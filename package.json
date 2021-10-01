@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "compile": "hardhat starknet-compile",
+    "test": "hardhat test"
+  },
+  "devDependencies": {
+    "@shardlabs/starknet-hardhat-plugin": "^0.1.5",
+    "chai": "^4.3.4",
+    "hardhat": "^2.6.4"
+  }
+}

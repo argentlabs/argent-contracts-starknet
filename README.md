@@ -2,7 +2,7 @@
 
 Preliminary work for an Argent Account on Starknet.
 
-## Environment
+## Environment (python)
 
 ### Install Cairo
 
@@ -31,4 +31,20 @@ nile compile
 pytest ./test/argent_account.py
 ```
 
+## Environment (node)
 
+### Install
+
+```
+yarn install
+```
+
+## Compile the contracts
+```
+yarn run compile 
+```
+
+### Test the contracts
+```
+yarn run test
+```

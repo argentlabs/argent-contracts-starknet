@@ -6,7 +6,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.alloc import alloc
-from starkware.cairo.common.math import assert_not_zero
+from starkware.cairo.common.math import assert_not_zero, assert_le
 from starkware.starknet.common.storage import Storage
 from starkware.starknet.common.syscalls import call_contract
 
@@ -17,7 +17,9 @@ from starkware.starknet.common.syscalls import call_contract
 const CHANGE_SIGNER_SELECTOR = 1540130945889430637313403138889853410180247761946478946165786566748520529557
 const CHANGE_GUARDIAN_SELECTOR = 1374386526556551464817815908276843861478960435557596145330240747921847320237
 const TRIGGER_ESCAPE_SELECTOR = 654787765132774538659281525944449989569480594447680779882263455595827967108
-
+const CANCEL_ESCAPE_SELECTOR = 992575500541331354489361836180456905167517944319528538469723604173440834912
+const ESCAPE_GUARDIAN_SELECTOR = 1662889347576632967292303062205906116436469425870979472602094601074614456040
+const ESCAPE_SIGNER_SELECTOR = 578307412324655990419134484880427622068887477430675222732446709420063579565
 const IS_VALID_SIGNATURE_SELECTOR = 1138073982574099226972715907883430523600275391887289231447128254784345409857
 
 const ESCAPE_SECURITY_PERIOD = 500
@@ -189,7 +191,7 @@ func change_guardian{
     validate_signer_signature(message_hash, signatures[0], signatures[1])
     validate_guardian_signature(message_hash, signatures[2], signatures[3])
 
-    # change signer
+    # change guardian
     assert_not_zero(new_guardian)
     _guardian.write(new_guardian)
     return()
@@ -240,6 +242,112 @@ func trigger_escape{
     let (block_timestamp) = _block_timestamp.read()
     local new_escape: Escape = Escape(block_timestamp + ESCAPE_SECURITY_PERIOD, escapor)
     _escape.write(new_escape)
+    return()
+end
+
+@external
+func cancel_escape{
+        storage_ptr: Storage*,
+        pedersen_ptr: HashBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
+        range_check_ptr
+    } (
+        nonce: felt,
+        signatures_len: felt,
+        signatures: felt*
+    ):
+    alloc_locals
+
+    # validate and bump nonce
+    validate_and_bump_nonce(nonce)
+
+    # validate there is an active escape
+    let (local current_escape) = _escape.read()
+    assert_not_zero(current_escape.active_at)
+
+    # validate signatures
+    assert signatures_len = 4
+    let (to) = _self_address.read()
+    let calldata: felt* = alloc()
+    let (local message_hash) = get_message_hash(to, CANCEL_ESCAPE_SELECTOR, 0, calldata, nonce)
+    validate_signer_signature(message_hash, signatures[0], signatures[1])
+    validate_guardian_signature(message_hash, signatures[2], signatures[3])
+
+    # clear escape
+    local new_escape: Escape = Escape(0, 0)
+    _escape.write(new_escape)
+    return()
+end
+
+@external
+func escape_guardian{
+        storage_ptr: Storage*,
+        pedersen_ptr: HashBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
+        range_check_ptr
+    } (
+        new_guardian: felt,
+        nonce: felt,
+        signatures_len: felt,
+        signatures: felt*
+    ):
+    alloc_locals
+
+    # validate and bump nonce
+    validate_and_bump_nonce(nonce)
+
+    # validate there is an active escape
+    let (local block_timestamp) = _block_timestamp.read()
+    let (local current_escape) = _escape.read()
+    assert_le(block_timestamp, current_escape.active_at)
+
+    # validate signer signatures
+    assert signatures_len = 2
+    let (to) = _self_address.read()
+    let calldata: felt* = alloc()
+    assert calldata[0] = new_guardian
+    let (local message_hash) = get_message_hash(to, ESCAPE_GUARDIAN_SELECTOR, 1, calldata, nonce)
+    validate_signer_signature(message_hash, signatures[0], signatures[1])
+
+    # change guardian
+    assert_not_zero(new_guardian)
+    _guardian.write(new_guardian)
+    return()
+end
+
+@external
+func escape_signer{
+        storage_ptr: Storage*,
+        pedersen_ptr: HashBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
+        range_check_ptr
+    } (
+        new_signer: felt,
+        nonce: felt,
+        signatures_len: felt,
+        signatures: felt*
+    ):
+    alloc_locals
+
+    # validate and bump nonce
+    validate_and_bump_nonce(nonce)
+
+    # validate there is an active escape
+    let (local block_timestamp) = _block_timestamp.read()
+    let (local current_escape) = _escape.read()
+    assert_le(block_timestamp, current_escape.active_at)
+
+    # validate signer signatures
+    assert signatures_len = 2
+    let (to) = _self_address.read()
+    let calldata: felt* = alloc()
+    assert calldata[0] = new_signer
+    let (local message_hash) = get_message_hash(to, ESCAPE_SIGNER_SELECTOR, 1, calldata, nonce)
+    validate_guardian_signature(message_hash, signatures[0], signatures[1])
+
+    # change signer
+    assert_not_zero(new_signer)
+    _signer.write(new_signer)
     return()
 end
 

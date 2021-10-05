@@ -11,6 +11,7 @@ guardian = Signer(456789987654321123)
 L1_ADDRESS = 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984
 
 ESCAPE_SECURITY_PERIOD = 500
+MAGIC_VALUE = 1138073982574099226972715907883430523600275391887289231447128254784345409857
 
 @pytest.fixture(scope='module')
 def event_loop():
@@ -25,10 +26,8 @@ async def get_starknet():
 async def account_factory(get_starknet):
     starknet = get_starknet
     account = await deploy(starknet, "contracts/ArgentAccount.cairo")
-    print('account address ', account.contract_address)
     await account.initialize(signer.public_key, guardian.public_key, L1_ADDRESS, account.contract_address).invoke()
     return starknet, account
-
 
 @pytest.mark.asyncio
 async def test_initializer(account_factory):
@@ -37,19 +36,18 @@ async def test_initializer(account_factory):
     assert (await account.get_guardian().call()).guardian == (guardian.public_key)
     assert (await account.get_L1_address().call()).L1_address == (L1_ADDRESS)
 
-
 @pytest.mark.asyncio
 async def test_execute(account_factory):
     starknet, account = account_factory
-    initializable = await deploy(starknet, "contracts/Initializable.cairo")
-
+    dapp = await deploy(starknet, "contracts/TestDapp.cairo")
     builder = TransactionBuilder(account, signer, guardian)
-    nonce = await builder.get_current_nonce()
-    transaction = builder.build_execute_transaction(initializable.contract_address, 'initialize', [], nonce)
 
-    assert await initializable.initialized().call() == (0,)
+    nonce = await builder.get_current_nonce()
+    transaction = builder.build_execute_transaction(dapp.contract_address, 'set_number', [47], nonce)
+
+    assert (await dapp.get_number(account.contract_address).call()).number == 0
     await transaction.invoke()
-    assert await initializable.initialized().call() == (1,)
+    assert (await dapp.get_number(account.contract_address).call()).number == 47
 
 @pytest.mark.asyncio
 async def test_change_signer(account_factory):
@@ -78,7 +76,7 @@ async def test_change_guardian(account_factory):
     assert (await account.get_guardian().call()).guardian == (new_guardian.public_key)
 
 @pytest.mark.asyncio
-async def test_trigger_escape_signer(account_factory):
+async def test_trigger_escape_by_signer(account_factory):
     starknet, account = account_factory
     builder = TransactionBuilder(account, signer, guardian)
 
@@ -93,7 +91,7 @@ async def test_trigger_escape_signer(account_factory):
     assert (escape.active_at == (121 + ESCAPE_SECURITY_PERIOD) and escape.caller == signer.public_key)
 
 @pytest.mark.asyncio
-async def test_trigger_escape_guardian(account_factory):
+async def test_trigger_escape_by_guardian(account_factory):
     starknet, account = account_factory
     builder = TransactionBuilder(account, signer, guardian)
 
@@ -106,3 +104,69 @@ async def test_trigger_escape_guardian(account_factory):
     await transaction.invoke()
     escape = await account.get_escape().call()
     assert (escape.active_at == (127 + ESCAPE_SECURITY_PERIOD) and escape.caller == guardian.public_key)
+
+@pytest.mark.asyncio
+async def test_escape_guardian(account_factory):
+    starknet, account = account_factory
+    builder = TransactionBuilder(account, signer, guardian)
+
+    await builder.set_block_timestamp(121)
+
+    # trigger escape
+    nonce = await builder.get_current_nonce()
+    transaction = builder.build_trigger_escape_transaction(signer, nonce)
+    await transaction.invoke()
+    escape = await account.get_escape().call()
+    assert (escape.active_at == (121 + ESCAPE_SECURITY_PERIOD) and escape.caller == signer.public_key)
+
+    await builder.set_block_timestamp(121 + ESCAPE_SECURITY_PERIOD)
+
+    # escape guardian
+    new_guardian = Signer(55555555)
+    nonce = await builder.get_current_nonce()
+    transaction = builder.build_escape_guardian_transaction(new_guardian, nonce)
+    
+    assert (await account.get_guardian().call()).guardian == (guardian.public_key)
+    await transaction.invoke()
+    assert (await account.get_guardian().call()).guardian == (new_guardian.public_key)
+    # escape should be cleared
+    escape = await account.get_escape().call()
+    assert (escape.active_at == 0 and escape.caller == 0)
+
+@pytest.mark.asyncio
+async def test_escape_signer(account_factory):
+    starknet, account = account_factory
+    builder = TransactionBuilder(account, signer, guardian)
+
+    await builder.set_block_timestamp(121)
+
+    # trigger escape
+    nonce = await builder.get_current_nonce()
+    transaction = builder.build_trigger_escape_transaction(guardian, nonce)
+    await transaction.invoke()
+    escape = await account.get_escape().call()
+    assert (escape.active_at == (121 + ESCAPE_SECURITY_PERIOD) and escape.caller == guardian.public_key)
+
+    await builder.set_block_timestamp(121 + ESCAPE_SECURITY_PERIOD + 1)
+
+    # escape signer
+    new_signer = Signer(555554675)
+    nonce = await builder.get_current_nonce()
+    transaction = builder.build_escape_signer_transaction(new_signer, nonce)
+    
+    assert (await account.get_signer().call()).signer == (signer.public_key)
+    await transaction.invoke()
+    assert (await account.get_signer().call()).signer == (new_signer.public_key)
+    # escape should be cleared
+    escape = await account.get_escape().call()
+    assert (escape.active_at == 0 and escape.caller == 0)
+
+@pytest.mark.asyncio
+async def test_is_valid_signature(account_factory):
+    starknet, account = account_factory
+    builder = TransactionBuilder(account, signer, guardian)
+
+    hash = 1283225199545181604979924458180358646374088657288769423115053097913173815464
+    transaction = builder.build_is_valid_signature_transaction(hash)
+    res = await transaction.call()
+    assert (res.magic_value == MAGIC_VALUE)

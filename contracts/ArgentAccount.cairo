@@ -22,19 +22,11 @@ const ESCAPE_GUARDIAN_SELECTOR = 16628893475766329672923030622059061164364694258
 const ESCAPE_SIGNER_SELECTOR = 578307412324655990419134484880427622068887477430675222732446709420063579565
 const IS_VALID_SIGNATURE_SELECTOR = 1138073982574099226972715907883430523600275391887289231447128254784345409857
 
-const ESCAPE_SECURITY_PERIOD = 500
+const ESCAPE_SECURITY_PERIOD = 500 # set to e.g. 7 days in prod
 
 ####################
 # STRUCTS
 ####################
-
-struct Message:
-    member to: felt
-    member selector: felt
-    member calldata: felt*
-    member calldata_size: felt
-    member nonce: felt
-end
 
 struct Escape:
     member active_at: felt
@@ -82,7 +74,12 @@ func initialize{
         storage_ptr: Storage*,
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
-    } (signer: felt, guardian: felt, L1_address: felt, self_address: felt):
+    } (
+        signer: felt,
+        guardian: felt,
+        L1_address: felt,
+        self_address: felt
+    ):
     # check that the contract is not initialized
     let (initialized) = _initialized.read()
     assert initialized = 0
@@ -299,7 +296,7 @@ func escape_guardian{
     # validate there is an active escape
     let (local block_timestamp) = _block_timestamp.read()
     let (local current_escape) = _escape.read()
-    assert_le(block_timestamp, current_escape.active_at)
+    assert_le(current_escape.active_at, block_timestamp)
 
     # validate signer signatures
     assert signatures_len = 2
@@ -309,9 +306,14 @@ func escape_guardian{
     let (local message_hash) = get_message_hash(to, ESCAPE_GUARDIAN_SELECTOR, 1, calldata, nonce)
     validate_signer_signature(message_hash, signatures[0], signatures[1])
 
+    # clear escape
+    local new_escape: Escape = Escape(0, 0)
+    _escape.write(new_escape)
+
     # change guardian
     assert_not_zero(new_guardian)
     _guardian.write(new_guardian)
+
     return()
 end
 
@@ -335,7 +337,7 @@ func escape_signer{
     # validate there is an active escape
     let (local block_timestamp) = _block_timestamp.read()
     let (local current_escape) = _escape.read()
-    assert_le(block_timestamp, current_escape.active_at)
+    assert_le(current_escape.active_at, block_timestamp)
 
     # validate signer signatures
     assert signatures_len = 2
@@ -345,9 +347,14 @@ func escape_signer{
     let (local message_hash) = get_message_hash(to, ESCAPE_SIGNER_SELECTOR, 1, calldata, nonce)
     validate_guardian_signature(message_hash, signatures[0], signatures[1])
 
+    # clear escape
+    local new_escape: Escape = Escape(0, 0)
+    _escape.write(new_escape)
+
     # change signer
     assert_not_zero(new_signer)
     _signer.write(new_signer)
+
     return()
 end
 

@@ -76,6 +76,19 @@ async def test_change_guardian(account_factory):
     assert (await account.get_guardian().call()).guardian == (new_guardian.public_key)
 
 @pytest.mark.asyncio
+async def test_change_L1_address(account_factory):
+    starknet, account = account_factory
+    builder = TransactionBuilder(account, signer, guardian)
+
+    new_L1_address = 0xa1a1224e9071470ab12a8df7626d4fe7789a039d
+    nonce = await builder.get_current_nonce()
+    transaction = builder.build_change_L1_address_transaction(new_L1_address, nonce)
+
+    assert (await account.get_L1_address().call()).L1_address == (L1_ADDRESS)
+    await transaction.invoke()
+    assert (await account.get_L1_address().call()).L1_address == (new_L1_address)
+
+@pytest.mark.asyncio
 async def test_trigger_escape_by_signer(account_factory):
     starknet, account = account_factory
     builder = TransactionBuilder(account, signer, guardian)

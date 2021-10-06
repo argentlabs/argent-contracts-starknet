@@ -27,6 +27,13 @@ class TransactionBuilder():
         signer_sig = self.signer.sign(message_hash)
         guardian_sig = self.guardian.sign(message_hash)
         return self.account.change_guardian(new_guardian, nonce, [signer_sig[0], signer_sig[1], guardian_sig[0], guardian_sig[1]])
+        
+    def build_change_L1_address_transaction(self, new_L1_address, nonce):
+        selector = get_selector_from_name('change_L1_address')
+        message_hash = hash_message(self.account.contract_address, self.account.contract_address, selector, [new_L1_address], nonce)
+        signer_sig = self.signer.sign(message_hash)
+        guardian_sig = self.guardian.sign(message_hash)
+        return self.account.change_L1_address(new_L1_address, nonce, [signer_sig[0], signer_sig[1], guardian_sig[0], guardian_sig[1]])
 
     def build_trigger_escape_transaction(self, escapor_signer, nonce):
         selector = get_selector_from_name('trigger_escape')

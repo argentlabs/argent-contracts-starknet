@@ -16,6 +16,7 @@ from starkware.starknet.common.syscalls import call_contract
 
 const CHANGE_SIGNER_SELECTOR = 1540130945889430637313403138889853410180247761946478946165786566748520529557
 const CHANGE_GUARDIAN_SELECTOR = 1374386526556551464817815908276843861478960435557596145330240747921847320237
+const CHANGE_L1_ADDRESS_SELECTOR = 279169963369459328778917024654659648799474594494056791695540097993562699432
 const TRIGGER_ESCAPE_SELECTOR = 654787765132774538659281525944449989569480594447680779882263455595827967108
 const CANCEL_ESCAPE_SELECTOR = 992575500541331354489361836180456905167517944319528538469723604173440834912
 const ESCAPE_GUARDIAN_SELECTOR = 1662889347576632967292303062205906116436469425870979472602094601074614456040
@@ -191,6 +192,37 @@ func change_guardian{
     # change guardian
     assert_not_zero(new_guardian)
     _guardian.write(new_guardian)
+    return()
+end
+
+@external
+func change_L1_address{
+        storage_ptr: Storage*,
+        pedersen_ptr: HashBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
+        range_check_ptr
+    } (
+        new_L1_address: felt,
+        nonce: felt,
+        signatures_len: felt,
+        signatures: felt*
+    ):
+    alloc_locals
+
+    # validate and bump nonce
+    validate_and_bump_nonce(nonce)
+
+    # validate signatures
+    assert signatures_len = 4
+    let (to) = _self_address.read()
+    let calldata: felt* = alloc()
+    assert calldata[0] = new_L1_address
+    let (local message_hash) = get_message_hash(to, CHANGE_L1_ADDRESS_SELECTOR, 1, calldata, nonce)
+    validate_signer_signature(message_hash, signatures[0], signatures[1])
+    validate_guardian_signature(message_hash, signatures[2], signatures[3])
+
+    # change guardian
+    _L1_address.write(new_L1_address)
     return()
 end
 

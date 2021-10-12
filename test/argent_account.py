@@ -50,6 +50,21 @@ async def test_execute(account_factory):
     assert (await dapp.get_number(account.contract_address).call()).number == 47
 
 @pytest.mark.asyncio
+async def test_execute_no_guardian(account_factory):
+    starknet, account = account_factory
+    account_no_guardian = await deploy(starknet, "contracts/ArgentAccount.cairo")
+    await account_no_guardian.initialize(signer.public_key, 0, L1_ADDRESS, account_no_guardian.contract_address).invoke()
+    dapp = await deploy(starknet, "contracts/TestDapp.cairo")
+    builder = TransactionBuilder(account_no_guardian, signer, 0)
+
+    nonce = await builder.get_current_nonce()
+    transaction = builder.build_execute_transaction(dapp.contract_address, 'set_number', [47], nonce)
+
+    assert (await dapp.get_number(account_no_guardian.contract_address).call()).number == 0
+    await transaction.invoke()
+    assert (await dapp.get_number(account_no_guardian.contract_address).call()).number == 47
+
+@pytest.mark.asyncio
 async def test_change_signer(account_factory):
     starknet, account = account_factory
     builder = TransactionBuilder(account, signer, guardian)

@@ -11,8 +11,12 @@ class TransactionBuilder():
         selector = get_selector_from_name(selector_name)
         message_hash = hash_message(self.account.contract_address, to, selector, calldata, nonce)
         signer_sig = self.signer.sign(message_hash)
-        guardian_sig = self.guardian.sign(message_hash)
-        return self.account.execute(to, selector, calldata, nonce, [signer_sig[0], signer_sig[1], guardian_sig[0], guardian_sig[1]])
+        signatures = [signer_sig[0], signer_sig[1]]
+        if self.guardian != 0:
+            guardian_sig = self.guardian.sign(message_hash)
+            signatures.append(guardian_sig[0])
+            signatures.append(guardian_sig[1])
+        return self.account.execute(to, selector, calldata, nonce, signatures)
 
     def build_change_signer_transaction(self, new_signer, nonce):
         selector = get_selector_from_name('change_signer')

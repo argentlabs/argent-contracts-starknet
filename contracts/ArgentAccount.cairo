@@ -12,6 +12,16 @@ from starkware.cairo.common.hash_state import (
 )
 
 ####################
+# INTERFACE
+####################
+
+@contract_interface
+namespace IGuardian:
+    func is_valid_signature(hash: felt, sig_len: felt, sig: felt*) -> (magic_value: felt):
+    end
+end
+
+####################
 # CONSTANTS
 ####################
 

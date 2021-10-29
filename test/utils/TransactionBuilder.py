@@ -16,7 +16,7 @@ class TransactionBuilder():
             guardian_sig = self.guardian.sign(message_hash)
             signatures.append(guardian_sig[0])
             signatures.append(guardian_sig[1])
-        return self.account.execute(to, selector, calldata, nonce, signatures)
+        return (self.account.execute(to, selector, calldata, nonce), signatures)
 
     def build_change_signer_transaction(self, new_signer, nonce):
         selector = get_selector_from_name('change_signer')
@@ -63,7 +63,7 @@ class TransactionBuilder():
         return self.account.is_valid_signature(hash, [sig_signer[0], sig_signer[1], sig_guardian[0], sig_guardian[1]])
 
     async def get_current_nonce(self):
-        return (await self.account.get_current_nonce().call()).nonce
+        return (await self.account.get_current_nonce().call()).result.nonce
 
     async def set_block_timestamp(self, timestamp):
         await self.account.set_block_timestamp(timestamp).invoke()

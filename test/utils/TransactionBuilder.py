@@ -27,12 +27,36 @@ class TransactionBuilder():
         signer_sig = self.signer.sign(message_hash)
         guardian_sig = self.guardian.sign(message_hash)
         return self.account.change_guardian(new_guardian, nonce, [signer_sig[0], signer_sig[1], guardian_sig[0], guardian_sig[1]])
+        
+    def build_change_L1_address_transaction(self, new_L1_address, nonce):
+        selector = get_selector_from_name('change_L1_address')
+        message_hash = hash_message(self.account.contract_address, self.account.contract_address, selector, [new_L1_address], nonce)
+        signer_sig = self.signer.sign(message_hash)
+        guardian_sig = self.guardian.sign(message_hash)
+        return self.account.change_L1_address(new_L1_address, nonce, [signer_sig[0], signer_sig[1], guardian_sig[0], guardian_sig[1]])
 
     def build_trigger_escape_transaction(self, escapor_signer, nonce):
         selector = get_selector_from_name('trigger_escape')
         message_hash = hash_message(self.account.contract_address, self.account.contract_address, selector, [escapor_signer.public_key], nonce)
         sig = escapor_signer.sign(message_hash)
         return self.account.trigger_escape(escapor_signer.public_key, nonce, [sig[0], sig[1]])
+
+    def build_escape_guardian_transaction(self, new_guardian, nonce):
+        selector = get_selector_from_name('escape_guardian')
+        message_hash = hash_message(self.account.contract_address, self.account.contract_address, selector, [new_guardian.public_key], nonce)
+        sig = self.signer.sign(message_hash)
+        return self.account.escape_guardian(new_guardian.public_key, nonce, [sig[0], sig[1]])
+
+    def build_escape_signer_transaction(self, new_signer, nonce):
+        selector = get_selector_from_name('escape_signer')
+        message_hash = hash_message(self.account.contract_address, self.account.contract_address, selector, [new_signer.public_key], nonce)
+        sig = self.guardian.sign(message_hash)
+        return self.account.escape_signer(new_signer.public_key, nonce, [sig[0], sig[1]])
+
+    def build_is_valid_signature_transaction(self, hash):
+        sig_signer = self.signer.sign(hash)
+        sig_guardian = self.guardian.sign(hash)
+        return self.account.is_valid_signature(hash, [sig_signer[0], sig_signer[1], sig_guardian[0], sig_guardian[1]])
 
     async def get_current_nonce(self):
         return (await self.account.get_current_nonce().call()).nonce

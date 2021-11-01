@@ -7,8 +7,7 @@ from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
-from starkware.starknet.common.storage import Storage
-from starkware.starknet.common.syscalls import call_contract
+from starkware.starknet.common.syscalls import call_contract, get_tx_signature
 
 ####################
 # CONSTANTS
@@ -34,25 +33,12 @@ struct Escape:
     member caller: felt
 end
 
-struct Signature:
-    member sig_r: felt
-    member sig_s: felt
-end
-
 ####################
 # STORAGE VARIABLES
 ####################
 
 @storage_var
-func _self_address() -> (res: felt):
-end
-
-@storage_var
 func _current_nonce() -> (res: felt):
-end
-
-@storage_var
-func _initialized() -> (res: felt):
 end
 
 @storage_var
@@ -75,60 +61,50 @@ end
 # EXTERNAL FUNCTIONS
 ####################
 
-@external
-func initialize{
-        storage_ptr: Storage*,
+@constructor
+func constructor{
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (
         signer: felt,
         guardian: felt,
-        L1_address: felt,
-        self_address: felt
+        L1_address: felt
     ):
-    # check that the contract is not initialized
-    let (initialized) = _initialized.read()
-    assert initialized = 0
-    # check that the signer and self_address are not zero
+    # check that the signer is not zero
     assert_not_zero(signer)
-    assert_not_zero(self_address)
     # initialize the contract
-    _initialized.write(1)
     _signer.write(signer)
     _guardian.write(guardian)
     _L1_address.write(L1_address)
-    _self_address.write(self_address)
     return ()
 end
 
 @external
 func execute{
-        storage_ptr: Storage*,
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         ecdsa_ptr: SignatureBuiltin*,
-        syscall_ptr: felt*,
         range_check_ptr
     } (
         to: felt,
         selector: felt,
         calldata_len: felt,
         calldata: felt*,
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ) -> (response : felt):
     alloc_locals
 
-    # cast sig to an array of Signature struct until natively supported by Cairo
-    let (local signatures_len, local signatures) = cast_to_signature(sig_len, sig)
+    # get the signatures
+    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
 
     # validate signatures
     let (local message_hash) = get_message_hash(to, selector, calldata_len, calldata, nonce)
-    validate_signer_signature(message_hash, signatures, signatures_len, 0)
-    validate_guardian_signature(message_hash, signatures, signatures_len, 1)
+    validate_signer_signature(message_hash, sig, sig_len)
+    validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
     # execute call
     let response = call_contract(
@@ -143,20 +119,18 @@ end
 
 @external
 func change_signer{
-        storage_ptr: Storage*,
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
         new_signer: felt,
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ):
     alloc_locals
 
-    # cast sig to an array of Signature struct until natively supported by Cairo
-    let (local signatures_len, local signatures) = cast_to_signature(sig_len, sig)
+    # get the signatures
+    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
@@ -166,8 +140,8 @@ func change_signer{
     let calldata: felt* = alloc()
     assert calldata[0] = new_signer
     let (local message_hash) = get_message_hash(to, CHANGE_SIGNER_SELECTOR, 1, calldata, nonce)
-    validate_signer_signature(message_hash, signatures, signatures_len, 0)
-    validate_guardian_signature(message_hash, signatures, signatures_len, 1)
+    validate_signer_signature(message_hash, sig, sig_len)
+    validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
     # change signer
     assert_not_zero(new_signer)
@@ -177,20 +151,18 @@ end
 
 @external
 func change_guardian{
-        storage_ptr: Storage*,
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
         new_guardian: felt,
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ):
     alloc_locals
 
-    # cast sig to an array of Signature struct until natively supported by Cairo
-    let (local signatures_len, local signatures) = cast_to_signature(sig_len, sig)
+    # get the signatures
+    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
@@ -200,8 +172,8 @@ func change_guardian{
     let calldata: felt* = alloc()
     assert calldata[0] = new_guardian
     let (local message_hash) = get_message_hash(to, CHANGE_GUARDIAN_SELECTOR, 1, calldata, nonce)
-    validate_signer_signature(message_hash, signatures, signatures_len, 0)
-    validate_guardian_signature(message_hash, signatures, signatures_len, 1)
+    validate_signer_signature(message_hash, sig, sig_len)
+    validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
     # change guardian
     assert_not_zero(new_guardian)
@@ -211,20 +183,18 @@ end
 
 @external
 func change_L1_address{
-        storage_ptr: Storage*,
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
         new_L1_address: felt,
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ):
     alloc_locals
 
-    # cast sig to an array of Signature struct until natively supported by Cairo
-    let (local signatures_len, local signatures) = cast_to_signature(sig_len, sig)
+    # get the signatures
+    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
@@ -234,8 +204,8 @@ func change_L1_address{
     let calldata: felt* = alloc()
     assert calldata[0] = new_L1_address
     let (local message_hash) = get_message_hash(to, CHANGE_L1_ADDRESS_SELECTOR, 1, calldata, nonce)
-    validate_signer_signature(message_hash, signatures, signatures_len, 0)
-    validate_guardian_signature(message_hash, signatures, signatures_len, 1)
+    validate_signer_signature(message_hash, sig, sig_len)
+    validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
     # change guardian
     _L1_address.write(new_L1_address)
@@ -244,20 +214,18 @@ end
 
 @external
 func trigger_escape{
-        storage_ptr: Storage*,
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
         escapor: felt,
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ):
     alloc_locals
 
-    # cast sig to an array of Signature struct until natively supported by Cairo
-    let (local signatures_len, local signatures) = cast_to_signature(sig_len, sig)
+    # get the signatures
+    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
@@ -280,10 +248,10 @@ func trigger_escape{
     assert calldata[0] = escapor
     let (local message_hash) = get_message_hash(to, TRIGGER_ESCAPE_SELECTOR, 1, calldata, nonce)
     if escapor == signer:
-        validate_signer_signature(message_hash, signatures, signatures_len, 0)
+        validate_signer_signature(message_hash, sig, sig_len)
     else:
         assert escapor = guardian
-        validate_guardian_signature(message_hash, signatures, signatures_len, 0) 
+        validate_guardian_signature(message_hash, sig, sig_len) 
     end
 
     # rebinding ptrs
@@ -298,19 +266,17 @@ end
 
 @external
 func cancel_escape{
-        storage_ptr: Storage*,
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ):
     alloc_locals
 
-    # cast sig to an array of Signature struct until natively supported by Cairo
-    let (local signatures_len, local signatures) = cast_to_signature(sig_len, sig)
+    # get the signatures
+    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
@@ -323,8 +289,8 @@ func cancel_escape{
     let (to) = _self_address.read()
     let calldata: felt* = alloc()
     let (local message_hash) = get_message_hash(to, CANCEL_ESCAPE_SELECTOR, 0, calldata, nonce)
-    validate_signer_signature(message_hash, signatures, signatures_len, 0)
-    validate_guardian_signature(message_hash, signatures, signatures_len, 1)
+    validate_signer_signature(message_hash, sig, sig_len)
+    validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
     # clear escape
     local new_escape: Escape = Escape(0, 0)
@@ -334,20 +300,18 @@ end
 
 @external
 func escape_guardian{
-        storage_ptr: Storage*,
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
         new_guardian: felt,
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ):
     alloc_locals
 
-    # cast sig to an array of Signature struct until natively supported by Cairo
-    let (local signatures_len, local signatures) = cast_to_signature(sig_len, sig)
+    # get the signatures
+    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
@@ -362,7 +326,7 @@ func escape_guardian{
     let calldata: felt* = alloc()
     assert calldata[0] = new_guardian
     let (local message_hash) = get_message_hash(to, ESCAPE_GUARDIAN_SELECTOR, 1, calldata, nonce)
-    validate_signer_signature(message_hash, signatures, signatures_len, 0)
+    validate_signer_signature(message_hash, sig, sig_len)
 
     # clear escape
     local new_escape: Escape = Escape(0, 0)
@@ -377,20 +341,18 @@ end
 
 @external
 func escape_signer{
-        storage_ptr: Storage*,
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
         new_signer: felt,
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ):
     alloc_locals
 
-    # cast sig to an array of Signature struct until natively supported by Cairo
-    let (local signatures_len, local signatures) = cast_to_signature(sig_len, sig)
+    # get the signatures
+    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
@@ -405,7 +367,7 @@ func escape_signer{
     let calldata: felt* = alloc()
     assert calldata[0] = new_signer
     let (local message_hash) = get_message_hash(to, ESCAPE_SIGNER_SELECTOR, 1, calldata, nonce)
-    validate_guardian_signature(message_hash, signatures, signatures_len, 0)
+    validate_guardian_signature(message_hash, sig, sig_len)
 
     # clear escape
     local new_escape: Escape = Escape(0, 0)
@@ -424,10 +386,9 @@ end
 
 @view
 func is_valid_signature{
-        storage_ptr: Storage*,
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         ecdsa_ptr: SignatureBuiltin*,
-        syscall_ptr: felt*,
         range_check_ptr
     } (
         hash: felt,
@@ -436,36 +397,24 @@ func is_valid_signature{
     ) -> (magic_value: felt):
     alloc_locals
 
-    # cast sig to an array of Signature struct until natively supported by Cairo
-    let (local signatures_len, local signatures) = cast_to_signature(sig_len, sig)
-
-    validate_signer_signature(hash, signatures, signatures_len, 0)
-    validate_guardian_signature(hash, signatures, signatures_len, 1)
+    validate_signer_signature(hash, sig, sig_len)
+    validate_guardian_signature(hash, sig + 2, sig_len - 2)
     return (magic_value = IS_VALID_SIGNATURE_SELECTOR)
 end
 
 @view
 func get_current_nonce{
-    storage_ptr : Storage*, 
-    pedersen_ptr : HashBuiltin*,
+    syscall_ptr: felt*, 
+    pedersen_ptr: HashBuiltin*,
     range_check_ptr}() -> (nonce: felt):
     let (res) = _current_nonce.read()
     return (nonce=res)
 end
 
 @view
-func get_initialized{
-    storage_ptr : Storage*, 
-    pedersen_ptr : HashBuiltin*,
-    range_check_ptr}() -> (initialized: felt):
-    let (res) = _initialized.read()
-    return (initialized=res)
-end
-
-@view
 func get_signer{
-    storage_ptr : Storage*, 
-    pedersen_ptr : HashBuiltin*,
+    syscall_ptr: felt*, 
+    pedersen_ptr: HashBuiltin*,
     range_check_ptr}() -> (signer: felt):
     let (res) = _signer.read()
     return (signer=res)
@@ -473,8 +422,8 @@ end
 
 @view
 func get_guardian{
-    storage_ptr : Storage*, 
-    pedersen_ptr : HashBuiltin*,
+    syscall_ptr: felt*, 
+    pedersen_ptr: HashBuiltin*,
     range_check_ptr}() -> (guardian: felt):
     let (res) = _guardian.read()
     return (guardian=res)
@@ -482,8 +431,8 @@ end
 
 @view
 func get_escape{
-    storage_ptr : Storage*, 
-    pedersen_ptr : HashBuiltin*,
+    syscall_ptr: felt*, 
+    pedersen_ptr: HashBuiltin*,
     range_check_ptr}() -> (active_at: felt, caller: felt):
     let (res) = _escape.read()
     return (active_at=res.active_at, caller=res.caller)
@@ -491,8 +440,8 @@ end
 
 @view
 func get_L1_address{
-    storage_ptr : Storage*, 
-    pedersen_ptr : HashBuiltin*,
+    syscall_ptr: felt*, 
+    pedersen_ptr: HashBuiltin*,
     range_check_ptr}() -> (L1_address: felt):
     let (res) = _L1_address.read()
     return (L1_address=res)
@@ -503,8 +452,8 @@ end
 ####################
 
 func validate_and_bump_nonce{
-        storage_ptr : Storage*, 
-        pedersen_ptr : HashBuiltin*,
+        syscall_ptr: felt*, 
+        pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (
         message_nonce: felt
@@ -516,63 +465,68 @@ func validate_and_bump_nonce{
 end
 
 func validate_signer_signature{
-        storage_ptr : Storage*, 
-        pedersen_ptr : HashBuiltin*,
-        ecdsa_ptr : SignatureBuiltin*,
+        syscall_ptr: felt*, 
+        pedersen_ptr: HashBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
         message: felt, 
-        signatures: Signature*,
-        signatures_len: felt,
-        position: felt
+        signatures: felt*,
+        signatures_len: felt
     ) -> ():
-    assert_le(position, signatures_len - 1) 
+    assert_nn(signatures_len - 2)
     let (signer) = _signer.read()
     verify_ecdsa_signature(
         message=message,
         public_key=signer,
-        signature_r=signatures[position].sig_r,
-        signature_s=signatures[position].sig_s)
+        signature_r=signatures[0],
+        signature_s=signatures[1])
     return()
 end
 
 func validate_guardian_signature{
-        storage_ptr : Storage*, 
-        pedersen_ptr : HashBuiltin*,
+        syscall_ptr: felt*, 
+        pedersen_ptr: HashBuiltin*,
         ecdsa_ptr : SignatureBuiltin*,
         range_check_ptr
     } (
         message: felt,
-        signatures: Signature*,
-        signatures_len: felt,
-        position: felt
+        signatures: felt*,
+        signatures_len: felt
     ) -> ():
     let (guardian) = _guardian.read()
     if guardian == 0:
         return()
     else:
-        assert_le(position, signatures_len - 1)
+        assert_nn(signatures_len - 2)
         verify_ecdsa_signature(
             message=message,
             public_key=guardian,
-            signature_r=signatures[position].sig_r,
-            signature_s=signatures[position].sig_s)
+            signature_r=signatures[0],
+            signature_s=signatures[1])
         return()
     end
 end
 
 func get_message_hash{
-    storage_ptr : Storage*, 
-    pedersen_ptr : HashBuiltin*,
-    ecdsa_ptr : SignatureBuiltin*,
-    range_check_ptr}(to: felt, selector: felt, calldata_len: felt, calldata: felt*, nonce: felt) -> (res: felt):
+        syscall_ptr: felt*, 
+        pedersen_ptr: HashBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
+        range_check_ptr
+    } (
+        to: felt,
+        selector: felt,
+        calldata_len: felt,
+        calldata: felt*,
+        nonce: felt
+    ) -> (res: felt):
     alloc_locals
     let (account) = _self_address.read()
     let (res) = hash2{hash_ptr=pedersen_ptr}(account, to)
     let (res) = hash2{hash_ptr=pedersen_ptr}(res, selector)
     # we need to make `res` local
     # to prevent the reference from being revoked
-    local storage_ptr : Storage* = storage_ptr
+    local syscall_ptr: felt* = syscall_ptr
     local range_check_ptr = range_check_ptr
     local res = res
     let (res_calldata) = hash_calldata(calldata, calldata_len)
@@ -604,13 +558,26 @@ end
 ####################
 
 @storage_var
+func _self_address() -> (res: felt):
+end
+
+@external
+func set_self_address{
+    syscall_ptr: felt*, 
+    pedersen_ptr: HashBuiltin*,
+    range_check_ptr}(new_address: felt):
+    _self_address.write(new_address)
+    return ()
+end
+
+@storage_var
 func _block_timestamp() -> (res: felt):
 end
 
 @view
 func get_block_timestamp{
-    storage_ptr : Storage*, 
-    pedersen_ptr : HashBuiltin*,
+    syscall_ptr: felt*, 
+    pedersen_ptr: HashBuiltin*,
     range_check_ptr}() -> (block_timestamp: felt):
     let (res) = _block_timestamp.read()
     return (block_timestamp=res)
@@ -618,21 +585,9 @@ end
 
 @external
 func set_block_timestamp{
-    storage_ptr : Storage*, 
-    pedersen_ptr : HashBuiltin*,
+    syscall_ptr: felt*, 
+    pedersen_ptr: HashBuiltin*,
     range_check_ptr}(new_block_timestamp: felt):
     _block_timestamp.write(new_block_timestamp)
     return ()
-end
-
-func cast_to_signature{
-        range_check_ptr
-    } (
-        array_len: felt,
-        array: felt*
-    ) -> (sig_len: felt, sig: Signature*):
-    let sig_len = array_len / Signature.SIZE
-    assert_nn(sig_len)
-    let sig = cast (array, Signature*)
-    return (sig_len=sig_len,sig=sig)
 end

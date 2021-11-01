@@ -26,7 +26,7 @@ Under this model we can build a simple yet highly secure non-custodial wallet.
 
 ## Development
 
-### Install Cairo
+### Install Cairo 0.5.1
 
 See https://www.cairo-lang.org/docs/quickstart.html
 

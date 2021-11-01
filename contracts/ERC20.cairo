@@ -3,7 +3,6 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.starknet.common.syscalls import get_caller_address
-from starkware.starknet.common.storage import Storage
 from starkware.cairo.common.math import assert_nn_le
 
 #
@@ -37,7 +36,7 @@ end
 
 @view
 func get_total_supply{
-        storage_ptr: Storage*,
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } () -> (res: felt):
@@ -47,7 +46,7 @@ end
 
 @view
 func balance_of{
-        storage_ptr: Storage*,
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (user: felt) -> (res: felt):
@@ -57,7 +56,7 @@ end
 
 @view
 func allowance{
-        storage_ptr: Storage*,
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (owner: felt, spender: felt) -> (res: felt):
@@ -71,9 +70,8 @@ end
 
 @external
 func initialize{
-        storage_ptr: Storage*,
-        pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } ():
     let (_initialized) = initialized.read()
@@ -86,9 +84,8 @@ func initialize{
 end
 
 func _mint{
-        storage_ptr: Storage*,
-        pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (recipient: felt, amount: felt):
     let (res) = balances.read(user=recipient)
@@ -100,7 +97,7 @@ func _mint{
 end
 
 func _transfer{
-        storage_ptr: Storage*,
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (sender: felt, recipient: felt, amount: felt):
@@ -119,9 +116,8 @@ end
 
 @external
 func mint{
-        storage_ptr: Storage*,
-        pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (recipient: felt, amount: felt):
     _mint(recipient, amount)
@@ -130,9 +126,8 @@ end
 
 @external
 func transfer{
-        storage_ptr: Storage*,
-        pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (recipient: felt, amount: felt):
     let (sender) = get_caller_address()
@@ -142,9 +137,8 @@ end
 
 @external
 func transfer_from{
-        storage_ptr: Storage*,
-        pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (sender: felt, recipient: felt, amount: felt):
     let (caller) = get_caller_address()
@@ -157,9 +151,8 @@ end
 
 @external
 func approve{
-        storage_ptr: Storage*,
-        pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (spender: felt, amount: felt):
     let (caller) = get_caller_address()

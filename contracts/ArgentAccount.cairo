@@ -125,9 +125,7 @@ func change_signer{
         range_check_ptr
     } (
         new_signer: felt,
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ):
     alloc_locals
 
@@ -159,9 +157,7 @@ func change_guardian{
         range_check_ptr
     } (
         new_guardian: felt,
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ):
     alloc_locals
 
@@ -193,9 +189,7 @@ func change_L1_address{
         range_check_ptr
     } (
         new_L1_address: felt,
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ):
     alloc_locals
 
@@ -226,9 +220,7 @@ func trigger_escape{
         range_check_ptr
     } (
         escapor: felt,
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ):
     alloc_locals
 
@@ -279,9 +271,7 @@ func cancel_escape{
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ):
     alloc_locals
 
@@ -316,9 +306,7 @@ func escape_guardian{
         range_check_ptr
     } (
         new_guardian: felt,
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ):
     alloc_locals
 
@@ -359,9 +347,7 @@ func escape_signer{
         range_check_ptr
     } (
         new_signer: felt,
-        nonce: felt,
-        sig_len: felt,
-        sig: felt*
+        nonce: felt
     ):
     alloc_locals
 

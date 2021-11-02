@@ -17,7 +17,7 @@ from starkware.cairo.common.hash_state import (
 
 @contract_interface
 namespace IGuardian:
-    func is_valid_signature(hash: felt, sig_len: felt, sig: felt*) -> (magic_value: felt):
+    func is_valid_signature(hash: felt, sig_len: felt, sig: felt*) -> ():
     end
 end
 
@@ -501,25 +501,23 @@ func validate_signer_signature{
 end
 
 func validate_guardian_signature{
-        syscall_ptr: felt*, 
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
-        ecdsa_ptr : SignatureBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
         message: felt,
         signatures: felt*,
         signatures_len: felt
     ) -> ():
+    alloc_locals
     let (guardian) = _guardian.read()
+    local pedersen_ptr: HashBuiltin* = pedersen_ptr
     if guardian == 0:
         return()
     else:
         assert_nn(signatures_len - 2)
-        verify_ecdsa_signature(
-            message=message,
-            public_key=guardian,
-            signature_r=signatures[0],
-            signature_s=signatures[1])
+        IGuardian.is_valid_signature(contract_address=guardian, hash=message, sig_len=signatures_len, sig=signatures)
         return()
     end
 end

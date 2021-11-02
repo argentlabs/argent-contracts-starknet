@@ -37,7 +37,7 @@ class TransactionBuilder():
         transaction = self.account.change_L1_address(new_L1_address, nonce)
         return (transaction, signatures)
 
-    def build_trigger_escape_transaction(self, escapor_signer, nonce):
+    def build_trigger_escape_transaction(self, escapor, escapor_signer, nonce):
         selector = get_selector_from_name('trigger_escape')
         message_hash = hash_message(self.account.contract_address, self.account.contract_address, selector, [escapor_signer.public_key], nonce)
         signatures = list(escapor_signer.sign(message_hash))

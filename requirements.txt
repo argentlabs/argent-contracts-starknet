@@ -1,0 +1,4 @@
+cairo-lang
+cairo-nile
+pytest
+pytest-asyncio

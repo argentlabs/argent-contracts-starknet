@@ -21,7 +21,7 @@ Under this model we can build a simple yet highly secure non-custodial wallet.
 - Access to an equivalent of `block.timestamp` to enable timelocks. Currently mocked in the account with the `_block_timestamp` storage variable.
 - Access to an equivalent of `address(this)` to determine the self address of the account. Currently mocked in the account with the `_self_address` storage variable.
 - An upgrade/proxy pattern using an equivalent of `delegatecall` so that the account of a user can evolve over time without changing addresses.
-- A strategy to define the `_L1_address` storage variable as the L1 address that can be the exit for the assets of the L2 account.
+- A strategy to define the `_L1_address` storage variable as the L1 address that can exit the assets of the account.
 - A mechanism to pay fees.
 
 ## Development

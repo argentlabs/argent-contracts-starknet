@@ -26,21 +26,26 @@ Under this model we can build a simple yet highly secure non-custodial wallet.
 
 ## Development
 
-### Install Cairo 0.5.1
+### Setup a local virtual env
 
-See https://www.cairo-lang.org/docs/quickstart.html
-
-### Install Nile
 ```
-pip install cairo-nile
+python -m venv ./venv
+source ./venv/bin/activate
 ```
 
-See https://github.com/martriay/nile for more details.
-
-
-### Install pytest
+### Install Cairo 0.5.1 dependencies
 ```
-pip install pytest pytest-asyncio
+brew install gmp
+```
+
+See for more details:
+- https://www.cairo-lang.org/docs/quickstart.html
+- https://github.com/martriay/nile
+
+
+### Install Python dependencies
+```
+pip install -r requirements.txt
 ```
 
 ### Compile the contracts

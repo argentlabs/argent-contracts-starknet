@@ -33,13 +33,14 @@ python -m venv ./venv
 source ./venv/bin/activate
 ```
 
-### Install Cairo 0.5.1
+### Install Cairo 0.5.1 dependencies
 ```
 brew install gmp
 ```
 
-See https://www.cairo-lang.org/docs/quickstart.html
-See https://github.com/martriay/nile for more details.
+See for more details:
+- https://www.cairo-lang.org/docs/quickstart.html
+- https://github.com/martriay/nile
 
 
 ### Install Python dependencies

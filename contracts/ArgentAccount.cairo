@@ -403,7 +403,7 @@ func is_valid_signature{
 end
 
 @view
-func get_current_nonce{
+func get_nonce{
     syscall_ptr: felt*, 
     pedersen_ptr: HashBuiltin*,
     range_check_ptr}() -> (nonce: felt):

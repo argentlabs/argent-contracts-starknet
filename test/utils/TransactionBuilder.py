@@ -61,8 +61,8 @@ class TransactionBuilder():
         signatures = list(self.signer.sign(hash) + self.guardian.sign(hash))
         return self.account.is_valid_signature(hash, signatures)
 
-    async def get_current_nonce(self):
-        return (await self.account.get_current_nonce().call()).result.nonce
+    async def get_nonce(self):
+        return (await self.account.get_nonce().call()).result.nonce
 
     async def set_block_timestamp(self, timestamp):
         await self.account.set_block_timestamp(timestamp).invoke()

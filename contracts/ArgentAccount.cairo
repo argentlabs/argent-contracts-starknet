@@ -1,13 +1,15 @@
 %lang starknet
 %builtins pedersen range_check ecdsa
 
-from starkware.cairo.common.hash import hash2
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
 from starkware.starknet.common.syscalls import call_contract, get_tx_signature
+from starkware.cairo.common.hash_state import (
+    hash_init, hash_finalize, hash_update, hash_update_single
+)
 
 ####################
 # CONSTANTS
@@ -96,13 +98,13 @@ func execute{
     alloc_locals
 
     # get the signatures
-    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
+    let (sig_len : felt, sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
 
     # validate signatures
-    let (local message_hash) = get_message_hash(to, selector, calldata_len, calldata, nonce)
+    let (message_hash) = get_message_hash(to, selector, calldata_len, calldata, nonce)
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
@@ -130,7 +132,7 @@ func change_signer{
     alloc_locals
 
     # get the signatures
-    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
+    let (sig_len : felt, sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
@@ -139,7 +141,7 @@ func change_signer{
     let (to) = _self_address.read()
     let calldata: felt* = alloc()
     assert calldata[0] = new_signer
-    let (local message_hash) = get_message_hash(to, CHANGE_SIGNER_SELECTOR, 1, calldata, nonce)
+    let (message_hash) = get_message_hash(to, CHANGE_SIGNER_SELECTOR, 1, calldata, nonce)
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
@@ -162,7 +164,7 @@ func change_guardian{
     alloc_locals
 
     # get the signatures
-    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
+    let (sig_len : felt, sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
@@ -171,7 +173,7 @@ func change_guardian{
     let (to) = _self_address.read()
     let calldata: felt* = alloc()
     assert calldata[0] = new_guardian
-    let (local message_hash) = get_message_hash(to, CHANGE_GUARDIAN_SELECTOR, 1, calldata, nonce)
+    let (message_hash) = get_message_hash(to, CHANGE_GUARDIAN_SELECTOR, 1, calldata, nonce)
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
@@ -194,7 +196,7 @@ func change_L1_address{
     alloc_locals
 
     # get the signatures
-    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
+    let (sig_len : felt, sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
@@ -203,7 +205,7 @@ func change_L1_address{
     let (to) = _self_address.read()
     let calldata: felt* = alloc()
     assert calldata[0] = new_L1_address
-    let (local message_hash) = get_message_hash(to, CHANGE_L1_ADDRESS_SELECTOR, 1, calldata, nonce)
+    let (message_hash) = get_message_hash(to, CHANGE_L1_ADDRESS_SELECTOR, 1, calldata, nonce)
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
@@ -225,18 +227,18 @@ func trigger_escape{
     alloc_locals
 
     # get the signatures
-    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
+    let (sig_len : felt, sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
 
     # no escape when the guardian is not set
-    let (local guardian) = _guardian.read()
+    let (guardian) = _guardian.read()
     assert_not_zero(guardian)
 
     # check if there is already an escape
-    let (local current_escape) = _escape.read()
-    let (local signer) = _signer.read()
+    let (current_escape) = _escape.read()
+    let (signer) = _signer.read()
     if current_escape.active_at != 0:
         assert current_escape.caller = guardian
         assert escapor = signer
@@ -246,7 +248,7 @@ func trigger_escape{
     let (to) = _self_address.read()
     let calldata: felt* = alloc()
     assert calldata[0] = escapor
-    let (local message_hash) = get_message_hash(to, TRIGGER_ESCAPE_SELECTOR, 1, calldata, nonce)
+    let (message_hash) = get_message_hash(to, TRIGGER_ESCAPE_SELECTOR, 1, calldata, nonce)
     if escapor == signer:
         validate_signer_signature(message_hash, sig, sig_len)
     else:
@@ -276,19 +278,19 @@ func cancel_escape{
     alloc_locals
 
     # get the signatures
-    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
+    let (sig_len : felt, sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
 
     # validate there is an active escape
-    let (local current_escape) = _escape.read()
+    let (current_escape) = _escape.read()
     assert_not_zero(current_escape.active_at)
 
     # validate signatures
     let (to) = _self_address.read()
     let calldata: felt* = alloc()
-    let (local message_hash) = get_message_hash(to, CANCEL_ESCAPE_SELECTOR, 0, calldata, nonce)
+    let (message_hash) = get_message_hash(to, CANCEL_ESCAPE_SELECTOR, 0, calldata, nonce)
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
@@ -311,21 +313,21 @@ func escape_guardian{
     alloc_locals
 
     # get the signatures
-    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
+    let (sig_len : felt, sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
 
     # validate there is an active escape
-    let (local block_timestamp) = _block_timestamp.read()
-    let (local current_escape) = _escape.read()
+    let (block_timestamp) = _block_timestamp.read()
+    let (current_escape) = _escape.read()
     assert_le(current_escape.active_at, block_timestamp)
 
     # validate signer signatures
     let (to) = _self_address.read()
     let calldata: felt* = alloc()
     assert calldata[0] = new_guardian
-    let (local message_hash) = get_message_hash(to, ESCAPE_GUARDIAN_SELECTOR, 1, calldata, nonce)
+    let (message_hash) = get_message_hash(to, ESCAPE_GUARDIAN_SELECTOR, 1, calldata, nonce)
     validate_signer_signature(message_hash, sig, sig_len)
 
     # clear escape
@@ -352,21 +354,21 @@ func escape_signer{
     alloc_locals
 
     # get the signatures
-    let (local sig_len : felt, local sig : felt*) = get_tx_signature()
+    let (sig_len : felt, sig : felt*) = get_tx_signature()
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
 
     # validate there is an active escape
-    let (local block_timestamp) = _block_timestamp.read()
-    let (local current_escape) = _escape.read()
+    let (block_timestamp) = _block_timestamp.read()
+    let (current_escape) = _escape.read()
     assert_le(current_escape.active_at, block_timestamp)
 
     # validate signer signatures
     let (to) = _self_address.read()
     let calldata: felt* = alloc()
     assert calldata[0] = new_signer
-    let (local message_hash) = get_message_hash(to, ESCAPE_SIGNER_SELECTOR, 1, calldata, nonce)
+    let (message_hash) = get_message_hash(to, ESCAPE_SIGNER_SELECTOR, 1, calldata, nonce)
     validate_guardian_signature(message_hash, sig, sig_len)
 
     # clear escape
@@ -511,7 +513,6 @@ end
 func get_message_hash{
         syscall_ptr: felt*, 
         pedersen_ptr: HashBuiltin*,
-        ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
         to: felt,
@@ -522,35 +523,41 @@ func get_message_hash{
     ) -> (res: felt):
     alloc_locals
     let (account) = _self_address.read()
-    let (res) = hash2{hash_ptr=pedersen_ptr}(account, to)
-    let (res) = hash2{hash_ptr=pedersen_ptr}(res, selector)
-    # we need to make `res` local
-    # to prevent the reference from being revoked
     local syscall_ptr: felt* = syscall_ptr
-    local range_check_ptr = range_check_ptr
-    local res = res
-    let (res_calldata) = hash_calldata(calldata, calldata_len)
-    let (res) = hash2{hash_ptr=pedersen_ptr}(res, res_calldata)
-    let (res) = hash2{hash_ptr=pedersen_ptr}(res, nonce)
-    return (res=res)
+    let (local calldata_hash) = hash_calldata(calldata, calldata_len)
+    let hash_ptr = pedersen_ptr
+    with hash_ptr:
+        let (hash_state_ptr) = hash_init()
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, account)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, to)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, selector)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, calldata_hash)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, nonce)
+        let (res) = hash_finalize(hash_state_ptr)
+        let pedersen_ptr = hash_ptr
+        return (res=res)
+    end
+    
 end
 
-func hash_calldata{pedersen_ptr: HashBuiltin*}(
+func hash_calldata{
+        pedersen_ptr: HashBuiltin*
+    }(
         calldata: felt*,
         calldata_size: felt
     ) -> (res: felt):
-    if calldata_size == 0:
-        return (res=0)
+    let hash_ptr = pedersen_ptr
+    with hash_ptr:
+        let (hash_state_ptr) = hash_init()
+        let (hash_state_ptr) = hash_update(
+            hash_state_ptr,
+            calldata,
+            calldata_size
+        )
+        let (res) = hash_finalize(hash_state_ptr)
+        let pedersen_ptr = hash_ptr
+        return (res=res)
     end
-
-    if calldata_size == 1:
-        return (res=[calldata])
-    end
-
-    let _calldata = [calldata]
-    let (res) = hash_calldata(calldata + 1, calldata_size - 1)
-    let (res) = hash2{hash_ptr=pedersen_ptr}(res, _calldata)
-    return (res=res)
 end
 
 ####################

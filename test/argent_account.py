@@ -12,7 +12,7 @@ guardian = Signer(456789987654321123)
 L1_ADDRESS = 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984
 
 ESCAPE_SECURITY_PERIOD = 500
-MAGIC_VALUE = 1138073982574099226972715907883430523600275391887289231447128254784345409857
+VERSION = 206933405232 # '0.1.0' = 30 2E 31 2E 30 = 0x302E312E30 = 206933405232
 
 @pytest.fixture(scope='module')
 def event_loop():
@@ -36,6 +36,7 @@ async def test_initializer(account_factory):
     assert (await account.get_signer().call()).result.signer == (signer.public_key)
     assert (await account.get_guardian().call()).result.guardian == (guardian.public_key)
     assert (await account.get_L1_address().call()).result.L1_address == (L1_ADDRESS)
+    assert (await account.get_version().call()).result.version == VERSION
 
 @pytest.mark.asyncio
 async def test_execute(account_factory):
@@ -196,5 +197,4 @@ async def test_is_valid_signature(account_factory):
 
     hash = 1283225199545181604979924458180358646374088657288769423115053097913173815464
     transaction = builder.build_is_valid_signature_transaction(hash)
-    res = (await transaction.call()).result
-    assert (res.magic_value == MAGIC_VALUE)
+    res = (await transaction.call())

@@ -13,6 +13,8 @@ from starkware.starknet.common.syscalls import call_contract, get_tx_signature
 # CONSTANTS
 ####################
 
+const VERSION = '0.1.0' # '0.1.0' = 30 2E 31 2E 30 = 0x302E312E30 = 206933405232
+
 const CHANGE_SIGNER_SELECTOR = 1540130945889430637313403138889853410180247761946478946165786566748520529557
 const CHANGE_GUARDIAN_SELECTOR = 1374386526556551464817815908276843861478960435557596145330240747921847320237
 const CHANGE_L1_ADDRESS_SELECTOR = 279169963369459328778917024654659648799474594494056791695540097993562699432
@@ -20,7 +22,6 @@ const TRIGGER_ESCAPE_SELECTOR = 654787765132774538659281525944449989569480594447
 const CANCEL_ESCAPE_SELECTOR = 992575500541331354489361836180456905167517944319528538469723604173440834912
 const ESCAPE_GUARDIAN_SELECTOR = 1662889347576632967292303062205906116436469425870979472602094601074614456040
 const ESCAPE_SIGNER_SELECTOR = 578307412324655990419134484880427622068887477430675222732446709420063579565
-const IS_VALID_SIGNATURE_SELECTOR = 1138073982574099226972715907883430523600275391887289231447128254784345409857
 
 const ESCAPE_SECURITY_PERIOD = 500 # set to e.g. 7 days in prod
 
@@ -394,12 +395,10 @@ func is_valid_signature{
         hash: felt,
         sig_len: felt,
         sig: felt*
-    ) -> (magic_value: felt):
-    alloc_locals
-
+    ) -> ():
     validate_signer_signature(hash, sig, sig_len)
     validate_guardian_signature(hash, sig + 2, sig_len - 2)
-    return (magic_value = IS_VALID_SIGNATURE_SELECTOR)
+    return ()
 end
 
 @view
@@ -445,6 +444,11 @@ func get_L1_address{
     range_check_ptr}() -> (L1_address: felt):
     let (res) = _L1_address.read()
     return (L1_address=res)
+end
+
+@view
+func get_version() -> (version: felt):
+    return (version=VERSION)
 end
 
 ####################

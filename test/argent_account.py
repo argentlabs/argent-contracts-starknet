@@ -27,7 +27,6 @@ async def get_starknet():
 async def account_factory(get_starknet):
     starknet = get_starknet
     account = await deploy(starknet, "contracts/ArgentAccount.cairo", [signer.public_key, guardian.public_key, L1_ADDRESS])
-    await account.set_self_address(account.contract_address).invoke()
     return starknet, account
 
 @pytest.mark.asyncio
@@ -54,7 +53,6 @@ async def test_execute(account_factory):
 async def test_execute_no_guardian(account_factory):
     starknet, account = account_factory
     account_no_guardian = await deploy(starknet, "contracts/ArgentAccount.cairo", [signer.public_key, 0, L1_ADDRESS])
-    await account_no_guardian.set_self_address(account_no_guardian.contract_address).invoke()
     dapp = await deploy(starknet, "contracts/TestDapp.cairo")
     builder = TransactionBuilder(account_no_guardian, signer, 0)
 

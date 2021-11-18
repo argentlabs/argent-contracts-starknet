@@ -1,4 +1,4 @@
-cairo-lang
+cairo-lang>=0.6.0
 cairo-nile
 pytest
 pytest-asyncio

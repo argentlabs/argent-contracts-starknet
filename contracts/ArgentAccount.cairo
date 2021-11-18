@@ -6,7 +6,7 @@ from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
-from starkware.starknet.common.syscalls import call_contract, get_tx_signature
+from starkware.starknet.common.syscalls import call_contract, get_tx_signature, get_contract_address
 from starkware.cairo.common.hash_state import (
     hash_init, hash_finalize, hash_update, hash_update_single
 )
@@ -139,10 +139,10 @@ func change_signer{
     validate_and_bump_nonce(nonce)
 
     # validate signatures
-    let (to) = _self_address.read()
+    let (self) = get_contract_address()
     let calldata: felt* = alloc()
     assert calldata[0] = new_signer
-    let (message_hash) = get_message_hash(to, CHANGE_SIGNER_SELECTOR, 1, calldata, nonce)
+    let (message_hash) = get_message_hash(self, CHANGE_SIGNER_SELECTOR, 1, calldata, nonce)
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
@@ -171,10 +171,10 @@ func change_guardian{
     validate_and_bump_nonce(nonce)
 
     # validate signatures
-    let (to) = _self_address.read()
+    let (self) = get_contract_address()
     let calldata: felt* = alloc()
     assert calldata[0] = new_guardian
-    let (message_hash) = get_message_hash(to, CHANGE_GUARDIAN_SELECTOR, 1, calldata, nonce)
+    let (message_hash) = get_message_hash(self, CHANGE_GUARDIAN_SELECTOR, 1, calldata, nonce)
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
@@ -203,10 +203,10 @@ func change_L1_address{
     validate_and_bump_nonce(nonce)
 
     # validate signatures
-    let (to) = _self_address.read()
+    let (self) = get_contract_address()
     let calldata: felt* = alloc()
     assert calldata[0] = new_L1_address
-    let (message_hash) = get_message_hash(to, CHANGE_L1_ADDRESS_SELECTOR, 1, calldata, nonce)
+    let (message_hash) = get_message_hash(self, CHANGE_L1_ADDRESS_SELECTOR, 1, calldata, nonce)
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
@@ -246,10 +246,10 @@ func trigger_escape{
     end
 
     # validate signature
-    let (to) = _self_address.read()
+    let (self) = get_contract_address()
     let calldata: felt* = alloc()
     assert calldata[0] = escapor
-    let (message_hash) = get_message_hash(to, TRIGGER_ESCAPE_SELECTOR, 1, calldata, nonce)
+    let (message_hash) = get_message_hash(self, TRIGGER_ESCAPE_SELECTOR, 1, calldata, nonce)
     if escapor == signer:
         validate_signer_signature(message_hash, sig, sig_len)
     else:
@@ -289,9 +289,9 @@ func cancel_escape{
     assert_not_zero(current_escape.active_at)
 
     # validate signatures
-    let (to) = _self_address.read()
+    let (self) = get_contract_address()
     let calldata: felt* = alloc()
-    let (message_hash) = get_message_hash(to, CANCEL_ESCAPE_SELECTOR, 0, calldata, nonce)
+    let (message_hash) = get_message_hash(self, CANCEL_ESCAPE_SELECTOR, 0, calldata, nonce)
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
@@ -325,10 +325,10 @@ func escape_guardian{
     assert_le(current_escape.active_at, block_timestamp)
 
     # validate signer signatures
-    let (to) = _self_address.read()
+    let (self) = get_contract_address()
     let calldata: felt* = alloc()
     assert calldata[0] = new_guardian
-    let (message_hash) = get_message_hash(to, ESCAPE_GUARDIAN_SELECTOR, 1, calldata, nonce)
+    let (message_hash) = get_message_hash(self, ESCAPE_GUARDIAN_SELECTOR, 1, calldata, nonce)
     validate_signer_signature(message_hash, sig, sig_len)
 
     # clear escape
@@ -366,10 +366,10 @@ func escape_signer{
     assert_le(current_escape.active_at, block_timestamp)
 
     # validate signer signatures
-    let (to) = _self_address.read()
+    let (self) = get_contract_address()
     let calldata: felt* = alloc()
     assert calldata[0] = new_signer
-    let (message_hash) = get_message_hash(to, ESCAPE_SIGNER_SELECTOR, 1, calldata, nonce)
+    let (message_hash) = get_message_hash(self, ESCAPE_SIGNER_SELECTOR, 1, calldata, nonce)
     validate_guardian_signature(message_hash, sig, sig_len)
 
     # clear escape
@@ -526,9 +526,8 @@ func get_message_hash{
         nonce: felt
     ) -> (res: felt):
     alloc_locals
-    let (account) = _self_address.read()
-    local syscall_ptr: felt* = syscall_ptr
-    let (local calldata_hash) = hash_calldata(calldata, calldata_len)
+    let (account) = get_contract_address()
+    let (calldata_hash) = hash_calldata(calldata, calldata_len)
     let hash_ptr = pedersen_ptr
     with hash_ptr:
         let (hash_state_ptr) = hash_init()
@@ -567,19 +566,6 @@ end
 ####################
 # TMP HACK
 ####################
-
-@storage_var
-func _self_address() -> (res: felt):
-end
-
-@external
-func set_self_address{
-    syscall_ptr: felt*, 
-    pedersen_ptr: HashBuiltin*,
-    range_check_ptr}(new_address: felt):
-    _self_address.write(new_address)
-    return ()
-end
 
 @storage_var
 func _block_timestamp() -> (res: felt):

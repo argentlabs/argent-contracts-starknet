@@ -28,7 +28,6 @@ async def account_factory(get_starknet):
     async def _account_factory(guardian):
         starknet = get_starknet
         account = await deploy(starknet, "contracts/ArgentAccount.cairo", [signer.public_key, guardian, L1_ADDRESS])
-        await account.set_self_address(account.contract_address).invoke()
         return account
     return _account_factory
 
@@ -41,8 +40,8 @@ async def guardian_factory(get_starknet):
 @pytest.fixture
 async def dapp_factory(get_starknet):
     starknet = get_starknet
-    account = await deploy(starknet, "contracts/ArgentAccount.cairo", [signer.public_key, guardian.public_key, L1_ADDRESS])
-    return starknet, account
+    dapp = await deploy(starknet, "contracts/TestDapp.cairo")
+    return dapp
 
 @pytest.mark.asyncio
 async def test_initializer(account_factory, guardian_factory):
@@ -68,10 +67,9 @@ async def test_execute(account_factory, guardian_factory, dapp_factory):
     assert (await dapp.get_number(account.contract_address).call()).result.number == 47
 
 @pytest.mark.asyncio
-async def test_execute_no_guardian(account_factory):
-    starknet, account = account_factory
-    account_no_guardian = await deploy(starknet, "contracts/ArgentAccount.cairo", [signer.public_key, 0, L1_ADDRESS])
-    dapp = await deploy(starknet, "contracts/TestDapp.cairo")
+async def test_execute_no_guardian(account_factory, dapp_factory):
+    account_no_guardian = await account_factory(0)
+    dapp = dapp_factory
     builder = TransactionBuilder(account_no_guardian, signer, 0)
 
     nonce = await builder.get_nonce()
@@ -102,7 +100,7 @@ async def test_change_guardian(account_factory, guardian_factory):
     builder = TransactionBuilder(account, signer, guardian_signer)
 
     new_guardian = guardian_factory
-    nonce = await builder.get_current_nonce()
+    nonce = await builder.get_nonce()
     (transaction, signatures) = builder.build_change_guardian_transaction(new_guardian.contract_address, nonce)
 
     assert (await account.get_guardian().call()).result.guardian == (guardian.contract_address)
@@ -131,7 +129,7 @@ async def test_trigger_escape_by_signer(account_factory, guardian_factory):
 
     await builder.set_block_timestamp(121)
 
-    nonce = await builder.get_current_nonce()
+    nonce = await builder.get_nonce()
     (transaction, signatures) = builder.build_trigger_escape_transaction(signer.public_key, signer, nonce)
     escape = (await account.get_escape().call()).result
     assert (escape.active_at == 0 and escape.caller == 0)
@@ -147,7 +145,7 @@ async def test_trigger_escape_by_guardian(account_factory, guardian_factory):
 
     await builder.set_block_timestamp(127)
 
-    nonce = await builder.get_current_nonce()
+    nonce = await builder.get_nonce()
     (transaction, signatures) = builder.build_trigger_escape_transaction(guardian.contract_address, guardian_signer, nonce)
     escape = (await account.get_escape().call()).result
     assert (escape.active_at == 0 and escape.caller == 0)
@@ -164,7 +162,7 @@ async def test_escape_guardian(account_factory, guardian_factory):
     await builder.set_block_timestamp(121)
 
     # trigger escape
-    nonce = await builder.get_current_nonce()
+    nonce = await builder.get_nonce()
     (transaction, signatures) = builder.build_trigger_escape_transaction(signer.public_key, signer, nonce)
     await transaction.invoke(signature=signatures)
     escape = (await account.get_escape().call()).result
@@ -174,7 +172,7 @@ async def test_escape_guardian(account_factory, guardian_factory):
 
     # escape guardian
     new_guardian = guardian_factory
-    nonce = await builder.get_current_nonce()
+    nonce = await builder.get_nonce()
     (transaction, signatures) = builder.build_escape_guardian_transaction(new_guardian.contract_address, nonce)
     
     assert (await account.get_guardian().call()).result.guardian == (guardian.contract_address)
@@ -193,7 +191,7 @@ async def test_escape_signer(account_factory, guardian_factory):
     await builder.set_block_timestamp(121)
 
     # trigger escape
-    nonce = await builder.get_current_nonce()
+    nonce = await builder.get_nonce()
     (transaction, signatures) = builder.build_trigger_escape_transaction(guardian.contract_address, guardian_signer, nonce)
     await transaction.invoke(signature=signatures)
     escape = (await account.get_escape().call()).result

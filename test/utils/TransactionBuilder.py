@@ -39,16 +39,16 @@ class TransactionBuilder():
 
     def build_trigger_escape_transaction(self, escapor, escapor_signer, nonce):
         selector = get_selector_from_name('trigger_escape')
-        message_hash = hash_message(self.account.contract_address, self.account.contract_address, selector, [escapor_signer.public_key], nonce)
+        message_hash = hash_message(self.account.contract_address, self.account.contract_address, selector, [escapor], nonce)
         signatures = list(escapor_signer.sign(message_hash))
-        transaction = self.account.trigger_escape(escapor_signer.public_key, nonce)
+        transaction = self.account.trigger_escape(escapor, nonce)
         return (transaction, signatures)
 
     def build_escape_guardian_transaction(self, new_guardian, nonce):
         selector = get_selector_from_name('escape_guardian')
-        message_hash = hash_message(self.account.contract_address, self.account.contract_address, selector, [new_guardian.public_key], nonce)
+        message_hash = hash_message(self.account.contract_address, self.account.contract_address, selector, [new_guardian], nonce)
         signatures  = list(self.signer.sign(message_hash))
-        transaction = self.account.escape_guardian(new_guardian.public_key, nonce)
+        transaction = self.account.escape_guardian(new_guardian, nonce)
         return (transaction, signatures)
 
     def build_escape_signer_transaction(self, new_signer, nonce):

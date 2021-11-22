@@ -18,6 +18,32 @@ end
 func _escape_key(account : felt) -> (res: felt):
 end
 
+@external
+func set_signing_key{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        key: felt
+    ) -> ():
+    let (account) = get_caller_address()
+    _signing_key.write(account, key)
+    return()
+end
+
+@external
+func set_escape_key{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        key: felt
+    ) -> ():
+    let (account) = get_caller_address()
+    _escape_key.write(account, key)
+    return()
+end
+
 @view
 func is_valid_signature{
         syscall_ptr: felt*,
@@ -53,4 +79,24 @@ func is_valid_signature{
     end
     assert_not_zero(0)
     return()
+end
+
+@view
+func get_signing_key{
+        syscall_ptr: felt*, 
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (account: felt) -> (signing_key: felt):
+    let (signing_key) = _signing_key.read(account)
+    return (signing_key=signing_key)
+end
+
+@view
+func get_escape_key{
+        syscall_ptr: felt*, 
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (account: felt) -> (escape_key: felt):
+    let (escape_key) = _escape_key.read(account)
+    return (escape_key=escape_key)
 end

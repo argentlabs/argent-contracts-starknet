@@ -264,7 +264,7 @@ func trigger_escape{
         validate_signer_signature(message_hash, sig, sig_len)
     else:
         assert escapor = guardian
-        validate_guardian_signature(message_hash, sig, sig_len) 
+        validate_guardian_signature_for_escape(message_hash, sig, sig_len) 
     end
 
     # rebinding ptrs
@@ -380,7 +380,7 @@ func escape_signer{
     let calldata: felt* = alloc()
     assert calldata[0] = new_signer
     let (message_hash) = get_message_hash(self, ESCAPE_SIGNER_SELECTOR, 1, calldata, nonce)
-    validate_guardian_signature(message_hash, sig, sig_len)
+    validate_guardian_signature_for_escape(message_hash, sig, sig_len)
 
     # clear escape
     local new_escape: Escape = Escape(0, 0)
@@ -520,6 +520,45 @@ func validate_guardian_signature{
         IGuardian.is_valid_signature(contract_address=guardian, hash=message, sig_len=signatures_len, sig=signatures)
         return()
     end
+end
+
+func validate_guardian_signature_for_escape{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
+        range_check_ptr
+    } (
+        message: felt,
+        signatures: felt*,
+        signatures_len: felt
+    ) -> ():
+    alloc_locals
+    let result : felt* = alloc()
+    # we append an entry to the signatures array so the guardian contract
+    # can discriminate between the default and an escape
+    append(result, signatures, signatures_len, 'escape')
+    validate_guardian_signature(message, result, signatures_len + 1)
+    return ()
+end
+
+func append{
+        syscall_ptr: felt*,
+        range_check_ptr
+    } (
+        result: felt*,
+        a: felt*,
+        a_len: felt,
+        b: felt
+    ) -> ():
+    if a_len == 0:
+        assert [result] = b
+        return ()
+    end
+    
+    assert [result] = [a]
+    assert [result + 1] = [a + 1]
+
+    return append(result+2, a+2, a_len-2, b)
 end
 
 func get_message_hash{

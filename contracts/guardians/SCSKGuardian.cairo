@@ -3,7 +3,7 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.signature import verify_ecdsa_signature
-from starkware.cairo.common.math import assert_not_zero
+from starkware.cairo.common.math import assert_not_zero, assert_nn
 
 ######################################
 # Single Common Stark Key Guardian
@@ -37,7 +37,7 @@ func is_valid_signature{
         sig_len: felt,
         sig: felt*
     ) -> ():
-    assert sig_len = 2
+    assert_nn(sig_len - 2)
     let (signing_key) = _signing_key.read()
     verify_ecdsa_signature(
         message=hash,

@@ -11,36 +11,31 @@ from starkware.cairo.common.alloc import alloc
 # multicall to succeed.  
 #########################################################################
 
+struct Call:
+    member contract: felt
+    member selector: felt
+    member calldata_len: felt
+    member calldata: felt*
+end
+
 @view
 func multicall{
         syscall_ptr: felt*,
         range_check_ptr
     } (
-        contract_len: felt,
-        contract: felt*,
-        selector_len: felt,
-        selector: felt*,
-        offset_len: felt,
-        offset: felt*,
-        calldata_len: felt,
-        calldata: felt*
+        calls_len: felt,
+        calls: felt*
     ) -> (result_len: felt, result: felt*):
     alloc_locals
 
-    assert contract_len = selector_len
-    assert contract_len = offset_len
-
-    let (local result : felt*) = alloc()
-    call_loop(
-        num_calls=contract_len,
-        contract=contract,
-        selector=selector,
-        offset=offset,
-        calldata=calldata,
+    let (result : felt*) = alloc()
+    let (result_len) = call_loop(
+        calls_len=calls_len,
+        calls=calls,
         result=result
     )
 
-    return (result_len=contract_len, result=result)
+    return (result_len=result_len, result=result)
 
 end
 
@@ -48,34 +43,51 @@ func call_loop{
         syscall_ptr: felt*,
         range_check_ptr
     } (
-        num_calls: felt,
-        contract: felt*,
-        selector: felt*,
-        offset: felt*,
-        calldata: felt*,
+        calls_len: felt,
+        calls: felt*,
         result: felt*
+    ) -> (result_len: felt):
+
+    if calls_len == 0: 
+        return (0)
+    end
+    alloc_locals
+
+    let response = call_contract(
+        contract_address=[calls],
+        function_selector=[calls + 1],
+        calldata_size=[calls + 2],
+        calldata=&[calls + 3]
+    )
+    
+    array_copy(result, response.retdata_size, response.retdata)
+
+    let (len) = call_loop(
+        calls_len=calls_len - (3 + [calls + 2]),
+        calls = calls + (3 + [calls + 2]),
+        result=result + response.retdata_size
+    )
+    return (len + response.retdata_size)
+end
+
+func array_copy{
+        syscall_ptr: felt*,
+        range_check_ptr
+    } (
+        a: felt*,
+        b_len: felt,
+        b: felt*
     ) -> ():
 
-    if num_calls == 0: 
+    assert [a] = [b]
+
+    if b_len == 1:
         return ()
     end
 
-    let response = call_contract(
-        contract_address=[contract],
-        function_selector=[selector],
-        calldata_size=[offset],
-        calldata=calldata
+    return array_copy(
+        a=a+1,
+        b_len=b_len-1,
+        b=b+1
     )
-
-    assert response.retdata_size = 1
-    assert [result] = [response.retdata]
-
-    return call_loop(
-        num_calls=num_calls - 1,
-        contract=contract + 1,
-        selector=selector + 1,
-        offset=offset + 1,
-        calldata=calldata + [offset],
-        result=result + 1
-    )
-end
+end 

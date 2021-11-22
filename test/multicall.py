@@ -23,7 +23,7 @@ async def get_starknet():
 @pytest.mark.asyncio
 async def test_multicall(get_starknet):
     starknet = get_starknet
-    multicall = await deploy(starknet, "contracts/Multicall2.cairo")
+    multicall = await deploy(starknet, "contracts/Multicall.cairo")
     erc20_1 = await deploy(starknet, "contracts/ERC20.cairo")
     erc20_2 = await deploy(starknet, "contracts/ERC20.cairo")
 

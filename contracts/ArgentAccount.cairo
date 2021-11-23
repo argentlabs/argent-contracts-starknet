@@ -5,6 +5,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.alloc import alloc
+from starkware.cairo.common.memcpy import memcpy
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
 from starkware.starknet.common.syscalls import call_contract, get_tx_signature, get_contract_address
 from starkware.cairo.common.hash_state import (
@@ -264,7 +265,8 @@ func trigger_escape{
         validate_signer_signature(message_hash, sig, sig_len)
     else:
         assert escapor = guardian
-        validate_guardian_signature_for_escape(message_hash, sig, sig_len) 
+        add_escape_flag(sig, sig_len)
+        validate_guardian_signature(message_hash, sig, sig_len+1)
     end
 
     # rebinding ptrs
@@ -380,7 +382,8 @@ func escape_signer{
     let calldata: felt* = alloc()
     assert calldata[0] = new_signer
     let (message_hash) = get_message_hash(self, ESCAPE_SIGNER_SELECTOR, 1, calldata, nonce)
-    validate_guardian_signature_for_escape(message_hash, sig, sig_len)
+    add_escape_flag(sig, sig_len)
+    validate_guardian_signature(message_hash, sig, sig_len+1)
 
     # clear escape
     local new_escape: Escape = Escape(0, 0)
@@ -522,43 +525,16 @@ func validate_guardian_signature{
     end
 end
 
-func validate_guardian_signature_for_escape{
+func add_escape_flag{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
-        ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
-        message: felt,
-        signatures: felt*,
-        signatures_len: felt
+        sig: felt*,
+        sig_len: felt
     ) -> ():
-    alloc_locals
-    let result : felt* = alloc()
-    # we append an entry to the signatures array so the guardian contract
-    # can discriminate between the default and an escape
-    append(result, signatures, signatures_len, 'escape')
-    validate_guardian_signature(message, result, signatures_len + 1)
-    return ()
-end
-
-func append{
-        syscall_ptr: felt*,
-        range_check_ptr
-    } (
-        result: felt*,
-        a: felt*,
-        a_len: felt,
-        b: felt
-    ) -> ():
-    if a_len == 0:
-        assert [result] = b
-        return ()
-    end
-    
-    assert [result] = [a]
-    assert [result + 1] = [a + 1]
-
-    return append(result+2, a+2, a_len-2, b)
+    assert [sig + sig_len] = 'escape'
+    return()
 end
 
 func get_message_hash{

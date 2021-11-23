@@ -18,32 +18,6 @@ end
 func _escape_key(account : felt) -> (res: felt):
 end
 
-@external
-func set_signing_key{
-        syscall_ptr: felt*,
-        pedersen_ptr: HashBuiltin*,
-        range_check_ptr
-    } (
-        key: felt
-    ) -> ():
-    let (account) = get_caller_address()
-    _signing_key.write(account, key)
-    return()
-end
-
-@external
-func set_escape_key{
-        syscall_ptr: felt*,
-        pedersen_ptr: HashBuiltin*,
-        range_check_ptr
-    } (
-        key: felt
-    ) -> ():
-    let (account) = get_caller_address()
-    _escape_key.write(account, key)
-    return()
-end
-
 @view
 func is_valid_signature{
         syscall_ptr: felt*,
@@ -78,6 +52,37 @@ func is_valid_signature{
         return()
     end
     assert_not_zero(0)
+    return()
+end
+
+@view
+func can_override_signer() -> (is_true: felt):
+    return (is_true=0)
+end
+
+@external
+func set_signing_key{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        key: felt
+    ) -> ():
+    let (account) = get_caller_address()
+    _signing_key.write(account, key)
+    return()
+end
+
+@external
+func set_escape_key{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        key: felt
+    ) -> ():
+    let (account) = get_caller_address()
+    _escape_key.write(account, key)
     return()
 end
 

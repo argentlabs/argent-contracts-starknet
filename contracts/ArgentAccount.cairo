@@ -7,6 +7,7 @@ from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.memcpy import memcpy
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
+from starkware.cairo.common.math_cmp import is_le
 from starkware.starknet.common.syscalls import call_contract, get_tx_signature, get_contract_address
 from starkware.cairo.common.hash_state import (
     hash_init, hash_finalize, hash_update, hash_update_single
@@ -19,6 +20,9 @@ from starkware.cairo.common.hash_state import (
 @contract_interface
 namespace IGuardian:
     func is_valid_signature(hash: felt, sig_len: felt, sig: felt*) -> ():
+    end
+
+    func can_override_signer() -> (is_true: felt):
     end
 end
 
@@ -252,10 +256,22 @@ func trigger_escape{
     let (current_escape) = _escape.read()
     let (signer) = _signer.read()
     if current_escape.active_at != 0:
-        assert current_escape.caller = guardian
-        assert escapor = signer
+        let (can_override) = IGuardian.can_override_signer(contract_address=guardian)
+        if can_override == 0:
+            assert current_escape.caller = guardian
+            assert escapor = signer
+        else:
+            # guardian can override signer iff weight >= 2
+            assert current_escape.caller = signer
+            assert escapor = guardian
+        end
+        tempvar syscall_ptr: felt* = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+    else :
+        tempvar syscall_ptr: felt* = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
     end
-
+    
     # validate signature
     let (self) = get_contract_address()
     let calldata: felt* = alloc()

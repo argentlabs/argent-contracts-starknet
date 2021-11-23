@@ -46,3 +46,8 @@ func is_valid_signature{
         signature_s=sig[1])
     return()
 end
+
+@view
+func can_override_signer() -> (is_true: felt):
+    return (is_true=0)
+end

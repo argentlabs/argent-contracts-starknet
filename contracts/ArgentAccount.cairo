@@ -6,7 +6,7 @@ from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
-from starkware.starknet.common.syscalls import call_contract, get_tx_signature, get_contract_address
+from starkware.starknet.common.syscalls import call_contract, get_tx_signature, get_contract_address, get_caller_address
 from starkware.cairo.common.hash_state import (
     hash_init, hash_finalize, hash_update, hash_update_single
 )
@@ -19,10 +19,11 @@ const VERSION = '0.1.0' # '0.1.0' = 30 2E 31 2E 30 = 0x302E312E30 = 206933405232
 
 const CHANGE_SIGNER_SELECTOR = 1540130945889430637313403138889853410180247761946478946165786566748520529557
 const CHANGE_GUARDIAN_SELECTOR = 1374386526556551464817815908276843861478960435557596145330240747921847320237
-const TRIGGER_ESCAPE_SELECTOR = 654787765132774538659281525944449989569480594447680779882263455595827967108
-const CANCEL_ESCAPE_SELECTOR = 992575500541331354489361836180456905167517944319528538469723604173440834912
+const TRIGGER_ESCAPE_GUARDIAN_SELECTOR = 73865429733192804476769961144708816295126306469589518371407068321865763651
+const TRIGGER_ESCAPE_SIGNER_SELECTOR = 651891265762986954898774236860523560457159526623523844149280938288756256223
 const ESCAPE_GUARDIAN_SELECTOR = 1662889347576632967292303062205906116436469425870979472602094601074614456040
 const ESCAPE_SIGNER_SELECTOR = 578307412324655990419134484880427622068887477430675222732446709420063579565
+const CANCEL_ESCAPE_SELECTOR = 992575500541331354489361836180456905167517944319528538469723604173440834912
 
 const ESCAPE_SECURITY_PERIOD = 500 # set to e.g. 7 days in prod
 
@@ -91,18 +92,39 @@ func execute{
     ) -> (response : felt):
     alloc_locals
 
-    # get the signatures
-    let (sig_len : felt, sig : felt*) = get_tx_signature()
-
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
 
-    # validate signatures
+    # get the signature(s)
+    let (sig_len : felt, sig : felt*) = get_tx_signature()
+
+    # get self address
+    let (self) = get_contract_address()
+
+    # compute message hash
     let (message_hash) = get_message_hash(to, selector, calldata_len, calldata, nonce)
+
+    if to == self:
+        tempvar signer_condition = (selector - ESCAPE_GUARDIAN_SELECTOR) * (selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
+        tempvar guardian_condition = (selector - ESCAPE_SIGNER_SELECTOR) * (selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
+        if signer_condition == 0:
+            # validate signer signature
+            validate_signer_signature(message_hash, sig, sig_len)
+            jmp do_execute
+        end
+        if guardian_condition == 0:
+            # validate guardian signature
+            validate_guardian_signature(message_hash, sig, sig_len)
+            jmp do_execute
+        end
+    end
+    # validate signer and guardian signatures
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
+    
 
     # execute call
+    do_execute:
     let response = call_contract(
         contract_address=to,
         function_selector=selector,
@@ -117,27 +139,13 @@ end
 func change_signer{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
-        ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
-        new_signer: felt,
-        nonce: felt
+        new_signer: felt
     ):
-    alloc_locals
 
-    # get the signatures
-    let (sig_len : felt, sig : felt*) = get_tx_signature()
-
-    # validate and bump nonce
-    validate_and_bump_nonce(nonce)
-
-    # validate signatures
-    let (self) = get_contract_address()
-    let calldata: felt* = alloc()
-    assert calldata[0] = new_signer
-    let (message_hash) = get_message_hash(self, CHANGE_SIGNER_SELECTOR, 1, calldata, nonce)
-    validate_signer_signature(message_hash, sig, sig_len)
-    validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
+    # only called via execute
+    assert_only_self()
 
     # change signer
     assert_not_zero(new_signer)
@@ -152,24 +160,10 @@ func change_guardian{
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
-        new_guardian: felt,
-        nonce: felt
+        new_guardian: felt
     ):
-    alloc_locals
-
-    # get the signatures
-    let (sig_len : felt, sig : felt*) = get_tx_signature()
-
-    # validate and bump nonce
-    validate_and_bump_nonce(nonce)
-
-    # validate signatures
-    let (self) = get_contract_address()
-    let calldata: felt* = alloc()
-    assert calldata[0] = new_guardian
-    let (message_hash) = get_message_hash(self, CHANGE_GUARDIAN_SELECTOR, 1, calldata, nonce)
-    validate_signer_signature(message_hash, sig, sig_len)
-    validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
+    # only called via execute
+    assert_only_self()
 
     # change guardian
     assert_not_zero(new_guardian)
@@ -178,53 +172,48 @@ func change_guardian{
 end
 
 @external
-func trigger_escape{
+func trigger_escape_guardian{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } ():
+
+    # only called via execute
+    assert_only_self()
+    # no escape when the guardian is not set
+    assert_guardian_set()
+
+    # store new escape
+    let (block_timestamp) = _block_timestamp.read()
+    let (signer) = _signer.read()
+    let new_escape: Escape = Escape(block_timestamp + ESCAPE_SECURITY_PERIOD, signer)
+    _escape.write(new_escape)
+    return()
+end
+
+@external
+func trigger_escape_signer{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
-    } (
-        escapor: felt,
-        nonce: felt
-    ):
+    } ():
     alloc_locals
 
-    # get the signatures
-    let (sig_len : felt, sig : felt*) = get_tx_signature()
-
-    # validate and bump nonce
-    validate_and_bump_nonce(nonce)
-
+    # only called via execute
+    assert_only_self()
     # no escape when the guardian is not set
-    let (guardian) = _guardian.read()
-    assert_not_zero(guardian)
+    let (guardian) = assert_guardian_set()
 
-    # check if there is already an escape
+    # no escape when there is an ongoing escape by the signer
     let (current_escape) = _escape.read()
-    let (signer) = _signer.read()
     if current_escape.active_at != 0:
         assert current_escape.caller = guardian
-        assert escapor = signer
     end
-
-    # validate signature
-    let (self) = get_contract_address()
-    let calldata: felt* = alloc()
-    assert calldata[0] = escapor
-    let (message_hash) = get_message_hash(self, TRIGGER_ESCAPE_SELECTOR, 1, calldata, nonce)
-    if escapor == signer:
-        validate_signer_signature(message_hash, sig, sig_len)
-    else:
-        assert escapor = guardian
-        validate_guardian_signature(message_hash, sig, sig_len) 
-    end
-
-    # rebinding ptrs
-    local ecdsa_ptr: SignatureBuiltin* = ecdsa_ptr  
 
     # store new escape
     let (block_timestamp) = _block_timestamp.read()
-    local new_escape: Escape = Escape(block_timestamp + ESCAPE_SECURITY_PERIOD, escapor)
+    let new_escape: Escape = Escape(block_timestamp + ESCAPE_SECURITY_PERIOD, guardian)
     _escape.write(new_escape)
     return()
 end
@@ -235,30 +224,17 @@ func cancel_escape{
         pedersen_ptr: HashBuiltin*,
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
-    } (
-        nonce: felt
-    ):
-    alloc_locals
+    } ():
 
-    # get the signatures
-    let (sig_len : felt, sig : felt*) = get_tx_signature()
-
-    # validate and bump nonce
-    validate_and_bump_nonce(nonce)
+    # only called via execute
+    assert_only_self()
 
     # validate there is an active escape
     let (current_escape) = _escape.read()
     assert_not_zero(current_escape.active_at)
 
-    # validate signatures
-    let (self) = get_contract_address()
-    let calldata: felt* = alloc()
-    let (message_hash) = get_message_hash(self, CANCEL_ESCAPE_SELECTOR, 0, calldata, nonce)
-    validate_signer_signature(message_hash, sig, sig_len)
-    validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
-
     # clear escape
-    local new_escape: Escape = Escape(0, 0)
+    let new_escape: Escape = Escape(0, 0)
     _escape.write(new_escape)
     return()
 end
@@ -270,31 +246,25 @@ func escape_guardian{
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
-        new_guardian: felt,
-        nonce: felt
+        new_guardian: felt
     ):
-    alloc_locals
 
-    # get the signatures
-    let (sig_len : felt, sig : felt*) = get_tx_signature()
+    # only called via execute
+    assert_only_self()
+    # no escape when the guardian is not set
+    assert_guardian_set()
 
-    # validate and bump nonce
-    validate_and_bump_nonce(nonce)
-
-    # validate there is an active escape
+    # assert there is an active escape
     let (block_timestamp) = _block_timestamp.read()
     let (current_escape) = _escape.read()
     assert_le(current_escape.active_at, block_timestamp)
 
-    # validate signer signatures
-    let (self) = get_contract_address()
-    let calldata: felt* = alloc()
-    assert calldata[0] = new_guardian
-    let (message_hash) = get_message_hash(self, ESCAPE_GUARDIAN_SELECTOR, 1, calldata, nonce)
-    validate_signer_signature(message_hash, sig, sig_len)
+    # assert the escape was triggered by the signer
+    let (signer) = _signer.read()
+    assert current_escape.caller = signer
 
     # clear escape
-    local new_escape: Escape = Escape(0, 0)
+    let new_escape: Escape = Escape(0, 0)
     _escape.write(new_escape)
 
     # change guardian
@@ -311,31 +281,25 @@ func escape_signer{
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
-        new_signer: felt,
-        nonce: felt
+        new_signer: felt
     ):
     alloc_locals
-
-    # get the signatures
-    let (sig_len : felt, sig : felt*) = get_tx_signature()
-
-    # validate and bump nonce
-    validate_and_bump_nonce(nonce)
+    
+    # only called via execute
+    assert_only_self()
+    # no escape when the guardian is not set
+    let (guardian) = assert_guardian_set()
 
     # validate there is an active escape
     let (block_timestamp) = _block_timestamp.read()
     let (current_escape) = _escape.read()
     assert_le(current_escape.active_at, block_timestamp)
 
-    # validate signer signatures
-    let (self) = get_contract_address()
-    let calldata: felt* = alloc()
-    assert calldata[0] = new_signer
-    let (message_hash) = get_message_hash(self, ESCAPE_SIGNER_SELECTOR, 1, calldata, nonce)
-    validate_guardian_signature(message_hash, sig, sig_len)
+    # assert the escape was triggered by the guardian
+    assert current_escape.caller = guardian
 
     # clear escape
-    local new_escape: Escape = Escape(0, 0)
+    let new_escape: Escape = Escape(0, 0)
     _escape.write(new_escape)
 
     # change signer
@@ -409,6 +373,27 @@ end
 ####################
 # INTERNAL FUNCTIONS
 ####################
+
+func assert_only_self{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } () -> ():
+    let (self) = get_contract_address()
+    let (caller_address) = get_caller_address()
+    assert self = caller_address
+    return()
+end
+
+func assert_guardian_set{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } () -> (guardian: felt):
+    let (guardian) = _guardian.read()
+    assert_not_zero(guardian)
+    return(guardian=guardian)
+end
 
 func validate_and_bump_nonce{
         syscall_ptr: felt*, 

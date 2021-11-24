@@ -19,9 +19,7 @@ Under this model we can build a simple yet highly secure non-custodial wallet.
 ## Missing Cairo features
 
 - Access to an equivalent of `block.timestamp` to enable timelocks. Currently mocked in the account with the `_block_timestamp` storage variable.
-- Access to an equivalent of `address(this)` to determine the self address of the account. Currently mocked in the account with the `_self_address` storage variable.
 - An upgrade/proxy pattern using an equivalent of `delegatecall` so that the account of a user can evolve over time without changing addresses.
-- A strategy to define the `_L1_address` storage variable as the L1 address that can exit the assets of the account.
 - A mechanism to pay fees.
 
 ## Development
@@ -33,20 +31,18 @@ python -m venv ./venv
 source ./venv/bin/activate
 ```
 
-### Install Cairo 0.5.1 dependencies
+### Install Cairo dependencies
 ```
 brew install gmp
+```
+
+```
+pip install -r requirements.txt
 ```
 
 See for more details:
 - https://www.cairo-lang.org/docs/quickstart.html
 - https://github.com/martriay/nile
-
-
-### Install Python dependencies
-```
-pip install -r requirements.txt
-```
 
 ### Compile the contracts
 ```

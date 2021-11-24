@@ -19,7 +19,6 @@ const VERSION = '0.1.0' # '0.1.0' = 30 2E 31 2E 30 = 0x302E312E30 = 206933405232
 
 const CHANGE_SIGNER_SELECTOR = 1540130945889430637313403138889853410180247761946478946165786566748520529557
 const CHANGE_GUARDIAN_SELECTOR = 1374386526556551464817815908276843861478960435557596145330240747921847320237
-const CHANGE_L1_ADDRESS_SELECTOR = 279169963369459328778917024654659648799474594494056791695540097993562699432
 const TRIGGER_ESCAPE_SELECTOR = 654787765132774538659281525944449989569480594447680779882263455595827967108
 const CANCEL_ESCAPE_SELECTOR = 992575500541331354489361836180456905167517944319528538469723604173440834912
 const ESCAPE_GUARDIAN_SELECTOR = 1662889347576632967292303062205906116436469425870979472602094601074614456040
@@ -56,10 +55,6 @@ end
 func _escape() -> (res: Escape):
 end
 
-@storage_var
-func _L1_address() -> (res: felt):
-end
-
 ####################
 # EXTERNAL FUNCTIONS
 ####################
@@ -71,15 +66,13 @@ func constructor{
         range_check_ptr
     } (
         signer: felt,
-        guardian: felt,
-        L1_address: felt
+        guardian: felt
     ):
     # check that the signer is not zero
     assert_not_zero(signer)
     # initialize the contract
     _signer.write(signer)
     _guardian.write(guardian)
-    _L1_address.write(L1_address)
     return ()
 end
 
@@ -181,37 +174,6 @@ func change_guardian{
     # change guardian
     assert_not_zero(new_guardian)
     _guardian.write(new_guardian)
-    return()
-end
-
-@external
-func change_L1_address{
-        syscall_ptr: felt*,
-        pedersen_ptr: HashBuiltin*,
-        ecdsa_ptr: SignatureBuiltin*,
-        range_check_ptr
-    } (
-        new_L1_address: felt,
-        nonce: felt
-    ):
-    alloc_locals
-
-    # get the signatures
-    let (sig_len : felt, sig : felt*) = get_tx_signature()
-
-    # validate and bump nonce
-    validate_and_bump_nonce(nonce)
-
-    # validate signatures
-    let (self) = get_contract_address()
-    let calldata: felt* = alloc()
-    assert calldata[0] = new_L1_address
-    let (message_hash) = get_message_hash(self, CHANGE_L1_ADDRESS_SELECTOR, 1, calldata, nonce)
-    validate_signer_signature(message_hash, sig, sig_len)
-    validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
-
-    # change guardian
-    _L1_address.write(new_L1_address)
     return()
 end
 
@@ -437,15 +399,6 @@ func get_escape{
     range_check_ptr}() -> (active_at: felt, caller: felt):
     let (res) = _escape.read()
     return (active_at=res.active_at, caller=res.caller)
-end
-
-@view
-func get_L1_address{
-    syscall_ptr: felt*, 
-    pedersen_ptr: HashBuiltin*,
-    range_check_ptr}() -> (L1_address: felt):
-    let (res) = _L1_address.read()
-    return (L1_address=res)
 end
 
 @view

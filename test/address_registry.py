@@ -1,11 +1,9 @@
 import pytest
 import asyncio
 from starkware.starknet.testing.starknet import Starknet
-from starkware.starknet.testing.objects import StarknetContractCall
-from starkware.starknet.public.abi import get_selector_from_name
 from utils.Signer import Signer
 from utils.deploy import deploy
-from utils.TransactionBuilder import TransactionBuilder
+from utils.TransactionSender import TransactionSender
 
 signer = Signer(123456789987654321)
 guardian = Signer(456789987654321123)
@@ -45,10 +43,10 @@ async def test_initializer(account_factory):
 async def test_setup_registry(account_factory, registry_factory):
     account = account_factory
     registry = registry_factory
-    builder = TransactionBuilder(account, signer, guardian)
+    sender = TransactionSender(account)
 
-    nonce = await builder.get_nonce()
-    (transaction, signatures) = builder.build_execute_transaction(registry.contract_address, 'set_L1_address', [L1_ADDRESS], nonce)
     assert (await registry.get_L1_address(account.contract_address).call()).result.res == 0
-    await transaction.invoke(signature=signatures)
+
+    await sender.send_transaction(registry.contract_address, 'set_L1_address', [L1_ADDRESS], [signer, guardian])
+
     assert (await registry.get_L1_address(account.contract_address).call()).result.res == L1_ADDRESS

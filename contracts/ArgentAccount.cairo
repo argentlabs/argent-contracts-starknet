@@ -124,9 +124,11 @@ func execute{
         if signer_condition == 0:
             # validate signer signature
             validate_signer_signature(message_hash, sig, sig_len)
+            # rebind pointers
             tempvar syscall_ptr: felt* = syscall_ptr
             tempvar range_check_ptr = range_check_ptr
             tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
+            # go to execute
             jmp do_execute
         end
         if guardian_condition == 0:
@@ -134,25 +136,24 @@ func execute{
             let (extended_sig) = add_escape_flag(sig, sig_len)
             # validate guardian signature
             validate_guardian_signature(message_hash, extended_sig, sig_len + 1)
+            # rebind pointers
             tempvar syscall_ptr: felt* = syscall_ptr
             tempvar range_check_ptr = range_check_ptr
             tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
+            # go to execute
             jmp do_execute
         end
     end
     # validate signer and guardian signatures
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
-    
+    # rebind pointers
     tempvar syscall_ptr: felt* = syscall_ptr
     tempvar range_check_ptr = range_check_ptr
     tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
     
     # execute call
     do_execute:
-
-    
-
     let response = call_contract(
         contract_address=to,
         function_selector=selector,

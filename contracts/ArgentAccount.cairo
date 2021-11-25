@@ -5,11 +5,25 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.alloc import alloc
+from starkware.cairo.common.memcpy import memcpy
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
 from starkware.starknet.common.syscalls import call_contract, get_tx_signature, get_contract_address, get_caller_address
 from starkware.cairo.common.hash_state import (
     hash_init, hash_finalize, hash_update, hash_update_single
 )
+
+####################
+# INTERFACE
+####################
+
+@contract_interface
+namespace IGuardian:
+    func is_valid_signature(hash: felt, sig_len: felt, sig: felt*):
+    end
+
+    func can_override_signer() -> (is_true: felt):
+    end
+end
 
 ####################
 # CONSTANTS
@@ -110,11 +124,19 @@ func execute{
         if signer_condition == 0:
             # validate signer signature
             validate_signer_signature(message_hash, sig, sig_len)
+            tempvar syscall_ptr: felt* = syscall_ptr
+            tempvar range_check_ptr = range_check_ptr
+            tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
             jmp do_execute
         end
         if guardian_condition == 0:
+            # add flag to indicate an escape
+            let (extended_sig) = add_escape_flag(sig, sig_len)
             # validate guardian signature
-            validate_guardian_signature(message_hash, sig, sig_len)
+            validate_guardian_signature(message_hash, extended_sig, sig_len + 1)
+            tempvar syscall_ptr: felt* = syscall_ptr
+            tempvar range_check_ptr = range_check_ptr
+            tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
             jmp do_execute
         end
     end
@@ -122,8 +144,15 @@ func execute{
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
     
+    tempvar syscall_ptr: felt* = syscall_ptr
+    tempvar range_check_ptr = range_check_ptr
+    tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
+    
     # execute call
     do_execute:
+
+    
+
     let response = call_contract(
         contract_address=to,
         function_selector=selector,
@@ -425,25 +454,37 @@ end
 func validate_guardian_signature{
         syscall_ptr: felt*, 
         pedersen_ptr: HashBuiltin*,
-        ecdsa_ptr : SignatureBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
         message: felt,
         signatures: felt*,
         signatures_len: felt
     ) -> ():
+    alloc_locals
     let (guardian) = _guardian.read()
     if guardian == 0:
         return()
     else:
         assert_nn(signatures_len - 2)
-        verify_ecdsa_signature(
-            message=message,
-            public_key=guardian,
-            signature_r=signatures[0],
-            signature_s=signatures[1])
+        IGuardian.is_valid_signature(contract_address=guardian, hash=message, sig_len=signatures_len, sig=signatures)
         return()
     end
+end
+
+func add_escape_flag{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        sig: felt*,
+        sig_len: felt
+    ) -> (extended: felt*):
+    alloc_locals
+    let (local extended : felt*) = alloc()
+    memcpy(extended, sig, sig_len)
+    assert [extended+sig_len] = 'escape'
+    return(extended=extended)
 end
 
 func get_message_hash{

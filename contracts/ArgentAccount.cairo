@@ -122,7 +122,6 @@ func execute{
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
     
-
     # execute call
     do_execute:
     let response = call_contract(
@@ -157,7 +156,6 @@ end
 func change_guardian{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
-        ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
         new_guardian: felt
@@ -195,7 +193,6 @@ end
 func trigger_escape_signer{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
-        ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } ():
     alloc_locals
@@ -222,7 +219,6 @@ end
 func cancel_escape{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
-        ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } ():
 
@@ -243,7 +239,6 @@ end
 func escape_guardian{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
-        ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
         new_guardian: felt
@@ -278,13 +273,12 @@ end
 func escape_signer{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
-        ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
         new_signer: felt
     ):
     alloc_locals
-    
+
     # only called via execute
     assert_only_self()
     # no escape when the guardian is not set

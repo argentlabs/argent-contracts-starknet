@@ -1,7 +1,6 @@
 import pytest
 import asyncio
 from starkware.starknet.testing.starknet import Starknet
-from starkware.starknet.testing.objects import StarknetContractCall
 from starkware.starknet.public.abi import get_selector_from_name
 from utils.deploy import deploy
 

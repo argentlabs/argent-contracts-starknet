@@ -118,17 +118,17 @@ func execute{
     # compute message hash
     let (message_hash) = get_message_hash(to, selector, calldata_len, calldata, nonce)
 
+    # rebind pointers
+    local syscall_ptr: felt* = syscall_ptr
+    local range_check_ptr = range_check_ptr
+    local pedersen_ptr: HashBuiltin* = pedersen_ptr
+
     if to == self:
         tempvar signer_condition = (selector - ESCAPE_GUARDIAN_SELECTOR) * (selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
         tempvar guardian_condition = (selector - ESCAPE_SIGNER_SELECTOR) * (selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
         if signer_condition == 0:
             # validate signer signature
             validate_signer_signature(message_hash, sig, sig_len)
-            # rebind pointers
-            tempvar syscall_ptr: felt* = syscall_ptr
-            tempvar range_check_ptr = range_check_ptr
-            tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
-            # go to execute
             jmp do_execute
         end
         if guardian_condition == 0:
@@ -136,21 +136,12 @@ func execute{
             let (extended_sig) = add_escape_flag(sig, sig_len)
             # validate guardian signature
             validate_guardian_signature(message_hash, extended_sig, sig_len + 1)
-            # rebind pointers
-            tempvar syscall_ptr: felt* = syscall_ptr
-            tempvar range_check_ptr = range_check_ptr
-            tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
-            # go to execute
             jmp do_execute
         end
     end
     # validate signer and guardian signatures
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
-    # rebind pointers
-    tempvar syscall_ptr: felt* = syscall_ptr
-    tempvar range_check_ptr = range_check_ptr
-    tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
     
     # execute call
     do_execute:
@@ -160,7 +151,6 @@ func execute{
         calldata_size=calldata_len,
         calldata=calldata
     )
-
     return (response=response.retdata_size)
 end
 
@@ -172,7 +162,6 @@ func change_signer{
     } (
         new_signer: felt
     ):
-
     # only called via execute
     assert_only_self()
 

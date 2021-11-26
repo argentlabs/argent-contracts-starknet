@@ -1,6 +1,6 @@
-# Argent Account on Starknet
+# Argent Account on StarkNet
 
-Preliminary work for an Argent Account on Starknet.
+*Warning: StarkNet is still in alpha, so is this project. In particular the `ArgentAccount.cairo` contract has not been audited yet and should not be used to store significant value.*
 
 ## High-Level Specification
 

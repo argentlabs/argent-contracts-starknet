@@ -10,6 +10,9 @@ from utils.TransactionSender import TransactionSender
 signer = Signer(123456789987654321)
 guardian_signer = Signer(456789987654321123)
 
+wrong_signer = Signer(666666666666666666)
+wrong_guardian_signer = Signer(6767676767)
+
 ESCAPE_SECURITY_PERIOD = 500
 VERSION = 206933405232 # '0.1.0' = 30 2E 31 2E 30 = 0x302E312E30 = 206933405232
 
@@ -63,12 +66,17 @@ async def test_call_dapp_with_guardian(account_factory, dapp_factory):
 
     # should revert with the wrong signer
     await assert_revert(
-        sender.send_transaction(dapp.contract_address, 'set_number', [47], [Signer(121212121), guardian_signer])
+        sender.send_transaction(dapp.contract_address, 'set_number', [47], [wrong_signer, guardian_signer])
     )
 
-    # should revert with the wrong guardian
+    # should revert with the wrong guardian key
     await assert_revert(
-        sender.send_transaction(dapp.contract_address, 'set_number', [47], [signer, Signer(121212121)])
+        sender.send_transaction(dapp.contract_address, 'set_number', [47], [signer, wrong_guardian_signer])
+    )
+
+    # should fail with only 1 signer
+    await assert_revert(
+        sender.send_transaction(dapp.contract_address, 'set_number', [47], [signer])
     )
 
     # should call the dapp
@@ -88,6 +96,23 @@ async def test_call_dapp_no_guardian(get_starknet, dapp_factory):
     await sender.send_transaction(dapp.contract_address, 'set_number', [47], [signer])
     assert (await dapp.get_number(account_no_guardian.contract_address).call()).result.number == 47
 
+    # should change the signer
+    new_signer = Signer(4444444444)
+    assert (await account_no_guardian.get_signer().call()).result.signer == (signer.public_key)
+    await sender.send_transaction(account_no_guardian.contract_address, 'change_signer', [new_signer.public_key], [signer])
+    assert (await account_no_guardian.get_signer().call()).result.signer == (new_signer.public_key)
+
+    # should reverts calls that require the guardian to be set
+    await assert_revert(
+        sender.send_transaction(account_no_guardian.contract_address, 'trigger_escape_guardian', [], [signer])
+    )
+
+    # should add a guardian
+    new_guardian = Signer(34567788966)
+    assert (await account_no_guardian.get_guardian().call()).result.guardian == (0)
+    await sender.send_transaction(account_no_guardian.contract_address, 'change_guardian', [new_guardian.public_key], [new_signer])
+    assert (await account_no_guardian.get_guardian().call()).result.guardian == (new_guardian.public_key)
+
 @pytest.mark.asyncio
 async def test_change_signer(account_factory):
     account, _ = account_factory
@@ -96,6 +121,17 @@ async def test_change_signer(account_factory):
 
     assert (await account.get_signer().call()).result.signer == (signer.public_key)
 
+    # should revert with the wrong signer
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'change_signer', [new_signer.public_key], [wrong_signer, guardian_signer])
+    )
+
+    # should revert with the wrong guardian signer
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'change_signer', [new_signer.public_key], [signer, wrong_guardian_signer])
+    )
+
+    # should work with the correct signers
     await sender.send_transaction(account.contract_address, 'change_signer', [new_signer.public_key], [signer, guardian_signer])
 
     assert (await account.get_signer().call()).result.signer == (new_signer.public_key)
@@ -108,6 +144,17 @@ async def test_change_guardian(account_factory):
 
     assert (await account.get_guardian().call()).result.guardian == (guardian.contract_address)
 
+    # should revert with the wrong signer
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'change_guardian', [new_guardian.public_key], [wrong_signer, guardian_signer])
+    )
+
+    # should revert with the wrong guardian signer
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'change_guardian', [new_guardian.public_key], [signer, wrong_guardian_signer])
+    )
+
+    # should work with the correct signers
     await sender.send_transaction(account.contract_address, 'change_guardian', [new_guardian.public_key], [signer, guardian_signer])
 
     assert (await account.get_guardian().call()).result.guardian == (new_guardian.public_key)
@@ -208,6 +255,11 @@ async def test_cancel_escape(account_factory):
     await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [guardian_signer])
     escape = (await account.get_escape().call()).result
     assert (escape.active_at == (127 + ESCAPE_SECURITY_PERIOD) and escape.caller == guardian.contract_address)
+
+    # should fail to cancel with only the signer
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'cancel_escape', [], [signer])
+    )
 
     # cancel escape
     await sender.send_transaction(account.contract_address, 'cancel_escape', [], [signer, guardian_signer])

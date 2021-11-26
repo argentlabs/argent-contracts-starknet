@@ -4,7 +4,7 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.testing.objects import StarknetContractCall
-from starkware.starknet.public.abi import get_selector_from_name
+from starkware.crypto.signature.signature import pedersen_hash
 from utils.Signer import Signer
 from utils.deploy import deploy
 from utils.TransactionSender import TransactionSender
@@ -53,6 +53,37 @@ async def dapp_factory(get_starknet):
     starknet = get_starknet
     dapp = await deploy(starknet, "contracts/TestDapp.cairo")
     return dapp
+
+@pytest.mark.asyncio
+async def test_scsk_guardian(account_factory, guardian_factory, dapp_factory):
+    guardian1, _ = guardian_factory
+    account = await account_factory(guardian1.contract_address)
+    dapp = dapp_factory
+    sender = TransactionSender(account)
+
+    # is configured correctly
+    assert (await guardian1.get_signing_key().call()).result.signing_key == (guardian_1_key.public_key)
+
+    # can approve transactions
+    assert (await dapp.get_number(account.contract_address).call()).result.number == 0
+    await sender.send_transaction(dapp.contract_address, 'set_number', [47], [account_signer, guardian_1_key])
+    assert (await dapp.get_number(account.contract_address).call()).result.number == 47
+
+    # can set a new key
+    guardian_1_key_new = Signer(455667754)
+    hash = pedersen_hash(guardian_1_key_new.public_key, 0)
+    signature = list(guardian_1_key.sign(hash))
+    await guardian1.set_signing_key(guardian_1_key_new.public_key).invoke(signature=signature)
+    assert (await guardian1.get_signing_key().call()).result.signing_key == (guardian_1_key_new.public_key)
+
+    # new key can approve transactions
+    await sender.send_transaction(dapp.contract_address, 'set_number', [57], [account_signer, guardian_1_key_new])
+    assert (await dapp.get_number(account.contract_address).call()).result.number == 57
+
+    # old key cannot approve transactions
+    await assert_revert(
+        sender.send_transaction(dapp.contract_address, 'set_number', [67], [account_signer, guardian_1_key])
+    )
 
 @pytest.mark.asyncio
 async def test_guardian_suite(account_factory, guardian_factory, dapp_factory):

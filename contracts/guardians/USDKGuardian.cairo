@@ -56,8 +56,8 @@ func is_valid_signature{
 end
 
 @view
-func can_override_signer() -> (is_true: felt):
-    return (is_true=0)
+func weight() -> (weight: felt):
+    return (weight=1)
 end
 
 @external

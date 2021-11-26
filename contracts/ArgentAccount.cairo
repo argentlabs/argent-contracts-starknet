@@ -21,7 +21,7 @@ namespace IGuardian:
     func is_valid_signature(hash: felt, sig_len: felt, sig: felt*):
     end
 
-    func can_override_signer() -> (is_true: felt):
+    func weight() -> (weight: felt):
     end
 end
 
@@ -194,11 +194,27 @@ func trigger_escape_guardian{
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } ():
-
+    alloc_locals
+    
     # only called via execute
     assert_only_self()
     # no escape when the guardian is not set
-    assert_guardian_set()
+    let (guardian) = assert_guardian_set()
+
+    # no escape if there is an escape by the guardian and guardian has weight > 1
+    let (current_escape) = _escape.read()
+    if current_escape.caller == guardian:
+        let (weight) = IGuardian.weight(contract_address=guardian)
+        # assert weight <= 1
+        assert_nn(1 - weight)
+        tempvar syscall_ptr: felt* = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
+    else:
+        tempvar syscall_ptr: felt* = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
+    end
 
     # store new escape
     let (block_timestamp) = _block_timestamp.read()
@@ -221,10 +237,19 @@ func trigger_escape_signer{
     # no escape when the guardian is not set
     let (guardian) = assert_guardian_set()
 
-    # no escape when there is an ongoing escape by the signer
+    # no escape if there is an escape by the signer and guardian has weight <= 1
     let (current_escape) = _escape.read()
-    if current_escape.active_at != 0:
-        assert current_escape.caller = guardian
+    if ((current_escape.caller - guardian) * current_escape.caller) != 0:
+        let (weight) = IGuardian.weight(contract_address=guardian)
+        # assert weight > 1
+        assert_nn(weight - 2)
+        tempvar syscall_ptr: felt* = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
+    else:
+        tempvar syscall_ptr: felt* = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
     end
 
     # store new escape

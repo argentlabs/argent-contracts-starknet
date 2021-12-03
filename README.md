@@ -2,9 +2,6 @@
 
 *Warning: StarkNet is still in alpha, so is this project. In particular the `ArgentAccount.cairo` contract has not been audited yet and should not be used to store significant value.*
 
-<<<<<<< HEAD
-## Environment (python)
-=======
 ## High-Level Specification
 
 The account is a 2-of-2 custom multisig where the `signer` key is typically stored on the user's phone and the `guardian` is an external contract that can validate the signatures of one or more keys. 
@@ -30,8 +27,9 @@ Under this model we can build a simple yet highly secure non-custodial wallet.
 - An upgrade/proxy pattern using an equivalent of `delegatecall` so that the account of a user can evolve over time without changing addresses.
 - A mechanism to pay fees.
 
-## Development
->>>>>>> a1447738a1b2b5cde2546b2379984a18ee1813f3
+# Development
+
+## Environment (Python)
 
 ### Setup a local virtual env
 
@@ -63,20 +61,20 @@ nile compile
 pytest ./test/argent_account.py
 ```
 
-## Environment (node)
+## Environment (Node)
 
 ### Install
 
 ```
-yarn install
+yarn
 ```
 
 ## Compile the contracts
 ```
-yarn run compile 
+yarn compile 
 ```
 
 ### Test the contracts
 ```
-yarn run test
+yarn test
 ```

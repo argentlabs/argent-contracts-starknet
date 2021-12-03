@@ -249,10 +249,10 @@
     "@ethersproject/properties" "^5.4.0"
     "@ethersproject/strings" "^5.4.0"
 
-"@nomiclabs/hardhat-docker@^2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-docker/-/hardhat-docker-2.0.1.tgz#09eced021b758de12789db6812dbfc576641d9af"
-  integrity sha512-6ztBlm6Sxrgn4eUVUnu3nzrcRcIyupggHMfTccbnBexwK0doDBoVL5enePWtcwUE0qNmmN8Be+TsTg89FPverg==
+"@nomiclabs/hardhat-docker@^2.0.2":
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-docker/-/hardhat-docker-2.0.2.tgz#ae964be17951275a55859ff7358e9e7c77448846"
+  integrity sha512-XgGEpRT3wlA1VslyB57zyAHV+oll8KnV1TjwnxxC1tpAL04/lbdwpdO5KxInVN8irMSepqFpsiSkqlcnvbE7Ng==
   dependencies:
     dockerode "^2.5.8"
     fs-extra "^7.0.1"
@@ -326,12 +326,12 @@
     "@sentry/types" "5.30.0"
     tslib "^1.9.3"
 
-"@shardlabs/starknet-hardhat-plugin@^0.1.5":
-  version "0.1.5"
-  resolved "https://registry.yarnpkg.com/@shardlabs/starknet-hardhat-plugin/-/starknet-hardhat-plugin-0.1.5.tgz#8f8300412fd32226f37745780a548b8b8dac773a"
-  integrity sha512-0QXvfP3tnEIQBkr4DS8zmhIxhYr5C3Jf/gPWBu7jatvGpTZA7r3xESssXux5VikTIg/ng4CuhvFWCWDZf+HqOw==
+"@shardlabs/starknet-hardhat-plugin@^0.3.4":
+  version "0.3.4"
+  resolved "https://registry.yarnpkg.com/@shardlabs/starknet-hardhat-plugin/-/starknet-hardhat-plugin-0.3.4.tgz#bf5ae758d9be84e80b8f80f2b1d3127509c56e54"
+  integrity sha512-Bk+Wq4wQJdUL/WnmCvAFRx9LBmId/sEi/G3hhXaxnQTUpxe+Dx9GtgWAQFkN43e5A+ysrg8RYATQrtm/INpJWQ==
   dependencies:
-    "@nomiclabs/hardhat-docker" "^2.0.1"
+    "@nomiclabs/hardhat-docker" "^2.0.2"
     hardhat "^2.6.2"
 
 "@solidity-parser/parser@^0.11.0":

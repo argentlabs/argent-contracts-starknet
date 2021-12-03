@@ -1,19 +1,24 @@
-# Argent Account on Starknet
+# Argent Account on StarkNet
 
-Preliminary work for an Argent Account on Starknet.
+*Warning: StarkNet is still in alpha, so is this project. In particular the `ArgentAccount.cairo` contract has not been audited yet and should not be used to store significant value.*
 
 <<<<<<< HEAD
 ## Environment (python)
 =======
 ## High-Level Specification
 
-The account is a 2-of-2 custom multisig where the `signer` key is typically stored on the user phone and the `guardian` key is managed by an off-chain service to enable fraud monitoring (e.g. trusted contacts, daily limits, etc). The user can always opt-out of the guardian service and manage the `guardian` key himself.
+The account is a 2-of-2 custom multisig where the `signer` key is typically stored on the user's phone and the `guardian` is an external contract that can validate the signatures of one or more keys. 
+The `guardian` acts both as a co-validator for typical operations of the wallet, and as the trusted actor that can recover the wallet in case the `signer` key is lost or compromised.
+These two features may have different key requirements (e.g. a single key for fraud monitoring, and a n-of-m setup for 'social' recovery) as encapsulated by the logic of the `guardian` contract.
 
-Normal operations of the wallet (`execute`, `change_signer` and `change_guardian`) require both signatures to be executed.
+By default the `guardian` has a single key managed by an off-chain service to enable fraud monitoring (e.g. trusted contacts, daily limits, etc) and recovery. The user can always opt-out of the guardian service and select a `guardian` contract with different key requirements.
 
-Each party alone can trigger the `escape` mode on the wallet if the other party is not cooperating or lost. An escape takes 7 days before being active, after which the non-cooperating party can be replaced. The wallet is asymetric in favor of the `signer` who can override an escape triggered by the `guardian`. 
+Normal operations of the wallet (`execute`, `change_signer`, `change_guardian`, `cancel_escape`) require the approval of both parties to be executed.
 
-A triggered escape can always be cancelled with both signatures.
+Each party alone can trigger the `escape` mode (a.k.a. recovery) on the wallet if the other party is not cooperating or lost. An escape takes 7 days before being active, after which the non-cooperating party can be replaced.
+The wallet is always asymmetric in favor of one of the party depending on the `weight` of the `guardian`. The favoured party can always override an escape triggered by the other party.
+
+A triggered escape can always be cancelled with the approval of both parties.
 
 We assume that the `signer` key is backed up such that the probability of the `signer` key being lost should be close to zero.
 
@@ -21,31 +26,32 @@ Under this model we can build a simple yet highly secure non-custodial wallet.
 
 ## Missing Cairo features
 
-- Access to an equivallent of `block.timestamp` to enable timelocks. Currently mocked in the account with the `_block_timestamp` storage variable.
-- Access to an equivallent of `address(this)` to determine the self address of the account. Currently mocked in the account with the `_self_address` storage variable.
-- An upgrade/proxy pattern using an equivallent of `delegatecall` so that the account of a user can evolve over time without changing address.
-- A strategy to define the `_L1_address` storage variable as the L1 address that can exit the assets of the account.
+- Access to an equivalent of `block.timestamp` to enable timelocks. Currently mocked in the account with the `_block_timestamp` storage variable.
+- An upgrade/proxy pattern using an equivalent of `delegatecall` so that the account of a user can evolve over time without changing addresses.
 - A mechanism to pay fees.
 
 ## Development
 >>>>>>> a1447738a1b2b5cde2546b2379984a18ee1813f3
 
-### Install Cairo
+### Setup a local virtual env
 
-See https://www.cairo-lang.org/docs/quickstart.html
-
-### Install Nile
 ```
-pip install cairo-nile
+python -m venv ./venv
+source ./venv/bin/activate
 ```
 
-See https://github.com/martriay/nile for more details.
-
-
-### Install pytest
+### Install Cairo dependencies
 ```
-pip install pytest pytest-asyncio
+brew install gmp
 ```
+
+```
+pip install -r requirements.txt
+```
+
+See for more details:
+- https://www.cairo-lang.org/docs/quickstart.html
+- https://github.com/martriay/nile
 
 ### Compile the contracts
 ```

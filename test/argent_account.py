@@ -1,17 +1,28 @@
 import pytest
 import asyncio
 from starkware.starknet.testing.starknet import Starknet
-from starkware.starknet.public.abi import get_selector_from_name
+from starkware.starkware_utils.error_handling import StarkException
+from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from utils.Signer import Signer
 from utils.deploy import deploy
-from utils.TransactionBuilder import TransactionBuilder
+from utils.TransactionSender import TransactionSender
 
 signer = Signer(123456789987654321)
-guardian = Signer(456789987654321123)
-L1_ADDRESS = 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984
+guardian_signer = Signer(456789987654321123)
+
+wrong_signer = Signer(666666666666666666)
+wrong_guardian_signer = Signer(6767676767)
 
 ESCAPE_SECURITY_PERIOD = 500
-MAGIC_VALUE = 1138073982574099226972715907883430523600275391887289231447128254784345409857
+VERSION = 206933405232 # '0.1.0' = 30 2E 31 2E 30 = 0x302E312E30 = 206933405232
+
+async def assert_revert(expression):
+    try:
+        await expression
+        assert False
+    except StarkException as err:
+        _, error = err.args
+        assert error['code'] == StarknetErrorCode.TRANSACTION_FAILED
 
 @pytest.fixture(scope='module')
 def event_loop():
@@ -25,161 +36,245 @@ async def get_starknet():
 @pytest.fixture
 async def account_factory(get_starknet):
     starknet = get_starknet
-    account = await deploy(starknet, "contracts/ArgentAccount.cairo")
-    await account.initialize(signer.public_key, guardian.public_key, L1_ADDRESS, account.contract_address).invoke()
-    return starknet, account
+    guardian = await deploy(starknet, "contracts/guardians/SCSKGuardian.cairo", [guardian_signer.public_key])
+    account = await deploy(starknet, "contracts/ArgentAccount.cairo", [signer.public_key, guardian.contract_address])
+    return account, guardian
+
+@pytest.fixture
+async def dapp_factory(get_starknet):
+    starknet = get_starknet
+    dapp = await deploy(starknet, "contracts/TestDapp.cairo")
+    return dapp
 
 @pytest.mark.asyncio
 async def test_initializer(account_factory):
-    _, account = account_factory
-    assert (await account.get_signer().call()).signer == (signer.public_key)
-    assert (await account.get_guardian().call()).guardian == (guardian.public_key)
-    assert (await account.get_L1_address().call()).L1_address == (L1_ADDRESS)
+    account, guardian = account_factory
+    assert (await account.get_signer().call()).result.signer == (signer.public_key)
+    assert (await account.get_guardian().call()).result.guardian == (guardian.contract_address)
+    assert (await account.get_version().call()).result.version == VERSION
 
 @pytest.mark.asyncio
-async def test_execute(account_factory):
-    starknet, account = account_factory
-    dapp = await deploy(starknet, "contracts/TestDapp.cairo")
-    builder = TransactionBuilder(account, signer, guardian)
+async def test_call_dapp_with_guardian(account_factory, dapp_factory):
+    account, _ = account_factory
+    dapp = dapp_factory
+    sender = TransactionSender(account)
 
-    nonce = await builder.get_current_nonce()
-    transaction = builder.build_execute_transaction(dapp.contract_address, 'set_number', [47], nonce)
+    # should revert with the wrong nonce
+    await assert_revert(
+        sender.send_transaction(dapp.contract_address, 'set_number', [47], [signer, guardian_signer], nonce=3)
+    )
 
-    assert (await dapp.get_number(account.contract_address).call()).number == 0
-    await transaction.invoke()
-    assert (await dapp.get_number(account.contract_address).call()).number == 47
+    # should revert with the wrong signer
+    await assert_revert(
+        sender.send_transaction(dapp.contract_address, 'set_number', [47], [wrong_signer, guardian_signer])
+    )
+
+    # should revert with the wrong guardian key
+    await assert_revert(
+        sender.send_transaction(dapp.contract_address, 'set_number', [47], [signer, wrong_guardian_signer])
+    )
+
+    # should fail with only 1 signer
+    await assert_revert(
+        sender.send_transaction(dapp.contract_address, 'set_number', [47], [signer])
+    )
+
+    # should call the dapp
+    assert (await dapp.get_number(account.contract_address).call()).result.number == 0
+    await sender.send_transaction(dapp.contract_address, 'set_number', [47], [signer, guardian_signer])
+    assert (await dapp.get_number(account.contract_address).call()).result.number == 47
+
+@pytest.mark.asyncio
+async def test_call_dapp_no_guardian(get_starknet, dapp_factory):
+    starknet = get_starknet
+    account_no_guardian = await deploy(starknet, "contracts/ArgentAccount.cairo", [signer.public_key, 0])
+    dapp = dapp_factory
+    sender = TransactionSender(account_no_guardian)
+
+    # should call the dapp
+    assert (await dapp.get_number(account_no_guardian.contract_address).call()).result.number == 0
+    await sender.send_transaction(dapp.contract_address, 'set_number', [47], [signer])
+    assert (await dapp.get_number(account_no_guardian.contract_address).call()).result.number == 47
+
+    # should change the signer
+    new_signer = Signer(4444444444)
+    assert (await account_no_guardian.get_signer().call()).result.signer == (signer.public_key)
+    await sender.send_transaction(account_no_guardian.contract_address, 'change_signer', [new_signer.public_key], [signer])
+    assert (await account_no_guardian.get_signer().call()).result.signer == (new_signer.public_key)
+
+    # should reverts calls that require the guardian to be set
+    await assert_revert(
+        sender.send_transaction(account_no_guardian.contract_address, 'trigger_escape_guardian', [], [signer])
+    )
+
+    # should add a guardian
+    new_guardian = Signer(34567788966)
+    assert (await account_no_guardian.get_guardian().call()).result.guardian == (0)
+    await sender.send_transaction(account_no_guardian.contract_address, 'change_guardian', [new_guardian.public_key], [new_signer])
+    assert (await account_no_guardian.get_guardian().call()).result.guardian == (new_guardian.public_key)
 
 @pytest.mark.asyncio
 async def test_change_signer(account_factory):
-    starknet, account = account_factory
-    builder = TransactionBuilder(account, signer, guardian)
-
+    account, _ = account_factory
+    sender = TransactionSender(account)
     new_signer = Signer(4444444444)
-    nonce = await builder.get_current_nonce()
-    transaction = builder.build_change_signer_transaction(new_signer.public_key, nonce)
 
-    assert (await account.get_signer().call()).signer == (signer.public_key)
-    await transaction.invoke()
-    assert (await account.get_signer().call()).signer == (new_signer.public_key)
+    assert (await account.get_signer().call()).result.signer == (signer.public_key)
+
+    # should revert with the wrong signer
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'change_signer', [new_signer.public_key], [wrong_signer, guardian_signer])
+    )
+
+    # should revert with the wrong guardian signer
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'change_signer', [new_signer.public_key], [signer, wrong_guardian_signer])
+    )
+
+    # should work with the correct signers
+    await sender.send_transaction(account.contract_address, 'change_signer', [new_signer.public_key], [signer, guardian_signer])
+
+    assert (await account.get_signer().call()).result.signer == (new_signer.public_key)
 
 @pytest.mark.asyncio
 async def test_change_guardian(account_factory):
-    starknet, account = account_factory
-    builder = TransactionBuilder(account, signer, guardian)
-
+    account, guardian = account_factory
+    sender = TransactionSender(account)
     new_guardian = Signer(55555555)
-    nonce = await builder.get_current_nonce()
-    transaction = builder.build_change_guardian_transaction(new_guardian.public_key, nonce)
 
-    assert (await account.get_guardian().call()).guardian == (guardian.public_key)
-    await transaction.invoke()
-    assert (await account.get_guardian().call()).guardian == (new_guardian.public_key)
+    assert (await account.get_guardian().call()).result.guardian == (guardian.contract_address)
 
-@pytest.mark.asyncio
-async def test_change_L1_address(account_factory):
-    starknet, account = account_factory
-    builder = TransactionBuilder(account, signer, guardian)
+    # should revert with the wrong signer
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'change_guardian', [new_guardian.public_key], [wrong_signer, guardian_signer])
+    )
 
-    new_L1_address = 0xa1a1224e9071470ab12a8df7626d4fe7789a039d
-    nonce = await builder.get_current_nonce()
-    transaction = builder.build_change_L1_address_transaction(new_L1_address, nonce)
+    # should revert with the wrong guardian signer
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'change_guardian', [new_guardian.public_key], [signer, wrong_guardian_signer])
+    )
 
-    assert (await account.get_L1_address().call()).L1_address == (L1_ADDRESS)
-    await transaction.invoke()
-    assert (await account.get_L1_address().call()).L1_address == (new_L1_address)
+    # should work with the correct signers
+    await sender.send_transaction(account.contract_address, 'change_guardian', [new_guardian.public_key], [signer, guardian_signer])
+
+    assert (await account.get_guardian().call()).result.guardian == (new_guardian.public_key)
 
 @pytest.mark.asyncio
-async def test_trigger_escape_by_signer(account_factory):
-    starknet, account = account_factory
-    builder = TransactionBuilder(account, signer, guardian)
+async def test_trigger_escape_guardian(account_factory):
+    account, _ = account_factory
+    sender = TransactionSender(account)
+    await sender.set_block_timestamp(127)
 
-    await builder.set_block_timestamp(121)
-
-    nonce = await builder.get_current_nonce()
-    transaction = builder.build_trigger_escape_transaction(signer, nonce)
-    escape = await account.get_escape().call()
+    escape = (await account.get_escape().call()).result
     assert (escape.active_at == 0 and escape.caller == 0)
-    await transaction.invoke()
-    escape = await account.get_escape().call()
-    assert (escape.active_at == (121 + ESCAPE_SECURITY_PERIOD) and escape.caller == signer.public_key)
+
+    await sender.send_transaction(account.contract_address, 'trigger_escape_guardian', [], [signer])
+
+    escape = (await account.get_escape().call()).result
+    assert (escape.active_at == (127 + ESCAPE_SECURITY_PERIOD) and escape.caller == signer.public_key)
 
 @pytest.mark.asyncio
-async def test_trigger_escape_by_guardian(account_factory):
-    starknet, account = account_factory
-    builder = TransactionBuilder(account, signer, guardian)
+async def test_trigger_escape_signer(account_factory):
+    account, guardian = account_factory
+    sender = TransactionSender(account)
+    await sender.set_block_timestamp(127)
 
-    await builder.set_block_timestamp(127)
-
-    nonce = await builder.get_current_nonce()
-    transaction = builder.build_trigger_escape_transaction(guardian, nonce)
-    escape = await account.get_escape().call()
+    escape = (await account.get_escape().call()).result
     assert (escape.active_at == 0 and escape.caller == 0)
-    await transaction.invoke()
-    escape = await account.get_escape().call()
-    assert (escape.active_at == (127 + ESCAPE_SECURITY_PERIOD) and escape.caller == guardian.public_key)
+
+    await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [guardian_signer])
+
+    escape = (await account.get_escape().call()).result
+    assert (escape.active_at == (127 + ESCAPE_SECURITY_PERIOD) and escape.caller == guardian.contract_address)
 
 @pytest.mark.asyncio
 async def test_escape_guardian(account_factory):
-    starknet, account = account_factory
-    builder = TransactionBuilder(account, signer, guardian)
-
-    await builder.set_block_timestamp(121)
+    account, guardian = account_factory
+    sender = TransactionSender(account)
+    new_guardian = Signer(55555555)
+    await sender.set_block_timestamp(127)
 
     # trigger escape
-    nonce = await builder.get_current_nonce()
-    transaction = builder.build_trigger_escape_transaction(signer, nonce)
-    await transaction.invoke()
-    escape = await account.get_escape().call()
-    assert (escape.active_at == (121 + ESCAPE_SECURITY_PERIOD) and escape.caller == signer.public_key)
+    await sender.send_transaction(account.contract_address, 'trigger_escape_guardian', [], [signer])
+    escape = (await account.get_escape().call()).result
+    assert (escape.active_at == (127 + ESCAPE_SECURITY_PERIOD) and escape.caller == signer.public_key)
 
-    await builder.set_block_timestamp(121 + ESCAPE_SECURITY_PERIOD)
+    # should fail to escape before the end of the period
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'escape_guardian', [new_guardian.public_key], [signer])
+    )
 
-    # escape guardian
-    new_guardian = Signer(55555555)
-    nonce = await builder.get_current_nonce()
-    transaction = builder.build_escape_guardian_transaction(new_guardian, nonce)
-    
-    assert (await account.get_guardian().call()).guardian == (guardian.public_key)
-    await transaction.invoke()
-    assert (await account.get_guardian().call()).guardian == (new_guardian.public_key)
+    # wait security period
+    await sender.set_block_timestamp(127 + ESCAPE_SECURITY_PERIOD)
+
+    # should escape after the security period
+    assert (await account.get_guardian().call()).result.guardian == (guardian.contract_address)
+    await sender.send_transaction(account.contract_address, 'escape_guardian', [new_guardian.public_key], [signer])
+    assert (await account.get_guardian().call()).result.guardian == (new_guardian.public_key)
+
     # escape should be cleared
-    escape = await account.get_escape().call()
+    escape = (await account.get_escape().call()).result
     assert (escape.active_at == 0 and escape.caller == 0)
 
 @pytest.mark.asyncio
 async def test_escape_signer(account_factory):
-    starknet, account = account_factory
-    builder = TransactionBuilder(account, signer, guardian)
-
-    await builder.set_block_timestamp(121)
+    account, guardian = account_factory
+    sender = TransactionSender(account)
+    new_signer = Signer(5555555578895)
+    await sender.set_block_timestamp(127)
 
     # trigger escape
-    nonce = await builder.get_current_nonce()
-    transaction = builder.build_trigger_escape_transaction(guardian, nonce)
-    await transaction.invoke()
-    escape = await account.get_escape().call()
-    assert (escape.active_at == (121 + ESCAPE_SECURITY_PERIOD) and escape.caller == guardian.public_key)
+    await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [guardian_signer])
+    escape = (await account.get_escape().call()).result
+    assert (escape.active_at == (127 + ESCAPE_SECURITY_PERIOD) and escape.caller == guardian.contract_address)
 
-    await builder.set_block_timestamp(121 + ESCAPE_SECURITY_PERIOD + 1)
+    # should fail to escape before the end of the period
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'escape_signer', [new_signer.public_key], [guardian_signer])
+    )
 
-    # escape signer
-    new_signer = Signer(555554675)
-    nonce = await builder.get_current_nonce()
-    transaction = builder.build_escape_signer_transaction(new_signer, nonce)
-    
-    assert (await account.get_signer().call()).signer == (signer.public_key)
-    await transaction.invoke()
-    assert (await account.get_signer().call()).signer == (new_signer.public_key)
+    # wait security period
+    await sender.set_block_timestamp(127 + ESCAPE_SECURITY_PERIOD)
+
+    # should escape after the security period
+    assert (await account.get_signer().call()).result.signer == (signer.public_key)
+    await sender.send_transaction(account.contract_address, 'escape_signer', [new_signer.public_key], [guardian_signer])
+    assert (await account.get_signer().call()).result.signer == (new_signer.public_key)
+
     # escape should be cleared
-    escape = await account.get_escape().call()
+    escape = (await account.get_escape().call()).result
+    assert (escape.active_at == 0 and escape.caller == 0)
+
+@pytest.mark.asyncio
+async def test_cancel_escape(account_factory):
+    account, guardian = account_factory
+    sender = TransactionSender(account)
+    await sender.set_block_timestamp(127)
+
+    # trigger escape
+    await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [guardian_signer])
+    escape = (await account.get_escape().call()).result
+    assert (escape.active_at == (127 + ESCAPE_SECURITY_PERIOD) and escape.caller == guardian.contract_address)
+
+    # should fail to cancel with only the signer
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'cancel_escape', [], [signer])
+    )
+
+    # cancel escape
+    await sender.send_transaction(account.contract_address, 'cancel_escape', [], [signer, guardian_signer])
+
+    # escape should be cleared
+    escape = (await account.get_escape().call()).result
     assert (escape.active_at == 0 and escape.caller == 0)
 
 @pytest.mark.asyncio
 async def test_is_valid_signature(account_factory):
-    starknet, account = account_factory
-    builder = TransactionBuilder(account, signer, guardian)
-
+    account, guardian = account_factory
     hash = 1283225199545181604979924458180358646374088657288769423115053097913173815464
-    transaction = builder.build_is_valid_signature_transaction(hash)
-    res = await transaction.call()
-    assert (res.magic_value == MAGIC_VALUE)
+
+    signatures = []
+    for sig in [signer, guardian_signer]:
+        signatures += list(sig.sign(hash))
+    
+    await account.is_valid_signature(hash, signatures).call()

@@ -2,7 +2,6 @@
 %builtins pedersen range_check
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.starknet.common.storage import Storage
 from starkware.starknet.common.syscalls import get_caller_address
 
 ####################
@@ -19,7 +18,6 @@ end
 
 @external
 func set_number{
-        storage_ptr: Storage*,
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
@@ -37,7 +35,7 @@ end
 
 @view
 func get_number{
-        storage_ptr: Storage*,
+        syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
     }(

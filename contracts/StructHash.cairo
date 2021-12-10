@@ -24,14 +24,14 @@ struct Mail:
     member contents : felt
 end
 
-# H('StarkNetDomain(felt name,felt version,felt chainId)')
-const STARKNET_DOMAIN_TYPE_HASH = 0x1ac84eab85ae7c91085e6143344d685aba3353d2029a7b1eccf46794249a7
+# H('StarkNetDomain(name:felt,version:felt,chainId:felt)')
+const STARKNET_DOMAIN_TYPE_HASH = 0x1bfc207425a47a5dfa1a50a4f5241203f50624ca5fdf5e18755765416b8e288
 
-# H('Mail(Person from,Person to,felt contents)Person(felt name,felt wallet)')
-const MAIL_TYPE_HASH = 0x3e42cd1b168ba9dde92479b909ce5133824c58a6b2030aa9fbb698095831ed0
+# H('Mail(from:Person,to:Person,contents:felt)Person(name:felt,wallet:felt)')
+const MAIL_TYPE_HASH = 0x13d89452df9512bf750f539ba3001b945576243288137ddb6c788457d4b2f79
 
-# H('Person(felt name,felt wallet)')
-const PERSON_TYPE_HASH = 0x205728d5ea4ba1cf7fefb11ad4f0bd1eb6f498df394993afb37a89b354dd476
+# H('Person(name:felt,wallet:felt)')
+const PERSON_TYPE_HASH = 0x2896dbe4b96a67110f454c01e5336edc5bbc3635537efd690f122f4809cc855
 
 # takes StarkNetDomain and returns its struct_hash
 func hashDomain{hash_ptr : HashBuiltin*}(domain : StarkNet_Domain*) -> (hash : felt):
@@ -89,7 +89,7 @@ func test{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -
     let (__fp__, _) = get_fp_and_pc()
 
     local domain : StarkNet_Domain = StarkNet_Domain(
-        name='Ether Mail',
+        name='StarkNet Mail',
         version=1,
         chain_id=1
         )

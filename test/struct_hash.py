@@ -19,10 +19,10 @@ async def get_starknet():
 
 
 @pytest.mark.asyncio
-async def test_eip712(get_starknet):
+async def test_message_hash(get_starknet):
     starknet = get_starknet
     eip712 = await deploy(starknet, "contracts/StructHash.cairo")
 
     response = await eip712.test().call()
 
-    assert response.result.hash == 941141766170116937295581121140425199172770042801890316068798201059101839897
+    assert response.result.hash == 3160883476061025723409394569853829347589002322526444575905616911969884666064

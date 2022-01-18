@@ -1,5 +1,4 @@
 %lang starknet
-%builtins pedersen range_check ecdsa bitwise
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin

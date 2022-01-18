@@ -1,5 +1,4 @@
 %lang starknet
-%builtins pedersen range_check ecdsa
 
 from starkware.starknet.common.syscalls import call_contract
 from starkware.cairo.common.alloc import alloc

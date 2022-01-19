@@ -1,5 +1,6 @@
 import pytest
 import asyncio
+import logging
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
@@ -7,8 +8,11 @@ from utils.Signer import Signer
 from utils.deploy import deploy
 from utils.TransactionSender import TransactionSender
 
+LOGGER = logging.getLogger(__name__)
+
 signer = Signer(123456789987654321)
 guardian = Signer(456789987654321123)
+guardian_backup = Signer(354523164513454)
 
 wrong_signer = Signer(666666666666666666)
 wrong_guardian = Signer(6767676767)
@@ -173,7 +177,7 @@ async def test_trigger_escape_guardian(account_factory):
     assert (escape.active_at == (127 + ESCAPE_SECURITY_PERIOD) and escape.caller_is_signer == 1)
 
 @pytest.mark.asyncio
-async def test_trigger_escape_signer(account_factory):
+async def test_trigger_escape_signer_by_guardian(account_factory):
     account = account_factory
     sender = TransactionSender(account)
     await sender.set_block_timestamp(127)
@@ -182,6 +186,22 @@ async def test_trigger_escape_signer(account_factory):
     assert (escape.active_at == 0)
 
     await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [guardian])
+
+    escape = (await account.get_escape().call()).result
+    assert (escape.active_at == (127 + ESCAPE_SECURITY_PERIOD) and escape.caller_is_signer == 0)
+
+@pytest.mark.asyncio
+async def test_trigger_escape_signer_by_guardian_backup(account_factory):
+    account = account_factory
+    sender = TransactionSender(account)
+    await sender.send_transaction(account.contract_address, 'change_guardian_backup', [guardian_backup.public_key], [signer, guardian])
+    
+    await sender.set_block_timestamp(127)
+
+    escape = (await account.get_escape().call()).result
+    assert (escape.active_at == 0)
+
+    await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [0, guardian_backup])
 
     escape = (await account.get_escape().call()).result
     assert (escape.active_at == (127 + ESCAPE_SECURITY_PERIOD) and escape.caller_is_signer == 0)

@@ -21,9 +21,6 @@ class TransactionSender():
 
         return await self.account.execute(to, selector, calldata, nonce).invoke(signature=signatures)
 
-    async def set_block_timestamp(self, timestamp):
-        await self.account.set_block_timestamp(timestamp).invoke()
-
 def hash_message(account, to, selector, calldata, nonce):
     message = [
         account,

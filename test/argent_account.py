@@ -45,7 +45,8 @@ def reset_starknet_block(starknet):
 @pytest.fixture
 async def account_factory(get_starknet):
     starknet = get_starknet
-    account = await deploy(starknet, "contracts/ArgentAccount.cairo", [signer.public_key, guardian.public_key])
+    account = await deploy(starknet, "contracts/ArgentAccount.cairo")
+    await account.initialize(signer.public_key, guardian.public_key).invoke()
     return account
 
 @pytest.fixture
@@ -57,9 +58,14 @@ async def dapp_factory(get_starknet):
 @pytest.mark.asyncio
 async def test_initializer(account_factory):
     account = account_factory
+    # should be configured correctly
     assert (await account.get_signer().call()).result.signer == (signer.public_key)
     assert (await account.get_guardian().call()).result.guardian == (guardian.public_key)
     assert (await account.get_version().call()).result.version == VERSION
+    # should throw when calling initialize
+    await assert_revert(
+         account.initialize(signer.public_key, guardian.public_key).invoke()
+     )
 
 @pytest.mark.asyncio
 async def test_call_dapp_with_guardian(account_factory, dapp_factory):
@@ -101,7 +107,8 @@ async def test_call_dapp_with_guardian(account_factory, dapp_factory):
 @pytest.mark.asyncio
 async def test_call_dapp_no_guardian(get_starknet, dapp_factory):
     starknet = get_starknet
-    account_no_guardian = await deploy(starknet, "contracts/ArgentAccount.cairo", [signer.public_key, 0])
+    account_no_guardian = await deploy(starknet, "contracts/ArgentAccount.cairo")
+    await account_no_guardian.initialize(signer.public_key, 0).invoke()
     dapp = dapp_factory
     sender = TransactionSender(account_no_guardian)
 

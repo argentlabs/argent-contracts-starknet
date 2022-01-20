@@ -122,8 +122,8 @@ end
 # EXTERNAL FUNCTIONS
 ####################
 
-@constructor
-func constructor{
+@external
+func initialize{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
@@ -131,7 +131,10 @@ func constructor{
         signer: felt,
         guardian: felt
     ):
-    # check that the signer is not zero
+    # check that we are not already initialized
+    let (current_signer) = _signer.read()
+    assert current_signer = 0
+    # check that the target signer is not zero
     assert_not_zero(signer)
     # initialize the contract
     _signer.write(signer)

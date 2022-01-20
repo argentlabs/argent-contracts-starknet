@@ -14,7 +14,10 @@ class TransactionSender():
         message_hash = hash_message(self.account.contract_address, to, selector, calldata, nonce)
         signatures = []
         for signer in signers:
-            signatures += list(signer.sign(message_hash))
+            if signer == 0:
+                signatures += list([0, 0])
+            else:    
+                signatures += list(signer.sign(message_hash))
 
         return await self.account.execute(to, selector, calldata, nonce).invoke(signature=signatures)
 

@@ -8,7 +8,7 @@ The account is a 2-of-2 custom multisig where the `signer` key is typically stor
 
 The user can always opt-out of the guardian service and manage the guardian key himself. Alternatively he can add a second `guardian_backup` key to the account that has the same role as the `guardian` and can be used as the ultimate censorship resistance guarantee.
 
-Normal operations of the wallet (`execute`, `change_signer`, `change_guardian`, `cancel_escape`) require the approval of both parties to be executed.
+Normal operations of the wallet (`execute`, `change_signer`, `change_guardian`, `change_guardian_backup`, `validate_guardian_signature`, `cancel_escape`) require the approval of both parties to be executed.
 
 Each party alone can trigger the `escape` mode (a.k.a. recovery) on the wallet if the other party is not cooperating or lost. An escape takes 7 days before being active, after which the non-cooperating party can be replaced.
 The wallet is asymmetric in favor of the `signer` who can override an escape triggered by the guardian.
@@ -18,6 +18,19 @@ A triggered escape can always be cancelled with the approval of both parties.
 We assume that the `signer` key is backed up such that the probability of the `signer` key being lost should be close to zero.
 
 Under this model we can build a simple yet highly secure non-custodial wallet.
+
+| Action | Signer | Guardian | Comments |
+|--------|--------|----------|----------|
+| Execute | X | X | |
+| Change Signer | X | X | |
+| Change Guardian | X | X | |
+| Change Guardian Backup | X | X | |
+| Trigger Escape Guardian | X | | |
+| Trigger Escape Signer | | X | |
+| Escape Guardian | X | | After security period
+| Escape Signer | | X | After security period
+| Cancel Escape | X | X | |
+
 
 ## Missing Cairo features
 

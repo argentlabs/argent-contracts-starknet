@@ -30,8 +30,8 @@ const CANCEL_ESCAPE_SELECTOR = 9925755005413313544893618361804569051675179443195
 
 const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
 
-const FALSE = 0
-const TRUE = 1
+const ESCAPE_TYPE_GUARDIAN = 0
+const ESCAPE_TYPE_SIGNER = 1
 
 ####################
 # STRUCTS
@@ -39,7 +39,43 @@ const TRUE = 1
 
 struct Escape:
     member active_at: felt
-    member caller_is_signer: felt
+    member type: felt
+end
+
+####################
+# EVENTS
+####################
+
+@event
+func signer_changed(new_signer: felt):
+end
+
+@event
+func guardian_changed(new_guardian: felt):
+end
+
+@event
+func guardian_backup_changed(new_guardian: felt):
+end
+
+@event
+func escape_guardian_triggered(active_at: felt):
+end
+
+@event
+func escape_signer_triggered(active_at: felt):
+end
+
+@event
+func escape_canceled():
+end
+
+@event
+func guardian_escaped(new_guardian: felt):
+end
+
+@event
+func signer_escaped(new_signer: felt):
 end
 
 ####################
@@ -191,6 +227,7 @@ func change_guardian{
 
     # change guardian
     _guardian.write(new_guardian)
+    guardian_changed.emit(new_guardian=new_guardian)
     return()
 end
 
@@ -228,7 +265,7 @@ func trigger_escape_guardian{
 
     # store new escape
     let (block_timestamp) = get_block_timestamp()
-    let new_escape: Escape = Escape(block_timestamp + ESCAPE_SECURITY_PERIOD, TRUE)
+    let new_escape: Escape = Escape(block_timestamp + ESCAPE_SECURITY_PERIOD, ESCAPE_TYPE_GUARDIAN)
     _escape.write(new_escape)
     return()
 end
@@ -246,13 +283,13 @@ func trigger_escape_signer{
     # no escape when there is no guardian set
     assert_guardian_set()
 
-    # no escape if there is an escape by the signer
+    # no escape if there is an guradian escape triggered by the signer in progress
     let (current_escape) = _escape.read()
-    assert (current_escape.active_at * current_escape.caller_is_signer) = 0
+    assert current_escape.active_at * (current_escape.type - ESCAPE_TYPE_GUARDIAN) = 0
 
     # store new escape
     let (block_timestamp) = get_block_timestamp()
-    let new_escape: Escape = Escape(block_timestamp + ESCAPE_SECURITY_PERIOD, FALSE)
+    let new_escape: Escape = Escape(block_timestamp + ESCAPE_SECURITY_PERIOD, ESCAPE_TYPE_SIGNER)
     _escape.write(new_escape)
     return()
 end
@@ -297,7 +334,7 @@ func escape_guardian{
     # assert there is an active escape
     assert_le(current_escape.active_at, block_timestamp)
     # assert the escape was triggered by the signer
-    assert current_escape.caller_is_signer = TRUE
+    assert current_escape.type = ESCAPE_TYPE_GUARDIAN
 
     # clear escape
     let new_escape: Escape = Escape(0, 0)
@@ -330,7 +367,7 @@ func escape_signer{
     # validate there is an active escape
     assert_le(current_escape.active_at, block_timestamp)
     # assert the escape was triggered by the guardian
-    assert current_escape.caller_is_signer = FALSE
+    assert current_escape.type = ESCAPE_TYPE_SIGNER
 
     # clear escape
     let new_escape: Escape = Escape(0, 0)
@@ -408,9 +445,9 @@ func get_escape{
         syscall_ptr: felt*, 
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
-    } () -> (active_at: felt, caller_is_signer: felt):
+    } () -> (active_at: felt, type: felt):
     let (res) = _escape.read()
-    return (active_at=res.active_at, caller_is_signer=res.caller_is_signer)
+    return (active_at=res.active_at, type=res.type)
 end
 
 @view

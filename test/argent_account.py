@@ -5,6 +5,8 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.business_logic.state import BlockInfo
+from starkware.starknet.business_logic.transaction_execution_objects import Event
+from starkware.starknet.compiler.compile import get_selector_from_name
 from utils.Signer import Signer
 from utils.deploy import deploy
 from utils.TransactionSender import TransactionSender
@@ -22,6 +24,10 @@ DEFAULT_TIMESTAMP = 1640991600
 ESCAPE_SECURITY_PERIOD = 24*7*60*60
 VERSION = 206933470768 # '0.2.0' = 30 2E 32 2E 30 = 0x302E322E30 = 206933470768
 
+ESCAPE_TYPE_GUARDIAN = 0
+ESCAPE_TYPE_SIGNER = 1
+
+
 async def assert_revert(expression):
     try:
         await expression
@@ -29,6 +35,13 @@ async def assert_revert(expression):
     except StarkException as err:
         _, error = err.args
         assert error['code'] == StarknetErrorCode.TRANSACTION_FAILED
+
+def assert_event_emmited(tx_exec_info, from_address, name, data):
+    assert Event(
+        from_address=from_address,
+        keys=[get_selector_from_name(name)],
+        data=data,
+    ) in tx_exec_info.raw_events
 
 @pytest.fixture(scope='module')
 def event_loop():
@@ -166,7 +179,14 @@ async def test_change_guardian(account_factory):
     )
 
     # should work with the correct signers
-    await sender.send_transaction(account.contract_address, 'change_guardian', [new_guardian.public_key], [signer, guardian])
+    tx_exec_info = await sender.send_transaction(account.contract_address, 'change_guardian', [new_guardian.public_key], [signer, guardian])
+    
+    assert_event_emmited(
+        tx_exec_info,
+        from_address=account.contract_address,
+        name='guardian_changed',
+        data=[new_guardian.public_key]
+    )
 
     assert (await account.get_guardian().call()).result.guardian == (new_guardian.public_key)
 
@@ -185,7 +205,7 @@ async def test_trigger_escape_guardian(get_starknet, account_factory):
     await sender.send_transaction(account.contract_address, 'trigger_escape_guardian', [], [signer])
 
     escape = (await account.get_escape().call()).result
-    assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.caller_is_signer == 1)
+    assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_GUARDIAN)
 
 @pytest.mark.asyncio
 async def test_trigger_escape_signer_by_guardian(get_starknet, account_factory):
@@ -202,7 +222,7 @@ async def test_trigger_escape_signer_by_guardian(get_starknet, account_factory):
     await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [guardian])
 
     escape = (await account.get_escape().call()).result
-    assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.caller_is_signer == 0)
+    assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_SIGNER)
 
 @pytest.mark.asyncio
 async def test_trigger_escape_signer_by_guardian_backup(get_starknet, account_factory):
@@ -220,7 +240,7 @@ async def test_trigger_escape_signer_by_guardian_backup(get_starknet, account_fa
     await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [0, guardian_backup])
 
     escape = (await account.get_escape().call()).result
-    assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.caller_is_signer == 0)
+    assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_SIGNER)
 
 @pytest.mark.asyncio
 async def test_escape_guardian(get_starknet, account_factory):
@@ -236,7 +256,7 @@ async def test_escape_guardian(get_starknet, account_factory):
     await sender.send_transaction(account.contract_address, 'trigger_escape_guardian', [], [signer])
 
     escape = (await account.get_escape().call()).result
-    assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.caller_is_signer == 1)
+    assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_GUARDIAN)
 
     # should fail to escape before the end of the period
     await assert_revert(
@@ -253,7 +273,7 @@ async def test_escape_guardian(get_starknet, account_factory):
 
     # escape should be cleared
     escape = (await account.get_escape().call()).result
-    assert (escape.active_at == 0 and escape.caller_is_signer == 0)
+    assert (escape.active_at == 0 and escape.type == 0)
 
 @pytest.mark.asyncio
 async def test_escape_signer(get_starknet, account_factory):
@@ -268,7 +288,7 @@ async def test_escape_signer(get_starknet, account_factory):
     # trigger escape
     await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [guardian])
     escape = (await account.get_escape().call()).result
-    assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.caller_is_signer == 0)
+    assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_SIGNER)
 
     # should fail to escape before the end of the period
     await assert_revert(
@@ -285,7 +305,7 @@ async def test_escape_signer(get_starknet, account_factory):
 
     # escape should be cleared
     escape = (await account.get_escape().call()).result
-    assert (escape.active_at == 0 and escape.caller_is_signer == 0)
+    assert (escape.active_at == 0 and escape.type == 0)
 
 @pytest.mark.asyncio
 async def test_cancel_escape(get_starknet, account_factory):
@@ -299,7 +319,7 @@ async def test_cancel_escape(get_starknet, account_factory):
     # trigger escape
     await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [guardian])
     escape = (await account.get_escape().call()).result
-    assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.caller_is_signer == 0)
+    assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_SIGNER)
 
     # should fail to cancel with only the signer
     await assert_revert(
@@ -311,7 +331,7 @@ async def test_cancel_escape(get_starknet, account_factory):
 
     # escape should be cleared
     escape = (await account.get_escape().call()).result
-    assert (escape.active_at == 0 and escape.caller_is_signer == 0)
+    assert (escape.active_at == 0 and escape.type == 0)
 
 @pytest.mark.asyncio
 async def test_is_valid_signature(account_factory):

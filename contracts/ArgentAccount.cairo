@@ -6,7 +6,10 @@ from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.memcpy import memcpy
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
-from starkware.starknet.common.syscalls import call_contract, get_tx_signature, get_contract_address, get_caller_address
+from starkware.starknet.common.syscalls import (
+    call_contract, 
+    get_tx_signature, get_contract_address, get_caller_address, get_block_timestamp
+)
 from starkware.cairo.common.hash_state import (
     hash_init, hash_finalize, hash_update, hash_update_single
 )
@@ -25,7 +28,7 @@ const ESCAPE_GUARDIAN_SELECTOR = 16628893475766329672923030622059061164364694258
 const ESCAPE_SIGNER_SELECTOR = 578307412324655990419134484880427622068887477430675222732446709420063579565
 const CANCEL_ESCAPE_SELECTOR = 992575500541331354489361836180456905167517944319528538469723604173440834912
 
-const ESCAPE_SECURITY_PERIOD = 500 # set to e.g. 7 days in prod
+const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
 
 const FALSE = 0
 const TRUE = 1
@@ -224,7 +227,7 @@ func trigger_escape_guardian{
     assert_guardian_set()
 
     # store new escape
-    let (block_timestamp) = _block_timestamp.read()
+    let (block_timestamp) = get_block_timestamp()
     let new_escape: Escape = Escape(block_timestamp + ESCAPE_SECURITY_PERIOD, TRUE)
     _escape.write(new_escape)
     return()
@@ -248,7 +251,7 @@ func trigger_escape_signer{
     assert (current_escape.active_at * current_escape.caller_is_signer) = 0
 
     # store new escape
-    let (block_timestamp) = _block_timestamp.read()
+    let (block_timestamp) = get_block_timestamp()
     let new_escape: Escape = Escape(block_timestamp + ESCAPE_SECURITY_PERIOD, FALSE)
     _escape.write(new_escape)
     return()
@@ -290,7 +293,7 @@ func escape_guardian{
     assert_guardian_set()
     
     let (current_escape) = _escape.read()
-    let (block_timestamp) = _block_timestamp.read()
+    let (block_timestamp) = get_block_timestamp()
     # assert there is an active escape
     assert_le(current_escape.active_at, block_timestamp)
     # assert the escape was triggered by the signer
@@ -323,7 +326,7 @@ func escape_signer{
     assert_guardian_set()
 
     let (current_escape) = _escape.read()
-    let (block_timestamp) = _block_timestamp.read()
+    let (block_timestamp) = get_block_timestamp()
     # validate there is an active escape
     assert_le(current_escape.active_at, block_timestamp)
     # assert the escape was triggered by the guardian
@@ -563,30 +566,4 @@ func hash_calldata{
         let pedersen_ptr = hash_ptr
         return (res=res)
     end
-end
-
-####################
-# TMP HACK
-####################
-
-@storage_var
-func _block_timestamp() -> (res: felt):
-end
-
-@view
-func get_block_timestamp{
-    syscall_ptr: felt*, 
-    pedersen_ptr: HashBuiltin*,
-    range_check_ptr}() -> (block_timestamp: felt):
-    let (res) = _block_timestamp.read()
-    return (block_timestamp=res)
-end
-
-@external
-func set_block_timestamp{
-    syscall_ptr: felt*, 
-    pedersen_ptr: HashBuiltin*,
-    range_check_ptr}(new_block_timestamp: felt):
-    _block_timestamp.write(new_block_timestamp)
-    return ()
 end

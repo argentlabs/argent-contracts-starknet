@@ -237,7 +237,7 @@ async def test_change_guardian_backup_when_no_guardian(get_starknet):
     )
 
 @pytest.mark.asyncio
-async def test_trigger_escape_guardian(get_starknet, account_factory):
+async def test_trigger_escape_guardian_by_signer(get_starknet, account_factory):
     account = account_factory
     starknet = get_starknet
     sender = TransactionSender(account)
@@ -390,6 +390,53 @@ async def test_escape_signer(get_starknet, account_factory):
     # escape should be cleared
     escape = (await account.get_escape().call()).result
     assert (escape.active_at == 0 and escape.type == 0)
+
+@pytest.mark.asyncio
+async def test_trigger_escape_signer_by_guardian_overridden(get_starknet, account_factory):
+    account = account_factory
+    starknet = get_starknet
+    sender = TransactionSender(account)
+    new_signer = Signer(5555555578895)
+    
+    # reset block_timestamp
+    reset_starknet_block(starknet=starknet)
+
+    # trigger escape
+    await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [guardian])
+    escape = (await account.get_escape().call()).result
+    assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_SIGNER)
+
+    # wait few seconds
+    update_starknet_block(starknet=starknet, block_timestamp=(DEFAULT_TIMESTAMP+100))
+
+    # signer overrides escape
+    await sender.send_transaction(account.contract_address, 'trigger_escape_guardian', [], [signer])
+    escape = (await account.get_escape().call()).result
+    assert (escape.active_at == (DEFAULT_TIMESTAMP + 100 + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_GUARDIAN)
+
+@pytest.mark.asyncio
+async def test_trigger_escape_guardian_by_signer_overridden(get_starknet, account_factory):
+    account = account_factory
+    starknet = get_starknet
+    sender = TransactionSender(account)
+    new_signer = Signer(5555555578895)
+    
+    # reset block_timestamp
+    reset_starknet_block(starknet=starknet)
+
+    # trigger escape
+    await sender.send_transaction(account.contract_address, 'trigger_escape_guardian', [], [signer])
+    escape = (await account.get_escape().call()).result
+    assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_GUARDIAN)
+
+    # wait few seconds
+    update_starknet_block(starknet=starknet, block_timestamp=(DEFAULT_TIMESTAMP+100))
+
+    # guradian tries to override escape => should fail
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [guardian])
+    )
+
 
 @pytest.mark.asyncio
 async def test_cancel_escape(get_starknet, account_factory):

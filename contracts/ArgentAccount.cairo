@@ -286,9 +286,9 @@ func trigger_escape_signer{
     # no escape when there is no guardian set
     assert_guardian_set()
 
-    # no escape if there is an guradian escape triggered by the signer in progress
+    # no escape if there is an guardian escape triggered by the signer in progress
     let (current_escape) = _escape.read()
-    assert current_escape.active_at * (current_escape.type - ESCAPE_TYPE_GUARDIAN) = 0
+    assert current_escape.active_at * (current_escape.type - ESCAPE_TYPE_SIGNER) = 0
 
     # store new escape
     let (block_timestamp) = get_block_timestamp()

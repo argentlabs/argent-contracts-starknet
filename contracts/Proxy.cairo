@@ -1,31 +1,37 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
+from starkware.cairo.common.math import assert_not_zero
 from starkware.starknet.common.syscalls import delegate_call, delegate_l1_handler
 
-# The address of the implementation contract.
-@storage_var
-func impl_address() -> (address : felt):
-end
+from contracts.Upgradable import _get_implementation, _set_implementation
+
+####################
+# CONSTRUCTOR
+####################
 
 @constructor
 func constructor{
-        syscall_ptr : felt*,
-        pedersen_ptr : HashBuiltin*,
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (
-        impl_address_ : felt
+        implementation: felt
     ):
-    impl_address.write(value=impl_address_)
+    _set_implementation(implementation)
     return ()
 end
+
+####################
+# EXTERNAL FUNCTIONS
+####################
 
 @external
 @raw_input
 @raw_output
 func __default__{
-        syscall_ptr : felt*,
-        pedersen_ptr : HashBuiltin*,
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (
         selector : felt,
@@ -35,10 +41,10 @@ func __default__{
         retdata_size : felt,
         retdata : felt*
     ):
-    let (address) = impl_address.read()
+    let (implementation) = _get_implementation()
 
     let (retdata_size : felt, retdata : felt*) = delegate_call(
-        contract_address=address,
+        contract_address=implementation,
         function_selector=selector,
         calldata_size=calldata_size,
         calldata=calldata)
@@ -56,12 +62,26 @@ func __l1_default__{
         calldata_size : felt,
         calldata : felt*
     ):
-    let (address) = impl_address.read()
+    let (implementation) = _get_implementation()
 
     delegate_l1_handler(
-        contract_address=address,
+        contract_address=implementation,
         function_selector=selector,
         calldata_size=calldata_size,
         calldata=calldata)
     return ()
+end
+
+####################
+# VIEW FUNCTIONS
+####################
+
+@view
+func get_implementation{
+        syscall_ptr: felt*, 
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } () -> (implementation: felt):
+    let (implementation) = _get_implementation()
+    return (implementation=implementation)
 end

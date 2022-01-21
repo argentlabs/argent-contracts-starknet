@@ -33,9 +33,9 @@ async def get_starknet():
 async def account_factory(get_starknet):
     starknet = get_starknet
     account_impl = await deploy(starknet, "contracts/ArgentAccount.cairo")
-    account_proxy = await deploy_proxy(starknet, "contracts/Proxy.cairo", "contracts/ArgentAccount.cairo", [account_impl.contract_address])
+    proxy, account_proxy = await deploy_proxy(starknet, "contracts/Proxy.cairo", "contracts/ArgentAccount.cairo", [account_impl.contract_address])
     await account_proxy.initialize(signer.public_key, guardian.public_key).invoke()
-    return account_proxy
+    return account_proxy, proxy, account_impl
 
 @pytest.fixture
 async def dapp_factory(get_starknet):
@@ -45,14 +45,15 @@ async def dapp_factory(get_starknet):
 
 @pytest.mark.asyncio
 async def test_initializer(account_factory):
-    account = account_factory
+    account, proxy, account_impl = account_factory
+    assert (await proxy.get_implementation().call()).result.implementation == (account_impl.contract_address)
     assert (await account.get_signer().call()).result.signer == (signer.public_key)
     assert (await account.get_guardian().call()).result.guardian == (guardian.public_key)
     assert (await account.get_version().call()).result.version == VERSION
 
 @pytest.mark.asyncio
 async def test_call_dapp(account_factory, dapp_factory):
-    account = account_factory
+    account, _, _ = account_factory
     dapp = dapp_factory
     sender = TransactionSender(account)
 
@@ -60,3 +61,15 @@ async def test_call_dapp(account_factory, dapp_factory):
     assert (await dapp.get_number(account.contract_address).call()).result.number == 0
     await sender.send_transaction(dapp.contract_address, 'set_number', [47], [signer, guardian])
     assert (await dapp.get_number(account.contract_address).call()).result.number == 47
+
+@pytest.mark.asyncio
+async def test_upgrade(account_factory):
+    account, proxy, account_impl_1 = account_factory
+    _, _, account_impl_2 = account_factory
+
+    sender = TransactionSender(account)
+
+    assert (await proxy.get_implementation().call()).result.implementation == (account_impl_1.contract_address)
+    await sender.send_transaction(account.contract_address, 'upgrade', [account_impl_2.contract_address], [signer, guardian])
+    assert (await proxy.get_implementation().call()).result.implementation == (account_impl_2.contract_address)
+    

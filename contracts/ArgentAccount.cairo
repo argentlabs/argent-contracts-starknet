@@ -14,6 +14,8 @@ from starkware.cairo.common.hash_state import (
     hash_init, hash_finalize, hash_update, hash_update_single
 )
 
+from contracts.Upgradable import _set_implementation
+
 ####################
 # CONSTANTS
 ####################
@@ -172,7 +174,7 @@ func execute{
 
     # get the signature(s)
     let (sig_len : felt, sig : felt*) = get_tx_signature()
-
+    
     # get self address
     let (self) = get_contract_address()
 
@@ -211,6 +213,21 @@ func execute{
     let (response : felt*) = alloc()
     let (response_len) = execute_list(calls_len, calls, response)
     return (response_len=response_len, response=response)
+end
+
+@external
+func upgrade{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        implementation: felt
+    ):
+    # only called via execute
+    assert_only_self()
+    # change implementation
+    _set_implementation(implementation)
+    return()
 end
 
 @external

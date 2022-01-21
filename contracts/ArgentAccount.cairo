@@ -198,6 +198,7 @@ func change_signer{
     # change signer
     assert_not_zero(new_signer)
     _signer.write(new_signer)
+    signer_changed.emit(new_signer=new_signer)
     return()
 end
 
@@ -247,6 +248,7 @@ func change_guardian_backup{
 
     # change guardian
     _guardian_backup.write(new_guardian)
+    guardian_backup_changed.emit(new_guardian=new_guardian)
     return()
 end
 
@@ -267,6 +269,7 @@ func trigger_escape_guardian{
     let (block_timestamp) = get_block_timestamp()
     let new_escape: Escape = Escape(block_timestamp + ESCAPE_SECURITY_PERIOD, ESCAPE_TYPE_GUARDIAN)
     _escape.write(new_escape)
+    escape_guardian_triggered.emit(active_at=block_timestamp + ESCAPE_SECURITY_PERIOD)
     return()
 end
 
@@ -291,6 +294,7 @@ func trigger_escape_signer{
     let (block_timestamp) = get_block_timestamp()
     let new_escape: Escape = Escape(block_timestamp + ESCAPE_SECURITY_PERIOD, ESCAPE_TYPE_SIGNER)
     _escape.write(new_escape)
+    escape_signer_triggered.emit(active_at=block_timestamp + ESCAPE_SECURITY_PERIOD)
     return()
 end
 
@@ -311,6 +315,7 @@ func cancel_escape{
     # clear escape
     let new_escape: Escape = Escape(0, 0)
     _escape.write(new_escape)
+    escape_canceled.emit()
     return()
 end
 
@@ -343,6 +348,7 @@ func escape_guardian{
     # change guardian
     assert_not_zero(new_guardian)
     _guardian.write(new_guardian)
+    guardian_escaped.emit(new_guardian=new_guardian)
 
     return()
 end
@@ -376,6 +382,7 @@ func escape_signer{
     # change signer
     assert_not_zero(new_signer)
     _signer.write(new_signer)
+    signer_escaped.emit(new_signer=new_signer)
 
     return()
 end

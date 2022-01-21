@@ -156,7 +156,14 @@ async def test_change_signer(account_factory):
     )
 
     # should work with the correct signers
-    await sender.send_transaction(account.contract_address, 'change_signer', [new_signer.public_key], [signer, guardian])
+    tx_exec_info = await sender.send_transaction(account.contract_address, 'change_signer', [new_signer.public_key], [signer, guardian])
+
+    assert_event_emmited(
+        tx_exec_info,
+        from_address=account.contract_address,
+        name='signer_changed',
+        data=[new_signer.public_key]
+    )
 
     assert (await account.get_signer().call()).result.signer == (new_signer.public_key)
 
@@ -191,6 +198,45 @@ async def test_change_guardian(account_factory):
     assert (await account.get_guardian().call()).result.guardian == (new_guardian.public_key)
 
 @pytest.mark.asyncio
+async def test_change_guardian_backup(account_factory):
+    account = account_factory
+    sender = TransactionSender(account)
+    new_guardian_backup = Signer(55555555)
+
+    # should revert with the wrong signer
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'change_guardian_backup', [new_guardian_backup.public_key], [wrong_signer, guardian])
+    )
+
+    # should revert with the wrong guardian signer
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'change_guardian_backup', [new_guardian_backup.public_key], [signer, wrong_guardian])
+    )
+
+    # should work with the correct signers
+    tx_exec_info = await sender.send_transaction(account.contract_address, 'change_guardian_backup', [new_guardian_backup.public_key], [signer, guardian])
+    
+    assert_event_emmited(
+        tx_exec_info,
+        from_address=account.contract_address,
+        name='guardian_backup_changed',
+        data=[new_guardian_backup.public_key]
+    )
+
+    assert (await account.get_guardian_backup().call()).result.guardian_backup == (new_guardian_backup.public_key)
+
+@pytest.mark.asyncio
+async def test_change_guardian_backup_when_no_guardian(get_starknet):
+    starknet = get_starknet
+    account = await deploy(starknet, "contracts/ArgentAccount.cairo", [signer.public_key, 0])
+    sender = TransactionSender(account)
+    new_guardian_backup = Signer(55555555)
+
+    await assert_revert(
+        sender.send_transaction(account.contract_address, 'change_guardian_backup', [new_guardian_backup.public_key], [signer])
+    )
+
+@pytest.mark.asyncio
 async def test_trigger_escape_guardian(get_starknet, account_factory):
     account = account_factory
     starknet = get_starknet
@@ -202,7 +248,14 @@ async def test_trigger_escape_guardian(get_starknet, account_factory):
     escape = (await account.get_escape().call()).result
     assert (escape.active_at == 0)
 
-    await sender.send_transaction(account.contract_address, 'trigger_escape_guardian', [], [signer])
+    tx_exec_info = await sender.send_transaction(account.contract_address, 'trigger_escape_guardian', [], [signer])
+
+    assert_event_emmited(
+        tx_exec_info,
+        from_address=account.contract_address,
+        name='escape_guardian_triggered',
+        data=[DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD]
+    )
 
     escape = (await account.get_escape().call()).result
     assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_GUARDIAN)
@@ -219,7 +272,14 @@ async def test_trigger_escape_signer_by_guardian(get_starknet, account_factory):
     escape = (await account.get_escape().call()).result
     assert (escape.active_at == 0)
 
-    await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [guardian])
+    tx_exec_info = await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [guardian])
+
+    assert_event_emmited(
+        tx_exec_info,
+        from_address=account.contract_address,
+        name='escape_signer_triggered',
+        data=[DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD]
+    )
 
     escape = (await account.get_escape().call()).result
     assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_SIGNER)
@@ -237,7 +297,14 @@ async def test_trigger_escape_signer_by_guardian_backup(get_starknet, account_fa
     escape = (await account.get_escape().call()).result
     assert (escape.active_at == 0)
 
-    await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [0, guardian_backup])
+    tx_exec_info = await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [0, guardian_backup])
+
+    assert_event_emmited(
+        tx_exec_info,
+        from_address=account.contract_address,
+        name='escape_signer_triggered',
+        data=[DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD]
+    )
 
     escape = (await account.get_escape().call()).result
     assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_SIGNER)
@@ -268,7 +335,16 @@ async def test_escape_guardian(get_starknet, account_factory):
 
     # should escape after the security period
     assert (await account.get_guardian().call()).result.guardian == (guardian.public_key)
-    await sender.send_transaction(account.contract_address, 'escape_guardian', [new_guardian.public_key], [signer])
+    
+    tx_exec_info = await sender.send_transaction(account.contract_address, 'escape_guardian', [new_guardian.public_key], [signer])
+
+    assert_event_emmited(
+        tx_exec_info,
+        from_address=account.contract_address,
+        name='guardian_escaped',
+        data=[new_guardian.public_key]
+    )
+
     assert (await account.get_guardian().call()).result.guardian == (new_guardian.public_key)
 
     # escape should be cleared
@@ -300,7 +376,15 @@ async def test_escape_signer(get_starknet, account_factory):
 
     # should escape after the security period
     assert (await account.get_signer().call()).result.signer == (signer.public_key)
-    await sender.send_transaction(account.contract_address, 'escape_signer', [new_signer.public_key], [guardian])
+    tx_exec_info = await sender.send_transaction(account.contract_address, 'escape_signer', [new_signer.public_key], [guardian])
+
+    assert_event_emmited(
+        tx_exec_info,
+        from_address=account.contract_address,
+        name='signer_escaped',
+        data=[new_signer.public_key]
+    )
+
     assert (await account.get_signer().call()).result.signer == (new_signer.public_key)
 
     # escape should be cleared
@@ -327,7 +411,14 @@ async def test_cancel_escape(get_starknet, account_factory):
     )
 
     # cancel escape
-    await sender.send_transaction(account.contract_address, 'cancel_escape', [], [signer, guardian])
+    tx_exec_info = await sender.send_transaction(account.contract_address, 'cancel_escape', [], [signer, guardian])
+
+    assert_event_emmited(
+        tx_exec_info,
+        from_address=account.contract_address,
+        name='escape_canceled',
+        data=[]
+    )
 
     # escape should be cleared
     escape = (await account.get_escape().call()).result

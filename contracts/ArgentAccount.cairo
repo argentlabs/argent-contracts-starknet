@@ -33,9 +33,18 @@ const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
 const ESCAPE_TYPE_GUARDIAN = 0
 const ESCAPE_TYPE_SIGNER = 1
 
+const PREFIX_TRANSACTION = 'StarkNet Transaction'
+
 ####################
 # STRUCTS
 ####################
+
+struct Call:
+   member to: felt
+   member selector: felt
+   member calldata_len: felt
+   member calldata: felt*
+end
 
 struct Escape:
     member active_at: felt
@@ -130,11 +139,9 @@ func execute{
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
-        to: felt,
-        selector: felt,
-        calldata_len: felt,
-        calldata: felt*,
-        nonce: felt
+        calls_len: felt,
+        calls: Call*,
+        nonce
     ) -> (response : felt):
     alloc_locals
 
@@ -148,7 +155,7 @@ func execute{
     let (self) = get_contract_address()
 
     # compute message hash
-    let (message_hash) = get_message_hash(to, selector, calldata_len, calldata, nonce)
+    let (message_hash) = get_execute_hash(to, selector, calldata_len, calldata, nonce)
 
     # rebind pointers
     local syscall_ptr: felt* = syscall_ptr
@@ -563,49 +570,109 @@ func validate_guardian_signature{
     end
 end
 
-func get_message_hash{
+# @notice Computes the hash of a multicall to the `execute` method.
+# @param calls_len The legnth of the array of `Call`
+# @param calls A pointer to the array of `Call`
+# @param nonce The nonce for the multicall transaction
+# @return res The hash of the multicall
+func get_execute_hash{
         syscall_ptr: felt*, 
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (
-        to: felt,
-        selector: felt,
-        calldata_len: felt,
-        calldata: felt*,
+        calls_len: felt,
+        calls: Call*,
         nonce: felt
     ) -> (res: felt):
     alloc_locals
     let (account) = get_contract_address()
-    let (calldata_hash) = hash_calldata(calldata, calldata_len)
+    let (calls_hash) = hash_call_array(calls_len, calls)
     let hash_ptr = pedersen_ptr
     with hash_ptr:
         let (hash_state_ptr) = hash_init()
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, PREFIX_TRANSACTION)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, account)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, to)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, selector)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, calldata_hash)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, calls_hash)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, nonce)
         let (res) = hash_finalize(hash_state_ptr)
         let pedersen_ptr = hash_ptr
         return (res=res)
     end
-    
 end
 
-func hash_calldata{
+# @notice Computes the hash of an array of `Call`
+# @param calls_len The legnth of the array of `Call`
+# @param calls A pointer to the array of `Call`
+# @return res The hash of the array of `Call`
+func hash_call_array{
         pedersen_ptr: HashBuiltin*
     }(
-        calldata: felt*,
-        calldata_size: felt
-    ) -> (res: felt):
+        calls_len: felt,
+        calls: Call*
+    ) -> (
+        res: felt
+    ):
+    alloc_locals
+
+    let (hash_array : felt*) = alloc()
+    hash_call_loop(calls_len, calls, hash_array)
+
     let hash_ptr = pedersen_ptr
     with hash_ptr:
         let (hash_state_ptr) = hash_init()
-        let (hash_state_ptr) = hash_update(
-            hash_state_ptr,
-            calldata,
-            calldata_size
-        )
+        let (hash_state_ptr) = hash_update(hash_state_ptr, hash_array, calls_len)
+        let (res) = hash_finalize(hash_state_ptr)
+        let pedersen_ptr = hash_ptr
+        return (res=res)
+    end
+end
+
+# @notice Turns an array of `Call` into an array of `hash(Call)`
+# @param calls_len The legnth of the array of `Call`
+# @param calls A pointer to the array of `Call`
+# @param hash_array A pointer to the array of `hash(Call)`
+func hash_call_loop{
+        pedersen_ptr: HashBuiltin*
+    } (
+        calls_len: felt,
+        calls: Call*,
+        hash_array: felt*
+    ):
+    if calls_len == 0:
+        return ()
+    end
+    let this_call = [calls]
+    let (calldata_hash) = hash_calldata(this_call.calldata_len, this_call.calldata)
+    let hash_ptr = pedersen_ptr
+    with hash_ptr:
+        let (hash_state_ptr) = hash_init()
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, this_call.to)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, this_call.selector)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, calldata_hash)
+        let (res) = hash_finalize(hash_state_ptr)
+        let pedersen_ptr = hash_ptr
+        assert [hash_array] = res
+    end
+    hash_call_loop(calls_len - 1, calls + 1, hash_array + 1)
+    return()
+end
+
+# @notice Computes the hash of calldata as an array of felt
+# @param calldata_len The length of the calldata array
+# @param calldata A pointer to the calldata array
+# @return the hash of the calldata
+func hash_calldata{
+        pedersen_ptr: HashBuiltin*
+    } (
+        calldata_len: felt,
+        calldata: felt*,
+    ) -> (
+        res: felt
+    ):
+    let hash_ptr = pedersen_ptr
+    with hash_ptr:
+        let (hash_state_ptr) = hash_init()
+        let (hash_state_ptr) = hash_update(hash_state_ptr, calldata, calldata_len)
         let (res) = hash_finalize(hash_state_ptr)
         let pedersen_ptr = hash_ptr
         return (res=res)

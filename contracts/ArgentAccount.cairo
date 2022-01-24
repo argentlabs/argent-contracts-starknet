@@ -290,9 +290,11 @@ func trigger_escape_signer{
     let (current_escape) = _escape.read()
     assert current_escape.active_at * (current_escape.type - ESCAPE_TYPE_SIGNER) = 0
 
+    # if no current_escape, active_at = 0 => assert success
+
     # if current_escape exists (active_at > 0)
-    # and current_escape is type ESCAPE_TYPE_SIGNER (i.e. guardian trying to escape signer)
-    # signer is allowed to override the escape
+    # and current_escape is type ESCAPE_TYPE_GUARDIAN (i.e. signer trying to escape guardian)
+    # guardian is not allowed to override the escape => assert fails
 
     # store new escape
     let (block_timestamp) = get_block_timestamp()

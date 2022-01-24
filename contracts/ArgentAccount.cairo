@@ -13,6 +13,7 @@ from starkware.starknet.common.syscalls import (
 from starkware.cairo.common.hash_state import (
     hash_init, hash_finalize, hash_update, hash_update_single
 )
+from contracts.utils.array import array_concat
 
 ####################
 # CONSTANTS
@@ -142,7 +143,10 @@ func execute{
         calls_len: felt,
         calls: Call*,
         nonce
-    ) -> (response : felt):
+    ) -> (
+        response_len: felt,
+        response: felt*
+    ):
     alloc_locals
 
     # validate and bump nonce
@@ -155,7 +159,7 @@ func execute{
     let (self) = get_contract_address()
 
     # compute message hash
-    let (message_hash) = get_execute_hash(to, selector, calldata_len, calldata, nonce)
+    let (message_hash) = get_execute_hash(calls_len, calls, nonce)
 
     # rebind pointers
     local syscall_ptr: felt* = syscall_ptr
@@ -182,13 +186,8 @@ func execute{
     
     # execute call
     do_execute:
-    let response = call_contract(
-        contract_address=to,
-        function_selector=selector,
-        calldata_size=calldata_len,
-        calldata=calldata
-    )
-    return (response=response.retdata_size)
+    let (response_len, response) = execute_list(calls_len, calls)
+    return (response_len=response_len, response=response)
 end
 
 @external
@@ -570,6 +569,41 @@ func validate_guardian_signature{
     end
 end
 
+func execute_list{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        calls_len: felt,
+        calls: Call*
+    ) -> (
+        response_len: felt,
+        reponse: felt*
+    ):
+    alloc_locals
+
+    # if no more calls
+    if calls_len == 0:
+       let (res : felt*) = alloc()
+       return (0, res)
+    end
+    
+    # do the current call
+    let this_call: Call = [calls]
+    let this_res = call_contract(
+        contract_address=this_call.to,
+        function_selector=this_call.selector,
+        calldata_size=this_call.calldata_len,
+        calldata=this_call.calldata
+    )
+    # do the next calls recursively
+    let (response_len, response) = execute_list(calls_len - 1, calls + (2 + this_call.calldata_len))
+    # concat the results at the end of the current call's result
+    (response_len, response) = array_concat(this_res.retdata_size, this_res.retdata, res_len, res)
+    # return the concatenated response
+    return (response_len=response_len, response=response)
+end
+
 # @notice Computes the hash of a multicall to the `execute` method.
 # @param calls_len The legnth of the array of `Call`
 # @param calls A pointer to the array of `Call`
@@ -653,7 +687,7 @@ func hash_call_loop{
         let pedersen_ptr = hash_ptr
         assert [hash_array] = res
     end
-    hash_call_loop(calls_len - 1, calls + 1, hash_array + 1)
+    hash_call_loop(calls_len - 1, calls + Call.SIZE, hash_array + 1)
     return()
 end
 

@@ -392,7 +392,7 @@ async def test_escape_signer(get_starknet, account_factory):
     assert (escape.active_at == 0 and escape.type == 0)
 
 @pytest.mark.asyncio
-async def test_trigger_escape_signer_by_guardian_overridden(get_starknet, account_factory):
+async def test_signer_overrides_trigger_escape_signer(get_starknet, account_factory):
     account = account_factory
     starknet = get_starknet
     sender = TransactionSender(account)
@@ -415,7 +415,7 @@ async def test_trigger_escape_signer_by_guardian_overridden(get_starknet, accoun
     assert (escape.active_at == (DEFAULT_TIMESTAMP + 100 + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_GUARDIAN)
 
 @pytest.mark.asyncio
-async def test_trigger_escape_guardian_by_signer_overridden(get_starknet, account_factory):
+async def test_guardian_overrides_trigger_escape_guardian(get_starknet, account_factory):
     account = account_factory
     starknet = get_starknet
     sender = TransactionSender(account)

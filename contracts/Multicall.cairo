@@ -2,6 +2,8 @@
 
 from starkware.starknet.common.syscalls import call_contract
 from starkware.cairo.common.alloc import alloc
+from starkware.cairo.common.memcpy import memcpy
+
 
 #########################################################################
 # The Multicall contract can call an array of view methods on different
@@ -59,7 +61,7 @@ func call_loop{
         calldata=&[calls + 3]
     )
     
-    array_copy(result, response.retdata_size, response.retdata)
+    memcpy(result, response.retdata, response.retdata_size)
 
     let (len) = call_loop(
         calls_len=calls_len - (3 + [calls + 2]),
@@ -68,25 +70,3 @@ func call_loop{
     )
     return (len + response.retdata_size)
 end
-
-func array_copy{
-        syscall_ptr: felt*,
-        range_check_ptr
-    } (
-        a: felt*,
-        b_len: felt,
-        b: felt*
-    ) -> ():
-
-    assert [a] = [b]
-
-    if b_len == 1:
-        return ()
-    end
-
-    return array_copy(
-        a=a+1,
-        b_len=b_len-1,
-        b=b+1
-    )
-end 

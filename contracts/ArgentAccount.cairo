@@ -184,9 +184,10 @@ func execute{
     validate_signer_signature(message_hash, sig, sig_len)
     validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
     
-    # execute call
+    # execute calls
     do_execute:
-    let (response_len, response) = execute_list(calls_len, calls)
+    let (response : felt*) = alloc()
+    let (response_len) = execute_list(calls_len, calls, response)
     return (response_len=response_len, response=response)
 end
 
@@ -569,39 +570,42 @@ func validate_guardian_signature{
     end
 end
 
+# @notice Executes a list of contract calls recursively.
+# @param calls_len The number of calls to execute
+# @param calls A pointer to the first call to execute
+# @param response The array of felt to pupulate with the returned data
+# @return response_len The size of the returned data
 func execute_list{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (
         calls_len: felt,
-        calls: Call*
+        calls: Call*,
+        reponse: felt*
     ) -> (
         response_len: felt,
-        reponse: felt*
     ):
     alloc_locals
 
     # if no more calls
     if calls_len == 0:
-       let (res : felt*) = alloc()
-       return (0, res)
+       return ()
     end
     
     # do the current call
     let this_call: Call = [calls]
-    let this_res = call_contract(
+    let res = call_contract(
         contract_address=this_call.to,
         function_selector=this_call.selector,
         calldata_size=this_call.calldata_len,
         calldata=this_call.calldata
     )
+    # copy the result in response
+    memcpy(reponse, res.retdata, res.retdata_size)
     # do the next calls recursively
-    let (response_len, response) = execute_list(calls_len - 1, calls + (2 + this_call.calldata_len))
-    # concat the results at the end of the current call's result
-    (response_len, response) = array_concat(this_res.retdata_size, this_res.retdata, res_len, res)
-    # return the concatenated response
-    return (response_len=response_len, response=response)
+    let (response_len) = execute_list(calls_len - 1, calls + (2 + this_call.calldata_len), reponse + res.retdata_size)
+    return (response_len + res.retdata_size)
 end
 
 # @notice Computes the hash of a multicall to the `execute` method.

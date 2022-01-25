@@ -13,7 +13,6 @@ from starkware.starknet.common.syscalls import (
 from starkware.cairo.common.hash_state import (
     hash_init, hash_finalize, hash_update, hash_update_single
 )
-from contracts.utils.array import array_concat
 
 ####################
 # CONSTANTS
@@ -40,11 +39,18 @@ const PREFIX_TRANSACTION = 'StarkNet Transaction'
 # STRUCTS
 ####################
 
+struct Call_Input:
+    member to: felt
+    member selector: felt
+    member data_offset: felt
+    member data_len: felt
+end
+
 struct Call:
-   member to: felt
-   member selector: felt
-   member calldata_len: felt
-   member calldata: felt*
+    member to: felt
+    member selector: felt
+    member calldata_len: felt
+    member calldata: felt*
 end
 
 struct Escape:
@@ -140,14 +146,23 @@ func execute{
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
-        calls_len: felt,
-        calls: Call*,
+        call_input_len: felt,
+        call_input: Call_Input*,
+        calldata_len: felt,
+        calldata: felt*,
         nonce
     ) -> (
         response_len: felt,
         response: felt*
     ):
     alloc_locals
+
+    ############### TMP #############################
+    # parse inputs to an array of 'Call' struct
+    let (calls : Call*) = alloc()
+    parse_input(call_input_len, call_input, calldata, calls)
+    let calls_len = call_input_len
+    #################################################
 
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
@@ -166,24 +181,33 @@ func execute{
     local range_check_ptr = range_check_ptr
     local pedersen_ptr: HashBuiltin* = pedersen_ptr
 
-    if to == self:
-        tempvar signer_condition = (selector - ESCAPE_GUARDIAN_SELECTOR) * (selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
-        tempvar guardian_condition = (selector - ESCAPE_SIGNER_SELECTOR) * (selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
-        if signer_condition == 0:
-            # validate signer signature
-            validate_signer_signature(message_hash, sig, sig_len)
-            jmp do_execute
+    local ec_ptr: SignatureBuiltin* = ecdsa_ptr
+    if calls_len == 1:
+        if calls[0].to == self:
+            tempvar signer_condition = (calls[0].selector - ESCAPE_GUARDIAN_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
+            tempvar guardian_condition = (calls[0].selector - ESCAPE_SIGNER_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
+            if signer_condition == 0:
+                # validate signer signature
+                validate_signer_signature{ecdsa_ptr=ec_ptr}(message_hash, sig, sig_len)
+                jmp do_execute
+            end
+            if guardian_condition == 0:
+                # validate guardian signature
+                validate_guardian_signature{ecdsa_ptr=ec_ptr}(message_hash, sig, sig_len)
+                jmp do_execute
+            end
         end
-        if guardian_condition == 0:
-            # validate guardian signature
-            validate_guardian_signature(message_hash, sig, sig_len)
-            jmp do_execute
-        end
+    else:
+        # make sure no call is to the account
+        assert_no_self_call(self, calls_len, calls)
     end
     # validate signer and guardian signatures
-    validate_signer_signature(message_hash, sig, sig_len)
-    validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
+    validate_signer_signature{ecdsa_ptr=ec_ptr}(message_hash, sig, sig_len)
+    validate_guardian_signature{ecdsa_ptr=ec_ptr}(message_hash, sig + 2, sig_len - 2)
     
+    # rebind pointer
+    ecdsa_ptr = ec_ptr
+
     # execute calls
     do_execute:
     let (response : felt*) = alloc()
@@ -494,6 +518,19 @@ func assert_guardian_set{
     return()
 end
 
+func assert_no_self_call(
+        self: felt,
+        calls_len: felt,
+        calls: Call*
+    ):
+    if calls_len == 0:
+        return ()
+    end
+    assert_not_zero(calls[0].to - self)
+    assert_no_self_call(self, calls_len - 1, calls + Call.SIZE)
+    return()
+end
+
 func validate_and_bump_nonce{
         syscall_ptr: felt*, 
         pedersen_ptr: HashBuiltin*,
@@ -590,7 +627,7 @@ func execute_list{
 
     # if no more calls
     if calls_len == 0:
-       return ()
+       return (0)
     end
     
     # do the current call
@@ -715,4 +752,33 @@ func hash_calldata{
         let pedersen_ptr = hash_ptr
         return (res=res)
     end
+end
+
+func parse_input{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        input_len: felt,
+        input: Call_Input*,
+        calldata: felt*,
+        calls: Call*
+    ):
+    alloc_locals
+
+    # if no more inputs
+    if input_len == 0:
+       return ()
+    end
+    
+    # parse the first input
+    assert [calls] = Call(
+            to=[input].to,
+            selector=[input].selector,
+            calldata_len=[input].data_len,
+            calldata=calldata + [input].data_offset)
+    
+    # parse the other inputs recursively
+    parse_input(input_len - 1, input + Call_Input.SIZE, calldata, calls + Call.SIZE)
+    return ()
 end

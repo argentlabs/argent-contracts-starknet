@@ -25,10 +25,10 @@ Under this model we can build a simple yet highly secure non-custodial wallet.
 | Change Signer | X | X | |
 | Change Guardian | X | X | |
 | Change Guardian Backup | X | X | |
-| Trigger Escape Guardian | X | | |
-| Trigger Escape Signer | | X | |
-| Escape Guardian | X | | After security period
-| Escape Signer | | X | After security period
+| Trigger Escape Guardian | X | | Can override an escape signer in progress |
+| Trigger Escape Signer | | X | Fail if escape guardian in progress |
+| Escape Guardian | X | | After security period |
+| Escape Signer | | X | After security period |
 | Cancel Escape | X | X | |
 
 

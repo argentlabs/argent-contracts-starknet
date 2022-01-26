@@ -136,11 +136,17 @@ async def test_multicall(account_factory, dapp_factory):
     dapp = dapp_factory
     sender = TransactionSender(account)
 
-    calls = [(dapp.contract_address, 'set_number', [47]), (dapp.contract_address, 'increase_number', [10])]
+    # should reverts when one of the call is to the account
+    await assert_revert(
+        sender.send_transaction([(dapp.contract_address, 'set_number', [47]), (account.contract_address, 'trigger_escape_guardian', [])], [signer, guardian])
+    )
+    await assert_revert(
+        sender.send_transaction([(account.contract_address, 'trigger_escape_guardian', []), (dapp.contract_address, 'set_number', [47])], [signer, guardian])
+    )
 
     # should call the dapp
     assert (await dapp.get_number(account.contract_address).call()).result.number == 0
-    await sender.send_transaction(calls, [signer, guardian])
+    await sender.send_transaction([(dapp.contract_address, 'set_number', [47]), (dapp.contract_address, 'increase_number', [10])], [signer, guardian])
     assert (await dapp.get_number(account.contract_address).call()).result.number == 57
 
 @pytest.mark.asyncio

@@ -176,24 +176,18 @@ func execute{
     # compute message hash
     let (message_hash) = get_execute_hash(calls_len, calls, nonce)
 
-    # rebind pointers
-    local syscall_ptr: felt* = syscall_ptr
-    local range_check_ptr = range_check_ptr
-    local pedersen_ptr: HashBuiltin* = pedersen_ptr
-
-    local ec_ptr: SignatureBuiltin* = ecdsa_ptr
     if calls_len == 1:
         if calls[0].to == self:
             tempvar signer_condition = (calls[0].selector - ESCAPE_GUARDIAN_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
             tempvar guardian_condition = (calls[0].selector - ESCAPE_SIGNER_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
             if signer_condition == 0:
                 # validate signer signature
-                validate_signer_signature{ecdsa_ptr=ec_ptr}(message_hash, sig, sig_len)
+                validate_signer_signature(message_hash, sig, sig_len)
                 jmp do_execute
             end
             if guardian_condition == 0:
                 # validate guardian signature
-                validate_guardian_signature{ecdsa_ptr=ec_ptr}(message_hash, sig, sig_len)
+                validate_guardian_signature(message_hash, sig, sig_len)
                 jmp do_execute
             end
         end
@@ -202,14 +196,15 @@ func execute{
         assert_no_self_call(self, calls_len, calls)
     end
     # validate signer and guardian signatures
-    validate_signer_signature{ecdsa_ptr=ec_ptr}(message_hash, sig, sig_len)
-    validate_guardian_signature{ecdsa_ptr=ec_ptr}(message_hash, sig + 2, sig_len - 2)
-    
-    # rebind pointer
-    ecdsa_ptr = ec_ptr
+    validate_signer_signature(message_hash, sig, sig_len)
+    validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
 
     # execute calls
     do_execute:
+    local ecdsa_ptr: SignatureBuiltin* = ecdsa_ptr
+    local syscall_ptr: felt* = syscall_ptr
+    local range_check_ptr = range_check_ptr
+    local pedersen_ptr: HashBuiltin* = pedersen_ptr
     let (response : felt*) = alloc()
     let (response_len) = execute_list(calls_len, calls, response)
     return (response_len=response_len, response=response)
@@ -641,7 +636,7 @@ func execute_list{
     # copy the result in response
     memcpy(reponse, res.retdata, res.retdata_size)
     # do the next calls recursively
-    let (response_len) = execute_list(calls_len - 1, calls + (2 + this_call.calldata_len), reponse + res.retdata_size)
+    let (response_len) = execute_list(calls_len - 1, calls + Call.SIZE, reponse + res.retdata_size)
     return (response_len + res.retdata_size)
 end
 

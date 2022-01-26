@@ -28,6 +28,20 @@ func set_number{
     return ()
 end
 
+@external
+func increase_number{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    }(
+        number: felt
+    ):
+    let (user) = get_caller_address()
+    let (val) = stored_number.read(user)
+    stored_number.write(user, val + number)
+    return ()
+end
+
 ####################
 # VIEW FUNCTIONS
 ####################

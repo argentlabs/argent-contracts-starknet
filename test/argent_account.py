@@ -118,7 +118,7 @@ async def test_call_dapp_no_guardian(get_starknet, dapp_factory):
 
     # should reverts calls that require the guardian to be set
     await assert_revert(
-        sender.send_transaction([(account_no_guardian.contract_address, 'trigger_escape_guardian', [])], [signer]),
+        sender.send_transaction([(account_no_guardian.contract_address, 'trigger_escape_guardian', [])], [new_signer]),
         "guardian must be set"
     )
 

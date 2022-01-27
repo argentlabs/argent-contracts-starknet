@@ -284,10 +284,9 @@ func trigger_escape_guardian{
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } ():
-    alloc_locals
-    
     # only called via execute
     assert_only_self()
+
     # no escape when the guardian is not set
     assert_guardian_set()
 
@@ -305,10 +304,9 @@ func trigger_escape_signer{
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } ():
-    alloc_locals
-
     # only called via execute
     assert_only_self()
+    
     # no escape when there is no guardian set
     assert_guardian_set()
 
@@ -493,9 +491,7 @@ end
 ####################
 
 func assert_only_self{
-        syscall_ptr: felt*,
-        pedersen_ptr: HashBuiltin*,
-        range_check_ptr
+        syscall_ptr: felt*
     } () -> ():
     let (self) = get_contract_address()
     let (caller_address) = get_caller_address()
@@ -608,9 +604,7 @@ end
 # @param response The array of felt to pupulate with the returned data
 # @return response_len The size of the returned data
 func execute_list{
-        syscall_ptr: felt*,
-        pedersen_ptr: HashBuiltin*,
-        range_check_ptr
+        syscall_ptr: felt*
     } (
         calls_len: felt,
         calls: Call*,
@@ -647,8 +641,7 @@ end
 # @return res The hash of the multicall
 func get_execute_hash{
         syscall_ptr: felt*, 
-        pedersen_ptr: HashBuiltin*,
-        range_check_ptr
+        pedersen_ptr: HashBuiltin*
     } (
         calls_len: felt,
         calls: Call*,

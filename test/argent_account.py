@@ -5,7 +5,6 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.business_logic.state import BlockInfo
-from starkware.starknet.business_logic.transaction_execution_objects import Event
 from starkware.starknet.compiler.compile import get_selector_from_name
 from utils.Signer import Signer
 from utils.utilities import deploy, assert_revert, str_to_felt, assert_event_emmited

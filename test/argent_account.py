@@ -217,16 +217,16 @@ async def test_change_guardian_backup(account_factory):
 
     # should revert with the wrong signer
     await assert_revert(
-        sender.send_transaction(account.contract_address, 'change_guardian_backup', [new_guardian_backup.public_key], [wrong_signer, guardian])
+        sender.send_transaction([(account.contract_address, 'change_guardian_backup', [new_guardian_backup.public_key])], [wrong_signer, guardian])
     )
 
     # should revert with the wrong guardian signer
     await assert_revert(
-        sender.send_transaction(account.contract_address, 'change_guardian_backup', [new_guardian_backup.public_key], [signer, wrong_guardian])
+        sender.send_transaction([(account.contract_address, 'change_guardian_backup', [new_guardian_backup.public_key])], [signer, wrong_guardian])
     )
 
     # should work with the correct signers
-    tx_exec_info = await sender.send_transaction(account.contract_address, 'change_guardian_backup', [new_guardian_backup.public_key], [signer, guardian])
+    tx_exec_info = await sender.send_transaction([(account.contract_address, 'change_guardian_backup', [new_guardian_backup.public_key])], [signer, guardian])
     
     assert_event_emmited(
         tx_exec_info,
@@ -245,7 +245,7 @@ async def test_change_guardian_backup_when_no_guardian(get_starknet):
     new_guardian_backup = Signer(55555555)
 
     await assert_revert(
-        sender.send_transaction(account.contract_address, 'change_guardian_backup', [new_guardian_backup.public_key], [signer])
+        sender.send_transaction([(account.contract_address, 'change_guardian_backup', [new_guardian_backup.public_key])], [signer])
     )
 
 @pytest.mark.asyncio
@@ -414,7 +414,7 @@ async def test_signer_overrides_trigger_escape_signer(get_starknet, account_fact
     reset_starknet_block(starknet=starknet)
 
     # trigger escape
-    await sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [guardian])
+    await sender.send_transaction([(account.contract_address, 'trigger_escape_signer', [])], [guardian])
     escape = (await account.get_escape().call()).result
     assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_SIGNER)
 
@@ -422,7 +422,7 @@ async def test_signer_overrides_trigger_escape_signer(get_starknet, account_fact
     update_starknet_block(starknet=starknet, block_timestamp=(DEFAULT_TIMESTAMP+100))
 
     # signer overrides escape
-    await sender.send_transaction(account.contract_address, 'trigger_escape_guardian', [], [signer])
+    await sender.send_transaction([(account.contract_address, 'trigger_escape_guardian', [])], [signer])
     escape = (await account.get_escape().call()).result
     assert (escape.active_at == (DEFAULT_TIMESTAMP + 100 + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_GUARDIAN)
 
@@ -437,7 +437,7 @@ async def test_guardian_overrides_trigger_escape_guardian(get_starknet, account_
     reset_starknet_block(starknet=starknet)
 
     # trigger escape
-    await sender.send_transaction(account.contract_address, 'trigger_escape_guardian', [], [signer])
+    await sender.send_transaction([(account.contract_address, 'trigger_escape_guardian', [])], [signer])
     escape = (await account.get_escape().call()).result
     assert (escape.active_at == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_GUARDIAN)
 
@@ -446,7 +446,7 @@ async def test_guardian_overrides_trigger_escape_guardian(get_starknet, account_
 
     # guradian tries to override escape => should fail
     await assert_revert(
-        sender.send_transaction(account.contract_address, 'trigger_escape_signer', [], [guardian])
+        sender.send_transaction([(account.contract_address, 'trigger_escape_signer', [])], [guardian])
     )
 
 

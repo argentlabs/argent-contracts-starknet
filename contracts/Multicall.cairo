@@ -12,13 +12,6 @@ from starkware.cairo.common.memcpy import memcpy
 # multicall to succeed.  
 #########################################################################
 
-struct Call:
-    member contract: felt
-    member selector: felt
-    member calldata_len: felt
-    member calldata: felt*
-end
-
 @view
 func multicall{
         syscall_ptr: felt*,

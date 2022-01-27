@@ -8,7 +8,7 @@ from starkware.starknet.business_logic.state import BlockInfo
 from starkware.starknet.business_logic.transaction_execution_objects import Event
 from starkware.starknet.compiler.compile import get_selector_from_name
 from utils.Signer import Signer
-from utils.utilities import deploy, assert_revert
+from utils.utilities import deploy, assert_revert, str_to_felt, assert_event_emmited
 from utils.TransactionSender import TransactionSender
 
 LOGGER = logging.getLogger(__name__)
@@ -22,17 +22,11 @@ wrong_guardian = Signer(6767676767)
 
 DEFAULT_TIMESTAMP = 1640991600
 ESCAPE_SECURITY_PERIOD = 24*7*60*60
-VERSION = 206933470768 # '0.2.0' = 30 2E 32 2E 30 = 0x302E322E30 = 206933470768
+
+VERSION = str_to_felt('0.2.0')
 
 ESCAPE_TYPE_GUARDIAN = 0
 ESCAPE_TYPE_SIGNER = 1
-
-def assert_event_emmited(tx_exec_info, from_address, name, data):
-    assert Event(
-        from_address=from_address,
-        keys=[get_selector_from_name(name)],
-        data=data,
-    ) in tx_exec_info.raw_events
 
 @pytest.fixture(scope='module')
 def event_loop():

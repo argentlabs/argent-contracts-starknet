@@ -21,7 +21,7 @@ async def get_starknet():
 @pytest.mark.asyncio
 async def test_message_hash(get_starknet):
     starknet = get_starknet
-    eip712 = await deploy(starknet, "contracts/StructHash.cairo")
+    eip712 = await deploy(starknet, "contracts/test/StructHash.cairo")
 
     response = await eip712.test().call()
 

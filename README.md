@@ -6,7 +6,7 @@
 
 The account is a 2-of-2 custom multisig where the `signer` key is typically stored on the user's phone and the `guardian` key is managed by an off-chain service to enable fraud monitoring (e.g. trusted contacts, daily limits, etc) and recovery. More specifically, the `guardian` acts both as a co-validator for typical operations of the wallet, and as the trusted actor that can recover the wallet in case the `signer` key is lost or compromised.
 
-The user can always opt-out of the guardian service and manage the guardian key himself. Alternatively he can add a second `guardian_backup` key to the account that has the same role as the `guardian` and can be used as the ultimate censorship resistance guarantee.
+The user can always opt-out of the guardian service and manage the guardian key himself. Alternatively he/she can add a second `guardian_backup` key to the account that has the same role as the `guardian` and can be used as the ultimate censorship resistance guarantee.
 
 Normal operations of the wallet (`execute`, `change_signer`, `change_guardian`, `change_guardian_backup`, `validate_guardian_signature`, `cancel_escape`) require the approval of both parties to be executed.
 

@@ -1,48 +1,31 @@
 %lang starknet
 
-from starkware.starknet.common.syscalls import call_contract
+from starkware.starknet.common.syscalls import call_contract, get_block_number
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.memcpy import memcpy
-
 
 #########################################################################
 # The Multicall contract can call an array of view methods on different
 # contracts and return the aggregate response as an array.
-# Each view method being called must retrun a single felt for the 
-# multicall to succeed.  
+# Each view method being called must return a single felt for the
+# multicall to succeed.
 #########################################################################
 
 @view
-func multicall{
-        syscall_ptr: felt*,
-        range_check_ptr
-    } (
-        calls_len: felt,
-        calls: felt*
-    ) -> (result_len: felt, result: felt*):
+func aggregate{syscall_ptr : felt*, range_check_ptr}(calls_len : felt, calls : felt*) -> (
+        block_number : felt, result_len : felt, result : felt*):
     alloc_locals
 
     let (result : felt*) = alloc()
-    let (result_len) = call_loop(
-        calls_len=calls_len,
-        calls=calls,
-        result=result
-    )
+    let (result_len) = call_loop(calls_len=calls_len, calls=calls, result=result)
+    let (block_number) = get_block_number()
 
-    return (result_len=result_len, result=result)
-
+    return (block_number=block_number, result_len=result_len, result=result)
 end
 
-func call_loop{
-        syscall_ptr: felt*,
-        range_check_ptr
-    } (
-        calls_len: felt,
-        calls: felt*,
-        result: felt*
-    ) -> (result_len: felt):
-
-    if calls_len == 0: 
+func call_loop{syscall_ptr : felt*, range_check_ptr}(
+        calls_len : felt, calls : felt*, result : felt*) -> (result_len : felt):
+    if calls_len == 0:
         return (0)
     end
     alloc_locals
@@ -51,15 +34,13 @@ func call_loop{
         contract_address=[calls],
         function_selector=[calls + 1],
         calldata_size=[calls + 2],
-        calldata=&[calls + 3]
-    )
-    
+        calldata=&[calls + 3])
+
     memcpy(result, response.retdata, response.retdata_size)
 
     let (len) = call_loop(
         calls_len=calls_len - (3 + [calls + 2]),
-        calls = calls + (3 + [calls + 2]),
-        result=result + response.retdata_size
-    )
+        calls=calls + (3 + [calls + 2]),
+        result=result + response.retdata_size)
     return (len + response.retdata_size)
 end

@@ -242,7 +242,9 @@ func change_guardian{
     # assert !(guardian_backup != 0 && new_guardian == 0)
     if new_guardian == 0:
         let (guardian_backup) = _guardian_backup.read()
-        assert guardian_backup = 0
+        with_attr error_message("new guardian cannot be null"):
+            assert guardian_backup = 0
+        end
         tempvar syscall_ptr: felt* = syscall_ptr
         tempvar range_check_ptr = range_check_ptr
         tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
@@ -312,7 +314,9 @@ func trigger_escape_signer{
 
     # no escape if there is an guardian escape triggered by the signer in progress
     let (current_escape) = _escape.read()
-    assert current_escape.active_at * (current_escape.type - ESCAPE_TYPE_SIGNER) = 0
+    with_attr error_message("cannot overrride signer escape"):
+        assert current_escape.active_at * (current_escape.type - ESCAPE_TYPE_SIGNER) = 0
+    end
 
     # store new escape
     let (block_timestamp) = get_block_timestamp()
@@ -334,7 +338,9 @@ func cancel_escape{
 
     # validate there is an active escape
     let (current_escape) = _escape.read()
-    assert_not_zero(current_escape.active_at)
+    with_attr error_message("no escape to cancel"):
+        assert_not_zero(current_escape.active_at)
+    end
 
     # clear escape
     let new_escape: Escape = Escape(0, 0)
@@ -360,10 +366,12 @@ func escape_guardian{
     
     let (current_escape) = _escape.read()
     let (block_timestamp) = get_block_timestamp()
-    # assert there is an active escape
-    assert_le(current_escape.active_at, block_timestamp)
-    # assert the escape was triggered by the signer
-    assert current_escape.type = ESCAPE_TYPE_GUARDIAN
+    with_attr error_message("escape is not valid"):
+        # assert there is an active escape
+        assert_le(current_escape.active_at, block_timestamp)
+        # assert the escape was triggered by the signer
+        assert current_escape.type = ESCAPE_TYPE_GUARDIAN
+    end
 
     # clear escape
     let new_escape: Escape = Escape(0, 0)
@@ -394,10 +402,12 @@ func escape_signer{
 
     let (current_escape) = _escape.read()
     let (block_timestamp) = get_block_timestamp()
-    # validate there is an active escape
-    assert_le(current_escape.active_at, block_timestamp)
-    # assert the escape was triggered by the guardian
-    assert current_escape.type = ESCAPE_TYPE_SIGNER
+    with_attr error_message("escape is not valid"):
+        # validate there is an active escape
+        assert_le(current_escape.active_at, block_timestamp)
+        # assert the escape was triggered by the guardian
+        assert current_escape.type = ESCAPE_TYPE_SIGNER
+    end
 
     # clear escape
     let new_escape: Escape = Escape(0, 0)
@@ -495,7 +505,9 @@ func assert_only_self{
     } () -> ():
     let (self) = get_contract_address()
     let (caller_address) = get_caller_address()
-    assert self = caller_address
+    with_attr error_message("must be called via execute"):
+        assert self = caller_address
+    end
     return()
 end
 
@@ -505,7 +517,9 @@ func assert_guardian_set{
         range_check_ptr
     } ():
     let (guardian) = _guardian.read()
-    assert_not_zero(guardian)
+    with_attr error_message("guardian must be set"):
+        assert_not_zero(guardian)
+    end
     return()
 end
 
@@ -530,7 +544,9 @@ func validate_and_bump_nonce{
         message_nonce: felt
     ) -> ():
     let (current_nonce) = _current_nonce.read()
-    assert current_nonce = message_nonce
+    with_attr error_message("nonce invalid"):
+        assert current_nonce = message_nonce
+    end
     _current_nonce.write(current_nonce + 1)
     return()
 end
@@ -545,13 +561,15 @@ func validate_signer_signature{
         signatures: felt*,
         signatures_len: felt
     ) -> ():
-    assert_nn(signatures_len - 2)
-    let (signer) = _signer.read()
-    verify_ecdsa_signature(
-        message=message,
-        public_key=signer,
-        signature_r=signatures[0],
-        signature_s=signatures[1])
+    with_attr error_message("signer signature invalid"):
+        assert_nn(signatures_len - 2)
+        let (signer) = _signer.read()
+        verify_ecdsa_signature(
+            message=message,
+            public_key=signer,
+            signature_r=signatures[0],
+            signature_s=signatures[1])
+    end
     return()
 end
 
@@ -570,29 +588,31 @@ func validate_guardian_signature{
     if guardian == 0:
         return()
     else:
-        if signatures_len == 2:
-            # must be signed by guardian
-            verify_ecdsa_signature(
-                message=message,
-                public_key=guardian,
-                signature_r=signatures[0],
-                signature_s=signatures[1])
-            tempvar syscall_ptr: felt* = syscall_ptr
-            tempvar range_check_ptr = range_check_ptr
-            tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
-        else:
-            # must be signed by guardian_backup
-            assert signatures_len = 4
-            assert (signatures[0] + signatures[1]) = 0
-            let (guardian_backup) = _guardian_backup.read()
-            verify_ecdsa_signature(
-                message=message,
-                public_key=guardian_backup,
-                signature_r=signatures[2],
-                signature_s=signatures[3])
-            tempvar syscall_ptr: felt* = syscall_ptr
-            tempvar range_check_ptr = range_check_ptr
-            tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
+        with_attr error_message("guardian signature invalid"):
+            if signatures_len == 2:
+                # must be signed by guardian
+                verify_ecdsa_signature(
+                    message=message,
+                    public_key=guardian,
+                    signature_r=signatures[0],
+                    signature_s=signatures[1])
+                tempvar syscall_ptr: felt* = syscall_ptr
+                tempvar range_check_ptr = range_check_ptr
+                tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
+            else:
+                # must be signed by guardian_backup
+                assert signatures_len = 4
+                assert (signatures[0] + signatures[1]) = 0
+                let (guardian_backup) = _guardian_backup.read()
+                verify_ecdsa_signature(
+                    message=message,
+                    public_key=guardian_backup,
+                    signature_r=signatures[2],
+                    signature_s=signatures[3])
+                tempvar syscall_ptr: felt* = syscall_ptr
+                tempvar range_check_ptr = range_check_ptr
+                tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
+            end
         end
         return()
     end

@@ -7,8 +7,9 @@ from starkware.cairo.common.memcpy import memcpy
 #########################################################################
 # The Multicall contract can call an array of view methods on different
 # contracts and return the aggregate response as an array.
-# Each view method being called must return a single felt for the
-# multicall to succeed.
+# E.g.
+# Input: [to_1, selector_1, data_1_len, data_1, ..., to_N, selector_N, data_N_len, data_N]
+# Output: [result_1 + .... + result_N]
 #########################################################################
 
 @view

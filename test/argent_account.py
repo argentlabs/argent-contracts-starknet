@@ -251,7 +251,8 @@ async def test_change_guardian_backup(account_factory):
 @pytest.mark.asyncio
 async def test_change_guardian_backup_when_no_guardian(get_starknet):
     starknet = get_starknet
-    account = await deploy(starknet, "contracts/ArgentAccount.cairo", [signer.public_key, 0])
+    account = await deploy(starknet, "contracts/ArgentAccount.cairo")
+    await account.initialize(signer.public_key, 0).invoke()
     sender = TransactionSender(account)
     new_guardian_backup = Signer(55555555)
 

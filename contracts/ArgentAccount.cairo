@@ -7,8 +7,7 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.memcpy import memcpy
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
 from starkware.starknet.common.syscalls import (
-    call_contract, 
-    get_tx_signature, get_contract_address, get_caller_address, get_block_timestamp
+    call_contract, get_tx_info, get_contract_address, get_caller_address, get_block_timestamp
 )
 from starkware.cairo.common.hash_state import (
     hash_init, hash_finalize, hash_update, hash_update_single
@@ -145,7 +144,7 @@ func initialize{
 end
 
 @external
-func execute{
+func __execute__{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         ecdsa_ptr: SignatureBuiltin*,
@@ -172,37 +171,34 @@ func execute{
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
 
-    # get the signature(s)
-    let (sig_len : felt, sig : felt*) = get_tx_signature()
-    
-    # get self address
-    let (self) = get_contract_address()
+    # get the tx info
+    let (tx_info) = get_tx_info()
 
     # compute message hash
-    let (message_hash) = get_execute_hash(calls_len, calls, nonce)
+    let (message_hash) = get_execute_hash(tx_info.account_contract_address, calls_len, calls, nonce, tx_info.max_fee, tx_info.version)
 
     if calls_len == 1:
-        if calls[0].to == self:
+        if calls[0].to == tx_info.account_contract_address:
             tempvar signer_condition = (calls[0].selector - ESCAPE_GUARDIAN_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
             tempvar guardian_condition = (calls[0].selector - ESCAPE_SIGNER_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
             if signer_condition == 0:
                 # validate signer signature
-                validate_signer_signature(message_hash, sig, sig_len)
+                validate_signer_signature(message_hash, tx_info.signature, tx_info.signature_len)
                 jmp do_execute
             end
             if guardian_condition == 0:
                 # validate guardian signature
-                validate_guardian_signature(message_hash, sig, sig_len)
+                validate_guardian_signature(message_hash, tx_info.signature, tx_info.signature_len)
                 jmp do_execute
             end
         end
     else:
         # make sure no call is to the account
-        assert_no_self_call(self, calls_len, calls)
+        assert_no_self_call(tx_info.account_contract_address, calls_len, calls)
     end
     # validate signer and guardian signatures
-    validate_signer_signature(message_hash, sig, sig_len)
-    validate_guardian_signature(message_hash, sig + 2, sig_len - 2)
+    validate_signer_signature(message_hash, tx_info.signature, tx_info.signature_len)
+    validate_guardian_signature(message_hash, tx_info.signature + 2, tx_info.signature_len - 2)
 
     # execute calls
     do_execute:
@@ -678,17 +674,21 @@ end
 # @param calls_len The legnth of the array of `Call`
 # @param calls A pointer to the array of `Call`
 # @param nonce The nonce for the multicall transaction
+# @param max_fee The max fee the user is willing to pay for the multicall
+# @param version The version of transaction in the Cairo OS. Always set to 0.
 # @return res The hash of the multicall
 func get_execute_hash{
         syscall_ptr: felt*, 
         pedersen_ptr: HashBuiltin*
     } (
+        account: felt,
         calls_len: felt,
         calls: Call*,
-        nonce: felt
+        nonce: felt,
+        max_fee: felt,
+        version: felt
     ) -> (res: felt):
     alloc_locals
-    let (account) = get_contract_address()
     let (calls_hash) = hash_call_array(calls_len, calls)
     let hash_ptr = pedersen_ptr
     with hash_ptr:
@@ -697,6 +697,8 @@ func get_execute_hash{
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, account)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, calls_hash)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, nonce)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, max_fee)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, version)
         let (res) = hash_finalize(hash_state_ptr)
         let pedersen_ptr = hash_ptr
         return (res=res)

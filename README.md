@@ -34,7 +34,6 @@ Under this model we can build a simple yet highly secure non-custodial wallet.
 
 ## Missing Cairo features
 
-- An upgrade/proxy pattern using an equivalent of `delegatecall` so that the account of a user can evolve over time without changing addresses.
 - A mechanism to pay fees.
 
 ## Development

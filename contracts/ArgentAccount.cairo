@@ -51,7 +51,7 @@ const PREFIX_TRANSACTION = 'StarkNet Transaction'
 # STRUCTS
 ####################
 
-struct Call_Input:
+struct MCall:
     member to: felt
     member selector: felt
     member data_offset: felt
@@ -165,8 +165,8 @@ func __execute__{
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
-        call_input_len: felt,
-        call_input: Call_Input*,
+        mcalls_len: felt,
+        mcalls: MCall*,
         calldata_len: felt,
         calldata: felt*,
         nonce
@@ -179,8 +179,8 @@ func __execute__{
     ############### TMP #############################
     # parse inputs to an array of 'Call' struct
     let (calls : Call*) = alloc()
-    parse_input(call_input_len, call_input, calldata, calls)
-    let calls_len = call_input_len
+    from_mcall_to_call(mcalls_len, mcalls, calldata, calls)
+    let calls_len = mcalls_len
     #################################################
 
     # validate and bump nonce
@@ -826,31 +826,31 @@ func hash_calldata{
     end
 end
 
-func parse_input{
+func from_mcall_to_call{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (
-        input_len: felt,
-        input: Call_Input*,
+        mcalls_len: felt,
+        mcalls: MCall*,
         calldata: felt*,
         calls: Call*
     ):
     alloc_locals
 
-    # if no more inputs
-    if input_len == 0:
+    # if no more mcalls
+    if mcalls_len == 0:
        return ()
     end
     
-    # parse the first input
+    # parse the first mcall
     assert [calls] = Call(
-            to=[input].to,
-            selector=[input].selector,
-            calldata_len=[input].data_len,
-            calldata=calldata + [input].data_offset)
+            to=[mcalls].to,
+            selector=[mcalls].selector,
+            calldata_len=[mcalls].data_len,
+            calldata=calldata + [mcalls].data_offset)
     
-    # parse the other inputs recursively
-    parse_input(input_len - 1, input + Call_Input.SIZE, calldata, calls + Call.SIZE)
+    # parse the other mcalls recursively
+    from_mcall_to_call(mcalls_len - 1, mcalls + MCall.SIZE, calldata, calls + Call.SIZE)
     return ()
 end

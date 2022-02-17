@@ -1,26 +1,26 @@
 %lang starknet
 
-from starkware.starknet.common.syscalls import call_contract
+from starkware.starknet.common.syscalls import call_contract, get_block_number
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.memcpy import memcpy
 
 
 #########################################################################
 # The Multicall contract can call an array of view methods on different
-# contracts and return the aggregate responses as an array.
+# contracts and return the aggregate response as an array.
 # E.g.
 # Input: [to_1, selector_1, data_1_len, data_1, ..., to_N, selector_N, data_N_len, data_N]
 # Output: [result_1 + .... + result_N]
 #########################################################################
 
 @view
-func multicall{
+func aggregate{
         syscall_ptr: felt*,
         range_check_ptr
     } (
         calls_len: felt,
         calls: felt*
-    ) -> (result_len: felt, result: felt*):
+    ) -> (block_number: felt, result_len: felt, result: felt*):
     alloc_locals
 
     let (result : felt*) = alloc()
@@ -29,8 +29,9 @@ func multicall{
         calls=calls,
         result=result
     )
+    let (block_number) = get_block_number()
 
-    return (result_len=result_len, result=result)
+    return (block_number=block_number, result_len=result_len, result=result)
 
 end
 

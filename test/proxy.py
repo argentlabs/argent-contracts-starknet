@@ -63,9 +63,10 @@ async def test_call_dapp(account_factory, dapp_factory):
     assert (await dapp.get_number(account.contract_address).call()).result.number == 47
 
 @pytest.mark.asyncio
-async def test_upgrade(account_factory):
+async def test_upgrade(account_factory, dapp_factory):
     account, proxy, account_impl_1 = account_factory
     _, _, account_impl_2 = account_factory
+    dapp = dapp_factory
 
     sender = TransactionSender(account)
 
@@ -73,6 +74,13 @@ async def test_upgrade(account_factory):
     await assert_revert(
         sender.send_transaction([(account.contract_address, 'upgrade', [account_impl_2.contract_address])], [signer, wrong_guardian]),
         "guardian signature invalid"
+    )
+
+    # should revert when the target is not an account
+    await assert_revert(
+        sender.send_transaction([(account.contract_address, 'upgrade', [dapp.contract_address])], [signer, guardian]),
+        "Invalid implementation",
+        StarknetErrorCode.ENTRY_POINT_NOT_FOUND_IN_CONTRACT
     )
 
     assert (await proxy.get_implementation().call()).result.implementation == (account_impl_1.contract_address)

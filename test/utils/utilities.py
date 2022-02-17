@@ -14,13 +14,15 @@ def str_to_felt(text):
 def uint(a):
     return(a, 0)
 
-async def assert_revert(expression, expected_message=None):
+async def assert_revert(expression, expected_message=None, expected_code=None):
+    if expected_code is None:
+        expected_code = StarknetErrorCode.TRANSACTION_FAILED
     try:
         await expression
         assert False
     except StarkException as err:
         _, error = err.args
-        assert error['code'] == StarknetErrorCode.TRANSACTION_FAILED
+        assert error['code'] == expected_code
         if expected_message is not None:
             assert expected_message in error['message']
 

@@ -15,6 +15,12 @@ from starkware.cairo.common.hash_state import (
 
 from contracts.Upgradable import _set_implementation
 
+@contract_interface
+namespace IAccount:
+    func supportsInterface(interfaceId: felt) -> (success : felt):
+    end
+end
+
 ####################
 # CONSTANTS
 ####################
@@ -33,6 +39,11 @@ const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
 
 const ESCAPE_TYPE_GUARDIAN = 0
 const ESCAPE_TYPE_SIGNER = 1
+
+const ERC156_ACCOUNT_INTERFACE = 0x50b70dcb
+
+const TRUE = 1
+const FALSE = 0
 
 const PREFIX_TRANSACTION = 'StarkNet Transaction'
 
@@ -221,6 +232,11 @@ func upgrade{
     ):
     # only called via execute
     assert_only_self()
+    # make sure the target is an account
+    with_attr error_message("Invalid implementation"):
+        let (success) = IAccount.supportsInterface(contract_address=implementation, interfaceId=ERC156_ACCOUNT_INTERFACE)
+        assert success = TRUE
+    end
     # change implementation
     _set_implementation(implementation)
     return()
@@ -455,6 +471,26 @@ func is_valid_signature{
     validate_signer_signature(hash, sig, sig_len)
     validate_guardian_signature(hash, sig + 2, sig_len - 2)
     return ()
+end
+
+@view
+func supportsInterface{
+        syscall_ptr: felt*, 
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        interfaceId: felt
+    ) -> (success: felt):
+
+    # 165
+    if interfaceId == 0x01ffc9a7:
+        return (TRUE)
+    end
+    # IAccount
+    if interfaceId == ERC156_ACCOUNT_INTERFACE:
+        return (TRUE)
+    end 
+    return (FALSE)
 end
 
 @view

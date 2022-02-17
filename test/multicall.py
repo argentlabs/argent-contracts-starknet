@@ -23,12 +23,12 @@ async def test_multicall(get_starknet):
     erc20_1 = await deploy(starknet, "contracts/lib/ERC20.cairo", [str_to_felt('token1'), str_to_felt('T1'), user1])
     erc20_2 = await deploy(starknet, "contracts/lib/ERC20.cairo", [str_to_felt('token2'), str_to_felt('T2'), user2])
 
-    response = await multicall.multicall([
+    response = await multicall.aggregate([
         erc20_1.contract_address, get_selector_from_name('decimals'), 0,
         erc20_1.contract_address, get_selector_from_name('balanceOf'), 1, user1,
         erc20_2.contract_address, get_selector_from_name('balanceOf'), 1, user2
     ]).call()
-    print(response.result)
+
     assert response.result.result[0] == 18
     assert response.result.result[1] == 1000
     assert response.result.result[3] == 1000

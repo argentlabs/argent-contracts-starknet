@@ -79,7 +79,7 @@ async def test_upgrade(account_factory, dapp_factory):
     # should revert when the target is not an account
     await assert_revert(
         sender.send_transaction([(account.contract_address, 'upgrade', [dapp.contract_address])], [signer, guardian]),
-        "Invalid implementation",
+        "implementation invalid",
         StarknetErrorCode.ENTRY_POINT_NOT_FOUND_IN_CONTRACT
     )
 

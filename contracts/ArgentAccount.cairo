@@ -145,9 +145,13 @@ func initialize{
     ):
     # check that we are not already initialized
     let (current_signer) = _signer.read()
-    assert current_signer = 0
+    with_attr error_message("already initialized"):
+        assert current_signer = 0
+    end
     # check that the target signer is not zero
-    assert_not_zero(signer)
+    with_attr error_message("signer cannot be null"):
+        assert_not_zero(signer)
+    end
     # initialize the contract
     _signer.write(signer)
     _guardian.write(guardian)
@@ -233,7 +237,7 @@ func upgrade{
     # only called via execute
     assert_only_self()
     # make sure the target is an account
-    with_attr error_message("Invalid implementation"):
+    with_attr error_message("implementation invalid"):
         let (success) = IAccount.supportsInterface(contract_address=implementation, interfaceId=ERC156_ACCOUNT_INTERFACE)
         assert success = TRUE
     end
@@ -254,7 +258,9 @@ func change_signer{
     assert_only_self()
 
     # change signer
-    assert_not_zero(new_signer)
+    with_attr error_message("signer cannot be null"):
+        assert_not_zero(new_signer)
+    end
     _signer.write(new_signer)
     signer_changed.emit(new_signer=new_signer)
     return()

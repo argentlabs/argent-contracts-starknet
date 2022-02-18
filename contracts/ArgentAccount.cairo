@@ -40,7 +40,7 @@ const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
 const ESCAPE_TYPE_GUARDIAN = 0
 const ESCAPE_TYPE_SIGNER = 1
 
-const ERC156_ACCOUNT_INTERFACE = 0x50b70dcb
+const ERC156_ACCOUNT_INTERFACE = 0xbd73c577
 
 const TRUE = 1
 const FALSE = 0
@@ -827,17 +827,13 @@ func hash_calldata{
 end
 
 func from_mcall_to_call{
-        syscall_ptr: felt*,
-        pedersen_ptr: HashBuiltin*,
-        range_check_ptr
+        syscall_ptr: felt*
     } (
         mcalls_len: felt,
         mcalls: MCall*,
         calldata: felt*,
         calls: Call*
     ):
-    alloc_locals
-
     # if no more mcalls
     if mcalls_len == 0:
        return ()

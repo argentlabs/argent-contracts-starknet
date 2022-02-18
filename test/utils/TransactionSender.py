@@ -17,15 +17,15 @@ class TransactionSender():
             execution_info = await self.account.get_nonce().call()
             nonce = execution_info.result.nonce
 
-        call_inputs = []
+        mcalls = []
         calls_with_selector = []
         calldata = []
         for i in range(len(calls)):
             if len(calls[i]) != 3:
                 raise Exception("Invalid call parameters")
             call = calls[i]
-            call_input = (call[0], get_selector_from_name(call[1]), len(calldata), len(call[2]))
-            call_inputs.append(call_input)
+            mcall = (call[0], get_selector_from_name(call[1]), len(calldata), len(call[2]))
+            mcalls.append(mcall)
             calldata.extend(call[2])
             calls_with_selector.append((call[0], get_selector_from_name(call[1]), call[2]))
 
@@ -37,7 +37,7 @@ class TransactionSender():
             else:    
                 signatures += list(signer.sign(message_hash))
 
-        return await self.account.__execute__(call_inputs, calldata, nonce).invoke(signature=signatures)
+        return await self.account.__execute__(mcalls, calldata, nonce).invoke(signature=signatures)
 
 def hash_multicall(account, calls, nonce, max_fee):
     hash_array = []

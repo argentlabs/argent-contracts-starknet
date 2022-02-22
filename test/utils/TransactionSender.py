@@ -18,13 +18,13 @@ class TransactionSender():
             nonce = execution_info.result.nonce
 
         calls_with_selector = [(call[0], get_selector_from_name(call[1]), call[2]) for call in calls]
-        (call_array, calldata) = from_call_to_call_array(calls)
+        call_array, calldata = from_call_to_call_array(calls)
 
         message_hash = hash_multicall(self.account.contract_address, calls_with_selector, nonce, max_fee)
         signatures = []
         for signer in signers:
             if signer == 0:
-                signatures += list([0, 0])
+                signatures += [0, 0]
             else:    
                 signatures += list(signer.sign(message_hash))
 
@@ -33,12 +33,12 @@ class TransactionSender():
 def from_call_to_call_array(calls):
     call_array = []
     calldata = []
-    for i, call in enumerate(calls):
+    for call in calls:
         assert len(call) == 3, "Invalid call parameters"
         entry = (call[0], get_selector_from_name(call[1]), len(calldata), len(call[2]))
         call_array.append(entry)
         calldata.extend(call[2])
-    return (call_array, calldata)
+    return call_array, calldata
 
 def hash_multicall(account, calls, nonce, max_fee):
     hash_array = []

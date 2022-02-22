@@ -1,7 +1,6 @@
 import os
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.compiler.compile import compile_starknet_files
-from starkware.starknet.testing.state import StarknetState
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.business_logic.transaction_execution_objects import Event
@@ -12,7 +11,7 @@ def str_to_felt(text):
     return int.from_bytes(b_text, "big")
 
 def uint(a):
-    return(a, 0)
+    return a, 0
 
 async def assert_revert(expression, expected_message=None, expected_code=None):
     if expected_code is None:
@@ -49,7 +48,7 @@ async def deploy_proxy(starknet, proxy_path, implementation_path, params=None):
     params = params or []
     proxy_definition = compile_starknet_files([proxy_path], debug_info=True)
     implementation_definition = compile_starknet_files([implementation_path], debug_info=True)
-    deployed_proxy = await starknet.deploy(contract_def=proxy_definition,constructor_calldata=params)
+    deployed_proxy = await starknet.deploy(contract_def=proxy_definition, constructor_calldata=params)
     wrapped_proxy = StarknetContract(
         state=starknet.state,
         abi=implementation_definition.abi,

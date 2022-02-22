@@ -51,18 +51,20 @@ const PREFIX_TRANSACTION = 'StarkNet Transaction'
 # STRUCTS
 ####################
 
-struct MCall:
-    member to: felt
-    member selector: felt
-    member data_offset: felt
-    member data_len: felt
-end
-
 struct Call:
     member to: felt
     member selector: felt
     member calldata_len: felt
     member calldata: felt*
+end
+
+# Tmp struct introduced while we wait for Cairo
+# to support passing `[Call]` to __execute__
+struct CallArray:
+    member to: felt
+    member selector: felt
+    member data_offset: felt
+    member data_len: felt
 end
 
 struct Escape:
@@ -165,8 +167,8 @@ func __execute__{
         ecdsa_ptr: SignatureBuiltin*,
         range_check_ptr
     } (
-        mcalls_len: felt,
-        mcalls: MCall*,
+        call_array_len: felt,
+        call_array: CallArray*,
         calldata_len: felt,
         calldata: felt*,
         nonce: felt
@@ -179,8 +181,8 @@ func __execute__{
     ############### TMP #############################
     # parse inputs to an array of 'Call' struct
     let (calls : Call*) = alloc()
-    from_mcall_to_call(mcalls_len, mcalls, calldata, calls)
-    let calls_len = mcalls_len
+    from_call_array_to_call(call_array_len, call_array, calldata, calls)
+    let calls_len = call_array_len
     #################################################
 
     # validate and bump nonce
@@ -190,7 +192,7 @@ func __execute__{
     let (tx_info) = get_tx_info()
 
     # compute message hash
-    let (message_hash) = get_execute_hash(tx_info.account_contract_address, calls_len, calls, nonce, tx_info.max_fee, tx_info.version)
+    let (hash) = hash_multicall(tx_info.account_contract_address, calls_len, calls, nonce, tx_info.max_fee, tx_info.version)
 
     if calls_len == 1:
         if calls[0].to == tx_info.account_contract_address:
@@ -198,12 +200,12 @@ func __execute__{
             tempvar guardian_condition = (calls[0].selector - ESCAPE_SIGNER_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
             if signer_condition == 0:
                 # validate signer signature
-                validate_signer_signature(message_hash, tx_info.signature, tx_info.signature_len)
+                validate_signer_signature(hash, tx_info.signature, tx_info.signature_len)
                 jmp do_execute
             end
             if guardian_condition == 0:
                 # validate guardian signature
-                validate_guardian_signature(message_hash, tx_info.signature, tx_info.signature_len)
+                validate_guardian_signature(hash, tx_info.signature, tx_info.signature_len)
                 jmp do_execute
             end
         end
@@ -212,8 +214,8 @@ func __execute__{
         assert_no_self_call(tx_info.account_contract_address, calls_len, calls)
     end
     # validate signer and guardian signatures
-    validate_signer_signature(message_hash, tx_info.signature, tx_info.signature_len)
-    validate_guardian_signature(message_hash, tx_info.signature + 2, tx_info.signature_len - 2)
+    validate_signer_signature(hash, tx_info.signature, tx_info.signature_len)
+    validate_guardian_signature(hash, tx_info.signature + 2, tx_info.signature_len - 2)
 
     # execute calls
     do_execute:
@@ -719,7 +721,7 @@ end
 # @param max_fee The max fee the user is willing to pay for the multicall
 # @param version The version of transaction in the Cairo OS. Always set to 0.
 # @return res The hash of the multicall
-func get_execute_hash{
+func hash_multicall{
         syscall_ptr: felt*, 
         pedersen_ptr: HashBuiltin*
     } (
@@ -826,27 +828,28 @@ func hash_calldata{
     end
 end
 
-func from_mcall_to_call{
+func from_call_array_to_call{
         syscall_ptr: felt*
     } (
-        mcalls_len: felt,
-        mcalls: MCall*,
+        call_array_len: felt,
+        call_array: CallArray*,
         calldata: felt*,
         calls: Call*
     ):
-    # if no more mcalls
-    if mcalls_len == 0:
+    # if no more calls
+    if call_array_len == 0:
        return ()
     end
     
-    # parse the first mcall
+    # parse the current call
     assert [calls] = Call(
-            to=[mcalls].to,
-            selector=[mcalls].selector,
-            calldata_len=[mcalls].data_len,
-            calldata=calldata + [mcalls].data_offset)
+            to=[call_array].to,
+            selector=[call_array].selector,
+            calldata_len=[call_array].data_len,
+            calldata=calldata + [call_array].data_offset
+        )
     
-    # parse the other mcalls recursively
-    from_mcall_to_call(mcalls_len - 1, mcalls + MCall.SIZE, calldata, calls + Call.SIZE)
+    # parse the remaining calls recursively
+    from_call_array_to_call(call_array_len - 1, call_array + CallArray.SIZE, calldata, calls + Call.SIZE)
     return ()
 end

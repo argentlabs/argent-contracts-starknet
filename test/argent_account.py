@@ -24,6 +24,8 @@ ESCAPE_SECURITY_PERIOD = 24*7*60*60
 
 VERSION = str_to_felt('0.2.0')
 
+IACCOUNT_ID = 0xf10dbd44
+
 ESCAPE_TYPE_GUARDIAN = 0
 ESCAPE_TYPE_SIGNER = 1
 
@@ -62,7 +64,8 @@ async def test_initializer(account_factory):
     assert (await account.get_signer().call()).result.signer == (signer.public_key)
     assert (await account.get_guardian().call()).result.guardian == (guardian.public_key)
     assert (await account.get_version().call()).result.version == VERSION
-    # should throw when calling initialize
+    assert (await account.supportsInterface(IACCOUNT_ID).call()).result.success == 1
+    # should throw when calling initialize twice
     await assert_revert(
          account.initialize(signer.public_key, guardian.public_key).invoke()
      )

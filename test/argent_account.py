@@ -104,7 +104,15 @@ async def test_call_dapp_with_guardian(account_factory, dapp_factory):
 
     # should call the dapp
     assert (await dapp.get_number(account.contract_address).call()).result.number == 0
-    await sender.send_transaction(calls, [signer, guardian])
+    
+    tx_exec_info = await sender.send_transaction(calls, [signer, guardian])
+
+    assert_event_emmited(
+        tx_exec_info,
+        from_address=account.contract_address,
+        name='transaction_executed'
+    )
+
     assert (await dapp.get_number(account.contract_address).call()).result.number == 47
 
 @pytest.mark.asyncio

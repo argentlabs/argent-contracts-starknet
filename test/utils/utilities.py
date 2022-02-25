@@ -25,12 +25,17 @@ async def assert_revert(expression, expected_message=None, expected_code=None):
         if expected_message is not None:
             assert expected_message in error['message']
 
-def assert_event_emmited(tx_exec_info, from_address, name, data):
+def assert_event_emmited(tx_exec_info, from_address, name, data = []):
+    if not data:
+        raw_events = [Event(from_address=event.from_address, keys=event.keys, data=[]) for event in tx_exec_info.raw_events]
+    else: 
+        raw_events = tx_exec_info.raw_events  
+
     assert Event(
         from_address=from_address,
         keys=[get_selector_from_name(name)],
         data=data,
-    ) in tx_exec_info.raw_events
+    ) in raw_events
 
 compiled_code = {}
 

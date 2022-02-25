@@ -4,7 +4,7 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from utils.Signer import Signer
-from utils.utilities import deploy, deploy_proxy, assert_revert, str_to_felt
+from utils.utilities import deploy, deploy_proxy, assert_revert, str_to_felt, assert_event_emmited
 from utils.TransactionSender import TransactionSender
 
 signer = Signer(123456789987654321)
@@ -84,6 +84,15 @@ async def test_upgrade(account_factory, dapp_factory):
     )
 
     assert (await proxy.get_implementation().call()).result.implementation == (account_impl_1.contract_address)
-    await sender.send_transaction([(account.contract_address, 'upgrade', [account_impl_2.contract_address])], [signer, guardian])
+    
+    tx_exec_info = await sender.send_transaction([(account.contract_address, 'upgrade', [account_impl_2.contract_address])], [signer, guardian])
+    
+    assert_event_emmited(
+        tx_exec_info,
+        from_address=account.contract_address,
+        name='account_upgraded',
+        data=[account_impl_2.contract_address]
+    )
+
     assert (await proxy.get_implementation().call()).result.implementation == (account_impl_2.contract_address)
     

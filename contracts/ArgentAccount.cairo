@@ -108,6 +108,14 @@ end
 func signer_escaped(new_signer: felt):
 end
 
+@event
+func account_upgraded(new_implementation: felt):
+end
+
+@event
+func transaction_executed(hash: felt, response_len: felt, response: felt*):
+end
+
 ####################
 # STORAGE VARIABLES
 ####################
@@ -225,6 +233,8 @@ func __execute__{
     local pedersen_ptr: HashBuiltin* = pedersen_ptr
     let (response : felt*) = alloc()
     let (response_len) = execute_list(calls_len, calls, response)
+    # emit event
+    transaction_executed.emit(hash=hash, response_len=response_len, response=response)
     return (response_len=response_len, response=response)
 end
 
@@ -245,6 +255,7 @@ func upgrade{
     end
     # change implementation
     _set_implementation(implementation)
+    account_upgraded.emit(new_implementation=implementation)
     return()
 end
 

@@ -19,6 +19,8 @@ We assume that the `signer` key is backed up such that the probability of the `s
 
 Under this model we can build a simple yet highly secure non-custodial wallet.
 
+To enable that model to evolve if needed, the account is implemented as a proxy delegating all calls to a target implementation. Upgrading the wallet to a new implementation requires the approval of both the `signer` and a `guardian`.
+
 | Action | Signer | Guardian | Comments |
 |--------|--------|----------|----------|
 | Execute | X | X | |
@@ -30,12 +32,7 @@ Under this model we can build a simple yet highly secure non-custodial wallet.
 | Escape Guardian | X | | After security period |
 | Escape Signer | | X | After security period |
 | Cancel Escape | X | X | |
-
-
-## Missing Cairo features
-
-- An upgrade/proxy pattern using an equivalent of `delegatecall` so that the account of a user can evolve over time without changing addresses.
-- A mechanism to pay fees.
+| Upgrade | X | X | |
 
 ## Development
 

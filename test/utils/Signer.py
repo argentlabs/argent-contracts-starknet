@@ -1,5 +1,4 @@
-from starkware.crypto.signature.signature import pedersen_hash, private_to_stark_key, sign
-from starkware.starknet.public.abi import get_selector_from_name
+from starkware.crypto.signature.signature import private_to_stark_key, sign
 
 
 class Signer():

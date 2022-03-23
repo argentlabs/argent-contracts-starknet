@@ -167,6 +167,7 @@ func initialize{
 end
 
 @external
+@raw_output
 func __execute__{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
@@ -179,8 +180,8 @@ func __execute__{
         calldata: felt*,
         nonce: felt
     ) -> (
-        response_len: felt,
-        response: felt*
+        retdata_size: felt,
+        retdata: felt*
     ):
     alloc_locals
 
@@ -230,7 +231,7 @@ func __execute__{
     let (response_len) = execute_list(calls_len, calls, response)
     # emit event
     transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
-    return (response_len=response_len, response=response)
+    return (retdata_size=response_len, retdata=response)
 end
 
 @external

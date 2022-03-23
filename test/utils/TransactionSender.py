@@ -1,7 +1,7 @@
 from starkware.starknet.public.abi import get_selector_from_name
 from starkware.cairo.common.hash_state import compute_hash_on_elements
 from starkware.starknet.definitions.general_config import StarknetChainId
-from starkware.starknet.core.os.transaction_hash import TransactionHashPrefix
+from starkware.starknet.core.os.transaction_hash import calculate_transaction_hash_common, TransactionHashPrefix
 import logging
 from utils.utilities import str_to_felt
 
@@ -50,13 +50,13 @@ def get_transaction_hash(account, call_array, calldata, nonce, max_fee):
         *calldata,
         nonce]
 
-    data_to_hash = [
-        TransactionHashPrefix.INVOKE.value,
+    return calculate_transaction_hash_common(
+        TransactionHashPrefix.INVOKE,
         TRANSACTION_VERSION,
         account,
         get_selector_from_name('__execute__'),
-        compute_hash_on_elements(execute_calldata),
+        execute_calldata,
         max_fee,
         StarknetChainId.TESTNET.value,
-    ]
-    return compute_hash_on_elements(data_to_hash)
+        []
+    )

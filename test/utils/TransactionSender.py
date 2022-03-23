@@ -1,6 +1,7 @@
 from starkware.starknet.public.abi import get_selector_from_name
 from starkware.cairo.common.hash_state import compute_hash_on_elements
 from starkware.starknet.definitions.general_config import StarknetChainId
+from starkware.starknet.core.os.transaction_hash import TransactionHashPrefix
 import logging
 from utils.utilities import str_to_felt
 
@@ -21,6 +22,7 @@ class TransactionSender():
         call_array, calldata = from_call_to_call_array(calls)
 
         transaction_hash = get_transaction_hash(self.account.contract_address, call_array, calldata, nonce, max_fee)
+
         signatures = []
         for signer in signers:
             if signer == 0:
@@ -40,27 +42,21 @@ def from_call_to_call_array(calls):
         calldata.extend(call[2])
     return call_array, calldata
 
-def get_execute_calldata(call_array, calldata):
-    execute_calldata = []
-    execute_calldata.append(len(call_array))
-    for call in call_array:
-        execute_calldata.append(len(call))
-        execute_calldata.extend(call)
-    execute_calldata.append(len(calldata))
-    execute_calldata.extend(calldata)
-    execute_calldata.append(nonce)
-    return execute_calldata
-
 def get_transaction_hash(account, call_array, calldata, nonce, max_fee):
-    execute_calldata = get_execute_calldata(call_array, calldata, nonce)
+    execute_calldata = [
+        len(call_array),
+        *[x for t in call_array for x in t],
+        len(calldata),
+        *calldata,
+        nonce]
+
     data_to_hash = [
-        str_to_felt('invoke'),
+        TransactionHashPrefix.INVOKE.value,
         TRANSACTION_VERSION,
         account,
         get_selector_from_name('__execute__'),
         compute_hash_on_elements(execute_calldata),
         max_fee,
-        StarknetChainId.TESTNET,
-        []
+        StarknetChainId.TESTNET.value,
     ]
     return compute_hash_on_elements(data_to_hash)

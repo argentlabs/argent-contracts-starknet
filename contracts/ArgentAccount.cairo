@@ -40,7 +40,7 @@ const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
 const ESCAPE_TYPE_GUARDIAN = 0
 const ESCAPE_TYPE_SIGNER = 1
 
-const ERC156_ACCOUNT_INTERFACE = 0xf10dbd44
+const ERC165_ACCOUNT_INTERFACE = 0xf10dbd44
 
 const TRUE = 1
 const FALSE = 0
@@ -502,7 +502,7 @@ func supportsInterface{
         return (TRUE)
     end
     # IAccount
-    if interfaceId == ERC156_ACCOUNT_INTERFACE:
+    if interfaceId == ERC165_ACCOUNT_INTERFACE:
         return (TRUE)
     end 
     return (FALSE)

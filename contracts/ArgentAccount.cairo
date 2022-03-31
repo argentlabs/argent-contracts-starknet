@@ -246,7 +246,7 @@ func upgrade{
     assert_only_self()
     # make sure the target is an account
     with_attr error_message("implementation invalid"):
-        let (success) = IAccount.supportsInterface(contract_address=implementation, interfaceId=ERC156_ACCOUNT_INTERFACE)
+        let (success) = IAccount.supportsInterface(contract_address=implementation, interfaceId=ERC165_ACCOUNT_INTERFACE)
         assert success = TRUE
     end
     # change implementation

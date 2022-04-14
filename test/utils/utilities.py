@@ -3,7 +3,7 @@ from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.compiler.compile import compile_starknet_files
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
-from starkware.starknet.business_logic.transaction_execution_objects import Event
+from starkware.starknet.business_logic.execution.objects import Event
 from starkware.starknet.compiler.compile import get_selector_from_name
 
 def str_to_felt(text):

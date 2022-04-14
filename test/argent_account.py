@@ -2,10 +2,7 @@ import pytest
 import asyncio
 import logging
 from starkware.starknet.testing.starknet import Starknet
-from starkware.starkware_utils.error_handling import StarkException
-from starkware.starknet.definitions.error_codes import StarknetErrorCode
-from starkware.starknet.business_logic.state import BlockInfo
-from starkware.starknet.compiler.compile import get_selector_from_name
+from starkware.starknet.business_logic.state.state import BlockInfo
 from utils.Signer import Signer
 from utils.utilities import deploy, assert_revert, str_to_felt, assert_event_emmited
 from utils.TransactionSender import TransactionSender
@@ -39,7 +36,7 @@ async def get_starknet():
     return starknet
 
 def update_starknet_block(starknet, block_number=1, block_timestamp=DEFAULT_TIMESTAMP):
-    starknet.state.state.block_info = BlockInfo(block_number=block_number, block_timestamp=block_timestamp)
+    starknet.state.state.block_info = BlockInfo(block_number=block_number, block_timestamp=block_timestamp, gas_price=0)
 
 def reset_starknet_block(starknet):
     update_starknet_block(starknet=starknet)

@@ -1,5 +1,4 @@
 from starkware.starknet.public.abi import get_selector_from_name
-from starkware.cairo.common.hash_state import compute_hash_on_elements
 from starkware.starknet.definitions.general_config import StarknetChainId
 from starkware.starknet.core.os.transaction_hash.transaction_hash import calculate_transaction_hash_common, TransactionHashPrefix
 import logging

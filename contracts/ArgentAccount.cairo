@@ -25,7 +25,7 @@ end
 # CONSTANTS
 ####################
 
-const VERSION = '0.2.0' # '0.2.0' = 30 2E 32 2E 30 = 0x302E322E30 = 206933470768
+const VERSION = '0.2.1'
 
 const CHANGE_SIGNER_SELECTOR = 1540130945889430637313403138889853410180247761946478946165786566748520529557
 const CHANGE_GUARDIAN_SELECTOR = 1374386526556551464817815908276843861478960435557596145330240747921847320237
@@ -40,12 +40,10 @@ const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
 const ESCAPE_TYPE_GUARDIAN = 0
 const ESCAPE_TYPE_SIGNER = 1
 
-const ERC156_ACCOUNT_INTERFACE = 0xf10dbd44
+const ERC165_ACCOUNT_INTERFACE = 0xf10dbd44
 
 const TRUE = 1
 const FALSE = 0
-
-const PREFIX_TRANSACTION = 'StarkNet Transaction'
 
 ####################
 # STRUCTS
@@ -169,6 +167,7 @@ func initialize{
 end
 
 @external
+@raw_output
 func __execute__{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
@@ -181,8 +180,8 @@ func __execute__{
         calldata: felt*,
         nonce: felt
     ) -> (
-        response_len: felt,
-        response: felt*
+        retdata_size: felt,
+        retdata: felt*
     ):
     alloc_locals
 
@@ -199,21 +198,18 @@ func __execute__{
     # get the tx info
     let (tx_info) = get_tx_info()
 
-    # compute message hash
-    let (hash) = hash_multicall(tx_info.account_contract_address, calls_len, calls, nonce, tx_info.max_fee, tx_info.version)
-
     if calls_len == 1:
         if calls[0].to == tx_info.account_contract_address:
             tempvar signer_condition = (calls[0].selector - ESCAPE_GUARDIAN_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
             tempvar guardian_condition = (calls[0].selector - ESCAPE_SIGNER_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
             if signer_condition == 0:
                 # validate signer signature
-                validate_signer_signature(hash, tx_info.signature, tx_info.signature_len)
+                validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
                 jmp do_execute
             end
             if guardian_condition == 0:
                 # validate guardian signature
-                validate_guardian_signature(hash, tx_info.signature, tx_info.signature_len)
+                validate_guardian_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
                 jmp do_execute
             end
         end
@@ -222,8 +218,8 @@ func __execute__{
         assert_no_self_call(tx_info.account_contract_address, calls_len, calls)
     end
     # validate signer and guardian signatures
-    validate_signer_signature(hash, tx_info.signature, tx_info.signature_len)
-    validate_guardian_signature(hash, tx_info.signature + 2, tx_info.signature_len - 2)
+    validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
+    validate_guardian_signature(tx_info.transaction_hash, tx_info.signature + 2, tx_info.signature_len - 2)
 
     # execute calls
     do_execute:
@@ -234,8 +230,8 @@ func __execute__{
     let (response : felt*) = alloc()
     let (response_len) = execute_list(calls_len, calls, response)
     # emit event
-    transaction_executed.emit(hash=hash, response_len=response_len, response=response)
-    return (response_len=response_len, response=response)
+    transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
+    return (retdata_size=response_len, retdata=response)
 end
 
 @external
@@ -250,7 +246,7 @@ func upgrade{
     assert_only_self()
     # make sure the target is an account
     with_attr error_message("implementation invalid"):
-        let (success) = IAccount.supportsInterface(contract_address=implementation, interfaceId=ERC156_ACCOUNT_INTERFACE)
+        let (success) = IAccount.supportsInterface(contract_address=implementation, interfaceId=ERC165_ACCOUNT_INTERFACE)
         assert success = TRUE
     end
     # change implementation
@@ -506,7 +502,7 @@ func supportsInterface{
         return (TRUE)
     end
     # IAccount
-    if interfaceId == ERC156_ACCOUNT_INTERFACE:
+    if interfaceId == ERC165_ACCOUNT_INTERFACE:
         return (TRUE)
     end 
     return (FALSE)
@@ -723,120 +719,6 @@ func execute_list{
     # do the next calls recursively
     let (response_len) = execute_list(calls_len - 1, calls + Call.SIZE, reponse + res.retdata_size)
     return (response_len + res.retdata_size)
-end
-
-# @notice Computes the hash of a multicall to the `execute` method.
-# @param calls_len The legnth of the array of `Call`
-# @param calls A pointer to the array of `Call`
-# @param nonce The nonce for the multicall transaction
-# @param max_fee The max fee the user is willing to pay for the multicall
-# @param version The version of transaction in the Cairo OS. Always set to 0.
-# @return res The hash of the multicall
-func hash_multicall{
-        syscall_ptr: felt*, 
-        pedersen_ptr: HashBuiltin*
-    } (
-        account: felt,
-        calls_len: felt,
-        calls: Call*,
-        nonce: felt,
-        max_fee: felt,
-        version: felt
-    ) -> (res: felt):
-    alloc_locals
-    let (calls_hash) = hash_call_array(calls_len, calls)
-    let hash_ptr = pedersen_ptr
-    with hash_ptr:
-        let (hash_state_ptr) = hash_init()
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, PREFIX_TRANSACTION)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, account)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, calls_hash)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, nonce)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, max_fee)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, version)
-        let (res) = hash_finalize(hash_state_ptr)
-        let pedersen_ptr = hash_ptr
-        return (res=res)
-    end
-end
-
-# @notice Computes the hash of an array of `Call`
-# @param calls_len The legnth of the array of `Call`
-# @param calls A pointer to the array of `Call`
-# @return res The hash of the array of `Call`
-func hash_call_array{
-        pedersen_ptr: HashBuiltin*
-    }(
-        calls_len: felt,
-        calls: Call*
-    ) -> (
-        res: felt
-    ):
-    alloc_locals
-
-    let (hash_array : felt*) = alloc()
-    hash_call_loop(calls_len, calls, hash_array)
-
-    let hash_ptr = pedersen_ptr
-    with hash_ptr:
-        let (hash_state_ptr) = hash_init()
-        let (hash_state_ptr) = hash_update(hash_state_ptr, hash_array, calls_len)
-        let (res) = hash_finalize(hash_state_ptr)
-        let pedersen_ptr = hash_ptr
-        return (res=res)
-    end
-end
-
-# @notice Turns an array of `Call` into an array of `hash(Call)`
-# @param calls_len The legnth of the array of `Call`
-# @param calls A pointer to the array of `Call`
-# @param hash_array A pointer to the array of `hash(Call)`
-func hash_call_loop{
-        pedersen_ptr: HashBuiltin*
-    } (
-        calls_len: felt,
-        calls: Call*,
-        hash_array: felt*
-    ):
-    if calls_len == 0:
-        return ()
-    end
-    let this_call = [calls]
-    let (calldata_hash) = hash_calldata(this_call.calldata_len, this_call.calldata)
-    let hash_ptr = pedersen_ptr
-    with hash_ptr:
-        let (hash_state_ptr) = hash_init()
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, this_call.to)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, this_call.selector)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, calldata_hash)
-        let (res) = hash_finalize(hash_state_ptr)
-        let pedersen_ptr = hash_ptr
-        assert [hash_array] = res
-    end
-    hash_call_loop(calls_len - 1, calls + Call.SIZE, hash_array + 1)
-    return()
-end
-
-# @notice Computes the hash of calldata as an array of felt
-# @param calldata_len The length of the calldata array
-# @param calldata A pointer to the calldata array
-# @return the hash of the calldata
-func hash_calldata{
-        pedersen_ptr: HashBuiltin*
-    } (
-        calldata_len: felt,
-        calldata: felt*,
-    ) -> (
-        res: felt
-    ):
-    let hash_ptr = pedersen_ptr
-    with hash_ptr:
-        let (hash_state_ptr) = hash_init()
-        let (hash_state_ptr) = hash_update(hash_state_ptr, calldata, calldata_len)
-        let (res) = hash_finalize(hash_state_ptr)
-        let pedersen_ptr = hash_ptr
-        return (res=res)
-    end
 end
 
 func from_call_array_to_call{

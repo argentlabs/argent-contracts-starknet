@@ -1,7 +1,6 @@
 import pytest
 import asyncio
 from starkware.starknet.testing.starknet import Starknet
-from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from utils.Signer import Signer
 from utils.utilities import deploy, deploy_proxy, assert_revert, str_to_felt, assert_event_emmited
@@ -12,7 +11,7 @@ guardian = Signer(456789987654321123)
 wrong_signer = Signer(666666666666666666)
 wrong_guardian = Signer(6767676767)
 
-VERSION = str_to_felt('0.2.0')
+VERSION = str_to_felt('0.2.1')
 
 @pytest.fixture(scope='module')
 def event_loop():

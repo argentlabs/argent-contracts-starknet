@@ -12,6 +12,20 @@ from starkware.cairo.common.bool import (TRUE, FALSE)
 
 from contracts.Upgradable import _set_implementation
 
+@contract_interface
+namespace IPlugin:
+    # Method to call during validation
+    func validate(
+        plugin_data_len: felt,
+        plugin_data: felt*,
+        call_array_len: felt,
+        call_array: CallArray*,
+        calldata_len: felt,
+        calldata: felt*
+    ):
+    end
+end
+
 ####################
 # CONSTANTS
 ####################
@@ -26,6 +40,7 @@ const ESCAPE_GUARDIAN_SELECTOR = 16628893475766329672923030622059061164364694258
 const ESCAPE_SIGNER_SELECTOR = 578307412324655990419134484880427622068887477430675222732446709420063579565
 const CANCEL_ESCAPE_SELECTOR = 992575500541331354489361836180456905167517944319528538469723604173440834912
 const SUPPORTS_INTERFACE_SELECTOR = 1184015894760294494673613438913361435336722154500302038630992932234692784845
+const VALIDATE_WITH_PLUGIN_SELECTOR = 711707544683360748886552898736421357314279550279312425282792016031126102997
 
 const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
 
@@ -131,6 +146,10 @@ end
 func _escape() -> (res: Escape):
 end
 
+@storage_var
+func _plugins(plugin: felt) -> (res: felt):
+end
+
 ####################
 # EXTERNAL FUNCTIONS
 ####################
@@ -185,6 +204,9 @@ func __execute__{
     assert_initialized()
     # no reentrant call to prevent signature reutilization
     assert_non_reentrant()
+    
+    # validate and bump nonce
+    validate_and_bump_nonce(nonce)
 
     ############### TMP #############################
     # parse inputs to an array of 'Call' struct
@@ -193,14 +215,11 @@ func __execute__{
     let calls_len = call_array_len
     #################################################
 
-    # validate and bump nonce
-    validate_and_bump_nonce(nonce)
-
     # get the tx info
     let (tx_info) = get_tx_info()
 
-    if calls_len == 1:
-        if calls[0].to == tx_info.account_contract_address:
+    if calls[0].to == tx_info.account_contract_address:
+        if calls_len == 1:
             tempvar signer_condition = (calls[0].selector - ESCAPE_GUARDIAN_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
             tempvar guardian_condition = (calls[0].selector - ESCAPE_SIGNER_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
             if signer_condition == 0:
@@ -213,10 +232,15 @@ func __execute__{
                 validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
                 jmp do_execute
             end
+        else:
+            if calls[0].selector - VALIDATE_WITH_PLUGIN_SELECTOR == 0:
+                validate_with_plugin(call_array_len, call_array, calldata_len, calldata)
+                jmp do_execute
+            else:
+                # make sure no call is to the account
+                assert_no_self_call(tx_info.account_contract_address, calls_len, calls)
+            end
         end
-    else:
-        # make sure no call is to the account
-        assert_no_self_call(tx_info.account_contract_address, calls_len, calls)
     end
     # validate signer and guardian signatures
     validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
@@ -234,6 +258,57 @@ func __execute__{
     transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
     return (retdata_size=response_len, retdata=response)
 end
+
+###### PLUGIN #######
+
+@external
+func add_plugin{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        plugin: felt
+    ):
+    # only called via execute
+    assert_only_self()
+
+    # change signer
+    with_attr error_message("plugin cannot be null"):
+        assert_not_zero(plugin)
+    end
+    _plugins.write(plugin, 1)
+    return()
+end
+
+func validate_with_plugin{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
+        range_check_ptr
+    } (
+        call_array_len: felt,
+        call_array: CallArray*,
+        calldata_len: felt,
+        calldata: felt*
+    ):
+    alloc_locals
+
+    let plugin = calldata[call_array[0].data_offset]
+    let (is_plugin) = _plugins.read(plugin)
+    assert_not_zero(is_plugin)
+
+    IPlugin.delegate_validate(
+        contract_address=plugin,
+        plugin_data_len=call_array[0].data_len - 1,
+        plugin_data=calldata + call_array[0].data_offset + 1,
+        call_array_len=call_array_len - 1,
+        call_array=call_array + CallArray.SIZE,
+        calldata_len=calldata_len - call_array[0].data_len,
+        calldata=calldata + call_array[0].data_offset + call_array[0].data_len)
+    return()
+end
+
+######################
 
 @external
 func upgrade{

@@ -47,7 +47,7 @@ func validate{
     let session_expires = [plugin_data + 1]
     with_attr error_message("session expired"):
         let (now) = get_block_timestamp()
-        assert_nn(now - session_expires)
+        assert_nn(session_expires - now)
     end
     # check if the session is approved
     let session_key = [plugin_data]

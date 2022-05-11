@@ -40,7 +40,7 @@ const ESCAPE_GUARDIAN_SELECTOR = 16628893475766329672923030622059061164364694258
 const ESCAPE_SIGNER_SELECTOR = 578307412324655990419134484880427622068887477430675222732446709420063579565
 const CANCEL_ESCAPE_SELECTOR = 992575500541331354489361836180456905167517944319528538469723604173440834912
 const SUPPORTS_INTERFACE_SELECTOR = 1184015894760294494673613438913361435336722154500302038630992932234692784845
-const VALIDATE_WITH_PLUGIN_SELECTOR = 711707544683360748886552898736421357314279550279312425282792016031126102997
+const USE_PLUGIN_SELECTOR = 1121675007639292412441492001821602921366030142137563176027248191276862353634
 
 const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
 
@@ -218,33 +218,34 @@ func __execute__{
     # get the tx info
     let (tx_info) = get_tx_info()
 
-    if calls[0].to == tx_info.account_contract_address:
+    if calls[0].selector - USE_PLUGIN_SELECTOR == 0:
+        # validate with plugin
+        validate_with_plugin(call_array_len, call_array, calldata_len, calldata)
+        jmp do_execute
+    else:
         if calls_len == 1:
-            tempvar signer_condition = (calls[0].selector - ESCAPE_GUARDIAN_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
-            tempvar guardian_condition = (calls[0].selector - ESCAPE_SIGNER_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
-            if signer_condition == 0:
-                # validate signer signature
-                validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
-                jmp do_execute
-            end
-            if guardian_condition == 0:
-                # validate guardian signature
-                validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
-                jmp do_execute
+            if calls[0].to == tx_info.account_contract_address:
+                tempvar signer_condition = (calls[0].selector - ESCAPE_GUARDIAN_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
+                tempvar guardian_condition = (calls[0].selector - ESCAPE_SIGNER_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
+                if signer_condition == 0:
+                    # validate signer signature
+                    validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
+                    jmp do_execute
+                end
+                if guardian_condition == 0:
+                    # validate guardian signature
+                    validate_guardian_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
+                    jmp do_execute
+                end
             end
         else:
-            if calls[0].selector - VALIDATE_WITH_PLUGIN_SELECTOR == 0:
-                validate_with_plugin(call_array_len, call_array, calldata_len, calldata)
-                jmp do_execute
-            else:
-                # make sure no call is to the account
-                assert_no_self_call(tx_info.account_contract_address, calls_len, calls)
-            end
+            # make sure no call is to the account
+            assert_no_self_call(tx_info.account_contract_address, calls_len, calls)
         end
+        # validate signer and guardian signatures
+        validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
+        validate_guardian_signature(tx_info.transaction_hash, tx_info.signature + 2, tx_info.signature_len - 2)
     end
-    # validate signer and guardian signatures
-    validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
-    validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len - 2, tx_info.signature + 2)
 
     # execute calls
     do_execute:
@@ -253,7 +254,15 @@ func __execute__{
     local range_check_ptr = range_check_ptr
     local pedersen_ptr: HashBuiltin* = pedersen_ptr
     let (response : felt*) = alloc()
-    let (response_len) = execute_list(calls_len, calls, response)
+    local response_len
+    if calls[0].selector - USE_PLUGIN_SELECTOR == 0:
+        # could call execute_with_plugin 
+        let (res) = execute_list(calls_len - 1, calls + Call.SIZE, response)
+        assert response_len = res
+    else:
+        let (res) = execute_list(calls_len, calls, response)
+        assert response_len = res
+    end
     # emit event
     transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
     return (retdata_size=response_len, retdata=response)
@@ -278,6 +287,16 @@ func add_plugin{
     end
     _plugins.write(plugin, 1)
     return()
+end
+
+@view
+func is_plugin{
+        syscall_ptr: felt*, 
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (plugin: felt) -> (success: felt):
+    let (res) = _plugins.read(plugin)
+    return (success=res)
 end
 
 func validate_with_plugin{

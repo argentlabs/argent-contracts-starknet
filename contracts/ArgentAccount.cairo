@@ -628,9 +628,10 @@ func validate_signer_signature{
         signatures: felt*,
         signatures_len: felt
     ) -> ():
+    let (signer) = _signer.read()
     with_attr error_message("signer signature invalid"):
+        assert_not_zero(signer)
         assert_nn(signatures_len - 2)
-        let (signer) = _signer.read()
         verify_ecdsa_signature(
             message=message,
             public_key=signer,

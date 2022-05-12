@@ -111,6 +111,10 @@ func account_upgraded(new_implementation: felt):
 end
 
 @event
+func account_initialized(signer: felt, guardian: felt):
+end
+
+@event
 func transaction_executed(hash: felt, response_len: felt, response: felt*):
 end
 
@@ -163,6 +167,8 @@ func initialize{
     # initialize the contract
     _signer.write(signer)
     _guardian.write(guardian)
+    # emit event
+    account_initialized.emit(signer=signer, guardian=guardian)
     return ()
 end
 

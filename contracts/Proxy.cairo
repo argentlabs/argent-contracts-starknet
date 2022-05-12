@@ -1,7 +1,6 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.cairo.common.math import assert_not_zero
 from starkware.starknet.common.syscalls import delegate_call, delegate_l1_handler
 
 from contracts.Upgradable import _get_implementation, _set_implementation

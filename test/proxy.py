@@ -5,6 +5,7 @@ from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from utils.Signer import Signer
 from utils.utilities import deploy, deploy_proxy, assert_revert, str_to_felt, assert_event_emmited
 from utils.TransactionSender import TransactionSender
+from starkware.starknet.compiler.compile import get_selector_from_name
 
 signer = Signer(123456789987654321)
 guardian = Signer(456789987654321123)
@@ -26,8 +27,11 @@ async def get_starknet():
 async def account_factory(get_starknet):
     starknet = get_starknet
     account_impl = await deploy(starknet, "contracts/ArgentAccount.cairo")
-    proxy, account = await deploy_proxy(starknet, "contracts/Proxy.cairo", "contracts/ArgentAccount.cairo", [account_impl.contract_address])
-    await account.initialize(signer.public_key, guardian.public_key).invoke()
+    proxy, account = await deploy_proxy(
+        starknet,
+        "contracts/Proxy.cairo",
+        "contracts/ArgentAccount.cairo",
+        [account_impl.contract_address, get_selector_from_name('initialize'), 2, signer.public_key, guardian.public_key])
     return account, proxy, account_impl
 
 @pytest.fixture

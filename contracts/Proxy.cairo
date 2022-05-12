@@ -16,9 +16,17 @@ func constructor{
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (
-        implementation: felt
+        implementation: felt,
+        selector: felt,
+        calldata_len: felt,
+        calldata: felt*
     ):
     _set_implementation(implementation)
+    delegate_call(
+        contract_address=implementation,
+        function_selector=selector,
+        calldata_size=calldata_len,
+        calldata=calldata)
     return ()
 end
 

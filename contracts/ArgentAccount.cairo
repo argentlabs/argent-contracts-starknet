@@ -37,8 +37,8 @@ const CANCEL_ESCAPE_SELECTOR = 9925755005413313544893618361804569051675179443195
 
 const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
 
-const ESCAPE_TYPE_GUARDIAN = 0
-const ESCAPE_TYPE_SIGNER = 1
+const ESCAPE_TYPE_GUARDIAN = 1
+const ESCAPE_TYPE_SIGNER = 2
 
 const ERC165_ACCOUNT_INTERFACE = 0xf10dbd44
 
@@ -184,6 +184,9 @@ func __execute__{
         retdata: felt*
     ):
     alloc_locals
+
+    # make sure the account is initialized
+    assert_initialized()
 
     ############### TMP #############################
     # parse inputs to an array of 'Call' struct
@@ -415,6 +418,7 @@ func escape_guardian{
     let (block_timestamp) = get_block_timestamp()
     with_attr error_message("escape is not valid"):
         # assert there is an active escape
+        assert_not_zero(current_escape.active_at)
         assert_le(current_escape.active_at, block_timestamp)
         # assert the escape was triggered by the signer
         assert current_escape.type = ESCAPE_TYPE_GUARDIAN
@@ -451,6 +455,7 @@ func escape_signer{
     let (block_timestamp) = get_block_timestamp()
     with_attr error_message("escape is not valid"):
         # validate there is an active escape
+        assert_not_zero(current_escape.active_at)
         assert_le(current_escape.active_at, block_timestamp)
         # assert the escape was triggered by the guardian
         assert current_escape.type = ESCAPE_TYPE_SIGNER
@@ -578,6 +583,18 @@ func assert_only_self{
     return()
 end
 
+func assert_initialized{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } ():
+    let (signer) = _signer.read()
+    with_attr error_message("account not initialized"):
+        assert_not_zero(signer)
+    end
+    return()
+end
+
 func assert_guardian_set{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
@@ -628,10 +645,9 @@ func validate_signer_signature{
         signatures: felt*,
         signatures_len: felt
     ) -> ():
-    let (signer) = _signer.read()
     with_attr error_message("signer signature invalid"):
-        assert_not_zero(signer)
         assert_nn(signatures_len - 2)
+        let (signer) = _signer.read()
         verify_ecdsa_signature(
             message=message,
             public_key=signer,

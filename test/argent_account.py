@@ -23,8 +23,8 @@ VERSION = str_to_felt('0.2.2')
 
 IACCOUNT_ID = 0xf10dbd44
 
-ESCAPE_TYPE_GUARDIAN = 0
-ESCAPE_TYPE_SIGNER = 1
+ESCAPE_TYPE_GUARDIAN = 1
+ESCAPE_TYPE_SIGNER = 2
 
 @pytest.fixture(scope='module')
 def event_loop():

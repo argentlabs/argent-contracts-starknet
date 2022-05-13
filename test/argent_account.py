@@ -19,7 +19,7 @@ wrong_guardian = Signer(6767676767)
 DEFAULT_TIMESTAMP = 1640991600
 ESCAPE_SECURITY_PERIOD = 24*7*60*60
 
-VERSION = str_to_felt('0.2.1')
+VERSION = str_to_felt('0.2.2')
 
 IACCOUNT_ID = 0xf10dbd44
 

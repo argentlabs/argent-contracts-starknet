@@ -12,7 +12,7 @@ guardian = Signer(456789987654321123)
 wrong_signer = Signer(666666666666666666)
 wrong_guardian = Signer(6767676767)
 
-VERSION = str_to_felt('0.2.1')
+VERSION = str_to_felt('0.2.2')
 
 @pytest.fixture(scope='module')
 def event_loop():

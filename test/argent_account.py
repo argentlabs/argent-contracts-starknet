@@ -36,7 +36,11 @@ async def get_starknet():
     return starknet
 
 def update_starknet_block(starknet, block_number=1, block_timestamp=DEFAULT_TIMESTAMP):
-    starknet.state.state.block_info = BlockInfo(block_number=block_number, block_timestamp=block_timestamp, gas_price=0)
+    starknet.state.state.block_info = BlockInfo(
+        block_number=block_number,
+        block_timestamp=block_timestamp,
+        gas_price=0,
+        sequencer_address=starknet.state.state.block_info.sequencer_address)
 
 def reset_starknet_block(starknet):
     update_starknet_block(starknet=starknet)

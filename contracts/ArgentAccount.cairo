@@ -489,10 +489,12 @@ func is_valid_signature{
         hash: felt,
         sig_len: felt,
         sig: felt*
-    ) -> ():
-    validate_signer_signature(hash, sig, sig_len)
-    validate_guardian_signature(hash, sig + 2, sig_len - 2)
-    return ()
+    ) -> (is_valid: felt):
+    let (is_signer_sig_valid) = validate_signer_signature(hash, sig, sig_len)
+    let (is_guardian_sig_valid) = validate_guardian_signature(hash, sig + 2, sig_len - 2)
+    
+    # Cairo's way of doing `&&` is by multiplying the two booleans.
+    return (is_valid=is_signer_sig_valid * is_guardian_sig_valid)
 end
 
 @view
@@ -646,7 +648,7 @@ func validate_signer_signature{
         message: felt, 
         signatures: felt*,
         signatures_len: felt
-    ) -> ():
+    ) -> (is_valid: felt):
     with_attr error_message("signer signature invalid"):
         assert_nn(signatures_len - 2)
         let (signer) = _signer.read()
@@ -656,7 +658,7 @@ func validate_signer_signature{
             signature_r=signatures[0],
             signature_s=signatures[1])
     end
-    return()
+    return(is_valid=TRUE)
 end
 
 func validate_guardian_signature{
@@ -668,11 +670,11 @@ func validate_guardian_signature{
         message: felt,
         signatures: felt*,
         signatures_len: felt
-    ) -> ():
+    ) -> (is_valid: felt):
     alloc_locals
     let (guardian) = _guardian.read()
     if guardian == 0:
-        return()
+        return(is_valid=TRUE)
     else:
         with_attr error_message("guardian signature invalid"):
             if signatures_len == 2:
@@ -700,7 +702,7 @@ func validate_guardian_signature{
                 tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
             end
         end
-        return()
+        return(is_valid=TRUE)
     end
 end
 

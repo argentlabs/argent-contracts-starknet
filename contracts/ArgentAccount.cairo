@@ -8,7 +8,7 @@ from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
 from starkware.starknet.common.syscalls import (
     call_contract, get_tx_info, get_contract_address, get_caller_address, get_block_timestamp
 )
-from starkware.cairo.common.bool import {TRUE, FALSE}
+from starkware.cairo.common.bool import (TRUE, FALSE)
 
 from contracts.Upgradable import _set_implementation
 

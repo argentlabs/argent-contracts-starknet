@@ -101,11 +101,11 @@ func signer_escaped(new_signer: felt):
 end
 
 @event
-func account_upgraded(new_implementation: felt):
+func account_created(account: felt, key: felt, guardian: felt):
 end
 
 @event
-func account_initialized(signer: felt, guardian: felt):
+func account_upgraded(new_implementation: felt):
 end
 
 @event
@@ -162,7 +162,8 @@ func initialize{
     _signer.write(signer)
     _guardian.write(guardian)
     # emit event
-    account_initialized.emit(signer=signer, guardian=guardian)
+    let (self) = get_contract_address()
+    account_created.emit(account=self, key=signer, guardian=guardian)
     return ()
 end
 

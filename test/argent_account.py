@@ -19,12 +19,12 @@ wrong_guardian = Signer(6767676767)
 DEFAULT_TIMESTAMP = 1640991600
 ESCAPE_SECURITY_PERIOD = 24*7*60*60
 
-VERSION = str_to_felt('0.2.1')
+VERSION = str_to_felt('0.2.2')
 
 IACCOUNT_ID = 0xf10dbd44
 
-ESCAPE_TYPE_GUARDIAN = 0
-ESCAPE_TYPE_SIGNER = 1
+ESCAPE_TYPE_GUARDIAN = 1
+ESCAPE_TYPE_SIGNER = 2
 
 @pytest.fixture(scope='module')
 def event_loop():
@@ -36,7 +36,11 @@ async def get_starknet():
     return starknet
 
 def update_starknet_block(starknet, block_number=1, block_timestamp=DEFAULT_TIMESTAMP):
-    starknet.state.state.block_info = BlockInfo(block_number=block_number, block_timestamp=block_timestamp, gas_price=0)
+    starknet.state.state.block_info = BlockInfo(
+        block_number=block_number,
+        block_timestamp=block_timestamp,
+        gas_price=0,
+        sequencer_address=starknet.state.state.block_info.sequencer_address)
 
 def reset_starknet_block(starknet):
     update_starknet_block(starknet=starknet)

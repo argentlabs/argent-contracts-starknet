@@ -2,15 +2,11 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.signature import verify_ecdsa_signature
-from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.memcpy import memcpy
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
 from starkware.starknet.common.syscalls import (
     call_contract, get_tx_info, get_contract_address, get_caller_address, get_block_timestamp
-)
-from starkware.cairo.common.hash_state import (
-    hash_init, hash_finalize, hash_update, hash_update_single
 )
 
 from contracts.Upgradable import _set_implementation
@@ -25,7 +21,7 @@ end
 # CONSTANTS
 ####################
 
-const VERSION = '0.2.1'
+const VERSION = '0.2.2'
 
 const CHANGE_SIGNER_SELECTOR = 1540130945889430637313403138889853410180247761946478946165786566748520529557
 const CHANGE_GUARDIAN_SELECTOR = 1374386526556551464817815908276843861478960435557596145330240747921847320237
@@ -37,8 +33,8 @@ const CANCEL_ESCAPE_SELECTOR = 9925755005413313544893618361804569051675179443195
 
 const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
 
-const ESCAPE_TYPE_GUARDIAN = 0
-const ESCAPE_TYPE_SIGNER = 1
+const ESCAPE_TYPE_GUARDIAN = 1
+const ESCAPE_TYPE_SIGNER = 2
 
 const ERC165_ACCOUNT_INTERFACE = 0xf10dbd44
 
@@ -111,6 +107,10 @@ func account_upgraded(new_implementation: felt):
 end
 
 @event
+func account_initialized(signer: felt, guardian: felt):
+end
+
+@event
 func transaction_executed(hash: felt, response_len: felt, response: felt*):
 end
 
@@ -163,6 +163,8 @@ func initialize{
     # initialize the contract
     _signer.write(signer)
     _guardian.write(guardian)
+    # emit event
+    account_initialized.emit(signer=signer, guardian=guardian)
     return ()
 end
 
@@ -184,6 +186,9 @@ func __execute__{
         retdata: felt*
     ):
     alloc_locals
+
+    # make sure the account is initialized
+    assert_initialized()
 
     ############### TMP #############################
     # parse inputs to an array of 'Call' struct
@@ -415,6 +420,7 @@ func escape_guardian{
     let (block_timestamp) = get_block_timestamp()
     with_attr error_message("escape is not valid"):
         # assert there is an active escape
+        assert_not_zero(current_escape.active_at)
         assert_le(current_escape.active_at, block_timestamp)
         # assert the escape was triggered by the signer
         assert current_escape.type = ESCAPE_TYPE_GUARDIAN
@@ -451,6 +457,7 @@ func escape_signer{
     let (block_timestamp) = get_block_timestamp()
     with_attr error_message("escape is not valid"):
         # validate there is an active escape
+        assert_not_zero(current_escape.active_at)
         assert_le(current_escape.active_at, block_timestamp)
         # assert the escape was triggered by the guardian
         assert current_escape.type = ESCAPE_TYPE_SIGNER
@@ -574,6 +581,18 @@ func assert_only_self{
     let (caller_address) = get_caller_address()
     with_attr error_message("must be called via execute"):
         assert self = caller_address
+    end
+    return()
+end
+
+func assert_initialized{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } ():
+    let (signer) = _signer.read()
+    with_attr error_message("account not initialized"):
+        assert_not_zero(signer)
     end
     return()
 end

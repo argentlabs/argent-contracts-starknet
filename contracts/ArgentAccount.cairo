@@ -221,7 +221,7 @@ func __execute__{
     if calls[0].selector - USE_PLUGIN_SELECTOR == 0:
         # validate with plugin
         validate_with_plugin(call_array_len, call_array, calldata_len, calldata)
-        jmp do_execute
+        return()
     else:
         if calls_len == 1:
             if calls[0].to == tx_info.account_contract_address:
@@ -230,12 +230,12 @@ func __execute__{
                 if signer_condition == 0:
                     # validate signer signature
                     validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
-                    jmp do_execute
+                    return()
                 end
                 if guardian_condition == 0:
                     # validate guardian signature
                     validate_guardian_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
-                    jmp do_execute
+                    return()
                 end
             end
         else:
@@ -246,26 +246,7 @@ func __execute__{
         validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
         validate_guardian_signature(tx_info.transaction_hash, tx_info.signature + 2, tx_info.signature_len - 2)
     end
-
-    # execute calls
-    do_execute:
-    local ecdsa_ptr: SignatureBuiltin* = ecdsa_ptr
-    local syscall_ptr: felt* = syscall_ptr
-    local range_check_ptr = range_check_ptr
-    local pedersen_ptr: HashBuiltin* = pedersen_ptr
-    let (response : felt*) = alloc()
-    local response_len
-    if calls[0].selector - USE_PLUGIN_SELECTOR == 0:
-        # could call execute_with_plugin 
-        let (res) = execute_list(calls_len - 1, calls + Call.SIZE, response)
-        assert response_len = res
-    else:
-        let (res) = execute_list(calls_len, calls, response)
-        assert response_len = res
-    end
-    # emit event
-    transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
-    return (retdata_size=response_len, retdata=response)
+    return()
 end
 
 ###### PLUGIN #######

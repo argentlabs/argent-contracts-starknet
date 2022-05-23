@@ -490,6 +490,8 @@ func is_valid_signature{
         sig_len: felt,
         sig: felt*
     ) -> (is_valid: felt):
+    alloc_locals
+
     let (is_signer_sig_valid) = validate_signer_signature(hash, sig, sig_len)
     let (is_guardian_sig_valid) = validate_guardian_signature(hash, sig + 2, sig_len - 2)
     

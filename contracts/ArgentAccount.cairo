@@ -8,6 +8,7 @@ from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
 from starkware.starknet.common.syscalls import (
     call_contract, get_tx_info, get_contract_address, get_caller_address, get_block_timestamp
 )
+from starkware.cairo.common.bool import {TRUE, FALSE}
 
 from contracts.Upgradable import _set_implementation
 
@@ -37,9 +38,6 @@ const ESCAPE_TYPE_GUARDIAN = 1
 const ESCAPE_TYPE_SIGNER = 2
 
 const ERC165_ACCOUNT_INTERFACE = 0xf10dbd44
-
-const TRUE = 1
-const FALSE = 0
 
 ####################
 # STRUCTS

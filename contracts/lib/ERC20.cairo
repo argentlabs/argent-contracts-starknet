@@ -6,6 +6,7 @@ from starkware.cairo.common.math import assert_not_zero
 from starkware.cairo.common.uint256 import (
     Uint256, uint256_add, uint256_sub, uint256_le, uint256_lt, uint256_check
 )
+from starkware.cairo.common.bool import (TRUE, FALSE)
 
 #
 # Storage
@@ -135,8 +136,7 @@ func transfer{
     let (sender) = get_caller_address()
     _transfer(sender, recipient, amount)
 
-    # Cairo equivalent to 'return (true)'
-    return (1)
+    return (TRUE)
 end
 
 @external
@@ -163,8 +163,7 @@ func transferFrom{
     let (new_allowance: Uint256) = uint256_sub(caller_allowance, amount)
     allowances.write(sender, caller, new_allowance)
 
-    # Cairo equivalent to 'return (true)'
-    return (1)
+    return (TRUE)
 end
 
 @external
@@ -176,8 +175,7 @@ func approve{
     let (caller) = get_caller_address()
     _approve(caller, spender, amount)
 
-    # Cairo equivalent to 'return (true)'
-    return (1)
+    return (TRUE)
 end
 
 @external
@@ -197,8 +195,7 @@ func increaseAllowance{
 
     _approve(caller, spender, new_allowance)
 
-    # Cairo equivalent to 'return (true)'
-    return (1)
+    return (TRUE)
 end
 
 @external
@@ -219,8 +216,7 @@ func decreaseAllowance{
 
     _approve(caller, spender, new_allowance)
 
-    # Cairo equivalent to 'return (true)'
-    return (1)
+    return (TRUE)
 end
 
 #

@@ -187,6 +187,8 @@ func __execute__{
 
     # make sure the account is initialized
     assert_initialized()
+    # no reentrant call to prevent signature reutilization
+    assert_non_reentrant()
 
     ############### TMP #############################
     # parse inputs to an array of 'Call' struct
@@ -595,6 +597,16 @@ func assert_initialized{
     let (signer) = _signer.read()
     with_attr error_message("account not initialized"):
         assert_not_zero(signer)
+    end
+    return()
+end
+
+func assert_non_reentrant{
+        syscall_ptr: felt*
+    } () -> ():
+    let (caller) = get_caller_address()
+    with_attr error_message("no reentrant call"):
+        assert caller = 0
     end
     return()
 end

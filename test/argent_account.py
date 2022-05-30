@@ -520,4 +520,5 @@ async def test_is_valid_signature(account_factory):
     for sig in [signer, guardian]:
         signatures += list(sig.sign(hash))
     
-    await account.is_valid_signature(hash, signatures).call()
+    res = (await account.is_valid_signature(hash, signatures).call()).result
+    assert (res.is_valid == 1)

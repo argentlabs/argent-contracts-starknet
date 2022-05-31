@@ -44,9 +44,9 @@ async def dapp_factory(get_starknet):
 @pytest.mark.asyncio
 async def test_initializer(account_factory):
     account, proxy, implementation = account_factory
-    assert (await proxy.get_implementation().call()).result.implementation == (implementation)
-    assert (await account.get_signer().call()).result.signer == (signer.public_key)
-    assert (await account.get_guardian().call()).result.guardian == (guardian.public_key)
+    assert (await proxy.get_implementation().call()).result.implementation == implementation
+    assert (await account.get_signer().call()).result.signer == signer.public_key
+    assert (await account.get_guardian().call()).result.guardian == guardian.public_key
     assert (await account.get_version().call()).result.version == VERSION
 
 @pytest.mark.asyncio

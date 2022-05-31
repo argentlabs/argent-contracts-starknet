@@ -250,10 +250,10 @@ func upgrade{
         let (calldata: felt*) = alloc()
         assert calldata[0] = ERC165_ACCOUNT_INTERFACE
         let (retdata_size: felt, retdata: felt*) = library_call(
-                                                        class_hash=implementation,
-                                                        function_selector=SUPPORTS_INTERFACE_SELECTOR,
-                                                        calldata_size=1,
-                                                        calldata=calldata)
+            class_hash=implementation,
+            function_selector=SUPPORTS_INTERFACE_SELECTOR,
+            calldata_size=1,
+            calldata=calldata)
         assert retdata_size = 1
         assert [retdata] = TRUE
     end

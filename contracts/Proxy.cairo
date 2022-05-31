@@ -1,7 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.starknet.common.syscalls import library_call, delegate_l1_handler
+from starkware.starknet.common.syscalls import library_call, library_call_l1_handler
 
 from contracts.Upgradable import _get_implementation, _set_implementation
 
@@ -71,8 +71,8 @@ func __l1_default__{
     ):
     let (implementation) = _get_implementation()
 
-    delegate_l1_handler(
-        contract_address=implementation,
+    library_call_l1_handler(
+        class_hash=implementation,
         function_selector=selector,
         calldata_size=calldata_size,
         calldata=calldata)

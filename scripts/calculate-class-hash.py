@@ -7,8 +7,6 @@ path_to_json = './artifacts/'
 json_files = [pos_json for pos_json in os.listdir(
     path_to_json) if pos_json.endswith('.json')]
 
-print(json_files)
-
 
 def print_class_hash(class_location):
     location = path_to_json + class_location

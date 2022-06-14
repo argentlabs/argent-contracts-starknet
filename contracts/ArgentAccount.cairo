@@ -6,17 +6,11 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.memcpy import memcpy
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
 from starkware.starknet.common.syscalls import (
-    call_contract, get_tx_info, get_contract_address, get_caller_address, get_block_timestamp
+    library_call, call_contract, get_tx_info, get_contract_address, get_caller_address, get_block_timestamp
 )
 from starkware.cairo.common.bool import (TRUE, FALSE)
 
 from contracts.Upgradable import _set_implementation
-
-@contract_interface
-namespace IAccount:
-    func supportsInterface(interfaceId: felt) -> (success : felt):
-    end
-end
 
 ####################
 # CONSTANTS
@@ -31,6 +25,7 @@ const TRIGGER_ESCAPE_SIGNER_SELECTOR = 65189126576298695489877423686052356045715
 const ESCAPE_GUARDIAN_SELECTOR = 1662889347576632967292303062205906116436469425870979472602094601074614456040
 const ESCAPE_SIGNER_SELECTOR = 578307412324655990419134484880427622068887477430675222732446709420063579565
 const CANCEL_ESCAPE_SELECTOR = 992575500541331354489361836180456905167517944319528538469723604173440834912
+const SUPPORTS_INTERFACE_SELECTOR = 1184015894760294494673613438913361435336722154500302038630992932234692784845
 
 const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
 
@@ -101,11 +96,11 @@ func signer_escaped(new_signer: felt):
 end
 
 @event
-func account_upgraded(new_implementation: felt):
+func account_created(account: felt, key: felt, guardian: felt):
 end
 
 @event
-func account_initialized(signer: felt, guardian: felt):
+func account_upgraded(new_implementation: felt):
 end
 
 @event
@@ -162,7 +157,8 @@ func initialize{
     _signer.write(signer)
     _guardian.write(guardian)
     # emit event
-    account_initialized.emit(signer=signer, guardian=guardian)
+    let (self) = get_contract_address()
+    account_created.emit(account=self, key=signer, guardian=guardian)
     return ()
 end
 
@@ -251,8 +247,15 @@ func upgrade{
     assert_only_self()
     # make sure the target is an account
     with_attr error_message("implementation invalid"):
-        let (success) = IAccount.supportsInterface(contract_address=implementation, interfaceId=ERC165_ACCOUNT_INTERFACE)
-        assert success = TRUE
+        let (calldata: felt*) = alloc()
+        assert calldata[0] = ERC165_ACCOUNT_INTERFACE
+        let (retdata_size: felt, retdata: felt*) = library_call(
+            class_hash=implementation,
+            function_selector=SUPPORTS_INTERFACE_SELECTOR,
+            calldata_size=1,
+            calldata=calldata)
+        assert retdata_size = 1
+        assert [retdata] = TRUE
     end
     # change implementation
     _set_implementation(implementation)

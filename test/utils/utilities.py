@@ -31,11 +31,14 @@ def assert_event_emmited(tx_exec_info, from_address, name, data = []):
     else: 
         raw_events = tx_exec_info.raw_events  
 
-    assert Event(
+    event = Event(
         from_address=from_address,
         keys=[get_selector_from_name(name)],
         data=data,
-    ) in raw_events
+    )
+    assert event in raw_events
+
+    return event
 
 contract_classes = {}
 

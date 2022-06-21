@@ -205,12 +205,12 @@ func __execute__{
             tempvar guardian_condition = (calls[0].selector - ESCAPE_SIGNER_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
             if signer_condition == 0:
                 # validate signer signature
-                validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
+                validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
                 jmp do_execute
             end
             if guardian_condition == 0:
                 # validate guardian signature
-                validate_guardian_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
+                validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
                 jmp do_execute
             end
         end
@@ -219,8 +219,8 @@ func __execute__{
         assert_no_self_call(tx_info.account_contract_address, calls_len, calls)
     end
     # validate signer and guardian signatures
-    validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
-    validate_guardian_signature(tx_info.transaction_hash, tx_info.signature + 2, tx_info.signature_len - 2)
+    validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
+    validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len - 2, tx_info.signature + 2)
 
     # execute calls
     do_execute:
@@ -495,8 +495,8 @@ func is_valid_signature{
     ) -> (is_valid: felt):
     alloc_locals
 
-    let (is_signer_sig_valid) = validate_signer_signature(hash, sig, sig_len)
-    let (is_guardian_sig_valid) = validate_guardian_signature(hash, sig + 2, sig_len - 2)
+    let (is_signer_sig_valid) = validate_signer_signature(hash, sig_len, sig)
+    let (is_guardian_sig_valid) = validate_guardian_signature(hash, sig_len - 2, sig + 2)
     
     # Cairo's way of doing `&&` is by multiplying the two booleans.
     return (is_valid=is_signer_sig_valid * is_guardian_sig_valid)
@@ -661,8 +661,8 @@ func validate_signer_signature{
         range_check_ptr
     } (
         message: felt, 
-        signatures: felt*,
-        signatures_len: felt
+        signatures_len: felt,
+        signatures: felt*
     ) -> (is_valid: felt):
     with_attr error_message("signer signature invalid"):
         assert_nn(signatures_len - 2)
@@ -683,8 +683,8 @@ func validate_guardian_signature{
         range_check_ptr
     } (
         message: felt,
-        signatures: felt*,
-        signatures_len: felt
+        signatures_len: felt,
+        signatures: felt*
     ) -> (is_valid: felt):
     alloc_locals
     let (guardian) = _guardian.read()

@@ -1,8 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.cairo.common.math import assert_not_zero
-from starkware.starknet.common.syscalls import delegate_call, delegate_l1_handler
+from starkware.starknet.common.syscalls import library_call, library_call_l1_handler
 
 from contracts.Upgradable import _get_implementation, _set_implementation
 
@@ -16,9 +15,17 @@ func constructor{
         pedersen_ptr: HashBuiltin*,
         range_check_ptr
     } (
-        implementation: felt
+        implementation: felt,
+        selector: felt,
+        calldata_len: felt,
+        calldata: felt*
     ):
     _set_implementation(implementation)
+    library_call(
+        class_hash=implementation,
+        function_selector=selector,
+        calldata_size=calldata_len,
+        calldata=calldata)
     return ()
 end
 
@@ -43,8 +50,8 @@ func __default__{
     ):
     let (implementation) = _get_implementation()
 
-    let (retdata_size : felt, retdata : felt*) = delegate_call(
-        contract_address=implementation,
+    let (retdata_size : felt, retdata : felt*) = library_call(
+        class_hash=implementation,
         function_selector=selector,
         calldata_size=calldata_size,
         calldata=calldata)
@@ -64,8 +71,8 @@ func __l1_default__{
     ):
     let (implementation) = _get_implementation()
 
-    delegate_l1_handler(
-        contract_address=implementation,
+    library_call_l1_handler(
+        class_hash=implementation,
         function_selector=selector,
         calldata_size=calldata_size,
         calldata=calldata)

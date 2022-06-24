@@ -2,30 +2,21 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.signature import verify_ecdsa_signature
-from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.memcpy import memcpy
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
 from starkware.starknet.common.syscalls import (
-    call_contract, get_tx_info, get_contract_address, get_caller_address, get_block_timestamp
+    library_call, call_contract, get_tx_info, get_contract_address, get_caller_address, get_block_timestamp
 )
-from starkware.cairo.common.hash_state import (
-    hash_init, hash_finalize, hash_update, hash_update_single
-)
+from starkware.cairo.common.bool import (TRUE, FALSE)
 
 from contracts.Upgradable import _set_implementation
-
-@contract_interface
-namespace IAccount:
-    func supportsInterface(interfaceId: felt) -> (success : felt):
-    end
-end
 
 ####################
 # CONSTANTS
 ####################
 
-const VERSION = '0.2.1'
+const VERSION = '0.2.2'
 
 const CHANGE_SIGNER_SELECTOR = 1540130945889430637313403138889853410180247761946478946165786566748520529557
 const CHANGE_GUARDIAN_SELECTOR = 1374386526556551464817815908276843861478960435557596145330240747921847320237
@@ -34,16 +25,14 @@ const TRIGGER_ESCAPE_SIGNER_SELECTOR = 65189126576298695489877423686052356045715
 const ESCAPE_GUARDIAN_SELECTOR = 1662889347576632967292303062205906116436469425870979472602094601074614456040
 const ESCAPE_SIGNER_SELECTOR = 578307412324655990419134484880427622068887477430675222732446709420063579565
 const CANCEL_ESCAPE_SELECTOR = 992575500541331354489361836180456905167517944319528538469723604173440834912
+const SUPPORTS_INTERFACE_SELECTOR = 1184015894760294494673613438913361435336722154500302038630992932234692784845
 
 const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
 
-const ESCAPE_TYPE_GUARDIAN = 0
-const ESCAPE_TYPE_SIGNER = 1
+const ESCAPE_TYPE_GUARDIAN = 1
+const ESCAPE_TYPE_SIGNER = 2
 
 const ERC165_ACCOUNT_INTERFACE = 0xf10dbd44
-
-const TRUE = 1
-const FALSE = 0
 
 ####################
 # STRUCTS
@@ -107,6 +96,10 @@ func signer_escaped(new_signer: felt):
 end
 
 @event
+func account_created(account: felt, key: felt, guardian: felt):
+end
+
+@event
 func account_upgraded(new_implementation: felt):
 end
 
@@ -163,6 +156,9 @@ func initialize{
     # initialize the contract
     _signer.write(signer)
     _guardian.write(guardian)
+    # emit event
+    let (self) = get_contract_address()
+    account_created.emit(account=self, key=signer, guardian=guardian)
     return ()
 end
 
@@ -184,6 +180,11 @@ func __execute__{
         retdata: felt*
     ):
     alloc_locals
+
+    # make sure the account is initialized
+    assert_initialized()
+    # no reentrant call to prevent signature reutilization
+    assert_non_reentrant()
 
     ############### TMP #############################
     # parse inputs to an array of 'Call' struct
@@ -246,8 +247,15 @@ func upgrade{
     assert_only_self()
     # make sure the target is an account
     with_attr error_message("implementation invalid"):
-        let (success) = IAccount.supportsInterface(contract_address=implementation, interfaceId=ERC165_ACCOUNT_INTERFACE)
-        assert success = TRUE
+        let (calldata: felt*) = alloc()
+        assert calldata[0] = ERC165_ACCOUNT_INTERFACE
+        let (retdata_size: felt, retdata: felt*) = library_call(
+            class_hash=implementation,
+            function_selector=SUPPORTS_INTERFACE_SELECTOR,
+            calldata_size=1,
+            calldata=calldata)
+        assert retdata_size = 1
+        assert [retdata] = TRUE
     end
     # change implementation
     _set_implementation(implementation)
@@ -415,6 +423,7 @@ func escape_guardian{
     let (block_timestamp) = get_block_timestamp()
     with_attr error_message("escape is not valid"):
         # assert there is an active escape
+        assert_not_zero(current_escape.active_at)
         assert_le(current_escape.active_at, block_timestamp)
         # assert the escape was triggered by the signer
         assert current_escape.type = ESCAPE_TYPE_GUARDIAN
@@ -451,6 +460,7 @@ func escape_signer{
     let (block_timestamp) = get_block_timestamp()
     with_attr error_message("escape is not valid"):
         # validate there is an active escape
+        assert_not_zero(current_escape.active_at)
         assert_le(current_escape.active_at, block_timestamp)
         # assert the escape was triggered by the guardian
         assert current_escape.type = ESCAPE_TYPE_SIGNER
@@ -482,10 +492,14 @@ func is_valid_signature{
         hash: felt,
         sig_len: felt,
         sig: felt*
-    ) -> ():
-    validate_signer_signature(hash, sig, sig_len)
-    validate_guardian_signature(hash, sig + 2, sig_len - 2)
-    return ()
+    ) -> (is_valid: felt):
+    alloc_locals
+
+    let (is_signer_sig_valid) = validate_signer_signature(hash, sig, sig_len)
+    let (is_guardian_sig_valid) = validate_guardian_signature(hash, sig + 2, sig_len - 2)
+    
+    # Cairo's way of doing `&&` is by multiplying the two booleans.
+    return (is_valid=is_signer_sig_valid * is_guardian_sig_valid)
 end
 
 @view
@@ -578,6 +592,28 @@ func assert_only_self{
     return()
 end
 
+func assert_initialized{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } ():
+    let (signer) = _signer.read()
+    with_attr error_message("account not initialized"):
+        assert_not_zero(signer)
+    end
+    return()
+end
+
+func assert_non_reentrant{
+        syscall_ptr: felt*
+    } () -> ():
+    let (caller) = get_caller_address()
+    with_attr error_message("no reentrant call"):
+        assert caller = 0
+    end
+    return()
+end
+
 func assert_guardian_set{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
@@ -627,7 +663,7 @@ func validate_signer_signature{
         message: felt, 
         signatures: felt*,
         signatures_len: felt
-    ) -> ():
+    ) -> (is_valid: felt):
     with_attr error_message("signer signature invalid"):
         assert_nn(signatures_len - 2)
         let (signer) = _signer.read()
@@ -637,7 +673,7 @@ func validate_signer_signature{
             signature_r=signatures[0],
             signature_s=signatures[1])
     end
-    return()
+    return(is_valid=TRUE)
 end
 
 func validate_guardian_signature{
@@ -649,11 +685,11 @@ func validate_guardian_signature{
         message: felt,
         signatures: felt*,
         signatures_len: felt
-    ) -> ():
+    ) -> (is_valid: felt):
     alloc_locals
     let (guardian) = _guardian.read()
     if guardian == 0:
-        return()
+        return(is_valid=TRUE)
     else:
         with_attr error_message("guardian signature invalid"):
             if signatures_len == 2:
@@ -681,7 +717,7 @@ func validate_guardian_signature{
                 tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr
             end
         end
-        return()
+        return(is_valid=TRUE)
     end
 end
 

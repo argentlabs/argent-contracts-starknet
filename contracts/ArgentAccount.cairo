@@ -6,7 +6,7 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.memcpy import memcpy
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
 from starkware.starknet.common.syscalls import (
-    library_call, call_contract, get_tx_info, get_contract_address, get_caller_address, get_block_timestamp
+    library_call, call_contract, get_tx_info, get_contract_address, get_caller_address, get_block_timestamp, deploy
 )
 from starkware.cairo.common.bool import (TRUE, FALSE)
 
@@ -105,6 +105,10 @@ end
 
 @event
 func transaction_executed(hash: felt, response_len: felt, response: felt*):
+end
+
+@event
+func contract_deployed(contract_address: felt, class_hash: felt, salt: felt):
 end
 
 ####################
@@ -233,6 +237,30 @@ func __execute__{
     # emit event
     transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
     return (retdata_size=response_len, retdata=response)
+end
+
+@external
+func deploy_contract{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        class_hash: felt,
+        contract_address_salt: felt,
+        constructor_calldata_len: felt,
+        constructor_calldata: felt*,
+    ) -> (contract_address: felt):
+    # only called via execute
+    assert_only_self()
+    # deploy contract
+    let (contract_address) = deploy(
+        class_hash=class_hash,
+        contract_address_salt=contract_address_salt,
+        constructor_calldata_size=constructor_calldata_len,
+        constructor_calldata=constructor_calldata
+    )
+    contract_deployed.emit(contract_address=contract_address, class_hash=class_hash, salt=contract_address_salt)
+    return (contract_address=contract_address)
 end
 
 @external

@@ -305,6 +305,21 @@ func add_plugin{
 end
 
 @external
+func remove_plugin{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        plugin: felt
+    ):
+    # only called via execute
+    assert_only_self()
+    # remove plugin
+    _plugins.write(plugin, 0)
+    return()
+end
+
+@external
 func execute_on_plugin{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,

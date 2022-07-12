@@ -24,6 +24,10 @@ struct CallArray:
     member data_len: felt
 end
 
+@event
+func session_key_revoked(session_key: felt):
+end
+
 @storage_var
 func SessionKey_revoked_keys(key: felt) -> (res: felt):
 end
@@ -90,6 +94,7 @@ func revoke_session_key{
         session_key: felt
     ):
     SessionKey_revoked_keys.write(session_key, 1)
+    session_key_revoked.emit(session_key)
     return()
 end
 

@@ -4,9 +4,11 @@ import logging
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.business_logic.state.state import BlockInfo
 from utils.Signer import Signer
-from utils.utilities import deploy, assert_revert, str_to_felt, assert_event_emmited
+from utils.utilities import deploy, declare, assert_revert, str_to_felt, assert_event_emmited
 from utils.TransactionSender import TransactionSender
 from starkware.cairo.common.hash_state import compute_hash_on_elements
+from starkware.starknet.compiler.compile import get_selector_from_name
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -33,7 +35,11 @@ async def get_starknet():
     return starknet
 
 def update_starknet_block(starknet, block_number=1, block_timestamp=DEFAULT_TIMESTAMP):
-    starknet.state.state.block_info = BlockInfo(block_number=block_number, block_timestamp=block_timestamp, gas_price=0)
+    starknet.state.state.block_info = BlockInfo(
+        block_number=block_number,
+        block_timestamp=block_timestamp,
+        gas_price=0,
+        sequencer_address=starknet.state.state.block_info.sequencer_address)
 
 def reset_starknet_block(starknet):
     update_starknet_block(starknet=starknet)
@@ -54,8 +60,8 @@ async def dapp_factory(get_starknet):
 @pytest.fixture
 async def plugin_factory(get_starknet):
     starknet = get_starknet
-    plugin_session = await deploy(starknet, "contracts/SessionKey.cairo")
-    return plugin_session
+    plugin_session = await declare(starknet, "contracts/plugins/SessionKey.cairo")
+    return plugin_session.class_hash
 
 @pytest.mark.asyncio
 async def test_add_plugin(account_factory, plugin_factory):
@@ -63,9 +69,9 @@ async def test_add_plugin(account_factory, plugin_factory):
     plugin = plugin_factory
     sender = TransactionSender(account)
 
-    assert (await account.is_plugin(plugin.contract_address).call()).result.success == (0)
-    tx_exec_info = await sender.send_transaction([(account.contract_address, 'add_plugin', [plugin.contract_address])], [signer])
-    assert (await account.is_plugin(plugin.contract_address).call()).result.success == (1)
+    assert (await account.is_plugin(plugin).call()).result.success == (0)
+    tx_exec_info = await sender.send_transaction([(account.contract_address, 'add_plugin', [plugin])], [signer])
+    assert (await account.is_plugin(plugin).call()).result.success == (1)
 
 @pytest.mark.asyncio
 async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_factory, get_starknet):
@@ -75,14 +81,16 @@ async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_
     starknet = get_starknet
     sender = TransactionSender(account)
 
-    tx_exec_info = await sender.send_transaction([(account.contract_address, 'add_plugin', [plugin.contract_address])], [signer])
-
+    # add session key plugin
+    await sender.send_transaction([(account.contract_address, 'add_plugin', [plugin])], [signer])
+    # authorise session key
     session_token = get_session_token(session_key.public_key, DEFAULT_TIMESTAMP + 10)
     assert (await dapp.get_number(account.contract_address).call()).result.number == 0
     update_starknet_block(starknet=starknet, block_timestamp=(DEFAULT_TIMESTAMP))
+    # call with session key
     tx_exec_info = await sender.send_transaction(
         [
-            (account.contract_address, 'use_plugin', [plugin.contract_address, session_key.public_key, DEFAULT_TIMESTAMP + 10, session_token[0], session_token[1]]),
+            (account.contract_address, 'use_plugin', [plugin, session_key.public_key, DEFAULT_TIMESTAMP + 10, session_token[0], session_token[1]]),
             (dapp.contract_address, 'set_number', [47])
         ], 
         [session_key])
@@ -92,8 +100,20 @@ async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_
         from_address=account.contract_address,
         name='transaction_executed'
     )
-
+    # check it worked
     assert (await dapp.get_number(account.contract_address).call()).result.number == 47
+    # revoke session key
+    await sender.send_transaction([(account.contract_address, 'execute_on_plugin', [plugin, get_selector_from_name('revoke_session_key'), 1, session_key.public_key])], [signer])
+    # check the session key is no longer authorised
+    await assert_revert(
+        sender.send_transaction(
+            [
+                (account.contract_address, 'use_plugin', [plugin, session_key.public_key, DEFAULT_TIMESTAMP + 10, session_token[0], session_token[1]]),
+                (dapp.contract_address, 'set_number', [47])
+            ], 
+            [session_key]),
+        "session key revoked"
+    )
 
 def get_session_token(key, expires):
     session = [

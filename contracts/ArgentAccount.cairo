@@ -200,16 +200,11 @@ func __execute__{
     ):
     alloc_locals
 
-    # make sure the account is initialized
-    assert_initialized()
+    # validate calls
+    validate(call_array_len, call_array, calldata_len, calldata, nonce)
+
     # no reentrant call to prevent signature reutilization
     assert_non_reentrant()
-    
-    # validate and bump nonce
-    validate_and_bump_nonce(nonce)
-
-    # get the tx info
-    let (tx_info) = get_tx_info()
 
     ############### TMP #############################
     # parse inputs to an array of 'Call' struct
@@ -218,45 +213,10 @@ func __execute__{
     let calls_len = call_array_len
     #################################################
 
-    if calls[0].selector - USE_PLUGIN_SELECTOR == 0:
-        # validate with plugin
-        validate_with_plugin(call_array_len, call_array, calldata_len, calldata)
-        jmp do_execute
-    else:
-        if calls_len == 1:
-            if calls[0].to == tx_info.account_contract_address:
-                tempvar signer_condition = (calls[0].selector - ESCAPE_GUARDIAN_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
-                tempvar guardian_condition = (calls[0].selector - ESCAPE_SIGNER_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
-                if signer_condition == 0:
-                    # validate signer signature
-                    validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
-                    jmp do_execute
-                end
-                if guardian_condition == 0:
-                    # validate guardian signature
-                    validate_guardian_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
-                    jmp do_execute
-                end
-            end
-        else:
-            # make sure no call is to the account
-            assert_no_self_call(tx_info.account_contract_address, calls_len, calls)
-        end
-        # validate signer and guardian signatures
-        validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
-        validate_guardian_signature(tx_info.transaction_hash, tx_info.signature + 2, tx_info.signature_len - 2)
-    end
-
     # execute calls
-    do_execute:
-    local ecdsa_ptr: SignatureBuiltin* = ecdsa_ptr
-    local syscall_ptr: felt* = syscall_ptr
-    local range_check_ptr = range_check_ptr
-    local pedersen_ptr: HashBuiltin* = pedersen_ptr
     let (response : felt*) = alloc()
     local response_len
     if calls[0].selector - USE_PLUGIN_SELECTOR == 0:
-        # could call execute_with_plugin 
         let (res) = execute_list(calls_len - 1, calls + Call.SIZE, response)
         assert response_len = res
     else:
@@ -264,8 +224,63 @@ func __execute__{
         assert response_len = res
     end
     # emit event
+    let (tx_info) = get_tx_info()
     transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
+
     return (retdata_size=response_len, retdata=response)
+end
+
+func validate{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
+        range_check_ptr
+    } (
+        call_array_len: felt,
+        call_array: CallArray*,
+        calldata_len: felt,
+        calldata: felt*,
+        nonce: felt
+    ):
+    alloc_locals
+
+    # make sure the account is initialized
+    assert_initialized()
+    
+    # validate and bump nonce
+    validate_and_bump_nonce(nonce)
+
+    # get the tx info
+    let (tx_info) = get_tx_info()
+
+    if call_array_len == 1:
+        if call_array[0].to == tx_info.account_contract_address:
+            tempvar signer_condition = (call_array[0].selector - ESCAPE_GUARDIAN_SELECTOR) * (call_array[0].selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
+            tempvar guardian_condition = (call_array[0].selector - ESCAPE_SIGNER_SELECTOR) * (call_array[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
+            if signer_condition == 0:
+                # validate signer signature
+                validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
+                return()
+            end
+            if guardian_condition == 0:
+                # validate guardian signature
+                validate_guardian_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
+                return()
+            end
+        end
+    else:
+        if (call_array[0].to - tx_info.account_contract_address) + (call_array[0].selector - USE_PLUGIN_SELECTOR) == 0:
+            validate_with_plugin(call_array_len, call_array, calldata_len, calldata)
+            return()
+        else:
+            # make sure no call is to the account
+            assert_no_self_call(tx_info.account_contract_address, call_array_len, call_array)
+        end
+    end
+    # validate signer and guardian signatures
+    validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
+    validate_guardian_signature(tx_info.transaction_hash, tx_info.signature + 2, tx_info.signature_len - 2)
+    return()
 end
 
 ###### PLUGIN #######
@@ -286,6 +301,31 @@ func add_plugin{
         assert_not_zero(plugin)
     end
     _plugins.write(plugin, 1)
+    return()
+end
+
+@external
+func execute_on_plugin{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        plugin: felt,
+        selector: felt,
+        calldata_len: felt,
+        calldata: felt*
+    ):
+    # only called via execute
+    assert_only_self()
+    # only valid plugin
+    let (is_plugin) = _plugins.read(plugin)
+    assert_not_zero(is_plugin)
+
+    library_call(
+        class_hash=plugin,
+        function_selector=selector,
+        calldata_size=calldata_len,
+        calldata=calldata)
     return()
 end
 
@@ -316,8 +356,8 @@ func validate_with_plugin{
     let (is_plugin) = _plugins.read(plugin)
     assert_not_zero(is_plugin)
 
-    IPlugin.delegate_validate(
-        contract_address=plugin,
+    IPlugin.library_call_validate(
+        class_hash=plugin,
         plugin_data_len=call_array[0].data_len - 1,
         plugin_data=calldata + call_array[0].data_offset + 1,
         call_array_len=call_array_len - 1,
@@ -722,14 +762,14 @@ end
 
 func assert_no_self_call(
         self: felt,
-        calls_len: felt,
-        calls: Call*
+        call_array_len: felt,
+        call_array: CallArray*
     ):
-    if calls_len == 0:
+    if call_array_len == 0:
         return ()
     end
-    assert_not_zero(calls[0].to - self)
-    assert_no_self_call(self, calls_len - 1, calls + Call.SIZE)
+    assert_not_zero(call_array[0].to - self)
+    assert_no_self_call(self, call_array_len - 1, call_array + CallArray.SIZE)
     return()
 end
 

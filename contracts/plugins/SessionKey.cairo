@@ -24,6 +24,10 @@ struct CallArray:
     member data_len: felt
 end
 
+@storage_var
+func SessionKey_revoked_keys(key: felt) -> (res: felt):
+end
+
 @external
 func validate{
         syscall_ptr: felt*,
@@ -60,6 +64,11 @@ func validate{
             sig=plugin_data + 2
         )
     end
+    # check if the session key is revoked
+    with_attr error_message("session key revoked"):
+        let (is_revoked) = SessionKey_revoked_keys.read(session_key)
+        assert is_revoked = 0
+    end
     # check if the tx is signed by the session key
     with_attr error_message("session key signature invalid"):
         verify_ecdsa_signature(
@@ -69,6 +78,18 @@ func validate{
             signature_s=tx_info.signature[1]
         )
     end
+    return()
+end
+
+@external
+func revoke_session_key{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        session_key: felt
+    ):
+    SessionKey_revoked_keys.write(session_key, 1)
     return()
 end
 

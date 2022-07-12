@@ -74,6 +74,18 @@ async def test_add_plugin(account_factory, plugin_factory):
     assert (await account.is_plugin(plugin).call()).result.success == (1)
 
 @pytest.mark.asyncio
+async def test_remove_plugin(account_factory, plugin_factory):
+    account = account_factory
+    plugin = plugin_factory
+    sender = TransactionSender(account)
+
+    assert (await account.is_plugin(plugin).call()).result.success == (0)
+    await sender.send_transaction([(account.contract_address, 'add_plugin', [plugin])], [signer])
+    assert (await account.is_plugin(plugin).call()).result.success == (1)
+    await sender.send_transaction([(account.contract_address, 'remove_plugin', [plugin])], [signer])
+    assert (await account.is_plugin(plugin).call()).result.success == (0)
+
+@pytest.mark.asyncio
 async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_factory, get_starknet):
     account = account_factory
     plugin = plugin_factory
@@ -103,7 +115,12 @@ async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_
     # check it worked
     assert (await dapp.get_number(account.contract_address).call()).result.number == 47
     # revoke session key
-    await sender.send_transaction([(account.contract_address, 'execute_on_plugin', [plugin, get_selector_from_name('revoke_session_key'), 1, session_key.public_key])], [signer])
+    tx_exec_info = await sender.send_transaction([(account.contract_address, 'execute_on_plugin', [plugin, get_selector_from_name('revoke_session_key'), 1, session_key.public_key])], [signer])
+    assert_event_emmited(
+        tx_exec_info,
+        from_address=account.contract_address,
+        name='session_key_revoked'
+    )
     # check the session key is no longer authorised
     await assert_revert(
         sender.send_transaction(

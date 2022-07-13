@@ -221,6 +221,10 @@ func __execute__{
     if calls[0].selector - USE_PLUGIN_SELECTOR == 0:
         # validate with plugin
         validate_with_plugin(call_array_len, call_array, calldata_len, calldata)
+        tempvar ecdsa_ptr = ecdsa_ptr
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
         jmp do_execute
     else:
         if calls_len == 1:
@@ -230,11 +234,19 @@ func __execute__{
                 if signer_condition == 0:
                     # validate signer signature
                     validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
+                    tempvar ecdsa_ptr = ecdsa_ptr
+                    tempvar syscall_ptr = syscall_ptr
+                    tempvar range_check_ptr = range_check_ptr
+                    tempvar pedersen_ptr = pedersen_ptr
                     jmp do_execute
                 end
                 if guardian_condition == 0:
                     # validate guardian signature
                     validate_guardian_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
+                    tempvar ecdsa_ptr = ecdsa_ptr
+                    tempvar syscall_ptr = syscall_ptr
+                    tempvar range_check_ptr = range_check_ptr
+                    tempvar pedersen_ptr = pedersen_ptr
                     jmp do_execute
                 end
             end
@@ -245,6 +257,10 @@ func __execute__{
         # validate signer and guardian signatures
         validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
         validate_guardian_signature(tx_info.transaction_hash, tx_info.signature + 2, tx_info.signature_len - 2)
+        tempvar ecdsa_ptr = ecdsa_ptr
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
     end
 
     # execute calls
@@ -316,8 +332,8 @@ func validate_with_plugin{
     let (is_plugin) = _plugins.read(plugin)
     assert_not_zero(is_plugin)
 
-    IPlugin.delegate_validate(
-        contract_address=plugin,
+    IPlugin.library_call_validate(
+        class_hash=plugin,
         plugin_data_len=call_array[0].data_len - 1,
         plugin_data=calldata + call_array[0].data_offset + 1,
         call_array_len=call_array_len - 1,

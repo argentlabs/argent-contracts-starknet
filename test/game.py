@@ -41,21 +41,35 @@ async def account2_factory(get_starknet):
 
 
 @pytest.fixture
-async def game_factory(get_starknet, account1_factory, account2_factory):
+async def token_factory(get_starknet, account1_factory, account2_factory):
     starknet = get_starknet
     account1 = account1_factory
     account2 = account2_factory
-    dapp = await deploy(starknet, "contracts/Game.cairo", [account1.contract_address, account2.contract_address])
-    return dapp
+    token = await deploy(starknet, "contracts/lib/ERC20-2.cairo", [str_to_felt('token1'), str_to_felt('T1'), account1.contract_address, account2.contract_address])
+    return token
+
+
+@pytest.fixture
+async def game_factory(get_starknet, account1_factory, account2_factory, token_factory):
+    starknet = get_starknet
+    token = token_factory
+    account1 = account1_factory
+    account2 = account2_factory
+    game = await deploy(starknet, "contracts/Game.cairo", [token.contract_address, account1.contract_address, account2.contract_address])
+    return game
 
 
 @pytest.mark.asyncio
-async def test_accounts(account1_factory, account2_factory):
+async def test_accounts(account1_factory, account2_factory, token_factory):
+    token = token_factory
     account1 = account1_factory
     account2 = account2_factory
     # should be configured correctly
     assert (await account1.get_signer().call()).result.signer == (player1.public_key)
     assert (await account2.get_signer().call()).result.signer == (player2.public_key)
+    # check token balances of both players
+    assert (await token.balanceOf(account1.contract_address).call()).result.balance.low == 1000000000000000000
+    assert (await token.balanceOf(account2.contract_address).call()).result.balance.low == 1000000000000000000
 
 
 @pytest.mark.asyncio
@@ -93,15 +107,18 @@ async def test_game_defaults(game_factory, account1_factory, account2_factory):
     (3, 2, 1),  # scissors vs paper, player 1 wins
     (3, 3, 0),  # scissors vs scissors, tie
 ])
-async def test_game(game_factory, account1_factory, account2_factory, input_player1, input_player2, winner):
+async def test_game(game_factory, account1_factory, account2_factory, token_factory, input_player1, input_player2, winner):
     game = game_factory
+    token = token_factory
     account1 = account1_factory
     account2 = account2_factory
     sender1 = TransactionSender(account1)
     sender2 = TransactionSender(account2)
 
-    calls1 = [(game.contract_address, 'bet', [input_player1])]
-    calls2 = [(game.contract_address, 'bet', [input_player2])]
+    calls1 = [(token.contract_address, 'increaseAllowance', [game.contract_address,
+               1000000000000000000, 0]), (game.contract_address, 'bet', [input_player1])]
+    calls2 = [(token.contract_address, 'increaseAllowance', [game.contract_address,
+               1000000000000000000, 0]), (game.contract_address, 'bet', [input_player2])]
 
     if input_player1 > 0:
         await sender1.send_transaction(calls1, [player1])
@@ -112,3 +129,16 @@ async def test_game(game_factory, account1_factory, account2_factory, input_play
         account1.contract_address if winner == 1 else (account2.contract_address if winner == 2 else 0)))
 
     assert (await game.get_winner().call()).result.res == expectedWinnerAccountAddress
+    # check updated token balances for both accounts
+    if winner == -1:  # game is not over
+        assert (await token.balanceOf(account1.contract_address).call()).result.balance.low == 1000000000000000000
+        assert (await token.balanceOf(account2.contract_address).call()).result.balance.low == 1000000000000000000
+    elif winner == 0:  # tie
+        assert (await token.balanceOf(account1.contract_address).call()).result.balance.low == 1000000000000000000
+        assert (await token.balanceOf(account2.contract_address).call()).result.balance.low == 1000000000000000000
+    elif winner == 1:  # player 1 won
+        assert (await token.balanceOf(account1.contract_address).call()).result.balance.low == 1000000000000000000 + 1000000000000000000
+        assert (await token.balanceOf(account2.contract_address).call()).result.balance.low == 0
+    elif winner == 2:  # player 2 won
+        assert (await token.balanceOf(account1.contract_address).call()).result.balance.low == 0
+        assert (await token.balanceOf(account2.contract_address).call()).result.balance.low == 1000000000000000000 + 1000000000000000000

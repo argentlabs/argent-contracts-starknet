@@ -123,6 +123,15 @@ func get_winner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     return (1)
 end
 
+@view
+func get_players{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    player1 : felt, player2 : felt
+):
+    let (player1) = _player1.read()
+    let (player2) = _player2.read()
+    return (player1, player2)
+end
+
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     player1 : felt, player2 : felt

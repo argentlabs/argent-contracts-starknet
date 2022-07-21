@@ -59,10 +59,14 @@ async def test_accounts(account1_factory, account2_factory):
 
 
 @pytest.mark.asyncio
-async def test_game_defaults(game_factory):
+async def test_game_defaults(game_factory, account1_factory, account2_factory):
     game = game_factory
+    account1 = account1_factory
+    account2 = account2_factory
     # should be configured correctly
     assert (await game.get_winner().call()).result.res == 0
+    assert (await game.get_players().call()).result.player1 == account1.contract_address
+    assert (await game.get_players().call()).result.player2 == account2.contract_address
 
 
 @pytest.mark.asyncio

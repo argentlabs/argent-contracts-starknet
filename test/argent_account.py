@@ -40,6 +40,7 @@ def update_starknet_block(starknet, block_number=1, block_timestamp=DEFAULT_TIME
         block_number=block_number,
         block_timestamp=block_timestamp,
         gas_price=0,
+        starknet_version="0.9.1",
         sequencer_address=starknet.state.state.block_info.sequencer_address)
 
 def reset_starknet_block(starknet):

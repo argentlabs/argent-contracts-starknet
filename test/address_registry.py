@@ -8,7 +8,7 @@ from utils.TransactionSender import TransactionSender
 signer = Signer(123456789987654321)
 guardian = Signer(456789987654321123)
 
-VERSION = str_to_felt('0.2.1')
+VERSION = str_to_felt('0.2.2')
 L1_ADDRESS = 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984
 
 @pytest.fixture(scope='module')

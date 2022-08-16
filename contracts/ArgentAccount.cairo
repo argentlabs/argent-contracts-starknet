@@ -259,12 +259,12 @@ func validate{
             tempvar guardian_condition = (call_array[0].selector - ESCAPE_SIGNER_SELECTOR) * (call_array[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
             if signer_condition == 0:
                 # validate signer signature
-                validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
+                validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
                 return()
             end
             if guardian_condition == 0:
                 # validate guardian signature
-                validate_guardian_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
+                validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
                 return()
             end
         end
@@ -278,8 +278,8 @@ func validate{
         end
     end
     # validate signer and guardian signatures
-    validate_signer_signature(tx_info.transaction_hash, tx_info.signature, tx_info.signature_len)
-    validate_guardian_signature(tx_info.transaction_hash, tx_info.signature + 2, tx_info.signature_len - 2)
+    validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
+    validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len - 2, tx_info.signature + 2)
     return()
 end
 

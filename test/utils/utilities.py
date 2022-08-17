@@ -53,7 +53,11 @@ async def deploy(starknet, path, params=None):
 async def declare(starknet, path):
     contract_class = compile_starknet_files([path], debug_info=True)
     declared_class = await starknet.declare(contract_class=contract_class)
-    return declared_class
+    return declared_class 
+    
+def compile(path):
+    contract_clss = compile_starknet_files([path], debug_info=True)
+    return contract_clss
 
 async def deploy_proxy(starknet, proxy_path, abi, params=None):
     params = params or []
@@ -66,3 +70,13 @@ async def deploy_proxy(starknet, proxy_path, abi, params=None):
         contract_address=deployed_proxy.contract_address,
         deploy_execution_info=deployed_proxy.deploy_execution_info)
     return deployed_proxy, wrapped_proxy
+
+def cached_contract(state, _class, deployed):
+    """Return the cached contract"""
+    contract = StarknetContract(
+        state=state,
+        abi=_class.abi,
+        contract_address=deployed.contract_address,
+        deploy_execution_info=deployed.deploy_execution_info
+    )
+    return contract

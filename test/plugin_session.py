@@ -4,7 +4,7 @@ import logging
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.business_logic.state.state import BlockInfo
 from utils.Signer import Signer
-from utils.utilities import deploy, declare, assert_revert, str_to_felt, assert_event_emmited
+from utils.utilities import deploy, cached_contract, compile, assert_revert, str_to_felt, assert_event_emmited
 from utils.TransactionSender import TransactionSender
 from starkware.cairo.common.hash_state import compute_hash_on_elements
 from starkware.starknet.compiler.compile import get_selector_from_name
@@ -46,58 +46,77 @@ def update_starknet_block(starknet, block_number=1, block_timestamp=DEFAULT_TIME
 def reset_starknet_block(starknet):
     update_starknet_block(starknet=starknet)
 
+@pytest.fixture(scope='module')
+def contract_classes():
+    account_cls = compile('contracts/ArgentAccount.cairo')
+    dapp_cls = compile("contracts/test/TestDapp.cairo")
+    session_key_cls = compile("contracts/plugins/SessionKey.cairo")
+
+    return account_cls, dapp_cls, session_key_cls
+
+
 @pytest.fixture
-async def account_factory(get_starknet):
-    starknet = get_starknet
-    account = await deploy(starknet, "contracts/ArgentAccount.cairo")
+async def account_init(contract_classes):
+    account_cls, dapp_cls, session_key_cls = contract_classes
+    starknet = await Starknet.empty()
+
+    account = await starknet.deploy(
+        contract_class=account_cls,
+        constructor_calldata=[]
+    )
+    dapp1 = await starknet.deploy(
+        contract_class=dapp_cls,
+        constructor_calldata=[],
+    )
+    dapp2 = await starknet.deploy(
+        contract_class=dapp_cls,
+        constructor_calldata=[],
+    )
     await account.initialize(signer.public_key, 0).invoke()
-    return account
+    session_key_class = await starknet.declare(contract_class=session_key_cls)
+    session_key_class_hash = session_key_class.class_hash
+    return starknet.state, account, dapp1, dapp2, session_key_class_hash
+
 
 @pytest.fixture
-async def dapp_factory(get_starknet):
-    starknet = get_starknet
-    dapp = await deploy(starknet, "contracts/test/TestDapp.cairo")
-    dapp2 = await deploy(starknet, "contracts/test/TestDapp.cairo")
-    return dapp, dapp2
+def account_factory(contract_classes, account_init):
+    account_cls, dapp_cls, session_key_cls = contract_classes
+    state, account, dapp1, dapp2, session_key_class = account_init
+    _state = state.copy()
+    account = cached_contract(_state, account_cls, account)
+    dapp1 = cached_contract(_state, dapp_cls, dapp1)
+    dapp2 = cached_contract(_state, dapp_cls, dapp2)
 
-@pytest.fixture
-async def plugin_factory(get_starknet):
-    starknet = get_starknet
-    plugin_session = await declare(starknet, "contracts/plugins/SessionKey.cairo")
-    return plugin_session.class_hash
+    return account, dapp1, dapp2, session_key_class
 
 @pytest.mark.asyncio
-async def test_add_plugin(account_factory, plugin_factory):
-    account = account_factory
-    plugin = plugin_factory
+async def test_add_plugin(account_factory):
+    account, _, _, session_key_class = account_factory
     sender = TransactionSender(account)
 
-    assert (await account.is_plugin(plugin).call()).result.success == (0)
-    await sender.send_transaction([(account.contract_address, 'add_plugin', [plugin])], [signer])
-    assert (await account.is_plugin(plugin).call()).result.success == (1)
+    assert (await account.is_plugin(session_key_class).call()).result.success == (0)
+    await sender.send_transaction([(account.contract_address, 'add_plugin', [session_key_class])], [signer])
+    assert (await account.is_plugin(session_key_class).call()).result.success == (1)
 
 @pytest.mark.asyncio
-async def test_remove_plugin(account_factory, plugin_factory):
-    account = account_factory
-    plugin = plugin_factory
+async def test_remove_plugin(account_factory):
+    account, _, _, session_key_class = account_factory
     sender = TransactionSender(account)
 
-    assert (await account.is_plugin(plugin).call()).result.success == (0)
-    await sender.send_transaction([(account.contract_address, 'add_plugin', [plugin])], [signer])
-    assert (await account.is_plugin(plugin).call()).result.success == (1)
-    await sender.send_transaction([(account.contract_address, 'remove_plugin', [plugin])], [signer])
-    assert (await account.is_plugin(plugin).call()).result.success == (0)
+    assert (await account.is_plugin(session_key_class).call()).result.success == (0)
+    await sender.send_transaction([(account.contract_address, 'add_plugin', [session_key_class])], [signer])
+    assert (await account.is_plugin(session_key_class).call()).result.success == (1)
+    await sender.send_transaction([(account.contract_address, 'remove_plugin', [session_key_class])], [signer])
+    assert (await account.is_plugin(session_key_class).call()).result.success == (0)
 
 @pytest.mark.asyncio
-async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_factory, get_starknet):
-    account = account_factory
-    plugin = plugin_factory
-    dapp, dapp2 = dapp_factory
+async def test_call_dapp_with_session_key(account_factory, get_starknet):
+    account, dapp, dapp2, session_key_class = account_factory
     starknet = get_starknet
     sender = TransactionSender(account)
 
     # add session key plugin
-    await sender.send_transaction([(account.contract_address, 'add_plugin', [plugin])], [signer])
+    await sender.send_transaction([(account.contract_address, 'add_plugin', [session_key_class])], [signer])
     # authorise session key
     merkle_leaves = get_leaves(
         [dapp.contract_address, dapp.contract_address, dapp2.contract_address, dapp2.contract_address, dapp2.contract_address],
@@ -116,7 +135,7 @@ async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_
     # passing once the len(proof). if odd nb of leaves proof will be filled with 0.
     tx_exec_info = await sender.send_transaction(
         [
-            (account.contract_address, 'use_plugin', [plugin, session_key.public_key, DEFAULT_TIMESTAMP + 10, session_token[0], session_token[1], root, len(proof), *proof, *proof2]),
+            (account.contract_address, 'use_plugin', [session_key_class, session_key.public_key, DEFAULT_TIMESTAMP + 10, session_token[0], session_token[1], root, len(proof), *proof, *proof2]),
             (dapp.contract_address, 'set_number', [47]),
             (dapp2.contract_address, 'set_number_times3', [20])
         ], 
@@ -135,7 +154,7 @@ async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_
     await assert_revert(
         sender.send_transaction(
             [
-                (account.contract_address, 'use_plugin', [plugin, session_key.public_key, DEFAULT_TIMESTAMP + 10, session_token[0], session_token[1], root, len(proof), *proof]),
+                (account.contract_address, 'use_plugin', [session_key_class, session_key.public_key, DEFAULT_TIMESTAMP + 10, session_token[0], session_token[1], root, len(proof), *proof]),
                 (dapp.contract_address, 'set_number_times3', [47])
             ], 
             [session_key]),
@@ -143,7 +162,7 @@ async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_
     )
 
     # revoke session key
-    tx_exec_info = await sender.send_transaction([(account.contract_address, 'execute_on_plugin', [plugin, get_selector_from_name('revoke_session_key'), 1, session_key.public_key])], [signer])
+    tx_exec_info = await sender.send_transaction([(account.contract_address, 'execute_on_plugin', [session_key_class, get_selector_from_name('revoke_session_key'), 1, session_key.public_key])], [signer])
     assert_event_emmited(
         tx_exec_info,
         from_address=account.contract_address,
@@ -153,7 +172,7 @@ async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_
     await assert_revert(
         sender.send_transaction(
             [
-                (account.contract_address, 'use_plugin', [plugin, session_key.public_key, DEFAULT_TIMESTAMP + 10, session_token[0], session_token[1], root, len(proof), *proof]),
+                (account.contract_address, 'use_plugin', [session_key_class, session_key.public_key, DEFAULT_TIMESTAMP + 10, session_token[0], session_token[1], root, len(proof), *proof]),
                 (dapp.contract_address, 'set_number', [47])
             ], 
             [session_key]),

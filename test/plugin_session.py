@@ -3,13 +3,13 @@ import asyncio
 import logging
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.business_logic.state.state import BlockInfo
+from starkware.starknet.definitions.general_config import StarknetChainId
 from utils.Signer import Signer
 from utils.utilities import deploy, declare, assert_revert, str_to_felt, assert_event_emmited
 from utils.TransactionSender import TransactionSender
 from starkware.cairo.common.hash_state import compute_hash_on_elements
 from starkware.starknet.compiler.compile import get_selector_from_name
 from utils.merkle_utils import generate_merkle_proof, generate_merkle_root, get_leaves, verify_merkle_proof
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -24,6 +24,11 @@ ESCAPE_SECURITY_PERIOD = 24*7*60*60
 VERSION = str_to_felt('0.2.2')
 
 IACCOUNT_ID = 0xf10dbd44
+
+# H('StarkNetDomain(name:felt,version:felt,chainId:felt)')
+STARKNET_DOMAIN_TYPE_HASH = 0x1bfc207425a47a5dfa1a50a4f5241203f50624ca5fdf5e18755765416b8e288
+# H('Session(key:felt,expires:felt,root:merkletree)')
+SESSION_TYPE_HASH = 0x1aa0e1c56b45cf06a54534fa1707c54e520b842feb21d03b7deddb6f1e340c
 
 
 @pytest.fixture(scope='module')
@@ -105,7 +110,7 @@ async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_
     )    
     leaves = list(map(lambda x: x[0], merkle_leaves))
     root = generate_merkle_root(leaves)
-    session_token = get_session_token(session_key.public_key, DEFAULT_TIMESTAMP + 10, root)
+    session_token = get_session_token(session_key.public_key, DEFAULT_TIMESTAMP + 10, root, StarknetChainId.TESTNET.value, account.contract_address)
 
     proof = generate_merkle_proof(leaves, 0)
     proof2 = generate_merkle_proof(leaves, 4)
@@ -116,7 +121,7 @@ async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_
     # passing once the len(proof). if odd nb of leaves proof will be filled with 0.
     tx_exec_info = await sender.send_transaction(
         [
-            (account.contract_address, 'use_plugin', [plugin, session_key.public_key, DEFAULT_TIMESTAMP + 10, session_token[0], session_token[1], root, len(proof), *proof, *proof2]),
+            (account.contract_address, 'use_plugin', [plugin, session_key.public_key, DEFAULT_TIMESTAMP + 10, root, len(proof), *proof, *proof2, *session_token]),
             (dapp.contract_address, 'set_number', [47]),
             (dapp2.contract_address, 'set_number_times3', [20])
         ], 
@@ -135,7 +140,7 @@ async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_
     await assert_revert(
         sender.send_transaction(
             [
-                (account.contract_address, 'use_plugin', [plugin, session_key.public_key, DEFAULT_TIMESTAMP + 10, session_token[0], session_token[1], root, len(proof), *proof]),
+                (account.contract_address, 'use_plugin', [plugin, session_key.public_key, DEFAULT_TIMESTAMP + 10, root, len(proof), *proof, *session_token]),
                 (dapp.contract_address, 'set_number_times3', [47])
             ], 
             [session_key]),
@@ -153,18 +158,22 @@ async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_
     await assert_revert(
         sender.send_transaction(
             [
-                (account.contract_address, 'use_plugin', [plugin, session_key.public_key, DEFAULT_TIMESTAMP + 10, session_token[0], session_token[1], root, len(proof), *proof]),
+                (account.contract_address, 'use_plugin', [plugin, session_key.public_key, DEFAULT_TIMESTAMP + 10, root, len(proof), *proof, *session_token]),
                 (dapp.contract_address, 'set_number', [47])
             ], 
             [session_key]),
         "session key revoked"
     )
 
-def get_session_token(key, expires, root):
-    session = [
-        key,
-        expires,
-        root
-    ]
-    hash = compute_hash_on_elements(session)
+def get_session_token(session_key, session_expires, root, chain_id, account):
+
+    domain_hash = compute_hash_on_elements([STARKNET_DOMAIN_TYPE_HASH, chain_id])
+    message_hash = compute_hash_on_elements([SESSION_TYPE_HASH, session_key, session_expires, root])
+    
+    hash = compute_hash_on_elements([
+        str_to_felt('StarkNet Message'),
+        domain_hash,
+        account,
+        message_hash
+    ])
     return signer.sign(hash)

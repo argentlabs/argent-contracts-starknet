@@ -12,25 +12,12 @@ from starkware.cairo.common.bool import (TRUE, FALSE)
 
 from contracts.Upgradable import _set_implementation
 
-@contract_interface
-namespace IPlugin:
-    # Method to call during validation
-    func validate(
-        plugin_data_len: felt,
-        plugin_data: felt*,
-        call_array_len: felt,
-        call_array: CallArray*,
-        calldata_len: felt,
-        calldata: felt*
-    ):
-    end
-end
-
 ####################
 # CONSTANTS
 ####################
 
-const VERSION = '0.2.2'
+const NAME = 'ArgentDefaultAccount'
+const VERSION = '0.2.3'
 
 const CHANGE_SIGNER_SELECTOR = 1540130945889430637313403138889853410180247761946478946165786566748520529557
 const CHANGE_GUARDIAN_SELECTOR = 1374386526556551464817815908276843861478960435557596145330240747921847320237
@@ -40,7 +27,6 @@ const ESCAPE_GUARDIAN_SELECTOR = 16628893475766329672923030622059061164364694258
 const ESCAPE_SIGNER_SELECTOR = 578307412324655990419134484880427622068887477430675222732446709420063579565
 const CANCEL_ESCAPE_SELECTOR = 992575500541331354489361836180456905167517944319528538469723604173440834912
 const SUPPORTS_INTERFACE_SELECTOR = 1184015894760294494673613438913361435336722154500302038630992932234692784845
-const USE_PLUGIN_SELECTOR = 1121675007639292412441492001821602921366030142137563176027248191276862353634
 
 const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
 
@@ -146,10 +132,6 @@ end
 func _escape() -> (res: Escape):
 end
 
-@storage_var
-func _plugins(plugin: felt) -> (res: felt):
-end
-
 ####################
 # EXTERNAL FUNCTIONS
 ####################
@@ -200,9 +182,8 @@ func __execute__{
     ):
     alloc_locals
 
-    # validate calls
-    validate(call_array_len, call_array, calldata_len, calldata, nonce)
-
+    # make sure the account is initialized
+    assert_initialized()
     # no reentrant call to prevent signature reutilization
     assert_non_reentrant()
 
@@ -213,176 +194,47 @@ func __execute__{
     let calls_len = call_array_len
     #################################################
 
-    # execute calls
-    let (response : felt*) = alloc()
-    local response_len
-    if calls[0].selector - USE_PLUGIN_SELECTOR == 0:
-        let (res) = execute_list(calls_len - 1, calls + Call.SIZE, response)
-        assert response_len = res
-    else:
-        let (res) = execute_list(calls_len, calls, response)
-        assert response_len = res
-    end
-    # emit event
-    let (tx_info) = get_tx_info()
-    transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
-
-    return (retdata_size=response_len, retdata=response)
-end
-
-func validate{
-        syscall_ptr: felt*,
-        pedersen_ptr: HashBuiltin*,
-        ecdsa_ptr: SignatureBuiltin*,
-        range_check_ptr
-    } (
-        call_array_len: felt,
-        call_array: CallArray*,
-        calldata_len: felt,
-        calldata: felt*,
-        nonce: felt
-    ):
-    alloc_locals
-
-    # make sure the account is initialized
-    assert_initialized()
-    
     # validate and bump nonce
     validate_and_bump_nonce(nonce)
 
     # get the tx info
     let (tx_info) = get_tx_info()
 
-    if call_array_len == 1:
-        if call_array[0].to == tx_info.account_contract_address:
-            tempvar signer_condition = (call_array[0].selector - ESCAPE_GUARDIAN_SELECTOR) * (call_array[0].selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
-            tempvar guardian_condition = (call_array[0].selector - ESCAPE_SIGNER_SELECTOR) * (call_array[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
+    if calls_len == 1:
+        if calls[0].to == tx_info.account_contract_address:
+            tempvar signer_condition = (calls[0].selector - ESCAPE_GUARDIAN_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
+            tempvar guardian_condition = (calls[0].selector - ESCAPE_SIGNER_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
             if signer_condition == 0:
                 # validate signer signature
                 validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
-                return()
+                jmp do_execute
             end
             if guardian_condition == 0:
                 # validate guardian signature
                 validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
-                return()
+                jmp do_execute
             end
         end
     else:
-        if (call_array[0].to - tx_info.account_contract_address) + (call_array[0].selector - USE_PLUGIN_SELECTOR) == 0:
-            validate_with_plugin(call_array_len, call_array, calldata_len, calldata)
-            return()
-        else:
-            # make sure no call is to the account
-            assert_no_self_call(tx_info.account_contract_address, call_array_len, call_array)
-        end
+        # make sure no call is to the account
+        assert_no_self_call(tx_info.account_contract_address, calls_len, calls)
     end
     # validate signer and guardian signatures
     validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
     validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len - 2, tx_info.signature + 2)
-    return()
+
+    # execute calls
+    do_execute:
+    local ecdsa_ptr: SignatureBuiltin* = ecdsa_ptr
+    local syscall_ptr: felt* = syscall_ptr
+    local range_check_ptr = range_check_ptr
+    local pedersen_ptr: HashBuiltin* = pedersen_ptr
+    let (response : felt*) = alloc()
+    let (response_len) = execute_list(calls_len, calls, response)
+    # emit event
+    transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
+    return (retdata_size=response_len, retdata=response)
 end
-
-###### PLUGIN #######
-
-@external
-func add_plugin{
-        syscall_ptr: felt*,
-        pedersen_ptr: HashBuiltin*,
-        range_check_ptr
-    } (
-        plugin: felt
-    ):
-    # only called via execute
-    assert_only_self()
-
-    # add plugin
-    with_attr error_message("plugin cannot be null"):
-        assert_not_zero(plugin)
-    end
-    _plugins.write(plugin, 1)
-    return()
-end
-
-@external
-func remove_plugin{
-        syscall_ptr: felt*,
-        pedersen_ptr: HashBuiltin*,
-        range_check_ptr
-    } (
-        plugin: felt
-    ):
-    # only called via execute
-    assert_only_self()
-    # remove plugin
-    _plugins.write(plugin, 0)
-    return()
-end
-
-@external
-func execute_on_plugin{
-        syscall_ptr: felt*,
-        pedersen_ptr: HashBuiltin*,
-        range_check_ptr
-    } (
-        plugin: felt,
-        selector: felt,
-        calldata_len: felt,
-        calldata: felt*
-    ):
-    # only called via execute
-    assert_only_self()
-    # only valid plugin
-    let (is_plugin) = _plugins.read(plugin)
-    assert_not_zero(is_plugin)
-
-    library_call(
-        class_hash=plugin,
-        function_selector=selector,
-        calldata_size=calldata_len,
-        calldata=calldata)
-    return()
-end
-
-@view
-func is_plugin{
-        syscall_ptr: felt*, 
-        pedersen_ptr: HashBuiltin*,
-        range_check_ptr
-    } (plugin: felt) -> (success: felt):
-    let (res) = _plugins.read(plugin)
-    return (success=res)
-end
-
-func validate_with_plugin{
-        syscall_ptr: felt*,
-        pedersen_ptr: HashBuiltin*,
-        ecdsa_ptr: SignatureBuiltin*,
-        range_check_ptr
-    } (
-        call_array_len: felt,
-        call_array: CallArray*,
-        calldata_len: felt,
-        calldata: felt*
-    ):
-    alloc_locals
-
-    let plugin = calldata[call_array[0].data_offset]
-    let (is_plugin) = _plugins.read(plugin)
-    assert_not_zero(is_plugin)
-
-    IPlugin.library_call_validate(
-        class_hash=plugin,
-        plugin_data_len=call_array[0].data_len - 1,
-        plugin_data=calldata + call_array[0].data_offset + 1,
-        call_array_len=call_array_len - 1,
-        call_array=call_array + CallArray.SIZE,
-        calldata_len=calldata_len - call_array[0].data_len,
-        calldata=calldata + call_array[0].data_offset + call_array[0].data_len)
-    return()
-end
-
-######################
 
 @external
 func upgrade{
@@ -722,8 +574,8 @@ func get_escape{
 end
 
 @view
-func get_version() -> (version: felt):
-    return (version=VERSION)
+func get_version() -> (name: felt, version: felt):
+    return (name=NAME,version=VERSION)
 end
 
 ####################
@@ -777,14 +629,14 @@ end
 
 func assert_no_self_call(
         self: felt,
-        call_array_len: felt,
-        call_array: CallArray*
+        calls_len: felt,
+        calls: Call*
     ):
-    if call_array_len == 0:
+    if calls_len == 0:
         return ()
     end
-    assert_not_zero(call_array[0].to - self)
-    assert_no_self_call(self, call_array_len - 1, call_array + CallArray.SIZE)
+    assert_not_zero(calls[0].to - self)
+    assert_no_self_call(self, calls_len - 1, calls + Call.SIZE)
     return()
 end
 

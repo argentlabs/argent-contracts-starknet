@@ -17,6 +17,8 @@ from starkware.starknet.common.syscalls import (
 const STARKNET_DOMAIN_TYPE_HASH = 0x1bfc207425a47a5dfa1a50a4f5241203f50624ca5fdf5e18755765416b8e288
 # H('Session(key:felt,expires:felt,root:merkletree)')
 const SESSION_TYPE_HASH = 0x1aa0e1c56b45cf06a54534fa1707c54e520b842feb21d03b7deddb6f1e340c
+# H(Policy(contractAddress:felt,selector:selector))
+const POLICY_TYPE_HASH = 0x2f0026e78543f036f33e26a8f5891b88c58dc1e20cbbfaf0bb53274da6fa568
 
 @contract_interface
 namespace IAccount:
@@ -138,7 +140,16 @@ func check_policy{
         return()
     end
 
-    let (leaf) = hash2{hash_ptr=pedersen_ptr}([call_array].to, [call_array].selector)
+    let hash_ptr = pedersen_ptr
+    with hash_ptr:
+        let (hash_state) = hash_init()
+        let (hash_state) = hash_update_single(hash_state_ptr=hash_state, item=POLICY_TYPE_HASH)
+        let (hash_state) = hash_update_single(hash_state_ptr=hash_state, item=[call_array].to)
+        let (hash_state) = hash_update_single(hash_state_ptr=hash_state, item=[call_array].selector)
+        let (leaf) = hash_finalize(hash_state_ptr=hash_state)
+        let pedersen_ptr = hash_ptr
+    end
+    
     let (proof_valid) = merkle_verify(leaf, root, proof_len, proof)
     with_attr error_message("Not allowed by policy"):
         assert proof_valid = 1

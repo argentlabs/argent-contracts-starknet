@@ -29,6 +29,8 @@ IACCOUNT_ID = 0xf10dbd44
 STARKNET_DOMAIN_TYPE_HASH = 0x1bfc207425a47a5dfa1a50a4f5241203f50624ca5fdf5e18755765416b8e288
 # H('Session(key:felt,expires:felt,root:merkletree)')
 SESSION_TYPE_HASH = 0x1aa0e1c56b45cf06a54534fa1707c54e520b842feb21d03b7deddb6f1e340c
+# H(Policy(contractAddress:felt,selector:selector))
+POLICY_TYPE_HASH = 0x2f0026e78543f036f33e26a8f5891b88c58dc1e20cbbfaf0bb53274da6fa568
 
 
 @pytest.fixture(scope='module')
@@ -105,6 +107,7 @@ async def test_call_dapp_with_session_key(account_factory, plugin_factory, dapp_
     await sender.send_transaction([(account.contract_address, 'add_plugin', [plugin])], [signer])
     # authorise session key
     merkle_leaves = get_leaves(
+        POLICY_TYPE_HASH,
         [dapp.contract_address, dapp.contract_address, dapp2.contract_address, dapp2.contract_address, dapp2.contract_address],
         [get_selector_from_name('set_number'), get_selector_from_name('set_number_double'), get_selector_from_name('set_number'), get_selector_from_name('set_number_double'), get_selector_from_name('set_number_times3')]
     )    

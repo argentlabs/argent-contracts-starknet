@@ -1,4 +1,5 @@
 from starkware.crypto.signature.fast_pedersen_hash import pedersen_hash
+from starkware.cairo.common.hash_state import compute_hash_on_elements
 
 # generates merkle root from values list
 # each pair of values must be in sorted order
@@ -33,10 +34,10 @@ def verify_merkle_proof(leaf: int, proof: 'list[int]') -> bool:
     return curr == root
 
 # creates the inital merkle leaf values to use
-def get_leaves(contracts: 'list[int]', selectors: 'list[int]') -> 'list[tuple[int, int, int]]':
+def get_leaves(policy_type_hash: 'int', contracts: 'list[int]', selectors: 'list[int]') -> 'list[tuple[int, int, int]]':
     values = []
     for i in range(0, len(contracts)):
-        leaf = pedersen_hash(contracts[i], selectors[i])
+        leaf = compute_hash_on_elements([policy_type_hash, contracts[i], selectors[i]])
         value = (leaf, contracts[i], selectors[i])
         values.append(value)
 

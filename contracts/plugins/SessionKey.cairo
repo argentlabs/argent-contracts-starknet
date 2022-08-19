@@ -6,12 +6,9 @@ from starkware.cairo.common.hash_state import (
     HashState, hash_finalize, hash_init, hash_update, hash_update_single)
 from starkware.cairo.common.hash import hash2
 from starkware.cairo.common.math_cmp import is_le_felt
-from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.alloc import alloc
-from starkware.cairo.common.math import assert_not_zero, assert_nn
-from starkware.starknet.common.syscalls import (
-    call_contract, get_tx_info, get_contract_address, get_caller_address, get_block_timestamp
-)
+from starkware.cairo.common.math import assert_nn
+from starkware.starknet.common.syscalls import get_tx_info, get_block_timestamp
 
 # H('StarkNetDomain(chainId:felt)')
 const STARKNET_DOMAIN_TYPE_HASH = 0x13cda234a04d66db62c06b8e3ad5f91bd0c67286c2c7519a826cf49da6ba478
@@ -61,14 +58,18 @@ func validate{
     let (tx_info) = get_tx_info()
 
     # parse the plugin data
-    let session_key = [plugin_data]
-    let session_expires = [plugin_data + 1]
-    let root = [plugin_data + 2]
-    let proof_len = [plugin_data + 3]
-    let proofs_len = proof_len * call_array_len
-    let proofs = plugin_data + 4
-    let session_token_len = plugin_data_len - 4 - proofs_len
-    let session_token = plugin_data + 4 + proofs_len
+    with_attr error_message("invalid plugin data"):
+        assert_nn(plugin_data_len - 4)
+        let session_key = [plugin_data]
+        let session_expires = [plugin_data + 1]
+        let root = [plugin_data + 2]
+        let proof_len = [plugin_data + 3]
+        let proofs_len = proof_len * call_array_len
+        let proofs = plugin_data + 4
+        let session_token_len = plugin_data_len - 4 - proofs_len
+        assert_nn(session_token_len)
+        let session_token = plugin_data + 4 + proofs_len
+    end
 
     # check if the session has expired
     with_attr error_message("session expired"):

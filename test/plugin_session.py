@@ -56,7 +56,7 @@ def reset_starknet_block(starknet):
 @pytest.fixture
 async def account_factory(get_starknet):
     starknet = get_starknet
-    account = await deploy(starknet, "contracts/ArgentAccount.cairo")
+    account = await deploy(starknet, "contracts/ArgentPluginAccount.cairo")
     await account.initialize(signer.public_key, 0).invoke()
     return account
 

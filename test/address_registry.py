@@ -8,7 +8,7 @@ from utils.TransactionSender import TransactionSender
 signer = Signer(123456789987654321)
 guardian = Signer(456789987654321123)
 
-VERSION = str_to_felt('0.2.2')
+VERSION = str_to_felt('0.2.3')
 L1_ADDRESS = 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984
 
 @pytest.fixture(scope='module')
@@ -23,7 +23,7 @@ async def get_starknet():
 @pytest.fixture
 async def account_factory(get_starknet):
     starknet = get_starknet
-    account = await deploy(starknet, "contracts/ArgentAccount.cairo")
+    account = await deploy(starknet, "contracts/ArgentDefaultAccount.cairo")
     await account.initialize(signer.public_key, guardian.public_key).invoke()
     return account
 

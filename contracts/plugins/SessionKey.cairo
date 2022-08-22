@@ -78,8 +78,8 @@ func validate{
     end
 
     # check if the session is approved
-    let (session_hash) = compute_session_hash(session_key, session_expires, root, tx_info.chain_id, tx_info.account_contract_address)
     with_attr error_message("unauthorised session"):
+        let (session_hash) = compute_session_hash(session_key, session_expires, root, tx_info.chain_id, tx_info.account_contract_address)
         IAccount.is_valid_signature(
             contract_address=tx_info.account_contract_address,
             hash=session_hash,
@@ -105,7 +105,9 @@ func validate{
     end
 
     # check if the calls satisy the policies
-    check_policy(call_array_len, call_array, root, proof_len, proofs)
+    with_attr error_message("not allowed by policy"):
+        check_policy(call_array_len, call_array, root, proof_len, proofs)
+    end
 
     return()
 end
@@ -152,9 +154,8 @@ func check_policy{
     end
     
     let (proof_valid) = merkle_verify(leaf, root, proof_len, proof)
-    with_attr error_message("Not allowed by policy"):
-        assert proof_valid = 1
-    end
+    assert proof_valid = 1
+    
     check_policy(call_array_len - 1, call_array + CallArray.SIZE, root, proof_len, proof + proof_len)
     return()
 end

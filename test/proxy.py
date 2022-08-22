@@ -26,7 +26,7 @@ async def get_starknet():
 @pytest.fixture
 async def account_factory(get_starknet):
     starknet = get_starknet
-    implementation_class = await declare(starknet, "contracts/ArgentAccount.cairo")
+    implementation_class = await declare(starknet, "contracts/ArgentDefaultAccount.cairo")
     proxy, account = await deploy_proxy(
         starknet,
         "contracts/Proxy.cairo",

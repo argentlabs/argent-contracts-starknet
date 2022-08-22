@@ -19,7 +19,7 @@ wrong_guardian = Signer(6767676767)
 DEFAULT_TIMESTAMP = 1640991600
 ESCAPE_SECURITY_PERIOD = 24*7*60*60
 
-VERSION = str_to_felt('0.0.1')
+VERSION = str_to_felt('0.2.3')
 
 IACCOUNT_ID = 0xf10dbd44
 
@@ -49,7 +49,7 @@ def reset_starknet_block(starknet):
 @pytest.fixture
 async def account_factory(get_starknet):
     starknet = get_starknet
-    account = await deploy(starknet, "contracts/ArgentAccount.cairo")
+    account = await deploy(starknet, "contracts/ArgentDefaultAccount.cairo")
     await account.initialize(signer.public_key, guardian.public_key).invoke()
     return account
 
@@ -120,7 +120,7 @@ async def test_call_dapp_with_guardian(account_factory, dapp_factory):
 @pytest.mark.asyncio
 async def test_call_dapp_no_guardian(get_starknet, dapp_factory):
     starknet = get_starknet
-    account_no_guardian = await deploy(starknet, "contracts/ArgentAccount.cairo")
+    account_no_guardian = await deploy(starknet, "contracts/ArgentDefaultAccount.cairo")
     await account_no_guardian.initialize(signer.public_key, 0).invoke()
     dapp = dapp_factory
     sender = TransactionSender(account_no_guardian)
@@ -264,7 +264,7 @@ async def test_change_guardian_backup(account_factory):
 @pytest.mark.asyncio
 async def test_change_guardian_backup_when_no_guardian(get_starknet):
     starknet = get_starknet
-    account = await deploy(starknet, "contracts/ArgentAccount.cairo")
+    account = await deploy(starknet, "contracts/ArgentDefaultAccount.cairo")
     await account.initialize(signer.public_key, 0).invoke()
     sender = TransactionSender(account)
     new_guardian_backup = Signer(55555555)

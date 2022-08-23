@@ -13,8 +13,8 @@ from starkware.starknet.common.syscalls import (
     call_contract, get_tx_info, get_contract_address, get_caller_address, get_block_timestamp
 )
 
-# H('StarkNetDomain(name:felt,version:felt,chainId:felt)')
-const STARKNET_DOMAIN_TYPE_HASH = 0x1bfc207425a47a5dfa1a50a4f5241203f50624ca5fdf5e18755765416b8e288
+# H('StarkNetDomain(chainId:felt)')
+const STARKNET_DOMAIN_TYPE_HASH = 0x13cda234a04d66db62c06b8e3ad5f91bd0c67286c2c7519a826cf49da6ba478
 # H('Session(key:felt,expires:felt,root:merkletree)')
 const SESSION_TYPE_HASH = 0x1aa0e1c56b45cf06a54534fa1707c54e520b842feb21d03b7deddb6f1e340c
 # H(Policy(contractAddress:felt,selector:selector))

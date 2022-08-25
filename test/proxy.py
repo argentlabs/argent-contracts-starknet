@@ -60,6 +60,7 @@ def contract_factory(contract_classes, contract_init):
 @pytest.mark.asyncio
 async def test_initializer(contract_factory):
     proxy, account, _, account_class, _, _ = contract_factory
+    
     assert (await proxy.get_implementation().call()).result.implementation == account_class
     assert (await account.get_signer().call()).result.signer == signer.public_key
     assert (await account.get_guardian().call()).result.guardian == guardian.public_key

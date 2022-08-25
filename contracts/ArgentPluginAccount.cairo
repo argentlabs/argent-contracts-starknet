@@ -43,7 +43,7 @@ const CANCEL_ESCAPE_SELECTOR = 9925755005413313544893618361804569051675179443195
 const SUPPORTS_INTERFACE_SELECTOR = 1184015894760294494673613438913361435336722154500302038630992932234692784845
 const USE_PLUGIN_SELECTOR = 1121675007639292412441492001821602921366030142137563176027248191276862353634
 
-const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # set to e.g. 7 days in prod
+const ESCAPE_SECURITY_PERIOD = 7*24*60*60 # 7 days
 
 const ESCAPE_TYPE_GUARDIAN = 1
 const ESCAPE_TYPE_SIGNER = 2
@@ -723,8 +723,13 @@ func get_escape{
 end
 
 @view
-func get_version() -> (name: felt, version: felt):
-    return (name=NAME,version=VERSION)
+func get_version() -> (version: felt):
+    return (version=VERSION)
+end
+
+@view
+func get_name() -> (name: felt):
+    return (name=NAME)
 end
 
 ####################

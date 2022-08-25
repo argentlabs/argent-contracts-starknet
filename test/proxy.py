@@ -3,56 +3,70 @@ import asyncio
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from utils.Signer import Signer
-from utils.utilities import deploy, declare, deploy_proxy, assert_revert, str_to_felt, assert_event_emmited
+from utils.utilities import compile, cached_contract, assert_revert, assert_event_emmited
 from utils.TransactionSender import TransactionSender
 from starkware.starknet.compiler.compile import get_selector_from_name
 
-signer = Signer(123456789987654321)
-guardian = Signer(456789987654321123)
-wrong_signer = Signer(666666666666666666)
-wrong_guardian = Signer(6767676767)
-
-VERSION = str_to_felt('0.2.2')
+signer = Signer(1)
+guardian = Signer(2)
+wrong_signer = Signer(3)
+wrong_guardian = Signer(4)
 
 @pytest.fixture(scope='module')
 def event_loop():
     return asyncio.new_event_loop()
 
 @pytest.fixture(scope='module')
-async def get_starknet():
+def contract_classes():
+    proxy_cls = compile("contracts/Proxy.cairo")
+    account_cls = compile('contracts/ArgentDefaultAccount.cairo')
+    dapp_cls = compile("contracts/test/TestDapp.cairo")
+    
+    return proxy_cls, account_cls, dapp_cls
+
+@pytest.fixture(scope='module')
+async def contract_init(contract_classes):
+    proxy_cls, account_cls, dapp_cls = contract_classes
     starknet = await Starknet.empty()
-    return starknet
+
+    account_decl = await starknet.declare(contract_class=account_cls)
+    account_2_decl = await starknet.declare(contract_class=account_cls)
+    non_account_decl = await starknet.declare(contract_class=dapp_cls)
+
+    proxy = await starknet.deploy(
+        contract_class=proxy_cls,
+        constructor_calldata=[account_decl.class_hash, get_selector_from_name('initialize'), 2, signer.public_key, guardian.public_key]
+    )
+
+    dapp = await starknet.deploy(
+        contract_class=dapp_cls,
+        constructor_calldata=[],
+    )
+
+    return starknet.state, proxy, dapp, account_decl.class_hash, account_2_decl.class_hash, non_account_decl.class_hash
 
 @pytest.fixture
-async def account_factory(get_starknet):
-    starknet = get_starknet
-    implementation_class = await declare(starknet, "contracts/ArgentDefaultAccount.cairo")
-    proxy, account = await deploy_proxy(
-        starknet,
-        "contracts/Proxy.cairo",
-        implementation_class.abi,
-        [implementation_class.class_hash, get_selector_from_name('initialize'), 2, signer.public_key, guardian.public_key])
-    return account, proxy, implementation_class.class_hash
+def contract_factory(contract_classes, contract_init):
+    proxy_cls, implementation_cls, dapp_cls = contract_classes
+    state, proxy, dapp, account_class, account_2_class, non_acccount_class = contract_init
+    _state = state.copy()
 
-@pytest.fixture
-async def dapp_factory(get_starknet):
-    starknet = get_starknet
-    dapp_class = await declare(starknet, "contracts/test/TestDapp.cairo")
-    dapp = await deploy(starknet, "contracts/test/TestDapp.cairo")
-    return dapp, dapp_class.class_hash
+    proxy = cached_contract(_state, proxy_cls, proxy)
+    account = cached_contract(_state, implementation_cls, proxy)
+    dapp = cached_contract(_state, dapp_cls, dapp)
+
+    return proxy, account, dapp, account_class, account_2_class, non_acccount_class
 
 @pytest.mark.asyncio
-async def test_initializer(account_factory):
-    account, proxy, implementation = account_factory
-    assert (await proxy.get_implementation().call()).result.implementation == implementation
+async def test_initializer(contract_factory):
+    proxy, account, _, account_class, _, _ = contract_factory
+    assert (await proxy.get_implementation().call()).result.implementation == account_class
     assert (await account.get_signer().call()).result.signer == signer.public_key
     assert (await account.get_guardian().call()).result.guardian == guardian.public_key
-    assert (await account.get_version().call()).result.version == VERSION
 
 @pytest.mark.asyncio
-async def test_call_dapp(account_factory, dapp_factory):
-    account, _, _ = account_factory
-    dapp, _ = dapp_factory
+async def test_call_dapp(contract_factory):
+    _, account, dapp, _, _, _ = contract_factory
     sender = TransactionSender(account)
 
     # should revert with the wrong signer
@@ -67,36 +81,33 @@ async def test_call_dapp(account_factory, dapp_factory):
     assert (await dapp.get_number(account.contract_address).call()).result.number == 47
 
 @pytest.mark.asyncio
-async def test_upgrade(account_factory, dapp_factory):
-    account, proxy, account_impl_1 = account_factory
-    _, _, account_impl_2 = account_factory
-    dapp, dapp_class_hash = dapp_factory
-
+async def test_upgrade(contract_factory):
+    proxy, account, dapp, account_class, account_2_class, non_acccount_class = contract_factory
     sender = TransactionSender(account)
 
     # should revert with the wrong guardian
     await assert_revert(
-        sender.send_transaction([(account.contract_address, 'upgrade', [account_impl_2])], [signer, wrong_guardian]),
+        sender.send_transaction([(account.contract_address, 'upgrade', [account_2_class])], [signer, wrong_guardian]),
         "guardian signature invalid"
     )
 
     # should revert when the target is not an account
     await assert_revert(
-        sender.send_transaction([(account.contract_address, 'upgrade', [dapp_class_hash])], [signer, guardian]),
+        sender.send_transaction([(account.contract_address, 'upgrade', [non_acccount_class])], [signer, guardian]),
         "implementation invalid",
         StarknetErrorCode.ENTRY_POINT_NOT_FOUND_IN_CONTRACT
     )
 
-    assert (await proxy.get_implementation().call()).result.implementation == (account_impl_1)
+    assert (await proxy.get_implementation().call()).result.implementation == (account_class)
     
-    tx_exec_info = await sender.send_transaction([(account.contract_address, 'upgrade', [account_impl_2])], [signer, guardian])
+    tx_exec_info = await sender.send_transaction([(account.contract_address, 'upgrade', [account_2_class])], [signer, guardian])
     
     assert_event_emmited(
         tx_exec_info,
         from_address=account.contract_address,
         name='account_upgraded',
-        data=[account_impl_2]
+        data=[account_2_class]
     )
 
-    assert (await proxy.get_implementation().call()).result.implementation == (account_impl_2)
+    assert (await proxy.get_implementation().call()).result.implementation == (account_2_class)
     

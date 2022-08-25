@@ -19,6 +19,7 @@ wrong_guardian = Signer(8)
 ESCAPE_SECURITY_PERIOD = 24*7*60*60
 
 VERSION = str_to_felt('0.2.3')
+NAME = str_to_felt('ArgentDefaultAccount')
 
 IACCOUNT_ID = 0xf10dbd44
 
@@ -78,6 +79,7 @@ async def test_initializer(contract_factory):
     assert (await account.get_signer().call()).result.signer == (signer.public_key)
     assert (await account.get_guardian().call()).result.guardian == (guardian.public_key)
     assert (await account.get_version().call()).result.version == VERSION
+    assert (await account.get_name().call()).result.name == NAME
     assert (await account.supportsInterface(IACCOUNT_ID).call()).result.success == 1
     # should throw when calling initialize twice
     await assert_revert(

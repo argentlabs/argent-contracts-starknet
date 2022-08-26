@@ -183,6 +183,23 @@ func __validate__{
 end
 
 @external
+func __validate_declare__{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
+        range_check_ptr
+    } (
+        class_hash: felt
+    ):
+    # get the tx info
+    let (tx_info) = get_tx_info()
+    # validate signatures
+    validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
+    validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len - 2, tx_info.signature + 2)
+    return()
+end
+
+@external
 @raw_output
 func __execute__{
         syscall_ptr: felt*,
@@ -224,6 +241,8 @@ func __execute__{
     transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
     return (retdata_size=response_len, retdata=response)
 end
+
+validate_declare(class_hash)
 
 @external
 func initialize{

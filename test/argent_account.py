@@ -19,7 +19,7 @@ wrong_guardian = Signer(8)
 ESCAPE_SECURITY_PERIOD = 24*7*60*60
 
 VERSION = str_to_felt('0.2.3')
-NAME = str_to_felt('ArgentDefaultAccount')
+NAME = str_to_felt('ArgentAccount')
 
 IACCOUNT_ID = 0xf10dbd44
 
@@ -32,7 +32,7 @@ def event_loop():
 
 @pytest.fixture(scope='module')
 def contract_classes():
-    account_cls = compile('contracts/ArgentDefaultAccount.cairo')
+    account_cls = compile('contracts/ArgentAccount.cairo')
     dapp_cls = compile("contracts/test/TestDapp.cairo")
     
     return account_cls, dapp_cls

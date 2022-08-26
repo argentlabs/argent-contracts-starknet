@@ -16,7 +16,7 @@ from contracts.Upgradable import _set_implementation
 # CONSTANTS
 ####################
 
-const NAME = 'ArgentDefaultAccount'
+const NAME = 'ArgentAccount'
 const VERSION = '0.2.3'
 
 const CHANGE_SIGNER_SELECTOR = 1540130945889430637313403138889853410180247761946478946165786566748520529557

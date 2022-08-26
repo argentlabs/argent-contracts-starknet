@@ -19,7 +19,7 @@ def event_loop():
 @pytest.fixture(scope='module')
 def contract_classes():
     proxy_cls = compile("contracts/Proxy.cairo")
-    account_cls = compile('contracts/ArgentDefaultAccount.cairo')
+    account_cls = compile('contracts/ArgentAccount.cairo')
     dapp_cls = compile("contracts/test/TestDapp.cairo")
     
     return proxy_cls, account_cls, dapp_cls
@@ -60,7 +60,7 @@ def contract_factory(contract_classes, contract_init):
 @pytest.mark.asyncio
 async def test_initializer(contract_factory):
     proxy, account, _, account_class, _, _ = contract_factory
-    
+
     assert (await proxy.get_implementation().call()).result.implementation == account_class
     assert (await account.get_signer().call()).result.signer == signer.public_key
     assert (await account.get_guardian().call()).result.guardian == guardian.public_key

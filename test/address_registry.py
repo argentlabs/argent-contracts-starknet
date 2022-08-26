@@ -16,7 +16,7 @@ def event_loop():
 
 @pytest.fixture(scope='module')
 def contract_classes():
-    account_cls = compile('contracts/ArgentDefaultAccount.cairo')
+    account_cls = compile('contracts/ArgentAccount.cairo')
     registry_cls = compile("contracts/lib/AddressRegistry.cairo")
     
     return account_cls, registry_cls

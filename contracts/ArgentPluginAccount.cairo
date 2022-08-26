@@ -156,35 +156,7 @@ end
 ####################
 
 @external
-func initialize{
-        syscall_ptr: felt*,
-        pedersen_ptr: HashBuiltin*,
-        range_check_ptr
-    } (
-        signer: felt,
-        guardian: felt
-    ):
-    # check that we are not already initialized
-    let (current_signer) = _signer.read()
-    with_attr error_message("already initialized"):
-        assert current_signer = 0
-    end
-    # check that the target signer is not zero
-    with_attr error_message("signer cannot be null"):
-        assert_not_zero(signer)
-    end
-    # initialize the contract
-    _signer.write(signer)
-    _guardian.write(guardian)
-    # emit event
-    let (self) = get_contract_address()
-    account_created.emit(account=self, key=signer, guardian=guardian)
-    return ()
-end
-
-@external
-@raw_output
-func __execute__{
+func __validate__{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         ecdsa_ptr: SignatureBuiltin*,
@@ -193,63 +165,12 @@ func __execute__{
         call_array_len: felt,
         call_array: CallArray*,
         calldata_len: felt,
-        calldata: felt*,
-        nonce: felt
-    ) -> (
-        retdata_size: felt,
-        retdata: felt*
-    ):
-    alloc_locals
-
-    # validate calls
-    validate(call_array_len, call_array, calldata_len, calldata, nonce)
-
-    # no reentrant call to prevent signature reutilization
-    assert_non_reentrant()
-
-    ############### TMP #############################
-    # parse inputs to an array of 'Call' struct
-    let (calls : Call*) = alloc()
-    from_call_array_to_call(call_array_len, call_array, calldata, calls)
-    let calls_len = call_array_len
-    #################################################
-
-    # execute calls
-    let (response : felt*) = alloc()
-    local response_len
-    if calls[0].selector - USE_PLUGIN_SELECTOR == 0:
-        let (res) = execute_list(calls_len - 1, calls + Call.SIZE, response)
-        assert response_len = res
-    else:
-        let (res) = execute_list(calls_len, calls, response)
-        assert response_len = res
-    end
-    # emit event
-    let (tx_info) = get_tx_info()
-    transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
-
-    return (retdata_size=response_len, retdata=response)
-end
-
-func validate{
-        syscall_ptr: felt*,
-        pedersen_ptr: HashBuiltin*,
-        ecdsa_ptr: SignatureBuiltin*,
-        range_check_ptr
-    } (
-        call_array_len: felt,
-        call_array: CallArray*,
-        calldata_len: felt,
-        calldata: felt*,
-        nonce: felt
+        calldata: felt*
     ):
     alloc_locals
 
     # make sure the account is initialized
     assert_initialized()
-    
-    # validate and bump nonce
-    validate_and_bump_nonce(nonce)
 
     # get the tx info
     let (tx_info) = get_tx_info()
@@ -281,7 +202,102 @@ func validate{
     # validate signer and guardian signatures
     validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
     validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len - 2, tx_info.signature + 2)
+
     return()
+end
+
+@external
+func __validate_declare__{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
+        range_check_ptr
+    } (
+        class_hash: felt
+    ):
+    alloc_locals
+    # get the tx info
+    let (tx_info) = get_tx_info()
+    # validate signatures
+    validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
+    validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len - 2, tx_info.signature + 2)
+    return()
+end
+
+@external
+@raw_output
+func __execute__{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
+        range_check_ptr
+    } (
+        call_array_len: felt,
+        call_array: CallArray*,
+        calldata_len: felt,
+        calldata: felt*
+    ) -> (
+        retdata_size: felt,
+        retdata: felt*
+    ):
+    alloc_locals
+
+    # no reentrant call to prevent signature reutilization
+    assert_non_reentrant()
+
+    # get the tx info
+    let (tx_info) = get_tx_info()
+
+    # block transaction with version != 1
+    assert_correct_version(tx_info.version)
+
+    ############### TMP #############################
+    # parse inputs to an array of 'Call' struct
+    let (calls : Call*) = alloc()
+    from_call_array_to_call(call_array_len, call_array, calldata, calls)
+    let calls_len = call_array_len
+    #################################################
+
+    # execute calls
+    let (response : felt*) = alloc()
+    local response_len
+    if calls[0].selector - USE_PLUGIN_SELECTOR == 0:
+        let (res) = execute_list(calls_len - 1, calls + Call.SIZE, response)
+        assert response_len = res
+    else:
+        let (res) = execute_list(calls_len, calls, response)
+        assert response_len = res
+    end
+    # emit event
+    transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
+    return (retdata_size=response_len, retdata=response)
+end
+
+@external
+func initialize{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        signer: felt,
+        guardian: felt
+    ):
+    # check that we are not already initialized
+    let (current_signer) = _signer.read()
+    with_attr error_message("already initialized"):
+        assert current_signer = 0
+    end
+    # check that the target signer is not zero
+    with_attr error_message("signer cannot be null"):
+        assert_not_zero(signer)
+    end
+    # initialize the contract
+    _signer.write(signer)
+    _guardian.write(guardian)
+    # emit event
+    let (self) = get_contract_address()
+    account_created.emit(account=self, key=signer, guardian=guardian)
+    return ()
 end
 
 ###### PLUGIN #######
@@ -765,6 +781,15 @@ func assert_non_reentrant{
     let (caller) = get_caller_address()
     with_attr error_message("no reentrant call"):
         assert caller = 0
+    end
+    return()
+end
+
+func assert_correct_version{
+        syscall_ptr: felt*
+    } (version: felt) -> ():
+    with_attr error_message("invalid tx version"):
+        assert version = 1
     end
     return()
 end

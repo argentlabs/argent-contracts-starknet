@@ -191,6 +191,7 @@ func __validate_declare__{
     } (
         class_hash: felt
     ):
+    alloc_locals
     # get the tx info
     let (tx_info) = get_tx_info()
     # validate signatures
@@ -241,8 +242,6 @@ func __execute__{
     transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
     return (retdata_size=response_len, retdata=response)
 end
-
-validate_declare(class_hash)
 
 @external
 func initialize{

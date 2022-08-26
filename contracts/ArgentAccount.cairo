@@ -164,6 +164,52 @@ func initialize{
 end
 
 @external
+func __validate__{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        ecdsa_ptr: SignatureBuiltin*,
+        range_check_ptr
+    } (
+        call_array_len: felt,
+        call_array: CallArray*,
+        calldata_len: felt,
+        calldata: felt*
+    ):
+    alloc_locals
+
+    # make sure the account is initialized
+    assert_initialized()
+
+    # get the tx info
+    let (tx_info) = get_tx_info()
+
+    if call_array_len == 1:
+        if call_array[0].to == tx_info.account_contract_address:
+            tempvar signer_condition = (call_array[0].selector - ESCAPE_GUARDIAN_SELECTOR) * (call_array[0].selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
+            tempvar guardian_condition = (call_array[0].selector - ESCAPE_SIGNER_SELECTOR) * (call_array[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
+            if signer_condition == 0:
+                # validate signer signature
+                validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
+                return()
+            end
+            if guardian_condition == 0:
+                # validate guardian signature
+                validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
+                return()
+            end
+        end
+    else:
+        # make sure no call is to the account
+        assert_no_self_call(tx_info.account_contract_address, call_array_len, call_array)
+    end
+    # validate signer and guardian signatures
+    validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
+    validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len - 2, tx_info.signature + 2)
+
+    return()
+end
+
+@external
 @raw_output
 func __execute__{
         syscall_ptr: felt*,
@@ -174,16 +220,13 @@ func __execute__{
         call_array_len: felt,
         call_array: CallArray*,
         calldata_len: felt,
-        calldata: felt*,
-        nonce: felt
+        calldata: felt*
     ) -> (
         retdata_size: felt,
         retdata: felt*
     ):
     alloc_locals
 
-    # make sure the account is initialized
-    assert_initialized()
     # no reentrant call to prevent signature reutilization
     assert_non_reentrant()
 
@@ -194,44 +237,12 @@ func __execute__{
     let calls_len = call_array_len
     #################################################
 
-    # validate and bump nonce
-    validate_and_bump_nonce(nonce)
-
-    # get the tx info
-    let (tx_info) = get_tx_info()
-
-    if calls_len == 1:
-        if calls[0].to == tx_info.account_contract_address:
-            tempvar signer_condition = (calls[0].selector - ESCAPE_GUARDIAN_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_GUARDIAN_SELECTOR)
-            tempvar guardian_condition = (calls[0].selector - ESCAPE_SIGNER_SELECTOR) * (calls[0].selector - TRIGGER_ESCAPE_SIGNER_SELECTOR)
-            if signer_condition == 0:
-                # validate signer signature
-                validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
-                jmp do_execute
-            end
-            if guardian_condition == 0:
-                # validate guardian signature
-                validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
-                jmp do_execute
-            end
-        end
-    else:
-        # make sure no call is to the account
-        assert_no_self_call(tx_info.account_contract_address, calls_len, calls)
-    end
-    # validate signer and guardian signatures
-    validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature)
-    validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len - 2, tx_info.signature + 2)
-
     # execute calls
-    do_execute:
-    local ecdsa_ptr: SignatureBuiltin* = ecdsa_ptr
-    local syscall_ptr: felt* = syscall_ptr
-    local range_check_ptr = range_check_ptr
-    local pedersen_ptr: HashBuiltin* = pedersen_ptr
     let (response : felt*) = alloc()
     let (response_len) = execute_list(calls_len, calls, response)
+
     # emit event
+    let (tx_info) = get_tx_info()
     transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
     return (retdata_size=response_len, retdata=response)
 end
@@ -634,14 +645,14 @@ end
 
 func assert_no_self_call(
         self: felt,
-        calls_len: felt,
-        calls: Call*
+        call_array_len: felt,
+        call_array: CallArray*
     ):
-    if calls_len == 0:
+    if call_array_len == 0:
         return ()
     end
-    assert_not_zero(calls[0].to - self)
-    assert_no_self_call(self, calls_len - 1, calls + Call.SIZE)
+    assert_not_zero(call_array[0].to - self)
+    assert_no_self_call(self, call_array_len - 1, call_array + CallArray.SIZE)
     return()
 end
 

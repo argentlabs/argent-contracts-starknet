@@ -1,10 +1,13 @@
 import os
 from starkware.starknet.testing.contract import StarknetContract
+from starkware.starknet.business_logic.state.state import BlockInfo
 from starkware.starknet.compiler.compile import compile_starknet_files
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.business_logic.execution.objects import Event
 from starkware.starknet.compiler.compile import get_selector_from_name
+
+DEFAULT_TIMESTAMP = 1640991600
 
 def str_to_felt(text):
     b_text = bytes(text, 'UTF-8')
@@ -37,32 +40,26 @@ def assert_event_emmited(tx_exec_info, from_address, name, data = []):
         data=data,
     ) in raw_events
 
-contract_classes = {}
+def update_starknet_block(state, block_number=1, block_timestamp=DEFAULT_TIMESTAMP):
+    state.state.block_info = BlockInfo(
+        block_number=block_number,
+        block_timestamp=block_timestamp,
+        gas_price=0,
+        starknet_version="0.9.1",
+        sequencer_address=state.state.block_info.sequencer_address)
 
-async def deploy(starknet, path, params=None):
-    params = params or []
-    if path in contract_classes:
-        contract_class = contract_classes[path]
-    else:
-        contract_class = compile_starknet_files([path], debug_info=True)
-        contract_classes[path] = contract_class
-        await starknet.declare(contract_class=contract_class)
-    deployed_contract = await starknet.deploy(contract_class=contract_class,constructor_calldata=params)
-    return deployed_contract
+def reset_starknet_block(state):
+    update_starknet_block(state=state)
 
-async def declare(starknet, path):
-    contract_class = compile_starknet_files([path], debug_info=True)
-    declared_class = await starknet.declare(contract_class=contract_class)
-    return declared_class
+def compile(path):
+    contract_cls = compile_starknet_files([path], debug_info=True)
+    return contract_cls
 
-async def deploy_proxy(starknet, proxy_path, abi, params=None):
-    params = params or []
-    proxy_class = compile_starknet_files([proxy_path], debug_info=True)
-    declared_proxy = await starknet.declare(contract_class=proxy_class)
-    deployed_proxy = await starknet.deploy(contract_class=proxy_class, constructor_calldata=params)
-    wrapped_proxy = StarknetContract(
-        state=starknet.state,
-        abi=abi,
-        contract_address=deployed_proxy.contract_address,
-        deploy_execution_info=deployed_proxy.deploy_execution_info)
-    return deployed_proxy, wrapped_proxy
+def cached_contract(state, _class, deployed):
+    contract = StarknetContract(
+        state=state,
+        abi=_class.abi,
+        contract_address=deployed.contract_address,
+        deploy_execution_info=deployed.deploy_execution_info
+    )
+    return contract

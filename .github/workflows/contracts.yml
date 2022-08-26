@@ -27,4 +27,4 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Test with pytest
       run: |
-        pytest -v ./test/argent_account.py ./test/proxy.py
+        pytest -v ./test/argent_account.py ./test/argent_plugin_account.py ./test/proxy.py ./test/session_keys.py

@@ -137,33 +137,6 @@ end
 ####################
 
 @external
-func initialize{
-        syscall_ptr: felt*,
-        pedersen_ptr: HashBuiltin*,
-        range_check_ptr
-    } (
-        signer: felt,
-        guardian: felt
-    ):
-    # check that we are not already initialized
-    let (current_signer) = _signer.read()
-    with_attr error_message("already initialized"):
-        assert current_signer = 0
-    end
-    # check that the target signer is not zero
-    with_attr error_message("signer cannot be null"):
-        assert_not_zero(signer)
-    end
-    # initialize the contract
-    _signer.write(signer)
-    _guardian.write(guardian)
-    # emit event
-    let (self) = get_contract_address()
-    account_created.emit(account=self, key=signer, guardian=guardian)
-    return ()
-end
-
-@external
 func __validate__{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
@@ -230,6 +203,12 @@ func __execute__{
     # no reentrant call to prevent signature reutilization
     assert_non_reentrant()
 
+    # get the tx info
+    let (tx_info) = get_tx_info()
+
+    # block transaction with version != 1
+    assert_correct_version(tx_info.version) 
+
     ############### TMP #############################
     # parse inputs to an array of 'Call' struct
     let (calls : Call*) = alloc()
@@ -242,9 +221,35 @@ func __execute__{
     let (response_len) = execute_list(calls_len, calls, response)
 
     # emit event
-    let (tx_info) = get_tx_info()
     transaction_executed.emit(hash=tx_info.transaction_hash, response_len=response_len, response=response)
     return (retdata_size=response_len, retdata=response)
+end
+
+@external
+func initialize{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (
+        signer: felt,
+        guardian: felt
+    ):
+    # check that we are not already initialized
+    let (current_signer) = _signer.read()
+    with_attr error_message("already initialized"):
+        assert current_signer = 0
+    end
+    # check that the target signer is not zero
+    with_attr error_message("signer cannot be null"):
+        assert_not_zero(signer)
+    end
+    # initialize the contract
+    _signer.write(signer)
+    _guardian.write(guardian)
+    # emit event
+    let (self) = get_contract_address()
+    account_created.emit(account=self, key=signer, guardian=guardian)
+    return ()
 end
 
 @external
@@ -627,6 +632,15 @@ func assert_non_reentrant{
     let (caller) = get_caller_address()
     with_attr error_message("no reentrant call"):
         assert caller = 0
+    end
+    return()
+end
+
+func assert_correct_version{
+        syscall_ptr: felt*
+    } (version: felt) -> ():
+    with_attr error_message("invalid tx version"):
+        assert version = 1
     end
     return()
 end

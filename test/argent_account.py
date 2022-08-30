@@ -32,7 +32,7 @@ def event_loop():
 
 @pytest.fixture(scope='module')
 def contract_classes():
-    account_cls = compile('contracts/ArgentAccount.cairo')
+    account_cls = compile('contracts/account/ArgentAccount.cairo')
     dapp_cls = compile("contracts/test/TestDapp.cairo")
     
     return account_cls, dapp_cls

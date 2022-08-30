@@ -18,8 +18,8 @@ def event_loop():
 
 @pytest.fixture(scope='module')
 def contract_classes():
-    proxy_cls = compile("contracts/Proxy.cairo")
-    account_cls = compile('contracts/ArgentAccount.cairo')
+    proxy_cls = compile("contracts/upgrade/Proxy.cairo")
+    account_cls = compile('contracts/account/ArgentAccount.cairo')
     dapp_cls = compile("contracts/test/TestDapp.cairo")
     
     return proxy_cls, account_cls, dapp_cls

@@ -13,7 +13,7 @@ def event_loop():
 
 @pytest.fixture(scope='module')
 def contract_classes():
-    account_cls = compile('contracts/ArgentPluginAccount.cairo')
+    account_cls = compile('contracts/account/ArgentPluginAccount.cairo')
     plugin_cls = compile("contracts/plugins/SessionKey.cairo")
     
     return account_cls, plugin_cls

@@ -19,7 +19,7 @@ async def get_starknet():
 @pytest.mark.asyncio
 async def test_multicall(get_starknet):
     starknet = get_starknet
-    multicall = await deploy(starknet, "contracts/Multicall.cairo")
+    multicall = await deploy(starknet, "contracts/lib/Multicall.cairo")
     erc20_1 = await deploy(starknet, "contracts/lib/ERC20.cairo", [str_to_felt('token1'), str_to_felt('T1'), user1])
     erc20_2 = await deploy(starknet, "contracts/lib/ERC20.cairo", [str_to_felt('token2'), str_to_felt('T2'), user2])
 

@@ -3,8 +3,10 @@ from starkware.starknet.public.abi import get_selector_from_name
 from starkware.starknet.definitions.general_config import StarknetChainId
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.core.os.transaction_hash.transaction_hash import calculate_transaction_hash_common, TransactionHashPrefix
-from starkware.starknet.services.api.gateway.transaction import InvokeFunction
+from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Declare
 from starkware.starknet.business_logic.transaction.objects import InternalTransaction, TransactionExecutionInfo
+from starkware.starknet.services.api.contract_class import ContractClass
+from starkware.starknet.core.os.class_hash import compute_class_hash
 from utils.Signer import Signer
 
 TRANSACTION_VERSION = 1
@@ -30,7 +32,7 @@ class TransactionSender():
         if nonce is None:
             nonce = await state.state.get_nonce_at(contract_address=self.account.contract_address)
 
-        transaction_hash = get_transaction_hash(self.account.contract_address, raw_invocation.calldata, nonce, max_fee)
+        transaction_hash = get_transaction_hash(TransactionHashPrefix.INVOKE, self.account.contract_address, raw_invocation.calldata, nonce, max_fee)
 
         signatures = []
         for signer in signers:
@@ -54,6 +56,44 @@ class TransactionSender():
         )
         execution_info = await state.execute_tx(tx=tx)
         return execution_info
+    
+    async def declare_class(
+        self,
+        contract_cls: ContractClass,
+        signers: List[Signer],
+        nonce: Optional[int] = None,
+        max_fee: Optional[int] = 0
+    ) -> TransactionExecutionInfo :
+        
+        state = self.account.state
+
+        if nonce is None:
+            nonce = await state.state.get_nonce_at(contract_address=self.account.contract_address)
+
+        class_hash = compute_class_hash(contract_cls)
+        transaction_hash = get_transaction_hash(TransactionHashPrefix.DECLARE, self.account.contract_address, [class_hash], nonce, max_fee)
+
+        signatures = []
+        for signer in signers:
+            if signer == 0:
+                signatures += [0, 0]
+            else:    
+                signatures += list(signer.sign(transaction_hash))
+
+        external_tx = Declare(
+            sender_address=self.account.contract_address,
+            contract_class=contract_cls,
+            signature=signatures,
+            max_fee=max_fee,
+            version=TRANSACTION_VERSION,
+            nonce=nonce,
+        )
+
+        tx = InternalTransaction.from_external(
+            external_tx=external_tx, general_config=state.general_config
+        )
+        execution_info = await state.execute_tx(tx=tx)
+        return execution_info
 
 def from_call_to_call_array(calls):
     call_array = []
@@ -65,12 +105,12 @@ def from_call_to_call_array(calls):
         calldata.extend(call[2])
     return call_array, calldata
 
-def get_transaction_hash(account, calldata, nonce, max_fee):
+def get_transaction_hash(prefix, account, calldata, nonce, max_fee):
     
     additional_data = [nonce]
 
     return calculate_transaction_hash_common(
-            tx_hash_prefix=TransactionHashPrefix.INVOKE,
+            tx_hash_prefix=prefix,
             version=TRANSACTION_VERSION,
             contract_address=account,
             entry_point_selector=0,

@@ -90,6 +90,27 @@ async def test_initializer(contract_factory):
      )
 
 @pytest.mark.asyncio
+async def test_declare(contract_factory):
+    account, _, _ = contract_factory
+    sender = TransactionSender(account)
+
+    test_cls = compile("contracts/test/StructHash.cairo")
+
+    # should revert with only one signature
+    await assert_revert(
+        sender.declare_class(test_cls, [signer]),
+        "guardian signature invalid"
+    )
+
+    # should revert with wrong signer
+    await assert_revert(
+        sender.declare_class(test_cls, [wrong_signer, guardian]),
+        "signer signature invalid"
+    )
+
+    tx_exec_info = await sender.declare_class(test_cls, [signer, guardian])
+
+@pytest.mark.asyncio
 async def test_call_dapp_with_guardian(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)

@@ -16,8 +16,12 @@ from starkware.starknet.common.syscalls import (
 from starkware.cairo.common.bool import TRUE, FALSE
 
 from contracts.upgrade.Upgradable import _set_implementation
-from contracts.account.library import Call, CallArray, Escape
-
+from contracts.account.library import (
+    Call,
+    CallArray,
+    Escape,
+)
+    
 /////////////////////
 // CONSTANTS
 /////////////////////

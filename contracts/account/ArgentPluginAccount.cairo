@@ -96,10 +96,6 @@ func transaction_executed(hash: felt, response_len: felt, response: felt*) {
 ///////////////////////
 
 @storage_var
-func _current_nonce() -> (res: felt) {
-}
-
-@storage_var
 func _signer() -> (res: felt) {
 }
 
@@ -562,12 +558,6 @@ func supportsInterface{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_che
 }
 
 @view
-func get_nonce{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (nonce: felt) {
-    let (res) = _current_nonce.read();
-    return (nonce=res);
-}
-
-@view
 func get_signer{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
     signer: felt
 ) {
@@ -659,17 +649,6 @@ func assert_no_self_call(self: felt, call_array_len: felt, call_array: CallArray
     }
     assert_not_zero(call_array[0].to - self);
     assert_no_self_call(self, call_array_len - 1, call_array + CallArray.SIZE);
-    return ();
-}
-
-func validate_and_bump_nonce{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    message_nonce: felt
-) -> () {
-    let (current_nonce) = _current_nonce.read();
-    with_attr error_message("nonce invalid") {
-        assert current_nonce = message_nonce;
-    }
-    _current_nonce.write(current_nonce + 1);
     return ();
 }
 

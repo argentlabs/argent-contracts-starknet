@@ -54,7 +54,7 @@ async def contract_init(contract_classes):
         contract_class=account_cls,
         constructor_calldata=[]
     )
-    await account.initialize(signer.public_key, 0).invoke()
+    await account.initialize(signer.public_key, 0).execute()
 
     dapp = await starknet.deploy(
         contract_class=dapp_cls,

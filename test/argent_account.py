@@ -1,6 +1,7 @@
 import pytest
 import asyncio
 from starkware.starknet.testing.starknet import Starknet
+from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from utils.Signer import Signer
 from utils.utilities import cached_contract, compile, assert_revert, str_to_felt, assert_event_emmited, update_starknet_block, reset_starknet_block, DEFAULT_TIMESTAMP
 from utils.TransactionSender import TransactionSender
@@ -46,13 +47,13 @@ async def contract_init(contract_classes):
         contract_class=account_cls,
         constructor_calldata=[]
     )
-    await account.initialize(signer.public_key, guardian.public_key).invoke()
+    await account.initialize(signer.public_key, guardian.public_key).execute()
 
     account_no_guardian = await starknet.deploy(
         contract_class=account_cls,
         constructor_calldata=[]
     )
-    await account_no_guardian.initialize(signer.public_key, 0).invoke()
+    await account_no_guardian.initialize(signer.public_key, 0).execute()
 
     dapp = await starknet.deploy(
         contract_class=dapp_cls,
@@ -62,10 +63,11 @@ async def contract_init(contract_classes):
     return starknet.state, account, account_no_guardian, dapp
 
 @pytest.fixture
-def contract_factory(contract_classes, contract_init):
+async def contract_factory(contract_classes, contract_init):
     account_cls, dapp_cls = contract_classes
     state, account, account_no_guardian, dapp = contract_init
     _state = state.copy()
+
     account = cached_contract(_state, account_cls, account)
     account_no_guardian = cached_contract(_state, account_cls, account_no_guardian)
     dapp = cached_contract(_state, dapp_cls, dapp)
@@ -83,7 +85,8 @@ async def test_initializer(contract_factory):
     assert (await account.supportsInterface(IACCOUNT_ID).call()).result.success == 1
     # should throw when calling initialize twice
     await assert_revert(
-         account.initialize(signer.public_key, guardian.public_key).invoke()
+         account.initialize(signer.public_key, guardian.public_key).execute(),
+         "already initialized"
      )
 
 @pytest.mark.asyncio
@@ -96,7 +99,7 @@ async def test_call_dapp_with_guardian(contract_factory):
     # should revert with the wrong nonce
     await assert_revert(
         sender.send_transaction(calls, [signer, guardian], nonce=3),
-        "nonce invalid"
+        expected_code=StarknetErrorCode.INVALID_TRANSACTION_NONCE
     )
 
     # should revert with the wrong signer
@@ -195,7 +198,7 @@ async def test_change_signer(contract_factory):
 
     # should work with the correct signers
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'change_signer', [new_signer.public_key])], [signer, guardian])
-
+    
     assert_event_emmited(
         tx_exec_info,
         from_address=account.contract_address,

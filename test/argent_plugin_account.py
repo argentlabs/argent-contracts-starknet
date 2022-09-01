@@ -27,7 +27,7 @@ async def contract_init(contract_classes):
         contract_class=account_cls,
         constructor_calldata=[]
     )
-    await account.initialize(signer.public_key, 0).invoke()
+    await account.initialize(signer.public_key, 0).execute()
 
     plugin_cls_hash = await starknet.declare(contract_class=plugin_cls)
 

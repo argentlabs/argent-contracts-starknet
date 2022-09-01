@@ -119,8 +119,16 @@ func _escape() -> (res: Escape) {
 
 @external
 func __validate__{
-    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
-}(call_array_len: felt, call_array: CallArray*, calldata_len: felt, calldata: felt*) {
+    syscall_ptr: felt*,
+    pedersen_ptr: HashBuiltin*,
+    ecdsa_ptr: SignatureBuiltin*,
+    range_check_ptr
+} (
+    call_array_len: felt,
+    call_array: CallArray*,
+    calldata_len: felt,
+    calldata: felt*
+) {
     alloc_locals;
 
     // make sure the account is initialized
@@ -163,8 +171,13 @@ func __validate__{
 
 @external
 func __validate_declare__{
-    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
-}(class_hash: felt) {
+    syscall_ptr: felt*,
+    pedersen_ptr: HashBuiltin*,
+    ecdsa_ptr: SignatureBuiltin*,
+    range_check_ptr
+} (
+    class_hash: felt
+) {
     alloc_locals;
     // get the tx info
     let (tx_info) = get_tx_info();
@@ -179,8 +192,16 @@ func __validate_declare__{
 @external
 @raw_output
 func __execute__{
-    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
-}(call_array_len: felt, call_array: CallArray*, calldata_len: felt, calldata: felt*) -> (
+    syscall_ptr: felt*,
+    pedersen_ptr: HashBuiltin*,
+    ecdsa_ptr: SignatureBuiltin*,
+    range_check_ptr
+} (
+    call_array_len: felt,
+    call_array: CallArray*,
+    calldata_len: felt,
+    calldata: felt*
+) -> (
     retdata_size: felt, retdata: felt*
 ) {
     alloc_locals;

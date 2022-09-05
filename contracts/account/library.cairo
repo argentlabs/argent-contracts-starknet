@@ -163,7 +163,7 @@ func assert_no_self_call(self: felt, call_array_len: felt, call_array: CallArray
 // @param calls A pointer to the first call to execute
 // @param response The array of felt to pupulate with the returned data
 // @return response_len The size of the returned data
-func execute_list{syscall_ptr: felt*}(calls_len: felt, calls: Call*, reponse: felt*) -> (
+func execute_list{syscall_ptr: felt*}(calls_len: felt, calls: Call*, reponse: felt*, index: felt) -> (
     response_len: felt
 ) {
     alloc_locals;
@@ -175,16 +175,18 @@ func execute_list{syscall_ptr: felt*}(calls_len: felt, calls: Call*, reponse: fe
 
     // do the current call
     let this_call: Call = [calls];
-    let res = call_contract(
-        contract_address=this_call.to,
-        function_selector=this_call.selector,
-        calldata_size=this_call.calldata_len,
-        calldata=this_call.calldata,
-    );
+    with_attr error_message("argent/multicall {index} failed") {
+        let res = call_contract(
+            contract_address=this_call.to,
+            function_selector=this_call.selector,
+            calldata_size=this_call.calldata_len,
+            calldata=this_call.calldata,
+        );
+    }
     // copy the result in response
     memcpy(reponse, res.retdata, res.retdata_size);
     // do the next calls recursively
-    let (response_len) = execute_list(calls_len - 1, calls + Call.SIZE, reponse + res.retdata_size);
+    let (response_len) = execute_list(calls_len - 1, calls + Call.SIZE, reponse + res.retdata_size, index + 1);
     return (response_len + res.retdata_size,);
 }
 

@@ -50,6 +50,16 @@ func increase_number{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check
     return ();
 }
 
+@external
+func throw_error{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    number: felt
+) {
+    with_attr error_message("test dapp reverted") {
+        assert 0 = 1;
+    }
+    return();
+}
+
 /////////////////////
 // VIEW FUNCTIONS
 /////////////////////

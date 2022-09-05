@@ -130,7 +130,7 @@ func __execute__{
 
     // execute calls
     let (response: felt*) = alloc();
-    let (response_len) = execute_list(calls_len, calls, response);
+    let (response_len) = execute_list(calls_len, calls, response, 0);
 
     // emit event
     transaction_executed.emit(

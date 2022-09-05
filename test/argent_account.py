@@ -193,6 +193,16 @@ async def test_multicall(contract_factory):
         sender.send_transaction([(account.contract_address, 'trigger_escape_guardian', []), (dapp.contract_address, 'set_number', [47])], [signer, guardian])
     )
 
+    # should indicate which called failed
+    await assert_revert(
+        sender.send_transaction([(dapp.contract_address, 'set_number', [47]), (dapp.contract_address, 'throw_error', [1])], [signer, guardian]),
+        "argent/multicall 1 failed"
+    )
+    await assert_revert(
+        sender.send_transaction([(dapp.contract_address, 'throw_error', [1]), (dapp.contract_address, 'set_number', [47])], [signer, guardian]),
+        "argent/multicall 0 failed"
+    )
+
     # should call the dapp
     assert (await dapp.get_number(account.contract_address).call()).result.number == 0
     await sender.send_transaction([(dapp.contract_address, 'set_number', [47]), (dapp.contract_address, 'increase_number', [10])], [signer, guardian])

@@ -151,10 +151,10 @@ func __execute__{
     let (response: felt*) = alloc();
     local response_len;
     if (calls[0].selector - USE_PLUGIN_SELECTOR == 0) {
-        let (res) = execute_list(calls_len - 1, calls + Call.SIZE, response);
+        let (res) = execute_list(calls_len - 1, calls + Call.SIZE, response, 0);
         assert response_len = res;
     } else {
-        let (res) = execute_list(calls_len, calls, response);
+        let (res) = execute_list(calls_len, calls, response, 0);
         assert response_len = res;
     }
     // emit event

@@ -192,7 +192,7 @@ func add_plugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
     assert_only_self();
 
     // add plugin
-    with_attr error_message("plugin cannot be null") {
+    with_attr error_message("argent: plugin invalid") {
         assert_not_zero(plugin);
     }
     _plugins.write(plugin, 1);
@@ -203,6 +203,11 @@ func add_plugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
 func remove_plugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) {
     // only called via execute
     assert_only_self();
+
+    let (is_plugin) = _plugins.read(plugin);
+    with_attr error_message("argent: unknown plugin") {
+        assert_not_zero(is_plugin);
+    }
     // remove plugin
     _plugins.write(plugin, 0);
     return ();
@@ -214,9 +219,11 @@ func execute_on_plugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_che
 ) {
     // only called via execute
     assert_only_self();
-    // only valid plugin
+
     let (is_plugin) = _plugins.read(plugin);
-    assert_not_zero(is_plugin);
+    with_attr error_message("argent: unknown plugin") {
+        assert_not_zero(is_plugin);
+    }
 
     library_call(
         class_hash=plugin, function_selector=selector, calldata_size=calldata_len, calldata=calldata
@@ -239,7 +246,9 @@ func validate_with_plugin{
 
     let plugin = calldata[call_array[0].data_offset];
     let (is_plugin) = _plugins.read(plugin);
-    assert_not_zero(is_plugin);
+    with_attr error_message("argent: unknown plugin") {
+        assert_not_zero(is_plugin);
+    }
 
     IPlugin.library_call_validate(
         class_hash=plugin,

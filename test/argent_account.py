@@ -86,7 +86,7 @@ async def test_initializer(contract_factory):
     # should throw when calling initialize twice
     await assert_revert(
          account.initialize(signer.public_key, guardian.public_key).execute(),
-         "already initialized"
+         "argent: already initialized"
      )
 
 @pytest.mark.asyncio
@@ -99,13 +99,13 @@ async def test_declare(contract_factory):
     # should revert with only one signature
     await assert_revert(
         sender.declare_class(test_cls, [signer]),
-        "guardian signature invalid"
+        "argent: guardian signature invalid"
     )
 
     # should revert with wrong signer
     await assert_revert(
         sender.declare_class(test_cls, [wrong_signer, guardian]),
-        "signer signature invalid"
+        "argent: signer signature invalid"
     )
 
     tx_exec_info = await sender.declare_class(test_cls, [signer, guardian])
@@ -126,19 +126,19 @@ async def test_call_dapp_with_guardian(contract_factory):
     # should revert with the wrong signer
     await assert_revert(
         sender.send_transaction(calls, [wrong_signer, guardian]),
-        "signer signature invalid"
+        "argent: signer signature invalid"
     )
 
     # should revert with the wrong guardian
     await assert_revert(
         sender.send_transaction(calls, [signer, wrong_guardian]),
-        "guardian signature invalid"
+        "argent: guardian signature invalid"
     )
 
     # should fail with only 1 signer
     await assert_revert(
         sender.send_transaction(calls, [signer]),
-        "guardian signature invalid"
+        "argent: guardian signature invalid"
     )
 
     # should call the dapp
@@ -172,7 +172,7 @@ async def test_call_dapp_no_guardian(contract_factory):
     # should reverts calls that require the guardian to be set
     await assert_revert(
         sender.send_transaction([(account_no_guardian.contract_address, 'trigger_escape_guardian', [])], [new_signer]),
-        "guardian must be set"
+        "argent: guardian required"
     )
 
     # should add a guardian
@@ -196,11 +196,11 @@ async def test_multicall(contract_factory):
     # should indicate which called failed
     await assert_revert(
         sender.send_transaction([(dapp.contract_address, 'set_number', [47]), (dapp.contract_address, 'throw_error', [1])], [signer, guardian]),
-        "argent/multicall 1 failed"
+        "argent: multicall 1 failed"
     )
     await assert_revert(
         sender.send_transaction([(dapp.contract_address, 'throw_error', [1]), (dapp.contract_address, 'set_number', [47])], [signer, guardian]),
-        "argent/multicall 0 failed"
+        "argent: multicall 0 failed"
     )
 
     # should call the dapp
@@ -218,13 +218,13 @@ async def test_change_signer(contract_factory):
     # should revert with the wrong signer
     await assert_revert(
         sender.send_transaction([(account.contract_address, 'change_signer', [new_signer.public_key])], [wrong_signer, guardian]),
-        "signer signature invalid"
+        "argent: signer signature invalid"
     )
 
     # should revert with the wrong guardian signer
     await assert_revert(
         sender.send_transaction([(account.contract_address, 'change_signer', [new_signer.public_key])], [signer, wrong_guardian]),
-        "guardian signature invalid"
+        "argent: guardian signature invalid"
     )
 
     # should work with the correct signers
@@ -249,13 +249,13 @@ async def test_change_guardian(contract_factory):
     # should revert with the wrong signer
     await assert_revert(
         sender.send_transaction([(account.contract_address, 'change_guardian', [new_guardian.public_key])], [wrong_signer, guardian]),
-        "signer signature invalid"
+        "argent: signer signature invalid"
     )
 
     # should revert with the wrong guardian signer
     await assert_revert(
         sender.send_transaction([(account.contract_address, 'change_guardian', [new_guardian.public_key])], [signer, wrong_guardian]),
-        "guardian signature invalid"
+        "argent: guardian signature invalid"
     )
 
     # should work with the correct signers
@@ -278,13 +278,13 @@ async def test_change_guardian_backup(contract_factory):
     # should revert with the wrong signer
     await assert_revert(
         sender.send_transaction([(account.contract_address, 'change_guardian_backup', [new_guardian_backup.public_key])], [wrong_signer, guardian]),
-        "signer signature invalid"
+        "argent: signer signature invalid"
     )
 
     # should revert with the wrong guardian signer
     await assert_revert(
         sender.send_transaction([(account.contract_address, 'change_guardian_backup', [new_guardian_backup.public_key])], [signer, wrong_guardian]),
-        "guardian signature invalid"
+        "argent: guardian signature invalid"
     )
 
     # should work with the correct signers
@@ -388,6 +388,12 @@ async def test_escape_guardian(contract_factory):
     # reset block_timestamp
     reset_starknet_block(state=account.state)
 
+    # should revert when there is no escape
+    await assert_revert(
+        sender.send_transaction([(account.contract_address, 'escape_guardian', [new_guardian.public_key])], [signer]),
+        "argent: not escaping"
+    )
+
     # trigger escape
     await sender.send_transaction([(account.contract_address, 'trigger_escape_guardian', [])], [signer])
 
@@ -397,7 +403,7 @@ async def test_escape_guardian(contract_factory):
     # should fail to escape before the end of the period
     await assert_revert(
         sender.send_transaction([(account.contract_address, 'escape_guardian', [new_guardian.public_key])], [signer]),
-        "escape is not valid"
+        "argent: escape not active"
     )
 
     # wait security period
@@ -429,6 +435,12 @@ async def test_escape_signer(contract_factory):
     # reset block_timestamp
     reset_starknet_block(state=account.state)
 
+    # should revert when there is no escape
+    await assert_revert(
+        sender.send_transaction([(account.contract_address, 'escape_signer', [new_signer.public_key])], [guardian]),
+        "argent: not escaping"
+    )
+
     # trigger escape
     await sender.send_transaction([(account.contract_address, 'trigger_escape_signer', [])], [guardian])
     escape = (await account.get_escape().call()).result
@@ -437,7 +449,7 @@ async def test_escape_signer(contract_factory):
     # should fail to escape before the end of the period
     await assert_revert(
         sender.send_transaction([(account.contract_address, 'escape_signer', [new_signer.public_key])], [guardian]),
-        "escape is not valid"
+        "argent: escape not active"
     )
 
     # wait security period
@@ -500,7 +512,7 @@ async def test_guardian_overrides_trigger_escape_guardian(contract_factory):
     # guradian tries to override escape => should fail
     await assert_revert(
         sender.send_transaction([(account.contract_address, 'trigger_escape_signer', [])], [guardian]),
-        "cannot overrride signer escape"
+        "argent: cannot override escape"
     )
 
 
@@ -520,7 +532,7 @@ async def test_cancel_escape(contract_factory):
     # should fail to cancel with only the signer
     await assert_revert(
         sender.send_transaction([(account.contract_address, 'cancel_escape', [])], [signer]),
-        "guardian signature invalid"
+        "argent: guardian signature invalid"
     )
 
     # cancel escape

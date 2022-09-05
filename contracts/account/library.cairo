@@ -112,7 +112,7 @@ func _escape() -> (res: Escape) {
 func assert_only_self{syscall_ptr: felt*}() -> () {
     let (self) = get_contract_address();
     let (caller_address) = get_caller_address();
-    with_attr error_message("must be called via execute") {
+    with_attr error_message("argent: only self") {
         assert self = caller_address;
     }
     return ();
@@ -120,7 +120,7 @@ func assert_only_self{syscall_ptr: felt*}() -> () {
 
 func assert_initialized{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     let (signer) = _signer.read();
-    with_attr error_message("account not initialized") {
+    with_attr error_message("argent: account not initialized") {
         assert_not_zero(signer);
     }
     return ();
@@ -128,14 +128,14 @@ func assert_initialized{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_ch
 
 func assert_non_reentrant{syscall_ptr: felt*}() -> () {
     let (caller) = get_caller_address();
-    with_attr error_message("no reentrant call") {
+    with_attr error_message("argent: no reentrant call") {
         assert caller = 0;
     }
     return ();
 }
 
 func assert_correct_version{syscall_ptr: felt*}(version: felt) -> () {
-    with_attr error_message("invalid tx version") {
+    with_attr error_message("argent: invalid tx version") {
         assert version = 1;
     }
     return ();
@@ -143,7 +143,7 @@ func assert_correct_version{syscall_ptr: felt*}(version: felt) -> () {
 
 func assert_guardian_set{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     let (guardian) = _guardian.read();
-    with_attr error_message("guardian must be set") {
+    with_attr error_message("argent: guardian required") {
         assert_not_zero(guardian);
     }
     return ();
@@ -175,7 +175,7 @@ func execute_list{syscall_ptr: felt*}(calls_len: felt, calls: Call*, reponse: fe
 
     // do the current call
     let this_call: Call = [calls];
-    with_attr error_message("argent/multicall {index} failed") {
+    with_attr error_message("argent: multicall {index} failed") {
         let res = call_contract(
             contract_address=this_call.to,
             function_selector=this_call.selector,
@@ -237,11 +237,11 @@ namespace ArgentModel {
     ) {
         // check that we are not already initialized
         let (current_signer) = _signer.read();
-        with_attr error_message("already initialized") {
+        with_attr error_message("argent: already initialized") {
             assert current_signer = 0;
         }
         // check that the target signer is not zero
-        with_attr error_message("signer cannot be null") {
+        with_attr error_message("argent: signer cannot be null") {
             assert_not_zero(signer);
         }
         // initialize the contract
@@ -256,7 +256,7 @@ namespace ArgentModel {
         // only called via execute
         assert_only_self();
         // make sure the target is an account
-        with_attr error_message("implementation invalid") {
+        with_attr error_message("argent: invalid implementation") {
             let (calldata: felt*) = alloc();
             assert calldata[0] = ERC165_ACCOUNT_INTERFACE;
             let (retdata_size: felt, retdata: felt*) = library_call(
@@ -281,7 +281,7 @@ namespace ArgentModel {
         assert_only_self();
 
         // change signer
-        with_attr error_message("signer cannot be null") {
+        with_attr error_message("argent: signer cannot be null") {
             assert_not_zero(new_signer);
         }
         _signer.write(new_signer);
@@ -298,7 +298,7 @@ namespace ArgentModel {
         // assert !(guardian_backup != 0 && new_guardian == 0)
         if (new_guardian == 0) {
             let (guardian_backup) = _guardian_backup.read();
-            with_attr error_message("new guardian cannot be null") {
+            with_attr error_message("argent: new guardian invalid") {
                 assert guardian_backup = 0;
             }
             tempvar syscall_ptr: felt* = syscall_ptr;
@@ -355,7 +355,7 @@ namespace ArgentModel {
 
         // no escape if there is an guardian escape triggered by the signer in progress
         let (current_escape) = _escape.read();
-        with_attr error_message("cannot overrride signer escape") {
+        with_attr error_message("argent: cannot override escape") {
             assert current_escape.active_at * (current_escape.type - ESCAPE_TYPE_SIGNER) = 0;
         }
 
@@ -373,7 +373,7 @@ namespace ArgentModel {
 
         // validate there is an active escape
         let (current_escape) = _escape.read();
-        with_attr error_message("no escape to cancel") {
+        with_attr error_message("argent: no active escape") {
             assert_not_zero(current_escape.active_at);
         }
 
@@ -396,11 +396,13 @@ namespace ArgentModel {
 
         let (current_escape) = _escape.read();
         let (block_timestamp) = get_block_timestamp();
-        with_attr error_message("escape is not valid") {
-            // assert there is an active escape
+        with_attr error_message("argent: not escaping") {
             assert_not_zero(current_escape.active_at);
+        }
+        with_attr error_message("argent: escape not active") {
             assert_le(current_escape.active_at, block_timestamp);
-            // assert the escape was triggered by the signer
+        }
+        with_attr error_message("argent: escape type invalid") {
             assert current_escape.type = ESCAPE_TYPE_GUARDIAN;
         }
 
@@ -428,11 +430,13 @@ namespace ArgentModel {
 
         let (current_escape) = _escape.read();
         let (block_timestamp) = get_block_timestamp();
-        with_attr error_message("escape is not valid") {
-            // validate there is an active escape
+        with_attr error_message("argent: not escaping") {
             assert_not_zero(current_escape.active_at);
+        }
+        with_attr error_message("argent: escape not active") {
             assert_le(current_escape.active_at, block_timestamp);
-            // assert the escape was triggered by the guardian
+        }
+        with_attr error_message("argent: escape type invalid") {
             assert current_escape.type = ESCAPE_TYPE_SIGNER;
         }
 
@@ -509,7 +513,7 @@ namespace ArgentModel {
     func validate_signer_signature{
         syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
     }(message: felt, signatures_len: felt, signatures: felt*) -> (is_valid: felt) {
-        with_attr error_message("signer signature invalid") {
+        with_attr error_message("argent: signer signature invalid") {
             assert_nn(signatures_len - 2);
             let (signer) = _signer.read();
             verify_ecdsa_signature(
@@ -527,7 +531,7 @@ namespace ArgentModel {
         if (guardian == 0) {
             return (is_valid=TRUE);
         } else {
-            with_attr error_message("guardian signature invalid") {
+            with_attr error_message("argent: guardian signature invalid") {
                 if (signatures_len == 2) {
                     // must be signed by guardian
                     verify_ecdsa_signature(

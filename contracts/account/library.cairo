@@ -292,22 +292,17 @@ namespace ArgentModel {
     func change_guardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
         new_guardian: felt
     ) {
+        alloc_locals;
+
         // only called via execute
         assert_only_self();
 
-        // assert !(guardian_backup != 0 && new_guardian == 0)
+        // make sure guardian_backup = 0 when new_guardian = 0
+        let (guardian_backup) = _guardian_backup.read();
         if (new_guardian == 0) {
-            let (guardian_backup) = _guardian_backup.read();
             with_attr error_message("argent: new guardian invalid") {
                 assert guardian_backup = 0;
             }
-            tempvar syscall_ptr: felt* = syscall_ptr;
-            tempvar range_check_ptr = range_check_ptr;
-            tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr;
-        } else {
-            tempvar syscall_ptr: felt* = syscall_ptr;
-            tempvar range_check_ptr = range_check_ptr;
-            tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr;
         }
 
         // change guardian
@@ -527,39 +522,37 @@ namespace ArgentModel {
         syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
     }(message: felt, signatures_len: felt, signatures: felt*) -> (is_valid: felt) {
         alloc_locals;
+        
         let (guardian) = _guardian.read();
         if (guardian == 0) {
             return (is_valid=TRUE);
-        } else {
+        }
+
+        if (signatures_len == 2) {
             with_attr error_message("argent: guardian signature invalid") {
-                if (signatures_len == 2) {
-                    // must be signed by guardian
-                    verify_ecdsa_signature(
-                        message=message,
-                        public_key=guardian,
-                        signature_r=signatures[0],
-                        signature_s=signatures[1],
-                    );
-                    tempvar syscall_ptr: felt* = syscall_ptr;
-                    tempvar range_check_ptr = range_check_ptr;
-                    tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr;
-                } else {
-                    // must be signed by guardian_backup
-                    assert signatures_len = 4;
-                    assert (signatures[0] + signatures[1]) = 0;
-                    let (guardian_backup) = _guardian_backup.read();
-                    verify_ecdsa_signature(
-                        message=message,
-                        public_key=guardian_backup,
-                        signature_r=signatures[2],
-                        signature_s=signatures[3],
-                    );
-                    tempvar syscall_ptr: felt* = syscall_ptr;
-                    tempvar range_check_ptr = range_check_ptr;
-                    tempvar pedersen_ptr: HashBuiltin* = pedersen_ptr;
-                }
+                verify_ecdsa_signature(
+                    message=message,
+                    public_key=guardian,
+                    signature_r=signatures[0],
+                    signature_s=signatures[1],
+                );
             }
             return (is_valid=TRUE);
         }
+        
+        let (guardian_backup) = _guardian_backup.read();
+        with_attr error_message("argent: signature format invalid") {
+            assert signatures_len = 4;
+            assert (signatures[0] + signatures[1]) = 0;
+        }
+         with_attr error_message("argent: guardian backup signature invalid") {
+            verify_ecdsa_signature(
+                message=message,
+                public_key=guardian_backup,
+                signature_r=signatures[2],
+                signature_s=signatures[3],
+            );
+        }
+        return (is_valid=TRUE);
     }
 }

@@ -97,13 +97,12 @@ func __validate__{
             }
         }
     } else {
-        if ((call_array[0].to - tx_info.account_contract_address) + (call_array[0].selector - USE_PLUGIN_SELECTOR) == 0) {
+        if (call_array[0].to == tx_info.account_contract_address and call_array[0].selector == USE_PLUGIN_SELECTOR) {
             validate_with_plugin(call_array_len, call_array, calldata_len, calldata);
             return ();
-        } else {
-            // make sure no call is to the account
-            assert_no_self_call(tx_info.account_contract_address, call_array_len, call_array);
         }
+        // make sure no call is to the account
+        assert_no_self_call(tx_info.account_contract_address, call_array_len, call_array);
     }
     // validate signer and guardian signatures
     ArgentModel.validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature);
@@ -150,7 +149,7 @@ func __execute__{
     // execute calls
     let (response: felt*) = alloc();
     local response_len;
-    if (calls[0].selector - USE_PLUGIN_SELECTOR == 0) {
+    if (calls[0].selector == USE_PLUGIN_SELECTOR) {
         let (res) = execute_list(calls_len - 1, calls + Call.SIZE, response, 0);
         assert response_len = res;
     } else {

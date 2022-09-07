@@ -43,7 +43,7 @@ def assert_event_emmited(tx_exec_info: TransactionExecutionInfo, from_address: i
         data=data,
     ) in raw_events
 
-def update_starknet_block(state: StarknetState, block_number: Optional[int] = 1, block_timestamp: Optional[int] = DEFAULT_TIMESTAMP):
+def update_starknet_block(state: StarknetState, block_number=1, block_timestamp=DEFAULT_TIMESTAMP):
     state.state.block_info = BlockInfo(
         block_number=block_number,
         block_timestamp=block_timestamp,

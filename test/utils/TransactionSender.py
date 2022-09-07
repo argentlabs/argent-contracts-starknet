@@ -18,9 +18,9 @@ class TransactionSender():
     async def send_transaction(
         self,
         calls,
-        signers: List[Signer],
-        nonce: Optional[int] = None,
-        max_fee: Optional[int] = 0
+        signers: list[Signer],
+        nonce: int = None,
+        max_fee: int | None = 0
     ) -> TransactionExecutionInfo :
 
         calls_with_selector = [(call[0], get_selector_from_name(call[1]), call[2]) for call in calls]

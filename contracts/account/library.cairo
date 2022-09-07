@@ -163,7 +163,7 @@ func assert_no_self_call(self: felt, call_array_len: felt, call_array: CallArray
 // @param calls A pointer to the first call to execute
 // @param response The array of felt to pupulate with the returned data
 // @return response_len The size of the returned data
-func execute_list{syscall_ptr: felt*}(calls_len: felt, calls: Call*, reponse: felt*, index: felt) -> (
+func execute_calls{syscall_ptr: felt*}(calls_len: felt, calls: Call*, reponse: felt*, index: felt) -> (
     response_len: felt
 ) {
     alloc_locals;

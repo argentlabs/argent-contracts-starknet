@@ -18,7 +18,7 @@ from starkware.cairo.common.bool import TRUE, FALSE
 from contracts.upgrade.Upgradable import _set_implementation
 
 const SUPPORTS_INTERFACE_SELECTOR = 1184015894760294494673613438913361435336722154500302038630992932234692784845;
-const ERC165_ACCOUNT_INTERFACE = 0xf10dbd44;
+const ERC165_ACCOUNT_INTERFACE_ID = 0xf10dbd44;
 
 /////////////////////
 // STRUCTS
@@ -258,7 +258,7 @@ namespace ArgentModel {
         // make sure the target is an account
         with_attr error_message("argent: invalid implementation") {
             let (calldata: felt*) = alloc();
-            assert calldata[0] = ERC165_ACCOUNT_INTERFACE;
+            assert calldata[0] = ERC165_ACCOUNT_INTERFACE_ID;
             let (retdata_size: felt, retdata: felt*) = library_call(
                 class_hash=implementation,
                 function_selector=SUPPORTS_INTERFACE_SELECTOR,
@@ -471,7 +471,7 @@ namespace ArgentModel {
             return (TRUE,);
         }
         // IAccount
-        if (interfaceId == ERC165_ACCOUNT_INTERFACE) {
+        if (interfaceId == ERC165_ACCOUNT_INTERFACE_ID) {
             return (TRUE,);
         }
         return (FALSE,);

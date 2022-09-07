@@ -16,7 +16,7 @@ def event_loop():
 
 @pytest.fixture(scope='module')
 def contract_classes():
-    account_cls = compile('contracts/ArgentAccount.cairo')
+    account_cls = compile('contracts/account/ArgentAccount.cairo')
     registry_cls = compile("contracts/lib/AddressRegistry.cairo")
     
     return account_cls, registry_cls
@@ -30,7 +30,7 @@ async def contract_init(contract_classes):
         contract_class=account_cls,
         constructor_calldata=[]
     )
-    await account.initialize(signer.public_key, guardian.public_key).invoke()
+    await account.initialize(signer.public_key, guardian.public_key).execute()
 
     registry = await starknet.deploy(
         contract_class=registry_cls,

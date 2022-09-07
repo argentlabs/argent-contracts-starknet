@@ -39,7 +39,7 @@ def event_loop():
 
 @pytest.fixture(scope='module')
 def contract_classes():
-    account_cls = compile('contracts/ArgentPluginAccount.cairo')
+    account_cls = compile('contracts/account/ArgentPluginAccount.cairo')
     dapp_cls = compile("contracts/test/TestDapp.cairo")
     session_plugin_cls = compile("contracts/plugins/SessionKey.cairo")
     
@@ -54,7 +54,7 @@ async def contract_init(contract_classes):
         contract_class=account_cls,
         constructor_calldata=[]
     )
-    await account.initialize(signer.public_key, 0).invoke()
+    await account.initialize(signer.public_key, 0).execute()
 
     dapp = await starknet.deploy(
         contract_class=dapp_cls,

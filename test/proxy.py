@@ -18,8 +18,8 @@ def event_loop():
 
 @pytest.fixture(scope='module')
 def contract_classes():
-    proxy_cls = compile("contracts/Proxy.cairo")
-    account_cls = compile('contracts/ArgentAccount.cairo')
+    proxy_cls = compile("contracts/upgrade/Proxy.cairo")
+    account_cls = compile('contracts/account/ArgentAccount.cairo')
     dapp_cls = compile("contracts/test/TestDapp.cairo")
     
     return proxy_cls, account_cls, dapp_cls
@@ -73,7 +73,7 @@ async def test_call_dapp(contract_factory):
     # should revert with the wrong signer
     await assert_revert(
         sender.send_transaction([(dapp.contract_address, 'set_number', [47])], [wrong_signer, guardian]),
-        "signer signature invalid"
+        "argent: signer signature invalid"
     )
 
     # should call the dapp
@@ -89,13 +89,13 @@ async def test_upgrade(contract_factory):
     # should revert with the wrong guardian
     await assert_revert(
         sender.send_transaction([(account.contract_address, 'upgrade', [account_2_class])], [signer, wrong_guardian]),
-        "guardian signature invalid"
+        "argent: guardian signature invalid"
     )
 
     # should revert when the target is not an account
     await assert_revert(
         sender.send_transaction([(account.contract_address, 'upgrade', [non_acccount_class])], [signer, guardian]),
-        "implementation invalid",
+        "argent: invalid implementation",
         StarknetErrorCode.ENTRY_POINT_NOT_FOUND_IN_CONTRACT
     )
 

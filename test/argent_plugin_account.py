@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from starkware.starknet.testing.starknet import Starknet
 from utils.Signer import Signer
-from utils.utilities import cached_contract, compile
+from utils.utilities import cached_contract, compile, assert_revert
 from utils.TransactionSender import TransactionSender
 
 signer = Signer(1)
@@ -13,7 +13,7 @@ def event_loop():
 
 @pytest.fixture(scope='module')
 def contract_classes():
-    account_cls = compile('contracts/ArgentPluginAccount.cairo')
+    account_cls = compile('contracts/account/ArgentPluginAccount.cairo')
     plugin_cls = compile("contracts/plugins/SessionKey.cairo")
     
     return account_cls, plugin_cls
@@ -27,7 +27,7 @@ async def contract_init(contract_classes):
         contract_class=account_cls,
         constructor_calldata=[]
     )
-    await account.initialize(signer.public_key, 0).invoke()
+    await account.initialize(signer.public_key, 0).execute()
 
     plugin_cls_hash = await starknet.declare(contract_class=plugin_cls)
 
@@ -47,6 +47,12 @@ async def test_add_plugin(contract_factory):
     account, plugin = contract_factory
     sender = TransactionSender(account)
 
+    # should fail when the plugin is 0
+    await assert_revert(
+        sender.send_transaction([(account.contract_address, 'add_plugin', [0])], [signer]),
+        "argent: plugin invalid"
+    )
+
     assert (await account.is_plugin(plugin).call()).result.success == (0)
     await sender.send_transaction([(account.contract_address, 'add_plugin', [plugin])], [signer])
     assert (await account.is_plugin(plugin).call()).result.success == (1)
@@ -59,5 +65,12 @@ async def test_remove_plugin(contract_factory):
     assert (await account.is_plugin(plugin).call()).result.success == (0)
     await sender.send_transaction([(account.contract_address, 'add_plugin', [plugin])], [signer])
     assert (await account.is_plugin(plugin).call()).result.success == (1)
+
+    # should fail when the plugin is unknown
+    await assert_revert(
+        sender.send_transaction([(account.contract_address, 'remove_plugin', [1234])], [signer]),
+        "argent: unknown plugin"
+    )
+
     await sender.send_transaction([(account.contract_address, 'remove_plugin', [plugin])], [signer])
     assert (await account.is_plugin(plugin).call()).result.success == (0)

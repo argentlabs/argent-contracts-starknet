@@ -186,7 +186,7 @@ func execute_calls{syscall_ptr: felt*}(calls_len: felt, calls: Call*, reponse: f
     // copy the result in response
     memcpy(reponse, res.retdata, res.retdata_size);
     // do the next calls recursively
-    let (response_len) = execute_list(calls_len - 1, calls + Call.SIZE, reponse + res.retdata_size, index + 1);
+    let (response_len) = execute_calls(calls_len - 1, calls + Call.SIZE, reponse + res.retdata_size, index + 1);
     return (response_len + res.retdata_size,);
 }
 

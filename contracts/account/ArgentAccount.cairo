@@ -13,7 +13,7 @@ from contracts.account.library import (
     Escape,
     ArgentModel,
     from_call_array_to_call,
-    execute_list,
+    execute_calls,
     assert_non_reentrant,
     assert_initialized,
     assert_no_self_call,
@@ -65,6 +65,7 @@ func __validate__{
 
     if (call_array_len == 1) {
         if (call_array[0].to == tx_info.account_contract_address) {
+            // a * b == 0 --> a == 0 OR b == 0
             tempvar signer_condition = (call_array[0].selector - ArgentModel.ESCAPE_GUARDIAN_SELECTOR) * (call_array[0].selector - ArgentModel.TRIGGER_ESCAPE_GUARDIAN_SELECTOR);
             tempvar guardian_condition = (call_array[0].selector - ArgentModel.ESCAPE_SIGNER_SELECTOR) * (call_array[0].selector - ArgentModel.TRIGGER_ESCAPE_SIGNER_SELECTOR);
             if (signer_condition == 0) {
@@ -130,7 +131,7 @@ func __execute__{
 
     // execute calls
     let (response: felt*) = alloc();
-    let (response_len) = execute_list(calls_len, calls, response, 0);
+    let (response_len) = execute_calls(calls_len, calls, response, 0);
 
     // emit event
     transaction_executed.emit(

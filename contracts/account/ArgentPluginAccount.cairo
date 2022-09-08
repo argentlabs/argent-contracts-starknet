@@ -31,6 +31,7 @@ from contracts.account.library import (
 const NAME = 'ArgentPluginAccount';
 const VERSION = '0.0.1';
 
+// get_selector_from_name('use_plugin')
 const USE_PLUGIN_SELECTOR = 1121675007639292412441492001821602921366030142137563176027248191276862353634;
 
 //////////////////////
@@ -187,7 +188,7 @@ func __validate_declare__{
 // ///////////////////// PLUGIN /////////////////////
 
 @external
-func add_plugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) {
+func addPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) {
     // only called via execute
     assert_only_self();
 
@@ -200,7 +201,7 @@ func add_plugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
 }
 
 @external
-func remove_plugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) {
+func removePlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) {
     // only called via execute
     assert_only_self();
 
@@ -214,7 +215,7 @@ func remove_plugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_p
 }
 
 @external
-func execute_on_plugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+func executeOnPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     plugin: felt, selector: felt, calldata_len: felt, calldata: felt*
 ) {
     // only called via execute
@@ -232,7 +233,7 @@ func execute_on_plugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_che
 }
 
 @view
-func is_plugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) -> (
+func isPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) -> (
     success: felt
 ) {
     let (res) = _plugins.read(plugin);
@@ -283,7 +284,7 @@ func upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
 }
 
 @external
-func change_signer{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+func changeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     new_signer: felt
 ) {
     ArgentModel.change_signer(new_signer);
@@ -291,7 +292,7 @@ func change_signer{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_p
 }
 
 @external
-func change_guardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+func changeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     new_guardian: felt
 ) {
     ArgentModel.change_guardian(new_guardian);
@@ -299,7 +300,7 @@ func change_guardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check
 }
 
 @external
-func change_guardian_backup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+func changeGuardianBackup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     new_guardian: felt
 ) {
     ArgentModel.change_guardian_backup(new_guardian);
@@ -307,25 +308,25 @@ func change_guardian_backup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, rang
 }
 
 @external
-func trigger_escape_guardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+func triggerEscapeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     ArgentModel.trigger_escape_guardian();
     return ();
 }
 
 @external
-func trigger_escape_signer{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+func triggerEscapeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     ArgentModel.trigger_escape_signer();
     return ();
 }
 
 @external
-func cancel_escape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+func cancelEscape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     ArgentModel.cancel_escape();
     return ();
 }
 
 @external
-func escape_guardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+func escapeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     new_guardian: felt
 ) {
     ArgentModel.escape_guardian(new_guardian);
@@ -333,7 +334,7 @@ func escape_guardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check
 }
 
 @external
-func escape_signer{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+func escapeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     new_signer: felt
 ) {
     ArgentModel.escape_signer(new_signer);
@@ -345,7 +346,7 @@ func escape_signer{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_p
 /////////////////////
 
 @view
-func is_valid_signature{
+func isValidSignature{
     syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
 }(hash: felt, sig_len: felt, sig: felt*) -> (is_valid: felt) {
     let (is_valid) = ArgentModel.is_valid_signature(hash, sig_len, sig);
@@ -356,12 +357,12 @@ func is_valid_signature{
 func supportsInterface{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     interfaceId: felt
 ) -> (success: felt) {
-    let (success) =  ArgentModel.supportsInterface(interfaceId);
+    let (success) =  ArgentModel.supports_interface(interfaceId);
     return (success=success);
 }
 
 @view
-func get_signer{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+func getSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
     signer: felt
 ) {
     let (res) = ArgentModel.get_signer();
@@ -369,7 +370,7 @@ func get_signer{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
 }
 
 @view
-func get_guardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+func getGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
     guardian: felt
 ) {
     let (res) = ArgentModel.get_guardian();
@@ -377,7 +378,7 @@ func get_guardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_pt
 }
 
 @view
-func get_guardian_backup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+func getGuardianBackup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
     guardian_backup: felt
 ) {
     let (res) = ArgentModel.get_guardian_backup();
@@ -385,7 +386,7 @@ func get_guardian_backup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_c
 }
 
 @view
-func get_escape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+func getEscape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
     active_at: felt, type: felt
 ) {
     let (active_at, type) = ArgentModel.get_escape();
@@ -393,11 +394,11 @@ func get_escape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
 }
 
 @view
-func get_version() -> (version: felt) {
+func getVersion() -> (version: felt) {
     return (version=VERSION);
 }
 
 @view
-func get_name() -> (name: felt) {
+func getName() -> (name: felt) {
     return (name=NAME);
 }

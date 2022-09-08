@@ -62,8 +62,8 @@ async def test_initializer(contract_factory):
     proxy, account, _, account_class, _, _ = contract_factory
 
     assert (await proxy.get_implementation().call()).result.implementation == account_class
-    assert (await account.get_signer().call()).result.signer == signer.public_key
-    assert (await account.get_guardian().call()).result.guardian == guardian.public_key
+    assert (await account.getSigner().call()).result.signer == signer.public_key
+    assert (await account.getGuardian().call()).result.guardian == guardian.public_key
 
 @pytest.mark.asyncio
 async def test_call_dapp(contract_factory):

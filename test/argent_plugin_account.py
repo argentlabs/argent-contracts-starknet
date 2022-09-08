@@ -49,28 +49,28 @@ async def test_add_plugin(contract_factory):
 
     # should fail when the plugin is 0
     await assert_revert(
-        sender.send_transaction([(account.contract_address, 'add_plugin', [0])], [signer]),
+        sender.send_transaction([(account.contract_address, 'addPlugin', [0])], [signer]),
         "argent: plugin invalid"
     )
 
-    assert (await account.is_plugin(plugin).call()).result.success == (0)
-    await sender.send_transaction([(account.contract_address, 'add_plugin', [plugin])], [signer])
-    assert (await account.is_plugin(plugin).call()).result.success == (1)
+    assert (await account.isPlugin(plugin).call()).result.success == (0)
+    await sender.send_transaction([(account.contract_address, 'addPlugin', [plugin])], [signer])
+    assert (await account.isPlugin(plugin).call()).result.success == (1)
 
 @pytest.mark.asyncio
 async def test_remove_plugin(contract_factory):
     account, plugin = contract_factory
     sender = TransactionSender(account)
 
-    assert (await account.is_plugin(plugin).call()).result.success == (0)
-    await sender.send_transaction([(account.contract_address, 'add_plugin', [plugin])], [signer])
-    assert (await account.is_plugin(plugin).call()).result.success == (1)
+    assert (await account.isPlugin(plugin).call()).result.success == (0)
+    await sender.send_transaction([(account.contract_address, 'addPlugin', [plugin])], [signer])
+    assert (await account.isPlugin(plugin).call()).result.success == (1)
 
     # should fail when the plugin is unknown
     await assert_revert(
-        sender.send_transaction([(account.contract_address, 'remove_plugin', [1234])], [signer]),
+        sender.send_transaction([(account.contract_address, 'removePlugin', [1234])], [signer]),
         "argent: unknown plugin"
     )
 
-    await sender.send_transaction([(account.contract_address, 'remove_plugin', [plugin])], [signer])
-    assert (await account.is_plugin(plugin).call()).result.success == (0)
+    await sender.send_transaction([(account.contract_address, 'removePlugin', [plugin])], [signer])
+    assert (await account.isPlugin(plugin).call()).result.success == (0)

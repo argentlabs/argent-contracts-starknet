@@ -24,7 +24,7 @@ const POLICY_TYPE_HASH = 0x2f0026e78543f036f33e26a8f5891b88c58dc1e20cbbfaf0bb532
 
 @contract_interface
 namespace IAccount {
-    func is_valid_signature(hash: felt, sig_len: felt, sig: felt*) {
+    func isValidSignature(hash: felt, sig_len: felt, sig: felt*) {
     }
 }
 
@@ -84,7 +84,7 @@ func validate{
         let (session_hash) = compute_session_hash(
             session_key, session_expires, root, tx_info.chain_id, tx_info.account_contract_address
         );
-        IAccount.is_valid_signature(
+        IAccount.isValidSignature(
             contract_address=tx_info.account_contract_address,
             hash=session_hash,
             sig_len=session_token_len,

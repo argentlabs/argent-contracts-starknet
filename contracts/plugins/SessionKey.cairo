@@ -117,7 +117,7 @@ func validate{
 }
 
 @external
-func revoke_session_key{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+func revokeSession{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     session_key: felt
 ) {
     SessionKey_revoked_keys.write(session_key, 1);

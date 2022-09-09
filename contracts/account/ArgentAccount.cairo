@@ -40,7 +40,7 @@ func transaction_executed(hash: felt, response_len: felt, response: felt*) {
 }
 
 /////////////////////
-// EXTERNAL FUNCTIONS
+// ACCOUNT INTERFACE
 /////////////////////
 
 @external
@@ -160,6 +160,26 @@ func __validate_declare__{
     return ();
 }
 
+@view
+func isValidSignature{
+    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
+}(hash: felt, sig_len: felt, sig: felt*) -> (is_valid: felt) {
+    let (is_valid) = ArgentModel.is_valid_signature(hash, sig_len, sig);
+    return (is_valid=is_valid);
+}
+
+@view
+func supportsInterface{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    interfaceId: felt
+) -> (success: felt) {
+    let (success) =  ArgentModel.supports_interface(interfaceId);
+    return (success=success);
+}
+
+/////////////////////
+// EXTERNAL FUNCTIONS
+/////////////////////
+
 @external
 func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     signer: felt, guardian: felt
@@ -241,22 +261,6 @@ func escapeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_pt
 /////////////////////
 
 @view
-func isValidSignature{
-    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
-}(hash: felt, sig_len: felt, sig: felt*) -> (is_valid: felt) {
-    let (is_valid) = ArgentModel.is_valid_signature(hash, sig_len, sig);
-    return (is_valid=is_valid);
-}
-
-@view
-func supportsInterface{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    interfaceId: felt
-) -> (success: felt) {
-    let (success) =  ArgentModel.supports_interface(interfaceId);
-    return (success=success);
-}
-
-@view
 func getSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
     signer: felt
 ) {
@@ -298,3 +302,11 @@ func getName() -> (name: felt) {
     return (name=NAME);
 }
 
+// TMP: Remove when isValidSignature() is widely used 
+@view
+func is_valid_signature{
+    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
+}(hash: felt, sig_len: felt, sig: felt*) -> (is_valid: felt) {
+    let (is_valid) = ArgentModel.is_valid_signature(hash, sig_len, sig);
+    return (is_valid=is_valid);
+}

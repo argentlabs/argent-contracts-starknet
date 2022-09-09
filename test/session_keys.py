@@ -135,7 +135,7 @@ async def test_call_dapp_with_session_key(contract_factory):
     )
 
     # revoke session key
-    tx_exec_info = await sender.send_transaction([(account.contract_address, 'executeOnPlugin', [session_plugin, get_selector_from_name('revoke_session_key'), 1, session_key.public_key])], [signer])
+    tx_exec_info = await sender.send_transaction([(account.contract_address, 'executeOnPlugin', [session_plugin, get_selector_from_name('revokeSession'), 1, session_key.public_key])], [signer])
     assert_event_emmited(
         tx_exec_info,
         from_address=account.contract_address,

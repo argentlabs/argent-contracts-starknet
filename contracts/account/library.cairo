@@ -18,7 +18,8 @@ from starkware.cairo.common.bool import TRUE, FALSE
 from contracts.upgrade.Upgradable import _set_implementation
 
 const SUPPORTS_INTERFACE_SELECTOR = 1184015894760294494673613438913361435336722154500302038630992932234692784845;
-const ERC165_ACCOUNT_INTERFACE_ID = 0xf10dbd44;
+const ERC165_ACCOUNT_INTERFACE_ID = 0xa66bd575;
+const ERC165_ACCOUNT_INTERFACE_ID_OLD = 0xf10dbd44; // this is needed to upgrade to this version
 
 /////////////////////
 // STRUCTS
@@ -464,14 +465,18 @@ namespace ArgentModel {
     }
 
     func supports_interface{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-        interfaceId: felt
+        interface_id: felt
     ) -> (success: felt) {
         // 165
-        if (interfaceId == 0x01ffc9a7) {
+        if (interface_id == 0x01ffc9a7) {
             return (TRUE,);
         }
         // IAccount
-        if (interfaceId == ERC165_ACCOUNT_INTERFACE_ID) {
+        if (interface_id == ERC165_ACCOUNT_INTERFACE_ID) {
+            return (TRUE,);
+        }
+        // Old IAccount
+        if (interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD) {
             return (TRUE,);
         }
         return (FALSE,);

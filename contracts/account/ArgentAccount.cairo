@@ -40,7 +40,7 @@ func transaction_executed(hash: felt, response_len: felt, response: felt*) {
 }
 
 /////////////////////
-// EXTERNAL FUNCTIONS
+// ACCOUNT INTERFACE
 /////////////////////
 
 @external
@@ -160,6 +160,26 @@ func __validate_declare__{
     return ();
 }
 
+@view
+func isValidSignature{
+    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
+}(hash: felt, sig_len: felt, sig: felt*) -> (isValid: felt) {
+    let (isValid) = ArgentModel.is_valid_signature(hash, sig_len, sig);
+    return (isValid=isValid);
+}
+
+@view
+func supportsInterface{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    interfaceId: felt
+) -> (success: felt) {
+    let (success) =  ArgentModel.supports_interface(interfaceId);
+    return (success=success);
+}
+
+/////////////////////
+// EXTERNAL FUNCTIONS
+/////////////////////
+
 @external
 func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     signer: felt, guardian: felt
@@ -179,60 +199,60 @@ func upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
 }
 
 @external
-func change_signer{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    new_signer: felt
+func changeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    newSigner: felt
 ) {
-    ArgentModel.change_signer(new_signer);
+    ArgentModel.change_signer(newSigner);
     return ();
 }
 
 @external
-func change_guardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    new_guardian: felt
+func changeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    newGuardian: felt
 ) {
-    ArgentModel.change_guardian(new_guardian);
+    ArgentModel.change_guardian(newGuardian);
     return ();
 }
 
 @external
-func change_guardian_backup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    new_guardian: felt
+func changeGuardianBackup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    newGuardian: felt
 ) {
-    ArgentModel.change_guardian_backup(new_guardian);
+    ArgentModel.change_guardian_backup(newGuardian);
     return ();
 }
 
 @external
-func trigger_escape_guardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+func triggerEscapeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     ArgentModel.trigger_escape_guardian();
     return ();
 }
 
 @external
-func trigger_escape_signer{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+func triggerEscapeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     ArgentModel.trigger_escape_signer();
     return ();
 }
 
 @external
-func cancel_escape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+func cancelEscape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     ArgentModel.cancel_escape();
     return ();
 }
 
 @external
-func escape_guardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    new_guardian: felt
+func escapeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    newGuardian: felt
 ) {
-    ArgentModel.escape_guardian(new_guardian);
+    ArgentModel.escape_guardian(newGuardian);
     return ();
 }
 
 @external
-func escape_signer{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    new_signer: felt
+func escapeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    newSigner: felt
 ) {
-    ArgentModel.escape_signer(new_signer);
+    ArgentModel.escape_signer(newSigner);
     return ();
 }
 
@@ -241,23 +261,7 @@ func escape_signer{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_p
 /////////////////////
 
 @view
-func is_valid_signature{
-    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
-}(hash: felt, sig_len: felt, sig: felt*) -> (is_valid: felt) {
-    let (is_valid) = ArgentModel.is_valid_signature(hash, sig_len, sig);
-    return (is_valid=is_valid);
-}
-
-@view
-func supportsInterface{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    interfaceId: felt
-) -> (success: felt) {
-    let (success) =  ArgentModel.supportsInterface(interfaceId);
-    return (success=success);
-}
-
-@view
-func get_signer{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+func getSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
     signer: felt
 ) {
     let (res) = ArgentModel.get_signer();
@@ -265,7 +269,7 @@ func get_signer{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
 }
 
 @view
-func get_guardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+func getGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
     guardian: felt
 ) {
     let (res) = ArgentModel.get_guardian();
@@ -273,28 +277,36 @@ func get_guardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_pt
 }
 
 @view
-func get_guardian_backup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
-    guardian_backup: felt
+func getGuardianBackup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+    guardianBackup: felt
 ) {
     let (res) = ArgentModel.get_guardian_backup();
-    return (guardian_backup=res);
+    return (guardianBackup=res);
 }
 
 @view
-func get_escape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
-    active_at: felt, type: felt
+func getEscape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+    activeAt: felt, type: felt
 ) {
-    let (active_at, type) = ArgentModel.get_escape();
-    return (active_at=active_at, type=type);
+    let (activeAt, type) = ArgentModel.get_escape();
+    return (activeAt=activeAt, type=type);
 }
 
 @view
-func get_version() -> (version: felt) {
+func getVersion() -> (version: felt) {
     return (version=VERSION);
 }
 
 @view
-func get_name() -> (name: felt) {
+func getName() -> (name: felt) {
     return (name=NAME);
 }
 
+// TMP: Remove when isValidSignature() is widely used 
+@view
+func is_valid_signature{
+    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
+}(hash: felt, sig_len: felt, sig: felt*) -> (is_valid: felt) {
+    let (is_valid) = ArgentModel.is_valid_signature(hash, sig_len, sig);
+    return (is_valid=is_valid);
+}

@@ -83,32 +83,12 @@ def contract_factory(contract_classes, contract_init):
     return account, dapp, dapp2, session_plugin_class
 
 @pytest.mark.asyncio
-async def test_add_plugin(contract_factory):
-    account, _, _, session_plugin = contract_factory
-    sender = TransactionSender(account)
-
-    assert (await account.is_plugin(session_plugin).call()).result.success == (0)
-    await sender.send_transaction([(account.contract_address, 'add_plugin', [session_plugin])], [signer])
-    assert (await account.is_plugin(session_plugin).call()).result.success == (1)
-
-@pytest.mark.asyncio
-async def test_remove_plugin(contract_factory):
-    account, _, _, session_plugin = contract_factory
-    sender = TransactionSender(account)
-
-    assert (await account.is_plugin(session_plugin).call()).result.success == (0)
-    await sender.send_transaction([(account.contract_address, 'add_plugin', [session_plugin])], [signer])
-    assert (await account.is_plugin(session_plugin).call()).result.success == (1)
-    await sender.send_transaction([(account.contract_address, 'remove_plugin', [session_plugin])], [signer])
-    assert (await account.is_plugin(session_plugin).call()).result.success == (0)
-
-@pytest.mark.asyncio
 async def test_call_dapp_with_session_key(contract_factory):
     account, dapp, dapp2, session_plugin = contract_factory
     sender = TransactionSender(account)
 
     # add session key plugin
-    await sender.send_transaction([(account.contract_address, 'add_plugin', [session_plugin])], [signer])
+    await sender.send_transaction([(account.contract_address, 'addPlugin', [session_plugin])], [signer])
     # authorise session key
     merkle_leaves = get_leaves(
         POLICY_TYPE_HASH,
@@ -155,7 +135,7 @@ async def test_call_dapp_with_session_key(contract_factory):
     )
 
     # revoke session key
-    tx_exec_info = await sender.send_transaction([(account.contract_address, 'execute_on_plugin', [session_plugin, get_selector_from_name('revoke_session_key'), 1, session_key.public_key])], [signer])
+    tx_exec_info = await sender.send_transaction([(account.contract_address, 'executeOnPlugin', [session_plugin, get_selector_from_name('revokeSession'), 1, session_key.public_key])], [signer])
     assert_event_emmited(
         tx_exec_info,
         from_address=account.contract_address,

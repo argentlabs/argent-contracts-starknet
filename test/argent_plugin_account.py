@@ -1,8 +1,10 @@
 import pytest
 import asyncio
 from starkware.starknet.testing.starknet import Starknet
+from starkware.starkware_utils.error_handling import StarkException
+
 from utils.Signer import Signer
-from utils.utilities import cached_contract, compile, assert_revert
+from utils.utilities import cached_contract, compile
 from utils.TransactionSender import TransactionSender
 
 signer = Signer(1)
@@ -15,7 +17,7 @@ def event_loop():
 def contract_classes():
     account_cls = compile('contracts/account/ArgentPluginAccount.cairo')
     plugin_cls = compile("contracts/plugins/SessionKey.cairo")
-    
+
     return account_cls, plugin_cls
 
 @pytest.fixture(scope='module')
@@ -48,10 +50,8 @@ async def test_add_plugin(contract_factory):
     sender = TransactionSender(account)
 
     # should fail when the plugin is 0
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'addPlugin', [0])], [signer]),
-        "argent: plugin invalid"
-    )
+    with pytest.raises(StarkException, match="argent: plugin invalid"):
+        await sender.send_transaction([(account.contract_address, 'addPlugin', [0])], [signer])
 
     assert (await account.isPlugin(plugin).call()).result.success == (0)
     await sender.send_transaction([(account.contract_address, 'addPlugin', [plugin])], [signer])
@@ -67,10 +67,8 @@ async def test_remove_plugin(contract_factory):
     assert (await account.isPlugin(plugin).call()).result.success == (1)
 
     # should fail when the plugin is unknown
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'removePlugin', [1234])], [signer]),
-        "argent: unknown plugin"
-    )
+    with pytest.raises(StarkException, match="argent: unknown plugin"):
+        await sender.send_transaction([(account.contract_address, 'removePlugin', [1234])], [signer]),
 
     await sender.send_transaction([(account.contract_address, 'removePlugin', [plugin])], [signer])
     assert (await account.isPlugin(plugin).call()).result.success == (0)

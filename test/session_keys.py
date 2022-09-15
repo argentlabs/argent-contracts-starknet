@@ -2,8 +2,9 @@ import pytest
 import asyncio
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.definitions.general_config import StarknetChainId
+from starkware.starkware_utils.error_handling import StarkException
 from utils.Signer import Signer
-from utils.utilities import cached_contract, compile, str_to_felt, assert_revert, assert_event_emmited, DEFAULT_TIMESTAMP, update_starknet_block
+from utils.utilities import cached_contract, compile, str_to_felt, assert_event_emmited, DEFAULT_TIMESTAMP, update_starknet_block
 from utils.TransactionSender import TransactionSender
 from starkware.cairo.common.hash_state import compute_hash_on_elements
 from starkware.starknet.compiler.compile import get_selector_from_name
@@ -24,7 +25,7 @@ def get_session_token(session_key, session_expires, root, chain_id, account):
 
     domain_hash = compute_hash_on_elements([STARKNET_DOMAIN_TYPE_HASH, chain_id])
     message_hash = compute_hash_on_elements([SESSION_TYPE_HASH, session_key, session_expires, root])
-    
+
     hash = compute_hash_on_elements([
         str_to_felt('StarkNet Message'),
         domain_hash,
@@ -42,7 +43,7 @@ def contract_classes():
     account_cls = compile('contracts/account/ArgentPluginAccount.cairo')
     dapp_cls = compile("contracts/test/TestDapp.cairo")
     session_plugin_cls = compile("contracts/plugins/SessionKey.cairo")
-    
+
     return account_cls, dapp_cls, session_plugin_cls
 
 @pytest.fixture(scope='module')
@@ -94,14 +95,14 @@ async def test_call_dapp_with_session_key(contract_factory):
         POLICY_TYPE_HASH,
         [dapp.contract_address, dapp.contract_address, dapp2.contract_address, dapp2.contract_address, dapp2.contract_address],
         [get_selector_from_name('set_number'), get_selector_from_name('set_number_double'), get_selector_from_name('set_number'), get_selector_from_name('set_number_double'), get_selector_from_name('set_number_times3')]
-    )    
+    )
     leaves = list(map(lambda x: x[0], merkle_leaves))
     root = generate_merkle_root(leaves)
     session_token = get_session_token(session_key.public_key, DEFAULT_TIMESTAMP + 10, root, StarknetChainId.TESTNET.value, account.contract_address)
 
     proof = generate_merkle_proof(leaves, 0)
     proof2 = generate_merkle_proof(leaves, 4)
-    
+
     assert (await dapp.get_number(account.contract_address).call()).result.number == 0
     update_starknet_block(state=account.state, block_timestamp=(DEFAULT_TIMESTAMP))
     # call with session key
@@ -111,7 +112,7 @@ async def test_call_dapp_with_session_key(contract_factory):
             (account.contract_address, 'use_plugin', [session_plugin, session_key.public_key, DEFAULT_TIMESTAMP + 10, root, len(proof), *proof, *proof2, *session_token]),
             (dapp.contract_address, 'set_number', [47]),
             (dapp2.contract_address, 'set_number_times3', [20])
-        ], 
+        ],
         [session_key])
 
     assert_event_emmited(
@@ -124,15 +125,13 @@ async def test_call_dapp_with_session_key(contract_factory):
     assert (await dapp2.get_number(account.contract_address).call()).result.number == 60
 
     # wrong policy call with random proof
-    await assert_revert(
-        sender.send_transaction(
+    with pytest.raises(StarkException, match="not allowed by policy"):
+        await sender.send_transaction(
             [
                 (account.contract_address, 'use_plugin', [session_plugin, session_key.public_key, DEFAULT_TIMESTAMP + 10, root, len(proof), *proof, *session_token]),
                 (dapp.contract_address, 'set_number_times3', [47])
-            ], 
-            [session_key]),
-        "not allowed by policy"
-    )
+            ],
+            [session_key])
 
     # revoke session key
     tx_exec_info = await sender.send_transaction(
@@ -149,12 +148,10 @@ async def test_call_dapp_with_session_key(contract_factory):
         name='session_key_revoked'
     )
     # check the session key is no longer authorised
-    await assert_revert(
-        sender.send_transaction(
+    with pytest.raises(StarkException, match="session key revoked"):
+        await sender.send_transaction(
             [
                 (account.contract_address, 'use_plugin', [session_plugin, session_key.public_key, DEFAULT_TIMESTAMP + 10, root, len(proof), *proof, *session_token]),
                 (dapp.contract_address, 'set_number', [47])
-            ], 
-            [session_key]),
-        "session key revoked"
-    )
+            ],
+            [session_key])

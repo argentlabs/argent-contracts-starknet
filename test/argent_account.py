@@ -2,8 +2,9 @@ import pytest
 import asyncio
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
+from starkware.starkware_utils.error_handling import StarkException
 from utils.Signer import Signer
-from utils.utilities import cached_contract, compile, assert_revert, str_to_felt, assert_event_emmited, update_starknet_block, reset_starknet_block, DEFAULT_TIMESTAMP
+from utils.utilities import cached_contract, compile, str_to_felt, assert_event_emmited, update_starknet_block, reset_starknet_block, DEFAULT_TIMESTAMP
 from utils.TransactionSender import TransactionSender
 
 signer = Signer(1)
@@ -35,7 +36,7 @@ def event_loop():
 def contract_classes():
     account_cls = compile('contracts/account/ArgentAccount.cairo')
     dapp_cls = compile("contracts/test/TestDapp.cairo")
-    
+
     return account_cls, dapp_cls
 
 @pytest.fixture(scope='module')
@@ -84,10 +85,8 @@ async def test_initializer(contract_factory):
     assert (await account.getName().call()).result.name == NAME
     assert (await account.supportsInterface(IACCOUNT_ID).call()).result.success == 1
     # should throw when calling initialize twice
-    await assert_revert(
-         account.initialize(signer.public_key, guardian.public_key).execute(),
-         "argent: already initialized"
-     )
+    with pytest.raises(StarkException, match="argent: already initialized"):
+        await account.initialize(signer.public_key, guardian.public_key).execute()
 
 @pytest.mark.asyncio
 async def test_declare(contract_factory):
@@ -97,22 +96,16 @@ async def test_declare(contract_factory):
     test_cls = compile("contracts/test/StructHash.cairo")
 
     # should revert with only one signature
-    await assert_revert(
-        sender.declare_class(test_cls, [signer]),
-        "argent: signature format invalid"
-    )
+    with pytest.raises(StarkException, match="argent: signature format invalid"):
+        await sender.declare_class(test_cls, [signer])
 
     # should revert with wrong signer
-    await assert_revert(
-        sender.declare_class(test_cls, [wrong_signer, guardian]),
-        "argent: signer signature invalid"
-    )
+    with pytest.raises(StarkException, match="argent: signer signature invalid"):
+        await sender.declare_class(test_cls, [wrong_signer, guardian])
 
     # should revert with wrong guardian
-    await assert_revert(
-        sender.declare_class(test_cls, [signer, wrong_guardian]),
-        "argent: guardian signature invalid"
-    )
+    with pytest.raises(StarkException, match="argent: guardian signature invalid"):
+        await sender.declare_class(test_cls, [signer, wrong_guardian])
 
     tx_exec_info = await sender.declare_class(test_cls, [signer, guardian])
 
@@ -124,38 +117,29 @@ async def test_call_dapp_with_guardian(contract_factory):
     calls = [(dapp.contract_address, 'set_number', [47])]
 
     # should revert with the wrong nonce
-    await assert_revert(
-        sender.send_transaction(calls, [signer, guardian], nonce=3),
-        expected_code=StarknetErrorCode.INVALID_TRANSACTION_NONCE
-    )
+    with pytest.raises(StarkException) as exc_info:
+        await sender.send_transaction(calls, [signer, guardian], nonce=3),
+    assert exc_info.value.code == StarknetErrorCode.INVALID_TRANSACTION_NONCE
 
     # should revert with the wrong signer
-    await assert_revert(
-        sender.send_transaction(calls, [wrong_signer, guardian]),
-        "argent: signer signature invalid"
-    )
+    with pytest.raises(StarkException, match="argent: signer signature invalid"):
+        await sender.send_transaction(calls, [wrong_signer, guardian])
 
     # should revert with the wrong guardian
-    await assert_revert(
-        sender.send_transaction(calls, [signer, wrong_guardian]),
-        "argent: guardian signature invalid"
-    )
+    with pytest.raises(StarkException, match="argent: guardian signature invalid"):
+        await sender.send_transaction(calls, [signer, wrong_guardian])
 
     # should revert when the signature format is not valid
-    await assert_revert(
-        sender.send_transaction(calls, [signer, guardian, wrong_guardian]),
-        "argent: signature format invalid"
-    )
+    with pytest.raises(StarkException, match="argent: signature format invalid"):
+        await sender.send_transaction(calls, [signer, guardian, wrong_guardian]),
 
     # should fail with only 1 signer
-    await assert_revert(
-        sender.send_transaction(calls, [signer]),
-        "argent: signature format invalid"
-    )
+    with pytest.raises(StarkException, match="argent: signature format invalid"):
+        await sender.send_transaction(calls, [signer])
 
     # should call the dapp
     assert (await dapp.get_number(account.contract_address).call()).result.number == 0
-    
+
     tx_exec_info = await sender.send_transaction(calls, [signer, guardian])
 
     assert_event_emmited(
@@ -177,20 +161,17 @@ async def test_call_dapp_guardian_backup(contract_factory):
     calls = [(dapp.contract_address, 'set_number', [47])]
 
     # should revert with the wrong guardian
-    await assert_revert(
-        sender.send_transaction(calls, [signer, 0, wrong_guardian]),
-        "argent: guardian backup signature invalid"
-    )
+    with pytest.raises(StarkException, match="argent: guardian backup signature invalid"):
+        await sender.send_transaction(calls, [signer, 0, wrong_guardian])
+
 
     # should revert when the signature format is not valid
-    await assert_revert(
-        sender.send_transaction(calls, [signer, guardian, guardian_backup]),
-        "argent: signature format invalid"
-    )
+    with pytest.raises(StarkException, match="argent: signature format invalid"):
+        await sender.send_transaction(calls, [signer, guardian, guardian_backup]),
 
     # should call the dapp
     assert (await dapp.get_number(account.contract_address).call()).result.number == 0
-    
+
     tx_exec_info = await sender.send_transaction(calls, [signer, 0, guardian_backup])
 
     assert_event_emmited(
@@ -217,10 +198,8 @@ async def test_call_dapp_no_guardian(contract_factory):
     assert (await account_no_guardian.getSigner().call()).result.signer == (new_signer.public_key)
 
     # should reverts calls that require the guardian to be set
-    await assert_revert(
-        sender.send_transaction([(account_no_guardian.contract_address, 'triggerEscapeGuardian', [])], [new_signer]),
-        "argent: guardian required"
-    )
+    with pytest.raises(StarkException, match="argent: guardian required"):
+        await sender.send_transaction([(account_no_guardian.contract_address, 'triggerEscapeGuardian', [])], [new_signer]),
 
     # should add a guardian
     assert (await account_no_guardian.getGuardian().call()).result.guardian == (0)
@@ -233,22 +212,18 @@ async def test_multicall(contract_factory):
     sender = TransactionSender(account)
 
     # should reverts when one of the call is to the account
-    await assert_revert(
-        sender.send_transaction([(dapp.contract_address, 'set_number', [47]), (account.contract_address, 'triggerEscapeGuardian', [])], [signer, guardian])
-    )
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'triggerEscapeGuardian', []), (dapp.contract_address, 'set_number', [47])], [signer, guardian])
-    )
+    with pytest.raises(StarkException):
+        await sender.send_transaction([(dapp.contract_address, 'set_number', [47]), (account.contract_address, 'triggerEscapeGuardian', [])], [signer, guardian])
+
+    with pytest.raises(StarkException):
+        await sender.send_transaction([(account.contract_address, 'triggerEscapeGuardian', []), (dapp.contract_address, 'set_number', [47])], [signer, guardian])
 
     # should indicate which called failed
-    await assert_revert(
-        sender.send_transaction([(dapp.contract_address, 'set_number', [47]), (dapp.contract_address, 'throw_error', [1])], [signer, guardian]),
-        "argent: multicall 1 failed"
-    )
-    await assert_revert(
-        sender.send_transaction([(dapp.contract_address, 'throw_error', [1]), (dapp.contract_address, 'set_number', [47])], [signer, guardian]),
-        "argent: multicall 0 failed"
-    )
+    with pytest.raises(StarkException, match="argent: multicall 1 failed"):
+        await sender.send_transaction([(dapp.contract_address, 'set_number', [47]), (dapp.contract_address, 'throw_error', [1])], [signer, guardian])
+
+    with pytest.raises(StarkException, match="argent: multicall 0 failed"):
+        await sender.send_transaction([(dapp.contract_address, 'throw_error', [1]), (dapp.contract_address, 'set_number', [47])], [signer, guardian])
 
     # should call the dapp
     assert (await dapp.get_number(account.contract_address).call()).result.number == 0
@@ -263,20 +238,16 @@ async def test_change_signer(contract_factory):
     assert (await account.getSigner().call()).result.signer == (signer.public_key)
 
     # should revert with the wrong signer
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'changeSigner', [new_signer.public_key])], [wrong_signer, guardian]),
-        "argent: signer signature invalid"
-    )
+    with pytest.raises(StarkException, match="argent: signer signature invalid"):
+        await sender.send_transaction([(account.contract_address, 'changeSigner', [new_signer.public_key])], [wrong_signer, guardian])
 
     # should revert with the wrong guardian signer
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'changeSigner', [new_signer.public_key])], [signer, wrong_guardian]),
-        "argent: guardian signature invalid"
-    )
+    with pytest.raises(StarkException, match="argent: guardian signature invalid"):
+        await sender.send_transaction([(account.contract_address, 'changeSigner', [new_signer.public_key])], [signer, wrong_guardian])
 
     # should work with the correct signers
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'changeSigner', [new_signer.public_key])], [signer, guardian])
-    
+
     assert_event_emmited(
         tx_exec_info,
         from_address=account.contract_address,
@@ -294,20 +265,16 @@ async def test_change_guardian(contract_factory):
     assert (await account.getGuardian().call()).result.guardian == (guardian.public_key)
 
     # should revert with the wrong signer
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'changeGuardian', [new_guardian.public_key])], [wrong_signer, guardian]),
-        "argent: signer signature invalid"
-    )
+    with pytest.raises(StarkException, match="argent: signer signature invalid"):
+        await sender.send_transaction([(account.contract_address, 'changeGuardian', [new_guardian.public_key])], [wrong_signer, guardian])
 
     # should revert with the wrong guardian signer
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'changeGuardian', [new_guardian.public_key])], [signer, wrong_guardian]),
-        "argent: guardian signature invalid"
-    )
+    with pytest.raises(StarkException, match="argent: guardian signature invalid"):
+        await sender.send_transaction([(account.contract_address, 'changeGuardian', [new_guardian.public_key])], [signer, wrong_guardian])
 
     # should work with the correct signers
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'changeGuardian', [new_guardian.public_key])], [signer, guardian])
-    
+
     assert_event_emmited(
         tx_exec_info,
         from_address=account.contract_address,
@@ -323,20 +290,16 @@ async def test_change_guardian_backup(contract_factory):
     sender = TransactionSender(account)
 
     # should revert with the wrong signer
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'changeGuardianBackup', [new_guardian_backup.public_key])], [wrong_signer, guardian]),
-        "argent: signer signature invalid"
-    )
+    with pytest.raises(StarkException, match="argent: signer signature invalid"):
+        await sender.send_transaction([(account.contract_address, 'changeGuardianBackup', [new_guardian_backup.public_key])], [wrong_signer, guardian]),
 
     # should revert with the wrong guardian signer
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'changeGuardianBackup', [new_guardian_backup.public_key])], [signer, wrong_guardian]),
-        "argent: guardian signature invalid"
-    )
+    with pytest.raises(StarkException, match="argent: guardian signature invalid"):
+        await sender.send_transaction([(account.contract_address, 'changeGuardianBackup', [new_guardian_backup.public_key])], [signer, wrong_guardian]),
 
     # should work with the correct signers
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'changeGuardianBackup', [new_guardian_backup.public_key])], [signer, guardian])
-    
+
     assert_event_emmited(
         tx_exec_info,
         from_address=account.contract_address,
@@ -351,9 +314,8 @@ async def test_change_guardian_backup_when_no_guardian(contract_factory):
     _, account_no_guardian, dapp = contract_factory
     sender = TransactionSender(account_no_guardian)
 
-    await assert_revert(
-        sender.send_transaction([(account_no_guardian.contract_address, 'changeGuardianBackup', [new_guardian_backup.public_key])], [signer])
-    )
+    with pytest.raises(StarkException):
+        await sender.send_transaction([(account_no_guardian.contract_address, 'changeGuardianBackup', [new_guardian_backup.public_key])], [signer])
 
 @pytest.mark.asyncio
 async def test_change_guardian_when_guardian_backup(contract_factory):
@@ -363,16 +325,14 @@ async def test_change_guardian_when_guardian_backup(contract_factory):
     # add guardian backup
     await sender.send_transaction([(account.contract_address, 'changeGuardianBackup', [guardian_backup.public_key])], [signer, guardian])
 
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'changeGuardian', [0])], [signer, guardian]),
-        "argent: new guardian invalid"
-    )
+    with pytest.raises(StarkException, match="argent: new guardian invalid"):
+        await sender.send_transaction([(account.contract_address, 'changeGuardian', [0])], [signer, guardian]),
 
 @pytest.mark.asyncio
 async def test_trigger_escape_guardian_by_signer(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
-    
+
     # reset block_timestamp
     reset_starknet_block(state=account.state)
 
@@ -380,7 +340,7 @@ async def test_trigger_escape_guardian_by_signer(contract_factory):
     assert (escape.activeAt == 0)
 
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'triggerEscapeGuardian', [])], [signer])
-    
+
     assert_event_emmited(
         tx_exec_info,
         from_address=account.contract_address,
@@ -395,7 +355,7 @@ async def test_trigger_escape_guardian_by_signer(contract_factory):
 async def test_trigger_escape_signer_by_guardian(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
-    
+
     # reset block_timestamp
     reset_starknet_block(state=account.state)
 
@@ -421,7 +381,7 @@ async def test_trigger_escape_signer_by_guardian_backup(contract_factory):
 
     # set guardian backup
     await sender.send_transaction([(account.contract_address, 'changeGuardianBackup', [guardian_backup.public_key])], [signer, guardian])
-    
+
     # reset block_timestamp
     reset_starknet_block(state=account.state)
 
@@ -449,10 +409,8 @@ async def test_escape_guardian(contract_factory):
     reset_starknet_block(state=account.state)
 
     # should revert when there is no escape
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'escapeGuardian', [new_guardian.public_key])], [signer]),
-        "argent: not escaping"
-    )
+    with pytest.raises(StarkException, match="argent: not escaping"):
+        await sender.send_transaction([(account.contract_address, 'escapeGuardian', [new_guardian.public_key])], [signer])
 
     # trigger escape
     await sender.send_transaction([(account.contract_address, 'triggerEscapeGuardian', [])], [signer])
@@ -461,17 +419,15 @@ async def test_escape_guardian(contract_factory):
     assert (escape.activeAt == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_GUARDIAN)
 
     # should fail to escape before the end of the period
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'escapeGuardian', [new_guardian.public_key])], [signer]),
-        "argent: escape not active"
-    )
+    with pytest.raises(StarkException, match="argent: escape not active"):
+        await sender.send_transaction([(account.contract_address, 'escapeGuardian', [new_guardian.public_key])], [signer])
 
     # wait security period
     update_starknet_block(state=account.state, block_timestamp=(DEFAULT_TIMESTAMP+ESCAPE_SECURITY_PERIOD))
 
     # should escape after the security period
     assert (await account.getGuardian().call()).result.guardian == (guardian.public_key)
-    
+
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'escapeGuardian', [new_guardian.public_key])], [signer])
 
     assert_event_emmited(
@@ -491,15 +447,13 @@ async def test_escape_guardian(contract_factory):
 async def test_escape_signer(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
-    
+
     # reset block_timestamp
     reset_starknet_block(state=account.state)
 
     # should revert when there is no escape
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'escapeSigner', [new_signer.public_key])], [guardian]),
-        "argent: not escaping"
-    )
+    with pytest.raises(StarkException, match="argent: not escaping"):
+        await sender.send_transaction([(account.contract_address, 'escapeSigner', [new_signer.public_key])], [guardian])
 
     # trigger escape
     await sender.send_transaction([(account.contract_address, 'triggerEscapeSigner', [])], [guardian])
@@ -507,10 +461,8 @@ async def test_escape_signer(contract_factory):
     assert (escape.activeAt == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_SIGNER)
 
     # should fail to escape before the end of the period
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'escapeSigner', [new_signer.public_key])], [guardian]),
-        "argent: escape not active"
-    )
+    with pytest.raises(StarkException, match="argent: escape not active"):
+        await sender.send_transaction([(account.contract_address, 'escapeSigner', [new_signer.public_key])], [guardian])
 
     # wait security period
     update_starknet_block(state=account.state, block_timestamp=(DEFAULT_TIMESTAMP+ESCAPE_SECURITY_PERIOD))
@@ -536,7 +488,7 @@ async def test_escape_signer(contract_factory):
 async def test_signer_overrides_trigger_escape_signer(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
-    
+
     # reset block_timestamp
     reset_starknet_block(state=account.state)
 
@@ -557,7 +509,7 @@ async def test_signer_overrides_trigger_escape_signer(contract_factory):
 async def test_guardian_overrides_trigger_escape_guardian(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
-    
+
     # reset block_timestamp
     reset_starknet_block(state=account.state)
 
@@ -570,17 +522,15 @@ async def test_guardian_overrides_trigger_escape_guardian(contract_factory):
     update_starknet_block(state=account.state, block_timestamp=(DEFAULT_TIMESTAMP+100))
 
     # guradian tries to override escape => should fail
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'triggerEscapeSigner', [])], [guardian]),
-        "argent: cannot override escape"
-    )
+    with pytest.raises(StarkException, match="argent: cannot override escape"):
+        await sender.send_transaction([(account.contract_address, 'triggerEscapeSigner', [])], [guardian])
 
 
 @pytest.mark.asyncio
 async def test_cancel_escape(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
-    
+
     # reset block_timestamp
     reset_starknet_block(state=account.state)
 
@@ -590,10 +540,8 @@ async def test_cancel_escape(contract_factory):
     assert (escape.activeAt == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_SIGNER)
 
     # should fail to cancel with only the signer
-    await assert_revert(
-        sender.send_transaction([(account.contract_address, 'cancelEscape', [])], [signer]),
-        "argent: signature format invalid"
-    )
+    with pytest.raises(StarkException, match="argent: signature format invalid"):
+        await sender.send_transaction([(account.contract_address, 'cancelEscape', [])], [signer]),
 
     # cancel escape
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'cancelEscape', [])], [signer, guardian])
@@ -627,7 +575,7 @@ async def test_is_valid_signature(contract_factory):
 @pytest.mark.asyncio
 async def test_support_interface(contract_factory):
     account, _, _ = contract_factory
-    
+
     # 165
     res = (await account.supportsInterface(0x01ffc9a7).call()).result
     assert (res.success == 1)

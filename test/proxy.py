@@ -2,8 +2,9 @@ import pytest
 import asyncio
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
+from starkware.starkware_utils.error_handling import StarkException
 from utils.Signer import Signer
-from utils.utilities import compile, cached_contract, assert_revert, assert_event_emmited, get_execute_data
+from utils.utilities import compile, cached_contract, assert_event_emmited, get_execute_data
 from utils.TransactionSender import TransactionSender, from_call_to_call_array
 from typing import Optional, List, Tuple
 
@@ -90,10 +91,8 @@ async def test_call_dapp(contract_factory):
     sender = TransactionSender(account)
 
     # should revert with the wrong signer
-    await assert_revert(
-        sender.send_transaction([(dapp.contract_address, 'set_number', [47])], [wrong_signer, guardian]),
-        "argent: signer signature invalid"
-    )
+    with pytest.raises(StarkException, match="argent: signer signature invalid"):
+        await sender.send_transaction([(dapp.contract_address, 'set_number', [47])], [wrong_signer, guardian]),
 
     # should call the dapp
     assert (await dapp.get_number(account.contract_address).call()).result.number == 0
@@ -137,23 +136,19 @@ async def test_upgrade(contract_factory):
     sender = TransactionSender(account)
 
     # should revert with the wrong guardian
-    await assert_revert(
-        sender.send_transaction(
-            [build_upgrade_call(account, account_2_class)],
-            [signer, wrong_guardian]
-        ),
-        "argent: guardian signature invalid"
-    )
+    with pytest.raises(StarkException, match="argent: guardian signature invalid"):
+        await sender.send_transaction(
+                [build_upgrade_call(account, account_2_class)],
+                [signer, wrong_guardian]
+            )
 
     # should revert when the target is not an account
-    await assert_revert(
-        sender.send_transaction(
+    with pytest.raises(StarkException, match="argent: invalid implementation") as exc_info:
+        await sender.send_transaction(
             [build_upgrade_call(account, non_account_class)],
             [signer, guardian]
         ),
-        "argent: invalid implementation",
-        StarknetErrorCode.ENTRY_POINT_NOT_FOUND_IN_CONTRACT
-    )
+    assert exc_info.value.code == StarknetErrorCode.ENTRY_POINT_NOT_FOUND_IN_CONTRACT
 
     assert (await proxy.get_implementation().call()).result.implementation == account_class
 
@@ -252,31 +247,25 @@ async def test_execute_after_upgrade_safety(contract_factory):
     )
 
     # Can't call execute_after_upgrade directly (single call)
-    await assert_revert(
-        sender.send_transaction(
+    with pytest.raises(StarkException, match="argent: forbidden call"):
+        await sender.send_transaction(
             [execute_after_upgrade_call],
             [signer, guardian]
-        ),
-        "argent: forbidden call"
-    )
+        )
 
     # Can't call execute_after_upgrade directly (multicall call)
-    await assert_revert(
-        sender.send_transaction(
+    with pytest.raises(StarkException):
+        await sender.send_transaction(
             [set_number_call, execute_after_upgrade_call],
             [signer, guardian]
-        ),
-        # disallowed call to self has no specific message yet
-    )
+        )
 
     # Can't call execute_after_upgrade externally
-    await assert_revert(
-        wrong_sender.send_transaction(
+    with pytest.raises(StarkException, match="argent: only self"):
+        await wrong_sender.send_transaction(
             [execute_after_upgrade_call],
             [wrong_signer, wrong_guardian]
-        ),
-        "argent: only self"
-    )
+        )
 
     # execute_after_upgrade can't call the wallet
     change_signer_call = (
@@ -284,10 +273,8 @@ async def test_execute_after_upgrade_safety(contract_factory):
         "changeSigner",
         [wrong_signer.public_key]
     )
-    await assert_revert(
-        sender.send_transaction(
+    with pytest.raises(StarkException, match="argent: multicall 0 failed"):
+        await sender.send_transaction(
             [build_upgrade_call(account, account_2_class, [change_signer_call])],
             [signer, guardian]
-        ),
-        "argent: multicall 0 failed"
-    )
+        )

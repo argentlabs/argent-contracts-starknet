@@ -632,7 +632,7 @@ async def test_support_interface(contract_factory):
     res = (await account.supportsInterface(0x01ffc9a7).call()).result
     assert (res.success == 1)
     # IAccount
-    res = (await account.supportsInterface(0xa66bd575).call()).result
+    res = (await account.supportsInterface(IACCOUNT_ID).call()).result
     assert (res.success == 1)
     # IAccount old
     res = (await account.supportsInterface(0xf10dbd44).call()).result

@@ -20,7 +20,7 @@ from contracts.account.library import (
     assert_non_reentrant,
     assert_initialized,
     assert_no_self_call,
-    assert_correct_version,
+    assert_correct_tx_version,
     assert_only_self
 )
 
@@ -138,8 +138,8 @@ func __execute__{
     // get the tx info
     let (tx_info) = get_tx_info();
 
-    // block transaction with version != 1
-    assert_correct_version(tx_info.version);
+    // block transaction with version != 1 or QUERY
+    assert_correct_tx_version(tx_info.version);
 
     /////////////////////// TMP /////////////////////
     // parse inputs to an array of 'Call' struct

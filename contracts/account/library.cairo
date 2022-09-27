@@ -21,6 +21,9 @@ const SUPPORTS_INTERFACE_SELECTOR = 11840158947602944946736134389133614353367221
 const ERC165_ACCOUNT_INTERFACE_ID = 0xa66bd575;
 const ERC165_ACCOUNT_INTERFACE_ID_OLD = 0xf10dbd44; // this is needed to upgrade to this version
 
+const TRANSACTION_VERSION = 1;
+const QUERY_VERSION = 2**128 + TRANSACTION_VERSION;
+
 /////////////////////
 // STRUCTS
 /////////////////////
@@ -135,9 +138,9 @@ func assert_non_reentrant{syscall_ptr: felt*}() -> () {
     return ();
 }
 
-func assert_correct_version{syscall_ptr: felt*}(version: felt) -> () {
+func assert_correct_tx_version{syscall_ptr: felt*}(tx_version: felt) -> () {
     with_attr error_message("argent: invalid tx version") {
-        assert version = 1;
+        assert (tx_version - TRANSACTION_VERSION) * (tx_version - QUERY_VERSION) = 0;
     }
     return ();
 }

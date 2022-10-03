@@ -175,8 +175,11 @@ func __validate_deploy__{
     alloc_locals;
     // get the tx info
     let (tx_info) = get_tx_info();
-    // validate the signer signature only
+    // validate signatures
     ArgentModel.validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature);
+    ArgentModel.validate_guardian_signature(
+        tx_info.transaction_hash, tx_info.signature_len - 2, tx_info.signature + 2
+    );
     return ();
 }
 

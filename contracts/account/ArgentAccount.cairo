@@ -3,8 +3,10 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.memcpy import memcpy
+from starkware.cairo.common.math import assert_not_zero
 from starkware.starknet.common.syscalls import (
     get_tx_info,
+    library_call,
     get_contract_address,
 )
 from contracts.account.library import (
@@ -14,10 +16,11 @@ from contracts.account.library import (
     ArgentModel,
     from_call_array_to_call,
     execute_calls,
+    assert_only_self,
+    assert_correct_tx_version,
     assert_non_reentrant,
     assert_initialized,
     assert_no_self_call,
-    assert_correct_tx_version
 )
     
 /////////////////////
@@ -82,6 +85,9 @@ func __validate__{
                 );
                 return ();
             }
+            with_attr error_message("argent: forbiden call") {
+                assert_not_zero(call_array[0].selector - ArgentModel.EXECUTE_AFTER_UPGRADE_SELECTOR);
+            } 
         }
     } else {
         // make sure no call is to the account
@@ -112,7 +118,6 @@ func __execute__{
     retdata_size: felt, retdata: felt*
 ) {
     alloc_locals;
-
     // no reentrant call to prevent signature reutilization
     assert_non_reentrant();
 
@@ -219,6 +224,43 @@ func upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
 ) {
     ArgentModel.upgrade(implementation);
     return ();
+}
+
+@external
+func upgrade_and_execute{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    implementation: felt, calldata_len: felt, calldata: felt*
+) {
+    ArgentModel.upgrade(implementation);
+    let (retdata_size: felt, retdata: felt*) = library_call(
+        class_hash=implementation,
+        function_selector=ArgentModel.EXECUTE_AFTER_UPGRADE_SELECTOR,
+        calldata_size=calldata_len,
+        calldata=calldata,
+    );
+    return ();
+}
+
+@external
+func execute_after_upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    call_array_len: felt, call_array: CallArray*, calldata_len: felt, calldata: felt*
+) -> (
+    retdata_len: felt, retdata: felt*
+) {
+    alloc_locals;
+    // only self
+    assert_only_self();
+    // only calls to external contract
+    let (self) = get_contract_address();
+    assert_no_self_call(self, call_array_len, call_array);
+
+    let (calls: Call*) = alloc();
+    from_call_array_to_call(call_array_len, call_array, calldata, calls);
+    let calls_len = call_array_len;
+
+    // execute calls
+    let (response: felt*) = alloc();
+    let (response_len) = execute_calls(calls_len, calls, response, 0);
+    return (retdata_len=response_len, retdata=response);
 }
 
 @external

@@ -43,6 +43,11 @@ def assert_event_emmited(tx_exec_info: TransactionExecutionInfo, from_address: i
         data=data,
     ) in raw_events
 
+def find_event_emited(tx_exec_info: TransactionExecutionInfo, from_address: int, name: str):
+    raw_events = [Event(from_address=event.from_address, keys=event.keys, data=[]) for event in tx_exec_info.get_sorted_events()]
+    index = raw_events.index(Event(from_address=from_address, keys=[get_selector_from_name(name)], data=[]))
+    return tx_exec_info.get_sorted_events()[index]
+
 def update_starknet_block(state: StarknetState, block_number=1, block_timestamp=DEFAULT_TIMESTAMP):
     state.state.block_info = BlockInfo(
         block_number=block_number,

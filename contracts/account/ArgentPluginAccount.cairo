@@ -78,6 +78,9 @@ func __validate__{
     // get the tx info
     let (tx_info) = get_tx_info();
 
+    // block transaction with version != 1 or QUERY
+    assert_correct_tx_version(tx_info.version);
+
     if (call_array_len == 1) {
         if (call_array[0].to == tx_info.account_contract_address) {
             // a * b == 0 --> a == 0 OR b == 0
@@ -135,12 +138,6 @@ func __execute__{
     // no reentrant call to prevent signature reutilization
     assert_non_reentrant();
 
-    // get the tx info
-    let (tx_info) = get_tx_info();
-
-    // block transaction with version != 1 or QUERY
-    assert_correct_tx_version(tx_info.version);
-
     /////////////////////// TMP /////////////////////
     // parse inputs to an array of 'Call' struct
     let (calls: Call*) = alloc();
@@ -159,6 +156,7 @@ func __execute__{
         assert response_len = res;
     }
     // emit event
+    let (tx_info) = get_tx_info();
     transaction_executed.emit(
         hash=tx_info.transaction_hash, response_len=response_len, response=response
     );
@@ -200,8 +198,11 @@ func __validate_deploy__{
     alloc_locals;
     // get the tx info
     let (tx_info) = get_tx_info();
-    // validate the signer signature only
+    // validate signatures
     ArgentModel.validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature);
+    ArgentModel.validate_guardian_signature(
+        tx_info.transaction_hash, tx_info.signature_len - 2, tx_info.signature + 2
+    );
     return ();
 }
 

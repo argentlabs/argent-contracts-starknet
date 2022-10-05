@@ -90,22 +90,25 @@ async def test_call_dapp(contract_factory):
     assert (await dapp.get_number(account.contract_address).call()).result.number == 47
 
 
-def build_upgrade_call(
-        account,
-        new_implementation,
-        calls: Optional[List[Tuple]] = None,
-) -> Tuple:
-    if calls is None:
-        calls = []
+
+def build_execute_after_upgrade_data(calls: Optional[List[Tuple]] = None):
+    if calls is None: calls = []
     multicall_call_array, multicall_calldata = from_call_to_call_array(calls)
     multicall_call_array_flat = [data for call in multicall_call_array for data in call]
 
-    execute_calldata = [
+    return [
         len(multicall_call_array),
         *multicall_call_array_flat,
         len(multicall_calldata),
         *multicall_calldata
     ]
+
+def build_upgrade_call(
+        account,
+        new_implementation,
+        calls: Optional[List[Tuple]] = None,
+) -> Tuple:
+    execute_calldata = build_execute_after_upgrade_data(calls)
 
     upgrade_and_execute_calldata = [
         new_implementation,
@@ -168,7 +171,7 @@ async def test_upgrade_exec(contract_factory):
     set_number_call = (dapp.contract_address, 'set_number', [47])
 
     tx_exec_info = await sender.send_transaction(
-        [build_upgrade_call(account, account_2_class, [set_number_call, set_number_call])],
+        [build_upgrade_call(account, account_2_class, [set_number_call])],
         [signer, guardian]
     )
 
@@ -181,3 +184,43 @@ async def test_upgrade_exec(contract_factory):
 
     assert (await proxy.get_implementation().call()).result.implementation == account_2_class
     assert (await dapp.get_number(account.contract_address).call()).result.number == 47
+    # check that the data returned by the call is ok
+
+
+async def test_upgrade_many_calls(contract_factory):
+    # TODO basic check for more than one call, check that the data returned by the call is ok
+    return
+
+
+async def test_execute_after_upgrade_safety(contract_factory):
+    proxy, account, dapp, account_class, account_2_class, non_account_class = contract_factory
+    sender = TransactionSender(account)
+    set_number_call = (dapp.contract_address, 'set_number', [47])
+    assert (await proxy.get_implementation().call()).result.implementation == account_class
+    execute_after_upgrade_call = (
+        account.contract_address,
+        "execute_after_upgrade",
+        build_execute_after_upgrade_data([set_number_call])
+    )
+
+    # Can't call execute_after_upgrade directly (single call)
+    await assert_revert(
+        sender.send_transaction(
+            [execute_after_upgrade_call],
+            [signer, guardian]
+        ),
+        "argent: forbidden call"
+    )
+
+    # Can't call execute_after_upgrade directly (multicall call)
+    await assert_revert(
+        sender.send_transaction(
+            [set_number_call, execute_after_upgrade_call],
+            [signer, guardian]
+        ),
+        # disallowed call to self has no specific message yet
+    )
+
+    # Can't call execute_after_upgrade externally (TODO)
+
+    # execute_after_upgrade can't call the wallet (TODO)

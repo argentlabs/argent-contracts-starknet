@@ -19,6 +19,7 @@ def str_to_felt(text: str) -> int:
 def uint(a: int) -> Tuple[int, int]:
     return (a, 0)
 
+
 async def assert_revert(expression, expected_message: Optional[str] = None, expected_code: Optional[StarknetErrorCode] = None):
     if expected_code is None:
         expected_code = StarknetErrorCode.TRANSACTION_FAILED
@@ -27,9 +28,10 @@ async def assert_revert(expression, expected_message: Optional[str] = None, expe
         assert False
     except StarkException as err:
         _, error = err.args
-        assert error['code'] == expected_code
+        assert error['code'] == expected_code, f"assert expected: {expected_code}, got error: {error['code']}"
         if expected_message is not None:
-            assert expected_message in error['message']
+            errors_found = [s.removeprefix("Error message: ") for s in error['message'].splitlines() if s.startswith("Error message: ")]
+            assert expected_message in errors_found, f"assert expected: {expected_message}, found errors: {errors_found}"
 
 def assert_event_emmited(tx_exec_info: TransactionExecutionInfo, from_address: int, name: str, data: Optional[List[int]] = []):
     if not data:

@@ -134,7 +134,7 @@ func __execute__{
 
     // execute calls
     let (response: felt*) = alloc();
-    let (response_len) = execute_calls(calls_len, calls, response, 0);
+    let (response_len) = execute_calls(calls_len, calls, response, index=0);
 
     // emit event
     let (tx_info) = get_tx_info();
@@ -228,6 +228,8 @@ func upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
 @external
 func upgrade_and_execute{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     implementation: felt, calldata_len: felt, calldata: felt*
+) -> (
+    retdata_len: felt, retdata: felt*
 ) {
     ArgentModel.upgrade(implementation);
     let (retdata_size: felt, retdata: felt*) = library_call(
@@ -236,7 +238,7 @@ func upgrade_and_execute{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_c
         calldata_size=calldata_len,
         calldata=calldata,
     );
-    return ();
+    return (retdata_len=retdata_size, retdata=retdata);
 }
 
 @external

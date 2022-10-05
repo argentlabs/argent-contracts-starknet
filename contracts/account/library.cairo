@@ -165,7 +165,7 @@ func assert_no_self_call(self: felt, call_array_len: felt, call_array: CallArray
 // @notice Executes a list of contract calls recursively.
 // @param calls_len The number of calls to execute
 // @param calls A pointer to the first call to execute
-// @param response The array of felt to pupulate with the returned data
+// @param response The array of felt to populate with the returned data
 // @return response_len The size of the returned data
 func execute_calls{syscall_ptr: felt*}(calls_len: felt, calls: Call*, reponse: felt*, index: felt) -> (
     response_len: felt
@@ -554,7 +554,7 @@ namespace ArgentModel {
             assert signatures_len = 4;
             assert (signatures[0] + signatures[1]) = 0;
         }
-         with_attr error_message("argent: guardian backup signature invalid") {
+        with_attr error_message("argent: guardian backup signature invalid") {
             verify_ecdsa_signature(
                 message=message,
                 public_key=guardian_backup,

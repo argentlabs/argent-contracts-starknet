@@ -11,17 +11,18 @@ from utils.Signer import Signer
 
 TRANSACTION_VERSION = 1
 
-class TransactionSender():
+
+class TransactionSender:
     def __init__(self, account: StarknetContract):
         self.account = account
 
     async def send_transaction(
         self,
-        calls,
+        calls: List,
         signers: List[Signer],
         nonce: Optional[int] = None,
         max_fee: Optional[int] = 0
-    ) -> TransactionExecutionInfo :
+    ) -> TransactionExecutionInfo:
 
         calls_with_selector = [(call[0], get_selector_from_name(call[1]), call[2]) for call in calls]
         call_array, calldata = from_call_to_call_array(calls)
@@ -95,7 +96,8 @@ class TransactionSender():
         execution_info = await state.execute_tx(tx=tx)
         return execution_info
 
-def from_call_to_call_array(calls):
+
+def from_call_to_call_array(calls: List):
     call_array = []
     calldata = []
     for call in calls:

@@ -19,15 +19,18 @@ wrong_guardian = Signer(4)
 def event_loop():
     return asyncio.new_event_loop()
 
+@pytest.fixture(scope='module', params=[
+    "ArgentAccount",
+    "ArgentPluginAccount",
+])
+def account_class(request):
+    return compile(f"contracts/account/{request.param}.cairo")
 
 @pytest.fixture(scope='module')
-def contract_classes():
+def contract_classes(account_class):
     proxy_cls = compile("contracts/upgrade/Proxy.cairo")
-    account_cls = compile('contracts/account/ArgentAccount.cairo')
     dapp_cls = compile("contracts/test/TestDapp.cairo")
-
-    return proxy_cls, account_cls, dapp_cls
-
+    return proxy_cls, account_class, dapp_cls
 
 @pytest.fixture(scope='module')
 async def contract_init(contract_classes):

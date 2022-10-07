@@ -14,8 +14,7 @@ from contracts.account.library import (
     CallArray,
     Escape,
     ArgentModel,
-    from_call_array_to_call,
-    execute_calls,
+    execute_call_array,
     assert_only_self,
     assert_correct_tx_version,
     assert_non_reentrant,
@@ -88,7 +87,7 @@ func __validate__{
                 );
                 return ();
             }
-            with_attr error_message("argent: forbiden call") {
+            with_attr error_message("argent: forbidden call") {
                 assert_not_zero(call_array[0].selector - ArgentModel.EXECUTE_AFTER_UPGRADE_SELECTOR);
             } 
         }
@@ -125,23 +124,15 @@ func __execute__{
     // no reentrant call to prevent signature reutilization
     assert_non_reentrant();
 
-    //////////////// TMP /////////////////////
-    // parse inputs to an array of 'Call' struct
-    let (calls: Call*) = alloc();
-    from_call_array_to_call(call_array_len, call_array, calldata, calls);
-    let calls_len = call_array_len;
-    ////////////////////////////////////////////
-
     // execute calls
-    let (response: felt*) = alloc();
-    let (response_len) = execute_calls(calls_len, calls, response, index=0);
+    let (retdata_len, retdata) = execute_call_array(call_array_len, call_array, calldata_len, calldata);
 
     // emit event
     let (tx_info) = get_tx_info();
     transaction_executed.emit(
-        hash=tx_info.transaction_hash, response_len=response_len, response=response
+        hash=tx_info.transaction_hash, response_len=retdata_len, response=retdata
     );
-    return (retdata_size=response_len, retdata=response);
+    return (retdata_size=retdata_len, retdata=retdata);
 }
 
 @external
@@ -219,49 +210,38 @@ func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
 
 @external
 func upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    implementation: felt
-) {
-    ArgentModel.upgrade(implementation);
-    return ();
-}
-
-@external
-func upgrade_and_execute{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     implementation: felt, calldata_len: felt, calldata: felt*
-) -> (
-    retdata_len: felt, retdata: felt*
-) {
+) -> (retdata_len: felt, retdata: felt*) {
+    alloc_locals;
     ArgentModel.upgrade(implementation);
-    let (retdata_size: felt, retdata: felt*) = library_call(
-        class_hash=implementation,
-        function_selector=ArgentModel.EXECUTE_AFTER_UPGRADE_SELECTOR,
-        calldata_size=calldata_len,
-        calldata=calldata,
-    );
-    return (retdata_len=retdata_size, retdata=retdata);
+
+    if (calldata_len == 0) {
+        local retdata : felt*;
+        return (retdata_len=0, retdata=retdata);
+    } else {
+        let (retdata_size: felt, retdata: felt*) = library_call(
+            class_hash=implementation,
+            function_selector=ArgentModel.EXECUTE_AFTER_UPGRADE_SELECTOR,
+            calldata_size=calldata_len,
+            calldata=calldata,
+        );
+        return (retdata_len=retdata_size, retdata=retdata);
+    }
 }
 
 @external
 func execute_after_upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     call_array_len: felt, call_array: CallArray*, calldata_len: felt, calldata: felt*
-) -> (
-    retdata_len: felt, retdata: felt*
-) {
+) -> (retdata_len: felt, retdata: felt*) {
     alloc_locals;
     // only self
     assert_only_self();
     // only calls to external contract
     let (self) = get_contract_address();
     assert_no_self_call(self, call_array_len, call_array);
-
-    let (calls: Call*) = alloc();
-    from_call_array_to_call(call_array_len, call_array, calldata, calls);
-    let calls_len = call_array_len;
-
     // execute calls
-    let (response: felt*) = alloc();
-    let (response_len) = execute_calls(calls_len, calls, response, 0);
-    return (retdata_len=response_len, retdata=response);
+    let (retdata_len, retdata) = execute_call_array(call_array_len, call_array, calldata_len, calldata);
+    return (retdata_len=retdata_len, retdata=retdata);
 }
 
 @external

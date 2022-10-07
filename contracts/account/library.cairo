@@ -162,12 +162,32 @@ func assert_no_self_call(self: felt, call_array_len: felt, call_array: CallArray
     return ();
 }
 
+// @notice Convenience method to convert an execute a call array
+func execute_call_array{syscall_ptr: felt*}(
+    call_array_len: felt, call_array: CallArray*, calldata_len: felt, calldata: felt*
+) -> (retdata_len: felt, retdata: felt*) {
+    let (calls: Call*) = from_call_array_to_call(call_array_len, call_array, calldata);
+    return execute_calls(call_array_len, calls);
+}
+
+// @notice Executes a list of contract calls sequentially.
+// @param calls_len The number of calls to execute
+// @param calls A pointer to the first call to execute
+// @return retdata_len The size of the returned data
+// @return retdata The returned data
+func execute_calls{syscall_ptr: felt*}(calls_len: felt, calls: Call*) -> (retdata_len: felt, retdata: felt*) {
+    alloc_locals;
+    let (response: felt*) = alloc();
+    let (response_len) = execute_calls_recursive(calls_len, calls, response, 0);
+    return (retdata_len=response_len, retdata=response);
+}
+
 // @notice Executes a list of contract calls recursively.
 // @param calls_len The number of calls to execute
 // @param calls A pointer to the first call to execute
 // @param response The array of felt to populate with the returned data
 // @return response_len The size of the returned data
-func execute_calls{syscall_ptr: felt*}(calls_len: felt, calls: Call*, reponse: felt*, index: felt) -> (
+func execute_calls_recursive{syscall_ptr: felt*}(calls_len: felt, calls: Call*, reponse: felt*, index: felt) -> (
     response_len: felt
 ) {
     alloc_locals;
@@ -190,11 +210,20 @@ func execute_calls{syscall_ptr: felt*}(calls_len: felt, calls: Call*, reponse: f
     // copy the result in response
     memcpy(reponse, res.retdata, res.retdata_size);
     // do the next calls recursively
-    let (response_len) = execute_calls(calls_len - 1, calls + Call.SIZE, reponse + res.retdata_size, index + 1);
+    let (response_len) = execute_calls_recursive(calls_len - 1, calls + Call.SIZE, reponse + res.retdata_size, index + 1);
     return (response_len + res.retdata_size,);
 }
 
 func from_call_array_to_call{syscall_ptr: felt*}(
+    call_array_len: felt, call_array: CallArray*, calldata: felt*
+) -> (calls: Call*) {
+    alloc_locals;
+    let (calls: Call*) = alloc();
+    from_call_array_to_call_recursive(call_array_len, call_array, calldata, calls);
+    return (calls=calls);
+}
+
+func from_call_array_to_call_recursive{syscall_ptr: felt*}(
     call_array_len: felt, call_array: CallArray*, calldata: felt*, calls: Call*
 ) {
     // if no more calls
@@ -211,7 +240,7 @@ func from_call_array_to_call{syscall_ptr: felt*}(
         );
 
     // parse the remaining calls recursively
-    from_call_array_to_call(
+    from_call_array_to_call_recursive(
         call_array_len - 1, call_array + CallArray.SIZE, calldata, calls + Call.SIZE
     );
     return ();

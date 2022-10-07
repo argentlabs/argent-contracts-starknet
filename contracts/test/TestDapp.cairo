@@ -43,11 +43,12 @@ func set_number_times3{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_che
 @external
 func increase_number{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     number: felt
-) {
+) -> (new_number: felt) {
     let (user) = get_caller_address();
     let (val) = stored_number.read(user);
-    stored_number.write(user, val + number);
-    return ();
+    let new_number = val + number;
+    stored_number.write(user, new_number);
+    return (new_number= new_number);
 }
 
 @external

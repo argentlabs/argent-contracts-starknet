@@ -459,10 +459,15 @@ func execute_call_array_plugin{syscall_ptr: felt*}(
 ) -> (retdata_len: felt, retdata: felt*) {
     alloc_locals;
 
-    let (calls: Call*) = from_call_array_to_call(call_array_len, call_array, calldata);
+    let (calls: Call*) = alloc();
+    from_call_array_to_call(call_array_len, call_array, calldata, calls);
+
+    let (response: felt*) = alloc();
     if (calls[0].selector == USE_PLUGIN_SELECTOR) {
-        return execute_calls(call_array_len - 1, calls + Call.SIZE);
+        let (response_len) = execute_calls(call_array_len - 1, calls + Call.SIZE, response, 0);
+        return (retdata_len=response_len, retdata=response);
     } else {
-        return execute_calls(call_array_len, calls);
+        let (response_len) = execute_calls(call_array_len, calls, response, 0);
+        return (retdata_len=response_len, retdata=response);
     }
 }

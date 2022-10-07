@@ -36,16 +36,22 @@ To enable that model to evolve if needed, the account is implemented as a proxy 
 
 ## Development
 
-### Setup a local virtual env
+### Setup a local virtual env with Python 3.9
 
 ```
-python -m venv ./venv
+python3.9 -m venv ./venv
 source ./venv/bin/activate
 ```
 
 ### Install Cairo dependencies
 ```
 brew install gmp
+```
+
+You might need this extra step if you are running on a Mac with the M1 chip
+
+```
+CFLAGS=-I`brew --prefix gmp`/include LDFLAGS=-L`brew --prefix gmp`/lib pip install ecdsa fastecdsa sympy
 ```
 
 ```

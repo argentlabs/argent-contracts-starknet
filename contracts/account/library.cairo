@@ -162,10 +162,26 @@ func assert_no_self_call(self: felt, call_array_len: felt, call_array: CallArray
     return ();
 }
 
+// @notice Convenience method to convert an execute a call array
+func execute_call_array{syscall_ptr: felt*}(
+    call_array_len: felt, call_array: CallArray*, calldata_len: felt, calldata: felt*
+) -> (retdata_len: felt, retdata: felt*) {
+    alloc_locals;
+    // convert calls
+    let (calls: Call*) = alloc();
+    from_call_array_to_call(call_array_len, call_array, calldata, calls);
+
+    // execute them
+    let (response: felt*) = alloc();
+    let (response_len) = execute_calls(call_array_len, calls, response, 0);
+    return (retdata_len=response_len, retdata=response);
+}
+
+
 // @notice Executes a list of contract calls recursively.
 // @param calls_len The number of calls to execute
 // @param calls A pointer to the first call to execute
-// @param response The array of felt to pupulate with the returned data
+// @param response The array of felt to populate with the returned data
 // @return response_len The size of the returned data
 func execute_calls{syscall_ptr: felt*}(calls_len: felt, calls: Call*, reponse: felt*, index: felt) -> (
     response_len: felt
@@ -208,7 +224,7 @@ func from_call_array_to_call{syscall_ptr: felt*}(
         selector=[call_array].selector,
         calldata_len=[call_array].data_len,
         calldata=calldata + [call_array].data_offset
-        );
+    );
 
     // parse the remaining calls recursively
     from_call_array_to_call(
@@ -226,6 +242,7 @@ namespace ArgentModel {
     const ESCAPE_GUARDIAN_SELECTOR = 510756951529079116816142749077704776910668567546043821008232923043034641617;
     const ESCAPE_SIGNER_SELECTOR = 1455116469465411075152303383382102930902943882042348163899277328605146981359;
     const CANCEL_ESCAPE_SELECTOR = 1387988583969094862956788899343599960070518480842441785602446058600435897039;
+    const EXECUTE_AFTER_UPGRADE_SELECTOR = 738349667340360233096752603318170676063569407717437256101137432051386874767;
 
     const ESCAPE_SECURITY_PERIOD = 7 * 24 * 60 * 60;  // 7 days
 
@@ -553,7 +570,7 @@ namespace ArgentModel {
             assert signatures_len = 4;
             assert (signatures[0] + signatures[1]) = 0;
         }
-         with_attr error_message("argent: guardian backup signature invalid") {
+        with_attr error_message("argent: guardian backup signature invalid") {
             verify_ecdsa_signature(
                 message=message,
                 public_key=guardian_backup,

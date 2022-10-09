@@ -10,15 +10,14 @@ from utils.TransactionSender import TransactionSender
 from starkware.starknet.compiler.compile import get_selector_from_name
 from starkware.cairo.common.hash_state import compute_hash_on_elements
 
-
 signer = Signer(1)
 guardian = Signer(2)
 
 CONTRACT_ADDRESS_PREFIX = str_to_felt('STARKNET_CONTRACT_ADDRESS')
 UNIVERSAL_DEPLOYER_PREFIX = str_to_felt('UniversalDeployerContract')
 
-def compute_address(caller_address, salt, class_hash, constructor_calldata):
 
+def compute_address(caller_address, salt, class_hash, constructor_calldata):
     _salt = pedersen_hash(UNIVERSAL_DEPLOYER_PREFIX, salt)
     constructor_calldata_hash = compute_hash_on_elements(constructor_calldata)
 
@@ -36,13 +35,15 @@ def compute_address(caller_address, salt, class_hash, constructor_calldata):
 def event_loop():
     return asyncio.new_event_loop()
 
+
 @pytest.fixture(scope='module')
 def contract_classes():
     proxy_cls = compile("contracts/upgrade/Proxy.cairo")
     account_cls = compile('contracts/account/ArgentAccount.cairo')
     deployer_cls = compile('contracts/lib/UniversalDeployer.cairo')
-    
+
     return proxy_cls, account_cls, deployer_cls
+
 
 @pytest.fixture(scope='module')
 async def contract_init(contract_classes):
@@ -66,21 +67,40 @@ async def contract_init(contract_classes):
 
     return proxy_decl.class_hash, account_decl.class_hash, account, deployer
 
+
 @pytest.mark.asyncio
 async def test_deployer(contract_init):
     proxy_hash, account_hash, account, deployer = contract_init
     sender = TransactionSender(account)
 
     salt = str_to_felt('salt')
-    constructor_calldata = [account_hash, get_selector_from_name('initialize'), 2, signer.public_key, guardian.public_key]
 
-    # get the counter factual address
-    counterfactual_address = compute_address(0, salt, proxy_hash, constructor_calldata)
+    account_initialize_call_data = [signer.public_key, guardian.public_key]
+
+    proxy_constructor_call_data = [
+        account_hash,
+        get_selector_from_name('initialize'),
+        len(account_initialize_call_data),
+        *account_initialize_call_data
+    ]
+
+    # get the counterfactual address
+    counterfactual_address = compute_address(0, salt, proxy_hash, proxy_constructor_call_data)
+
     # deploy with deployer
-    tx_exec_info = await sender.send_transaction([(deployer.contract_address, 'deployContract', [proxy_hash, salt, 0, 5, account_hash, get_selector_from_name('initialize'), 2, signer.public_key, guardian.public_key])], [signer])
-    # check that adddress is the same
+    deploy_call = (
+        deployer.contract_address,
+        'deployContract',
+        [
+            proxy_hash,  # classHash,
+            salt,  # salt,
+            0,  # unique,
+            len(proxy_constructor_call_data),  # calldata,
+            *proxy_constructor_call_data
+        ]
+    )
+    tx_exec_info = await sender.send_transaction([deploy_call], [signer])
+
+    # check that address is the same
     event = find_event_emited(tx_exec_info, deployer.contract_address, 'ContractDeployed')
     assert event.data[0] == counterfactual_address
-
-
-

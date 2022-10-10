@@ -212,11 +212,10 @@ func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
 func upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     implementation: felt, calldata_len: felt, calldata: felt*
 ) -> (retdata_len: felt, retdata: felt*) {
-    alloc_locals;
     ArgentModel.upgrade(implementation);
 
     if (calldata_len == 0) {
-        local retdata : felt*;
+        let (retdata: felt*) = alloc();
         return (retdata_len=0, retdata=retdata);
     } else {
         let (retdata_size: felt, retdata: felt*) = library_call(

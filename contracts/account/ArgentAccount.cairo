@@ -155,18 +155,15 @@ func __validate_declare__{
     return ();
 }
 
+
+@raw_input
 @external
 func __validate_deploy__{
     syscall_ptr: felt*,
     pedersen_ptr: HashBuiltin*,
     ecdsa_ptr: SignatureBuiltin*,
     range_check_ptr
-} (
-    class_hash: felt,
-    ctr_args_len: felt,
-    ctr_args: felt*,
-    salt: felt
-) {
+} (selector: felt, calldata_size: felt, calldata: felt*) {
     alloc_locals;
     // get the tx info
     let (tx_info) = get_tx_info();

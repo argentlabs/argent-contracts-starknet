@@ -180,8 +180,6 @@ func __validate_deploy__{
     range_check_ptr
 } (
     class_hash: felt,
-    ctr_args_len: felt,
-    ctr_args: felt*,
     salt: felt
 ) {
     alloc_locals;

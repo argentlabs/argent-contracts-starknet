@@ -49,7 +49,7 @@ func __validate_deploy__{
     assert inner_calldata[0] = class_hash;
     assert inner_calldata[1] = salt;
     
-    let (retdata_size: felt, retdata: felt*) = library_call(
+    library_call(
         class_hash=implementation,
         function_selector=VALIDATE_DEPLOY_SELECTOR,
         calldata_size=2,

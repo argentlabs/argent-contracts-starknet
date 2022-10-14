@@ -163,9 +163,11 @@ func __validate_deploy__{
     range_check_ptr
 } (
     class_hash: felt,
-    ctr_args_len: felt,
-    ctr_args: felt*,
-    salt: felt
+    contract_address_salt: felt,
+    implementation: felt,
+    selector: felt,
+    calldata_len: felt,
+    calldata: felt*
 ) {
     alloc_locals;
     // get the tx info

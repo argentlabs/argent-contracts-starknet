@@ -137,28 +137,27 @@ func __execute__{
     return (retdata_size=retdata_len, retdata=retdata);
 }
 
-@external
-@raw_input
-@raw_output
-func __default__{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    selector: felt, calldata_size: felt, calldata: felt*
-) -> (retdata_size: felt, retdata: felt*) {    
+// @external
+// @raw_input
+// @raw_output
+// func __default__{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+//     selector: felt, calldata_size: felt, calldata: felt*
+// ) -> (retdata_size: felt, retdata: felt*) {    
 
-    let (tx_info) = get_tx_info();
+//     let (tx_info) = get_tx_info();
 
-    # should allow from wallet only?
-    # what about ?
+//     // should allow from wallet only?
 
-    let (plugin_address) = get_plugin_from_signature(tx_info.signature_len, tx_info.signature);
+//     let (plugin_address) = get_plugin_from_signature(tx_info.signature_len, tx_info.signature);
 
-    let (retdata_size: felt, retdata: felt*) = library_call(
-        class_hash=current_plugin,
-        function_selector=selector,
-        calldata_size=calldata_size,
-        calldata=calldata,
-    );
-    return (retdata_size=retdata_size, retdata=retdata);
-}
+//     let (retdata_size: felt, retdata: felt*) = library_call(
+//         class_hash=plugin_address,
+//         function_selector=selector,
+//         calldata_size=calldata_size,
+//         calldata=calldata,
+//     );
+//     return (retdata_size=retdata_size, retdata=retdata);
+// }
 
 @external
 func __validate_declare__{
@@ -175,19 +174,21 @@ func __validate_declare__{
 }
 
 
+@raw_input
 @external
 func __validate_deploy__{
     syscall_ptr: felt*,
     pedersen_ptr: HashBuiltin*,
     ecdsa_ptr: SignatureBuiltin*,
     range_check_ptr
-} (class_hash: felt, salt: felt) {
+} (selector: felt, calldata_size: felt, calldata: felt*) {
     alloc_locals;
     assert_initialized();
     let (tx_info) = get_tx_info();
     isValidSignature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature);
     return ();
 }
+
 
 @view
 func isValidSignature{
@@ -302,7 +303,7 @@ func is_valid_signature{
     return (is_valid=is_valid);
 }
 
-func assert_initialized{syscall_ptr: felt*}(){
+func assert_initialized{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(){
     let (default_plugin) = _plugins.read(0);
     with_attr error_message("argent: account not initialized") {
         assert_not_zero(default_plugin);

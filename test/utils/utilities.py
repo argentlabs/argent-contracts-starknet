@@ -33,17 +33,20 @@ async def assert_revert(expression, expected_message: Optional[str] = None, expe
             errors_found = [s.removeprefix("Error message: ") for s in error['message'].splitlines() if s.startswith("Error message: ")]
             assert expected_message in errors_found, f"assert expected: {expected_message}, found errors: {errors_found}"
 
-def assert_event_emmited(tx_exec_info: TransactionExecutionInfo, from_address: int, name: str, data: Optional[List[int]] = []):
+
+def assert_event_emitted(tx_exec_info: TransactionExecutionInfo, from_address: int, name: str, data: Optional[List[int]] = []):
     if not data:
         raw_events = [Event(from_address=event.from_address, keys=event.keys, data=[]) for event in tx_exec_info.get_sorted_events()]
     else: 
         raw_events = [Event(from_address=event.from_address, keys=event.keys, data=event.data) for event in tx_exec_info.get_sorted_events()] 
 
-    assert Event(
+    event_to_find = Event(
         from_address=from_address,
         keys=[get_selector_from_name(name)],
         data=data,
-    ) in raw_events, f"Event {name} not found"
+    )
+
+    assert event_to_find in raw_events, f"Event {name} not found"
 
 def find_event_emited(tx_exec_info: TransactionExecutionInfo, from_address: int, name: str):
     raw_events = [Event(from_address=event.from_address, keys=event.keys, data=[]) for event in tx_exec_info.get_sorted_events()]
@@ -76,7 +79,7 @@ def cached_contract(state: StarknetState, _class: ContractClass, deployed: Stark
 
 
 def get_execute_data(tx_exec_info: TransactionExecutionInfo) -> List[int]:
-    raw_data:List[int] = tx_exec_info.call_info.retdata
+    raw_data: List[int] = tx_exec_info.call_info.retdata
     ret_execute_size, *ret_execute = raw_data
     assert ret_execute_size == len(ret_execute), "Unexpected return size"
     return ret_execute

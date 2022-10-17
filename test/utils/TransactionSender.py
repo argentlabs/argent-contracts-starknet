@@ -12,13 +12,17 @@ from utils.Signer import Signer
 TRANSACTION_VERSION = 1
 
 
+# [target_address, selector, arguments]
+Call = Tuple[str, str, List]
+
+
 class TransactionSender:
     def __init__(self, account: StarknetContract):
         self.account = account
 
     async def send_transaction(
         self,
-        calls: List,
+        calls: List[Call],
         signers: List[Signer],
         nonce: Optional[int] = None,
         max_fee: Optional[int] = 0
@@ -97,7 +101,7 @@ class TransactionSender:
         return execution_info
 
 
-def from_call_to_call_array(calls: List):
+def from_call_to_call_array(calls: List[Call]):
     call_array = []
     calldata = []
     for call in calls:

@@ -3,7 +3,7 @@ import asyncio
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.definitions.general_config import StarknetChainId
 from utils.Signer import Signer
-from utils.utilities import cached_contract, compile, str_to_felt, assert_revert, assert_event_emmited, DEFAULT_TIMESTAMP, update_starknet_block
+from utils.utilities import cached_contract, compile, str_to_felt, assert_revert, assert_event_emitted, DEFAULT_TIMESTAMP, update_starknet_block
 from utils.TransactionSender import TransactionSender
 from starkware.cairo.common.hash_state import compute_hash_on_elements
 from starkware.starknet.compiler.compile import get_selector_from_name
@@ -114,7 +114,7 @@ async def test_call_dapp_with_session_key(contract_factory):
         ], 
         [session_key])
 
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='transaction_executed'
@@ -143,7 +143,7 @@ async def test_call_dapp_with_session_key(contract_factory):
         )],
         [signer]
     )
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='session_key_revoked'

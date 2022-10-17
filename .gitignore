@@ -4,3 +4,4 @@ venv/
 __pycache__
 artifacts
 node.json
+.idea

@@ -44,6 +44,11 @@ func SessionKey_revoked_keys(key: felt) -> (res: felt) {
 }
 
 @external
+func initialize(data_len: felt, data: felt*) {
+    return ();
+}
+
+@external
 func validate{
     syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
 }(

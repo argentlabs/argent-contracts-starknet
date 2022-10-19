@@ -3,9 +3,9 @@ import asyncio
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from utils.Signer import Signer
-from utils.utilities import compile, cached_contract, assert_revert, assert_event_emmited, get_execute_data
-from utils.TransactionSender import TransactionSender, from_call_to_call_array
-from typing import Optional, List, Tuple
+from utils.utilities import compile, cached_contract, assert_revert, assert_event_emitted, get_execute_data
+from utils.TransactionSender import TransactionSender, Call, from_call_to_call_array
+from typing import Optional, List, Tuple, Union
 
 from starkware.starknet.compiler.compile import get_selector_from_name
 
@@ -101,7 +101,7 @@ async def test_call_dapp(contract_factory):
     assert (await dapp.get_number(account.contract_address).call()).result.number == 47
 
 
-def build_execute_after_upgrade_data(calls: Optional[List[Tuple]] = None) -> List[Tuple]:
+def build_execute_after_upgrade_data(calls: Optional[List[Call]] = None) -> List[Union[int,Tuple]]:
     if calls is None:
         calls = []
     multicall_call_array, multicall_calldata = from_call_to_call_array(calls)
@@ -118,8 +118,8 @@ def build_execute_after_upgrade_data(calls: Optional[List[Tuple]] = None) -> Lis
 def build_upgrade_call(
         account,
         new_implementation,
-        calls: Optional[List[Tuple]] = None,
-) -> Tuple:
+        calls: Optional[List[Call]] = None,
+) -> Call:
     execute_calldata = build_execute_after_upgrade_data(calls)
 
     upgrade_calldata = [
@@ -166,7 +166,7 @@ async def test_upgrade(contract_factory):
     assert len(ret_execute) == 1, "Unexpected return data length"
     assert ret_execute[0] == 0, "Expected 0 calls to be executed after upgrade"
 
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='account_upgraded',
@@ -184,7 +184,7 @@ async def test_upgrade_exec(contract_factory):
     assert (await proxy.get_implementation().call()).result.implementation == account_class
     assert (await dapp.get_number(account.contract_address).call()).result.number == 0
 
-    increase_number_call = (dapp.contract_address, 'increase_number', [47])
+    increase_number_call: Call = (dapp.contract_address, 'increase_number', [47])
 
     tx_exec_info = await sender.send_transaction(
         [build_upgrade_call(account, account_2_class, [increase_number_call])],
@@ -196,7 +196,7 @@ async def test_upgrade_exec(contract_factory):
     assert ret_execute[0] == 1, "Expected 1 call to be executed after upgrade"
     assert ret_execute[1] == 47, "Expected new_number returned"
 
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='account_upgraded',
@@ -214,8 +214,8 @@ async def test_upgrade_many_calls(contract_factory):
     assert (await proxy.get_implementation().call()).result.implementation == account_class
     assert (await dapp.get_number(account.contract_address).call()).result.number == 0
 
-    increase_number_call = (dapp.contract_address, 'increase_number', [47])
-    increase_number_again_call = (dapp.contract_address, 'increase_number', [1])
+    increase_number_call: Call = (dapp.contract_address, 'increase_number', [47])
+    increase_number_again_call: Call = (dapp.contract_address, 'increase_number', [1])
 
     tx_exec_info = await sender.send_transaction(
         [build_upgrade_call(account, account_2_class, [increase_number_call, increase_number_again_call])],
@@ -228,7 +228,7 @@ async def test_upgrade_many_calls(contract_factory):
     assert ret_execute[1] == 47, "Expected new_number returned from first call"
     assert ret_execute[2] == 48, "Expected new_number returned form second call"
 
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='account_upgraded',
@@ -243,9 +243,9 @@ async def test_execute_after_upgrade_safety(contract_factory):
     proxy, account, wrong_account, dapp, account_class, account_2_class, non_account_class = contract_factory
     sender = TransactionSender(account)
     wrong_sender = TransactionSender(wrong_account)
-    set_number_call = (dapp.contract_address, 'set_number', [47])
+    set_number_call: Call = (dapp.contract_address, 'set_number', [47])
     assert (await proxy.get_implementation().call()).result.implementation == account_class
-    execute_after_upgrade_call = (
+    execute_after_upgrade_call: Call = (
         account.contract_address,
         "execute_after_upgrade",
         build_execute_after_upgrade_data([set_number_call])
@@ -279,7 +279,7 @@ async def test_execute_after_upgrade_safety(contract_factory):
     )
 
     # execute_after_upgrade can't call the wallet
-    change_signer_call = (
+    change_signer_call: Call = (
         account.contract_address,
         "changeSigner",
         [wrong_signer.public_key]

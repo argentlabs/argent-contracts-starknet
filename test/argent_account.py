@@ -3,7 +3,7 @@ import asyncio
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from utils.Signer import Signer
-from utils.utilities import cached_contract, compile, assert_revert, str_to_felt, assert_event_emmited, update_starknet_block, reset_starknet_block, DEFAULT_TIMESTAMP
+from utils.utilities import cached_contract, compile, assert_revert, str_to_felt, assert_event_emitted, update_starknet_block, reset_starknet_block, DEFAULT_TIMESTAMP
 from utils.TransactionSender import TransactionSender
 
 signer = Signer(1)
@@ -158,7 +158,7 @@ async def test_call_dapp_with_guardian(contract_factory):
     
     tx_exec_info = await sender.send_transaction(calls, [signer, guardian])
 
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='transaction_executed'
@@ -193,7 +193,7 @@ async def test_call_dapp_guardian_backup(contract_factory):
     
     tx_exec_info = await sender.send_transaction(calls, [signer, 0, guardian_backup])
 
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='transaction_executed'
@@ -277,7 +277,7 @@ async def test_change_signer(contract_factory):
     # should work with the correct signers
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'changeSigner', [new_signer.public_key])], [signer, guardian])
     
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='signer_changed',
@@ -308,7 +308,7 @@ async def test_change_guardian(contract_factory):
     # should work with the correct signers
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'changeGuardian', [new_guardian.public_key])], [signer, guardian])
     
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='guardian_changed',
@@ -337,7 +337,7 @@ async def test_change_guardian_backup(contract_factory):
     # should work with the correct signers
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'changeGuardianBackup', [new_guardian_backup.public_key])], [signer, guardian])
     
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='guardian_backup_changed',
@@ -381,7 +381,7 @@ async def test_trigger_escape_guardian_by_signer(contract_factory):
 
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'triggerEscapeGuardian', [])], [signer])
     
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='escape_guardian_triggered',
@@ -404,7 +404,7 @@ async def test_trigger_escape_signer_by_guardian(contract_factory):
 
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'triggerEscapeSigner', [])], [guardian])
 
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='escape_signer_triggered',
@@ -430,7 +430,7 @@ async def test_trigger_escape_signer_by_guardian_backup(contract_factory):
 
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'triggerEscapeSigner', [])], [0, guardian_backup])
 
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='escape_signer_triggered',
@@ -474,7 +474,7 @@ async def test_escape_guardian(contract_factory):
     
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'escapeGuardian', [new_guardian.public_key])], [signer])
 
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='guardian_escaped',
@@ -519,7 +519,7 @@ async def test_escape_signer(contract_factory):
     assert (await account.getSigner().call()).result.signer == (signer.public_key)
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'escapeSigner', [new_signer.public_key])], [guardian])
 
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='signer_escaped',
@@ -598,7 +598,7 @@ async def test_cancel_escape(contract_factory):
     # cancel escape
     tx_exec_info = await sender.send_transaction([(account.contract_address, 'cancelEscape', [])], [signer, guardian])
 
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='escape_canceled',

@@ -8,13 +8,15 @@ namespace IPlugin {
     func initialize(data_len: felt, data: felt*) {
     }
 
-    func validate(
+    // TODO should be (calls_len: felt, calls: Call*) instead?
+    func validate_calls(
         call_array_len: felt,
         call_array: CallArray*,
         calldata_len: felt,
         calldata: felt*,
     ) {
     }
+
 }
 
 // %lang starknet

@@ -96,7 +96,7 @@ func __validate__{
 
     let (plugin_address) = get_plugin_from_signature(tx_info.signature_len, tx_info.signature);
 
-    IPlugin.library_call_validate(
+    IPlugin.library_call_validate_calls(
         class_hash=plugin_address,
         call_array_len=call_array_len,
         call_array=call_array,
@@ -137,27 +137,27 @@ func __execute__{
     return (retdata_size=retdata_len, retdata=retdata);
 }
 
-// @external
-// @raw_input
-// @raw_output
-// func __default__{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-//     selector: felt, calldata_size: felt, calldata: felt*
-// ) -> (retdata_size: felt, retdata: felt*) {    
+@external
+@raw_input
+@raw_output
+func __default__{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    selector: felt, calldata_size: felt, calldata: felt*
+) -> (retdata_size: felt, retdata: felt*) {    
 
-//     let (tx_info) = get_tx_info();
+    let (tx_info) = get_tx_info();
 
-//     // should allow from wallet only?
+    // should allow from wallet only?
 
-//     let (plugin_address) = get_plugin_from_signature(tx_info.signature_len, tx_info.signature);
+    let (plugin_address) = get_plugin_from_signature(tx_info.signature_len, tx_info.signature);
 
-//     let (retdata_size: felt, retdata: felt*) = library_call(
-//         class_hash=plugin_address,
-//         function_selector=selector,
-//         calldata_size=calldata_size,
-//         calldata=calldata,
-//     );
-//     return (retdata_size=retdata_size, retdata=retdata);
-// }
+    let (retdata_size: felt, retdata: felt*) = library_call(
+        class_hash=plugin_address,
+        function_selector=selector,
+        calldata_size=calldata_size,
+        calldata=calldata,
+    );
+    return (retdata_size=retdata_size, retdata=retdata);
+}
 
 @external
 func __validate_declare__{
@@ -414,9 +414,8 @@ func readOnPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_pt
     return (retdata_len=retdata_len, retdata=retdata);
 }
 
-
 @external
-func invokeOnPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+func executeOnPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     plugin: felt, selector: felt, calldata_len: felt, calldata: felt*
 ) -> (retdata_len: felt, retdata: felt*) {
 

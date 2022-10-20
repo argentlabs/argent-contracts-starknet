@@ -51,19 +51,16 @@ func is_valid_signature{
 
 @external
 func validate{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr}(
-    plugin_data_len: felt,
-    plugin_data: felt*,
     call_array_len: felt,
     call_array: CallArray*,
     calldata_len: felt,
     calldata: felt*,
 ) {
+    alloc_locals;
+    let (tx_info) = get_tx_info();
+    // invokeOnPlugin??
     if (call_array_len == 1) {
         if (call_array[0].to == tx_info.account_contract_address) {
-
-            // TODO its really hard to validate every tx here, since this plugins is not aware of other plugins
-            // one possibility is to make sure you can't call other plugins here
-
             // a * b == 0 --> a == 0 OR b == 0
             tempvar signer_condition = (call_array[0].selector - ArgentModel.ESCAPE_GUARDIAN_SELECTOR) * (call_array[0].selector - ArgentModel.TRIGGER_ESCAPE_GUARDIAN_SELECTOR);
             tempvar guardian_condition = (call_array[0].selector - ArgentModel.ESCAPE_SIGNER_SELECTOR) * (call_array[0].selector - ArgentModel.TRIGGER_ESCAPE_SIGNER_SELECTOR);
@@ -84,13 +81,12 @@ func validate{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: Signatu
         }
     }
     // validate signer and guardian signatures
-    ArgentModel.validate_signer_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature);
-    ArgentModel.validate_guardian_signature(tx_info.transaction_hash, tx_info.signature_len - 2, tx_info.signature + 2);
+    isValidSignature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature);
     return ();
 }
 
 
-// BIG TODO this is publicly callable now!!!!!!!
+// BIG TODO this is publicly callable now if we expose it via __default__ is so, we need to check the call comes from the wallet!
 @external
 func changeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     newSigner: felt

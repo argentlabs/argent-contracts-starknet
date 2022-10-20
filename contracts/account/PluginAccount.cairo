@@ -350,7 +350,7 @@ func validate_with_plugin{
     calldata_len: felt,
     calldata: felt*,
 ) {
-    IPlugin.library_call_validate(
+    IPlugin.library_call_validate_calls(
         class_hash=plugin_id,
         call_array_len=call_array_len,
         call_array=call_array,

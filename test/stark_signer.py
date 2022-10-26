@@ -3,7 +3,7 @@ import asyncio
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from utils.Signer import Signer
-from utils.utilities import compile, cached_contract, assert_revert, assert_event_emmited, get_execute_data
+from utils.utilities import compile, cached_contract, assert_revert, assert_event_emitted, get_execute_data
 from utils.TransactionSender import TransactionSender, from_call_to_call_array
 from typing import Optional, List, Tuple
 
@@ -166,7 +166,7 @@ async def test_upgrade(contract_factory):
     assert len(ret_execute) == 1, "Unexpected return data length"
     assert ret_execute[0] == 0, "Expected 0 calls to be executed after upgrade"
 
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='account_upgraded',
@@ -196,7 +196,7 @@ async def test_upgrade_exec(contract_factory):
     assert ret_execute[0] == 1, "Expected 1 call to be executed after upgrade"
     assert ret_execute[1] == 47, "Expected new_number returned"
 
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='account_upgraded',
@@ -228,7 +228,7 @@ async def test_upgrade_many_calls(contract_factory):
     assert ret_execute[1] == 47, "Expected new_number returned from first call"
     assert ret_execute[2] == 48, "Expected new_number returned form second call"
 
-    assert_event_emmited(
+    assert_event_emitted(
         tx_exec_info,
         from_address=account.contract_address,
         name='account_upgraded',

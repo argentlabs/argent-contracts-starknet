@@ -49,13 +49,6 @@ func getPublicKey{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_pt
     return (public_key=public_key);
 }
 
-@view
-func isValidSignature{
-    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr, ecdsa_ptr: SignatureBuiltin*
-}(hash: felt, signature_len: felt, signature: felt*) -> (isValid: felt) {
-    let (isValid) = is_valid_signature(hash, signature_len, signature);
-    return (isValid=isValid);
-}
 
 @view
 func supportsInterface{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
@@ -68,9 +61,8 @@ func supportsInterface{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_che
     return (FALSE,);
 }
 
-
 @view
-func validate_calls{
+func validate{
     syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr, ecdsa_ptr: SignatureBuiltin*
 }(
     call_array_len: felt,
@@ -84,6 +76,7 @@ func validate_calls{
     return ();
 }
 
+@view
 func is_valid_signature{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
@@ -94,6 +87,11 @@ func is_valid_signature{
     signature_len: felt,
     signature: felt*
 ) -> (is_valid: felt) {
+
+    with_attr error_message("StarkSigner: invalid signature length") {
+        assert signature_len = 3;
+    }
+    
     let (public_key) = StarkSigner_public_key.read();
 
     let sig_r = signature[1];

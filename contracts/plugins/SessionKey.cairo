@@ -11,9 +11,17 @@ from starkware.cairo.common.hash_state import (
 )
 from starkware.cairo.common.hash import hash2
 from starkware.cairo.common.math_cmp import is_le_felt
+from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.alloc import alloc
-from starkware.cairo.common.math import assert_nn
-from starkware.starknet.common.syscalls import get_tx_info, get_block_timestamp
+from starkware.cairo.common.bool import TRUE, FALSE
+from starkware.cairo.common.math import assert_not_zero, assert_nn
+from starkware.starknet.common.syscalls import (
+    call_contract,
+    get_tx_info,
+    get_contract_address,
+    get_caller_address,
+    get_block_timestamp,
+)
 
 // H('StarkNetDomain(chainId:felt)')
 const STARKNET_DOMAIN_TYPE_HASH = 0x13cda234a04d66db62c06b8e3ad5f91bd0c67286c2c7519a826cf49da6ba478;
@@ -43,11 +51,30 @@ func session_key_revoked(session_key: felt) {
 func SessionKey_revoked_keys(key: felt) -> (res: felt) {
 }
 
-@external
-func initialize(data_len: felt, data: felt*) {
-    return ();
+@view
+func supportsInterface{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    interfaceId: felt
+) -> (success: felt) {
+    // 165
+    if (interfaceId == 0x01ffc9a7) {
+        return (TRUE,);
+    }
+    return (FALSE,);
 }
 
+@view
+func is_valid_signature{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+    ecdsa_ptr: SignatureBuiltin*
+}(
+    hash: felt,
+    signature_len: felt,
+    signature: felt*
+) -> (is_valid: felt) {
+    return (is_valid=FALSE); // This plugin can only validate call
+}
 @external
 func validate{
     syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
@@ -62,32 +89,38 @@ func validate{
     // get the tx info
     let (tx_info) = get_tx_info();
 
-    // parse the plugin data
-    with_attr error_message("invalid plugin data") {
-        assert_nn(tx_info.signature_len - 4);
-        let session_key = [tx_info.signature];
-        let session_expires = [tx_info.signature + 1];
-        let root = [tx_info.signature + 2];
-        let proof_len = [tx_info.signature + 3];
-        let proofs_len = proof_len * call_array_len;
-        let proofs : felt* = tx_info.signature + 4;
-        let session_token_len = tx_info.signature_len - 4 - proofs_len;
-        assert_nn(session_token_len);
-        let session_token : felt* = tx_info.signature + 4 + proofs_len;
-        let session_signature : felt* = session_token + session_token_len;
+     // parse the plugin data
+    with_attr error_message("SessionKey: invalid plugin data") {
+        let sig_r = tx_info.signature[1];
+        let sig_s = tx_info.signature[2];
+        let session_key = tx_info.signature[3];
+        let session_expires = tx_info.signature[4];
+        let root = tx_info.signature[5];
+        let proof_len = tx_info.signature[6];
+        let proofs_len = tx_info.signature[7];
+        let proofs = tx_info.signature + 8;
+        let session_token_offset = 8 + proofs_len;
+        let session_token_len = tx_info.signature[session_token_offset];
+        let session_token = tx_info.signature + session_token_offset + 1;
     }
 
-    // check if the session has expired
-    with_attr error_message("session expired") {
+    with_attr error_message("SessionKey: invalid proof len") {
+         assert proofs_len = call_array_len * proof_len;
+    }
+
+    with_attr error_message("SessionKey: invalid signature length") {
+        assert tx_info.signature_len = session_token_offset + 1 + session_token_len;
+    }
+
+    with_attr error_message("SessionKey: session expired") {
         let (now) = get_block_timestamp();
         assert_nn(session_expires - now);
     }
 
-    // check if the session is approved
-    with_attr error_message("unauthorised session") {
-        let (session_hash) = compute_session_hash(
-            session_key, session_expires, root, tx_info.chain_id, tx_info.account_contract_address
-        );
+    let (session_hash) = compute_session_hash(
+        session_key, session_expires, root, tx_info.chain_id, tx_info.account_contract_address
+    );    
+    with_attr error_message("SessionKey: unauthorised session") {
         IAccount.isValidSignature(
             contract_address=tx_info.account_contract_address,
             hash=session_hash,
@@ -95,43 +128,50 @@ func validate{
             sig=session_token,
         );
     }
-
     // check if the session key is revoked
-    with_attr error_message("session key revoked") {
+    with_attr error_message("SessionKey: session key revoked") {
         let (is_revoked) = SessionKey_revoked_keys.read(session_key);
         assert is_revoked = 0;
     }
-
     // check if the tx is signed by the session key
-    with_attr error_message("session key signature invalid") {
+    with_attr error_message("SessionKey: invalid signature") {
         verify_ecdsa_signature(
             message=tx_info.transaction_hash,
             public_key=session_key,
-            signature_r=session_signature[0],
-            signature_s=session_signature[1],
+            signature_r=sig_r,
+            signature_s=sig_s,
         );
     }
-
-    // check if the calls satisy the policies
-    with_attr error_message("not allowed by policy") {
-        check_policy(call_array_len, call_array, root, proof_len, proofs);
-    }
+    check_policy(call_array_len, call_array, root, proof_len, proofs_len, proofs);
 
     return ();
 }
 
 @external
-func revokeSession{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+func revokeSessionKey{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     session_key: felt
 ) {
+    assert_only_self();
+
     SessionKey_revoked_keys.write(session_key, 1);
     session_key_revoked.emit(session_key);
     return ();
 }
 
+/////////////////////
+// INTERNAL FUNCTIONS
+/////////////////////
+
 func check_policy{
     syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
-}(call_array_len: felt, call_array: CallArray*, root: felt, proof_len: felt, proof: felt*) {
+}(
+    call_array_len: felt,
+    call_array: CallArray*,
+    root: felt,
+    proof_len: felt,
+    proofs_len: felt,
+    proofs: felt*,
+) {
     alloc_locals;
 
     if (call_array_len == 0) {
@@ -150,11 +190,17 @@ func check_policy{
         let pedersen_ptr = hash_ptr;
     }
 
-    let (proof_valid) = merkle_verify(leaf, root, proof_len, proof);
-    assert proof_valid = 1;
-
+    let (proof_valid) = merkle_verify(leaf, root, proof_len, proofs);
+    with_attr error_message("SessionKey: not allowed by policy") {
+        assert proof_valid = TRUE;
+    }
     check_policy(
-        call_array_len - 1, call_array + CallArray.SIZE, root, proof_len, proof + proof_len
+        call_array_len - 1,
+        call_array + CallArray.SIZE,
+        root,
+        proof_len,
+        proofs_len - proof_len,
+        proofs + proof_len,
     );
     return ();
 }
@@ -206,9 +252,9 @@ func merkle_verify{pedersen_ptr: HashBuiltin*, range_check_ptr}(
     let (calc_root) = calc_merkle_root(leaf, proof_len, proof);
     // check if calculated root is equal to expected
     if (calc_root == root) {
-        return (1,);
+        return (TRUE,);
     } else {
-        return (0,);
+        return (FALSE,);
     }
 }
 
@@ -236,4 +282,14 @@ func calc_merkle_root{pedersen_ptr: HashBuiltin*, range_check_ptr}(
 
     let (res) = calc_merkle_root(node, proof_len - 1, proof + 1);
     return (res,);
+}
+
+
+func assert_only_self{syscall_ptr: felt*}() -> () {
+    let (self) = get_contract_address();
+    let (caller_address) = get_caller_address();
+    with_attr error_message("SessionKey: only self") {
+        assert self = caller_address;
+    }
+    return ();
 }

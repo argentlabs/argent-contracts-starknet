@@ -24,9 +24,12 @@ from contracts.account.library import (
 )
 
 
+// TODO storage namespace
+
 @external
 func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(data_len: felt, data: felt*) {
-    // assert data_len == 2;
+    // TODO check if already initialize or assert that only the owner can call this
+    // TODO assert data_len == 2;
     let signer = data[0];
     let guardian = data[1];
     ArgentModel.initialize(signer, guardian);
@@ -34,18 +37,10 @@ func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
 }
 
 @view
-func isValidSignature{
-    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr, ecdsa_ptr: SignatureBuiltin*
-}(hash: felt, signature_len: felt, signature: felt*) -> (isValid: felt) {
-    let (isValid) = is_valid_signature(hash, signature_len, signature);
-    return (isValid=isValid);
-}
-
-@view
 func is_valid_signature{
     syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr, ecdsa_ptr: SignatureBuiltin*
 }(hash: felt, signature_len: felt, signature: felt*) -> (isValid: felt) {
-    let (isValid) = ArgentModel.is_valid_signature(hash, signature_len, signature);
+    let (isValid) = ArgentModel.is_valid_signature(hash, signature_len - 1, signature + 1);
     return (isValid=isValid);
 }
 
@@ -58,7 +53,6 @@ func validate{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: Signatu
 ) {
     alloc_locals;
     let (tx_info) = get_tx_info();
-    // invokeOnPlugin??
     if (call_array_len == 1) {
         if (call_array[0].to == tx_info.account_contract_address) {
             // a * b == 0 --> a == 0 OR b == 0
@@ -67,30 +61,31 @@ func validate{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: Signatu
             if (signer_condition == 0) {
                 // validate signer signature
                 ArgentModel.validate_signer_signature(
-                    tx_info.transaction_hash, tx_info.signature_len, tx_info.signature
+                    tx_info.transaction_hash, tx_info.signature_len - 1, tx_info.signature + 1
                 );
                 return ();
             }
             if (guardian_condition == 0) {
                 // validate guardian signature
                 ArgentModel.validate_guardian_signature(
-                    tx_info.transaction_hash, tx_info.signature_len, tx_info.signature
+                    tx_info.transaction_hash, tx_info.signature_len - 1, tx_info.signature + 1
                 );
                 return ();
             }
         }
     }
+
     // validate signer and guardian signatures
-    isValidSignature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature);
+    is_valid_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature);
     return ();
 }
 
 
-// BIG TODO this is publicly callable now if we expose it via __default__ is so, we need to check the call comes from the wallet!
 @external
 func changeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     newSigner: felt
 ) {
+    assert_only_self();
     ArgentModel.change_signer(newSigner);
     return ();
 }
@@ -100,6 +95,7 @@ func changeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_pt
 func changeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     newGuardian: felt
 ) {
+    assert_only_self();
     ArgentModel.change_guardian(newGuardian);
     return ();
 }
@@ -108,6 +104,7 @@ func changeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_
 func changeGuardianBackup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     newGuardian: felt
 ) {
+    assert_only_self();
     ArgentModel.change_guardian_backup(newGuardian);
     return ();
 }
@@ -115,18 +112,21 @@ func changeGuardianBackup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_
 
 @external
 func triggerEscapeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+    assert_only_self();
     ArgentModel.trigger_escape_guardian();
     return ();
 }
 
 @external
 func triggerEscapeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+    assert_only_self();
     ArgentModel.trigger_escape_signer();
     return ();
 }
 
 @external
 func cancelEscape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+    assert_only_self();
     ArgentModel.cancel_escape();
     return ();
 }
@@ -135,6 +135,7 @@ func cancelEscape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_pt
 func escapeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     newGuardian: felt
 ) {
+    assert_only_self();
     ArgentModel.escape_guardian(newGuardian);
     return ();
 }
@@ -143,6 +144,7 @@ func escapeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_
 func escapeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     newSigner: felt
 ) {
+    assert_only_self();
     ArgentModel.escape_signer(newSigner);
     return ();
 }

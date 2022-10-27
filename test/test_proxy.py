@@ -21,7 +21,7 @@ def event_loop():
 
 @pytest.fixture(scope='module', params=[
     "ArgentAccount",
-    "ArgentPluginAccount",
+    # "ArgentPluginAccount",
 ])
 def account_class(request):
     return compile(f"contracts/account/{request.param}.cairo")

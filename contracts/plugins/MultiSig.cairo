@@ -1,7 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
-from starkware.cairo.common.math import assert_not_zero
+from starkware.cairo.common.math import assert_not_zero, assert_le, assert_lt, assert_nn
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.starknet.common.syscalls import (
@@ -38,33 +38,64 @@ func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
 ) {
     alloc_locals;
 
+    // TODO only self
+
     let (threshold) = MultiSig_threshold.read();
     with_attr error_message("MultiSig: already initialized") {
-        assert threshold = 0;
+        assert threshold = FALSE;
     }
 
-    let threshold = plugin_data[0];
-    let owners_len = plugin_data[1];
-    let owners = plugin_data + 2;
+    let threshold: felt  = plugin_data[0];
+    let owners_len: felt = plugin_data[1];
+    let owners: felt* = plugin_data + 2;
 
-    with_attr error_message("MultiSig: invalid threshold") {
-        assert_not_zero(threshold);
+    with_attr error_message("MultiSig: Zero threshold") {
+        assert_nn(threshold);
     }
 
-    // require(_owners.length > 0 && _owners.length <= MAX_OWNER_COUNT, "MSW: Not enough or too many owners");
-    with_attr error_message("MultiSig: XXX") {
-        assert_not_zero(owners_len);
+    with_attr error_message("MultiSig: Zero owners") {
+        assert_nn(owners_len);
     }
 
-    add_owners(owners_len, owners);
+    with_attr error_message("MultiSig: Bad threshold") {
+        assert_le(threshold, owners_len);
+    }
 
-    //require(_threshold > 0 && _threshold <= _owners.length, "MSW: Invalid threshold");
+    // CHECK MAX_OWNERS?
+
+    _add_owners(owners_len, owners);
     MultiSig_threshold.write(threshold);    
     return ();
 }
 
-
+@external
 func add_owners{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    new_threshold: felt, owners_len: felt, owners: felt*
+) {
+    assert_only_self();
+    let (threshold) = MultiSig_threshold.read();
+    with_attr error_message("MultiSig: not initialized") {
+        assert_nn(threshold);
+    }
+
+    with_attr error_message("MultiSig: Zero threshold") {
+        assert_nn(new_threshold);
+    }
+
+    // CHECK MAX_OWNERS?
+
+    _add_owners(owners_len, owners);
+
+    let (new_owners_len) = MultiSig_owners_len.read();
+    with_attr error_message("MultiSig: Bad threshold") {
+        assert_le(new_threshold, new_owners_len);
+    }
+
+    MultiSig_threshold.write(new_threshold);  
+    return ();
+}
+
+func _add_owners{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     owners_len: felt, owners: felt*
 ) {
     if (owners_len == 0) {
@@ -72,13 +103,14 @@ func add_owners{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
     }
     let owner = owners[0];
     let (current_owner_status) = MultiSig_owners.read(owner);
-    with_attr error_message("MultiSig: Already an owner") {
+    with_attr error_message("MultiSig: Already an owner: {owner}") {
         assert current_owner_status = FALSE;
     }
+    // CHECK can be more efficient
     let (current_owners_len) = MultiSig_owners_len.read();
     MultiSig_owners_len.write(current_owners_len + 1);
     MultiSig_owners.write(owner, TRUE);
-    add_owners(owners_len - 1, owners + 1);
+    _add_owners(owners_len - 1, owners + 1);
     return ();
 }
 
@@ -120,13 +152,28 @@ func is_valid_signature{
     signature: felt*
 ) -> (is_valid: felt) {
 
-    // TODO threshold
-    // TODO signature_lenght
-    // TODO make sure sigs are all different
     let (threshold) = MultiSig_threshold.read();
+    with_attr error_message("MultiSig: not initialized") {
+        assert_nn(threshold);
+    }
 
     let signatures = signature[1];
-    require_signatures(hash, signatures, signature + 2);
+
+    with_attr error_message("MultiSig: Invalid signature length") {
+        assert signature_len = 2 + (3 * signatures);
+    }
+
+    with_attr error_message("MultiSig: Not enough (or too many) signatures") {
+        // CHECK allow extra sigs? why?
+        assert threshold = signatures;
+    }
+
+    require_signatures(
+        hash=hash,
+        last_owner=0,
+        signatures_len=signatures,
+        signatures=signature + 2
+    );
     return (is_valid=TRUE);
 }
 
@@ -137,6 +184,7 @@ func require_signatures{
     ecdsa_ptr: SignatureBuiltin*
 }(
     hash: felt,
+    last_owner: felt,
     signatures_len: felt,
     signatures: felt*
 ) {
@@ -148,8 +196,18 @@ func require_signatures{
     let sig_r = signatures[1];
     let sig_s = signatures[2];
 
-    // TODO assert that owner is really an owner
-    // TODO maybe get the owner from the signature, not sure if cheaper
+    let (is_owner) = MultiSig_owners.read(address=owner);
+    with_attr error_message("MultiSig: {owner} is not an owner") {
+        assert is_owner = TRUE;
+    }
+
+    // TODO this is not that easy on cairo
+    // with_attr error_message("MultiSig: Bad threshold {last_owner} {owner}") {
+    //     // owner > last_owner . This guarantees unique owners
+    //     assert_lt(last_owner, owner);
+    // }
+
+    // CHECK maybe get the owner from the signature, not sure if cheaper
 
     verify_ecdsa_signature(
         message=hash,
@@ -157,7 +215,12 @@ func require_signatures{
         signature_r=sig_r,
         signature_s=sig_s
     );
-    require_signatures(hash, signatures_len - 1, signatures + 3);
+    require_signatures(
+        hash=hash,
+        last_owner=owner,
+        signatures_len=signatures_len - 1,
+        signatures=signatures + 3
+    );
     return ();
 }
 

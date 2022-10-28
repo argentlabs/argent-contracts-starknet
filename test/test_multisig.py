@@ -1,16 +1,12 @@
 import pytest
 import asyncio
 from starkware.starknet.testing.starknet import Starknet
-from starkware.starknet.definitions.general_config import StarknetChainId
 from utils.Signer import Signer
 from utils.multisig_utils import MultisigPluginSigner
-from utils.utilities import build_contract, compile, str_to_felt, assert_revert, assert_event_emitted, DEFAULT_TIMESTAMP, update_starknet_block
-from utils.TransactionSender import TransactionSender
-from starkware.cairo.common.hash_state import compute_hash_on_elements
-from starkware.starknet.compiler.compile import get_selector_from_name
-from utils.merkle_utils import generate_merkle_proof, generate_merkle_root, get_leaves, verify_merkle_proof
+from utils.utilities import build_contract, compile, str_to_felt, assert_revert, assert_event_emitted
 
 signer_key = Signer(1)
+signer_key_2 = Signer(2)
 wrong_signer_key = Signer(6)
 
 
@@ -22,7 +18,6 @@ def event_loop():
 @pytest.fixture(scope='module')
 async def starknet():
     return await Starknet.empty()
-
 
 
 @pytest.fixture(scope='module')
@@ -85,3 +80,89 @@ async def test_dapp(contracts):
         data=[]
     )
     assert (await dapp.get_balance().call()).result.res == 47
+
+
+@pytest.mark.asyncio
+async def test_1_of_2(contracts):
+    multisig_plugin_signer, dapp = contracts
+    assert (await dapp.get_balance().call()).result.res == 0
+
+    threshold = 1
+    new_owners = [signer_key_2.public_key]
+    await multisig_plugin_signer.execute_on_plugin(
+        "add_owners",
+        [threshold, len(new_owners), *new_owners]
+    )
+
+    multisig_plugin_signer_2 = MultisigPluginSigner(
+        keys=[signer_key_2],
+        account=multisig_plugin_signer.account,
+        plugin_address=multisig_plugin_signer.plugin_address
+    )
+
+    await multisig_plugin_signer_2.send_transaction(
+        calls=[(dapp.contract_address, 'set_balance', [47])],
+    )
+    assert (await dapp.get_balance().call()).result.res == 47
+
+    await multisig_plugin_signer.send_transaction(
+        calls=[(dapp.contract_address, 'set_balance', [48])],
+    )
+    assert (await dapp.get_balance().call()).result.res == 48
+
+@pytest.mark.asyncio
+async def test_2_of_2(contracts):
+    multisig_plugin_signer, dapp = contracts
+    assert (await dapp.get_balance().call()).result.res == 0
+
+    threshold = 2
+    new_owners = [signer_key_2.public_key]
+    await multisig_plugin_signer.execute_on_plugin(
+        "add_owners",
+        [threshold, len(new_owners), *new_owners]
+    )
+
+    multisig_plugin_signer_2 = MultisigPluginSigner(
+        keys=[signer_key_2],
+        account=multisig_plugin_signer.account,
+        plugin_address=multisig_plugin_signer.plugin_address
+    )
+
+    multisig_plugin_signer_both = MultisigPluginSigner(
+        keys=[signer_key, signer_key_2],
+        account=multisig_plugin_signer.account,
+        plugin_address=multisig_plugin_signer.plugin_address
+    )
+
+    multisig_plugin_signer_same_key_twice = MultisigPluginSigner(
+        keys=[signer_key, signer_key],
+        account=multisig_plugin_signer.account,
+        plugin_address=multisig_plugin_signer.plugin_address
+    )
+
+    await assert_revert(
+        multisig_plugin_signer_2.send_transaction(
+            calls=[(dapp.contract_address, 'set_balance', [47])],
+        ),
+        revert_reason="MultiSig: Not enough (or too many) signatures"
+    )
+
+    await assert_revert(
+        multisig_plugin_signer.send_transaction(
+            calls=[(dapp.contract_address, 'set_balance', [47])],
+        ),
+        revert_reason="MultiSig: Not enough (or too many) signatures"
+    )
+
+    await assert_revert(
+        multisig_plugin_signer_same_key_twice.send_transaction(
+            calls=[(dapp.contract_address, 'set_balance', [47])],
+        ),
+        revert_reason="TBD"
+    )
+
+    await multisig_plugin_signer_both.send_transaction(
+        calls=[(dapp.contract_address, 'set_balance', [47])],
+    )
+    assert (await dapp.get_balance().call()).result.res == 47
+

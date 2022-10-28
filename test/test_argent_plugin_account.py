@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from starkware.starknet.testing.starknet import Starknet
 from utils.Signer import Signer
-from utils.utilities import build_contract, compile, assert_revert, ERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, str_to_felt, assert_event_emitted
+from utils.utilities import build_contract, compile, assert_revert, ERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, str_to_felt, assert_event_emitted, from_call_to_call_array
 from utils.plugin_signer import StarkPluginSigner
 from utils.session_keys_utils import SessionPluginSigner
 from starkware.starknet.compiler.compile import get_selector_from_name
@@ -144,6 +144,45 @@ async def test_executeOnPlugin(network):
     await assert_revert(
         stark_plugin_signer_2.send_transaction(calls=[(stark_plugin_signer.account.contract_address, 'executeOnPlugin', exec_arguments)]),
         revert_reason="StarkSigner: only self"
+    )
+
+    read_execution_info = await stark_plugin_signer.read_on_plugin("getPublicKey")
+    assert read_execution_info.result[0] == [signer_key.public_key]
+
+
+@pytest.mark.asyncio
+async def test_execute_from_external_account(network):
+    # Account 2 tries to change the signer key on Account 1, via __execute__ -> executeOnPlugin -> setPublicKey
+
+    account, stark_plugin_signer, stark_plugin_signer_2, session_plugin_signer, dapp = network
+    read_execution_info = await stark_plugin_signer.read_on_plugin("getPublicKey")
+    assert read_execution_info.result[0] == [signer_key.public_key]
+
+    set_public_key_arguments = [signer_key_2.public_key]
+
+    exec_on_plugin_args = [
+        stark_plugin_signer.plugin_address,
+        get_selector_from_name("setPublicKey"),
+        len(set_public_key_arguments),
+        *set_public_key_arguments
+    ]
+    exec_on_plugin_call = (stark_plugin_signer.account.contract_address, 'executeOnPlugin', exec_on_plugin_args)
+
+    execute_call_array, execute_calldata = from_call_to_call_array([exec_on_plugin_call])
+    execute_call_array_flat = [item for call in execute_call_array for item in list(call)]
+
+    exec_args = [
+        len(execute_call_array),
+        *execute_call_array_flat,
+        len(execute_calldata),
+        *execute_calldata
+    ]
+
+    execute_call = (stark_plugin_signer.account.contract_address, "__execute__", exec_args)
+
+    await assert_revert(
+        stark_plugin_signer_2.send_transaction(calls=[execute_call]),
+        revert_reason="argent: no reentrant call"
     )
 
     read_execution_info = await stark_plugin_signer.read_on_plugin("getPublicKey")

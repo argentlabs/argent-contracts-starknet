@@ -1,7 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
-from starkware.cairo.common.math import assert_not_zero, assert_le, assert_lt, assert_nn
+from starkware.cairo.common.math import assert_not_zero, assert_le, assert_lt, assert_nn, assert_lt_felt
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.starknet.common.syscalls import (
@@ -201,14 +201,12 @@ func require_signatures{
         assert is_owner = TRUE;
     }
 
-    // TODO this is not that easy on cairo
-    // with_attr error_message("MultiSig: Bad threshold {last_owner} {owner}") {
-    //     // owner > last_owner . This guarantees unique owners
-    //     assert_lt(last_owner, owner);
-    // }
+    with_attr error_message("MultiSig: Signatures are not sorted") {
+        // owner > last_owner . This guarantees unique owners. Signatures need to be ordered by owner
+        assert_lt_felt(last_owner, owner);
+    }
 
     // CHECK maybe get the owner from the signature, not sure if cheaper
-
     verify_ecdsa_signature(
         message=hash,
         public_key=owner,

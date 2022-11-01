@@ -110,6 +110,7 @@ async def test_1_of_2(contracts):
     )
     assert (await dapp.get_balance().call()).result.res == 48
 
+
 @pytest.mark.asyncio
 async def test_2_of_2(contracts):
     multisig_plugin_signer, dapp = contracts
@@ -122,29 +123,11 @@ async def test_2_of_2(contracts):
         [threshold, len(new_owners), *new_owners]
     )
 
+    # Only one signer
     multisig_plugin_signer_2 = MultisigPluginSigner(
         keys=[signer_key_2],
         account=multisig_plugin_signer.account,
         plugin_address=multisig_plugin_signer.plugin_address
-    )
-
-    multisig_plugin_signer_both = MultisigPluginSigner(
-        keys=[signer_key, signer_key_2],
-        account=multisig_plugin_signer.account,
-        plugin_address=multisig_plugin_signer.plugin_address
-    )
-
-    multisig_plugin_signer_same_key_twice = MultisigPluginSigner(
-        keys=[signer_key, signer_key],
-        account=multisig_plugin_signer.account,
-        plugin_address=multisig_plugin_signer.plugin_address
-    )
-
-    await assert_revert(
-        multisig_plugin_signer_2.send_transaction(
-            calls=[(dapp.contract_address, 'set_balance', [47])],
-        ),
-        revert_reason="MultiSig: Not enough (or too many) signatures"
     )
 
     await assert_revert(
@@ -155,12 +138,46 @@ async def test_2_of_2(contracts):
     )
 
     await assert_revert(
+        multisig_plugin_signer_2.send_transaction(
+            calls=[(dapp.contract_address, 'set_balance', [47])],
+        ),
+        revert_reason="MultiSig: Not enough (or too many) signatures"
+    )
+
+    # Same signer twice
+    multisig_plugin_signer_same_key_twice = MultisigPluginSigner(
+        keys=[signer_key, signer_key],
+        account=multisig_plugin_signer.account,
+        plugin_address=multisig_plugin_signer.plugin_address
+    )
+
+    await assert_revert(
         multisig_plugin_signer_same_key_twice.send_transaction(
             calls=[(dapp.contract_address, 'set_balance', [47])],
         ),
-        revert_reason="TBD"
+        revert_reason="MultiSig: Signatures are not sorted"
     )
 
+    # Wrong order
+    multisig_plugin_signer_wrong_order = MultisigPluginSigner(
+        keys=[signer_key_2, signer_key],
+        account=multisig_plugin_signer.account,
+        plugin_address=multisig_plugin_signer.plugin_address
+    )
+
+    await assert_revert(
+        multisig_plugin_signer_wrong_order.send_transaction(
+            calls=[(dapp.contract_address, 'set_balance', [47])],
+        ),
+        revert_reason="MultiSig: Signatures are not sorted"
+    )
+
+    # Correct call
+    multisig_plugin_signer_both = MultisigPluginSigner(
+        keys=[signer_key, signer_key_2],
+        account=multisig_plugin_signer.account,
+        plugin_address=multisig_plugin_signer.plugin_address
+    )
     await multisig_plugin_signer_both.send_transaction(
         calls=[(dapp.contract_address, 'set_balance', [47])],
     )

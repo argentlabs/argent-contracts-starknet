@@ -138,6 +138,18 @@ func assert_non_reentrant{syscall_ptr: felt*}() -> () {
     return ();
 }
 
+func assert_self_or_zero{syscall_ptr: felt*}() -> () {
+    let (caller_address) = get_caller_address();
+    if (caller_address == 0) {
+        return ();
+    }
+    let (self) = get_contract_address();
+    with_attr error_message("argent: only self") {
+        assert self = caller_address;
+    }
+    return ();
+}
+
 func assert_correct_tx_version{syscall_ptr: felt*}(tx_version: felt) -> () {
     with_attr error_message("argent: invalid tx version") {
         assert (tx_version - TRANSACTION_VERSION) * (tx_version - QUERY_VERSION) = 0;

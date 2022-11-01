@@ -13,7 +13,8 @@ from starkware.starknet.common.syscalls import (
 from contracts.account.library import (
     Call,
     CallArray,
-    assert_only_self
+    assert_only_self,
+    assert_self_or_zero
 )
 
 
@@ -29,8 +30,10 @@ func MultiSig_owners_len() -> (res: felt) {
 func MultiSig_owners(address: felt) -> (res: felt) {
 }
 
-// TODO think about nonces
-// TODO think other account as a member
+// CHECK think about nonces
+// CHECK think about other account as a member
+// CHECK think revoking signature
+// CHECK should it be an easy way to list owners?
 
 @external
 func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
@@ -38,7 +41,7 @@ func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
 ) {
     alloc_locals;
 
-    // TODO only self
+    assert_self_or_zero();
 
     let (threshold) = MultiSig_threshold.read();
     with_attr error_message("MultiSig: already initialized") {
@@ -64,13 +67,14 @@ func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
     // CHECK MAX_OWNERS?
 
     _add_owners(owners_len, owners);
+    MultiSig_owners_len.write(owners_len);
     MultiSig_threshold.write(threshold);    
     return ();
 }
 
 @external
 func add_owners{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    new_threshold: felt, owners_len: felt, owners: felt*
+    new_threshold: felt, new_owners_len: felt, new_owners: felt*
 ) {
     assert_only_self();
     let (threshold) = MultiSig_threshold.read();
@@ -84,7 +88,9 @@ func add_owners{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
 
     // CHECK MAX_OWNERS?
 
-    _add_owners(owners_len, owners);
+    _add_owners(new_owners_len, new_owners);
+    let (current_owners_len) = MultiSig_owners_len.read();
+    MultiSig_owners_len.write(current_owners_len + new_owners_len);
 
     let (new_owners_len) = MultiSig_owners_len.read();
     with_attr error_message("MultiSig: Bad threshold") {
@@ -106,10 +112,8 @@ func _add_owners{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr
     with_attr error_message("MultiSig: Already an owner: {owner}") {
         assert current_owner_status = FALSE;
     }
-    // CHECK can be more efficient
-    let (current_owners_len) = MultiSig_owners_len.read();
-    MultiSig_owners_len.write(current_owners_len + 1);
     MultiSig_owners.write(owner, TRUE);
+
     _add_owners(owners_len - 1, owners + 1);
     return ();
 }

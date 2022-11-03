@@ -8,7 +8,7 @@ The account is a 2-of-2 custom multisig where the `signer` key is typically stor
 
 The user can always opt-out of the guardian service and manage the guardian key himself. Alternatively he/she can add a second `guardian_backup` key to the account that has the same role as the `guardian` and can be used as the ultimate censorship resistance guarantee.
 
-Normal operations of the wallet (`execute`, `change_signer`, `change_guardian`, `change_guardian_backup`, `validate_guardian_signature`, `cancel_escape`) require the approval of both parties to be executed.
+Normal operations of the wallet (`execute`, `changeSigner`, `changeGuardian`, `changeGuardianBackup`, `validateGuardianSignature`, `cancelEscape`) require the approval of both parties to be executed.
 
 Each party alone can trigger the `escape` mode (a.k.a. recovery) on the wallet if the other party is not cooperating or lost. An escape takes 7 days before being active, after which the non-cooperating party can be replaced.
 The wallet is asymmetric in favor of the `signer` who can override an escape triggered by the guardian.

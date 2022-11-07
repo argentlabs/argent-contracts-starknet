@@ -9,12 +9,16 @@ from starkware.starknet.common.syscalls import (
     library_call,
     get_contract_address,
 )
-from contracts.account.library import (
+
+from contracts.utils.calls import (
     Call,
     CallArray,
+    execute_call_array,
+)
+
+from contracts.account.library import (
     Escape,
     ArgentModel,
-    execute_call_array,
     assert_only_self,
     assert_correct_tx_version,
     assert_non_reentrant,

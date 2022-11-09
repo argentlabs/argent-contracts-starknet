@@ -11,7 +11,6 @@ from starkware.starknet.common.syscalls import (
 )
 
 from contracts.utils.calls import (
-    Call,
     CallArray,
     execute_call_array,
 )

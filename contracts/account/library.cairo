@@ -17,10 +17,7 @@ from starkware.cairo.common.bool import TRUE, FALSE
 
 from contracts.upgrade.Upgradable import _set_implementation
 
-from contracts.utils.calls import (
-    Call,
-    CallArray,
-)
+from contracts.utils.calls import CallArray
 
 const SUPPORTS_INTERFACE_SELECTOR = 1184015894760294494673613438913361435336722154500302038630992932234692784845;
 const ERC165_ACCOUNT_INTERFACE_ID = 0x3943f10f;

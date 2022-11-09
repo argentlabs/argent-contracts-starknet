@@ -10,14 +10,16 @@ from starkware.starknet.common.syscalls import (
     get_contract_address,
 )
 from contracts.plugins.IPlugin import IPlugin
-from contracts.account.library import (
+from contracts.utils.calls import (
     Call,
     CallArray,
-    Escape,
-    ArgentModel,
-    from_call_array_to_call,
     execute_call_array,
     execute_calls,
+    from_call_array_to_call
+)
+from contracts.account.library import (
+    Escape,
+    ArgentModel,
     assert_non_reentrant,
     assert_initialized,
     assert_no_self_call,

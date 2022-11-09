@@ -232,7 +232,7 @@ async def test_multicall(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
 
-    # should reverts when one of the call is to the account
+    # should revert when one of the call is to the account
     await assert_revert(
         sender.send_transaction([(dapp.contract_address, 'set_number', [47]), (account.contract_address, 'triggerEscapeGuardian', [])], [signer, guardian])
     )
@@ -243,11 +243,11 @@ async def test_multicall(contract_factory):
     # should indicate which called failed
     await assert_revert(
         sender.send_transaction([(dapp.contract_address, 'set_number', [47]), (dapp.contract_address, 'throw_error', [1])], [signer, guardian]),
-        "argent: multicall 1 failed"
+        "multicall 1 failed"
     )
     await assert_revert(
         sender.send_transaction([(dapp.contract_address, 'throw_error', [1]), (dapp.contract_address, 'set_number', [47])], [signer, guardian]),
-        "argent: multicall 0 failed"
+        "multicall 0 failed"
     )
 
     # should call the dapp

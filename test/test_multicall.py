@@ -44,7 +44,7 @@ async def test_multicall():
     response = await multicall.aggregate(call_array, calldata).call()
 
     assert response.result.retdata == [
-            1, 18,
-            2, 1000, 0,
-            2, 1000, 0
+            1, 18,       # 1st call result
+            2, 1000, 0,  # 2nd call result
+            2, 1000, 0   # 3rd call result
     ]

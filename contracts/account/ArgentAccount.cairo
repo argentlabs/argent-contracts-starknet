@@ -68,9 +68,6 @@ func __validate__{
     // get the tx info
     let (tx_info) = get_tx_info();
 
-    // block transaction with version != 1 or QUERY
-    assert_correct_tx_version(tx_info.version);
-
     if (call_array_len == 1) {
         if (call_array[0].to == tx_info.account_contract_address) {
             // a * b == 0 --> a == 0 OR b == 0
@@ -123,6 +120,11 @@ func __execute__{
     retdata_size: felt, retdata: felt*
 ) {
     alloc_locals;
+
+    let (tx_info) = get_tx_info();
+
+    // block transaction with version != 1 or QUERY
+    assert_correct_tx_version(tx_info.version);
     
     // no reentrant call to prevent signature reutilization
     assert_non_reentrant();
@@ -131,7 +133,6 @@ func __execute__{
     let (retdata_len, retdata) = execute_call_array(call_array_len, call_array, calldata_len, calldata);
 
     // emit event
-    let (tx_info) = get_tx_info();
     transaction_executed.emit(
         hash=tx_info.transaction_hash, response_len=retdata_len, response=retdata
     );

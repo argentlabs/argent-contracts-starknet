@@ -224,8 +224,9 @@ func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
 func upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     implementation: felt, calldata_len: felt, calldata: felt*
 ) -> (retdata_len: felt, retdata: felt*) {
+    // upgrades the implementation
     ArgentModel.upgrade(implementation);
-
+    // library call to implementation.execute_after_upgrade 
     if (calldata_len == 0) {
         let (retdata: felt*) = alloc();
         return (retdata_len=0, retdata=retdata);
@@ -240,7 +241,7 @@ func upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     }
 }
 
-// @dev Code to execute after an upgrade
+// @dev Logic (multicall) to execute after an upgrade
 // @param call_array The multicall to execute
 // @param calldata The calldata associated to the multicall
 // @return retdata An array containing the output of the calls

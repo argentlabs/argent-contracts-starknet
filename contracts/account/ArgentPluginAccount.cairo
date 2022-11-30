@@ -2,7 +2,6 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.alloc import alloc
-from starkware.cairo.common.memcpy import memcpy
 from starkware.cairo.common.math import assert_not_zero
 from starkware.starknet.common.syscalls import (
     library_call,
@@ -18,7 +17,6 @@ from contracts.utils.calls import (
     from_call_array_to_call
 )
 from contracts.account.library import (
-    Escape,
     ArgentModel,
     assert_non_reentrant,
     assert_initialized,
@@ -26,6 +24,12 @@ from contracts.account.library import (
     assert_correct_tx_version,
     assert_only_self
 )
+
+//
+// @title ArgentPluginAccount
+// @author Argent Labs
+// @notice Experimental Argent account supporting plugins
+//
 
 ///////////////////////
 // CONSTANTS
@@ -214,6 +218,8 @@ func supportsInterface{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_che
 // PLUGIN
 //////////////////////
 
+// @dev Adds a new plugin
+// @param plugin The class hash of the plugin
 @external
 func addPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) {
     // only called via execute
@@ -227,6 +233,8 @@ func addPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     return ();
 }
 
+// @dev Removes an existing plugin
+// @param plugin The class hash of the plugin
 @external
 func removePlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) {
     // only called via execute
@@ -241,6 +249,10 @@ func removePlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_pt
     return ();
 }
 
+// @dev Executes a library call on one of the enabled plugin of the account
+// @param plugin The class hash of the plugin
+// @param selector The method to execute on the plugin
+// @param calldata The call data of the call
 @external
 func executeOnPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     plugin: felt, selector: felt, calldata_len: felt, calldata: felt*
@@ -259,6 +271,9 @@ func executeOnPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check
     return ();
 }
 
+// @dev Checks if a plugin is enabled on the account
+// @param plugin The class hash of the plugin
+// @return success True if the plugin is enabled
 @view
 func isPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) -> (
     success: felt
@@ -294,6 +309,9 @@ func validate_with_plugin{
 // EXTERNAL FUNCTIONS
 //////////////////////
 
+// @dev Initialises the account with the signer and an optional guardian
+// @param signer The signer public key
+// @param guardian The guardian public key
 @external
 func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     signer: felt, guardian: felt
@@ -304,6 +322,10 @@ func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
     return ();
 }
 
+// @dev Upgrades the implementation of the account and optionaly (library) calls {execute_after_upgrade}
+// @param implementation The class hash of the new implementation
+// @param calldata The calldata to pass to {execute_after_upgrade}
+// @return retdata The return of the library call to {execute_after_upgrade}
 @external
 func upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     implementation: felt, calldata_len: felt, calldata: felt*
@@ -325,6 +347,10 @@ func upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     }
 }
 
+// @dev Logic (multicall) to execute after an upgrade
+// @param call_array The multicall to execute
+// @param calldata The calldata associated to the multicall
+// @return retdata An array containing the output of the calls
 @external
 func execute_after_upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     call_array_len: felt, call_array: CallArray*, calldata_len: felt, calldata: felt*
@@ -340,6 +366,8 @@ func execute_after_upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range
     return (retdata_len=retdata_len, retdata=retdata);
 }
 
+// @dev Changes the signer
+// @param newSigner The public key of the new signer
 @external
 func changeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     newSigner: felt
@@ -348,6 +376,8 @@ func changeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_pt
     return ();
 }
 
+// @dev Changes the guardian
+// @param newGuardian The public key of the new guardian
 @external
 func changeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     newGuardian: felt
@@ -356,6 +386,8 @@ func changeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_
     return ();
 }
 
+// @dev Changes the guardian backup
+// @param newGuardian The public key of the new guardian backup
 @external
 func changeGuardianBackup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     newGuardian: felt
@@ -364,24 +396,29 @@ func changeGuardianBackup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_
     return ();
 }
 
+// @dev Triggers the escape of the guardian
 @external
 func triggerEscapeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     ArgentModel.trigger_escape_guardian();
     return ();
 }
 
+// @dev Triggers the escape of the signer
 @external
 func triggerEscapeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     ArgentModel.trigger_escape_signer();
     return ();
 }
 
+// @dev Cancels an ongoing escape if any
 @external
 func cancelEscape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     ArgentModel.cancel_escape();
     return ();
 }
 
+// @dev Escapes the guardian
+// @param newGuardian The public key of the new guardian
 @external
 func escapeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     newGuardian: felt
@@ -390,6 +427,8 @@ func escapeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_
     return ();
 }
 
+// @dev Escapes the signer
+// @param newSigner The public key of the new signer
 @external
 func escapeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     newSigner: felt
@@ -402,6 +441,8 @@ func escapeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_pt
 // VIEW FUNCTIONS
 /////////////////////
 
+// @dev Gets the current signer
+// @return signer The public key of the signer
 @view
 func getSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
     signer: felt
@@ -410,6 +451,8 @@ func getSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     return (signer=res);
 }
 
+// @dev Gets the current guardian
+// @return guardian The public key of the guardian
 @view
 func getGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
     guardian: felt
@@ -418,6 +461,8 @@ func getGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr
     return (guardian=res);
 }
 
+// @dev Gets the current guardian backup
+// @return guardian The public key of the guardian backup
 @view
 func getGuardianBackup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
     guardianBackup: felt
@@ -426,6 +471,9 @@ func getGuardianBackup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_che
     return (guardianBackup=res);
 }
 
+// @dev Gets the details of the ongoing escape
+// @return activeAt The timestamp at which the escape can be executed
+// @return type The type of the ongoing escape: 0=no escape, 1=guardian escape, 2=signer escape
 @view
 func getEscape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
     activeAt: felt, type: felt
@@ -434,17 +482,21 @@ func getEscape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     return (activeAt=activeAt, type=type);
 }
 
+// @dev Gets the version of the account implementation
+// @return version The current version as a short string
 @view
 func getVersion() -> (version: felt) {
     return (version=VERSION);
 }
 
+// @dev Gets the name of the account implementation
+// @return name The name as a short string
 @view
 func getName() -> (name: felt) {
     return (name=NAME);
 }
 
-// TMP: Remove when isValidSignature() is widely used 
+// @dev DEPRECATED: Remove when isValidSignature() is widely used
 @view
 func is_valid_signature{
     syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr

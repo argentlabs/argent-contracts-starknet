@@ -218,7 +218,8 @@ func supportsInterface{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_che
 // PLUGIN
 //////////////////////
 
-// @dev Adds a new plugin
+// @dev Adds a new plugin.
+// Must be called via {__execute__} and authorised by the signer and a guardian. 
 // @param plugin The class hash of the plugin
 @external
 func addPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) {
@@ -233,7 +234,8 @@ func addPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     return ();
 }
 
-// @dev Removes an existing plugin
+// @dev Removes an existing plugin.
+// Must be called via {__execute__} and authorised by the signer and a guardian. 
 // @param plugin The class hash of the plugin
 @external
 func removePlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) {
@@ -249,7 +251,8 @@ func removePlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_pt
     return ();
 }
 
-// @dev Executes a library call on one of the enabled plugin of the account
+// @dev Executes a library call on one of the enabled plugin of the account.
+// Must be called via {__execute__} and authorised by the signer and a guardian.
 // @param plugin The class hash of the plugin
 // @param selector The method to execute on the plugin
 // @param calldata The call data of the call
@@ -271,7 +274,7 @@ func executeOnPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check
     return ();
 }
 
-// @dev Checks if a plugin is enabled on the account
+// @dev Checks if a plugin is enabled on the account.
 // @param plugin The class hash of the plugin
 // @return success True if the plugin is enabled
 @view
@@ -309,7 +312,8 @@ func validate_with_plugin{
 // EXTERNAL FUNCTIONS
 //////////////////////
 
-// @dev Initialises the account with the signer and an optional guardian
+// @dev Initialises the account with the signer and an optional guardian.
+// Must be called immediately after the account is deployed.
 // @param signer The signer public key
 // @param guardian The guardian public key
 @external
@@ -322,7 +326,8 @@ func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
     return ();
 }
 
-// @dev Upgrades the implementation of the account and optionaly (library) calls {execute_after_upgrade}
+// @dev Upgrades the implementation of the account and delegate calls {execute_after_upgrade} if additional data is provided.
+// Must be called via {__execute__} and authorised by the signer and a guardian. 
 // @param implementation The class hash of the new implementation
 // @param calldata The calldata to pass to {execute_after_upgrade}
 // @return retdata The return of the library call to {execute_after_upgrade}
@@ -347,7 +352,8 @@ func upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     }
 }
 
-// @dev Logic (multicall) to execute after an upgrade
+// @dev Logic or multicall to execute after an upgrade.
+// Can only be called by the account after a call to {upgrade}.
 // @param call_array The multicall to execute
 // @param calldata The calldata associated to the multicall
 // @return retdata An array containing the output of the calls
@@ -366,7 +372,8 @@ func execute_after_upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range
     return (retdata_len=retdata_len, retdata=retdata);
 }
 
-// @dev Changes the signer
+// @dev Changes the signer.
+// Must be called via {__execute__} and authorised by the signer and a guardian.
 // @param newSigner The public key of the new signer
 @external
 func changeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
@@ -376,7 +383,8 @@ func changeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_pt
     return ();
 }
 
-// @dev Changes the guardian
+// @dev Changes the guardian.
+// Must be called via {__execute__} and authorised by the signer and a guardian.
 // @param newGuardian The public key of the new guardian
 @external
 func changeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
@@ -386,7 +394,8 @@ func changeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_
     return ();
 }
 
-// @dev Changes the guardian backup
+// @dev Changes the guardian backup.
+// Must be called via {__execute__} and authorised by the signer and a guardian.
 // @param newGuardian The public key of the new guardian backup
 @external
 func changeGuardianBackup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
@@ -396,28 +405,34 @@ func changeGuardianBackup{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_
     return ();
 }
 
-// @dev Triggers the escape of the guardian
+// @dev Triggers the escape of the guardian when it is lost or compromised.
+// Must be called via {__execute__} and authorised by the signer alone.
+// Can override an ongoing escape of the signer.
 @external
 func triggerEscapeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     ArgentModel.trigger_escape_guardian();
     return ();
 }
 
-// @dev Triggers the escape of the signer
+// @dev Triggers the escape of the signer when it is lost or compromised.
+// Must be called via {__execute__} and authorised by a guardian alone.
+// Cannot override an ongoing escape of the guardian.
 @external
 func triggerEscapeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     ArgentModel.trigger_escape_signer();
     return ();
 }
 
-// @dev Cancels an ongoing escape if any
+// @dev Cancels an ongoing escape if any.
+// Must be called via {__execute__} and authorised by the signer and a guardian.
 @external
 func cancelEscape{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     ArgentModel.cancel_escape();
     return ();
 }
 
-// @dev Escapes the guardian
+// @dev Escapes the guardian after the escape period of 7 days.
+// Must be called via {__execute__} and authorised by the signer alone.
 // @param newGuardian The public key of the new guardian
 @external
 func escapeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
@@ -427,7 +442,8 @@ func escapeGuardian{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_
     return ();
 }
 
-// @dev Escapes the signer
+// @dev Escapes the signer after the escape period of 7 days.
+// Must be called via {__execute__} and authorised by a guardian alone.
 // @param newSigner The public key of the new signer
 @external
 func escapeSigner{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(

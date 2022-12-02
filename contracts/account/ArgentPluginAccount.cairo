@@ -238,7 +238,7 @@ func addPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
 }
 
 // @dev Removes an existing plugin.
-// Must be called via {__execute__} and authorised by the signer and a guardian, or by a plugin.
+// Must be called via {__execute__} and authorised by the signer and a guardian.
 // @param plugin The class hash of the plugin
 @external
 func removePlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) {

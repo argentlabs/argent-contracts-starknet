@@ -36,7 +36,7 @@ from contracts.account.library import (
 ///////////////////////
 
 const NAME = 'ArgentPluginAccount';
-const VERSION = '0.0.1';
+const VERSION = '0.0.2';
 
 // get_selector_from_name('use_plugin')
 const USE_PLUGIN_SELECTOR = 1121675007639292412441492001821602921366030142137563176027248191276862353634;
@@ -110,6 +110,9 @@ func __validate__{
         }
     } else {
         if (call_array[0].to == tx_info.account_contract_address and call_array[0].selector == USE_PLUGIN_SELECTOR) {
+            // make sure the remaining calls are not to the account
+            assert_no_self_call(tx_info.account_contract_address, call_array_len - 1, call_array +  + CallArray.SIZE);
+            // validate with the plugin
             validate_with_plugin(call_array_len, call_array, calldata_len, calldata);
             return ();
         }
@@ -220,7 +223,6 @@ func supportsInterface{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_che
 
 // @dev Adds a new plugin.
 // Must be called via {__execute__} and authorised by the signer and a guardian.
-// Can also be called by a plugin.
 // @param plugin The class hash of the plugin
 @external
 func addPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) {
@@ -236,7 +238,7 @@ func addPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
 }
 
 // @dev Removes an existing plugin.
-// Must be called via {__execute__} and authorised by the signer and a guardian. 
+// Must be called via {__execute__} and authorised by the signer and a guardian, or by a plugin.
 // @param plugin The class hash of the plugin
 @external
 func removePlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) {

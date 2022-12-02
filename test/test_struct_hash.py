@@ -7,13 +7,7 @@ user1 = 0x69221ff9023c4d7ba9123f0f9c32634c23fc5776d86657f464ecb51fd811445
 user2 = 0x72648c3b1953572d2c4395a610f18b83cca14fa4d1ba10fc4484431fd463e5c
 
 
-@pytest.fixture(scope='module')
-def event_loop():
-    return asyncio.new_event_loop()
-
-@pytest.mark.asyncio
-async def test_message_hash():
-    starknet = await Starknet.empty()
+async def test_message_hash(starknet: Starknet, ):
     eip712_cls = compile('contracts/test/StructHash.cairo')
     eip712 = await starknet.deploy(
         contract_class=eip712_cls,

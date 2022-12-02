@@ -1,5 +1,6 @@
 import pytest
-import asyncio
+
+from starkware.starknet.services.api.contract_class import ContractClass
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from utils.Signer import Signer
@@ -27,22 +28,9 @@ IACCOUNT_ID = 0x3943f10f
 ESCAPE_TYPE_GUARDIAN = 1
 ESCAPE_TYPE_SIGNER = 2
 
-@pytest.fixture(scope='module')
-def event_loop():
-    return asyncio.new_event_loop()
 
 @pytest.fixture(scope='module')
-def contract_classes():
-    account_cls = compile('contracts/account/ArgentAccount.cairo')
-    dapp_cls = compile("contracts/test/TestDapp.cairo")
-    
-    return account_cls, dapp_cls
-
-@pytest.fixture(scope='module')
-async def contract_init(contract_classes):
-    account_cls, dapp_cls = contract_classes
-    starknet = await Starknet.empty()
-
+async def contract_init(starknet: Starknet, account_cls: ContractClass, test_dapp_cls: ContractClass):
     account = await starknet.deploy(
         contract_class=account_cls,
         constructor_calldata=[]
@@ -56,25 +44,25 @@ async def contract_init(contract_classes):
     await account_no_guardian.initialize(signer.public_key, 0).execute()
 
     dapp = await starknet.deploy(
-        contract_class=dapp_cls,
+        contract_class=test_dapp_cls,
         constructor_calldata=[],
     )
 
     return starknet.state, account, account_no_guardian, dapp
 
+
 @pytest.fixture
-async def contract_factory(contract_classes, contract_init):
-    account_cls, dapp_cls = contract_classes
+async def contract_factory(account_cls: ContractClass, test_dapp_cls: ContractClass, contract_init):
     state, account, account_no_guardian, dapp = contract_init
     _state = state.copy()
 
     account = cached_contract(_state, account_cls, account)
     account_no_guardian = cached_contract(_state, account_cls, account_no_guardian)
-    dapp = cached_contract(_state, dapp_cls, dapp)
+    dapp = cached_contract(_state, test_dapp_cls, dapp)
 
     return account, account_no_guardian, dapp
 
-@pytest.mark.asyncio
+
 async def test_initializer(contract_factory):
     account, _, _ = contract_factory
     # should be configured correctly
@@ -89,7 +77,7 @@ async def test_initializer(contract_factory):
          "argent: already initialized"
      )
 
-@pytest.mark.asyncio
+
 async def test_declare(contract_factory):
     account, _, _ = contract_factory
     sender = TransactionSender(account)
@@ -116,7 +104,8 @@ async def test_declare(contract_factory):
 
     tx_exec_info = await sender.declare_class(test_cls, [signer, guardian])
 
-@pytest.mark.asyncio
+
+
 async def test_call_dapp_with_guardian(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
@@ -166,7 +155,7 @@ async def test_call_dapp_with_guardian(contract_factory):
 
     assert (await dapp.get_number(account.contract_address).call()).result.number == 47
 
-@pytest.mark.asyncio
+
 async def test_call_dapp_guardian_backup(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
@@ -201,7 +190,7 @@ async def test_call_dapp_guardian_backup(contract_factory):
 
     assert (await dapp.get_number(account.contract_address).call()).result.number == 47
 
-@pytest.mark.asyncio
+
 async def test_call_dapp_no_guardian(contract_factory):
     _, account_no_guardian, dapp = contract_factory
     sender = TransactionSender(account_no_guardian)
@@ -216,7 +205,7 @@ async def test_call_dapp_no_guardian(contract_factory):
     await sender.send_transaction([(account_no_guardian.contract_address, 'changeSigner', [new_signer.public_key])], [signer])
     assert (await account_no_guardian.getSigner().call()).result.signer == (new_signer.public_key)
 
-    # should reverts calls that require the guardian to be set
+    # should revert calls that require the guardian to be set
     await assert_revert(
         sender.send_transaction([(account_no_guardian.contract_address, 'triggerEscapeGuardian', [])], [new_signer]),
         "argent: guardian required"
@@ -227,7 +216,7 @@ async def test_call_dapp_no_guardian(contract_factory):
     await sender.send_transaction([(account_no_guardian.contract_address, 'changeGuardian', [new_guardian.public_key])], [new_signer])
     assert (await account_no_guardian.getGuardian().call()).result.guardian == (new_guardian.public_key)
 
-@pytest.mark.asyncio
+
 async def test_multicall(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
@@ -255,12 +244,12 @@ async def test_multicall(contract_factory):
     await sender.send_transaction([(dapp.contract_address, 'set_number', [47]), (dapp.contract_address, 'increase_number', [10])], [signer, guardian])
     assert (await dapp.get_number(account.contract_address).call()).result.number == 57
 
-@pytest.mark.asyncio
+
 async def test_change_signer(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
 
-    assert (await account.getSigner().call()).result.signer == (signer.public_key)
+    assert (await account.getSigner().call()).result.signer == signer.public_key
 
     # should revert with the wrong signer
     await assert_revert(
@@ -286,7 +275,7 @@ async def test_change_signer(contract_factory):
 
     assert (await account.getSigner().call()).result.signer == (new_signer.public_key)
 
-@pytest.mark.asyncio
+
 async def test_change_guardian(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
@@ -317,7 +306,7 @@ async def test_change_guardian(contract_factory):
 
     assert (await account.getGuardian().call()).result.guardian == (new_guardian.public_key)
 
-@pytest.mark.asyncio
+
 async def test_change_guardian_backup(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
@@ -346,7 +335,7 @@ async def test_change_guardian_backup(contract_factory):
 
     assert (await account.getGuardianBackup().call()).result.guardianBackup == (new_guardian_backup.public_key)
 
-@pytest.mark.asyncio
+
 async def test_change_guardian_backup_when_no_guardian(contract_factory):
     _, account_no_guardian, dapp = contract_factory
     sender = TransactionSender(account_no_guardian)
@@ -355,7 +344,7 @@ async def test_change_guardian_backup_when_no_guardian(contract_factory):
         sender.send_transaction([(account_no_guardian.contract_address, 'changeGuardianBackup', [new_guardian_backup.public_key])], [signer])
     )
 
-@pytest.mark.asyncio
+
 async def test_change_guardian_when_guardian_backup(contract_factory):
     account, _, _ = contract_factory
     sender = TransactionSender(account)
@@ -368,7 +357,7 @@ async def test_change_guardian_when_guardian_backup(contract_factory):
         "argent: new guardian invalid"
     )
 
-@pytest.mark.asyncio
+
 async def test_trigger_escape_guardian_by_signer(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
@@ -391,7 +380,7 @@ async def test_trigger_escape_guardian_by_signer(contract_factory):
     escape = (await account.getEscape().call()).result
     assert (escape.activeAt == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_GUARDIAN)
 
-@pytest.mark.asyncio
+
 async def test_trigger_escape_signer_by_guardian(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
@@ -414,7 +403,7 @@ async def test_trigger_escape_signer_by_guardian(contract_factory):
     escape = (await account.getEscape().call()).result
     assert (escape.activeAt == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_SIGNER)
 
-@pytest.mark.asyncio
+
 async def test_trigger_escape_signer_by_guardian_backup(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
@@ -440,7 +429,7 @@ async def test_trigger_escape_signer_by_guardian_backup(contract_factory):
     escape = (await account.getEscape().call()).result
     assert (escape.activeAt == (DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_SIGNER)
 
-@pytest.mark.asyncio
+
 async def test_escape_guardian(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
@@ -487,7 +476,7 @@ async def test_escape_guardian(contract_factory):
     escape = (await account.getEscape().call()).result
     assert (escape.activeAt == 0 and escape.type == 0)
 
-@pytest.mark.asyncio
+
 async def test_escape_signer(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
@@ -532,7 +521,7 @@ async def test_escape_signer(contract_factory):
     escape = (await account.getEscape().call()).result
     assert (escape.activeAt == 0 and escape.type == 0)
 
-@pytest.mark.asyncio
+
 async def test_signer_overrides_trigger_escape_signer(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
@@ -553,7 +542,7 @@ async def test_signer_overrides_trigger_escape_signer(contract_factory):
     escape = (await account.getEscape().call()).result
     assert (escape.activeAt == (DEFAULT_TIMESTAMP + 100 + ESCAPE_SECURITY_PERIOD) and escape.type == ESCAPE_TYPE_GUARDIAN)
 
-@pytest.mark.asyncio
+
 async def test_guardian_overrides_trigger_escape_guardian(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
@@ -576,7 +565,6 @@ async def test_guardian_overrides_trigger_escape_guardian(contract_factory):
     )
 
 
-@pytest.mark.asyncio
 async def test_cancel_escape(contract_factory):
     account, _, dapp = contract_factory
     sender = TransactionSender(account)
@@ -609,7 +597,7 @@ async def test_cancel_escape(contract_factory):
     escape = (await account.getEscape().call()).result
     assert (escape.activeAt == 0 and escape.type == 0)
 
-@pytest.mark.asyncio
+
 async def test_is_valid_signature(contract_factory):
     account, _, dapp = contract_factory
     hash = 1283225199545181604979924458180358646374088657288769423115053097913173815464
@@ -624,7 +612,7 @@ async def test_is_valid_signature(contract_factory):
     res = (await account.is_valid_signature(hash, signatures).call()).result
     assert (res.is_valid == 1)
 
-@pytest.mark.asyncio
+
 async def test_support_interface(contract_factory):
     account, _, _ = contract_factory
     

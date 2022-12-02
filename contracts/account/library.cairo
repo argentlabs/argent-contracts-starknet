@@ -3,12 +3,9 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.cairo.common.alloc import alloc
-from starkware.cairo.common.memcpy import memcpy
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
 from starkware.starknet.common.syscalls import (
     library_call,
-    call_contract,
-    get_tx_info,
     get_contract_address,
     get_caller_address,
     get_block_timestamp,
@@ -483,7 +480,8 @@ namespace ArgentModel {
         let (guardian_backup) = _guardian_backup.read();
         with_attr error_message("argent: signature format invalid") {
             assert signatures_len = 4;
-            assert (signatures[0] + signatures[1]) = 0;
+            assert signatures[0] = 0;
+            assert signatures[1] = 0;
         }
         with_attr error_message("argent: guardian backup signature invalid") {
             verify_ecdsa_signature(

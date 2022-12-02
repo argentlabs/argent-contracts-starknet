@@ -1,4 +1,4 @@
-cairo-lang>=0.10.1
+cairo-lang>=0.10.2
 cairo-nile>=0.9.1
 nile-coverage>=0.2.0
 pytest>=7.1.2

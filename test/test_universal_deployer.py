@@ -1,5 +1,7 @@
 import pytest
 import asyncio
+
+from starkware.starknet.services.api.contract_class import ContractClass
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from utils.Signer import Signer
@@ -32,23 +34,12 @@ def compute_address(caller_address, salt, class_hash, constructor_calldata):
 
 
 @pytest.fixture(scope='module')
-def event_loop():
-    return asyncio.new_event_loop()
+def deployer_cls():
+    return compile('contracts/lib/UniversalDeployer.cairo')
 
 
 @pytest.fixture(scope='module')
-def contract_classes():
-    proxy_cls = compile("contracts/upgrade/Proxy.cairo")
-    account_cls = compile('contracts/account/ArgentAccount.cairo')
-    deployer_cls = compile('contracts/lib/UniversalDeployer.cairo')
-
-    return proxy_cls, account_cls, deployer_cls
-
-
-@pytest.fixture(scope='module')
-async def contract_init(contract_classes):
-    proxy_cls, account_cls, deployer_cls = contract_classes
-    starknet = await Starknet.empty()
+async def contract_init(starknet: Starknet, proxy_cls: ContractClass, account_cls: ContractClass, deployer_cls: ContractClass):
 
     proxy_decl = await starknet.declare(contract_class=proxy_cls)
     account_decl = await starknet.declare(contract_class=account_cls)
@@ -68,7 +59,6 @@ async def contract_init(contract_classes):
     return proxy_decl.class_hash, account_decl.class_hash, account, deployer
 
 
-@pytest.mark.asyncio
 async def test_deployer(contract_init):
     proxy_hash, account_hash, account, deployer = contract_init
     sender = TransactionSender(account)

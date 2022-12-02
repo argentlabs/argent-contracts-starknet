@@ -25,6 +25,16 @@ def account_cls() -> ContractClass:
 
 
 @pytest.fixture(scope='module')
+def plugin_account_cls() -> ContractClass:
+    return compile('contracts/account/ArgentPluginAccount.cairo')
+
+
+@pytest.fixture(scope='module')
+def session_plugin_cls() -> ContractClass:
+    return compile('contracts/plugins/SessionKey.cairo')
+
+
+@pytest.fixture(scope='module')
 def test_dapp_cls() -> ContractClass:
     return compile("contracts/test/TestDapp.cairo")
 
@@ -54,3 +64,4 @@ def deploy_env_copy(deploy_env: Tuple[Starknet, DeclaredClass, ContractClass, Co
     starknet, account_decl, account_cls, proxy_cls, proxy_decl = deploy_env
     starknet_copy = Starknet(starknet.state.copy())
     return starknet_copy, account_decl, account_cls, proxy_cls, proxy_decl
+

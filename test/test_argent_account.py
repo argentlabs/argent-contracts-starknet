@@ -30,9 +30,7 @@ ESCAPE_TYPE_SIGNER = 2
 
 
 @pytest.fixture(scope='module')
-async def contract_init(account_cls: ContractClass, test_dapp_cls: ContractClass):
-    starknet = await Starknet.empty()
-
+async def contract_init(starknet: Starknet, account_cls: ContractClass, test_dapp_cls: ContractClass):
     account = await starknet.deploy(
         contract_class=account_cls,
         constructor_calldata=[]

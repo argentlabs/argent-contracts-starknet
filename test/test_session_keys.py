@@ -1,5 +1,7 @@
 import pytest
 import asyncio
+
+from starkware.starknet.services.api.contract_class import ContractClass
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.definitions.general_config import StarknetChainId
 from utils.Signer import Signer
@@ -20,6 +22,7 @@ SESSION_TYPE_HASH = 0x1aa0e1c56b45cf06a54534fa1707c54e520b842feb21d03b7deddb6f1e
 # H(Policy(contractAddress:felt,selector:selector))
 POLICY_TYPE_HASH = 0x2f0026e78543f036f33e26a8f5891b88c58dc1e20cbbfaf0bb53274da6fa568
 
+
 def get_session_token(session_key, session_expires, root, chain_id, account):
 
     domain_hash = compute_hash_on_elements([STARKNET_DOMAIN_TYPE_HASH, chain_id])
@@ -33,36 +36,22 @@ def get_session_token(session_key, session_expires, root, chain_id, account):
     ])
     return signer.sign(hash)
 
-@pytest.fixture(scope='module')
-def event_loop():
-    return asyncio.new_event_loop()
 
 @pytest.fixture(scope='module')
-def contract_classes():
-    account_cls = compile('contracts/account/ArgentPluginAccount.cairo')
-    dapp_cls = compile("contracts/test/TestDapp.cairo")
-    session_plugin_cls = compile("contracts/plugins/SessionKey.cairo")
-    
-    return account_cls, dapp_cls, session_plugin_cls
-
-@pytest.fixture(scope='module')
-async def contract_init(contract_classes):
-    account_cls, dapp_cls, session_plugin_cls = contract_classes
-    starknet = await Starknet.empty()
-
+async def contract_init(starknet: Starknet, plugin_account_cls: ContractClass, test_dapp_cls: ContractClass, session_plugin_cls: ContractClass):
     account = await starknet.deploy(
-        contract_class=account_cls,
+        contract_class=plugin_account_cls,
         constructor_calldata=[]
     )
     await account.initialize(signer.public_key, 0).execute()
 
     dapp = await starknet.deploy(
-        contract_class=dapp_cls,
+        contract_class=test_dapp_cls,
         constructor_calldata=[]
     )
 
     dapp2 = await starknet.deploy(
-        contract_class=dapp_cls,
+        contract_class=test_dapp_cls,
         constructor_calldata=[]
     )
 
@@ -70,19 +59,19 @@ async def contract_init(contract_classes):
 
     return starknet.state, account, dapp, dapp2, session_plugin_decl.class_hash
 
+
 @pytest.fixture
-def contract_factory(contract_classes, contract_init):
-    account_cls, dapp_cls, session_plugin_cls = contract_classes
+def contract_factory(contract_init, plugin_account_cls: ContractClass, test_dapp_cls: ContractClass):
     state, account, dapp, dapp2, session_plugin_class = contract_init
     _state = state.copy()
 
-    account = cached_contract(_state, account_cls, account)
-    dapp = cached_contract(_state, dapp_cls, dapp)
-    dapp2 = cached_contract(_state, dapp_cls, dapp2)
+    account = cached_contract(_state, plugin_account_cls, account)
+    dapp = cached_contract(_state, test_dapp_cls, dapp)
+    dapp2 = cached_contract(_state, test_dapp_cls, dapp2)
 
     return account, dapp, dapp2, session_plugin_class
 
-@pytest.mark.asyncio
+
 async def test_call_dapp_with_session_key(contract_factory):
     account, dapp, dapp2, session_plugin = contract_factory
     sender = TransactionSender(account)

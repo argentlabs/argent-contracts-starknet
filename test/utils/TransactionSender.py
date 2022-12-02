@@ -11,7 +11,7 @@ from starkware.starknet.testing.objects import StarknetCallInfo
 from starkware.starknet.testing.starknet import Starknet
 from utils.Signer import Signer
 
-from test.utils.utilities import build_contract_with_proxy
+from utils.utilities import build_contract_with_proxy
 
 TRANSACTION_VERSION = 1
 

@@ -219,7 +219,8 @@ func supportsInterface{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_che
 //////////////////////
 
 // @dev Adds a new plugin.
-// Must be called via {__execute__} and authorised by the signer and a guardian. 
+// Must be called via {__execute__} and authorised by the signer and a guardian.
+// Can also be called by a plugin.
 // @param plugin The class hash of the plugin
 @external
 func addPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(plugin: felt) {

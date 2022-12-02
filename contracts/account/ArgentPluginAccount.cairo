@@ -111,7 +111,7 @@ func __validate__{
     } else {
         if (call_array[0].to == tx_info.account_contract_address and call_array[0].selector == USE_PLUGIN_SELECTOR) {
             // make sure the remaining calls are not to the account
-            assert_no_self_call(tx_info.account_contract_address, call_array_len - 1, call_array +  + CallArray.SIZE);
+            assert_no_self_call(tx_info.account_contract_address, call_array_len - 1, call_array + CallArray.SIZE);
             // validate with the plugin
             validate_with_plugin(call_array_len, call_array, calldata_len, calldata);
             return ();

@@ -15,16 +15,13 @@ wrong_signer = Signer(3)
 wrong_guardian = Signer(4)
 
 
-@pytest.fixture(scope='module')
-def event_loop():
-    return asyncio.new_event_loop()
-
 @pytest.fixture(scope='module', params=[
     "ArgentAccount",
     "ArgentPluginAccount",
 ])
 def account_class(request):
     return compile(f"contracts/account/{request.param}.cairo")
+
 
 @pytest.fixture(scope='module')
 def contract_classes(account_class):

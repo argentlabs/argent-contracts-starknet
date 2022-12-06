@@ -2,6 +2,7 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.alloc import alloc
+from starkware.cairo.common.memcpy import memcpy
 from starkware.cairo.common.math import assert_not_zero
 from starkware.starknet.common.syscalls import (
     get_tx_info,

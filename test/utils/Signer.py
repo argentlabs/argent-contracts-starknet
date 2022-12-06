@@ -1,7 +1,8 @@
 from typing import Tuple
 from starkware.crypto.signature.signature import private_to_stark_key, sign
 
-class Signer():
+
+class Signer:
     def __init__(self, private_key: int):
         self.private_key = private_key
         self.public_key = private_to_stark_key(private_key)

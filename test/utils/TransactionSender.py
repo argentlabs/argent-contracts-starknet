@@ -19,6 +19,8 @@ TRANSACTION_VERSION = 1
 # [target_address, selector, arguments]
 Call = Tuple[str, str, List]
 
+CallArray = Tuple[str, str, int, int]
+
 
 class TransactionSender:
     def __init__(self, account: StarknetContract):
@@ -58,6 +60,48 @@ class TransactionSender:
         call_array, calldata = from_call_to_call_array(calls)
         
         raw_invocation = self.account.__execute__(call_array, calldata)
+        state = raw_invocation.state
+
+        if nonce is None:
+            nonce = await state.state.get_nonce_at(contract_address=self.account.contract_address)
+
+        transaction_hash = get_transaction_hash(TransactionHashPrefix.INVOKE, self.account.contract_address, raw_invocation.calldata, nonce, max_fee)
+
+        signatures = []
+        for signer in signers:
+            if signer == 0:
+                signatures += [0, 0]
+            else:    
+                signatures += list(signer.sign(transaction_hash))
+
+        external_tx = InvokeFunction(
+            contract_address=self.account.contract_address,
+            calldata=raw_invocation.calldata,
+            entry_point_selector=None,
+            signature=signatures,
+            max_fee=max_fee,
+            version=TRANSACTION_VERSION,
+            nonce=nonce,
+        )
+
+        tx = InternalTransaction.from_external(
+            external_tx=external_tx, general_config=state.general_config
+        )
+        execution_info = await state.execute_tx(tx=tx)
+        return execution_info
+
+    async def send_call_array_transaction(
+        self,
+        call_arrays: List[CallArray],
+        calldata: List[int],
+        signers: List[Signer],
+        nonce: Optional[int] = None,
+        max_fee: Optional[int] = 0
+    ) -> TransactionExecutionInfo:
+
+        call_arrays_with_selector = [(call[0], get_selector_from_name(call[1]), call[2], call[3]) for call in call_arrays]
+        
+        raw_invocation = self.account.__execute__(call_arrays_with_selector, calldata)
         state = raw_invocation.state
 
         if nonce is None:

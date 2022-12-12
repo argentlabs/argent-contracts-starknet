@@ -278,5 +278,5 @@ async def test_execute_after_upgrade_safety(contract_factory):
             [build_upgrade_call(account, account_2_class_hash, [change_signer_call])],
             [signer, guardian]
         ),
-        "multicall 0 failed"
+        "multicall 1 failed"
     )

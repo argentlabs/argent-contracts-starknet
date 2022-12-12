@@ -2,6 +2,7 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import get_caller_address
+from starkware.cairo.common.math import assert_le
 
 /////////////////////
 // STORAGE VARIABLES
@@ -61,6 +62,13 @@ func throw_error{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr
     return();
 }
 
+@external
+func add{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    a: felt, b: felt
+) -> (res: felt) {
+    return (res=a+b);
+}
+
 /////////////////////
 // VIEW FUNCTIONS
 /////////////////////
@@ -71,4 +79,12 @@ func get_number{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
 ) {
     let (number) = stored_number.read(user);
     return (number=number);
+}
+
+@view
+func check_le{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(a: felt, b: felt) {
+    with_attr error_message("check le failed") {
+        assert_le(a,b);
+    }
+    return();
 }

@@ -12,9 +12,7 @@ from contracts.plugins.IPlugin import IPlugin
 from contracts.utils.calls import (
     Call,
     CallArray,
-    execute_call_array,
-    execute_calls,
-    from_call_array_to_call
+    execute_plain_multicall
 )
 from contracts.account.library import (
     ArgentModel,
@@ -371,7 +369,7 @@ func execute_after_upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range
     let (self) = get_contract_address();
     assert_no_self_call(self, call_array_len, call_array);
     // execute calls
-    let (retdata_len, retdata) = execute_call_array(call_array_len, call_array, calldata_len, calldata);
+    let (retdata_len, retdata) = execute_plain_multicall(call_array_len, call_array, calldata);
     return (retdata_len=retdata_len, retdata=retdata);
 }
 
@@ -529,15 +527,11 @@ func execute_call_array_plugin{syscall_ptr: felt*}(
 ) -> (retdata_len: felt, retdata: felt*) {
     alloc_locals;
 
-    let (calls: Call*) = alloc();
-    from_call_array_to_call(call_array_len, call_array, calldata, calls);
-
-    let (response: felt*) = alloc();
-    if (calls[0].selector == USE_PLUGIN_SELECTOR) {
-        let (response_len) = execute_calls(call_array_len - 1, calls + Call.SIZE, response, 0);
+    if (call_array[0].selector == USE_PLUGIN_SELECTOR) {
+        let (response_len, response) = execute_plain_multicall(call_array_len - 1, call_array + CallArray.SIZE, calldata);
         return (retdata_len=response_len, retdata=response);
     } else {
-        let (response_len) = execute_calls(call_array_len, calls, response, 0);
+        let (response_len, response) = execute_plain_multicall(call_array_len, call_array, calldata);
         return (retdata_len=response_len, retdata=response);
     }
 }

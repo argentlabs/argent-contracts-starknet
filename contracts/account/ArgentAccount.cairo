@@ -11,7 +11,8 @@ from starkware.starknet.common.syscalls import (
 
 from contracts.utils.calls import (
     CallArray,
-    execute_call_array,
+    execute_plain_multicall,
+    execute_smart_multicall,
 )
 
 from contracts.account.library import (
@@ -22,6 +23,9 @@ from contracts.account.library import (
     assert_initialized,
     assert_no_self_call,
 )
+
+const USE_SMART_MULTICALL = 483169958307474692663332918813952323073956179318861159525186903285592065456;
+
 
 //
 // @title ArgentAccount
@@ -34,7 +38,7 @@ from contracts.account.library import (
 /////////////////////
 
 const NAME = 'ArgentAccount';
-const VERSION = '0.2.3';
+const VERSION = '0.2.4';
 
 /////////////////////
 // EVENTS
@@ -134,13 +138,20 @@ func __execute__{
     assert_non_reentrant();
 
     // execute calls
-    let (retdata_len, retdata) = execute_call_array(call_array_len, call_array, calldata_len, calldata);
-
+    if (call_array[0].to + (call_array[0].selector - USE_SMART_MULTICALL) == 0) {
+        let (a, b, response_len, response: felt*) = execute_smart_multicall(call_array_len - 1, call_array + CallArray.SIZE, calldata);
+        tempvar syscall_ptr: felt* = syscall_ptr;
+    } else {
+        let (response_len, response: felt*) = execute_plain_multicall(call_array_len, call_array, calldata);
+        tempvar syscall_ptr: felt* = syscall_ptr;
+    }
+    tempvar response_len: felt = response_len;
+    tempvar response: felt* = response;
     // emit event
     transaction_executed.emit(
-        hash=tx_info.transaction_hash, response_len=retdata_len, response=retdata
+        hash=tx_info.transaction_hash, response_len=response_len, response=response
     );
-    return (retdata_size=retdata_len, retdata=retdata);
+    return (retdata_size=response_len, retdata=response);
 }
 
 @external
@@ -259,7 +270,7 @@ func execute_after_upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range
     let (self) = get_contract_address();
     assert_no_self_call(self, call_array_len, call_array);
     // execute calls
-    let (retdata_len, retdata) = execute_call_array(call_array_len, call_array, calldata_len, calldata);
+    let (retdata_len, retdata) = execute_plain_multicall(call_array_len, call_array, calldata);
     return (retdata_len=retdata_len, retdata=retdata);
 }
 

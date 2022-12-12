@@ -20,7 +20,7 @@ wrong_guardian = Signer(8)
 
 ESCAPE_SECURITY_PERIOD = 24*7*60*60
 
-VERSION = str_to_felt('0.2.3')
+VERSION = str_to_felt('0.2.4')
 NAME = str_to_felt('ArgentAccount')
 
 IACCOUNT_ID = 0x3943f10f
@@ -232,11 +232,11 @@ async def test_multicall(contract_factory):
     # should indicate which called failed
     await assert_revert(
         sender.send_transaction([(dapp.contract_address, 'set_number', [47]), (dapp.contract_address, 'throw_error', [1])], [signer, guardian]),
-        "multicall 1 failed"
+        "multicall 2 failed"
     )
     await assert_revert(
         sender.send_transaction([(dapp.contract_address, 'throw_error', [1]), (dapp.contract_address, 'set_number', [47])], [signer, guardian]),
-        "multicall 0 failed"
+        "multicall 1 failed"
     )
 
     # should call the dapp

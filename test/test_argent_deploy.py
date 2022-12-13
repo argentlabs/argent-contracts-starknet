@@ -78,7 +78,7 @@ async def test_validate_deploy_errors(deploy_env_copy: Tuple[Starknet, DeclaredC
             contract_cls=proxy_cls,
             signature=[]
         ),
-        expected_message="argent: signer signature invalid"
+        expected_message="argent: signature format invalid"
     )
 
     # Test with signer only

@@ -165,12 +165,6 @@ async def test_call_dapp_guardian_backup(contract_factory):
 
     calls = [(dapp.contract_address, 'set_number', [47])]
 
-    # should revert with the wrong guardian
-    await assert_revert(
-        sender.send_transaction(calls, [signer, 0, wrong_guardian]),
-        "argent: guardian backup signature invalid"
-    )
-
     # should revert when the signature format is not valid
     await assert_revert(
         sender.send_transaction(calls, [signer, guardian, guardian_backup]),
@@ -180,7 +174,7 @@ async def test_call_dapp_guardian_backup(contract_factory):
     # should call the dapp
     assert (await dapp.get_number(account.contract_address).call()).result.number == 0
     
-    tx_exec_info = await sender.send_transaction(calls, [signer, 0, guardian_backup])
+    tx_exec_info = await sender.send_transaction(calls, [signer, guardian_backup])
 
     assert_event_emitted(
         tx_exec_info,
@@ -417,7 +411,7 @@ async def test_trigger_escape_signer_by_guardian_backup(contract_factory):
     escape = (await account.getEscape().call()).result
     assert (escape.activeAt == 0)
 
-    tx_exec_info = await sender.send_transaction([(account.contract_address, 'triggerEscapeSigner', [])], [0, guardian_backup])
+    tx_exec_info = await sender.send_transaction([(account.contract_address, 'triggerEscapeSigner', [])], [guardian_backup])
 
     assert_event_emitted(
         tx_exec_info,
@@ -601,16 +595,20 @@ async def test_cancel_escape(contract_factory):
 async def test_is_valid_signature(contract_factory):
     account, _, dapp = contract_factory
     hash = 1283225199545181604979924458180358646374088657288769423115053097913173815464
+    invalid_hash = 1283225199545181604979924458180358646374088657288769423115053097913173811111
 
     signatures = []
     for sig in [signer, guardian]:
         signatures += list(sig.sign(hash))
-    # new IAccount
+    # valid: new IAccount
     res = (await account.isValidSignature(hash, signatures).call()).result
     assert (res.isValid == 1)
-    # old IAccount
+    # valid: old IAccount
     res = (await account.is_valid_signature(hash, signatures).call()).result
     assert (res.is_valid == 1)
+    # invalid: new IAccount
+    res = (await account.isValidSignature(invalid_hash, signatures).call()).result
+    assert (res.isValid == 0)
 
 
 async def test_support_interface(contract_factory):

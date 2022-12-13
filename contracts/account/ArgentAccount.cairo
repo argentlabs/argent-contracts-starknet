@@ -138,7 +138,10 @@ func __execute__{
     assert_non_reentrant();
 
     // execute calls
-    if (call_array[0].to + (call_array[0].selector - USE_SMART_MULTICALL) == 0) {
+    if (call_array[0].selector == USE_SMART_MULTICALL) {
+        with_attr error_message("argent: invalid smart multiccall") {
+            assert call_array[0].to = 0;
+        }
         let (a, b, response_len, response: felt*) = execute_smart_multicall(call_array_len - 1, call_array + CallArray.SIZE, calldata);
         tempvar syscall_ptr: felt* = syscall_ptr;
     } else {
@@ -147,6 +150,7 @@ func __execute__{
     }
     tempvar response_len: felt = response_len;
     tempvar response: felt* = response;
+    
     // emit event
     transaction_executed.emit(
         hash=tx_info.transaction_hash, response_len=response_len, response=response

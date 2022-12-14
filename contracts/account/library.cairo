@@ -17,8 +17,9 @@ from contracts.upgrade.Upgradable import _set_implementation
 from contracts.utils.calls import CallArray
 
 const SUPPORTS_INTERFACE_SELECTOR = 1184015894760294494673613438913361435336722154500302038630992932234692784845;
-const ERC165_ACCOUNT_INTERFACE_ID = 0x3943f10f;
-const ERC165_ACCOUNT_INTERFACE_ID_OLD = 0xf10dbd44; // this is needed to upgrade to this version
+const ERC165_ACCOUNT_INTERFACE_ID = 0xa66bd575;
+const ERC165_ACCOUNT_INTERFACE_ID_OLD_1 = 0x3943f10f; // this is needed to upgrade to this version
+const ERC165_ACCOUNT_INTERFACE_ID_OLD_2 = 0xf10dbd44; // this is needed to upgrade to this version
 
 const TRANSACTION_VERSION = 1;
 const QUERY_VERSION = 2**128 + TRANSACTION_VERSION;
@@ -408,7 +409,7 @@ namespace ArgentModel {
             return (TRUE,);
         }
         // Old IAccount
-        if (interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD) {
+        if ((interface_id - ERC165_ACCOUNT_INTERFACE_ID_OLD_1) * (interface_id - ERC165_ACCOUNT_INTERFACE_ID_OLD_2) == 0) {
             return (TRUE,);
         }
         return (FALSE,);

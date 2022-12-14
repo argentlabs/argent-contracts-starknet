@@ -23,7 +23,8 @@ ESCAPE_SECURITY_PERIOD = 24*7*60*60
 VERSION = str_to_felt('0.2.4')
 NAME = str_to_felt('ArgentAccount')
 
-IACCOUNT_ID = 0x3943f10f
+IACCOUNT_ID = 0xa66bd575
+IACCOUNT_ID_OLD = 0x3943f10f
 
 ESCAPE_TYPE_GUARDIAN = 1
 ESCAPE_TYPE_SIGNER = 2
@@ -623,7 +624,7 @@ async def test_support_interface(contract_factory):
     res = (await account.supportsInterface(IACCOUNT_ID).call()).result
     assert (res.success == 1)
     # IAccount old
-    res = (await account.supportsInterface(0xf10dbd44).call()).result
+    res = (await account.supportsInterface(IACCOUNT_ID_OLD).call()).result
     assert (res.success == 1)
     # unsupported
     res = (await account.supportsInterface(0xffffffff).call()).result

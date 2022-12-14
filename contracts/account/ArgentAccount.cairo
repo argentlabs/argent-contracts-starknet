@@ -11,7 +11,7 @@ from starkware.starknet.common.syscalls import (
 
 from contracts.utils.calls import (
     CallArray,
-    execute_call_array,
+    execute_multicall,
 )
 
 from contracts.account.library import (
@@ -34,7 +34,7 @@ from contracts.account.library import (
 /////////////////////
 
 const NAME = 'ArgentAccount';
-const VERSION = '0.2.3';
+const VERSION = '0.2.4';
 
 /////////////////////
 // EVENTS
@@ -134,7 +134,7 @@ func __execute__{
     assert_non_reentrant();
 
     // execute calls
-    let (retdata_len, retdata) = execute_call_array(call_array_len, call_array, calldata_len, calldata);
+    let (retdata_len, retdata) = execute_multicall(call_array_len, call_array, calldata);
 
     // emit event
     transaction_executed.emit(
@@ -229,18 +229,13 @@ func upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     // upgrades the implementation
     ArgentModel.upgrade(implementation);
     // library call to implementation.execute_after_upgrade 
-    if (calldata_len == 0) {
-        let (retdata: felt*) = alloc();
-        return (retdata_len=0, retdata=retdata);
-    } else {
-        let (retdata_size: felt, retdata: felt*) = library_call(
-            class_hash=implementation,
-            function_selector=ArgentModel.EXECUTE_AFTER_UPGRADE_SELECTOR,
-            calldata_size=calldata_len,
-            calldata=calldata,
-        );
-        return (retdata_len=retdata_size, retdata=retdata);
-    }
+    let (retdata_size: felt, retdata: felt*) = library_call(
+        class_hash=implementation,
+        function_selector=ArgentModel.EXECUTE_AFTER_UPGRADE_SELECTOR,
+        calldata_size=calldata_len,
+        calldata=calldata,
+    );
+    return (retdata_len=retdata_size, retdata=retdata);
 }
 
 // @dev Logic or multicall to execute after an upgrade.
@@ -259,7 +254,7 @@ func execute_after_upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range
     let (self) = get_contract_address();
     assert_no_self_call(self, call_array_len, call_array);
     // execute calls
-    let (retdata_len, retdata) = execute_call_array(call_array_len, call_array, calldata_len, calldata);
+    let (retdata_len, retdata) = execute_multicall(call_array_len, call_array, calldata);
     return (retdata_len=retdata_len, retdata=retdata);
 }
 

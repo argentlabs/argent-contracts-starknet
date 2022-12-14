@@ -23,88 +23,39 @@ struct CallArray {
     data_len: felt,
 }
 
-func from_call_array_to_call{syscall_ptr: felt*}(
-    call_array_len: felt, call_array: CallArray*, calldata: felt*, calls: Call*
-) {
-    // if no more calls
-    if (call_array_len == 0) {
-        return ();
-    }
-
-    // parse the current call
-    assert [calls] = Call(
-        to=[call_array].to,
-        selector=[call_array].selector,
-        calldata_len=[call_array].data_len,
-        calldata=calldata + [call_array].data_offset
-    );
-
-    // parse the remaining calls recursively
-    from_call_array_to_call(
-        call_array_len - 1, call_array + CallArray.SIZE, calldata, calls + Call.SIZE
-    );
-    return ();
-}
-
-
-// @notice Convenience method to convert an execute a call array
+// @notice Executes a list of call array recursively
 // @return response_len: The size of the returned data
-// @return response: Data return 
-//   in the form [*call_1_data, *call_2_data, ..., *call_N_data]
-func execute_call_array{syscall_ptr: felt*}(
-    call_array_len: felt, call_array: CallArray*, calldata_len: felt, calldata: felt*
-) -> (retdata_len: felt, retdata: felt*) {
-    alloc_locals;
-    // convert calls
-    let (calls: Call*) = alloc();
-    from_call_array_to_call(call_array_len, call_array, calldata, calls);
-
-    // execute them
-    let (response: felt*) = alloc();
-    let (response_len) = execute_calls(call_array_len, calls, response, 0);
-    return (retdata_len=response_len, retdata=response);
-}
-
-
-// @notice Executes a list of contract calls recursively.
-// @param calls_len The number of calls to execute
-// @param calls A pointer to the first call to execute
-// @param response The array of felt to populate with the returned data
-//   in the form [*call_1_data, *call_2_data, ..., *call_N_data]
-// @return response_len The size of the returned data
-func execute_calls{syscall_ptr: felt*}(calls_len: felt, calls: Call*, response: felt*, index: felt) -> (
-    response_len: felt
-) {
+// @return response: An array of felt populated with the returned data 
+//   in the form [len(call_1_data), *call_1_data, len(call_2_data), *call_2_data, ..., len(call_N_data), *call_N_data]
+func execute_multicall{syscall_ptr: felt*}(
+    call_array_len: felt, call_array: CallArray*, calldata: felt*
+) -> (response_len: felt, response: felt*) {
     alloc_locals;
 
-    // if no more calls
-    if (calls_len == 0) {
-        return (0,);
+    if (call_array_len == 0) {
+        let (response) = alloc();
+        return (0, response);
     }
 
-    // do the current call
-    let this_call: Call = [calls];
-    with_attr error_message("multicall {index} failed") {
+    // call recursively all previous calls
+    let (response_len, response: felt*) = execute_multicall(call_array_len - 1, call_array, calldata);
+
+    // handle the last call
+    let last_call = call_array[call_array_len - 1];
+
+    // call the last call
+    with_attr error_message("multicall {call_array_len} failed") {
         let res = call_contract(
-            contract_address=this_call.to,
-            function_selector=this_call.selector,
-            calldata_size=this_call.calldata_len,
-            calldata=this_call.calldata,
+            contract_address=last_call.to,
+            function_selector=last_call.selector,
+            calldata_size=last_call.data_len,
+            calldata=calldata + last_call.data_offset,
         );
     }
-    // copy the result in response
-    memcpy(
-        dst=response,
-        src=res.retdata,
-        len=res.retdata_size
-    );
-    // do the next calls recursively
-    let (response_len) = execute_calls(
-        calls_len=calls_len - 1,
-        calls=calls + Call.SIZE,
-        response=response + res.retdata_size,
-        index=index + 1
-    );
-    return (response_len + res.retdata_size,);
+
+    // store response data
+    assert [response + response_len] = res.retdata_size;
+    memcpy(response + response_len + 1, res.retdata, res.retdata_size);
+    return (response_len + res.retdata_size + 1, response);
 }
 

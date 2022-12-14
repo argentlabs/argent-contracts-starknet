@@ -153,8 +153,9 @@ async def test_upgrade(contract_factory):
     )
 
     ret_execute = get_execute_data(tx_exec_info)
-    assert len(ret_execute) == 1, "Unexpected return data length"
-    assert ret_execute[0] == 0, "Expected 0 calls to be executed after upgrade"
+    print(len(ret_execute))
+    assert len(ret_execute) == 2, "Unexpected return data length"
+    assert ret_execute[1] == 0, "Expected 0 calls to be executed after upgrade"
 
     assert_event_emitted(
         tx_exec_info,
@@ -207,7 +208,7 @@ async def test_upgrade_many_calls(contract_factory):
     increase_number_again_call: Call = (dapp.contract_address, 'increase_number', [1])
 
     tx_exec_info = await sender.send_transaction(
-        [build_upgrade_call(account, account_2_class_hash, [increase_number_call, increase_number_again_call])],
+        [build_upgrade_call(account, account_2_class_hash, [increase_number_call, increase_number_again_call, increase_number_again_call])],
         [signer, guardian]
     )
 

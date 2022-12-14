@@ -153,9 +153,7 @@ async def test_upgrade(contract_factory):
     )
 
     ret_execute = get_execute_data(tx_exec_info)
-    print(len(ret_execute))
-    assert len(ret_execute) == 2, "Unexpected return data length"
-    assert ret_execute[1] == 0, "Expected 0 calls to be executed after upgrade"
+    assert len(ret_execute) == 0, "Expected 0 calls to be executed after upgrade"
 
     assert_event_emitted(
         tx_exec_info,
@@ -182,8 +180,7 @@ async def test_upgrade_exec(contract_factory):
     )
 
     ret_execute = get_execute_data(tx_exec_info)
-    assert len(ret_execute) == 2, "Unexpected return data length"
-    assert ret_execute[0] == 1, "Expected 1 call to be executed after upgrade"
+    assert ret_execute[0] == 1, "Expected call response to be of length 1 "
     assert ret_execute[1] == 47, "Expected new_number returned"
 
     assert_event_emitted(
@@ -208,15 +205,15 @@ async def test_upgrade_many_calls(contract_factory):
     increase_number_again_call: Call = (dapp.contract_address, 'increase_number', [1])
 
     tx_exec_info = await sender.send_transaction(
-        [build_upgrade_call(account, account_2_class_hash, [increase_number_call, increase_number_again_call, increase_number_again_call])],
+        [build_upgrade_call(account, account_2_class_hash, [increase_number_call, increase_number_again_call])],
         [signer, guardian]
     )
 
     ret_execute = get_execute_data(tx_exec_info)
-    assert len(ret_execute) == 3, "Unexpected return data length"
-    assert ret_execute[0] == 2, "Expected 2 calls to be executed after upgrade"
+    assert ret_execute[0] == 1, "Expected call 1 response to be of length 1 "
     assert ret_execute[1] == 47, "Expected new_number returned from first call"
-    assert ret_execute[2] == 48, "Expected new_number returned form second call"
+    assert ret_execute[2] == 1, "Expected call 2 response to be of length 1 "
+    assert ret_execute[3] == 48, "Expected new_number returned form second call"
 
     assert_event_emitted(
         tx_exec_info,
@@ -279,5 +276,5 @@ async def test_execute_after_upgrade_safety(contract_factory):
             [build_upgrade_call(account, account_2_class_hash, [change_signer_call])],
             [signer, guardian]
         ),
-        "multicall 0 failed"
+        "multicall 1 failed"
     )

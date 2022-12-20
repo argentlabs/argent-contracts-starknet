@@ -1,7 +1,7 @@
 %lang starknet
 
-from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
-from starkware.cairo.common.signature import verify_ecdsa_signature
+from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin, EcOpBuiltin
+from starkware.cairo.common.signature import verify_ecdsa_signature, check_ecdsa_signature
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn
 from starkware.starknet.common.syscalls import (
@@ -385,12 +385,12 @@ namespace ArgentModel {
     /////////////////////
 
     func is_valid_signature{
-        syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
+        syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ec_op_ptr: EcOpBuiltin*, range_check_ptr
     }(hash: felt, sig_len: felt, sig: felt*) -> (is_valid: felt) {
         alloc_locals;
 
-        let (is_signer_sig_valid) = validate_signer_signature(hash, sig_len, sig);
-        let (is_guardian_sig_valid) = validate_guardian_signature(hash, sig_len - 2, sig + 2);
+        let (is_signer_sig_valid) = is_valid_signer_signature(hash, sig_len, sig);
+        let (is_guardian_sig_valid) = is_valid_guardian_signature(hash, sig_len - 2, sig + 2);
 
         // Cairo's way of doing `&&` is by multiplying the two booleans.
         return (is_valid=is_signer_sig_valid * is_guardian_sig_valid);
@@ -442,55 +442,72 @@ namespace ArgentModel {
         return (active_at=res.active_at, type=res.type);
     }
 
+    func is_valid_signer_signature{
+        syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ec_op_ptr: EcOpBuiltin*, range_check_ptr
+    }(message: felt, signatures_len: felt, signatures: felt*) -> (is_valid: felt) {
+        alloc_locals;
+        with_attr error_message("argent: signature format invalid") {
+            assert_nn(signatures_len - 2);
+        }
+        let (signer) = _signer.read();
+        let (is_valid) = check_ecdsa_signature(
+            message=message, public_key=signer, signature_r=signatures[0], signature_s=signatures[1]
+        );
+        return (is_valid=is_valid);
+    }
+
+    func is_valid_guardian_signature{
+        syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ec_op_ptr: EcOpBuiltin*, range_check_ptr
+    }(message: felt, signatures_len: felt, signatures: felt*) -> (is_valid: felt) {
+        alloc_locals;
+
+        let (guardian) = _guardian.read();
+        if (guardian == 0) {
+            with_attr error_message("argent: signature format invalid") {
+                assert signatures_len = 0;
+            }
+            return (is_valid=TRUE);
+        }
+
+        with_attr error_message("argent: signature format invalid") {
+            assert signatures_len = 2;
+        }
+        let (guardian_valid) = check_ecdsa_signature(
+                message=message, public_key=guardian, signature_r=signatures[0], signature_s=signatures[1]
+            );
+        if (guardian_valid == TRUE) {
+            return (is_valid=TRUE);
+        }
+        let (guardian_backup) = _guardian_backup.read();
+        let (guardian_backup_valid) = check_ecdsa_signature(
+                message=message, public_key=guardian_backup, signature_r=signatures[0], signature_s=signatures[1]
+            );
+        return (is_valid=guardian_backup_valid);
+    }
+
     func validate_signer_signature{
         syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
-    }(message: felt, signatures_len: felt, signatures: felt*) -> (is_valid: felt) {
-        with_attr error_message("argent: signer signature invalid") {
+    }(message: felt, signatures_len: felt, signatures: felt*) {
+        with_attr error_message("argent: signature format invalid") {
             assert_nn(signatures_len - 2);
+        }
+        with_attr error_message("argent: signer signature invalid") {
             let (signer) = _signer.read();
             verify_ecdsa_signature(
                 message=message, public_key=signer, signature_r=signatures[0], signature_s=signatures[1]
             );
         }
-        return (is_valid=TRUE);
+        return ();
     }
 
     func validate_guardian_signature{
-        syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
-    }(message: felt, signatures_len: felt, signatures: felt*) -> (is_valid: felt) {
-        alloc_locals;
+        syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ec_op_ptr: EcOpBuiltin*, range_check_ptr
+    }(message: felt, signatures_len: felt, signatures: felt*) {
         
-        let (guardian) = _guardian.read();
-        if (guardian == 0) {
-            return (is_valid=TRUE);
+        let (is_valid) = is_valid_guardian_signature(message, signatures_len, signatures);
+        with_attr error_message("argent: guardian signature invalid") {
+            assert is_valid = TRUE;
         }
-
-        if (signatures_len == 2) {
-            with_attr error_message("argent: guardian signature invalid") {
-                verify_ecdsa_signature(
-                    message=message,
-                    public_key=guardian,
-                    signature_r=signatures[0],
-                    signature_s=signatures[1],
-                );
-            }
-            return (is_valid=TRUE);
-        }
-        
-        let (guardian_backup) = _guardian_backup.read();
-        with_attr error_message("argent: signature format invalid") {
-            assert signatures_len = 4;
-            assert signatures[0] = 0;
-            assert signatures[1] = 0;
-        }
-        with_attr error_message("argent: guardian backup signature invalid") {
-            verify_ecdsa_signature(
-                message=message,
-                public_key=guardian_backup,
-                signature_r=signatures[2],
-                signature_s=signatures[3],
-            );
-        }
-        return (is_valid=TRUE);
+        return ();
     }
 }

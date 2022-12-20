@@ -1,6 +1,6 @@
 %lang starknet
 
-from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
+from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin, EcOpBuiltin
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.math import assert_not_zero
 from starkware.starknet.common.syscalls import (
@@ -57,6 +57,7 @@ func __validate__{
     syscall_ptr: felt*,
     pedersen_ptr: HashBuiltin*,
     ecdsa_ptr: SignatureBuiltin*,
+    ec_op_ptr: EcOpBuiltin*,
     range_check_ptr
 } (
     call_array_len: felt,
@@ -113,7 +114,6 @@ func __validate__{
 func __execute__{
     syscall_ptr: felt*,
     pedersen_ptr: HashBuiltin*,
-    ecdsa_ptr: SignatureBuiltin*,
     range_check_ptr
 } (
     call_array_len: felt,
@@ -148,6 +148,7 @@ func __validate_declare__{
     syscall_ptr: felt*,
     pedersen_ptr: HashBuiltin*,
     ecdsa_ptr: SignatureBuiltin*,
+    ec_op_ptr: EcOpBuiltin*,
     range_check_ptr
 } (
     class_hash: felt
@@ -170,6 +171,7 @@ func __validate_deploy__{
     syscall_ptr: felt*,
     pedersen_ptr: HashBuiltin*,
     ecdsa_ptr: SignatureBuiltin*,
+    ec_op_ptr: EcOpBuiltin*,
     range_check_ptr
 } (selector: felt, calldata_size: felt, calldata: felt*) {
     alloc_locals;
@@ -185,7 +187,7 @@ func __validate_deploy__{
 
 @view
 func isValidSignature{
-    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
+    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ec_op_ptr: EcOpBuiltin*, range_check_ptr
 }(hash: felt, sig_len: felt, sig: felt*) -> (isValid: felt) {
     let (isValid) = ArgentModel.is_valid_signature(hash, sig_len, sig);
     return (isValid=isValid);
@@ -406,7 +408,7 @@ func getName() -> (name: felt) {
 // @dev DEPRECATED: Remove when isValidSignature() is widely used
 @view
 func is_valid_signature{
-    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ecdsa_ptr: SignatureBuiltin*, range_check_ptr
+    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ec_op_ptr: EcOpBuiltin*, range_check_ptr
 }(hash: felt, sig_len: felt, sig: felt*) -> (is_valid: felt) {
     let (is_valid) = ArgentModel.is_valid_signature(hash, sig_len, sig);
     return (is_valid=is_valid);

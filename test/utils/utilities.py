@@ -89,9 +89,10 @@ def cached_contract(state: StarknetState, _class: ContractClass, deployed: Stark
 
 def get_execute_data(tx_exec_info: TransactionExecutionInfo) -> List[int]:
     raw_data: List[int] = tx_exec_info.call_info.retdata
-    ret_execute_size, *ret_execute = raw_data
-    assert ret_execute_size == len(ret_execute), "Unexpected return size"
-    return ret_execute
+    response_len = raw_data[2]
+    response = raw_data[3:]
+    assert response_len == len(response), "Unexpected return size"
+    return response
 
 
 def copy_contract_state(contract: StarknetContract) -> StarknetContract:

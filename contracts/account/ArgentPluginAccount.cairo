@@ -10,11 +10,8 @@ from starkware.starknet.common.syscalls import (
 )
 from contracts.plugins.IPlugin import IPlugin
 from contracts.utils.calls import (
-    Call,
     CallArray,
-    execute_call_array,
-    execute_calls,
-    from_call_array_to_call
+    execute_multicall,
 )
 from contracts.account.library import (
     ArgentModel,
@@ -36,7 +33,7 @@ from contracts.account.library import (
 ///////////////////////
 
 const NAME = 'ArgentPluginAccount';
-const VERSION = '0.0.2';
+const VERSION = '0.0.3';
 
 // get_selector_from_name('use_plugin')
 const USE_PLUGIN_SELECTOR = 1121675007639292412441492001821602921366030142137563176027248191276862353634;
@@ -153,7 +150,7 @@ func __execute__{
     // no reentrant call to prevent signature reutilization
     assert_non_reentrant();
 
-    let (retdata_len, retdata) = execute_call_array_plugin(call_array_len, call_array, calldata_len, calldata);
+    let (retdata_len, retdata) = execute_multicall_plugin(call_array_len, call_array, calldata);
 
     // emit event
     transaction_executed.emit(
@@ -341,20 +338,16 @@ func upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     implementation: felt, calldata_len: felt, calldata: felt*
 ) -> (retdata_len: felt, retdata: felt*) {
     alloc_locals;
+    // upgrades the implementation
     ArgentModel.upgrade(implementation);
-
-    if (calldata_len == 0) {
-        let (retdata: felt*) = alloc();
-        return (retdata_len=0, retdata=retdata);
-    } else {
-        let (retdata_size: felt, retdata: felt*) = library_call(
-            class_hash=implementation,
-            function_selector=ArgentModel.EXECUTE_AFTER_UPGRADE_SELECTOR,
-            calldata_size=calldata_len,
-            calldata=calldata,
-        );
-        return (retdata_len=retdata_size, retdata=retdata);
-    }
+    // library call to implementation.execute_after_upgrade
+    let (retdata_size: felt, retdata: felt*) = library_call(
+        class_hash=implementation,
+        function_selector=ArgentModel.EXECUTE_AFTER_UPGRADE_SELECTOR,
+        calldata_size=calldata_len,
+        calldata=calldata,
+    );
+    return (retdata_len=retdata_size, retdata=retdata);
 }
 
 // @dev Logic or multicall to execute after an upgrade.
@@ -373,7 +366,7 @@ func execute_after_upgrade{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range
     let (self) = get_contract_address();
     assert_no_self_call(self, call_array_len, call_array);
     // execute calls
-    let (retdata_len, retdata) = execute_call_array(call_array_len, call_array, calldata_len, calldata);
+    let (retdata_len, retdata) = execute_multicall(call_array_len, call_array, calldata);
     return (retdata_len=retdata_len, retdata=retdata);
 }
 
@@ -526,20 +519,16 @@ func is_valid_signature{
     return (is_valid=is_valid);
 }
 
-func execute_call_array_plugin{syscall_ptr: felt*}(
-    call_array_len: felt, call_array: CallArray*, calldata_len: felt, calldata: felt*
+func execute_multicall_plugin{syscall_ptr: felt*}(
+    call_array_len: felt, call_array: CallArray*, calldata: felt*
 ) -> (retdata_len: felt, retdata: felt*) {
     alloc_locals;
 
-    let (calls: Call*) = alloc();
-    from_call_array_to_call(call_array_len, call_array, calldata, calls);
-
-    let (response: felt*) = alloc();
-    if (calls[0].selector == USE_PLUGIN_SELECTOR) {
-        let (response_len) = execute_calls(call_array_len - 1, calls + Call.SIZE, response, 0);
+    if (call_array[0].selector == USE_PLUGIN_SELECTOR) {
+        let (response_len, response) = execute_multicall(call_array_len - 1, call_array + CallArray.SIZE, calldata);
         return (retdata_len=response_len, retdata=response);
     } else {
-        let (response_len) = execute_calls(call_array_len, calls, response, 0);
+        let (response_len, response) = execute_multicall(call_array_len, call_array, calldata);
         return (retdata_len=response_len, retdata=response);
     }
 }

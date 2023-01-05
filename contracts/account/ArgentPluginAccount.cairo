@@ -276,6 +276,26 @@ func executeOnPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check
     return ();
 }
 
+// @dev Executes a library call on one of the enabled plugin of the account.
+// @param plugin The class hash of the plugin
+// @param selector The method to execute on the plugin
+// @param calldata The call data of the call
+// @return the return data of the call
+@view
+func readOnPlugin{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    plugin: felt, selector: felt, calldata_len: felt, calldata: felt*
+) -> (result_len: felt, result: felt*) {
+    let (is_plugin) = _plugins.read(plugin);
+    with_attr error_message("argent: unknown plugin") {
+        assert_not_zero(is_plugin);
+    }
+
+    let (result_len, result) = library_call(
+        class_hash=plugin, function_selector=selector, calldata_size=calldata_len, calldata=calldata
+    );
+    return (result_len=result_len, result=result);
+}
+
 // @dev Checks if a plugin is enabled on the account.
 // @param plugin The class hash of the plugin
 // @return success True if the plugin is enabled

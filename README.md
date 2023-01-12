@@ -72,4 +72,25 @@ nile compile
 pytest ./test/argent_account.py
 ```
 
+## How to deploy a contract
 
+Make sure you have some eth on the network you plan to deploy. 
+
+To deploy a contract you first need to declare it (if it is already declared jump this).  
+
+
+Open your argent wallet:  
+1. Go to Settings >> Developer settings >> Smart contract development >> Declare smart contract.  
+2. Pick the json file of your contract (not the abi). Make sure to copy the contract class hash.  
+3. Select the network and the account with which you'll pay.  
+4. Hit declare and wait.
+5. If you didn't already, you can copy the class hash.
+
+Now that your contract is declared, you can deploy it.  
+Open your argent wallet:
+1. Go to Settings >> Developer settings >> Smart contract development >> Deploy smart contract.  
+2. Paste the contract class hash.  
+3. Select the network, and the account with which you'll pay.
+4. Specify a salt or hit generate random.
+5. Enable "Unique address" if needed.
+6. Hit deploy and wait.

@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  push:
+    branches: [cairo/cairo_1.0]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2022-11-03
+      - uses: Swatinem/rust-cache@v2
+      - run: ./scripts/install-cairo-1.0.sh
+      - run: ./scripts/test-cairo-1.0-contracts.sh

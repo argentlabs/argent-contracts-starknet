@@ -1,56 +1,61 @@
 #[contract]
 mod ArgentAccount {
+    
+    struct Storage { 
+        signer: felt,
+        guardian: felt,
+        guardian_backup: felt,
+    }
+
+    #[external]
+    fn initialize(signer: felt, guardian: felt, guardian_backup: felt) {
+        // check that we are not already initialized
+        assert(signer::read() == 0, 'argent: already initialized');
+        // check that the target signer is not zero
+        assert(signer != 0, 'argent: signer cannot be null');
+        // initialize the account
+        signer::write(signer);
+        guardian::write(guardian);
+        guardian_backup::write(guardian_backup);
+    }
+
     #[view]
-    fn supports_interface(interface_id: felt) -> bool {
-        if interface_id == 0x01ffc9a7 { // ERC165
-            true
-        } else if interface_id == 0x12456789 { // TODO: IAccount interface id
-            true
-        } else {
-            false
-        }
+    fn get_signer() -> felt {
+        signer::read()
+    }
+
+    #[view]
+    fn get_guardian() -> felt {
+        guardian::read()
+    }
+
+    #[view]
+    fn get_guardian_backup() -> felt {
+        guardian_backup::read()
     }
 }
 
-fn single_element_arr(value: felt) -> Array::<felt> {
-    let mut arr = array_new::<felt>();
-    array_append::<felt>(ref arr, value);
-    arr
-}
-
-fn pop_and_compare(ref arr: Array::<felt>, value: felt, err: felt) {
-    match array_pop_front::<felt>(ref arr) {
-        Option::Some(x) => {
-            assert(x == value, err);
-        },
-        Option::None(_) => {
-            panic(single_element_arr('Got empty result data'))
-        },
-    };
-}
-
-fn assert_empty(mut arr: Array::<felt>) {
-    assert(array_len::<felt>(ref arr) == 0_u128, 'Array not empty');
-}
-
-
 #[test]
 #[available_gas(20000)]
-fn test_supported_interfaces() {
-    let mut retdata = ArgentAccount::__external::supports_interface(single_element_arr(0x01ffc9a7));
-    pop_and_compare(ref retdata, 1, 'Wrong result');
-    assert_empty(retdata);
+fn initialize() {
+    ArgentAccount::initialize(1, 2, 3);
+    assert(ArgentAccount::get_signer() == 1, 'value should be 1');
+    assert(ArgentAccount::get_guardian() == 2, 'value should be 2');
+    assert(ArgentAccount::get_guardian_backup() == 3, 'value should be 3');
 }
 
 #[test]
 #[available_gas(20000)]
-fn test_unsupported_interface() {
-    let mut retdata = ArgentAccount::__external::supports_interface(single_element_arr(0));
-    pop_and_compare(ref retdata, 0, 'Wrong result');
-    assert_empty(retdata);
-
-    retdata = ArgentAccount::__external::supports_interface(single_element_arr(69));
-    pop_and_compare(ref retdata, 0, 'Wrong result');
-    assert_empty(retdata);
+#[should_panic(expected = 'argent: signer cannot be null')]
+fn initialize_with_null_signer() {
+    ArgentAccount::initialize(0, 2, 3);
 }
 
+#[test]
+#[available_gas(20000)]
+#[should_panic(expected = 'argent: already initialized')]
+fn already_initialized() {
+    ArgentAccount::initialize(1, 2, 3);
+    assert(ArgentAccount::get_signer() == 1, 'value should be 1');
+    ArgentAccount::initialize(10, 20, 0);
+}

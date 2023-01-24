@@ -1,6 +1,5 @@
 #[contract]
 mod ArgentAccount {
-    // dummy change to remove
     
     struct Storage { 
         signer: felt,

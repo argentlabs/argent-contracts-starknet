@@ -5,3 +5,4 @@ __pycache__
 artifacts
 node.json
 .idea
+cairo/

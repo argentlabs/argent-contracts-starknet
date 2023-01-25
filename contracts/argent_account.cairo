@@ -5,7 +5,9 @@ mod ArgentAccount {
         signer: felt,
         guardian: felt,
         guardian_backup: felt,
-        supported_interfaces: Map::<felt, bool>,
+        // supportedInterfaces named in camelCase to match OZ's ERC165Storage but without a 
+        // leading underscore because underscores have a specific meaning in Rust.
+        supportedInterfaces: Map::<felt, bool>, 
     }
 
     #[external]
@@ -47,14 +49,14 @@ mod ArgentAccount {
         } else if interface_id == 0x3943f10f { // latest on main branch of ArgentAccount
             true
         } else {
-            supported_interfaces::read(interface_id)
+            supportedInterfaces::read(interface_id)
         }
     }
 
     #[external]
     fn register_interface(interface_id: felt) {
         // assert_only_self()
-        supported_interfaces::write(interface_id, true);
+        supportedInterfaces::write(interface_id, true);
     }
 }
 

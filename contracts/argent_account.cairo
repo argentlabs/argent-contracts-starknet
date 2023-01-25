@@ -92,9 +92,14 @@ fn already_initialized() {
 
 #[test]
 #[available_gas(20000)]
-fn erc165_basic_interfaces() {
+fn erc165_unsupported_interfaces() {
     assert(ArgentAccount::supportsInterface(0) == false, 'value should be false');
     assert(ArgentAccount::supportsInterface(ERC165_INVALID_INTERFACE_ID) == false, 'value should be false');
+}
+
+#[test]
+#[available_gas(20000)]
+fn erc165_supported_interfaces() {
     assert(ArgentAccount::supportsInterface(ERC165_IERC165_INTERFACE_ID) == true, 'value should be true');
     assert(ArgentAccount::supportsInterface(ERC165_ACCOUNT_INTERFACE_ID) == true, 'value should be true');
     assert(ArgentAccount::supportsInterface(ERC165_OLD_ACCOUNT_INTERFACE_ID) == true, 'value should be true');

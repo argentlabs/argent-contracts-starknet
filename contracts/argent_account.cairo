@@ -1,3 +1,8 @@
+const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
+const ERC165_INVALID_INTERFACE_ID: felt = 0xffffffff;
+const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
+const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
+
 #[contract]
 mod ArgentAccount {
     
@@ -42,11 +47,11 @@ mod ArgentAccount {
     #[view]
     fn supportsInterface(interface_id: felt) -> bool {
         // using combination of hardcoding and dynamic lookup for tradeoff between performance and flexibility
-        if interface_id == 0x01ffc9a7 {        // ERC165
+        if interface_id == super::ERC165_IERC165_INTERFACE_ID {
             true 
-        } else if interface_id == 0xa66bd575 { // latest OpenZeppelin IAccount id
+        } else if interface_id == super::ERC165_ACCOUNT_INTERFACE_ID {
             true 
-        } else if interface_id == 0x3943f10f { // latest on main branch of ArgentAccount
+        } else if interface_id == super::ERC165_OLD_ACCOUNT_INTERFACE_ID { // latest on main branch of ArgentAccount
             true
         } else {
             supportedInterfaces::read(interface_id)
@@ -89,10 +94,10 @@ fn already_initialized() {
 #[available_gas(20000)]
 fn erc165_basic_interfaces() {
     assert(ArgentAccount::supportsInterface(0) == false, 'value should be false');
-    assert(ArgentAccount::supportsInterface(0xffffffff) == false, 'value should be false');
-    assert(ArgentAccount::supportsInterface(0x01ffc9a7) == true, 'value should be true');
-    assert(ArgentAccount::supportsInterface(0xa66bd575) == true, 'value should be true');
-    assert(ArgentAccount::supportsInterface(0x3943f10f) == true, 'value should be true');
+    assert(ArgentAccount::supportsInterface(ERC165_INVALID_INTERFACE_ID) == false, 'value should be false');
+    assert(ArgentAccount::supportsInterface(ERC165_IERC165_INTERFACE_ID) == true, 'value should be true');
+    assert(ArgentAccount::supportsInterface(ERC165_ACCOUNT_INTERFACE_ID) == true, 'value should be true');
+    assert(ArgentAccount::supportsInterface(ERC165_OLD_ACCOUNT_INTERFACE_ID) == true, 'value should be true');
 }
 
 #[test]

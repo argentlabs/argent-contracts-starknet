@@ -47,12 +47,12 @@ mod ArgentAccount {
     #[view]
     fn supportsInterface(interface_id: felt) -> bool {
         // using combination of hardcoding and dynamic lookup for tradeoff between performance and flexibility
-        if interface_id == super::ERC165_IERC165_INTERFACE_ID {
+        if (
+            interface_id == super::ERC165_IERC165_INTERFACE_ID | 
+            interface_id == super::ERC165_ACCOUNT_INTERFACE_ID |
+            interface_id == super::ERC165_OLD_ACCOUNT_INTERFACE_ID
+        ) {
             true 
-        } else if interface_id == super::ERC165_ACCOUNT_INTERFACE_ID {
-            true 
-        } else if interface_id == super::ERC165_OLD_ACCOUNT_INTERFACE_ID { // latest on main branch of ArgentAccount
-            true
         } else {
             supportedInterfaces::read(interface_id)
         }
@@ -107,5 +107,5 @@ fn erc165_interface_registering() {
     ArgentAccount::register_interface(0x12345678);
     assert(ArgentAccount::supportsInterface(0x12345678) == true, 'value should be true');
 
-    // TODO: add test making sure register_interface can only be called by self
+    // TODO(axel): add test making sure register_interface can only be called by self
 }

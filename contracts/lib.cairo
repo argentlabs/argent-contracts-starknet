@@ -1,6 +1,11 @@
+mod dummy_syscalls;
+
+use dummy_syscalls::dummy_get_contract_address;
+
 #[contract]
 mod ArgentAccount {
-    
+    use super::dummy_get_contract_address;
+
     struct Storage { 
         signer: felt,
         guardian: felt,
@@ -33,6 +38,11 @@ mod ArgentAccount {
     fn get_guardian_backup() -> felt {
         guardian_backup::read()
     }
+
+    #[view]
+    fn my_address() -> felt {
+        super::dummy_get_contract_address()
+    }
 }
 
 #[test]
@@ -58,4 +68,10 @@ fn already_initialized() {
     ArgentAccount::initialize(1, 2, 3);
     assert(ArgentAccount::get_signer() == 1, 'value should be 1');
     ArgentAccount::initialize(10, 20, 0);
+}
+
+#[test]
+#[available_gas(20000)]
+fn foo() {
+    assert(ArgentAccount::my_address() == 69, 'value should be 69');
 }

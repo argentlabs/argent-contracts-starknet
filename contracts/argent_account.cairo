@@ -10,9 +10,6 @@ mod ArgentAccount {
         signer: felt,
         guardian: felt,
         guardian_backup: felt,
-        // supportedInterfaces named in camelCase to match OZ's ERC165Storage but without a 
-        // leading underscore because underscores have a specific meaning in Rust.
-        supportedInterfaces: Map::<felt, bool>, 
     }
 
     #[external]
@@ -46,22 +43,9 @@ mod ArgentAccount {
 
     #[view]
     fn supportsInterface(interface_id: felt) -> bool {
-        // using combination of hardcoding and dynamic lookup for tradeoff between performance and flexibility
-        if (
-            interface_id == super::ERC165_IERC165_INTERFACE_ID | 
-            interface_id == super::ERC165_ACCOUNT_INTERFACE_ID |
-            interface_id == super::ERC165_OLD_ACCOUNT_INTERFACE_ID
-        ) {
-            true 
-        } else {
-            supportedInterfaces::read(interface_id)
-        }
-    }
-
-    #[external]
-    fn register_interface(interface_id: felt) {
-        // assert_only_self()
-        supportedInterfaces::write(interface_id, true);
+        interface_id == super::ERC165_IERC165_INTERFACE_ID | 
+        interface_id == super::ERC165_ACCOUNT_INTERFACE_ID |
+        interface_id == super::ERC165_OLD_ACCOUNT_INTERFACE_ID
     }
 }
 
@@ -103,14 +87,4 @@ fn erc165_supported_interfaces() {
     assert(ArgentAccount::supportsInterface(ERC165_IERC165_INTERFACE_ID) == true, 'value should be true');
     assert(ArgentAccount::supportsInterface(ERC165_ACCOUNT_INTERFACE_ID) == true, 'value should be true');
     assert(ArgentAccount::supportsInterface(ERC165_OLD_ACCOUNT_INTERFACE_ID) == true, 'value should be true');
-}
-
-#[test]
-#[available_gas(20000)]
-fn erc165_interface_registering() {
-    assert(ArgentAccount::supportsInterface(0x12345678) == false, 'value should be false');
-    ArgentAccount::register_interface(0x12345678);
-    assert(ArgentAccount::supportsInterface(0x12345678) == true, 'value should be true');
-
-    // TODO(axel): add test making sure register_interface can only be called by self
 }

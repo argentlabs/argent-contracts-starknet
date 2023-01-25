@@ -40,10 +40,12 @@ mod ArgentAccount {
     #[view]
     fn supportsInterface(interface_id: felt) -> bool {
         // using combination of hardcoding and dynamic lookup for tradeoff between performance and flexibility
-        if interface_id == 0x01ffc9a7 {
-            true // ERC165
-        } else if interface_id == 0xa66bd575 { // TODO: validate value
-            true // IAccount
+        if interface_id == 0x01ffc9a7 {        // ERC165
+            true 
+        } else if interface_id == 0xa66bd575 { // latest OpenZeppelin IAccount id
+            true 
+        } else if interface_id == 0x3943f10f { // latest on main branch of ArgentAccount
+            true
         } else {
             supported_interfaces::read(interface_id)
         }
@@ -88,6 +90,7 @@ fn erc165_basic_interfaces() {
     assert(ArgentAccount::supportsInterface(0xffffffff) == false, 'value should be false');
     assert(ArgentAccount::supportsInterface(0x01ffc9a7) == true, 'value should be true');
     assert(ArgentAccount::supportsInterface(0xa66bd575) == true, 'value should be true');
+    assert(ArgentAccount::supportsInterface(0x3943f10f) == true, 'value should be true');
 }
 
 #[test]

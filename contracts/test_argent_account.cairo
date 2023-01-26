@@ -53,3 +53,12 @@ fn erc165_supported_interfaces() {
         'value should be true'
     );
 }
+
+#[test]
+#[available_gas(30000)]
+fn change_signer() {
+    ArgentAccount::initialize(1, 2, 3);
+    assert(ArgentAccount::get_signer() == 1, 'value should be 1');
+    ArgentAccount::changeSigner(11);
+    assert(ArgentAccount::get_signer() == 11, 'value should be 11');
+}

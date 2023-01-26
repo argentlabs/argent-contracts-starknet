@@ -1,5 +1,7 @@
 #[contract]
 mod ArgentAccount {
+    use contracts::asserts;
+    
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
@@ -35,6 +37,16 @@ mod ArgentAccount {
     #[view]
     fn get_guardian_backup() -> felt {
         guardian_backup::read()
+    }
+
+    #[external]
+    fn changeSigner(new_signer: felt) {
+        // only called via execute
+        asserts::assert_only_self();
+        // check that the target signer is not zero
+        assert(new_signer != 0, 'argent: signer cannot be null');
+        // update the signer
+        signer::write(new_signer);
     }
 
     // ERC165

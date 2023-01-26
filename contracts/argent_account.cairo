@@ -1,6 +1,7 @@
 #[contract]
 mod ArgentAccount {
     use contracts::dummy_syscalls;
+    use contracts::asserts;
     
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
@@ -51,4 +52,18 @@ mod ArgentAccount {
     fn get_contract_address_test() -> felt {
         dummy_syscalls::get_contract_address() 
     }
+
+    fn assert_only_self_test() -> felt {
+        let a = 1;
+        asserts::assert_only_self();
+        a
+    }
+
+    fn assert_correct_tx_version_test(tx_version: felt) -> felt {
+        let a = 1;
+        asserts::assert_correct_tx_version(tx_version);
+        1
+    }
+
+
 }

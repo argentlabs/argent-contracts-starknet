@@ -55,10 +55,45 @@ fn erc165_supported_interfaces() {
 }
 
 #[test]
-#[available_gas(30000)]
+#[available_gas(10000)]
 fn change_signer() {
     ArgentAccount::initialize(1, 2, 3);
     assert(ArgentAccount::get_signer() == 1, 'value should be 1');
     ArgentAccount::changeSigner(11);
     assert(ArgentAccount::get_signer() == 11, 'value should be 11');
+}
+
+#[test]
+#[available_gas(10000)]
+fn change_guardian() {
+    ArgentAccount::initialize(1, 2, 3);
+    assert(ArgentAccount::get_guardian() == 2, 'value should be 2');
+    ArgentAccount::changeGuardian(22);
+    assert(ArgentAccount::get_guardian() == 22, 'value should be 22');
+}
+
+#[test]
+#[available_gas(10000)]
+#[should_panic(expected = 'argent: new guardian invalid')]
+fn change_invalid_guardian() {
+    ArgentAccount::initialize(1, 2, 3);
+    assert(ArgentAccount::get_guardian() == 2, 'value should be 2');
+    ArgentAccount::changeGuardian(0);
+}
+
+#[test]
+#[available_gas(10000)]
+fn change_guardian_backup() {
+    ArgentAccount::initialize(1, 2, 3);
+    assert(ArgentAccount::get_guardian_backup() == 3, 'value should be 3');
+    ArgentAccount::changeGuardianBackup(33);
+    assert(ArgentAccount::get_guardian_backup() == 33, 'value should be 33');
+}
+
+#[test]
+#[available_gas(10000)]
+#[should_panic(expected = 'argent: guardian required')]
+fn change_invalid_guardian_backup() {
+    ArgentAccount::initialize(1, 0, 0);
+    ArgentAccount::changeGuardianBackup(33);
 }

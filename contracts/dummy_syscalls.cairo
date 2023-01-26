@@ -10,6 +10,10 @@ fn get_block_number() -> felt {
     1
 }
 
+fn get_block_timestamp() -> felt {
+    100
+}
+
 fn get_tx_info() {}
 
 fn call_contract(to: felt, selector: felt, calldata: Array::<felt>) -> Array::<felt> {

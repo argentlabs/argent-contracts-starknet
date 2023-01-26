@@ -11,7 +11,7 @@ fn assert_only_self() {
 
 fn assert_non_reentrant(signer: felt) {
     let caller_address = dummy_syscalls::get_caller_address();
-    assert(caller_address == 0, 'argent: argent: no reentrant call');
+    assert(caller_address == 0, 'argent: no reentrant call');
 }
 
 fn assert_initialized(signer: felt) {
@@ -22,7 +22,7 @@ fn assert_initialized(signer: felt) {
 
 fn assert_correct_tx_version(tx_version: felt) {
     assert(
-        tx_version == TRANSACTION_VERSION ^ tx_version == QUERY_VERSION,
+        tx_version == TRANSACTION_VERSION | tx_version == QUERY_VERSION,
         'argent: invalid tx version'
     );
 }

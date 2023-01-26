@@ -3,6 +3,7 @@
 version = 3
 
 [[package]]
+<<<<<<< HEAD
 name = "aho-corasick"
 version = "0.7.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3156,3 +3157,7 @@ dependencies = [
  "syn",
  "synstructure",
 ]
+=======
+name = "argent-contracts-starknet"
+version = "0.1.0"
+>>>>>>> e50abfa (Initial EIP1271)

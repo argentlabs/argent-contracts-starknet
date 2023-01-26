@@ -1,6 +1,6 @@
 #[contract]
 mod ArgentAccount {
-    use contracts::dummy_syscalls;
+
     
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
@@ -47,9 +47,5 @@ mod ArgentAccount {
         interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
     }
 
-    #[view]
-    fn get_contract_address_test() -> felt {
-        dummy_syscalls::get_contract_address() 
-    }
 
 }

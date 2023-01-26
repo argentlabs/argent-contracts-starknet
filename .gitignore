@@ -6,3 +6,4 @@ artifacts
 node.json
 .idea
 cairo/
+target/

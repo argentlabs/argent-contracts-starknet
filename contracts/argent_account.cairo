@@ -106,4 +106,12 @@ mod ArgentAccount {
         }
         ecdsa::check_ecdsa_signature(message_hash, guardian_backup::read(), signature_r, signature_s)
     }
+
+    fn validate_signer_signature(ref signatures: Array::<felt>, message_hash: felt) {
+        assert(is_valid_signer_signature(ref signatures, message_hash), 'argent: signer signature invalid');
+    }
+
+    fn validate_guardian_signature(ref signatures: Array::<felt>, message_hash: felt) {
+        assert(is_valid_guardian_signature(ref signatures, message_hash), 'argent: guardian signature invalid');
+    }
 }

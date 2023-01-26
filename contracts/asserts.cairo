@@ -1,7 +1,7 @@
 use contracts::dummy_syscalls;
 
 const TRANSACTION_VERSION: felt = 1;
-const QUERY_VERSION = 340282366920938463463374607431768211456 + TRANSACTION_VERSION; // 2**128 + TRANSACTION_VERSION
+const QUERY_VERSION: felt= 340282366920938463463374607431768211457; // 2**128 + TRANSACTION_VERSION
 
 fn assert_only_self() {
     let self = dummy_syscalls::get_contract_address();

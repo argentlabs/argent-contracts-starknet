@@ -48,3 +48,18 @@ fn erc165_supported_interfaces() {
 fn get_contract_address_test() {
     assert(ArgentAccount::get_contract_address_test() == 69, 'value should be 69');
 }
+
+#[test]
+#[available_gas(20000)]
+fn test_assert_only_self() {
+    let retdata = ArgentAccount::assert_only_self_test();
+    assert(retdata == 1, 'return data should be 1');
+}
+
+#[test]
+#[available_gas(20000)]
+fn assert_correct_tx_version_test() {
+    let tx_version = 1;
+    let retdata = ArgentAccount::assert_correct_tx_version_test(tx_version);
+    assert(retdata == 1, 'return data should be 1');
+}

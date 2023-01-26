@@ -1,7 +1,8 @@
 #[contract]
 mod ArgentAccount {
+    use array::ArrayTrait;
     use contracts::asserts;
-
+    
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
@@ -74,5 +75,35 @@ mod ArgentAccount {
     #[view]
     fn supportsInterface(interface_id: felt) -> bool {
         interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
+    }
+
+    // ERC1271
+    #[view]
+    fn isValidSignature(ref signatures: Array::<felt>, message_hash: felt) -> bool {
+        let is_valid_signer = is_valid_signer_signature(ref signatures, message_hash);
+        let is_valid_guardian = is_valid_guardian_signature(ref signatures, message_hash);
+        is_valid_signer & is_valid_guardian
+    }
+
+    fn is_valid_signer_signature(ref signatures: Array::<felt>, message_hash: felt) -> bool {
+        assert(signatures.len() >= 2_u128, 'argent: signature format invalid');
+        let signature_r = signatures.at(0_u128);
+        let signature_s = signatures.at(1_u128);
+        ecdsa::check_ecdsa_signature(message_hash, signer::read(), signature_r, signature_s)
+    }
+
+    fn is_valid_guardian_signature(ref signatures: Array::<felt>, message_hash: felt) -> bool {
+        let guardian_ = guardian::read();
+        if guardian_ == 0 {
+            assert(signatures.len() == 2_u128, 'argent: signature format invalid');
+            return true;
+        }
+        assert(signatures.len() == 4_u128, 'argent: signature format invalid');
+        let signature_r = signatures.at(2_u128);
+        let signature_s = signatures.at(3_u128);
+        if ecdsa::check_ecdsa_signature(message_hash, guardian_, signature_r, signature_s) {
+            return true;
+        }
+        ecdsa::check_ecdsa_signature(message_hash, guardian_backup::read(), signature_r, signature_s)
     }
 }

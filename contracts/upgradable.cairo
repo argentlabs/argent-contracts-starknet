@@ -1,7 +1,5 @@
 #[contract]
 mod Upgradable {
-    use contracts::dummy_syscalls;
-    
     struct Storage { 
         implementation: felt,
     }

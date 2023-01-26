@@ -1,5 +1,5 @@
-use array::ArrayTrait;
 use contracts::ArgentAccount;
+use array::ArrayTrait;
 
 const message_hash: felt = 0x503f4bea29baee10b22a7f10bdc82dda071c977c1f25b8f3973d34e6b03b2c;
 const public_key: felt = 0x7b7454acbe7845da996377f85eb0892044d75ae95d04d3325a391951f35d2ec;

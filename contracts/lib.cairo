@@ -5,4 +5,5 @@ mod argent_account;
 use argent_account::ArgentAccount;
 
 mod test_argent_account;
+mod test_asserts;
 

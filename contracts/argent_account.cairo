@@ -53,24 +53,4 @@ mod ArgentAccount {
         dummy_syscalls::get_contract_address() 
     }
 
-    fn assert_only_self_test() -> felt {
-        let a = 1;
-        asserts::assert_only_self();
-        a
-    }
-
-    fn assert_guardian_set_test() -> felt {
-        let a = 1;
-        let guardian = guardian::read();
-        asserts::assert_guardian_set(guardian);
-        a
-    }
-
-    fn assert_correct_tx_version_test(tx_version: felt) -> felt {
-        let a = 1;
-        asserts::assert_correct_tx_version(tx_version);
-        1
-    }
-
-
 }

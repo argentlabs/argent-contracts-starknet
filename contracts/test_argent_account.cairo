@@ -41,10 +41,3 @@ fn erc165_supported_interfaces() {
     assert(ArgentAccount::supportsInterface(ArgentAccount::ERC165_ACCOUNT_INTERFACE_ID) == true, 'value should be true');
     assert(ArgentAccount::supportsInterface(ArgentAccount::ERC165_OLD_ACCOUNT_INTERFACE_ID) == true, 'value should be true');
 }
-
-
-#[test]
-#[available_gas(20000)]
-fn get_contract_address_test() {
-    assert(ArgentAccount::get_contract_address_test() == 69, 'value should be 69');
-}

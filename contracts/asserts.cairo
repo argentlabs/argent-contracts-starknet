@@ -6,10 +6,9 @@ fn assert_only_self() {
     assert(self == caller_address, 'argent: only self');
 }
 
-fn assert_initialized() {
+fn assert_initialized(signer: felt) {
     // read signer from contract storage 
-    // let guardian= signer::read();
-    let signer = 1;
+    // let signer = signer::read();
     assert(signer != 0, 'argent: account not initialized');
 }
 
@@ -19,9 +18,8 @@ fn assert_correct_tx_version(tx_version: felt) {
     assert(tx_version == correct_tx_version ^ tx_version == query_version, 'argent: invalid tx version');
 }
 
-fn assert_guardian_set() {
+fn assert_guardian_set(guardian: felt) {
     // read guardian from contract storage 
     // let guardian= guardian::read();
-    let guardian = 1;
     assert(guardian != 0, 'argent: guardian required');
 }

@@ -63,3 +63,11 @@ fn assert_correct_tx_version_test() {
     let retdata = ArgentAccount::assert_correct_tx_version_test(tx_version);
     assert(retdata == 1, 'return data should be 1');
 }
+
+#[test]
+#[available_gas(20000)]
+#[should_panic(expected = 'argent: guardian required')]
+fn assert_guardian_set_test() {
+    let retdata = ArgentAccount::assert_guardian_set_test();
+    assert(retdata != 1, 'return data should not be 1');
+}

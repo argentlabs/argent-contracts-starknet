@@ -59,6 +59,13 @@ mod ArgentAccount {
         a
     }
 
+    fn assert_guardian_set_test() -> felt {
+        let a = 1;
+        let guardian = guardian::read();
+        asserts::assert_guardian_set(guardian);
+        a
+    }
+
     fn assert_correct_tx_version_test(tx_version: felt) -> felt {
         let a = 1;
         asserts::assert_correct_tx_version(tx_version);

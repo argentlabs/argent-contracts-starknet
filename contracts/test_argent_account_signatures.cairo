@@ -11,60 +11,136 @@ const guardian_pubkey: felt = 0x759ca09377679ecd535a81e83039658bf40959283187c654
 const guardian_r: felt = 0x1734f5510c8b862984461d2221411d12a706140bae629feac0aad35f4d91a19;
 const guardian_s: felt = 0x75c904c1969e5b2bf2e9fedb32d6180f06288d81a6a2164d876ea4be2ae7520;
 
-const guardian_backup_pubkey: felt = 0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2f96fec5ba847310b20;
+const guardian_backup_pubkey: felt =
+    0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2f96fec5ba847310b20;
 const guardian_backup_r: felt = 0x1e03a158a4142532f903caa32697a74fcf5c05b762bb866cec28670d0a53f9a;
 const guardian_backup_s: felt = 0x74be76fe620a42899bc34afce7b31a058408b23c250805054fca4de4e0121ca;
+
+fn single_signature(r: felt, s: felt) -> Array::<felt> {
+    let mut signatures = ArrayTrait::new();
+    signatures.append(r);
+    signatures.append(s);
+    signatures
+}
+
+fn double_signature(r1: felt, s1: felt, r2: felt, s2: felt) -> Array::<felt> {
+    let mut signatures = ArrayTrait::new();
+    signatures.append(r1);
+    signatures.append(s1);
+    signatures.append(r2);
+    signatures.append(s2);
+    signatures
+}
 
 #[test]
 #[available_gas(20000)]
 fn valid_no_guardian() {
-    let mut signatures = ArrayTrait::new();
-    signatures.append(signer_r);
-    signatures.append(signer_s);
     ArgentAccount::initialize(signer_pubkey, 0, 0);
+    let mut signatures = single_signature(signer_r, signer_s);
     assert(ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
 }
 
 #[test]
 #[available_gas(20000)]
 fn valid_with_guardian() {
-    let mut signatures = ArrayTrait::new();
-    signatures.append(signer_r);
-    signatures.append(signer_s);
-    signatures.append(guardian_r);
-    signatures.append(guardian_s);
     ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
+    let mut signatures = double_signature(signer_r, signer_s, guardian_r, guardian_s);
     assert(ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
 }
 
 #[test]
 #[available_gas(20000)]
 fn valid_with_guardian_backup() {
-    let mut signatures = ArrayTrait::new();
-    signatures.append(signer_r);
-    signatures.append(signer_s);
-    signatures.append(guardian_backup_r);
-    signatures.append(guardian_backup_s);
     ArgentAccount::initialize(signer_pubkey, 1, guardian_backup_pubkey);
+    let mut signatures = double_signature(signer_r, signer_s, guardian_backup_r, guardian_backup_s);
     assert(ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
 }
 
 #[test]
 #[available_gas(20000)]
-fn invalid_signer_signature() {
-    let mut signatures = ArrayTrait::new();
-    signatures.append(42);
-    signatures.append(49);
+fn invalid_hash() {
     ArgentAccount::initialize(signer_pubkey, 0, 0);
+    let mut signatures = single_signature(signer_r, signer_s);
+    assert(!ArgentAccount::isValidSignature(ref signatures, 0), 'invalid signature');
+    assert(!ArgentAccount::isValidSignature(ref signatures, 123), 'invalid signature');
+}
+
+#[test]
+#[available_gas(20000)]
+fn invalid_signer_no_guardian() {
+    ArgentAccount::initialize(signer_pubkey, 0, 0);
+    let mut signatures = single_signature(0, 0);
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+    let mut signatures = single_signature(42, 99);
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+    let mut signatures = single_signature(guardian_r, guardian_s);
     assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
 }
 
 #[test]
 #[available_gas(20000)]
-fn invalid_signer_hash() {
-    let mut signatures = ArrayTrait::new();
-    signatures.append(signer_r);
-    signatures.append(signer_s);
+fn invalid_signer_with_guardian() {
+    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
+    let mut signatures = double_signature(0, 0, 0, 0);
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+    let mut signatures = double_signature(42, 99, 534, 123);
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+    let mut signatures = double_signature(signer_r, signer_s, 0, 0);
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+    let mut signatures = double_signature(signer_r, signer_s, signer_r, signer_s);
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+    let mut signatures = double_signature(guardian_r, guardian_s, guardian_r, guardian_s);
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+}
+
+#[test]
+#[available_gas(20000)]
+fn invalid_guardian() {
+    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
+    let mut signatures = double_signature(0, 0, 0, 0);
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+    let mut signatures = double_signature(42, 99, 534, 123);
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+    let mut signatures = double_signature(signer_r, signer_s, 0, 0);
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+    let mut signatures = double_signature(signer_r, signer_s, signer_r, signer_s);
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+    let mut signatures = double_signature(guardian_r, guardian_s, guardian_r, guardian_s);
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+}
+
+#[test]
+#[available_gas(20000)]
+#[should_panic]
+fn invalid_signature_length_no_guardian() {
     ArgentAccount::initialize(signer_pubkey, 0, 0);
-    assert(!ArgentAccount::isValidSignature(ref signatures, 123), 'invalid signature');
+    let mut signatures = ArrayTrait::new();
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+}
+
+#[test]
+#[available_gas(20000)]
+#[should_panic]
+fn invalid_signature_length_no_guardian_2() {
+    ArgentAccount::initialize(signer_pubkey, 0, 0);
+    let mut signatures = double_signature(signer_r, signer_s, guardian_r, guardian_s);
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+}
+
+#[test]
+#[available_gas(20000)]
+#[should_panic]
+fn invalid_signature_length_with_guardian() {
+    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
+    let mut signatures = ArrayTrait::new();
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
+}
+
+#[test]
+#[available_gas(20000)]
+#[should_panic]
+fn invalid_signature_length_with_guardian_2() {
+    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
+    let mut signatures = single_signature(signer_r, signer_s);
+    assert(!ArgentAccount::isValidSignature(ref signatures, message_hash), 'invalid signature');
 }

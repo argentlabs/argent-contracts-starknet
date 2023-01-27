@@ -1,6 +1,5 @@
 #[contract]
 mod Upgradable {
-    use contracts::asserts;
     
     struct Storage { 
         implementation: felt,

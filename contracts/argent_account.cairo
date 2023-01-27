@@ -117,9 +117,9 @@ mod ArgentAccount {
 
     // ERC1271
     #[view]
-    fn isValidSignature(ref signatures: Array::<felt>, message_hash: felt) -> bool {
-        let is_valid_signer = is_valid_signer_signature(ref signatures, message_hash);
-        let is_valid_guardian = is_valid_guardian_signature(ref signatures, message_hash);
+    fn isValidSignature(ref signatures: Array::<felt>, hash: felt) -> bool {
+        let is_valid_signer = is_valid_signer_signature(ref signatures, hash);
+        let is_valid_guardian = is_valid_guardian_signature(ref signatures, hash);
         is_valid_signer & is_valid_guardian
     }
 
@@ -130,7 +130,7 @@ mod ArgentAccount {
         ecdsa::check_ecdsa_signature(hash, signer::read(), signature_r, signature_s)
     }
 
-    fn is_valid_guardian_signature(ref signatures: Array::<felt>, message_hash: felt) -> bool {
+    fn is_valid_guardian_signature(ref signatures: Array::<felt>, hash: felt) -> bool {
         let guardian_ = guardian::read();
         if guardian_ == 0 {
             assert(signatures.len() == 2_usize, 'argent: signature format invalid');
@@ -145,9 +145,7 @@ mod ArgentAccount {
         if is_valid_guardian_signature {
             return true;
         }
-        ecdsa::check_ecdsa_signature(
-            message_hash, guardian_backup::read(), signature_r, signature_s
-        )
+        ecdsa::check_ecdsa_signature(hash, guardian_backup::read(), signature_r, signature_s)
     }
 
     #[external]

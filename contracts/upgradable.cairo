@@ -1,5 +1,7 @@
 #[contract]
 mod Upgradable {
+    use contracts::asserts;
+    
     struct Storage { 
         implementation: felt,
     }
@@ -9,7 +11,7 @@ mod Upgradable {
     }
 
     fn _set_implementation(implementation: felt) {
-        // assert_not_zero(implementation);
+        assert(implementation != 0, 'argent: implementation cannot be zero');
         implementation::write(implementation)
     }
 

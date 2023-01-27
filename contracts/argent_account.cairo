@@ -79,20 +79,20 @@ mod ArgentAccount {
 
     // ERC1271
     #[view]
-    fn isValidSignature(ref signatures: Array::<felt>, message_hash: felt) -> bool {
-        let is_valid_signer = is_valid_signer_signature(ref signatures, message_hash);
-        let is_valid_guardian = is_valid_guardian_signature(ref signatures, message_hash);
+    fn isValidSignature(ref signatures: Array::<felt>, hash: felt) -> bool {
+        let is_valid_signer = is_valid_signer_signature(ref signatures, hash);
+        let is_valid_guardian = is_valid_guardian_signature(ref signatures, hash);
         is_valid_signer & is_valid_guardian
     }
 
-    fn is_valid_signer_signature(ref signatures: Array::<felt>, message_hash: felt) -> bool {
+    fn is_valid_signer_signature(ref signatures: Array::<felt>, hash: felt) -> bool {
         assert(signatures.len() >= 2_u128, 'argent: signature format invalid');
         let signature_r = signatures.at(0_u128);
         let signature_s = signatures.at(1_u128);
-        ecdsa::check_ecdsa_signature(message_hash, signer::read(), signature_r, signature_s)
+        ecdsa::check_ecdsa_signature(hash, signer::read(), signature_r, signature_s)
     }
 
-    fn is_valid_guardian_signature(ref signatures: Array::<felt>, message_hash: felt) -> bool {
+    fn is_valid_guardian_signature(ref signatures: Array::<felt>, hash: felt) -> bool {
         let guardian_ = guardian::read();
         if guardian_ == 0 {
             assert(signatures.len() == 2_u128, 'argent: signature format invalid');
@@ -101,27 +101,22 @@ mod ArgentAccount {
         assert(signatures.len() == 4_u128, 'argent: signature format invalid');
         let signature_r = signatures.at(2_u128);
         let signature_s = signatures.at(3_u128);
-        if ecdsa::check_ecdsa_signature(
-            message_hash, guardian_, signature_r, signature_s
-        ) {
+        let is_valid_guardian_signature = ecdsa::check_ecdsa_signature(
+            hash, guardian_, signature_r, signature_s
+        );
+        if is_valid_guardian_signature {
             return true;
         }
-        ecdsa::check_ecdsa_signature(
-            message_hash, guardian_backup::read(), signature_r, signature_s
-        )
+        ecdsa::check_ecdsa_signature(hash, guardian_backup::read(), signature_r, signature_s)
     }
 
-    fn validate_signer_signature(ref signatures: Array::<felt>, message_hash: felt) {
-        assert(
-            is_valid_signer_signature(ref signatures, message_hash),
-            'argent: signer signature invalid'
-        );
+    fn validate_signer_signature(ref signatures: Array::<felt>, hash: felt) {
+        let is_valid = is_valid_signer_signature(ref signatures, hash);
+        assert(is_valid, 'argent: signer signature invalid');
     }
 
-    fn validate_guardian_signature(ref signatures: Array::<felt>, message_hash: felt) {
-        assert(
-            is_valid_guardian_signature(ref signatures, message_hash),
-            'argent: guardian signature invalid'
-        );
+    fn validate_guardian_signature(ref signatures: Array::<felt>, hash: felt) {
+        let is_valid = is_valid_guardian_signature(ref signatures, hash);
+        assert(is_valid, 'argent: guardian signature invalid');
     }
 }

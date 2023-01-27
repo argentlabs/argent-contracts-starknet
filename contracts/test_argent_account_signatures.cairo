@@ -52,17 +52,6 @@ fn invalid_signer_signature() {
 
 #[test]
 #[available_gas(20000)]
-#[should_panic(expected = 'argent: signer signature invalid')]
-fn invalid_signer_signature_validation() {
-    let mut signatures = ArrayTrait::new();
-    signatures.append(42);
-    signatures.append(49);
-    ArgentAccount::initialize(public_key, 0, 0);
-    ArgentAccount::validate_signer_signature(ref signatures, message_hash)
-}
-
-#[test]
-#[available_gas(20000)]
 fn invalid_signer_hash() {
     let mut signatures = ArrayTrait::new();
     signatures.append(signature_r);

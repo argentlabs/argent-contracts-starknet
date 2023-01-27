@@ -145,7 +145,9 @@ mod ArgentAccount {
         if is_valid_guardian_signature {
             return true;
         }
-        ecdsa::check_ecdsa_signature(message_hash, guardian_backup::read(), signature_r, signature_s)
+        ecdsa::check_ecdsa_signature(
+            message_hash, guardian_backup::read(), signature_r, signature_s
+        )
     }
 
     #[external]

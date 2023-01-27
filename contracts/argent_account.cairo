@@ -9,26 +9,18 @@ mod ArgentAccount {
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
 
-<<<<<<< HEAD
     const ESCAPE_SECURITY_PERIOD: felt = 604800; // 7 days
 
     const ESCAPE_TYPE_GUARDIAN: felt = 1;
     const ESCAPE_TYPE_SIGNER: felt = 2;
 
-=======
->>>>>>> 4f2c6fc (started trigger escape signer)
 
     struct Storage {
         signer: felt,
         guardian: felt,
         guardian_backup: felt,
-<<<<<<< HEAD
         escape_active_at: felt,
         escape_type: felt,
-=======
-        escape_active_at: u128,
-        escape_type: u8,
->>>>>>> 4f2c6fc (started trigger escape signer)
     }
 
 
@@ -193,6 +185,9 @@ mod ArgentAccount {
         EscapeCanceled();
     }
 
+    fn cancel_escape() {
+        // only called via execute
+        asserts::assert_only_self();
 
     fn escape_signer(new_signer: felt, block_timestamp: felt) {
         // only called via execute

@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "Argent-contracts"
+name = "argent-contracts-starknet"
 version = "0.1.0"

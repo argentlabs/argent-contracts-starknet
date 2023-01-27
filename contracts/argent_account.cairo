@@ -2,7 +2,7 @@
 mod ArgentAccount {
     use array::ArrayTrait;
     use contracts::asserts;
-    
+
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;

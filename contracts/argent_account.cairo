@@ -1,12 +1,10 @@
 #[contract]
 mod ArgentAccount {
-
-    
+    const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
-    const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
 
-    struct Storage { 
+    struct Storage {
         signer: felt,
         guardian: felt,
         guardian_backup: felt,
@@ -42,10 +40,6 @@ mod ArgentAccount {
     // ERC165
     #[view]
     fn supportsInterface(interface_id: felt) -> bool {
-        interface_id == ERC165_IERC165_INTERFACE_ID | 
-        interface_id == ERC165_ACCOUNT_INTERFACE_ID |
-        interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
+        interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
     }
-
-
 }

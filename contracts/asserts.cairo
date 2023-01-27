@@ -1,7 +1,7 @@
 use contracts::dummy_syscalls;
 
 const TRANSACTION_VERSION: felt = 1;
-const QUERY_VERSION: felt= 340282366920938463463374607431768211457; // 2**128 + TRANSACTION_VERSION
+const QUERY_VERSION: felt = 340282366920938463463374607431768211457; // 2**128 + TRANSACTION_VERSION
 
 fn assert_only_self() {
     let self = dummy_syscalls::get_contract_address();
@@ -21,7 +21,10 @@ fn assert_initialized(signer: felt) {
 }
 
 fn assert_correct_tx_version(tx_version: felt) {
-    assert(tx_version == TRANSACTION_VERSION ^ tx_version == QUERY_VERSION, 'argent: invalid tx version');
+    assert(
+        tx_version == TRANSACTION_VERSION ^ tx_version == QUERY_VERSION,
+        'argent: invalid tx version'
+    );
 }
 
 fn assert_guardian_set(guardian: felt) {

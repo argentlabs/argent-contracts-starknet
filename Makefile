@@ -1,4 +1,4 @@
-# @ are used to silent the commands being written in console
+# @ are used to prevent the makefile to print the command used in the console
 # Because we have a fodler called test we need PHONY
 .PHONY: test 
 

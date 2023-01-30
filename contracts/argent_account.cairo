@@ -2,6 +2,7 @@
 mod ArgentAccount {
     use array::ArrayTrait;
     use contracts::asserts;
+    use contracts::dummy_syscalls;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
@@ -13,6 +14,13 @@ mod ArgentAccount {
         guardian_backup: felt,
     }
 
+
+    #[event]
+    fn AccountCreated(account: felt, key: felt, guardian: felt) {}
+
+    #[event]
+    fn TransactionExecuted(hash: felt, response: Array::<felt>) {}
+
     #[external]
     fn initialize(signer: felt, guardian: felt, guardian_backup: felt) {
         // check that we are not already initialized
@@ -23,6 +31,7 @@ mod ArgentAccount {
         signer::write(signer);
         guardian::write(guardian);
         guardian_backup::write(guardian_backup);
+        // AccountCreated(dummy_syscalls::get_contract_address(), signer, guardian); Can't call yet
     }
 
     #[view]

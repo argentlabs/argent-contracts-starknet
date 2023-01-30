@@ -15,6 +15,6 @@ jobs:
           profile: minimal
           toolchain: nightly-2022-11-03
       - uses: Swatinem/rust-cache@v2
-      - run: ./scripts/install-cairo-1.0.sh
-      - run: ./scripts/test-cairo-1.0-contracts.sh
-      - run: ./cairo/bin/cairo-format --check --recursive contracts/
+      - run: make install
+      - run: make test
+      - run: make format

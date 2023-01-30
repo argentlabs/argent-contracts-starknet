@@ -23,12 +23,12 @@ mod ArgentAccount {
         escape_type: felt,
     }
 
-
     #[event]
     fn AccountCreated(account: felt, key: felt, guardian: felt) {}
 
     #[event]
     fn TransactionExecuted(hash: felt, response: Array::<felt>) {}
+
     #[event]
     fn EscapeSignerTriggered(active_at: felt) {}
 
@@ -37,7 +37,6 @@ mod ArgentAccount {
 
     #[event]
     fn EscapeCanceled() {}
-
 
     #[external]
     fn initialize(signer: felt, guardian: felt, guardian_backup: felt) {
@@ -167,7 +166,7 @@ mod ArgentAccount {
         let new_escape_activation = block_timestamp + ESCAPE_SECURITY_PERIOD;
         escape_active_at::write(new_escape_activation);
         escape_type::write(ESCAPE_TYPE_SIGNER);
-        EscapeSignerTriggered(new_escape_activation);
+    // EscapeSignerTriggered(new_escape_activation); Can't call yet
     }
 
     fn cancel_escape() {
@@ -182,7 +181,7 @@ mod ArgentAccount {
         // clear escape
         escape_active_at::write(0);
         escape_type::write(0);
-        EscapeCanceled();
+    // EscapeCanceled(); Can't call yet
     }
 
     fn cancel_escape() {
@@ -212,6 +211,6 @@ mod ArgentAccount {
         // change signer
         assert(new_signer != 0, 'argent: signer cannot be null');
         signer::write(new_signer);
-        SignerEscaped(new_signer);
+    // SignerEscaped(new_signer);
     }
 }

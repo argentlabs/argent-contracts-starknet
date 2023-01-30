@@ -3160,4 +3160,3 @@ dependencies = [
 =======
 name = "argent-contracts-starknet"
 version = "0.1.0"
->>>>>>> e50abfa (Initial EIP1271)

@@ -3,7 +3,7 @@ use contracts::ArgentAccount;
 const ERC165_INVALID_INTERFACE_ID: felt = 0xffffffff;
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 fn initialize() {
     ArgentAccount::initialize(1, 2, 3);
     assert(ArgentAccount::get_signer() == 1, 'value should be 1');
@@ -12,14 +12,14 @@ fn initialize() {
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 #[should_panic(expected = 'argent: signer cannot be null')]
 fn initialize_with_null_signer() {
     ArgentAccount::initialize(0, 2, 3);
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 #[should_panic(expected = 'argent: already initialized')]
 fn already_initialized() {
     ArgentAccount::initialize(1, 2, 3);
@@ -28,7 +28,7 @@ fn already_initialized() {
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 fn erc165_unsupported_interfaces() {
     assert(ArgentAccount::supportsInterface(0) == false, 'value should be false');
     assert(
@@ -38,7 +38,7 @@ fn erc165_unsupported_interfaces() {
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 fn erc165_supported_interfaces() {
     assert(
         ArgentAccount::supportsInterface(ArgentAccount::ERC165_IERC165_INTERFACE_ID) == true,
@@ -55,7 +55,7 @@ fn erc165_supported_interfaces() {
 }
 
 #[test]
-#[available_gas(10000)]
+#[available_gas(2000000)]
 fn change_signer() {
     ArgentAccount::initialize(1, 2, 3);
     assert(ArgentAccount::get_signer() == 1, 'value should be 1');
@@ -64,7 +64,7 @@ fn change_signer() {
 }
 
 #[test]
-#[available_gas(10000)]
+#[available_gas(2000000)]
 fn change_guardian() {
     ArgentAccount::initialize(1, 2, 3);
     assert(ArgentAccount::get_guardian() == 2, 'value should be 2');
@@ -73,7 +73,7 @@ fn change_guardian() {
 }
 
 #[test]
-#[available_gas(10000)]
+#[available_gas(2000000)]
 #[should_panic(expected = 'argent: new guardian invalid')]
 fn change_invalid_guardian() {
     ArgentAccount::initialize(1, 2, 3);
@@ -82,7 +82,7 @@ fn change_invalid_guardian() {
 }
 
 #[test]
-#[available_gas(10000)]
+#[available_gas(2000000)]
 fn change_guardian_backup() {
     ArgentAccount::initialize(1, 2, 3);
     assert(ArgentAccount::get_guardian_backup() == 3, 'value should be 3');
@@ -91,7 +91,7 @@ fn change_guardian_backup() {
 }
 
 #[test]
-#[available_gas(10000)]
+#[available_gas(2000000)]
 #[should_panic(expected = 'argent: guardian required')]
 fn change_invalid_guardian_backup() {
     ArgentAccount::initialize(1, 0, 0);

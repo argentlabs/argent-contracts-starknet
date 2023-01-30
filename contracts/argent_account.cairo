@@ -31,7 +31,7 @@ mod ArgentAccount {
         signer::write(signer);
         guardian::write(guardian);
         guardian_backup::write(guardian_backup);
-        // AccountCreated(dummy_syscalls::get_contract_address(), signer, guardian); Can't call yet
+    // AccountCreated(dummy_syscalls::get_contract_address(), signer, guardian); Can't call yet
     }
 
     #[view]

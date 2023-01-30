@@ -17,4 +17,4 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: ./scripts/install-cairo-1.0.sh
       - run: cargo run --bin cairo-test -- --starknet --path contracts/
-      - run: ./cairo/bin/cairo-format --check --recursive contracts/
+      - run: cargo run --bin cairo-format -- --check --recursive contracts/

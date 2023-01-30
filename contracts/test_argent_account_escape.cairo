@@ -82,8 +82,8 @@ fn escape_signer_no_active_escape() {
     let new_signer = 5;
     // 7 days + current timestamp + 1 block
     let future_timestamp = dummy_syscalls::get_block_timestamp()
-        + ESCAPE_SECURITY_PERIOD
-        + 1; // 7 days + current timestamp + 1 block
+        + ArgentAccount::ESCAPE_SECURITY_PERIOD
+        + 1;
     ArgentAccount::initialize(INITIALIZED_SIGNER, INITIALIZED_GUARDIAN, 0);
     ArgentAccount::escape_signer(new_signer, future_timestamp);
 }

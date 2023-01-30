@@ -16,5 +16,5 @@ jobs:
           toolchain: nightly-2022-11-03
       - uses: Swatinem/rust-cache@v2
       - run: ./scripts/install-cairo-1.0.sh
-      - run: ./scripts/test-cairo-1.0-contracts.sh
+      - run: cargo run --bin cairo-test -- --starknet --path contracts/
       - run: ./cairo/bin/cairo-format --check --recursive contracts/

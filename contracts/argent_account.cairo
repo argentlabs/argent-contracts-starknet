@@ -2,6 +2,7 @@
 mod ArgentAccount {
     use array::ArrayTrait;
     use contracts::asserts;
+    use contracts::dummy_syscalls;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
@@ -13,6 +14,13 @@ mod ArgentAccount {
         guardian_backup: felt,
     }
 
+
+    #[event]
+    fn AccountCreated(account: felt, key: felt, guardian: felt) {}
+
+    #[event]
+    fn TransactionExecuted(hash: felt, response: Array::<felt>) {}
+
     #[external]
     fn initialize(signer: felt, guardian: felt, guardian_backup: felt) {
         // check that we are not already initialized
@@ -23,6 +31,7 @@ mod ArgentAccount {
         signer::write(signer);
         guardian::write(guardian);
         guardian_backup::write(guardian_backup);
+    // AccountCreated(dummy_syscalls::get_contract_address(), signer, guardian); Can't call yet
     }
 
     #[view]
@@ -86,21 +95,21 @@ mod ArgentAccount {
     }
 
     fn is_valid_signer_signature(ref signatures: Array::<felt>, hash: felt) -> bool {
-        assert(signatures.len() >= 2_u128, 'argent: signature format invalid');
-        let signature_r = signatures.at(0_u128);
-        let signature_s = signatures.at(1_u128);
+        assert(signatures.len() >= 2_usize, 'argent: signature format invalid');
+        let signature_r = signatures.at(0_usize);
+        let signature_s = signatures.at(1_usize);
         ecdsa::check_ecdsa_signature(hash, signer::read(), signature_r, signature_s)
     }
 
     fn is_valid_guardian_signature(ref signatures: Array::<felt>, hash: felt) -> bool {
         let guardian_ = guardian::read();
         if guardian_ == 0 {
-            assert(signatures.len() == 2_u128, 'argent: signature format invalid');
+            assert(signatures.len() == 2_usize, 'argent: signature format invalid');
             return true;
         }
-        assert(signatures.len() == 4_u128, 'argent: signature format invalid');
-        let signature_r = signatures.at(2_u128);
-        let signature_s = signatures.at(3_u128);
+        assert(signatures.len() == 4_usize, 'argent: signature format invalid');
+        let signature_r = signatures.at(2_usize);
+        let signature_s = signatures.at(3_usize);
         let is_valid_guardian_signature = ecdsa::check_ecdsa_signature(
             hash, guardian_, signature_r, signature_s
         );

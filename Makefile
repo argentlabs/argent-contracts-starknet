@@ -6,7 +6,7 @@
 INSTALLATION-FOLDER=./cairo
 
 install: 
-	if [ -d $(INSTALLATION-FOLDER)]; then \
+	if [ -d $(INSTALLATION-FOLDER) ]; then \
 		$(MAKE) update-cairo; \
 	else \
 		$(MAKE) clone-cairo; \
@@ -27,5 +27,5 @@ build:
 test: 
 	cargo run --bin cairo-test -- --starknet --path contracts/
 
-format:
+check-format:
 	cargo run --bin cairo-format -- --check --recursive contracts/

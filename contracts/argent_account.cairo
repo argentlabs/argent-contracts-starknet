@@ -169,6 +169,7 @@ mod ArgentAccount {
     // EscapeSignerTriggered(new_escape_activation); Can't call yet
     }
 
+    #[external]
     fn cancel_escape() {
         // only called via execute
         asserts::assert_only_self();
@@ -184,10 +185,7 @@ mod ArgentAccount {
     // EscapeCanceled(); Can't call yet
     }
 
-    fn cancel_escape() {
-        // only called via execute
-        asserts::assert_only_self();
-
+    #[external]
     fn escape_signer(new_signer: felt, block_timestamp: felt) {
         // only called via execute
         asserts::assert_only_self();

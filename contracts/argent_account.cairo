@@ -148,7 +148,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn trigger_escape_signer() {
+    fn triggerEscapeSigner() {
         // only called via execute
         asserts::assert_only_self();
 
@@ -171,7 +171,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn cancel_escape() {
+    fn cancelEscape() {
         // only called via execute
         asserts::assert_only_self();
 
@@ -187,7 +187,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn escape_signer(new_signer: felt, block_timestamp: felt) {
+    fn escapeSigner(new_signer: felt, block_timestamp: felt) {
         // only called via execute
         asserts::assert_only_self();
         // no escape when the guardian is not set

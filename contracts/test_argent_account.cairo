@@ -31,27 +31,18 @@ fn already_initialized() {
 #[available_gas(2000000)]
 fn erc165_unsupported_interfaces() {
     assert(ArgentAccount::supportsInterface(0) == false, 'value should be false');
-    assert(
-        ArgentAccount::supportsInterface(ERC165_INVALID_INTERFACE_ID) == false,
-        'value should be false'
-    );
+    assert(!ArgentAccount::supportsInterface(ERC165_INVALID_INTERFACE_ID), 'value should be false');
 }
 
 #[test]
 #[available_gas(2000000)]
 fn erc165_supported_interfaces() {
-    assert(
-        ArgentAccount::supportsInterface(ArgentAccount::ERC165_IERC165_INTERFACE_ID) == true,
-        'value should be true'
-    );
-    assert(
-        ArgentAccount::supportsInterface(ArgentAccount::ERC165_ACCOUNT_INTERFACE_ID) == true,
-        'value should be true'
-    );
-    assert(
-        ArgentAccount::supportsInterface(ArgentAccount::ERC165_OLD_ACCOUNT_INTERFACE_ID) == true,
-        'value should be true'
-    );
+    let value = ArgentAccount::supportsInterface(ArgentAccount::ERC165_IERC165_INTERFACE_ID);
+    assert(value, 'value should be true');
+    let value = ArgentAccount::supportsInterface(ArgentAccount::ERC165_ACCOUNT_INTERFACE_ID);
+    assert(value == true, 'value should be true');
+    let value = ArgentAccount::supportsInterface(ArgentAccount::ERC165_OLD_ACCOUNT_INTERFACE_ID);
+    assert(value, 'value should be true');
 }
 
 #[test]

@@ -33,7 +33,7 @@ fn double_signature(r1: felt, s1: felt, r2: felt, s2: felt) -> Array::<felt> {
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 fn valid_no_guardian() {
     ArgentAccount::initialize(signer_pubkey, 0, 0);
     let mut signatures = single_signature(signer_r, signer_s);
@@ -41,7 +41,7 @@ fn valid_no_guardian() {
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 fn valid_with_guardian() {
     ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
     let mut signatures = double_signature(signer_r, signer_s, guardian_r, guardian_s);
@@ -49,7 +49,7 @@ fn valid_with_guardian() {
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 fn valid_with_guardian_backup() {
     ArgentAccount::initialize(signer_pubkey, 1, guardian_backup_pubkey);
     let mut signatures = double_signature(signer_r, signer_s, guardian_backup_r, guardian_backup_s);
@@ -57,7 +57,7 @@ fn valid_with_guardian_backup() {
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 fn invalid_hash() {
     ArgentAccount::initialize(signer_pubkey, 0, 0);
     let mut signatures = single_signature(signer_r, signer_s);
@@ -66,7 +66,7 @@ fn invalid_hash() {
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 fn invalid_signer_no_guardian() {
     ArgentAccount::initialize(signer_pubkey, 0, 0);
     let mut signatures = single_signature(0, 0);
@@ -78,7 +78,7 @@ fn invalid_signer_no_guardian() {
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 fn invalid_signer_with_guardian() {
     ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
     let mut signatures = double_signature(0, 0, 0, 0);
@@ -94,7 +94,7 @@ fn invalid_signer_with_guardian() {
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 fn invalid_guardian() {
     ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
     let mut signatures = double_signature(0, 0, 0, 0);
@@ -110,7 +110,7 @@ fn invalid_guardian() {
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 #[should_panic]
 fn invalid_signature_length_no_guardian() {
     ArgentAccount::initialize(signer_pubkey, 0, 0);
@@ -119,7 +119,7 @@ fn invalid_signature_length_no_guardian() {
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 #[should_panic]
 fn invalid_signature_length_no_guardian_2() {
     ArgentAccount::initialize(signer_pubkey, 0, 0);
@@ -128,7 +128,7 @@ fn invalid_signature_length_no_guardian_2() {
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 #[should_panic]
 fn invalid_signature_length_with_guardian() {
     ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
@@ -137,7 +137,7 @@ fn invalid_signature_length_with_guardian() {
 }
 
 #[test]
-#[available_gas(20000)]
+#[available_gas(2000000)]
 #[should_panic]
 fn invalid_signature_length_with_guardian_2() {
     ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);

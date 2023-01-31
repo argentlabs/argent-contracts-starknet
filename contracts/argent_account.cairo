@@ -153,13 +153,14 @@ mod ArgentAccount {
         asserts::assert_only_self();
 
         // no escape when the guardian is not set
-        let guardian = guardian::read();
-        assert(guardian != 0, 'argent: guardian required');
+        assert(guardian::read() != 0, 'argent: guardian required');
 
         // no escape if there is a guardian escape triggered by the signer in progress
         let current_timestamp = escape_active_at::read();
         let current_type = escape_type::read();
-        assert(current_timestamp == 0 & current_type == 0, 'argent: cannot override escape');
+        if current_timestamp != 0 {
+            assert(current_type == ESCAPE_TYPE_SIGNER, 'argent: cannot override escape');
+        };
 
         // store new escape
         let block_timestamp = dummy_syscalls::get_block_timestamp();
@@ -190,8 +191,7 @@ mod ArgentAccount {
         // only called via execute
         asserts::assert_only_self();
         // no escape when the guardian is not set
-        let guardian = guardian::read();
-        assert(guardian != 0, 'argent: guardian required');
+        assert(guardian::read() != 0, 'argent: guardian required');
 
         let current_escape_timestamp = escape_active_at::read();
         let current_escape_type = escape_type::read();

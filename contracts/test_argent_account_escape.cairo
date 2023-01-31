@@ -33,6 +33,7 @@ fn valid_trigger_escape_signer() {
 
 #[test]
 #[available_gas(2000000)]
+<<<<<<< HEAD
 #[should_panic(expected = 'argent: cannot override escape')]
 fn trigger_escape_signer_escape_already_active() {
 <<<<<<< HEAD
@@ -46,6 +47,8 @@ fn trigger_escape_signer_escape_already_active() {
 
 #[test]
 #[available_gas(2000000)]
+=======
+>>>>>>> bc61f76 (changed guardian asserts to be inline wihtout additional var, fixed cannot override escape assert in escape signer)
 fn escape_signer() {
     let new_signer = 5;
 <<<<<<< HEAD
@@ -107,10 +110,6 @@ fn escape_signer_not_active_yet() {
 #[test]
 #[available_gas(2000000)]
 fn cancel_escape() {
-    let new_signer = 5;
-    let future_timestamp = dummy_syscalls::get_block_timestamp()
-        + ArgentAccount::ESCAPE_SECURITY_PERIOD
-        + 1; // 7 days + current timestamp + 1 block
     ArgentAccount::initialize(INITIALIZED_SIGNER, INITIALIZED_GUARDIAN, 0);
     ArgentAccount::trigger_escape_signer();
     ArgentAccount::cancel_escape();
@@ -128,7 +127,6 @@ fn cancel_escape() {
 #[available_gas(2000000)]
 #[should_panic(expected = 'argent: escape not active')]
 fn cancel_no_active_escape() {
-    let new_signer = 5;
     ArgentAccount::initialize(INITIALIZED_SIGNER, INITIALIZED_GUARDIAN, 0);
     ArgentAccount::cancel_escape();
 }

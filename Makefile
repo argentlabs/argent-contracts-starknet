@@ -1,10 +1,12 @@
 # Won't write the called command in the console
 .SILENT:
-# Because we have a fodler called test we need PHONY to avoid collision
+# Because we have a folder called test we need PHONY to avoid collision
 .PHONY: test 
 
+INSTALLATION-FOLDER=./cairo
+
 install: 
-	if [ -d "./cairo/starkware-libs-cairo" ]; then \
+	if [ -d $(INSTALLATION-FOLDER)]; then \
 		$(MAKE) update-cairo; \
 	else \
 		$(MAKE) clone-cairo; \
@@ -12,12 +14,12 @@ install:
 	$(MAKE) build
 
 clone-cairo:
-	mkdir -p cairo/starkware-libs-cairo
-	git clone --depth 1 https://github.com/starkware-libs/cairo.git ./cairo/starkware-libs-cairo
+	mkdir -p $(INSTALLATION-FOLDER)
+	git clone --depth 1 https://github.com/starkware-libs/cairo.git $(INSTALLATION-FOLDER)
 
 
 update-cairo:
-	git -C ./cairo/starkware-libs-cairo pull
+	git -C $(INSTALLATION-FOLDER) pull
 
 build:
 	cargo build

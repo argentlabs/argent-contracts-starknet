@@ -16,10 +16,7 @@ const INITIALIZED_GUARDIAN: felt = 2;
 fn valid_trigger_escape_signer() {
 <<<<<<< HEAD
     ArgentAccount::initialize(INITIALIZED_SIGNER, INITIALIZED_GUARDIAN, 0);
-=======
-    ArgentAccount::initialize(INITIALIZED_SIGNER, INITIALIZED_GUARDIAN, 0); 
->>>>>>> 822aa45 (finished testing escaping signer)
-    ArgentAccount::trigger_escape_signer();
+    ArgentAccount::triggerEscapeSigner();
 
     let escape_active_at = ArgentAccount::get_escape_active_at();
     let escape_type = ArgentAccount::get_escape_type();
@@ -57,12 +54,8 @@ fn escape_signer() {
         + ArgentAccount::ESCAPE_SECURITY_PERIOD
         + 1;
     ArgentAccount::initialize(INITIALIZED_SIGNER, INITIALIZED_GUARDIAN, 0);
-=======
-    let future_timestamp = dummy_syscalls::get_block_timestamp() + ESCAPE_SECURITY_PERIOD + 1; // 7 days + current timestamp + 1 block
-    ArgentAccount::initialize(INITIALIZED_SIGNER, INITIALIZED_GUARDIAN, 0); 
->>>>>>> 822aa45 (finished testing escaping signer)
-    ArgentAccount::trigger_escape_signer();
-    ArgentAccount::escape_signer(new_signer, future_timestamp);
+    ArgentAccount::triggerEscapeSigner();
+    ArgentAccount::escapeSigner(new_signer, future_timestamp);
 
     // check escape cleared
     let escape_active_at = ArgentAccount::get_escape_active_at();
@@ -88,7 +81,7 @@ fn escape_signer_no_active_escape() {
         + ArgentAccount::ESCAPE_SECURITY_PERIOD
         + 1;
     ArgentAccount::initialize(INITIALIZED_SIGNER, INITIALIZED_GUARDIAN, 0);
-    ArgentAccount::escape_signer(new_signer, future_timestamp);
+    ArgentAccount::escapeSigner(new_signer, future_timestamp);
 }
 
 #[test]
@@ -100,8 +93,8 @@ fn escape_signer_not_active_yet() {
     let future_timestamp = dummy_syscalls::get_block_timestamp()
         + ArgentAccount::ESCAPE_SECURITY_PERIOD;
     ArgentAccount::initialize(INITIALIZED_SIGNER, INITIALIZED_GUARDIAN, 0);
-    ArgentAccount::trigger_escape_signer();
-    ArgentAccount::escape_signer(new_signer, future_timestamp);
+    ArgentAccount::triggerEscapeSigner();
+    ArgentAccount::escapeSigner(new_signer, future_timestamp);
 
     let signer = ArgentAccount::get_signer();
     assert(signer == INITIALIZED_SIGNER, 'signer was mistakenly changed to the new one')
@@ -111,8 +104,8 @@ fn escape_signer_not_active_yet() {
 #[available_gas(2000000)]
 fn cancel_escape() {
     ArgentAccount::initialize(INITIALIZED_SIGNER, INITIALIZED_GUARDIAN, 0);
-    ArgentAccount::trigger_escape_signer();
-    ArgentAccount::cancel_escape();
+    ArgentAccount::triggerEscapeSigner();
+    ArgentAccount::cancelEscape();
 
     let signer = ArgentAccount::get_signer();
     assert(signer == INITIALIZED_SIGNER, 'signer was mistakenly changed to the new one')
@@ -128,6 +121,6 @@ fn cancel_escape() {
 #[should_panic(expected = 'argent: escape not active')]
 fn cancel_no_active_escape() {
     ArgentAccount::initialize(INITIALIZED_SIGNER, INITIALIZED_GUARDIAN, 0);
-    ArgentAccount::cancel_escape();
+    ArgentAccount::cancelEscape();
 }
 

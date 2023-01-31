@@ -32,10 +32,9 @@ fn valid_trigger_escape_signer() {
 #[available_gas(2000000)]
 fn trigger_escape_signer_escape_already_active() {
     ArgentAccount::initialize(INITIALIZED_SIGNER, INITIALIZED_GUARDIAN, 0);
-    ArgentAccount::trigger_escape_signer();
-    ArgentAccount::trigger_escape_signer();
+    ArgentAccount::triggerEscapeSigner();
+    ArgentAccount::triggerEscapeSigner();
 }
-
 
 #[test]
 #[available_gas(2000000)]

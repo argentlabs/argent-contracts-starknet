@@ -27,5 +27,9 @@ build:
 test: 
 	cargo run --bin cairo-test -- --starknet --path contracts/
 
+
+format:
+	cargo run --bin cairo-format -- --recursive contracts/
+
 check-format:
 	cargo run --bin cairo-format -- --check --recursive contracts/

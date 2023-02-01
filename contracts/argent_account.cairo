@@ -112,7 +112,6 @@ mod ArgentAccount {
         interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
     }
 
-
     // ERC1271
     #[view]
     fn isValidSignature(ref signatures: Array::<felt>, hash: felt) -> bool {
@@ -158,7 +157,7 @@ mod ArgentAccount {
         let escape_timestamp = escape_active_at::read();
         if escape_timestamp != 0 {
             let escape_type = escape_type::read();
-            assert(current_type == ESCAPE_TYPE_SIGNER, 'argent: cannot override escape');
+            assert(escape_type == ESCAPE_TYPE_SIGNER, 'argent: cannot override escape');
         };
 
         // store new escape

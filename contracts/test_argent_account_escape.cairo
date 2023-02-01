@@ -19,12 +19,13 @@ fn valid_trigger_escape_signer() {
     ArgentAccount::triggerEscapeSigner();
 
     let escape_active_at = ArgentAccount::get_escape_active_at();
-    let escape_type = ArgentAccount::get_escape_type();
     let block_timestamp = dummy_syscalls::get_block_timestamp();
     assert(
         escape_active_at == block_timestamp + ArgentAccount::ESCAPE_SECURITY_PERIOD,
         'escape activation set to wrong timestamp'
     );
+
+    let escape_type = ArgentAccount::get_escape_type();
     assert(escape_type == ArgentAccount::ESCAPE_TYPE_SIGNER, 'wrong escape type');
 }
 

@@ -10,7 +10,6 @@ mod ArgentAccount {
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
 
     const ESCAPE_SECURITY_PERIOD: felt = 604800; // 7 days
-
     const ESCAPE_TYPE_GUARDIAN: felt = 1;
     const ESCAPE_TYPE_SIGNER: felt = 2;
 
@@ -156,9 +155,9 @@ mod ArgentAccount {
         assert(guardian::read() != 0, 'argent: guardian required');
 
         // no escape if there is a guardian escape triggered by the signer in progress
-        let current_timestamp = escape_active_at::read();
-        if current_timestamp != 0 {
-            let current_type = escape_type::read();
+        let escape_timestamp = escape_active_at::read();
+        if escape_timestamp != 0 {
+            let escape_type = escape_type::read();
             assert(current_type == ESCAPE_TYPE_SIGNER, 'argent: cannot override escape');
         };
 
@@ -176,8 +175,8 @@ mod ArgentAccount {
         asserts::assert_only_self();
 
         // validate there is an active escape
-        let current_escape_timestamp = escape_active_at::read();
-        assert(current_escape_timestamp != 0, 'argent: no active escape"');
+        let escape_timestamp = escape_active_at::read();
+        assert(escape_timestamp != 0, 'argent: no active escape"');
 
         // clear escape
         escape_active_at::write(0);
@@ -192,15 +191,15 @@ mod ArgentAccount {
         // no escape when the guardian is not set
         assert(guardian::read() != 0, 'argent: guardian required');
 
-        let current_escape_timestamp = escape_active_at::read();
+        let escape_timestamp = escape_active_at::read();
         // TODO: add syscall to block timestamp, once block timestamp can be changed 
         // currently passed in as a param
 
-        assert(current_escape_timestamp != 0, 'argent: not escaping')
-        assert(current_escape_timestamp < block_timestamp, 'argent: escape not active')
+        assert(escape_timestamp != 0, 'argent: not escaping')
+        assert(escape_timestamp < block_timestamp, 'argent: escape not active')
 
-        let current_escape_type = escape_type::read();
-        assert(current_escape_type == ESCAPE_TYPE_SIGNER, 'argent: escape type invalid')
+        let escape_type = escape_type::read();
+        assert(escape_type == ESCAPE_TYPE_SIGNER, 'argent: escape type invalid')
 
         // clear escape
         escape_active_at::write(0);

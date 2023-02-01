@@ -2,7 +2,7 @@ name: Rust CI
 
 on:
   push:
-    branches: [cairo/cairo_1.0]
+    branches: [cairo/cairo_1.0, chore/improving-ci-cache]
   pull_request:
 
 jobs:

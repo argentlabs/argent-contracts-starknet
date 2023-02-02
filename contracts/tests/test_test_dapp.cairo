@@ -1,6 +1,5 @@
 use contracts::TestDapp;
 use contracts::dummy_syscalls::get_caller_address;
-use debug::print_felt;
 
 const MAX_FELT: felt = 3618502788666131213697322783095070105623107215331596699973092056135872020480;
 

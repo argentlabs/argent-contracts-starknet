@@ -36,15 +36,24 @@ fn set_number_double() {
 fn set_number_double_neg() {
     TestDapp::set_number_double(-42);
     assert(TestDapp::get_number(get_caller_address()) == -42 * 2, 'Value should be -42 * 2');
-    assert(TestDapp::get_number(get_caller_address()) == 3618502788666131213697322783095070105623107215331596699973092056135872020397, 'Value should be 3618502788666131213697322783095070105623107215331596699973092056135872020397');
+    assert(
+        TestDapp::get_number(
+            get_caller_address()
+        ) == 3618502788666131213697322783095070105623107215331596699973092056135872020397,
+        'Value should be 3618502788666131213697322783095070105623107215331596699973092056135872020397'
+    );
 }
 
 #[test]
 #[available_gas(2000000)]
 fn set_number_double_overflow() {
     TestDapp::set_number_double(MAX_FELT);
-    assert(TestDapp::get_number(get_caller_address()) == MAX_FELT * 2, 'Value should be MAX_FELT * 2');
-    assert(TestDapp::get_number(get_caller_address()) == MAX_FELT - 1, 'Value should be MAX_FELT - 1');
+    assert(
+        TestDapp::get_number(get_caller_address()) == MAX_FELT * 2, 'Value should be MAX_FELT * 2'
+    );
+    assert(
+        TestDapp::get_number(get_caller_address()) == MAX_FELT - 1, 'Value should be MAX_FELT - 1'
+    );
 }
 
 #[test]
@@ -59,15 +68,24 @@ fn set_number_times3() {
 fn set_number_times3_neg() {
     TestDapp::set_number_times3(-42);
     assert(TestDapp::get_number(get_caller_address()) == -42 * 3, 'Value should be -42 * 3');
-    assert(TestDapp::get_number(get_caller_address()) == 3618502788666131213697322783095070105623107215331596699973092056135872020355, 'Value should be 3618502788666131213697322783095070105623107215331596699973092056135872020355');
+    assert(
+        TestDapp::get_number(
+            get_caller_address()
+        ) == 3618502788666131213697322783095070105623107215331596699973092056135872020355,
+        'Value should be 3618502788666131213697322783095070105623107215331596699973092056135872020355'
+    );
 }
 
 #[test]
 #[available_gas(2000000)]
 fn set_number_times3_overflow() {
     TestDapp::set_number_times3(MAX_FELT);
-    assert(TestDapp::get_number(get_caller_address()) == MAX_FELT * 3, 'Value should be MAX_FELT * 3');
-    assert(TestDapp::get_number(get_caller_address()) == MAX_FELT - 2, 'Value should be MAX_FELT - 2');
+    assert(
+        TestDapp::get_number(get_caller_address()) == MAX_FELT * 3, 'Value should be MAX_FELT * 3'
+    );
+    assert(
+        TestDapp::get_number(get_caller_address()) == MAX_FELT - 2, 'Value should be MAX_FELT - 2'
+    );
 }
 
 #[test]
@@ -110,12 +128,11 @@ fn increase_number_overflow_from_max_felt() {
 }
 
 
-
 #[test]
 #[available_gas(2000000)]
 fn increase_number_neg() {
     TestDapp::set_number(43);
-    TestDapp::increase_number(-1); 
+    TestDapp::increase_number(-1);
     assert(TestDapp::get_number(get_caller_address()) == 42, 'Value should be 42');
 }
 

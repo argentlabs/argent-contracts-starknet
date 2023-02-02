@@ -1,7 +1,5 @@
 #[contract]
 mod TestDapp {
-    // use array::ArrayTrait;
-    // use contracts::asserts;
     use contracts::dummy_syscalls;
 
     /////////////////////

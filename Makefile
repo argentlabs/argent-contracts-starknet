@@ -28,9 +28,8 @@ build:
 test: 
 	cargo run --bin cairo-test -- --starknet --path $(SOURCE_FOLDER)
 
-
 format:
-	cargo run --bin cairo-format -- --recursive $(SOURCE_FOLDER)
+	cargo run --bin cairo-format -- --recursive $(SOURCE_FOLDER) --print-parsing-errors
 
 check-format:
 	cargo run --bin cairo-format -- --check --recursive $(SOURCE_FOLDER)

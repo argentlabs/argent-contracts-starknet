@@ -3,7 +3,6 @@ mod ArgentAccount {
     use array::ArrayTrait;
     use contracts::asserts;
     use contracts::dummy_syscalls;
-    use contracts::dummy_syscalls;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;

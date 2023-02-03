@@ -3,7 +3,6 @@
 version = 3
 
 [[package]]
-<<<<<<< HEAD
 name = "aho-corasick"
 version = "0.7.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -689,6 +688,7 @@ dependencies = [
  "cairo-lang-utils",
  "env_logger",
  "id-arena",
+ "indexmap",
  "indoc",
  "itertools",
  "log",
@@ -3157,6 +3157,3 @@ dependencies = [
  "syn",
  "synstructure",
 ]
-=======
-name = "argent-contracts-starknet"
-version = "0.1.0"

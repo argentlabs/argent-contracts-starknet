@@ -6,14 +6,15 @@ struct CallArray {
     data_len: felt,
 }
 
+impl ArrayCallArrayDrop of Drop::<Array::<CallArray>>;
+
 #[contract]
 mod ArgentAccount {
     use array::ArrayTrait;
     use contracts::asserts;
     use ecdsa::check_ecdsa_signature;
     use super::CallArray;
-
-    impl ArrayCallArrayDrop of Drop::<Array::<CallArray>>;
+    use super::ArrayCallArrayDrop;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
@@ -74,7 +75,7 @@ mod ArgentAccount {
             }
         } else {
             // make sure no call is to the account
-            asserts::assert_no_self_call(ref call_array, account_address, 0_usize);
+            asserts::assert_no_self_call(ref call_array, account_address);
         }
         let is_valid = is_valid_signer_signature(ref signature, transaction_hash);
         assert(is_valid, 'argent: signer signature invalid');

@@ -193,11 +193,11 @@ mod ArgentAccount {
         // TODO: add syscall to block timestamp, once block timestamp can be changed 
         // currently passed in as a param
 
-        assert(escape_timestamp != 0, 'argent: not escaping')
-        assert(escape_timestamp < block_timestamp, 'argent: escape not active')
+        assert(escape_timestamp != 0, 'argent: not escaping');
+        assert(escape_timestamp < block_timestamp, 'argent: escape not active');
 
         let escape_type = escape_type::read();
-        assert(escape_type == ESCAPE_TYPE_SIGNER, 'argent: escape type invalid')
+        assert(escape_type == ESCAPE_TYPE_SIGNER, 'argent: escape type invalid');
 
         // clear escape
         escape_active_at::write(0);

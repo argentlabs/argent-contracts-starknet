@@ -50,7 +50,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn changeSigner(new_signer: felt) {
+    fn change_signer(new_signer: felt) {
         // only called via execute
         asserts::assert_only_self();
         // check that the target signer is not zero
@@ -60,7 +60,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn changeGuardian(new_guardian: felt) {
+    fn change_guardian(new_guardian: felt) {
         // only called via execute
         asserts::assert_only_self();
         // make sure guardian_backup = 0 when new_guardian = 0
@@ -72,7 +72,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn changeGuardianBackup(new_guardian_backup: felt) {
+    fn change_guardian_backup(new_guardian_backup: felt) {
         // only called via execute
         asserts::assert_only_self();
         assert(guardian::read() != 0, 'argent: guardian required');
@@ -82,13 +82,13 @@ mod ArgentAccount {
 
     // ERC165
     #[view]
-    fn supportsInterface(interface_id: felt) -> bool {
+    fn supports_interface(interface_id: felt) -> bool {
         interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
     }
 
     // ERC1271
     #[view]
-    fn isValidSignature(ref signatures: Array::<felt>, hash: felt) -> bool {
+    fn is_valid_signature(ref signatures: Array::<felt>, hash: felt) -> bool {
         let is_valid_signer = is_valid_signer_signature(ref signatures, hash);
         let is_valid_guardian = is_valid_guardian_signature(ref signatures, hash);
         is_valid_signer & is_valid_guardian

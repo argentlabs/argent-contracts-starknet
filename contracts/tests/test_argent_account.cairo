@@ -42,7 +42,7 @@ fn erc165_supported_interfaces() {
     let value = ArgentAccount::supports_interface(ArgentAccount::ERC165_IERC165_INTERFACE_ID);
     assert(value, 'value should be true');
     let value = ArgentAccount::supports_interface(ArgentAccount::ERC165_ACCOUNT_INTERFACE_ID);
-    assert(value == true, 'value should be true');
+    assert(value, 'value should be true');
     let value = ArgentAccount::supports_interface(ArgentAccount::ERC165_OLD_ACCOUNT_INTERFACE_ID);
     assert(value, 'value should be true');
 }

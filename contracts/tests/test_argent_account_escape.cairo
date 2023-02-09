@@ -48,7 +48,7 @@ fn escape_signer() {
 
     // check new signer
     let changed_signer = ArgentAccount::get_signer();
-    assert(changed_signer == new_signer, 'signer was not changed to the new one')
+    assert(changed_signer == new_signer, 'signer was not changed to the new one');
 }
 
 #[test]
@@ -77,7 +77,7 @@ fn escape_signer_not_active_yet() {
     ArgentAccount::escapeSigner(new_signer, future_timestamp);
 
     let signer = ArgentAccount::get_signer();
-    assert(signer == INITIALIZED_SIGNER, 'signer was mistakenly changed to the new one')
+    assert(signer == INITIALIZED_SIGNER, 'signer was mistakenly changed to the new one');
 }
 
 #[test]
@@ -88,7 +88,7 @@ fn cancel_escape() {
     ArgentAccount::cancelEscape();
 
     let signer = ArgentAccount::get_signer();
-    assert(signer == INITIALIZED_SIGNER, 'signer was mistakenly changed to the new one')
+    assert(signer == INITIALIZED_SIGNER, 'signer was mistakenly changed to the new one');
 
     // check escape cleared
     let escape_active_at = ArgentAccount::get_escape_active_at();

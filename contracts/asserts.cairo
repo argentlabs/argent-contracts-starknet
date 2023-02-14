@@ -15,8 +15,6 @@ fn assert_non_reentrant(signer: felt) {
 }
 
 fn assert_correct_tx_version(tx_version: felt) {
-    assert(
-        tx_version == TRANSACTION_VERSION ^ tx_version == QUERY_VERSION,
-        'argent/invalid-tx-version'
-    );
+    let is_valid = tx_version == TRANSACTION_VERSION ^ tx_version == QUERY_VERSION;
+    assert(is_valid, 'argent/invalid-tx-version');
 }

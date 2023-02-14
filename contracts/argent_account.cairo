@@ -24,9 +24,9 @@ mod ArgentAccount {
     #[external]
     fn initialize(signer: felt, guardian: felt, guardian_backup: felt) {
         // check that we are not already initialized
-        assert(signer::read() == 0, 'argent: already initialized');
+        assert(signer::read() == 0, 'argent/already-initialized');
         // check that the target signer is not zero
-        assert(signer != 0, 'argent: signer cannot be null');
+        assert(signer != 0, 'argent/null-signer');
         // initialize the account
         signer::write(signer);
         guardian::write(guardian);
@@ -54,7 +54,7 @@ mod ArgentAccount {
         // only called via execute
         asserts::assert_only_self();
         // check that the target signer is not zero
-        assert(new_signer != 0, 'argent: signer cannot be null');
+        assert(new_signer != 0, 'argent/null-signer');
         // update the signer
         signer::write(new_signer);
     }
@@ -64,9 +64,7 @@ mod ArgentAccount {
         // only called via execute
         asserts::assert_only_self();
         // make sure guardian_backup = 0 when new_guardian = 0
-        if new_guardian == 0 {
-            assert(guardian_backup::read() == 0, 'argent: new guardian invalid');
-        }
+        assert(new_guardian != 0 | guardian_backup::read() == 0, 'argent/guardian-backup-needed');
         // update the guardian
         guardian::write(new_guardian);
     }
@@ -75,7 +73,7 @@ mod ArgentAccount {
     fn change_guardian_backup(new_guardian_backup: felt) {
         // only called via execute
         asserts::assert_only_self();
-        assert(guardian::read() != 0, 'argent: guardian required');
+        assert(guardian::read() != 0, 'argent/guardian-required');
         // update the guardian backup
         guardian_backup::write(new_guardian_backup);
     }
@@ -95,7 +93,7 @@ mod ArgentAccount {
     }
 
     fn is_valid_signer_signature(ref signatures: Array::<felt>, hash: felt) -> bool {
-        assert(signatures.len() >= 2_usize, 'argent: invalid signature size');
+        assert(signatures.len() >= 2_usize, 'argent/invalid-signature-length');
         let signature_r = signatures.at(0_usize);
         let signature_s = signatures.at(1_usize);
         ecdsa::check_ecdsa_signature(hash, signer::read(), signature_r, signature_s)
@@ -104,10 +102,10 @@ mod ArgentAccount {
     fn is_valid_guardian_signature(ref signatures: Array::<felt>, hash: felt) -> bool {
         let guardian_ = guardian::read();
         if guardian_ == 0 {
-            assert(signatures.len() == 2_usize, 'argent: invalid signature size');
+            assert(signatures.len() == 2_usize, 'argent/invalid-signature-length');
             return true;
         }
-        assert(signatures.len() == 4_usize, 'argent: invalid signature size');
+        assert(signatures.len() == 4_usize, 'argent/invalid-signature-length');
         let signature_r = signatures.at(2_usize);
         let signature_s = signatures.at(3_usize);
         let is_valid_guardian_signature = ecdsa::check_ecdsa_signature(

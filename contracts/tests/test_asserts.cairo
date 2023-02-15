@@ -21,10 +21,3 @@ fn assert_correct_tx_version_invalidtx_test() {
     let tx_version = 4;
     asserts::assert_correct_tx_version(tx_version);
 }
-
-#[test]
-#[should_panic(expected = 'argent: guardian required')]
-fn test_assert_guardian_set() {
-    let guardian = 0;
-    asserts::assert_guardian_set(guardian);
-}

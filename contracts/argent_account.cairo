@@ -16,22 +16,22 @@ mod ArgentAccount {
 
 
     #[event]
-    fn AccountCreated(account: felt, key: felt, guardian: felt) {}
+    fn AccountCreated(account: felt, key: felt, guardian: felt, guardian_backup: felt) {}
 
     #[event]
     fn TransactionExecuted(hash: felt, response: Array::<felt>) {}
 
     #[external]
-    fn initialize(signer: felt, guardian: felt, guardian_backup: felt) {
+    fn initialize(new_signer: felt, new_guardian: felt, new_guardian_backup: felt) {
         // check that we are not already initialized
         assert(signer::read() == 0, 'argent/already-initialized');
         // check that the target signer is not zero
-        assert(signer != 0, 'argent/null-signer');
+        assert(new_signer != 0, 'argent/null-signer');
         // initialize the account
-        signer::write(signer);
-        guardian::write(guardian);
-        guardian_backup::write(guardian_backup);
-    // AccountCreated(dummy_syscalls::get_contract_address(), signer, guardian); Can't call yet
+        signer::write(new_signer);
+        guardian::write(new_guardian);
+        guardian_backup::write(new_guardian_backup);
+    // AccountCreated(dummy_syscalls::get_contract_address(), new_signer, new_guardian, new_guardian_backup); Can't call yet
     }
 
     #[view]

@@ -52,7 +52,7 @@ mod ArgentAccount {
     // #[external] // ignored to avoid serde
     fn __validate__(ref call_array: Array::<CallArray>, ref calldata: Array::<felt>) {
         // make sure the account is initialized
-        assert(signer::read() != 0, 'argent: account not initialized');
+        assert(signer::read() != 0, 'argent/uninitialized');
 
         let account_address = dummy_syscalls::get_contract_address();
         let transaction_hash = dummy_syscalls::get_transaction_hash();
@@ -63,24 +63,24 @@ mod ArgentAccount {
             if call.to == account_address {
                 if call.selector == ESCAPE_GUARDIAN_SELECTOR | call.selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
                     let is_valid = is_valid_signer_signature(ref signature, transaction_hash);
-                    assert(is_valid, 'argent: signer signature invalid');
+                    assert(is_valid, 'argent/invalid-signer-sig');
                     return ();
                 }
                 if call.selector == ESCAPE_SIGNER_SELECTOR | call.selector == TRIGGER_ESCAPE_SIGNER_SELECTOR {
                     let is_valid = is_valid_guardian_signature(ref signature, transaction_hash);
-                    assert(is_valid, 'argent: guardian signature invalid');
+                    assert(is_valid, 'argent/invalid-guardian-sig');
                     return ();
                 }
-                assert(call.selector == EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent: forbidden call');
+                assert(call.selector == EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
             }
         } else {
             // make sure no call is to the account
             asserts::assert_no_self_call(ref call_array, account_address);
         }
         let is_valid = is_valid_signer_signature(ref signature, transaction_hash);
-        assert(is_valid, 'argent: signer signature invalid');
+        assert(is_valid, 'argent/invalid-signer-sig');
         let is_valid = is_valid_guardian_signature(ref signature, transaction_hash);
-        assert(is_valid, 'argent: guardian signature invalid');
+        assert(is_valid, 'argent/invalid-guardian-sig');
     }
 
     #[external]

@@ -5,7 +5,8 @@ use starknet::ContractAddressZeroable;
 use traits::Into;
 use starknet::ContractAddressIntoFelt;
 use array::ArrayTrait;
-use contracts::argent_account::CallArray;
+use contracts::dummy_syscalls;
+use contracts::argent_account::Call;
 
 const TRANSACTION_VERSION: felt = 1;
 const QUERY_VERSION: felt = 340282366920938463463374607431768211457; // 2**128 + TRANSACTION_VERSION
@@ -23,11 +24,11 @@ fn assert_correct_tx_version(tx_version: felt) {
     assert(is_valid, 'argent/invalid-tx-version');
 }
 
-fn assert_no_self_call(ref call_array: Array::<CallArray>, self: felt) {
-    assert_no_self_call_internal(ref call_array, self, 0_usize);
+fn assert_no_self_call(ref calls: Array::<Call>, self: felt) {
+    assert_no_self_call_internal(ref calls, self, 0_usize);
 }
 
-fn assert_no_self_call_internal(ref call_array: Array::<CallArray>, self: felt, index: usize) {
+fn assert_no_self_call_internal(ref calls: Array::<Call>, self: felt, index: usize) {
     match get_gas() {
         Option::Some(_) => {},
         Option::None(_) => {
@@ -37,10 +38,10 @@ fn assert_no_self_call_internal(ref call_array: Array::<CallArray>, self: felt, 
         },
     }
 
-    if index == call_array.len() {
+    if index == calls.len() {
         return ();
     }
-    assert(call_array.at(index).to != self, 'argent: no self call');
-    assert_no_self_call_internal(ref call_array, self, index + 1_usize);
+    assert(calls.at(index).to != self, 'argent: no self call');
+    assert_no_self_call_internal(ref calls, self, index + 1_usize);
     return ();
 }

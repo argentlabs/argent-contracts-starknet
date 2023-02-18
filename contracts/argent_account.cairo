@@ -1,20 +1,21 @@
 #[derive(Copy, Drop)]
-struct CallArray {
+struct Call {
     to: felt,
     selector: felt,
-    data_offset: felt,
-    data_len: felt,
+    calldata: Array::<felt>,
 }
 
-impl ArrayCallArrayDrop of Drop::<Array::<CallArray>>;
+impl ArrayCallDrop of Drop::<Array::<Call>>;
 
 #[contract]
 mod ArgentAccount {
     use array::ArrayTrait;
     use contracts::asserts;
     use ecdsa::check_ecdsa_signature;
-    use super::CallArray;
-    use super::ArrayCallArrayDrop;
+    use super::Call;
+    use super::ArrayCallDrop;
+
+    impl ArrayCallCopy of Copy::<Array::<Call>>;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
@@ -50,7 +51,7 @@ mod ArgentAccount {
     fn TransactionExecuted(hash: felt, response: Array<felt>) {}
 
     // #[external] // ignored to avoid serde
-    fn __validate__(ref call_array: Array::<CallArray>, ref calldata: Array::<felt>) {
+    fn __validate__(ref calls: Array::<Call>) {
         // make sure the account is initialized
         assert(signer::read() != 0, 'argent/uninitialized');
 
@@ -58,8 +59,8 @@ mod ArgentAccount {
         let transaction_hash = dummy_syscalls::get_transaction_hash();
         let mut signature = dummy_syscalls::get_signature();
 
-        if call_array.len() == 1_usize {
-            let call = call_array.at(0_usize);
+        if calls.len() == 1_usize {
+            let call = calls.at(0_usize);
             if call.to == account_address {
                 if call.selector == ESCAPE_GUARDIAN_SELECTOR | call.selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
                     let is_valid = is_valid_signer_signature(ref signature, transaction_hash);
@@ -75,7 +76,7 @@ mod ArgentAccount {
             }
         } else {
             // make sure no call is to the account
-            asserts::assert_no_self_call(ref call_array, account_address);
+            asserts::assert_no_self_call(ref calls, account_address);
         }
         let is_valid = is_valid_signer_signature(ref signature, transaction_hash);
         assert(is_valid, 'argent/invalid-signer-sig');

@@ -1,8 +1,8 @@
 // use contracts::asserts::Assertion;
 use array::ArrayTrait;
 use contracts::asserts;
-use contracts::argent_account::CallArray;
-use contracts::argent_account::ArrayCallArrayDrop;
+use contracts::argent_account::Call;
+use contracts::argent_account::ArrayCallDrop;
 
 use starknet_testing::set_caller_address;
 use starknet_testing::set_contract_address;
@@ -46,15 +46,15 @@ fn assert_correct_tx_version_invalidtx_test() {
 #[available_gas(2000000)]
 fn test_no_self_call() {
     let self = dummy_syscalls::get_contract_address();
-    let mut call_array = ArrayTrait::new();
-    asserts::assert_no_self_call(ref call_array, self);
-    let mut call_array = ArrayTrait::new();
-    call_array.append(CallArray { to: 0, selector: 100, data_offset: 0, data_len: 2 });
-    asserts::assert_no_self_call(ref call_array, self);
-    let mut call_array = ArrayTrait::new();
-    call_array.append(CallArray { to: 1, selector: 100, data_offset: 0, data_len: 2 });
-    call_array.append(CallArray { to: 2, selector: 200, data_offset: 2, data_len: 3 });
-    asserts::assert_no_self_call(ref call_array, self);
+    let mut calls = ArrayTrait::new();
+    asserts::assert_no_self_call(ref calls, self);
+    let mut calls = ArrayTrait::new();
+    calls.append(Call { to: 0, selector: 100, calldata: ArrayTrait::new() });
+    asserts::assert_no_self_call(ref calls, self);
+    let mut calls = ArrayTrait::new();
+    calls.append(Call { to: 1, selector: 100, calldata: ArrayTrait::new() });
+    calls.append(Call { to: 2, selector: 200, calldata: ArrayTrait::new() });
+    asserts::assert_no_self_call(ref calls, self);
 }
 
 #[test]
@@ -62,9 +62,9 @@ fn test_no_self_call() {
 #[should_panic(expected = 'argent: no self call')]
 fn test_no_self_call_invalid() {
     let self = dummy_syscalls::get_contract_address();
-    let mut call_array = ArrayTrait::new();
-    call_array.append(CallArray { to: self, selector: 100, data_offset: 0, data_len: 2 });
-    asserts::assert_no_self_call(ref call_array, self);
+    let mut calls = ArrayTrait::new();
+    calls.append(Call { to: self, selector: 100, calldata: ArrayTrait::new() });
+    asserts::assert_no_self_call(ref calls, self);
 }
 
 #[test]
@@ -72,8 +72,8 @@ fn test_no_self_call_invalid() {
 #[should_panic(expected = 'argent: no self call')]
 fn test_no_self_call_invalid_2() {
     let self = dummy_syscalls::get_contract_address();
-    let mut call_array = ArrayTrait::new();
-    call_array.append(CallArray { to: 1, selector: 100, data_offset: 0, data_len: 2 });
-    call_array.append(CallArray { to: self, selector: 200, data_offset: 2, data_len: 3 });
-    asserts::assert_no_self_call(ref call_array, self);
+    let mut calls = ArrayTrait::new();
+    calls.append(Call { to: 1, selector: 100, calldata: ArrayTrait::new() });
+    calls.append(Call { to: self, selector: 200, calldata: ArrayTrait::new() });
+    asserts::assert_no_self_call(ref calls, self);
 }

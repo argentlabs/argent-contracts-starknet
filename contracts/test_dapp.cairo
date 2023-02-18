@@ -1,13 +1,14 @@
 #[contract]
 mod TestDapp {
     use contracts::dummy_syscalls;
+    use starknet::ContractAddress;
 
     /////////////////////
     // STORAGE VARIABLES
     ////////////////////
 
     struct Storage {
-        stored_number: LegacyMap::<felt, felt>, 
+        stored_number: LegacyMap::<ContractAddress, felt>, 
     }
 
     /////////////////////
@@ -51,7 +52,7 @@ mod TestDapp {
     /////////////////////
 
     #[view]
-    fn get_number(user: felt) -> (felt) {
+    fn get_number(user: ContractAddress) -> (felt) {
         stored_number::read(user)
     }
 }

@@ -94,11 +94,10 @@ mod ArgentAccount {
 
     fn is_valid_signer_signature(ref signatures: Array::<felt>, hash: felt) -> bool {
         assert(signatures.len() >= 2_usize, 'argent/invalid-signature-length');
-        let signature_r = signatures.at(0_usize);
-        let signature_s = signatures.at(1_usize);
+        let signature_r = *(signatures.at(0_usize));
+        let signature_s = *(signatures.at(1_usize));
         ecdsa::check_ecdsa_signature(hash, signer::read(), signature_r, signature_s)
     }
-
     fn is_valid_guardian_signature(ref signatures: Array::<felt>, hash: felt) -> bool {
         let guardian_ = guardian::read();
         if guardian_ == 0 {
@@ -106,8 +105,8 @@ mod ArgentAccount {
             return true;
         }
         assert(signatures.len() == 4_usize, 'argent/invalid-signature-length');
-        let signature_r = signatures.at(2_usize);
-        let signature_s = signatures.at(3_usize);
+        let signature_r = *(signatures.at(2_usize));
+        let signature_s = *(signatures.at(3_usize));
         let is_valid_guardian_signature = ecdsa::check_ecdsa_signature(
             hash, guardian_, signature_r, signature_s
         );

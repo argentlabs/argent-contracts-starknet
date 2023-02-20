@@ -5,18 +5,20 @@ struct Call {
     calldata: Array::<felt>,
 }
 
+impl ArrayCallCopy of Copy::<Array::<Call>>;
 impl ArrayCallDrop of Drop::<Array::<Call>>;
 
 #[contract]
 mod ArgentAccount {
     use array::ArrayTrait;
     use starknet::get_contract_address;
+    use starknet::get_tx_info;
     use contracts::asserts;
     use ecdsa::check_ecdsa_signature;
+    use traits::Into;
+    use starknet::ContractAddressIntoFelt;
     use super::Call;
     use super::ArrayCallDrop;
-
-    impl ArrayCallCopy of Copy::<Array::<Call>>;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
@@ -57,12 +59,13 @@ mod ArgentAccount {
         assert(signer::read() != 0, 'argent/uninitialized');
 
         let account_address = starknet::get_contract_address();
-        let transaction_hash = dummy_syscalls::get_transaction_hash();
-        let mut signature = dummy_syscalls::get_signature();
+        let tx_info = unbox(starknet::get_tx_info());
+        let transaction_hash = tx_info.transaction_hash;
+        let mut signature = tx_info.signature;
 
         if calls.len() == 1_usize {
-            let call = calls.at(0_usize);
-            if call.to == account_address {
+            let call = *(calls.at(0_usize));
+            if call.to.into() == account_address.into() {
                 if call.selector == ESCAPE_GUARDIAN_SELECTOR | call.selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
                     let is_valid = is_valid_signer_signature(transaction_hash, @signature);
                     assert(is_valid, 'argent/invalid-signer-sig');
@@ -77,7 +80,7 @@ mod ArgentAccount {
             }
         } else {
             // make sure no call is to the account
-            asserts::assert_no_self_call(ref calls, account_address);
+            asserts::assert_no_self_call(@calls, account_address);
         }
         let is_valid = is_valid_signer_signature(transaction_hash, @signature);
         assert(is_valid, 'argent/invalid-signer-sig');

@@ -48,14 +48,14 @@ fn assert_correct_tx_version_invalidtx_test() {
 fn test_no_self_call() {
     let self = starknet::get_contract_address();
     let mut calls = ArrayTrait::new();
-    asserts::assert_no_self_call(ref calls, self);
+    asserts::assert_no_self_call(@calls, self);
     let mut calls = ArrayTrait::new();
     calls.append(Call { to: contract_address_const::<0>(), selector: 100, calldata: ArrayTrait::new() });
-    asserts::assert_no_self_call(ref calls, self);
+    asserts::assert_no_self_call(@calls, self);
     let mut calls = ArrayTrait::new();
     calls.append(Call { to: contract_address_const::<1>(), selector: 100, calldata: ArrayTrait::new() });
     calls.append(Call { to: contract_address_const::<2>(), selector: 200, calldata: ArrayTrait::new() });
-    asserts::assert_no_self_call(ref calls, self);
+    asserts::assert_no_self_call(@calls, self);
 }
 
 #[test]
@@ -65,7 +65,7 @@ fn test_no_self_call_invalid() {
     let self = starknet::get_contract_address();
     let mut calls = ArrayTrait::new();
     calls.append(Call { to: self, selector: 100, calldata: ArrayTrait::new() });
-    asserts::assert_no_self_call(ref calls, self);
+    asserts::assert_no_self_call(@calls, self);
 }
 
 #[test]
@@ -76,5 +76,5 @@ fn test_no_self_call_invalid_2() {
     let mut calls = ArrayTrait::new();
     calls.append(Call { to: contract_address_const::<1>(), selector: 100, calldata: ArrayTrait::new() });
     calls.append(Call { to: self, selector: 200, calldata: ArrayTrait::new() });
-    asserts::assert_no_self_call(ref calls, self);
+    asserts::assert_no_self_call(@calls, self);
 }

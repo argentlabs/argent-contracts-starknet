@@ -1,8 +1,8 @@
 #[contract]
 mod ArgentMultisigAccount {
-     use array::ArrayTrait;
-     use traits::Into;
-     use zeroable::Zeroable;
+    use array::ArrayTrait;
+    use traits::Into;
+    use zeroable::Zeroable;
 
 
     struct Storage {
@@ -31,8 +31,7 @@ mod ArgentMultisigAccount {
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
         add_signers(signers, 0, 0_u32);
-        threshold::write(threshold);    
-
+        threshold::write(threshold);
     // empty array to emit - this is necessary?
     // let mut removed_signers = ArrayTrait::new();
     // removed_signers.append(0);
@@ -45,13 +44,10 @@ mod ArgentMultisigAccount {
     //     0,
     //     removed_signers,
     // ); Can't call yet
-
     }
 
-    
     // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
-    fn is_signer_using_last(signer: felt, last_signer: felt) -> bool  {
-        
+    fn is_signer_using_last(signer: felt, last_signer: felt) -> bool {
         if (signer.is_zero()) {
             return false;
         }
@@ -68,37 +64,28 @@ mod ArgentMultisigAccount {
         return false;
     }
 
-    fn add_signers(
-        signers_to_add: Array::<felt>, last_signer: felt, num: u32
-    ) {
+    fn add_signers(signers_to_add: Array::<felt>, last_signer: felt, num: u32) {
         if (signers_to_add.is_empty()) {
             return ();
         }
-        
+
         let signer = signers_to_add.at(num);
         assert(*signer != 0, 'argent/invalid zero signer');
 
         let current_signer_status = is_signer_using_last(*signer, last_signer);
         assert(!(current_signer_status), 'argent/already a signer');
 
-
         // Signers are added at the end of the list
         signer_list::write(last_signer, *signer);
 
-        add_signers(
-            signers_to_add,
-            *signer,
-            num + 1_u32
-        );
+        add_signers(signers_to_add, *signer, num + 1_u32);
     }
 
-
     // Asserts that:  0 < threshold <= signers_len
-    fn assert_valid_threshold_and_signers_count(threshold: felt, signers_len: felt){
+    fn assert_valid_threshold_and_signers_count(threshold: felt, signers_len: felt) {
         assert(threshold != 0, 'argent/invalid threshold');
         // assert(threshold < max_range, 'argent/invalid threshold');
         assert(signers_len != 0, 'argent/invalid signers len');
         assert(threshold <= signers_len, 'argent/bad threshold');
     }
-
 }

@@ -86,19 +86,19 @@ mod ArgentAccount {
 
     // ERC1271
     #[view]
-    fn is_valid_signature(ref signatures: Array::<felt>, hash: felt) -> bool {
-        let is_valid_signer = is_valid_signer_signature(ref signatures, hash);
-        let is_valid_guardian = is_valid_guardian_signature(ref signatures, hash);
+    fn is_valid_signature(signatures: @Array::<felt>, hash: felt) -> bool {
+        let is_valid_signer = is_valid_signer_signature(signatures, hash);
+        let is_valid_guardian = is_valid_guardian_signature(signatures, hash);
         is_valid_signer & is_valid_guardian
     }
 
-    fn is_valid_signer_signature(ref signatures: Array::<felt>, hash: felt) -> bool {
+    fn is_valid_signer_signature(signatures: @Array::<felt>, hash: felt) -> bool {
         assert(signatures.len() >= 2_usize, 'argent/invalid-signature-length');
         let signature_r = *(signatures.at(0_usize));
         let signature_s = *(signatures.at(1_usize));
         ecdsa::check_ecdsa_signature(hash, signer::read(), signature_r, signature_s)
     }
-    fn is_valid_guardian_signature(ref signatures: Array::<felt>, hash: felt) -> bool {
+    fn is_valid_guardian_signature(signatures: @Array::<felt>, hash: felt) -> bool {
         let guardian_ = guardian::read();
         if guardian_ == 0 {
             assert(signatures.len() == 2_usize, 'argent/invalid-signature-length');

@@ -30,7 +30,7 @@ mod ArgentMultisigAccount {
         let signers_len = signers.len().into();
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
-        add_signers(signers, 0, 0_u32);
+        add_signers(signers_to_add: signers, last_signer: 0, iterator: 0_u32);
         threshold::write(threshold);
     // empty array to emit - this is necessary?
     // let mut removed_signers = ArrayTrait::new();
@@ -64,12 +64,12 @@ mod ArgentMultisigAccount {
         return false;
     }
 
-    fn add_signers(signers_to_add: Array::<felt>, last_signer: felt, num: u32) {
+    fn add_signers(signers_to_add: Array::<felt>, last_signer: felt, iterator: u32) {
         if (signers_to_add.is_empty()) {
             return ();
         }
 
-        let signer = signers_to_add.at(num);
+        let signer = signers_to_add.at(iterator);
         assert(*signer != 0, 'argent/invalid zero signer');
 
         let current_signer_status = is_signer_using_last(*signer, last_signer);
@@ -78,7 +78,7 @@ mod ArgentMultisigAccount {
         // Signers are added at the end of the list
         signer_list::write(last_signer, *signer);
 
-        add_signers(signers_to_add, *signer, num + 1_u32);
+        add_signers(signers_to_add, *signer, iterator + 1_u32);
     }
 
     // Asserts that:  0 < threshold <= signers_len

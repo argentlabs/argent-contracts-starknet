@@ -1,34 +1,104 @@
 #[contract]
 mod ArgentMultisigAccount {
+     use array::ArrayTrait;
+     use traits::Into;
+     use zeroable::Zeroable;
+
 
     struct Storage {
-    threshold: felt,
+        threshold: felt,
+        signer_list: LegacyMap::<felt, felt>,
     }
+
+
+    #[event]
+    fn ConfigurationUpdated(
+        new_threshold: felt,
+        new_signers_count: felt,
+        added_singers_len: felt,
+        added_signers: Array::<felt>,
+        removed_signers_len: felt,
+        removed_signers: Array::<felt>
+    ) {}
 
     // @dev Set the initial parameters for the multisig. It's mandatory to call this methods to secure the account.
     // It's recommended to call this method in the same transaction that deploys the account to make sure it's always initialized
     #[external]
-    fn initialize(
-        threshold: felt,  signers: Array::<felt>
+    fn initialize(threshold: felt, signers: Array::<felt>) {
+        let current_threshold = threshold::read();
+        assert(current_threshold.is_zero(), 'argent/already-initialized');
+        let signers_len = signers.len().into();
+        assert_valid_threshold_and_signers_count(threshold, signers_len);
+
+        add_signers(signers, 0, 0_u32);
+        threshold::write(threshold);    
+
+    // empty array to emit - this is necessary?
+    // let mut removed_signers = ArrayTrait::new();
+    // removed_signers.append(0);
+
+    // ConfigurationUpdated(
+    //     threshold,
+    //     signers_len,
+    //     signers_len,
+    //     signers,
+    //     0,
+    //     removed_signers,
+    // ); Can't call yet
+
+    }
+
+    
+    // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
+    fn is_signer_using_last(signer: felt, last_signer: felt) -> bool  {
+        
+        if (signer.is_zero()) {
+            return false;
+        }
+
+        let next_signer = signer_list::read(signer);
+        if (next_signer != 0) {
+            return true;
+        }
+
+        if (last_signer == signer) {
+            return true;
+        }
+
+        return false;
+    }
+
+    fn add_signers(
+        signers_to_add: Array::<felt>, last_signer: felt, num: u32
     ) {
+        if (signers_to_add.is_empty()) {
+            return ();
+        }
+        
+        let signer = signers_to_add.at(num);
+        assert(*signer != 0, 'argent/invalid zero signer');
 
-        let current_threshold = storage_threshold::read();
-        assert(current_threshold == 0, 'argent/already-initialized');
+        let current_signer_status = is_signer_using_last(*signer, last_signer);
+        assert(!(current_signer_status), 'argent/already a signer');
 
-        // assert_valid_threshold_and_signers_count(threshold=threshold, signers_len=signers_len);
 
-        // SignerStorage.add_signers(signers_len, signers, last_signer=0);
-        // storage_threshold.write(threshold);    
+        // Signers are added at the end of the list
+        signer_list::write(last_signer, *signer);
 
-        // configuration_updated.emit(
-        //     new_threshold=threshold,
-        //     new_signers_count=signers_len,
-        //     added_signers_len=signers_len,
-        //     added_signers=signers,
-        //     removed_signers_len=0,
-        //     removed_signers=cast(0, felt*),
-        // );
+        add_signers(
+            signers_to_add,
+            *signer,
+            num + 1_u32
+        );
+    }
 
+
+    // Asserts that:  0 < threshold <= signers_len
+    fn assert_valid_threshold_and_signers_count(threshold: felt, signers_len: felt){
+        assert(threshold != 0, 'argent/invalid threshold');
+        // assert(threshold < max_range, 'argent/invalid threshold');
+        assert(signers_len != 0, 'argent/invalid signers len');
+        assert(threshold <= signers_len, 'argent/bad threshold');
     }
 
 }

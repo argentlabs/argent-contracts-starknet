@@ -1,11 +1,11 @@
 use starknet::get_contract_address;
 use starknet::get_caller_address;
 use zeroable::Zeroable;
+use starknet::ContractAddress;
 use starknet::ContractAddressZeroable;
 use traits::Into;
 use starknet::ContractAddressIntoFelt;
 use array::ArrayTrait;
-use contracts::dummy_syscalls;
 use contracts::argent_account::Call;
 
 const TRANSACTION_VERSION: felt = 1;
@@ -24,11 +24,11 @@ fn assert_correct_tx_version(tx_version: felt) {
     assert(is_valid, 'argent/invalid-tx-version');
 }
 
-fn assert_no_self_call(ref calls: Array::<Call>, self: felt) {
+fn assert_no_self_call(ref calls: Array::<Call>, self: ContractAddress) {
     assert_no_self_call_internal(ref calls, self, 0_usize);
 }
 
-fn assert_no_self_call_internal(ref calls: Array::<Call>, self: felt, index: usize) {
+fn assert_no_self_call_internal(ref calls: Array::<Call>, self: ContractAddress, index: usize) {
     match get_gas() {
         Option::Some(_) => {},
         Option::None(_) => {

@@ -1,6 +1,6 @@
 #[derive(Copy, Drop)]
 struct Call {
-    to: felt,
+    to: ContractAddress,
     selector: felt,
     calldata: Array::<felt>,
 }
@@ -10,6 +10,7 @@ impl ArrayCallDrop of Drop::<Array::<Call>>;
 #[contract]
 mod ArgentAccount {
     use array::ArrayTrait;
+    use starknet::get_contract_address;
     use contracts::asserts;
     use ecdsa::check_ecdsa_signature;
     use super::Call;
@@ -55,7 +56,7 @@ mod ArgentAccount {
         // make sure the account is initialized
         assert(signer::read() != 0, 'argent/uninitialized');
 
-        let account_address = dummy_syscalls::get_contract_address();
+        let account_address = starknet::get_contract_address();
         let transaction_hash = dummy_syscalls::get_transaction_hash();
         let mut signature = dummy_syscalls::get_signature();
 
@@ -63,12 +64,12 @@ mod ArgentAccount {
             let call = calls.at(0_usize);
             if call.to == account_address {
                 if call.selector == ESCAPE_GUARDIAN_SELECTOR | call.selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
-                    let is_valid = is_valid_signer_signature(ref signature, transaction_hash);
+                    let is_valid = is_valid_signer_signature(transaction_hash, @signature);
                     assert(is_valid, 'argent/invalid-signer-sig');
                     return ();
                 }
                 if call.selector == ESCAPE_SIGNER_SELECTOR | call.selector == TRIGGER_ESCAPE_SIGNER_SELECTOR {
-                    let is_valid = is_valid_guardian_signature(ref signature, transaction_hash);
+                    let is_valid = is_valid_guardian_signature(transaction_hash, @signature);
                     assert(is_valid, 'argent/invalid-guardian-sig');
                     return ();
                 }
@@ -78,9 +79,9 @@ mod ArgentAccount {
             // make sure no call is to the account
             asserts::assert_no_self_call(ref calls, account_address);
         }
-        let is_valid = is_valid_signer_signature(ref signature, transaction_hash);
+        let is_valid = is_valid_signer_signature(transaction_hash, @signature);
         assert(is_valid, 'argent/invalid-signer-sig');
-        let is_valid = is_valid_guardian_signature(ref signature, transaction_hash);
+        let is_valid = is_valid_guardian_signature(transaction_hash, @signature);
         assert(is_valid, 'argent/invalid-guardian-sig');
     }
 

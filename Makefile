@@ -7,10 +7,10 @@ INSTALLATION_FOLDER=./cairo
 SOURCE_FOLDER=./contracts
 
 install: 
-	$(MAKE) simple-install
+	$(MAKE) install-cairo
 	$(MAKE) vscode
 
-make simple-install:
+make install-cairo:
 	if [ -d $(INSTALLATION_FOLDER) ]; then \
 		$(MAKE) update-cairo; \
 	else \

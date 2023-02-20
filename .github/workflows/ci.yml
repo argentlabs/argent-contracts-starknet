@@ -27,7 +27,7 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Install cairo
-        run: make simple-install
+        run: make install-cairo
       - name: Run all tests
         run: make test
       - name: Check formatting

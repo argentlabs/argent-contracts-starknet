@@ -13,6 +13,7 @@ install:
 		$(MAKE) clone-cairo; \
 	fi
 	$(MAKE) build
+	$(MAKE) vscode
 
 clone-cairo:
 	mkdir -p $(INSTALLATION_FOLDER)

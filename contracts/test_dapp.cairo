@@ -1,6 +1,6 @@
 #[contract]
 mod TestDapp {
-    use contracts::dummy_syscalls;
+    use starknet::get_caller_address;
     use starknet::ContractAddress;
 
     /////////////////////
@@ -17,25 +17,22 @@ mod TestDapp {
 
     #[external]
     fn set_number(number: felt) {
-        let user = dummy_syscalls::get_caller_address();
-        stored_number::write(user, number);
+        stored_number::write(get_caller_address(), number);
     }
 
     #[external]
     fn set_number_double(number: felt) {
-        let user = dummy_syscalls::get_caller_address();
-        stored_number::write(user, number * 2);
+        stored_number::write(get_caller_address(), number * 2);
     }
 
     #[external]
     fn set_number_times3(number: felt) {
-        let user = dummy_syscalls::get_caller_address();
-        stored_number::write(user, number * 3);
+        stored_number::write(get_caller_address(), number * 3);
     }
 
     #[external]
     fn increase_number(number: felt) -> felt {
-        let user = dummy_syscalls::get_caller_address();
+        let user = get_caller_address();
         let val = stored_number::read(user);
         let new_number = val + number;
         stored_number::write(user, new_number);

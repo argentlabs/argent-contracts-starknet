@@ -1,6 +1,6 @@
-mod dummy_syscalls;
-mod asserts;
 mod tests;
+
+mod asserts;
 
 mod argent_account;
 use argent_account::ArgentAccount;

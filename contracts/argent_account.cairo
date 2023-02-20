@@ -58,7 +58,7 @@ mod ArgentAccount {
         let account_address = starknet::get_contract_address();
         let tx_info = unbox(starknet::get_tx_info());
         let transaction_hash = tx_info.transaction_hash;
-        let mut signature = tx_info.signature;
+        let mut signature = *(tx_info.signature.snapshot);
 
         if calls.len() == 1_usize {
             let call = *(calls.at(0_usize));
@@ -97,6 +97,7 @@ mod ArgentAccount {
         guardian_backup::write(new_guardian_backup);
     // AccountCreated(starknet::get_contract_address(), new_signer, new_guardian, new_guardian_backup); Can't call yet
     }
+
     #[view]
     fn get_signer() -> felt {
         signer::read()

@@ -1,5 +1,5 @@
-use contracts::dummy_syscalls::get_contract_address;
-use contracts::dummy_syscalls::get_caller_address;
+use starknet::get_contract_address;
+use starknet::get_caller_address;
 use zeroable::Zeroable;
 use starknet::ContractAddressZeroable;
 use traits::Into;

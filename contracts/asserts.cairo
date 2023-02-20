@@ -6,7 +6,7 @@ use starknet::ContractAddressZeroable;
 use traits::Into;
 use starknet::ContractAddressIntoFelt;
 use array::ArrayTrait;
-use contracts::argent_account::Call;
+use contracts::argent_account::ArgentAccount::Call;
 
 const TRANSACTION_VERSION: felt = 1;
 const QUERY_VERSION: felt = 340282366920938463463374607431768211457; // 2**128 + TRANSACTION_VERSION

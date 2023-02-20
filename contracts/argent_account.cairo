@@ -1,24 +1,21 @@
-#[derive(Copy, Drop)]
-struct Call {
-    to: ContractAddress,
-    selector: felt,
-    calldata: Array::<felt>,
-}
-
-impl ArrayCallCopy of Copy::<Array::<Call>>;
-impl ArrayCallDrop of Drop::<Array::<Call>>;
-
 #[contract]
 mod ArgentAccount {
+    use traits::Into;
     use array::ArrayTrait;
+    use ecdsa::check_ecdsa_signature;
     use starknet::get_contract_address;
     use starknet::get_tx_info;
-    use contracts::asserts;
-    use ecdsa::check_ecdsa_signature;
-    use traits::Into;
     use starknet::ContractAddressIntoFelt;
-    use super::Call;
-    use super::ArrayCallDrop;
+    use contracts::asserts;
+
+    #[derive(Copy, Drop)]
+    struct Call {
+        to: ContractAddress,
+        selector: felt,
+        calldata: Array::<felt>,
+    }
+
+    impl ArrayFeltCopy of Copy::<Array::<felt>>;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
@@ -46,7 +43,7 @@ mod ArgentAccount {
         guardian: felt,
         guardian_backup: felt,
     }
-    
+
     #[event]
     fn AccountCreated(account: felt, key: felt, guardian: felt, guardian_backup: felt) {}
 

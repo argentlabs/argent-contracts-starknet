@@ -1,6 +1,5 @@
 mod dummy_syscalls;
 mod asserts;
-
 mod tests;
 
 mod argent_account;

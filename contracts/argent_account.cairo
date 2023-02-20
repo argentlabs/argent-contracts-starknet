@@ -3,6 +3,7 @@ mod ArgentAccount {
     use array::ArrayTrait;
     use contracts::asserts;
     use contracts::dummy_syscalls;
+    use ecdsa::check_ecdsa_signature;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
@@ -13,8 +14,6 @@ mod ArgentAccount {
         guardian: felt,
         guardian_backup: felt,
     }
-
-
     #[event]
     fn AccountCreated(account: felt, key: felt, guardian: felt, guardian_backup: felt) {}
 
@@ -33,7 +32,6 @@ mod ArgentAccount {
         guardian_backup::write(new_guardian_backup);
     // AccountCreated(dummy_syscalls::get_contract_address(), new_signer, new_guardian, new_guardian_backup); Can't call yet
     }
-
     #[view]
     fn get_signer() -> felt {
         signer::read()
@@ -86,9 +84,9 @@ mod ArgentAccount {
 
     // ERC1271
     #[view]
-    fn is_valid_signature(signatures: @Array::<felt>, hash: felt) -> bool {
-        let is_valid_signer = is_valid_signer_signature(signatures, hash);
-        let is_valid_guardian = is_valid_guardian_signature(signatures, hash);
+    fn is_valid_signature(signatures: Array::<felt>, hash: felt) -> bool {
+        let is_valid_signer = is_valid_signer_signature(@signatures, hash);
+        let is_valid_guardian = is_valid_guardian_signature(@signatures, hash);
         is_valid_signer & is_valid_guardian
     }
 
@@ -96,8 +94,9 @@ mod ArgentAccount {
         assert(signatures.len() >= 2_usize, 'argent/invalid-signature-length');
         let signature_r = *(signatures.at(0_usize));
         let signature_s = *(signatures.at(1_usize));
-        ecdsa::check_ecdsa_signature(hash, signer::read(), signature_r, signature_s)
+        check_ecdsa_signature(hash, signer::read(), signature_r, signature_s)
     }
+
     fn is_valid_guardian_signature(signatures: @Array::<felt>, hash: felt) -> bool {
         let guardian_ = guardian::read();
         if guardian_ == 0 {
@@ -107,12 +106,12 @@ mod ArgentAccount {
         assert(signatures.len() == 4_usize, 'argent/invalid-signature-length');
         let signature_r = *(signatures.at(2_usize));
         let signature_s = *(signatures.at(3_usize));
-        let is_valid_guardian_signature = ecdsa::check_ecdsa_signature(
+        let is_valid_guardian_signature = check_ecdsa_signature(
             hash, guardian_, signature_r, signature_s
         );
         if is_valid_guardian_signature {
             return true;
         }
-        ecdsa::check_ecdsa_signature(hash, guardian_backup::read(), signature_r, signature_s)
+        check_ecdsa_signature(hash, guardian_backup::read(), signature_r, signature_s)
     }
 }

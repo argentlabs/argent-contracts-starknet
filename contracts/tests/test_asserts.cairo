@@ -1,4 +1,3 @@
-// use contracts::asserts::Assertion;
 use contracts::asserts;
 
 use starknet_testing::set_caller_address;

@@ -171,8 +171,7 @@ mod ArgentAccount {
         assert(current_escape.escape_type != ESCAPE_TYPE_SIGNER, 'argent/cannot-override-escape');
 
         // store new escape
-        let block_timestamp =
-            get_block_timestamp(); // TODO Can we trust timestamp? in the doc it says otherwise
+        let block_timestamp = get_block_timestamp();
         escape::write(
             Escape {
                 active_at: block_timestamp.into() + ESCAPE_SECURITY_PERIOD,
@@ -206,8 +205,7 @@ mod ArgentAccount {
 
         // TODO Should we check for overrides escape like in trigger_escape_signer
         // store new escape
-        let block_timestamp =
-            get_block_timestamp(); // TODO Can we trust timestamp? in the doc it says otherwise
+        let block_timestamp = get_block_timestamp();
         escape::write(
             Escape {
                 active_at: block_timestamp.into() + ESCAPE_SECURITY_PERIOD,
@@ -238,7 +236,7 @@ mod ArgentAccount {
     fn cancel_escape() {
         assert_only_self();
         // validate there is an active escape
-        assert(!(escape::read()).active_at.is_zero(), 'argent/no-active-escape');
+        assert(escape::read().active_at != 0, 'argent/no-active-escape');
         // clear escape
         escape::write(Escape { active_at: 0, escape_type: 0 });
     // escape_canceled();

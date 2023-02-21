@@ -27,11 +27,12 @@ mod ArgentMultisigAccount {
     fn initialize(threshold: felt, signers: Array::<felt>) {
         let current_threshold = threshold::read();
         assert(current_threshold.is_zero(), 'argent/already-initialized');
-        let signers_len = signers.len().into();
+        let signers_len = signers.len();
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
-        add_signers(signers_to_add: signers, last_signer: 0, iterator: 0_u32);
+        add_signers(iterator: signers_len, signers_to_add: signers, last_signer: 0);
         threshold::write(threshold);
+    
     // empty array to emit - this is necessary?
     // let mut removed_signers = ArrayTrait::new();
     // removed_signers.append(0);
@@ -64,12 +65,14 @@ mod ArgentMultisigAccount {
         return false;
     }
 
-    fn add_signers(signers_to_add: Array::<felt>, last_signer: felt, iterator: u32) {
-        if (signers_to_add.is_empty()) {
+    fn add_signers(iterator: u32, signers_to_add: Array::<felt>, last_signer: felt) {
+        
+        if (iterator == 0_u32) {
             return ();
         }
 
         let signer = signers_to_add.at(iterator);
+
         assert(*signer != 0, 'argent/invalid zero signer');
 
         let current_signer_status = is_signer_using_last(*signer, last_signer);
@@ -78,14 +81,14 @@ mod ArgentMultisigAccount {
         // Signers are added at the end of the list
         signer_list::write(last_signer, *signer);
 
-        add_signers(signers_to_add, *signer, iterator + 1_u32);
+        add_signers(iterator - 1_u32, signers_to_add, *signer);
     }
 
     // Asserts that:  0 < threshold <= signers_len
-    fn assert_valid_threshold_and_signers_count(threshold: felt, signers_len: felt) {
+    fn assert_valid_threshold_and_signers_count(threshold: felt, signers_len: usize) {
         assert(threshold != 0, 'argent/invalid threshold');
         // assert(threshold < max_range, 'argent/invalid threshold');
-        assert(signers_len != 0, 'argent/invalid signers len');
-        assert(threshold <= signers_len, 'argent/bad threshold');
+        assert(signers_len != 0_u32, 'argent/invalid signers len');
+        assert(threshold <= signers_len.into(), 'argent/bad threshold');
     }
 }

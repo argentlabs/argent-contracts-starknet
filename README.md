@@ -58,6 +58,15 @@ code --install-extension cairo1*.vsix
 cd ../..
 ```
 
+
+Then go to the vscode extension setting and fill "Language Server Path" using the path appropriate for your machine
+```
+/FULL_PATH_TO_THIS_FOLDER/cairo/target/release/cairo-language-server
+```
+
+
+Original docs in case it changes: https://github.com/starkware-libs/cairo/tree/main/vscode-cairo
+
 ### Test the contracts
 ```
 make test

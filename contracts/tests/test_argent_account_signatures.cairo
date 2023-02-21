@@ -32,17 +32,26 @@ fn double_signature(r1: felt, s1: felt, r2: felt, s2: felt) -> Array::<felt> {
     signatures
 }
 
+
+fn initialize_account() {
+    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
+}
+
+fn initialize_account_without_guardian() {
+    ArgentAccount::initialize(signer_pubkey, 0, 0);
+}
+
 #[test]
 #[available_gas(2000000)]
 fn valid_no_guardian() {
-    ArgentAccount::initialize(signer_pubkey, 0, 0);
+    initialize_account_without_guardian();
     let signatures = single_signature(signer_r, signer_s);
     assert(ArgentAccount::is_valid_signature(message_hash, signatures), 'invalid signature');
 }
 #[test]
 #[available_gas(2000000)]
 fn valid_with_guardian() {
-    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
+    initialize_account();
     let signatures = double_signature(signer_r, signer_s, guardian_r, guardian_s);
     assert(ArgentAccount::is_valid_signature(message_hash, signatures), 'invalid signature');
 }
@@ -58,7 +67,7 @@ fn valid_with_guardian_backup() {
 #[test]
 #[available_gas(2000000)]
 fn invalid_hash_1() {
-    ArgentAccount::initialize(signer_pubkey, 0, 0);
+    initialize_account_without_guardian();
     let signatures = single_signature(signer_r, signer_s);
     assert(!ArgentAccount::is_valid_signature(0, signatures), 'invalid signature');
 }
@@ -66,7 +75,7 @@ fn invalid_hash_1() {
 #[test]
 #[available_gas(2000000)]
 fn invalid_hash_2() {
-    ArgentAccount::initialize(signer_pubkey, 0, 0);
+    initialize_account_without_guardian();
     let signatures = single_signature(signer_r, signer_s);
     assert(!ArgentAccount::is_valid_signature(123, signatures), 'invalid signature');
 }
@@ -74,7 +83,7 @@ fn invalid_hash_2() {
 #[test]
 #[available_gas(2000000)]
 fn invalid_signer_no_guardian() {
-    ArgentAccount::initialize(signer_pubkey, 0, 0);
+    initialize_account_without_guardian();
     let signatures = single_signature(0, 0);
     assert(!ArgentAccount::is_valid_signature(message_hash, signatures), 'invalid signature');
     let signatures = single_signature(42, 99);
@@ -86,7 +95,7 @@ fn invalid_signer_no_guardian() {
 #[test]
 #[available_gas(2000000)]
 fn invalid_signer_with_guardian() {
-    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
+    initialize_account();
     let signatures = double_signature(0, 0, 0, 0);
     assert(!ArgentAccount::is_valid_signature(message_hash, signatures), 'invalid signature');
     let signatures = double_signature(42, 99, 534, 123);
@@ -102,7 +111,7 @@ fn invalid_signer_with_guardian() {
 #[test]
 #[available_gas(2000000)]
 fn invalid_guardian() {
-    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
+    initialize_account();
     let signatures = double_signature(0, 0, 0, 0);
     assert(!ArgentAccount::is_valid_signature(message_hash, signatures), 'invalid signature');
     let signatures = double_signature(42, 99, 534, 123);
@@ -119,7 +128,7 @@ fn invalid_guardian() {
 #[available_gas(2000000)]
 #[should_panic]
 fn invalid_signature_length_no_guardian() {
-    ArgentAccount::initialize(signer_pubkey, 0, 0);
+    initialize_account_without_guardian();
     let signatures = ArrayTrait::new();
     assert(!ArgentAccount::is_valid_signature(message_hash, signatures), 'invalid signature');
 }
@@ -128,7 +137,7 @@ fn invalid_signature_length_no_guardian() {
 #[available_gas(2000000)]
 #[should_panic]
 fn invalid_signature_length_no_guardian_2() {
-    ArgentAccount::initialize(signer_pubkey, 0, 0);
+    initialize_account_without_guardian();
     let signatures = double_signature(signer_r, signer_s, guardian_r, guardian_s);
     assert(!ArgentAccount::is_valid_signature(message_hash, signatures), 'invalid signature');
 }
@@ -137,7 +146,7 @@ fn invalid_signature_length_no_guardian_2() {
 #[available_gas(2000000)]
 #[should_panic]
 fn invalid_signature_length_with_guardian() {
-    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
+    initialize_account();
     let signatures = ArrayTrait::new();
     assert(!ArgentAccount::is_valid_signature(message_hash, signatures), 'invalid signature');
 }
@@ -146,7 +155,7 @@ fn invalid_signature_length_with_guardian() {
 #[available_gas(2000000)]
 #[should_panic]
 fn invalid_signature_length_with_guardian_2() {
-    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
+    initialize_account();
     let signatures = single_signature(signer_r, signer_s);
     assert(!ArgentAccount::is_valid_signature(message_hash, signatures), 'invalid signature');
 }

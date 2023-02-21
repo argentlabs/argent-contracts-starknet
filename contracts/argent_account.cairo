@@ -214,8 +214,7 @@ mod ArgentAccount {
                 escape_type: ESCAPE_TYPE_GUARDIAN
             }
         );
-        // escape_guardian_triggered.emit(block_timestamp + ESCAPE_SECURITY_PERIOD);
-        return ();
+    // escape_guardian_triggered.emit(block_timestamp + ESCAPE_SECURITY_PERIOD);
     }
 
 
@@ -231,9 +230,8 @@ mod ArgentAccount {
         // change guardian
         assert(!new_guardian.is_zero(), 'argent/new-signer-zero');
         guardian::write(new_guardian);
-        // guardian_escaped(new_guardian);
+    // guardian_escaped(new_guardian);
 
-        return ();
     }
 
     #[external]

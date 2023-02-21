@@ -27,12 +27,12 @@ mod ArgentMultisigAccount {
     fn initialize(threshold: felt, signers: Array::<felt>) {
         let current_threshold = threshold::read();
         assert(current_threshold.is_zero(), 'argent/already-initialized');
+
         let signers_len = signers.len();
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
-        add_signers(iterator: signers_len, signers_to_add: signers, last_signer: 0);
+        add_signers(signers, 0);
         threshold::write(threshold);
-    
     // empty array to emit - this is necessary?
     // let mut removed_signers = ArrayTrait::new();
     // removed_signers.append(0);
@@ -49,7 +49,7 @@ mod ArgentMultisigAccount {
 
     // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
     fn is_signer_using_last(signer: felt, last_signer: felt) -> bool {
-        if (signer.is_zero()) {
+        if (signer == 0) {
             return false;
         }
 
@@ -58,30 +58,32 @@ mod ArgentMultisigAccount {
             return true;
         }
 
-        if (last_signer == signer) {
-            return true;
-        }
-
-        return false;
+        last_signer == signer
     }
 
-    fn add_signers(iterator: u32, signers_to_add: Array::<felt>, last_signer: felt) {
-        
-        if (iterator == 0_u32) {
-            return ();
+    fn add_signers(mut signers_to_add: Array::<felt>, last_signer: felt) {
+        match get_gas() {
+            Option::Some(_) => {},
+            Option::None(_) => {
+                let mut data = ArrayTrait::new();
+                data.append('Out of gas');
+                panic(data);
+            },
         }
+        match signers_to_add.pop_front() {
+            Option::Some(signer) => {
+                assert(signer != 0, 'argent/invalid zero signer');
 
-        let signer = signers_to_add.at(iterator);
+                let current_signer_status = is_signer_using_last(signer, last_signer);
+                assert(!(current_signer_status), 'argent/already a signer');
 
-        assert(*signer != 0, 'argent/invalid zero signer');
+                // Signers are added at the end of the list
+                signer_list::write(last_signer, signer);
 
-        let current_signer_status = is_signer_using_last(*signer, last_signer);
-        assert(!(current_signer_status), 'argent/already a signer');
-
-        // Signers are added at the end of the list
-        signer_list::write(last_signer, *signer);
-
-        add_signers(iterator - 1_u32, signers_to_add, *signer);
+                add_signers(signers_to_add, signer);
+            },
+            Option::None(()) => (),
+        }
     }
 
     // Asserts that:  0 < threshold <= signers_len

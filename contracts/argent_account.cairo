@@ -8,19 +8,18 @@ mod ArgentAccount {
     use starknet::ContractAddressIntoFelt;
     use contracts::asserts;
 
-    #[derive(Copy, Drop)]
+    #[derive(Drop)]
     struct Call {
         to: ContractAddress,
         selector: felt,
         calldata: Array::<felt>,
     }
 
-    impl ArrayFeltCopy of Copy::<Array::<felt>>;
-
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
 
+    // TODO: update selectors
     const CHANGE_SIGNER_SELECTOR: felt =
         174572128530328568741270994650351248940644050288235239638974755381225723145;
     const CHANGE_GUARDIAN_SELECTOR: felt =
@@ -58,30 +57,31 @@ mod ArgentAccount {
         let account_address = starknet::get_contract_address();
         let tx_info = unbox(starknet::get_tx_info());
         let transaction_hash = tx_info.transaction_hash;
-        let mut signature = *(tx_info.signature.snapshot);
+        let mut signature = tx_info.signature.snapshot;
 
         if calls.len() == 1_usize {
-            let call = *(calls.at(0_usize));
-            if call.to.into() == account_address.into() {
-                if call.selector == ESCAPE_GUARDIAN_SELECTOR | call.selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
-                    let is_valid = is_valid_signer_signature(transaction_hash, @signature);
+            let call = calls.at(0_usize);
+            if (*call.to).into() == account_address.into() {
+                let selector = *call.selector;
+                if selector == ESCAPE_GUARDIAN_SELECTOR | selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
+                    let is_valid = is_valid_signer_signature(transaction_hash, signature);
                     assert(is_valid, 'argent/invalid-signer-sig');
                     return ();
                 }
-                if call.selector == ESCAPE_SIGNER_SELECTOR | call.selector == TRIGGER_ESCAPE_SIGNER_SELECTOR {
-                    let is_valid = is_valid_guardian_signature(transaction_hash, @signature);
+                if selector == ESCAPE_SIGNER_SELECTOR | selector == TRIGGER_ESCAPE_SIGNER_SELECTOR {
+                    let is_valid = is_valid_guardian_signature(transaction_hash, signature);
                     assert(is_valid, 'argent/invalid-guardian-sig');
                     return ();
                 }
-                assert(call.selector == EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
+                assert(selector == EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
             }
         } else {
             // make sure no call is to the account
             asserts::assert_no_self_call(@calls, account_address);
         }
-        let is_valid = is_valid_signer_signature(transaction_hash, @signature);
+        let is_valid = is_valid_signer_signature(transaction_hash, signature);
         assert(is_valid, 'argent/invalid-signer-sig');
-        let is_valid = is_valid_guardian_signature(transaction_hash, @signature);
+        let is_valid = is_valid_guardian_signature(transaction_hash, signature);
         assert(is_valid, 'argent/invalid-guardian-sig');
     }
 

@@ -40,7 +40,7 @@ fn assert_no_self_call_internal(calls: @Array::<Call>, self: ContractAddress, in
     if index == calls.len() {
         return ();
     }
-    let to = *(calls.at(index).to);
+    let to = *calls.at(index).to;
     assert(to.into() != self.into(), 'argent/no-multicall-to-self');
     assert_no_self_call_internal(calls, self, index + 1_usize);
     return ();

@@ -57,19 +57,19 @@ mod ArgentAccount {
         let account_address = starknet::get_contract_address();
         let tx_info = unbox(starknet::get_tx_info());
         let transaction_hash = tx_info.transaction_hash;
-        let mut signature = tx_info.signature.snapshot;
+        let mut full_signature = tx_info.signature.snapshot;
 
         if calls.len() == 1_usize {
             let call = calls.at(0_usize);
             if (*call.to).into() == account_address.into() {
                 let selector = *call.selector;
                 if selector == ESCAPE_GUARDIAN_SELECTOR | selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
-                    let is_valid = is_valid_signer_signature(transaction_hash, signature);
+                    let is_valid = is_valid_signer_signature(transaction_hash, full_signature);
                     assert(is_valid, 'argent/invalid-signer-sig');
                     return ();
                 }
                 if selector == ESCAPE_SIGNER_SELECTOR | selector == TRIGGER_ESCAPE_SIGNER_SELECTOR {
-                    let is_valid = is_valid_guardian_signature(transaction_hash, signature);
+                    let is_valid = is_valid_guardian_signature(transaction_hash, full_signature);
                     assert(is_valid, 'argent/invalid-guardian-sig');
                     return ();
                 }
@@ -79,9 +79,11 @@ mod ArgentAccount {
             // make sure no call is to the account
             asserts::assert_no_self_call(@calls, account_address);
         }
-        let is_valid = is_valid_signer_signature(transaction_hash, signature);
+
+        let (signer_signature, guardian_signature) = split_signatures(full_signature);
+        let is_valid = is_valid_signer_signature(transaction_hash, signer_signature);
         assert(is_valid, 'argent/invalid-signer-sig');
-        let is_valid = is_valid_guardian_signature(transaction_hash, signature);
+        let is_valid = is_valid_guardian_signature(transaction_hash, guardian_signature);
         assert(is_valid, 'argent/invalid-guardian-sig');
     }
 
@@ -151,33 +153,46 @@ mod ArgentAccount {
     // ERC1271
     #[view]
     fn is_valid_signature(hash: felt, signatures: Array<felt>) -> bool {
-        let is_valid_signer = is_valid_signer_signature(hash, @signatures);
-        let is_valid_guardian = is_valid_guardian_signature(hash, @signatures);
+        let (signer_signature, guardian_signature) = split_signatures(@signatures);
+        let is_valid_signer = is_valid_signer_signature(hash, signer_signature);
+        let is_valid_guardian = is_valid_guardian_signature(hash, guardian_signature);
         is_valid_signer & is_valid_guardian
     }
 
-    fn is_valid_signer_signature(hash: felt, signatures: @Array<felt>) -> bool {
-        assert(signatures.len() >= 2_usize, 'argent/invalid-signature-length');
-        let signature_r = *(signatures.at(0_usize));
-        let signature_s = *(signatures.at(1_usize));
+    fn is_valid_signer_signature(hash: felt, signature: @Array<felt>) -> bool {
+        assert(signature.len() == 2_usize, 'argent/invalid-signature-length');
+        let signature_r = *signature.at(0_usize);
+        let signature_s = *signature.at(1_usize);
         check_ecdsa_signature(hash, signer::read(), signature_r, signature_s)
     }
 
-    fn is_valid_guardian_signature(hash: felt, signatures: @Array<felt>) -> bool {
+    fn is_valid_guardian_signature(hash: felt, signature: @Array<felt>) -> bool {
         let guardian_ = guardian::read();
         if guardian_ == 0 {
-            assert(signatures.len() == 2_usize, 'argent/invalid-signature-length');
+            assert(signature.len() == 0_usize, 'argent/invalid-signature-length');
             return true;
         }
-        assert(signatures.len() == 4_usize, 'argent/invalid-signature-length');
-        let signature_r = *(signatures.at(2_usize));
-        let signature_s = *(signatures.at(3_usize));
-        let is_valid_guardian_signature = check_ecdsa_signature(
-            hash, guardian_, signature_r, signature_s
-        );
-        if is_valid_guardian_signature {
+        assert(signature.len() == 2_usize, 'argent/invalid-signature-length');
+        let signature_r = *signature.at(0_usize);
+        let signature_s = *signature.at(1_usize);
+        let is_valid = check_ecdsa_signature(hash, guardian_, signature_r, signature_s);
+        if is_valid {
             return true;
         }
         check_ecdsa_signature(hash, guardian_backup::read(), signature_r, signature_s)
+    }
+
+    fn split_signatures(full_signature: @Array::<felt>) -> (@Array::<felt>, @Array::<felt>) {
+        if full_signature.len() == 2_usize {
+            return (full_signature, @ArrayTrait::new());
+        }
+        assert(full_signature.len() == 4_usize, 'argent/invalid-signature-length');
+        let mut signer_signature = ArrayTrait::new();
+        signer_signature.append(*full_signature.at(0_usize));
+        signer_signature.append(*full_signature.at(1_usize));
+        let mut guardian_signature = ArrayTrait::new();
+        guardian_signature.append(*full_signature.at(2_usize));
+        guardian_signature.append(*full_signature.at(3_usize));
+        (@signer_signature, @guardian_signature)
     }
 }

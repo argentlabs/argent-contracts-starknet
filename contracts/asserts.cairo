@@ -1,7 +1,6 @@
 use starknet::get_contract_address;
 use starknet::get_caller_address;
 use zeroable::Zeroable;
-use starknet::ContractAddress;
 use starknet::ContractAddressZeroable;
 use traits::Into;
 use starknet::ContractAddressIntoFelt;
@@ -43,5 +42,4 @@ fn assert_no_self_call_internal(calls: @Array::<Call>, self: ContractAddress, in
     let to = *calls.at(index).to;
     assert(to.into() != self.into(), 'argent/no-multicall-to-self');
     assert_no_self_call_internal(calls, self, index + 1_usize);
-    return ();
 }

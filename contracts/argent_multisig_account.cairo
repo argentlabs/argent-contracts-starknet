@@ -88,14 +88,6 @@ mod ArgentMultisigAccount {
     }
 
     fn add_signers(mut signers_to_add: Array::<felt>, last_signer: felt) {
-        match get_gas() {
-            Option::Some(_) => {},
-            Option::None(_) => {
-                let mut data = ArrayTrait::new();
-                data.append('Out of gas');
-                panic(data);
-            },
-        }
         match get_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {

@@ -15,7 +15,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly-2022-11-03
+          toolchain: nightly
       - name: Set up cache
         uses: actions/cache@v3
         with:

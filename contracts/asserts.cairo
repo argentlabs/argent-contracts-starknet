@@ -1,10 +1,11 @@
+use traits::Into;
+use array::ArrayTrait;
+use zeroable::Zeroable;
 use starknet::get_contract_address;
 use starknet::get_caller_address;
-use zeroable::Zeroable;
 use starknet::ContractAddressZeroable;
-use traits::Into;
 use starknet::ContractAddressIntoFelt;
-use array::ArrayTrait;
+
 use contracts::argent_account::ArgentAccount::Call;
 
 const TRANSACTION_VERSION: felt = 1;

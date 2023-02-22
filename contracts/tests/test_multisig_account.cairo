@@ -2,7 +2,6 @@ use array::ArrayTrait;
 use contracts::ArgentMultisigAccount;
 use debug::print_felt;
 use traits::Into;
-
 // cant call yet due to get_gas not working
 // #[test]
 // #[available_gas(20000000)]
@@ -14,3 +13,4 @@ use traits::Into;
 //     ArgentMultisigAccount::initialize(threshold, signers_array);
 //     assert(ArgentMultisigAccount::threshold::read() == threshold, 'new threshold not set');
 // }
+

@@ -33,21 +33,23 @@ mod ArgentMultisigAccount {
 
         add_signers(signers, 0);
         threshold::write(threshold);
-    // empty array to emit - this is necessary?
-    // let mut removed_signers = ArrayTrait::new();
-    // removed_signers.append(0);
 
-    // ConfigurationUpdated(
-    //     threshold,
-    //     signers_len,
-    //     signers_len,
-    //     signers,
-    //     0,
-    //     removed_signers,
-    // ); Can't call yet
+    // ConfigurationUpdated(); Can't call yet
     }
 
-    // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
+
+    #[view]
+    fn get_threshold() -> felt {
+        storage_threshold::read()
+    }
+
+    // ERC165
+    #[view]
+    fn supports_interface(interface_id: felt) -> bool {
+        interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
+    }
+
+    
     fn is_signer_using_last(signer: felt, last_signer: felt) -> bool {
         if (signer == 0) {
             return false;

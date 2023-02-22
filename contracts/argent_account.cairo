@@ -182,21 +182,6 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn escape_signer(new_signer: felt) {
-        assert_only_self();
-        assert_guardian_set();
-        assert_valid_escape_of_type(ESCAPE_TYPE_SIGNER);
-
-        // clear escape
-        escape::write(Escape { active_at: 0, escape_type: 0,  });
-        // change signer
-        assert(!new_signer.is_zero(), 'argent/new-signer-zero');
-        signer::write(new_signer);
-    // signer_escaped(new_signer);
-
-    }
-
-    #[external]
     fn trigger_escape_guardian() {
         // only called via execute
         assert_only_self();
@@ -215,22 +200,32 @@ mod ArgentAccount {
     // escape_guardian_triggered.emit(block_timestamp + ESCAPE_SECURITY_PERIOD);
     }
 
+    #[external]
+    fn escape_signer(new_signer: felt) {
+        assert_only_self();
+        assert_guardian_set();
+        assert_can_escape_for_type(ESCAPE_TYPE_SIGNER);
+        assert(!new_signer.is_zero(), 'argent/new-signer-zero');
+        // Shouldn't we check new_signer != guardian?
+        clear_escape();
+        signer::write(new_signer);
+    // signer_escaped(new_signer);
+
+    }
 
     #[external]
     fn escape_guardian(new_guardian: felt) {
         assert_only_self();
         assert_guardian_set();
-        assert_valid_escape_of_type(ESCAPE_TYPE_GUARDIAN);
-
-        // clear escape
-        escape::write(Escape { active_at: 0, escape_type: 0,  });
-
-        // change guardian
+        assert_can_escape_for_type(ESCAPE_TYPE_GUARDIAN);
         assert(!new_guardian.is_zero(), 'argent/new-signer-zero');
+
+        clear_escape();
         guardian::write(new_guardian);
     // guardian_escaped(new_guardian);
 
     }
+
 
     #[external]
     fn cancel_escape() {
@@ -301,16 +296,21 @@ mod ArgentAccount {
     // UTILS
     /////////////////////
 
-    fn assert_guardian_set() {
-        assert(!(guardian::read()).is_zero(), 'argent/guardian-required');
+    #[inline(always)]
+    fn clear_escape() {
+        escape::write(Escape { active_at: 0, escape_type: 0 });
     }
 
-    fn assert_valid_escape_of_type(escape_type: felt) {
+    fn assert_can_escape_for_type(escape_type: felt) {
         let current_escape = escape::read();
         let block_timestamp = get_block_timestamp();
 
         assert(!current_escape.active_at.is_zero(), 'argent/not-escaping');
         assert(current_escape.active_at <= block_timestamp.into(), 'argent/escape-not-active');
         assert(current_escape.escape_type == escape_type, 'argent/escape-type-invalid');
+    }
+
+    fn assert_guardian_set() {
+        assert(!(guardian::read()).is_zero(), 'argent/guardian-required');
     }
 }

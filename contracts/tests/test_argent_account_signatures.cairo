@@ -1,21 +1,23 @@
 use array::ArrayTrait;
 use contracts::ArgentAccount;
 
+use contracts::tests::signer_pubkey;
+use contracts::tests::guardian_pubkey;
+use contracts::tests::guardian_backup_pubkey;
+
 use contracts::tests::initialize_account;
 use contracts::tests::initialize_account_without_guardian;
 
-use contracts::tests::signer_pubkey;
-use contracts::tests::signer_r;
-use contracts::tests::signer_s;
-use contracts::tests::guardian_pubkey;
-use contracts::tests::guardian_r;
-use contracts::tests::guardian_s;
-use contracts::tests::guardian_backup_pubkey;
-use contracts::tests::guardian_backup_r;
-use contracts::tests::guardian_backup_s;
-
 const message_hash: felt = 0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8;
 
+const signer_r: felt = 0x6ff7b413a8457ef90f326b5280600a4473fef49b5b1dcdfcd7f42ca7aa59c69;
+const signer_s: felt = 0x23a9747ed71abc5cb956c0df44ee8638b65b3e9407deade65de62247b8fd77;
+
+const guardian_r: felt = 0x1734f5510c8b862984461d2221411d12a706140bae629feac0aad35f4d91a19;
+const guardian_s: felt = 0x75c904c1969e5b2bf2e9fedb32d6180f06288d81a6a2164d876ea4be2ae7520;
+
+const guardian_backup_r: felt = 0x1e03a158a4142532f903caa32697a74fcf5c05b762bb866cec28670d0a53f9a;
+const guardian_backup_s: felt = 0x74be76fe620a42899bc34afce7b31a058408b23c250805054fca4de4e0121ca;
 
 fn single_signature(r: felt, s: felt) -> Array::<felt> {
     let mut signatures = ArrayTrait::new();

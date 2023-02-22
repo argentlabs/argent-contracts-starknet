@@ -1,28 +1,40 @@
 use contracts::ArgentAccount;
 use contracts::ArgentAccount::Escape;
 use zeroable::Zeroable;
+use starknet::contract_address_const;
 use traits::Into;
+use starknet_testing::set_block_timestamp;
+use starknet_testing::set_caller_address;
 
-use contracts::tests::DEFAULT_TIMESTAMP;
-use contracts::tests::ESCAPE_SECURITY_PERIOD;
-use contracts::tests::ESCAPE_TYPE_GUARDIAN;
-use contracts::tests::ESCAPE_TYPE_SIGNER;
-
-use contracts::tests::set_block_timestamp_to_default;
 use contracts::tests::initialize_account;
 use contracts::tests::initialize_account_without_guardian;
-use contracts::tests::set_caller_to_pseudo_random;
+
+const DEFAULT_TIMESTAMP: u64 = 42_u64;
+const ESCAPE_SECURITY_PERIOD: felt = 604800; // 7 * 24 * 60 * 60;  // 7 days
+const ESCAPE_TYPE_GUARDIAN: felt = 1;
+const ESCAPE_TYPE_SIGNER: felt = 2;
 
 // trigger_escape_signer
-// escape_signer
+
+#[test]
+#[available_gas(2000000)]
+fn trigger_escape_signer() {
+    initialize_account();
+    set_block_timestamp(DEFAULT_TIMESTAMP);
+    ArgentAccount::trigger_escape_signer();
+    let escape = ArgentAccount::get_escape();
+    assert(
+        escape.active_at == DEFAULT_TIMESTAMP.into() + ESCAPE_SECURITY_PERIOD, 'active_at invalid'
+    );
+    assert(escape.escape_type == ESCAPE_TYPE_SIGNER, 'escape_type invalid');
+}
 
 // trigger_escape_guardian
-// escape_guardian
 #[test]
 #[available_gas(2000000)]
 fn trigger_escape_guardian_by_signer() {
     initialize_account();
-    set_block_timestamp_to_default();
+    set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_guardian();
     let escape = ArgentAccount::get_escape();
     assert(
@@ -36,24 +48,26 @@ fn trigger_escape_guardian_by_signer() {
 #[should_panic]
 fn trigger_escape_guardian_without_guardian() {
     initialize_account_without_guardian();
-    set_block_timestamp_to_default();
+    set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_guardian();
 }
 
 
+// escape_signer
 #[test]
-#[available_gas(2000000)]
-fn trigger_escape_signer() {
+#[available_gas(2000000)] // TODO Ongoing
+#[should_panic]
+fn escape_signer() {
     initialize_account();
-    set_block_timestamp_to_default();
+    set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_signer();
-    let escape = ArgentAccount::get_escape();
-    assert(
-        escape.active_at == DEFAULT_TIMESTAMP.into() + ESCAPE_SECURITY_PERIOD, 'active_at invalid'
-    );
-    assert(escape.escape_type == ESCAPE_TYPE_SIGNER, 'escape_type invalid');
+    set_block_timestamp(DEFAULT_TIMESTAMP + 604800_u64);
+    ArgentAccount::escape_signer(42);
+    assert_escape_cleared();
+    assert(ArgentAccount::get_signer() == 42, 'Signer should now be 42');
 }
 
+// escape_guardian
 
 // Cancel escape 
 
@@ -62,9 +76,7 @@ fn trigger_escape_signer() {
 fn cancel_escape() {
     initialize_account();
     ArgentAccount::trigger_escape_signer();
-    let escape = ArgentAccount::get_escape();
-    assert(escape.active_at != 0, 'active_at != zero');
-    assert(escape.escape_type != 0, 'escape_type != zero');
+    assert_escape_cleared();
     ArgentAccount::cancel_escape();
     let escape = ArgentAccount::get_escape();
     assert(escape.active_at.is_zero(), 'active_at == 0');
@@ -76,7 +88,7 @@ fn cancel_escape() {
 #[should_panic]
 fn cancel_escape_assert_only_self() {
     initialize_account();
-    set_caller_to_pseudo_random();
+    set_caller_address(contract_address_const::<42>());
     ArgentAccount::cancel_escape();
 }
 
@@ -95,7 +107,7 @@ fn cancel_escape_no_escape_set() {
 
 fn get_escape() {
     initialize_account();
-    set_block_timestamp_to_default();
+    set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_signer();
     let escape = ArgentAccount::get_escape();
     assert(
@@ -129,4 +141,9 @@ fn get_escape_unitialized() {
 // TODO Each signer stuff should have an assert_only_self test
 // TODO Each signer stuff should have an assert_guardian_set test
 
-
+// Utils
+fn assert_escape_cleared() {
+    let escape = ArgentAccount::get_escape();
+    assert(escape.active_at != 0, 'active_at != zero');
+    assert(escape.escape_type != 0, 'escape_type != zero');
+}

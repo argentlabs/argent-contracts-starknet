@@ -3,24 +3,19 @@ mod test_argent_account;
 mod test_argent_account_signatures;
 mod test_argent_account_escape;
 
-mod utils;
-// Consts
-use utils::DEFAULT_TIMESTAMP;
-use utils::ESCAPE_SECURITY_PERIOD;
-use utils::ESCAPE_TYPE_GUARDIAN;
-use utils::ESCAPE_TYPE_SIGNER;
+use contracts::ArgentAccount;
 
-use utils::signer_pubkey;
-use utils::signer_r;
-use utils::signer_s;
-use utils::guardian_pubkey;
-use utils::guardian_r;
-use utils::guardian_s;
-use utils::guardian_backup_pubkey;
-use utils::guardian_backup_r;
-use utils::guardian_backup_s;
-// fn
-use utils::initialize_account;
-use utils::initialize_account_without_guardian;
-use utils::set_block_timestamp_to_default;
-use utils::set_caller_to_pseudo_random;
+const signer_pubkey: felt = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;
+
+const guardian_pubkey: felt = 0x759ca09377679ecd535a81e83039658bf40959283187c654c5416f439403cf5;
+
+const guardian_backup_pubkey: felt =
+    0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2f96fec5ba847310b20;
+
+fn initialize_account() {
+    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
+}
+
+fn initialize_account_without_guardian() {
+    ArgentAccount::initialize(signer_pubkey, 0, 0);
+}

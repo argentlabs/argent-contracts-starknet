@@ -27,6 +27,7 @@ jobs:
             target/
             cairo/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
       - name: Step 4 - Install/Update cairo
         run: make install-cairo
       - name: Step 5 - Run all tests

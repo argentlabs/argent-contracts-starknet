@@ -33,20 +33,20 @@ mod ArgentMultisigAccount {
 
         add_signers(signers, 0);
         threshold::write(threshold);
-    // ConfigurationUpdated(); Can't call yet
+        // ConfigurationUpdated(); Can't call yet
     }
 
 
     #[view]
     fn get_threshold() -> felt {
-        storage_threshold::read()
+        threshold::read()
     }
 
     // ERC165
-    #[view]
-    fn supports_interface(interface_id: felt) -> bool {
-        interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
-    }
+    // #[view]
+    // fn supports_interface(interface_id: felt) -> bool {
+    //     interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
+    // }
 
 
     fn is_signer_using_last(signer: felt, last_signer: felt) -> bool {
@@ -71,6 +71,15 @@ mod ArgentMultisigAccount {
                 panic(data);
             },
         }
+        match get_gas_all(get_builtin_costs()) {
+            Option::Some(_) => {},
+            Option::None(_) => {
+                let mut err_data = array_new();
+                array_append(ref err_data, 'Out of gas');
+                panic(err_data)
+            },
+        }
+
         match signers_to_add.pop_front() {
             Option::Some(signer) => {
                 assert(signer != 0, 'argent/invalid zero signer');
@@ -89,7 +98,7 @@ mod ArgentMultisigAccount {
 
     // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
     // Otherwise cost increases with the list size
-    fn is_signer(signer: felt) -> felt {
+    fn is_signer(signer: felt) -> bool {
         if (signer == 0) {
             return false;
         }

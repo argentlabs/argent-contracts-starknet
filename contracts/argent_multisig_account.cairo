@@ -33,7 +33,6 @@ mod ArgentMultisigAccount {
 
         add_signers(signers, 0);
         threshold::write(threshold);
-
     // ConfigurationUpdated(); Can't call yet
     }
 
@@ -49,7 +48,7 @@ mod ArgentMultisigAccount {
         interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
     }
 
-    
+
     fn is_signer_using_last(signer: felt, last_signer: felt) -> bool {
         if (signer == 0) {
             return false;
@@ -60,7 +59,7 @@ mod ArgentMultisigAccount {
             return true;
         }
 
-        last_signer == signer
+        return last_signer == signer;
     }
 
     fn add_signers(mut signers_to_add: Array::<felt>, last_signer: felt) {
@@ -87,6 +86,36 @@ mod ArgentMultisigAccount {
             Option::None(()) => (),
         }
     }
+
+    // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
+    // Otherwise cost increases with the list size
+    fn is_signer(signer: felt) -> felt {
+        if (signer == 0) {
+            return false;
+        }
+        let next_signer = signer_list::read(signer);
+        if (next_signer != 0) {
+            return true;
+        }
+        // check if its the latest
+        let last_signer = find_last_signer();
+        return last_signer == signer;
+    }
+
+    // Return the last signer or zero if no signers. Cost increases with the list size
+    fn find_last_signer() -> felt {
+        let first_signer = signer_list::read(0);
+        return find_last_signer_recursive(first_signer);
+    }
+
+    fn find_last_signer_recursive(from_signer: felt) -> felt {
+        let next_signer = signer_list::read(from_signer);
+        if (next_signer == 0) {
+            return from_signer;
+        }
+        return find_last_signer_recursive(next_signer);
+    }
+
 
     // Asserts that:  0 < threshold <= signers_len
     fn assert_valid_threshold_and_signers_count(threshold: felt, signers_len: usize) {

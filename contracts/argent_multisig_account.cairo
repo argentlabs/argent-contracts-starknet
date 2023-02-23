@@ -90,6 +90,23 @@ mod ArgentMultisigAccount {
     // ConfigurationUpdated(); // TODO
     }
 
+    // @dev Adds new signers to the account, additionally sets a new threshold
+    // @param new_threshold New threshold
+    // @param signers_to_add Contains the new signers, it will revert if it contains any existing signer
+    #[external]
+    fn add_signers(new_threshold: u32, signers_to_add: Array::<felt>) {
+        asserts::assert_only_self();
+        let (signers_len, last_signer) = signers_storage::load();
+
+        let new_signers_len = signers_len + signers_to_add.len();
+
+        assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
+
+        signers_storage::add_signers(signers_to_add, last_signer);
+        threshold::write(new_threshold);
+    // ConfigurationUpdated(); // TODO
+    }
+
     /////////////////////////////////////////////////////////
     // INTERNAL FUNCTIONS
     /////////////////////////////////////////////////////////
@@ -104,6 +121,35 @@ mod ArgentMultisigAccount {
 
     mod signers_storage {
         use array::ArrayTrait;
+
+
+        // Returns the number of signers and the last signer (or zero if the list is empty). Cost increases with the list size
+        // returns (signers_len, last_signer)
+        fn load() -> (u32, felt) {
+            return load_from(super::signer_list::read(0));
+        }
+
+        fn load_from(from_signer: felt) -> (u32, felt) {
+            match get_gas_all(get_builtin_costs()) {
+                Option::Some(_) => {},
+                Option::None(_) => {
+                    let mut err_data = array_new();
+                    array_append(ref err_data, 'Out of gas');
+                    panic(err_data)
+                }
+            }
+            if (from_signer == 0) {
+                // empty list
+                return (0_u32, 0);
+            }
+
+            let next_signer = super::signer_list::read(from_signer);
+            if (next_signer == 0) {
+                return (1_u32, from_signer);
+            }
+            let (next_lenght, last_signer) = load_from(next_signer);
+            return (next_lenght + 1_u32, last_signer);
+        }
 
         fn is_signer_using_last(signer: felt, last_signer: felt) -> bool {
             if (signer == 0) {

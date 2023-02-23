@@ -13,14 +13,14 @@ fn initialize() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = 'argent: signer cannot be null')]
+#[should_panic(expected = ('argent/null-signer', ))]
 fn initialize_with_null_signer() {
     ArgentAccount::initialize(0, 2, 3);
 }
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = 'argent: already initialized')]
+#[should_panic(expected = ('argent/already-initialized', ))]
 fn already_initialized() {
     ArgentAccount::initialize(1, 2, 3);
     assert(ArgentAccount::get_signer() == 1, 'value should be 1');
@@ -67,7 +67,7 @@ fn change_guardian() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = 'argent: new guardian invalid')]
+#[should_panic(expected = ('argent/guardian-backup-needed', ))]
 fn change_invalid_guardian() {
     ArgentAccount::initialize(1, 2, 3);
     assert(ArgentAccount::get_guardian() == 2, 'value should be 2');
@@ -85,7 +85,7 @@ fn change_guardian_backup() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = 'argent: guardian required')]
+#[should_panic(expected = ('argent/guardian-required', ))]
 fn change_invalid_guardian_backup() {
     ArgentAccount::initialize(1, 0, 0);
     ArgentAccount::change_guardian_backup(33);

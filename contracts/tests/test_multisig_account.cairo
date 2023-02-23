@@ -18,7 +18,7 @@ fn valid_before_init() {
 #[test]
 #[available_gas(20000000)]
 fn valid_initiliaze() {
-    let threshold = 2_u32;
+    let threshold = 1_u32;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     ArgentMultisigAccount::initialize(threshold, signers_array);
@@ -61,14 +61,14 @@ fn valid_initiliaze_two_signers() {
 
     // test signers list
     let signers = ArgentMultisigAccount::get_signers();
-    assert(signers.len() == 1_usize, 'invalid signers length');
+    assert(signers.len() == 2_usize, 'invalid signers length');
     assert(*signers.at(0_usize) == signer_pubkey_1, 'invalid signers result');
     assert(*signers.at(1_usize) == signer_pubkey_2, 'invalid signers result');
 }
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected = 'argent/bad threshold')]
+#[should_panic(expected = ('argent/bad threshold', ))]
 fn invalid_threshold() {
     let threshold = 3_u32;
     let mut signers_array = ArrayTrait::new();
@@ -218,7 +218,7 @@ fn remove_two_signers() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected = 'argent/not a signer')]
+#[should_panic(expected = ('argent/not a signer', ))]
 fn remove_invalid_signers() {
     // init
     let threshold = 1_u32;
@@ -236,7 +236,7 @@ fn remove_invalid_signers() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected = 'argent/bad threshold')]
+#[should_panic(expected = ('argent/bad threshold', ))]
 fn remove_signers_invalid_threshold() {
     // init
     let threshold = 1_u32;

@@ -2,21 +2,26 @@ name: Rust CI
 
 on:
   push:
-    branches: [cairo/cairo_1.0]
-  pull_request:
+    branches: 
+      - develop
+      - main
+  pull_request: 
+    branches: 
+      - develop
+      - main[develop, main]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Step 1 - Check out main branch
+      - name: Check out
         uses: actions/checkout@v3
-      - name: Step 2 - Install Rust
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
-      - name: Step 3 - Set up cache
+          toolchain: nightly-2022-11-03
+      - name: Set up cache
         uses: actions/cache@v3
         with:
           path: |
@@ -25,12 +30,10 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-            cairo/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-      - name: Step 4 - Install/Update cairo
+      - name: Install cairo
         run: make install-cairo
-      - name: Step 5 - Run all tests
+      - name: Run all tests
         run: make test
-      - name: Step 6 - Check formatting
+      - name: Check formatting
         run: make check-format

@@ -116,8 +116,8 @@ mod ArgentMultisigAccount {
     }
 
     fn assert_initialized() {
-        let threshold = storage_threshold::read();
-        assert(threshold != 0, 'argent/not initialized');
+        let threshold = threshold::read();
+        assert(threshold != 0_u32, 'argent/not initialized');
     }
 
     mod signers_storage {
@@ -204,29 +204,21 @@ mod ArgentMultisigAccount {
             match signers_to_remove.pop_front() {
                 Option::Some(signer) => {
                     let current_signer_status = is_signer_using_last(signer, last_signer);
-                    assert(current_signer_status, 'argent/ not a signer');
+                    assert(current_signer_status, 'argent/not a signer');
                     // Signer pointer set to 0, Previous pointer set to the next in the list
 
-                    let (previous_signer) = find_signer_before(signer);
-                    let (next_signer) = signer_list.read(signer);
+                    let previous_signer = find_signer_before(signer);
+                    let next_signer = super::signer_list::read(signer);
 
-                    signer_list.write(previous_signer, next_signer);
+                    super::signer_list::write(previous_signer, next_signer);
 
                     if (next_signer == 0) {
                         // Removing the last item
-                        remove_signers(
-                            signers_to_remove_len = signers_to_remove_len - 1,
-                            signers_to_remove = signers_to_remove + 1,
-                            last_signer = previous_signer
-                        );
+                        remove_signers(signers_to_remove, previous_signer);
                     } else {
                         // Removing an item in the middle
-                        signer_list.write(signer, 0);
-                        remove_signers(
-                            signers_to_remove_len = signers_to_remove_len - 1,
-                            signers_to_remove = signers_to_remove + 1,
-                            last_signer = last_signer
-                        );
+                        super::signer_list::write(signer, 0);
+                        remove_signers(signers_to_remove, previous_signer);
                     }
                 },
                 Option::None(()) => (),
@@ -280,7 +272,7 @@ mod ArgentMultisigAccount {
 
         fn find_signer_before_recursive(signer_after: felt, from_signer: felt) -> felt {
             let next_signer = super::signer_list::read(from_signer);
-            assert(next_signer != 0, 'argent/ unable to find signer before');
+            assert(next_signer != 0, 'argent/cant find signer before');
 
             if (next_signer == signer_after) {
                 return from_signer;

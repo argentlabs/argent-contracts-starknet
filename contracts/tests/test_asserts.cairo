@@ -14,7 +14,8 @@ fn test_assert_only_self() {
 }
 
 #[test]
-#[should_panic]
+#[available_gas(2000000)]
+#[should_panic(expected = ('argent/only-self', ))]
 fn test_assert_only_self_panic() {
     set_caller_address(contract_address_const::<42>());
     set_contract_address(contract_address_const::<69>());
@@ -22,15 +23,15 @@ fn test_assert_only_self_panic() {
 }
 
 #[test]
-fn assert_correct_tx_version_test() {
+fn assert_correct_tx_version() {
     // for now valid tx_version == 1 & 2
     let tx_version = 1;
     asserts::assert_correct_tx_version(tx_version);
 }
 
 #[test]
-#[should_panic]
-fn assert_correct_tx_version_invalidtx_test() {
+#[should_panic(expected = ('argent/invalid-tx-version', ))]
+fn assert_correct_tx_version_invalid_tx() {
     // for now valid tx_version == 1 & 2
     let tx_version = 4;
     asserts::assert_correct_tx_version(tx_version);

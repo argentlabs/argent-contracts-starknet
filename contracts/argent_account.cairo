@@ -25,7 +25,7 @@ mod ArgentAccount {
     #[derive(Copy)]
     struct Escape {
         active_at: u64,
-        escape_type: felt, // TODO Change to enum? ==> Can't do ATM
+        escape_type: felt, // TODO Change to enum? ==> Can't do ATM because would have to impl partialEq, update storage, etc etc
     }
 
     struct Storage {
@@ -34,15 +34,18 @@ mod ArgentAccount {
         guardian_backup: felt,
         escape: Escape,
     }
+
     /////////////////////
     // EVENTS
     /////////////////////
 
     #[event]
-    fn AccountCreated(account: felt, key: felt, guardian: felt, guardian_backup: felt) {}
+    fn AccountCreated(
+        account: felt, key: felt, guardian: felt, guardian_backup: felt
+    ) {} // TODO Change to snake?
 
     #[event]
-    fn TransactionExecuted(hash: felt, response: Array::<felt>) {}
+    fn TransactionExecuted(hash: felt, response: Array::<felt>) {} // TODO Change to snake?
 
     #[event]
     fn escape_signer_triggered(active_at: u64) {}
@@ -58,7 +61,6 @@ mod ArgentAccount {
 
     #[event]
     fn escape_canceled() {}
-
 
     /////////////////////
     // EXTERNAL FUNCTIONS
@@ -76,25 +78,10 @@ mod ArgentAccount {
         guardian_backup::write(new_guardian_backup);
     // AccountCreated(starknet::get_contract_address(), new_signer, new_guardian, new_guardian_backup); Can't call yet
     }
-    #[view]
-    fn get_signer() -> felt {
-        signer::read()
-    }
-
-    #[view]
-    fn get_guardian() -> felt {
-        guardian::read()
-    }
-
-    #[view]
-    fn get_guardian_backup() -> felt {
-        guardian_backup::read()
-    }
 
     #[external]
     fn change_signer(new_signer: felt) {
         assert_only_self();
-        // check that the target signer is not zero
         assert(new_signer != 0, 'argent/null-signer');
         // update the signer
         signer::write(new_signer);
@@ -109,6 +96,14 @@ mod ArgentAccount {
         );
         // update the guardian
         guardian::write(new_guardian);
+    }
+
+    #[external]
+    fn change_guardian_backup(new_guardian_backup: felt) {
+        assert_only_self();
+        assert(guardian::read() != 0, 'argent/guardian-required');
+
+        guardian_backup::write(new_guardian_backup);
     }
 
     // TODO isn't possible to merge trigger_escape_X and pass an argument ==> When enum?
@@ -169,19 +164,10 @@ mod ArgentAccount {
     #[external]
     fn cancel_escape() {
         assert_only_self();
-
         assert(escape::read().active_at != 0_u64, 'argent/no-active-escape');
 
         clear_escape();
     // escape_canceled();
-    }
-
-    #[external]
-    fn change_guardian_backup(new_guardian_backup: felt) {
-        assert_only_self();
-        assert(guardian::read() != 0, 'argent/guardian-required');
-
-        guardian_backup::write(new_guardian_backup);
     }
 
     /////////////////////
@@ -189,9 +175,25 @@ mod ArgentAccount {
     /////////////////////
 
     #[view]
+    fn get_signer() -> felt {
+        signer::read()
+    }
+
+    #[view]
+    fn get_guardian() -> felt {
+        guardian::read()
+    }
+
+    #[view]
+    fn get_guardian_backup() -> felt {
+        guardian_backup::read()
+    }
+
+    #[view]
     fn get_escape() -> Escape {
         escape::read()
     }
+
     // ERC165
     #[view]
     fn supports_interface(interface_id: felt) -> bool {

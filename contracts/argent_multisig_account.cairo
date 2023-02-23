@@ -98,6 +98,11 @@ mod ArgentMultisigAccount {
         assert(threshold <= signers_len, 'argent/bad threshold');
     }
 
+    fn assert_initialized() {
+        let threshold = storage_threshold::read();
+        assert(threshold != 0, 'argent/not initialized');
+    }
+
     mod signers_storage {
         use array::ArrayTrait;
 
@@ -140,6 +145,48 @@ mod ArgentMultisigAccount {
             }
         }
 
+        fn remove_signers(mut signers_to_remove: Array::<felt>, last_signer: felt) {
+            match get_gas_all(get_builtin_costs()) {
+                Option::Some(_) => {},
+                Option::None(_) => {
+                    let mut err_data = array_new();
+                    array_append(ref err_data, 'Out of gas');
+                    panic(err_data)
+                },
+            }
+
+            match signers_to_remove.pop_front() {
+                Option::Some(signer) => {
+                    let current_signer_status = is_signer_using_last(signer, last_signer);
+                    assert(current_signer_status, 'argent/ not a signer');
+                    // Signer pointer set to 0, Previous pointer set to the next in the list
+
+                    let (previous_signer) = find_signer_before(signer);
+                    let (next_signer) = signer_list.read(signer);
+
+                    signer_list.write(previous_signer, next_signer);
+
+                    if (next_signer == 0) {
+                        // Removing the last item
+                        remove_signers(
+                            signers_to_remove_len = signers_to_remove_len - 1,
+                            signers_to_remove = signers_to_remove + 1,
+                            last_signer = previous_signer
+                        );
+                    } else {
+                        // Removing an item in the middle
+                        signer_list.write(signer, 0);
+                        remove_signers(
+                            signers_to_remove_len = signers_to_remove_len - 1,
+                            signers_to_remove = signers_to_remove + 1,
+                            last_signer = last_signer
+                        );
+                    }
+                },
+                Option::None(()) => (),
+            }
+        }
+
         // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
         // Otherwise cost increases with the list size
         fn is_signer(signer: felt) -> bool {
@@ -176,6 +223,23 @@ mod ArgentMultisigAccount {
                 return from_signer;
             }
             return find_last_signer_recursive(next_signer);
+        }
+
+        // Returns the signer before `signer_after` or 0 if the signer is the first one. 
+        // Reverts if `signer_after` is not found
+        // Cost increases with the list size
+        fn find_signer_before(signer_after: felt) -> felt {
+            return find_signer_before_recursive(signer_after, 0);
+        }
+
+        fn find_signer_before_recursive(signer_after: felt, from_signer: felt) -> felt {
+            let next_signer = super::signer_list::read(from_signer);
+            assert(next_signer != 0, 'argent/ unable to find signer before');
+
+            if (next_signer == signer_after) {
+                return from_signer;
+            }
+            return find_signer_before_recursive(signer_after, next_signer);
         }
 
         // Returns the number of signers. Cost increases with the list size

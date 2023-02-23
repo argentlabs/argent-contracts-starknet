@@ -22,7 +22,7 @@ mod ArgentAccount {
     #[derive(Copy)]
     struct Escape {
         active_at: felt, // TODO Should we change this to u64?
-        escape_type: felt, // TODO Change to enum?
+        escape_type: felt, // TODO Change to enum? ==> Undoable ATM
     }
 
     impl StorageAccessEscape of StorageAccess::<Escape> {
@@ -206,7 +206,7 @@ mod ArgentAccount {
         assert_guardian_set();
         assert_can_escape_for_type(ESCAPE_TYPE_SIGNER);
         assert(!new_signer.is_zero(), 'argent/new-signer-zero');
-        // Shouldn't we check new_signer != guardian?
+        // TODO Shouldn't we check new_signer != guardian?
         clear_escape();
         signer::write(new_signer);
     // signer_escaped(new_signer);
@@ -218,7 +218,7 @@ mod ArgentAccount {
         assert_only_self();
         assert_guardian_set();
         assert_can_escape_for_type(ESCAPE_TYPE_GUARDIAN);
-        assert(!new_guardian.is_zero(), 'argent/new-signer-zero');
+        assert(!new_guardian.is_zero(), 'argent/new-guardian-zero');
 
         clear_escape();
         guardian::write(new_guardian);

@@ -181,6 +181,11 @@ mod ArgentMultisigAccount {
         return next_lenght + 1_u32;
     }
 
+    #[view]
+    fn get_signers() -> Array::<felt> {
+        return signers_storage::get_signers();
+    }
+
     // Asserts that:  0 < threshold <= signers_len
     fn assert_valid_threshold_and_signers_count(threshold: u32, signers_len: u32) {
         assert(threshold != 0_u32, 'argent/invalid threshold');
@@ -188,4 +193,31 @@ mod ArgentMultisigAccount {
         assert(signers_len != 0_u32, 'argent/invalid signers len');
         assert(threshold <= signers_len, 'argent/bad threshold');
     }
+
+    mod signers_storage  {
+        use array::ArrayTrait;
+
+        fn get_signers() -> Array::<felt> {
+            return get_signers_from(super::signer_list::read(0), array_new());
+        }
+
+        fn get_signers_from(from_signer: felt, mut previous_signers: Array::<felt>) -> Array::<felt> {
+            match get_gas_all(get_builtin_costs()) {
+                Option::Some(_) => {},
+                Option::None(_) => {
+                    let mut err_data = array_new();
+                    array_append(ref err_data, 'Out of gas');
+                    panic(err_data)
+                }
+            }
+            if (from_signer == 0) {
+                // empty list
+                return previous_signers;
+            }
+            previous_signers.append(from_signer);
+            return get_signers_from(super::signer_list::read(from_signer), previous_signers);
+        }
+    }
 }
+
+

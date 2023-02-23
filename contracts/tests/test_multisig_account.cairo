@@ -7,6 +7,14 @@ const signer_pubkey_1: felt = 0x759ca09377679ecd535a81e83039658bf40959283187c654
 const signer_pubkey_2: felt = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;
 
 
+
+#[test]
+#[available_gas(20000000)]
+fn valid_before_init() {
+    assert(ArgentMultisigAccount::get_signers().is_empty(), 'invalid signers length');
+}
+
+
 #[test]
 #[available_gas(20000000)]
 fn valid_initiliaze_one_signer() {
@@ -22,6 +30,12 @@ fn valid_initiliaze_one_signer() {
 
     // test if is signer correctly returns true
     assert(ArgentMultisigAccount::is_signer(signer_pubkey_1), 'is signer cant find signer');
+
+    // test signers list
+    let signers = ArgentMultisigAccount::get_signers();
+    assert(signers.len() == 1_usize, 'invalid signers length');
+    assert(*signers.at(0_usize) == signer_pubkey_1, 'invalid signers result');
+
 }
 
 
@@ -44,6 +58,13 @@ fn valid_initiliaze_two_signers() {
     // test if is signer correctly returns true
     assert(ArgentMultisigAccount::is_signer(signer_pubkey_1), 'is signer cant find signer 1');
     assert(ArgentMultisigAccount::is_signer(signer_pubkey_2), 'is signer cant find signer 2');
+
+    // test signers list
+    let signers = ArgentMultisigAccount::get_signers();
+    assert(signers.len() == 1_usize, 'invalid signers length');
+    assert(*signers.at(0_usize) == signer_pubkey_1, 'invalid signers result');
+    assert(*signers.at(1_usize) == signer_pubkey_2, 'invalid signers result');
+
 }
 
 #[test]

@@ -224,7 +224,6 @@ mod ArgentMultisigAccount {
                 Option::Some(signer) => {
                     let current_signer_status = is_signer_using_last(signer, last_signer);
                     assert(current_signer_status, 'argent/not a signer');
-                    // Signer pointer set to 0, Previous pointer set to the next in the list
 
                     let previous_signer = find_signer_before(signer);
                     let next_signer = super::signer_list::read(signer);
@@ -237,7 +236,7 @@ mod ArgentMultisigAccount {
                     } else {
                         // Removing an item in the middle
                         super::signer_list::write(signer, 0);
-                        remove_signers(signers_to_remove, previous_signer);
+                        remove_signers(signers_to_remove, last_signer);
                     }
                 },
                 Option::None(()) => (),

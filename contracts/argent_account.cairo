@@ -8,21 +8,23 @@ mod ArgentAccount {
     use option::OptionTrait;
     use starknet::StorageAccess;
     use starknet::get_block_timestamp;
+    use traits::TryInto;
     use traits::Into;
+    use integer::FeltTryIntoU64;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
 
-    const ESCAPE_SECURITY_PERIOD: felt = 604800; // 7 * 24 * 60 * 60;  // 7 days
+    const ESCAPE_SECURITY_PERIOD: u64 = 604800_u64; // 7 * 24 * 60 * 60;  // 7 days
 
     const ESCAPE_TYPE_GUARDIAN: felt = 1;
     const ESCAPE_TYPE_SIGNER: felt = 2;
 
     #[derive(Copy)]
     struct Escape {
-        active_at: felt, // TODO Should we change this to u64?
-        escape_type: felt, // TODO Change to enum? ==> Undoable ATM
+        active_at: u64,
+        escape_type: felt, // TODO Change to enum? ==> Can't do ATM
     }
 
     impl StorageAccessEscape of StorageAccess::<Escape> {
@@ -31,7 +33,9 @@ mod ArgentAccount {
         ) -> starknet::SyscallResult::<Escape> {
             Result::Ok(
                 Escape {
-                    active_at: StorageAccess::read(address_domain, base)?,
+                    active_at: (StorageAccess::<felt>::read(
+                        address_domain, base
+                    )?).try_into().unwrap(),
                     escape_type: starknet::storage_read_syscall(
                         address_domain, starknet::storage_address_from_base_and_offset(base, 1_u8)
                     )?,
@@ -41,7 +45,7 @@ mod ArgentAccount {
         fn write(
             address_domain: felt, base: starknet::StorageBaseAddress, value: Escape
         ) -> starknet::SyscallResult::<()> {
-            StorageAccess::write(address_domain, base, value.active_at)?;
+            StorageAccess::write(address_domain, base, value.active_at.into())?;
             starknet::storage_write_syscall(
                 address_domain,
                 starknet::storage_address_from_base_and_offset(base, 1_u8),
@@ -52,13 +56,13 @@ mod ArgentAccount {
 
     impl EscapeSerde of Serde::<Escape> {
         fn serialize(ref serialized: Array::<felt>, input: Escape) {
-            Serde::serialize(ref serialized, input.active_at);
+            Serde::<u64>::serialize(ref serialized, input.active_at);
             Serde::serialize(ref serialized, input.escape_type);
         }
         fn deserialize(ref serialized: Array::<felt>) -> Option::<Escape> {
             Option::Some(
                 Escape {
-                    active_at: Serde::deserialize(ref serialized)?,
+                    active_at: Serde::<u64>::deserialize(ref serialized)?,
                     escape_type: Serde::deserialize(ref serialized)?,
                 }
             )
@@ -166,7 +170,7 @@ mod ArgentAccount {
 
         // no escape if there is a guardian escape triggered by the signer in progress
         let current_escape = escape::read();
-        assert(current_escape.active_at.is_zero(), 'argent/cannot-override-escape');
+        assert(current_escape.active_at.into().is_zero(), 'argent/cannot-override-escape');
         // TODO Doubt correct
         assert(current_escape.escape_type != ESCAPE_TYPE_SIGNER, 'argent/cannot-override-escape');
 
@@ -174,8 +178,7 @@ mod ArgentAccount {
         let block_timestamp = get_block_timestamp();
         escape::write(
             Escape {
-                active_at: block_timestamp.into() + ESCAPE_SECURITY_PERIOD,
-                escape_type: ESCAPE_TYPE_SIGNER
+                active_at: block_timestamp + ESCAPE_SECURITY_PERIOD, escape_type: ESCAPE_TYPE_SIGNER
             }
         );
     // escape_signer_triggered.emit(block_timestamp + ESCAPE_SECURITY_PERIOD);
@@ -193,7 +196,7 @@ mod ArgentAccount {
         let block_timestamp = get_block_timestamp();
         escape::write(
             Escape {
-                active_at: block_timestamp.into() + ESCAPE_SECURITY_PERIOD,
+                active_at: block_timestamp + ESCAPE_SECURITY_PERIOD,
                 escape_type: ESCAPE_TYPE_GUARDIAN
             }
         );
@@ -205,7 +208,8 @@ mod ArgentAccount {
         assert_only_self();
         assert_guardian_set();
         assert_can_escape_for_type(ESCAPE_TYPE_SIGNER);
-        assert(!new_signer.is_zero(), 'argent/new-signer-zero');
+        // TODO != 0 should be replaced by is_non_zero() when they merge it
+        assert(new_signer != 0, 'argent/new-signer-zero');
         // TODO Shouldn't we check new_signer != guardian?
         clear_escape();
         signer::write(new_signer);
@@ -218,7 +222,7 @@ mod ArgentAccount {
         assert_only_self();
         assert_guardian_set();
         assert_can_escape_for_type(ESCAPE_TYPE_GUARDIAN);
-        assert(!new_guardian.is_zero(), 'argent/new-guardian-zero');
+        assert(new_guardian != 0, 'argent/new-guardian-zero');
 
         clear_escape();
         guardian::write(new_guardian);
@@ -231,9 +235,9 @@ mod ArgentAccount {
     fn cancel_escape() {
         assert_only_self();
         // validate there is an active escape
-        assert(escape::read().active_at != 0, 'argent/no-active-escape');
+        assert(escape::read().active_at != 0_u64, 'argent/no-active-escape');
         // clear escape
-        escape::write(Escape { active_at: 0, escape_type: 0 });
+        clear_escape();
     // escape_canceled();
     }
 
@@ -298,15 +302,15 @@ mod ArgentAccount {
 
     #[inline(always)]
     fn clear_escape() {
-        escape::write(Escape { active_at: 0, escape_type: 0 });
+        escape::write(Escape { active_at: 0_u64, escape_type: 0 });
     }
 
     fn assert_can_escape_for_type(escape_type: felt) {
         let current_escape = escape::read();
         let block_timestamp = get_block_timestamp();
 
-        assert(!current_escape.active_at.is_zero(), 'argent/not-escaping');
-        assert(current_escape.active_at <= block_timestamp.into(), 'argent/escape-not-active');
+        assert(current_escape.active_at != 0_u64, 'argent/not-escaping');
+        assert(current_escape.active_at <= block_timestamp, 'argent/escape-not-active');
         assert(current_escape.escape_type == escape_type, 'argent/escape-type-invalid');
     }
 

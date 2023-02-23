@@ -1,20 +1,30 @@
-use contracts::ArgentAccount;
-use contracts::ArgentAccount::Escape;
 use zeroable::Zeroable;
 use starknet::contract_address_const;
-use traits::Into;
 use starknet_testing::set_block_timestamp;
 use starknet_testing::set_caller_address;
 
+use contracts::ArgentAccount;
+use contracts::ArgentAccount::Escape;
 use contracts::tests::initialize_account;
 use contracts::tests::initialize_account_without_guardian;
 
 const DEFAULT_TIMESTAMP: u64 = 42_u64;
-const ESCAPE_SECURITY_PERIOD: felt = 604800; // 7 * 24 * 60 * 60;  // 7 days
+const ESCAPE_SECURITY_PERIOD: u64 = 604800_u64; // 7 * 24 * 60 * 60;  // 7 days
 const ESCAPE_TYPE_GUARDIAN: felt = 1;
 const ESCAPE_TYPE_SIGNER: felt = 2;
 
 // trigger_escape_signer
+//TODO Ongoing
+#[test]
+#[available_gas(2000000)]
+fn trigger_escape_signer() {
+    initialize_account();
+    set_block_timestamp(DEFAULT_TIMESTAMP);
+    ArgentAccount::trigger_escape_signer();
+    let escape = ArgentAccount::get_escape();
+    assert(escape.active_at == DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD, 'active_at invalid');
+    assert(escape.escape_type == ESCAPE_TYPE_SIGNER, 'escape_type invalid');
+}
 
 // trigger_escape_guardian
 
@@ -194,7 +204,7 @@ fn cancel_escape() {
     initialize_account();
     ArgentAccount::trigger_escape_signer();
     let escape = ArgentAccount::get_escape();
-    assert(escape.active_at != 0, 'active_at != zero');
+    assert(escape.active_at != 0_u64, 'active_at != zero');
     assert(escape.escape_type != 0, 'escape_type != zero');
     ArgentAccount::cancel_escape();
     assert_escape_cleared();
@@ -227,9 +237,7 @@ fn get_escape() {
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_signer();
     let escape = ArgentAccount::get_escape();
-    assert(
-        escape.active_at == DEFAULT_TIMESTAMP.into() + ESCAPE_SECURITY_PERIOD, '=DEFAULT+SEC_PERIOD'
-    );
+    assert(escape.active_at == DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD, '=DEFAULT+SEC_PERIOD');
     assert(escape.escape_type == ESCAPE_TYPE_SIGNER, '=ESCAPE_TYPE_GUARDIAN');
 }
 
@@ -258,12 +266,13 @@ fn get_escape_signer_guardian() {
 fn get_escape_unitialized() {
     initialize_account();
     let escape = ArgentAccount::get_escape();
-    assert(escape.active_at.is_zero(), 'active_at is zero');
+    // TODO Back to is_zero when the trait is possible on u64
+    assert(escape.active_at == 0_u64, 'active_at is zero');
     assert(escape.escape_type.is_zero(), 'escape_type is zero');
 }
 
 fn assert_escape_cleared() {
     let escape = ArgentAccount::get_escape();
-    assert(escape.active_at.is_zero(), 'active_at == 0');
+    assert(escape.active_at == 0_u64, 'active_at == 0');
     assert(escape.escape_type.is_zero(), 'escape_type == 0');
 }

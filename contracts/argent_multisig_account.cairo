@@ -9,16 +9,25 @@ mod ArgentMultisigAccount {
 
     // for some reason this is not part of the framework
     impl StorageAccessU32 of starknet::StorageAccess::<u32> {
-        fn read(address_domain: felt, base: starknet::StorageBaseAddress) -> starknet::SyscallResult::<u32> {
+        fn read(
+            address_domain: felt, base: starknet::StorageBaseAddress
+        ) -> starknet::SyscallResult::<u32> {
             Result::Ok(
-                starknet::StorageAccess::<felt>::read(address_domain, base)?.try_into().expect('StorageAccessU32 - non u32')
+                starknet::StorageAccess::<felt>::read(
+                    address_domain, base
+                )?.try_into().expect('StorageAccessU32 - non u32')
             )
         }
         #[inline(always)]
-        fn write(address_domain: felt, base: starknet::StorageBaseAddress, value: u32) -> starknet::SyscallResult::<()> {
+        fn write(
+            address_domain: felt, base: starknet::StorageBaseAddress, value: u32
+        ) -> starknet::SyscallResult::<()> {
             starknet::StorageAccess::<felt>::write(address_domain, base, value.into())
         }
     }
+    const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
+    const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
+    const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
 
     struct Storage {
         threshold: u32,
@@ -45,7 +54,7 @@ mod ArgentMultisigAccount {
 
         add_signers(signers, 0);
         threshold::write(threshold);
-        // ConfigurationUpdated(); Can't call yet
+    // ConfigurationUpdated(); Can't call yet
     }
 
 
@@ -57,8 +66,7 @@ mod ArgentMultisigAccount {
 
         assert_valid_threshold_and_signers_count(new_threshold, signers_len);
         threshold::write(new_threshold);
-
-        // ConfigurationUpdated(); // TODO
+    // ConfigurationUpdated(); // TODO
     }
 
 
@@ -68,11 +76,10 @@ mod ArgentMultisigAccount {
     }
 
     // ERC165
-    // #[view]
-    // fn supports_interface(interface_id: felt) -> bool {
-    //     interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
-    // }
-
+    #[view]
+    fn supports_interface(interface_id: felt) -> bool {
+        interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
+    }
 
     fn is_signer_using_last(signer: felt, last_signer: felt) -> bool {
         if (signer == 0) {
@@ -135,6 +142,15 @@ mod ArgentMultisigAccount {
     }
 
     fn find_last_signer_recursive(from_signer: felt) -> felt {
+        match get_gas_all(get_builtin_costs()) {
+            Option::Some(_) => {},
+            Option::None(_) => {
+                let mut err_data = array_new();
+                array_append(ref err_data, 'Out of gas');
+                panic(err_data)
+            },
+        }
+
         let next_signer = signer_list::read(from_signer);
         if (next_signer == 0) {
             return from_signer;

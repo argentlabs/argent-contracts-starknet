@@ -2,15 +2,12 @@
 mod ArgentAccount {
     use array::ArrayTrait;
     use contracts::asserts::assert_only_self;
-    use serde::Serde;
+    use contracts::StorageAccessEscape;
+    use contracts::EscapeSerde;
     use zeroable::Zeroable;
     use ecdsa::check_ecdsa_signature;
-    use option::OptionTrait;
-    use starknet::StorageAccess;
     use starknet::get_block_timestamp;
-    use traits::TryInto;
     use traits::Into;
-    use integer::FeltTryIntoU64;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
@@ -21,58 +18,15 @@ mod ArgentAccount {
     const ESCAPE_TYPE_GUARDIAN: felt = 1;
     const ESCAPE_TYPE_SIGNER: felt = 2;
 
+    /////////////////////
+    // STORAGE
+    /////////////////////
+
     #[derive(Copy)]
     struct Escape {
         active_at: u64,
         escape_type: felt, // TODO Change to enum? ==> Can't do ATM
     }
-
-    impl StorageAccessEscape of StorageAccess::<Escape> {
-        fn read(
-            address_domain: felt, base: starknet::StorageBaseAddress
-        ) -> starknet::SyscallResult::<Escape> {
-            Result::Ok(
-                Escape {
-                    active_at: (StorageAccess::<felt>::read(
-                        address_domain, base
-                    )?).try_into().unwrap(),
-                    escape_type: starknet::storage_read_syscall(
-                        address_domain, starknet::storage_address_from_base_and_offset(base, 1_u8)
-                    )?,
-                }
-            )
-        }
-        fn write(
-            address_domain: felt, base: starknet::StorageBaseAddress, value: Escape
-        ) -> starknet::SyscallResult::<()> {
-            StorageAccess::write(address_domain, base, value.active_at.into())?;
-            starknet::storage_write_syscall(
-                address_domain,
-                starknet::storage_address_from_base_and_offset(base, 1_u8),
-                value.escape_type
-            )
-        }
-    }
-
-    impl EscapeSerde of Serde::<Escape> {
-        fn serialize(ref serialized: Array::<felt>, input: Escape) {
-            Serde::<u64>::serialize(ref serialized, input.active_at);
-            Serde::serialize(ref serialized, input.escape_type);
-        }
-        fn deserialize(ref serialized: Array::<felt>) -> Option::<Escape> {
-            Option::Some(
-                Escape {
-                    active_at: Serde::<u64>::deserialize(ref serialized)?,
-                    escape_type: Serde::deserialize(ref serialized)?,
-                }
-            )
-        }
-    }
-
-
-    /////////////////////
-    // STORAGE
-    /////////////////////
 
     struct Storage {
         signer: felt,
@@ -157,7 +111,7 @@ mod ArgentAccount {
         guardian::write(new_guardian);
     }
 
-    // TODO isn't possible to merge trigger_escape_X and escape_X? 
+    // TODO isn't possible to merge trigger_escape_X and pass an argument ==> When enum?
     #[external]
     fn trigger_escape_signer() {
         assert_only_self();

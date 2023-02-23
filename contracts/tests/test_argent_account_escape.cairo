@@ -34,7 +34,6 @@ fn trigger_escape_signer_only_self() {
     ArgentAccount::trigger_escape_signer();
 }
 
-
 #[test]
 #[available_gas(2000000)]
 #[should_panic(expected = ('argent/guardian-required', ))]
@@ -73,7 +72,6 @@ fn trigger_escape_guardian_only_self() {
     set_caller_address(contract_address_const::<42>());
     ArgentAccount::trigger_escape_guardian();
 }
-
 
 #[test]
 #[available_gas(2000000)]
@@ -335,3 +333,4 @@ fn assert_escape_cleared() {
     assert(escape.active_at == 0_u64, 'active_at == 0');
     assert(escape.escape_type.is_zero(), 'escape_type == 0');
 }
+

@@ -14,7 +14,7 @@ const ESCAPE_TYPE_GUARDIAN: felt = 1;
 const ESCAPE_TYPE_SIGNER: felt = 2;
 
 // trigger_escape_signer
-//TODO Ongoing
+
 #[test]
 #[available_gas(2000000)]
 fn trigger_escape_signer() {
@@ -26,17 +26,82 @@ fn trigger_escape_signer() {
     assert(escape.escape_type == ESCAPE_TYPE_SIGNER, 'escape_type invalid');
 }
 
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected = ('argent/only-self', ))]
+fn trigger_escape_signer_only_self() {
+    initialize_account();
+    set_caller_address(contract_address_const::<42>());
+    ArgentAccount::trigger_escape_signer();
+}
+
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected = ('argent/guardian-required', ))]
+fn trigger_escape_signer_no_guardian_set() {
+    initialize_account_without_guardian();
+    ArgentAccount::trigger_escape_signer();
+}
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected = ('argent/cannot-override-escape', ))]
+fn trigger_escape_signer_twice() {
+    initialize_account();
+    ArgentAccount::trigger_escape_signer();
+    ArgentAccount::trigger_escape_signer();
+}
+
 // trigger_escape_guardian
 
+#[test]
+#[available_gas(2000000)]
+fn trigger_escape_guardian() {
+    initialize_account();
+    set_block_timestamp(DEFAULT_TIMESTAMP);
+    ArgentAccount::trigger_escape_guardian();
+    let escape = ArgentAccount::get_escape();
+    assert(escape.active_at == DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD, 'active_at invalid');
+    assert(escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'escape_type invalid');
+}
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected = ('argent/only-self', ))]
+fn trigger_escape_guardian_only_self() {
+    initialize_account();
+    set_caller_address(contract_address_const::<42>());
+    ArgentAccount::trigger_escape_guardian();
+}
+
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected = ('argent/guardian-required', ))]
+fn trigger_escape_guardian_no_guardian_set() {
+    initialize_account_without_guardian();
+    ArgentAccount::trigger_escape_guardian();
+}
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected = ('argent/cannot-override-escape', ))]
+fn trigger_escape_guardian_twice() {
+    initialize_account();
+    ArgentAccount::trigger_escape_guardian();
+    ArgentAccount::trigger_escape_guardian();
+}
+
 // escape_signer
-// TODO Every branch tested
+
 #[test]
 #[available_gas(2000000)]
 fn escape_signer() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_signer();
-    set_block_timestamp(DEFAULT_TIMESTAMP + 604800_u64);
+    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD);
     ArgentAccount::escape_signer(42);
     assert(ArgentAccount::get_signer() == 42, 'Signer == 42');
     assert_escape_cleared();
@@ -76,7 +141,7 @@ fn escape_signer_no_guardian_set() {
 #[should_panic(expected = ('argent/not-escaping', ))]
 fn escape_signer_not_escaping() {
     initialize_account();
-    set_block_timestamp(604800_u64);
+    set_block_timestamp(ESCAPE_SECURITY_PERIOD);
     ArgentAccount::escape_signer(42);
 }
 
@@ -97,7 +162,7 @@ fn escape_signer_before_timeout() {
 fn escape_signer_wrong_escape_type() {
     initialize_account();
     ArgentAccount::trigger_escape_guardian();
-    set_block_timestamp(604800_u64);
+    set_block_timestamp(ESCAPE_SECURITY_PERIOD);
     ArgentAccount::escape_signer(42);
 }
 
@@ -107,12 +172,11 @@ fn escape_signer_wrong_escape_type() {
 fn escape_signer_new_signer_zero() {
     initialize_account();
     ArgentAccount::trigger_escape_signer();
-    set_block_timestamp(604800_u64);
+    set_block_timestamp(ESCAPE_SECURITY_PERIOD);
     ArgentAccount::escape_signer(0);
 }
 
 // escape_guardian
-// TODO Every branch tested
 
 #[test]
 #[available_gas(2000000)]
@@ -120,7 +184,7 @@ fn escape_guardian() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_guardian();
-    set_block_timestamp(DEFAULT_TIMESTAMP + 604800_u64);
+    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD);
     ArgentAccount::escape_guardian(42);
     assert(ArgentAccount::get_guardian() == 42, 'Guardian == 42');
     assert_escape_cleared();
@@ -160,7 +224,7 @@ fn escape_guardian_no_guardian_set() {
 #[should_panic(expected = ('argent/not-escaping', ))]
 fn escape_guardian_not_escaping() {
     initialize_account();
-    set_block_timestamp(604800_u64);
+    set_block_timestamp(ESCAPE_SECURITY_PERIOD);
     ArgentAccount::escape_guardian(42);
 }
 
@@ -181,7 +245,7 @@ fn escape_guardian_before_timeout() {
 fn escape_guardian_wrong_escape_type() {
     initialize_account();
     ArgentAccount::trigger_escape_signer();
-    set_block_timestamp(604800_u64);
+    set_block_timestamp(ESCAPE_SECURITY_PERIOD);
     ArgentAccount::escape_guardian(42);
 }
 
@@ -191,12 +255,11 @@ fn escape_guardian_wrong_escape_type() {
 fn escape_guardian_new_guardian_zero() {
     initialize_account();
     ArgentAccount::trigger_escape_guardian();
-    set_block_timestamp(604800_u64);
+    set_block_timestamp(ESCAPE_SECURITY_PERIOD);
     ArgentAccount::escape_guardian(0);
 }
 
 // cancel_escape
-// TODO Every branch tested
 
 #[test]
 #[available_gas(2000000)]
@@ -228,7 +291,6 @@ fn cancel_escape_no_escape_set() {
 }
 
 // get_escape 
-// TODO Every branch tested
 
 #[test]
 #[available_gas(2000000)]
@@ -265,14 +327,12 @@ fn get_escape_signer_guardian() {
 #[available_gas(2000000)]
 fn get_escape_unitialized() {
     initialize_account();
-    let escape = ArgentAccount::get_escape();
-    // TODO Back to is_zero when the trait is possible on u64
-    assert(escape.active_at == 0_u64, 'active_at is zero');
-    assert(escape.escape_type.is_zero(), 'escape_type is zero');
+    assert_escape_cleared();
 }
 
 fn assert_escape_cleared() {
     let escape = ArgentAccount::get_escape();
+    // TODO Back to is_zero when the trait is possible on u64
     assert(escape.active_at == 0_u64, 'active_at == 0');
     assert(escape.escape_type.is_zero(), 'escape_type == 0');
 }

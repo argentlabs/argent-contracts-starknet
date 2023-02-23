@@ -163,16 +163,9 @@ mod ArgentAccount {
 
     #[external]
     fn trigger_escape_signer() {
-        // only called via execute
         assert_only_self();
-        // no escape when the guardian is not set
         assert_guardian_set();
-
-        // no escape if there is a guardian escape triggered by the signer in progress
-        let current_escape = escape::read();
-        assert(current_escape.active_at.into().is_zero(), 'argent/cannot-override-escape');
-        // TODO Doubt correct
-        assert(current_escape.escape_type != ESCAPE_TYPE_SIGNER, 'argent/cannot-override-escape');
+        assert_no_escape_ongoing();
 
         // store new escape
         let block_timestamp = get_block_timestamp();
@@ -186,12 +179,11 @@ mod ArgentAccount {
 
     #[external]
     fn trigger_escape_guardian() {
-        // only called via execute
         assert_only_self();
-        // no escape when the guardian is not set
         assert_guardian_set();
 
-        // TODO Should we check for overrides escape like in trigger_escape_signer
+        assert_no_escape_ongoing();
+
         // store new escape
         let block_timestamp = get_block_timestamp();
         escape::write(
@@ -316,5 +308,10 @@ mod ArgentAccount {
 
     fn assert_guardian_set() {
         assert(!(guardian::read()).is_zero(), 'argent/guardian-required');
+    }
+
+    fn assert_no_escape_ongoing() {
+        let current_escape = escape::read();
+        assert(current_escape.active_at.into().is_zero(), 'argent/cannot-override-escape');
     }
 }

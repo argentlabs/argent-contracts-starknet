@@ -9,13 +9,19 @@ mod ArgentMultisigAccount {
 
     // for some reason this is not part of the framework
     impl StorageAccessU32 of starknet::StorageAccess::<u32> {
-        fn read(address_domain: felt, base: starknet::StorageBaseAddress) -> starknet::SyscallResult::<u32> {
+        fn read(
+            address_domain: felt, base: starknet::StorageBaseAddress
+        ) -> starknet::SyscallResult::<u32> {
             Result::Ok(
-                starknet::StorageAccess::<felt>::read(address_domain, base)?.try_into().expect('StorageAccessU32 - non u32')
+                starknet::StorageAccess::<felt>::read(
+                    address_domain, base
+                )?.try_into().expect('StorageAccessU32 - non u32')
             )
         }
         #[inline(always)]
-        fn write(address_domain: felt, base: starknet::StorageBaseAddress, value: u32) -> starknet::SyscallResult::<()> {
+        fn write(
+            address_domain: felt, base: starknet::StorageBaseAddress, value: u32
+        ) -> starknet::SyscallResult::<()> {
             starknet::StorageAccess::<felt>::write(address_domain, base, value.into())
         }
     }
@@ -82,8 +88,7 @@ mod ArgentMultisigAccount {
 
         assert_valid_threshold_and_signers_count(new_threshold, signers_len);
         threshold::write(new_threshold);
-
-        // ConfigurationUpdated(); // TODO
+    // ConfigurationUpdated(); // TODO
     }
 
     // @dev Adds new signers to the account, additionally sets a new threshold
@@ -104,7 +109,6 @@ mod ArgentMultisigAccount {
     }
 
 
-    
     // @dev Removes account signers, additionally sets a new threshold
     // @param new_threshold New threshold
     // @param signers_to_remove Should contain only current signers, otherwise it will revert
@@ -297,7 +301,7 @@ mod ArgentMultisigAccount {
                     panic(err_data)
                 },
             }
-            
+
             let next_signer = super::signer_list::read(from_signer);
             assert(next_signer != 0, 'argent/cant find signer before');
 

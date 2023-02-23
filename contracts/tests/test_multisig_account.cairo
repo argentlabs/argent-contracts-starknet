@@ -123,7 +123,7 @@ fn remove_signers_start() {
     signers_array.append(signer_pubkey_2);
     signers_array.append(signer_pubkey_3);
     ArgentMultisigAccount::initialize(threshold, signers_array);
-    
+
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
     signer_to_remove.append(signer_pubkey_1);
@@ -148,7 +148,7 @@ fn remove_signers_middle() {
     signers_array.append(signer_pubkey_2);
     signers_array.append(signer_pubkey_3);
     ArgentMultisigAccount::initialize(threshold, signers_array);
-    
+
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
     signer_to_remove.append(signer_pubkey_2);
@@ -174,7 +174,7 @@ fn remove_signers_end() {
     signers_array.append(signer_pubkey_2);
     signers_array.append(signer_pubkey_3);
     ArgentMultisigAccount::initialize(threshold, signers_array);
-    
+
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
     signer_to_remove.append(signer_pubkey_3);
@@ -199,7 +199,7 @@ fn remove_two_signers() {
     signers_array.append(signer_pubkey_2);
     signers_array.append(signer_pubkey_3);
     ArgentMultisigAccount::initialize(threshold, signers_array);
-    
+
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
     signer_to_remove.append(signer_pubkey_1);
@@ -245,7 +245,7 @@ fn remove_signers_invalid_threshold() {
     signers_array.append(signer_pubkey_2);
     signers_array.append(signer_pubkey_3);
     ArgentMultisigAccount::initialize(threshold, signers_array);
-    
+
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
     signer_to_remove.append(signer_pubkey_1);

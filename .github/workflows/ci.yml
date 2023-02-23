@@ -8,20 +8,20 @@ on:
   pull_request: 
     branches: 
       - develop
-      - main[develop, main]
+      - main
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out
+      - name: Step 1 - Check out main branch
         uses: actions/checkout@v3
-      - name: Install Rust
+      - name: Step 2 - Install Rust
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly-2022-11-03
-      - name: Set up cache
+          toolchain: nightly
+      - name: Step 3 - Set up cache
         uses: actions/cache@v3
         with:
           path: |
@@ -30,10 +30,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
+            cairo/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install cairo
+          restore-keys: ${{ runner.os }}-cargo-
+      - name: Step 4 - Install/Update cairo
         run: make install-cairo
-      - name: Run all tests
+      - name: Step 5 - Run all tests
         run: make test
-      - name: Check formatting
+      - name: Step 6 - Check formatting
         run: make check-format

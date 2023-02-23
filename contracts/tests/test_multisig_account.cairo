@@ -15,8 +15,9 @@ fn valid_initiliaze_one_signer() {
     signers_array.append(signer_pubkey_1);
     ArgentMultisigAccount::initialize(threshold, signers_array);
 
-    // test if signers is in list
     assert(ArgentMultisigAccount::threshold::read() == threshold, 'new threshold not set');
+
+    // test if signers is in list
     assert(ArgentMultisigAccount::signer_list::read(0) == signer_pubkey_1, 'signer 1 not added');
 
     // test if is signer correctly returns true
@@ -32,8 +33,9 @@ fn valid_initiliaze_two_signers() {
     signers_array.append(signer_pubkey_2);
     ArgentMultisigAccount::initialize(threshold, signers_array);
 
-    // test if signers is in list
     assert(ArgentMultisigAccount::threshold::read() == threshold, 'new threshold not set');
+
+    // test if signers is in list
     assert(ArgentMultisigAccount::signer_list::read(0) == signer_pubkey_1, 'signer 1 not added');
     assert(
         ArgentMultisigAccount::signer_list::read(signer_pubkey_1) == signer_pubkey_2,
@@ -56,3 +58,20 @@ fn invalid_threshold() {
     ArgentMultisigAccount::initialize(threshold, signers_array);
 }
 
+
+#[test]
+#[available_gas(20000000)]
+#[should_panic(expected = 'argent/already-initialized')]
+fn already_initialized() {
+    let threshold = 1;
+    let mut signers_array = ArrayTrait::new();
+    signers_array.append(signer_pubkey_1);
+    signers_array.append(signer_pubkey_2);
+    ArgentMultisigAccount::initialize(threshold, signers_array);
+    assert(ArgentMultisigAccount::threshold::read() == threshold, 'new threshold not set');
+
+    let mut signers_array = ArrayTrait::new();
+    signers_array.append(signer_pubkey_1);
+    signers_array.append(signer_pubkey_2);
+    ArgentMultisigAccount::initialize(threshold, signers_array);
+}

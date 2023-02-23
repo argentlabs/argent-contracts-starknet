@@ -103,6 +103,25 @@ mod ArgentMultisigAccount {
     // ConfigurationUpdated(); // TODO
     }
 
+
+    
+    // @dev Removes account signers, additionally sets a new threshold
+    // @param new_threshold New threshold
+    // @param signers_to_remove Should contain only current signers, otherwise it will revert
+    #[external]
+    fn remove_signers(new_threshold: u32, signers_to_remove: Array::<felt>) {
+        asserts::assert_only_self();
+        let (signers_len, last_signer) = signers_storage::load();
+
+        let new_signers_len = signers_len - signers_to_remove.len();
+
+        assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
+
+        signers_storage::remove_signers(signers_to_remove, last_signer);
+        threshold::write(new_threshold);
+    // ConfigurationUpdated(); // TODO
+    }
+
     /////////////////////////////////////////////////////////
     // INTERNAL FUNCTIONS
     /////////////////////////////////////////////////////////
@@ -271,6 +290,15 @@ mod ArgentMultisigAccount {
         }
 
         fn find_signer_before_recursive(signer_after: felt, from_signer: felt) -> felt {
+            match get_gas_all(get_builtin_costs()) {
+                Option::Some(_) => {},
+                Option::None(_) => {
+                    let mut err_data = array_new();
+                    array_append(ref err_data, 'Out of gas');
+                    panic(err_data)
+                },
+            }
+            
             let next_signer = super::signer_list::read(from_signer);
             assert(next_signer != 0, 'argent/cant find signer before');
 

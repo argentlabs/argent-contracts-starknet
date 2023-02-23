@@ -111,3 +111,50 @@ fn add_signers() {
     assert(ArgentMultisigAccount::get_threshold() == 2_u32, 'new threshold not set');
 }
 
+
+#[test]
+#[available_gas(20000000)]
+fn remove_signers() {
+    // init
+    let threshold = 1_u32;
+    let mut signers_array = ArrayTrait::new();
+    signers_array.append(signer_pubkey_1);
+    signers_array.append(signer_pubkey_2);
+    ArgentMultisigAccount::initialize(threshold, signers_array);
+    
+    assert(ArgentMultisigAccount::is_signer(signer_pubkey_1), 'is signer cant find signer 1');
+    assert(ArgentMultisigAccount::is_signer(signer_pubkey_2), 'is signer cant find signer 2');
+
+    // remove signer
+    let mut signer_to_remove = ArrayTrait::new();
+    signer_to_remove.append(signer_pubkey_2);
+    ArgentMultisigAccount::remove_signers(1_u32, signer_to_remove);
+
+    // check 
+    let signers = ArgentMultisigAccount::get_signers();
+    assert(signers.len() == 1_usize, 'invalid signers length');
+    assert(ArgentMultisigAccount::get_threshold() == 1_u32, 'new threshold not set');
+    assert(!(ArgentMultisigAccount::is_signer(signer_pubkey_2)), 'signer 2 was not removed');
+    assert(ArgentMultisigAccount::is_signer(signer_pubkey_1), 'signer 1 was removed');
+}
+
+
+#[test]
+#[available_gas(20000000)]
+#[should_panic(expected = 'argent/not a signer')]
+fn remove_invalid_signers() {
+    // init
+    let threshold = 1_u32;
+    let mut signers_array = ArrayTrait::new();
+    signers_array.append(signer_pubkey_1);
+    signers_array.append(signer_pubkey_2);
+    ArgentMultisigAccount::initialize(threshold, signers_array);
+    
+    assert(ArgentMultisigAccount::is_signer(signer_pubkey_1), 'is signer cant find signer 1');
+    assert(ArgentMultisigAccount::is_signer(signer_pubkey_2), 'is signer cant find signer 2');
+
+    // remove signer
+    let mut signer_to_remove = ArrayTrait::new();
+    signer_to_remove.append(10);
+    ArgentMultisigAccount::remove_signers(1_u32, signer_to_remove);
+}

@@ -91,7 +91,7 @@ mod ArgentAccount {
     fn TransactionExecuted(hash: felt, response: Array::<felt>) {}
 
     #[event]
-    fn escape_signer_triggered(active_at: felt) {}
+    fn escape_signer_triggered(active_at: u64) {}
 
     #[event]
     fn signer_escaped(new_signer: felt) {}
@@ -139,7 +139,6 @@ mod ArgentAccount {
 
     #[external]
     fn change_signer(new_signer: felt) {
-        // only called via execute
         assert_only_self();
         // check that the target signer is not zero
         assert(new_signer != 0, 'argent/null-signer');
@@ -149,18 +148,16 @@ mod ArgentAccount {
 
     #[external]
     fn change_guardian(new_guardian: felt) {
-        // only called via execute
         assert_only_self();
         // make sure guardian_backup = 0 when new_guardian = 0
         assert(
-            !new_guardian.is_zero() | guardian_backup::read().is_zero(),
-            'argent/guardian-backup-needed'
+            new_guardian != 0 | guardian_backup::read().is_zero(), 'argent/guardian-backup-needed'
         );
         // update the guardian
         guardian::write(new_guardian);
     }
 
-
+    // TODO isn't possible to merge trigger_escape_X and escape_X? 
     #[external]
     fn trigger_escape_signer() {
         assert_only_self();
@@ -168,31 +165,23 @@ mod ArgentAccount {
         assert_no_escape_ongoing();
 
         // store new escape
-        let block_timestamp = get_block_timestamp();
-        escape::write(
-            Escape {
-                active_at: block_timestamp + ESCAPE_SECURITY_PERIOD, escape_type: ESCAPE_TYPE_SIGNER
-            }
-        );
-    // escape_signer_triggered.emit(block_timestamp + ESCAPE_SECURITY_PERIOD);
+        let futur_block_timestamp = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
+        escape::write(Escape { active_at: futur_block_timestamp, escape_type: ESCAPE_TYPE_SIGNER });
+    // escape_signer_triggered(futur_block_timestamp);
     }
 
     #[external]
     fn trigger_escape_guardian() {
         assert_only_self();
         assert_guardian_set();
-
         assert_no_escape_ongoing();
 
         // store new escape
-        let block_timestamp = get_block_timestamp();
+        let futur_block_timestamp = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
         escape::write(
-            Escape {
-                active_at: block_timestamp + ESCAPE_SECURITY_PERIOD,
-                escape_type: ESCAPE_TYPE_GUARDIAN
-            }
+            Escape { active_at: futur_block_timestamp, escape_type: ESCAPE_TYPE_GUARDIAN }
         );
-    // escape_guardian_triggered.emit(block_timestamp + ESCAPE_SECURITY_PERIOD);
+    // escape_guardian_triggered(futur_block_timestamp);
     }
 
     #[external]
@@ -226,19 +215,18 @@ mod ArgentAccount {
     #[external]
     fn cancel_escape() {
         assert_only_self();
-        // validate there is an active escape
+
         assert(escape::read().active_at != 0_u64, 'argent/no-active-escape');
-        // clear escape
+
         clear_escape();
     // escape_canceled();
     }
 
     #[external]
     fn change_guardian_backup(new_guardian_backup: felt) {
-        // only called via execute
         assert_only_self();
         assert(guardian::read() != 0, 'argent/guardian-required');
-        // update the guardian backup
+
         guardian_backup::write(new_guardian_backup);
     }
 
@@ -306,10 +294,12 @@ mod ArgentAccount {
         assert(current_escape.escape_type == escape_type, 'argent/escape-type-invalid');
     }
 
+    #[inline(always)]
     fn assert_guardian_set() {
         assert(!(guardian::read()).is_zero(), 'argent/guardian-required');
     }
 
+    #[inline(always)]
     fn assert_no_escape_ongoing() {
         let current_escape = escape::read();
         assert(current_escape.active_at.into().is_zero(), 'argent/cannot-override-escape');

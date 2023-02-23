@@ -40,7 +40,7 @@ fn valid_initiliaze() {
 #[test]
 #[available_gas(20000000)]
 fn valid_initiliaze_two_signers() {
-    let threshold = 1;
+    let threshold = 1_u32;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
@@ -70,7 +70,7 @@ fn valid_initiliaze_two_signers() {
 #[available_gas(20000000)]
 #[should_panic(expected = 'argent/bad threshold')]
 fn invalid_threshold() {
-    let threshold = 3;
+    let threshold = 3_u32;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);

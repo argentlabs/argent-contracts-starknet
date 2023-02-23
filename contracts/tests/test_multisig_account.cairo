@@ -7,7 +7,6 @@ const signer_pubkey_1: felt = 0x759ca09377679ecd535a81e83039658bf40959283187c654
 const signer_pubkey_2: felt = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;
 
 
-
 #[test]
 #[available_gas(20000000)]
 fn valid_before_init() {
@@ -35,7 +34,6 @@ fn valid_initiliaze() {
     let signers = ArgentMultisigAccount::get_signers();
     assert(signers.len() == 1_usize, 'invalid signers length');
     assert(*signers.at(0_usize) == signer_pubkey_1, 'invalid signers result');
-
 }
 
 #[test]
@@ -65,7 +63,6 @@ fn valid_initiliaze_two_signers() {
     assert(signers.len() == 1_usize, 'invalid signers length');
     assert(*signers.at(0_usize) == signer_pubkey_1, 'invalid signers result');
     assert(*signers.at(1_usize) == signer_pubkey_2, 'invalid signers result');
-
 }
 
 #[test]

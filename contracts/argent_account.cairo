@@ -115,10 +115,12 @@ mod ArgentAccount {
         assert_no_escape_ongoing();
 
         // store new escape
-        let futur_block_timestamp = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
+        let future_block_timestamp = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
         // TODO Since timestamp is a u64, and escape type 1 small felt, we can pack those two values and use 1 storage slot
-        escape::write(Escape { active_at: futur_block_timestamp, escape_type: ESCAPE_TYPE_SIGNER });
-    // escape_signer_triggered(futur_block_timestamp);
+        escape::write(
+            Escape { active_at: future_block_timestamp, escape_type: ESCAPE_TYPE_SIGNER }
+        );
+    // escape_signer_triggered(future_block_timestamp);
     }
 
     #[external]
@@ -128,11 +130,11 @@ mod ArgentAccount {
         assert_no_escape_ongoing();
 
         // store new escape
-        let futur_block_timestamp = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
+        let future_block_timestamp = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
         escape::write(
-            Escape { active_at: futur_block_timestamp, escape_type: ESCAPE_TYPE_GUARDIAN }
+            Escape { active_at: future_block_timestamp, escape_type: ESCAPE_TYPE_GUARDIAN }
         );
-    // escape_guardian_triggered(futur_block_timestamp);
+    // escape_guardian_triggered(future_block_timestamp);
     }
 
     #[external]

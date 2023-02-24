@@ -40,12 +40,10 @@ mod ArgentAccount {
     /////////////////////
 
     #[event]
-    fn AccountCreated(
-        account: felt, key: felt, guardian: felt, guardian_backup: felt
-    ) {} // TODO Change to snake?
+    fn AccountCreated(account: felt, key: felt, guardian: felt, guardian_backup: felt) {}
 
     #[event]
-    fn TransactionExecuted(hash: felt, response: Array::<felt>) {} // TODO Change to snake?
+    fn transaction_executed(hash: felt, response: Array::<felt>) {}
 
     #[event]
     fn escape_signer_triggered(active_at: u64) {}
@@ -76,7 +74,7 @@ mod ArgentAccount {
         signer::write(new_signer);
         guardian::write(new_guardian);
         guardian_backup::write(new_guardian_backup);
-    // AccountCreated(starknet::get_contract_address(), new_signer, new_guardian, new_guardian_backup);
+    // account_created(starknet::get_contract_address(), new_signer, new_guardian, new_guardian_backup);
     }
 
     #[external]

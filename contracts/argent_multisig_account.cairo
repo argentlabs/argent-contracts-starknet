@@ -208,7 +208,6 @@ mod ArgentMultisigAccount {
         assert(threshold != 0_u32, 'argent/not initialized');
     }
 
-
     mod signers_storage {
         use array::ArrayTrait;
 
@@ -394,8 +393,8 @@ mod ArgentMultisigAccount {
             if (next_signer == 0) {
                 return (1_u32, from_signer);
             }
-            let (next_lenght, last_signer) = load_from(next_signer);
-            return (next_lenght + 1_u32, last_signer);
+            let (next_length, last_signer) = load_from(next_signer);
+            return (next_length + 1_u32, last_signer);
         }
 
         // Returns the number of signers. Cost increases with the list size
@@ -417,8 +416,8 @@ mod ArgentMultisigAccount {
                 return 0_u32;
             }
             let next_signer = super::signer_list::read(from_signer);
-            let next_lenght = get_signers_len_from(next_signer);
-            return next_lenght + 1_u32;
+            let next_length = get_signers_len_from(next_signer);
+            return next_length + 1_u32;
         }
 
         fn get_signers() -> Array::<felt> {

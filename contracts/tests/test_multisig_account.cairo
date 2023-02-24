@@ -16,7 +16,7 @@ fn valid_before_init() {
 
 #[test]
 #[available_gas(20000000)]
-fn valid_initiliaze_one_signer() {
+fn valid_initiliaze() {
     let threshold = 1_u32;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);

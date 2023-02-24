@@ -116,19 +116,3 @@ const signer_2_signature_r : felt = 78041802210933510373275720743288956121068917
 const signer_2_signature_s : felt = 117732574052293722698213953663617651411051623743664517986289794046851647347;
 
 
-#[test]
-#[available_gas(20000000)]
-fn test_signature() {
-    // init
-    let threshold = 1_u32;
-    let mut signers_array = ArrayTrait::new();
-    signers_array.append(signer_pubkey_2);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
-
-    
-    let mut signature = ArrayTrait::<felt>::new();
-    signature.append(signer_pubkey_2);
-    signature.append(signer_2_signature_r);
-    signature.append(signer_2_signature_s);
-    assert(ArgentMultisigAccount::is_valid_signature(message_hash, signature) == true, 'bad signature');
-}

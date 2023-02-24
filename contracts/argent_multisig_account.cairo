@@ -6,6 +6,8 @@ mod ArgentMultisigAccount {
     use traits::TryInto;
     use zeroable::Zeroable;
     use option::OptionTrait;
+    use ecdsa::check_ecdsa_signature;
+    use signer_signature::SignerSignature;
 
     // for some reason this is not part of the framework
     impl StorageAccessU32 of starknet::StorageAccess::<u32> {
@@ -34,6 +36,7 @@ mod ArgentMultisigAccount {
         signer_list: LegacyMap::<felt, felt>,
     }
 
+    
     #[event]
     fn ConfigurationUpdated(
         new_threshold: u32,
@@ -78,6 +81,25 @@ mod ArgentMultisigAccount {
         return signers_storage::is_signer(signer);
     }
 
+    #[view]
+    fn assert_valid_signer_signature(hash: felt, signer: felt, signature_r: felt, signature_s: felt) {
+        let is_signer = signers_storage::is_signer(signer);
+        assert(is_signer, 'argent/not-a-signer');
+        let is_valid = check_ecdsa_signature(hash, signer, signature_r, signature_s);
+        assert(is_valid, 'argent/invalid-signature');
+    }
+
+    #[view]
+    fn is_valid_signature(hash: felt, signatures: Array::<felt>) -> bool {
+        let threshold = threshold::read();
+        assert(threshold != 0_usize, 'am:not-initialized');
+        assert(signatures.len() == threshold * signer_signature::SignerSignatureSize, 'argent/invalid-signature-length');
+        let mut mut_signatures = signatures;
+        let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
+        let parsed_signatures = signer_signature::deserialize_array_signer_signature(ref mut_signatures, signer_signatures_out, threshold).unwrap();
+        validate_signatures(hash, @parsed_signatures);
+        return true;
+    }
 
     #[external]
     fn change_threshold(new_threshold: u32) {
@@ -110,6 +132,39 @@ mod ArgentMultisigAccount {
     /////////////////////////////////////////////////////////
     // INTERNAL FUNCTIONS
     /////////////////////////////////////////////////////////
+
+    fn validate_signatures(hash: felt, signatures: @Array::<SignerSignature>) {
+        validate_signatures_helper(hash, signatures, 0, 0_usize);
+    }
+
+    fn validate_signatures_helper(hash: felt, signatures: @Array::<SignerSignature>, last_signer: felt, signature_index : usize) {
+        match get_gas_all(get_builtin_costs()) {
+                Option::Some(_) => {},
+                Option::None(_) => {
+                    let mut err_data = array_new();
+                    array_append(ref err_data, 'Out of gas');
+                    panic(err_data)
+                }
+        }
+
+        if signature_index >= signatures.len() {
+            return ();
+        }
+
+        let signer_signature : SignerSignature = *(signatures.at(signature_index));
+        assert(signer_signature.signer> last_signer, 'argent/signatures-not-sorted');
+
+        assert_valid_signer_signature(
+            hash,
+            signer_signature.signer,
+            signer_signature.signature_r,
+            signer_signature.signature_s
+        );
+        
+        validate_signatures_helper(hash, signatures, signer_signature.signer, signature_index + 1_usize);
+    }
+
+
 
     // Asserts that:  0 < threshold <= signers_len
     fn assert_valid_threshold_and_signers_count(threshold: u32, signers_len: u32) {
@@ -273,6 +328,62 @@ mod ArgentMultisigAccount {
             previous_signers.append(from_signer);
             return get_signers_from(super::signer_list::read(from_signer), previous_signers);
         }
+    }
+
+
+
+mod signer_signature {
+    use array::ArrayTrait;
+    use serde::Serde;
+
+    #[derive(Copy, Drop)]
+    struct SignerSignature {
+        signer: felt,
+        signature_r: felt,
+        signature_s: felt,
+    }
+
+    const SignerSignatureSize: u32 = 3_u32;
+    impl SignerSignatureArrayCopy of Copy::<Array::<SignerSignature>>;
+    impl SignerSignatureArrayDrop of Drop::<Array::<SignerSignature>>;
+
+    impl SignerSignatureSerde of serde::Serde::<SignerSignature> {
+        fn serialize(ref serialized: Array::<felt>, input: SignerSignature) {
+            Serde::<felt>::serialize(ref serialized, input.signer);
+            Serde::<felt>::serialize(ref serialized, input.signature_r);
+            Serde::<felt>::serialize(ref serialized, input.signature_s);
+        }
+        fn deserialize(ref serialized: Array::<felt>) -> Option::<SignerSignature> {
+            Option::Some(
+                SignerSignature {
+                    signer: Serde::<felt>::deserialize(ref serialized)?,
+                    signature_r: Serde::<felt>::deserialize(ref serialized)?,
+                    signature_s: Serde::<felt>::deserialize(ref serialized)?,
+                }
+            )
+        }
+    }
+
+    fn deserialize_array_signer_signature(
+        ref serialized: Array::<felt>,
+        mut curr_output: Array::<SignerSignature>,
+        remaining: usize
+    ) -> Option::<Array::<SignerSignature>> {
+        match get_gas() {
+            Option::Some(_) => {},
+            Option::None(_) => {
+                let mut data = ArrayTrait::new();
+                data.append('Out of gas');
+                panic(data);
+            },
+        }
+        if remaining == 0_usize {
+            return Option::<Array::<SignerSignature>>::Some(curr_output);
+        }
+        curr_output.append(Serde::<SignerSignature>::deserialize(ref serialized)?);
+        deserialize_array_signer_signature(ref serialized, curr_output, remaining - 1_usize)
+    }
+
     }
 }
 

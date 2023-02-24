@@ -36,40 +36,40 @@ To enable that model to evolve if needed, the account is implemented as a proxy 
 
 ## Development
 
-### Setup a local virtual env with Python 3.9
+### Setup Rust
 
-```
-python3.9 -m venv ./venv
-source ./venv/bin/activate
-```
+As explained here https://github.com/starkware-libs/cairo#prerequisites
 
-### Install Cairo dependencies
-```
-brew install gmp
-```
+### Setup project
 
-You might need this extra step if you are running on a Mac with the M1 chip
-
+run
 ```
-CFLAGS=-I`brew --prefix gmp`/include LDFLAGS=-L`brew --prefix gmp`/lib pip install ecdsa fastecdsa sympy
+make install
 ```
 
+### Setup vscode extension (optional)
+
 ```
-pip install -r requirements.txt
+cd cairo/vscode-cairo
+sudo npm install --global @vscode/vsce
+npm install
+vsce package
+code --install-extension cairo1*.vsix
+cd ../..
 ```
 
-See for more details:
-- https://www.cairo-lang.org/docs/quickstart.html
-- https://github.com/martriay/nile
 
-### Compile the contracts
+Then go to the vscode extension setting and fill "Language Server Path" using the path appropriate for your machine
 ```
-nile compile
+/FULL_PATH_TO_THIS_FOLDER/cairo/target/release/cairo-language-server
 ```
+
+
+Original docs in case it changes: https://github.com/starkware-libs/cairo/tree/main/vscode-cairo
 
 ### Test the contracts
 ```
-pytest ./test/argent_account.py
+make test
 ```
 
 ## How to deploy a contract

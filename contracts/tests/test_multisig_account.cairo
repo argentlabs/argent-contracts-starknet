@@ -110,9 +110,3 @@ fn add_signers() {
     assert(signers.len() == 2_usize, 'invalid signers length');
     assert(ArgentMultisigAccount::get_threshold() == 2_u32, 'new threshold not set');
 }
-
-const message_hash: felt = 424242;
-const signer_2_signature_r : felt = 780418022109335103732757207432889561210689172704851180349474175235986529895;
-const signer_2_signature_s : felt = 117732574052293722698213953663617651411051623743664517986289794046851647347;
-
-

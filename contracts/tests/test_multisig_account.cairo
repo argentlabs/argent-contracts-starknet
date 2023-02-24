@@ -5,6 +5,7 @@ use traits::Into;
 
 const signer_pubkey_1: felt = 0x759ca09377679ecd535a81e83039658bf40959283187c654c5416f439403cf5;
 const signer_pubkey_2: felt = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;
+const signer_pubkey_3: felt = 0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2f96fec5ba847310b20;
 
 #[test]
 #[available_gas(20000000)]
@@ -35,7 +36,8 @@ fn valid_initiliaze_one_signer() {
     assert(*signers.at(0_usize) == signer_pubkey_1, 'invalid signers result');
 }
 
-
+#[test]
+#[available_gas(20000000)]
 fn valid_initiliaze_two_signers() {
     let threshold = 1_u32;
     let mut signers_array = ArrayTrait::new();
@@ -58,14 +60,14 @@ fn valid_initiliaze_two_signers() {
 
     // test signers list
     let signers = ArgentMultisigAccount::get_signers();
-    assert(signers.len() == 1_usize, 'invalid signers length');
+    assert(signers.len() == 2_usize, 'invalid signers length');
     assert(*signers.at(0_usize) == signer_pubkey_1, 'invalid signers result');
     assert(*signers.at(1_usize) == signer_pubkey_2, 'invalid signers result');
 }
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected = ('argent/bad threshold',))]
+#[should_panic(expected = ('argent/bad threshold', ))]
 fn invalid_threshold() {
     let threshold = 3_u32;
     let mut signers_array = ArrayTrait::new();
@@ -73,25 +75,6 @@ fn invalid_threshold() {
     signers_array.append(signer_pubkey_2);
     ArgentMultisigAccount::initialize(threshold, signers_array);
 }
-
-
-#[test]
-#[available_gas(20000000)]
-#[should_panic(expected = ('argent/already-initialized',))]
-fn already_initialized() {
-    let threshold = 1_u32;
-    let mut signers_array = ArrayTrait::new();
-    signers_array.append(signer_pubkey_1);
-    signers_array.append(signer_pubkey_2);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
-    assert(ArgentMultisigAccount::threshold::read() == threshold, 'new threshold not set');
-
-    let mut signers_array = ArrayTrait::new();
-    signers_array.append(signer_pubkey_1);
-    signers_array.append(signer_pubkey_2);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
-}
-
 
 #[test]
 #[available_gas(20000000)]

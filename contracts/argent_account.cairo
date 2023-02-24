@@ -254,7 +254,7 @@ mod ArgentAccount {
 
     #[inline(always)]
     fn assert_guardian_set() {
-        assert(!(guardian::read()).is_zero(), 'argent/guardian-required');
+        assert(guardian::read() != 0, 'argent/guardian-required');
     }
 
     #[inline(always)]

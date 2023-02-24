@@ -40,7 +40,7 @@ mod ArgentAccount {
     /////////////////////
 
     #[event]
-    fn account_created(account: felt, key: felt, guardian: felt, guardian_backup: felt) {}
+    fn AccountCreated(account: felt, key: felt, guardian: felt, guardian_backup: felt) {}
 
     #[event]
     fn transaction_executed(hash: felt, response: Array::<felt>) {}
@@ -99,7 +99,7 @@ mod ArgentAccount {
     #[external]
     fn change_guardian_backup(new_guardian_backup: felt) {
         assert_only_self();
-        assert(guardian::read() != 0, 'argent/guardian-required');
+        assert_guardian_set();
 
         guardian_backup::write(new_guardian_backup);
     }

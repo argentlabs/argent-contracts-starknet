@@ -76,7 +76,7 @@ mod ArgentAccount {
         signer::write(new_signer);
         guardian::write(new_guardian);
         guardian_backup::write(new_guardian_backup);
-    // AccountCreated(starknet::get_contract_address(), new_signer, new_guardian, new_guardian_backup); Can't call yet
+    // AccountCreated(starknet::get_contract_address(), new_signer, new_guardian, new_guardian_backup);
     }
 
     #[external]
@@ -106,7 +106,10 @@ mod ArgentAccount {
         guardian_backup::write(new_guardian_backup);
     }
 
-    // TODO isn't possible to merge trigger_escape_X and pass an argument ==> When enum?
+    // TODO isn't possible to merge trigger_escape_X and pass an argument ==> When we can use enum?
+    // TODO Shouldn't we specify who will be the new signer, and allow him to take ownership when time is over?
+    // Ref https://twitter.com/bytes032/status/1628697044326969345
+    // But then it means that if the escape isn't cancel, after timeout he can take the ownership at ANY time.
     #[external]
     fn trigger_escape_signer() {
         assert_only_self();
@@ -115,6 +118,7 @@ mod ArgentAccount {
 
         // store new escape
         let futur_block_timestamp = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
+        // TODO Since timestamp is a u64, and escape type 1 small felt, we can pack those two values and use 1 storage slot
         escape::write(Escape { active_at: futur_block_timestamp, escape_type: ESCAPE_TYPE_SIGNER });
     // escape_signer_triggered(futur_block_timestamp);
     }

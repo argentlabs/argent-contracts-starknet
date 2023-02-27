@@ -54,12 +54,12 @@ mod ArgentMultisigAccount {
 
     #[view]
     fn get_signers() -> Array::<felt> {
-        return signers_storage::get_signers();
+        signers_storage::get_signers()
     }
 
     #[view]
     fn is_signer(signer: felt) -> bool {
-        return signers_storage::is_signer(signer);
+        signers_storage::is_signer(signer)
     }
 
     #[view]
@@ -75,7 +75,7 @@ mod ArgentMultisigAccount {
     #[view]
     fn is_valid_signature(hash: felt, signatures: Array::<felt>) -> bool {
         let threshold = threshold::read();
-        assert(threshold != 0_usize, 'am:not-initialized');
+        assert(threshold != 0_usize, 'argent/not-initialized');
         assert(
             signatures.len() == threshold * signer_signature::SignerSignatureSize,
             'argent/invalid-signature-length'
@@ -86,8 +86,9 @@ mod ArgentMultisigAccount {
             ref mut_signatures, signer_signatures_out, threshold
         ).unwrap();
         validate_signatures(hash, @parsed_signatures);
-        return true;
+        true;
     }
+
 
     #[external]
     fn change_threshold(new_threshold: u32) {

@@ -102,7 +102,6 @@ mod ArgentAccount {
         guardian_backup::write(new_guardian_backup);
     }
 
-    // TODO isn't possible to merge trigger_escape_X and pass an argument ==> When we can use enum?
     // TODO Shouldn't we specify who will be the new signer, and allow him to take ownership when time is over?
     // Ref https://twitter.com/bytes032/status/1628697044326969345
     // But then it means that if the escape isn't cancel, after timeout he can take the ownership at ANY time.
@@ -110,7 +109,7 @@ mod ArgentAccount {
     fn trigger_escape_signer() {
         assert_only_self();
         assert_guardian_set();
-        assert_no_escape_ongoing();
+        assert_can_escape_signer();
 
         // store new escape
         let future_block_timestamp = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
@@ -125,7 +124,6 @@ mod ArgentAccount {
     fn trigger_escape_guardian() {
         assert_only_self();
         assert_guardian_set();
-        assert_no_escape_ongoing();
 
         // store new escape
         let future_block_timestamp = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
@@ -140,8 +138,8 @@ mod ArgentAccount {
         assert_only_self();
         assert_guardian_set();
         assert_can_escape_for_type(ESCAPE_TYPE_SIGNER);
-        // TODO != 0 should be replaced by is_non_zero() when they merge it
         assert(new_signer != 0, 'argent/new-signer-zero');
+
         // TODO Shouldn't we check new_signer != guardian?
         clear_escape();
         signer::write(new_signer);
@@ -253,7 +251,6 @@ mod ArgentAccount {
         assert(current_escape.escape_type == escape_type, 'argent/escape-type-invalid');
     }
 
-
     #[inline(always)]
     fn assert_valid_guardian_backup(new_guardian: felt) {
         if new_guardian.is_zero() {
@@ -267,8 +264,12 @@ mod ArgentAccount {
     }
 
     #[inline(always)]
-    fn assert_no_escape_ongoing() {
+    fn assert_can_escape_signer() {
         let current_escape = escape::read();
-        assert(current_escape.active_at.into().is_zero(), 'argent/cannot-override-escape');
+        if current_escape.active_at != 0_u64 {
+            assert(
+                current_escape.escape_type != ESCAPE_TYPE_SIGNER, 'argent/cannot-override-escape'
+            );
+        }
     }
 }

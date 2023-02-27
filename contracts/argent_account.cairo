@@ -88,10 +88,8 @@ mod ArgentAccount {
     #[external]
     fn change_guardian(new_guardian: felt) {
         assert_only_self();
-        // make sure guardian_backup = 0 when new_guardian = 0
-        assert(
-            new_guardian != 0 | guardian_backup::read().is_zero(), 'argent/guardian-backup-needed'
-        );
+        assert_valid_guardian_backup(new_guardian);
+
         // update the guardian
         guardian::write(new_guardian);
     }
@@ -236,6 +234,7 @@ mod ArgentAccount {
         }
         check_ecdsa_signature(hash, guardian_backup::read(), signature_r, signature_s)
     }
+
     /////////////////////
     // UTILS
     /////////////////////
@@ -252,6 +251,14 @@ mod ArgentAccount {
         assert(current_escape.active_at != 0_u64, 'argent/not-escaping');
         assert(current_escape.active_at <= block_timestamp, 'argent/escape-not-active');
         assert(current_escape.escape_type == escape_type, 'argent/escape-type-invalid');
+    }
+
+
+    #[inline(always)]
+    fn assert_valid_guardian_backup(new_guardian: felt) {
+        if new_guardian.is_zero() {
+            assert(guardian_backup::read().is_zero(), 'argent/guardian-backup-needed');
+        }
     }
 
     #[inline(always)]

@@ -7,7 +7,11 @@ mod ArgentMultisigAccount {
     use zeroable::Zeroable;
     use option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
-    use signer_signature::SignerSignature;
+    use contracts::signer_signature::SignerSignature;
+    use contracts::signer_signature::deserialize_array_signer_signature;
+    use contracts::signer_signature::SignerSignatureSize;
+    use contracts::signer_signature::SignerSignatureArrayCopy;
+    use contracts::signer_signature::SignerSignatureArrayDrop;
     use contracts::calls::Call;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
@@ -72,7 +76,7 @@ mod ArgentMultisigAccount {
         let tx_info = unbox(starknet::get_tx_info());
 
         // TODO converting to array is probably avoidable
-        let signature_array =  span_to_array(tx_info.signature.snapshot);
+        let signature_array =  contracts::utils::span_to_array(tx_info.signature.snapshot);
 
         let valid = is_valid_signature(tx_info.transaction_hash, signature_array);
         assert(valid, 'argent/invalid-signature');
@@ -109,12 +113,12 @@ mod ArgentMultisigAccount {
         let threshold = threshold::read();
         assert(threshold != 0_usize, 'argent/not-initialized');
         assert(
-            signatures.len() == threshold * signer_signature::SignerSignatureSize,
+            signatures.len() == threshold * SignerSignatureSize,
             'argent/invalid-signature-length'
         );
         let mut mut_signatures = signatures;
         let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
-        let parsed_signatures = signer_signature::deserialize_array_signer_signature(
+        let parsed_signatures = deserialize_array_signer_signature(
             ref mut_signatures, signer_signatures_out, threshold
         ).unwrap();
         validate_signatures(hash, @parsed_signatures);
@@ -269,7 +273,6 @@ mod ArgentMultisigAccount {
             let first_signer = super::signer_list::read(0);
             return find_last_signer_recursive(first_signer);
         }
-
 
         fn find_last_signer_recursive(from_signer: felt) -> felt {
             match try_fetch_gas_all(get_builtin_costs()) {
@@ -468,84 +471,5 @@ mod ArgentMultisigAccount {
         }
     }
 
-
-    mod signer_signature {
-        use array::ArrayTrait;
-        use serde::Serde;
-
-        #[derive(Copy, Drop)]
-        struct SignerSignature {
-            signer: felt,
-            signature_r: felt,
-            signature_s: felt,
-        }
-
-        const SignerSignatureSize: u32 = 3_u32;
-        impl SignerSignatureArrayCopy of Copy::<Array::<SignerSignature>>;
-        impl SignerSignatureArrayDrop of Drop::<Array::<SignerSignature>>;
-
-        impl SignerSignatureSerde of serde::Serde::<SignerSignature> {
-            fn serialize(ref serialized: Array::<felt>, input: SignerSignature) {
-                Serde::<felt>::serialize(ref serialized, input.signer);
-                Serde::<felt>::serialize(ref serialized, input.signature_r);
-                Serde::<felt>::serialize(ref serialized, input.signature_s);
-            }
-            fn deserialize(ref serialized: Array::<felt>) -> Option::<SignerSignature> {
-                Option::Some(
-                    SignerSignature {
-                        signer: Serde::<felt>::deserialize(ref serialized)?,
-                        signature_r: Serde::<felt>::deserialize(ref serialized)?,
-                        signature_s: Serde::<felt>::deserialize(ref serialized)?,
-                    }
-                )
-            }
-        }
-
-        fn deserialize_array_signer_signature(
-            ref serialized: Array::<felt>,
-            mut curr_output: Array::<SignerSignature>,
-            remaining: usize
-        ) -> Option::<Array::<SignerSignature>> {
-            match try_fetch_gas() {
-                Option::Some(_) => {},
-                Option::None(_) => {
-                    let mut data = ArrayTrait::new();
-                    data.append('Out of gas');
-                    panic(data);
-                },
-            }
-            if remaining == 0_usize {
-                return Option::<Array::<SignerSignature>>::Some(curr_output);
-            }
-            curr_output.append(Serde::<SignerSignature>::deserialize(ref serialized)?);
-            deserialize_array_signer_signature(ref serialized, curr_output, remaining - 1_usize)
-        }
-
-    }
-
-    fn span_to_array(span: @Array::<felt>) -> Array::<felt> {
-        let mut output = ArrayTrait::new();
-        span_to_array_helper(span, output, 0_usize)
-    }
-
-    fn span_to_array_helper(
-        span: @Array::<felt>,
-        mut curr_output: Array::<felt>,
-        index: usize
-    ) -> Array::<felt> {
-        match try_fetch_gas() {
-            Option::Some(_) => {},
-            Option::None(_) => {
-                let mut data = ArrayTrait::new();
-                data.append('Out of gas');
-                panic(data);
-            },
-        }
-        if index == span.len() {
-            return curr_output;
-        }
-        curr_output.append(*(span.at(index)));
-        span_to_array_helper(span, curr_output, index + 1_usize)
-    }
 }
 

@@ -13,8 +13,6 @@ fn assert_only_self() {
     assert(get_contract_address().into() == get_caller_address().into(), 'argent/only-self');
 }
 
-
-// TODO If not used can be deleted
 #[inline(always)]
 fn assert_non_reentrant(signer: felt) {
     assert(get_caller_address().is_zero(), 'argent/no-reentrant-call');

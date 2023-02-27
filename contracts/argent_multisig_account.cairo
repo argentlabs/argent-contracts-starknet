@@ -86,7 +86,7 @@ mod ArgentMultisigAccount {
             ref mut_signatures, signer_signatures_out, threshold
         ).unwrap();
         validate_signatures(hash, @parsed_signatures);
-        true;
+        true
     }
 
 

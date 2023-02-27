@@ -8,10 +8,14 @@ mod ArgentMultisigAccount {
     use option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
     use signer_signature::SignerSignature;
+    use contracts::calls::Call;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
+
+    const EXECUTE_AFTER_UPGRADE_SELECTOR: felt =
+        738349667340360233096752603318170676063569407717437256101137432051386874767;
 
     struct Storage {
         threshold: u32,
@@ -46,6 +50,34 @@ mod ArgentMultisigAccount {
     fn supports_interface(interface_id: felt) -> bool {
         interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
     }
+
+    // TODO use the actual signature of the account interface
+    // #[external] // ignored to avoid serde
+    fn __validate__(ref calls: Array::<Call>) {
+        assert_initialized();
+
+        let account_address = starknet::get_contract_address();
+
+        if calls.len() == 1_usize {
+            let call = calls.at(0_usize);
+            if (*call.to).into() == account_address.into() {
+                let selector = *call.selector;
+                assert(selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
+            }
+        } else {
+            // make sure no call is to the account
+            asserts::assert_no_self_call(@calls, account_address);
+        }
+
+        let tx_info = unbox(starknet::get_tx_info());
+
+        // TODO converting to array is probably avoidable
+        let signature_array =  span_to_array(tx_info.signature.snapshot);
+
+        let valid = is_valid_signature(tx_info.transaction_hash, signature_array);
+        assert(valid, 'argent/invalid-signature');
+    }
+
 
     #[view]
     fn get_threshold() -> u32 {
@@ -88,7 +120,6 @@ mod ArgentMultisigAccount {
         validate_signatures(hash, @parsed_signatures);
         true
     }
-
 
     #[external]
     fn change_threshold(new_threshold: u32) {
@@ -489,6 +520,32 @@ mod ArgentMultisigAccount {
             curr_output.append(Serde::<SignerSignature>::deserialize(ref serialized)?);
             deserialize_array_signer_signature(ref serialized, curr_output, remaining - 1_usize)
         }
+
+    }
+
+    fn span_to_array(span: @Array::<felt>) -> Array::<felt> {
+        let mut output = ArrayTrait::new();
+        span_to_array_helper(span, output, 0_usize)
+    }
+
+    fn span_to_array_helper(
+        span: @Array::<felt>,
+        mut curr_output: Array::<felt>,
+        index: usize
+    ) -> Array::<felt> {
+        match try_fetch_gas() {
+            Option::Some(_) => {},
+            Option::None(_) => {
+                let mut data = ArrayTrait::new();
+                data.append('Out of gas');
+                panic(data);
+            },
+        }
+        if index == span.len() {
+            return curr_output;
+        }
+        curr_output.append(*(span.at(index)));
+        span_to_array_helper(span, curr_output, index + 1_usize)
     }
 }
 

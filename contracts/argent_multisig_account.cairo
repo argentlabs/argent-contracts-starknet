@@ -9,24 +9,6 @@ mod ArgentMultisigAccount {
     use ecdsa::check_ecdsa_signature;
     use signer_signature::SignerSignature;
 
-    // for some reason this is not part of the framework
-    impl StorageAccessU32 of starknet::StorageAccess::<u32> {
-        fn read(
-            address_domain: felt, base: starknet::StorageBaseAddress
-        ) -> starknet::SyscallResult::<u32> {
-            Result::Ok(
-                starknet::StorageAccess::<felt>::read(
-                    address_domain, base
-                )?.try_into().expect('StorageAccessU32 - non u32')
-            )
-        }
-        #[inline(always)]
-        fn write(
-            address_domain: felt, base: starknet::StorageBaseAddress, value: u32
-        ) -> starknet::SyscallResult::<()> {
-            starknet::StorageAccess::<felt>::write(address_domain, base, value.into())
-        }
-    }
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
@@ -167,7 +149,7 @@ mod ArgentMultisigAccount {
     }
 
     fn validate_signatures_helper(hash: felt, signatures: @Array::<SignerSignature>, last_signer: felt, signature_index : usize) {
-        match get_gas_all(get_builtin_costs()) {
+        match try_fetch_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();
@@ -248,7 +230,7 @@ mod ArgentMultisigAccount {
 
 
         fn find_last_signer_recursive(from_signer: felt) -> felt {
-            match get_gas_all(get_builtin_costs()) {
+            match try_fetch_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();
@@ -272,7 +254,7 @@ mod ArgentMultisigAccount {
         }
 
         fn find_signer_before_recursive(signer_after: felt, from_signer: felt) -> felt {
-            match get_gas_all(get_builtin_costs()) {
+            match try_fetch_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();
@@ -291,7 +273,7 @@ mod ArgentMultisigAccount {
         }
 
         fn add_signers(mut signers_to_add: Array::<felt>, last_signer: felt) {
-            match get_gas_all(get_builtin_costs()) {
+            match try_fetch_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();
@@ -317,7 +299,7 @@ mod ArgentMultisigAccount {
         }
 
         fn remove_signers(mut signers_to_remove: Array::<felt>, last_signer: felt) {
-            match get_gas_all(get_builtin_costs()) {
+            match try_fetch_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();
@@ -376,7 +358,7 @@ mod ArgentMultisigAccount {
         }
 
         fn load_from(from_signer: felt) -> (u32, felt) {
-            match get_gas_all(get_builtin_costs()) {
+            match try_fetch_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();
@@ -403,7 +385,7 @@ mod ArgentMultisigAccount {
         }
 
         fn get_signers_len_from(from_signer: felt) -> u32 {
-            match get_gas_all(get_builtin_costs()) {
+            match try_fetch_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();
@@ -427,7 +409,7 @@ mod ArgentMultisigAccount {
         fn get_signers_from(
             from_signer: felt, mut previous_signers: Array::<felt>
         ) -> Array::<felt> {
-            match get_gas_all(get_builtin_costs()) {
+            match try_fetch_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();
@@ -483,7 +465,7 @@ mod signer_signature {
         mut curr_output: Array::<SignerSignature>,
         remaining: usize
     ) -> Option::<Array::<SignerSignature>> {
-        match get_gas() {
+        match try_fetch_gas() {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut data = ArrayTrait::new();

@@ -11,6 +11,7 @@ const DEFAULT_TIMESTAMP: u64 = 42_u64;
 const ESCAPE_SECURITY_PERIOD: u64 = 604800_u64; // 7 * 24 * 60 * 60;  // 7 days
 const ESCAPE_TYPE_GUARDIAN: felt = 1;
 const ESCAPE_TYPE_SIGNER: felt = 2;
+
 // trigger_escape_signer
 
 #[test]
@@ -43,26 +44,28 @@ fn trigger_escape_signer_no_guardian_set() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/cannot-override-escape', ))]
 fn trigger_escape_signer_twice() {
     initialize_account();
     ArgentAccount::trigger_escape_signer();
+    let escape = ArgentAccount::get_escape();
+    assert(escape.active_at == ESCAPE_SECURITY_PERIOD, 'active_at 1 invalid');
+    assert(escape.escape_type == ESCAPE_TYPE_SIGNER, 'escape_type 1 invalid');
+
+    set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_signer();
+    let escape = ArgentAccount::get_escape();
+    assert(escape.active_at == DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD, 'active_at 2 invalid');
+    assert(escape.escape_type == ESCAPE_TYPE_SIGNER, 'escape_type 2 invalid');
 }
 
 #[test]
 #[available_gas(2000000)]
+#[should_panic(expected = ('argent/cannot-override-escape', ))]
 fn trigger_escape_signer_with_guardian_escaped() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_guardian();
-    let escape = ArgentAccount::get_escape();
-    assert(escape.active_at == DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD, 'active_at G invalid');
-    assert(escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'escape_type G invalid');
     ArgentAccount::trigger_escape_signer();
-    let escape = ArgentAccount::get_escape();
-    assert(escape.active_at == DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD, 'active_at S invalid');
-    assert(escape.escape_type == ESCAPE_TYPE_SIGNER, 'escape_type S invalid');
 }
 
 // trigger_escape_guardian
@@ -101,14 +104,14 @@ fn trigger_escape_guardian_twice() {
     initialize_account();
     ArgentAccount::trigger_escape_guardian();
     let escape = ArgentAccount::get_escape();
-    assert(escape.active_at == ESCAPE_SECURITY_PERIOD, 'active_at invalid');
-    assert(escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'escape_type invalid');
+    assert(escape.active_at == ESCAPE_SECURITY_PERIOD, 'active_at 1 invalid');
+    assert(escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'escape_type 1 invalid');
 
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_guardian();
     let escape = ArgentAccount::get_escape();
-    assert(escape.active_at == DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD, 'active_at invalid');
-    assert(escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'escape_type invalid');
+    assert(escape.active_at == DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD, 'active_at 2 invalid');
+    assert(escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'escape_type 2 invalid');
 }
 
 #[test]

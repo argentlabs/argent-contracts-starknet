@@ -264,7 +264,7 @@ mod ArgentAccount {
         let current_escape = escape::read();
         if current_escape.active_at != 0_u64 {
             assert(
-                current_escape.escape_type != ESCAPE_TYPE_SIGNER, 'argent/cannot-override-escape'
+                current_escape.escape_type == ESCAPE_TYPE_SIGNER, 'argent/cannot-override-escape'
             );
         }
     }

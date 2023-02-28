@@ -68,7 +68,7 @@ fn test_no_self_call() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = 'argent/no-multicall-to-self')]
+#[should_panic(expected = ('argent/no-multicall-to-self', ))]
 fn test_no_self_call_invalid() {
     let self = starknet::get_contract_address();
     let mut calls = ArrayTrait::new();
@@ -78,7 +78,7 @@ fn test_no_self_call_invalid() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = 'argent/no-multicall-to-self')]
+#[should_panic(expected = ('argent/no-multicall-to-self', ))]
 fn test_no_self_call_invalid_2() {
     let self = starknet::get_contract_address();
     let mut calls = ArrayTrait::new();

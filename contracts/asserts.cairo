@@ -29,7 +29,7 @@ fn assert_no_self_call(calls: @Array::<Call>, self: ContractAddress) {
 }
 
 fn assert_no_self_call_internal(calls: @Array::<Call>, self: ContractAddress, index: usize) {
-    match get_gas() {
+    match try_fetch_gas() {
         Option::Some(_) => {},
         Option::None(_) => {
             let mut data = ArrayTrait::new();

@@ -1,4 +1,4 @@
-#[contract]
+#[account_contract]
 mod ArgentAccount {
     use traits::Into;
     use array::ArrayTrait;
@@ -7,13 +7,7 @@ mod ArgentAccount {
     use starknet::get_tx_info;
     use starknet::ContractAddressIntoFelt;
     use contracts::asserts;
-
-    #[derive(Drop)]
-    struct Call {
-        to: ContractAddress,
-        selector: felt,
-        calldata: Array::<felt>,
-    }
+    use contracts::calls::Call;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;

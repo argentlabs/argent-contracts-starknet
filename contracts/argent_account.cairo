@@ -6,8 +6,9 @@ mod ArgentAccount {
     use contracts::EscapeSerde;
     use zeroable::Zeroable;
     use ecdsa::check_ecdsa_signature;
-    use starknet::get_block_timestamp;
+    use starknet::get_block_info;
     use traits::Into;
+    use box::unbox;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
@@ -112,7 +113,7 @@ mod ArgentAccount {
         assert_can_escape_signer();
 
         // store new escape
-        let active_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
+        let active_at = unbox(get_block_info()).block_timestamp + ESCAPE_SECURITY_PERIOD;
         // TODO Since timestamp is a u64, and escape type 1 small felt, we can pack those two values and use 1 storage slot
         escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_SIGNER });
     // escape_signer_triggered(active_at);
@@ -124,7 +125,7 @@ mod ArgentAccount {
         assert_guardian_set();
 
         // store new escape
-        let active_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
+        let active_at = unbox(get_block_info()).block_timestamp + ESCAPE_SECURITY_PERIOD;
         escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_GUARDIAN });
     // escape_guardian_triggered(active_at);
     }
@@ -240,7 +241,8 @@ mod ArgentAccount {
 
     fn assert_can_escape_for_type(escape_type: felt) {
         let current_escape = escape::read();
-        let block_timestamp = get_block_timestamp();
+        // TODO Hopefuly there will be a way to directly get the block timestamp without having to do this magic (will do a PR in their repo RN) 
+        let block_timestamp = unbox(get_block_info()).block_timestamp;
 
         assert(current_escape.active_at != 0_u64, 'argent/not-escaping');
         assert(current_escape.active_at <= block_timestamp, 'argent/inactive-escape');

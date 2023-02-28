@@ -40,6 +40,4 @@ check-format:
 	cargo run --bin cairo-format -- --check --recursive $(SOURCE_FOLDER)
 
 vscode:
-	cd cairo/vscode-cairo
-	cargo build --bin cairo-language-server --release
-	cd ../..
+	cd cairo/vscode-cairo && cargo build --bin cairo-language-server --release && cd ../..

@@ -1,4 +1,3 @@
-
 use array::ArrayTrait;
 use serde::Serde;
 
@@ -31,9 +30,7 @@ impl SignerSignatureSerde of serde::Serde::<SignerSignature> {
 }
 
 fn deserialize_array_signer_signature(
-    ref serialized: Array::<felt>,
-    mut curr_output: Array::<SignerSignature>,
-    remaining: usize
+    ref serialized: Array::<felt>, mut curr_output: Array::<SignerSignature>, remaining: usize
 ) -> Option::<Array::<SignerSignature>> {
     match try_fetch_gas() {
         Option::Some(_) => {},

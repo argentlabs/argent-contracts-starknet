@@ -6,9 +6,7 @@ fn span_to_array(span: @Array::<felt>) -> Array::<felt> {
 }
 
 fn span_to_array_helper(
-    span: @Array::<felt>,
-    mut curr_output: Array::<felt>,
-    index: usize
+    span: @Array::<felt>, mut curr_output: Array::<felt>, index: usize
 ) -> Array::<felt> {
     match try_fetch_gas() {
         Option::Some(_) => {},

@@ -45,4 +45,3 @@ fn assert_no_self_call_internal(calls: @Array::<Call>, self: ContractAddress, in
     assert_no_self_call_internal(calls, self, index + 1_usize);
 }
 
-

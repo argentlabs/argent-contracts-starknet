@@ -76,7 +76,7 @@ mod ArgentMultisigAccount {
         let tx_info = unbox(starknet::get_tx_info());
 
         // TODO converting to array is probably avoidable
-        let signature_array =  contracts::utils::span_to_array(tx_info.signature.snapshot);
+        let signature_array = contracts::utils::span_to_array(tx_info.signature.snapshot);
 
         let valid = is_valid_signature(tx_info.transaction_hash, signature_array);
         assert(valid, 'argent/invalid-signature');
@@ -113,8 +113,7 @@ mod ArgentMultisigAccount {
         let threshold = threshold::read();
         assert(threshold != 0_usize, 'argent/not-initialized');
         assert(
-            signatures.len() == threshold * SignerSignatureSize,
-            'argent/invalid-signature-length'
+            signatures.len() == threshold * SignerSignatureSize, 'argent/invalid-signature-length'
         );
         let mut mut_signatures = signatures;
         let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
@@ -470,6 +469,5 @@ mod ArgentMultisigAccount {
             return get_signers_from(super::signer_list::read(from_signer), previous_signers);
         }
     }
-
 }
 

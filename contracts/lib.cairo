@@ -23,10 +23,10 @@ use integer::FeltTryIntoU64;
 impl StorageAccessEscape of StorageAccess::<Escape> {
     fn read(
         address_domain: felt, base: starknet::StorageBaseAddress
-    ) -> starknet::SyscallResult::<Escape> {
+    ) -> starknet::SyscallResult<Escape> {
         Result::Ok(
             Escape {
-                active_at: (StorageAccess::<u64>::read(address_domain, base)?),
+                active_at: (StorageAccess::read(address_domain, base)?),
                 escape_type: starknet::storage_read_syscall(
                     address_domain, starknet::storage_address_from_base_and_offset(base, 1_u8)
                 )?,
@@ -35,8 +35,8 @@ impl StorageAccessEscape of StorageAccess::<Escape> {
     }
     fn write(
         address_domain: felt, base: starknet::StorageBaseAddress, value: Escape
-    ) -> starknet::SyscallResult::<()> {
-        StorageAccess::<u64>::write(address_domain, base, value.active_at)?;
+    ) -> starknet::SyscallResult<()> {
+        StorageAccess::write(address_domain, base, value.active_at)?;
         starknet::storage_write_syscall(
             address_domain,
             starknet::storage_address_from_base_and_offset(base, 1_u8),
@@ -46,14 +46,14 @@ impl StorageAccessEscape of StorageAccess::<Escape> {
 }
 
 impl EscapeSerde of Serde::<Escape> {
-    fn serialize(ref serialized: Array::<felt>, input: Escape) {
-        Serde::<u64>::serialize(ref serialized, input.active_at);
+    fn serialize(ref serialized: Array<felt>, input: Escape) {
+        Serde::serialize(ref serialized, input.active_at);
         Serde::serialize(ref serialized, input.escape_type);
     }
-    fn deserialize(ref serialized: Array::<felt>) -> Option::<Escape> {
+    fn deserialize(ref serialized: Array<felt>) -> Option<Escape> {
         Option::Some(
             Escape {
-                active_at: Serde::<u64>::deserialize(ref serialized)?,
+                active_at: Serde::deserialize(ref serialized)?,
                 escape_type: Serde::deserialize(ref serialized)?,
             }
         )

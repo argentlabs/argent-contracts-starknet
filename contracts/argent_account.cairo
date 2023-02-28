@@ -44,7 +44,7 @@ mod ArgentAccount {
     fn account_created(account: felt, key: felt, guardian: felt, guardian_backup: felt) {}
 
     #[event]
-    fn transaction_executed(hash: felt, response: Array::<felt>) {}
+    fn transaction_executed(hash: felt, response: Array<felt>) {}
 
     #[event]
     fn escape_signer_triggered(active_at: u64) {}
@@ -199,20 +199,20 @@ mod ArgentAccount {
 
     // ERC1271
     #[view]
-    fn is_valid_signature(hash: felt, signatures: Array::<felt>) -> bool {
+    fn is_valid_signature(hash: felt, signatures: Array<felt>) -> bool {
         let is_valid_signer = is_valid_signer_signature(hash, @signatures);
         let is_valid_guardian = is_valid_guardian_signature(hash, @signatures);
         is_valid_signer & is_valid_guardian
     }
 
-    fn is_valid_signer_signature(hash: felt, signatures: @Array::<felt>) -> bool {
+    fn is_valid_signer_signature(hash: felt, signatures: @Array<felt>) -> bool {
         assert(signatures.len() >= 2_usize, 'argent/invalid-signature-length');
         let signature_r = *(signatures.at(0_usize));
         let signature_s = *(signatures.at(1_usize));
         check_ecdsa_signature(hash, signer::read(), signature_r, signature_s)
     }
 
-    fn is_valid_guardian_signature(hash: felt, signatures: @Array::<felt>) -> bool {
+    fn is_valid_guardian_signature(hash: felt, signatures: @Array<felt>) -> bool {
         let guardian_ = guardian::read();
         if guardian_ == 0 {
             assert(signatures.len() == 2_usize, 'argent/invalid-signature-length');

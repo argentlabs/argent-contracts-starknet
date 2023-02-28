@@ -11,22 +11,22 @@ use contracts::tests::initialize_account_without_guardian;
 const message_hash: felt = 0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8;
 
 
-fn signature_for_signer(sign: Signature) -> Array::<felt> {
+fn signature_for_signer(sign: Signature) -> Array<felt> {
     single_signature(sign.r, sign.s)
 }
 
-fn single_signature(r: felt, s: felt) -> Array::<felt> {
+fn single_signature(r: felt, s: felt) -> Array<felt> {
     let mut signatures = ArrayTrait::new();
     signatures.append(r);
     signatures.append(s);
     signatures
 }
 
-fn signature_for_signers(sign1: Signature, sign2: Signature) -> Array::<felt> {
+fn signature_for_signers(sign1: Signature, sign2: Signature) -> Array<felt> {
     double_signature(sign1.r, sign1.s, sign2.r, sign2.s)
 }
 
-fn double_signature(r1: felt, s1: felt, r2: felt, s2: felt) -> Array::<felt> {
+fn double_signature(r1: felt, s1: felt, r2: felt, s2: felt) -> Array<felt> {
     let mut signatures = ArrayTrait::new();
     signatures.append(r1);
     signatures.append(s1);

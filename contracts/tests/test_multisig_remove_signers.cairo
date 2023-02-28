@@ -15,7 +15,6 @@ fn _initialize() {
     signers_array.append(signer_pubkey_2);
     signers_array.append(signer_pubkey_3);
     ArgentMultisigAccount::initialize(threshold, signers_array);
-
 }
 
 #[test]

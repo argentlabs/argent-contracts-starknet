@@ -181,7 +181,14 @@ mod ArgentAccount {
     fn trigger_escape_signer() {
         assert_only_self();
         assert_guardian_set();
-        assert_can_escape_signer();
+        // TODO as this will only allow to delay the escape, is it relevant?
+        // Can only escape signer by guardian, if there is no escape ongoing other or an escape ongoing but for of the type signer
+        let current_escape = escape::read();
+        if current_escape.active_at != 0_u64 {
+            assert(
+                current_escape.escape_type == ESCAPE_TYPE_SIGNER, 'argent/cannot-override-escape'
+            );
+        }
 
         let active_at = unbox(get_block_info()).block_timestamp + ESCAPE_SECURITY_PERIOD;
         // TODO Since timestamp is a u64, and escape type 1 small felt, we can pack those two values and use 1 storage slot
@@ -334,15 +341,5 @@ mod ArgentAccount {
     #[inline(always)]
     fn assert_guardian_set() {
         assert(guardian::read() != 0, 'argent/guardian-required');
-    }
-
-    #[inline(always)]
-    fn assert_can_escape_signer() {
-        let current_escape = escape::read();
-        if current_escape.active_at != 0_u64 {
-            assert(
-                current_escape.escape_type == ESCAPE_TYPE_SIGNER, 'argent/cannot-override-escape'
-            );
-        }
     }
 }

@@ -1,4 +1,3 @@
-
 use array::ArrayTrait;
 use zeroable::Zeroable;
 use starknet_testing::set_caller_address;

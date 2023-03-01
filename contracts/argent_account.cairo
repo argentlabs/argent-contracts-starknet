@@ -2,19 +2,19 @@
 mod ArgentAccount {
     use traits::Into;
     use array::ArrayTrait;
-    
-    use contracts::asserts::assert_only_self;
-    use contracts::StorageAccessEscape;
-    use contracts::EscapeSerde;
     use zeroable::Zeroable;
-    use ecdsa::check_ecdsa_signature;
-    use starknet::get_block_info;
-    use traits::Into;
     use box::unbox;
+
     use starknet::get_contract_address;
     use starknet::get_tx_info;
     use starknet::ContractAddressIntoFelt;
-    use contracts::asserts;
+    use starknet::get_block_info;
+    use ecdsa::check_ecdsa_signature;
+
+    use contracts::asserts::assert_only_self;
+    use contracts::asserts::assert_no_self_call;
+    use contracts::StorageAccessEscape;
+    use contracts::EscapeSerde;
     use contracts::calls::Call;
 
     const VALIDATION_SUCCESS: felt = 'VALIDATED';
@@ -55,7 +55,7 @@ mod ArgentAccount {
         active_at: u64,
         escape_type: felt, // TODO Change to enum? ==> Can't do ATM because would have to impl partialEq, update storage, etc etc
     }
-    
+
     struct Storage {
         signer: felt,
         guardian: felt,
@@ -75,8 +75,8 @@ mod ArgentAccount {
 
     #[event]
     fn escape_signer_triggered(active_at: u64) {}
-    
-    
+
+
     #[event]
     fn escape_guardian_triggered(active_at: felt) {}
 
@@ -122,7 +122,7 @@ mod ArgentAccount {
             }
         } else {
             // make sure no call is to the account
-            asserts::assert_no_self_call(@calls, account_address);
+            assert_no_self_call(@calls, account_address);
         }
 
         let (signer_signature, guardian_signature) = split_signatures(full_signature);
@@ -297,7 +297,7 @@ mod ArgentAccount {
         }
         check_ecdsa_signature(hash, guardian_backup::read(), signature_r, signature_s)
     }
-    
+
     fn split_signatures(full_signature: @Array::<felt>) -> (@Array::<felt>, @Array::<felt>) {
         if full_signature.len() == 2_usize {
             return (full_signature, @ArrayTrait::new());

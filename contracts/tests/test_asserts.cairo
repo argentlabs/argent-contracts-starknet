@@ -45,16 +45,30 @@ fn assert_correct_tx_version_invalidtx_test() {
 
 #[test]
 #[available_gas(2000000)]
-fn test_no_self_call() {
-    let self = starknet::get_contract_address();
-    assert(self.is_zero(), 'non null');
+fn test_no_self_call_empty() {
+    let self = contract_address_const::<42>();
+    set_caller_address(self);
     let mut calls = ArrayTrait::new();
     asserts::assert_no_self_call(@calls, self);
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_no_self_call_1() {
+    let self = contract_address_const::<42>();
+    set_caller_address(self);
     let mut calls = ArrayTrait::new();
     calls.append(
         Call { to: contract_address_const::<1>(), selector: 100, calldata: ArrayTrait::new() }
     );
     asserts::assert_no_self_call(@calls, self);
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_no_self_call_2() {
+    let self = contract_address_const::<42>();
+    set_caller_address(self);
     let mut calls = ArrayTrait::new();
     calls.append(
         Call { to: contract_address_const::<2>(), selector: 100, calldata: ArrayTrait::new() }
@@ -69,7 +83,8 @@ fn test_no_self_call() {
 #[available_gas(2000000)]
 #[should_panic(expected = ('argent/no-multicall-to-self', ))]
 fn test_no_self_call_invalid() {
-    let self = starknet::get_contract_address();
+    let self = contract_address_const::<42>();
+    set_caller_address(self);
     let mut calls = ArrayTrait::new();
     calls.append(Call { to: self, selector: 100, calldata: ArrayTrait::new() });
     asserts::assert_no_self_call(@calls, self);
@@ -79,7 +94,8 @@ fn test_no_self_call_invalid() {
 #[available_gas(2000000)]
 #[should_panic(expected = ('argent/no-multicall-to-self', ))]
 fn test_no_self_call_invalid_2() {
-    let self = starknet::get_contract_address();
+    let self = contract_address_const::<42>();
+    set_caller_address(self);
     let mut calls = ArrayTrait::new();
     calls.append(
         Call { to: contract_address_const::<1>(), selector: 100, calldata: ArrayTrait::new() }

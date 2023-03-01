@@ -68,7 +68,7 @@ mod ArgentAccount {
     /////////////////////
 
     #[event]
-    fn account_created(account: felt, key: felt, guardian: felt, guardian_backup: felt) {}
+    fn account_created(account: felt, key: felt, guardian: felt) {}
 
     #[event]
     fn transaction_executed(hash: felt, response: Array<felt>) {}

@@ -49,8 +49,8 @@ mod ArgentAccount {
         // make sure the account is initialized
         assert(signer::read() != 0, 'argent/uninitialized');
 
-        let account_address = starknet::get_contract_address();
-        let tx_info = unbox(starknet::get_tx_info());
+        let account_address = get_contract_address();
+        let tx_info = unbox(get_tx_info());
         let transaction_hash = tx_info.transaction_hash;
         let mut full_signature = tx_info.signature.snapshot;
 
@@ -94,7 +94,7 @@ mod ArgentAccount {
         signer::write(new_signer);
         guardian::write(new_guardian);
         guardian_backup::write(new_guardian_backup);
-    // AccountCreated(starknet::get_contract_address(), new_signer, new_guardian, new_guardian_backup); Can't call yet
+    // AccountCreated(get_contract_address(), new_signer, new_guardian, new_guardian_backup); Can't call yet
     }
 
     #[view]

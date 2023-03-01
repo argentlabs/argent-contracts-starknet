@@ -158,7 +158,9 @@ mod ArgentAccount {
     #[external]
     fn change_guardian(new_guardian: felt) {
         assert_only_self();
-        assert_valid_guardian_backup(new_guardian);
+        if new_guardian.is_zero() {
+            assert(guardian_backup::read().is_zero(), 'argent/guardian-backup-required');
+        }
 
         // update the guardian
         guardian::write(new_guardian);
@@ -329,13 +331,6 @@ mod ArgentAccount {
         assert(current_escape.active_at != 0_u64, 'argent/not-escaping');
         assert(current_escape.active_at <= block_timestamp, 'argent/inactive-escape');
         assert(current_escape.escape_type == escape_type, 'argent/invalid-escape-type');
-    }
-
-    #[inline(always)]
-    fn assert_valid_guardian_backup(new_guardian: felt) {
-        if new_guardian.is_zero() {
-            assert(guardian_backup::read().is_zero(), 'argent/guardian-backup-required');
-        }
     }
 
     #[inline(always)]

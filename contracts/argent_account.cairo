@@ -44,7 +44,7 @@ mod ArgentAccount {
     fn TransactionExecuted(hash: felt, response: Array<felt>) {}
 
     // #[external] // ignored to avoid serde
-    fn __validate__(ref calls: Array::<Call>) {
+    fn __validate__(ref calls: Array::<Call>) -> felt {
         // make sure the account is initialized
         assert(signer::read() != 0, 'argent/uninitialized');
 
@@ -60,12 +60,12 @@ mod ArgentAccount {
                 if selector == ESCAPE_GUARDIAN_SELECTOR | selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
                     let is_valid = is_valid_signer_signature(transaction_hash, full_signature);
                     assert(is_valid, 'argent/invalid-signer-sig');
-                    return ();
+                    return 0;
                 }
                 if selector == ESCAPE_SIGNER_SELECTOR | selector == TRIGGER_ESCAPE_SIGNER_SELECTOR {
                     let is_valid = is_valid_guardian_signature(transaction_hash, full_signature);
                     assert(is_valid, 'argent/invalid-guardian-sig');
-                    return ();
+                    return 0;
                 }
                 assert(selector == EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
             }
@@ -79,6 +79,8 @@ mod ArgentAccount {
         assert(is_valid, 'argent/invalid-signer-sig');
         let is_valid = is_valid_guardian_signature(transaction_hash, guardian_signature);
         assert(is_valid, 'argent/invalid-guardian-sig');
+
+        'VALIDATED'
     }
 
     #[external]

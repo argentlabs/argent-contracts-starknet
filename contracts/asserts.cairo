@@ -5,7 +5,6 @@ use starknet::get_contract_address;
 use starknet::get_caller_address;
 use starknet::ContractAddressZeroable;
 use starknet::ContractAddressIntoFelt;
-
 use contracts::argent_account::ArgentAccount::Call;
 
 const TRANSACTION_VERSION: felt = 1;

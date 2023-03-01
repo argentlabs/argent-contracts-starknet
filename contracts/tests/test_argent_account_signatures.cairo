@@ -16,14 +16,14 @@ const guardian_backup_pubkey: felt =
 const guardian_backup_r: felt = 0x1e03a158a4142532f903caa32697a74fcf5c05b762bb866cec28670d0a53f9a;
 const guardian_backup_s: felt = 0x74be76fe620a42899bc34afce7b31a058408b23c250805054fca4de4e0121ca;
 
-fn single_signature(r: felt, s: felt) -> Array::<felt> {
+fn single_signature(r: felt, s: felt) -> Array<felt> {
     let mut signatures = ArrayTrait::new();
     signatures.append(r);
     signatures.append(s);
     signatures
 }
 
-fn double_signature(r1: felt, s1: felt, r2: felt, s2: felt) -> Array::<felt> {
+fn double_signature(r1: felt, s1: felt, r2: felt, s2: felt) -> Array<felt> {
     let mut signatures = ArrayTrait::new();
     signatures.append(r1);
     signatures.append(s1);

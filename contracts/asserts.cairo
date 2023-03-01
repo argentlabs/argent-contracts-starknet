@@ -1,11 +1,12 @@
+use traits::Into;
+use array::ArrayTrait;
+use array::SpanTrait;
+use zeroable::Zeroable;
 use starknet::get_contract_address;
 use starknet::get_caller_address;
-use zeroable::Zeroable;
 use starknet::ContractAddressZeroable;
-use traits::Into;
 use starknet::ContractAddressIntoFelt;
 use contracts::calls::Call;
-use array::ArrayTrait;
 
 const TRANSACTION_VERSION: felt = 1;
 const QUERY_VERSION: felt = 340282366920938463463374607431768211457; // 2**128 + TRANSACTION_VERSION
@@ -25,10 +26,10 @@ fn assert_correct_tx_version(tx_version: felt) {
 
 
 fn assert_no_self_call(calls: @Array::<Call>, self: ContractAddress) {
-    assert_no_self_call_internal(calls, self, 0_usize);
+    assert_no_self_call_internal(calls.span(), self);
 }
 
-fn assert_no_self_call_internal(calls: @Array::<Call>, self: ContractAddress, index: usize) {
+fn assert_no_self_call_internal(mut calls: Span<Call>, self: ContractAddress) {
     match try_fetch_gas() {
         Option::Some(_) => {},
         Option::None(_) => {
@@ -37,11 +38,12 @@ fn assert_no_self_call_internal(calls: @Array::<Call>, self: ContractAddress, in
             panic(data);
         },
     }
-    if index == calls.len() {
-        return ();
-    }
-    let to = *calls.at(index).to;
-    assert(to.into() != self.into(), 'argent/no-multicall-to-self');
-    assert_no_self_call_internal(calls, self, index + 1_usize);
-}
 
+    match calls.pop_front() {
+        Option::Some(call) => {
+            assert((*call.to).into() != self.into(), 'argent/no-multicall-to-self');
+            assert_no_self_call_internal(calls, self);
+        },
+        Option::None(_) => (),
+    }
+}

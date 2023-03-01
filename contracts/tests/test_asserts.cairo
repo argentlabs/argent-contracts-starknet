@@ -1,12 +1,11 @@
 use array::ArrayTrait;
 use zeroable::Zeroable;
-use contracts::asserts;
-use contracts::argent_account::ArgentAccount::Call;
-
 use starknet_testing::set_caller_address;
 use starknet_testing::set_contract_address;
 use starknet::contract_address_const;
 use starknet::get_contract_address;
+use contracts::asserts;
+use contracts::argent_account::ArgentAccount::Call;
 
 impl CallDrop of Drop::<Call>;
 impl ArrayCallDrop of Drop::<Array::<Call>>;

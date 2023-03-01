@@ -450,9 +450,7 @@ mod ArgentMultisigAccount {
             return get_signers_from(super::signer_list::read(0), array_new());
         }
 
-        fn get_signers_from(
-            from_signer: felt, mut previous_signers: Array<felt>
-        ) -> Array<felt> {
+        fn get_signers_from(from_signer: felt, mut previous_signers: Array<felt>) -> Array<felt> {
             match try_fetch_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {

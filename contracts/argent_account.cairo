@@ -6,10 +6,10 @@ mod ArgentAccount {
     use starknet::get_contract_address;
     use starknet::get_tx_info;
     use starknet::ContractAddressIntoFelt;
+    use starknet::VALIDATED;
     use contracts::asserts;
     use contracts::calls::Call;
 
-    const VALIDATION_SUCCESS: felt = 'VALIDATED';
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
@@ -61,12 +61,12 @@ mod ArgentAccount {
                 if selector == ESCAPE_GUARDIAN_SELECTOR | selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
                     let is_valid = is_valid_signer_signature(transaction_hash, full_signature);
                     assert(is_valid, 'argent/invalid-signer-sig');
-                    return VALIDATION_SUCCESS;
+                    return VALIDATED;
                 }
                 if selector == ESCAPE_SIGNER_SELECTOR | selector == TRIGGER_ESCAPE_SIGNER_SELECTOR {
                     let is_valid = is_valid_guardian_signature(transaction_hash, full_signature);
                     assert(is_valid, 'argent/invalid-guardian-sig');
-                    return VALIDATION_SUCCESS;
+                    return VALIDATED;
                 }
                 assert(selector == EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
             }
@@ -81,7 +81,7 @@ mod ArgentAccount {
         let is_valid = is_valid_guardian_signature(transaction_hash, guardian_signature);
         assert(is_valid, 'argent/invalid-guardian-sig');
 
-        VALIDATION_SUCCESS
+        VALIDATED
     }
 
     #[external]

@@ -1,6 +1,8 @@
-#[contract]
+#[account_contract]
 mod ArgentAccount {
+    use traits::Into;
     use array::ArrayTrait;
+    
     use contracts::asserts::assert_only_self;
     use contracts::StorageAccessEscape;
     use contracts::EscapeSerde;
@@ -9,7 +11,13 @@ mod ArgentAccount {
     use starknet::get_block_info;
     use traits::Into;
     use box::unbox;
+    use starknet::get_contract_address;
+    use starknet::get_tx_info;
+    use starknet::ContractAddressIntoFelt;
+    use contracts::asserts;
+    use contracts::calls::Call;
 
+    const VALIDATION_SUCCESS: felt = 'VALIDATED';
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
@@ -18,6 +26,25 @@ mod ArgentAccount {
 
     const ESCAPE_TYPE_GUARDIAN: felt = 1;
     const ESCAPE_TYPE_SIGNER: felt = 2;
+
+    // TODO: update selectors
+    const CHANGE_SIGNER_SELECTOR: felt =
+        174572128530328568741270994650351248940644050288235239638974755381225723145;
+    const CHANGE_GUARDIAN_SELECTOR: felt =
+        1296071702357547150019664216025682391016361613613945351022196390148584441374;
+    const TRIGGER_ESCAPE_GUARDIAN_SELECTOR: felt =
+        145954635736934016296422259475449005649670140213177066015821444644082814628;
+    const TRIGGER_ESCAPE_SIGNER_SELECTOR: felt =
+        440853473255486090032829492468113410146539319637824817002531798290796877036;
+    const ESCAPE_GUARDIAN_SELECTOR: felt =
+        510756951529079116816142749077704776910668567546043821008232923043034641617;
+    const ESCAPE_SIGNER_SELECTOR: felt =
+        1455116469465411075152303383382102930902943882042348163899277328605146981359;
+    const CANCEL_ESCAPE_SELECTOR: felt =
+        1387988583969094862956788899343599960070518480842441785602446058600435897039;
+    const EXECUTE_AFTER_UPGRADE_SELECTOR: felt =
+        738349667340360233096752603318170676063569407717437256101137432051386874767;
+
 
     /////////////////////
     // STORAGE
@@ -28,7 +55,7 @@ mod ArgentAccount {
         active_at: u64,
         escape_type: felt, // TODO Change to enum? ==> Can't do ATM because would have to impl partialEq, update storage, etc etc
     }
-
+    
     struct Storage {
         signer: felt,
         guardian: felt,
@@ -48,12 +75,13 @@ mod ArgentAccount {
 
     #[event]
     fn escape_signer_triggered(active_at: u64) {}
+    
+    
+    #[event]
+    fn escape_guardian_triggered(active_at: felt) {}
 
     #[event]
     fn signer_escaped(new_signer: felt) {}
-
-    #[event]
-    fn escape_guardian_triggered(active_at: felt) {}
 
     #[event]
     fn guardian_escaped(new_guardian: felt) {}
@@ -64,6 +92,47 @@ mod ArgentAccount {
     /////////////////////
     // EXTERNAL FUNCTIONS
     /////////////////////
+    fn TransactionExecuted(hash: felt, response: Array<felt>) {}
+
+    // #[external] // ignored to avoid serde
+    fn __validate__(ref calls: Array::<Call>) -> felt {
+        // make sure the account is initialized
+        assert(signer::read() != 0, 'argent/uninitialized');
+
+        let account_address = get_contract_address();
+        let tx_info = unbox(get_tx_info());
+        let transaction_hash = tx_info.transaction_hash;
+        let mut full_signature = tx_info.signature.snapshot;
+
+        if calls.len() == 1_usize {
+            let call = calls.at(0_usize);
+            if (*call.to).into() == account_address.into() {
+                let selector = *call.selector;
+                if selector == ESCAPE_GUARDIAN_SELECTOR | selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
+                    let is_valid = is_valid_signer_signature(transaction_hash, full_signature);
+                    assert(is_valid, 'argent/invalid-signer-sig');
+                    return VALIDATION_SUCCESS;
+                }
+                if selector == ESCAPE_SIGNER_SELECTOR | selector == TRIGGER_ESCAPE_SIGNER_SELECTOR {
+                    let is_valid = is_valid_guardian_signature(transaction_hash, full_signature);
+                    assert(is_valid, 'argent/invalid-guardian-sig');
+                    return VALIDATION_SUCCESS;
+                }
+                assert(selector == EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
+            }
+        } else {
+            // make sure no call is to the account
+            asserts::assert_no_self_call(@calls, account_address);
+        }
+
+        let (signer_signature, guardian_signature) = split_signatures(full_signature);
+        let is_valid = is_valid_signer_signature(transaction_hash, signer_signature);
+        assert(is_valid, 'argent/invalid-signer-sig');
+        let is_valid = is_valid_guardian_signature(transaction_hash, guardian_signature);
+        assert(is_valid, 'argent/invalid-guardian-sig');
+
+        VALIDATION_SUCCESS
+    }
 
     #[external]
     fn initialize(new_signer: felt, new_guardian: felt, new_guardian_backup: felt) {
@@ -200,34 +269,47 @@ mod ArgentAccount {
     // ERC1271
     #[view]
     fn is_valid_signature(hash: felt, signatures: Array<felt>) -> bool {
-        let is_valid_signer = is_valid_signer_signature(hash, @signatures);
-        let is_valid_guardian = is_valid_guardian_signature(hash, @signatures);
+        let (signer_signature, guardian_signature) = split_signatures(@signatures);
+        let is_valid_signer = is_valid_signer_signature(hash, signer_signature);
+        let is_valid_guardian = is_valid_guardian_signature(hash, guardian_signature);
         is_valid_signer & is_valid_guardian
     }
 
-    fn is_valid_signer_signature(hash: felt, signatures: @Array<felt>) -> bool {
-        assert(signatures.len() >= 2_usize, 'argent/invalid-signature-length');
-        let signature_r = *(signatures.at(0_usize));
-        let signature_s = *(signatures.at(1_usize));
+    fn is_valid_signer_signature(hash: felt, signature: @Array<felt>) -> bool {
+        assert(signature.len() == 2_usize, 'argent/invalid-signature-length');
+        let signature_r = *signature.at(0_usize);
+        let signature_s = *signature.at(1_usize);
         check_ecdsa_signature(hash, signer::read(), signature_r, signature_s)
     }
 
-    fn is_valid_guardian_signature(hash: felt, signatures: @Array<felt>) -> bool {
+    fn is_valid_guardian_signature(hash: felt, signature: @Array<felt>) -> bool {
         let guardian_ = guardian::read();
         if guardian_ == 0 {
-            assert(signatures.len() == 2_usize, 'argent/invalid-signature-length');
+            assert(signature.len() == 0_usize, 'argent/invalid-signature-length');
             return true;
         }
-        assert(signatures.len() == 4_usize, 'argent/invalid-signature-length');
-        let signature_r = *(signatures.at(2_usize));
-        let signature_s = *(signatures.at(3_usize));
-        let is_valid_guardian_signature = check_ecdsa_signature(
-            hash, guardian_, signature_r, signature_s
-        );
-        if is_valid_guardian_signature {
+        assert(signature.len() == 2_usize, 'argent/invalid-signature-length');
+        let signature_r = *signature.at(0_usize);
+        let signature_s = *signature.at(1_usize);
+        let is_valid = check_ecdsa_signature(hash, guardian_, signature_r, signature_s);
+        if is_valid {
             return true;
         }
         check_ecdsa_signature(hash, guardian_backup::read(), signature_r, signature_s)
+    }
+    
+    fn split_signatures(full_signature: @Array::<felt>) -> (@Array::<felt>, @Array::<felt>) {
+        if full_signature.len() == 2_usize {
+            return (full_signature, @ArrayTrait::new());
+        }
+        assert(full_signature.len() == 4_usize, 'argent/invalid-signature-length');
+        let mut signer_signature = ArrayTrait::new();
+        signer_signature.append(*full_signature.at(0_usize));
+        signer_signature.append(*full_signature.at(1_usize));
+        let mut guardian_signature = ArrayTrait::new();
+        guardian_signature.append(*full_signature.at(2_usize));
+        guardian_signature.append(*full_signature.at(3_usize));
+        (@signer_signature, @guardian_signature)
     }
 
     /////////////////////

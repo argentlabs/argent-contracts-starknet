@@ -151,6 +151,6 @@ fn invalid_signature_length_with_guardian() {
 #[should_panic]
 fn invalid_signature_length_with_guardian_2() {
     initialize_account();
-    let signatures = signature_for_signer(signer());
+    let signatures = signature_for_signer(guardian());
     assert(!ArgentAccount::is_valid_signature(message_hash, signatures), 'invalid signature');
 }

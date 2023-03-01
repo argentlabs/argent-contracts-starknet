@@ -13,12 +13,12 @@ impl SignerSignatureArrayCopy of Copy::<Array::<SignerSignature>>;
 impl SignerSignatureArrayDrop of Drop::<Array::<SignerSignature>>;
 
 impl SignerSignatureSerde of serde::Serde::<SignerSignature> {
-    fn serialize(ref serialized: Array::<felt>, input: SignerSignature) {
+    fn serialize(ref serialized: Array<felt>, input: SignerSignature) {
         Serde::<felt>::serialize(ref serialized, input.signer);
         Serde::<felt>::serialize(ref serialized, input.signature_r);
         Serde::<felt>::serialize(ref serialized, input.signature_s);
     }
-    fn deserialize(ref serialized: Array::<felt>) -> Option::<SignerSignature> {
+    fn deserialize(ref serialized: Array<felt>) -> Option<SignerSignature> {
         Option::Some(
             SignerSignature {
                 signer: Serde::<felt>::deserialize(ref serialized)?,
@@ -30,8 +30,8 @@ impl SignerSignatureSerde of serde::Serde::<SignerSignature> {
 }
 
 fn deserialize_array_signer_signature(
-    ref serialized: Array::<felt>, mut curr_output: Array::<SignerSignature>, remaining: usize
-) -> Option::<Array::<SignerSignature>> {
+    ref serialized: Array<felt>, mut curr_output: Array<SignerSignature>, remaining: usize
+) -> Option<Array<SignerSignature>> {
     match try_fetch_gas() {
         Option::Some(_) => {},
         Option::None(_) => {

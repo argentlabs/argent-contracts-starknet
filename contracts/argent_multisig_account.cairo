@@ -23,7 +23,7 @@ mod ArgentMultisigAccount {
 
     struct Storage {
         threshold: u32,
-        signer_list: LegacyMap::<felt, felt>,
+        signer_list: LegacyMap<felt, felt>,
     }
 
     #[event]
@@ -57,7 +57,7 @@ mod ArgentMultisigAccount {
 
     // TODO use the actual signature of the account interface
     // #[external] // ignored to avoid serde
-    fn __validate__(ref calls: Array::<Call>) {
+    fn __validate__(ref calls: Array<Call>) {
         assert_initialized();
 
         let account_address = starknet::get_contract_address();
@@ -186,12 +186,12 @@ mod ArgentMultisigAccount {
     // INTERNAL FUNCTIONS
     /////////////////////////////////////////////////////////
 
-    fn validate_signatures(hash: felt, signatures: @Array::<SignerSignature>) {
+    fn validate_signatures(hash: felt, signatures: @Array<SignerSignature>) {
         validate_signatures_helper(hash, signatures, 0, 0_usize);
     }
 
     fn validate_signatures_helper(
-        hash: felt, signatures: @Array::<SignerSignature>, last_signer: felt, signature_index: usize
+        hash: felt, signatures: @Array<SignerSignature>, last_signer: felt, signature_index: usize
     ) {
         match try_fetch_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},

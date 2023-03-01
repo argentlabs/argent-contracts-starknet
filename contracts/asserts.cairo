@@ -25,7 +25,7 @@ fn assert_correct_tx_version(tx_version: felt) {
 }
 
 
-fn assert_no_self_call(calls: @Array::<Call>, self: ContractAddress) {
+fn assert_no_self_call(calls: @Array<Call>, self: ContractAddress) {
     assert_no_self_call_internal(calls.span(), self);
 }
 

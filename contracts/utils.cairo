@@ -1,13 +1,13 @@
 use array::ArrayTrait;
 
-fn span_to_array(span: @Array::<felt>) -> Array::<felt> {
+fn span_to_array(span: @Array<felt>) -> Array<felt> {
     let mut output = ArrayTrait::new();
     span_to_array_helper(span, output, 0_usize)
 }
 
 fn span_to_array_helper(
-    span: @Array::<felt>, mut curr_output: Array::<felt>, index: usize
-) -> Array::<felt> {
+    span: @Array<felt>, mut curr_output: Array<felt>, index: usize
+) -> Array<felt> {
     match try_fetch_gas() {
         Option::Some(_) => {},
         Option::None(_) => {

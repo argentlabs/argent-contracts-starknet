@@ -151,18 +151,18 @@ mod ArgentAccount {
     fn change_signer(new_signer: felt) {
         assert_only_self();
         assert(new_signer != 0, 'argent/null-signer');
-        // update the signer
+
         signer::write(new_signer);
     }
 
     #[external]
     fn change_guardian(new_guardian: felt) {
         assert_only_self();
+        // There cannot be a guardian_backup when there is no guardian
         if new_guardian.is_zero() {
             assert(guardian_backup::read().is_zero(), 'argent/guardian-backup-required');
         }
 
-        // update the guardian
         guardian::write(new_guardian);
     }
 
@@ -183,7 +183,6 @@ mod ArgentAccount {
         assert_guardian_set();
         assert_can_escape_signer();
 
-        // store new escape
         let active_at = unbox(get_block_info()).block_timestamp + ESCAPE_SECURITY_PERIOD;
         // TODO Since timestamp is a u64, and escape type 1 small felt, we can pack those two values and use 1 storage slot
         escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_SIGNER });
@@ -195,7 +194,6 @@ mod ArgentAccount {
         assert_only_self();
         assert_guardian_set();
 
-        // store new escape
         let active_at = unbox(get_block_info()).block_timestamp + ESCAPE_SECURITY_PERIOD;
         escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_GUARDIAN });
     // escape_guardian_triggered(active_at);

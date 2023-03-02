@@ -48,9 +48,8 @@ mod ArgentMultisigAccount {
         threshold::write(threshold);
 
         let mut removed_signers = ArrayTrait::new();
-        removed_signers.append(0); 
-        
-        // configuration_updated(threshold, signers_len, signers, removed_signers);
+        removed_signers.append(0);
+    // configuration_updated(threshold, signers_len, signers, removed_signers);
     }
 
     // ERC165

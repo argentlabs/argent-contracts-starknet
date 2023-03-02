@@ -192,6 +192,9 @@ mod ArgentAccount {
 
         let active_at = unbox(get_block_info()).block_timestamp + ESCAPE_SECURITY_PERIOD;
         // TODO Since timestamp is a u64, and escape type 1 small felt, we can pack those two values and use 1 storage slot
+        // TODO We could also inverse the way we store using a map and at ESCAPE_TYPE_SIGNER having the escape active_at of the signer and at ESCAPE_TYPE_GUARDIAN escape active_at
+        // Since none of these two can be filled at the same time, it'll always use one and only one slot
+        // Or we could simplify it by having the struct taking signer_active_at and guardian_active_at and no map
         escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_SIGNER });
     // escape_signer_triggered(active_at);
     }
@@ -212,7 +215,6 @@ mod ArgentAccount {
         assert_guardian_set();
         assert_can_escape_for_type(ESCAPE_TYPE_SIGNER);
         assert(new_signer != 0, 'argent/null-signer');
-
         // TODO Shouldn't we check new_signer != guardian?
         clear_escape();
         signer::write(new_signer);

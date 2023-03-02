@@ -118,7 +118,7 @@ mod ArgentMultisigAccount {
         let mut mut_signatures = signatures;
         let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
         let parsed_signatures = deserialize_array_signer_signature(
-            ref mut_signatures, signer_signatures_out, threshold
+            mut_signatures, signer_signatures_out, threshold
         ).unwrap();
         validate_signatures(hash, @parsed_signatures);
         true

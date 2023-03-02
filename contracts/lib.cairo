@@ -16,10 +16,6 @@ use test_dapp::TestDapp;
 use argent_account::ArgentAccount::Escape;
 use starknet::StorageAccess;
 use serde::Serde;
-use option::OptionTrait;
-use traits::Into;
-use traits::TryInto;
-use integer::FeltTryIntoU64;
 
 impl StorageAccessEscape of StorageAccess::<Escape> {
     fn read(
@@ -51,7 +47,7 @@ impl EscapeSerde of Serde::<Escape> {
         Serde::serialize(ref serialized, input.active_at);
         Serde::serialize(ref serialized, input.escape_type);
     }
-    fn deserialize(ref serialized: Array<felt>) -> Option<Escape> {
+    fn deserialize(ref serialized: Span<felt>) -> Option<Escape> {
         Option::Some(
             Escape {
                 active_at: Serde::deserialize(ref serialized)?,

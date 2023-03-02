@@ -44,9 +44,9 @@ fn deserialize_array_signer_signature(
         return Option::Some(curr_output);
     }
 
-    let mut span = Span{ snapshot : @serialized };
+    let mut span = Span { snapshot: @serialized };
     curr_output.append(Serde::deserialize(ref span)?);
-    
+
     deserialize_array_signer_signature(serialized, curr_output, remaining - 1_usize)
 }
 

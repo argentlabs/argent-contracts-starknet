@@ -21,6 +21,10 @@ mod ArgentMultisigAccount {
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt =
         738349667340360233096752603318170676063569407717437256101137432051386874767;
 
+
+    const NAME: felt = 'ArgentMultisig';
+    const VERSION: felt = '0.0.1';
+
     struct Storage {
         threshold: u32,
         signer_list: LegacyMap<felt, felt>,
@@ -85,6 +89,15 @@ mod ArgentMultisigAccount {
         assert(valid, 'argent/invalid-signature');
     }
 
+    #[view]
+    fn get_name() -> felt {
+        NAME
+    }
+
+    #[view]
+    fn get_version() -> felt {
+        VERSION
+    }
 
     #[view]
     fn get_threshold() -> u32 {

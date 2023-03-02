@@ -127,3 +127,16 @@ fn add_signer_already_in_list() {
     new_signers.append(signer_pubkey_1);
     ArgentMultisigAccount::add_signers(2_u32, new_signers);
 }
+
+
+#[test]
+#[available_gas(20000000)]
+fn get_name_and_version() {
+    assert(
+        ArgentMultisigAccount::get_name() == ArgentMultisigAccount::NAME, 'not getting correct name'
+    );
+    assert(
+        ArgentMultisigAccount::get_version() == ArgentMultisigAccount::VERSION,
+        'not getting correct name'
+    );
+}

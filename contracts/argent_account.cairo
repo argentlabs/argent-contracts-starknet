@@ -16,7 +16,7 @@ mod ArgentAccount {
     use contracts::asserts::assert_no_self_call;
     use contracts::StorageAccessEscape;
     use contracts::EscapeSerde;
-    
+
     use contracts::calls::Call;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;

@@ -27,7 +27,7 @@ mod ArgentMultisigAccount {
     }
 
     #[event]
-    fn ConfigurationUpdated(
+    fn configuration_updated(
         new_threshold: u32,
         new_signers_count: u32,
         added_signers: Array<felt>,
@@ -46,7 +46,11 @@ mod ArgentMultisigAccount {
 
         signers_storage::add_signers(signers, 0);
         threshold::write(threshold);
-    // ConfigurationUpdated(); Can't call yet
+
+        let mut removed_signers = ArrayTrait::new();
+        removed_signers.append(0); 
+        
+        // configuration_updated(threshold, signers_len, signers, removed_signers);
     }
 
     // ERC165
@@ -132,7 +136,7 @@ mod ArgentMultisigAccount {
 
         assert_valid_threshold_and_signers_count(new_threshold, signers_len);
         threshold::write(new_threshold);
-    // ConfigurationUpdated(); // TODO
+    // configuration_updated(); // TODO
     }
 
     // @dev Adds new signers to the account, additionally sets a new threshold
@@ -149,7 +153,7 @@ mod ArgentMultisigAccount {
 
         signers_storage::add_signers(signers_to_add, last_signer);
         threshold::write(new_threshold);
-    // ConfigurationUpdated(); // TODO
+    // configuration_updated(); // TODO
     }
 
 
@@ -167,7 +171,7 @@ mod ArgentMultisigAccount {
 
         signers_storage::remove_signers(signers_to_remove, last_signer);
         threshold::write(new_threshold);
-    // ConfigurationUpdated(); // TODO
+    // configuration_updated(); // TODO
     }
 
     // @dev Replace one signer with a different one
@@ -179,7 +183,7 @@ mod ArgentMultisigAccount {
         let (signers_len, last_signer) = signers_storage::load();
 
         signers_storage::replace_signer(signer_to_remove, signer_to_add, last_signer);
-    // ConfigurationUpdated(); // TODO
+    // configuration_updated(); // TODO
     }
 
     /////////////////////////////////////////////////////////

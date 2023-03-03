@@ -462,7 +462,8 @@ mod ArgentMultisigAccount {
         }
 
         fn get_signers() -> Array<felt> {
-            return get_signers_from(super::signer_list::read(0), array_new());
+            let all_signers = ArrayTrait::new();
+            get_signers_from(super::signer_list::read(0), all_signers)
         }
 
         fn get_signers_from(from_signer: felt, mut previous_signers: Array<felt>) -> Array<felt> {

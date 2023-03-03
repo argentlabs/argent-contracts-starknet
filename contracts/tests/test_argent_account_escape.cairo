@@ -137,7 +137,7 @@ fn escape_signer() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_signer();
-    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD);
+    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD + 1_u64);
     ArgentAccount::escape_signer(42);
     assert(ArgentAccount::get_signer() == 42, 'Signer == 42');
     assert_escape_cleared();
@@ -145,11 +145,11 @@ fn escape_signer() {
 
 #[test]
 #[available_gas(2000000)]
-fn escape_signer_after_timeout() {
+fn escape_signer_at_security_period() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_signer();
-    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD + 1_u64);
+    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD);
     ArgentAccount::escape_signer(42);
     assert(ArgentAccount::get_signer() == 42, 'Signer == 42');
     assert_escape_cleared();
@@ -220,7 +220,7 @@ fn escape_guardian() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_guardian();
-    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD);
+    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD + 1_u64);
     ArgentAccount::escape_guardian(42);
     assert(ArgentAccount::get_guardian() == 42, 'Guardian == 42');
     assert_escape_cleared();
@@ -228,11 +228,11 @@ fn escape_guardian() {
 
 #[test]
 #[available_gas(2000000)]
-fn escape_guardian_after_timeout() {
+fn escape_guardian_at_security_period() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_guardian();
-    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD + 1_u64);
+    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD);
     ArgentAccount::escape_guardian(42);
     assert(ArgentAccount::get_guardian() == 42, 'Guardian == 42');
     assert_escape_cleared();

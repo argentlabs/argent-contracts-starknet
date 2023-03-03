@@ -77,7 +77,6 @@ mod ArgentAccount {
     #[event]
     fn escape_signer_triggered(active_at: u64) {}
 
-
     #[event]
     fn escape_guardian_triggered(active_at: felt) {}
 
@@ -90,10 +89,12 @@ mod ArgentAccount {
     #[event]
     fn escape_canceled() {}
 
+    #[event]
+    fn transaction_executed(hash: felt, response: Array<felt>) {}
+
     /////////////////////
     // EXTERNAL FUNCTIONS
     /////////////////////
-    fn TransactionExecuted(hash: felt, response: Array<felt>) {}
 
     // #[external] // ignored to avoid serde
     fn __validate__(ref calls: Array::<Call>) -> felt {

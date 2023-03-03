@@ -89,9 +89,6 @@ mod ArgentAccount {
     #[event]
     fn escape_canceled() {}
 
-    #[event]
-    fn transaction_executed(hash: felt, response: Array<felt>) {}
-
     /////////////////////
     // EXTERNAL FUNCTIONS
     /////////////////////

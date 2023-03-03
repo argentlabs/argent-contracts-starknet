@@ -14,6 +14,7 @@ mod ArgentMultisigAccount {
     use contracts::signer_signature::SignerSignatureArrayCopy;
     use contracts::signer_signature::SignerSignatureArrayDrop;
     use contracts::calls::Call;
+    use contracts::spans;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
@@ -125,7 +126,7 @@ mod ArgentMultisigAccount {
         let tx_info = unbox(starknet::get_tx_info());
 
         // TODO converting to array is probably avoidable
-        let signature_array = contracts::spans::span_to_array(tx_info.signature);
+        let signature_array = spans::span_to_array(tx_info.signature);
 
         let valid = is_valid_signature(tx_info.transaction_hash, signature_array);
         assert(valid, 'argent/invalid-signature');

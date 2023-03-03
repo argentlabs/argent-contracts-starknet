@@ -141,12 +141,13 @@ mod ArgentMultisigAccount {
         let signers_len = signers.len();
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
-        signers_storage::add_signers(signers, 0);
+        signers_storage::add_signers(signers.span(), 0);
         threshold::write(threshold);
 
         let mut removed_signers = ArrayTrait::new();
         removed_signers.append(0);
-    // configuration_updated(threshold, signers_len, signers, removed_signers);
+        
+        configuration_updated(threshold, signers_len, signers, removed_signers);
     }
 
     #[external]
@@ -172,7 +173,7 @@ mod ArgentMultisigAccount {
 
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
 
-        signers_storage::add_signers(signers_to_add, last_signer);
+        signers_storage::add_signers(signers_to_add.span(), last_signer);
         threshold::write(new_threshold);
     // configuration_updated(); // TODO
     }
@@ -252,6 +253,7 @@ mod ArgentMultisigAccount {
 
     mod signers_storage {
         use array::ArrayTrait;
+        use array::SpanTrait;
 
         // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
         // Otherwise cost increases with the list size
@@ -331,7 +333,7 @@ mod ArgentMultisigAccount {
             find_signer_before_recursive(signer_after, next_signer)
         }
 
-        fn add_signers(mut signers_to_add: Array<felt>, last_signer: felt) {
+        fn add_signers(mut signers_to_add: Span<felt>, last_signer: felt) {
             match try_fetch_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
@@ -342,7 +344,8 @@ mod ArgentMultisigAccount {
             }
 
             match signers_to_add.pop_front() {
-                Option::Some(signer) => {
+                Option::Some(i) => {
+                    let signer = *i;
                     assert(signer != 0, 'argent/invalid-zero-signer');
 
                     let current_signer_status = is_signer_using_last(signer, last_signer);

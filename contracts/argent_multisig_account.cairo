@@ -190,9 +190,13 @@ mod ArgentMultisigAccount {
 
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
 
-        signers_storage::remove_signers(signers_to_remove, last_signer);
+        signers_storage::remove_signers(signers_to_remove.span(), last_signer);
         threshold::write(new_threshold);
-    // configuration_updated(); // TODO
+        
+        let mut added_signers = ArrayTrait::new();
+        added_signers.append(0); 
+
+        configuration_updated(new_threshold,new_signers_len,added_signers, signers_to_remove );
     }
 
     // @dev Replace one signer with a different one
@@ -360,7 +364,7 @@ mod ArgentMultisigAccount {
             }
         }
 
-        fn remove_signers(mut signers_to_remove: Array<felt>, last_signer: felt) {
+        fn remove_signers(mut signers_to_remove: Span<felt>, last_signer: felt) {
             match try_fetch_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
@@ -371,7 +375,8 @@ mod ArgentMultisigAccount {
             }
 
             match signers_to_remove.pop_front() {
-                Option::Some(signer) => {
+                Option::Some(i) => {
+                    let signer = *i;
                     let current_signer_status = is_signer_using_last(signer, last_signer);
                     assert(current_signer_status, 'argent/not-a-signer');
 

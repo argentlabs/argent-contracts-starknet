@@ -1,12 +1,12 @@
-#[contract]
+#[account_contract]
 mod ArgentMultisigAccount {
     use array::ArrayTrait;
-    use contracts::asserts;
     use traits::Into;
     use traits::TryInto;
     use zeroable::Zeroable;
     use option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
+    use contracts::asserts;
     use contracts::signer_signature::SignerSignature;
     use contracts::signer_signature::deserialize_array_signer_signature;
     use contracts::signer_signature::SignerSignatureSize;
@@ -23,7 +23,7 @@ mod ArgentMultisigAccount {
 
 
     const NAME: felt = 'ArgentMultisig';
-    const VERSION: felt = '0.0.1';
+    const VERSION: felt = '0.1.0-alpha.1';
 
     struct Storage {
         threshold: u32,
@@ -37,30 +37,6 @@ mod ArgentMultisigAccount {
         added_signers: Array<felt>,
         removed_signers: Array<felt>
     ) {}
-
-    // @dev Set the initial parameters for the multisig. It's mandatory to call this methods to secure the account.
-    // It's recommended to call this method in the same transaction that deploys the account to make sure it's always initialized
-    #[external]
-    fn initialize(threshold: u32, signers: Array<felt>) {
-        let current_threshold = threshold::read();
-        assert(current_threshold == 0_u32, 'argent/already-initialized');
-
-        let signers_len = signers.len();
-        assert_valid_threshold_and_signers_count(threshold, signers_len);
-
-        signers_storage::add_signers(signers, 0);
-        threshold::write(threshold);
-
-        let mut removed_signers = ArrayTrait::new();
-        removed_signers.append(0);
-    // configuration_updated(threshold, signers_len, signers, removed_signers);
-    }
-
-    // ERC165
-    #[view]
-    fn supports_interface(interface_id: felt) -> bool {
-        interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
-    }
 
     // TODO use the actual signature of the account interface
     // #[external] // ignored to avoid serde
@@ -83,11 +59,33 @@ mod ArgentMultisigAccount {
         let tx_info = unbox(starknet::get_tx_info());
 
         // TODO converting to array is probably avoidable
-        let signature_array = contracts::utils::span_to_array(tx_info.signature.snapshot);
+        let signature_array = contracts::spans::span_to_array(tx_info.signature);
 
         let valid = is_valid_signature(tx_info.transaction_hash, signature_array);
         assert(valid, 'argent/invalid-signature');
     }
+
+    // @dev Set the initial parameters for the multisig. It's mandatory to call this methods to secure the account.
+    // It's recommended to call this method in the same transaction that deploys the account to make sure it's always initialized
+    #[external]
+    fn initialize(threshold: u32, signers: Array<felt>) {
+        let current_threshold = threshold::read();
+        assert(current_threshold == 0_u32, 'argent/already-initialized');
+
+        let signers_len = signers.len();
+        assert_valid_threshold_and_signers_count(threshold, signers_len);
+
+        signers_storage::add_signers(signers, 0);
+        threshold::write(threshold);
+
+        let mut removed_signers = ArrayTrait::new();
+        removed_signers.append(0);
+    // configuration_updated(threshold, signers_len, signers, removed_signers);
+    }
+
+    /////////////////////////////////////////////////////////
+    // STORAGE FUNCTIONS
+    /////////////////////////////////////////////////////////
 
     #[view]
     fn get_name() -> felt {
@@ -114,31 +112,9 @@ mod ArgentMultisigAccount {
         signers_storage::is_signer(signer)
     }
 
-    #[view]
-    fn assert_valid_signer_signature(
-        hash: felt, signer: felt, signature_r: felt, signature_s: felt
-    ) {
-        let is_signer = signers_storage::is_signer(signer);
-        assert(is_signer, 'argent/not-a-signer');
-        let is_valid = check_ecdsa_signature(hash, signer, signature_r, signature_s);
-        assert(is_valid, 'argent/invalid-signature');
-    }
-
-    #[view]
-    fn is_valid_signature(hash: felt, signatures: Array<felt>) -> bool {
-        let threshold = threshold::read();
-        assert(threshold != 0_usize, 'argent/not-initialized');
-        assert(
-            signatures.len() == threshold * SignerSignatureSize, 'argent/invalid-signature-length'
-        );
-        let mut mut_signatures = signatures;
-        let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
-        let parsed_signatures = deserialize_array_signer_signature(
-            mut_signatures, signer_signatures_out, threshold
-        ).unwrap();
-        validate_signatures(hash, @parsed_signatures);
-        true
-    }
+    /////////////////////////////////////////////////////////
+    // VIEW FUNCTIONS
+    /////////////////////////////////////////////////////////
 
     #[external]
     fn change_threshold(new_threshold: u32) {
@@ -196,6 +172,42 @@ mod ArgentMultisigAccount {
 
         signers_storage::replace_signer(signer_to_remove, signer_to_add, last_signer);
     // configuration_updated(); // TODO
+    }
+
+    /////////////////////////////////////////////////////////
+    // VIEW FUNCTIONS
+    /////////////////////////////////////////////////////////
+
+    // ERC165
+    #[view]
+    fn supports_interface(interface_id: felt) -> bool {
+        interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
+    }
+
+    #[view]
+    fn assert_valid_signer_signature(
+        hash: felt, signer: felt, signature_r: felt, signature_s: felt
+    ) {
+        let is_signer = signers_storage::is_signer(signer);
+        assert(is_signer, 'argent/not-a-signer');
+        let is_valid = check_ecdsa_signature(hash, signer, signature_r, signature_s);
+        assert(is_valid, 'argent/invalid-signature');
+    }
+
+    #[view]
+    fn is_valid_signature(hash: felt, signatures: Array<felt>) -> bool {
+        let threshold = threshold::read();
+        assert(threshold != 0_usize, 'argent/not-initialized');
+        assert(
+            signatures.len() == threshold * SignerSignatureSize, 'argent/invalid-signature-length'
+        );
+        let mut mut_signatures = signatures;
+        let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
+        let parsed_signatures = deserialize_array_signer_signature(
+            mut_signatures, signer_signatures_out, threshold
+        ).unwrap();
+        validate_signatures(hash, @parsed_signatures);
+        true
     }
 
     /////////////////////////////////////////////////////////

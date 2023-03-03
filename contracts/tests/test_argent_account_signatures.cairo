@@ -34,7 +34,6 @@ fn double_signature(r1: felt, s1: felt, r2: felt, s2: felt) -> Array<felt> {
     signatures
 }
 
-
 #[test]
 #[available_gas(2000000)]
 fn valid_no_guardian() {
@@ -42,6 +41,7 @@ fn valid_no_guardian() {
     let signatures = single_signature(signer_r, signer_s);
     assert(ArgentAccount::is_valid_signature(message_hash, signatures), 'invalid signature');
 }
+
 #[test]
 #[available_gas(2000000)]
 fn valid_with_guardian() {

@@ -180,7 +180,7 @@ mod ArgentMultisigAccount {
         threshold::write(new_threshold);
 
         let mut removed_signers = ArrayTrait::new();
-        
+
         configuration_updated(new_threshold, new_signers_len, signers_to_add, removed_signers);
     }
 

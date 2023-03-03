@@ -146,7 +146,7 @@ mod ArgentMultisigAccount {
 
         let mut removed_signers = ArrayTrait::new();
         removed_signers.append(0);
-        
+
         configuration_updated(threshold, signers_len, signers, removed_signers);
     }
 
@@ -158,7 +158,14 @@ mod ArgentMultisigAccount {
 
         assert_valid_threshold_and_signers_count(new_threshold, signers_len);
         threshold::write(new_threshold);
-    // configuration_updated(); // TODO
+
+        let mut added_signers = ArrayTrait::new();
+        added_signers.append(0);
+
+        let mut removed_signers = ArrayTrait::new();
+        removed_signers.append(0);
+
+        configuration_updated(new_threshold, signers_len, added_signers, removed_signers);
     }
 
     // @dev Adds new signers to the account, additionally sets a new threshold
@@ -175,7 +182,11 @@ mod ArgentMultisigAccount {
 
         signers_storage::add_signers(signers_to_add.span(), last_signer);
         threshold::write(new_threshold);
-    // configuration_updated(); // TODO
+
+        let mut removed_signers = ArrayTrait::new();
+        removed_signers.append(0);
+
+        configuration_updated(new_threshold, new_signers_len, signers_to_add, removed_signers);
     }
 
     // @dev Removes account signers, additionally sets a new threshold
@@ -192,11 +203,11 @@ mod ArgentMultisigAccount {
 
         signers_storage::remove_signers(signers_to_remove.span(), last_signer);
         threshold::write(new_threshold);
-        
-        let mut added_signers = ArrayTrait::new();
-        added_signers.append(0); 
 
-        configuration_updated(new_threshold,new_signers_len,added_signers, signers_to_remove );
+        let mut added_signers = ArrayTrait::new();
+        added_signers.append(0);
+
+        configuration_updated(new_threshold, new_signers_len, added_signers, signers_to_remove);
     }
 
     // @dev Replace one signer with a different one
@@ -208,7 +219,14 @@ mod ArgentMultisigAccount {
         let (signers_len, last_signer) = signers_storage::load();
 
         signers_storage::replace_signer(signer_to_remove, signer_to_add, last_signer);
-    // configuration_updated(); // TODO
+
+        let mut added_signers = ArrayTrait::new();
+        added_signers.append(signer_to_add);
+
+        let mut removed_signer = ArrayTrait::new();
+        removed_signer.append(signer_to_remove);
+
+        configuration_updated(threshold::read(), signers_len, added_signers, removed_signer);
     }
 
     /////////////////////////////////////////////////////////

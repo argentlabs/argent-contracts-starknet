@@ -102,7 +102,7 @@ fn replace_signer_end() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected = ('argent/not a signer', ))]
+#[should_panic(expected = ('argent/not-a-signer', ))]
 fn replace_invalid_signer() {
     // init
     _initialize();
@@ -115,7 +115,7 @@ fn replace_invalid_signer() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected = ('argent/already a signer', ))]
+#[should_panic(expected = ('argent/already-a-signer', ))]
 fn replace_already_signer() {
     // init
     _initialize();

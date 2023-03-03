@@ -1,6 +1,7 @@
 #[account_contract]
 mod ArgentMultisigAccount {
     use array::ArrayTrait;
+    use array::SpanTrait;
     use traits::Into;
     use traits::TryInto;
     use zeroable::Zeroable;
@@ -95,7 +96,7 @@ mod ArgentMultisigAccount {
         let parsed_signatures = deserialize_array_signer_signature(
             mut_signatures, signer_signatures_out, threshold
         ).unwrap();
-        validate_signatures(hash, @parsed_signatures);
+        validate_signatures(hash, parsed_signatures.span());
         true
     }
 
@@ -106,7 +107,7 @@ mod ArgentMultisigAccount {
     // TODO use the actual signature of the account interface
     // #[external] // ignored to avoid serde
     fn __validate__(ref calls: Array<Call>) {
-        asserts::assert_initialized();
+        assert_initialized();
 
         let account_address = starknet::get_contract_address();
 
@@ -209,12 +210,12 @@ mod ArgentMultisigAccount {
     // INTERNAL FUNCTIONS
     /////////////////////////////////////////////////////////
 
-    fn validate_signatures(hash: felt, signatures: @Array<SignerSignature>) {
-        validate_signatures_helper(hash, signatures, 0, 0_usize);
+    fn validate_signatures(hash: felt, signatures: Span<SignerSignature>) {
+        validate_signatures_helper(hash, signatures, 0);
     }
 
     fn validate_signatures_helper(
-        hash: felt, signatures: @Array<SignerSignature>, last_signer: felt, signature_index: usize
+        hash: felt, mut signatures: Span<SignerSignature>, last_signer: felt
     ) {
         match try_fetch_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
@@ -225,23 +226,17 @@ mod ArgentMultisigAccount {
             }
         }
 
-        if signature_index >= signatures.len() {
-            return ();
+        match signatures.pop_front() {
+            Option::Some(i) => {
+                let signer_sig = *i;
+                assert(signer_sig.signer > last_signer, 'argent/signatures-not-sorted');
+                assert_valid_signer_signature(
+                    hash, signer_sig.signer, signer_sig.signature_r, signer_sig.signature_s
+                );
+                validate_signatures_helper(hash, signatures, signer_sig.signer);
+            },
+            Option::None(_) => ()
         }
-
-        let signer_signature: SignerSignature = *(signatures.at(signature_index));
-        assert(signer_signature.signer > last_signer, 'argent/signatures-not-sorted');
-
-        assert_valid_signer_signature(
-            hash,
-            signer_signature.signer,
-            signer_signature.signature_r,
-            signer_signature.signature_s
-        );
-
-        validate_signatures_helper(
-            hash, signatures, signer_signature.signer, signature_index + 1_usize
-        );
     }
 
     fn assert_valid_threshold_and_signers_count(threshold: u32, signers_len: u32) {

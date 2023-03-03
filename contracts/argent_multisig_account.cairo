@@ -285,7 +285,7 @@ mod ArgentMultisigAccount {
         // Return the last signer or zero if no signers. Cost increases with the list size
         fn find_last_signer() -> felt {
             let first_signer = super::signer_list::read(0);
-            return find_last_signer_recursive(first_signer);
+            find_last_signer_recursive(first_signer)
         }
 
         fn find_last_signer_recursive(from_signer: felt) -> felt {
@@ -302,14 +302,14 @@ mod ArgentMultisigAccount {
             if (next_signer == 0) {
                 return from_signer;
             }
-            return find_last_signer_recursive(next_signer);
+            find_last_signer_recursive(next_signer)
         }
 
         // Returns the signer before `signer_after` or 0 if the signer is the first one. 
         // Reverts if `signer_after` is not found
         // Cost increases with the list size
         fn find_signer_before(signer_after: felt) -> felt {
-            return find_signer_before_recursive(signer_after, 0);
+            find_signer_before_recursive(signer_after, 0)
         }
 
         fn find_signer_before_recursive(signer_after: felt, from_signer: felt) -> felt {
@@ -328,7 +328,7 @@ mod ArgentMultisigAccount {
             if (next_signer == signer_after) {
                 return from_signer;
             }
-            return find_signer_before_recursive(signer_after, next_signer);
+            find_signer_before_recursive(signer_after, next_signer)
         }
 
         fn add_signers(mut signers_to_add: Array<felt>, last_signer: felt) {
@@ -440,7 +440,7 @@ mod ArgentMultisigAccount {
 
         // Returns the number of signers. Cost increases with the list size
         fn get_signers_len() -> u32 {
-            return get_signers_len_from(super::signer_list::read(0));
+            get_signers_len_from(super::signer_list::read(0))
         }
 
         fn get_signers_len_from(from_signer: felt) -> u32 {
@@ -479,7 +479,7 @@ mod ArgentMultisigAccount {
                 return previous_signers;
             }
             previous_signers.append(from_signer);
-            return get_signers_from(super::signer_list::read(from_signer), previous_signers);
+            get_signers_from(super::signer_list::read(from_signer), previous_signers)
         }
     }
 }

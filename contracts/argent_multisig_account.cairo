@@ -41,7 +41,7 @@ mod ArgentMultisigAccount {
     // TODO use the actual signature of the account interface
     // #[external] // ignored to avoid serde
     fn __validate__(ref calls: Array<Call>) {
-        assert_initialized();
+        asserts::assert_initialized();
 
         let account_address = starknet::get_contract_address();
 
@@ -252,15 +252,14 @@ mod ArgentMultisigAccount {
 
     // Asserts that:  0 < threshold <= signers_len
     fn assert_valid_threshold_and_signers_count(threshold: u32, signers_len: u32) {
-        assert(threshold != 0_u32, 'argent/invalid threshold');
-        // assert(threshold < max_range, 'argent/invalid threshold');
-        assert(signers_len != 0_u32, 'argent/invalid signers len');
-        assert(threshold <= signers_len, 'argent/bad threshold');
+        assert(threshold != 0_u32, 'argent/invalid-threshold');
+        assert(signers_len != 0_u32, 'argent/invalid-signers-len');
+        assert(threshold <= signers_len, 'argent/bad-threshold');
     }
 
     fn assert_initialized() {
         let threshold = threshold::read();
-        assert(threshold != 0_u32, 'argent/not initialized');
+        assert(threshold != 0_u32, 'argent/not-initialized');
     }
 
     mod signers_storage {
@@ -336,7 +335,7 @@ mod ArgentMultisigAccount {
             }
 
             let next_signer = super::signer_list::read(from_signer);
-            assert(next_signer != 0, 'argent/cant find signer before');
+            assert(next_signer != 0, 'argent/cant-find-signer-before');
 
             if (next_signer == signer_after) {
                 return from_signer;
@@ -356,10 +355,10 @@ mod ArgentMultisigAccount {
 
             match signers_to_add.pop_front() {
                 Option::Some(signer) => {
-                    assert(signer != 0, 'argent/invalid zero signer');
+                    assert(signer != 0, 'argent/invalid-zero-signer');
 
                     let current_signer_status = is_signer_using_last(signer, last_signer);
-                    assert(!(current_signer_status), 'argent/already a signer');
+                    assert(!(current_signer_status), 'argent/already-a-signer');
 
                     // Signers are added at the end of the list
                     super::signer_list::write(last_signer, signer);
@@ -383,7 +382,7 @@ mod ArgentMultisigAccount {
             match signers_to_remove.pop_front() {
                 Option::Some(signer) => {
                     let current_signer_status = is_signer_using_last(signer, last_signer);
-                    assert(current_signer_status, 'argent/not a signer');
+                    assert(current_signer_status, 'argent/not-a-signer');
 
                     let previous_signer = find_signer_before(signer);
                     let next_signer = super::signer_list::read(signer);
@@ -404,13 +403,13 @@ mod ArgentMultisigAccount {
         }
 
         fn replace_signer(signer_to_remove: felt, signer_to_add: felt, last_signer: felt) {
-            assert(signer_to_add != 0, 'argent/invalid zero signer');
+            assert(signer_to_add != 0, 'argent/invalid-zero-signer');
 
             let signer_to_add_status = is_signer_using_last(signer_to_add, last_signer);
-            assert(!signer_to_add_status, 'argent/already a signer');
+            assert(!signer_to_add_status, 'argent/already-a-signer');
 
             let signer_to_remove_status = is_signer_using_last(signer_to_remove, last_signer);
-            assert(signer_to_remove_status, 'argent/not a signer');
+            assert(signer_to_remove_status, 'argent/not-a-signer');
 
             // removed signer will point to 0
             // previous signer will point to the new one

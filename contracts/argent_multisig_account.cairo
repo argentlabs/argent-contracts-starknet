@@ -116,7 +116,7 @@ mod ArgentMultisigAccount {
             let call = calls.at(0_usize);
             if (*call.to).into() == account_address.into() {
                 let selector = *call.selector;
-                assert(selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
+                assert(selector == EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
             }
         } else {
             // make sure no call is to the account

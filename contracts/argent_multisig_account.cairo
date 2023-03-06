@@ -8,6 +8,7 @@ mod ArgentMultisigAccount {
     use option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
     use gas::get_gas_all;
+    use starknet::get_contract_address;
     use contracts::asserts;
     use contracts::signer_signature::SignerSignature;
     use contracts::signer_signature::deserialize_array_signer_signature;
@@ -111,7 +112,7 @@ mod ArgentMultisigAccount {
     fn __validate__(ref calls: Array<Call>) {
         assert_initialized();
 
-        let account_address = starknet::get_contract_address();
+        let account_address = get_contract_address();
 
         if calls.len() == 1_usize {
             let call = calls.at(0_usize);

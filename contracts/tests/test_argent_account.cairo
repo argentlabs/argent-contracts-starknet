@@ -6,7 +6,7 @@ use contracts::ArgentAccount;
 
 use contracts::tests::initialize_account;
 use contracts::tests::initialize_account_without_guardian;
-use contracts::tests::initialize_account_without_guardian_backup;
+use contracts::tests::initialize_account_with_guardian_backup;
 use contracts::tests::signer_pubkey;
 use contracts::tests::guardian_pubkey;
 use contracts::tests::guardian_backup_pubkey;
@@ -16,10 +16,10 @@ const ERC165_INVALID_INTERFACE_ID: felt = 0xffffffff;
 #[test]
 #[available_gas(2000000)]
 fn initialize() {
-    initialize_account();
-    assert(ArgentAccount::get_signer() == signer_pubkey, 'value should be 1');
-    assert(ArgentAccount::get_guardian() == guardian_pubkey, 'value should be 2');
-    assert(ArgentAccount::get_guardian_backup() == guardian_backup_pubkey, 'value should be 3');
+    ArgentAccount::initialize(1, 2, 3);
+    assert(ArgentAccount::get_signer() == 1, 'value should be 1');
+    assert(ArgentAccount::get_guardian() == 2, 'value should be 2');
+    assert(ArgentAccount::get_guardian_backup() == 3, 'value should be 3');
 }
 
 #[test]
@@ -104,14 +104,14 @@ fn change_guardian_only_self() {
 #[available_gas(2000000)]
 #[should_panic(expected = ('argent/backup-should-be-null', ))]
 fn change_guardian_to_zero() {
-    initialize_account();
+    initialize_account_with_guardian_backup();
     ArgentAccount::change_guardian(0);
 }
 
 #[test]
 #[available_gas(2000000)]
 fn change_guardian_to_zero_without_guardian_backup() {
-    initialize_account_without_guardian_backup();
+    initialize_account();
     ArgentAccount::change_guardian(0);
     assert(ArgentAccount::get_guardian().is_zero(), 'value should be 0');
 }

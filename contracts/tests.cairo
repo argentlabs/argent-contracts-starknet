@@ -11,7 +11,7 @@ const guardian_backup_pubkey: felt =
     0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2f96fec5ba847310b20;
 
 fn initialize_account() {
-    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, guardian_backup_pubkey);
+    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
 }
 
 
@@ -19,7 +19,7 @@ fn initialize_account_without_guardian() {
     ArgentAccount::initialize(signer_pubkey, 0, 0);
 }
 
-fn initialize_account_without_guardian_backup() {
-    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
+fn initialize_account_with_guardian_backup() {
+    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, guardian_backup_pubkey);
 }
 

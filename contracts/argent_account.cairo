@@ -68,7 +68,7 @@ mod ArgentAccount {
                     assert(is_valid, 'argent/invalid-guardian-sig');
                     return VALIDATED;
                 }
-                assert(selector == EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
+                assert(selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
             }
         } else {
             // make sure no call is to the account

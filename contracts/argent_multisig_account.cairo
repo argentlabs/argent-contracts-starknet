@@ -305,7 +305,7 @@ mod ArgentMultisigAccount {
             }
             // check if its the latest
             let last_signer = find_last_signer();
-            
+
             last_signer == signer
         }
 

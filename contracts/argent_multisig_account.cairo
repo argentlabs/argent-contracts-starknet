@@ -7,6 +7,7 @@ mod ArgentMultisigAccount {
     use zeroable::Zeroable;
     use option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
+    use gas::get_gas_all;
     use contracts::asserts;
     use contracts::signer_signature::SignerSignature;
     use contracts::signer_signature::deserialize_array_signer_signature;
@@ -235,7 +236,7 @@ mod ArgentMultisigAccount {
     fn validate_signatures_helper(
         hash: felt, mut signatures: Span<SignerSignature>, last_signer: felt
     ) {
-        match try_fetch_gas_all(get_builtin_costs()) {
+        match get_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = array_new();
@@ -271,6 +272,8 @@ mod ArgentMultisigAccount {
     mod signers_storage {
         use array::ArrayTrait;
         use array::SpanTrait;
+        use gas::get_gas_all;
+
 
         // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
         // Otherwise cost increases with the list size
@@ -308,7 +311,7 @@ mod ArgentMultisigAccount {
         }
 
         fn find_last_signer_recursive(from_signer: felt) -> felt {
-            match try_fetch_gas_all(get_builtin_costs()) {
+            match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();
@@ -332,7 +335,7 @@ mod ArgentMultisigAccount {
         }
 
         fn find_signer_before_recursive(signer_after: felt, from_signer: felt) -> felt {
-            match try_fetch_gas_all(get_builtin_costs()) {
+            match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();
@@ -351,7 +354,7 @@ mod ArgentMultisigAccount {
         }
 
         fn add_signers(mut signers_to_add: Span<felt>, last_signer: felt) {
-            match try_fetch_gas_all(get_builtin_costs()) {
+            match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();
@@ -378,7 +381,7 @@ mod ArgentMultisigAccount {
         }
 
         fn remove_signers(mut signers_to_remove: Span<felt>, last_signer: felt) {
-            match try_fetch_gas_all(get_builtin_costs()) {
+            match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();
@@ -438,7 +441,7 @@ mod ArgentMultisigAccount {
         }
 
         fn load_from(from_signer: felt) -> (u32, felt) {
-            match try_fetch_gas_all(get_builtin_costs()) {
+            match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();
@@ -465,7 +468,7 @@ mod ArgentMultisigAccount {
         }
 
         fn get_signers_len_from(from_signer: felt) -> u32 {
-            match try_fetch_gas_all(get_builtin_costs()) {
+            match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();
@@ -488,7 +491,7 @@ mod ArgentMultisigAccount {
         }
 
         fn get_signers_from(from_signer: felt, mut previous_signers: Array<felt>) -> Array<felt> {
-            match try_fetch_gas_all(get_builtin_costs()) {
+            match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
                     let mut err_data = array_new();

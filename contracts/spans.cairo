@@ -1,5 +1,6 @@
 use array::ArrayTrait;
 use array::SpanTrait;
+use gas::get_gas;
 
 fn span_to_array(span: Span<felt>) -> Array<felt> {
     let mut output = ArrayTrait::new();
@@ -7,7 +8,7 @@ fn span_to_array(span: Span<felt>) -> Array<felt> {
 }
 
 fn span_to_array_helper(mut span: Span<felt>, mut curr_output: Array<felt>) -> Array<felt> {
-    match try_fetch_gas() {
+    match get_gas() {
         Option::Some(_) => {},
         Option::None(_) => {
             let mut data = ArrayTrait::new();

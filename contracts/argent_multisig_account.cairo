@@ -369,7 +369,7 @@ mod ArgentMultisigAccount {
                     assert(signer != 0, 'argent/invalid-zero-signer');
 
                     let current_signer_status = is_signer_using_last(signer, last_signer);
-                    assert(!(current_signer_status), 'argent/already-a-signer');
+                    assert(!current_signer_status, 'argent/already-a-signer');
 
                     // Signers are added at the end of the list
                     super::signer_list::write(last_signer, signer);
@@ -437,7 +437,7 @@ mod ArgentMultisigAccount {
         // Returns the number of signers and the last signer (or zero if the list is empty). Cost increases with the list size
         // returns (signers_len, last_signer)
         fn load() -> (u32, felt) {
-            return load_from(super::signer_list::read(0));
+            load_from(super::signer_list::read(0))
         }
 
         fn load_from(from_signer: felt) -> (u32, felt) {

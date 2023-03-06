@@ -81,10 +81,17 @@ mod ArgentMultisigAccount {
     fn assert_valid_signer_signature(
         hash: felt, signer: felt, signature_r: felt, signature_s: felt
     ) {
+        let is_valid = is_valid_signer_signature(hash, signer, signature_r, signature_s);
+        assert(is_valid, 'argent/invalid-signature');
+    }
+
+    #[view]
+    fn is_valid_signer_signature(
+        hash: felt, signer: felt, signature_r: felt, signature_s: felt
+    ) -> bool {
         let is_signer = signers_storage::is_signer(signer);
         assert(is_signer, 'argent/not-a-signer');
-        let is_valid = check_ecdsa_signature(hash, signer, signature_r, signature_s);
-        assert(is_valid, 'argent/invalid-signature');
+        check_ecdsa_signature(hash, signer, signature_r, signature_s)
     }
 
     #[view]
@@ -99,8 +106,7 @@ mod ArgentMultisigAccount {
         let parsed_signatures = deserialize_array_signer_signature(
             mut_signatures, signer_signatures_out, threshold
         ).unwrap();
-        validate_signatures(hash, parsed_signatures.span());
-        true
+        is_valid_signatures_array(hash, parsed_signatures.span())
     }
 
     /////////////////////////////////////////////////////////
@@ -230,13 +236,13 @@ mod ArgentMultisigAccount {
     // INTERNAL FUNCTIONS
     /////////////////////////////////////////////////////////
 
-    fn validate_signatures(hash: felt, signatures: Span<SignerSignature>) {
-        validate_signatures_helper(hash, signatures, 0);
+    fn is_valid_signatures_array(hash: felt, signatures: Span<SignerSignature>) -> bool {
+        is_valid_signatures_array_helper(hash, signatures, 0)
     }
 
-    fn validate_signatures_helper(
+    fn is_valid_signatures_array_helper(
         hash: felt, mut signatures: Span<SignerSignature>, last_signer: felt
-    ) {
+    ) -> bool {
         match get_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
@@ -250,12 +256,17 @@ mod ArgentMultisigAccount {
             Option::Some(i) => {
                 let signer_sig = *i;
                 assert(signer_sig.signer > last_signer, 'argent/signatures-not-sorted');
-                assert_valid_signer_signature(
+                let valid_signer_signature = is_valid_signer_signature(
                     hash, signer_sig.signer, signer_sig.signature_r, signer_sig.signature_s
                 );
-                validate_signatures_helper(hash, signatures, signer_sig.signer);
+                if !valid_signer_signature {
+                    return false;
+                }
+                return is_valid_signatures_array_helper(hash, signatures, signer_sig.signer);
             },
-            Option::None(_) => ()
+            Option::None(_) => {
+                return true;
+            }
         }
     }
 

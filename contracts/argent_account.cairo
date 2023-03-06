@@ -2,17 +2,31 @@
 mod ArgentAccount {
     use traits::Into;
     use array::ArrayTrait;
-    use ecdsa::check_ecdsa_signature;
+    use zeroable::Zeroable;
+    use box::unbox;
+
     use starknet::get_contract_address;
     use starknet::get_tx_info;
     use starknet::ContractAddressIntoFelt;
+    use starknet::get_block_info;
     use starknet::VALIDATED;
-    use contracts::asserts;
+    use ecdsa::check_ecdsa_signature;
+
+    use contracts::asserts::assert_only_self;
+    use contracts::asserts::assert_no_self_call;
+    use contracts::StorageAccessEscape;
+    use contracts::EscapeSerde;
+
     use contracts::calls::Call;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
+
+    const ESCAPE_SECURITY_PERIOD: u64 = 604800_u64; // 7 * 24 * 60 * 60;  // 7 days
+
+    const ESCAPE_TYPE_GUARDIAN: felt = 1;
+    const ESCAPE_TYPE_SIGNER: felt = 2;
 
     // TODO: update selectors
     const CHANGE_SIGNER_SELECTOR: felt =
@@ -32,17 +46,52 @@ mod ArgentAccount {
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt =
         738349667340360233096752603318170676063569407717437256101137432051386874767;
 
+
+    /////////////////////
+    // STORAGE
+    /////////////////////
+
+    #[derive(Copy)]
+    struct Escape {
+        active_at: u64,
+        escape_type: felt, // TODO Change to enum? ==> Can't do ATM because would have to impl partialEq, update storage, etc etc
+    }
+
     struct Storage {
         signer: felt,
         guardian: felt,
         guardian_backup: felt,
+        escape: Escape,
     }
 
-    #[event]
-    fn AccountCreated(account: felt, key: felt, guardian: felt, guardian_backup: felt) {}
+    /////////////////////
+    // EVENTS
+    /////////////////////
 
     #[event]
-    fn TransactionExecuted(hash: felt, response: Array<felt>) {}
+    fn account_created(account: felt, key: felt, guardian: felt) {}
+
+    #[event]
+    fn transaction_executed(hash: felt, response: Array<felt>) {}
+
+    #[event]
+    fn escape_signer_triggered(active_at: u64) {}
+
+    #[event]
+    fn escape_guardian_triggered(active_at: felt) {}
+
+    #[event]
+    fn signer_escaped(new_signer: felt) {}
+
+    #[event]
+    fn guardian_escaped(new_guardian: felt) {}
+
+    #[event]
+    fn escape_canceled() {}
+
+    /////////////////////
+    // EXTERNAL FUNCTIONS
+    /////////////////////
 
     // #[external] // ignored to avoid serde
     fn __validate__(ref calls: Array::<Call>) -> felt {
@@ -72,7 +121,7 @@ mod ArgentAccount {
             }
         } else {
             // make sure no call is to the account
-            asserts::assert_no_self_call(@calls, account_address);
+            assert_no_self_call(@calls, account_address);
         }
 
         let (signer_signature, guardian_signature) = split_signatures(full_signature);
@@ -94,8 +143,110 @@ mod ArgentAccount {
         signer::write(new_signer);
         guardian::write(new_guardian);
         guardian_backup::write(new_guardian_backup);
-    // AccountCreated(get_contract_address(), new_signer, new_guardian, new_guardian_backup); Can't call yet
+    // account_created(starknet::get_contract_address(), new_signer, new_guardian, new_guardian_backup);
     }
+
+    #[external]
+    fn change_signer(new_signer: felt) {
+        assert_only_self();
+        assert(new_signer != 0, 'argent/null-signer');
+
+        signer::write(new_signer);
+    }
+
+    #[external]
+    fn change_guardian(new_guardian: felt) {
+        assert_only_self();
+        // There cannot be a guardian_backup when there is no guardian
+        if new_guardian.is_zero() {
+            assert(guardian_backup::read().is_zero(), 'argent/guardian-backup-required');
+        }
+
+        guardian::write(new_guardian);
+    }
+
+    #[external]
+    fn change_guardian_backup(new_guardian_backup: felt) {
+        assert_only_self();
+        assert_guardian_set();
+
+        guardian_backup::write(new_guardian_backup);
+    }
+
+    // TODO Shouldn't we specify who will be the new signer, and allow him to take ownership when time is over?
+    // Ref https://twitter.com/bytes032/status/1628697044326969345
+    // But then it means that if the escape isn't cancel, after timeout he can take the ownership at ANY time.
+    #[external]
+    fn trigger_escape_signer() {
+        assert_only_self();
+        assert_guardian_set();
+        // TODO as this will only allow to delay the escape, is it relevant?
+        // Can only escape signer by guardian, if there is no escape ongoing other or an escape ongoing but for of the type signer
+        let current_escape = escape::read();
+        if current_escape.active_at != 0_u64 {
+            assert(
+                current_escape.escape_type == ESCAPE_TYPE_SIGNER, 'argent/cannot-override-escape'
+            );
+        }
+
+        let active_at = unbox(get_block_info()).block_timestamp + ESCAPE_SECURITY_PERIOD;
+        // TODO Since timestamp is a u64, and escape type 1 small felt, we can pack those two values and use 1 storage slot
+        // TODO We could also inverse the way we store using a map and at ESCAPE_TYPE_SIGNER having the escape active_at of the signer and at ESCAPE_TYPE_GUARDIAN escape active_at
+        // Since none of these two can be filled at the same time, it'll always use one and only one slot
+        // Or we could simplify it by having the struct taking signer_active_at and guardian_active_at and no map
+        escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_SIGNER });
+    // escape_signer_triggered(active_at);
+    }
+
+    #[external]
+    fn trigger_escape_guardian() {
+        assert_only_self();
+        assert_guardian_set();
+
+        let active_at = unbox(get_block_info()).block_timestamp + ESCAPE_SECURITY_PERIOD;
+        escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_GUARDIAN });
+    // escape_guardian_triggered(active_at);
+    }
+
+    #[external]
+    fn escape_signer(new_signer: felt) {
+        assert_only_self();
+        assert_guardian_set();
+        assert_can_escape_for_type(ESCAPE_TYPE_SIGNER);
+        assert(new_signer != 0, 'argent/null-signer');
+        // TODO Shouldn't we check new_signer != guardian?
+        clear_escape();
+        signer::write(new_signer);
+    // signer_escaped(new_signer);
+
+    }
+
+    #[external]
+    fn escape_guardian(new_guardian: felt) {
+        assert_only_self();
+        assert_guardian_set();
+        assert_can_escape_for_type(ESCAPE_TYPE_GUARDIAN);
+        assert(new_guardian != 0, 'argent/null-guardian');
+
+        clear_escape();
+        guardian::write(new_guardian);
+    // guardian_escaped(new_guardian);
+
+    }
+
+
+    #[external]
+    fn cancel_escape() {
+        assert_only_self();
+        assert(escape::read().active_at != 0_u64, 'argent/no-active-escape');
+
+        clear_escape();
+    // escape_canceled();
+    }
+
+    /////////////////////
+    // VIEW FUNCTIONS
+    /////////////////////
 
     #[view]
     fn get_signer() -> felt {
@@ -112,33 +263,9 @@ mod ArgentAccount {
         guardian_backup::read()
     }
 
-    #[external]
-    fn change_signer(new_signer: felt) {
-        // only called via execute
-        asserts::assert_only_self();
-        // check that the target signer is not zero
-        assert(new_signer != 0, 'argent/null-signer');
-        // update the signer
-        signer::write(new_signer);
-    }
-
-    #[external]
-    fn change_guardian(new_guardian: felt) {
-        // only called via execute
-        asserts::assert_only_self();
-        // make sure guardian_backup = 0 when new_guardian = 0
-        assert(new_guardian != 0 | guardian_backup::read() == 0, 'argent/guardian-backup-needed');
-        // update the guardian
-        guardian::write(new_guardian);
-    }
-
-    #[external]
-    fn change_guardian_backup(new_guardian_backup: felt) {
-        // only called via execute
-        asserts::assert_only_self();
-        assert(guardian::read() != 0, 'argent/guardian-required');
-        // update the guardian backup
-        guardian_backup::write(new_guardian_backup);
+    #[view]
+    fn get_escape() -> Escape {
+        escape::read()
     }
 
     // ERC165
@@ -191,5 +318,29 @@ mod ArgentAccount {
         guardian_signature.append(*full_signature.at(2_usize));
         guardian_signature.append(*full_signature.at(3_usize));
         (@signer_signature, @guardian_signature)
+    }
+
+    /////////////////////
+    // UTILS
+    /////////////////////
+
+    #[inline(always)]
+    fn clear_escape() {
+        escape::write(Escape { active_at: 0_u64, escape_type: 0 });
+    }
+
+    fn assert_can_escape_for_type(escape_type: felt) {
+        let current_escape = escape::read();
+        // TODO Hopefuly there will be a way to directly get the block timestamp without having to do this magic (will do a PR in their repo RN) 
+        let block_timestamp = unbox(get_block_info()).block_timestamp;
+
+        assert(current_escape.active_at != 0_u64, 'argent/not-escaping');
+        assert(current_escape.active_at <= block_timestamp, 'argent/inactive-escape');
+        assert(current_escape.escape_type == escape_type, 'argent/invalid-escape-type');
+    }
+
+    #[inline(always)]
+    fn assert_guardian_set() {
+        assert(guardian::read() != 0, 'argent/guardian-required');
     }
 }

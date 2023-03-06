@@ -67,7 +67,7 @@ fn change_guardian() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/guardian-backup-needed', ))]
+#[should_panic(expected = ('argent/guardian-backup-required', ))]
 fn change_invalid_guardian() {
     ArgentAccount::initialize(1, 2, 3);
     assert(ArgentAccount::get_guardian() == 2, 'value should be 2');

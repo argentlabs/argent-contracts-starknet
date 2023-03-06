@@ -1,7 +1,7 @@
 use zeroable::Zeroable;
 use starknet::contract_address_const;
-use starknet_testing::set_block_timestamp;
-use starknet_testing::set_caller_address;
+use starknet::testing::set_block_timestamp;
+use starknet::testing::set_caller_address;
 
 use contracts::ArgentAccount;
 use contracts::tests::initialize_account;

@@ -6,6 +6,7 @@ use starknet::get_contract_address;
 use starknet::get_caller_address;
 use starknet::ContractAddressZeroable;
 use starknet::ContractAddressIntoFelt;
+use gas::get_gas;
 use contracts::calls::Call;
 
 const TRANSACTION_VERSION: felt = 1;
@@ -32,7 +33,7 @@ fn assert_no_self_call(calls: @Array::<Call>, self: ContractAddress) {
 }
 
 fn assert_no_self_call_internal(mut calls: Span<Call>, self: ContractAddress) {
-    match try_fetch_gas() {
+    match get_gas() {
         Option::Some(_) => {},
         Option::None(_) => {
             let mut data = ArrayTrait::new();

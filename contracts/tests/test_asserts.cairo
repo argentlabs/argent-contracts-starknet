@@ -1,7 +1,7 @@
 use array::ArrayTrait;
 use zeroable::Zeroable;
-use starknet_testing::set_caller_address;
-use starknet_testing::set_contract_address;
+use starknet::testing::set_caller_address;
+use starknet::testing::set_contract_address;
 use starknet::contract_address_const;
 use starknet::get_contract_address;
 use contracts::asserts;

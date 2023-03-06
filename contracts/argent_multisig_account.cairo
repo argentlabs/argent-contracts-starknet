@@ -265,7 +265,7 @@ mod ArgentMultisigAccount {
                 is_valid_signatures_array_helper(hash, signatures, signer_sig.signer)
             },
             Option::None(_) => {
-                return true;
+                true
             }
         }
     }

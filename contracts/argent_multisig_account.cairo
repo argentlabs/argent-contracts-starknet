@@ -153,7 +153,7 @@ mod ArgentMultisigAccount {
         signers_storage::add_signers(signers.span(), 0);
         threshold::write(threshold);
 
-        let mut removed_signers = ArrayTrait::new();
+        let removed_signers = ArrayTrait::new();
 
         configuration_updated(threshold, signers_len, signers, removed_signers);
     }
@@ -167,10 +167,9 @@ mod ArgentMultisigAccount {
         assert_valid_threshold_and_signers_count(new_threshold, signers_len);
         threshold::write(new_threshold);
 
-        let mut added_signers = ArrayTrait::new();
-        let mut removed_signers = ArrayTrait::new();
+        let empty_list = ArrayTrait::new();
 
-        configuration_updated(new_threshold, signers_len, added_signers, removed_signers);
+        configuration_updated(new_threshold, signers_len, empty_list, empty_list);
     }
 
     // @dev Adds new signers to the account, additionally sets a new threshold
@@ -188,7 +187,7 @@ mod ArgentMultisigAccount {
         signers_storage::add_signers(signers_to_add.span(), last_signer);
         threshold::write(new_threshold);
 
-        let mut removed_signers = ArrayTrait::new();
+        let removed_signers = ArrayTrait::new();
 
         configuration_updated(new_threshold, new_signers_len, signers_to_add, removed_signers);
     }
@@ -208,7 +207,7 @@ mod ArgentMultisigAccount {
         signers_storage::remove_signers(signers_to_remove.span(), last_signer);
         threshold::write(new_threshold);
 
-        let mut added_signers = ArrayTrait::new();
+        let added_signers = ArrayTrait::new();
 
         configuration_updated(new_threshold, new_signers_len, added_signers, signers_to_remove);
     }

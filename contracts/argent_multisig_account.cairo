@@ -167,9 +167,10 @@ mod ArgentMultisigAccount {
         assert_valid_threshold_and_signers_count(new_threshold, signers_len);
         threshold::write(new_threshold);
 
-        let empty_list = ArrayTrait::new();
+        let added_signers = ArrayTrait::new();
+        let removed_signers = ArrayTrait::new();
 
-        configuration_updated(new_threshold, signers_len, empty_list, empty_list);
+        configuration_updated(new_threshold, signers_len, added_signers, removed_signers);
     }
 
     // @dev Adds new signers to the account, additionally sets a new threshold

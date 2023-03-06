@@ -89,6 +89,15 @@ mod ArgentAccount {
     #[event]
     fn escape_canceled() {}
 
+    #[event]
+    fn signer_changed(new_signer: felt) {}
+
+    #[event]
+    fn guardian_changed(new_guardian: felt) {}
+
+    #[event]
+    fn guardian_backup_changed(new_guardian: felt) {}
+
     /////////////////////
     // EXTERNAL FUNCTIONS
     /////////////////////
@@ -152,6 +161,7 @@ mod ArgentAccount {
         assert(new_signer != 0, 'argent/null-signer');
 
         signer::write(new_signer);
+    //signer_changed(new_signer);
     }
 
     #[external]
@@ -159,10 +169,11 @@ mod ArgentAccount {
         assert_only_self();
         // There cannot be a guardian_backup when there is no guardian
         if new_guardian.is_zero() {
-            assert(guardian_backup::read().is_zero(), 'argent/guardian-backup-required');
+            assert(guardian_backup::read().is_zero(), 'argent/backup-should-be-null');
         }
 
         guardian::write(new_guardian);
+    //guardian_changed(new_guardian);
     }
 
     #[external]
@@ -171,6 +182,7 @@ mod ArgentAccount {
         assert_guardian_set();
 
         guardian_backup::write(new_guardian_backup);
+    //guardian_backup_changed(new_guardian_backup);
     }
 
     // TODO Shouldn't we specify who will be the new signer, and allow him to take ownership when time is over?

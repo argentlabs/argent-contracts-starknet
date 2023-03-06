@@ -262,7 +262,7 @@ mod ArgentMultisigAccount {
                 if !valid_signer_signature {
                     return false;
                 }
-                return is_valid_signatures_array_helper(hash, signatures, signer_sig.signer);
+                is_valid_signatures_array_helper(hash, signatures, signer_sig.signer)
             },
             Option::None(_) => {
                 return true;
@@ -305,7 +305,8 @@ mod ArgentMultisigAccount {
             }
             // check if its the latest
             let last_signer = find_last_signer();
-            return last_signer == signer;
+            
+            last_signer == signer
         }
 
         // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
@@ -319,7 +320,7 @@ mod ArgentMultisigAccount {
                 return true;
             }
 
-            return last_signer == signer;
+            last_signer == signer
         }
 
         // Return the last signer or zero if no signers. Cost increases with the list size
@@ -477,7 +478,7 @@ mod ArgentMultisigAccount {
                 return (1_u32, from_signer);
             }
             let (next_length, last_signer) = load_from(next_signer);
-            return (next_length + 1_u32, last_signer);
+            (next_length + 1_u32, last_signer)
         }
 
         // Returns the number of signers. Cost increases with the list size
@@ -500,7 +501,7 @@ mod ArgentMultisigAccount {
             }
             let next_signer = super::signer_list::read(from_signer);
             let next_length = get_signers_len_from(next_signer);
-            return next_length + 1_u32;
+            next_length + 1_u32
         }
 
         fn get_signers() -> Array<felt> {

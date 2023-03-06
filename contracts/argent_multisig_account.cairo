@@ -270,6 +270,12 @@ mod ArgentMultisigAccount {
         assert(threshold != 0_u32, 'argent/not-initialized');
     }
 
+
+    // This module handles the storage of the multisig owners using a linked set
+    // you can't store signer 0 and you can't store duplicates.
+    // This allows to retrieve the list of owners easily.
+    // In terms of storage this will use one storage slot per signer
+    // Reading become a bit more expensive for some operations as it need to go through the full list for some operations
     mod signers_storage {
         use array::ArrayTrait;
         use array::SpanTrait;

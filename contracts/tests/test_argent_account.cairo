@@ -39,6 +39,13 @@ fn already_initialized() {
 
 #[test]
 #[available_gas(2000000)]
+#[should_panic(expected = ('argent/backup-should-be-null', ))]
+fn initialized_guardian_to_zero_without_guardian_backup() {
+    ArgentAccount::initialize(1, 0, 3);
+}
+
+#[test]
+#[available_gas(2000000)]
 fn erc165_unsupported_interfaces() {
     assert(ArgentAccount::supports_interface(0) == false, 'value should be false');
     assert(

@@ -9,6 +9,7 @@ mod ArgentMultisigAccount {
     use ecdsa::check_ecdsa_signature;
     use gas::get_gas_all;
     use starknet::get_contract_address;
+    use starknet::VALIDATED;
     use contracts::asserts;
     use contracts::signer_signature::SignerSignature;
     use contracts::signer_signature::deserialize_array_signer_signature;

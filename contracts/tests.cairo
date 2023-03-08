@@ -10,7 +10,8 @@ const guardian_pubkey: felt = 0x759ca09377679ecd535a81e83039658bf40959283187c654
 const guardian_backup_pubkey: felt =
     0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2f96fec5ba847310b20;
 const wrong_signer_pubkey: felt = 0x743829e0a179f8afe223fc8112dfc8d024ab6b235fd42283c4f5970259ce7b7;
-const wrong_guardian_pubkey: felt = 0x6eeee2b0c71d681692559735e08a2c3ba04e7347c0c18d4d49b83bb89771591;
+const wrong_guardian_pubkey: felt =
+    0x6eeee2b0c71d681692559735e08a2c3ba04e7347c0c18d4d49b83bb89771591;
 
 fn initialize_account() {
     ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);

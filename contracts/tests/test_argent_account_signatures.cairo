@@ -132,7 +132,9 @@ fn invalid_signer_with_invalid_guardian() {
     assert(!ArgentAccount::is_valid_signature(message_hash, signatures), 'invalid signature');
     let signatures = double_signature(0, 0, wrong_guardian_r, wrong_guardian_s);
     assert(!ArgentAccount::is_valid_signature(message_hash, signatures), 'invalid signature');
-    let signatures = double_signature(wrong_signer_r, wrong_signer_s, wrong_guardian_r, wrong_guardian_s);
+    let signatures = double_signature(
+        wrong_signer_r, wrong_signer_s, wrong_guardian_r, wrong_guardian_s
+    );
     assert(!ArgentAccount::is_valid_signature(message_hash, signatures), 'invalid signature');
 }
 

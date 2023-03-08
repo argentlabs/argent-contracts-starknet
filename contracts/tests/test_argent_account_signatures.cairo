@@ -1,6 +1,6 @@
 use array::ArrayTrait;
-use contracts::ArgentAccount;
 
+use contracts::ArgentAccount;
 use contracts::tests::signer_pubkey;
 use contracts::tests::guardian_pubkey;
 use contracts::tests::guardian_backup_pubkey;

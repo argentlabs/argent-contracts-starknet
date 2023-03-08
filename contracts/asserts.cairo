@@ -1,12 +1,14 @@
-use traits::Into;
 use array::ArrayTrait;
 use array::SpanTrait;
+use gas::get_gas;
+use traits::Into;
 use zeroable::Zeroable;
+
 use starknet::get_contract_address;
 use starknet::get_caller_address;
 use starknet::ContractAddressZeroable;
 use starknet::ContractAddressIntoFelt;
-use gas::get_gas;
+
 use contracts::calls::Call;
 
 const TRANSACTION_VERSION: felt = 1;

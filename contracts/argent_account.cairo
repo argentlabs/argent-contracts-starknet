@@ -130,7 +130,7 @@ mod ArgentAccount {
             }
         } else {
             // make sure no call is to the account
-            assert_no_self_call(@calls, account_address);
+            assert_no_self_call(calls.span(), account_address);
         }
 
         let (signer_signature, guardian_signature) = split_signatures(full_signature);

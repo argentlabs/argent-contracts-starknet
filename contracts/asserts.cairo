@@ -28,8 +28,8 @@ fn assert_correct_tx_version(tx_version: felt) {
     assert(is_valid, 'argent/invalid-tx-version');
 }
 
-fn assert_no_self_call(calls: @Array::<Call>, self: ContractAddress) {
-    assert_no_self_call_internal(calls.span(), self);
+fn assert_no_self_call(calls: Span::<Call>, self: ContractAddress) {
+    assert_no_self_call_internal(calls, self);
 }
 
 fn assert_no_self_call_internal(mut calls: Span<Call>, self: ContractAddress) {

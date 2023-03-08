@@ -111,7 +111,7 @@ mod ArgentAccount {
         let account_address = get_contract_address();
         let tx_info = unbox(get_tx_info());
         let transaction_hash = tx_info.transaction_hash;
-        let mut full_signature = tx_info.signature;
+        let full_signature = tx_info.signature;
 
         if calls.len() == 1_usize {
             let call = calls.at(0_usize);

@@ -115,7 +115,7 @@ mod ArgentMultisigAccount {
 
     // TODO use the actual signature of the account interface
     // #[external] // ignored to avoid serde
-    fn __validate__(ref calls: Array<Call>) {
+    fn __validate__(ref calls: Array<Call>) -> felt {
         assert_initialized();
 
         let account_address = get_contract_address();
@@ -138,6 +138,8 @@ mod ArgentMultisigAccount {
 
         let valid = is_valid_signature(tx_info.transaction_hash, signature_array);
         assert(valid, 'argent/invalid-signature');
+
+        VALIDATED
     }
 
     // @dev Set the initial parameters for the multisig. It's mandatory to call this methods to secure the account.

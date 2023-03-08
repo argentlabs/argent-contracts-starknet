@@ -148,6 +148,10 @@ mod ArgentAccount {
         assert(signer::read() == 0, 'argent/already-initialized');
         // check that the target signer is not zero
         assert(new_signer != 0, 'argent/null-signer');
+        // There cannot be a guardian_backup when there is no guardian
+        if new_guardian.is_zero() {
+            assert(new_guardian_backup.is_zero(), 'argent/backup-should-be-null');
+        }
         // initialize the account
         signer::write(new_signer);
         guardian::write(new_guardian);

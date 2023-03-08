@@ -2,6 +2,7 @@
 mod ArgentAccount {
     use traits::Into;
     use array::ArrayTrait;
+    use array::SpanTrait;
     use zeroable::Zeroable;
     use box::unbox;
 
@@ -110,7 +111,7 @@ mod ArgentAccount {
         let account_address = get_contract_address();
         let tx_info = unbox(get_tx_info());
         let transaction_hash = tx_info.transaction_hash;
-        let mut full_signature = tx_info.signature.snapshot;
+        let mut full_signature = tx_info.signature;
 
         if calls.len() == 1_usize {
             let call = calls.at(0_usize);
@@ -293,20 +294,20 @@ mod ArgentAccount {
     // ERC1271
     #[view]
     fn is_valid_signature(hash: felt, signatures: Array<felt>) -> bool {
-        let (signer_signature, guardian_signature) = split_signatures(@signatures);
+        let (signer_signature, guardian_signature) = split_signatures(signatures.span());
         let is_valid_signer = is_valid_signer_signature(hash, signer_signature);
         let is_valid_guardian = is_valid_guardian_signature(hash, guardian_signature);
         is_valid_signer & is_valid_guardian
     }
 
-    fn is_valid_signer_signature(hash: felt, signature: @Array<felt>) -> bool {
+    fn is_valid_signer_signature(hash: felt, signature: Span<felt>) -> bool {
         assert(signature.len() == 2_usize, 'argent/invalid-signature-length');
         let signature_r = *signature.at(0_usize);
         let signature_s = *signature.at(1_usize);
         check_ecdsa_signature(hash, signer::read(), signature_r, signature_s)
     }
 
-    fn is_valid_guardian_signature(hash: felt, signature: @Array<felt>) -> bool {
+    fn is_valid_guardian_signature(hash: felt, signature: Span<felt>) -> bool {
         let guardian_ = guardian::read();
         if guardian_ == 0 {
             assert(signature.len() == 0_usize, 'argent/invalid-signature-length');
@@ -322,9 +323,9 @@ mod ArgentAccount {
         check_ecdsa_signature(hash, guardian_backup::read(), signature_r, signature_s)
     }
 
-    fn split_signatures(full_signature: @Array::<felt>) -> (@Array::<felt>, @Array::<felt>) {
+    fn split_signatures(full_signature: Span::<felt>) -> (Span::<felt>, Span::<felt>) {
         if full_signature.len() == 2_usize {
-            return (full_signature, @ArrayTrait::new());
+            return (full_signature, ArrayTrait::new().span());
         }
         assert(full_signature.len() == 4_usize, 'argent/invalid-signature-length');
         let mut signer_signature = ArrayTrait::new();
@@ -333,7 +334,7 @@ mod ArgentAccount {
         let mut guardian_signature = ArrayTrait::new();
         guardian_signature.append(*full_signature.at(2_usize));
         guardian_signature.append(*full_signature.at(3_usize));
-        (@signer_signature, @guardian_signature)
+        (signer_signature.span(), guardian_signature.span())
     }
 
     /////////////////////

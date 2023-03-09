@@ -17,8 +17,9 @@ mod ArgentAccount {
     use contracts::asserts::assert_no_self_call;
     use contracts::StorageAccessEscape;
     use contracts::EscapeSerde;
-
-    use contracts::calls::Call;
+    use contracts::Call;
+    use contracts::CallSerde;
+    use contracts::ArrayCallSerde;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
@@ -103,7 +104,7 @@ mod ArgentAccount {
     // EXTERNAL FUNCTIONS
     /////////////////////
 
-    // #[external] // ignored to avoid serde
+    #[external]
     fn __validate__(ref calls: Array::<Call>) -> felt {
         // make sure the account is initialized
         assert(signer::read() != 0, 'argent/uninitialized');

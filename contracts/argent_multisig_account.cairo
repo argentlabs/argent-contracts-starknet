@@ -129,7 +129,7 @@ mod ArgentMultisigAccount {
             }
         } else {
             // make sure no call is to the account
-            asserts::assert_no_self_call(@calls, account_address);
+            asserts::assert_no_self_call(calls.span(), account_address);
         }
 
         let tx_info = unbox(starknet::get_tx_info());

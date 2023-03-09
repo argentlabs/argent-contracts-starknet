@@ -1,12 +1,14 @@
-use traits::Into;
 use array::ArrayTrait;
 use array::SpanTrait;
+use gas::get_gas;
+use traits::Into;
 use zeroable::Zeroable;
+
 use starknet::get_contract_address;
 use starknet::get_caller_address;
 use starknet::ContractAddressZeroable;
 use starknet::ContractAddressIntoFelt;
-use gas::get_gas;
+
 use contracts::calls::Call;
 
 const TRANSACTION_VERSION: felt = 1;
@@ -28,11 +30,7 @@ fn assert_correct_tx_version(tx_version: felt) {
     assert(is_valid, 'argent/invalid-tx-version');
 }
 
-fn assert_no_self_call(calls: @Array::<Call>, self: ContractAddress) {
-    assert_no_self_call_internal(calls.span(), self);
-}
-
-fn assert_no_self_call_internal(mut calls: Span<Call>, self: ContractAddress) {
+fn assert_no_self_call(mut calls: Span::<Call>, self: ContractAddress) {
     match get_gas() {
         Option::Some(_) => {},
         Option::None(_) => {
@@ -44,7 +42,7 @@ fn assert_no_self_call_internal(mut calls: Span<Call>, self: ContractAddress) {
     match calls.pop_front() {
         Option::Some(call) => {
             assert((*call.to).into() != self.into(), 'argent/no-multicall-to-self');
-            assert_no_self_call_internal(calls, self);
+            assert_no_self_call(calls, self);
         },
         Option::None(_) => (),
     }

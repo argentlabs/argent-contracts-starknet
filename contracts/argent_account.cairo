@@ -1,18 +1,20 @@
 #[account_contract]
 mod ArgentAccount {
-    use traits::Into;
     use array::ArrayTrait;
     use array::SpanTrait;
-    use zeroable::Zeroable;
     use box::unbox;
+    use ecdsa::check_ecdsa_signature;
+    use traits::Into;
+    use zeroable::Zeroable;
 
-    use starknet::get_contract_address;
-    use starknet::get_tx_info;
     use starknet::ContractAddressIntoFelt;
     use starknet::get_block_info;
+    use starknet::get_contract_address;
+    use starknet::get_tx_info;
     use starknet::VALIDATED;
-    use ecdsa::check_ecdsa_signature;
 
+    use contracts::EscapeSerde;
+    use contracts::StorageAccessEscape;
     use contracts::asserts::assert_only_self;
     use contracts::asserts::assert_no_self_call;
     use contracts::StorageAccessEscape;
@@ -20,6 +22,9 @@ mod ArgentAccount {
     use contracts::Call;
     use contracts::CallSerde;
     use contracts::ArrayCallSerde;
+    
+    const NAME: felt = 'ArgentAccount';
+    const VERSION: felt = '0.3.0-alpha.1';
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
@@ -48,10 +53,9 @@ mod ArgentAccount {
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt =
         738349667340360233096752603318170676063569407717437256101137432051386874767;
 
-
-    /////////////////////
-    // STORAGE
-    /////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                           Storage                                          //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[derive(Copy)]
     struct Escape {
@@ -66,9 +70,9 @@ mod ArgentAccount {
         escape: Escape,
     }
 
-    /////////////////////
-    // EVENTS
-    /////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                           Events                                           //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[event]
     fn account_created(account: felt, key: felt, guardian: felt) {}
@@ -100,9 +104,9 @@ mod ArgentAccount {
     #[event]
     fn guardian_backup_changed(new_guardian: felt) {}
 
-    /////////////////////
-    // EXTERNAL FUNCTIONS
-    /////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                     External functions                                     //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[external]
     fn __validate__(ref calls: Array::<Call>) -> felt {
@@ -132,7 +136,7 @@ mod ArgentAccount {
             }
         } else {
             // make sure no call is to the account
-            assert_no_self_call(@calls, account_address);
+            assert_no_self_call(calls.span(), account_address);
         }
 
         let (signer_signature, guardian_signature) = split_signatures(full_signature);
@@ -236,7 +240,6 @@ mod ArgentAccount {
         clear_escape();
         signer::write(new_signer);
     // signer_escaped(new_signer);
-
     }
 
     #[external]
@@ -249,9 +252,7 @@ mod ArgentAccount {
         clear_escape();
         guardian::write(new_guardian);
     // guardian_escaped(new_guardian);
-
     }
-
 
     #[external]
     fn cancel_escape() {
@@ -262,9 +263,9 @@ mod ArgentAccount {
     // escape_canceled();
     }
 
-    /////////////////////
-    // VIEW FUNCTIONS
-    /////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                       View functions                                       //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[view]
     fn get_signer() -> felt {
@@ -301,6 +302,10 @@ mod ArgentAccount {
         is_valid_signer & is_valid_guardian
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                          Internal                                          //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
     fn is_valid_signer_signature(hash: felt, signature: Span<felt>) -> bool {
         assert(signature.len() == 2_usize, 'argent/invalid-signature-length');
         let signature_r = *signature.at(0_usize);
@@ -324,7 +329,7 @@ mod ArgentAccount {
         check_ecdsa_signature(hash, guardian_backup::read(), signature_r, signature_s)
     }
 
-    fn split_signatures(full_signature: Span::<felt>) -> (Span::<felt>, Span::<felt>) {
+    fn split_signatures(full_signature: Span<felt>) -> (Span::<felt>, Span::<felt>) {
         if full_signature.len() == 2_usize {
             return (full_signature, ArrayTrait::new().span());
         }
@@ -337,10 +342,6 @@ mod ArgentAccount {
         guardian_signature.append(*full_signature.at(3_usize));
         (signer_signature.span(), guardian_signature.span())
     }
-
-    /////////////////////
-    // UTILS
-    /////////////////////
 
     #[inline(always)]
     fn clear_escape() {

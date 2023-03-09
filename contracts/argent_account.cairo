@@ -13,16 +13,14 @@ mod ArgentAccount {
     use starknet::get_tx_info;
     use starknet::VALIDATED;
 
-    use contracts::EscapeSerde;
-    use contracts::StorageAccessEscape;
     use contracts::asserts::assert_only_self;
     use contracts::asserts::assert_no_self_call;
-    use contracts::StorageAccessEscape;
     use contracts::EscapeSerde;
+    use contracts::StorageAccessEscape;
     use contracts::Call;
     use contracts::CallSerde;
     use contracts::ArrayCallSerde;
-    
+
     const NAME: felt = 'ArgentAccount';
     const VERSION: felt = '0.3.0-alpha.1';
 

@@ -18,7 +18,6 @@ fn initialize_account() {
     ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
 }
 
-
 fn initialize_account_without_guardian() {
     ArgentAccount::initialize(signer_pubkey, 0, 0);
 }

@@ -7,7 +7,6 @@ use starknet::get_contract_address;
 use contracts::asserts;
 use contracts::argent_account::ArgentAccount::Call;
 
-impl CallDrop of Drop::<Call>;
 impl ArrayCallDrop of Drop::<Array::<Call>>;
 
 #[test]

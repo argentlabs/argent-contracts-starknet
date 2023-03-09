@@ -2,5 +2,5 @@
 struct Call {
     to: ContractAddress,
     selector: felt,
-    calldata: Array::<felt>,
+    calldata: Array<felt>,
 }

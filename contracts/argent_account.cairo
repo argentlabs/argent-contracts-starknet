@@ -19,6 +19,9 @@ mod ArgentAccount {
     use contracts::asserts::assert_no_self_call;
     use contracts::calls::Call;
 
+    const NAME: felt = 'ArgentAccount';
+    const VERSION: felt = '0.3.0-alpha.1';
+
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;

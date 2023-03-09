@@ -3,7 +3,6 @@ mod ArgentMultisigAccount {
     use array::ArrayTrait;
     use array::SpanTrait;
     use traits::Into;
-    use traits::TryInto;
     use zeroable::Zeroable;
     use option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
@@ -255,10 +254,13 @@ mod ArgentMultisigAccount {
             }
         }
 
-        match signatures.pop_front() {
+        let sig_pop: Option<@SignerSignature> = signatures.pop_front();
+        match sig_pop {
             Option::Some(i) => {
                 let signer_sig = *i;
-                assert(signer_sig.signer > last_signer, 'argent/signatures-not-sorted');
+                assert(
+                    signer_sig.signer.into() > last_signer.into(), 'argent/signatures-not-sorted'
+                );
                 let valid_signer_signature = is_valid_signer_signature(
                     hash, signer_sig.signer, signer_sig.signature_r, signer_sig.signature_s
                 );

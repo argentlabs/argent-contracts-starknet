@@ -28,12 +28,7 @@ fn assert_correct_tx_version(tx_version: felt) {
     assert(is_valid, 'argent/invalid-tx-version');
 }
 
-
-fn assert_no_self_call(calls: @Array<Call>, self: ContractAddress) {
-    assert_no_self_call_internal(calls.span(), self);
-}
-
-fn assert_no_self_call_internal(mut calls: Span<Call>, self: ContractAddress) {
+fn assert_no_self_call(mut calls: Span::<Call>, self: ContractAddress) {
     match get_gas() {
         Option::Some(_) => {},
         Option::None(_) => {
@@ -46,7 +41,7 @@ fn assert_no_self_call_internal(mut calls: Span<Call>, self: ContractAddress) {
     match calls.pop_front() {
         Option::Some(call) => {
             assert((*call.to).into() != self.into(), 'argent/no-multicall-to-self');
-            assert_no_self_call_internal(calls, self);
+            assert_no_self_call(calls, self);
         },
         Option::None(_) => (),
     }

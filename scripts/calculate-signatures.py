@@ -33,6 +33,8 @@ invalid_hash = 12832251995451816049799244581803586463740886572887694231150530979
 signer_r, signer_s = signer.sign(hash)
 guardian_r, guardian_s = guardian.sign(hash)
 guardian_backup_r, guardian_backup_s = guardian_backup.sign(hash)
+wrong_signer_r, wrong_signer_s = wrong_signer.sign(hash)
+wrong_guardian_r, wrong_guardian_s = wrong_guardian.sign(hash)
 
 print(f"""
 
@@ -49,5 +51,13 @@ const guardian_s: felt = 0x{guardian_s:x};
 const guardian_backup_pubkey: felt = 0x{guardian_backup.public_key:x};
 const guardian_backup_r: felt = 0x{guardian_backup_r:x};
 const guardian_backup_s: felt = 0x{guardian_backup_s:x};
+
+const wrong_signer_pubkey: felt = 0x{wrong_signer.public_key:x};
+const wrong_signer_r: felt = 0x{wrong_signer_r:x};
+const wrong_signer_s: felt = 0x{wrong_signer_s:x};
+
+const wrong_guardian_pubkey: felt = 0x{wrong_guardian.public_key:x};
+const wrong_guardian_r: felt = 0x{wrong_guardian_r:x};
+const wrong_guardian_s: felt = 0x{wrong_guardian_s:x};
 
 """);

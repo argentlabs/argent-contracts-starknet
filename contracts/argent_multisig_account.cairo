@@ -97,7 +97,7 @@ mod ArgentMultisigAccount {
     #[view]
     fn is_valid_signature(hash: felt, signatures: Array<felt>) -> bool {
         let threshold = threshold::read();
-        assert(threshold != 0_usize, 'argent/not-initialized');
+        assert_initialized();
         assert(
             signatures.len() == threshold * SignerSignatureSize, 'argent/invalid-signature-length'
         );
@@ -153,6 +153,7 @@ mod ArgentMultisigAccount {
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
         signers_storage::add_signers(signers.span(), 0);
+        //  TODO If they change usize type to be "more" it'll break, should we prevent it and use usize instead, or write directly into()?
         threshold::write(threshold);
 
         let removed_signers = ArrayTrait::new();
@@ -281,6 +282,8 @@ mod ArgentMultisigAccount {
         assert(threshold <= signers_len, 'argent/bad-threshold');
     }
 
+
+    #[inline(always)]
     fn assert_initialized() {
         let threshold = threshold::read();
         assert(threshold != 0_u32, 'argent/not-initialized');
@@ -296,7 +299,6 @@ mod ArgentMultisigAccount {
         use array::ArrayTrait;
         use array::SpanTrait;
         use gas::get_gas_all;
-
 
         // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
         // Otherwise cost increases with the list size
@@ -468,22 +470,19 @@ mod ArgentMultisigAccount {
             match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
-                    let mut err_data = ArrayTrait::new();
+                    let mut err_data = array_new();
                     array_append(ref err_data, 'Out of gas');
                     panic(err_data)
                 }
             }
-            if (from_signer == 0) {
-                // empty list
-                return (0_u32, 0);
-            }
-
             let next_signer = super::signer_list::read(from_signer);
-            if (next_signer == 0) {
-                return (1_u32, from_signer);
+            match next_signer {
+                0 => (1_u32, from_signer),
+                _ => {
+                    let (next_length, last_signer) = load_from(next_signer);
+                    (next_length + 1_u32, last_signer)
+                }
             }
-            let (next_length, last_signer) = load_from(next_signer);
-            (next_length + 1_u32, last_signer)
         }
 
         // Returns the number of signers. Cost increases with the list size
@@ -500,13 +499,14 @@ mod ArgentMultisigAccount {
                     panic(err_data)
                 }
             }
-            if (from_signer == 0) {
-                // empty list
-                return 0_u32;
+            match from_signer {
+                0 => 0_u32,
+                _ => {
+                    let next_signer = super::signer_list::read(from_signer);
+                    let next_length = get_signers_len_from(next_signer);
+                    next_length + 1_u32
+                }
             }
-            let next_signer = super::signer_list::read(from_signer);
-            let next_length = get_signers_len_from(next_signer);
-            next_length + 1_u32
         }
 
         fn get_signers() -> Array<felt> {
@@ -523,12 +523,13 @@ mod ArgentMultisigAccount {
                     panic(err_data)
                 }
             }
-            if (from_signer == 0) {
-                // empty list
-                return previous_signers;
+            match from_signer {
+                0 => previous_signers,
+                _ => {
+                    previous_signers.append(from_signer);
+                    get_signers_from(super::signer_list::read(from_signer), previous_signers)
+                }
             }
-            previous_signers.append(from_signer);
-            get_signers_from(super::signer_list::read(from_signer), previous_signers)
         }
     }
 }

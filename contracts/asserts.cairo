@@ -39,6 +39,7 @@ fn assert_no_self_call(mut calls: Span::<Call>, self: ContractAddress) {
             panic(data);
         },
     }
+
     match calls.pop_front() {
         Option::Some(call) => {
             assert((*call.to).into() != self.into(), 'argent/no-multicall-to-self');

@@ -470,7 +470,7 @@ mod ArgentMultisigAccount {
             match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
-                    let mut err_data = array_new();
+                    let mut err_data = ArrayTrait::new();
                     array_append(ref err_data, 'Out of gas');
                     panic(err_data)
                 }

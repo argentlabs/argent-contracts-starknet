@@ -286,7 +286,7 @@ mod ArgentMultisigAccount {
     #[inline(always)]
     fn assert_initialized() {
         let threshold = threshold::read();
-        assert(threshold != 0_u32, 'argent/not-initialized');
+        assert(threshold != 0_u32, 'argent/uninitialized');
     }
 
 

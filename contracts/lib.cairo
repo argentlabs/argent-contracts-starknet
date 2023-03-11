@@ -28,8 +28,6 @@ use starknet::contract_address::ContractAddressSerde;
 use argent_account::ArgentAccount::Escape;
 use calls::Call;
 
-impl ArrayCallDrop of Drop::<Array::<Call>>;
-
 impl StorageAccessEscape of StorageAccess::<Escape> {
     fn read(
         address_domain: felt, base: starknet::StorageBaseAddress

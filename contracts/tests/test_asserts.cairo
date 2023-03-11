@@ -7,8 +7,6 @@ use starknet::get_contract_address;
 use contracts::asserts;
 use contracts::argent_account::ArgentAccount::Call;
 
-impl ArrayCallDrop of Drop::<Array::<Call>>;
-
 #[test]
 #[available_gas(2000000)]
 fn test_assert_only_self() {

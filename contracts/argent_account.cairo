@@ -162,9 +162,7 @@ mod ArgentAccount {
         signer::write(new_signer);
         guardian::write(new_guardian);
         guardian_backup::write(new_guardian_backup);
-        AccountCreated(
-            starknet::get_contract_address(), new_signer, new_guardian, new_guardian_backup
-        );
+        AccountCreated(get_contract_address(), new_signer, new_guardian, new_guardian_backup);
     }
 
     #[external]

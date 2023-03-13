@@ -4,10 +4,10 @@
 // In terms of storage this will use one storage slot per signer
 // Reading become a bit more expensive for some operations as it need to go through the full list for some operations
 mod signers_storage {
-    use contracts::argent_multisig_account::ArgentMultisigAccount;
     use array::ArrayTrait;
     use array::SpanTrait;
     use gas::get_gas_all;
+    use contracts::argent_multisig_account::ArgentMultisigAccount;
 
 
     // Constant computation cost if `signer` is in fact in the list AND it's not the last one.

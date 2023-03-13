@@ -73,7 +73,9 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[event]
-    fn AccountCreated(account: ContractAddress, key: felt, guardian: felt, new_guardian_backup: felt) {}
+    fn AccountCreated(
+        account: ContractAddress, key: felt, guardian: felt, new_guardian_backup: felt
+    ) {}
 
     #[event]
     fn TransactionExecuted(hash: felt, response: Array<felt>) {}
@@ -160,7 +162,9 @@ mod ArgentAccount {
         signer::write(new_signer);
         guardian::write(new_guardian);
         guardian_backup::write(new_guardian_backup);
-        AccountCreated(starknet::get_contract_address(), new_signer, new_guardian, new_guardian_backup);
+        AccountCreated(
+            starknet::get_contract_address(), new_signer, new_guardian, new_guardian_backup
+        );
     }
 
     #[external]

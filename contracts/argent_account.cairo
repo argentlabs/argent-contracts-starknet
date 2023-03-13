@@ -149,6 +149,38 @@ mod ArgentAccount {
     }
 
     #[external]
+    fn __validate_declare__(class_hash: felt) {
+        assert(signer::read() != 0, 'argent/uninitialized');
+
+        let tx_info = unbox(get_tx_info());
+        let transaction_hash = tx_info.transaction_hash;
+        let full_signature = tx_info.signature;
+        let (signer_signature, guardian_signature) = split_signatures(full_signature);
+        let is_valid = is_valid_signer_signature(transaction_hash, signer_signature);
+        assert(is_valid, 'argent/invalid-signer-sig');
+        let is_valid = is_valid_guardian_signature(transaction_hash, guardian_signature);
+        assert(is_valid, 'argent/invalid-guardian-sig');
+
+        VALIDATED
+    }
+
+    #[raw_input]
+    #[external]
+    fn __validate_deploy__(selector: felt, calldata_size: Array<felt>) {
+        assert(signer::read() != 0, 'argent/uninitialized');
+
+        let tx_info = unbox(get_tx_info());
+        let (signer_signature, guardian_signature) = split_signatures(full_signature);
+        let is_valid = is_valid_signer_signature(transaction_hash, signer_signature);
+        assert(is_valid, 'argent/invalid-signer-sig');
+        let is_valid = is_valid_guardian_signature(transaction_hash, guardian_signature);
+        assert(is_valid, 'argent/invalid-guardian-sig');
+
+        VALIDATED
+    }
+
+
+    #[external]
     fn initialize(new_signer: felt, new_guardian: felt, new_guardian_backup: felt) {
         // check that we are not already initialized
         assert(signer::read() == 0, 'argent/already-initialized');

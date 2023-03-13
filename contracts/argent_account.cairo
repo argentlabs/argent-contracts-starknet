@@ -55,7 +55,7 @@ mod ArgentAccount {
     //                                           Storage                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    #[derive(Copy)]
+    #[derive(Drop, Copy)]
     struct Escape {
         active_at: u64,
         escape_type: felt, // TODO Change to enum? ==> Can't do ATM because would have to impl partialEq, update storage, etc etc

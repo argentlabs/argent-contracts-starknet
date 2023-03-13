@@ -97,7 +97,7 @@ mod ArgentMultisigAccount {
     #[view]
     fn is_valid_signature(hash: felt, signatures: Array<felt>) -> bool {
         let threshold = threshold::read();
-        assert_initialized();
+        assert(threshold != 0_u32, 'argent/uninitialized');
         assert(
             signatures.len() == threshold * SignerSignatureSize, 'argent/invalid-signature-length'
         );
@@ -303,11 +303,11 @@ mod ArgentMultisigAccount {
         // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
         // Otherwise cost increases with the list size
         fn is_signer(signer: felt) -> bool {
-            if (signer == 0) {
+            if signer == 0 {
                 return false;
             }
             let next_signer = super::signer_list::read(signer);
-            if (next_signer != 0) {
+            if next_signer != 0 {
                 return true;
             }
             // check if its the latest
@@ -318,12 +318,12 @@ mod ArgentMultisigAccount {
 
         // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
         fn is_signer_using_last(signer: felt, last_signer: felt) -> bool {
-            if (signer == 0) {
+            if signer == 0 {
                 return false;
             }
 
             let next_signer = super::signer_list::read(signer);
-            if (next_signer != 0) {
+            if next_signer != 0 {
                 return true;
             }
 
@@ -347,7 +347,7 @@ mod ArgentMultisigAccount {
             }
 
             let next_signer = super::signer_list::read(from_signer);
-            if (next_signer == 0) {
+            if next_signer == 0 {
                 return from_signer;
             }
             find_last_signer_recursive(next_signer)
@@ -373,7 +373,7 @@ mod ArgentMultisigAccount {
             let next_signer = super::signer_list::read(from_signer);
             assert(next_signer != 0, 'argent/cant-find-signer-before');
 
-            if (next_signer == signer_after) {
+            if next_signer == signer_after {
                 return from_signer;
             }
             find_signer_before_recursive(signer_after, next_signer)
@@ -427,7 +427,7 @@ mod ArgentMultisigAccount {
 
                     super::signer_list::write(previous_signer, next_signer);
 
-                    if (next_signer == 0) {
+                    if next_signer == 0 {
                         // Removing the last item
                         remove_signers(signers_to_remove, previous_signer);
                     } else {
@@ -475,14 +475,18 @@ mod ArgentMultisigAccount {
                     panic(err_data)
                 }
             }
-            let next_signer = super::signer_list::read(from_signer);
-            match next_signer {
-                0 => (1_u32, from_signer),
-                _ => {
-                    let (next_length, last_signer) = load_from(next_signer);
-                    (next_length + 1_u32, last_signer)
-                }
+            if from_signer == 0 {
+                // empty list
+                return (0_u32, 0);
             }
+
+            let next_signer = super::signer_list::read(from_signer);
+
+            if next_signer == 0 {
+                return (1_u32, from_signer);
+            }
+            let (next_length, last_signer) = load_from(next_signer);
+            (next_length + 1_u32, last_signer)
         }
 
         // Returns the number of signers. Cost increases with the list size
@@ -499,14 +503,13 @@ mod ArgentMultisigAccount {
                     panic(err_data)
                 }
             }
-            match from_signer {
-                0 => 0_u32,
-                _ => {
-                    let next_signer = super::signer_list::read(from_signer);
-                    let next_length = get_signers_len_from(next_signer);
-                    next_length + 1_u32
-                }
+            if from_signer == 0 {
+                // empty list
+                return 0_u32;
             }
+            let next_signer = super::signer_list::read(from_signer);
+            let next_length = get_signers_len_from(next_signer);
+            next_length + 1_u32
         }
 
         fn get_signers() -> Array<felt> {
@@ -523,13 +526,12 @@ mod ArgentMultisigAccount {
                     panic(err_data)
                 }
             }
-            match from_signer {
-                0 => previous_signers,
-                _ => {
-                    previous_signers.append(from_signer);
-                    get_signers_from(super::signer_list::read(from_signer), previous_signers)
-                }
+            if from_signer == 0 {
+                // empty list
+                return previous_signers;
             }
+            previous_signers.append(from_signer);
+            get_signers_from(super::signer_list::read(from_signer), previous_signers)
         }
     }
 }

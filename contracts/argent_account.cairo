@@ -73,34 +73,34 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[event]
-    fn account_created(account: felt, key: felt, guardian: felt) {}
+    fn AccountCreated(account: felt, key: felt, guardian: felt) {}
 
     #[event]
-    fn transaction_executed(hash: felt, response: Array<felt>) {}
+    fn TransactionExecuted(hash: felt, response: Array<felt>) {}
 
     #[event]
-    fn escape_signer_triggered(active_at: u64) {}
+    fn EscapeSignerTriggered(active_at: u64) {}
 
     #[event]
-    fn escape_guardian_triggered(active_at: felt) {}
+    fn EscapeGuardianTriggered(active_at: felt) {}
 
     #[event]
-    fn signer_escaped(new_signer: felt) {}
+    fn SignerEscaped(new_signer: felt) {}
 
     #[event]
-    fn guardian_escaped(new_guardian: felt) {}
+    fn GuardianEscaped(new_guardian: felt) {}
 
     #[event]
-    fn escape_canceled() {}
+    fn EscapeCanceled() {}
 
     #[event]
-    fn signer_changed(new_signer: felt) {}
+    fn SignerChanged(new_signer: felt) {}
 
     #[event]
-    fn guardian_changed(new_guardian: felt) {}
+    fn GuardianChanged(new_guardian: felt) {}
 
     #[event]
-    fn guardian_backup_changed(new_guardian: felt) {}
+    fn GuardianBackupChanged(new_guardian: felt) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                     External functions                                     //
@@ -160,7 +160,7 @@ mod ArgentAccount {
         signer::write(new_signer);
         guardian::write(new_guardian);
         guardian_backup::write(new_guardian_backup);
-    // account_created(starknet::get_contract_address(), new_signer, new_guardian, new_guardian_backup);
+    // AccountCreated(starknet::get_contract_address(), new_signer, new_guardian, new_guardian_backup);
     }
 
     #[external]
@@ -169,7 +169,7 @@ mod ArgentAccount {
         assert(new_signer != 0, 'argent/null-signer');
 
         signer::write(new_signer);
-    //signer_changed(new_signer);
+    //SignerChanged(new_signer);
     }
 
     #[external]
@@ -181,7 +181,7 @@ mod ArgentAccount {
         }
 
         guardian::write(new_guardian);
-    //guardian_changed(new_guardian);
+    //GuardianChanged(new_guardian);
     }
 
     #[external]
@@ -190,7 +190,7 @@ mod ArgentAccount {
         assert_guardian_set();
 
         guardian_backup::write(new_guardian_backup);
-    //guardian_backup_changed(new_guardian_backup);
+    //GuardianBackupChanged(new_guardian_backup);
     }
 
     // TODO Shouldn't we specify who will be the new signer, and allow him to take ownership when time is over?
@@ -215,7 +215,7 @@ mod ArgentAccount {
         // Since none of these two can be filled at the same time, it'll always use one and only one slot
         // Or we could simplify it by having the struct taking signer_active_at and guardian_active_at and no map
         escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_SIGNER });
-    // escape_signer_triggered(active_at);
+    // EscapeSignerTriggered(active_at);
     }
 
     #[external]
@@ -225,7 +225,7 @@ mod ArgentAccount {
 
         let active_at = unbox(get_block_info()).block_timestamp + ESCAPE_SECURITY_PERIOD;
         escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_GUARDIAN });
-    // escape_guardian_triggered(active_at);
+    // EscapeGuardianTriggered(active_at);
     }
 
     #[external]
@@ -237,7 +237,7 @@ mod ArgentAccount {
         // TODO Shouldn't we check new_signer != guardian?
         clear_escape();
         signer::write(new_signer);
-    // signer_escaped(new_signer);
+    // SignerEscaped(new_signer);
     }
 
     #[external]
@@ -249,7 +249,7 @@ mod ArgentAccount {
 
         clear_escape();
         guardian::write(new_guardian);
-    // guardian_escaped(new_guardian);
+    // GuardianEscaped(new_guardian);
     }
 
     #[external]
@@ -258,7 +258,7 @@ mod ArgentAccount {
         assert(escape::read().active_at != 0_u64, 'argent/no-active-escape');
 
         clear_escape();
-    // escape_canceled();
+    // EscapeCanceled();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

@@ -306,7 +306,7 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     fn is_valid_span_signature(hash: felt, signatures: Span<felt>) -> bool {
-        if guardian::read() == 0 {
+        if _guardian::read() == 0 {
             return is_valid_signer_signature(hash, signatures);
         }
         let (signer_signature, guardian_signature) = split_signatures(signatures);
@@ -326,10 +326,11 @@ mod ArgentAccount {
         assert(signature.len() == 2_usize, 'argent/invalid-signature-length');
         let signature_r = *signature.at(0_usize);
         let signature_s = *signature.at(1_usize);
-        if check_ecdsa_signature(hash, guardian::read(), signature_r, signature_s) {
+        let is_valid = check_ecdsa_signature(hash, _guardian::read(), signature_r, signature_s);
+        if is_valid {
             true
         } else {
-            check_ecdsa_signature(hash, guardian_backup::read(), signature_r, signature_s)
+            check_ecdsa_signature(hash, _guardian_backup::read(), signature_r, signature_s)
         }
     }
 

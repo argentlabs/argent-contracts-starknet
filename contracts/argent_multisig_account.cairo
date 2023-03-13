@@ -33,7 +33,7 @@ mod ArgentMultisigAccount {
     }
 
     #[event]
-    fn configuration_updated(
+    fn ConfigurationUpdated(
         new_threshold: u32,
         new_signers_count: u32,
         added_signers: Array<felt>,
@@ -155,7 +155,7 @@ mod ArgentMultisigAccount {
 
         let removed_signers = ArrayTrait::new();
 
-        configuration_updated(threshold, signers_len, signers, removed_signers);
+        ConfigurationUpdated(threshold, signers_len, signers, removed_signers);
     }
 
     #[external]
@@ -170,7 +170,7 @@ mod ArgentMultisigAccount {
         let added_signers = ArrayTrait::new();
         let removed_signers = ArrayTrait::new();
 
-        configuration_updated(new_threshold, signers_len, added_signers, removed_signers);
+        ConfigurationUpdated(new_threshold, signers_len, added_signers, removed_signers);
     }
 
     // @dev Adds new signers to the account, additionally sets a new threshold
@@ -190,7 +190,7 @@ mod ArgentMultisigAccount {
 
         let removed_signers = ArrayTrait::new();
 
-        configuration_updated(new_threshold, new_signers_len, signers_to_add, removed_signers);
+        ConfigurationUpdated(new_threshold, new_signers_len, signers_to_add, removed_signers);
     }
 
     // @dev Removes account signers, additionally sets a new threshold
@@ -210,7 +210,7 @@ mod ArgentMultisigAccount {
 
         let added_signers = ArrayTrait::new();
 
-        configuration_updated(new_threshold, new_signers_len, added_signers, signers_to_remove);
+        ConfigurationUpdated(new_threshold, new_signers_len, added_signers, signers_to_remove);
     }
 
     // @dev Replace one signer with a different one
@@ -229,7 +229,7 @@ mod ArgentMultisigAccount {
         let mut removed_signer = ArrayTrait::new();
         removed_signer.append(signer_to_remove);
 
-        configuration_updated(threshold::read(), signers_len, added_signers, removed_signer);
+        ConfigurationUpdated(threshold::read(), signers_len, added_signers, removed_signer);
     }
 
     /////////////////////////////////////////////////////////

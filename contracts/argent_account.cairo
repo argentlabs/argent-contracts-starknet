@@ -139,11 +139,8 @@ mod ArgentAccount {
             assert_no_self_call(calls.span(), account_address);
         }
 
-        let (signer_signature, guardian_signature) = split_signatures(full_signature);
-        let is_valid = is_valid_signer_signature(transaction_hash, signer_signature);
-        assert(is_valid, 'argent/invalid-signer-sig');
-        let is_valid = is_valid_guardian_signature(transaction_hash, guardian_signature);
-        assert(is_valid, 'argent/invalid-guardian-sig');
+        let is_valid = is_valid_span_signature(transaction_hash, full_signature);
+        assert(is_valid, 'argent/invalid-signature');
 
         VALIDATED
     }
@@ -296,15 +293,22 @@ mod ArgentAccount {
     // ERC1271
     #[view]
     fn is_valid_signature(hash: felt, signatures: Array<felt>) -> bool {
-        let (signer_signature, guardian_signature) = split_signatures(signatures.span());
-        let is_valid_signer = is_valid_signer_signature(hash, signer_signature);
-        let is_valid_guardian = is_valid_guardian_signature(hash, guardian_signature);
-        is_valid_signer & is_valid_guardian
+        is_valid_span_signature(hash, signatures.span())
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                          Internal                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    fn is_valid_span_signature(hash: felt, signatures: Span<felt>) -> bool {
+        if guardian::read() == 0 {
+            return is_valid_signer_signature(hash, signatures);
+        }
+        let (signer_signature, guardian_signature) = split_signatures(signatures);
+        let is_valid_signer = is_valid_signer_signature(hash, signer_signature);
+        let is_valid_guardian = is_valid_guardian_signature(hash, guardian_signature);
+        is_valid_signer & is_valid_guardian
+    }
 
     fn is_valid_signer_signature(hash: felt, signature: Span<felt>) -> bool {
         assert(signature.len() == 2_usize, 'argent/invalid-signature-length');
@@ -314,15 +318,10 @@ mod ArgentAccount {
     }
 
     fn is_valid_guardian_signature(hash: felt, signature: Span<felt>) -> bool {
-        let guardian_ = _guardian::read();
-        if guardian_ == 0 {
-            assert(signature.len() == 0_usize, 'argent/invalid-signature-length');
-            return true;
-        }
         assert(signature.len() == 2_usize, 'argent/invalid-signature-length');
         let signature_r = *signature.at(0_usize);
         let signature_s = *signature.at(1_usize);
-        let is_valid = check_ecdsa_signature(hash, guardian_, signature_r, signature_s);
+        let is_valid = check_ecdsa_signature(hash, guardian::read(), signature_r, signature_s);
         if is_valid {
             return true;
         }

@@ -260,7 +260,7 @@ mod ArgentAccount {
         assert(escape::read().active_at != 0_u64, 'argent/no-active-escape');
 
         clear_escape();
-    // EscapeCanceled();
+        EscapeCanceled();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

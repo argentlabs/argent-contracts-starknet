@@ -73,7 +73,9 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[event]
-    fn AccountCreated(account: felt, key: felt, guardian: felt) {}
+    fn AccountCreated(
+        account: ContractAddress, key: felt, guardian: felt, new_guardian_backup: felt
+    ) {}
 
     #[event]
     fn TransactionExecuted(hash: felt, response: Array<felt>) {}
@@ -82,7 +84,7 @@ mod ArgentAccount {
     fn EscapeSignerTriggered(active_at: u64) {}
 
     #[event]
-    fn EscapeGuardianTriggered(active_at: felt) {}
+    fn EscapeGuardianTriggered(active_at: u64) {}
 
     #[event]
     fn SignerEscaped(new_signer: felt) {}
@@ -160,7 +162,7 @@ mod ArgentAccount {
         signer::write(new_signer);
         guardian::write(new_guardian);
         guardian_backup::write(new_guardian_backup);
-    // AccountCreated(starknet::get_contract_address(), new_signer, new_guardian, new_guardian_backup);
+        AccountCreated(get_contract_address(), new_signer, new_guardian, new_guardian_backup);
     }
 
     #[external]
@@ -169,7 +171,7 @@ mod ArgentAccount {
         assert(new_signer != 0, 'argent/null-signer');
 
         signer::write(new_signer);
-    //SignerChanged(new_signer);
+        SignerChanged(new_signer);
     }
 
     #[external]
@@ -181,7 +183,7 @@ mod ArgentAccount {
         }
 
         guardian::write(new_guardian);
-    //GuardianChanged(new_guardian);
+        GuardianChanged(new_guardian);
     }
 
     #[external]
@@ -190,7 +192,7 @@ mod ArgentAccount {
         assert_guardian_set();
 
         guardian_backup::write(new_guardian_backup);
-    //GuardianBackupChanged(new_guardian_backup);
+        GuardianBackupChanged(new_guardian_backup);
     }
 
     // TODO Shouldn't we specify who will be the new signer, and allow him to take ownership when time is over?
@@ -215,7 +217,7 @@ mod ArgentAccount {
         // Since none of these two can be filled at the same time, it'll always use one and only one slot
         // Or we could simplify it by having the struct taking signer_active_at and guardian_active_at and no map
         escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_SIGNER });
-    // EscapeSignerTriggered(active_at);
+        EscapeSignerTriggered(active_at);
     }
 
     #[external]
@@ -225,7 +227,7 @@ mod ArgentAccount {
 
         let active_at = unbox(get_block_info()).block_timestamp + ESCAPE_SECURITY_PERIOD;
         escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_GUARDIAN });
-    // EscapeGuardianTriggered(active_at);
+        EscapeGuardianTriggered(active_at);
     }
 
     #[external]
@@ -237,7 +239,7 @@ mod ArgentAccount {
         // TODO Shouldn't we check new_signer != guardian?
         clear_escape();
         signer::write(new_signer);
-    // SignerEscaped(new_signer);
+        SignerEscaped(new_signer);
     }
 
     #[external]
@@ -249,7 +251,7 @@ mod ArgentAccount {
 
         clear_escape();
         guardian::write(new_guardian);
-    // GuardianEscaped(new_guardian);
+        GuardianEscaped(new_guardian);
     }
 
     #[external]
@@ -258,7 +260,7 @@ mod ArgentAccount {
         assert(escape::read().active_at != 0_u64, 'argent/no-active-escape');
 
         clear_escape();
-    // EscapeCanceled();
+        EscapeCanceled();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

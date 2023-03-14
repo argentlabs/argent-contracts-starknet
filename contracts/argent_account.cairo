@@ -144,16 +144,20 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn __validate_declare__(class_hash: felt) {
+    fn __validate_declare__(class_hash: felt) -> felt {
         assert_initialized();
         assert_is_valid_signature();
+        VALIDATED
     }
 
     #[raw_input]
     #[external]
-    fn __validate_deploy__(selector: felt, calldata_size: Array<felt>) {
+    fn __validate_deploy__(
+        class_hash: felt, contract_address_salt: felt, public_key_: felt
+    ) -> felt {
         assert_initialized();
         assert_is_valid_signature();
+        VALIDATED
     }
 
 

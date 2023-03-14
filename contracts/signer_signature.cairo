@@ -12,6 +12,8 @@ struct SignerSignature {
 
 const SignerSignatureSize: u32 = 3_u32;
 
+impl SignerSignatureArrayDrop of Drop::<Array::<SignerSignature>>;
+
 impl SignerSignatureSerde of serde::Serde::<SignerSignature> {
     fn serialize(ref serialized: Array<felt>, input: SignerSignature) {
         Serde::serialize(ref serialized, input.signer);

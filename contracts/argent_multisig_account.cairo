@@ -2,21 +2,22 @@
 mod ArgentMultisigAccount {
     use array::ArrayTrait;
     use array::SpanTrait;
-    use traits::Into;
-    use zeroable::Zeroable;
-    use option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
     use gas::get_gas_all;
+    use option::OptionTrait;
+    use traits::Into;
+    use zeroable::Zeroable;
+
     use starknet::get_contract_address;
     use starknet::VALIDATED;
+
     use contracts::asserts;
-    use contracts::signer_signature::SignerSignature;
-    use contracts::signer_signature::deserialize_array_signer_signature;
-    use contracts::signer_signature::SignerSignatureSize;
+    use contracts::SignerSignature;
+    use contracts::deserialize_array_signer_signature;
+    use contracts::SignerSignatureSize;
+    use contracts::SignerSignatureArrayDrop;
     use contracts::calls::Call;
     use contracts::spans;
-
-    impl SignerSignatureArrayDrop of Drop::<Array::<SignerSignature>>;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;

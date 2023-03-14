@@ -145,44 +145,35 @@ fn invalid_signer_with_invalid_guardian() {
 #[test]
 #[available_gas(2000000)]
 #[should_panic(expected = ('argent/invalid-signature-length', ))]
+fn invalid_empty_signature_without_guardian() {
+    initialize_account_without_guardian();
+    let signatures = ArrayTrait::new();
+    is_valid_signature(message_hash, signatures);
+}
+
+#[test]
+#[available_gas(2000000)]
 fn invalid_signature_length_without_guardian() {
     initialize_account_without_guardian();
+    let signatures = double_signature(signer_r, signer_s, guardian_r, guardian_s);
+    assert(!is_valid_signature(message_hash, signatures), 'invalid signature');
+}
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected = ('argent/invalid-signature-length', ))]
+fn invalid_empty_signature_with_guardian() {
+    initialize_account();
     let signatures = ArrayTrait::new();
     is_valid_signature(message_hash, signatures);
 }
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/invalid-signature-length', ))]
-fn invalid_signature_length_without_guardian_2() {
-    initialize_account_without_guardian();
-    let signatures = double_signature(signer_r, signer_s, guardian_r, guardian_s);
-    is_valid_signature(message_hash, signatures);
-}
-
-#[test]
-#[available_gas(2000000)]
-#[should_panic(expected = ('argent/invalid-signature-length', ))]
 fn invalid_signature_length_with_guardian() {
     initialize_account();
-    let signatures = ArrayTrait::new();
-    is_valid_signature(message_hash, signatures);
-}
-
-#[test]
-#[available_gas(2000000)]
-#[should_panic(expected = ('argent/invalid-signature-length', ))]
-fn invalid_signature_length_with_guardian_2() {
-    initialize_account();
     let signatures = single_signature(signer_r, signer_s);
-    is_valid_signature(message_hash, signatures);
-}
-
-#[test]
-#[available_gas(2000000)]
-#[should_panic(expected = ('argent/invalid-signature-length', ))]
-fn invalid_signature_length_with_guardian_3() {
-    initialize_account();
+    assert(!is_valid_signature(message_hash, signatures), 'invalid signature');
     let signatures = single_signature(guardian_r, guardian_s);
-    is_valid_signature(message_hash, signatures);
+    assert(!is_valid_signature(message_hash, signatures), 'invalid signature');
 }

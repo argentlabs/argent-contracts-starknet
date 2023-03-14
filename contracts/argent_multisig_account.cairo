@@ -16,6 +16,8 @@ mod ArgentMultisigAccount {
     use contracts::calls::Call;
     use contracts::spans;
 
+    impl SignerSignatureArrayDrop of Drop::<Array::<SignerSignature>>;
+
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
@@ -23,11 +25,8 @@ mod ArgentMultisigAccount {
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt =
         738349667340360233096752603318170676063569407717437256101137432051386874767;
 
-
     const NAME: felt = 'ArgentMultisig';
     const VERSION: felt = '0.1.0-alpha.1';
-
-    impl SignerSignatureArrayDrop of Drop::<Array::<SignerSignature>>;
 
     struct Storage {
         threshold: u32,

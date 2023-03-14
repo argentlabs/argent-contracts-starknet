@@ -116,16 +116,18 @@ mod ArgentAccount {
             let call = calls.at(0_usize);
             if (*call.to).into() == account_address.into() {
                 let tx_info = unbox(get_tx_info());
-                let transaction_hash = tx_info.transaction_hash;
-                let full_signature = tx_info.signature;
                 let selector = *call.selector;
                 if selector == ESCAPE_GUARDIAN_SELECTOR | selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
-                    let is_valid = is_valid_signer_signature(transaction_hash, full_signature);
+                    let is_valid = is_valid_signer_signature(
+                        tx_info.transaction_hash, tx_info.signature
+                    );
                     assert(is_valid, 'argent/invalid-signer-sig');
                     return VALIDATED;
                 }
                 if selector == ESCAPE_SIGNER_SELECTOR | selector == TRIGGER_ESCAPE_SIGNER_SELECTOR {
-                    let is_valid = is_valid_guardian_signature(transaction_hash, full_signature);
+                    let is_valid = is_valid_guardian_signature(
+                        tx_info.transaction_hash, tx_info.signature
+                    );
                     assert(is_valid, 'argent/invalid-guardian-sig');
                     return VALIDATED;
                 }
@@ -136,7 +138,7 @@ mod ArgentAccount {
             assert_no_self_call(calls.span(), account_address);
         }
 
-        assert_is_lama_rename();
+        assert_is_valid_signature();
 
         VALIDATED
     }
@@ -144,14 +146,14 @@ mod ArgentAccount {
     #[external]
     fn __validate_declare__(class_hash: felt) {
         assert_initialized();
-        assert_is_lama_rename();
+        assert_is_valid_signature();
     }
 
     #[raw_input]
     #[external]
     fn __validate_deploy__(selector: felt, calldata_size: Array<felt>) {
         assert_initialized();
-        assert_is_lama_rename();
+        assert_is_valid_signature();
     }
 
 
@@ -313,7 +315,7 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                          Internal                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    fn assert_is_lama_rename() {
+    fn assert_is_valid_signature() {
         let tx_info = unbox(get_tx_info());
         let transaction_hash = tx_info.transaction_hash;
         let full_signature = tx_info.signature;

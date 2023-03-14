@@ -16,7 +16,7 @@ mod ArgentMultisigAccount {
     use contracts::deserialize_array_signer_signature;
     use contracts::SignerSignatureSize;
     use contracts::SignerSignatureArrayDrop;
-    use contracts::calls::Call;
+    use contracts::Call;
     use contracts::spans;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;

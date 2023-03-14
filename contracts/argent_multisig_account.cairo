@@ -2,18 +2,21 @@
 mod ArgentMultisigAccount {
     use array::ArrayTrait;
     use array::SpanTrait;
-    use traits::Into;
-    use zeroable::Zeroable;
-    use option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
     use gas::get_gas_all;
+    use option::OptionTrait;
+    use traits::Into;
+    use zeroable::Zeroable;
+
     use starknet::get_contract_address;
     use starknet::VALIDATED;
+
     use contracts::asserts;
-    use contracts::signer_signature::SignerSignature;
-    use contracts::signer_signature::deserialize_array_signer_signature;
-    use contracts::signer_signature::SignerSignatureSize;
-    use contracts::calls::Call;
+    use contracts::SignerSignature;
+    use contracts::deserialize_array_signer_signature;
+    use contracts::SignerSignatureSize;
+    // use contracts::SignerSignatureArrayDrop;
+    use contracts::Call;
     use contracts::spans;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
@@ -23,9 +26,10 @@ mod ArgentMultisigAccount {
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt =
         738349667340360233096752603318170676063569407717437256101137432051386874767;
 
-
     const NAME: felt = 'ArgentMultisig';
     const VERSION: felt = '0.1.0-alpha.1';
+
+    impl SignerSignatureArrayDrop of Drop::<Array::<SignerSignature>>;
 
     struct Storage {
         threshold: u32,

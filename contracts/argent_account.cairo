@@ -15,11 +15,14 @@ mod ArgentAccount {
 
     use contracts::asserts::assert_only_self;
     use contracts::asserts::assert_no_self_call;
+    use contracts::Escape;
     use contracts::EscapeSerde;
     use contracts::StorageAccessEscape;
     use contracts::Call;
     use contracts::CallSerde;
     use contracts::ArrayCallSerde;
+
+    impl ArrayCallDrop of Drop::<Array::<Call>>;
 
     const NAME: felt = 'ArgentAccount';
     const VERSION: felt = '0.3.0-alpha.1';
@@ -54,12 +57,6 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                           Storage                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    #[derive(Drop, Copy)]
-    struct Escape {
-        active_at: u64,
-        escape_type: felt, // TODO Change to enum? ==> Can't do ATM because would have to impl partialEq, update storage, etc etc
-    }
 
     struct Storage {
         _signer: felt,

@@ -30,6 +30,7 @@ mod ArgentAccount {
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
+    const ERC1271_VALIDATED: felt = 0x1626ba7e;
 
     const ESCAPE_SECURITY_PERIOD: u64 = 604800_u64; // 7 * 24 * 60 * 60;  // 7 days
 
@@ -139,8 +140,10 @@ mod ArgentAccount {
         let (signer_signature, guardian_signature) = split_signatures(full_signature);
         let is_valid = is_valid_signer_signature(transaction_hash, signer_signature);
         assert(is_valid, 'argent/invalid-signer-sig');
-        let is_valid = is_valid_guardian_signature(transaction_hash, guardian_signature);
-        assert(is_valid, 'argent/invalid-guardian-sig');
+        if _guardian::read() != 0 {
+            let is_valid = is_valid_guardian_signature(transaction_hash, guardian_signature);
+            assert(is_valid, 'argent/invalid-guardian-sig');
+        }
 
         VALIDATED
     }
@@ -292,38 +295,52 @@ mod ArgentAccount {
 
     // ERC1271
     #[view]
-    fn is_valid_signature(hash: felt, signatures: Array<felt>) -> bool {
-        let (signer_signature, guardian_signature) = split_signatures(signatures.span());
-        let is_valid_signer = is_valid_signer_signature(hash, signer_signature);
-        let is_valid_guardian = is_valid_guardian_signature(hash, guardian_signature);
-        is_valid_signer & is_valid_guardian
+    fn is_valid_signature(hash: felt, signatures: Array<felt>) -> felt {
+        if is_valid_span_signature(hash, signatures.span()) {
+            ERC1271_VALIDATED
+        } else {
+            0
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                          Internal                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    fn is_valid_span_signature(hash: felt, signatures: Span<felt>) -> bool {
+        let (signer_signature, guardian_signature) = split_signatures(signatures);
+        let is_valid = is_valid_signer_signature(hash, signer_signature);
+        if !is_valid {
+            return false;
+        }
+        if _guardian::read() == 0 {
+            guardian_signature.is_empty()
+        } else {
+            is_valid_guardian_signature(hash, guardian_signature)
+        }
+    }
+
     fn is_valid_signer_signature(hash: felt, signature: Span<felt>) -> bool {
-        assert(signature.len() == 2_usize, 'argent/invalid-signature-length');
+        if signature.len() != 2_usize {
+            return false;
+        }
         let signature_r = *signature.at(0_usize);
         let signature_s = *signature.at(1_usize);
         check_ecdsa_signature(hash, _signer::read(), signature_r, signature_s)
     }
 
     fn is_valid_guardian_signature(hash: felt, signature: Span<felt>) -> bool {
-        let guardian_ = _guardian::read();
-        if guardian_ == 0 {
-            assert(signature.len() == 0_usize, 'argent/invalid-signature-length');
-            return true;
+        if signature.len() != 2_usize {
+            return false;
         }
-        assert(signature.len() == 2_usize, 'argent/invalid-signature-length');
         let signature_r = *signature.at(0_usize);
         let signature_s = *signature.at(1_usize);
-        let is_valid = check_ecdsa_signature(hash, guardian_, signature_r, signature_s);
+        let is_valid = check_ecdsa_signature(hash, _guardian::read(), signature_r, signature_s);
         if is_valid {
-            return true;
+            true
+        } else {
+            check_ecdsa_signature(hash, _guardian_backup::read(), signature_r, signature_s)
         }
-        check_ecdsa_signature(hash, _guardian_backup::read(), signature_r, signature_s)
     }
 
     fn split_signatures(full_signature: Span<felt>) -> (Span::<felt>, Span::<felt>) {

@@ -99,7 +99,7 @@ mod ArgentMultisigAccount {
     #[view]
     fn is_valid_signature(hash: felt, signatures: Array<felt>) -> bool {
         let threshold = threshold::read();
-        assert(threshold != 0_usize, 'argent/not-initialized');
+        assert(threshold != 0_u32, 'argent/uninitialized');
         assert(
             signatures.len() == threshold * SignerSignatureSize, 'argent/invalid-signature-length'
         );
@@ -155,6 +155,7 @@ mod ArgentMultisigAccount {
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
         signers_storage::add_signers(signers.span(), 0);
+        //  TODO If they change usize type to be "more" it'll break, should we prevent it and use usize instead, or write directly into()?
         threshold::write(threshold);
 
         let removed_signers = ArrayTrait::new();
@@ -283,9 +284,11 @@ mod ArgentMultisigAccount {
         assert(threshold <= signers_len, 'argent/bad-threshold');
     }
 
+
+    #[inline(always)]
     fn assert_initialized() {
         let threshold = threshold::read();
-        assert(threshold != 0_u32, 'argent/not-initialized');
+        assert(threshold != 0_u32, 'argent/uninitialized');
     }
 
 
@@ -299,15 +302,14 @@ mod ArgentMultisigAccount {
         use array::SpanTrait;
         use gas::get_gas_all;
 
-
         // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
         // Otherwise cost increases with the list size
         fn is_signer(signer: felt) -> bool {
-            if (signer == 0) {
+            if signer == 0 {
                 return false;
             }
             let next_signer = super::signer_list::read(signer);
-            if (next_signer != 0) {
+            if next_signer != 0 {
                 return true;
             }
             // check if its the latest
@@ -318,12 +320,12 @@ mod ArgentMultisigAccount {
 
         // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
         fn is_signer_using_last(signer: felt, last_signer: felt) -> bool {
-            if (signer == 0) {
+            if signer == 0 {
                 return false;
             }
 
             let next_signer = super::signer_list::read(signer);
-            if (next_signer != 0) {
+            if next_signer != 0 {
                 return true;
             }
 
@@ -347,7 +349,7 @@ mod ArgentMultisigAccount {
             }
 
             let next_signer = super::signer_list::read(from_signer);
-            if (next_signer == 0) {
+            if next_signer == 0 {
                 return from_signer;
             }
             find_last_signer_recursive(next_signer)
@@ -373,7 +375,7 @@ mod ArgentMultisigAccount {
             let next_signer = super::signer_list::read(from_signer);
             assert(next_signer != 0, 'argent/cant-find-signer-before');
 
-            if (next_signer == signer_after) {
+            if next_signer == signer_after {
                 return from_signer;
             }
             find_signer_before_recursive(signer_after, next_signer)
@@ -427,7 +429,7 @@ mod ArgentMultisigAccount {
 
                     super::signer_list::write(previous_signer, next_signer);
 
-                    if (next_signer == 0) {
+                    if next_signer == 0 {
                         // Removing the last item
                         remove_signers(signers_to_remove, previous_signer);
                     } else {
@@ -475,13 +477,14 @@ mod ArgentMultisigAccount {
                     panic(err_data)
                 }
             }
-            if (from_signer == 0) {
+            if from_signer == 0 {
                 // empty list
                 return (0_u32, 0);
             }
 
             let next_signer = super::signer_list::read(from_signer);
-            if (next_signer == 0) {
+
+            if next_signer == 0 {
                 return (1_u32, from_signer);
             }
             let (next_length, last_signer) = load_from(next_signer);
@@ -502,7 +505,7 @@ mod ArgentMultisigAccount {
                     panic(err_data)
                 }
             }
-            if (from_signer == 0) {
+            if from_signer == 0 {
                 // empty list
                 return 0_u32;
             }
@@ -525,7 +528,7 @@ mod ArgentMultisigAccount {
                     panic(err_data)
                 }
             }
-            if (from_signer == 0) {
+            if from_signer == 0 {
                 // empty list
                 return previous_signers;
             }

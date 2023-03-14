@@ -27,6 +27,8 @@ mod ArgentMultisigAccount {
     const NAME: felt = 'ArgentMultisig';
     const VERSION: felt = '0.1.0-alpha.1';
 
+    impl SignerSignatureArrayDrop of Drop::<Array::<SignerSignature>>;
+
     struct Storage {
         threshold: u32,
         signer_list: LegacyMap<felt, felt>,

@@ -13,6 +13,7 @@ mod ArgentMultisigAccount {
 
     use contracts::asserts;
     use contracts::SignerSignature;
+    use contracts::signers_storage::signers_storage;
     use contracts::deserialize_array_signer_signature;
     use contracts::SignerSignatureSize;
     use contracts::Call;

@@ -8,7 +8,7 @@ mod argent_account;
 use argent_account::ArgentAccount;
 
 
-mod signer_storage;
+mod signers_storage;
 mod argent_multisig_account;
 use argent_multisig_account::ArgentMultisigAccount;
 

@@ -2,12 +2,14 @@ use array::ArrayTrait;
 use array::SpanTrait;
 use gas::get_gas;
 
-fn span_to_array(span: Span<felt>) -> Array<felt> {
+fn span_to_array(span: Span<felt252>) -> Array<felt252> {
     let mut output = ArrayTrait::new();
     span_to_array_helper(span, output)
 }
 
-fn span_to_array_helper(mut span: Span<felt>, mut curr_output: Array<felt>) -> Array<felt> {
+fn span_to_array_helper(
+    mut span: Span<felt252>, mut curr_output: Array<felt252>
+) -> Array<felt252> {
     match get_gas() {
         Option::Some(_) => {},
         Option::None(_) => {

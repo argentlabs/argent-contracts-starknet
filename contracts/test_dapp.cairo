@@ -7,7 +7,7 @@ mod TestDapp {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     struct Storage {
-        stored_number: LegacyMap::<ContractAddress, felt>, 
+        stored_number: LegacyMap::<ContractAddress, felt252>, 
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -15,22 +15,22 @@ mod TestDapp {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[external]
-    fn set_number(number: felt) {
+    fn set_number(number: felt252) {
         stored_number::write(get_caller_address(), number);
     }
 
     #[external]
-    fn set_number_double(number: felt) {
+    fn set_number_double(number: felt252) {
         stored_number::write(get_caller_address(), number * 2);
     }
 
     #[external]
-    fn set_number_times3(number: felt) {
+    fn set_number_times3(number: felt252) {
         stored_number::write(get_caller_address(), number * 3);
     }
 
     #[external]
-    fn increase_number(number: felt) -> felt {
+    fn increase_number(number: felt252) -> felt252 {
         let user = get_caller_address();
         let val = stored_number::read(user);
         let new_number = val + number;
@@ -39,7 +39,7 @@ mod TestDapp {
     }
 
     #[external]
-    fn throw_error(number: felt) {
+    fn throw_error(number: felt252) {
         assert(0 == 1, 'test dapp reverted')
     }
 
@@ -48,7 +48,7 @@ mod TestDapp {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[view]
-    fn get_number(user: ContractAddress) -> (felt) {
+    fn get_number(user: ContractAddress) -> (felt252) {
         stored_number::read(user)
     }
 }

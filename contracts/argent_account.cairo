@@ -7,7 +7,7 @@ mod ArgentAccount {
     use traits::Into;
     use zeroable::Zeroable;
 
-    use starknet::ContractAddressIntoFelt;
+    use starknet::ContractAddressIntoFelt252;
     use starknet::get_block_info;
     use starknet::get_contract_address;
     use starknet::get_tx_info;
@@ -24,35 +24,35 @@ mod ArgentAccount {
 
     impl ArrayCallDrop of Drop::<Array::<Call>>;
 
-    const NAME: felt = 'ArgentAccount';
-    const VERSION: felt = '0.3.0-alpha.1';
+    const NAME: felt252 = 'ArgentAccount';
+    const VERSION: felt252 = '0.3.0-alpha.1';
 
-    const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
-    const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
-    const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
-    const ERC1271_VALIDATED: felt = 0x1626ba7e;
+    const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
+    const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
+    const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt252 = 0x3943f10f;
+    const ERC1271_VALIDATED: felt252 = 0x1626ba7e;
 
     const ESCAPE_SECURITY_PERIOD: u64 = 604800_u64; // 7 * 24 * 60 * 60;  // 7 days
 
-    const ESCAPE_TYPE_GUARDIAN: felt = 1;
-    const ESCAPE_TYPE_SIGNER: felt = 2;
+    const ESCAPE_TYPE_GUARDIAN: felt252 = 1;
+    const ESCAPE_TYPE_SIGNER: felt252 = 2;
 
     // TODO: update selectors
-    const CHANGE_SIGNER_SELECTOR: felt =
+    const CHANGE_SIGNER_SELECTOR: felt252 =
         174572128530328568741270994650351248940644050288235239638974755381225723145;
-    const CHANGE_GUARDIAN_SELECTOR: felt =
+    const CHANGE_GUARDIAN_SELECTOR: felt252 =
         1296071702357547150019664216025682391016361613613945351022196390148584441374;
-    const TRIGGER_ESCAPE_GUARDIAN_SELECTOR: felt =
+    const TRIGGER_ESCAPE_GUARDIAN_SELECTOR: felt252 =
         145954635736934016296422259475449005649670140213177066015821444644082814628;
-    const TRIGGER_ESCAPE_SIGNER_SELECTOR: felt =
+    const TRIGGER_ESCAPE_SIGNER_SELECTOR: felt252 =
         440853473255486090032829492468113410146539319637824817002531798290796877036;
-    const ESCAPE_GUARDIAN_SELECTOR: felt =
+    const ESCAPE_GUARDIAN_SELECTOR: felt252 =
         510756951529079116816142749077704776910668567546043821008232923043034641617;
-    const ESCAPE_SIGNER_SELECTOR: felt =
+    const ESCAPE_SIGNER_SELECTOR: felt252 =
         1455116469465411075152303383382102930902943882042348163899277328605146981359;
-    const CANCEL_ESCAPE_SELECTOR: felt =
+    const CANCEL_ESCAPE_SELECTOR: felt252 =
         1387988583969094862956788899343599960070518480842441785602446058600435897039;
-    const EXECUTE_AFTER_UPGRADE_SELECTOR: felt =
+    const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
         738349667340360233096752603318170676063569407717437256101137432051386874767;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -60,9 +60,9 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     struct Storage {
-        _signer: felt,
-        _guardian: felt,
-        _guardian_backup: felt,
+        _signer: felt252,
+        _guardian: felt252,
+        _guardian_backup: felt252,
         _escape: Escape,
     }
 
@@ -72,11 +72,11 @@ mod ArgentAccount {
 
     #[event]
     fn AccountCreated(
-        account: ContractAddress, key: felt, guardian: felt, new_guardian_backup: felt
+        account: ContractAddress, key: felt252, guardian: felt252, new_guardian_backup: felt252
     ) {}
 
     #[event]
-    fn TransactionExecuted(hash: felt, response: Array<felt>) {}
+    fn TransactionExecuted(hash: felt252, response: Array<felt252>) {}
 
     #[event]
     fn EscapeSignerTriggered(active_at: u64) {}
@@ -85,29 +85,29 @@ mod ArgentAccount {
     fn EscapeGuardianTriggered(active_at: u64) {}
 
     #[event]
-    fn SignerEscaped(new_signer: felt) {}
+    fn SignerEscaped(new_signer: felt252) {}
 
     #[event]
-    fn GuardianEscaped(new_guardian: felt) {}
+    fn GuardianEscaped(new_guardian: felt252) {}
 
     #[event]
     fn EscapeCanceled() {}
 
     #[event]
-    fn SignerChanged(new_signer: felt) {}
+    fn SignerChanged(new_signer: felt252) {}
 
     #[event]
-    fn GuardianChanged(new_guardian: felt) {}
+    fn GuardianChanged(new_guardian: felt252) {}
 
     #[event]
-    fn GuardianBackupChanged(new_guardian: felt) {}
+    fn GuardianBackupChanged(new_guardian: felt252) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                     External functions                                     //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[external]
-    fn __validate__(ref calls: Array::<Call>) -> felt {
+    fn __validate__(ref calls: Array::<Call>) -> felt252 {
         // make sure the account is initialized
         assert(_signer::read() != 0, 'argent/uninitialized');
 
@@ -149,7 +149,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn initialize(new_signer: felt, new_guardian: felt, new_guardian_backup: felt) {
+    fn initialize(new_signer: felt252, new_guardian: felt252, new_guardian_backup: felt252) {
         // check that we are not already initialized
         assert(_signer::read() == 0, 'argent/already-initialized');
         // check that the target signer is not zero
@@ -166,7 +166,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn change_signer(new_signer: felt) {
+    fn change_signer(new_signer: felt252) {
         assert_only_self();
         assert(new_signer != 0, 'argent/null-signer');
 
@@ -175,7 +175,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn change_guardian(new_guardian: felt) {
+    fn change_guardian(new_guardian: felt252) {
         assert_only_self();
         // There cannot be a guardian_backup when there is no guardian
         if new_guardian.is_zero() {
@@ -187,7 +187,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn change_guardian_backup(new_guardian_backup: felt) {
+    fn change_guardian_backup(new_guardian_backup: felt252) {
         assert_only_self();
         assert_guardian_set();
 
@@ -212,7 +212,7 @@ mod ArgentAccount {
         }
 
         let active_at = unbox(get_block_info()).block_timestamp + ESCAPE_SECURITY_PERIOD;
-        // TODO Since timestamp is a u64, and escape type 1 small felt, we can pack those two values and use 1 storage slot
+        // TODO Since timestamp is a u64, and escape type 1 small felt252, we can pack those two values and use 1 storage slot
         // TODO We could also inverse the way we store using a map and at ESCAPE_TYPE_SIGNER having the escape active_at of the signer and at ESCAPE_TYPE_GUARDIAN escape active_at
         // Since none of these two can be filled at the same time, it'll always use one and only one slot
         // Or we could simplify it by having the struct taking signer_active_at and guardian_active_at and no map
@@ -231,7 +231,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn escape_signer(new_signer: felt) {
+    fn escape_signer(new_signer: felt252) {
         assert_only_self();
         assert_guardian_set();
         assert_can_escape_for_type(ESCAPE_TYPE_SIGNER);
@@ -243,7 +243,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn escape_guardian(new_guardian: felt) {
+    fn escape_guardian(new_guardian: felt252) {
         assert_only_self();
         assert_guardian_set();
         assert_can_escape_for_type(ESCAPE_TYPE_GUARDIAN);
@@ -268,17 +268,17 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[view]
-    fn get_signer() -> felt {
+    fn get_signer() -> felt252 {
         _signer::read()
     }
 
     #[view]
-    fn get_guardian() -> felt {
+    fn get_guardian() -> felt252 {
         _guardian::read()
     }
 
     #[view]
-    fn get_guardian_backup() -> felt {
+    fn get_guardian_backup() -> felt252 {
         _guardian_backup::read()
     }
 
@@ -289,13 +289,13 @@ mod ArgentAccount {
 
     // ERC165
     #[view]
-    fn supports_interface(interface_id: felt) -> bool {
+    fn supports_interface(interface_id: felt252) -> bool {
         interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
     }
 
     // ERC1271
     #[view]
-    fn is_valid_signature(hash: felt, signatures: Array<felt>) -> felt {
+    fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> felt252 {
         if is_valid_span_signature(hash, signatures.span()) {
             ERC1271_VALIDATED
         } else {
@@ -307,7 +307,7 @@ mod ArgentAccount {
     //                                          Internal                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    fn is_valid_span_signature(hash: felt, signatures: Span<felt>) -> bool {
+    fn is_valid_span_signature(hash: felt252, signatures: Span<felt252>) -> bool {
         let (signer_signature, guardian_signature) = split_signatures(signatures);
         let is_valid = is_valid_signer_signature(hash, signer_signature);
         if !is_valid {
@@ -320,7 +320,7 @@ mod ArgentAccount {
         }
     }
 
-    fn is_valid_signer_signature(hash: felt, signature: Span<felt>) -> bool {
+    fn is_valid_signer_signature(hash: felt252, signature: Span<felt252>) -> bool {
         if signature.len() != 2_usize {
             return false;
         }
@@ -329,7 +329,7 @@ mod ArgentAccount {
         check_ecdsa_signature(hash, _signer::read(), signature_r, signature_s)
     }
 
-    fn is_valid_guardian_signature(hash: felt, signature: Span<felt>) -> bool {
+    fn is_valid_guardian_signature(hash: felt252, signature: Span<felt252>) -> bool {
         if signature.len() != 2_usize {
             return false;
         }
@@ -343,7 +343,7 @@ mod ArgentAccount {
         }
     }
 
-    fn split_signatures(full_signature: Span<felt>) -> (Span::<felt>, Span::<felt>) {
+    fn split_signatures(full_signature: Span<felt252>) -> (Span::<felt252>, Span::<felt252>) {
         if full_signature.len() == 2_usize {
             return (full_signature, ArrayTrait::new().span());
         }
@@ -362,7 +362,7 @@ mod ArgentAccount {
         _escape::write(Escape { active_at: 0_u64, escape_type: 0 });
     }
 
-    fn assert_can_escape_for_type(escape_type: felt) {
+    fn assert_can_escape_for_type(escape_type: felt252) {
         let current_escape = _escape::read();
         // TODO Hopefuly there will be a way to directly get the block timestamp without having to do this magic (will do a PR in their repo RN) 
         let block_timestamp = unbox(get_block_info()).block_timestamp;

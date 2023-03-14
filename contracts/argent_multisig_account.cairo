@@ -19,29 +19,29 @@ mod ArgentMultisigAccount {
     use contracts::Call;
     use contracts::spans;
 
-    const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
-    const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
-    const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
+    const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
+    const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
+    const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt252 = 0x3943f10f;
 
-    const EXECUTE_AFTER_UPGRADE_SELECTOR: felt =
+    const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
         738349667340360233096752603318170676063569407717437256101137432051386874767;
 
-    const NAME: felt = 'ArgentMultisig';
-    const VERSION: felt = '0.1.0-alpha.1';
+    const NAME: felt252 = 'ArgentMultisig';
+    const VERSION: felt252 = '0.1.0-alpha.1';
 
     impl SignerSignatureArrayDrop of Drop::<Array::<SignerSignature>>;
 
     struct Storage {
         threshold: u32,
-        signer_list: LegacyMap<felt, felt>,
+        signer_list: LegacyMap<felt252, felt252>,
     }
 
     #[event]
     fn ConfigurationUpdated(
         new_threshold: u32,
         new_signers_count: u32,
-        added_signers: Array<felt>,
-        removed_signers: Array<felt>
+        added_signers: Array<felt252>,
+        removed_signers: Array<felt252>
     ) {}
 
     /////////////////////////////////////////////////////////
@@ -49,12 +49,12 @@ mod ArgentMultisigAccount {
     /////////////////////////////////////////////////////////
 
     #[view]
-    fn get_name() -> felt {
+    fn get_name() -> felt252 {
         NAME
     }
 
     #[view]
-    fn get_version() -> felt {
+    fn get_version() -> felt252 {
         VERSION
     }
 
@@ -64,24 +64,24 @@ mod ArgentMultisigAccount {
     }
 
     #[view]
-    fn get_signers() -> Array<felt> {
+    fn get_signers() -> Array<felt252> {
         signers_storage::get_signers()
     }
 
     #[view]
-    fn is_signer(signer: felt) -> bool {
+    fn is_signer(signer: felt252) -> bool {
         signers_storage::is_signer(signer)
     }
 
     // ERC165
     #[view]
-    fn supports_interface(interface_id: felt) -> bool {
+    fn supports_interface(interface_id: felt252) -> bool {
         interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
     }
 
     #[view]
     fn assert_valid_signer_signature(
-        hash: felt, signer: felt, signature_r: felt, signature_s: felt
+        hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
     ) {
         let is_valid = is_valid_signer_signature(hash, signer, signature_r, signature_s);
         assert(is_valid, 'argent/invalid-signature');
@@ -89,7 +89,7 @@ mod ArgentMultisigAccount {
 
     #[view]
     fn is_valid_signer_signature(
-        hash: felt, signer: felt, signature_r: felt, signature_s: felt
+        hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
     ) -> bool {
         let is_signer = signers_storage::is_signer(signer);
         assert(is_signer, 'argent/not-a-signer');
@@ -97,7 +97,7 @@ mod ArgentMultisigAccount {
     }
 
     #[view]
-    fn is_valid_signature(hash: felt, signatures: Array<felt>) -> bool {
+    fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> bool {
         let threshold = threshold::read();
         assert(threshold != 0_u32, 'argent/uninitialized');
         assert(
@@ -117,7 +117,7 @@ mod ArgentMultisigAccount {
 
     // TODO use the actual signature of the account interface
     // #[external] // ignored to avoid serde
-    fn __validate__(ref calls: Array<Call>) -> felt {
+    fn __validate__(ref calls: Array<Call>) -> felt252 {
         assert_initialized();
 
         let account_address = get_contract_address();
@@ -147,7 +147,7 @@ mod ArgentMultisigAccount {
     // @dev Set the initial parameters for the multisig. It's mandatory to call this methods to secure the account.
     // It's recommended to call this method in the same transaction that deploys the account to make sure it's always initialized
     #[external]
-    fn initialize(threshold: u32, signers: Array<felt>) {
+    fn initialize(threshold: u32, signers: Array<felt252>) {
         let current_threshold = threshold::read();
         assert(current_threshold == 0_u32, 'argent/already-initialized');
 
@@ -182,7 +182,7 @@ mod ArgentMultisigAccount {
     // @param new_threshold New threshold
     // @param signers_to_add Contains the new signers, it will revert if it contains any existing signer
     #[external]
-    fn add_signers(new_threshold: u32, signers_to_add: Array<felt>) {
+    fn add_signers(new_threshold: u32, signers_to_add: Array<felt252>) {
         asserts::assert_only_self();
         let (signers_len, last_signer) = signers_storage::load();
 
@@ -202,7 +202,7 @@ mod ArgentMultisigAccount {
     // @param new_threshold New threshold
     // @param signers_to_remove Should contain only current signers, otherwise it will revert
     #[external]
-    fn remove_signers(new_threshold: u32, signers_to_remove: Array<felt>) {
+    fn remove_signers(new_threshold: u32, signers_to_remove: Array<felt252>) {
         asserts::assert_only_self();
         let (signers_len, last_signer) = signers_storage::load();
 
@@ -222,7 +222,7 @@ mod ArgentMultisigAccount {
     // @param signer_to_remove Signer to remove
     // @param signer_to_add Signer to add
     #[external]
-    fn replace_signer(signer_to_remove: felt, signer_to_add: felt) {
+    fn replace_signer(signer_to_remove: felt252, signer_to_add: felt252) {
         asserts::assert_only_self();
         let (signers_len, last_signer) = signers_storage::load();
 
@@ -241,12 +241,12 @@ mod ArgentMultisigAccount {
     // INTERNAL FUNCTIONS
     /////////////////////////////////////////////////////////
 
-    fn is_valid_signatures_array(hash: felt, signatures: Span<SignerSignature>) -> bool {
+    fn is_valid_signatures_array(hash: felt252, signatures: Span<SignerSignature>) -> bool {
         is_valid_signatures_array_helper(hash, signatures, 0)
     }
 
     fn is_valid_signatures_array_helper(
-        hash: felt, mut signatures: Span<SignerSignature>, last_signer: felt
+        hash: felt252, mut signatures: Span<SignerSignature>, last_signer: felt252
     ) -> bool {
         match get_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
@@ -304,7 +304,7 @@ mod ArgentMultisigAccount {
 
         // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
         // Otherwise cost increases with the list size
-        fn is_signer(signer: felt) -> bool {
+        fn is_signer(signer: felt252) -> bool {
             if signer == 0 {
                 return false;
             }
@@ -319,7 +319,7 @@ mod ArgentMultisigAccount {
         }
 
         // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
-        fn is_signer_using_last(signer: felt, last_signer: felt) -> bool {
+        fn is_signer_using_last(signer: felt252, last_signer: felt252) -> bool {
             if signer == 0 {
                 return false;
             }
@@ -333,12 +333,12 @@ mod ArgentMultisigAccount {
         }
 
         // Return the last signer or zero if no signers. Cost increases with the list size
-        fn find_last_signer() -> felt {
+        fn find_last_signer() -> felt252 {
             let first_signer = super::signer_list::read(0);
             find_last_signer_recursive(first_signer)
         }
 
-        fn find_last_signer_recursive(from_signer: felt) -> felt {
+        fn find_last_signer_recursive(from_signer: felt252) -> felt252 {
             match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
@@ -358,11 +358,11 @@ mod ArgentMultisigAccount {
         // Returns the signer before `signer_after` or 0 if the signer is the first one. 
         // Reverts if `signer_after` is not found
         // Cost increases with the list size
-        fn find_signer_before(signer_after: felt) -> felt {
+        fn find_signer_before(signer_after: felt252) -> felt252 {
             find_signer_before_recursive(signer_after, 0)
         }
 
-        fn find_signer_before_recursive(signer_after: felt, from_signer: felt) -> felt {
+        fn find_signer_before_recursive(signer_after: felt252, from_signer: felt252) -> felt252 {
             match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
@@ -381,7 +381,7 @@ mod ArgentMultisigAccount {
             find_signer_before_recursive(signer_after, next_signer)
         }
 
-        fn add_signers(mut signers_to_add: Span<felt>, last_signer: felt) {
+        fn add_signers(mut signers_to_add: Span<felt252>, last_signer: felt252) {
             match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
@@ -408,7 +408,7 @@ mod ArgentMultisigAccount {
             }
         }
 
-        fn remove_signers(mut signers_to_remove: Span<felt>, last_signer: felt) {
+        fn remove_signers(mut signers_to_remove: Span<felt252>, last_signer: felt252) {
             match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
@@ -442,7 +442,7 @@ mod ArgentMultisigAccount {
             }
         }
 
-        fn replace_signer(signer_to_remove: felt, signer_to_add: felt, last_signer: felt) {
+        fn replace_signer(signer_to_remove: felt252, signer_to_add: felt252, last_signer: felt252) {
             assert(signer_to_add != 0, 'argent/invalid-zero-signer');
 
             let signer_to_add_status = is_signer_using_last(signer_to_add, last_signer);
@@ -464,11 +464,11 @@ mod ArgentMultisigAccount {
 
         // Returns the number of signers and the last signer (or zero if the list is empty). Cost increases with the list size
         // returns (signers_len, last_signer)
-        fn load() -> (u32, felt) {
+        fn load() -> (u32, felt252) {
             load_from(super::signer_list::read(0))
         }
 
-        fn load_from(from_signer: felt) -> (u32, felt) {
+        fn load_from(from_signer: felt252) -> (u32, felt252) {
             match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
@@ -496,7 +496,7 @@ mod ArgentMultisigAccount {
             get_signers_len_from(super::signer_list::read(0))
         }
 
-        fn get_signers_len_from(from_signer: felt) -> u32 {
+        fn get_signers_len_from(from_signer: felt252) -> u32 {
             match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
@@ -514,12 +514,14 @@ mod ArgentMultisigAccount {
             next_length + 1_u32
         }
 
-        fn get_signers() -> Array<felt> {
+        fn get_signers() -> Array<felt252> {
             let all_signers = ArrayTrait::new();
             get_signers_from(super::signer_list::read(0), all_signers)
         }
 
-        fn get_signers_from(from_signer: felt, mut previous_signers: Array<felt>) -> Array<felt> {
+        fn get_signers_from(
+            from_signer: felt252, mut previous_signers: Array<felt252>
+        ) -> Array<felt252> {
             match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {

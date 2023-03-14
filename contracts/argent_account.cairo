@@ -21,7 +21,8 @@ mod ArgentAccount {
     use contracts::Call;
     use contracts::CallSerde;
     use contracts::ArrayCallSerde;
-    use contracts::ArrayCallDrop;
+
+    impl ArrayCallDrop of Drop::<Array::<Call>>;
 
     const NAME: felt = 'ArgentAccount';
     const VERSION: felt = '0.3.0-alpha.1';

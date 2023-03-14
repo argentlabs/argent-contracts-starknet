@@ -6,8 +6,8 @@ use starknet::contract_address_const;
 use starknet::get_contract_address;
 use contracts::asserts;
 use contracts::Call;
-use contracts::ArrayCallDrop;
 
+impl ArrayCallDrop of Drop::<Array::<Call>>;
 
 #[test]
 #[available_gas(2000000)]

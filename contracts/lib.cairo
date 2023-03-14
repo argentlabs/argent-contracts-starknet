@@ -21,7 +21,6 @@ mod calls;
 use calls::Call;
 use calls::CallSerde;
 use calls::ArrayCallSerde;
-use calls::ArrayCallDrop;
 
 mod escape;
 use escape::Escape;
@@ -30,6 +29,5 @@ use escape::EscapeSerde;
 
 mod signer_signature;
 use signer_signature::SignerSignature;
-use signer_signature::SignerSignatureArrayDrop;
 use signer_signature::deserialize_array_signer_signature;
 use signer_signature::SignerSignatureSize;

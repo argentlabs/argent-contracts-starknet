@@ -10,8 +10,6 @@ struct Call {
     calldata: Array<felt>,
 }
 
-impl ArrayCallDrop of Drop::<Array::<Call>>;
-
 impl CallSerde of Serde::<Call> {
     fn serialize(ref serialized: Array::<felt>, input: Call) {
         let ref_input = @input;

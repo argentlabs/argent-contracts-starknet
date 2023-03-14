@@ -2,20 +2,21 @@
 mod ArgentMultisigAccount {
     use array::ArrayTrait;
     use array::SpanTrait;
-    use traits::Into;
-    use zeroable::Zeroable;
-    use option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
     use gas::get_gas_all;
+    use option::OptionTrait;
+    use traits::Into;
+    use zeroable::Zeroable;
+
     use starknet::get_contract_address;
     use starknet::VALIDATED;
+
     use contracts::asserts;
-    use contracts::signer_signature::SignerSignature;
-    use contracts::signer_signature::deserialize_array_signer_signature;
-    use contracts::signer_signature::SignerSignatureSize;
-    use contracts::signer_signature::SignerSignatureArrayCopy;
-    use contracts::signer_signature::SignerSignatureArrayDrop;
-    use contracts::calls::Call;
+    use contracts::SignerSignature;
+    use contracts::deserialize_array_signer_signature;
+    use contracts::SignerSignatureSize;
+    // use contracts::SignerSignatureArrayDrop;
+    use contracts::Call;
     use contracts::spans;
 
     const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
@@ -25,9 +26,10 @@ mod ArgentMultisigAccount {
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt =
         738349667340360233096752603318170676063569407717437256101137432051386874767;
 
-
     const NAME: felt = 'ArgentMultisig';
     const VERSION: felt = '0.1.0-alpha.1';
+
+    impl SignerSignatureArrayDrop of Drop::<Array::<SignerSignature>>;
 
     struct Storage {
         threshold: u32,
@@ -35,7 +37,7 @@ mod ArgentMultisigAccount {
     }
 
     #[event]
-    fn configuration_updated(
+    fn ConfigurationUpdated(
         new_threshold: u32,
         new_signers_count: u32,
         added_signers: Array<felt>,
@@ -158,7 +160,7 @@ mod ArgentMultisigAccount {
 
         let removed_signers = ArrayTrait::new();
 
-        configuration_updated(threshold, signers_len, signers, removed_signers);
+        ConfigurationUpdated(threshold, signers_len, signers, removed_signers);
     }
 
     #[external]
@@ -173,7 +175,7 @@ mod ArgentMultisigAccount {
         let added_signers = ArrayTrait::new();
         let removed_signers = ArrayTrait::new();
 
-        configuration_updated(new_threshold, signers_len, added_signers, removed_signers);
+        ConfigurationUpdated(new_threshold, signers_len, added_signers, removed_signers);
     }
 
     // @dev Adds new signers to the account, additionally sets a new threshold
@@ -193,7 +195,7 @@ mod ArgentMultisigAccount {
 
         let removed_signers = ArrayTrait::new();
 
-        configuration_updated(new_threshold, new_signers_len, signers_to_add, removed_signers);
+        ConfigurationUpdated(new_threshold, new_signers_len, signers_to_add, removed_signers);
     }
 
     // @dev Removes account signers, additionally sets a new threshold
@@ -213,7 +215,7 @@ mod ArgentMultisigAccount {
 
         let added_signers = ArrayTrait::new();
 
-        configuration_updated(new_threshold, new_signers_len, added_signers, signers_to_remove);
+        ConfigurationUpdated(new_threshold, new_signers_len, added_signers, signers_to_remove);
     }
 
     // @dev Replace one signer with a different one
@@ -232,7 +234,7 @@ mod ArgentMultisigAccount {
         let mut removed_signer = ArrayTrait::new();
         removed_signer.append(signer_to_remove);
 
-        configuration_updated(threshold::read(), signers_len, added_signers, removed_signer);
+        ConfigurationUpdated(threshold::read(), signers_len, added_signers, removed_signer);
     }
 
     /////////////////////////////////////////////////////////

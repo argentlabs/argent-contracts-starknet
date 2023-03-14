@@ -5,7 +5,7 @@ use starknet::testing::set_contract_address;
 use starknet::contract_address_const;
 use starknet::get_contract_address;
 use contracts::asserts;
-use contracts::argent_account::ArgentAccount::Call;
+use contracts::Call;
 
 impl ArrayCallDrop of Drop::<Array::<Call>>;
 
@@ -48,7 +48,7 @@ fn assert_correct_tx_version_invalid_tx() {
 fn test_no_self_call_empty() {
     let self = contract_address_const::<42>();
     set_caller_address(self);
-    let mut calls = ArrayTrait::new();
+    let calls = ArrayTrait::new();
     asserts::assert_no_self_call(calls.span(), self);
 }
 

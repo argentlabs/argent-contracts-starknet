@@ -15,11 +15,14 @@ mod ArgentAccount {
 
     use contracts::asserts::assert_only_self;
     use contracts::asserts::assert_no_self_call;
+    use contracts::Escape;
     use contracts::EscapeSerde;
     use contracts::StorageAccessEscape;
     use contracts::Call;
     use contracts::CallSerde;
     use contracts::ArrayCallSerde;
+
+    impl ArrayCallDrop of Drop::<Array::<Call>>;
 
     const NAME: felt = 'ArgentAccount';
     const VERSION: felt = '0.3.0-alpha.1';
@@ -55,17 +58,11 @@ mod ArgentAccount {
     //                                           Storage                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    #[derive(Drop, Copy)]
-    struct Escape {
-        active_at: u64,
-        escape_type: felt, // TODO Change to enum? ==> Can't do ATM because would have to impl partialEq, update storage, etc etc
-    }
-
     struct Storage {
-        signer: felt,
-        guardian: felt,
-        guardian_backup: felt,
-        escape: Escape,
+        _signer: felt,
+        _guardian: felt,
+        _guardian_backup: felt,
+        _escape: Escape,
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -111,7 +108,7 @@ mod ArgentAccount {
     #[external]
     fn __validate__(ref calls: Array::<Call>) -> felt {
         // make sure the account is initialized
-        assert(signer::read() != 0, 'argent/uninitialized');
+        assert(_signer::read() != 0, 'argent/uninitialized');
 
         let account_address = get_contract_address();
         let tx_info = unbox(get_tx_info());
@@ -183,7 +180,7 @@ mod ArgentAccount {
     #[external]
     fn initialize(new_signer: felt, new_guardian: felt, new_guardian_backup: felt) {
         // check that we are not already initialized
-        assert(signer::read() == 0, 'argent/already-initialized');
+        assert(_signer::read() == 0, 'argent/already-initialized');
         // check that the target signer is not zero
         assert(new_signer != 0, 'argent/null-signer');
         // There cannot be a guardian_backup when there is no guardian
@@ -191,9 +188,9 @@ mod ArgentAccount {
             assert(new_guardian_backup.is_zero(), 'argent/backup-should-be-null');
         }
         // initialize the account
-        signer::write(new_signer);
-        guardian::write(new_guardian);
-        guardian_backup::write(new_guardian_backup);
+        _signer::write(new_signer);
+        _guardian::write(new_guardian);
+        _guardian_backup::write(new_guardian_backup);
         AccountCreated(get_contract_address(), new_signer, new_guardian, new_guardian_backup);
     }
 
@@ -202,7 +199,7 @@ mod ArgentAccount {
         assert_only_self();
         assert(new_signer != 0, 'argent/null-signer');
 
-        signer::write(new_signer);
+        _signer::write(new_signer);
         SignerChanged(new_signer);
     }
 
@@ -211,10 +208,10 @@ mod ArgentAccount {
         assert_only_self();
         // There cannot be a guardian_backup when there is no guardian
         if new_guardian.is_zero() {
-            assert(guardian_backup::read().is_zero(), 'argent/backup-should-be-null');
+            assert(_guardian_backup::read().is_zero(), 'argent/backup-should-be-null');
         }
 
-        guardian::write(new_guardian);
+        _guardian::write(new_guardian);
         GuardianChanged(new_guardian);
     }
 
@@ -223,7 +220,7 @@ mod ArgentAccount {
         assert_only_self();
         assert_guardian_set();
 
-        guardian_backup::write(new_guardian_backup);
+        _guardian_backup::write(new_guardian_backup);
         GuardianBackupChanged(new_guardian_backup);
     }
 
@@ -236,7 +233,7 @@ mod ArgentAccount {
         assert_guardian_set();
         // TODO as this will only allow to delay the escape, is it relevant?
         // Can only escape signer by guardian, if there is no escape ongoing other or an escape ongoing but for of the type signer
-        let current_escape = escape::read();
+        let current_escape = _escape::read();
         if current_escape.active_at != 0_u64 {
             assert(
                 current_escape.escape_type == ESCAPE_TYPE_SIGNER, 'argent/cannot-override-escape'
@@ -248,7 +245,7 @@ mod ArgentAccount {
         // TODO We could also inverse the way we store using a map and at ESCAPE_TYPE_SIGNER having the escape active_at of the signer and at ESCAPE_TYPE_GUARDIAN escape active_at
         // Since none of these two can be filled at the same time, it'll always use one and only one slot
         // Or we could simplify it by having the struct taking signer_active_at and guardian_active_at and no map
-        escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_SIGNER });
+        _escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_SIGNER });
         EscapeSignerTriggered(active_at);
     }
 
@@ -258,7 +255,7 @@ mod ArgentAccount {
         assert_guardian_set();
 
         let active_at = unbox(get_block_info()).block_timestamp + ESCAPE_SECURITY_PERIOD;
-        escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_GUARDIAN });
+        _escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_GUARDIAN });
         EscapeGuardianTriggered(active_at);
     }
 
@@ -270,7 +267,7 @@ mod ArgentAccount {
         assert(new_signer != 0, 'argent/null-signer');
         // TODO Shouldn't we check new_signer != guardian?
         clear_escape();
-        signer::write(new_signer);
+        _signer::write(new_signer);
         SignerEscaped(new_signer);
     }
 
@@ -282,14 +279,14 @@ mod ArgentAccount {
         assert(new_guardian != 0, 'argent/null-guardian');
 
         clear_escape();
-        guardian::write(new_guardian);
+        _guardian::write(new_guardian);
         GuardianEscaped(new_guardian);
     }
 
     #[external]
     fn cancel_escape() {
         assert_only_self();
-        assert(escape::read().active_at != 0_u64, 'argent/no-active-escape');
+        assert(_escape::read().active_at != 0_u64, 'argent/no-active-escape');
 
         clear_escape();
         EscapeCanceled();
@@ -301,22 +298,22 @@ mod ArgentAccount {
 
     #[view]
     fn get_signer() -> felt {
-        signer::read()
+        _signer::read()
     }
 
     #[view]
     fn get_guardian() -> felt {
-        guardian::read()
+        _guardian::read()
     }
 
     #[view]
     fn get_guardian_backup() -> felt {
-        guardian_backup::read()
+        _guardian_backup::read()
     }
 
     #[view]
     fn get_escape() -> Escape {
-        escape::read()
+        _escape::read()
     }
 
     // ERC165
@@ -342,11 +339,11 @@ mod ArgentAccount {
         assert(signature.len() == 2_usize, 'argent/invalid-signature-length');
         let signature_r = *signature.at(0_usize);
         let signature_s = *signature.at(1_usize);
-        check_ecdsa_signature(hash, signer::read(), signature_r, signature_s)
+        check_ecdsa_signature(hash, _signer::read(), signature_r, signature_s)
     }
 
     fn is_valid_guardian_signature(hash: felt, signature: Span<felt>) -> bool {
-        let guardian_ = guardian::read();
+        let guardian_ = _guardian::read();
         if guardian_ == 0 {
             assert(signature.len() == 0_usize, 'argent/invalid-signature-length');
             return true;
@@ -358,7 +355,7 @@ mod ArgentAccount {
         if is_valid {
             return true;
         }
-        check_ecdsa_signature(hash, guardian_backup::read(), signature_r, signature_s)
+        check_ecdsa_signature(hash, _guardian_backup::read(), signature_r, signature_s)
     }
 
     fn split_signatures(full_signature: Span<felt>) -> (Span::<felt>, Span::<felt>) {
@@ -377,11 +374,11 @@ mod ArgentAccount {
 
     #[inline(always)]
     fn clear_escape() {
-        escape::write(Escape { active_at: 0_u64, escape_type: 0 });
+        _escape::write(Escape { active_at: 0_u64, escape_type: 0 });
     }
 
     fn assert_can_escape_for_type(escape_type: felt) {
-        let current_escape = escape::read();
+        let current_escape = _escape::read();
         // TODO Hopefuly there will be a way to directly get the block timestamp without having to do this magic (will do a PR in their repo RN) 
         let block_timestamp = unbox(get_block_info()).block_timestamp;
 
@@ -392,6 +389,6 @@ mod ArgentAccount {
 
     #[inline(always)]
     fn assert_guardian_set() {
-        assert(guardian::read() != 0, 'argent/guardian-required');
+        assert(_guardian::read() != 0, 'argent/guardian-required');
     }
 }

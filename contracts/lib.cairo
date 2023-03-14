@@ -10,7 +10,6 @@ use argent_account::ArgentAccount;
 mod argent_multisig_account;
 use argent_multisig_account::ArgentMultisigAccount;
 
-
 mod erc20;
 use erc20::ERC20;
 

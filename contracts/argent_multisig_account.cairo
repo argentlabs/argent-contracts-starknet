@@ -9,6 +9,7 @@ mod ArgentMultisigAccount {
     use zeroable::Zeroable;
 
     use starknet::get_contract_address;
+    use starknet::ContractAddressIntoFelt252;
     use starknet::VALIDATED;
 
     use contracts::asserts::assert_only_self;

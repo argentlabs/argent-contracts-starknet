@@ -12,7 +12,7 @@ mod signers_storage {
 
     // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
     // Otherwise cost increases with the list size
-    fn is_signer(signer: felt) -> bool {
+    fn is_signer(signer: felt252) -> bool {
         if (signer == 0) {
             return false;
         }
@@ -27,7 +27,7 @@ mod signers_storage {
     }
 
     // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
-    fn is_signer_using_last(signer: felt, last_signer: felt) -> bool {
+    fn is_signer_using_last(signer: felt252, last_signer: felt252) -> bool {
         if (signer == 0) {
             return false;
         }
@@ -41,12 +41,12 @@ mod signers_storage {
     }
 
     // Return the last signer or zero if no signers. Cost increases with the list size
-    fn find_last_signer() -> felt {
+    fn find_last_signer() -> felt252 {
         let first_signer = ArgentMultisigAccount::signer_list::read(0);
         find_last_signer_recursive(first_signer)
     }
 
-    fn find_last_signer_recursive(from_signer: felt) -> felt {
+    fn find_last_signer_recursive(from_signer: felt252) -> felt252 {
         match get_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
@@ -66,11 +66,11 @@ mod signers_storage {
     // Returns the signer before `signer_after` or 0 if the signer is the first one. 
     // Reverts if `signer_after` is not found
     // Cost increases with the list size
-    fn find_signer_before(signer_after: felt) -> felt {
+    fn find_signer_before(signer_after: felt252) -> felt252 {
         find_signer_before_recursive(signer_after, 0)
     }
 
-    fn find_signer_before_recursive(signer_after: felt, from_signer: felt) -> felt {
+    fn find_signer_before_recursive(signer_after: felt252, from_signer: felt252) -> felt252 {
         match get_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
@@ -89,7 +89,7 @@ mod signers_storage {
         find_signer_before_recursive(signer_after, next_signer)
     }
 
-    fn add_signers(mut signers_to_add: Span<felt>, last_signer: felt) {
+    fn add_signers(mut signers_to_add: Span<felt252>, last_signer: felt252) {
         match get_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
@@ -116,7 +116,7 @@ mod signers_storage {
         }
     }
 
-    fn remove_signers(mut signers_to_remove: Span<felt>, last_signer: felt) {
+    fn remove_signers(mut signers_to_remove: Span<felt252>, last_signer: felt252) {
         match get_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
@@ -150,7 +150,7 @@ mod signers_storage {
         }
     }
 
-    fn replace_signer(signer_to_remove: felt, signer_to_add: felt, last_signer: felt) {
+    fn replace_signer(signer_to_remove: felt252, signer_to_add: felt252, last_signer: felt252) {
         assert(signer_to_add != 0, 'argent/invalid-zero-signer');
 
         let signer_to_add_status = is_signer_using_last(signer_to_add, last_signer);
@@ -172,11 +172,11 @@ mod signers_storage {
 
     // Returns the number of signers and the last signer (or zero if the list is empty). Cost increases with the list size
     // returns (signers_len, last_signer)
-    fn load() -> (u32, felt) {
+    fn load() -> (u32, felt252) {
         load_from(ArgentMultisigAccount::signer_list::read(0))
     }
 
-    fn load_from(from_signer: felt) -> (u32, felt) {
+    fn load_from(from_signer: felt252) -> (u32, felt252) {
         match get_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
@@ -203,7 +203,7 @@ mod signers_storage {
         get_signers_len_from(ArgentMultisigAccount::signer_list::read(0))
     }
 
-    fn get_signers_len_from(from_signer: felt) -> u32 {
+    fn get_signers_len_from(from_signer: felt252) -> u32 {
         match get_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
@@ -221,12 +221,12 @@ mod signers_storage {
         next_length + 1_u32
     }
 
-    fn get_signers() -> Array<felt> {
+    fn get_signers() -> Array<felt252> {
         let all_signers = ArrayTrait::new();
         get_signers_from(ArgentMultisigAccount::signer_list::read(0), all_signers)
     }
 
-    fn get_signers_from(from_signer: felt, mut previous_signers: Array<felt>) -> Array<felt> {
+    fn get_signers_from(from_signer: felt252, mut previous_signers: Array<felt252>) -> Array<felt252> {
         match get_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {

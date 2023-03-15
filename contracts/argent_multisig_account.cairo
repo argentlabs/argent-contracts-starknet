@@ -31,10 +31,18 @@ mod ArgentMultisigAccount {
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION: felt252 = '0.1.0-alpha.1';
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                           Storage                                          //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    
     struct Storage {
         threshold: u32, 
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                           Events                                           //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    
     #[event]
     fn ConfigurationUpdated(
         new_threshold: u32,
@@ -43,76 +51,9 @@ mod ArgentMultisigAccount {
         removed_signers: Array<felt252>
     ) {}
 
-    /////////////////////////////////////////////////////////
-    // VIEW FUNCTIONS
-    /////////////////////////////////////////////////////////
-
-    #[view]
-    fn get_name() -> felt252 {
-        NAME
-    }
-
-    #[view]
-    fn get_version() -> felt252 {
-        VERSION
-    }
-
-    #[view]
-    fn get_threshold() -> u32 {
-        threshold::read()
-    }
-
-    #[view]
-    fn get_signers() -> Array<felt252> {
-        SignersStorage::get_signers()
-    }
-
-    #[view]
-    fn is_signer(signer: felt252) -> bool {
-        SignersStorage::is_signer(signer)
-    }
-
-    // ERC165
-    #[view]
-    fn supports_interface(interface_id: felt252) -> bool {
-        interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
-    }
-
-    #[view]
-    fn assert_valid_signer_signature(
-        hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
-    ) {
-        let is_valid = is_valid_signer_signature(hash, signer, signature_r, signature_s);
-        assert(is_valid, 'argent/invalid-signature');
-    }
-
-    #[view]
-    fn is_valid_signer_signature(
-        hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
-    ) -> bool {
-        let is_signer = SignersStorage::is_signer(signer);
-        assert(is_signer, 'argent/not-a-signer');
-        check_ecdsa_signature(hash, signer, signature_r, signature_s)
-    }
-
-    #[view]
-    fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> bool {
-        let threshold = threshold::read();
-        assert(threshold != 0_u32, 'argent/uninitialized');
-        assert(
-            signatures.len() == threshold * SignerSignatureSize, 'argent/invalid-signature-length'
-        );
-        let mut mut_signatures = signatures;
-        let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
-        let parsed_signatures = deserialize_array_signer_signature(
-            mut_signatures, signer_signatures_out, threshold
-        ).unwrap();
-        is_valid_signatures_array(hash, parsed_signatures.span())
-    }
-
-    /////////////////////////////////////////////////////////
-    // EXTERNAL FUNCTIONS
-    /////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                     External functions                                     //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     // TODO use the actual signature of the account interface
     // #[external] // ignored to avoid serde
@@ -236,9 +177,77 @@ mod ArgentMultisigAccount {
         ConfigurationUpdated(threshold::read(), signers_len, added_signers, removed_signer);
     }
 
-    /////////////////////////////////////////////////////////
-    // INTERNAL FUNCTIONS
-    /////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                       View functions                                       //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    #[view]
+    fn get_name() -> felt252 {
+        NAME
+    }
+
+    #[view]
+    fn get_version() -> felt252 {
+        VERSION
+    }
+
+    #[view]
+    fn get_threshold() -> u32 {
+        threshold::read()
+    }
+
+    #[view]
+    fn get_signers() -> Array<felt252> {
+        SignersStorage::get_signers()
+    }
+
+    #[view]
+    fn is_signer(signer: felt252) -> bool {
+        SignersStorage::is_signer(signer)
+    }
+
+    // ERC165
+    #[view]
+    fn supports_interface(interface_id: felt252) -> bool {
+        interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
+    }
+
+    #[view]
+    fn assert_valid_signer_signature(
+        hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
+    ) {
+        let is_valid = is_valid_signer_signature(hash, signer, signature_r, signature_s);
+        assert(is_valid, 'argent/invalid-signature');
+    }
+
+    #[view]
+    fn is_valid_signer_signature(
+        hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
+    ) -> bool {
+        let is_signer = SignersStorage::is_signer(signer);
+        assert(is_signer, 'argent/not-a-signer');
+        check_ecdsa_signature(hash, signer, signature_r, signature_s)
+    }
+
+    #[view]
+    fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> bool {
+        let threshold = threshold::read();
+        assert(threshold != 0_u32, 'argent/uninitialized');
+        assert(
+            signatures.len() == threshold * SignerSignatureSize, 'argent/invalid-signature-length'
+        );
+        let mut mut_signatures = signatures;
+        let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
+        let parsed_signatures = deserialize_array_signer_signature(
+            mut_signatures, signer_signatures_out, threshold
+        ).unwrap();
+        is_valid_signatures_array(hash, parsed_signatures.span())
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                          Internal                                          //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     fn is_valid_signatures_array(hash: felt252, signatures: Span<SignerSignature>) -> bool {
         is_valid_signatures_array_helper(hash, signatures, 0)

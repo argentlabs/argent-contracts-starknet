@@ -9,8 +9,8 @@ use contracts::tests::initialize_account_without_guardian;
 
 const DEFAULT_TIMESTAMP: u64 = 42_u64;
 const ESCAPE_SECURITY_PERIOD: u64 = 604800_u64; // 7 * 24 * 60 * 60;  // 7 days
-const ESCAPE_TYPE_GUARDIAN: felt = 1;
-const ESCAPE_TYPE_SIGNER: felt = 2;
+const ESCAPE_TYPE_GUARDIAN: felt252 = 1;
+const ESCAPE_TYPE_SIGNER: felt252 = 2;
 
 // trigger_escape_signer
 

@@ -5,12 +5,12 @@ use starknet::StorageAccess;
 #[derive(Drop, Copy)]
 struct Escape {
     active_at: u64,
-    escape_type: felt, // TODO Change to enum? ==> Can't do ATM because would have to impl partialEq, update storage, etc etc
+    escape_type: felt252, // TODO Change to enum? ==> Can't do ATM because would have to impl partialEq, update storage, etc etc
 }
 
 impl StorageAccessEscape of StorageAccess::<Escape> {
     fn read(
-        address_domain: felt, base: starknet::StorageBaseAddress
+        address_domain: felt252, base: starknet::StorageBaseAddress
     ) -> starknet::SyscallResult<Escape> {
         Result::Ok(
             Escape {
@@ -22,7 +22,7 @@ impl StorageAccessEscape of StorageAccess::<Escape> {
         )
     }
     fn write(
-        address_domain: felt, base: starknet::StorageBaseAddress, value: Escape
+        address_domain: felt252, base: starknet::StorageBaseAddress, value: Escape
     ) -> starknet::SyscallResult<()> {
         StorageAccess::write(address_domain, base, value.active_at)?;
         starknet::storage_write_syscall(
@@ -34,11 +34,11 @@ impl StorageAccessEscape of StorageAccess::<Escape> {
 }
 
 impl EscapeSerde of Serde::<Escape> {
-    fn serialize(ref serialized: Array<felt>, input: Escape) {
+    fn serialize(ref serialized: Array<felt252>, input: Escape) {
         Serde::serialize(ref serialized, input.active_at);
         Serde::serialize(ref serialized, input.escape_type);
     }
-    fn deserialize(ref serialized: Span<felt>) -> Option<Escape> {
+    fn deserialize(ref serialized: Span<felt252>) -> Option<Escape> {
         Option::Some(
             Escape {
                 active_at: Serde::deserialize(ref serialized)?,

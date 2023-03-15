@@ -11,7 +11,8 @@ mod ArgentMultisigAccount {
     use starknet::get_contract_address;
     use starknet::VALIDATED;
 
-    use contracts::asserts;
+    use contracts::asserts::assert_only_self;
+    use contracts::asserts::assert_no_self_call;
     use contracts::SignerSignature;
     use contracts::signers_storage::signers_storage;
     use contracts::deserialize_array_signer_signature;
@@ -19,9 +20,9 @@ mod ArgentMultisigAccount {
     use contracts::Call;
     use contracts::spans;
 
-    const ERC165_IERC165_INTERFACE_ID: felt = 0x01ffc9a7;
-    const ERC165_ACCOUNT_INTERFACE_ID: felt = 0xa66bd575;
-    const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt = 0x3943f10f;
+    const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
+    const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
+    const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt252 = 0x3943f10f;
 
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
         738349667340360233096752603318170676063569407717437256101137432051386874767;
@@ -112,7 +113,7 @@ mod ArgentMultisigAccount {
     /////////////////////////////////////////////////////////
     // EXTERNAL FUNCTIONS
     /////////////////////////////////////////////////////////
-
+    
     // TODO use the actual signature of the account interface
     // #[external] // ignored to avoid serde
     fn __validate__(ref calls: Array<Call>) -> felt252 {
@@ -180,7 +181,7 @@ mod ArgentMultisigAccount {
     // @param new_threshold New threshold
     // @param signers_to_add Contains the new signers, it will revert if it contains any existing signer
     #[external]
-    fn add_signers(new_threshold: u32, signers_to_add: Array<felt>) {
+    fn add_signers(new_threshold: u32, signers_to_add: Array<felt252>) {
         assert_only_self();
         let (signers_len, last_signer) = signers_storage::load();
 
@@ -200,7 +201,7 @@ mod ArgentMultisigAccount {
     // @param new_threshold New threshold
     // @param signers_to_remove Should contain only current signers, otherwise it will revert
     #[external]
-    fn remove_signers(new_threshold: u32, signers_to_remove: Array<felt>) {
+    fn remove_signers(new_threshold: u32, signers_to_remove: Array<felt252>) {
         assert_only_self();
         let (signers_len, last_signer) = signers_storage::load();
 
@@ -220,7 +221,7 @@ mod ArgentMultisigAccount {
     // @param signer_to_remove Signer to remove
     // @param signer_to_add Signer to add
     #[external]
-    fn replace_signer(signer_to_remove: felt, signer_to_add: felt) {
+    fn replace_signer(signer_to_remove: felt252, signer_to_add: felt252) {
         assert_only_self();
         let (signers_len, last_signer) = signers_storage::load();
 

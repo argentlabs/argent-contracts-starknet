@@ -226,7 +226,9 @@ mod signers_storage {
         get_signers_from(ArgentMultisigAccount::signer_list::read(0), all_signers)
     }
 
-    fn get_signers_from(from_signer: felt252, mut previous_signers: Array<felt252>) -> Array<felt252> {
+    fn get_signers_from(
+        from_signer: felt252, mut previous_signers: Array<felt252>
+    ) -> Array<felt252> {
         match get_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {

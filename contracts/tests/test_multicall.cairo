@@ -14,8 +14,8 @@ impl ArrayCallDrop of Drop::<Array::<Call>>;
 #[available_gas(2000000)]
 fn execute_multicall_simple() {
     let mut arr = array_new::<Call>();
-    arr.append(get_call());
-    arr.append(get_call_with_data(43));
+    arr.append(create_simple_call());
+    arr.append(create_simple_call_with_data(43));
     let mut res = execute_multicall(arr);
     assert(res.len() == 2_usize, '2');
     assert(*res.at(0_usize) == 42, '42');
@@ -26,8 +26,8 @@ fn execute_multicall_simple() {
 #[available_gas(2000000)]
 fn execute_multicall_test_dapp_1() {
     let mut arr = array_new::<Call>();
-    arr.append(set_number(12));
-    arr.append(get_number());
+    arr.append(create_set_number_call(12));
+    arr.append(create_get_number_call());
     let retdata = execute_multicall(arr);
     assert(retdata.len() == 1_usize, '1');
     assert(*retdata.at(0_usize) == 12, '12');
@@ -37,10 +37,10 @@ fn execute_multicall_test_dapp_1() {
 #[available_gas(2000000)]
 fn execute_multicall_test_dapp_2() {
     let mut arr = array_new::<Call>();
-    arr.append(set_number_double(12));
-    arr.append(get_number());
-    arr.append(increase_number(18));
-    arr.append(get_number());
+    arr.append(create_set_number_call_double(12));
+    arr.append(create_get_number_call());
+    arr.append(create_increase_number_call(18));
+    arr.append(create_get_number_call());
     let retdata = execute_multicall(arr);
     assert(retdata.len() == 3_usize, '3');
     assert(*retdata.at(0_usize) == 24, '24');
@@ -53,13 +53,13 @@ fn execute_multicall_test_dapp_2() {
 #[available_gas(2000000)]
 fn execute_multicall_test_dapp_3() {
     let mut arr = array_new::<Call>();
-    arr.append(set_number(12));
-    arr.append(get_number());
-    arr.append(set_number_double(13));
-    arr.append(get_number());
-    arr.append(set_number_times3(14));
-    arr.append(get_number());
-    arr.append(increase_number(1));
+    arr.append(create_set_number_call(12));
+    arr.append(create_get_number_call());
+    arr.append(create_set_number_call_double(13));
+    arr.append(create_get_number_call());
+    arr.append(create_set_number_call_times3(14));
+    arr.append(create_get_number_call());
+    arr.append(create_increase_number_call(1));
     let retdata = execute_multicall(arr);
     assert(retdata.len() == 4_usize, '4');
     assert(*retdata.at(0_usize) == 12, '12');
@@ -71,33 +71,33 @@ fn execute_multicall_test_dapp_3() {
 #[test]
 #[available_gas(2000000)]
 #[should_panic(expected = ('test dapp reverted', ))]
-fn execute_multicall_test_dapp_with_throw_error() {
+fn execute_multicall_test_dapp_with_create_throw_error_call() {
     let mut arr = array_new::<Call>();
-    arr.append(set_number(12));
-    arr.append(throw_error(12));
-    arr.append(get_number());
+    arr.append(create_set_number_call(12));
+    arr.append(create_throw_error_call(12));
+    arr.append(create_get_number_call());
     let retdata = execute_multicall(arr);
 }
 
 #[test]
 #[available_gas(2000000)]
 #[should_panic(expected = ('test dapp reverted', ))]
-fn execute_multicall_test_dapp_with_throw_error_beginning() {
+fn execute_multicall_test_dapp_with_create_throw_error_call_beginning() {
     let mut arr = array_new::<Call>();
-    arr.append(throw_error(12));
-    arr.append(set_number(12));
-    arr.append(get_number());
+    arr.append(create_throw_error_call(12));
+    arr.append(create_set_number_call(12));
+    arr.append(create_get_number_call());
     let retdata = execute_multicall(arr);
 }
 
 #[test]
 #[available_gas(2000000)]
 #[should_panic(expected = ('test dapp reverted', ))]
-fn execute_multicall_test_dapp_with_throw_error_end() {
+fn execute_multicall_test_dapp_with_create_throw_error_call_end() {
     let mut arr = array_new::<Call>();
-    arr.append(set_number(12));
-    arr.append(get_number());
-    arr.append(throw_error(12));
+    arr.append(create_set_number_call(12));
+    arr.append(create_get_number_call());
+    arr.append(create_throw_error_call(12));
     let retdata = execute_multicall(arr);
 }
 
@@ -106,8 +106,8 @@ fn execute_multicall_test_dapp_with_throw_error_end() {
 #[available_gas(2000000)]
 fn aggregate_simple() {
     let mut arr = array_new::<Call>();
-    arr.append(get_call());
-    arr.append(get_call_with_data(43));
+    arr.append(create_simple_call());
+    arr.append(create_simple_call_with_data(43));
     set_block_number(42_u64);
     let (block_number, retdata) = aggregate(arr);
     assert(block_number == 42_u64, 'Block number should 42');
@@ -116,36 +116,36 @@ fn aggregate_simple() {
     assert(*retdata.at(1_usize) == 43, '43');
 }
 
-fn get_call() -> Call {
+fn create_simple_call() -> Call {
     create_call_with(42, 42)
 }
 
-fn get_call_with_data(number: felt252) -> Call {
+fn create_simple_call_with_data(number: felt252) -> Call {
     create_call_with(42, number)
 }
 
 
-fn set_number(number: felt252) -> Call {
+fn create_set_number_call(number: felt252) -> Call {
     create_call_with(1, number)
 }
 
-fn set_number_double(number: felt252) -> Call {
+fn create_set_number_call_double(number: felt252) -> Call {
     create_call_with(2, number)
 }
 
-fn set_number_times3(number: felt252) -> Call {
+fn create_set_number_call_times3(number: felt252) -> Call {
     create_call_with(3, number)
 }
 
-fn increase_number(number: felt252) -> Call {
+fn create_increase_number_call(number: felt252) -> Call {
     create_call_with(4, number)
 }
 
-fn throw_error(number: felt252) -> Call {
+fn create_throw_error_call(number: felt252) -> Call {
     create_call_with(5, number)
 }
 
-fn get_number() -> Call {
+fn create_get_number_call() -> Call {
     create_call_with(6, 0)
 }
 

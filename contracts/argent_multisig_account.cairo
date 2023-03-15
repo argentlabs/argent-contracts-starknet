@@ -128,7 +128,7 @@ mod ArgentMultisigAccount {
             }
         } else {
             // make sure no call is to the account
-            asserts::assert_no_self_call(calls.span(), account_address);
+            assert_no_self_call(calls.span(), account_address);
         }
 
         let tx_info = unbox(starknet::get_tx_info());
@@ -163,7 +163,7 @@ mod ArgentMultisigAccount {
 
     #[external]
     fn change_threshold(new_threshold: u32) {
-        asserts::assert_only_self();
+        assert_only_self();
 
         let signers_len = signers_storage::get_signers_len();
 
@@ -180,8 +180,8 @@ mod ArgentMultisigAccount {
     // @param new_threshold New threshold
     // @param signers_to_add Contains the new signers, it will revert if it contains any existing signer
     #[external]
-    fn add_signers(new_threshold: u32, signers_to_add: Array<felt252>) {
-        asserts::assert_only_self();
+    fn add_signers(new_threshold: u32, signers_to_add: Array<felt>) {
+        assert_only_self();
         let (signers_len, last_signer) = signers_storage::load();
 
         let new_signers_len = signers_len + signers_to_add.len();
@@ -200,8 +200,8 @@ mod ArgentMultisigAccount {
     // @param new_threshold New threshold
     // @param signers_to_remove Should contain only current signers, otherwise it will revert
     #[external]
-    fn remove_signers(new_threshold: u32, signers_to_remove: Array<felt252>) {
-        asserts::assert_only_self();
+    fn remove_signers(new_threshold: u32, signers_to_remove: Array<felt>) {
+        assert_only_self();
         let (signers_len, last_signer) = signers_storage::load();
 
         let new_signers_len = signers_len - signers_to_remove.len();
@@ -220,8 +220,8 @@ mod ArgentMultisigAccount {
     // @param signer_to_remove Signer to remove
     // @param signer_to_add Signer to add
     #[external]
-    fn replace_signer(signer_to_remove: felt252, signer_to_add: felt252) {
-        asserts::assert_only_self();
+    fn replace_signer(signer_to_remove: felt, signer_to_add: felt) {
+        assert_only_self();
         let (signers_len, last_signer) = signers_storage::load();
 
         signers_storage::replace_signer(signer_to_remove, signer_to_add, last_signer);

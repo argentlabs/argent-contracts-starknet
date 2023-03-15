@@ -30,7 +30,7 @@ fn execute_multicall_loop(mut calls: Span<Call>, ref array: Array<felt252>) {
         Option::Some(_) => {},
         Option::None(_) => {
             let mut data = ArrayTrait::new();
-            array_append(ref data, 'OOG');
+            array_append(ref data, 'Out of gas');
             panic(data);
         },
     }

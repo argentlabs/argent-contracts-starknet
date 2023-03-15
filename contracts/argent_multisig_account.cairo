@@ -114,7 +114,7 @@ mod ArgentMultisigAccount {
     /////////////////////////////////////////////////////////
     // EXTERNAL FUNCTIONS
     /////////////////////////////////////////////////////////
-    
+
     // TODO use the actual signature of the account interface
     // #[external] // ignored to avoid serde
     fn __validate__(ref calls: Array<Call>) -> felt252 {

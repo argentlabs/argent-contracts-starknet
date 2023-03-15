@@ -15,7 +15,6 @@ mod ArgentMultisigAccount {
     use contracts::SignerSignature;
     use contracts::deserialize_array_signer_signature;
     use contracts::SignerSignatureSize;
-    // use contracts::SignerSignatureArrayDrop;
     use contracts::Call;
     use contracts::spans;
 
@@ -29,7 +28,7 @@ mod ArgentMultisigAccount {
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION: felt252 = '0.1.0-alpha.1';
 
-    impl SignerSignatureArrayDrop of Drop::<Array::<SignerSignature>>;
+    // impl SignerSignatureArrayDrop of Drop::<Array::<SignerSignature>>;
 
     struct Storage {
         threshold: u32,

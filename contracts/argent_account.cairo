@@ -17,13 +17,7 @@ mod ArgentAccount {
     use contracts::asserts::assert_only_self;
     use contracts::asserts::assert_no_self_call;
     use contracts::Escape;
-    use contracts::EscapeSerde;
-    use contracts::StorageAccessEscape;
     use contracts::Call;
-    use contracts::CallSerde;
-    use contracts::ArrayCallSerde;
-
-    impl ArrayCallDrop of Drop::<Array::<Call>>;
 
     const NAME: felt252 = 'ArgentAccount';
     const VERSION: felt252 = '0.3.0-alpha.1';

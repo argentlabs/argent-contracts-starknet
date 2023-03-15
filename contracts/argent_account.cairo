@@ -7,6 +7,7 @@ mod ArgentAccount {
     use traits::Into;
     use zeroable::Zeroable;
 
+    use starknet::ContractAddress;
     use starknet::ContractAddressIntoFelt252;
     use starknet::get_block_info;
     use starknet::get_contract_address;

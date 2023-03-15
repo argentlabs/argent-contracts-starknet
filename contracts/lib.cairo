@@ -19,6 +19,7 @@ use test_dapp::TestDapp;
 
 mod multicall;
 use multicall::Multicall;
+use multicall::Multicall::aggregate;
 
 mod traits;
 use traits::ArrayTraitExt;

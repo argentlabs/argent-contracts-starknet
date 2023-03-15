@@ -4,8 +4,9 @@ use starknet::contract_address_const;
 use starknet::testing::set_caller_address;
 use starknet::testing::set_block_number;
 
-use contracts::execute_multicall;
 use contracts::Call;
+use contracts::execute_multicall;
+use contracts::aggregate;
 
 impl ArrayCallDrop of Drop::<Array::<Call>>;
 
@@ -101,19 +102,19 @@ fn execute_multicall_test_dapp_with_throw_error_end() {
 }
 
 
-// #[test]
-// #[available_gas(2000000)]
-// fn aggregate() {
-//     let mut arr = array_new::<Call>();
-//     arr.append(get_call());
-//     arr.append(get_call_with_data(43));
-//     set_block_number(42_u64);
-//     let (block_number, retdata) = aggregate(arr);
-//     assert(block_number == 42_u64, 'Block number should 42');
-//     assert(retdata.len() == 2_usize, '2');
-//     assert(*retdata.at(0_usize) == 42, '42');
-//     assert(*retdata.at(1_usize) == 43, '43');
-// }
+#[test]
+#[available_gas(2000000)]
+fn aggregate_simple() {
+    let mut arr = array_new::<Call>();
+    arr.append(get_call());
+    arr.append(get_call_with_data(43));
+    set_block_number(42_u64);
+    let (block_number, retdata) = aggregate(arr);
+    assert(block_number == 42_u64, 'Block number should 42');
+    assert(retdata.len() == 2_usize, '2');
+    assert(*retdata.at(0_usize) == 42, '42');
+    assert(*retdata.at(1_usize) == 43, '43');
+}
 
 fn get_call() -> Call {
     create_call_with(42, 42)

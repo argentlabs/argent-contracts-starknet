@@ -14,8 +14,8 @@ mod ArgentMultisigAccount {
 
     use contracts::asserts::assert_only_self;
     use contracts::asserts::assert_no_self_call;
+    use contracts::signers_storage::SignersStorage;
     use contracts::SignerSignature;
-    use contracts::signers_storage::signers_storage;
     use contracts::deserialize_array_signer_signature;
     use contracts::SignerSignatureSize;
     use contracts::Call;
@@ -32,8 +32,7 @@ mod ArgentMultisigAccount {
     const VERSION: felt252 = '0.1.0-alpha.1';
 
     struct Storage {
-        threshold: u32,
-        signer_list: LegacyMap<felt252, felt252>,
+        threshold: u32, 
     }
 
     #[event]
@@ -65,12 +64,12 @@ mod ArgentMultisigAccount {
 
     #[view]
     fn get_signers() -> Array<felt252> {
-        signers_storage::get_signers()
+        SignersStorage::get_signers()
     }
 
     #[view]
     fn is_signer(signer: felt252) -> bool {
-        signers_storage::is_signer(signer)
+        SignersStorage::is_signer(signer)
     }
 
     // ERC165
@@ -91,7 +90,7 @@ mod ArgentMultisigAccount {
     fn is_valid_signer_signature(
         hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
     ) -> bool {
-        let is_signer = signers_storage::is_signer(signer);
+        let is_signer = SignersStorage::is_signer(signer);
         assert(is_signer, 'argent/not-a-signer');
         check_ecdsa_signature(hash, signer, signature_r, signature_s)
     }
@@ -154,7 +153,7 @@ mod ArgentMultisigAccount {
         let signers_len = signers.len();
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
-        signers_storage::add_signers(signers.span(), 0);
+        SignersStorage::add_signers(signers.span(), 0);
         //  TODO If they change usize type to be "more" it'll break, should we prevent it and use usize instead, or write directly into()?
         threshold::write(threshold);
 
@@ -167,7 +166,7 @@ mod ArgentMultisigAccount {
     fn change_threshold(new_threshold: u32) {
         assert_only_self();
 
-        let signers_len = signers_storage::get_signers_len();
+        let signers_len = SignersStorage::get_signers_len();
 
         assert_valid_threshold_and_signers_count(new_threshold, signers_len);
         threshold::write(new_threshold);
@@ -184,13 +183,13 @@ mod ArgentMultisigAccount {
     #[external]
     fn add_signers(new_threshold: u32, signers_to_add: Array<felt252>) {
         assert_only_self();
-        let (signers_len, last_signer) = signers_storage::load();
+        let (signers_len, last_signer) = SignersStorage::load();
 
         let new_signers_len = signers_len + signers_to_add.len();
 
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
 
-        signers_storage::add_signers(signers_to_add.span(), last_signer);
+        SignersStorage::add_signers(signers_to_add.span(), last_signer);
         threshold::write(new_threshold);
 
         let removed_signers = ArrayTrait::new();
@@ -204,13 +203,13 @@ mod ArgentMultisigAccount {
     #[external]
     fn remove_signers(new_threshold: u32, signers_to_remove: Array<felt252>) {
         assert_only_self();
-        let (signers_len, last_signer) = signers_storage::load();
+        let (signers_len, last_signer) = SignersStorage::load();
 
         let new_signers_len = signers_len - signers_to_remove.len();
 
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
 
-        signers_storage::remove_signers(signers_to_remove.span(), last_signer);
+        SignersStorage::remove_signers(signers_to_remove.span(), last_signer);
         threshold::write(new_threshold);
 
         let added_signers = ArrayTrait::new();
@@ -224,9 +223,9 @@ mod ArgentMultisigAccount {
     #[external]
     fn replace_signer(signer_to_remove: felt252, signer_to_add: felt252) {
         assert_only_self();
-        let (signers_len, last_signer) = signers_storage::load();
+        let (signers_len, last_signer) = SignersStorage::load();
 
-        signers_storage::replace_signer(signer_to_remove, signer_to_add, last_signer);
+        SignersStorage::replace_signer(signer_to_remove, signer_to_add, last_signer);
 
         let mut added_signers = ArrayTrait::new();
         added_signers.append(signer_to_add);

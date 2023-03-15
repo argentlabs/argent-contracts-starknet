@@ -19,8 +19,6 @@ use test_dapp::TestDapp;
 // Structures 
 mod calls;
 use calls::Call;
-use calls::CallSerde;
-use calls::ArrayCallSerde;
 
 mod escape;
 use escape::Escape;

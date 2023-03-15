@@ -11,7 +11,7 @@ use contracts::tests::signer_pubkey;
 use contracts::tests::guardian_pubkey;
 use contracts::tests::guardian_backup_pubkey;
 
-const ERC165_INVALID_INTERFACE_ID: felt = 0xffffffff;
+const ERC165_INVALID_INTERFACE_ID: felt252 = 0xffffffff;
 
 #[test]
 #[available_gas(2000000)]

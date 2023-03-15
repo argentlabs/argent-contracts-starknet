@@ -10,7 +10,7 @@ fn call_contract(
         Option::Some(_) => {},
         Option::None(_) => {
             let mut data = ArrayTrait::new();
-            array_append(ref data, 'OOG');
+            array_append(ref data, 'Out of gas');
             panic(data);
         },
     }

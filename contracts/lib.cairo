@@ -1,5 +1,6 @@
 mod tests;
 
+mod dummy_syscalls;
 mod spans;
 
 mod asserts;
@@ -16,9 +17,16 @@ use erc20::ERC20;
 mod test_dapp;
 use test_dapp::TestDapp;
 
+mod multicall;
+use multicall::Multicall;
+
+mod traits;
+use traits::ArrayTraitExt;
+
 // Structures 
 mod calls;
 use calls::Call;
+use calls::execute_multicall;
 
 mod escape;
 use escape::Escape;

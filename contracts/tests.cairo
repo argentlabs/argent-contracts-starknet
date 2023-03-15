@@ -6,6 +6,8 @@ mod test_multisig_remove_signers;
 mod test_multisig_replace_signers;
 mod test_multisig_signing;
 mod test_argent_account_escape;
+mod test_multicall;
+mod test_traits;
 
 use contracts::ArgentAccount;
 

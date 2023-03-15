@@ -1,5 +1,14 @@
 use array::ArrayTrait;
+use array::ArrayTCloneImpl;
+use array::SpanTrait;
+use gas::get_gas;
 use serde::Serde;
+use clone::Clone;
+
+use contracts::ArrayTraitExt;
+use contracts::dummy_syscalls::call_contract;
+
+// use starknet::call_contract_syscall;
 use starknet::ContractAddress;
 use starknet::contract_address::ContractAddressSerde;
 
@@ -9,6 +18,38 @@ struct Call {
     selector: felt252,
     calldata: Array<felt252>,
 }
+
+fn execute_multicall(calls: Array<Call>) -> Array<felt252> {
+    let mut arr = ArrayTrait::new();
+    execute_multicall_loop(calls.span(), ref arr);
+    arr
+}
+
+fn execute_multicall_loop(mut calls: Span<Call>, ref array: Array<felt252>) {
+    // When for loop is introduce can use it (check most cost optimized)
+    match get_gas() {
+        Option::Some(_) => {},
+        Option::None(_) => {
+            let mut data = ArrayTrait::new();
+            array_append(ref data, 'OOG');
+            panic(data);
+        },
+    }
+    match calls.pop_front() {
+        Option::Some(call) => {
+            // let mut current_call = call_contract_syscall(
+            //     *call.to, *call.selector, call.calldata.clone()
+            // ).unwrap_syscall();
+
+            let mut current_call = call_contract(*call.to, *call.selector, call.calldata.clone());
+            array.append_all(ref current_call);
+            // TODO Should I trigger event to say "Hey event X done" for ui it'll be noice I guesss?
+            execute_multicall_loop(calls, ref array);
+        },
+        Option::None(_) => (),
+    }
+}
+// Serialization 
 
 impl CallSerde of Serde::<Call> {
     fn serialize(ref serialized: Array::<felt252>, input: Call) {

@@ -26,7 +26,6 @@ fn execute_multicall(calls: Array<Call>) -> Array<felt252> {
 }
 
 fn execute_multicall_loop(mut calls: Span<Call>, ref array: Array<felt252>) {
-    // When for loop is introduce can use it (check most cost optimized)
     match get_gas() {
         Option::Some(_) => {},
         Option::None(_) => {
@@ -49,7 +48,7 @@ fn execute_multicall_loop(mut calls: Span<Call>, ref array: Array<felt252>) {
         Option::None(_) => (),
     }
 }
-// Serialization 
+// Call serialization 
 
 impl CallSerde of Serde::<Call> {
     fn serialize(ref serialized: Array::<felt252>, input: Call) {

@@ -5,12 +5,12 @@ use gas::get_gas;
 use serde::Serde;
 use clone::Clone;
 
-use contracts::ArrayTraitExt;
-use contracts::dummy_syscalls::call_contract;
-
 // use starknet::call_contract_syscall;
 use starknet::ContractAddress;
 use starknet::contract_address::ContractAddressSerde;
+
+use contracts::ArrayTraitExt;
+use contracts::dummy_syscalls::call_contract;
 
 #[derive(Drop)]
 struct Call {

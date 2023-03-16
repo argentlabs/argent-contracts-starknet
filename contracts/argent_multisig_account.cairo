@@ -2,6 +2,7 @@
 mod ArgentMultisigAccount {
     use array::ArrayTrait;
     use array::SpanTrait;
+    use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
     use gas::get_gas_all;
     use option::OptionTrait;

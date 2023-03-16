@@ -1,5 +1,6 @@
 #[contract]
 mod Multicall {
+    use box::BoxTrait;
     use starknet::get_block_info;
 
     use contracts::Call;

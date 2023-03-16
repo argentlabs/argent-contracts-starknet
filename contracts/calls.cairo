@@ -10,7 +10,7 @@ use starknet::ContractAddress;
 use starknet::contract_address::ContractAddressSerde;
 
 use contracts::ArrayTraitExt;
-use contracts::dummy_syscalls::call_contract;
+use contracts::dummy_syscalls::call_contract_syscall;
 
 #[derive(Drop)]
 struct Call {
@@ -21,11 +21,11 @@ struct Call {
 
 fn execute_multicall(calls: Array<Call>) -> Array<felt252> {
     let mut result = ArrayTrait::new();
-    execute_multicall_loop(calls.span(), ref arr);
-    arr
+    execute_multicall_loop(calls.span(), ref result, 0);
+    result
 }
 
-fn execute_multicall_loop(mut calls: Span<Call>, ref array: Array<felt252>) {
+fn execute_multicall_loop(mut calls: Span<Call>, ref result: Array<felt252>, index: felt252) {
     match get_gas() {
         Option::Some(_) => {},
         Option::None(_) => {
@@ -40,10 +40,20 @@ fn execute_multicall_loop(mut calls: Span<Call>, ref array: Array<felt252>) {
             //     *call.to, *call.selector, call.calldata.clone()
             // ).unwrap_syscall();
 
-            let mut current_call = call_contract(*call.to, *call.selector, call.calldata.clone());
-            array.append_all(ref current_call);
-            // TODO Should I trigger event to say "Hey event X done" for ui it'll be noice I guesss?
-            execute_multicall_loop(calls, ref array);
+            match call_contract_syscall(*call.to, *call.selector, call.calldata.clone()) {
+                Result::Ok(x) => {
+                    let mut call_result = x;
+                    result.append_all(ref call_result);
+                    // TODO Should I trigger event to say "Hey event X done" for ui it'll be noice I guesss?
+                    execute_multicall_loop(calls, ref result, index + 1);
+                },
+                Result::Err(revert_reason) => {
+                    let mut data = ArrayTrait::new();
+                    data.append('argent/multicall-failed-');
+                    data.append(index);
+                    panic(data);
+                },
+            }
         },
         Option::None(_) => (),
     }

@@ -70,7 +70,7 @@ fn execute_multicall_test_dapp_3() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('test dapp reverted', ))]
+#[should_panic(expected = ('argent/multicall-failed-', 1))]
 fn execute_multicall_test_dapp_with_create_throw_error_call() {
     let mut arr = array_new::<Call>();
     arr.append(create_set_number_call(12));
@@ -81,7 +81,7 @@ fn execute_multicall_test_dapp_with_create_throw_error_call() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('test dapp reverted', ))]
+#[should_panic(expected = ('argent/multicall-failed-', 0))]
 fn execute_multicall_test_dapp_with_create_throw_error_call_beginning() {
     let mut arr = array_new::<Call>();
     arr.append(create_throw_error_call(12));
@@ -92,7 +92,7 @@ fn execute_multicall_test_dapp_with_create_throw_error_call_beginning() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('test dapp reverted', ))]
+#[should_panic(expected = ('argent/multicall-failed-', 2))]
 fn execute_multicall_test_dapp_with_create_throw_error_call_end() {
     let mut arr = array_new::<Call>();
     arr.append(create_set_number_call(12));
@@ -100,7 +100,6 @@ fn execute_multicall_test_dapp_with_create_throw_error_call_end() {
     arr.append(create_throw_error_call(12));
     let retdata = execute_multicall(arr);
 }
-
 
 #[test]
 #[available_gas(2000000)]

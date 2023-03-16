@@ -6,6 +6,7 @@ mod ArgentMultisigAccount {
     use gas::get_gas_all;
     use option::OptionTrait;
     use traits::Into;
+    use box::BoxTrait;
     use zeroable::Zeroable;
 
     use starknet::get_contract_address;
@@ -73,7 +74,7 @@ mod ArgentMultisigAccount {
             assert_no_self_call(calls.span(), account_address);
         }
 
-        let tx_info = unbox(starknet::get_tx_info());
+        let tx_info = starknet::get_tx_info().unbox();
 
         // TODO converting to array is probably avoidable
         let signature_array = spans::span_to_array(tx_info.signature);

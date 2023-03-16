@@ -103,25 +103,26 @@ mod ArgentAccount {
 
     #[external]
     fn __validate__(ref calls: Array::<Call>) -> felt252 {
-        // make sure the account is initialized
-        assert(_signer::read() != 0, 'argent/uninitialized');
+        assert_initialized();
 
         let account_address = get_contract_address();
-        let tx_info = get_tx_info().unbox();
-        let transaction_hash = tx_info.transaction_hash;
-        let full_signature = tx_info.signature;
 
         if calls.len() == 1_usize {
             let call = calls.at(0_usize);
             if (*call.to).into() == account_address.into() {
+                let tx_info = get_tx_info().unbox();
                 let selector = *call.selector;
                 if selector == ESCAPE_GUARDIAN_SELECTOR | selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
-                    let is_valid = is_valid_signer_signature(transaction_hash, full_signature);
+                    let is_valid = is_valid_signer_signature(
+                        tx_info.transaction_hash, tx_info.signature
+                    );
                     assert(is_valid, 'argent/invalid-signer-sig');
                     return VALIDATED;
                 }
                 if selector == ESCAPE_SIGNER_SELECTOR | selector == TRIGGER_ESCAPE_SIGNER_SELECTOR {
-                    let is_valid = is_valid_guardian_signature(transaction_hash, full_signature);
+                    let is_valid = is_valid_guardian_signature(
+                        tx_info.transaction_hash, tx_info.signature
+                    );
                     assert(is_valid, 'argent/invalid-guardian-sig');
                     return VALIDATED;
                 }
@@ -132,14 +133,25 @@ mod ArgentAccount {
             assert_no_self_call(calls.span(), account_address);
         }
 
-        let (signer_signature, guardian_signature) = split_signatures(full_signature);
-        let is_valid = is_valid_signer_signature(transaction_hash, signer_signature);
-        assert(is_valid, 'argent/invalid-signer-sig');
-        if _guardian::read() != 0 {
-            let is_valid = is_valid_guardian_signature(transaction_hash, guardian_signature);
-            assert(is_valid, 'argent/invalid-guardian-sig');
-        }
+        assert_is_valid_signature();
 
+        VALIDATED
+    }
+
+    #[external]
+    fn __validate_declare__(class_hash: felt252) -> felt252 {
+        assert_initialized();
+        assert_is_valid_signature();
+        VALIDATED
+    }
+
+    #[raw_input]
+    #[external]
+    fn __validate_deploy__(
+        class_hash: felt252, contract_address_salt: felt252, public_key_: felt252
+    ) -> felt252 {
+        assert_initialized();
+        assert_is_valid_signature();
         VALIDATED
     }
 
@@ -301,6 +313,19 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                          Internal                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    fn assert_is_valid_signature() {
+        let tx_info = get_tx_info().unbox();
+        let transaction_hash = tx_info.transaction_hash;
+        let full_signature = tx_info.signature;
+
+        let (signer_signature, guardian_signature) = split_signatures(full_signature);
+        let is_valid = is_valid_signer_signature(transaction_hash, signer_signature);
+        assert(is_valid, 'argent/invalid-signer-sig');
+        if _guardian::read() != 0 {
+            let is_valid = is_valid_guardian_signature(transaction_hash, guardian_signature);
+            assert(is_valid, 'argent/invalid-guardian-sig');
+        }
+    }
 
     fn is_valid_span_signature(hash: felt252, signatures: Span<felt252>) -> bool {
         let (signer_signature, guardian_signature) = split_signatures(signatures);
@@ -369,5 +394,10 @@ mod ArgentAccount {
     #[inline(always)]
     fn assert_guardian_set() {
         assert(_guardian::read() != 0, 'argent/guardian-required');
+    }
+
+    #[inline(always)]
+    fn assert_initialized() {
+        assert(_signer::read() != 0, 'argent/uninitialized');
     }
 }

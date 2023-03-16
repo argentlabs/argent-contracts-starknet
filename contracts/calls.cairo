@@ -20,7 +20,7 @@ struct Call {
 }
 
 fn execute_multicall(calls: Array<Call>) -> Array<felt252> {
-    let mut arr = ArrayTrait::new();
+    let mut result = ArrayTrait::new();
     execute_multicall_loop(calls.span(), ref arr);
     arr
 }

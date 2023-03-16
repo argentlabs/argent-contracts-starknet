@@ -10,7 +10,7 @@ struct Escape {
 
 impl StorageAccessEscape of StorageAccess::<Escape> {
     fn read(
-        address_domain: felt252, base: starknet::StorageBaseAddress
+        address_domain: u32, base: starknet::StorageBaseAddress
     ) -> starknet::SyscallResult<Escape> {
         Result::Ok(
             Escape {
@@ -22,7 +22,7 @@ impl StorageAccessEscape of StorageAccess::<Escape> {
         )
     }
     fn write(
-        address_domain: felt252, base: starknet::StorageBaseAddress, value: Escape
+        address_domain: u32, base: starknet::StorageBaseAddress, value: Escape
     ) -> starknet::SyscallResult<()> {
         StorageAccess::write(address_domain, base, value.active_at)?;
         starknet::storage_write_syscall(

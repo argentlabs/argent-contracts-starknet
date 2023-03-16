@@ -2,7 +2,7 @@
 mod ArgentAccount {
     use array::ArrayTrait;
     use array::SpanTrait;
-    use box::unbox;
+    use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
     use traits::Into;
     use zeroable::Zeroable;
@@ -107,7 +107,7 @@ mod ArgentAccount {
         assert(_signer::read() != 0, 'argent/uninitialized');
 
         let account_address = get_contract_address();
-        let tx_info = unbox(get_tx_info());
+        let tx_info = get_tx_info().unbox();
         let transaction_hash = tx_info.transaction_hash;
         let full_signature = tx_info.signature;
 
@@ -206,7 +206,7 @@ mod ArgentAccount {
             );
         }
 
-        let active_at = unbox(get_block_info()).block_timestamp + ESCAPE_SECURITY_PERIOD;
+        let active_at = get_block_info().unbox().block_timestamp + ESCAPE_SECURITY_PERIOD;
         // TODO Since timestamp is a u64, and escape type 1 small felt252, we can pack those two values and use 1 storage slot
         // TODO We could also inverse the way we store using a map and at ESCAPE_TYPE_SIGNER having the escape active_at of the signer and at ESCAPE_TYPE_GUARDIAN escape active_at
         // Since none of these two can be filled at the same time, it'll always use one and only one slot
@@ -220,7 +220,7 @@ mod ArgentAccount {
         assert_only_self();
         assert_guardian_set();
 
-        let active_at = unbox(get_block_info()).block_timestamp + ESCAPE_SECURITY_PERIOD;
+        let active_at = get_block_info().unbox().block_timestamp + ESCAPE_SECURITY_PERIOD;
         _escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_GUARDIAN });
         EscapeGuardianTriggered(active_at);
     }
@@ -360,7 +360,7 @@ mod ArgentAccount {
     fn assert_can_escape_for_type(escape_type: felt252) {
         let current_escape = _escape::read();
         // TODO Hopefuly there will be a way to directly get the block timestamp without having to do this magic (will do a PR in their repo RN) 
-        let block_timestamp = unbox(get_block_info()).block_timestamp;
+        let block_timestamp = get_block_info().unbox().block_timestamp;
 
         assert(current_escape.active_at != 0_u64, 'argent/not-escaping');
         assert(current_escape.active_at <= block_timestamp, 'argent/inactive-escape');

@@ -7,7 +7,6 @@ mod ArgentMultisigAccount {
     use gas::get_gas_all;
     use option::OptionTrait;
     use traits::Into;
-    use box::BoxTrait;
     use zeroable::Zeroable;
 
     use starknet::get_contract_address;

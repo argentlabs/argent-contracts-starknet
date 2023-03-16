@@ -14,7 +14,7 @@ mod ArgentMultisigAccount {
 
     use contracts::asserts::assert_only_self;
     use contracts::asserts::assert_no_self_call;
-    use contracts::argent_multisig_storage::MultisigStorage;
+    use contracts::MultisigStorage;
     use contracts::SignerSignature;
     use contracts::deserialize_array_signer_signature;
     use contracts::SignerSignatureSize;

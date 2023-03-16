@@ -359,7 +359,6 @@ mod ArgentAccount {
 
     fn assert_can_escape_for_type(escape_type: felt252) {
         let current_escape = _escape::read();
-        // TODO Hopefuly there will be a way to directly get the block timestamp without having to do this magic (will do a PR in their repo RN) 
         let block_timestamp = get_block_info().unbox().block_timestamp;
 
         assert(current_escape.active_at != 0_u64, 'argent/not-escaping');

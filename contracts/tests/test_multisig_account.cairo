@@ -16,7 +16,7 @@ fn valid_before_init() {
 #[test]
 #[available_gas(20000000)]
 fn valid_initiliaze() {
-    let threshold = 1_u32;
+    let threshold = 1_usize;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     ArgentMultisigAccount::initialize(threshold, signers_array);
@@ -38,7 +38,7 @@ fn valid_initiliaze() {
 #[test]
 #[available_gas(20000000)]
 fn valid_initiliaze_two_signers() {
-    let threshold = 1_u32;
+    let threshold = 1_usize;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
@@ -68,7 +68,7 @@ fn valid_initiliaze_two_signers() {
 #[available_gas(20000000)]
 #[should_panic(expected = ('argent/bad-threshold', ))]
 fn invalid_threshold() {
-    let threshold = 3_u32;
+    let threshold = 3_usize;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
@@ -78,15 +78,15 @@ fn invalid_threshold() {
 #[test]
 #[available_gas(20000000)]
 fn change_threshold() {
-    let threshold = 1_u32;
+    let threshold = 1_usize;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(1);
     signers_array.append(2);
     ArgentMultisigAccount::initialize(threshold, signers_array);
     assert(ArgentMultisigAccount::get_threshold() == threshold, 'new threshold not set');
 
-    ArgentMultisigAccount::change_threshold(2_u32);
-    assert(ArgentMultisigAccount::get_threshold() == 2_u32, 'new threshold not set');
+    ArgentMultisigAccount::change_threshold(2_usize);
+    assert(ArgentMultisigAccount::get_threshold() == 2_usize, 'new threshold not set');
 }
 
 
@@ -94,7 +94,7 @@ fn change_threshold() {
 #[available_gas(20000000)]
 fn add_signers() {
     // init
-    let threshold = 1_u32;
+    let threshold = 1_usize;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     ArgentMultisigAccount::initialize(threshold, signers_array);
@@ -102,12 +102,12 @@ fn add_signers() {
     // add signer
     let mut new_signers = ArrayTrait::new();
     new_signers.append(signer_pubkey_2);
-    ArgentMultisigAccount::add_signers(2_u32, new_signers);
+    ArgentMultisigAccount::add_signers(2_usize, new_signers);
 
     // check 
     let signers = ArgentMultisigAccount::get_signers();
     assert(signers.len() == 2_usize, 'invalid signers length');
-    assert(ArgentMultisigAccount::get_threshold() == 2_u32, 'new threshold not set');
+    assert(ArgentMultisigAccount::get_threshold() == 2_usize, 'new threshold not set');
 }
 
 
@@ -116,7 +116,7 @@ fn add_signers() {
 #[should_panic(expected = ('argent/already-a-signer', ))]
 fn add_signer_already_in_list() {
     // init
-    let threshold = 1_u32;
+    let threshold = 1_usize;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     ArgentMultisigAccount::initialize(threshold, signers_array);
@@ -124,7 +124,7 @@ fn add_signer_already_in_list() {
     // add signer
     let mut new_signers = ArrayTrait::new();
     new_signers.append(signer_pubkey_1);
-    ArgentMultisigAccount::add_signers(2_u32, new_signers);
+    ArgentMultisigAccount::add_signers(2_usize, new_signers);
 }
 
 

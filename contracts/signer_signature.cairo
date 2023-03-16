@@ -10,7 +10,7 @@ struct SignerSignature {
     signature_s: felt252,
 }
 
-const SignerSignatureSize: u32 = 3_u32;
+const SignerSignatureSize: usize = 3_usize;
 
 impl SignerSignatureSerde of serde::Serde::<SignerSignature> {
     fn serialize(ref serialized: Array<felt252>, input: SignerSignature) {

@@ -14,7 +14,7 @@ const signer_2_signature_s: felt252 =
 #[available_gas(20000000)]
 fn test_signature() {
     // init
-    let threshold = 1_u32;
+    let threshold = 1_usize;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_2);
     ArgentMultisigAccount::initialize(threshold, signers_array);

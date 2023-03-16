@@ -29,14 +29,14 @@ mod ArgentMultisigAccount {
     const VERSION: felt252 = '0.1.0-alpha.1';
 
     struct Storage {
-        threshold: u32,
+        threshold: usize,
         signer_list: LegacyMap<felt252, felt252>,
     }
 
     #[event]
     fn ConfigurationUpdated(
-        new_threshold: u32,
-        new_signers_count: u32,
+        new_threshold: usize,
+        new_signers_count: usize,
         added_signers: Array<felt252>,
         removed_signers: Array<felt252>
     ) {}
@@ -56,7 +56,7 @@ mod ArgentMultisigAccount {
     }
 
     #[view]
-    fn get_threshold() -> u32 {
+    fn get_threshold() -> usize {
         threshold::read()
     }
 
@@ -96,7 +96,7 @@ mod ArgentMultisigAccount {
     #[view]
     fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> bool {
         let threshold = threshold::read();
-        assert(threshold != 0_u32, 'argent/uninitialized');
+        assert(threshold != 0_usize, 'argent/uninitialized');
         assert(
             signatures.len() == threshold * SignerSignatureSize, 'argent/invalid-signature-length'
         );
@@ -144,15 +144,14 @@ mod ArgentMultisigAccount {
     // @dev Set the initial parameters for the multisig. It's mandatory to call this methods to secure the account.
     // It's recommended to call this method in the same transaction that deploys the account to make sure it's always initialized
     #[external]
-    fn initialize(threshold: u32, signers: Array<felt252>) {
+    fn initialize(threshold: usize, signers: Array<felt252>) {
         let current_threshold = threshold::read();
-        assert(current_threshold == 0_u32, 'argent/already-initialized');
+        assert(current_threshold == 0_usize, 'argent/already-initialized');
 
         let signers_len = signers.len();
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
         signers_storage::add_signers(signers.span(), 0);
-        //  TODO If they change usize type to be "more" it'll break, should we prevent it and use usize instead, or write directly into()?
         threshold::write(threshold);
 
         let removed_signers = ArrayTrait::new();
@@ -161,12 +160,12 @@ mod ArgentMultisigAccount {
     }
 
     #[external]
-    fn change_threshold(new_threshold: u32) {
+    fn change_threshold(new_threshold: usize) {
         asserts::assert_only_self();
 
         let signers_len = signers_storage::get_signers_len();
-
         assert_valid_threshold_and_signers_count(new_threshold, signers_len);
+
         threshold::write(new_threshold);
 
         let added_signers = ArrayTrait::new();
@@ -179,12 +178,11 @@ mod ArgentMultisigAccount {
     // @param new_threshold New threshold
     // @param signers_to_add Contains the new signers, it will revert if it contains any existing signer
     #[external]
-    fn add_signers(new_threshold: u32, signers_to_add: Array<felt252>) {
+    fn add_signers(new_threshold: usize, signers_to_add: Array<felt252>) {
         asserts::assert_only_self();
+
         let (signers_len, last_signer) = signers_storage::load();
-
         let new_signers_len = signers_len + signers_to_add.len();
-
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
 
         signers_storage::add_signers(signers_to_add.span(), last_signer);
@@ -199,12 +197,11 @@ mod ArgentMultisigAccount {
     // @param new_threshold New threshold
     // @param signers_to_remove Should contain only current signers, otherwise it will revert
     #[external]
-    fn remove_signers(new_threshold: u32, signers_to_remove: Array<felt252>) {
+    fn remove_signers(new_threshold: usize, signers_to_remove: Array<felt252>) {
         asserts::assert_only_self();
+
         let (signers_len, last_signer) = signers_storage::load();
-
         let new_signers_len = signers_len - signers_to_remove.len();
-
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
 
         signers_storage::remove_signers(signers_to_remove.span(), last_signer);
@@ -221,8 +218,8 @@ mod ArgentMultisigAccount {
     #[external]
     fn replace_signer(signer_to_remove: felt252, signer_to_add: felt252) {
         asserts::assert_only_self();
-        let (signers_len, last_signer) = signers_storage::load();
 
+        let (signers_len, last_signer) = signers_storage::load();
         signers_storage::replace_signer(signer_to_remove, signer_to_add, last_signer);
 
         let mut added_signers = ArrayTrait::new();
@@ -275,9 +272,9 @@ mod ArgentMultisigAccount {
         }
     }
 
-    fn assert_valid_threshold_and_signers_count(threshold: u32, signers_len: u32) {
-        assert(threshold != 0_u32, 'argent/invalid-threshold');
-        assert(signers_len != 0_u32, 'argent/invalid-signers-len');
+    fn assert_valid_threshold_and_signers_count(threshold: usize, signers_len: usize) {
+        assert(threshold != 0_usize, 'argent/invalid-threshold');
+        assert(signers_len != 0_usize, 'argent/invalid-signers-len');
         assert(threshold <= signers_len, 'argent/bad-threshold');
     }
 
@@ -285,7 +282,7 @@ mod ArgentMultisigAccount {
     #[inline(always)]
     fn assert_initialized() {
         let threshold = threshold::read();
-        assert(threshold != 0_u32, 'argent/uninitialized');
+        assert(threshold != 0_usize, 'argent/uninitialized');
     }
 
 
@@ -461,11 +458,11 @@ mod ArgentMultisigAccount {
 
         // Returns the number of signers and the last signer (or zero if the list is empty). Cost increases with the list size
         // returns (signers_len, last_signer)
-        fn load() -> (u32, felt252) {
+        fn load() -> (usize, felt252) {
             load_from(super::signer_list::read(0))
         }
 
-        fn load_from(from_signer: felt252) -> (u32, felt252) {
+        fn load_from(from_signer: felt252) -> (usize, felt252) {
             match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
@@ -476,24 +473,24 @@ mod ArgentMultisigAccount {
             }
             if from_signer == 0 {
                 // empty list
-                return (0_u32, 0);
+                return (0_usize, 0);
             }
 
             let next_signer = super::signer_list::read(from_signer);
 
             if next_signer == 0 {
-                return (1_u32, from_signer);
+                return (1_usize, from_signer);
             }
             let (next_length, last_signer) = load_from(next_signer);
-            (next_length + 1_u32, last_signer)
+            (next_length + 1_usize, last_signer)
         }
 
         // Returns the number of signers. Cost increases with the list size
-        fn get_signers_len() -> u32 {
+        fn get_signers_len() -> usize {
             get_signers_len_from(super::signer_list::read(0))
         }
 
-        fn get_signers_len_from(from_signer: felt252) -> u32 {
+        fn get_signers_len_from(from_signer: felt252) -> usize {
             match get_gas_all(get_builtin_costs()) {
                 Option::Some(_) => {},
                 Option::None(_) => {
@@ -504,11 +501,11 @@ mod ArgentMultisigAccount {
             }
             if from_signer == 0 {
                 // empty list
-                return 0_u32;
+                return 0_usize;
             }
             let next_signer = super::signer_list::read(from_signer);
             let next_length = get_signers_len_from(next_signer);
-            next_length + 1_u32
+            next_length + 1_usize
         }
 
         fn get_signers() -> Array<felt252> {

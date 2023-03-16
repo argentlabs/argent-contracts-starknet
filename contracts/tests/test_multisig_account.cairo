@@ -1,6 +1,8 @@
 use array::ArrayTrait;
-use contracts::ArgentMultisigAccount;
 use traits::Into;
+
+use contracts::ArgentMultisigAccount;
+use contracts::signers_storage::SignersStorage;
 
 const signer_pubkey_1: felt252 = 0x759ca09377679ecd535a81e83039658bf40959283187c654c5416f439403cf5;
 const signer_pubkey_2: felt252 = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;
@@ -11,7 +13,6 @@ const signer_pubkey_3: felt252 = 0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2
 fn valid_before_init() {
     assert(ArgentMultisigAccount::get_signers().is_empty(), 'invalid signers length');
 }
-
 
 #[test]
 #[available_gas(20000000)]
@@ -24,7 +25,7 @@ fn valid_initiliaze() {
     assert(ArgentMultisigAccount::threshold::read() == threshold, 'new threshold not set');
 
     // test if signers is in list
-    assert(ArgentMultisigAccount::signer_list::read(0) == signer_pubkey_1, 'signer 1 not added');
+    assert(SignersStorage::signer_list::read(0) == signer_pubkey_1, 'signer 1 not added');
 
     // test if is signer correctly returns true
     assert(ArgentMultisigAccount::is_signer(signer_pubkey_1), 'is signer cant find signer');
@@ -47,10 +48,9 @@ fn valid_initiliaze_two_signers() {
     assert(ArgentMultisigAccount::threshold::read() == threshold, 'new threshold not set');
 
     // test if signers is in list
-    assert(ArgentMultisigAccount::signer_list::read(0) == signer_pubkey_1, 'signer 1 not added');
+    assert(SignersStorage::signer_list::read(0) == signer_pubkey_1, 'signer 1 not added');
     assert(
-        ArgentMultisigAccount::signer_list::read(signer_pubkey_1) == signer_pubkey_2,
-        'signer 2 not added'
+        SignersStorage::signer_list::read(signer_pubkey_1) == signer_pubkey_2, 'signer 2 not added'
     );
 
     // test if is signer correctly returns true

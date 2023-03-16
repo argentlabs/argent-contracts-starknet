@@ -7,6 +7,7 @@ mod asserts;
 mod argent_account;
 use argent_account::ArgentAccount;
 
+mod signers_storage;
 mod argent_multisig_account;
 use argent_multisig_account::ArgentMultisigAccount;
 

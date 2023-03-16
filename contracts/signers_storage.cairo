@@ -54,9 +54,9 @@ mod SignersStorage {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
-            },
+            }
         }
 
         let next_signer = signer_list::read(from_signer);
@@ -78,9 +78,9 @@ mod SignersStorage {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
-            },
+            }
         }
 
         let next_signer = signer_list::read(from_signer);
@@ -97,9 +97,9 @@ mod SignersStorage {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
-            },
+            }
         }
 
         match signers_to_add.pop_front() {
@@ -124,9 +124,9 @@ mod SignersStorage {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
-            },
+            }
         }
 
         match signers_to_remove.pop_front() {
@@ -184,7 +184,7 @@ mod SignersStorage {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
             }
         }
@@ -211,7 +211,7 @@ mod SignersStorage {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
             }
         }
@@ -236,7 +236,7 @@ mod SignersStorage {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
             }
         }

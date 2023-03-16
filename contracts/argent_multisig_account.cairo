@@ -33,17 +33,6 @@ mod ArgentMultisigAccount {
     const VERSION: felt252 = '0.1.0-alpha.1';
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-<<<<<<< HEAD
-    //                                           Storage                                          //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    struct Storage {
-        threshold: usize
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-=======
->>>>>>> 926f741 (renamed signer storage -> multisig storage, added threshold to multisig storage)
     //                                           Events                                           //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -91,22 +80,16 @@ mod ArgentMultisigAccount {
     // @dev Set the initial parameters for the multisig. It's mandatory to call this methods to secure the account.
     // It's recommended to call this method in the same transaction that deploys the account to make sure it's always initialized
     #[external]
-<<<<<<< HEAD
     fn initialize(threshold: usize, signers: Array<felt252>) {
         let current_threshold = threshold::read();
         assert(current_threshold == 0_usize, 'argent/already-initialized');
-=======
-    fn initialize(threshold: u32, signers: Array<felt252>) {
-        let current_threshold = MultisigStorage::threshold::read();
-        assert(current_threshold == 0_u32, 'argent/already-initialized');
->>>>>>> 926f741 (renamed signer storage -> multisig storage, added threshold to multisig storage)
 
         let signers_len = signers.len();
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
         MultisigStorage::add_signers(signers.span(), 0);
         //  TODO If they change usize type to be "more" it'll break, should we prevent it and use usize instead, or write directly into()?
-        MultisigStorage::threshold::write(threshold);
+        MultisigStorage::set_threshold(threshold);
 
         let removed_signers = ArrayTrait::new();
 
@@ -120,7 +103,7 @@ mod ArgentMultisigAccount {
         let signers_len = MultisigStorage::get_signers_len();
 
         assert_valid_threshold_and_signers_count(new_threshold, signers_len);
-        MultisigStorage::threshold::write(new_threshold);
+        MultisigStorage::set_threshold(new_threshold);
 
         let added_signers = ArrayTrait::new();
         let removed_signers = ArrayTrait::new();
@@ -140,7 +123,7 @@ mod ArgentMultisigAccount {
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
 
         MultisigStorage::add_signers(signers_to_add.span(), last_signer);
-        MultisigStorage::threshold::write(new_threshold);
+        MultisigStorage::set_threshold(new_threshold);
 
         let removed_signers = ArrayTrait::new();
 
@@ -159,7 +142,7 @@ mod ArgentMultisigAccount {
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
 
         MultisigStorage::remove_signers(signers_to_remove.span(), last_signer);
-        MultisigStorage::threshold::write(new_threshold);
+        MultisigStorage::set_threshold(new_threshold);
 
         let added_signers = ArrayTrait::new();
 
@@ -183,7 +166,7 @@ mod ArgentMultisigAccount {
         removed_signer.append(signer_to_remove);
 
         ConfigurationUpdated(
-            MultisigStorage::threshold::read(), signers_len, added_signers, removed_signer
+            MultisigStorage::get_threshold(), signers_len, added_signers, removed_signer
         );
     }
 
@@ -203,7 +186,7 @@ mod ArgentMultisigAccount {
 
     #[view]
     fn get_threshold() -> u32 {
-        MultisigStorage::threshold::read()
+        MultisigStorage::get_threshold()
     }
 
     #[view]

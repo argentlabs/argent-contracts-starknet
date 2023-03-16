@@ -210,5 +210,13 @@ mod MultisigStorage {
         previous_signers.append(from_signer);
         get_signers_from(signer_list::read(from_signer), previous_signers)
     }
+
+    fn get_threshold() -> u32 {
+        threshold::read()
+    }
+
+    fn set_threshold(threshold: u32) {
+        threshold::write(threshold);
+    }
 }
 

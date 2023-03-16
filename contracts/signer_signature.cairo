@@ -1,6 +1,6 @@
 use array::ArrayTrait;
 use serde::Serde;
-use gas::get_gas;
+use gas::withdraw_gas;
 
 
 #[derive(Copy, Drop)]
@@ -32,7 +32,7 @@ impl SignerSignatureSerde of serde::Serde::<SignerSignature> {
 fn deserialize_array_signer_signature(
     serialized: Array<felt252>, mut curr_output: Array<SignerSignature>, remaining: usize
 ) -> Option<Array<SignerSignature>> {
-    match get_gas() {
+    match withdraw_gas() {
         Option::Some(_) => {},
         Option::None(_) => {
             let mut data = ArrayTrait::new();

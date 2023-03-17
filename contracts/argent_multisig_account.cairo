@@ -3,7 +3,6 @@ mod ArgentMultisigAccount {
     use array::ArrayTrait;
     use array::SpanTrait;
     use ecdsa::check_ecdsa_signature;
-    use gas::withdraw_gas_all;
     use option::OptionTrait;
     use traits::Into;
     use box::BoxTrait;
@@ -21,6 +20,7 @@ mod ArgentMultisigAccount {
     use contracts::SignerSignatureSize;
     use contracts::Call;
     use contracts::spans;
+    use contracts::fetch_gas;
 
     const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
@@ -255,14 +255,7 @@ mod ArgentMultisigAccount {
     fn is_valid_signatures_array_helper(
         hash: felt252, mut signatures: Span<SignerSignature>, last_signer: felt252
     ) -> bool {
-        match withdraw_gas_all(get_builtin_costs()) {
-            Option::Some(_) => {},
-            Option::None(_) => {
-                let mut err_data = ArrayTrait::new();
-                err_data.append('Out of gas');
-                panic(err_data)
-            }
-        }
+        fetch_gas();
 
         let sig_pop: Option<@SignerSignature> = signatures.pop_front();
         match sig_pop {

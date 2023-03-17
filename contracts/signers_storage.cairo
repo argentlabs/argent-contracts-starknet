@@ -7,7 +7,7 @@
 mod SignersStorage {
     use array::ArrayTrait;
     use array::SpanTrait;
-    use gas::get_gas_all;
+    use gas::withdraw_gas_all;
 
     struct Storage {
         signer_list: LegacyMap<felt252, felt252>, 
@@ -50,13 +50,13 @@ mod SignersStorage {
     }
 
     fn find_last_signer_recursive(from_signer: felt252) -> felt252 {
-        match get_gas_all(get_builtin_costs()) {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
-            },
+            }
         }
 
         let next_signer = signer_list::read(from_signer);
@@ -74,13 +74,13 @@ mod SignersStorage {
     }
 
     fn find_signer_before_recursive(signer_after: felt252, from_signer: felt252) -> felt252 {
-        match get_gas_all(get_builtin_costs()) {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
-            },
+            }
         }
 
         let next_signer = signer_list::read(from_signer);
@@ -93,13 +93,13 @@ mod SignersStorage {
     }
 
     fn add_signers(mut signers_to_add: Span<felt252>, last_signer: felt252) {
-        match get_gas_all(get_builtin_costs()) {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
-            },
+            }
         }
 
         match signers_to_add.pop_front() {
@@ -120,13 +120,13 @@ mod SignersStorage {
     }
 
     fn remove_signers(mut signers_to_remove: Span<felt252>, last_signer: felt252) {
-        match get_gas_all(get_builtin_costs()) {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
-            },
+            }
         }
 
         match signers_to_remove.pop_front() {
@@ -180,11 +180,11 @@ mod SignersStorage {
     }
 
     fn load_from(from_signer: felt252) -> (usize, felt252) {
-        match get_gas_all(get_builtin_costs()) {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
             }
         }
@@ -207,11 +207,11 @@ mod SignersStorage {
     }
 
     fn get_signers_len_from(from_signer: felt252) -> usize {
-        match get_gas_all(get_builtin_costs()) {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
             }
         }
@@ -232,11 +232,11 @@ mod SignersStorage {
     fn get_signers_from(
         from_signer: felt252, mut previous_signers: Array<felt252>
     ) -> Array<felt252> {
-        match get_gas_all(get_builtin_costs()) {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
             }
         }

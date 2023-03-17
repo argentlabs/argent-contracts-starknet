@@ -37,7 +37,7 @@ mod ArgentMultisigAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     struct Storage {
-        threshold: u32, 
+        threshold: usize
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -46,8 +46,8 @@ mod ArgentMultisigAccount {
 
     #[event]
     fn ConfigurationUpdated(
-        new_threshold: u32,
-        new_signers_count: u32,
+        new_threshold: usize,
+        new_signers_count: usize,
         added_signers: Array<felt252>,
         removed_signers: Array<felt252>
     ) {}
@@ -88,9 +88,9 @@ mod ArgentMultisigAccount {
     // @dev Set the initial parameters for the multisig. It's mandatory to call this methods to secure the account.
     // It's recommended to call this method in the same transaction that deploys the account to make sure it's always initialized
     #[external]
-    fn initialize(threshold: u32, signers: Array<felt252>) {
+    fn initialize(threshold: usize, signers: Array<felt252>) {
         let current_threshold = threshold::read();
-        assert(current_threshold == 0_u32, 'argent/already-initialized');
+        assert(current_threshold == 0_usize, 'argent/already-initialized');
 
         let signers_len = signers.len();
         assert_valid_threshold_and_signers_count(threshold, signers_len);
@@ -105,12 +105,13 @@ mod ArgentMultisigAccount {
     }
 
     #[external]
-    fn change_threshold(new_threshold: u32) {
+    fn change_threshold(new_threshold: usize) {
         assert_only_self();
 
         let signers_len = SignersStorage::get_signers_len();
 
         assert_valid_threshold_and_signers_count(new_threshold, signers_len);
+
         threshold::write(new_threshold);
 
         let added_signers = ArrayTrait::new();
@@ -123,12 +124,11 @@ mod ArgentMultisigAccount {
     // @param new_threshold New threshold
     // @param signers_to_add Contains the new signers, it will revert if it contains any existing signer
     #[external]
-    fn add_signers(new_threshold: u32, signers_to_add: Array<felt252>) {
+    fn add_signers(new_threshold: usize, signers_to_add: Array<felt252>) {
         assert_only_self();
         let (signers_len, last_signer) = SignersStorage::load();
 
         let new_signers_len = signers_len + signers_to_add.len();
-
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
 
         SignersStorage::add_signers(signers_to_add.span(), last_signer);
@@ -143,12 +143,11 @@ mod ArgentMultisigAccount {
     // @param new_threshold New threshold
     // @param signers_to_remove Should contain only current signers, otherwise it will revert
     #[external]
-    fn remove_signers(new_threshold: u32, signers_to_remove: Array<felt252>) {
+    fn remove_signers(new_threshold: usize, signers_to_remove: Array<felt252>) {
         assert_only_self();
         let (signers_len, last_signer) = SignersStorage::load();
 
         let new_signers_len = signers_len - signers_to_remove.len();
-
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
 
         SignersStorage::remove_signers(signers_to_remove.span(), last_signer);
@@ -193,7 +192,7 @@ mod ArgentMultisigAccount {
     }
 
     #[view]
-    fn get_threshold() -> u32 {
+    fn get_threshold() -> usize {
         threshold::read()
     }
 
@@ -233,7 +232,7 @@ mod ArgentMultisigAccount {
     #[view]
     fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> bool {
         let threshold = threshold::read();
-        assert(threshold != 0_u32, 'argent/uninitialized');
+        assert(threshold != 0_usize, 'argent/uninitialized');
         assert(
             signatures.len() == threshold * SignerSignatureSize, 'argent/invalid-signature-length'
         );
@@ -286,9 +285,9 @@ mod ArgentMultisigAccount {
         }
     }
 
-    fn assert_valid_threshold_and_signers_count(threshold: u32, signers_len: u32) {
-        assert(threshold != 0_u32, 'argent/invalid-threshold');
-        assert(signers_len != 0_u32, 'argent/invalid-signers-len');
+    fn assert_valid_threshold_and_signers_count(threshold: usize, signers_len: usize) {
+        assert(threshold != 0_usize, 'argent/invalid-threshold');
+        assert(signers_len != 0_usize, 'argent/invalid-signers-len');
         assert(threshold <= signers_len, 'argent/bad-threshold');
     }
 
@@ -296,6 +295,6 @@ mod ArgentMultisigAccount {
     #[inline(always)]
     fn assert_initialized() {
         let threshold = threshold::read();
-        assert(threshold != 0_u32, 'argent/uninitialized');
+        assert(threshold != 0_usize, 'argent/uninitialized');
     }
 }

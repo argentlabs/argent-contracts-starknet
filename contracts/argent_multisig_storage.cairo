@@ -16,7 +16,7 @@ mod MultisigStorage {
 
     struct Storage {
         signer_list: LegacyMap<felt252, felt252>,
-        threshold: u32,
+        threshold: usize,
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -211,11 +211,11 @@ mod MultisigStorage {
         get_signers_from(signer_list::read(from_signer), previous_signers)
     }
 
-    fn get_threshold() -> u32 {
+    fn get_threshold() -> usize {
         threshold::read()
     }
 
-    fn set_threshold(threshold: u32) {
+    fn set_threshold(threshold: usize) {
         threshold::write(threshold);
     }
 }

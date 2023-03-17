@@ -81,7 +81,7 @@ mod ArgentMultisigAccount {
     // It's recommended to call this method in the same transaction that deploys the account to make sure it's always initialized
     #[external]
     fn initialize(threshold: usize, signers: Array<felt252>) {
-        let current_threshold = threshold::read();
+        let current_threshold = MultisigStorage::get_threshold();
         assert(current_threshold == 0_usize, 'argent/already-initialized');
 
         let signers_len = signers.len();
@@ -185,7 +185,7 @@ mod ArgentMultisigAccount {
     }
 
     #[view]
-    fn get_threshold() -> u32 {
+    fn get_threshold() -> usize {
         MultisigStorage::get_threshold()
     }
 
@@ -224,7 +224,7 @@ mod ArgentMultisigAccount {
 
     #[view]
     fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> bool {
-        let threshold = threshold::read();
+        let threshold = MultisigStorage::get_threshold();
         assert(threshold != 0_usize, 'argent/uninitialized');
         assert(
             signatures.len() == threshold * SignerSignatureSize, 'argent/invalid-signature-length'
@@ -280,7 +280,7 @@ mod ArgentMultisigAccount {
 
     #[inline(always)]
     fn assert_initialized() {
-        let threshold = threshold::read();
+        let threshold = MultisigStorage::get_threshold();
         assert(threshold != 0_usize, 'argent/uninitialized');
     }
 }

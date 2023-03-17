@@ -7,7 +7,7 @@
 mod SignersStorage {
     use array::ArrayTrait;
     use array::SpanTrait;
-    
+
     use contracts::fetch_gas;
 
     struct Storage {

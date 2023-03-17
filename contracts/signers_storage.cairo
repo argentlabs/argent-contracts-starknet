@@ -7,7 +7,7 @@
 mod SignersStorage {
     use array::ArrayTrait;
     use array::SpanTrait;
-    use gas::get_gas_all;
+    use gas::withdraw_gas_all;
 
     struct Storage {
         signer_list: LegacyMap<felt252, felt252>, 
@@ -50,7 +50,7 @@ mod SignersStorage {
     }
 
     fn find_last_signer_recursive(from_signer: felt252) -> felt252 {
-        match get_gas_all(get_builtin_costs()) {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
@@ -74,7 +74,7 @@ mod SignersStorage {
     }
 
     fn find_signer_before_recursive(signer_after: felt252, from_signer: felt252) -> felt252 {
-        match get_gas_all(get_builtin_costs()) {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
@@ -93,7 +93,7 @@ mod SignersStorage {
     }
 
     fn add_signers(mut signers_to_add: Span<felt252>, last_signer: felt252) {
-        match get_gas_all(get_builtin_costs()) {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
@@ -120,7 +120,7 @@ mod SignersStorage {
     }
 
     fn remove_signers(mut signers_to_remove: Span<felt252>, last_signer: felt252) {
-        match get_gas_all(get_builtin_costs()) {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
@@ -175,12 +175,12 @@ mod SignersStorage {
 
     // Returns the number of signers and the last signer (or zero if the list is empty). Cost increases with the list size
     // returns (signers_len, last_signer)
-    fn load() -> (u32, felt252) {
+    fn load() -> (usize, felt252) {
         load_from(signer_list::read(0))
     }
 
-    fn load_from(from_signer: felt252) -> (u32, felt252) {
-        match get_gas_all(get_builtin_costs()) {
+    fn load_from(from_signer: felt252) -> (usize, felt252) {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
@@ -190,24 +190,24 @@ mod SignersStorage {
         }
         if (from_signer == 0) {
             // empty list
-            return (0_u32, 0);
+            return (0_usize, 0);
         }
 
         let next_signer = signer_list::read(from_signer);
         if (next_signer == 0) {
-            return (1_u32, from_signer);
+            return (1_usize, from_signer);
         }
         let (next_length, last_signer) = load_from(next_signer);
-        (next_length + 1_u32, last_signer)
+        (next_length + 1_usize, last_signer)
     }
 
     // Returns the number of signers. Cost increases with the list size
-    fn get_signers_len() -> u32 {
+    fn get_signers_len() -> usize {
         get_signers_len_from(signer_list::read(0))
     }
 
-    fn get_signers_len_from(from_signer: felt252) -> u32 {
-        match get_gas_all(get_builtin_costs()) {
+    fn get_signers_len_from(from_signer: felt252) -> usize {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
@@ -217,11 +217,11 @@ mod SignersStorage {
         }
         if (from_signer == 0) {
             // empty list
-            return 0_u32;
+            return 0_usize;
         }
         let next_signer = signer_list::read(from_signer);
         let next_length = get_signers_len_from(next_signer);
-        next_length + 1_u32
+        next_length + 1_usize
     }
 
     fn get_signers() -> Array<felt252> {
@@ -232,7 +232,7 @@ mod SignersStorage {
     fn get_signers_from(
         from_signer: felt252, mut previous_signers: Array<felt252>
     ) -> Array<felt252> {
-        match get_gas_all(get_builtin_costs()) {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();

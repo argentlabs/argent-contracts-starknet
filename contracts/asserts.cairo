@@ -1,6 +1,6 @@
 use array::ArrayTrait;
 use array::SpanTrait;
-use gas::get_gas;
+use gas::withdraw_gas;
 use traits::Into;
 use zeroable::Zeroable;
 
@@ -33,7 +33,7 @@ fn assert_correct_tx_version(tx_version: felt252) {
 }
 
 fn assert_no_self_call(mut calls: Span::<Call>, self: ContractAddress) {
-    match get_gas() {
+    match withdraw_gas() {
         Option::Some(_) => {},
         Option::None(_) => {
             let mut data = ArrayTrait::new();

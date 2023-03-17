@@ -1,7 +1,7 @@
 use array::ArrayTrait;
 use array::ArrayTCloneImpl;
 use array::SpanTrait;
-use gas::get_gas;
+use gas::withdraw_gas;
 use serde::Serde;
 use clone::Clone;
 
@@ -26,11 +26,11 @@ fn execute_multicall(calls: Array<Call>) -> Array<felt252> {
 }
 
 fn execute_multicall_loop(mut calls: Span<Call>, ref result: Array<felt252>, index: felt252) {
-    match get_gas() {
+    match withdraw_gas() {
         Option::Some(_) => {},
         Option::None(_) => {
             let mut data = ArrayTrait::new();
-            array_append(ref data, 'Out of gas');
+            data.append('Out of gas');
             panic(data);
         },
     }

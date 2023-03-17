@@ -13,7 +13,7 @@ impl ArrayCallDrop of Drop::<Array::<Call>>;
 #[test]
 #[available_gas(2000000)]
 fn execute_multicall_simple() {
-    let mut arr = array_new::<Call>();
+    let mut arr = ArrayTrait::new();
     arr.append(create_simple_call());
     arr.append(create_simple_call_with_data(43));
     let mut res = execute_multicall(arr);
@@ -25,7 +25,7 @@ fn execute_multicall_simple() {
 #[test]
 #[available_gas(2000000)]
 fn execute_multicall_test_dapp_1() {
-    let mut arr = array_new::<Call>();
+    let mut arr = ArrayTrait::new();
     arr.append(create_set_number_call(12));
     arr.append(create_get_number_call());
     let retdata = execute_multicall(arr);
@@ -36,7 +36,7 @@ fn execute_multicall_test_dapp_1() {
 #[test]
 #[available_gas(2000000)]
 fn execute_multicall_test_dapp_2() {
-    let mut arr = array_new::<Call>();
+    let mut arr = ArrayTrait::new();
     arr.append(create_set_number_call_double(12));
     arr.append(create_get_number_call());
     arr.append(create_increase_number_call(18));
@@ -52,7 +52,7 @@ fn execute_multicall_test_dapp_2() {
 #[test]
 #[available_gas(2000000)]
 fn execute_multicall_test_dapp_3() {
-    let mut arr = array_new::<Call>();
+    let mut arr = ArrayTrait::new();
     arr.append(create_set_number_call(12));
     arr.append(create_get_number_call());
     arr.append(create_set_number_call_double(13));
@@ -72,7 +72,7 @@ fn execute_multicall_test_dapp_3() {
 #[available_gas(2000000)]
 #[should_panic(expected = ('argent/multicall-failed-', 1))]
 fn execute_multicall_test_dapp_with_create_throw_error_call() {
-    let mut arr = array_new::<Call>();
+    let mut arr = ArrayTrait::new();
     arr.append(create_set_number_call(12));
     arr.append(create_throw_error_call(12));
     arr.append(create_get_number_call());
@@ -83,7 +83,7 @@ fn execute_multicall_test_dapp_with_create_throw_error_call() {
 #[available_gas(2000000)]
 #[should_panic(expected = ('argent/multicall-failed-', 0))]
 fn execute_multicall_test_dapp_with_create_throw_error_call_beginning() {
-    let mut arr = array_new::<Call>();
+    let mut arr = ArrayTrait::new();
     arr.append(create_throw_error_call(12));
     arr.append(create_set_number_call(12));
     arr.append(create_get_number_call());
@@ -94,7 +94,7 @@ fn execute_multicall_test_dapp_with_create_throw_error_call_beginning() {
 #[available_gas(2000000)]
 #[should_panic(expected = ('argent/multicall-failed-', 2))]
 fn execute_multicall_test_dapp_with_create_throw_error_call_end() {
-    let mut arr = array_new::<Call>();
+    let mut arr = ArrayTrait::new();
     arr.append(create_set_number_call(12));
     arr.append(create_get_number_call());
     arr.append(create_throw_error_call(12));
@@ -104,7 +104,7 @@ fn execute_multicall_test_dapp_with_create_throw_error_call_end() {
 #[test]
 #[available_gas(2000000)]
 fn aggregate_simple() {
-    let mut arr = array_new::<Call>();
+    let mut arr = ArrayTrait::new();
     arr.append(create_simple_call());
     arr.append(create_simple_call_with_data(43));
     set_block_number(42_u64);

@@ -1,5 +1,5 @@
 use array::ArrayTrait;
-use gas::get_gas_all;
+use gas::withdraw_gas_all;
 
 use starknet::ContractAddress;
 use starknet::SyscallResult;
@@ -9,11 +9,11 @@ use contracts::test_dapp::TestDapp;
 fn call_contract_syscall(
     to: ContractAddress, selector: felt252, calldata: Array::<felt252>
 ) -> SyscallResult<Array::<felt252>> {
-    match get_gas_all(get_builtin_costs()) {
+    match withdraw_gas_all(get_builtin_costs()) {
         Option::Some(_) => {},
         Option::None(_) => {
             let mut data = ArrayTrait::new();
-            array_append(ref data, 'Out of gas');
+            data.append('Out of gas');
             panic(data);
         },
     }

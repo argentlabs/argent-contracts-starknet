@@ -1,6 +1,6 @@
 use array::ArrayTrait;
 use array::SpanTrait;
-use gas::get_gas;
+use gas::withdraw_gas;
 
 trait ArrayTraitExt<T> {
     fn append_all(ref self: Array::<T>, ref arr: Array::<T>);
@@ -8,11 +8,11 @@ trait ArrayTraitExt<T> {
 
 impl ArrayImpl<T, impl TDrop: Drop::<T>> of ArrayTraitExt::<T> {
     fn append_all(ref self: Array::<T>, ref arr: Array::<T>) {
-        match get_gas() {
+        match withdraw_gas() {
             Option::Some(_) => {},
             Option::None(_) => {
-                let mut data = array_new::<felt252>();
-                array_append(ref data, 'Out of gas');
+                let mut data = ArrayTrait::new();
+                data.append('Out of gas');
                 panic(data);
             },
         }

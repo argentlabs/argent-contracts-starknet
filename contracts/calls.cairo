@@ -44,7 +44,6 @@ fn execute_multicall_loop(mut calls: Span<Call>, ref result: Array<felt252>, ind
                 Result::Ok(x) => {
                     let mut call_result = x;
                     result.append_all(ref call_result);
-                    // TODO Should I trigger event to say "Hey event X done" for ui it'll be noice I guesss?
                     execute_multicall_loop(calls, ref result, index + 1);
                 },
                 Result::Err(revert_reason) => {

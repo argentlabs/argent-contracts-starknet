@@ -260,7 +260,7 @@ mod ArgentMultisigAccount {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();
-                array_append(ref err_data, 'Out of gas');
+                err_data.append('Out of gas');
                 panic(err_data)
             }
         }

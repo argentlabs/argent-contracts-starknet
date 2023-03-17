@@ -3,7 +3,7 @@ mod ArgentMultisigAccount {
     use array::ArrayTrait;
     use array::SpanTrait;
     use ecdsa::check_ecdsa_signature;
-    use gas::get_gas_all;
+    use gas::withdraw_gas_all;
     use option::OptionTrait;
     use traits::Into;
     use box::BoxTrait;
@@ -256,7 +256,7 @@ mod ArgentMultisigAccount {
     fn is_valid_signatures_array_helper(
         hash: felt252, mut signatures: Span<SignerSignature>, last_signer: felt252
     ) -> bool {
-        match get_gas_all(get_builtin_costs()) {
+        match withdraw_gas_all(get_builtin_costs()) {
             Option::Some(_) => {},
             Option::None(_) => {
                 let mut err_data = ArrayTrait::new();

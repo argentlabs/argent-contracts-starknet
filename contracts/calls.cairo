@@ -12,9 +12,8 @@ struct Call {
 
 impl CallSerde of Serde::<Call> {
     fn serialize(ref serialized: Array::<felt252>, input: Call) {
-        let ref_input = @input;
-        Serde::serialize(ref serialized, *ref_input.to);
-        Serde::serialize(ref serialized, *ref_input.selector);
+        Serde::serialize(ref serialized, input.to);
+        Serde::serialize(ref serialized, input.selector);
         Serde::serialize(ref serialized, input.calldata);
     }
     fn deserialize(ref serialized: Span::<felt252>) -> Option::<Call> {

@@ -98,13 +98,29 @@ mod ArgentAccount {
     fn GuardianBackupChanged(new_guardian: felt252) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                        Constructor                                         //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    #[constructor]
+    fn constructor(new_signer: felt252, new_guardian: felt252, new_guardian_backup: felt252) {
+        // check that the target signer is not zero
+        assert(new_signer != 0, 'argent/null-signer');
+        // There cannot be a guardian_backup when there is no guardian
+        if new_guardian.is_zero() {
+            assert(new_guardian_backup.is_zero(), 'argent/backup-should-be-null');
+        }
+        // initialize the account
+        _signer::write(new_signer);
+        _guardian::write(new_guardian);
+        _guardian_backup::write(new_guardian_backup);
+        AccountCreated(get_contract_address(), new_signer, new_guardian, new_guardian_backup);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                     External functions                                     //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[external]
     fn __validate__(ref calls: Array::<Call>) -> felt252 {
-        assert_initialized();
-
         let account_address = get_contract_address();
 
         if calls.len() == 1_usize {
@@ -140,7 +156,6 @@ mod ArgentAccount {
 
     #[external]
     fn __validate_declare__(class_hash: felt252) -> felt252 {
-        assert_initialized();
         assert_is_valid_signature();
         VALIDATED
     }
@@ -150,7 +165,6 @@ mod ArgentAccount {
     fn __validate_deploy__(
         class_hash: felt252, contract_address_salt: felt252, public_key_: felt252
     ) -> felt252 {
-        assert_initialized();
         assert_is_valid_signature();
         VALIDATED
     }
@@ -394,10 +408,5 @@ mod ArgentAccount {
     #[inline(always)]
     fn assert_guardian_set() {
         assert(_guardian::read() != 0, 'argent/guardian-required');
-    }
-
-    #[inline(always)]
-    fn assert_initialized() {
-        assert(_signer::read() != 0, 'argent/uninitialized');
     }
 }

@@ -8,8 +8,6 @@ use contracts::Call;
 use contracts::execute_multicall;
 use contracts::aggregate;
 
-impl ArrayCallDrop of Drop::<Array::<Call>>;
-
 #[test]
 #[available_gas(2000000)]
 fn execute_multicall_simple() {

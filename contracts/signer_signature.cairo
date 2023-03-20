@@ -1,7 +1,7 @@
 use array::ArrayTrait;
 use serde::Serde;
 
-use contracts::fetch_gas;
+use contracts::check_enough_gas;
 
 
 #[derive(Copy, Drop)]
@@ -33,7 +33,7 @@ impl SignerSignatureSerde of serde::Serde::<SignerSignature> {
 fn deserialize_array_signer_signature(
     serialized: Array<felt252>, mut curr_output: Array<SignerSignature>, remaining: usize
 ) -> Option<Array<SignerSignature>> {
-    fetch_gas();
+    check_enough_gas();
 
     if remaining == 0_usize {
         return Option::Some(curr_output);

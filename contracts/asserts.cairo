@@ -10,7 +10,7 @@ use starknet::ContractAddressZeroable;
 use starknet::ContractAddressIntoFelt252;
 
 use contracts::calls::Call;
-use contracts::fetch_gas;
+use contracts::check_enough_gas;
 
 const TRANSACTION_VERSION: felt252 = 1;
 const QUERY_VERSION: felt252 =
@@ -33,7 +33,7 @@ fn assert_correct_tx_version(tx_version: felt252) {
 }
 
 fn assert_no_self_call(mut calls: Span::<Call>, self: ContractAddress) {
-    fetch_gas();
+    check_enough_gas();
 
     match calls.pop_front() {
         Option::Some(call) => {

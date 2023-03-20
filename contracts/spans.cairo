@@ -1,7 +1,7 @@
 use array::ArrayTrait;
 use array::SpanTrait;
 
-use contracts::fetch_gas;
+use contracts::check_enough_gas;
 
 fn span_to_array(span: Span<felt252>) -> Array<felt252> {
     let mut output = ArrayTrait::new();
@@ -11,7 +11,7 @@ fn span_to_array(span: Span<felt252>) -> Array<felt252> {
 fn span_to_array_helper(
     mut span: Span<felt252>, mut curr_output: Array<felt252>
 ) -> Array<felt252> {
-    fetch_gas();
+    check_enough_gas();
 
     match span.pop_front() {
         Option::Some(i) => {

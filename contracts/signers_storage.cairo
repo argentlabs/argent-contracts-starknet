@@ -8,7 +8,7 @@ mod SignersStorage {
     use array::ArrayTrait;
     use array::SpanTrait;
 
-    use contracts::fetch_gas;
+    use contracts::check_enough_gas;
 
     struct Storage {
         signer_list: LegacyMap<felt252, felt252>, 
@@ -51,7 +51,7 @@ mod SignersStorage {
     }
 
     fn find_last_signer_recursive(from_signer: felt252) -> felt252 {
-        fetch_gas();
+        check_enough_gas();
 
         let next_signer = signer_list::read(from_signer);
         if (next_signer == 0) {
@@ -68,7 +68,7 @@ mod SignersStorage {
     }
 
     fn find_signer_before_recursive(signer_after: felt252, from_signer: felt252) -> felt252 {
-        fetch_gas();
+        check_enough_gas();
 
         let next_signer = signer_list::read(from_signer);
         assert(next_signer != 0, 'argent/cant-find-signer-before');
@@ -80,7 +80,7 @@ mod SignersStorage {
     }
 
     fn add_signers(mut signers_to_add: Span<felt252>, last_signer: felt252) {
-        fetch_gas();
+        check_enough_gas();
 
         match signers_to_add.pop_front() {
             Option::Some(i) => {
@@ -100,7 +100,7 @@ mod SignersStorage {
     }
 
     fn remove_signers(mut signers_to_remove: Span<felt252>, last_signer: felt252) {
-        fetch_gas();
+        check_enough_gas();
 
         match signers_to_remove.pop_front() {
             Option::Some(i) => {
@@ -153,7 +153,7 @@ mod SignersStorage {
     }
 
     fn load_from(from_signer: felt252) -> (usize, felt252) {
-        fetch_gas();
+        check_enough_gas();
 
         if (from_signer == 0) {
             // empty list
@@ -174,7 +174,7 @@ mod SignersStorage {
     }
 
     fn get_signers_len_from(from_signer: felt252) -> usize {
-        fetch_gas();
+        check_enough_gas();
 
         if (from_signer == 0) {
             // empty list
@@ -193,7 +193,7 @@ mod SignersStorage {
     fn get_signers_from(
         from_signer: felt252, mut previous_signers: Array<felt252>
     ) -> Array<felt252> {
-        fetch_gas();
+        check_enough_gas();
         if (from_signer == 0) {
             // empty list
             return previous_signers;

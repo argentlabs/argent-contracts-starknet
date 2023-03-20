@@ -20,7 +20,7 @@ mod ArgentMultisigAccount {
     use contracts::SignerSignatureSize;
     use contracts::Call;
     use contracts::spans;
-    use contracts::fetch_gas;
+    use contracts::check_enough_gas;
 
     const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
@@ -255,7 +255,7 @@ mod ArgentMultisigAccount {
     fn is_valid_signatures_array_helper(
         hash: felt252, mut signatures: Span<SignerSignature>, last_signer: felt252
     ) -> bool {
-        fetch_gas();
+        check_enough_gas();
 
         let sig_pop: Option<@SignerSignature> = signatures.pop_front();
         match sig_pop {

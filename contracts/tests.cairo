@@ -30,4 +30,3 @@ fn initialize_account_without_guardian() {
 fn initialize_account_with_guardian_backup() {
     ArgentAccount::initialize(signer_pubkey, guardian_pubkey, guardian_backup_pubkey);
 }
-

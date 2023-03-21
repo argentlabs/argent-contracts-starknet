@@ -2,7 +2,7 @@ use array::ArrayTrait;
 use traits::Into;
 
 use contracts::ArgentMultisigAccount;
-use contracts::argent_multisig_storage::MultisigStorage;
+use contracts::MultisigStorage;
 
 const signer_pubkey_1: felt252 = 0x759ca09377679ecd535a81e83039658bf40959283187c654c5416f439403cf5;
 const signer_pubkey_2: felt252 = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;

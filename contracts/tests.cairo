@@ -1,12 +1,13 @@
 mod test_asserts;
+
 mod test_argent_account;
-// TODO Re-enable when we/they fix ecdsa signature fn
-// mod test_argent_account_signatures;
+mod test_argent_account_escape;
+mod test_argent_account_signatures;
+
 mod test_multisig_account;
 mod test_multisig_remove_signers;
 mod test_multisig_replace_signers;
-// mod test_multisig_signing;
-mod test_argent_account_escape;
+mod test_multisig_signing;
 
 use contracts::ArgentAccount;
 

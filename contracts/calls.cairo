@@ -1,16 +1,15 @@
 use array::ArrayTrait;
 use array::ArrayTCloneImpl;
 use array::SpanTrait;
-use gas::withdraw_gas;
-use serde::Serde;
 use clone::Clone;
+use serde::Serde;
 
 // use starknet::call_contract_syscall;
 use starknet::ContractAddress;
-use starknet::contract_address::ContractAddressSerde;
 
 use contracts::ArrayTraitExt;
-use contracts::dummy_syscalls::call_contract_syscall;
+use contracts::dummy_syscalls::call_contract_syscall; // TODO remove me + remove me from lib
+use contracts::check_enough_gas;
 
 #[derive(Drop)]
 struct Call {
@@ -26,14 +25,7 @@ fn execute_multicall(calls: Array<Call>) -> Array<felt252> {
 }
 
 fn execute_multicall_loop(mut calls: Span<Call>, ref result: Array<felt252>, index: felt252) {
-    match withdraw_gas() {
-        Option::Some(_) => {},
-        Option::None(_) => {
-            let mut data = ArrayTrait::new();
-            data.append('Out of gas');
-            panic(data);
-        },
-    }
+    check_enough_gas();
     match calls.pop_front() {
         Option::Some(call) => {
             match call_contract_syscall(*call.to, *call.selector, call.calldata.clone()) {

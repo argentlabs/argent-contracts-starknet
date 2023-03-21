@@ -14,10 +14,13 @@ mod ArgentAccount {
     use starknet::get_tx_info;
     use starknet::VALIDATED;
 
-    use contracts::asserts::assert_only_self;
-    use contracts::asserts::assert_no_self_call;
+    use contracts::assert_correct_tx_version;
+    use contracts::assert_no_self_call;
+    use contracts::assert_non_reentrant;
+    use contracts::assert_only_self;
     use contracts::Escape;
     use contracts::Call;
+    use contracts::execute_multicall;
 
     const NAME: felt252 = 'ArgentAccount';
     const VERSION: felt252 = '0.3.0-alpha.1';
@@ -153,6 +156,19 @@ mod ArgentAccount {
         assert_initialized();
         assert_is_valid_signature();
         VALIDATED
+    }
+
+    #[external]
+    #[raw_output]
+    fn __execute__(calls: Array<Call>) -> Span::<felt252> {
+        // TODO PUT BACK WHEN WE CAN MOCK IT
+        // let tx_info = unbox(get_tx_info());
+        // assert_correct_tx_version(tx_info.version);
+        assert_non_reentrant();
+
+        let retdata = execute_multicall(calls);
+        // transaction_executed(tx_info.transaction_hash, retdata);
+        retdata.span()
     }
 
     #[external]

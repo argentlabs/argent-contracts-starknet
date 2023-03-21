@@ -36,14 +36,10 @@ fn execute_multicall_loop(mut calls: Span<Call>, ref result: Array<felt252>, ind
     }
     match calls.pop_front() {
         Option::Some(call) => {
-            // let mut current_call = call_contract_syscall(
-            //     *call.to, *call.selector, call.calldata.clone()
-            // ).unwrap_syscall();
-
             match call_contract_syscall(*call.to, *call.selector, call.calldata.clone()) {
-                Result::Ok(x) => {
-                    let mut call_result = x;
-                    result.append_all(ref call_result);
+                Result::Ok(retdata) => {
+                    let mut mut_retdata = retdata;
+                    result.append_all(ref mut_retdata);
                     execute_multicall_loop(calls, ref result, index + 1);
                 },
                 Result::Err(revert_reason) => {
@@ -57,6 +53,7 @@ fn execute_multicall_loop(mut calls: Span<Call>, ref result: Array<felt252>, ind
         Option::None(_) => (),
     }
 }
+
 // Call serialization 
 
 impl CallSerde of Serde::<Call> {

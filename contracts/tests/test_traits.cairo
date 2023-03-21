@@ -1,6 +1,5 @@
 use array::ArrayTrait;
-use contracts::traits::ArrayTraitExt;
-use contracts::traits;
+use contracts::ArrayTraitExt;
 
 #[test]
 #[available_gas(2000000)]

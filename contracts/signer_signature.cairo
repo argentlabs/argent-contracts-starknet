@@ -1,6 +1,7 @@
 use array::ArrayTrait;
 use serde::Serde;
-use gas::withdraw_gas;
+
+use contracts::check_enough_gas;
 
 
 #[derive(Copy, Drop)]
@@ -32,14 +33,8 @@ impl SignerSignatureSerde of serde::Serde::<SignerSignature> {
 fn deserialize_array_signer_signature(
     serialized: Array<felt252>, mut curr_output: Array<SignerSignature>, remaining: usize
 ) -> Option<Array<SignerSignature>> {
-    match withdraw_gas() {
-        Option::Some(_) => {},
-        Option::None(_) => {
-            let mut data = ArrayTrait::new();
-            data.append('Out of gas');
-            panic(data);
-        },
-    }
+    check_enough_gas();
+
     if remaining == 0_usize {
         return Option::Some(curr_output);
     }

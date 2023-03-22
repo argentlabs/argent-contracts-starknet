@@ -304,6 +304,7 @@ mod ArgentAccount {
     fn get_name() -> felt252 {
         NAME
     }
+
     // ERC165
     #[view]
     fn supports_interface(interface_id: felt252) -> bool {

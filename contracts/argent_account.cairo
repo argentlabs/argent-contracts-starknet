@@ -300,6 +300,7 @@ mod ArgentAccount {
         interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
     }
 
+
     // ERC1271
     #[view]
     fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> felt252 {
@@ -308,6 +309,88 @@ mod ArgentAccount {
         } else {
             0
         }
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                              External functions compatibility                              //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    #[external]
+    fn changeSigner(new_signer: felt252) {
+        change_signer(new_signer)
+    }
+
+    #[external]
+    fn changeGuardian(new_guardian: felt252) {
+        change_guardian(new_guardian)
+    }
+
+    #[external]
+    fn changeGuardianBackup(new_guardian_backup: felt252) {
+        change_guardian_backup(new_guardian_backup)
+    }
+
+    #[external]
+    fn triggerEscapeSigner() {
+        trigger_escape_signer()
+    }
+
+    #[external]
+    fn triggerEscapeGuardian() {
+        trigger_escape_guardian()
+    }
+
+    #[external]
+    fn escapeSigner(new_signer: felt252) {
+        escape_signer(new_signer)
+    }
+
+    #[external]
+    fn escapeGuardian(new_guardian: felt252) {
+        escape_guardian(new_guardian)
+    }
+
+    #[external]
+    fn cancelEscape() {
+        cancel_escape()
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                 View functions compatibility                               //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    #[view]
+    fn getSigner() -> felt252 {
+        get_signer()
+    }
+
+    #[view]
+    fn getGuardian() -> felt252 {
+        get_guardian()
+    }
+
+    #[view]
+    fn getGuardianBackup() -> felt252 {
+        get_guardian_backup()
+    }
+
+    #[view]
+    fn getEscape() -> Escape {
+        get_escape()
+    }
+
+
+    // ERC165
+    #[view]
+    fn supportsInterface(interface_id: felt252) -> bool {
+        supports_interface(interface_id)
+    }
+
+    // ERC1271
+    #[view]
+    fn isValidSignature(hash: felt252, signatures: Array<felt252>) -> felt252 {
+        is_valid_signature(hash, signatures)
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

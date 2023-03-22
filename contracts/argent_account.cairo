@@ -391,6 +391,15 @@ mod ArgentAccount {
         get_escape()
     }
 
+    #[view]
+    fn getVersion() -> felt252 {
+        get_version()
+    }
+
+    #[view]
+    fn getName() -> felt252 {
+        get_name()
+    }
 
     // ERC165
     #[view]

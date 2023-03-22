@@ -294,6 +294,16 @@ mod ArgentAccount {
         _escape::read()
     }
 
+
+    #[view]
+    fn get_version() -> felt252 {
+        VERSION
+    }
+
+    #[view]
+    fn get_name() -> felt252 {
+        NAME
+    }
     // ERC165
     #[view]
     fn supports_interface(interface_id: felt252) -> bool {

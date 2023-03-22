@@ -165,3 +165,14 @@ fn change_invalid_guardian_backup() {
     initialize_account_without_guardian();
     ArgentAccount::change_guardian_backup(33);
 }
+
+
+#[test]
+fn get_name() {
+    assert(ArgentAccount::get_name() == 'ArgentAccount', 'Name should be ArgentAccount');
+}
+
+#[test]
+fn get_version() {
+    assert(ArgentAccount::get_version() == '0.3.0-alpha.1', 'Name should be 0.3.0-alpha.1');
+}

@@ -228,6 +228,7 @@ mod ArgentAccount {
     }
 
     #[external]
+    #[inline(always)]
     fn trigger_escape_guardian() {
         assert_only_self();
         assert_guardian_set();
@@ -293,7 +294,6 @@ mod ArgentAccount {
     fn get_escape() -> Escape {
         _escape::read()
     }
-
 
     #[view]
     fn get_version() -> felt252 {

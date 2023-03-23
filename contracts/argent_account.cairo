@@ -18,9 +18,9 @@ mod ArgentAccount {
     use contracts::asserts::assert_no_self_call;
     use contracts::Escape;
     use contracts::Call;
+    use contracts::Version;
 
     const NAME: felt252 = 'ArgentAccount';
-    const VERSION: felt252 = '0.3.0-alpha.1';
 
     const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
@@ -296,8 +296,8 @@ mod ArgentAccount {
 
 
     #[view]
-    fn get_version() -> felt252 {
-        VERSION
+    fn get_version() -> Version {
+        Version { major: 0_u8, minor: 3_u8, patch: 1_u8 }
     }
 
     #[view]

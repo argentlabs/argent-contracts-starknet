@@ -28,7 +28,7 @@ fn execute_multicall_loop(mut calls: Span<Call>, ref result: Array<felt252>, ind
     check_enough_gas();
     match calls.pop_front() {
         Option::Some(call) => {
-            match call_contract_syscall(*call.to, *call.selector, call.calldata.clone()) {
+            match call_contract_syscall(*call.to, *call.selector, call.calldata.span()) {
                 Result::Ok(retdata) => {
                     let mut mut_retdata = retdata;
                     result.append_all(ref mut_retdata);

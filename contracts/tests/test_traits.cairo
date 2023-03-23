@@ -9,13 +9,13 @@ fn test_append_all() {
     destination.append(21);
     source.append(42);
     source.append(84);
+    let mut source = source.span();
     destination.append_all(ref source);
     assert(destination.len() == 3_usize, 'Len should be 3');
     assert(*destination.at(0_usize) == 21, 'Should be 42');
     assert(*destination.at(1_usize) == 42, 'Should be 21');
     assert(*destination.at(2_usize) == 84, 'Should be 21');
 }
-
 #[test]
 #[available_gas(2000000)]
 fn test_append_all_destination_empty() {
@@ -24,6 +24,7 @@ fn test_append_all_destination_empty() {
     source.append(21);
     source.append(42);
     source.append(84);
+    let mut source = source.span();
     destination.append_all(ref source);
     assert(destination.len() == 3_usize, 'Len should be 3');
     assert(*destination.at(0_usize) == 21, 'Should be 42');
@@ -39,6 +40,7 @@ fn test_append_all_source_empty() {
     destination.append(21);
     destination.append(42);
     destination.append(84);
+    let mut source = source.span();
     destination.append_all(ref source);
     assert(destination.len() == 3_usize, 'Len should be 3');
     assert(*destination.at(0_usize) == 21, 'Should be 42');
@@ -51,6 +53,7 @@ fn test_append_all_source_empty() {
 fn test_append_all_both_empty() {
     let mut destination = ArrayTrait::new();
     let mut source: Array<felt252> = ArrayTrait::new();
+    let mut source = source.span();
     destination.append_all(ref source);
     assert(destination.is_empty(), 'Should be empty');
 }

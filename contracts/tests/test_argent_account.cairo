@@ -174,5 +174,8 @@ fn get_name() {
 
 #[test]
 fn get_version() {
-    assert(ArgentAccount::get_version() == '0.3.0-alpha.1', 'Name should be 0.3.0-alpha.1');
+    let version = ArgentAccount::get_version();
+    assert(version.major == 0_u8, 'Version major = 0');
+    assert(version.minor == 3_u8, 'Version minor = 3');
+    assert(version.patch == 1_u8, 'Version patch = 1');
 }

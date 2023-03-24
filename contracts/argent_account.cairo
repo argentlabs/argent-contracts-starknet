@@ -394,7 +394,8 @@ mod ArgentAccount {
 
     #[view]
     fn getVersion() -> felt252 {
-        get_version()
+        // TODO Should be kept in sync with the other one while we don't use the new selectors
+        '0.3.0-alpha.1'
     }
 
     #[view]

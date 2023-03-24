@@ -13,13 +13,13 @@ fn call_contract_syscall(
     check_enough_gas();
     if selector == 1 {
         TestDapp::set_number(*calldata.at(0_usize));
-        empty_restult()
+        empty_result()
     } else if selector == 2 {
         TestDapp::set_number_double(*calldata.at(0_usize));
-        empty_restult()
+        empty_result()
     } else if selector == 3 {
         TestDapp::set_number_times3(*calldata.at(0_usize));
-        empty_restult()
+        empty_result()
     } else if selector == 4 {
         let num = TestDapp::increase_number(*calldata.at(0_usize));
         let mut result = ArrayTrait::new();
@@ -40,6 +40,6 @@ fn call_contract_syscall(
     }
 }
 
-fn empty_restult() -> SyscallResult<Span::<felt252>> {
+fn empty_result() -> SyscallResult<Span::<felt252>> {
     SyscallResult::Ok(ArrayTrait::new().span())
 }

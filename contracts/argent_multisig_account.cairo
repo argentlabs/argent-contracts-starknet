@@ -2,10 +2,10 @@
 mod ArgentMultisigAccount {
     use array::ArrayTrait;
     use array::SpanTrait;
+    use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
     use option::OptionTrait;
     use traits::Into;
-    use box::BoxTrait;
     use zeroable::Zeroable;
 
     use starknet::get_contract_address;

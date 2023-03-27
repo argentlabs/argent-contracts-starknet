@@ -4,15 +4,24 @@
 // In terms of storage this will use one storage slot per signer
 // Reading become a bit more expensive for some operations as it need to go through the full list for some operations
 #[contract]
-mod SignersStorage {
+mod MultisigStorage {
     use array::ArrayTrait;
     use array::SpanTrait;
 
     use contracts::check_enough_gas;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                          Storage                                           //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
     struct Storage {
-        signer_list: LegacyMap<felt252, felt252>, 
+        signer_list: LegacyMap<felt252, felt252>,
+        threshold: usize,
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                          Internal                                          //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
     // Otherwise cost increases with the list size
@@ -200,6 +209,14 @@ mod SignersStorage {
         }
         previous_signers.append(from_signer);
         get_signers_from(signer_list::read(from_signer), previous_signers)
+    }
+
+    fn get_threshold() -> usize {
+        threshold::read()
+    }
+
+    fn set_threshold(threshold: usize) {
+        threshold::write(threshold);
     }
 }
 

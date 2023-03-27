@@ -4,6 +4,10 @@ mod dummy_syscalls;
 mod spans;
 
 mod asserts;
+use asserts::assert_only_self;
+use asserts::assert_no_self_call;
+use asserts::assert_non_reentrant;
+use asserts::assert_correct_tx_version;
 
 mod argent_account;
 use argent_account::ArgentAccount;

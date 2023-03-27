@@ -22,14 +22,16 @@ fn assert_only_self() {
 }
 
 #[inline(always)]
-fn assert_non_reentrant(signer: felt252) {
+fn assert_non_reentrant() {
     assert(get_caller_address().is_zero(), 'argent/no-reentrant-call');
 }
 
 #[inline(always)]
 fn assert_correct_tx_version(tx_version: felt252) {
-    let is_valid = tx_version == TRANSACTION_VERSION ^ tx_version == QUERY_VERSION;
-    assert(is_valid, 'argent/invalid-tx-version');
+    // TODO Once we have || => can be one liner
+    if tx_version != TRANSACTION_VERSION {
+        assert(tx_version == QUERY_VERSION, 'argent/invalid-tx-version');
+    }
 }
 
 fn assert_no_self_call(mut calls: Span::<Call>, self: ContractAddress) {

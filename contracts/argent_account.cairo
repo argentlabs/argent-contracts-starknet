@@ -7,6 +7,8 @@ mod ArgentAccount {
     use traits::Into;
     use zeroable::Zeroable;
 
+    use starknet::ClassHash;
+    use starknet::class_hash_const;
     use starknet::ContractAddress;
     use starknet::ContractAddressIntoFelt252;
     use starknet::get_block_info;
@@ -59,6 +61,7 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     struct Storage {
+        _implementation: ClassHash,
         _signer: felt252,
         _guardian: felt252,
         _guardian_backup: felt252,
@@ -163,12 +166,12 @@ mod ArgentAccount {
     #[raw_output]
     fn __execute__(calls: Array<Call>) -> Span::<felt252> {
         // TODO PUT BACK WHEN WE CAN MOCK IT
-        // let tx_info = unbox(get_tx_info());
+        // let tx_info = get_tx_info().unbox();
         // assert_correct_tx_version(tx_info.version);
         assert_non_reentrant();
 
         let retdata = execute_multicall(calls);
-        // transaction_executed(tx_info.transaction_hash, retdata);
+        // TransactionExecuted(tx_info.transaction_hash, retdata);
         retdata.span()
     }
 
@@ -316,7 +319,7 @@ mod ArgentAccount {
                 panic(revert_reason)
             },
         }
-        _implementation::write(0);
+        _implementation::write(class_hash_const::<0>());
         ArrayTrait::new()
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////

@@ -170,23 +170,6 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn initialize(new_signer: felt252, new_guardian: felt252, new_guardian_backup: felt252) {
-        // check that we are not already initialized
-        assert(_signer::read() == 0, 'argent/already-initialized');
-        // check that the target signer is not zero
-        assert(new_signer != 0, 'argent/null-signer');
-        // There cannot be a guardian_backup when there is no guardian
-        if new_guardian.is_zero() {
-            assert(new_guardian_backup.is_zero(), 'argent/backup-should-be-null');
-        }
-        // initialize the account
-        _signer::write(new_signer);
-        _guardian::write(new_guardian);
-        _guardian_backup::write(new_guardian_backup);
-        AccountCreated(get_contract_address(), new_signer, new_guardian, new_guardian_backup);
-    }
-
-    #[external]
     fn change_signer(new_signer: felt252) {
         assert_only_self();
         assert(new_signer != 0, 'argent/null-signer');

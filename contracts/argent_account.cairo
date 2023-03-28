@@ -16,6 +16,7 @@ mod ArgentAccount {
     use starknet::get_tx_info;
     use starknet::VALIDATED;
     use starknet::syscalls::replace_class_syscall;
+    use starknet::syscalls::library_call_syscall;
 
     use contracts::assert_correct_tx_version;
     use contracts::assert_no_self_call;
@@ -29,6 +30,8 @@ mod ArgentAccount {
     const NAME: felt252 = 'ArgentAccount';
 
     const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
+    const SUPPORTS_INTERFACE_SELECTOR: felt252 =
+        1184015894760294494673613438913361435336722154500302038630992932234692784845;
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt252 = 0x3943f10f;
     const ERC1271_VALIDATED: felt252 = 0x1626ba7e;
@@ -103,6 +106,9 @@ mod ArgentAccount {
 
     #[event]
     fn GuardianBackupChanged(new_guardian: felt252) {}
+
+    #[event]
+    fn AccountUpgraded(new_implementation: ClassHash) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                     External functions                                     //
@@ -290,22 +296,30 @@ mod ArgentAccount {
         EscapeCanceled();
     }
 
-    // TODO This could be a trait we impl in another file
+    // TODO This could be a trait we impl in another file?
     #[external]
-    fn upgrade(implementation: ClassHash) { // assert_only_self();
-    // let mut calldata = ArrayTrait::new();
-    // calldata.append(ERC165_ACCOUNT_INTERFACE_ID);
-    // match library_call_syscall(implementation, SUPPORTS_INTERFACE_SELECTOR, calldata.span()) {
-    //     Result::Ok(retdata) => {
-    //         assert(retdata.len() == 1_usize, 'argent/wrong-call');
-    //         assert(*retdata.at(0_usize) == 1, 'argent/wrong-call');
-    //     },
-    //     Result::Err(revert_reason) => {
-    //         let mut data = ArrayTrait::new();
-    //         data.append('argent/invalid-implementation');
-    //         panic(data);
-    //     },
-    // }
+    fn upgrade(implementation: ClassHash, calldata: Array<felt252>) {
+        assert_only_self();
+        let mut erc_165_calldata = ArrayTrait::new();
+        erc_165_calldata.append(ERC165_ACCOUNT_INTERFACE_ID);
+        match library_call_syscall(
+            implementation, SUPPORTS_INTERFACE_SELECTOR, erc_165_calldata.span()
+        ) {
+            Result::Ok(retdata) => {
+                assert(retdata.len() == 1_usize, 'argent/invalid-erc_165-size');
+                assert(*retdata.at(0_usize) == 1, 'argent/invalid-erc_165-result');
+            },
+            Result::Err(revert_reason) => {
+                let mut data = ArrayTrait::new();
+                data.append('argent/invalid-implementation');
+                panic(data);
+            },
+        }
+        library_call_syscall(
+            implementation, EXECUTE_AFTER_UPGRADE_SELECTOR, calldata.span()
+        ).unwrap_syscall();
+        replace_class_syscall(implementation).unwrap_syscall();
+        AccountUpgraded(implementation);
     }
 
 
@@ -313,12 +327,7 @@ mod ArgentAccount {
     fn execute_after_upgrade(calls: Array<felt252>) -> Array::<felt252> {
         assert_only_self();
         let implementation = _implementation::read();
-        match replace_class_syscall(implementation) {
-            Result::Ok(_) => {},
-            Result::Err(revert_reason) => {
-                panic(revert_reason)
-            },
-        }
+        replace_class_syscall(implementation).unwrap_syscall();
         _implementation::write(class_hash_const::<0>());
         ArrayTrait::new()
     }

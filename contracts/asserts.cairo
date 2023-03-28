@@ -22,7 +22,7 @@ fn assert_only_self() {
 }
 
 #[inline(always)]
-fn assert_non_reentrant(signer: felt252) {
+fn assert_non_reentrant() {
     assert(get_caller_address().is_zero(), 'argent/no-reentrant-call');
 }
 

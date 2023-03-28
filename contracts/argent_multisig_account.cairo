@@ -14,13 +14,14 @@ mod ArgentMultisigAccount {
 
     use contracts::asserts::assert_only_self;
     use contracts::asserts::assert_no_self_call;
+    use contracts::Call;
+    use contracts::check_enough_gas;
+    use contracts::deserialize_array_signer_signature;
     use contracts::MultisigStorage;
     use contracts::SignerSignature;
-    use contracts::deserialize_array_signer_signature;
     use contracts::SignerSignatureSize;
-    use contracts::Call;
     use contracts::spans;
-    use contracts::check_enough_gas;
+    use contracts::Version;
 
     const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
@@ -30,7 +31,6 @@ mod ArgentMultisigAccount {
         738349667340360233096752603318170676063569407717437256101137432051386874767;
 
     const NAME: felt252 = 'ArgentMultisig';
-    const VERSION: felt252 = '0.1.0-alpha.1';
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                           Events                                           //
@@ -180,8 +180,9 @@ mod ArgentMultisigAccount {
     }
 
     #[view]
-    fn get_version() -> felt252 {
-        VERSION
+    fn get_version() -> Version {
+        // TODO Is this the correct version?
+        Version { major: 0_u8, minor: 1_u8, patch: 0_u8 }
     }
 
     #[view]

@@ -18,12 +18,12 @@ mod ArgentAccount {
     use contracts::assert_no_self_call;
     use contracts::assert_non_reentrant;
     use contracts::assert_only_self;
+    use contracts::execute_multicall;
     use contracts::Escape;
     use contracts::Call;
-    use contracts::execute_multicall;
+    use contracts::Version;
 
     const NAME: felt252 = 'ArgentAccount';
-    const VERSION: felt252 = '0.3.0-alpha.1';
 
     const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
@@ -308,6 +308,17 @@ mod ArgentAccount {
     #[view]
     fn get_escape() -> Escape {
         _escape::read()
+    }
+
+
+    #[view]
+    fn get_version() -> Version {
+        Version { major: 0_u8, minor: 3_u8, patch: 0_u8 }
+    }
+
+    #[view]
+    fn get_name() -> felt252 {
+        NAME
     }
 
     // ERC165

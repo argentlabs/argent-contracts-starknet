@@ -127,15 +127,15 @@ fn add_signer_already_in_list() {
     ArgentMultisigAccount::add_signers(2_usize, new_signers);
 }
 
+#[test]
+fn get_name() {
+    assert(ArgentMultisigAccount::get_name() == 'ArgentMultisig', 'Name should be ArgentMultisig');
+}
 
 #[test]
-#[available_gas(20000000)]
-fn get_name_and_version() {
-    assert(
-        ArgentMultisigAccount::get_name() == ArgentMultisigAccount::NAME, 'not getting correct name'
-    );
-    assert(
-        ArgentMultisigAccount::get_version() == ArgentMultisigAccount::VERSION,
-        'not getting correct name'
-    );
+fn get_version() {
+    let version = ArgentMultisigAccount::get_version();
+    assert(version.major == 0_u8, 'Version major = 0');
+    assert(version.minor == 1_u8, 'Version minor = 1');
+    assert(version.patch == 0_u8, 'Version patch = 0');
 }

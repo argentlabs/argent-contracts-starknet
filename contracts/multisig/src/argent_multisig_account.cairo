@@ -84,7 +84,7 @@ mod ArgentMultisigAccount {
             assert_no_self_call(calls.span(), account_address);
         }
 
-        assert_is_valid_signatures();
+        assert_is_valid_tx_signature();
 
         VALIDATED
     }
@@ -92,7 +92,7 @@ mod ArgentMultisigAccount {
     #[external]
     fn __validate_declare__(class_hash: felt252) -> felt252 {
         assert_initialized();
-        assert_is_valid_signatures();
+        assert_is_valid_tx_signature();
         VALIDATED
     }
 
@@ -101,7 +101,15 @@ mod ArgentMultisigAccount {
         class_hash: felt252, contract_address_salt: felt252, public_key_: felt252
     ) -> felt252 {
         assert_initialized();
-        assert_is_valid_signatures();
+
+        let tx_info = starknet::get_tx_info().unbox();
+        let hash = tx_info.transaction_hash;
+        let signature = tx_info.signature;
+        let signature_r = *signature.at(0_usize);
+        let signature_s = *signature.at(1_usize);
+
+        is_valid_signer_signature(hash, public_key_, signature_r, signature_s);
+
         VALIDATED
     }
 
@@ -251,7 +259,7 @@ mod ArgentMultisigAccount {
     //                                          Internal                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    fn assert_is_valid_signatures() {
+    fn assert_is_valid_tx_signature() {
         let tx_info = starknet::get_tx_info().unbox();
 
         // TODO converting to array is probably avoidable

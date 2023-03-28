@@ -372,6 +372,11 @@ mod ArgentAccount {
         interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
     }
 
+    #[view]
+    fn supportsInterface(interface_id: felt252) -> bool {
+        interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
+    }
+
     // ERC1271
     #[view]
     fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> felt252 {

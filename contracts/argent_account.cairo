@@ -14,13 +14,16 @@ mod ArgentAccount {
     use starknet::get_tx_info;
     use starknet::VALIDATED;
 
-    use contracts::asserts::assert_only_self;
-    use contracts::asserts::assert_no_self_call;
+    use contracts::assert_correct_tx_version;
+    use contracts::assert_no_self_call;
+    use contracts::assert_non_reentrant;
+    use contracts::assert_only_self;
+    use contracts::execute_multicall;
     use contracts::Escape;
     use contracts::Call;
+    use contracts::Version;
 
     const NAME: felt252 = 'ArgentAccount';
-    const VERSION: felt252 = '0.3.0-alpha.1';
 
     const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
@@ -171,6 +174,36 @@ mod ArgentAccount {
     }
 
     #[external]
+    #[raw_output]
+    fn __execute__(calls: Array<Call>) -> Span::<felt252> {
+        // TODO PUT BACK WHEN WE CAN MOCK IT
+        // let tx_info = unbox(get_tx_info());
+        // assert_correct_tx_version(tx_info.version);
+        assert_non_reentrant();
+
+        let retdata = execute_multicall(calls);
+        // transaction_executed(tx_info.transaction_hash, retdata);
+        retdata.span()
+    }
+
+    #[external]
+    fn initialize(new_signer: felt252, new_guardian: felt252, new_guardian_backup: felt252) {
+        // check that we are not already initialized
+        assert(_signer::read() == 0, 'argent/already-initialized');
+        // check that the target signer is not zero
+        assert(new_signer != 0, 'argent/null-signer');
+        // There cannot be a guardian_backup when there is no guardian
+        if new_guardian.is_zero() {
+            assert(new_guardian_backup.is_zero(), 'argent/backup-should-be-null');
+        }
+        // initialize the account
+        _signer::write(new_signer);
+        _guardian::write(new_guardian);
+        _guardian_backup::write(new_guardian_backup);
+        AccountCreated(get_contract_address(), new_signer, new_guardian, new_guardian_backup);
+    }
+
+    #[external]
     fn change_signer(new_signer: felt252) {
         assert_only_self();
         assert(new_signer != 0, 'argent/null-signer');
@@ -290,6 +323,17 @@ mod ArgentAccount {
     #[view]
     fn get_escape() -> Escape {
         _escape::read()
+    }
+
+
+    #[view]
+    fn get_version() -> Version {
+        Version { major: 0_u8, minor: 3_u8, patch: 0_u8 }
+    }
+
+    #[view]
+    fn get_name() -> felt252 {
+        NAME
     }
 
     // ERC165

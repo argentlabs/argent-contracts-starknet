@@ -26,19 +26,18 @@ fn test_assert_only_self_panic() {
 
 #[test]
 fn assert_correct_tx_version() {
-    // for now valid tx_version == 1 & 2
-    let tx_version = 1;
-    asserts::assert_correct_tx_version(tx_version);
+    asserts::assert_correct_tx_version(1);
+}
+
+#[test]
+fn assert_correct_tx_version_query_version() {
+    asserts::assert_correct_tx_version(340282366920938463463374607431768211457);
 }
 
 #[test]
 #[should_panic(expected = ('argent/invalid-tx-version', ))]
 fn assert_correct_tx_version_invalid_tx() {
-    // for now valid tx_version == 1 & 2
-    let tx_version = 4;
-    asserts::assert_correct_tx_version(tx_version);
-    let tx_version = 4;
-    asserts::assert_correct_tx_version(tx_version);
+    asserts::assert_correct_tx_version(4);
 }
 
 #[test]

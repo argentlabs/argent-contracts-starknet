@@ -1,13 +1,19 @@
 mod tests;
 
+mod dummy_syscalls;
 mod spans;
 
 mod asserts;
+use asserts::assert_only_self;
+use asserts::assert_no_self_call;
+use asserts::assert_non_reentrant;
+use asserts::assert_correct_tx_version;
 
 mod argent_account;
 use argent_account::ArgentAccount;
 
-mod signers_storage;
+mod argent_multisig_storage;
+use argent_multisig_storage::MultisigStorage;
 mod argent_multisig_account;
 use argent_multisig_account::ArgentMultisigAccount;
 
@@ -17,9 +23,17 @@ use erc20::ERC20;
 mod test_dapp;
 use test_dapp::TestDapp;
 
+mod multicall;
+use multicall::Multicall;
+use multicall::Multicall::aggregate;
+
+mod traits;
+use traits::ArrayTraitExt;
+
 // Structures 
 mod calls;
 use calls::Call;
+use calls::execute_multicall;
 
 mod escape;
 use escape::Escape;

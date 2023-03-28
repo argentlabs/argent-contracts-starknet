@@ -9,6 +9,9 @@ mod test_multisig_remove_signers;
 mod test_multisig_replace_signers;
 mod test_multisig_signing;
 
+mod test_multicall;
+mod test_traits;
+
 use contracts::ArgentAccount;
 
 const signer_pubkey: felt252 = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;

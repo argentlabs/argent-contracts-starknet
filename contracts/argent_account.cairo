@@ -309,7 +309,6 @@ mod ArgentAccount {
     #[external]
     fn execute_after_upgrade(calls: Array<felt252>) -> Array::<felt252> {
         assert_only_self();
-        assert(calls.is_empty(), 'argent/lama');
         let implementation = _implementation::read();
         match replace_class_syscall(implementation) {
             Result::Ok(_) => {},
@@ -317,7 +316,7 @@ mod ArgentAccount {
                 panic(revert_reason)
             },
         }
-        // _implementation::write(0); // TODO DELETE 
+        _implementation::write(0);
         ArrayTrait::new()
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////

@@ -69,9 +69,7 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[event]
-    fn AccountCreated(
-        account: ContractAddress, key: felt252, guardian: felt252, new_guardian_backup: felt252
-    ) {}
+    fn AccountCreated(account: ContractAddress, key: felt252, guardian: felt252) {}
 
     #[event]
     fn TransactionExecuted(hash: felt252, response: Array<felt252>) {}
@@ -105,18 +103,14 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[constructor]
-    fn constructor(new_signer: felt252, new_guardian: felt252, new_guardian_backup: felt252) {
+    fn constructor(new_signer: felt252, new_guardian: felt252) {
         // check that the target signer is not zero
         assert(new_signer != 0, 'argent/null-signer');
-        // There cannot be a guardian_backup when there is no guardian
-        if new_guardian.is_zero() {
-            assert(new_guardian_backup.is_zero(), 'argent/backup-should-be-null');
-        }
         // initialize the account
         _signer::write(new_signer);
         _guardian::write(new_guardian);
-        _guardian_backup::write(new_guardian_backup);
-        AccountCreated(get_contract_address(), new_signer, new_guardian, new_guardian_backup);
+        _guardian_backup::write(0);
+        AccountCreated(get_contract_address(), new_signer, new_guardian);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

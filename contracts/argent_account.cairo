@@ -100,6 +100,7 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                        Constructor                                         //
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    
     #[constructor]
     fn constructor(new_signer: felt252, new_guardian: felt252, new_guardian_backup: felt252) {
         // check that the target signer is not zero

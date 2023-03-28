@@ -13,6 +13,7 @@ mod ArgentAccount {
     use starknet::get_contract_address;
     use starknet::get_tx_info;
     use starknet::VALIDATED;
+    use starknet::syscalls::replace_class_syscall;
 
     use contracts::assert_correct_tx_version;
     use contracts::assert_no_self_call;
@@ -286,6 +287,39 @@ mod ArgentAccount {
         EscapeCanceled();
     }
 
+    // TODO This could be a trait we impl in another file
+    #[external]
+    fn upgrade(implementation: ClassHash) { // assert_only_self();
+    // let mut calldata = ArrayTrait::new();
+    // calldata.append(ERC165_ACCOUNT_INTERFACE_ID);
+    // match library_call_syscall(implementation, SUPPORTS_INTERFACE_SELECTOR, calldata.span()) {
+    //     Result::Ok(retdata) => {
+    //         assert(retdata.len() == 1_usize, 'argent/wrong-call');
+    //         assert(*retdata.at(0_usize) == 1, 'argent/wrong-call');
+    //     },
+    //     Result::Err(revert_reason) => {
+    //         let mut data = ArrayTrait::new();
+    //         data.append('argent/invalid-implementation');
+    //         panic(data);
+    //     },
+    // }
+    }
+
+
+    #[external]
+    fn execute_after_upgrade(calls: Array<felt252>) -> Array::<felt252> {
+        assert_only_self();
+        assert(calls.is_empty(), 'argent/lama');
+        let implementation = _implementation::read();
+        match replace_class_syscall(implementation) {
+            Result::Ok(_) => {},
+            Result::Err(revert_reason) => {
+                panic(revert_reason)
+            },
+        }
+        // _implementation::write(0); // TODO DELETE 
+        ArrayTrait::new()
+    }
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                       View functions                                       //
     ////////////////////////////////////////////////////////////////////////////////////////////////

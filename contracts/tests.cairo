@@ -24,13 +24,13 @@ const wrong_guardian_pubkey: felt252 =
     0x6eeee2b0c71d681692559735e08a2c3ba04e7347c0c18d4d49b83bb89771591;
 
 fn initialize_account() {
-    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, 0);
+    ArgentAccount::constructor(signer_pubkey, guardian_pubkey, 0);
 }
 
 fn initialize_account_without_guardian() {
-    ArgentAccount::initialize(signer_pubkey, 0, 0);
+    ArgentAccount::constructor(signer_pubkey, 0, 0);
 }
 
 fn initialize_account_with_guardian_backup() {
-    ArgentAccount::initialize(signer_pubkey, guardian_pubkey, guardian_backup_pubkey);
+    ArgentAccount::constructor(signer_pubkey, guardian_pubkey, guardian_backup_pubkey);
 }

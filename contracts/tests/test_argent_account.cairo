@@ -16,7 +16,7 @@ const ERC165_INVALID_INTERFACE_ID: felt252 = 0xffffffff;
 #[test]
 #[available_gas(2000000)]
 fn initialize() {
-    ArgentAccount::initialize(1, 2, 3);
+    ArgentAccount::constructor(1, 2, 3);
     assert(ArgentAccount::get_signer() == 1, 'value should be 1');
     assert(ArgentAccount::get_guardian() == 2, 'value should be 2');
     assert(ArgentAccount::get_guardian_backup() == 3, 'value should be 3');
@@ -26,29 +26,21 @@ fn initialize() {
 #[available_gas(2000000)]
 #[should_panic(expected = ('argent/null-signer', ))]
 fn initialize_with_null_signer() {
-    ArgentAccount::initialize(0, 2, 3);
-}
-
-#[test]
-#[available_gas(2000000)]
-#[should_panic(expected = ('argent/already-initialized', ))]
-fn already_initialized() {
-    ArgentAccount::initialize(1, 2, 3);
-    ArgentAccount::initialize(10, 20, 0);
+    ArgentAccount::constructor(0, 2, 3);
 }
 
 #[test]
 #[available_gas(2000000)]
 #[should_panic(expected = ('argent/backup-should-be-null', ))]
 fn initialized_guardian_to_zero_without_guardian_backup() {
-    ArgentAccount::initialize(1, 0, 3);
+    ArgentAccount::constructor(1, 0, 3);
 }
 
 
 #[test]
 #[available_gas(2000000)]
 fn initialized_no_guardian_no_backup() {
-    ArgentAccount::initialize(1, 0, 0);
+    ArgentAccount::constructor(1, 0, 0);
     assert(ArgentAccount::get_signer() == 1, 'value should be 1');
     assert(ArgentAccount::get_guardian() == 0, 'guardian should be zero');
     assert(ArgentAccount::get_guardian_backup() == 0, 'guardian backup should be zero');

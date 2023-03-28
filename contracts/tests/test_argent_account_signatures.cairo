@@ -65,7 +65,7 @@ fn valid_with_guardian() {
 #[test]
 #[available_gas(2000000)]
 fn valid_with_guardian_backup() {
-    ArgentAccount::initialize(signer_pubkey, 1, guardian_backup_pubkey);
+    ArgentAccount::constructor(signer_pubkey, 1, guardian_backup_pubkey);
     let signatures = double_signature(signer_r, signer_s, guardian_backup_r, guardian_backup_s);
     assert(is_valid_signature(message_hash, signatures), 'invalid signature');
 }

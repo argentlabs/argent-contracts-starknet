@@ -7,6 +7,8 @@ mod ArgentMultisigAccount {
     use option::OptionTrait;
     use traits::Into;
     use zeroable::Zeroable;
+    use clone::Clone;
+    use array::ArrayTCloneImpl;
 
     use starknet::get_contract_address;
     use starknet::ContractAddressIntoFelt252;
@@ -95,13 +97,13 @@ mod ArgentMultisigAccount {
     #[external]
     #[raw_output]
     fn __execute__(calls: Array<Call>) -> Span::<felt252> {
-        // TODO PUT BACK WHEN WE CAN MOCK IT
-        // let tx_info = unbox(get_tx_info());
-        // assert_correct_tx_version(tx_info.version);
+        let tx_info = starknet::get_tx_info().unbox();
+        assert_correct_tx_version(tx_info.version);
         assert_non_reentrant();
 
-        let retdata = execute_multicall(calls);
-        // TransactionExecuted(tx_info.transaction_hash, retdata);
+        let retdata = @execute_multicall(calls);
+        // have to clone for now since variable is moved
+        TransactionExecuted(tx_info.transaction_hash, retdata.clone());
         retdata.span()
     }
 

@@ -1,5 +1,3 @@
-use serde::Serde;
-
 use starknet::StorageAccess;
 
 #[derive(Drop, Copy, Serde)]

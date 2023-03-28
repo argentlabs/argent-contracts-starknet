@@ -44,6 +44,9 @@ mod ArgentMultisigAccount {
         removed_signers: Array<felt252>
     ) {}
 
+    #[event]
+    fn TransactionExecuted(hash: felt252, response: Array<felt252>) {}
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                     Constructor                                            //
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -89,6 +92,21 @@ mod ArgentMultisigAccount {
         VALIDATED
     }
 
+    #[external]
+    #[raw_output]
+    fn __execute__(calls: Array<Call>) -> Span::<felt252> {
+        // TODO PUT BACK WHEN WE CAN MOCK IT
+        // let tx_info = unbox(get_tx_info());
+        // assert_correct_tx_version(tx_info.version);
+        assert_non_reentrant();
+
+        let retdata = execute_multicall(calls);
+        // TransactionExecuted(tx_info.transaction_hash, retdata);
+        retdata.span()
+    }
+
+    // @dev Set the initial parameters for the multisig. It's mandatory to call this methods to secure the account.
+    // It's recommended to call this method in the same transaction that deploys the account to make sure it's always initialized
     #[external]
     fn __validate_declare__(class_hash: felt252) -> felt252 {
         assert_is_valid_tx_signature();

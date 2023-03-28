@@ -313,8 +313,7 @@ mod ArgentAccount {
 
     #[view]
     fn get_version() -> Version {
-        // TODO Is this the correct version?
-        Version { major: 0_u8, minor: 3_u8, patch: 1_u8 }
+        Version { major: 0_u8, minor: 3_u8, patch: 0_u8 }
     }
 
     #[view]

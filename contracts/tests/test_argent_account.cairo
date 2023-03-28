@@ -177,5 +177,5 @@ fn get_version() {
     let version = ArgentAccount::get_version();
     assert(version.major == 0_u8, 'Version major = 0');
     assert(version.minor == 3_u8, 'Version minor = 3');
-    assert(version.patch == 1_u8, 'Version patch = 1');
+    assert(version.patch == 0_u8, 'Version patch = 0');
 }

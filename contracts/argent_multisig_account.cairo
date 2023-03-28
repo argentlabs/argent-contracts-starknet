@@ -14,7 +14,7 @@ mod ArgentMultisigAccount {
 
     use contracts::asserts::assert_only_self;
     use contracts::asserts::assert_no_self_call;
-    use contracts::signers_storage::SignersStorage;
+    use contracts::MultisigStorage;
     use contracts::SignerSignature;
     use contracts::deserialize_array_signer_signature;
     use contracts::SignerSignatureSize;
@@ -31,14 +31,6 @@ mod ArgentMultisigAccount {
 
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION: felt252 = '0.1.0-alpha.1';
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                           Storage                                          //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    struct Storage {
-        threshold: usize
-    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                           Events                                           //
@@ -89,15 +81,15 @@ mod ArgentMultisigAccount {
     // It's recommended to call this method in the same transaction that deploys the account to make sure it's always initialized
     #[external]
     fn initialize(threshold: usize, signers: Array<felt252>) {
-        let current_threshold = threshold::read();
+        let current_threshold = MultisigStorage::get_threshold();
         assert(current_threshold == 0_usize, 'argent/already-initialized');
 
         let signers_len = signers.len();
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
-        SignersStorage::add_signers(signers.span(), 0);
+        MultisigStorage::add_signers(signers.span(), 0);
         //  TODO If they change usize type to be "more" it'll break, should we prevent it and use usize instead, or write directly into()?
-        threshold::write(threshold);
+        MultisigStorage::set_threshold(threshold);
 
         let removed_signers = ArrayTrait::new();
 
@@ -108,11 +100,10 @@ mod ArgentMultisigAccount {
     fn change_threshold(new_threshold: usize) {
         assert_only_self();
 
-        let signers_len = SignersStorage::get_signers_len();
+        let signers_len = MultisigStorage::get_signers_len();
 
         assert_valid_threshold_and_signers_count(new_threshold, signers_len);
-
-        threshold::write(new_threshold);
+        MultisigStorage::set_threshold(new_threshold);
 
         let added_signers = ArrayTrait::new();
         let removed_signers = ArrayTrait::new();
@@ -126,13 +117,13 @@ mod ArgentMultisigAccount {
     #[external]
     fn add_signers(new_threshold: usize, signers_to_add: Array<felt252>) {
         assert_only_self();
-        let (signers_len, last_signer) = SignersStorage::load();
+        let (signers_len, last_signer) = MultisigStorage::load();
 
         let new_signers_len = signers_len + signers_to_add.len();
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
 
-        SignersStorage::add_signers(signers_to_add.span(), last_signer);
-        threshold::write(new_threshold);
+        MultisigStorage::add_signers(signers_to_add.span(), last_signer);
+        MultisigStorage::set_threshold(new_threshold);
 
         let removed_signers = ArrayTrait::new();
 
@@ -145,13 +136,13 @@ mod ArgentMultisigAccount {
     #[external]
     fn remove_signers(new_threshold: usize, signers_to_remove: Array<felt252>) {
         assert_only_self();
-        let (signers_len, last_signer) = SignersStorage::load();
+        let (signers_len, last_signer) = MultisigStorage::load();
 
         let new_signers_len = signers_len - signers_to_remove.len();
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
 
-        SignersStorage::remove_signers(signers_to_remove.span(), last_signer);
-        threshold::write(new_threshold);
+        MultisigStorage::remove_signers(signers_to_remove.span(), last_signer);
+        MultisigStorage::set_threshold(new_threshold);
 
         let added_signers = ArrayTrait::new();
 
@@ -164,9 +155,9 @@ mod ArgentMultisigAccount {
     #[external]
     fn replace_signer(signer_to_remove: felt252, signer_to_add: felt252) {
         assert_only_self();
-        let (signers_len, last_signer) = SignersStorage::load();
+        let (signers_len, last_signer) = MultisigStorage::load();
 
-        SignersStorage::replace_signer(signer_to_remove, signer_to_add, last_signer);
+        MultisigStorage::replace_signer(signer_to_remove, signer_to_add, last_signer);
 
         let mut added_signers = ArrayTrait::new();
         added_signers.append(signer_to_add);
@@ -174,7 +165,9 @@ mod ArgentMultisigAccount {
         let mut removed_signer = ArrayTrait::new();
         removed_signer.append(signer_to_remove);
 
-        ConfigurationUpdated(threshold::read(), signers_len, added_signers, removed_signer);
+        ConfigurationUpdated(
+            MultisigStorage::get_threshold(), signers_len, added_signers, removed_signer
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,17 +186,17 @@ mod ArgentMultisigAccount {
 
     #[view]
     fn get_threshold() -> usize {
-        threshold::read()
+        MultisigStorage::get_threshold()
     }
 
     #[view]
     fn get_signers() -> Array<felt252> {
-        SignersStorage::get_signers()
+        MultisigStorage::get_signers()
     }
 
     #[view]
     fn is_signer(signer: felt252) -> bool {
-        SignersStorage::is_signer(signer)
+        MultisigStorage::is_signer(signer)
     }
 
     // ERC165
@@ -224,14 +217,14 @@ mod ArgentMultisigAccount {
     fn is_valid_signer_signature(
         hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
     ) -> bool {
-        let is_signer = SignersStorage::is_signer(signer);
+        let is_signer = MultisigStorage::is_signer(signer);
         assert(is_signer, 'argent/not-a-signer');
         check_ecdsa_signature(hash, signer, signature_r, signature_s)
     }
 
     #[view]
     fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> bool {
-        let threshold = threshold::read();
+        let threshold = MultisigStorage::get_threshold();
         assert(threshold != 0_usize, 'argent/uninitialized');
         assert(
             signatures.len() == threshold * SignerSignatureSize, 'argent/invalid-signature-length'
@@ -287,7 +280,7 @@ mod ArgentMultisigAccount {
 
     #[inline(always)]
     fn assert_initialized() {
-        let threshold = threshold::read();
+        let threshold = MultisigStorage::get_threshold();
         assert(threshold != 0_usize, 'argent/uninitialized');
     }
 }

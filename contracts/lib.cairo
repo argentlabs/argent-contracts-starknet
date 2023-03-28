@@ -4,11 +4,16 @@ mod dummy_syscalls;
 mod spans;
 
 mod asserts;
+use asserts::assert_only_self;
+use asserts::assert_no_self_call;
+use asserts::assert_non_reentrant;
+use asserts::assert_correct_tx_version;
 
 mod argent_account;
 use argent_account::ArgentAccount;
 
-mod signers_storage;
+mod argent_multisig_storage;
+use argent_multisig_storage::MultisigStorage;
 mod argent_multisig_account;
 use argent_multisig_account::ArgentMultisigAccount;
 

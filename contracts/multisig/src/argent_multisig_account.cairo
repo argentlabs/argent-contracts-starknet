@@ -101,9 +101,9 @@ mod ArgentMultisigAccount {
         assert_correct_tx_version(tx_info.version);
         assert_non_reentrant();
 
-        let retdata = @execute_multicall(calls);
+        let retdata = execute_multicall(calls);
         // have to clone for now since variable is moved
-        TransactionExecuted(tx_info.transaction_hash, retdata.clone());
+        TransactionExecuted(tx_info.transaction_hash, (@retdata).clone());
         retdata.span()
     }
 

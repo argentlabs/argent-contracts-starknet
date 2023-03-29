@@ -96,20 +96,24 @@ mod ArgentMultisigAccount {
         VALIDATED
     }
 
+    #[raw_input]
     #[external]
     fn __validate_deploy__(class_hash: felt252, contract_address_salt: felt252) -> felt252 {
         assert_initialized();
 
         let tx_info = starknet::get_tx_info().unbox();
-        assert(tx_info.signature.len() == 1_usize, 'argent/invalid-signature-length');
+        let signature_array = spans::span_to_array(tx_info.signature);
+
+        assert(signature_array.len() == SignerSignatureSize, 'argent/invalid-signature-length');
+
+        let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
         let hash = tx_info.transaction_hash;
-        let signature = tx_info.signature;
-        let signer = tx_info.signature.signer;
-        let signature_r = tx_info.signature.signature_r;
-        let signature_s = tx_info.signature.signature_s;
-
-        is_valid_signer_signature(hash, signer, signature_r, signature_s);
-
+        // hardcoded to 1 as only one signature is needed
+        let parsed_signatures = deserialize_array_signer_signature(
+            signature_array, signer_signatures_out, 1_usize
+        ).unwrap();
+        let valid = is_valid_signatures_array(hash, parsed_signatures.span());
+        assert(valid, 'argent/invalid-signature');
         VALIDATED
     }
 

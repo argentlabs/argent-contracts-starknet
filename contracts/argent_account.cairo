@@ -161,7 +161,10 @@ mod ArgentAccount {
     #[raw_input]
     #[external]
     fn __validate_deploy__(
-        class_hash: felt252, contract_address_salt: felt252, public_key_: felt252
+        class_hash: felt252,
+        contract_address_salt: felt252,
+        public_key_: felt252,
+        new_guardian: felt252
     ) -> felt252 {
         assert_is_valid_signature();
         VALIDATED

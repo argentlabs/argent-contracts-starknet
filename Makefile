@@ -18,11 +18,9 @@ make install-cairo:
 	fi
 	$(MAKE) build
 
-
 clone-cairo:
 	mkdir -p $(INSTALLATION_FOLDER)
 	git clone --depth 1 https://github.com/starkware-libs/cairo.git $(INSTALLATION_FOLDER)
-
 
 update-cairo:
 	git -C $(INSTALLATION_FOLDER) pull
@@ -35,7 +33,6 @@ test:
 
 test-account: 
 	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)/account
-
 
 test-lib: 
 	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)/lib

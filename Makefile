@@ -40,10 +40,8 @@ test-account:
 test-lib: 
 	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)/lib
 
-
 test-multicall: 
 	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)/multicall
-
 
 test-multisig: 
 	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)/multisig

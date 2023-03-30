@@ -43,7 +43,7 @@ fn replace_signer_1() {
 #[available_gas(20000000)]
 fn replace_signer_start() {
     // init
-    _initialize();
+    _initialize_multisig();
 
     // replace signer
     let signer_to_add = 5;
@@ -63,7 +63,7 @@ fn replace_signer_start() {
 #[available_gas(20000000)]
 fn replace_signer_middle() {
     // init
-    _initialize();
+    _initialize_multisig();
 
     // replace signer
     let signer_to_add = 5;
@@ -83,7 +83,7 @@ fn replace_signer_middle() {
 #[available_gas(20000000)]
 fn replace_signer_end() {
     // init
-    _initialize();
+    _initialize_multisig();
 
     // replace signer
     let signer_to_add = 5;
@@ -105,7 +105,7 @@ fn replace_signer_end() {
 #[should_panic(expected = ('argent/not-a-signer', ))]
 fn replace_invalid_signer() {
     // init
-    _initialize();
+    _initialize_multisig();
 
     // replace signer
     let signer_to_add = 5;
@@ -118,7 +118,7 @@ fn replace_invalid_signer() {
 #[should_panic(expected = ('argent/already-a-signer', ))]
 fn replace_already_signer() {
     // init
-    _initialize();
+    _initialize_multisig();
 
     // replace signer
     ArgentMultisigAccount::replace_signer(signer_pubkey_3, signer_pubkey_1);

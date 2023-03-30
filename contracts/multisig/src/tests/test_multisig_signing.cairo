@@ -24,5 +24,5 @@ fn test_signature() {
     signature.append(signer_2_signature_r);
     signature.append(signer_2_signature_s);
     let valid_signature = ArgentMultisigAccount::is_valid_signature(message_hash, signature);
-    assert(valid_signature == true, 'bad signature');
+    assert(valid_signature, 'bad signature');
 }

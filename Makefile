@@ -28,6 +28,9 @@ update-cairo:
 build:
 	cargo build
 
+compile-account: 
+	cargo run --bin starknet-compile -- $(SOURCE_FOLDER)/account account.json --allowed-libfuncs-list-name experimental_v0.1.0
+
 test: 
 	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)
 

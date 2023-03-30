@@ -33,20 +33,20 @@ mod ArgentAccount {
     const ESCAPE_SECURITY_PERIOD: u64 = 604800_u64; // 7 * 24 * 60 * 60;  // 7 days
 
     const ESCAPE_TYPE_GUARDIAN: felt252 = 1;
-    const ESCAPE_TYPE_SIGNER: felt252 = 2;
+    const ESCAPE_TYPE_OWNER: felt252 = 2;
 
     // TODO: update selectors
-    const CHANGE_SIGNER_SELECTOR: felt252 =
+    const CHANGE_OWNER_SELECTOR: felt252 =
         174572128530328568741270994650351248940644050288235239638974755381225723145;
     const CHANGE_GUARDIAN_SELECTOR: felt252 =
         1296071702357547150019664216025682391016361613613945351022196390148584441374;
     const TRIGGER_ESCAPE_GUARDIAN_SELECTOR: felt252 =
         145954635736934016296422259475449005649670140213177066015821444644082814628;
-    const TRIGGER_ESCAPE_SIGNER_SELECTOR: felt252 =
+    const TRIGGER_ESCAPE_OWNER_SELECTOR: felt252 =
         440853473255486090032829492468113410146539319637824817002531798290796877036;
     const ESCAPE_GUARDIAN_SELECTOR: felt252 =
         510756951529079116816142749077704776910668567546043821008232923043034641617;
-    const ESCAPE_SIGNER_SELECTOR: felt252 =
+    const ESCAPE_OWNER_SELECTOR: felt252 =
         1455116469465411075152303383382102930902943882042348163899277328605146981359;
     const CANCEL_ESCAPE_SELECTOR: felt252 =
         1387988583969094862956788899343599960070518480842441785602446058600435897039;
@@ -77,13 +77,13 @@ mod ArgentAccount {
     fn TransactionExecuted(hash: felt252, response: Array<felt252>) {}
 
     #[event]
-    fn EscapeSignerTriggered(active_at: u64) {}
+    fn EscapeOwnerTriggered(active_at: u64) {}
 
     #[event]
     fn EscapeGuardianTriggered(active_at: u64) {}
 
     #[event]
-    fn SignerEscaped(new_signer: felt252) {}
+    fn OwnerEscaped(new_owner: felt252) {}
 
     #[event]
     fn GuardianEscaped(new_guardian: felt252) {}
@@ -92,7 +92,7 @@ mod ArgentAccount {
     fn EscapeCanceled() {}
 
     #[event]
-    fn SignerChanged(new_signer: felt252) {}
+    fn OwnerChanged(new_owner: felt252) {}
 
     #[event]
     fn GuardianChanged(new_guardian: felt252) {}
@@ -116,13 +116,13 @@ mod ArgentAccount {
                 let tx_info = get_tx_info().unbox();
                 let selector = *call.selector;
                 if selector == ESCAPE_GUARDIAN_SELECTOR | selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
-                    let is_valid = is_valid_signer_signature(
+                    let is_valid = is_valid_owner_signature(
                         tx_info.transaction_hash, tx_info.signature
                     );
-                    assert(is_valid, 'argent/invalid-signer-sig');
+                    assert(is_valid, 'argent/invalid-owner-sig');
                     return VALIDATED;
                 }
-                if selector == ESCAPE_SIGNER_SELECTOR | selector == TRIGGER_ESCAPE_SIGNER_SELECTOR {
+                if selector == ESCAPE_OWNER_SELECTOR | selector == TRIGGER_ESCAPE_OWNER_SELECTOR {
                     let is_valid = is_valid_guardian_signature(
                         tx_info.transaction_hash, tx_info.signature
                     );
@@ -172,29 +172,29 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn initialize(new_signer: felt252, new_guardian: felt252, new_guardian_backup: felt252) {
+    fn initialize(new_owner: felt252, new_guardian: felt252, new_guardian_backup: felt252) {
         // check that we are not already initialized
         assert(_signer::read() == 0, 'argent/already-initialized');
-        // check that the target signer is not zero
-        assert(new_signer != 0, 'argent/null-signer');
+        // check that the target owner is not zero
+        assert(new_owner != 0, 'argent/null-owner');
         // There cannot be a guardian_backup when there is no guardian
         if new_guardian.is_zero() {
             assert(new_guardian_backup.is_zero(), 'argent/backup-should-be-null');
         }
         // initialize the account
-        _signer::write(new_signer);
+        _signer::write(new_owner);
         _guardian::write(new_guardian);
         _guardian_backup::write(new_guardian_backup);
-        AccountCreated(get_contract_address(), new_signer, new_guardian, new_guardian_backup);
+        AccountCreated(get_contract_address(), new_owner, new_guardian, new_guardian_backup);
     }
 
     #[external]
-    fn change_signer(new_signer: felt252) {
+    fn change_owner(new_owner: felt252) {
         assert_only_self();
-        assert(new_signer != 0, 'argent/null-signer');
+        assert(new_owner != 0, 'argent/null-owner');
 
-        _signer::write(new_signer);
-        SignerChanged(new_signer);
+        _signer::write(new_owner);
+        OwnerChanged(new_owner);
     }
 
     #[external]
@@ -218,29 +218,29 @@ mod ArgentAccount {
         GuardianBackupChanged(new_guardian_backup);
     }
 
-    // TODO Shouldn't we specify who will be the new signer, and allow him to take ownership when time is over?
+    // TODO Shouldn't we specify who will be the new owner, and allow him to take ownership when time is over?
     // Ref https://twitter.com/bytes032/status/1628697044326969345
     // But then it means that if the escape isn't cancel, after timeout he can take the ownership at ANY time.
     #[external]
-    fn trigger_escape_signer() {
+    fn trigger_escape_owner() {
         assert_only_self();
         assert_guardian_set();
         // TODO as this will only allow to delay the escape, is it relevant?
-        // Can only escape signer by guardian, if there is no escape ongoing other or an escape ongoing but for of the type signer
+        // Can only escape owner by guardian, if there is no escape ongoing other or an escape ongoing but for of the type owner
         let current_escape = _escape::read();
         if current_escape.active_at != 0_u64 {
             assert(
-                current_escape.escape_type == ESCAPE_TYPE_SIGNER, 'argent/cannot-override-escape'
+                current_escape.escape_type == ESCAPE_TYPE_OWNER, 'argent/cannot-override-escape'
             );
         }
 
         let active_at = get_block_info().unbox().block_timestamp + ESCAPE_SECURITY_PERIOD;
         // TODO Since timestamp is a u64, and escape type 1 small felt252, we can pack those two values and use 1 storage slot
-        // TODO We could also inverse the way we store using a map and at ESCAPE_TYPE_SIGNER having the escape active_at of the signer and at ESCAPE_TYPE_GUARDIAN escape active_at
+        // TODO We could also inverse the way we store using a map and at ESCAPE_TYPE_OWNER having the escape active_at of the owner and at ESCAPE_TYPE_GUARDIAN escape active_at
         // Since none of these two can be filled at the same time, it'll always use one and only one slot
-        // Or we could simplify it by having the struct taking signer_active_at and guardian_active_at and no map
-        _escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_SIGNER });
-        EscapeSignerTriggered(active_at);
+        // Or we could simplify it by having the struct taking owner_active_at and guardian_active_at and no map
+        _escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_OWNER });
+        EscapeOwnerTriggered(active_at);
     }
 
     #[external]
@@ -254,15 +254,14 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn escape_signer(new_signer: felt252) {
+    fn escape_owner(new_owner: felt252) {
         assert_only_self();
         assert_guardian_set();
-        assert_can_escape_for_type(ESCAPE_TYPE_SIGNER);
-        assert(new_signer != 0, 'argent/null-signer');
-        // TODO Shouldn't we check new_signer != guardian?
+        assert_can_escape_for_type(ESCAPE_TYPE_OWNER);
+        assert(new_owner != 0, 'argent/null-owner');
         clear_escape();
-        _signer::write(new_signer);
-        SignerEscaped(new_signer);
+        _signer::write(new_owner);
+        OwnerEscaped(new_owner);
     }
 
     #[external]
@@ -291,7 +290,7 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[view]
-    fn get_signer() -> felt252 {
+    fn get_owner() -> felt252 {
         _signer::read()
     }
 
@@ -345,9 +344,9 @@ mod ArgentAccount {
         let transaction_hash = tx_info.transaction_hash;
         let full_signature = tx_info.signature;
 
-        let (signer_signature, guardian_signature) = split_signatures(full_signature);
-        let is_valid = is_valid_signer_signature(transaction_hash, signer_signature);
-        assert(is_valid, 'argent/invalid-signer-sig');
+        let (owner_signature, guardian_signature) = split_signatures(full_signature);
+        let is_valid = is_valid_owner_signature(transaction_hash, owner_signature);
+        assert(is_valid, 'argent/invalid-owner-sig');
         if _guardian::read() != 0 {
             let is_valid = is_valid_guardian_signature(transaction_hash, guardian_signature);
             assert(is_valid, 'argent/invalid-guardian-sig');
@@ -355,8 +354,8 @@ mod ArgentAccount {
     }
 
     fn is_valid_span_signature(hash: felt252, signatures: Span<felt252>) -> bool {
-        let (signer_signature, guardian_signature) = split_signatures(signatures);
-        let is_valid = is_valid_signer_signature(hash, signer_signature);
+        let (owner_signature, guardian_signature) = split_signatures(signatures);
+        let is_valid = is_valid_owner_signature(hash, owner_signature);
         if !is_valid {
             return false;
         }
@@ -367,7 +366,7 @@ mod ArgentAccount {
         }
     }
 
-    fn is_valid_signer_signature(hash: felt252, signature: Span<felt252>) -> bool {
+    fn is_valid_owner_signature(hash: felt252, signature: Span<felt252>) -> bool {
         if signature.len() != 2_usize {
             return false;
         }
@@ -395,13 +394,13 @@ mod ArgentAccount {
             return (full_signature, ArrayTrait::new().span());
         }
         assert(full_signature.len() == 4_usize, 'argent/invalid-signature-length');
-        let mut signer_signature = ArrayTrait::new();
-        signer_signature.append(*full_signature.at(0_usize));
-        signer_signature.append(*full_signature.at(1_usize));
+        let mut owner_signature = ArrayTrait::new();
+        owner_signature.append(*full_signature.at(0_usize));
+        owner_signature.append(*full_signature.at(1_usize));
         let mut guardian_signature = ArrayTrait::new();
         guardian_signature.append(*full_signature.at(2_usize));
         guardian_signature.append(*full_signature.at(3_usize));
-        (signer_signature.span(), guardian_signature.span())
+        (owner_signature.span(), guardian_signature.span())
     }
 
     #[inline(always)]

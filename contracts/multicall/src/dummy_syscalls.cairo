@@ -5,7 +5,7 @@ use starknet::ContractAddress;
 use starknet::SyscallResult;
 
 use lib::check_enough_gas;
-use lib::TestDapp;
+use multicall::TestDapp;
 
 fn call_contract_syscall(
     to: ContractAddress, selector: felt252, calldata: Span::<felt252>

@@ -1,16 +1,8 @@
-mod dummy_syscalls;
-
 mod asserts;
 use asserts::assert_only_self;
 use asserts::assert_no_self_call;
 use asserts::assert_non_reentrant;
 use asserts::assert_correct_tx_version;
-
-mod erc20;
-use erc20::ERC20;
-
-mod test_dapp;
-use test_dapp::TestDapp;
 
 mod traits;
 use traits::ArrayTraitExt;

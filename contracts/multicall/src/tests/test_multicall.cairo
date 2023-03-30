@@ -5,8 +5,6 @@ use starknet::contract_address_const;
 use starknet::testing::set_caller_address;
 use starknet::testing::set_block_number;
 
-// use contracts::ArgentAccount::__execute__; // TODO MOVE CORRECT PLACE
-// use lib::initialize_account;
 use lib::Call;
 use lib::execute_multicall;
 use multicall::aggregate;
@@ -115,38 +113,6 @@ fn aggregate_simple() {
     assert(*retdata.at(0_usize) == 42, '42');
     assert(*retdata.at(1_usize) == 43, '43');
 }
-
-// __execute__
-// #[test]
-// #[available_gas(2000000)]
-// fn execute() {
-//     let mut arr = ArrayTrait::<Call>::new();
-//     arr.append(create_simple_call());
-//     arr.append(create_simple_call_with_data(43));
-//     let retdata = __execute__(arr);
-//     assert(retdata.len() == 2_usize, '2');
-//     assert(*retdata.at(0_usize) == 42, '42');
-//     assert(*retdata.at(1_usize) == 43, '43');
-// }
-
-// TODO can't mock tx_version atm so dummy test
-// #[test]
-// #[available_gas(2000000)]
-// // #[should_panic(expected = ('argent/only-self', ))]
-// fn execute_assert_correct_tx_version() {
-//     initialize_account();
-//     set_tx_version(1);
-//     __execute__(ArrayTrait::new());
-// }
-
-// #[test]
-// #[available_gas(2000000)]
-// #[should_panic(expected = ('argent/no-reentrant-call', ))]
-// fn execute_assert_non_reentrant() {
-//     initialize_account();
-//     set_caller_address(contract_address_const::<42>());
-//     __execute__(ArrayTrait::new());
-// }
 
 fn create_simple_call() -> Call {
     create_call_with(42, 42)

@@ -1,2 +1,4 @@
 [crate_roots]
 lib = "src"
+
+multicall = "../multicall/src"

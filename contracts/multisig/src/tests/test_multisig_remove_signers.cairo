@@ -3,7 +3,6 @@ use traits::Into;
 
 use multisig::ArgentMultisigAccount;
 
-
 #[test]
 #[available_gas(20000000)]
 fn remove_signers_first() {

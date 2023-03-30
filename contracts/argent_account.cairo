@@ -302,7 +302,7 @@ mod ArgentAccount {
         assert_only_self();
         let mut erc_165_calldata = ArrayTrait::new();
         erc_165_calldata.append(ERC165_ACCOUNT_INTERFACE_ID);
-        // TODO we should prob change the selector fdrom supportsInterface to supports_interface
+        // TODO we should prob change the selector from supportsInterface to supports_interface
         match library_call_syscall(
             implementation, SUPPORTS_INTERFACE_SELECTOR, erc_165_calldata.span()
         ) {
@@ -375,7 +375,7 @@ mod ArgentAccount {
 
     #[view]
     fn supportsInterface(interface_id: felt252) -> bool {
-        interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
+        supports_interface(interface_id)
     }
 
     // ERC1271

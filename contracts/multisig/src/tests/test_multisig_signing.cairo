@@ -17,7 +17,7 @@ fn test_signature() {
     let threshold = 1_usize;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_2);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
+    ArgentMultisigAccount::constructor(threshold, signers_array);
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(signer_pubkey_2);

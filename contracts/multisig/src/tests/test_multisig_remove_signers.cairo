@@ -13,7 +13,7 @@ fn _initialize() {
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
     signers_array.append(signer_pubkey_3);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
+    ArgentMultisigAccount::constructor(threshold, signers_array);
 }
 
 #[test]
@@ -209,11 +209,7 @@ fn remove_3_and_2() {
 #[should_panic(expected = ('argent/not-a-signer', ))]
 fn remove_invalid_signers() {
     // init
-    let threshold = 1_usize;
-    let mut signers_array = ArrayTrait::new();
-    signers_array.append(signer_pubkey_1);
-    signers_array.append(signer_pubkey_2);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
+    _initialize();
 
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();

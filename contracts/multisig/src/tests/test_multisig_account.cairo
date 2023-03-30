@@ -20,7 +20,7 @@ fn valid_initiliaze() {
     let threshold = 1_usize;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
+    ArgentMultisigAccount::constructor(threshold, signers_array);
 
     assert(MultisigStorage::threshold::read() == threshold, 'new threshold not set');
 
@@ -43,7 +43,7 @@ fn valid_initiliaze_two_signers() {
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
+    ArgentMultisigAccount::constructor(threshold, signers_array);
 
     assert(MultisigStorage::threshold::read() == threshold, 'new threshold not set');
 
@@ -72,7 +72,7 @@ fn invalid_threshold() {
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
+    ArgentMultisigAccount::constructor(threshold, signers_array);
 }
 
 #[test]
@@ -82,7 +82,7 @@ fn change_threshold() {
     let mut signers_array = ArrayTrait::new();
     signers_array.append(1);
     signers_array.append(2);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
+    ArgentMultisigAccount::constructor(threshold, signers_array);
     assert(ArgentMultisigAccount::get_threshold() == threshold, 'new threshold not set');
 
     ArgentMultisigAccount::change_threshold(2_usize);
@@ -97,7 +97,7 @@ fn add_signers() {
     let threshold = 1_usize;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
+    ArgentMultisigAccount::constructor(threshold, signers_array);
 
     // add signer
     let mut new_signers = ArrayTrait::new();
@@ -119,7 +119,7 @@ fn add_signer_already_in_list() {
     let threshold = 1_usize;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
+    ArgentMultisigAccount::constructor(threshold, signers_array);
 
     // add signer
     let mut new_signers = ArrayTrait::new();

@@ -14,7 +14,7 @@ fn _initialize() {
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
     signers_array.append(signer_pubkey_3);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
+    ArgentMultisigAccount::constructor(threshold, signers_array);
 }
 
 #[test]
@@ -24,7 +24,7 @@ fn replace_signer_1() {
     let threshold = 1_usize;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
+    ArgentMultisigAccount::constructor(threshold, signers_array);
 
     // replace signer
     let signer_to_add = signer_pubkey_2;

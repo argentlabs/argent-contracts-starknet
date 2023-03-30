@@ -48,6 +48,7 @@ mod ArgentMultisigAccount {
     //                                     Constructor                                            //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    // TODO: add constructor arguments to validate deploy
     #[constructor]
     fn constructor(threshold: usize, signers: Array<felt252>) {
         let signers_len = signers.len();

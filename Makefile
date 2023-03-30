@@ -33,6 +33,21 @@ build:
 test: 
 	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)
 
+test-account: 
+	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)/account
+
+
+test-lib: 
+	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)/lib
+
+
+test-multicall: 
+	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)/multicall
+
+
+test-multisig: 
+	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)/multisig
+
 format:
 	cargo run --bin cairo-format -- --recursive $(SOURCE_FOLDER) --print-parsing-errors
 

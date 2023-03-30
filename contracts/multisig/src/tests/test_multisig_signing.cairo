@@ -23,7 +23,6 @@ fn test_signature() {
     signature.append(signer_pubkey_2);
     signature.append(signer_2_signature_r);
     signature.append(signer_2_signature_s);
-    assert(
-        ArgentMultisigAccount::is_valid_signature(message_hash, signature) == true, 'bad signature'
-    );
+    let valid_signature = ArgentMultisigAccount::is_valid_signature(message_hash, signature);
+    assert(valid_signature == true, 'bad signature');
 }

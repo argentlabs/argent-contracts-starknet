@@ -43,7 +43,7 @@ mod ArgentMultisigAccount {
         added_signers: Array<felt252>,
         removed_signers: Array<felt252>
     ) {}
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                     Constructor                                            //
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -53,12 +53,12 @@ mod ArgentMultisigAccount {
     fn constructor(threshold: usize, signers: Array<felt252>) {
         let signers_len = signers.len();
         assert_valid_threshold_and_signers_count(threshold, signers_len);
-        
+
         // initialize the account
         MultisigStorage::add_signers(signers.span(), 0);
         //  TODO If they change usize type to be "more" it'll break, should we prevent it and use usize instead, or write directly into()?
         MultisigStorage::set_threshold(threshold);
-        
+
         let removed_signers = ArrayTrait::new();
 
         ConfigurationUpdated(threshold, signers_len, signers, removed_signers);
@@ -276,5 +276,4 @@ mod ArgentMultisigAccount {
         assert(signers_len != 0_usize, 'argent/invalid-signers-len');
         assert(threshold <= signers_len, 'argent/bad-threshold');
     }
-
 }

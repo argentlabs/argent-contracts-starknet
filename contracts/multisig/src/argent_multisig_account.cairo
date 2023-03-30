@@ -43,6 +43,25 @@ mod ArgentMultisigAccount {
         added_signers: Array<felt252>,
         removed_signers: Array<felt252>
     ) {}
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                     Constructor                                            //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    #[constructor]
+    fn constructor(threshold: usize, signers: Array<felt252>) {
+        let signers_len = signers.len();
+        assert_valid_threshold_and_signers_count(threshold, signers_len);
+        
+        // initialize the account
+        MultisigStorage::add_signers(signers.span(), 0);
+        //  TODO If they change usize type to be "more" it'll break, should we prevent it and use usize instead, or write directly into()?
+        MultisigStorage::set_threshold(threshold);
+        
+        let removed_signers = ArrayTrait::new();
+
+        ConfigurationUpdated(threshold, signers_len, signers, removed_signers);
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                     External functions                                     //
@@ -75,25 +94,6 @@ mod ArgentMultisigAccount {
         assert(valid, 'argent/invalid-signature');
 
         VALIDATED
-    }
-
-    // @dev Set the initial parameters for the multisig. It's mandatory to call this methods to secure the account.
-    // It's recommended to call this method in the same transaction that deploys the account to make sure it's always initialized
-    #[external]
-    fn initialize(threshold: usize, signers: Array<felt252>) {
-        let current_threshold = MultisigStorage::get_threshold();
-        assert(current_threshold == 0_usize, 'argent/already-initialized');
-
-        let signers_len = signers.len();
-        assert_valid_threshold_and_signers_count(threshold, signers_len);
-
-        MultisigStorage::add_signers(signers.span(), 0);
-        //  TODO If they change usize type to be "more" it'll break, should we prevent it and use usize instead, or write directly into()?
-        MultisigStorage::set_threshold(threshold);
-
-        let removed_signers = ArrayTrait::new();
-
-        ConfigurationUpdated(threshold, signers_len, signers, removed_signers);
     }
 
     #[external]

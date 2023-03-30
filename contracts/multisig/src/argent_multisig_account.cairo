@@ -70,8 +70,6 @@ mod ArgentMultisigAccount {
     // TODO use the actual signature of the account interface
     // #[external] // ignored to avoid serde
     fn __validate__(ref calls: Array<Call>) -> felt252 {
-        assert_initialized();
-
         let account_address = get_contract_address();
 
         if calls.len() == 1_usize {
@@ -278,10 +276,4 @@ mod ArgentMultisigAccount {
         assert(threshold <= signers_len, 'argent/bad-threshold');
     }
 
-
-    #[inline(always)]
-    fn assert_initialized() {
-        let threshold = MultisigStorage::get_threshold();
-        assert(threshold != 0_usize, 'argent/uninitialized');
-    }
 }

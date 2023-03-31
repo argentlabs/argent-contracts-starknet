@@ -56,7 +56,7 @@ mod ArgentMultisigAccount {
 
         // initialize the account
         MultisigStorage::add_signers(signers.span(), 0);
-        //  TODO If they change usize type to be "more" it'll break, should we prevent it and use usize instead, or write directly into()?
+
         MultisigStorage::set_threshold(threshold);
 
         let removed_signers = ArrayTrait::new();

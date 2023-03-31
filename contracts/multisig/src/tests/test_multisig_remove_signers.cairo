@@ -7,7 +7,7 @@ use multisig::ArgentMultisigAccount;
 #[available_gas(20000000)]
 fn remove_signers_first() {
     // init
-    _initialize_multisig();
+    initialize_multisig();
 
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
@@ -27,7 +27,7 @@ fn remove_signers_first() {
 #[available_gas(20000000)]
 fn remove_signers_center() {
     // init
-    _initialize_multisig();
+    initialize_multisig();
 
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
@@ -48,7 +48,7 @@ fn remove_signers_center() {
 #[available_gas(20000000)]
 fn remove_signers_last() {
     // init
-    _initialize_multisig();
+    initialize_multisig();
 
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
@@ -68,7 +68,7 @@ fn remove_signers_last() {
 #[available_gas(20000000)]
 fn remove_1_and_2() {
     // init
-    _initialize_multisig();
+    initialize_multisig();
 
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
@@ -89,7 +89,7 @@ fn remove_1_and_2() {
 #[available_gas(20000000)]
 fn remove_1_and_3() {
     // init
-    _initialize_multisig();
+    initialize_multisig();
 
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
@@ -110,7 +110,7 @@ fn remove_1_and_3() {
 #[available_gas(20000000)]
 fn remove_2_and_3() {
     // init
-    _initialize_multisig();
+    initialize_multisig();
 
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
@@ -131,7 +131,7 @@ fn remove_2_and_3() {
 #[available_gas(20000000)]
 fn remove_2_and_1() {
     // init
-    _initialize_multisig();
+    initialize_multisig();
 
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
@@ -153,7 +153,7 @@ fn remove_2_and_1() {
 #[available_gas(20000000)]
 fn remove_3_and_1() {
     // init
-    _initialize_multisig();
+    initialize_multisig();
 
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
@@ -174,7 +174,7 @@ fn remove_3_and_1() {
 #[available_gas(20000000)]
 fn remove_3_and_2() {
     // init
-    _initialize_multisig();
+    initialize_multisig();
 
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
@@ -196,7 +196,7 @@ fn remove_3_and_2() {
 #[should_panic(expected = ('argent/not-a-signer', ))]
 fn remove_invalid_signers() {
     // init
-    _initialize_multisig();
+    initialize_multisig();
 
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();
@@ -210,7 +210,7 @@ fn remove_invalid_signers() {
 #[should_panic(expected = ('argent/bad-threshold', ))]
 fn remove_signers_invalid_threshold() {
     // init
-    _initialize_multisig();
+    initialize_multisig();
 
     // remove signer
     let mut signer_to_remove = ArrayTrait::new();

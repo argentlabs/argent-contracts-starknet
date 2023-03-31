@@ -325,7 +325,7 @@ mod ArgentAccount {
 
 
     #[external]
-    fn execute_after_upgrade(calls: Array<felt252>) -> Array::<felt252> {
+    fn execute_after_upgrade(data: Array<felt252>) -> Array::<felt252> {
         assert_only_self();
         let implementation = _implementation::read();
         replace_class_syscall(implementation).unwrap_syscall();

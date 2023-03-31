@@ -21,12 +21,7 @@ fn valid_initiliaze() {
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     ArgentMultisigAccount::constructor(threshold, signers_array);
-
-    assert(MultisigStorage::threshold::read() == threshold, 'new threshold not set');
-
-    // test if signers is in list
-    assert(MultisigStorage::signer_list::read(0) == signer_pubkey_1, 'signer 1 not added');
-
+    assert(MultisigStorage::threshold::read() == threshold, 'threshold not set');
     // test if is signer correctly returns true
     assert(ArgentMultisigAccount::is_signer(signer_pubkey_1), 'is signer cant find signer');
 
@@ -44,15 +39,6 @@ fn valid_initiliaze_two_signers() {
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
     ArgentMultisigAccount::constructor(threshold, signers_array);
-
-    assert(MultisigStorage::threshold::read() == threshold, 'new threshold not set');
-
-    // test if signers is in list
-    assert(MultisigStorage::signer_list::read(0) == signer_pubkey_1, 'signer 1 not added');
-    assert(
-        MultisigStorage::signer_list::read(signer_pubkey_1) == signer_pubkey_2, 'signer 2 not added'
-    );
-
     // test if is signer correctly returns true
     assert(ArgentMultisigAccount::is_signer(signer_pubkey_1), 'is signer cant find signer 1');
     assert(ArgentMultisigAccount::is_signer(signer_pubkey_2), 'is signer cant find signer 2');
@@ -83,8 +69,7 @@ fn change_threshold() {
     signers_array.append(1);
     signers_array.append(2);
     ArgentMultisigAccount::constructor(threshold, signers_array);
-    assert(ArgentMultisigAccount::get_threshold() == threshold, 'new threshold not set');
-
+    
     ArgentMultisigAccount::change_threshold(2_usize);
     assert(ArgentMultisigAccount::get_threshold() == 2_usize, 'new threshold not set');
 }

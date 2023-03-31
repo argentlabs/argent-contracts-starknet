@@ -327,8 +327,10 @@ mod ArgentAccount {
     fn execute_after_upgrade(data: Array<felt252>) -> Array::<felt252> {
         assert_only_self();
         let implementation = _implementation::read();
-        replace_class_syscall(implementation).unwrap_syscall();
-        _implementation::write(class_hash_const::<0>());
+        if implementation != class_hash_const::<0>() {
+            replace_class_syscall(implementation).unwrap_syscall();
+            _implementation::write(class_hash_const::<0>());
+        }
         ArrayTrait::new()
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////

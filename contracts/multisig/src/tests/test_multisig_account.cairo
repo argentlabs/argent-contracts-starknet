@@ -69,7 +69,7 @@ fn change_threshold() {
     signers_array.append(1);
     signers_array.append(2);
     ArgentMultisigAccount::constructor(threshold, signers_array);
-    
+
     ArgentMultisigAccount::change_threshold(2_usize);
     assert(ArgentMultisigAccount::get_threshold() == 2_usize, 'new threshold not set');
 }

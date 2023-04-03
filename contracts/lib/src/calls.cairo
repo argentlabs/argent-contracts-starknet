@@ -1,12 +1,11 @@
 use array::ArrayTrait;
 use array::SpanTrait;
 
-// use starknet::call_contract_syscall;
+use starknet::call_contract_syscall;
 use starknet::ContractAddress;
 
 use lib::ArrayTraitExt;
 use lib::check_enough_gas;
-use multicall::dummy_syscalls::call_contract_syscall; // TODO remove me + remove me from lib
 
 #[derive(Drop, Serde)]
 struct Call {

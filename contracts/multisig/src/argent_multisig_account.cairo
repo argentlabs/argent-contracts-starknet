@@ -16,7 +16,10 @@ mod ArgentMultisigAccount {
 
     use lib::assert_only_self;
     use lib::assert_no_self_call;
+    use lib::assert_correct_tx_version;
+    use lib::assert_non_reentrant;
     use lib::check_enough_gas;
+    use lib::execute_multicall;
     use lib::Call;
     use lib::Version;
     use multisig::deserialize_array_signer_signature;

@@ -9,7 +9,7 @@ use contracts::TestDapp;
 
 fn call_contract_syscall(
     to: ContractAddress, selector: felt252, calldata: Span::<felt252>
-) -> SyscallResult<Span::<felt252>> {
+) -> SyscallResult<Span<felt252>> {
     check_enough_gas();
     if selector == 1 {
         TestDapp::set_number(*calldata.at(0_usize));
@@ -40,6 +40,6 @@ fn call_contract_syscall(
     }
 }
 
-fn empty_result() -> SyscallResult<Span::<felt252>> {
+fn empty_result() -> SyscallResult<Span<felt252>> {
     SyscallResult::Ok(ArrayTrait::new().span())
 }

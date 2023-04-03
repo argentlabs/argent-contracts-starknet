@@ -6,7 +6,7 @@ struct Escape {
     escape_type: felt252, // TODO Change to enum? ==> Can't do ATM because would have to impl partialEq, update storage, etc etc
 }
 
-impl StorageAccessEscape of StorageAccess::<Escape> {
+impl StorageAccessEscape of StorageAccess<Escape> {
     fn read(
         address_domain: u32, base: starknet::StorageBaseAddress
     ) -> starknet::SyscallResult<Escape> {

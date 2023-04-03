@@ -24,9 +24,8 @@ fn execute_multicall(calls: Array<Call>) -> Array<felt252> {
         match calls.pop_front() {
             Option::Some(call) => {
                 match call_contract_syscall(call.to, call.selector, call.calldata.span()) {
-                    Result::Ok(retdata) => {
-                        let mut mut_retdata = retdata;
-                        result.append_all(ref mut_retdata);
+                    Result::Ok(mut retdata) => {
+                        result.append_all(ref retdata);
                         idx = idx + 1;
                     },
                     Result::Err(revert_reason) => {

@@ -342,8 +342,8 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[view]
-    fn getVersion() -> Version {
-        get_version()
+    fn getVersion() -> felt252 {
+        '0.3.0'
     }
 
     #[view]
@@ -353,8 +353,16 @@ mod ArgentAccount {
 
     // ERC165
     #[view]
-    fn supportsInterface(interface_id: felt252) -> bool {
-        supports_interface(interface_id)
+    fn supportsInterface(interface_id: felt252) -> felt252 {
+        if interface_id == ERC165_IERC165_INTERFACE_ID {
+            1
+        } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
+            1
+        } else if interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID {
+            1
+        } else {
+            0
+        }
     }
 
     // ERC1271

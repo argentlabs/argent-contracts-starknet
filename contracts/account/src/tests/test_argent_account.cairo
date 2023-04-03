@@ -57,7 +57,7 @@ fn initialized_no_guardian_no_backup() {
 #[test]
 #[available_gas(2000000)]
 fn erc165_unsupported_interfaces() {
-    assert(ArgentAccount::supports_interface(0) == false, 'value should be false');
+    assert(!ArgentAccount::supports_interface(0), 'value should be false');
     assert(
         !ArgentAccount::supports_interface(ERC165_INVALID_INTERFACE_ID), 'value should be false'
     );
@@ -66,12 +66,15 @@ fn erc165_unsupported_interfaces() {
 #[test]
 #[available_gas(2000000)]
 fn erc165_supported_interfaces() {
-    let value = ArgentAccount::supports_interface(ArgentAccount::ERC165_IERC165_INTERFACE_ID);
-    assert(value, 'value should be true');
-    let value = ArgentAccount::supports_interface(ArgentAccount::ERC165_ACCOUNT_INTERFACE_ID);
-    assert(value, 'value should be true');
-    let value = ArgentAccount::supports_interface(ArgentAccount::ERC165_OLD_ACCOUNT_INTERFACE_ID);
-    assert(value, 'value should be true');
+    let value = assert(
+        ArgentAccount::supports_interface(0x01ffc9a7), 'ERC165_IERC165_INTERFACE_ID'
+    );
+    let value = assert(
+        ArgentAccount::supports_interface(0xa66bd575), 'ERC165_ACCOUNT_INTERFACE_ID'
+    );
+    let value = assert(
+        ArgentAccount::supports_interface(0x3943f10f), 'ERC165_OLD_ACCOUNT_INTERFACE_ID'
+    );
 }
 
 #[test]
@@ -166,7 +169,6 @@ fn change_invalid_guardian_backup() {
     ArgentAccount::change_guardian_backup(33);
 }
 
-
 #[test]
 fn get_name() {
     assert(ArgentAccount::get_name() == 'ArgentAccount', 'Name should be ArgentAccount');
@@ -178,4 +180,38 @@ fn get_version() {
     assert(version.major == 0_u8, 'Version major = 0');
     assert(version.minor == 3_u8, 'Version minor = 3');
     assert(version.patch == 0_u8, 'Version patch = 0');
+}
+
+#[test]
+fn getName() {
+    assert(ArgentAccount::get_name() == 'ArgentAccount', 'Name should be ArgentAccount');
+}
+
+#[test]
+fn getVersion() {
+    assert(ArgentAccount::getVersion() == '0.3.0', 'Version should be 0.3.0');
+}
+
+#[test]
+#[available_gas(2000000)]
+fn unsuported_supportsInterface() {
+    assert(ArgentAccount::supportsInterface(0) == 0, 'value should be false');
+    assert(
+        ArgentAccount::supportsInterface(ERC165_INVALID_INTERFACE_ID) == 0, 'value should be false'
+    );
+}
+
+
+#[test]
+#[available_gas(2000000)]
+fn supportsInterface() {
+    let value = assert(
+        ArgentAccount::supportsInterface(0x01ffc9a7) == 1, 'ERC165_IERC165_INTERFACE_ID'
+    );
+    let value = assert(
+        ArgentAccount::supportsInterface(0xa66bd575) == 1, 'ERC165_ACCOUNT_INTERFACE_ID'
+    );
+    let value = assert(
+        ArgentAccount::supportsInterface(0x3943f10f) == 1, 'ERC165_OLD_ACCOUNT_INTERFACE_ID'
+    );
 }

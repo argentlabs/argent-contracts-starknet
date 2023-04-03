@@ -1,2 +1,5 @@
 [crate_roots]
-contracts = "."
+account = "account/src"
+lib = "lib/src"
+multicall = "multicall/src"
+multisig = "multisig/src"

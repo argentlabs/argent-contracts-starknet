@@ -69,7 +69,7 @@ mod ArgentMultisigAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     // TODO use the actual signature of the account interface
-    // #[external] // ignored to avoid serde
+    #[external]
     fn __validate__(ref calls: Array<Call>) -> felt252 {
         let account_address = get_contract_address();
 
@@ -84,14 +84,38 @@ mod ArgentMultisigAccount {
             assert_no_self_call(calls.span(), account_address);
         }
 
-        let tx_info = starknet::get_tx_info().unbox();
+        assert_is_valid_tx_signature();
 
-        // TODO converting to array is probably avoidable
+        VALIDATED
+    }
+
+    #[external]
+    fn __validate_declare__(class_hash: felt252) -> felt252 {
+        assert_is_valid_tx_signature();
+        VALIDATED
+    }
+
+    #[raw_input]
+    #[external]
+    fn __validate_deploy__(
+        class_hash: felt252,
+        contract_address_salt: felt252,
+        threshold: usize,
+        signers: Array<felt252>
+    ) -> felt252 {
+        let tx_info = starknet::get_tx_info().unbox();
         let signature_array = spans::span_to_array(tx_info.signature);
 
-        let valid = is_valid_signature(tx_info.transaction_hash, signature_array);
-        assert(valid, 'argent/invalid-signature');
+        assert(signature_array.len() == SignerSignatureSize, 'argent/invalid-signature-length');
 
+        let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
+        let hash = tx_info.transaction_hash;
+        // hardcoded to 1 as only one signature is needed
+        let parsed_signatures = deserialize_array_signer_signature(
+            signature_array, signer_signatures_out, 1_usize
+        ).unwrap();
+        let valid = is_valid_signatures_array(hash, parsed_signatures.span());
+        assert(valid, 'argent/invalid-signature');
         VALIDATED
     }
 
@@ -240,6 +264,16 @@ mod ArgentMultisigAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                          Internal                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    fn assert_is_valid_tx_signature() {
+        let tx_info = starknet::get_tx_info().unbox();
+
+        // TODO converting to array is probably avoidable
+        let signature_array = spans::span_to_array(tx_info.signature);
+
+        let valid = is_valid_signature(tx_info.transaction_hash, signature_array);
+        assert(valid, 'argent/invalid-signature');
+    }
 
     fn is_valid_signatures_array(hash: felt252, signatures: Span<SignerSignature>) -> bool {
         is_valid_signatures_array_helper(hash, signatures, 0)

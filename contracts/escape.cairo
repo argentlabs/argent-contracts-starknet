@@ -1,8 +1,6 @@
-use serde::Serde;
-
 use starknet::StorageAccess;
 
-#[derive(Drop, Copy)]
+#[derive(Drop, Copy, Serde)]
 struct Escape {
     active_at: u64,
     escape_type: felt252, // TODO Change to enum? ==> Can't do ATM because would have to impl partialEq, update storage, etc etc
@@ -33,17 +31,3 @@ impl StorageAccessEscape of StorageAccess::<Escape> {
     }
 }
 
-impl EscapeSerde of Serde::<Escape> {
-    fn serialize(ref serialized: Array<felt252>, input: Escape) {
-        Serde::serialize(ref serialized, input.active_at);
-        Serde::serialize(ref serialized, input.escape_type);
-    }
-    fn deserialize(ref serialized: Span<felt252>) -> Option<Escape> {
-        Option::Some(
-            Escape {
-                active_at: Serde::deserialize(ref serialized)?,
-                escape_type: Serde::deserialize(ref serialized)?,
-            }
-        )
-    }
-}

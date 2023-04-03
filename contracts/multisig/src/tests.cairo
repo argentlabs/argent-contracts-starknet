@@ -1,0 +1,4 @@
+mod test_multisig_account;
+mod test_multisig_remove_signers;
+mod test_multisig_replace_signers;
+mod test_multisig_signing;

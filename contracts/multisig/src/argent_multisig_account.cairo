@@ -45,14 +45,32 @@ mod ArgentMultisigAccount {
     ) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                     Constructor                                            //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // TODO: add constructor arguments to validate deploy
+    #[constructor]
+    fn constructor(threshold: usize, signers: Array<felt252>) {
+        let signers_len = signers.len();
+        assert_valid_threshold_and_signers_count(threshold, signers_len);
+
+        // initialize the account
+        MultisigStorage::add_signers(signers.span(), 0);
+
+        MultisigStorage::set_threshold(threshold);
+
+        let removed_signers = ArrayTrait::new();
+
+        ConfigurationUpdated(threshold, signers_len, signers, removed_signers);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                     External functions                                     //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     // TODO use the actual signature of the account interface
     // #[external] // ignored to avoid serde
     fn __validate__(ref calls: Array<Call>) -> felt252 {
-        assert_initialized();
-
         let account_address = get_contract_address();
 
         if calls.len() == 1_usize {
@@ -75,25 +93,6 @@ mod ArgentMultisigAccount {
         assert(valid, 'argent/invalid-signature');
 
         VALIDATED
-    }
-
-    // @dev Set the initial parameters for the multisig. It's mandatory to call this methods to secure the account.
-    // It's recommended to call this method in the same transaction that deploys the account to make sure it's always initialized
-    #[external]
-    fn initialize(threshold: usize, signers: Array<felt252>) {
-        let current_threshold = MultisigStorage::get_threshold();
-        assert(current_threshold == 0_usize, 'argent/already-initialized');
-
-        let signers_len = signers.len();
-        assert_valid_threshold_and_signers_count(threshold, signers_len);
-
-        MultisigStorage::add_signers(signers.span(), 0);
-        //  TODO If they change usize type to be "more" it'll break, should we prevent it and use usize instead, or write directly into()?
-        MultisigStorage::set_threshold(threshold);
-
-        let removed_signers = ArrayTrait::new();
-
-        ConfigurationUpdated(threshold, signers_len, signers, removed_signers);
     }
 
     #[external]
@@ -276,12 +275,5 @@ mod ArgentMultisigAccount {
         assert(threshold != 0_usize, 'argent/invalid-threshold');
         assert(signers_len != 0_usize, 'argent/invalid-signers-len');
         assert(threshold <= signers_len, 'argent/bad-threshold');
-    }
-
-
-    #[inline(always)]
-    fn assert_initialized() {
-        let threshold = MultisigStorage::get_threshold();
-        assert(threshold != 0_usize, 'argent/uninitialized');
     }
 }

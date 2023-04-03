@@ -17,13 +17,12 @@ fn test_signature() {
     let threshold = 1_usize;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_2);
-    ArgentMultisigAccount::initialize(threshold, signers_array);
+    ArgentMultisigAccount::constructor(threshold, signers_array);
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(signer_pubkey_2);
     signature.append(signer_2_signature_r);
     signature.append(signer_2_signature_s);
-    assert(
-        ArgentMultisigAccount::is_valid_signature(message_hash, signature) == true, 'bad signature'
-    );
+    let valid_signature = ArgentMultisigAccount::is_valid_signature(message_hash, signature);
+    assert(valid_signature, 'bad signature');
 }

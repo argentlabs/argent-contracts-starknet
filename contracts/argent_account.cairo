@@ -336,79 +336,13 @@ mod ArgentAccount {
         }
     }
 
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                              External functions compatibility                              //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    #[external]
-    fn changeSigner(new_signer: felt252) {
-        change_signer(new_signer)
-    }
-
-    #[external]
-    fn changeGuardian(new_guardian: felt252) {
-        change_guardian(new_guardian)
-    }
-
-    #[external]
-    fn changeGuardianBackup(new_guardian_backup: felt252) {
-        change_guardian_backup(new_guardian_backup)
-    }
-
-    #[external]
-    fn triggerEscapeSigner() {
-        trigger_escape_signer()
-    }
-
-    #[external]
-    fn triggerEscapeGuardian() {
-        trigger_escape_guardian()
-    }
-
-    #[external]
-    fn escapeSigner(new_signer: felt252) {
-        escape_signer(new_signer)
-    }
-
-    #[external]
-    fn escapeGuardian(new_guardian: felt252) {
-        escape_guardian(new_guardian)
-    }
-
-    #[external]
-    fn cancelEscape() {
-        cancel_escape()
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                 View functions compatibility                               //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[view]
-    fn getSigner() -> felt252 {
-        get_signer()
-    }
-
-    #[view]
-    fn getGuardian() -> felt252 {
-        get_guardian()
-    }
-
-    #[view]
-    fn getGuardianBackup() -> felt252 {
-        get_guardian_backup()
-    }
-
-    #[view]
-    fn getEscape() -> Escape {
-        get_escape()
-    }
-
-    #[view]
-    fn getVersion() -> felt252 {
-        // TODO Should be kept in sync with the other one while we don't use the new selectors
-        '0.3.0-alpha.1'
+    fn getVersion() -> Version {
+        get_version()
     }
 
     #[view]

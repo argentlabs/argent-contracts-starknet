@@ -2,6 +2,10 @@ use array::ArrayTrait;
 use traits::Into;
 
 use multisig::ArgentMultisigAccount;
+use multisig::tests::initialize_multisig;
+use multisig::tests::signer_pubkey_1;
+use multisig::tests::signer_pubkey_2;
+use multisig::tests::signer_pubkey_3;
 
 #[test]
 #[available_gas(20000000)]

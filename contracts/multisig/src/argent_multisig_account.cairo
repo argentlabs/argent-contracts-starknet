@@ -91,16 +91,18 @@ mod ArgentMultisigAccount {
 
     #[external]
     fn __validate_declare__(class_hash: felt252) -> felt252 {
-        assert_initialized();
         assert_is_valid_tx_signature();
         VALIDATED
     }
 
     #[raw_input]
     #[external]
-    fn __validate_deploy__(class_hash: felt252, contract_address_salt: felt252) -> felt252 {
-        assert_initialized();
-
+    fn __validate_deploy__(
+        class_hash: felt252,
+        contract_address_salt: felt252,
+        threshold: usize,
+        signers: Array<felt252>
+    ) -> felt252 {
         let tx_info = starknet::get_tx_info().unbox();
         let signature_array = spans::span_to_array(tx_info.signature);
 

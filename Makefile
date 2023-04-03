@@ -18,11 +18,9 @@ make install-cairo:
 	fi
 	$(MAKE) build
 
-
 clone-cairo:
 	mkdir -p $(INSTALLATION_FOLDER)
 	git clone --depth 1 https://github.com/starkware-libs/cairo.git $(INSTALLATION_FOLDER)
-
 
 update-cairo:
 	git -C $(INSTALLATION_FOLDER) pull
@@ -30,8 +28,23 @@ update-cairo:
 build:
 	cargo build
 
+compile-account: 
+	cargo run --bin starknet-compile -- $(SOURCE_FOLDER)/account account.json --allowed-libfuncs-list-name experimental_v0.1.0
+
 test: 
 	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)
+
+test-account: 
+	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)/account
+
+test-lib: 
+	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)/lib
+
+test-multicall: 
+	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)/multicall
+
+test-multisig: 
+	cargo run --bin cairo-test -- --starknet $(SOURCE_FOLDER)/multisig
 
 format:
 	cargo run --bin cairo-format -- --recursive $(SOURCE_FOLDER) --print-parsing-errors

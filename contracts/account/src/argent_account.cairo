@@ -104,13 +104,13 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[constructor]
-    fn constructor(new_owner: felt252, new_guardian: felt252) {
-        assert(new_owner != 0, 'argent/null-owner');
+    fn constructor(owner: felt252, guardian: felt252) {
+        assert(owner != 0, 'argent/null-owner');
 
-        _signer::write(new_owner);
-        _guardian::write(new_guardian);
+        _signer::write(owner);
+        _guardian::write(guardian);
         _guardian_backup::write(0);
-        AccountCreated(get_contract_address(), new_owner, new_guardian);
+        AccountCreated(get_contract_address(), owner, guardian);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

@@ -70,9 +70,7 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[event]
-    fn AccountCreated(
-        account: ContractAddress, key: felt252, guardian: felt252, new_guardian_backup: felt252
-    ) {}
+    fn AccountCreated(account: ContractAddress, key: felt252, guardian: felt252) {}
 
     #[event]
     fn TransactionExecuted(hash: felt252, response: Array<felt252>) {}
@@ -102,13 +100,25 @@ mod ArgentAccount {
     fn GuardianBackupChanged(new_guardian: felt252) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                        Constructor                                         //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    #[constructor]
+    fn constructor(owner: felt252, guardian: felt252) {
+        assert(owner != 0, 'argent/null-owner');
+
+        _signer::write(owner);
+        _guardian::write(guardian);
+        _guardian_backup::write(0);
+        AccountCreated(get_contract_address(), owner, guardian);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                     External functions                                     //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[external]
     fn __validate__(ref calls: Array::<Call>) -> felt252 {
-        assert_initialized();
-
         let account_address = get_contract_address();
 
         if calls.len() == 1_usize {
@@ -144,17 +154,13 @@ mod ArgentAccount {
 
     #[external]
     fn __validate_declare__(class_hash: felt252) -> felt252 {
-        assert_initialized();
         assert_is_valid_signature();
         VALIDATED
     }
 
     #[raw_input]
     #[external]
-    fn __validate_deploy__(
-        class_hash: felt252, contract_address_salt: felt252, public_key_: felt252
-    ) -> felt252 {
-        assert_initialized();
+    fn __validate_deploy__(class_hash: felt252, owner: felt252, guardian: felt252) -> felt252 {
         assert_is_valid_signature();
         VALIDATED
     }
@@ -170,23 +176,6 @@ mod ArgentAccount {
         let retdata = execute_multicall(calls);
         // transaction_executed(tx_info.transaction_hash, retdata);
         retdata.span()
-    }
-
-    #[external]
-    fn initialize(new_owner: felt252, new_guardian: felt252, new_guardian_backup: felt252) {
-        // check that we are not already initialized
-        assert(_signer::read() == 0, 'argent/already-initialized');
-        // check that the target owner is not zero
-        assert(new_owner != 0, 'argent/null-owner');
-        // There cannot be a guardian_backup when there is no guardian
-        if new_guardian.is_zero() {
-            assert(new_guardian_backup.is_zero(), 'argent/backup-should-be-null');
-        }
-        // initialize the account
-        _signer::write(new_owner);
-        _guardian::write(new_guardian);
-        _guardian_backup::write(new_guardian_backup);
-        AccountCreated(get_contract_address(), new_owner, new_guardian, new_guardian_backup);
     }
 
     #[external]
@@ -420,10 +409,5 @@ mod ArgentAccount {
     #[inline(always)]
     fn assert_guardian_set() {
         assert(_guardian::read() != 0, 'argent/guardian-required');
-    }
-
-    #[inline(always)]
-    fn assert_initialized() {
-        assert(_signer::read() != 0, 'argent/uninitialized');
     }
 }

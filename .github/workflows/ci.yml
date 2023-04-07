@@ -31,8 +31,10 @@ jobs:
             ~/.cargo/git/db/
             target/
             cairo/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('cairo/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+            ${{ runner.os }}-cargo-
       - name: Step 4 - Install/Update cairo
         run: make install-cairo
       - name: Step 5 - Run all tests

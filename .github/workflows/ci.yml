@@ -31,7 +31,7 @@ jobs:
             ~/.cargo/git/db/
             target/
             cairo/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('cairo/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
       - name: Step 4 - Install/Update cairo
         run: make install-cairo

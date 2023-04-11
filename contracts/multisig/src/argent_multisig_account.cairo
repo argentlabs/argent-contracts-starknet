@@ -7,7 +7,6 @@ mod ArgentMultisigAccount {
     use option::OptionTrait;
     use traits::Into;
     use zeroable::Zeroable;
-    use clone::Clone;
     use array::ArrayTCloneImpl;
 
     use starknet::get_contract_address;

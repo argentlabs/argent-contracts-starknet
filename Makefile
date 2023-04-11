@@ -9,6 +9,7 @@ SOURCE_FOLDER=./contracts
 
 install: 
 	$(MAKE) install-cairo
+	$(MAKE) build
 	$(MAKE) vscode
 
 make install-cairo:
@@ -17,7 +18,6 @@ make install-cairo:
 	else \
 		$(MAKE) clone-cairo; \
 	fi
-	$(MAKE) build
 
 clone-cairo:
 	mkdir -p $(INSTALLATION_FOLDER)

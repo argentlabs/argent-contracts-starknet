@@ -20,7 +20,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: stable
       - name: Step 3 - Set up cache
         uses: actions/cache@v3
         with:
@@ -31,8 +31,7 @@ jobs:
             ~/.cargo/git/db/
             target/
             cairo/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+          key: cargo
       - name: Step 4 - Install/Update cairo
         run: make install-cairo
       - name: Step 5 - Run all tests

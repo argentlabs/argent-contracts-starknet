@@ -56,13 +56,11 @@ mod ArgentMultisigAccount {
     //                                     Constructor                                            //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // TODO: add constructor arguments to validate deploy
     #[constructor]
     fn constructor(threshold: usize, signers: Array<felt252>) {
         let signers_len = signers.len();
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
-        // initialize the account
         MultisigStorage::add_signers(signers.span(), 0);
 
         MultisigStorage::set_threshold(threshold);
@@ -105,13 +103,11 @@ mod ArgentMultisigAccount {
         assert_non_reentrant();
 
         let retdata = execute_multicall(calls);
-        // have to clone for now since variable is moved
-        TransactionExecuted(tx_info.transaction_hash, (@retdata).clone());
-        retdata.span()
+        let retdata_span = retdata.span();
+        TransactionExecuted(tx_info.transaction_hash, retdata);
+        retdata_span
     }
 
-    // @dev Set the initial parameters for the multisig. It's mandatory to call this methods to secure the account.
-    // It's recommended to call this method in the same transaction that deploys the account to make sure it's always initialized
     #[external]
     fn __validate_declare__(class_hash: felt252) -> felt252 {
         assert_is_valid_tx_signature();

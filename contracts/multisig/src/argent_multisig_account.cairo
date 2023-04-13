@@ -70,7 +70,7 @@ mod ArgentMultisigAccount {
 
     // TODO use the actual signature of the account interface
     #[external]
-    fn __validate__(ref calls: Array<Call>) -> felt252 {
+    fn __validate__(calls: Array<Call>) -> felt252 {
         let account_address = get_contract_address();
 
         if calls.len() == 1_usize {

@@ -197,7 +197,7 @@ fn remove_3_and_2() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected = ('argent/not-a-signer', ))]
+#[should_panic(expected: ('argent/not-a-signer', ))]
 fn remove_invalid_signers() {
     // init
     initialize_multisig();
@@ -211,7 +211,7 @@ fn remove_invalid_signers() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected = ('argent/bad-threshold', ))]
+#[should_panic(expected: ('argent/bad-threshold', ))]
 fn remove_signers_invalid_threshold() {
     // init
     initialize_multisig();

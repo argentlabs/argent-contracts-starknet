@@ -27,7 +27,7 @@ fn trigger_escape_owner() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/only-self', ))]
+#[should_panic(expected: ('argent/only-self', ))]
 fn trigger_escape_owner_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
@@ -36,7 +36,7 @@ fn trigger_escape_owner_only_self() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/guardian-required', ))]
+#[should_panic(expected: ('argent/guardian-required', ))]
 fn trigger_escape_owner_no_guardian_set() {
     initialize_account_without_guardian();
     ArgentAccount::trigger_escape_owner();
@@ -60,7 +60,7 @@ fn trigger_escape_owner_twice() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/cannot-override-escape', ))]
+#[should_panic(expected: ('argent/cannot-override-escape', ))]
 fn trigger_escape_owner_with_guardian_escaped() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
@@ -83,7 +83,7 @@ fn trigger_escape_guardian() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/only-self', ))]
+#[should_panic(expected: ('argent/only-self', ))]
 fn trigger_escape_guardian_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
@@ -92,7 +92,7 @@ fn trigger_escape_guardian_only_self() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/guardian-required', ))]
+#[should_panic(expected: ('argent/guardian-required', ))]
 fn trigger_escape_guardian_no_guardian_set() {
     initialize_account_without_guardian();
     ArgentAccount::trigger_escape_guardian();
@@ -157,7 +157,7 @@ fn escape_owner_at_security_period() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/only-self', ))]
+#[should_panic(expected: ('argent/only-self', ))]
 fn escape_owner_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
@@ -166,7 +166,7 @@ fn escape_owner_only_self() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/guardian-required', ))]
+#[should_panic(expected: ('argent/guardian-required', ))]
 fn escape_owner_no_guardian_set() {
     initialize_account_without_guardian();
     ArgentAccount::escape_owner(42);
@@ -174,7 +174,7 @@ fn escape_owner_no_guardian_set() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/not-escaping', ))]
+#[should_panic(expected: ('argent/not-escaping', ))]
 fn escape_owner_not_escaping() {
     initialize_account();
     set_block_timestamp(ESCAPE_SECURITY_PERIOD);
@@ -183,7 +183,7 @@ fn escape_owner_not_escaping() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/inactive-escape', ))]
+#[should_panic(expected: ('argent/inactive-escape', ))]
 fn escape_owner_before_timeout() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
@@ -194,7 +194,7 @@ fn escape_owner_before_timeout() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/invalid-escape-type', ))]
+#[should_panic(expected: ('argent/invalid-escape-type', ))]
 fn escape_owner_wrong_escape_type() {
     initialize_account();
     ArgentAccount::trigger_escape_guardian();
@@ -204,7 +204,7 @@ fn escape_owner_wrong_escape_type() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/null-owner', ))]
+#[should_panic(expected: ('argent/null-owner', ))]
 fn escape_owner_new_owner_null() {
     initialize_account();
     ArgentAccount::trigger_escape_owner();
@@ -240,7 +240,7 @@ fn escape_guardian_at_security_period() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/only-self', ))]
+#[should_panic(expected: ('argent/only-self', ))]
 fn escape_guardian_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
@@ -249,7 +249,7 @@ fn escape_guardian_only_self() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/guardian-required', ))]
+#[should_panic(expected: ('argent/guardian-required', ))]
 fn escape_guardian_no_guardian_set() {
     initialize_account_without_guardian();
     ArgentAccount::escape_guardian(42);
@@ -257,7 +257,7 @@ fn escape_guardian_no_guardian_set() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/not-escaping', ))]
+#[should_panic(expected: ('argent/not-escaping', ))]
 fn escape_guardian_not_escaping() {
     initialize_account();
     set_block_timestamp(ESCAPE_SECURITY_PERIOD);
@@ -266,7 +266,7 @@ fn escape_guardian_not_escaping() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/inactive-escape', ))]
+#[should_panic(expected: ('argent/inactive-escape', ))]
 fn escape_guardian_before_timeout() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
@@ -277,7 +277,7 @@ fn escape_guardian_before_timeout() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/invalid-escape-type', ))]
+#[should_panic(expected: ('argent/invalid-escape-type', ))]
 fn escape_guardian_wrong_escape_type() {
     initialize_account();
     ArgentAccount::trigger_escape_owner();
@@ -287,7 +287,7 @@ fn escape_guardian_wrong_escape_type() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/null-guardian', ))]
+#[should_panic(expected: ('argent/null-guardian', ))]
 fn escape_guardian_new_guardian_null() {
     initialize_account();
     ArgentAccount::trigger_escape_guardian();
@@ -311,7 +311,7 @@ fn cancel_escape() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/only-self', ))]
+#[should_panic(expected: ('argent/only-self', ))]
 fn cancel_escape_assert_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
@@ -320,7 +320,7 @@ fn cancel_escape_assert_only_self() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/no-active-escape', ))]
+#[should_panic(expected: ('argent/no-active-escape', ))]
 fn cancel_escape_no_escape_set() {
     initialize_account();
     ArgentAccount::cancel_escape();
@@ -388,7 +388,7 @@ fn assert_escape_cleared() {
 // TODO can't mock tx_version atm so dummy test
 // #[test]
 // #[available_gas(2000000)]
-// // #[should_panic(expected = ('argent/only-self', ))]
+// // #[should_panic(expected: ('argent/only-self', ))]
 // fn execute_assert_correct_tx_version() {
 //     initialize_account();
 //     set_tx_version(1);
@@ -397,7 +397,7 @@ fn assert_escape_cleared() {
 
 // #[test]
 // #[available_gas(2000000)]
-// #[should_panic(expected = ('argent/no-reentrant-call', ))]
+// #[should_panic(expected: ('argent/no-reentrant-call', ))]
 // fn execute_assert_non_reentrant() {
 //     initialize_account();
 //     set_caller_address(contract_address_const::<42>());

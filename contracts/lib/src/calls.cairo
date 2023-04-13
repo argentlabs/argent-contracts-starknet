@@ -16,28 +16,29 @@ struct Call {
 
 fn execute_multicall(calls: Array<Call>) -> Array<felt252> {
     let mut result = ArrayTrait::new();
-    execute_multicall_loop(calls.span(), ref result, 0);
+    let mut calls = calls;
+    let mut idx = 0;
+    loop {
+        check_enough_gas();
+        match calls.pop_front() {
+            Option::Some(call) => {
+                match call_contract_syscall(call.to, call.selector, call.calldata.span()) {
+                    Result::Ok(mut retdata) => {
+                        result.append_all(ref retdata);
+                        idx = idx + 1;
+                    },
+                    Result::Err(revert_reason) => {
+                        let mut data = ArrayTrait::new();
+                        data.append('argent/multicall-failed-');
+                        data.append(idx);
+                        panic(data);
+                    },
+                }
+            },
+            Option::None(_) => {
+                break ();
+            },
+        };
+    };
     result
-}
-
-fn execute_multicall_loop(mut calls: Span<Call>, ref result: Array<felt252>, index: felt252) {
-    check_enough_gas();
-    match calls.pop_front() {
-        Option::Some(call) => {
-            match call_contract_syscall(*call.to, *call.selector, call.calldata.span()) {
-                Result::Ok(retdata) => {
-                    let mut mut_retdata = retdata;
-                    result.append_all(ref mut_retdata);
-                    execute_multicall_loop(calls, ref result, index + 1);
-                },
-                Result::Err(revert_reason) => {
-                    let mut data = ArrayTrait::new();
-                    data.append('argent/multicall-failed-');
-                    data.append(index);
-                    panic(data);
-                },
-            }
-        },
-        Option::None(_) => (),
-    }
 }

@@ -49,7 +49,7 @@ mod TestDapp {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[view]
-    fn get_number(user: ContractAddress) -> (felt252) {
+    fn get_number(user: ContractAddress) -> felt252 {
         stored_number::read(user)
     }
 }

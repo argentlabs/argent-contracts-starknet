@@ -45,14 +45,32 @@ mod ArgentMultisigAccount {
     ) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                     Constructor                                            //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // TODO: add constructor arguments to validate deploy
+    #[constructor]
+    fn constructor(threshold: usize, signers: Array<felt252>) {
+        let signers_len = signers.len();
+        assert_valid_threshold_and_signers_count(threshold, signers_len);
+
+        // initialize the account
+        MultisigStorage::add_signers(signers.span(), 0);
+
+        MultisigStorage::set_threshold(threshold);
+
+        let removed_signers = ArrayTrait::new();
+
+        ConfigurationUpdated(threshold, signers_len, signers, removed_signers);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                     External functions                                     //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     // TODO use the actual signature of the account interface
-    // #[external] // ignored to avoid serde
+    #[external]
     fn __validate__(ref calls: Array<Call>) -> felt252 {
-        assert_initialized();
-
         let account_address = get_contract_address();
 
         if calls.len() == 1_usize {
@@ -66,34 +84,39 @@ mod ArgentMultisigAccount {
             assert_no_self_call(calls.span(), account_address);
         }
 
-        let tx_info = starknet::get_tx_info().unbox();
-
-        // TODO converting to array is probably avoidable
-        let signature_array = spans::span_to_array(tx_info.signature);
-
-        let valid = is_valid_signature(tx_info.transaction_hash, signature_array);
-        assert(valid, 'argent/invalid-signature');
+        assert_is_valid_tx_signature();
 
         VALIDATED
     }
 
-    // @dev Set the initial parameters for the multisig. It's mandatory to call this methods to secure the account.
-    // It's recommended to call this method in the same transaction that deploys the account to make sure it's always initialized
     #[external]
-    fn initialize(threshold: usize, signers: Array<felt252>) {
-        let current_threshold = MultisigStorage::get_threshold();
-        assert(current_threshold == 0_usize, 'argent/already-initialized');
+    fn __validate_declare__(class_hash: felt252) -> felt252 {
+        assert_is_valid_tx_signature();
+        VALIDATED
+    }
 
-        let signers_len = signers.len();
-        assert_valid_threshold_and_signers_count(threshold, signers_len);
+    #[raw_input]
+    #[external]
+    fn __validate_deploy__(
+        class_hash: felt252,
+        contract_address_salt: felt252,
+        threshold: usize,
+        signers: Array<felt252>
+    ) -> felt252 {
+        let tx_info = starknet::get_tx_info().unbox();
+        let signature_array = spans::span_to_array(tx_info.signature);
 
-        MultisigStorage::add_signers(signers.span(), 0);
-        //  TODO If they change usize type to be "more" it'll break, should we prevent it and use usize instead, or write directly into()?
-        MultisigStorage::set_threshold(threshold);
+        assert(signature_array.len() == SignerSignatureSize, 'argent/invalid-signature-length');
 
-        let removed_signers = ArrayTrait::new();
-
-        ConfigurationUpdated(threshold, signers_len, signers, removed_signers);
+        let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
+        let hash = tx_info.transaction_hash;
+        // hardcoded to 1 as only one signature is needed
+        let parsed_signatures = deserialize_array_signer_signature(
+            signature_array, signer_signatures_out, 1_usize
+        ).unwrap();
+        let valid = is_valid_signatures_array(hash, parsed_signatures.span());
+        assert(valid, 'argent/invalid-signature');
+        VALIDATED
     }
 
     #[external]
@@ -242,6 +265,16 @@ mod ArgentMultisigAccount {
     //                                          Internal                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    fn assert_is_valid_tx_signature() {
+        let tx_info = starknet::get_tx_info().unbox();
+
+        // TODO converting to array is probably avoidable
+        let signature_array = spans::span_to_array(tx_info.signature);
+
+        let valid = is_valid_signature(tx_info.transaction_hash, signature_array);
+        assert(valid, 'argent/invalid-signature');
+    }
+
     fn is_valid_signatures_array(hash: felt252, signatures: Span<SignerSignature>) -> bool {
         is_valid_signatures_array_helper(hash, signatures, 0)
     }
@@ -276,12 +309,5 @@ mod ArgentMultisigAccount {
         assert(threshold != 0_usize, 'argent/invalid-threshold');
         assert(signers_len != 0_usize, 'argent/invalid-signers-len');
         assert(threshold <= signers_len, 'argent/bad-threshold');
-    }
-
-
-    #[inline(always)]
-    fn assert_initialized() {
-        let threshold = MultisigStorage::get_threshold();
-        assert(threshold != 0_usize, 'argent/uninitialized');
     }
 }

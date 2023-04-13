@@ -9,7 +9,7 @@ mod ArgentAccount {
 
     use starknet::ContractAddress;
     use starknet::ContractAddressIntoFelt252;
-    use starknet::get_block_info;
+    use starknet::get_block_timestamp;
     use starknet::get_contract_address;
     use starknet::get_tx_info;
     use starknet::VALIDATED;
@@ -70,9 +70,7 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[event]
-    fn AccountCreated(
-        account: ContractAddress, key: felt252, guardian: felt252, new_guardian_backup: felt252
-    ) {}
+    fn AccountCreated(account: ContractAddress, key: felt252, guardian: felt252) {}
 
     #[event]
     fn TransactionExecuted(hash: felt252, response: Array<felt252>) {}
@@ -102,13 +100,25 @@ mod ArgentAccount {
     fn GuardianBackupChanged(new_guardian: felt252) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                        Constructor                                         //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    #[constructor]
+    fn constructor(owner: felt252, guardian: felt252) {
+        assert(owner != 0, 'argent/null-owner');
+
+        _signer::write(owner);
+        _guardian::write(guardian);
+        _guardian_backup::write(0);
+        AccountCreated(get_contract_address(), owner, guardian);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                     External functions                                     //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[external]
-    fn __validate__(ref calls: Array::<Call>) -> felt252 {
-        assert_initialized();
-
+    fn __validate__(calls: Array::<Call>) -> felt252 {
         let account_address = get_contract_address();
 
         if calls.len() == 1_usize {
@@ -144,17 +154,13 @@ mod ArgentAccount {
 
     #[external]
     fn __validate_declare__(class_hash: felt252) -> felt252 {
-        assert_initialized();
         assert_is_valid_signature();
         VALIDATED
     }
 
     #[raw_input]
     #[external]
-    fn __validate_deploy__(
-        class_hash: felt252, contract_address_salt: felt252, public_key_: felt252
-    ) -> felt252 {
-        assert_initialized();
+    fn __validate_deploy__(class_hash: felt252, owner: felt252, guardian: felt252) -> felt252 {
         assert_is_valid_signature();
         VALIDATED
     }
@@ -170,23 +176,6 @@ mod ArgentAccount {
         let retdata = execute_multicall(calls);
         // transaction_executed(tx_info.transaction_hash, retdata);
         retdata.span()
-    }
-
-    #[external]
-    fn initialize(new_owner: felt252, new_guardian: felt252, new_guardian_backup: felt252) {
-        // check that we are not already initialized
-        assert(_signer::read() == 0, 'argent/already-initialized');
-        // check that the target owner is not zero
-        assert(new_owner != 0, 'argent/null-owner');
-        // There cannot be a guardian_backup when there is no guardian
-        if new_guardian.is_zero() {
-            assert(new_guardian_backup.is_zero(), 'argent/backup-should-be-null');
-        }
-        // initialize the account
-        _signer::write(new_owner);
-        _guardian::write(new_guardian);
-        _guardian_backup::write(new_guardian_backup);
-        AccountCreated(get_contract_address(), new_owner, new_guardian, new_guardian_backup);
     }
 
     #[external]
@@ -235,7 +224,7 @@ mod ArgentAccount {
             );
         }
 
-        let active_at = get_block_info().unbox().block_timestamp + ESCAPE_SECURITY_PERIOD;
+        let active_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
         // TODO Since timestamp is a u64, and escape type 1 small felt252, we can pack those two values and use 1 storage slot
         // TODO We could also inverse the way we store using a map and at ESCAPE_TYPE_OWNER having the escape active_at of the owner and at ESCAPE_TYPE_GUARDIAN escape active_at
         // Since none of these two can be filled at the same time, it'll always use one and only one slot
@@ -249,7 +238,7 @@ mod ArgentAccount {
         assert_only_self();
         assert_guardian_set();
 
-        let active_at = get_block_info().unbox().block_timestamp + ESCAPE_SECURITY_PERIOD;
+        let active_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
         _escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_GUARDIAN });
         EscapeGuardianTriggered(active_at);
     }
@@ -315,7 +304,7 @@ mod ArgentAccount {
         Version { major: 0_u8, minor: 3_u8, patch: 0_u8 }
     }
 
-        #[view]
+    #[view]
     fn getVersion() -> felt252 {
         '0.3.0'
     }
@@ -338,7 +327,11 @@ mod ArgentAccount {
     }
     #[view]
     fn supportsInterface(interface_id: felt252) -> felt252 {
-        if (supports_interface(interface_id)) { 1 } else { 0 }
+        if (supports_interface(interface_id)) {
+            1
+        } else {
+            0
+        }
     }
 
     // ERC1271
@@ -430,20 +423,14 @@ mod ArgentAccount {
 
     fn assert_can_escape_for_type(escape_type: felt252) {
         let current_escape = _escape::read();
-        let block_timestamp = get_block_info().unbox().block_timestamp;
 
         assert(current_escape.active_at != 0_u64, 'argent/not-escaping');
-        assert(current_escape.active_at <= block_timestamp, 'argent/inactive-escape');
+        assert(current_escape.active_at <= get_block_timestamp(), 'argent/inactive-escape');
         assert(current_escape.escape_type == escape_type, 'argent/invalid-escape-type');
     }
 
     #[inline(always)]
     fn assert_guardian_set() {
         assert(_guardian::read() != 0, 'argent/guardian-required');
-    }
-
-    #[inline(always)]
-    fn assert_initialized() {
-        assert(_signer::read() != 0, 'argent/uninitialized');
     }
 }

@@ -6,49 +6,29 @@ use account::ArgentAccount;
 
 use account::tests::initialize_account;
 use account::tests::initialize_account_without_guardian;
-use account::tests::initialize_account_with_guardian_backup;
 use account::tests::owner_pubkey;
 use account::tests::guardian_pubkey;
-use account::tests::guardian_backup_pubkey;
-
-const ERC165_INVALID_INTERFACE_ID: felt252 = 0xffffffff;
 
 #[test]
 #[available_gas(2000000)]
 fn initialize() {
-    ArgentAccount::initialize(1, 2, 3);
+    ArgentAccount::constructor(1, 2);
     assert(ArgentAccount::get_owner() == 1, 'value should be 1');
     assert(ArgentAccount::get_guardian() == 2, 'value should be 2');
-    assert(ArgentAccount::get_guardian_backup() == 3, 'value should be 3');
+    assert(ArgentAccount::get_guardian_backup() == 0, 'value should be 0');
 }
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/null-owner', ))]
+#[should_panic(expected: ('argent/null-owner', ))]
 fn initialize_with_null_owner() {
-    ArgentAccount::initialize(0, 2, 3);
+    ArgentAccount::constructor(0, 2);
 }
-
-#[test]
-#[available_gas(2000000)]
-#[should_panic(expected = ('argent/already-initialized', ))]
-fn already_initialized() {
-    ArgentAccount::initialize(1, 2, 3);
-    ArgentAccount::initialize(10, 20, 0);
-}
-
-#[test]
-#[available_gas(2000000)]
-#[should_panic(expected = ('argent/backup-should-be-null', ))]
-fn initialized_guardian_to_zero_without_guardian_backup() {
-    ArgentAccount::initialize(1, 0, 3);
-}
-
 
 #[test]
 #[available_gas(2000000)]
 fn initialized_no_guardian_no_backup() {
-    ArgentAccount::initialize(1, 0, 0);
+    ArgentAccount::constructor(1, 0);
     assert(ArgentAccount::get_owner() == 1, 'value should be 1');
     assert(ArgentAccount::get_guardian() == 0, 'guardian should be zero');
     assert(ArgentAccount::get_guardian_backup() == 0, 'guardian backup should be zero');
@@ -57,24 +37,16 @@ fn initialized_no_guardian_no_backup() {
 #[test]
 #[available_gas(2000000)]
 fn erc165_unsupported_interfaces() {
-    assert(!ArgentAccount::supports_interface(0), 'value should be false');
-    assert(
-        !ArgentAccount::supports_interface(ERC165_INVALID_INTERFACE_ID), 'value should be false'
-    );
+    assert(!ArgentAccount::supports_interface(0), 'Should not support 0');
+    assert(!ArgentAccount::supports_interface(0xffffffff), 'Should not support 0xffffffff');
 }
 
 #[test]
 #[available_gas(2000000)]
 fn erc165_supported_interfaces() {
-    let value = assert(
-        ArgentAccount::supports_interface(0x01ffc9a7), 'ERC165_IERC165_INTERFACE_ID'
-    );
-    let value = assert(
-        ArgentAccount::supports_interface(0xa66bd575), 'ERC165_ACCOUNT_INTERFACE_ID'
-    );
-    let value = assert(
-        ArgentAccount::supports_interface(0x3943f10f), 'ERC165_OLD_ACCOUNT_INTERFACE_ID'
-    );
+    assert(ArgentAccount::supports_interface(0x01ffc9a7), 'ERC165_IERC165_INTERFACE_ID');
+    assert(ArgentAccount::supports_interface(0xa66bd575), 'ERC165_ACCOUNT_INTERFACE_ID');
+    assert(ArgentAccount::supports_interface(0x3943f10f), 'ERC165_OLD_ACCOUNT_INTERFACE_ID');
 }
 
 #[test]
@@ -88,7 +60,7 @@ fn change_owner() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/only-self', ))]
+#[should_panic(expected: ('argent/only-self', ))]
 fn change_owner_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
@@ -97,7 +69,7 @@ fn change_owner_only_self() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/null-owner', ))]
+#[should_panic(expected: ('argent/null-owner', ))]
 fn change_owner_to_zero() {
     initialize_account();
     ArgentAccount::change_owner(0);
@@ -113,7 +85,7 @@ fn change_guardian() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/only-self', ))]
+#[should_panic(expected: ('argent/only-self', ))]
 fn change_guardian_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
@@ -122,9 +94,10 @@ fn change_guardian_only_self() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/backup-should-be-null', ))]
+#[should_panic(expected: ('argent/backup-should-be-null', ))]
 fn change_guardian_to_zero() {
-    initialize_account_with_guardian_backup();
+    ArgentAccount::constructor(owner_pubkey, guardian_pubkey);
+    ArgentAccount::_guardian_backup::write(42);
     ArgentAccount::change_guardian(0);
 }
 
@@ -146,7 +119,7 @@ fn change_guardian_backup() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/only-self', ))]
+#[should_panic(expected: ('argent/only-self', ))]
 fn change_guardian_backup_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
@@ -163,7 +136,7 @@ fn change_guardian_backup_to_zero() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/guardian-required', ))]
+#[should_panic(expected: ('argent/guardian-required', ))]
 fn change_invalid_guardian_backup() {
     initialize_account_without_guardian();
     ArgentAccount::change_guardian_backup(33);

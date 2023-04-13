@@ -7,3 +7,4 @@ node.json
 .idea
 cairo/
 target/
+.vscode/

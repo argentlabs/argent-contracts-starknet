@@ -148,7 +148,7 @@ fn invalid_owner_with_invalid_guardian() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/invalid-signature-length', ))]
+#[should_panic(expected: ('argent/invalid-signature-length', ))]
 fn invalid_empty_signature_without_guardian() {
     initialize_account_without_guardian();
     let signatures = ArrayTrait::new();
@@ -165,7 +165,7 @@ fn invalid_signature_length_without_guardian() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/invalid-signature-length', ))]
+#[should_panic(expected: ('argent/invalid-signature-length', ))]
 fn invalid_empty_signature_with_guardian() {
     initialize_account();
     let signatures = ArrayTrait::new();

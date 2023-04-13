@@ -20,7 +20,7 @@ fn initialize() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/null-owner', ))]
+#[should_panic(expected: ('argent/null-owner', ))]
 fn initialize_with_null_owner() {
     ArgentAccount::constructor(0, 2);
 }
@@ -60,7 +60,7 @@ fn change_owner() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/only-self', ))]
+#[should_panic(expected: ('argent/only-self', ))]
 fn change_owner_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
@@ -69,7 +69,7 @@ fn change_owner_only_self() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/null-owner', ))]
+#[should_panic(expected: ('argent/null-owner', ))]
 fn change_owner_to_zero() {
     initialize_account();
     ArgentAccount::change_owner(0);
@@ -85,7 +85,7 @@ fn change_guardian() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/only-self', ))]
+#[should_panic(expected: ('argent/only-self', ))]
 fn change_guardian_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
@@ -94,7 +94,7 @@ fn change_guardian_only_self() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/backup-should-be-null', ))]
+#[should_panic(expected: ('argent/backup-should-be-null', ))]
 fn change_guardian_to_zero() {
     ArgentAccount::constructor(owner_pubkey, guardian_pubkey);
     ArgentAccount::_guardian_backup::write(42);
@@ -119,7 +119,7 @@ fn change_guardian_backup() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/only-self', ))]
+#[should_panic(expected: ('argent/only-self', ))]
 fn change_guardian_backup_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
@@ -136,7 +136,7 @@ fn change_guardian_backup_to_zero() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/guardian-required', ))]
+#[should_panic(expected: ('argent/guardian-required', ))]
 fn change_invalid_guardian_backup() {
     initialize_account_without_guardian();
     ArgentAccount::change_guardian_backup(33);

@@ -419,6 +419,8 @@ dependencies = [
  "env_logger",
  "path-clean",
  "salsa",
+ "serde",
+ "serde_json",
  "smol_str",
  "test-log",
 ]
@@ -545,9 +547,11 @@ dependencies = [
  "indoc",
  "itertools",
  "salsa",
+ "serde_json",
  "smol_str",
  "test-case",
  "test-log",
+ "unescaper",
 ]
 
 [[package]]
@@ -593,6 +597,7 @@ dependencies = [
  "clap",
  "itertools",
  "num-bigint",
+ "num-integer",
  "num-traits 0.2.15",
  "pretty_assertions",
  "salsa",

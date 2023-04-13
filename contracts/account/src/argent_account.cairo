@@ -218,9 +218,6 @@ mod ArgentAccount {
         GuardianBackupChanged(new_guardian_backup);
     }
 
-    // TODO Shouldn't we specify who will be the new owner, and allow him to take ownership when time is over?
-    // Ref https://twitter.com/bytes032/status/1628697044326969345
-    // But then it means that if the escape isn't cancel, after timeout he can take the ownership at ANY time.
     #[external]
     fn trigger_escape_owner() {
         assert_only_self();
@@ -291,7 +288,7 @@ mod ArgentAccount {
         assert_only_self();
         let mut erc_165_calldata = ArrayTrait::new();
         erc_165_calldata.append(ERC165_ACCOUNT_INTERFACE_ID);
-        // TODO we should prob change the selector from supportsInterface to supports_interface
+        // TODO we should prob change the selector from supportsInterface to supports_interface for the next upgrades as the standard is now snake_case
         match library_call_syscall(
             implementation, SUPPORTS_INTERFACE_SELECTOR, erc_165_calldata.span()
         ) {

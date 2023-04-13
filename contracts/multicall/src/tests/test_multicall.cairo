@@ -69,7 +69,7 @@ fn execute_multicall_test_dapp_3() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/multicall-failed-', 1))]
+#[should_panic(expected: ('argent/multicall-failed-', 1))]
 fn execute_multicall_test_dapp_with_create_throw_error_call() {
     let mut arr = ArrayTrait::new();
     arr.append(create_set_number_call(12));
@@ -80,7 +80,7 @@ fn execute_multicall_test_dapp_with_create_throw_error_call() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/multicall-failed-', 0))]
+#[should_panic(expected: ('argent/multicall-failed-', 0))]
 fn execute_multicall_test_dapp_with_create_throw_error_call_beginning() {
     let mut arr = ArrayTrait::new();
     arr.append(create_throw_error_call(12));
@@ -91,7 +91,7 @@ fn execute_multicall_test_dapp_with_create_throw_error_call_beginning() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected = ('argent/multicall-failed-', 2))]
+#[should_panic(expected: ('argent/multicall-failed-', 2))]
 fn execute_multicall_test_dapp_with_create_throw_error_call_end() {
     let mut arr = ArrayTrait::new();
     arr.append(create_set_number_call(12));

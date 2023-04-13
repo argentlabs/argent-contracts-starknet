@@ -52,7 +52,7 @@ fn valid_initiliaze_two_signers() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected = ('argent/bad-threshold', ))]
+#[should_panic(expected: ('argent/bad-threshold', ))]
 fn invalid_threshold() {
     let threshold = 3_usize;
     let mut signers_array = ArrayTrait::new();
@@ -98,7 +98,7 @@ fn add_signers() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected = ('argent/already-a-signer', ))]
+#[should_panic(expected: ('argent/already-a-signer', ))]
 fn add_signer_already_in_list() {
     // init
     let threshold = 1_usize;

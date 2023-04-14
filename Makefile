@@ -6,6 +6,7 @@
 INSTALLATION_FOLDER=./cairo
 INSTALLATION_FOLDER_CARGO=$(INSTALLATION_FOLDER)/Cargo.toml
 SOURCE_FOLDER=./contracts
+CAIRO_VERSION=v1.0.0-alpha.7
 
 install: 
 	$(MAKE) install-cairo
@@ -21,38 +22,37 @@ make install-cairo:
 
 clone-cairo:
 	mkdir -p $(INSTALLATION_FOLDER)
-	git clone --depth 1 https://github.com/starkware-libs/cairo.git $(INSTALLATION_FOLDER)
-	git reset --hard 81c4eb9
+	git clone git@github.com:starkware-libs/cairo.git --branch $(CAIRO_VERSION)
 
 update-cairo:
-	git -C $(INSTALLATION_FOLDER) pull
+	git -C $(INSTALLATION_FOLDER) checkout $(CAIRO_VERSION)
 
 build:
-	cargo build --manifest-path $(INSTALLATION_FOLDER_CARGO)
+	cargo build --manifest-path $(INSTALLATION_FOLDER_CARGO) --workspace --release
 
 compile-account: 
-	cargo run --manifest-path $(INSTALLATION_FOLDER_CARGO) --bin starknet-compile -- $(SOURCE_FOLDER)/account account.json --allowed-libfuncs-list-name experimental_v0.1.0
+	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/account account.json --allowed-libfuncs-list-name experimental_v0.1.0
 
 test: 
-	cargo run --manifest-path $(INSTALLATION_FOLDER_CARGO) --bin cairo-test -- --starknet $(SOURCE_FOLDER)
+	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)
 
 test-account: 
-	cargo run --manifest-path $(INSTALLATION_FOLDER_CARGO) --bin cairo-test -- --starknet $(SOURCE_FOLDER)/account
+	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)/account
 
 test-lib: 
-	cargo run --manifest-path $(INSTALLATION_FOLDER_CARGO) --bin cairo-test -- --starknet $(SOURCE_FOLDER)/lib
+	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)/lib
 
 test-multicall: 
-	cargo run --manifest-path $(INSTALLATION_FOLDER_CARGO) --bin cairo-test -- --starknet $(SOURCE_FOLDER)/multicall
+	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)/multicall
 
 test-multisig: 
-	cargo run --manifest-path $(INSTALLATION_FOLDER_CARGO) --bin cairo-test -- --starknet $(SOURCE_FOLDER)/multisig
+	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)/multisig
 
 format:
-	cargo run --manifest-path $(INSTALLATION_FOLDER_CARGO) --bin cairo-format -- --recursive $(SOURCE_FOLDER) --print-parsing-errors
+	./cairo/target/release/cairo-format --recursive $(SOURCE_FOLDER) --print-parsing-errors
 
 check-format:
-	cargo run --manifest-path $(INSTALLATION_FOLDER_CARGO) --bin cairo-format -- --check --recursive $(SOURCE_FOLDER)
+	./cairo/target/release/cairo-format --check --recursive $(SOURCE_FOLDER)
 
 vscode:
 	cd cairo/vscode-cairo && cargo build --bin cairo-language-server --release && cd ../..

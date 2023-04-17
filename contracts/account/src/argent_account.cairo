@@ -406,13 +406,7 @@ mod ArgentAccount {
             return (full_signature, ArrayTrait::new().span());
         }
         assert(full_signature.len() == 4, 'argent/invalid-signature-length');
-        let mut owner_signature = ArrayTrait::new();
-        owner_signature.append(*full_signature[0]);
-        owner_signature.append(*full_signature[1]);
-        let mut guardian_signature = ArrayTrait::new();
-        guardian_signature.append(*full_signature[2]);
-        guardian_signature.append(*full_signature[3]);
-        (owner_signature.span(), guardian_signature.span())
+        (full_signature.slice(0, 2), full_signature.slice(2, 2))
     }
 
     #[inline(always)]

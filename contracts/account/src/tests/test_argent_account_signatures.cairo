@@ -1,4 +1,5 @@
 use array::ArrayTrait;
+use array::SpanTrait;
 
 use account::ArgentAccount;
 use account::tests::owner_pubkey;
@@ -180,4 +181,47 @@ fn invalid_signature_length_with_guardian() {
     assert(!is_valid_signature(message_hash, signatures), 'invalid signature');
     let signatures = single_signature(guardian_r, guardian_s);
     assert(!is_valid_signature(message_hash, signatures), 'invalid signature');
+}
+
+
+#[test]
+#[available_gas(2000000)]
+fn split_signatures() {
+    let mut arr = ArrayTrait::new();
+    arr.append(21);
+    arr.append(42);
+    let (full, empty) = ArgentAccount::split_signatures(arr.span());
+    assert(full.len() == 2, 'Len should be 2');
+    assert(empty.len() == 0, 'Len should be 0');
+    assert(*full[0] == 21, 'Idx 0 should be 21');
+    assert(*full[1] == 42, 'Idx 1 should be 42');
+}
+
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('argent/invalid-signature-length', ))]
+fn split_signatures_wrong_lenght() {
+    let mut arr = ArrayTrait::new();
+    arr.append(21);
+    arr.append(42);
+    arr.append(45);
+    ArgentAccount::split_signatures(arr.span());
+}
+
+#[test]
+#[available_gas(2000000)]
+fn split_signatures_length_4() {
+    let mut arr = ArrayTrait::new();
+    arr.append(21);
+    arr.append(42);
+    arr.append(23);
+    arr.append(69);
+    let (owner, guardian) = ArgentAccount::split_signatures(arr.span());
+    assert(owner.len() == 2, 'Len owner should be 2');
+    assert(guardian.len() == 2, 'Len guardian should be 0');
+    assert(*owner[0] == 21, 'Idx 0 should be 21');
+    assert(*owner[1] == 42, 'Idx 1 should be 42');
+    assert(*guardian[0] == 23, 'Idx 0 should be 23');
+    assert(*guardian[1] == 69, 'Idx 1 should be 69');
 }

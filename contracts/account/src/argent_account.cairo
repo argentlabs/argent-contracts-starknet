@@ -22,7 +22,6 @@ mod ArgentAccount {
     use starknet::get_tx_info;
     use starknet::VALIDATED;
     use starknet::syscalls::replace_class_syscall;
-    use starknet::syscalls::library_call_syscall;
 
     use account::Escape;
 

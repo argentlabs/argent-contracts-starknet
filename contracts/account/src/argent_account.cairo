@@ -16,7 +16,7 @@ mod ArgentAccount {
     use starknet::ClassHash;
     use starknet::class_hash_const;
     use starknet::ContractAddress;
-    // use starknet::ContractAddressIntoFelt252;
+    use starknet::ContractAddressIntoFelt252;
     use starknet::get_block_timestamp;
     use starknet::get_contract_address;
     use starknet::get_tx_info;

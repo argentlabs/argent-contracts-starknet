@@ -14,7 +14,7 @@ impl StorageAccessEscape of StorageAccess<Escape> {
             Escape {
                 active_at: (StorageAccess::read(address_domain, base)?),
                 escape_type: starknet::storage_read_syscall(
-                    address_domain, starknet::storage_address_from_base_and_offset(base, 1_u8)
+                    address_domain, starknet::storage_address_from_base_and_offset(base, 1)
                 )?,
             }
         )
@@ -25,7 +25,7 @@ impl StorageAccessEscape of StorageAccess<Escape> {
         StorageAccess::write(address_domain, base, value.active_at)?;
         starknet::storage_write_syscall(
             address_domain,
-            starknet::storage_address_from_base_and_offset(base, 1_u8),
+            starknet::storage_address_from_base_and_offset(base, 1),
             value.escape_type
         )
     }

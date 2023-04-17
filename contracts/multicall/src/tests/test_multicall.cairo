@@ -16,9 +16,9 @@ fn execute_multicall_simple() {
     arr.append(create_simple_call());
     arr.append(create_simple_call_with_data(43));
     let mut res = execute_multicall(arr);
-    assert(res.len() == 2_usize, '2');
-    assert(*res.at(0_usize) == 42, '42');
-    assert(*res.at(1_usize) == 43, '43');
+    assert(res.len() == 2, '2');
+    assert(*res[0] == 42, '42');
+    assert(*res[1] == 43, '43');
 }
 
 #[test]
@@ -28,8 +28,8 @@ fn execute_multicall_test_dapp_1() {
     arr.append(create_set_number_call(12));
     arr.append(create_get_number_call());
     let retdata = execute_multicall(arr);
-    assert(retdata.len() == 1_usize, '1');
-    assert(*retdata.at(0_usize) == 12, '12');
+    assert(retdata.len() == 1, '1');
+    assert(*retdata[0] == 12, '12');
 }
 
 #[test]
@@ -41,10 +41,10 @@ fn execute_multicall_test_dapp_2() {
     arr.append(create_increase_number_call(18));
     arr.append(create_get_number_call());
     let retdata = execute_multicall(arr);
-    assert(retdata.len() == 3_usize, '3');
-    assert(*retdata.at(0_usize) == 24, '24');
-    assert(*retdata.at(1_usize) == 42, '42 1');
-    assert(*retdata.at(2_usize) == 42, '42 2');
+    assert(retdata.len() == 3, '3');
+    assert(*retdata[0] == 24, '24');
+    assert(*retdata[1] == 42, '42 1');
+    assert(*retdata[2] == 42, '42 2');
 }
 
 
@@ -60,11 +60,11 @@ fn execute_multicall_test_dapp_3() {
     arr.append(create_get_number_call());
     arr.append(create_increase_number_call(1));
     let retdata = execute_multicall(arr);
-    assert(retdata.len() == 4_usize, '4');
-    assert(*retdata.at(0_usize) == 12, '12');
-    assert(*retdata.at(1_usize) == 26, '26');
-    assert(*retdata.at(2_usize) == 42, '42');
-    assert(*retdata.at(3_usize) == 43, '43');
+    assert(retdata.len() == 4, '4');
+    assert(*retdata[0] == 12, '12');
+    assert(*retdata[1] == 26, '26');
+    assert(*retdata[2] == 42, '42');
+    assert(*retdata[3] == 43, '43');
 }
 
 #[test]
@@ -106,12 +106,12 @@ fn aggregate_simple() {
     let mut arr = ArrayTrait::new();
     arr.append(create_simple_call());
     arr.append(create_simple_call_with_data(43));
-    set_block_number(42_u64);
+    set_block_number(42);
     let (block_number, retdata) = aggregate(arr);
-    assert(block_number == 42_u64, 'Block number should 42');
-    assert(retdata.len() == 2_usize, '2');
-    assert(*retdata.at(0_usize) == 42, '42');
-    assert(*retdata.at(1_usize) == 43, '43');
+    assert(block_number == 42, 'Block number should 42');
+    assert(retdata.len() == 2, '2');
+    assert(*retdata[0] == 42, '42');
+    assert(*retdata[1] == 43, '43');
 }
 
 fn create_simple_call() -> Call {

@@ -11,7 +11,7 @@ const signer_pubkey_2: felt252 = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819
 const signer_pubkey_3: felt252 = 0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2f96fec5ba847310b20;
 
 fn initialize_multisig() {
-    let threshold = 1_usize;
+    let threshold = 1;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);

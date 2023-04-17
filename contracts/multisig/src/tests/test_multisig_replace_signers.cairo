@@ -11,7 +11,7 @@ use multisig::tests::signer_pubkey_3;
 #[available_gas(20000000)]
 fn replace_signer_1() {
     // init
-    let threshold = 1_usize;
+    let threshold = 1;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     ArgentMultisigAccount::constructor(threshold, signers_array);
@@ -22,8 +22,8 @@ fn replace_signer_1() {
 
     // check 
     let signers = ArgentMultisigAccount::get_signers();
-    assert(signers.len() == 1_usize, 'signer list changed size');
-    assert(ArgentMultisigAccount::get_threshold() == 1_usize, 'threshold changed');
+    assert(signers.len() == 1, 'signer list changed size');
+    assert(ArgentMultisigAccount::get_threshold() == 1, 'threshold changed');
     assert(!(ArgentMultisigAccount::is_signer(signer_pubkey_1)), 'signer 1 was not removed');
     assert(ArgentMultisigAccount::is_signer(signer_to_add), 'new was not added');
 }
@@ -41,8 +41,8 @@ fn replace_signer_start() {
 
     // check 
     let signers = ArgentMultisigAccount::get_signers();
-    assert(signers.len() == 3_usize, 'signer list changed size');
-    assert(ArgentMultisigAccount::get_threshold() == 1_usize, 'threshold changed');
+    assert(signers.len() == 3, 'signer list changed size');
+    assert(ArgentMultisigAccount::get_threshold() == 1, 'threshold changed');
     assert(!(ArgentMultisigAccount::is_signer(signer_pubkey_1)), 'signer 1 was not removed');
     assert(ArgentMultisigAccount::is_signer(signer_to_add), 'new was not added');
     assert(ArgentMultisigAccount::is_signer(signer_pubkey_2), 'signer 2 was removed');
@@ -61,8 +61,8 @@ fn replace_signer_middle() {
 
     // check 
     let signers = ArgentMultisigAccount::get_signers();
-    assert(signers.len() == 3_usize, 'signer list changed size');
-    assert(ArgentMultisigAccount::get_threshold() == 1_usize, 'threshold changed');
+    assert(signers.len() == 3, 'signer list changed size');
+    assert(ArgentMultisigAccount::get_threshold() == 1, 'threshold changed');
     assert(!(ArgentMultisigAccount::is_signer(signer_pubkey_2)), 'signer 2 was not removed');
     assert(ArgentMultisigAccount::is_signer(signer_to_add), 'new was not added');
     assert(ArgentMultisigAccount::is_signer(signer_pubkey_1), 'signer 1 was removed');
@@ -81,8 +81,8 @@ fn replace_signer_end() {
 
     // check 
     let signers = ArgentMultisigAccount::get_signers();
-    assert(signers.len() == 3_usize, 'signer list changed size');
-    assert(ArgentMultisigAccount::get_threshold() == 1_usize, 'threshold changed');
+    assert(signers.len() == 3, 'signer list changed size');
+    assert(ArgentMultisigAccount::get_threshold() == 1, 'threshold changed');
     assert(!(ArgentMultisigAccount::is_signer(signer_pubkey_3)), 'signer 3 was not removed');
     assert(ArgentMultisigAccount::is_signer(signer_to_add), 'new was not added');
     assert(ArgentMultisigAccount::is_signer(signer_pubkey_1), 'signer 1 was removed');

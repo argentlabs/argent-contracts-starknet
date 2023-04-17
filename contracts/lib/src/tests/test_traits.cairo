@@ -11,10 +11,10 @@ fn test_append_all() {
     source.append(84);
     let mut source = source.span();
     destination.append_all(ref source);
-    assert(destination.len() == 3_usize, 'Len should be 3');
-    assert(*destination.at(0_usize) == 21, 'Should be 42');
-    assert(*destination.at(1_usize) == 42, 'Should be 21');
-    assert(*destination.at(2_usize) == 84, 'Should be 21');
+    assert(destination.len() == 3, 'Len should be 3');
+    assert(*destination.at(0) == 21, 'Should be 42');
+    assert(*destination.at(1) == 42, 'Should be 21');
+    assert(*destination.at(2) == 84, 'Should be 21');
 }
 #[test]
 #[available_gas(2000000)]
@@ -26,10 +26,10 @@ fn test_append_all_destination_empty() {
     source.append(84);
     let mut source = source.span();
     destination.append_all(ref source);
-    assert(destination.len() == 3_usize, 'Len should be 3');
-    assert(*destination.at(0_usize) == 21, 'Should be 42');
-    assert(*destination.at(1_usize) == 42, 'Should be 21');
-    assert(*destination.at(2_usize) == 84, 'Should be 21');
+    assert(destination.len() == 3, 'Len should be 3');
+    assert(*destination.at(0) == 21, 'Should be 42');
+    assert(*destination.at(1) == 42, 'Should be 21');
+    assert(*destination.at(2) == 84, 'Should be 21');
 }
 
 #[test]
@@ -42,10 +42,10 @@ fn test_append_all_source_empty() {
     destination.append(84);
     let mut source = source.span();
     destination.append_all(ref source);
-    assert(destination.len() == 3_usize, 'Len should be 3');
-    assert(*destination.at(0_usize) == 21, 'Should be 42');
-    assert(*destination.at(1_usize) == 42, 'Should be 21');
-    assert(*destination.at(2_usize) == 84, 'Should be 21');
+    assert(destination.len() == 3, 'Len should be 3');
+    assert(*destination.at(0) == 21, 'Should be 42');
+    assert(*destination.at(1) == 42, 'Should be 21');
+    assert(*destination.at(2) == 84, 'Should be 21');
 }
 
 #[test]

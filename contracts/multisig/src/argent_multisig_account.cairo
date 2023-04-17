@@ -77,8 +77,8 @@ mod ArgentMultisigAccount {
     fn __validate__(calls: Array<Call>) -> felt252 {
         let account_address = get_contract_address();
 
-        if calls.len() == 1_usize {
-            let call = calls.at(0_usize);
+        if calls.len() == 1 {
+            let call = calls[0];
             if (*call.to).into() == account_address.into() {
                 let selector = *call.selector;
                 assert(selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
@@ -129,7 +129,7 @@ mod ArgentMultisigAccount {
         let hash = tx_info.transaction_hash;
         // hardcoded to 1 as only one signature is needed
         let parsed_signatures = deserialize_array_signer_signature(
-            signature_array, signer_signatures_out, 1_usize
+            signature_array, signer_signatures_out, 1
         ).unwrap();
         let valid = is_valid_signatures_array(hash, parsed_signatures.span());
         assert(valid, 'argent/invalid-signature');
@@ -222,7 +222,7 @@ mod ArgentMultisigAccount {
     #[view]
     fn get_version() -> Version {
         // TODO Is this the correct version?
-        Version { major: 0_u8, minor: 1_u8, patch: 0_u8 }
+        Version { major: 0, minor: 1, patch: 0 }
     }
 
     #[view]
@@ -266,7 +266,7 @@ mod ArgentMultisigAccount {
     #[view]
     fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> bool {
         let threshold = MultisigStorage::get_threshold();
-        assert(threshold != 0_usize, 'argent/uninitialized');
+        assert(threshold != 0, 'argent/uninitialized');
         assert(
             signatures.len() == threshold * SignerSignatureSize, 'argent/invalid-signature-length'
         );
@@ -323,8 +323,8 @@ mod ArgentMultisigAccount {
     }
 
     fn assert_valid_threshold_and_signers_count(threshold: usize, signers_len: usize) {
-        assert(threshold != 0_usize, 'argent/invalid-threshold');
-        assert(signers_len != 0_usize, 'argent/invalid-signers-len');
+        assert(threshold != 0, 'argent/invalid-threshold');
+        assert(signers_len != 0, 'argent/invalid-signers-len');
         assert(threshold <= signers_len, 'argent/bad-threshold');
     }
 }

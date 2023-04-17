@@ -4,11 +4,8 @@ mod ArgentAccount {
     use array::SpanTrait;
     use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
-    use traits::Into;
-    use zeroable::Zeroable;
 
     use starknet::ContractAddress;
-    use starknet::ContractAddressIntoFelt252;
     use starknet::get_block_timestamp;
     use starknet::get_contract_address;
     use starknet::get_tx_info;
@@ -31,7 +28,7 @@ mod ArgentAccount {
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt252 = 0x3943f10f;
     const ERC1271_VALIDATED: felt252 = 0x1626ba7e;
 
-    const ESCAPE_SECURITY_PERIOD: u64 = 604800_u64; // 7 * 24 * 60 * 60;  // 7 days
+    const ESCAPE_SECURITY_PERIOD: u64 = 604800; // 7 * 24 * 60 * 60;  // 7 days
 
     const ESCAPE_TYPE_GUARDIAN: felt252 = 1;
     const ESCAPE_TYPE_OWNER: felt252 = 2;
@@ -121,9 +118,9 @@ mod ArgentAccount {
     fn __validate__(calls: Array::<Call>) -> felt252 {
         let account_address = get_contract_address();
 
-        if calls.len() == 1_usize {
-            let call = calls.at(0_usize);
-            if (*call.to).into() == account_address.into() {
+        if calls.len() == 1 {
+            let call = calls[0];
+            if *call.to == account_address {
                 let tx_info = get_tx_info().unbox();
                 let selector = *call.selector;
                 if selector == ESCAPE_GUARDIAN_SELECTOR | selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
@@ -191,8 +188,8 @@ mod ArgentAccount {
     fn change_guardian(new_guardian: felt252) {
         assert_only_self();
         // There cannot be a guardian_backup when there is no guardian
-        if new_guardian.is_zero() {
-            assert(_guardian_backup::read().is_zero(), 'argent/backup-should-be-null');
+        if new_guardian == 0 {
+            assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
         }
 
         _guardian::write(new_guardian);
@@ -218,7 +215,7 @@ mod ArgentAccount {
         // TODO as this will only allow to delay the escape, is it relevant?
         // Can only escape owner by guardian, if there is no escape ongoing other or an escape ongoing but for of the type owner
         let current_escape = _escape::read();
-        if current_escape.active_at != 0_u64 {
+        if current_escape.active_at != 0 {
             assert(
                 current_escape.escape_type == ESCAPE_TYPE_OWNER, 'argent/cannot-override-escape'
             );
@@ -269,7 +266,7 @@ mod ArgentAccount {
     #[external]
     fn cancel_escape() {
         assert_only_self();
-        assert(_escape::read().active_at != 0_u64, 'argent/no-active-escape');
+        assert(_escape::read().active_at != 0, 'argent/no-active-escape');
 
         clear_escape();
         EscapeCanceled();
@@ -301,7 +298,7 @@ mod ArgentAccount {
 
     #[view]
     fn get_version() -> Version {
-        Version { major: 0_u8, minor: 3_u8, patch: 0_u8 }
+        Version { major: 0, minor: 3, patch: 0 }
     }
 
     #[view]
@@ -380,20 +377,20 @@ mod ArgentAccount {
     }
 
     fn is_valid_owner_signature(hash: felt252, signature: Span<felt252>) -> bool {
-        if signature.len() != 2_usize {
+        if signature.len() != 2 {
             return false;
         }
-        let signature_r = *signature.at(0_usize);
-        let signature_s = *signature.at(1_usize);
+        let signature_r = *signature[0];
+        let signature_s = *signature[1];
         check_ecdsa_signature(hash, _signer::read(), signature_r, signature_s)
     }
 
     fn is_valid_guardian_signature(hash: felt252, signature: Span<felt252>) -> bool {
-        if signature.len() != 2_usize {
+        if signature.len() != 2 {
             return false;
         }
-        let signature_r = *signature.at(0_usize);
-        let signature_s = *signature.at(1_usize);
+        let signature_r = *signature[0];
+        let signature_s = *signature[1];
         let is_valid = check_ecdsa_signature(hash, _guardian::read(), signature_r, signature_s);
         if is_valid {
             true
@@ -403,28 +400,22 @@ mod ArgentAccount {
     }
 
     fn split_signatures(full_signature: Span<felt252>) -> (Span::<felt252>, Span::<felt252>) {
-        if full_signature.len() == 2_usize {
+        if full_signature.len() == 2 {
             return (full_signature, ArrayTrait::new().span());
         }
-        assert(full_signature.len() == 4_usize, 'argent/invalid-signature-length');
-        let mut owner_signature = ArrayTrait::new();
-        owner_signature.append(*full_signature.at(0_usize));
-        owner_signature.append(*full_signature.at(1_usize));
-        let mut guardian_signature = ArrayTrait::new();
-        guardian_signature.append(*full_signature.at(2_usize));
-        guardian_signature.append(*full_signature.at(3_usize));
-        (owner_signature.span(), guardian_signature.span())
+        assert(full_signature.len() == 4, 'argent/invalid-signature-length');
+        (full_signature.slice(0, 2), full_signature.slice(2, 2))
     }
 
     #[inline(always)]
     fn clear_escape() {
-        _escape::write(Escape { active_at: 0_u64, escape_type: 0 });
+        _escape::write(Escape { active_at: 0, escape_type: 0 });
     }
 
     fn assert_can_escape_for_type(escape_type: felt252) {
         let current_escape = _escape::read();
 
-        assert(current_escape.active_at != 0_u64, 'argent/not-escaping');
+        assert(current_escape.active_at != 0, 'argent/not-escaping');
         assert(current_escape.active_at <= get_block_timestamp(), 'argent/inactive-escape');
         assert(current_escape.escape_type == escape_type, 'argent/invalid-escape-type');
     }

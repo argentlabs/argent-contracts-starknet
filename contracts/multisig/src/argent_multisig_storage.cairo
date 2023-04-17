@@ -166,15 +166,15 @@ mod MultisigStorage {
 
         if (from_signer == 0) {
             // empty list
-            return (0_usize, 0);
+            return (0, 0);
         }
 
         let next_signer = signer_list::read(from_signer);
         if (next_signer == 0) {
-            return (1_usize, from_signer);
+            return (1, from_signer);
         }
         let (next_length, last_signer) = load_from(next_signer);
-        (next_length + 1_usize, last_signer)
+        (next_length + 1, last_signer)
     }
 
     // Returns the number of signers. Cost increases with the list size
@@ -187,11 +187,11 @@ mod MultisigStorage {
 
         if (from_signer == 0) {
             // empty list
-            return 0_usize;
+            return 0;
         }
         let next_signer = signer_list::read(from_signer);
         let next_length = get_signers_len_from(next_signer);
-        next_length + 1_usize
+        next_length + 1
     }
 
     fn get_signers() -> Array<felt252> {

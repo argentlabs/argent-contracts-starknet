@@ -7,8 +7,8 @@ use account::ArgentAccount;
 use account::tests::initialize_account;
 use account::tests::initialize_account_without_guardian;
 
-const DEFAULT_TIMESTAMP: u64 = 42_u64;
-const ESCAPE_SECURITY_PERIOD: u64 = 604800_u64; // 7 * 24 * 60 * 60;  // 7 days
+const DEFAULT_TIMESTAMP: u64 = 42;
+const ESCAPE_SECURITY_PERIOD: u64 = 604800; // 7 * 24 * 60 * 60;  // 7 days
 const ESCAPE_TYPE_GUARDIAN: felt252 = 1;
 const ESCAPE_TYPE_OWNER: felt252 = 2;
 
@@ -137,7 +137,7 @@ fn escape_owner() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_owner();
-    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD + 1_u64);
+    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD + 1);
     ArgentAccount::escape_owner(42);
     assert(ArgentAccount::get_owner() == 42, 'Owner == 42');
     assert_escape_cleared();
@@ -188,7 +188,7 @@ fn escape_owner_before_timeout() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_owner();
-    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD - 1_u64);
+    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD - 1);
     ArgentAccount::escape_owner(42);
 }
 
@@ -220,7 +220,7 @@ fn escape_guardian() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_guardian();
-    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD + 1_u64);
+    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD + 1);
     ArgentAccount::escape_guardian(42);
     assert(ArgentAccount::get_guardian() == 42, 'Guardian == 42');
     assert_escape_cleared();
@@ -271,7 +271,7 @@ fn escape_guardian_before_timeout() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_guardian();
-    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD - 1_u64);
+    set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD - 1);
     ArgentAccount::escape_guardian(42);
 }
 
@@ -303,7 +303,7 @@ fn cancel_escape() {
     initialize_account();
     ArgentAccount::trigger_escape_owner();
     let escape = ArgentAccount::get_escape();
-    assert(escape.active_at != 0_u64, 'active_at != zero');
+    assert(escape.active_at != 0, 'active_at != zero');
     assert(escape.escape_type != 0, 'escape_type != zero');
     ArgentAccount::cancel_escape();
     assert_escape_cleared();
@@ -369,7 +369,7 @@ fn get_escape_unitialized() {
 fn assert_escape_cleared() {
     let escape = ArgentAccount::get_escape();
     // TODO Back to is_zero when the trait is possible on u64
-    assert(escape.active_at == 0_u64, 'active_at == 0');
+    assert(escape.active_at == 0, 'active_at == 0');
     assert(escape.escape_type.is_zero(), 'escape_type == 0');
 }
 // __execute__
@@ -380,9 +380,9 @@ fn assert_escape_cleared() {
 //     arr.append(create_simple_call());
 //     arr.append(create_simple_call_with_data(43));
 //     let retdata = __execute__(arr);
-//     assert(retdata.len() == 2_usize, '2');
-//     assert(*retdata.at(0_usize) == 42, '42');
-//     assert(*retdata.at(1_usize) == 43, '43');
+//     assert(retdata.len() == 2, '2');
+//     assert(*retdata[0] == 42, '42');
+//     assert(*retdata[1] == 43, '43');
 // }
 
 // TODO can't mock tx_version atm so dummy test

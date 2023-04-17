@@ -4,8 +4,6 @@ mod ArgentAccount {
     use array::SpanTrait;
     use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
-    use traits::Into;
-    use zeroable::Zeroable;
 
     use starknet::ContractAddress;
     use starknet::get_block_timestamp;
@@ -190,8 +188,8 @@ mod ArgentAccount {
     fn change_guardian(new_guardian: felt252) {
         assert_only_self();
         // There cannot be a guardian_backup when there is no guardian
-        if new_guardian.is_zero() {
-            assert(_guardian_backup::read().is_zero(), 'argent/backup-should-be-null');
+        if new_guardian == 0 {
+            assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
         }
 
         _guardian::write(new_guardian);

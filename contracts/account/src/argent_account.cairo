@@ -375,11 +375,6 @@ mod ArgentAccount {
         }
     }
 
-    #[view]
-    fn supportsInterface(interface_id: felt252) -> bool {
-        supports_interface(interface_id)
-    }
-
     // ERC1271
     #[view]
     fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> felt252 {

@@ -14,7 +14,10 @@ mod ArgentMultisigAccount {
 
     use lib::assert_only_self;
     use lib::assert_no_self_call;
+    use lib::assert_correct_tx_version;
+    use lib::assert_non_reentrant;
     use lib::check_enough_gas;
+    use lib::execute_multicall;
     use lib::Call;
     use lib::Version;
     use multisig::deserialize_array_signer_signature;
@@ -44,17 +47,18 @@ mod ArgentMultisigAccount {
         removed_signers: Array<felt252>
     ) {}
 
+    #[event]
+    fn TransactionExecuted(hash: felt252, response: Array<felt252>) {}
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                     Constructor                                            //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // TODO: add constructor arguments to validate deploy
     #[constructor]
     fn constructor(threshold: usize, signers: Array<felt252>) {
         let signers_len = signers.len();
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
-        // initialize the account
         MultisigStorage::add_signers(signers.span(), 0);
 
         MultisigStorage::set_threshold(threshold);
@@ -70,7 +74,7 @@ mod ArgentMultisigAccount {
 
     // TODO use the actual signature of the account interface
     #[external]
-    fn __validate__(ref calls: Array<Call>) -> felt252 {
+    fn __validate__(calls: Array<Call>) -> felt252 {
         let account_address = get_contract_address();
 
         if calls.len() == 1_usize {
@@ -87,6 +91,19 @@ mod ArgentMultisigAccount {
         assert_is_valid_tx_signature();
 
         VALIDATED
+    }
+
+    #[external]
+    #[raw_output]
+    fn __execute__(calls: Array<Call>) -> Span::<felt252> {
+        let tx_info = starknet::get_tx_info().unbox();
+        assert_correct_tx_version(tx_info.version);
+        assert_non_reentrant();
+
+        let retdata = execute_multicall(calls);
+        let retdata_span = retdata.span();
+        TransactionExecuted(tx_info.transaction_hash, retdata);
+        retdata_span
     }
 
     #[external]
@@ -262,7 +279,7 @@ mod ArgentMultisigAccount {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                          Internal                                          //
+    //                                   Internal Functions                                       //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     fn assert_is_valid_tx_signature() {

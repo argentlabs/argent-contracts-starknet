@@ -340,10 +340,14 @@ mod ArgentAccount {
         _escape::read()
     }
 
-
     #[view]
     fn get_version() -> Version {
         Version { major: 0_u8, minor: 3_u8, patch: 0_u8 }
+    }
+
+    #[view]
+    fn getVersion() -> felt252 {
+        '0.3.0'
     }
 
     #[view]
@@ -351,10 +355,24 @@ mod ArgentAccount {
         NAME
     }
 
+    #[view]
+    fn getName() -> felt252 {
+        get_name()
+    }
+
+
     // ERC165
     #[view]
     fn supports_interface(interface_id: felt252) -> bool {
         interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
+    }
+    #[view]
+    fn supportsInterface(interface_id: felt252) -> felt252 {
+        if (supports_interface(interface_id)) {
+            1
+        } else {
+            0
+        }
     }
 
     #[view]
@@ -370,6 +388,11 @@ mod ArgentAccount {
         } else {
             0
         }
+    }
+
+    #[view]
+    fn isValidSignature(hash: felt252, signatures: Array<felt252>) -> felt252 {
+        is_valid_signature(hash, signatures)
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

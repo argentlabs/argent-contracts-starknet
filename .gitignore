@@ -7,3 +7,6 @@ node.json
 .idea
 cairo/
 target/
+
+.DS_Store
+.vscode/*

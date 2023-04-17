@@ -1,3 +1,9 @@
+#[abi]
+trait IAccountUpgrade {
+    fn supports_interface(interface_id: felt252) -> bool;
+    fn execute_after_upgrade(data: Array<felt252>) -> Array::<felt252>;
+}
+
 #[account_contract]
 mod ArgentAccount {
     use array::ArrayTrait;
@@ -10,7 +16,7 @@ mod ArgentAccount {
     use starknet::ClassHash;
     use starknet::class_hash_const;
     use starknet::ContractAddress;
-    use starknet::ContractAddressIntoFelt252;
+    // use starknet::ContractAddressIntoFelt252;
     use starknet::get_block_timestamp;
     use starknet::get_contract_address;
     use starknet::get_tx_info;
@@ -28,11 +34,13 @@ mod ArgentAccount {
     use lib::Call;
     use lib::Version;
 
+
+    use super::IAccountUpgradeLibraryDispatcher;
+    use super::IAccountUpgradeDispatcherTrait;
+
     const NAME: felt252 = 'ArgentAccount';
 
     const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
-    const SUPPORTS_INTERFACE_SELECTOR: felt252 =
-        1184015894760294494673613438913361435336722154500302038630992932234692784845;
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt252 = 0x3943f10f;
     const ERC1271_VALIDATED: felt252 = 0x1626ba7e;
@@ -286,26 +294,15 @@ mod ArgentAccount {
     #[external]
     fn upgrade(implementation: ClassHash, calldata: Array<felt252>) {
         assert_only_self();
-        let mut erc_165_calldata = ArrayTrait::new();
-        erc_165_calldata.append(ERC165_ACCOUNT_INTERFACE_ID);
-        // TODO we should prob change the selector from supportsInterface to supports_interface for the next upgrades as the standard is now snake_case
-        match library_call_syscall(
-            implementation, SUPPORTS_INTERFACE_SELECTOR, erc_165_calldata.span()
-        ) {
-            Result::Ok(retdata) => {
-                assert(retdata.len() == 1_usize, 'argent/invalid-erc_165-size');
-                assert(*retdata.at(0_usize) == 1, 'argent/invalid-erc_165-result');
-            },
-            Result::Err(revert_reason) => {
-                let mut data = ArrayTrait::new();
-                data.append('argent/invalid-implementation');
-                panic(data);
-            },
-        }
-        library_call_syscall(
-            implementation, EXECUTE_AFTER_UPGRADE_SELECTOR, calldata.span()
-        ).unwrap_syscall();
+
+        let account_dispatcher = IAccountUpgradeLibraryDispatcher { class_hash: implementation };
+
+        let supports_interface = account_dispatcher.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
+        assert(supports_interface, 'argent/supports_interface');
+
         replace_class_syscall(implementation).unwrap_syscall();
+        account_dispatcher.execute_after_upgrade(calldata);
+
         AccountUpgraded(implementation);
     }
 

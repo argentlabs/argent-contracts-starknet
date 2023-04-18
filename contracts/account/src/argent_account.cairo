@@ -1,9 +1,3 @@
-#[abi]
-trait IAccountUpgrade {
-    fn supports_interface(interface_id: felt252) -> bool;
-    fn execute_after_upgrade(data: Array<felt252>) -> Array::<felt252>;
-}
-
 #[account_contract]
 mod ArgentAccount {
     use array::ArrayTrait;
@@ -32,10 +26,8 @@ mod ArgentAccount {
     use lib::execute_multicall;
     use lib::Call;
     use lib::Version;
-
-
-    use super::IAccountUpgradeLibraryDispatcher;
-    use super::IAccountUpgradeDispatcherTrait;
+    use lib::IAccountUpgradeLibraryDispatcher;
+    use lib::IAccountUpgradeDispatcherTrait;
 
     const NAME: felt252 = 'ArgentAccount';
 

@@ -72,7 +72,7 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     struct Storage {
-        _implementation: ClassHash,
+        _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         _signer: felt252,
         _guardian: felt252,
         _guardian_backup: felt252,

@@ -201,10 +201,6 @@ fn test_selectors() {
         'escape_owner'
     );
     assert(
-        ArgentAccount::CANCEL_ESCAPE_SELECTOR == 992575500541331354489361836180456905167517944319528538469723604173440834912,
-        'cancel_escape'
-    );
-    assert(
         ArgentAccount::EXECUTE_AFTER_UPGRADE_SELECTOR == 738349667340360233096752603318170676063569407717437256101137432051386874767,
         'execute_after_upgrade'
     );

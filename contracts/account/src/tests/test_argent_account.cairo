@@ -179,3 +179,33 @@ fn supportsInterface() {
     assert(ArgentAccount::supportsInterface(0xa66bd575) == 1, 'ERC165_ACCOUNT_INTERFACE_ID');
     assert(ArgentAccount::supportsInterface(0x3943f10f) == 1, 'ERC165_OLD_ACCOUNT_INTERFACE_ID');
 }
+
+#[test]
+#[available_gas(2000000)]
+fn test_selectors() {
+    // Double check to ensure it IS and STAYS correct
+    assert(
+        ArgentAccount::TRIGGER_ESCAPE_GUARDIAN_SELECTOR == 73865429733192804476769961144708816295126306469589518371407068321865763651,
+        'trigger_escape_guardian'
+    );
+    assert(
+        ArgentAccount::TRIGGER_ESCAPE_OWNER_SELECTOR == 1099763735485822105046709698985960101896351570185083824040512300972207240555,
+        'trigger_escape_owner'
+    );
+    assert(
+        ArgentAccount::ESCAPE_GUARDIAN_SELECTOR == 1662889347576632967292303062205906116436469425870979472602094601074614456040,
+        'escape_guardian'
+    );
+    assert(
+        ArgentAccount::ESCAPE_OWNER_SELECTOR == 1621457541430776841129472853859989177600163870003012244140335395142204209277,
+        'escape_owner'
+    );
+    assert(
+        ArgentAccount::CANCEL_ESCAPE_SELECTOR == 992575500541331354489361836180456905167517944319528538469723604173440834912,
+        'cancel_escape'
+    );
+    assert(
+        ArgentAccount::EXECUTE_AFTER_UPGRADE_SELECTOR == 738349667340360233096752603318170676063569407717437256101137432051386874767,
+        'execute_after_upgrade'
+    );
+}

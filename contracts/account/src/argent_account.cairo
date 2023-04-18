@@ -289,7 +289,7 @@ mod ArgentAccount {
         let account_dispatcher = IAccountUpgradeLibraryDispatcher { class_hash: implementation };
 
         let supports_interface = account_dispatcher.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
-        assert(supports_interface, 'argent/supports_interface');
+        assert(supports_interface, 'argent/supports-interface');
 
         replace_class_syscall(implementation).unwrap_syscall();
         account_dispatcher.execute_after_upgrade(calldata);

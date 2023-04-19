@@ -10,7 +10,9 @@ from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.business_logic.execution.objects import Event, TransactionExecutionInfo
 from starkware.starknet.compiler.compile import get_selector_from_name
-from starkware.starknet.services.api.contract_class import ContractClass
+from starkware.crypto.signature.fast_pedersen_hash import pedersen_hash
+ 
+# from starkware.starknet.services.api.contract_class import ContractClass
 from utils.Signer import Signer
 
 DEFAULT_TIMESTAMP = 1640991600
@@ -21,6 +23,12 @@ signer_key_2 = Signer(2)
 signer_key_3 = Signer(3)
 signer_key_4 = Signer(4)
 
+
+def pedersen_hash_list(felts: List[int]):
+    result = 0
+    for i in range(len(felts)):
+        result = pedersen_hash(result, felts[i])
+    return result
 
 def str_to_felt(text: str) -> int:
     b_text = bytes(text, 'UTF-8')
@@ -74,17 +82,17 @@ def update_starknet_block(state: StarknetState, block_number=1, block_timestamp=
 def reset_starknet_block(state: StarknetState):
     update_starknet_block(state=state)
 
-def compile(path: str) -> ContractClass:
-    contract_cls = compile_starknet_files([path], debug_info=True)
-    return contract_cls
+# def compile(path: str) -> ContractClass:
+#     contract_cls = compile_starknet_files([path], debug_info=True)
+#     return contract_cls
 
 
-def cached_contract(state: StarknetState, _class: ContractClass, deployed: StarknetContract) -> StarknetContract:
-    return build_contract(
-        contract=deployed,
-        state=state,
-        custom_abi=_class.abi
-    )
+# def cached_contract(state: StarknetState, _class: ContractClass, deployed: StarknetContract) -> StarknetContract:
+#     return build_contract(
+#         contract=deployed,
+#         state=state,
+#         custom_abi=_class.abi
+#     )
 
 
 def get_execute_data(tx_exec_info: TransactionExecutionInfo) -> List[int]:

@@ -4,6 +4,7 @@ mod ArgentAccount {
     use array::SpanTrait;
     use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
+    use hash::TupleSize4LegacyHash;
 
     use starknet::ClassHash;
     use starknet::class_hash_const;
@@ -41,6 +42,7 @@ mod ArgentAccount {
     const ESCAPE_TYPE_GUARDIAN: felt252 = 1;
     const ESCAPE_TYPE_OWNER: felt252 = 2;
 
+
     const TRIGGER_ESCAPE_GUARDIAN_SELECTOR: felt252 =
         73865429733192804476769961144708816295126306469589518371407068321865763651; // trigger_escape_guardian
     const TRIGGER_ESCAPE_OWNER_SELECTOR: felt252 =
@@ -51,6 +53,8 @@ mod ArgentAccount {
         1621457541430776841129472853859989177600163870003012244140335395142204209277; // escape_owner
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
         738349667340360233096752603318170676063569407717437256101137432051386874767; // execute_after_upgrade
+    const CHANGE_OWNER_SELECTOR: felt252 =
+        658036363289841962501247229249022783727527757834043681434485756469236076608; // change_owner
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                           Storage                                          //
@@ -181,9 +185,9 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn change_owner(new_owner: felt252) {
+    fn change_owner(new_owner: felt252, signature: Array<felt252>) {
         assert_only_self();
-        assert(new_owner != 0, 'argent/null-owner');
+        is_valid_new_owner(new_owner, signature.span());
 
         _signer::write(new_owner);
         OwnerChanged(new_owner);
@@ -381,6 +385,7 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                          Internal                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
+
     fn assert_is_valid_signature() {
         let tx_info = get_tx_info().unbox();
         let transaction_hash = tx_info.transaction_hash;
@@ -429,6 +434,21 @@ mod ArgentAccount {
         } else {
             check_ecdsa_signature(hash, _guardian_backup::read(), signature_r, signature_s)
         }
+    }
+
+    /// Signature is the Signed Message of this hash:
+    /// hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
+    fn is_valid_new_owner(new_owner: felt252, signature: Span<felt252>) {
+        assert(new_owner != 0, 'argent/null-owner');
+        assert(signature.len() == 2, 'argent/invalid-signature-length');
+        let signature_r = *signature[0];
+        let signature_s = *signature[1];
+        let chain_id = get_tx_info().unbox().chain_id;
+        let message_hash = TupleSize4LegacyHash::hash(
+            0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), _signer::read())
+        );
+        let is_valid = check_ecdsa_signature(message_hash, new_owner, signature_r, signature_s);
+        assert(is_valid, 'argent/invalid-owner-sig');
     }
 
     fn split_signatures(full_signature: Span<felt252>) -> (Span::<felt252>, Span::<felt252>) {

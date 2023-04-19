@@ -21,7 +21,6 @@ mod ArgentMultisigAccount {
     use lib::Call;
     use lib::Version;
     use multisig::deserialize_array_signer_signature;
-    use multisig::spans;
     use multisig::MultisigStorage;
     use multisig::SignerSignature;
     use multisig::SignerSignatureSize;
@@ -123,18 +122,13 @@ mod ArgentMultisigAccount {
         signers: Array<felt252>
     ) -> felt252 {
         let tx_info = starknet::get_tx_info().unbox();
-        let signature_array = spans::span_to_array(tx_info.signature);
 
-        assert(signature_array.len() == SignerSignatureSize, 'argent/invalid-signature-length');
-
-        let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
         let parsed_signatures = deserialize_array_signer_signature(
-            serialized: signature_array,
-            curr_output: signer_signatures_out,
-            remaining: 1 // only one signature is provided as asserted above
-        ).unwrap();
+            tx_info.signature
+        ).expect('argent/invalid-signature-length');
+        assert(parsed_signatures.len() == 1, 'argent/invalid-signature-length');
 
-        let valid = is_valid_signatures_array(tx_info.transaction_hash, parsed_signatures.span());
+        let valid = are_all_signatures_valid(tx_info.transaction_hash, parsed_signatures);
         assert(valid, 'argent/invalid-signature');
         VALIDATED
     }
@@ -286,42 +280,39 @@ mod ArgentMultisigAccount {
     }
 
     #[view]
-    fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> bool {
-        let threshold = MultisigStorage::get_threshold();
-        assert(threshold != 0, 'argent/uninitialized');
-        assert(
-            signatures.len() == threshold * SignerSignatureSize, 'argent/invalid-signature-length'
-        );
-        let mut mut_signatures = signatures;
-        let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
-        let parsed_signatures = deserialize_array_signer_signature(
-            serialized: mut_signatures, curr_output: signer_signatures_out, remaining: threshold
-        ).unwrap();
-        is_valid_signatures_array(hash, parsed_signatures.span())
+    fn is_valid_signature(hash: felt252, signature: Array<felt252>) -> bool {
+        is_valid_signature_span(hash, signature.span())
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                   Internal Functions                                       //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    fn is_valid_signature_span(hash: felt252, signature: Span<felt252>) -> bool {
+        let threshold = MultisigStorage::get_threshold();
+        assert(threshold != 0, 'argent/uninitialized');
+
+        let signer_signatures = deserialize_array_signer_signature(
+            signature
+        ).expect('argent/invalid-signature-length');
+        assert(signer_signatures.len() == threshold, 'argent/invalid-signature-length');
+        are_all_signatures_valid(hash, signer_signatures)
+    }
+
     fn assert_is_valid_tx_signature() {
         let tx_info = starknet::get_tx_info().unbox();
-
-        // TODO converting to array is probably avoidable
-        let signature_array = spans::span_to_array(tx_info.signature);
-
-        let valid = is_valid_signature(tx_info.transaction_hash, signature_array);
+        let valid = is_valid_signature_span(tx_info.transaction_hash, tx_info.signature);
         assert(valid, 'argent/invalid-signature');
     }
 
     /// Validates tha all the signatures are valid and different.
     /// the signatures needs to be sorted by signer
     /// ATTENTION: an empty array is considered valid
-    fn is_valid_signatures_array(hash: felt252, signatures: Span<SignerSignature>) -> bool {
-        is_valid_signatures_array_helper(hash, signatures, last_signer: 0)
+    fn are_all_signatures_valid(hash: felt252, signatures: Span<SignerSignature>) -> bool {
+        are_all_signatures_valid_helper(hash, signatures, last_signer: 0)
     }
 
-    fn is_valid_signatures_array_helper(
+    fn are_all_signatures_valid_helper(
         hash: felt252, mut signatures: Span<SignerSignature>, last_signer: felt252
     ) -> bool {
         check_enough_gas();
@@ -338,7 +329,7 @@ mod ArgentMultisigAccount {
                 if !valid_signer_signature {
                     return false;
                 }
-                is_valid_signatures_array_helper(hash, signatures, signer_sig.signer)
+                are_all_signatures_valid_helper(hash, signatures, signer_sig.signer)
             },
             Option::None(_) => true
         }

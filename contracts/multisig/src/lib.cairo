@@ -1,5 +1,3 @@
-mod spans;
-
 mod argent_multisig_account;
 use argent_multisig_account::ArgentMultisigAccount;
 

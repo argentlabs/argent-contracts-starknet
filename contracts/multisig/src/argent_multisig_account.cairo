@@ -120,6 +120,11 @@ mod ArgentMultisigAccount {
         VALIDATED
     }
 
+    // Self deployment meaning that the multisig pays for it's own deployment fee.
+    // In this scenario the multisig only requires the signature from one of the owners.
+    // This allows for better UX. UI must make clear that the funds are not safe from a bad signer until the deployment happens.
+    /// @dev Validates signature for self deployment.
+    /// @dev If signers can't be trusted, it's recommended to start with a 1:1 multisig and add other signers late
     #[raw_input]
     #[external]
     fn __validate_deploy__(
@@ -144,6 +149,8 @@ mod ArgentMultisigAccount {
         VALIDATED
     }
 
+    /// @dev Change threshold
+    /// @param new_threshold New threshold
     #[external]
     fn change_threshold(new_threshold: usize) {
         assert_only_self();
@@ -159,9 +166,10 @@ mod ArgentMultisigAccount {
         ConfigurationUpdated(new_threshold, signers_len, added_signers, removed_signers);
     }
 
-    // @dev Adds new signers to the account, additionally sets a new threshold
-    // @param new_threshold New threshold
-    // @param signers_to_add Contains the new signers, it will revert if it contains any existing signer
+    /// @dev Adds new signers to the account, additionally sets a new threshold
+    /// @param new_threshold New threshold
+    /// @param signers_to_add An array with all the signers to add
+    /// @dev will revert when trying to add a user already in the list
     #[external]
     fn add_signers(new_threshold: usize, signers_to_add: Array<felt252>) {
         assert_only_self();
@@ -178,9 +186,9 @@ mod ArgentMultisigAccount {
         ConfigurationUpdated(new_threshold, new_signers_len, signers_to_add, removed_signers);
     }
 
-    // @dev Removes account signers, additionally sets a new threshold
-    // @param new_threshold New threshold
-    // @param signers_to_remove Should contain only current signers, otherwise it will revert
+    /// @dev Removes account signers, additionally sets a new threshold
+    /// @param new_threshold New threshold
+    /// @param signers_to_remove Should contain only current signers, otherwise it will revert
     #[external]
     fn remove_signers(new_threshold: usize, signers_to_remove: Array<felt252>) {
         assert_only_self();
@@ -197,9 +205,9 @@ mod ArgentMultisigAccount {
         ConfigurationUpdated(new_threshold, new_signers_len, added_signers, signers_to_remove);
     }
 
-    // @dev Replace one signer with a different one
-    // @param signer_to_remove Signer to remove
-    // @param signer_to_add Signer to add
+    /// @dev Replace one signer with a different one
+    /// @param signer_to_remove Signer to remove
+    /// @param signer_to_add Signer to add
     #[external]
     fn replace_signer(signer_to_remove: felt252, signer_to_add: felt252) {
         assert_only_self();
@@ -265,6 +273,7 @@ mod ArgentMultisigAccount {
         Version { major: 0, minor: 1, patch: 0 }
     }
 
+    /// @dev Returns the threshold, the number of signers required to control this account
     #[view]
     fn get_threshold() -> usize {
         MultisigStorage::get_threshold()
@@ -286,6 +295,7 @@ mod ArgentMultisigAccount {
         interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
     }
 
+    /// @dev Assert that the given signature is a valid signature from one of the multisig owners
     #[view]
     fn assert_valid_signer_signature(
         hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252

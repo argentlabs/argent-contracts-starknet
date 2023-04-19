@@ -11,6 +11,9 @@ mod ArgentMultisigAccount {
     use starknet::get_contract_address;
     use starknet::ContractAddressIntoFelt252;
     use starknet::VALIDATED;
+    use starknet::syscalls::replace_class_syscall;
+    use starknet::ClassHash;
+    use starknet::class_hash_const;
 
     use lib::assert_only_self;
     use lib::assert_no_self_call;
@@ -20,6 +23,8 @@ mod ArgentMultisigAccount {
     use lib::execute_multicall;
     use lib::Call;
     use lib::Version;
+    use lib::IAccountUpgradeLibraryDispatcher;
+    use lib::IAccountUpgradeDispatcherTrait;
     use multisig::deserialize_array_signer_signature;
     use multisig::spans;
     use multisig::MultisigStorage;
@@ -36,6 +41,15 @@ mod ArgentMultisigAccount {
     const NAME: felt252 = 'ArgentMultisig';
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                           Storage                                          //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // This is deprecated and used to migrate cairo 0 accounts only
+    struct Storage {
+        _implementation: ClassHash, 
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                           Events                                           //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -49,6 +63,9 @@ mod ArgentMultisigAccount {
 
     #[event]
     fn TransactionExecuted(hash: felt252, response: Array<felt252>) {}
+
+    #[event]
+    fn AccountUpgraded(new_implementation: ClassHash) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                     Constructor                                            //
@@ -208,6 +225,34 @@ mod ArgentMultisigAccount {
         ConfigurationUpdated(
             MultisigStorage::get_threshold(), signers_len, added_signers, removed_signer
         );
+    }
+
+    // TODO This could be a trait we impl in another file?
+    #[external]
+    fn upgrade(implementation: ClassHash, calldata: Array<felt252>) {
+        assert_only_self();
+
+        let account_dispatcher = IAccountUpgradeLibraryDispatcher { class_hash: implementation };
+
+        let supports_interface = account_dispatcher.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
+        assert(supports_interface, 'argent/supports-interface');
+
+        replace_class_syscall(implementation).unwrap_syscall();
+        account_dispatcher.execute_after_upgrade(calldata);
+
+        AccountUpgraded(implementation);
+    }
+
+
+    #[external]
+    fn execute_after_upgrade(data: Array<felt252>) -> Array::<felt252> {
+        assert_only_self();
+        let implementation = _implementation::read();
+        if implementation != class_hash_const::<0>() {
+            replace_class_syscall(implementation).unwrap_syscall();
+            _implementation::write(class_hash_const::<0>());
+        }
+        ArrayTrait::new()
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

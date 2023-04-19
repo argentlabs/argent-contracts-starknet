@@ -5,11 +5,14 @@ mod ArgentAccount {
     use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
 
+    use starknet::ClassHash;
+    use starknet::class_hash_const;
     use starknet::ContractAddress;
     use starknet::get_block_timestamp;
     use starknet::get_contract_address;
     use starknet::get_tx_info;
     use starknet::VALIDATED;
+    use starknet::syscalls::replace_class_syscall;
 
     use account::Escape;
 
@@ -20,6 +23,8 @@ mod ArgentAccount {
     use lib::execute_multicall;
     use lib::Call;
     use lib::Version;
+    use lib::IAccountUpgradeLibraryDispatcher;
+    use lib::IAccountUpgradeDispatcherTrait;
 
     const NAME: felt252 = 'ArgentAccount';
 
@@ -49,6 +54,7 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     struct Storage {
+        _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         _signer: felt252,
         _guardian: felt252,
         _guardian_backup: felt252,
@@ -88,6 +94,9 @@ mod ArgentAccount {
 
     #[event]
     fn GuardianBackupChanged(new_guardian: felt252) {}
+
+    #[event]
+    fn AccountUpgraded(new_implementation: ClassHash) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                        Constructor                                         //
@@ -159,12 +168,12 @@ mod ArgentAccount {
     #[raw_output]
     fn __execute__(calls: Array<Call>) -> Span::<felt252> {
         // TODO PUT BACK WHEN WE CAN MOCK IT
-        // let tx_info = unbox(get_tx_info());
+        // let tx_info = get_tx_info().unbox();
         // assert_correct_tx_version(tx_info.version);
         assert_non_reentrant();
 
         let retdata = execute_multicall(calls);
-        // transaction_executed(tx_info.transaction_hash, retdata);
+        // TransactionExecuted(tx_info.transaction_hash, retdata);
         retdata.span()
     }
 
@@ -198,9 +207,6 @@ mod ArgentAccount {
         GuardianBackupChanged(new_guardian_backup);
     }
 
-    // TODO Shouldn't we specify who will be the new owner, and allow him to take ownership when time is over?
-    // Ref https://twitter.com/bytes032/status/1628697044326969345
-    // But then it means that if the escape isn't cancel, after timeout he can take the ownership at ANY time.
     #[external]
     fn trigger_escape_owner() {
         assert_only_self();
@@ -265,6 +271,33 @@ mod ArgentAccount {
         EscapeCanceled();
     }
 
+    // TODO This could be a trait we impl in another file?
+    #[external]
+    fn upgrade(implementation: ClassHash, calldata: Array<felt252>) {
+        assert_only_self();
+
+        let account_dispatcher = IAccountUpgradeLibraryDispatcher { class_hash: implementation };
+
+        let supports_interface = account_dispatcher.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
+        assert(supports_interface, 'argent/supports-interface');
+
+        replace_class_syscall(implementation).unwrap_syscall();
+        account_dispatcher.execute_after_upgrade(calldata);
+
+        AccountUpgraded(implementation);
+    }
+
+
+    #[external]
+    fn execute_after_upgrade(data: Array<felt252>) -> Array::<felt252> {
+        assert_only_self();
+        let implementation = _implementation::read();
+        if implementation != class_hash_const::<0>() {
+            replace_class_syscall(implementation).unwrap_syscall();
+            _implementation::write(class_hash_const::<0>());
+        }
+        ArrayTrait::new()
+    }
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                       View functions                                       //
     ////////////////////////////////////////////////////////////////////////////////////////////////

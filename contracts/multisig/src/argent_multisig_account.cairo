@@ -136,8 +136,14 @@ mod ArgentMultisigAccount {
         ).expect('argent/invalid-signature-length');
         assert(parsed_signatures.len() == 1, 'argent/invalid-signature-length');
 
-        let valid = are_all_signatures_valid(tx_info.transaction_hash, parsed_signatures);
-        assert(valid, 'argent/invalid-signature');
+        let signer_sig = *parsed_signatures[0];
+        let valid_signer_signature = is_valid_signer_signature(
+            tx_info.transaction_hash,
+            signer_sig.signer,
+            signer_sig.signature_r,
+            signer_sig.signature_s
+        );
+        assert(valid_signer_signature, 'argent/invalid-signature');
         VALIDATED
     }
 
@@ -331,47 +337,43 @@ mod ArgentMultisigAccount {
         let threshold = MultisigStorage::get_threshold();
         assert(threshold != 0, 'argent/uninitialized');
 
-        let signer_signatures = deserialize_array_signer_signature(
+        let mut signer_signatures = deserialize_array_signer_signature(
             signature
         ).expect('argent/invalid-signature-length');
         assert(signer_signatures.len() == threshold, 'argent/invalid-signature-length');
-        are_all_signatures_valid(hash, signer_signatures)
+
+        let mut last_signer: felt252 = 0;
+        loop {
+            check_enough_gas();
+            match signer_signatures.pop_front() {
+                Option::Some(signer_sig_ref) => {
+                    let signer_sig = *signer_sig_ref;
+                    assert(
+                        signer_sig.signer.into() > last_signer.into(),
+                        'argent/signatures-not-sorted'
+                    );
+                    let is_valid = is_valid_signer_signature(
+                        hash: hash,
+                        signer: signer_sig.signer,
+                        signature_r: signer_sig.signature_r,
+                        signature_s: signer_sig.signature_s,
+                    );
+                    if !is_valid {
+                        break false;
+                    }
+                    last_signer = signer_sig.signer;
+                },
+                Option::None(_) => {
+                    break true;
+                }
+            };
+        }
     }
 
     fn assert_is_valid_tx_signature() {
         let tx_info = starknet::get_tx_info().unbox();
         let valid = is_valid_signature_span(tx_info.transaction_hash, tx_info.signature);
         assert(valid, 'argent/invalid-signature');
-    }
-
-    /// Validates tha all the signatures are valid and different.
-    /// the signatures needs to be sorted by signer
-    /// ATTENTION: an empty array is considered valid
-    fn are_all_signatures_valid(hash: felt252, signatures: Span<SignerSignature>) -> bool {
-        are_all_signatures_valid_helper(hash, signatures, last_signer: 0)
-    }
-
-    fn are_all_signatures_valid_helper(
-        hash: felt252, mut signatures: Span<SignerSignature>, last_signer: felt252
-    ) -> bool {
-        check_enough_gas();
-
-        match signatures.pop_front() {
-            Option::Some(signer_sig_ref) => {
-                let signer_sig = *signer_sig_ref;
-                assert(
-                    signer_sig.signer.into() > last_signer.into(), 'argent/signatures-not-sorted'
-                );
-                let valid_signer_signature = is_valid_signer_signature(
-                    hash, signer_sig.signer, signer_sig.signature_r, signer_sig.signature_s
-                );
-                if !valid_signer_signature {
-                    return false;
-                }
-                are_all_signatures_valid_helper(hash, signatures, signer_sig.signer)
-            },
-            Option::None(_) => true
-        }
     }
 
     fn assert_valid_threshold_and_signers_count(threshold: usize, signers_len: usize) {

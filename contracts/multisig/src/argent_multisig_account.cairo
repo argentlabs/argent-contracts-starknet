@@ -112,11 +112,11 @@ mod ArgentMultisigAccount {
         VALIDATED
     }
 
-    /// @dev Validates signature for self deployment.
     // Self deployment meaning that the multisig pays for it's own deployment fee.
     // In this scenario the multisig only requires the signature from one of the owners.
     // This allows for better UX. UI must make clear that the funds are not safe from a bad signer until the deployment happens.
-    // If signers can't be trusted, it's recommended to start with a 1:1 multisig and add other signers later.
+    /// @dev Validates signature for self deployment.
+    /// @dev If signers can't be trusted, it's recommended to start with a 1:1 multisig and add other signers late
     #[raw_input]
     #[external]
     fn __validate_deploy__(
@@ -142,7 +142,7 @@ mod ArgentMultisigAccount {
     }
 
     /// @dev Change threshold
-    /// @para new_threshold New threshold
+    /// @param new_threshold New threshold
     #[external]
     fn change_threshold(new_threshold: usize) {
         assert_only_self();

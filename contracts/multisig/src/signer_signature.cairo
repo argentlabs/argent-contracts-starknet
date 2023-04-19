@@ -13,7 +13,6 @@ struct SignerSignature {
 
 const SignerSignatureSize: usize = 3;
 
-
 fn deserialize_array_signer_signature(serialized: Span<felt252>) -> Option<Span<SignerSignature>> {
     deserialize_array_signer_signature_helper(serialized, ArrayTrait::new())
 }
@@ -32,4 +31,3 @@ fn deserialize_array_signer_signature_helper(
         deserialize_array_signer_signature_helper(serialized, curr_output)
     }
 }
-

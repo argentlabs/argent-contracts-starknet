@@ -41,15 +41,6 @@ mod ArgentMultisigAccount {
     const NAME: felt252 = 'ArgentMultisig';
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                           Storage                                          //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // This is deprecated and used to migrate cairo 0 accounts only
-    struct Storage {
-        _implementation: ClassHash, 
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                           Events                                           //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -228,6 +219,9 @@ mod ArgentMultisigAccount {
     }
 
     // TODO This could be a trait we impl in another file?
+    /// @dev Can be called by the account to upgrade the implementation
+    /// @param calldata Will be passed to the new implementation `execute_after_upgrade` method
+    /// @param implementation class hash of the new implementation 
     #[external]
     fn upgrade(implementation: ClassHash, calldata: Array<felt252>) {
         assert_only_self();
@@ -243,14 +237,15 @@ mod ArgentMultisigAccount {
         AccountUpgraded(implementation);
     }
 
-
+    // This will be called on the new implementation when there is an upgrade to it
+    /// @param calldata Data passed to this function
     #[external]
     fn execute_after_upgrade(data: Array<felt252>) -> Array::<felt252> {
         assert_only_self();
-        let implementation = _implementation::read();
+        let implementation = MultisigStorage::get_implementation();
         if implementation != class_hash_const::<0>() {
             replace_class_syscall(implementation).unwrap_syscall();
-            _implementation::write(class_hash_const::<0>());
+           MultisigStorage::set_implementation(class_hash_const::<0>());
         }
         ArrayTrait::new()
     }

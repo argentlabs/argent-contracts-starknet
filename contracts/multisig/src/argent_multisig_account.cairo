@@ -273,7 +273,7 @@ mod ArgentMultisigAccount {
         Version { major: 0, minor: 1, patch: 0 }
     }
 
-    //// @dev Returns the threshold, the number of signers required to control this account
+    /// @dev Returns the threshold, the number of signers required to control this account
     #[view]
     fn get_threshold() -> usize {
         MultisigStorage::get_threshold()

@@ -26,6 +26,10 @@ mod ArgentMultisigAccount {
     use multisig::SignerSignature;
     use multisig::SignerSignatureSize;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                           CONSTANTS                                        //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
     const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt252 = 0x3943f10f;
@@ -112,6 +116,11 @@ mod ArgentMultisigAccount {
         VALIDATED
     }
 
+    // @dev Validates signature for self deployment.
+    // Self deployment meaning that the multisig pays for it's own deployment fee.
+    // In this scenario the multisig only requires the signature from one of the owners.
+    // This allows for better UX. UI must make clear that the funds are not safe from a bad signer until the deployment happens.
+    // If signers can't be trusted, it's recommended to start with a 1:1 multisig and add other signers later.
     #[raw_input]
     #[external]
     fn __validate_deploy__(
@@ -136,6 +145,8 @@ mod ArgentMultisigAccount {
         VALIDATED
     }
 
+    // @dev Change threshold
+    // @para new_threshold New threshold
     #[external]
     fn change_threshold(new_threshold: usize) {
         assert_only_self();
@@ -225,6 +236,7 @@ mod ArgentMultisigAccount {
         Version { major: 0, minor: 1, patch: 0 }
     }
 
+    // @dev Returns the Threshold, or number of signers required to control this account
     #[view]
     fn get_threshold() -> usize {
         MultisigStorage::get_threshold()
@@ -246,6 +258,7 @@ mod ArgentMultisigAccount {
         interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
     }
 
+    // @dev Assert that the given signature is a valid signature from one of the multisig owners
     #[view]
     fn assert_valid_signer_signature(
         hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252

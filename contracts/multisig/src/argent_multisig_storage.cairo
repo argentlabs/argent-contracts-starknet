@@ -1,4 +1,4 @@
-// This module handles the storage of the multisig owners using a linked list
+// This module handles the storage of the multisig owners using a linked set
 // you can't store signer 0 and you can't store duplicates.
 // This allows to retrieve the list of owners easily.
 // In terms of storage this will use one storage slot per signer

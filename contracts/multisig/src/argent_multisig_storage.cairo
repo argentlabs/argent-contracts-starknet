@@ -7,6 +7,7 @@
 mod MultisigStorage {
     use array::ArrayTrait;
     use array::SpanTrait;
+    use starknet::ClassHash;
 
     use lib::check_enough_gas;
 
@@ -17,6 +18,7 @@ mod MultisigStorage {
     struct Storage {
         signer_list: LegacyMap<felt252, felt252>,
         threshold: usize,
+        _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,6 +220,14 @@ mod MultisigStorage {
 
     fn set_threshold(threshold: usize) {
         threshold::write(threshold);
+    }
+
+    fn get_implementation() -> ClassHash {
+        _implementation::read()
+    }
+
+    fn set_implementation(implementation: ClassHash) {
+        _implementation::write(implementation);
     }
 }
 

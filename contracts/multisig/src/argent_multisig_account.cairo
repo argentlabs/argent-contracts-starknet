@@ -130,7 +130,7 @@ mod ArgentMultisigAccount {
         let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
         let parsed_signatures = deserialize_array_signer_signature(
             serialized: signature_array,
-            curr_output: signer_signatures_out,
+            current_output: signer_signatures_out,
             remaining: 1 // only one signature is provided as asserted above
         ).unwrap();
 
@@ -257,15 +257,14 @@ mod ArgentMultisigAccount {
     #[view]
     fn supports_interface(interface_id: felt252) -> bool {
         if interface_id == ERC165_IERC165_INTERFACE_ID {
-            return true;
+            true
+        } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
+            true
+        } else if interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID {
+            true
+        } else {
+            false
         }
-        if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
-            return true;
-        }
-        if interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID {
-            return true;
-        }
-        false
     }
 
     #[view]
@@ -295,7 +294,7 @@ mod ArgentMultisigAccount {
         let mut mut_signatures = signatures;
         let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
         let parsed_signatures = deserialize_array_signer_signature(
-            serialized: mut_signatures, curr_output: signer_signatures_out, remaining: threshold
+            serialized: mut_signatures, current_output: signer_signatures_out, remaining: threshold
         ).unwrap();
         is_valid_signatures_array(hash, parsed_signatures.span())
     }

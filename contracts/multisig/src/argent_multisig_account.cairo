@@ -160,7 +160,8 @@ mod ArgentMultisigAccount {
 
     /// @dev Adds new signers to the account, additionally sets a new threshold
     /// @param new_threshold New threshold
-    /// @param signers_to_add Contains the new signers, it will revert if it contains any existing signer
+    /// @param signers_to_add An array with all the signers to add
+    /// @dev will revert when trying to add a user already in the list
     #[external]
     fn add_signers(new_threshold: usize, signers_to_add: Array<felt252>) {
         assert_only_self();

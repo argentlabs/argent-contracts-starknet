@@ -245,7 +245,7 @@ mod ArgentMultisigAccount {
         let implementation = MultisigStorage::get_implementation();
         if implementation != class_hash_const::<0>() {
             replace_class_syscall(implementation).unwrap_syscall();
-           MultisigStorage::set_implementation(class_hash_const::<0>());
+            MultisigStorage::set_implementation(class_hash_const::<0>());
         }
         ArrayTrait::new()
     }

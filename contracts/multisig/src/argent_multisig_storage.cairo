@@ -18,7 +18,7 @@ mod MultisigStorage {
     struct Storage {
         signer_list: LegacyMap<felt252, felt252>,
         threshold: usize,
-        _implementation: ClassHash, 
+        _implementation: ClassHash,
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

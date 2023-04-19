@@ -232,7 +232,7 @@ mod ArgentMultisigAccount {
         let supports_interface = IErc165LibraryDispatcher {
             class_hash: implementation
         }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
-        assert(supports_interface, 'argent/supports-interface');
+        assert(supports_interface, 'argent/invalid-implementation');
 
         let old_version = get_version();
         replace_class_syscall(implementation).unwrap_syscall();

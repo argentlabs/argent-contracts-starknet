@@ -281,7 +281,7 @@ mod ArgentAccount {
         let supports_interface = IErc165LibraryDispatcher {
             class_hash: implementation
         }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
-        assert(supports_interface, 'argent/supports-interface');
+        assert(supports_interface, 'argent/invalid-implementation');
 
         replace_class_syscall(implementation).unwrap_syscall();
         // TODO pass the old version to the callback, careful with backwards compatibility

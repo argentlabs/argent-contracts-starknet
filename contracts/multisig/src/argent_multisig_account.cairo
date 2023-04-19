@@ -108,7 +108,7 @@ mod ArgentMultisigAccount {
 
     #[external]
     fn __validate_declare__(class_hash: felt252) -> felt252 {
-        panic_with_felt252('argent/declare-not-available'); // Not implemented yet
+        panic_with_felt252('argent/declare-not-available') // Not implemented yet
     }
 
     #[raw_input]

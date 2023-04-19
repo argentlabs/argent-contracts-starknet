@@ -29,6 +29,7 @@ mod ArgentAccount {
     const NAME: felt252 = 'ArgentAccount';
 
     const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
+    // TODO: Update with the latest account interface id for cairo 1. Also deal with the old account version
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt252 = 0x3943f10f;
     const ERC1271_VALIDATED: felt252 = 0x1626ba7e;

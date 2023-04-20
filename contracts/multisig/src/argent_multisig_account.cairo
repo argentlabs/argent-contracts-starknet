@@ -30,7 +30,6 @@ mod ArgentMultisigAccount {
     use multisig::deserialize_array_signer_signature;
     use multisig::MultisigStorage;
     use multisig::SignerSignature;
-    use multisig::SignerSignatureSize;
 
     const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;

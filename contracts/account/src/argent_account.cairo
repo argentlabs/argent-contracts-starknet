@@ -23,6 +23,8 @@ mod ArgentAccount {
     use lib::execute_multicall;
     use lib::Call;
     use lib::Version;
+    use lib::IErc165LibraryDispatcher;
+    use lib::IErc165DispatcherTrait;
     use lib::IAccountUpgradeLibraryDispatcher;
     use lib::IAccountUpgradeDispatcherTrait;
 
@@ -277,13 +279,16 @@ mod ArgentAccount {
     fn upgrade(implementation: ClassHash, calldata: Array<felt252>) {
         assert_only_self();
 
-        let account_dispatcher = IAccountUpgradeLibraryDispatcher { class_hash: implementation };
-
-        let supports_interface = account_dispatcher.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
-        assert(supports_interface, 'argent/supports-interface');
+        let supports_interface = IErc165LibraryDispatcher {
+            class_hash: implementation
+        }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
+        assert(supports_interface, 'argent/invalid-implementation');
 
         replace_class_syscall(implementation).unwrap_syscall();
-        account_dispatcher.execute_after_upgrade(calldata);
+        // TODO pass the old version to the callback, careful with backwards compatibility
+        IAccountUpgradeLibraryDispatcher {
+            class_hash: implementation
+        }.execute_after_upgrade(calldata);
 
         AccountUpgraded(implementation);
     }

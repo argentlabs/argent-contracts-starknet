@@ -23,8 +23,10 @@ mod ArgentMultisigAccount {
     use lib::execute_multicall;
     use lib::Call;
     use lib::Version;
-    use lib::IAccountUpgradeLibraryDispatcher;
-    use lib::IAccountUpgradeDispatcherTrait;
+    use lib::IErc165LibraryDispatcher;
+    use lib::IErc165DispatcherTrait;
+    use multisig::IUpgradeTargetLibraryDispatcher;
+    use multisig::IUpgradeTargetDispatcherTrait;
     use multisig::deserialize_array_signer_signature;
     use multisig::spans;
     use multisig::MultisigStorage;
@@ -35,8 +37,9 @@ mod ArgentMultisigAccount {
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt252 = 0x3943f10f;
 
+
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
-        738349667340360233096752603318170676063569407717437256101137432051386874767;
+        738349667340360233096752603318170676063569407717437256101137432051386874767; // execute_after_upgrade
 
     const NAME: felt252 = 'ArgentMultisig';
 
@@ -240,30 +243,36 @@ mod ArgentMultisigAccount {
         );
     }
 
-    // TODO This could be a trait we impl in another file?
     /// @dev Can be called by the account to upgrade the implementation
     /// @param calldata Will be passed to the new implementation `execute_after_upgrade` method
     /// @param implementation class hash of the new implementation 
+    /// @return retdata The data returned by `execute_after_upgrade`
     #[external]
-    fn upgrade(implementation: ClassHash, calldata: Array<felt252>) {
+    fn upgrade(implementation: ClassHash, calldata: Array<felt252>) -> Array::<felt252> {
         assert_only_self();
 
-        let account_dispatcher = IAccountUpgradeLibraryDispatcher { class_hash: implementation };
+        let supports_interface = IErc165LibraryDispatcher {
+            class_hash: implementation
+        }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
+        assert(supports_interface, 'argent/invalid-implementation');
 
-        let supports_interface = account_dispatcher.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
-        assert(supports_interface, 'argent/supports-interface');
-
+        let old_version = get_version();
         replace_class_syscall(implementation).unwrap_syscall();
-        account_dispatcher.execute_after_upgrade(calldata);
+        let return_data = IUpgradeTargetLibraryDispatcher {
+            class_hash: implementation
+        }.execute_after_upgrade(old_version, calldata);
 
         AccountUpgraded(implementation);
+        return_data
     }
 
-    // This will be called on the new implementation when there is an upgrade to it
-    /// @param calldata Data passed to this function
+
+    /// see `IUpgradeTarget`
     #[external]
-    fn execute_after_upgrade(data: Array<felt252>) -> Array::<felt252> {
+    fn execute_after_upgrade(previous_version: Version, data: Array<felt252>) -> Array::<felt252> {
         assert_only_self();
+        assert(data.len() == 0, 'argent/unexpected-data');
+
         let implementation = MultisigStorage::get_implementation();
         if implementation != class_hash_const::<0>() {
             replace_class_syscall(implementation).unwrap_syscall();

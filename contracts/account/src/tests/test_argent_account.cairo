@@ -65,8 +65,7 @@ fn change_owner() {
     initialize_account();
     assert(ArgentAccount::get_owner() == owner_pubkey, 'value should be 1');
 
-    let new_owner_sig = single_signature(new_owner_r, new_owner_s);
-    ArgentAccount::change_owner(new_owner_pubkey, new_owner_sig);
+    ArgentAccount::change_owner(new_owner_pubkey, new_owner_r, new_owner_s);
     assert(ArgentAccount::get_owner() == new_owner_pubkey, 'value should be new owner pub');
 }
 
@@ -76,8 +75,7 @@ fn change_owner() {
 fn change_owner_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
-    let new_owner_sig = single_signature(new_owner_r, new_owner_s);
-    ArgentAccount::change_owner(new_owner_pubkey, new_owner_sig);
+    ArgentAccount::change_owner(new_owner_pubkey, new_owner_r, new_owner_s);
 }
 
 #[test]
@@ -85,8 +83,7 @@ fn change_owner_only_self() {
 #[should_panic(expected: ('argent/null-owner', ))]
 fn change_owner_to_zero() {
     initialize_account();
-    let new_owner_sig = single_signature(new_owner_r, new_owner_s);
-    ArgentAccount::change_owner(0, new_owner_sig);
+    ArgentAccount::change_owner(0, new_owner_r, new_owner_s);
 }
 
 #[test]
@@ -94,8 +91,7 @@ fn change_owner_to_zero() {
 #[should_panic(expected: ('argent/invalid-owner-sig', ))]
 fn change_owner_invalid_message() {
     initialize_account();
-    let new_owner_sig = single_signature(wrong_owner_r, wrong_owner_s);
-    ArgentAccount::change_owner(new_owner_pubkey, new_owner_sig);
+    ArgentAccount::change_owner(new_owner_pubkey, wrong_owner_r, wrong_owner_s);
 }
 
 #[test]
@@ -103,20 +99,7 @@ fn change_owner_invalid_message() {
 #[should_panic(expected: ('argent/invalid-owner-sig', ))]
 fn change_owner_wrong_pub_key() {
     initialize_account();
-    let new_owner_sig = single_signature(new_owner_r, new_owner_s);
-    ArgentAccount::change_owner(wrong_owner_pubkey, new_owner_sig);
-}
-
-#[test]
-#[available_gas(2000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', ))]
-fn change_owner_invalid_sig_length() {
-    initialize_account();
-    let mut new_owner_sig = ArrayTrait::new();
-    new_owner_sig.append(new_owner_r);
-    new_owner_sig.append(new_owner_s);
-    new_owner_sig.append(1);
-    ArgentAccount::change_owner(wrong_owner_pubkey, new_owner_sig);
+    ArgentAccount::change_owner(wrong_owner_pubkey, new_owner_r, new_owner_s);
 }
 
 #[test]

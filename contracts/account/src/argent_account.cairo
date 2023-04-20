@@ -185,9 +185,9 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn change_owner(new_owner: felt252, signature: Array<felt252>) {
+    fn change_owner(new_owner: felt252, signature_r: felt252, signature_s: felt252) {
         assert_only_self();
-        assert_valid_new_owner(new_owner, signature.span());
+        assert_valid_new_owner(new_owner, signature_r, signature_s);
 
         _signer::write(new_owner);
         OwnerChanged(new_owner);
@@ -438,11 +438,8 @@ mod ArgentAccount {
 
     /// Signature is the Signed Message of this hash:
     /// hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
-    fn assert_valid_new_owner(new_owner: felt252, signature: Span<felt252>) {
+    fn assert_valid_new_owner(new_owner: felt252, signature_r: felt252, signature_s: felt252) {
         assert(new_owner != 0, 'argent/null-owner');
-        assert(signature.len() == 2, 'argent/invalid-signature-length');
-        let signature_r = *signature[0];
-        let signature_s = *signature[1];
         let chain_id = get_tx_info().unbox().chain_id;
         let message_hash = TupleSize4LegacyHash::hash(
             0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), _signer::read())

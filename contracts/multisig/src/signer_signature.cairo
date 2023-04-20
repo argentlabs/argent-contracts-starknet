@@ -13,17 +13,17 @@ struct SignerSignature {
 const SignerSignatureSize: usize = 3;
 
 fn deserialize_array_signer_signature(
-    serialized: Array<felt252>, mut curr_output: Array<SignerSignature>, remaining: usize
+    serialized: Array<felt252>, mut current_output: Array<SignerSignature>, remaining: usize
 ) -> Option<Array<SignerSignature>> {
     check_enough_gas();
 
     if remaining == 0 {
-        return Option::Some(curr_output);
+        return Option::Some(current_output);
     }
 
     let mut span = Span { snapshot: @serialized };
-    curr_output.append(Serde::deserialize(ref span)?);
+    current_output.append(Serde::deserialize(ref span)?);
 
-    deserialize_array_signer_signature(serialized, curr_output, remaining - 1)
+    deserialize_array_signer_signature(serialized, current_output, remaining - 1)
 }
 

@@ -67,20 +67,21 @@ mod ArgentMultisigAccount {
         let signers_len = signers.len();
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
-        MultisigStorage::add_signers(signers.span(), 0);
-
+        MultisigStorage::add_signers(signers.span(), last_signer: 0);
         MultisigStorage::set_threshold(threshold);
 
-        let removed_signers = ArrayTrait::new();
-
-        ConfigurationUpdated(threshold, signers_len, signers, removed_signers);
+        ConfigurationUpdated(
+            new_threshold: threshold,
+            new_signers_count: signers_len,
+            added_signers: signers,
+            removed_signers: ArrayTrait::new()
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                     External functions                                     //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // TODO use the actual signature of the account interface
     #[external]
     fn __validate__(calls: Array<Call>) -> felt252 {
         let account_address = get_contract_address();
@@ -88,11 +89,12 @@ mod ArgentMultisigAccount {
         if calls.len() == 1 {
             let call = calls[0];
             if (*call.to).into() == account_address.into() {
-                let selector = *call.selector;
-                assert(selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
+                // This should only be called after an upgrade, never directly
+                assert(*call.selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
             }
         } else {
-            // make sure no call is to the account
+            // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions
+            // and this restriction will reduce the attack surface
             assert_no_self_call(calls.span(), account_address);
         }
 
@@ -139,12 +141,13 @@ mod ArgentMultisigAccount {
         assert(signature_array.len() == SignerSignatureSize, 'argent/invalid-signature-length');
 
         let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
-        let hash = tx_info.transaction_hash;
-        // hardcoded to 1 as only one signature is needed
         let parsed_signatures = deserialize_array_signer_signature(
-            signature_array, signer_signatures_out, 1
+            serialized: signature_array,
+            current_output: signer_signatures_out,
+            remaining: 1 // only one signature is provided as asserted above
         ).unwrap();
-        let valid = is_valid_signatures_array(hash, parsed_signatures.span());
+
+        let valid = is_valid_signatures_array(tx_info.transaction_hash, parsed_signatures.span());
         assert(valid, 'argent/invalid-signature');
         VALIDATED
     }
@@ -160,10 +163,12 @@ mod ArgentMultisigAccount {
         assert_valid_threshold_and_signers_count(new_threshold, signers_len);
         MultisigStorage::set_threshold(new_threshold);
 
-        let added_signers = ArrayTrait::new();
-        let removed_signers = ArrayTrait::new();
-
-        ConfigurationUpdated(new_threshold, signers_len, added_signers, removed_signers);
+        ConfigurationUpdated(
+            new_threshold: new_threshold,
+            new_signers_count: signers_len,
+            added_signers: ArrayTrait::new(),
+            removed_signers: ArrayTrait::new()
+        );
     }
 
     /// @dev Adds new signers to the account, additionally sets a new threshold
@@ -181,9 +186,12 @@ mod ArgentMultisigAccount {
         MultisigStorage::add_signers(signers_to_add.span(), last_signer);
         MultisigStorage::set_threshold(new_threshold);
 
-        let removed_signers = ArrayTrait::new();
-
-        ConfigurationUpdated(new_threshold, new_signers_len, signers_to_add, removed_signers);
+        ConfigurationUpdated(
+            new_threshold: new_threshold,
+            new_signers_count: new_signers_len,
+            added_signers: signers_to_add,
+            removed_signers: ArrayTrait::new()
+        );
     }
 
     /// @dev Removes account signers, additionally sets a new threshold
@@ -200,9 +208,12 @@ mod ArgentMultisigAccount {
         MultisigStorage::remove_signers(signers_to_remove.span(), last_signer);
         MultisigStorage::set_threshold(new_threshold);
 
-        let added_signers = ArrayTrait::new();
-
-        ConfigurationUpdated(new_threshold, new_signers_len, added_signers, signers_to_remove);
+        ConfigurationUpdated(
+            new_threshold: new_threshold,
+            new_signers_count: new_signers_len,
+            added_signers: ArrayTrait::new(),
+            removed_signers: signers_to_remove
+        );
     }
 
     /// @dev Replace one signer with a different one
@@ -222,7 +233,10 @@ mod ArgentMultisigAccount {
         removed_signer.append(signer_to_remove);
 
         ConfigurationUpdated(
-            MultisigStorage::get_threshold(), signers_len, added_signers, removed_signer
+            new_threshold: MultisigStorage::get_threshold(),
+            new_signers_count: signers_len,
+            added_signers: added_signers,
+            removed_signers: removed_signer
         );
     }
 
@@ -269,7 +283,6 @@ mod ArgentMultisigAccount {
 
     #[view]
     fn get_version() -> Version {
-        // TODO Is this the correct version?
         Version { major: 0, minor: 1, patch: 0 }
     }
 
@@ -292,7 +305,15 @@ mod ArgentMultisigAccount {
     // ERC165
     #[view]
     fn supports_interface(interface_id: felt252) -> bool {
-        interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
+        if interface_id == ERC165_IERC165_INTERFACE_ID {
+            true
+        } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
+            true
+        } else if interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID {
+            true
+        } else {
+            false
+        }
     }
 
     /// @dev Assert that the given signature is a valid signature from one of the multisig owners
@@ -323,7 +344,7 @@ mod ArgentMultisigAccount {
         let mut mut_signatures = signatures;
         let mut signer_signatures_out = ArrayTrait::<SignerSignature>::new();
         let parsed_signatures = deserialize_array_signer_signature(
-            mut_signatures, signer_signatures_out, threshold
+            serialized: mut_signatures, current_output: signer_signatures_out, remaining: threshold
         ).unwrap();
         is_valid_signatures_array(hash, parsed_signatures.span())
     }
@@ -342,8 +363,11 @@ mod ArgentMultisigAccount {
         assert(valid, 'argent/invalid-signature');
     }
 
+    /// Validates tha all the signatures are valid and different.
+    /// the signatures needs to be sorted by signer
+    /// ATTENTION: an empty array is considered valid
     fn is_valid_signatures_array(hash: felt252, signatures: Span<SignerSignature>) -> bool {
-        is_valid_signatures_array_helper(hash, signatures, 0)
+        is_valid_signatures_array_helper(hash, signatures, last_signer: 0)
     }
 
     fn is_valid_signatures_array_helper(
@@ -351,10 +375,9 @@ mod ArgentMultisigAccount {
     ) -> bool {
         check_enough_gas();
 
-        let sig_pop: Option<@SignerSignature> = signatures.pop_front();
-        match sig_pop {
-            Option::Some(i) => {
-                let signer_sig = *i;
+        match signatures.pop_front() {
+            Option::Some(signer_sig_ref) => {
+                let signer_sig = *signer_sig_ref;
                 assert(
                     signer_sig.signer.into() > last_signer.into(), 'argent/signatures-not-sorted'
                 );
@@ -366,9 +389,7 @@ mod ArgentMultisigAccount {
                 }
                 is_valid_signatures_array_helper(hash, signatures, signer_sig.signer)
             },
-            Option::None(_) => {
-                true
-            }
+            Option::None(_) => true
         }
     }
 

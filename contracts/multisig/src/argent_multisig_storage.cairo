@@ -58,7 +58,7 @@ mod MultisigStorage {
     // Return the last signer or zero if no signers. Cost increases with the list size
     fn find_last_signer() -> felt252 {
         let first_signer = signer_list::read(0);
-        find_last_signer_recursive(first_signer)
+        find_last_signer_recursive(from_signer: first_signer)
     }
 
     fn find_last_signer_recursive(from_signer: felt252) -> felt252 {
@@ -75,7 +75,7 @@ mod MultisigStorage {
     // Reverts if `signer_after` is not found
     // Cost increases with the list size
     fn find_signer_before(signer_after: felt252) -> felt252 {
-        find_signer_before_recursive(signer_after, 0)
+        find_signer_before_recursive(signer_after, from_signer: 0)
     }
 
     fn find_signer_before_recursive(signer_after: felt252, from_signer: felt252) -> felt252 {
@@ -87,15 +87,15 @@ mod MultisigStorage {
         if (next_signer == signer_after) {
             return from_signer;
         }
-        find_signer_before_recursive(signer_after, next_signer)
+        find_signer_before_recursive(signer_after: signer_after, from_signer: next_signer)
     }
 
     fn add_signers(mut signers_to_add: Span<felt252>, last_signer: felt252) {
         check_enough_gas();
 
         match signers_to_add.pop_front() {
-            Option::Some(i) => {
-                let signer = *i;
+            Option::Some(signer_ref) => {
+                let signer = *signer_ref;
                 assert(signer != 0, 'argent/invalid-zero-signer');
 
                 let current_signer_status = is_signer_using_last(signer, last_signer);
@@ -104,7 +104,7 @@ mod MultisigStorage {
                 // Signers are added at the end of the list
                 signer_list::write(last_signer, signer);
 
-                add_signers(signers_to_add, signer);
+                add_signers(signers_to_add, last_signer: signer);
             },
             Option::None(()) => (),
         }
@@ -114,10 +114,12 @@ mod MultisigStorage {
         check_enough_gas();
 
         match signers_to_remove.pop_front() {
-            Option::Some(i) => {
-                let signer = *i;
+            Option::Some(signer_ref) => {
+                let signer = *signer_ref;
                 let current_signer_status = is_signer_using_last(signer, last_signer);
                 assert(current_signer_status, 'argent/not-a-signer');
+
+                // Signer pointer set to 0, Previous pointer set to the next in the list
 
                 let previous_signer = find_signer_before(signer);
                 let next_signer = signer_list::read(signer);
@@ -126,7 +128,7 @@ mod MultisigStorage {
 
                 if (next_signer == 0) {
                     // Removing the last item
-                    remove_signers(signers_to_remove, previous_signer);
+                    remove_signers(signers_to_remove, last_signer: previous_signer);
                 } else {
                     // Removing an item in the middle
                     signer_list::write(signer, 0);
@@ -197,8 +199,7 @@ mod MultisigStorage {
     }
 
     fn get_signers() -> Array<felt252> {
-        let all_signers = ArrayTrait::new();
-        get_signers_from(signer_list::read(0), all_signers)
+        get_signers_from(from_signer: signer_list::read(0), previous_signers: ArrayTrait::new())
     }
 
     fn get_signers_from(

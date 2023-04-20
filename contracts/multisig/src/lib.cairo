@@ -1,4 +1,3 @@
-mod spans;
 use lib::Version;
 
 #[abi]
@@ -21,7 +20,6 @@ use argent_multisig_storage::MultisigStorage;
 mod signer_signature;
 use signer_signature::SignerSignature;
 use signer_signature::deserialize_array_signer_signature;
-use signer_signature::SignerSignatureSize;
 
 #[cfg(test)]
 mod tests;

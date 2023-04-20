@@ -1,4 +1,5 @@
 use array::ArrayTrait;
+use array::SpanTrait;
 use serde::Serde;
 
 use lib::check_enough_gas;
@@ -10,20 +11,15 @@ struct SignerSignature {
     signature_s: felt252,
 }
 
-const SignerSignatureSize: usize = 3;
-
 fn deserialize_array_signer_signature(
-    serialized: Array<felt252>, mut current_output: Array<SignerSignature>, remaining: usize
-) -> Option<Array<SignerSignature>> {
-    check_enough_gas();
-
-    if remaining == 0 {
-        return Option::Some(current_output);
+    mut serialized: Span<felt252>
+) -> Option<Span<SignerSignature>> {
+    let mut output = ArrayTrait::new();
+    loop {
+        check_enough_gas();
+        if serialized.len() == 0 {
+            break Option::Some(output.span());
+        }
+        output.append(Serde::deserialize(ref serialized)?);
     }
-
-    let mut span = Span { snapshot: @serialized };
-    current_output.append(Serde::deserialize(ref span)?);
-
-    deserialize_array_signer_signature(serialized, current_output, remaining - 1)
 }
-

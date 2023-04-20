@@ -23,8 +23,10 @@ mod ArgentMultisigAccount {
     use lib::execute_multicall;
     use lib::Call;
     use lib::Version;
-    use lib::IAccountUpgradeLibraryDispatcher;
-    use lib::IAccountUpgradeDispatcherTrait;
+    use lib::IErc165LibraryDispatcher;
+    use lib::IErc165DispatcherTrait;
+    use multisig::IUpgradeTargetLibraryDispatcher;
+    use multisig::IUpgradeTargetDispatcherTrait;
     use multisig::deserialize_array_signer_signature;
     use multisig::MultisigStorage;
     use multisig::SignerSignature;
@@ -34,8 +36,9 @@ mod ArgentMultisigAccount {
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt252 = 0x3943f10f;
 
+
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
-        738349667340360233096752603318170676063569407717437256101137432051386874767;
+        738349667340360233096752603318170676063569407717437256101137432051386874767; // execute_after_upgrade
 
     const NAME: felt252 = 'ArgentMultisig';
 
@@ -117,10 +120,14 @@ mod ArgentMultisigAccount {
 
     #[external]
     fn __validate_declare__(class_hash: felt252) -> felt252 {
-        assert_is_valid_tx_signature();
-        VALIDATED
+        panic_with_felt252('argent/declare-not-available') // Not implemented yet
     }
 
+    // Self deployment meaning that the multisig pays for it's own deployment fee.
+    // In this scenario the multisig only requires the signature from one of the owners.
+    // This allows for better UX. UI must make clear that the funds are not safe from a bad signer until the deployment happens.
+    /// @dev Validates signature for self deployment.
+    /// @dev If signers can't be trusted, it's recommended to start with a 1:1 multisig and add other signers late
     #[raw_input]
     #[external]
     fn __validate_deploy__(
@@ -141,6 +148,8 @@ mod ArgentMultisigAccount {
         VALIDATED
     }
 
+    /// @dev Change threshold
+    /// @param new_threshold New threshold
     #[external]
     fn change_threshold(new_threshold: usize) {
         assert_only_self();
@@ -158,9 +167,10 @@ mod ArgentMultisigAccount {
         );
     }
 
-    // @dev Adds new signers to the account, additionally sets a new threshold
-    // @param new_threshold New threshold
-    // @param signers_to_add Contains the new signers, it will revert if it contains any existing signer
+    /// @dev Adds new signers to the account, additionally sets a new threshold
+    /// @param new_threshold New threshold
+    /// @param signers_to_add An array with all the signers to add
+    /// @dev will revert when trying to add a user already in the list
     #[external]
     fn add_signers(new_threshold: usize, signers_to_add: Array<felt252>) {
         assert_only_self();
@@ -180,9 +190,9 @@ mod ArgentMultisigAccount {
         );
     }
 
-    // @dev Removes account signers, additionally sets a new threshold
-    // @param new_threshold New threshold
-    // @param signers_to_remove Should contain only current signers, otherwise it will revert
+    /// @dev Removes account signers, additionally sets a new threshold
+    /// @param new_threshold New threshold
+    /// @param signers_to_remove Should contain only current signers, otherwise it will revert
     #[external]
     fn remove_signers(new_threshold: usize, signers_to_remove: Array<felt252>) {
         assert_only_self();
@@ -202,9 +212,9 @@ mod ArgentMultisigAccount {
         );
     }
 
-    // @dev Replace one signer with a different one
-    // @param signer_to_remove Signer to remove
-    // @param signer_to_add Signer to add
+    /// @dev Replace one signer with a different one
+    /// @param signer_to_remove Signer to remove
+    /// @param signer_to_add Signer to add
     #[external]
     fn replace_signer(signer_to_remove: felt252, signer_to_add: felt252) {
         assert_only_self();
@@ -226,30 +236,36 @@ mod ArgentMultisigAccount {
         );
     }
 
-    // TODO This could be a trait we impl in another file?
     /// @dev Can be called by the account to upgrade the implementation
     /// @param calldata Will be passed to the new implementation `execute_after_upgrade` method
     /// @param implementation class hash of the new implementation 
+    /// @return retdata The data returned by `execute_after_upgrade`
     #[external]
-    fn upgrade(implementation: ClassHash, calldata: Array<felt252>) {
+    fn upgrade(implementation: ClassHash, calldata: Array<felt252>) -> Array::<felt252> {
         assert_only_self();
 
-        let account_dispatcher = IAccountUpgradeLibraryDispatcher { class_hash: implementation };
+        let supports_interface = IErc165LibraryDispatcher {
+            class_hash: implementation
+        }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
+        assert(supports_interface, 'argent/invalid-implementation');
 
-        let supports_interface = account_dispatcher.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
-        assert(supports_interface, 'argent/supports-interface');
-
+        let old_version = get_version();
         replace_class_syscall(implementation).unwrap_syscall();
-        account_dispatcher.execute_after_upgrade(calldata);
+        let return_data = IUpgradeTargetLibraryDispatcher {
+            class_hash: implementation
+        }.execute_after_upgrade(old_version, calldata);
 
         AccountUpgraded(implementation);
+        return_data
     }
 
-    // This will be called on the new implementation when there is an upgrade to it
-    /// @param calldata Data passed to this function
+
+    /// see `IUpgradeTarget`
     #[external]
-    fn execute_after_upgrade(data: Array<felt252>) -> Array::<felt252> {
+    fn execute_after_upgrade(previous_version: Version, data: Array<felt252>) -> Array::<felt252> {
         assert_only_self();
+        assert(data.len() == 0, 'argent/unexpected-data');
+
         let implementation = MultisigStorage::get_implementation();
         if implementation != class_hash_const::<0>() {
             replace_class_syscall(implementation).unwrap_syscall();
@@ -272,6 +288,7 @@ mod ArgentMultisigAccount {
         Version { major: 0, minor: 1, patch: 0 }
     }
 
+    /// @dev Returns the threshold, the number of signers required to control this account
     #[view]
     fn get_threshold() -> usize {
         MultisigStorage::get_threshold()
@@ -301,6 +318,7 @@ mod ArgentMultisigAccount {
         }
     }
 
+    /// @dev Assert that the given signature is a valid signature from one of the multisig owners
     #[view]
     fn assert_valid_signer_signature(
         hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252

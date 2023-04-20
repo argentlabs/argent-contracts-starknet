@@ -23,12 +23,15 @@ mod ArgentAccount {
     use lib::execute_multicall;
     use lib::Call;
     use lib::Version;
+    use lib::IErc165LibraryDispatcher;
+    use lib::IErc165DispatcherTrait;
     use lib::IAccountUpgradeLibraryDispatcher;
     use lib::IAccountUpgradeDispatcherTrait;
 
     const NAME: felt252 = 'ArgentAccount';
 
     const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
+    // TODO: Update with the latest account interface id for cairo 1. Also deal with the old account version
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt252 = 0x3943f10f;
     const ERC1271_VALIDATED: felt252 = 0x1626ba7e;
@@ -276,13 +279,16 @@ mod ArgentAccount {
     fn upgrade(implementation: ClassHash, calldata: Array<felt252>) {
         assert_only_self();
 
-        let account_dispatcher = IAccountUpgradeLibraryDispatcher { class_hash: implementation };
-
-        let supports_interface = account_dispatcher.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
-        assert(supports_interface, 'argent/supports-interface');
+        let supports_interface = IErc165LibraryDispatcher {
+            class_hash: implementation
+        }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
+        assert(supports_interface, 'argent/invalid-implementation');
 
         replace_class_syscall(implementation).unwrap_syscall();
-        account_dispatcher.execute_after_upgrade(calldata);
+        // TODO pass the old version to the callback, careful with backwards compatibility
+        IAccountUpgradeLibraryDispatcher {
+            class_hash: implementation
+        }.execute_after_upgrade(calldata);
 
         AccountUpgraded(implementation);
     }

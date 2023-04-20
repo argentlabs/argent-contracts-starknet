@@ -6,7 +6,6 @@ use account::tests::owner_pubkey;
 use account::tests::guardian_pubkey;
 use account::tests::initialize_account;
 use account::tests::initialize_account_without_guardian;
-use account::tests::single_signature;
 
 const message_hash: felt252 = 0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8;
 
@@ -35,6 +34,13 @@ fn double_signature(r1: felt252, s1: felt252, r2: felt252, s2: felt252) -> Array
     signatures.append(s1);
     signatures.append(r2);
     signatures.append(s2);
+    signatures
+}
+
+fn single_signature(r: felt252, s: felt252) -> Array<felt252> {
+    let mut signatures = ArrayTrait::new();
+    signatures.append(r);
+    signatures.append(s);
     signatures
 }
 

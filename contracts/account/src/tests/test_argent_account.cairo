@@ -10,7 +10,6 @@ use account::tests::initialize_account_without_guardian;
 use account::tests::owner_pubkey;
 use account::tests::wrong_owner_pubkey;
 use account::tests::guardian_pubkey;
-use account::tests::single_signature;
 
 const new_owner_pubkey: felt252 = 0xa7da05a4d664859ccd6e567b935cdfbfe3018c7771cb980892ef38878ae9bc;
 const new_owner_r: felt252 = 0x5b786ea6339eae95e7fbcabc43b4667f697738581f9762108515aea7a051342;

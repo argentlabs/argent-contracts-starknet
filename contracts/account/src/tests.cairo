@@ -20,10 +20,3 @@ fn initialize_account() {
 fn initialize_account_without_guardian() {
     ArgentAccount::constructor(owner_pubkey, 0);
 }
-
-fn single_signature(r: felt252, s: felt252) -> Array<felt252> {
-    let mut signatures = ArrayTrait::new();
-    signatures.append(r);
-    signatures.append(s);
-    signatures
-}

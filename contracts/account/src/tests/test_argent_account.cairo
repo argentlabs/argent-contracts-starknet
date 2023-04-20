@@ -1,13 +1,22 @@
 use starknet::contract_address_const;
 use starknet::testing::set_caller_address;
 use zeroable::Zeroable;
+use array::ArrayTrait;
 
 use account::ArgentAccount;
 
 use account::tests::initialize_account;
 use account::tests::initialize_account_without_guardian;
 use account::tests::owner_pubkey;
+use account::tests::wrong_owner_pubkey;
 use account::tests::guardian_pubkey;
+
+const new_owner_pubkey: felt252 = 0xa7da05a4d664859ccd6e567b935cdfbfe3018c7771cb980892ef38878ae9bc;
+const new_owner_r: felt252 = 0x5b786ea6339eae95e7fbcabc43b4667f697738581f9762108515aea7a051342;
+const new_owner_s: felt252 = 0x4ded483cee51e8237a6f1c38e75042c1055ebdc22d3394d84b657f42cbdf32b;
+
+const wrong_owner_r: felt252 = 0x4be5db0599a2e5943f207da3f9bf2dd091acf055b71a1643e9c35fcd7e2c0df;
+const wrong_owner_s: felt252 = 0x2e44d5bad55a0d692e02529e7060f352fde85fae8d5946f28c34a10a29bc83b;
 
 #[test]
 #[available_gas(2000000)]
@@ -54,8 +63,9 @@ fn erc165_supported_interfaces() {
 fn change_owner() {
     initialize_account();
     assert(ArgentAccount::get_owner() == owner_pubkey, 'value should be 1');
-    ArgentAccount::change_owner(11);
-    assert(ArgentAccount::get_owner() == 11, 'value should be 11');
+
+    ArgentAccount::change_owner(new_owner_pubkey, new_owner_r, new_owner_s);
+    assert(ArgentAccount::get_owner() == new_owner_pubkey, 'value should be new owner pub');
 }
 
 #[test]
@@ -64,7 +74,7 @@ fn change_owner() {
 fn change_owner_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
-    ArgentAccount::change_owner(11);
+    ArgentAccount::change_owner(new_owner_pubkey, new_owner_r, new_owner_s);
 }
 
 #[test]
@@ -72,7 +82,23 @@ fn change_owner_only_self() {
 #[should_panic(expected: ('argent/null-owner', ))]
 fn change_owner_to_zero() {
     initialize_account();
-    ArgentAccount::change_owner(0);
+    ArgentAccount::change_owner(0, new_owner_r, new_owner_s);
+}
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('argent/invalid-owner-sig', ))]
+fn change_owner_invalid_message() {
+    initialize_account();
+    ArgentAccount::change_owner(new_owner_pubkey, wrong_owner_r, wrong_owner_s);
+}
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('argent/invalid-owner-sig', ))]
+fn change_owner_wrong_pub_key() {
+    initialize_account();
+    ArgentAccount::change_owner(wrong_owner_pubkey, new_owner_r, new_owner_s);
 }
 
 #[test]

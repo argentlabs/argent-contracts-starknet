@@ -28,19 +28,19 @@ const wrong_owner_s: felt252 = 0x2e44d5bad55a0d692e02529e7060f352fde85fae8d5946f
 const wrong_guardian_r: felt252 = 0x5e5375b33d31fea164fb58c97ae0f9354863af5274f47a261b268b072285539;
 const wrong_guardian_s: felt252 = 0x649c2cc2696a1f257534f03d913f869daae675467ed2f994b94059341e68929;
 
-fn single_signature(r: felt252, s: felt252) -> Array<felt252> {
-    let mut signatures = ArrayTrait::new();
-    signatures.append(r);
-    signatures.append(s);
-    signatures
-}
-
 fn double_signature(r1: felt252, s1: felt252, r2: felt252, s2: felt252) -> Array<felt252> {
     let mut signatures = ArrayTrait::new();
     signatures.append(r1);
     signatures.append(s1);
     signatures.append(r2);
     signatures.append(s2);
+    signatures
+}
+
+fn single_signature(r: felt252, s: felt252) -> Array<felt252> {
+    let mut signatures = ArrayTrait::new();
+    signatures.append(r);
+    signatures.append(s);
     signatures
 }
 

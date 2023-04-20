@@ -121,8 +121,7 @@ mod ArgentMultisigAccount {
 
     #[external]
     fn __validate_declare__(class_hash: felt252) -> felt252 {
-        assert_is_valid_tx_signature();
-        VALIDATED
+        panic_with_felt252('argent/declare-not-available') // Not implemented yet
     }
 
     // Self deployment meaning that the multisig pays for it's own deployment fee.

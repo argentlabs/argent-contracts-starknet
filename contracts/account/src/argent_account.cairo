@@ -44,17 +44,17 @@ mod ArgentAccount {
 
 
     const TRIGGER_ESCAPE_GUARDIAN_SELECTOR: felt252 =
-        73865429733192804476769961144708816295126306469589518371407068321865763651; // trigger_escape_guardian
+        73865429733192804476769961144708816295126306469589518371407068321865763651; // starknet_keccak('trigger_escape_guardian')
     const TRIGGER_ESCAPE_OWNER_SELECTOR: felt252 =
-        1099763735485822105046709698985960101896351570185083824040512300972207240555; // trigger_escape_owner
+        1099763735485822105046709698985960101896351570185083824040512300972207240555; // starknet_keccak('trigger_escape_owner')
     const ESCAPE_GUARDIAN_SELECTOR: felt252 =
-        1662889347576632967292303062205906116436469425870979472602094601074614456040; // escape_guardian
+        1662889347576632967292303062205906116436469425870979472602094601074614456040; // starknet_keccak('escape_guardian')
     const ESCAPE_OWNER_SELECTOR: felt252 =
-        1621457541430776841129472853859989177600163870003012244140335395142204209277; // escape_owner
+        1621457541430776841129472853859989177600163870003012244140335395142204209277; // starknet_keccake'(scape_owner')
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
-        738349667340360233096752603318170676063569407717437256101137432051386874767; // execute_after_upgrade
+        738349667340360233096752603318170676063569407717437256101137432051386874767; // starknet_keccak('execute_after_upgrade')
     const CHANGE_OWNER_SELECTOR: felt252 =
-        658036363289841962501247229249022783727527757834043681434485756469236076608; // change_owner
+        658036363289841962501247229249022783727527757834043681434485756469236076608; // starknet_keccak('change_owner')
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                           Storage                                          //
@@ -187,7 +187,7 @@ mod ArgentAccount {
     #[external]
     fn change_owner(new_owner: felt252, signature: Array<felt252>) {
         assert_only_self();
-        is_valid_new_owner(new_owner, signature.span());
+        assert_valid_new_owner(new_owner, signature.span());
 
         _signer::write(new_owner);
         OwnerChanged(new_owner);
@@ -438,7 +438,7 @@ mod ArgentAccount {
 
     /// Signature is the Signed Message of this hash:
     /// hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
-    fn is_valid_new_owner(new_owner: felt252, signature: Span<felt252>) {
+    fn assert_valid_new_owner(new_owner: felt252, signature: Span<felt252>) {
         assert(new_owner != 0, 'argent/null-owner');
         assert(signature.len() == 2, 'argent/invalid-signature-length');
         let signature_r = *signature[0];

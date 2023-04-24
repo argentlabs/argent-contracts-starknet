@@ -11,7 +11,7 @@ The account is controlled by multiple owners (or `signer`), and to generate a va
 
 A valid account signature is just a list of many individual owner signatures. And this account signature can be used to sign a Starknet transaction or be used in the method `is_valid_signature`
 
-Any operation that changes the security parameters, like adding/removing/changing owners, upgrading, or changing the threshold will also require the approval (signature) of some owners (threshold)
+Any operation that changes the security parameters, like adding/removing/changing owners, upgrading, or changing the threshold will also require the approval (signature) of enough owners (current threshold).
 
 ## Self-deployment
 

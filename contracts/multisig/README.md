@@ -20,5 +20,6 @@ This allows for better UX. For extra safety, it's recommended to deploy it befor
 
 
 ## Upgrade
-To enable the model to evolve if needed, the implements an `upgrade` method that will replace the implementation. Calling this method, as any other method, requires the approval from a quorum of owners (`threshold`)
+
+To enable the model to evolve, the account implements an `upgrade` method that replaces the implementation. Calling this method, as any other method, requires the approval from a quorum of owners (`threshold`).
 

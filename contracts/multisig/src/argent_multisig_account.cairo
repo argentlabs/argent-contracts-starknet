@@ -41,7 +41,7 @@ mod ArgentMultisigAccount {
 
     const NAME: felt252 = 'ArgentMultisig';
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
-    const MAX_SIGNERS_COUNT: usize = 32; 
+    const MAX_SIGNERS_COUNT: usize = 32;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                           Events                                           //

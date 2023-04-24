@@ -40,7 +40,8 @@ mod ArgentMultisigAccount {
         738349667340360233096752603318170676063569407717437256101137432051386874767; // execute_after_upgrade
 
     const NAME: felt252 = 'ArgentMultisig';
-    const MAX_SIGNERS_COUNT: usize = 32;
+    /// To many owners could make the multisig unable to process transactions if we reach a limit
+    const MAX_SIGNERS_COUNT: usize = 32; 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                           Events                                           //

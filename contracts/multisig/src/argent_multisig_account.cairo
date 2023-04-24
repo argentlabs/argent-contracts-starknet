@@ -40,6 +40,8 @@ mod ArgentMultisigAccount {
         738349667340360233096752603318170676063569407717437256101137432051386874767; // execute_after_upgrade
 
     const NAME: felt252 = 'ArgentMultisig';
+    /// Too many owners could make the multisig unable to process transactions if we reach a limit
+    const MAX_SIGNERS_COUNT: usize = 32;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                           Events                                           //
@@ -396,6 +398,7 @@ mod ArgentMultisigAccount {
     fn assert_valid_threshold_and_signers_count(threshold: usize, signers_len: usize) {
         assert(threshold != 0, 'argent/invalid-threshold');
         assert(signers_len != 0, 'argent/invalid-signers-len');
+        assert(signers_len <= MAX_SIGNERS_COUNT, 'argent/invalid-signers-len');
         assert(threshold <= signers_len, 'argent/bad-threshold');
     }
 }

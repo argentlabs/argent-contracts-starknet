@@ -9,7 +9,7 @@ This account requires multiple signatures from different parties to authorize an
 
 The account is controlled by multiple owners (or `signer`), and to generate a valid account signature you need at least some number of owner signatures. The minimum number of owners that need to sign is called the `threshold`.
 
-A valid account signature is just a list of many individual owner signatures. And this account signature can be used to sign a Starknet transaction or be used in the method `is_valid_signature`
+A valid account signature is just a list of many individual owner signatures. This account signature can be used as a Starknet transaction signature or in the `is_valid_signature` method.
 
 Any operation that changes the security parameters, like adding/removing/changing owners, upgrading, or changing the threshold will also require the approval (signature) of enough owners (current threshold).
 

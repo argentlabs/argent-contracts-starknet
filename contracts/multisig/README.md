@@ -21,10 +21,12 @@ The account signature is a list of owner signatures. The list must contain exact
 ## Self-deployment
 
 The account can pay the transaction fee for its own deployment. In this scenario, the multisig only requires the signature of one of the owners.
-This allows for better UX. **For extra safety, it's recommended to deploy it before depositing large amounts in the account**.
+This allows for better UX.
+
+**For extra safety, it's recommended to deploy the account before depositing large amounts in the account**.
 
 
 ## Upgrade
 
-To enable the model to evolve, the account implements an `upgrade` method that replaces the implementation. Calling this method, as any other method, requires the approval from a quorum of owners (`threshold`).
+To enable the model to evolve, the account implements an `upgrade` method that replaces the implementation. Calling this method, as any other method, requires the approval from `threshold` owners.
 

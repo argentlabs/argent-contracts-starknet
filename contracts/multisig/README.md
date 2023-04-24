@@ -15,7 +15,7 @@ Any operation that changes the security parameters, like adding/removing/changin
 
 ## Self-deployment
 
-The account can pay for the tx fee for its own deployment. In this scenario, the multisig only requires the signature of one of the owners.
+The account can pay the transaction fee for its own deployment. In this scenario, the multisig only requires the signature of one of the owners.
 This allows for better UX. For extra safety, it's recommended to deploy it before depositing large amounts in the account.
 
 

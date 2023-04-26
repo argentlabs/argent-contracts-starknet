@@ -411,6 +411,7 @@ mod ArgentAccount {
 
     // add back when updated to latest cairo version
     // currently serde not working for enums
+    /// Current escape if any, and its status
     // #[view]
     // fn get_escape_and_status() -> (Escape, EscapeStatus) {
     //     let current_escape = _escape::read();

@@ -268,7 +268,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn escape_owner(new_owner: felt252) {
+    fn escape_owner() {
         assert_only_self();
         assert_guardian_set();
 
@@ -291,11 +291,9 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn escape_guardian(new_guardian: felt252) {
+    fn escape_guardian() {
         assert_only_self();
         assert_guardian_set();
-        assert_can_escape_for_type(ESCAPE_TYPE_GUARDIAN);
-        assert(new_guardian != 0, 'argent/null-guardian');
 
         let current_escape = _escape::read();
         let current_escape_status = escape_status(current_escape.active_at);

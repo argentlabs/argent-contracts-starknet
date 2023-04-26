@@ -310,6 +310,16 @@ mod ArgentAccount {
         _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
     }
 
+    #[external]
+    fn cancel_escape() {
+        assert_only_self();
+        let current_escape = _escape::read();
+        let current_escape_status = escape_status(current_escape.active_at);
+        assert(current_escape_status != EscapeStatus::None(()), 'argent/no-active-escape');
+        reset_escape(current_escape);
+        EscapeCanceled();
+    }
+
     // TODO This could be a trait we impl in another file?
     #[external]
     fn upgrade(implementation: ClassHash, calldata: Array<felt252>) {

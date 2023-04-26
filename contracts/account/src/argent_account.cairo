@@ -219,26 +219,33 @@ mod ArgentAccount {
         GuardianBackupChanged(new_guardian_backup);
     }
 
+    /// @notice Triggers the escape of the owner when it is lost or compromised.
+    /// Must be called by the account and authorised by just a guardian.
+    /// Cannot override an ongoing escape of the guardian.
+    /// @param new_owner The new account owner if the escape completes
+    /// @dev
+    /// This method assumes that there is a guardian, and that `new_owner` is not 0
     #[external]
     fn trigger_escape_owner() {
         assert_only_self();
         assert_guardian_set();
-        // TODO as this will only allow to delay the escape, is it relevant?
         // Can only escape owner by guardian, if there is no escape ongoing other or an escape ongoing but for of the type owner
         let current_escape = _escape::read();
-        if current_escape.active_at != 0 {
+        if (current_escape.escape_type == ESCAPE_TYPE_GUARDIAN) {
+            let current_escape_status = escape_status(current_escape.active_at);
             assert(
-                current_escape.escape_type == ESCAPE_TYPE_OWNER, 'argent/cannot-override-escape'
+                current_escape_status == EscapeStatus::Expired(()), 'argent/cannot-override-escape'
             );
         }
 
+        reset_escape(current_escape);
         let active_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
         // TODO Since timestamp is a u64, and escape type 1 small felt252, we can pack those two values and use 1 storage slot
         // TODO We could also inverse the way we store using a map and at ESCAPE_TYPE_OWNER having the escape active_at of the owner and at ESCAPE_TYPE_GUARDIAN escape active_at
         // Since none of these two can be filled at the same time, it'll always use one and only one slot
         // Or we could simplify it by having the struct taking owner_active_at and guardian_active_at and no map
-        _escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_OWNER });
-        EscapeOwnerTriggered(active_at);
+        _escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: new_owner });
+        EscapeOwnerTriggered(active_at, new_owner);
     }
 
     #[external]
@@ -246,20 +253,41 @@ mod ArgentAccount {
         assert_only_self();
         assert_guardian_set();
 
+        if new_guardian == 0 {
+            assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
+        }
+
+        let current_escape = _escape::read();
+        reset_escape(current_escape);
+
         let active_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
-        _escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_GUARDIAN });
-        EscapeGuardianTriggered(active_at);
+        _escape::write(
+            Escape { active_at, escape_type: ESCAPE_TYPE_GUARDIAN, new_signer: new_guardian }
+        );
+        EscapeGuardianTriggered(active_at, new_guardian);
     }
 
     #[external]
     fn escape_owner(new_owner: felt252) {
         assert_only_self();
         assert_guardian_set();
-        assert_can_escape_for_type(ESCAPE_TYPE_OWNER);
-        assert(new_owner != 0, 'argent/null-owner');
-        clear_escape();
-        _signer::write(new_owner);
-        OwnerEscaped(new_owner);
+
+        let current_escape = _escape::read();
+        let current_escape_status = escape_status(current_escape.active_at);
+        assert(current_escape_status == EscapeStatus::Ready(()), 'argent/invalid-escape');
+        assert(current_escape.escape_type == ESCAPE_TYPE_OWNER, 'argent/invalid-escape-type');
+
+        _signer::write(current_escape.new_signer);
+
+        // needed if user started escape in old cairo version and
+        // upgraded half way through, then finished escape in new version
+        assert(current_escape.new_signer != 0, 'argent/null-owner');
+        _signer::write(current_escape.new_signer);
+
+        OwnerEscaped(current_escape.new_signer);
+
+        // clear escape
+        _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
     }
 
     #[external]
@@ -269,18 +297,17 @@ mod ArgentAccount {
         assert_can_escape_for_type(ESCAPE_TYPE_GUARDIAN);
         assert(new_guardian != 0, 'argent/null-guardian');
 
-        clear_escape();
-        _guardian::write(new_guardian);
-        GuardianEscaped(new_guardian);
-    }
+        let current_escape = _escape::read();
+        let current_escape_status = escape_status(current_escape.active_at);
+        assert(current_escape_status == EscapeStatus::Ready(()), 'argent/invalid-escape');
+        assert(current_escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'argent/invalid-escape-type');
 
-    #[external]
-    fn cancel_escape() {
-        assert_only_self();
-        assert(_escape::read().active_at != 0, 'argent/no-active-escape');
+        _guardian::write(current_escape.new_signer);
 
-        clear_escape();
-        EscapeCanceled();
+        GuardianEscaped(current_escape.new_signer);
+
+        // clear escape
+        _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
     }
 
     // TODO This could be a trait we impl in another file?

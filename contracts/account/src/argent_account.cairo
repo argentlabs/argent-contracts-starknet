@@ -457,17 +457,31 @@ mod ArgentAccount {
         (full_signature.slice(0, 2), full_signature.slice(2, 2))
     }
 
-    #[inline(always)]
-    fn clear_escape() {
-        _escape::write(Escape { active_at: 0, escape_type: 0 });
+    fn escape_status(escape_active_at: u64) -> EscapeStatus {
+        if (escape_active_at == 0) {
+            return EscapeStatus::None(());
+        }
+        if (get_block_timestamp() < escape_active_at) {
+            return EscapeStatus::NotReady(());
+        }
+        if (escape_active_at
+            + ESCAPE_EXPIRY_PERIOD <= get_block_timestamp()) {
+                return EscapeStatus::Expired(());
+            }
+        EscapeStatus::Ready(())
     }
 
-    fn assert_can_escape_for_type(escape_type: felt252) {
-        let current_escape = _escape::read();
-
-        assert(current_escape.active_at != 0, 'argent/not-escaping');
-        assert(current_escape.active_at <= get_block_timestamp(), 'argent/inactive-escape');
-        assert(current_escape.escape_type == escape_type, 'argent/invalid-escape-type');
+    #[inline(always)]
+    fn reset_escape(current_escape: Escape) {
+        let status = escape_status(current_escape.active_at);
+        if (status != EscapeStatus::None(
+            ()
+        )) {
+            _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
+            if (status != EscapeStatus::Expired(())) {
+                EscapeCanceled();
+            }
+        }
     }
 
     #[inline(always)]

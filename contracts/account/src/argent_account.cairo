@@ -226,9 +226,10 @@ mod ArgentAccount {
     /// @dev
     /// This method assumes that there is a guardian, and that `new_owner` is not 0
     #[external]
-    fn trigger_escape_owner() {
+    fn trigger_escape_owner(new_owner: felt252) {
         assert_only_self();
         assert_guardian_set();
+        assert(new_owner != 0, 'argent/null-owner');
         // Can only escape owner by guardian, if there is no escape ongoing other or an escape ongoing but for of the type owner
         let current_escape = _escape::read();
         if (current_escape.escape_type == ESCAPE_TYPE_GUARDIAN) {
@@ -249,7 +250,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn trigger_escape_guardian() {
+    fn trigger_escape_guardian(new_guardian: felt252) {
         assert_only_self();
         assert_guardian_set();
 

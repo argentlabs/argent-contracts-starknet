@@ -189,6 +189,14 @@ mod ArgentAccount {
         retdata.span()
     }
 
+    /// @notice Changes the owner
+    /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
+    /// @param new_owner New owner address
+    /// @param signature_r Signature R from the new owner 
+    /// @param signature_S Signature S from the new owner 
+    /// Signature is required to prevent changing to an address which is not in control of the user
+    /// Signature is the Signed Message of this hash:
+    /// hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
     #[external]
     fn change_owner(new_owner: felt252, signature_r: felt252, signature_s: felt252) {
         assert_only_self();
@@ -198,6 +206,10 @@ mod ArgentAccount {
         OwnerChanged(new_owner);
     }
 
+    /// @notice Changes the guardian
+    /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
+    /// @param new_guardian The address of the new guardian, or 0 to disable the guardian
+    /// can only be set to 0 if there is no guardian backup set
     #[external]
     fn change_guardian(new_guardian: felt252) {
         assert_only_self();
@@ -210,6 +222,9 @@ mod ArgentAccount {
         GuardianChanged(new_guardian);
     }
 
+    /// @notice Changes the backup guardian
+    /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
+    /// @param new_guardian_backup The address of the new backup guardian, or 0 to disable the backup guardian
     #[external]
     fn change_guardian_backup(new_guardian_backup: felt252) {
         assert_only_self();
@@ -285,21 +300,20 @@ mod ArgentAccount {
         assert_guardian_set();
 
         let current_escape = _escape::read();
+
         let current_escape_status = escape_status(current_escape.active_at);
         assert(current_escape_status == EscapeStatus::Ready(()), 'argent/inactive-escape');
         assert(current_escape.escape_type == ESCAPE_TYPE_OWNER, 'argent/invalid-escape-type');
 
-        _signer::write(current_escape.new_signer);
-
         // needed if user started escape in old cairo version and
-        // upgraded half way through, then finished escape in new version
+        // upgraded half way through,  then tries to finish the escape in new version
         assert(current_escape.new_signer != 0, 'argent/null-owner');
-        _signer::write(current_escape.new_signer);
-
-        OwnerEscaped(current_escape.new_signer);
 
         // clear escape
         _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
+        // update owner
+        _signer::write(current_escape.new_signer);
+        OwnerEscaped(current_escape.new_signer);
     }
 
     /// @notice Completes the escape and changes the guardian after the security period
@@ -316,12 +330,17 @@ mod ArgentAccount {
         assert(current_escape_status == EscapeStatus::Ready(()), 'argent/inactive-escape');
         assert(current_escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'argent/invalid-escape-type');
 
-        _guardian::write(current_escape.new_signer);
-
-        GuardianEscaped(current_escape.new_signer);
+        // needed if user started escape in old cairo version and
+        // upgraded half way through, then tries to finish the escape in new version
+        if current_escape.new_signer == 0 {
+            assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
+        }
 
         // clear escape
         _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
+        //update guardian
+        _guardian::write(current_escape.new_signer);
+        GuardianEscaped(current_escape.new_signer);
     }
 
     /// @notice Cancels an ongoing escape if any.

@@ -409,6 +409,13 @@ mod ArgentAccount {
         get_name()
     }
 
+    // add back when updated to latest cairo version
+    // currently serde not working for enums
+    // #[view]
+    // fn get_escape_and_status() -> (Escape, EscapeStatus) {
+    //     let current_escape = _escape::read();
+    //     (current_escape, escape_status(current_escape.active_at))
+    // }
 
     // ERC165
     #[view]

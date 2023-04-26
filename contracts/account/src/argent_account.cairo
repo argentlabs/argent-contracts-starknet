@@ -286,7 +286,7 @@ mod ArgentAccount {
 
         let current_escape = _escape::read();
         let current_escape_status = escape_status(current_escape.active_at);
-        assert(current_escape_status == EscapeStatus::Ready(()), 'argent/invalid-escape');
+        assert(current_escape_status == EscapeStatus::Ready(()), 'argent/inactive-escape');
         assert(current_escape.escape_type == ESCAPE_TYPE_OWNER, 'argent/invalid-escape-type');
 
         _signer::write(current_escape.new_signer);
@@ -313,7 +313,7 @@ mod ArgentAccount {
 
         let current_escape = _escape::read();
         let current_escape_status = escape_status(current_escape.active_at);
-        assert(current_escape_status == EscapeStatus::Ready(()), 'argent/invalid-escape');
+        assert(current_escape_status == EscapeStatus::Ready(()), 'argent/inactive-escape');
         assert(current_escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'argent/invalid-escape-type');
 
         _guardian::write(current_escape.new_signer);
@@ -530,9 +530,9 @@ mod ArgentAccount {
     #[inline(always)]
     fn reset_escape(current_escape: Escape) {
         let status = escape_status(current_escape.active_at);
-        if (status != EscapeStatus::None(
+        if status != EscapeStatus::None(
             ()
-        )) {
+        ) {
             _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
             if (status != EscapeStatus::Expired(())) {
                 EscapeCanceled();

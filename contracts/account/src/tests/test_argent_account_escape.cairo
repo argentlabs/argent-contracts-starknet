@@ -182,7 +182,7 @@ fn escape_owner_no_guardian_set() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/not-escaping', ))]
+#[should_panic(expected: ('argent/inactive-escape', ))]
 fn escape_owner_not_escaping() {
     initialize_account();
     set_block_timestamp(ESCAPE_SECURITY_PERIOD);
@@ -275,7 +275,7 @@ fn escape_guardian_no_guardian_set() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/not-escaping', ))]
+#[should_panic(expected: ('argent/inactive-escape', ))]
 fn escape_guardian_not_escaping() {
     initialize_account();
     set_block_timestamp(ESCAPE_SECURITY_PERIOD);

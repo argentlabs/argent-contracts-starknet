@@ -19,11 +19,11 @@ const ESCAPE_TYPE_OWNER: felt252 = 2;
 fn trigger_escape_owner() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
-    ArgentAccount::trigger_escape_owner(1);
+    ArgentAccount::trigger_escape_owner(42);
     let escape = ArgentAccount::get_escape();
     assert(escape.active_at == DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD, 'active_at invalid');
     assert(escape.escape_type == ESCAPE_TYPE_OWNER, 'escape_type invalid');
-    assert(escape.new_signer == 1, 'new_signer not set to 1');
+    assert(escape.new_signer == 42, 'Owner != 42');
 }
 
 #[test]
@@ -32,7 +32,7 @@ fn trigger_escape_owner() {
 fn trigger_escape_owner_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
-    ArgentAccount::trigger_escape_owner(1);
+    ArgentAccount::trigger_escape_owner(42);
 }
 
 #[test]
@@ -40,18 +40,18 @@ fn trigger_escape_owner_only_self() {
 #[should_panic(expected: ('argent/guardian-required', ))]
 fn trigger_escape_owner_no_guardian_set() {
     initialize_account_without_guardian();
-    ArgentAccount::trigger_escape_owner(1);
+    ArgentAccount::trigger_escape_owner(42);
 }
 
 #[test]
 #[available_gas(2000000)]
 fn trigger_escape_owner_twice() {
     initialize_account();
-    ArgentAccount::trigger_escape_owner(1);
+    ArgentAccount::trigger_escape_owner(42);
     let escape = ArgentAccount::get_escape();
     assert(escape.active_at == ESCAPE_SECURITY_PERIOD, 'active_at 1 invalid');
     assert(escape.escape_type == ESCAPE_TYPE_OWNER, 'escape_type 1 invalid');
-    assert(escape.new_signer == 1, 'new_signer not set to 1');
+    assert(escape.new_signer == 42, 'Owner != 42');
 
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_owner(1);
@@ -78,11 +78,11 @@ fn trigger_escape_owner_with_guardian_escaped() {
 fn trigger_escape_guardian() {
     initialize_account();
     set_block_timestamp(DEFAULT_TIMESTAMP);
-    ArgentAccount::trigger_escape_guardian(1);
+    ArgentAccount::trigger_escape_guardian(42);
     let escape = ArgentAccount::get_escape();
     assert(escape.active_at == DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD, 'active_at invalid');
     assert(escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'escape_type invalid');
-    assert(escape.new_signer == 1, 'new_signer not set to 1');
+    assert(escape.new_signer == 42, 'new_signer not set to 42');
 }
 
 #[test]
@@ -91,7 +91,7 @@ fn trigger_escape_guardian() {
 fn trigger_escape_guardian_only_self() {
     initialize_account();
     set_caller_address(contract_address_const::<42>());
-    ArgentAccount::trigger_escape_guardian(1);
+    ArgentAccount::trigger_escape_guardian(42);
 }
 
 #[test]
@@ -106,35 +106,35 @@ fn trigger_escape_guardian_no_guardian_set() {
 #[available_gas(2000000)]
 fn trigger_escape_guardian_twice() {
     initialize_account();
-    ArgentAccount::trigger_escape_guardian(1);
+    ArgentAccount::trigger_escape_guardian(42);
     let escape = ArgentAccount::get_escape();
     assert(escape.active_at == ESCAPE_SECURITY_PERIOD, 'active_at 1 invalid');
     assert(escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'escape_type 1 invalid');
-    assert(escape.new_signer == 1, 'new_signer not set to 1');
+    assert(escape.new_signer == 42, 'Owner != 42');
 
     set_block_timestamp(DEFAULT_TIMESTAMP);
     ArgentAccount::trigger_escape_guardian(1);
     let escape = ArgentAccount::get_escape();
     assert(escape.active_at == DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD, 'active_at 2 invalid');
     assert(escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'escape_type 2 invalid');
-    assert(escape.new_signer == 1, 'new_signer not set to 1');
+    assert(escape.new_signer == 1, 'Guardian != 1');
 }
 
 #[test]
 #[available_gas(2000000)]
 fn trigger_escape_guardian_with_owner_escaped() {
     initialize_account();
-    ArgentAccount::trigger_escape_owner(1);
+    ArgentAccount::trigger_escape_owner(42);
     let escape = ArgentAccount::get_escape();
     assert(escape.active_at == ESCAPE_SECURITY_PERIOD, 'active_at 1 invalid');
     assert(escape.escape_type == ESCAPE_TYPE_OWNER, 'escape_type 1 invalid');
-    assert(escape.new_signer == 1, 'new_signer not set to 1');
+    assert(escape.new_signer == 42, 'Owner != 42');
 
     ArgentAccount::trigger_escape_guardian(1);
     let escape = ArgentAccount::get_escape();
     assert(escape.active_at == ESCAPE_SECURITY_PERIOD, 'active_at 2 invalid');
     assert(escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'escape_type 2 invalid');
-    assert(escape.new_signer == 1, 'new_signer not set to 1');
+    assert(escape.new_signer == 1, 'Guardian != 1');
 }
 
 // escape_owner
@@ -159,7 +159,7 @@ fn escape_owner_at_security_period() {
     ArgentAccount::trigger_escape_owner(42);
     set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD);
     ArgentAccount::escape_owner();
-    assert(ArgentAccount::get_owner() == 42, 'Owner == 42');
+    assert(ArgentAccount::get_owner() == 42, 'Owner != 42');
     assert_escape_cleared();
 }
 
@@ -228,7 +228,7 @@ fn escape_guardian() {
     ArgentAccount::trigger_escape_guardian(42);
     set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD + 1);
     ArgentAccount::escape_guardian();
-    assert(ArgentAccount::get_guardian() == 42, 'Guardian != new guardian');
+    assert(ArgentAccount::get_guardian() == 42, 'Guardian != 42');
     assert_escape_cleared();
 }
 
@@ -240,7 +240,7 @@ fn escape_guardian_at_security_period() {
     ArgentAccount::trigger_escape_guardian(42);
     set_block_timestamp(DEFAULT_TIMESTAMP + ESCAPE_SECURITY_PERIOD);
     ArgentAccount::escape_guardian();
-    assert(ArgentAccount::get_guardian() == 42, 'Guardian != new guardian');
+    assert(ArgentAccount::get_guardian() == 42, 'Guardian != 42');
     assert_escape_cleared();
 }
 

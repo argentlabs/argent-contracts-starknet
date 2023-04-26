@@ -84,10 +84,10 @@ mod ArgentAccount {
     fn TransactionExecuted(hash: felt252, response: Array<felt252>) {}
 
     #[event]
-    fn EscapeOwnerTriggered(active_at: u64) {}
+    fn EscapeOwnerTriggered(active_at: u64, new_owner: felt252) {}
 
     #[event]
-    fn EscapeGuardianTriggered(active_at: u64) {}
+    fn EscapeGuardianTriggered(active_at: u64, new_guardian: felt252) {}
 
     #[event]
     fn OwnerEscaped(new_owner: felt252) {}

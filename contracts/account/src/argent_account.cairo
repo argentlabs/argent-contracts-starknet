@@ -249,6 +249,13 @@ mod ArgentAccount {
         EscapeOwnerTriggered(active_at, new_owner);
     }
 
+    /// @notice Triggers the escape of the guardian when it is lost or compromised.
+    /// Must be called by the account and authorised by the owner alone.
+    /// Can override an ongoing escape of the owner.
+    /// @param new_guardian The new account guardian if the escape completes
+    /// @dev
+    /// This method assumes that there is a guardian and that `new_guardian` can be 0
+    /// if there is no guardian backup
     #[external]
     fn trigger_escape_guardian(new_guardian: felt252) {
         assert_only_self();
@@ -268,6 +275,10 @@ mod ArgentAccount {
         EscapeGuardianTriggered(active_at, new_guardian);
     }
 
+    /// @notice Completes the escape and changes the owner after the security period
+    /// Must be called by the account and authorised by just a guardian
+    /// @dev
+    /// This method assumes that there is a guardian, and that the there is an escape for the owner
     #[external]
     fn escape_owner() {
         assert_only_self();
@@ -291,6 +302,10 @@ mod ArgentAccount {
         _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
     }
 
+    /// @notice Completes the escape and changes the guardian after the security period
+    /// Must be called by the account and authorised by just the owner
+    /// @dev
+    /// This method assumes that there is a guardian, and that the there is an escape for the guardian
     #[external]
     fn escape_guardian() {
         assert_only_self();
@@ -309,6 +324,8 @@ mod ArgentAccount {
         _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
     }
 
+    /// @notice Cancels an ongoing escape if any.
+    /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
     #[external]
     fn cancel_escape() {
         assert_only_self();
@@ -337,7 +354,6 @@ mod ArgentAccount {
 
         AccountUpgraded(implementation);
     }
-
 
     #[external]
     fn execute_after_upgrade(data: Array<felt252>) -> Array::<felt252> {

@@ -16,6 +16,7 @@ mod ArgentAccount {
     use starknet::syscalls::replace_class_syscall;
 
     use account::Escape;
+    use account::EscapeStatus;
 
     use lib::assert_correct_tx_version;
     use lib::assert_no_self_call;

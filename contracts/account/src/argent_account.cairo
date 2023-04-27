@@ -352,7 +352,6 @@ mod ArgentAccount {
         let current_escape_status = escape_status(current_escape.active_at);
         assert(current_escape_status != EscapeStatus::None(()), 'argent/no-active-escape');
         reset_escape(current_escape);
-        EscapeCanceled();
     }
 
     // TODO This could be a trait we impl in another file?

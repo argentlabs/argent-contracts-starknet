@@ -209,7 +209,7 @@ mod ArgentAccount {
     /// @notice Changes the guardian
     /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
     /// @param new_guardian The address of the new guardian, or 0 to disable the guardian
-    /// can only be set to 0 if there is no guardian backup set
+    /// @dev can only be set to 0 if there is no guardian backup set
     #[external]
     fn change_guardian(new_guardian: felt252) {
         assert_only_self();

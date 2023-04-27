@@ -20,12 +20,14 @@ enum EscapeStatus {
     Expired: ()
 }
 
-fn escape_status_to_num(escape_status: EscapeStatus) -> felt252 {
-    match escape_status {
+impl EscapeStatusInto of Into<EscapeStatus, felt252> {
+    fn into(self: EscapeStatus) -> felt252 {
+        match self {
         EscapeStatus::None(()) => 1,
         EscapeStatus::NotReady(()) => 2,
         EscapeStatus::Ready(()) => 3,
         EscapeStatus::Expired(()) => 4,
+    }
     }
 }
 
@@ -33,9 +35,7 @@ fn escape_status_to_num(escape_status: EscapeStatus) -> felt252 {
 impl EscapeStatusPartialEq of PartialEq<EscapeStatus> {
     #[inline(always)]
     fn eq(self: EscapeStatus, other: EscapeStatus) -> bool {
-        let a = escape_status_to_num(self);
-        let b = escape_status_to_num(other);
-        a == b
+        self.into() == other.into()
     }
     #[inline(always)]
     fn ne(self: EscapeStatus, other: EscapeStatus) -> bool {

@@ -20,7 +20,7 @@ enum EscapeStatus {
     Expired: ()
 }
 
-fn enum_to_num(escape_status: EscapeStatus) -> felt252 {
+fn escape_status_to_num(escape_status: EscapeStatus) -> felt252 {
     match escape_status {
         EscapeStatus::None(()) => 1,
         EscapeStatus::NotReady(()) => 2,
@@ -32,14 +32,14 @@ fn enum_to_num(escape_status: EscapeStatus) -> felt252 {
 // can be deleted once partialEq can be successfully derived
 impl EscapeStatusPartialEq of PartialEq<EscapeStatus> {
     #[inline(always)]
-    fn eq(a: EscapeStatus, b: EscapeStatus) -> bool {
-        let aa = enum_to_num(a);
-        let bb = enum_to_num(b);
-        aa == bb
+    fn eq(self: EscapeStatus, other: EscapeStatus) -> bool {
+        let a = escape_status_to_num(self);
+        let b = escape_status_to_num(other);
+        a == b
     }
     #[inline(always)]
-    fn ne(a: EscapeStatus, b: EscapeStatus) -> bool {
-        !(a == b)
+    fn ne(self: EscapeStatus, other: EscapeStatus) -> bool {
+        !(self == other)
     }
 }
 

@@ -556,7 +556,9 @@ mod ArgentAccount {
     #[inline(always)]
     fn reset_escape(current_escape: Escape) {
         let status = escape_status(current_escape.active_at);
-        if status == EscapeStatus::None(()) { return  (); }
+        if status == EscapeStatus::None(()) {
+            return ();
+        }
         _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
         if (status != EscapeStatus::Expired(())) {
             EscapeCanceled();

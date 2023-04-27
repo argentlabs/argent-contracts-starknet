@@ -202,7 +202,7 @@ fn escape_owner_before_timeout() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/invalid-escape-type', ))]
+#[should_panic(expected: ('argent/invalid-escape', ))]
 fn escape_owner_wrong_escape_type() {
     initialize_account();
     ArgentAccount::trigger_escape_guardian(42);
@@ -295,7 +295,7 @@ fn escape_guardian_before_timeout() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/invalid-escape-type', ))]
+#[should_panic(expected: ('argent/invalid-escape', ))]
 fn escape_guardian_wrong_escape_type() {
     initialize_account();
     ArgentAccount::trigger_escape_owner(42);

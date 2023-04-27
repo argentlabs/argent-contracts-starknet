@@ -303,7 +303,7 @@ mod ArgentAccount {
 
         let current_escape_status = escape_status(current_escape.active_at);
         assert(current_escape_status == EscapeStatus::Ready(()), 'argent/invalid-escape');
-        assert(current_escape.escape_type == ESCAPE_TYPE_OWNER, 'argent/invalid-escape-type');
+        assert(current_escape.escape_type == ESCAPE_TYPE_OWNER, 'argent/invalid-escape');
 
         // needed if user started escape in old cairo version and
         // upgraded half way through,  then tries to finish the escape in new version
@@ -328,7 +328,7 @@ mod ArgentAccount {
         let current_escape = _escape::read();
         let current_escape_status = escape_status(current_escape.active_at);
         assert(current_escape_status == EscapeStatus::Ready(()), 'argent/invalid-escape');
-        assert(current_escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'argent/invalid-escape-type');
+        assert(current_escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'argent/invalid-escape');
 
         // needed if user started escape in old cairo version and
         // upgraded half way through, then tries to finish the escape in new version

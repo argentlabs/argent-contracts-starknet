@@ -24,10 +24,10 @@ enum EscapeStatus {
 impl EscapeStatusInto of Into<EscapeStatus, felt252> {
     fn into(self: EscapeStatus) -> felt252 {
         match self {
-            EscapeStatus::None(()) => 1,
-            EscapeStatus::NotReady(()) => 2,
-            EscapeStatus::Ready(()) => 3,
-            EscapeStatus::Expired(()) => 4,
+            EscapeStatus::None(()) => 0,
+            EscapeStatus::NotReady(()) => 1,
+            EscapeStatus::Ready(()) => 2,
+            EscapeStatus::Expired(()) => 3,
         }
     }
 }

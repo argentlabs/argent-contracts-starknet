@@ -239,7 +239,7 @@ mod ArgentAccount {
     /// Cannot override an ongoing escape of the guardian.
     /// @param new_owner The new account owner if the escape completes
     /// @dev
-    /// This method assumes that there is a guardian, and that `new_owner` is not 0
+    /// This method checks that there is a guardian, and that `new_owner` is not 0
     #[external]
     fn trigger_escape_owner(new_owner: felt252) {
         assert_only_self();
@@ -269,8 +269,8 @@ mod ArgentAccount {
     /// Can override an ongoing escape of the owner.
     /// @param new_guardian The new account guardian if the escape completes
     /// @dev
-    /// This method assumes that there is a guardian and that `new_guardian` can be 0
-    /// if there is no guardian backup
+    /// This method checks that there is a guardian and that `new_guardian` can be 0
+    /// if there is no guardian backup (i.e. guardian backup == 0)
     #[external]
     fn trigger_escape_guardian(new_guardian: felt252) {
         assert_only_self();
@@ -293,7 +293,7 @@ mod ArgentAccount {
     /// @notice Completes the escape and changes the owner after the security period
     /// Must be called by the account and authorised by just a guardian
     /// @dev
-    /// This method assumes that there is a guardian, and that the there is an escape for the owner
+    /// This method checks that there is a guardian, and that the there is an escape for the owner
     #[external]
     fn escape_owner() {
         assert_only_self();

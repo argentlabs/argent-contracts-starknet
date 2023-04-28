@@ -20,6 +20,7 @@ enum EscapeStatus {
     Expired: ()
 }
 
+// can be deleted once partialEq can be successfully derived
 impl EscapeStatusInto of Into<EscapeStatus, felt252> {
     fn into(self: EscapeStatus) -> felt252 {
         match self {

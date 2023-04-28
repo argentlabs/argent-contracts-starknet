@@ -248,7 +248,7 @@ mod ArgentAccount {
         // Can only escape owner by guardian, if there is no escape ongoing other or an escape ongoing but for of the type owner
         let current_escape = _escape::read();
         if (current_escape.escape_type == ESCAPE_TYPE_GUARDIAN) {
-            let current_escape_status = escape_status(current_escape.active_at);
+            let current_escape_status = get_escape_status(current_escape.active_at);
             assert(
                 current_escape_status == EscapeStatus::Expired(()), 'argent/cannot-override-escape'
             );
@@ -301,7 +301,7 @@ mod ArgentAccount {
 
         let current_escape = _escape::read();
 
-        let current_escape_status = escape_status(current_escape.active_at);
+        let current_escape_status = get_escape_status(current_escape.active_at);
         assert(current_escape_status == EscapeStatus::Ready(()), 'argent/invalid-escape');
         assert(current_escape.escape_type == ESCAPE_TYPE_OWNER, 'argent/invalid-escape');
 
@@ -326,7 +326,7 @@ mod ArgentAccount {
         assert_guardian_set();
 
         let current_escape = _escape::read();
-        let current_escape_status = escape_status(current_escape.active_at);
+        let current_escape_status = get_escape_status(current_escape.active_at);
         assert(current_escape_status == EscapeStatus::Ready(()), 'argent/invalid-escape');
         assert(current_escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'argent/invalid-escape');
 
@@ -349,7 +349,7 @@ mod ArgentAccount {
     fn cancel_escape() {
         assert_only_self();
         let current_escape = _escape::read();
-        let current_escape_status = escape_status(current_escape.active_at);
+        let current_escape_status = get_escape_status(current_escape.active_at);
         assert(current_escape_status != EscapeStatus::None(()), 'argent/no-active-escape');
         reset_escape(current_escape);
     }
@@ -433,7 +433,7 @@ mod ArgentAccount {
     // #[view]
     // fn get_escape_and_status() -> (Escape, EscapeStatus) {
     //     let current_escape = _escape::read();
-    //     (current_escape, escape_status(current_escape.active_at))
+    //     (current_escape, get_escape_status(current_escape.active_at))
     // }
 
     // ERC165
@@ -539,7 +539,7 @@ mod ArgentAccount {
         (full_signature.slice(0, 2), full_signature.slice(2, 2))
     }
 
-    fn escape_status(escape_active_at: u64) -> EscapeStatus {
+    fn get_escape_status(escape_active_at: u64) -> EscapeStatus {
         if (escape_active_at == 0) {
             return EscapeStatus::None(());
         }
@@ -558,7 +558,7 @@ mod ArgentAccount {
 
     #[inline(always)]
     fn reset_escape(current_escape: Escape) {
-        let current_escape_status = escape_status(current_escape.active_at);
+        let current_escape_status = get_escape_status(current_escape.active_at);
         if current_escape_status == EscapeStatus::None(()) {
             return ();
         }

@@ -541,15 +541,19 @@ mod ArgentAccount {
 
     fn escape_status(escape_active_at: u64) -> EscapeStatus {
         if (escape_active_at == 0) {
-            EscapeStatus::None(())
-        } else if (get_block_timestamp() < escape_active_at) {
-            EscapeStatus::NotReady(())
-        } else if (escape_active_at
-            + ESCAPE_EXPIRY_PERIOD <= get_block_timestamp()) {
-                EscapeStatus::Expired(())
-            } else {
-                EscapeStatus::Ready(())
+            return EscapeStatus::None(());
+        }
+
+        let block_timestamp = get_block_timestamp();
+        if (block_timestamp < escape_active_at) {
+            return EscapeStatus::NotReady(());
+        }
+        if (escape_active_at
+            + ESCAPE_EXPIRY_PERIOD <= block_timestamp) {
+                return EscapeStatus::Expired(());
             }
+
+        EscapeStatus::Ready(())
     }
 
     #[inline(always)]

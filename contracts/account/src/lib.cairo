@@ -5,6 +5,7 @@ mod escape;
 use escape::Escape;
 use escape::StorageAccessEscape;
 use escape::EscapeSerde;
+use escape::EscapeStatus;
 
 #[cfg(test)]
 mod tests;

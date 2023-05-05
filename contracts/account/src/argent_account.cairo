@@ -18,6 +18,10 @@ mod ArgentAccount {
     use account::Escape;
     use account::EscapeStatus;
 
+    use account::ExternalCalls;
+    use account::hash_message_external_calls;
+    use lib::SpanSerde;
+
     use lib::assert_correct_tx_version;
     use lib::assert_no_self_call;
     use lib::assert_non_reentrant;
@@ -185,6 +189,29 @@ mod ArgentAccount {
         assert_non_reentrant();
 
         let retdata = execute_multicall(calls);
+        // TransactionExecuted(tx_info.transaction_hash, retdata);
+        retdata.span()
+    }
+
+    /// TODO return type as Array<Array<felt252>>
+    #[external]
+    fn execute_external_calls(
+        external_calls: ExternalCalls, signature: Array<felt252>
+    ) -> Span::<felt252> {
+        // TODO check nonce, expiry, sender...
+
+        let hash = hash_message_external_calls(@external_calls);
+        // TODO should i add some prefix here?
+        let (owner_signature, guardian_signature) = split_signatures(signature.span());
+        let is_valid = is_valid_owner_signature(hash, owner_signature);
+        assert(is_valid, 'argent/invalid-owner-sig');
+        if _guardian::read() != 0 {
+            let is_valid = is_valid_guardian_signature(hash, guardian_signature);
+            assert(is_valid, 'argent/invalid-guardian-sig');
+        }
+
+        // TODO update nonce
+        let retdata = execute_multicall(external_calls.calls);
         // TransactionExecuted(tx_info.transaction_hash, retdata);
         retdata.span()
     }

@@ -33,7 +33,7 @@ describe("Test contract: ArgentAccount", function () {
   });
 
   beforeEach(async () => {
-    // Do stuff
+    // TODO When everything is more clean, we could deploy a new funded cairo1 account and use that one to do all the logic
   });
 
   xdescribe("Example tests", function () {
@@ -197,7 +197,7 @@ describe("Test contract: ArgentAccount", function () {
         {
           contractAddress: account.address,
           entrypoint: "trigger_escape_guardian",
-          calldata: [],
+          calldata: CallData.compile({ new_guardian: "0x43" }),
         },
         undefined,
         { cairoVersion: "1" },
@@ -227,7 +227,7 @@ describe("Test contract: ArgentAccount", function () {
         {
           contractAddress: account.address,
           entrypoint: "trigger_escape_guardian",
-          calldata: [],
+          calldata: CallData.compile({ new_guardian: "0x43" }),
         },
         undefined,
         { cairoVersion: "1" },
@@ -238,7 +238,7 @@ describe("Test contract: ArgentAccount", function () {
         {
           contractAddress: account.address,
           entrypoint: "escape_guardian",
-          calldata: CallData.compile({ new_guardian: "0x43" }),
+          calldata: [],
         },
         undefined,
         { cairoVersion: "1" },
@@ -256,6 +256,11 @@ describe("Test contract: ArgentAccount", function () {
   xit("Should be posssible to deploy an argent account version 0.3.0", async function () {
     // await deployAccount(argentAccountClassHash);
     // TODO Impossible atm needs not (yet) available version of Starknet
+  });
+
+  it("Should be possible change owner", async function () {
+    // TODO This will involve passing new owner + R + S And test that this iss correct:
+    // TupleSize4LegacyHash::hash(0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), _signer::read()));
   });
 
   xit("Should use both signature when there is an owner AND a guardian", async function () {

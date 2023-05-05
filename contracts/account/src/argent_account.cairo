@@ -254,7 +254,7 @@ mod ArgentAccount {
             );
         }
 
-        reset_escape(current_escape);
+        reset_escape();
         let active_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
         // TODO Since timestamp is a u64, and escape type 1 small felt252, we can pack those two values and use 1 storage slot
         // TODO We could also inverse the way we store using a map and at ESCAPE_TYPE_OWNER having the escape active_at of the owner and at ESCAPE_TYPE_GUARDIAN escape active_at
@@ -280,8 +280,7 @@ mod ArgentAccount {
             assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
         }
 
-        let current_escape = _escape::read();
-        reset_escape(current_escape);
+        reset_escape();
 
         let active_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
         _escape::write(
@@ -351,7 +350,7 @@ mod ArgentAccount {
         let current_escape = _escape::read();
         let current_escape_status = get_escape_status(current_escape.active_at);
         assert(current_escape_status != EscapeStatus::None(()), 'argent/no-active-escape');
-        reset_escape(current_escape);
+        reset_escape();
     }
 
     // TODO This could be a trait we impl in another file?
@@ -557,7 +556,8 @@ mod ArgentAccount {
     }
 
     #[inline(always)]
-    fn reset_escape(current_escape: Escape) {
+    fn reset_escape() {
+        let current_escape = _escape::read();
         let current_escape_status = get_escape_status(current_escape.active_at);
         if current_escape_status == EscapeStatus::None(()) {
             return ();

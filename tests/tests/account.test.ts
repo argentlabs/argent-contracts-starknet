@@ -27,8 +27,8 @@ describe("Test contract: ArgentAccount", function () {
     console.log("\tSetup ongoing...");
     argentAccountClassHash = await declareContract("ArgentAccount");
     // TODO Those two can go away once we have support for deploying cairo1 accounts (should only be used in upgrade tests)
-    oldArgentAccountClassHash = await declareContract("OldArgentAccount"); 
-    proxyClassHash = await declareContract("Proxy"); 
+    oldArgentAccountClassHash = await declareContract("OldArgentAccount");
+    proxyClassHash = await declareContract("Proxy");
     // const testDappClassHash = await declareContract("TestDapp");
     // testDapp = await deployAndLoadContract(testDappClassHash);
     console.log("\tSetup done...");
@@ -38,7 +38,7 @@ describe("Test contract: ArgentAccount", function () {
     // TODO When everything is more clean, we could deploy a new funded cairo1 account and use that one to do all the logic
   });
 
-  xdescribe("Example tests", function () {
+  describe("Example tests", function () {
     it("Deploy a contract without guardian", async function () {
       const contract = await deployAndLoadAccountContract(argentAccountClassHash, 12);
       const result = await contract.call("get_guardian");
@@ -98,7 +98,7 @@ describe("Test contract: ArgentAccount", function () {
       const { balance: senderFinalBalance } = await ethContract.balanceOf(account.address);
       const { balance: recipientFinalBalance } = await ethContract.balanceOf(recipient);
       // Before amount should be higher than (after + transfer) amount due to fee
-      expect(uint256.uint256ToBN(senderInitialBalance) + 1000n > uint256.uint256ToBN(senderFinalBalance)).to.be.true
+      expect(uint256.uint256ToBN(senderInitialBalance) + 1000n > uint256.uint256ToBN(senderFinalBalance)).to.be.true;
       expect(uint256.uint256ToBN(recipientInitialBalance) + 1000n).to.equal(uint256.uint256ToBN(recipientFinalBalance));
     });
 
@@ -313,7 +313,7 @@ describe("Test contract: ArgentAccount", function () {
         ownerPrivateKey,
         guardianPrivateKey,
       );
-  
+
       const accountContract = await loadContract(account.address);
       const guardianBackupBefore = await accountContract.get_guardian_backup();
       expect(guardianBackupBefore).to.equal(0n);
@@ -329,9 +329,9 @@ describe("Test contract: ArgentAccount", function () {
       );
       const guardianBackupAfter = await accountContract.get_guardian_backup();
       expect(guardianBackupAfter).to.equal(BigInt(guardianBackupPublicKey));
-  
+
       account.signer = new ArgentSigner(ownerPrivateKey, guardianBackupPrivateKey);
-  
+
       await account.execute(
         {
           contractAddress: account.address,

@@ -3,7 +3,7 @@ import { loadContract } from "./lib";
 
 // Polls quickly for a local network
 class FastProvider extends SequencerProvider {
-  waitForTransaction(txHash: any, options?: any = {}): Promise<any> {
+  waitForTransaction(txHash: any, options = {}): Promise<any> {
     return super.waitForTransaction(txHash, { retryInterval: 250, ...options });
   }
 }

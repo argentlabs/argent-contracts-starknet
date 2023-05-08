@@ -1,12 +1,6 @@
 import { expect } from "chai";
 import { CallData, Signer, ec, num, stark, uint256 } from "starknet";
-import {
-  deployAccount,
-  deployCairo1AccountWithGuardian,
-  deployOldAccount,
-  getCairo1Account,
-  upgradeAccount,
-} from "./shared/account";
+import { deployAccount, deployCairo1AccountWithGuardian, getCairo1Account } from "./shared/account";
 import {
   account,
   declareContract,
@@ -16,6 +10,7 @@ import {
   loadContract,
 } from "./shared/lib";
 
+import { ArgentSigner } from "./shared/argentSigner";
 import { ethAddress, getEthContract } from "./shared/constants";
 import { increaseTime, setTime } from "./shared/devnetInteraction";
 
@@ -251,7 +246,7 @@ describe("Test contract: ArgentAccount", function () {
       expect(guardian).to.be.equal(BigInt("0x43"));
     });
 
-    it("Should use GUARDIAN signature when excaping owner", async function () {
+    it("Should use GUARDIAN signature when escaping owner", async function () {
       const ownerPrivateKey = stark.randomAddress();
       const guardianPrivateKey = stark.randomAddress();
       const account = await deployCairo1AccountWithGuardian(
@@ -272,7 +267,42 @@ describe("Test contract: ArgentAccount", function () {
         undefined,
         { cairoVersion: "1" },
       );
+
+      await setTime(42);
+      const accountContract = await loadContract(account.address);
+      const escape = await accountContract.get_escape();
+      expect(escape.escape_type).to.be.equal(2n);
+      expect(Number(escape.active_at)).to.be.greaterThanOrEqual(Number(42n + 604800n));
     });
+
+    it("Should use signature from BOTH OWNER and GUARDIAN when there is a GUARDIAN", async function () {
+      const ownerPrivateKey = stark.randomAddress();
+      const guardianPrivateKey = stark.randomAddress();
+      const account = await deployCairo1AccountWithGuardian(
+        proxyClassHash,
+        oldArgentAccountClassHash,
+        argentAccountClassHash,
+        ownerPrivateKey,
+        guardianPrivateKey,
+      );
+  
+      const accountContract = await loadContract(account.address);
+      const guardianBackupBefore = await accountContract.get_guardian_backup();
+      expect(guardianBackupBefore).to.be.equal(BigInt(0));
+      account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
+      await account.execute(
+        {
+          contractAddress: account.address,
+          entrypoint: "change_guardian_backup",
+          calldata: CallData.compile({ new_guardian_backup: "0x42" }),
+        },
+        undefined,
+        { cairoVersion: "1" },
+      );
+      const guardianBackupAfter = await accountContract.get_guardian_backup();
+      expect(guardianBackupAfter).to.be.equal(BigInt("0x42"));
+    });
+  
   });
 
   xit("Should be posssible to deploy an argent account version 0.3.0", async function () {
@@ -281,11 +311,12 @@ describe("Test contract: ArgentAccount", function () {
   });
 
   xit("Should be possible change owner", async function () {
-    // TODO This will involve passing new owner + R + S And test that this iss correct:
+    // TODO This will involve passing new owner + R + S And test that this iss correct
     // TupleSize4LegacyHash::hash(0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), _signer::read()));
   });
-
-  xit("Should sign messages from OWNER and GUARDIAN when there is a GUARDIAN", async function () {
-    // TODO This will involve passing new owner + R + S And test that this iss correct:
+  xit("Should sign messages from OWNER and GUARDIAN when there is a GUARDIAN (case with BACKUP)", async function () {
+    // TODO
   });
+
+
 });

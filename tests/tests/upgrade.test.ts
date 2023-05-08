@@ -3,7 +3,7 @@ import { shortString } from "starknet";
 import { deployOldAccount, getCairo1Account, upgradeAccount } from "./shared/account";
 import { declareContract, provider } from "./shared/lib";
 
-xdescribe("Test Argent Account: upgrade", function () {
+describe("Test Argent Account: upgrade", function () {
   // Avoid timeout
   this.timeout(320000);
 

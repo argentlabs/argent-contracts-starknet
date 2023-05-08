@@ -38,7 +38,7 @@ describe("Test contract: ArgentAccount", function () {
     // TODO When everything is more clean, we could deploy a new funded cairo1 account and use that one to do all the logic
   });
 
-  xdescribe("Example tests", function () {
+  describe("Example tests", function () {
     it("Deploy a contract without guardian", async function () {
       const contract = await deployAndLoadAccountContract(argentAccountClassHash, 12);
       const result = await contract.call("get_guardian");

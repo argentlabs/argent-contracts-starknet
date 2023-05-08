@@ -300,6 +300,50 @@ describe("Test contract: ArgentAccount", function () {
       const guardianBackupAfter = await accountContract.get_guardian_backup();
       expect(guardianBackupAfter).to.equal(BigInt("0x42"));
     });
+
+    it("Should sign messages from OWNER and BACKUP_GUARDIAN when there is a GUARDIAN and a BACKUP", async function () {
+      const ownerPrivateKey = stark.randomAddress();
+      const guardianPrivateKey = stark.randomAddress();
+      const guardianBackupPrivateKey = stark.randomAddress();
+      const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
+      const account = await deployCairo1AccountWithGuardian(
+        proxyClassHash,
+        oldArgentAccountClassHash,
+        argentAccountClassHash,
+        ownerPrivateKey,
+        guardianPrivateKey,
+      );
+  
+      const accountContract = await loadContract(account.address);
+      const guardianBackupBefore = await accountContract.get_guardian_backup();
+      expect(guardianBackupBefore).to.equal(0n);
+      account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
+      await account.execute(
+        {
+          contractAddress: account.address,
+          entrypoint: "change_guardian_backup",
+          calldata: CallData.compile({ new_guardian_backup: guardianBackupPublicKey }),
+        },
+        undefined,
+        { cairoVersion: "1" },
+      );
+      const guardianBackupAfter = await accountContract.get_guardian_backup();
+      expect(guardianBackupAfter).to.equal(BigInt(guardianBackupPublicKey));
+  
+      account.signer = new ArgentSigner(ownerPrivateKey, guardianBackupPrivateKey);
+  
+      await account.execute(
+        {
+          contractAddress: account.address,
+          entrypoint: "change_guardian",
+          calldata: CallData.compile({ new_guardian_backup: "0x42" }),
+        },
+        undefined,
+        { cairoVersion: "1" },
+      );
+      const guardianAfter = await accountContract.get_guardian();
+      expect(guardianAfter).to.equal(BigInt("0x42"));
+    });
   });
 
   xit("Should be posssible to deploy an argent account version 0.3.0", async function () {
@@ -311,7 +355,8 @@ describe("Test contract: ArgentAccount", function () {
     // TODO This will involve passing new owner + R + S And test that this iss correct
     // TupleSize4LegacyHash::hash(0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), _signer::read()));
   });
-  xit("Should sign messages from OWNER and GUARDIAN when there is a GUARDIAN (case with BACKUP)", async function () {
+
+  xit("Try signature len != 2 || != 4", async function () {
     // TODO
   });
 });

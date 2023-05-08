@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, ec, num, stark, uint256 } from "starknet";
+import { CallData, Signer, ec, num, stark, uint256 } from "starknet";
 import { deployAccount, deployOldAccount, getCairo1Account, upgradeAccount } from "./shared/account";
 import {
   account,
@@ -251,6 +251,36 @@ describe("Test contract: ArgentAccount", function () {
       const guardian = await accountContract.get_guardian();
       expect(guardian).to.be.equal(BigInt("0x43"));
     });
+
+    it("Should use GUARDIAN signature when excaping owner", async function () {
+      const ownerPrivateKey = stark.randomAddress();
+      const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
+      const account = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash, ownerPrivateKey, ownerPublicKey);
+      await upgradeAccount(account, argentAccountClassHash);
+      const guardianPrivateKey = stark.randomAddress();
+      const guardianPublicKey = ec.starkCurve.getStarkKey(guardianPrivateKey);
+      // Needs to be done aftewards otherwise can't upgrade without providing both owner signature and guardian signature (Should be changed later)
+      await account.execute(
+        {
+          contractAddress: account.address,
+          entrypoint: "change_guardian",
+          calldata: CallData.compile({ new_guardian: guardianPublicKey }),
+        },
+        undefined,
+        { cairoVersion: "1" },
+      );
+  
+      account.signer = new Signer(guardianPrivateKey);
+      await account.execute(
+        {
+          contractAddress: account.address,
+          entrypoint: "trigger_escape_owner",
+          calldata: CallData.compile({ new_owner: "0x42" }),
+        },
+        undefined,
+        { cairoVersion: "1" },
+      );
+    });
   });
 
   xit("Should be posssible to deploy an argent account version 0.3.0", async function () {
@@ -258,42 +288,10 @@ describe("Test contract: ArgentAccount", function () {
     // TODO Impossible atm needs not (yet) available version of Starknet
   });
 
-  it("Should be possible change owner", async function () {
+  xit("Should be possible change owner", async function () {
     // TODO This will involve passing new owner + R + S And test that this iss correct:
     // TupleSize4LegacyHash::hash(0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), _signer::read()));
   });
 
-  xit("Should use both signature when there is an owner AND a guardian", async function () {
-    // TODO PUT ON PAUSE: play around with signature (some more info down)
-    const ownerPrivateKey = stark.randomAddress();
-    const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
-    console.log(ownerPrivateKey);
-    console.log(ownerPublicKey);
-    const account = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash, ownerPrivateKey, ownerPublicKey);
-    await upgradeAccount(account, argentAccountClassHash);
-    const guardianPrivateKey = stark.randomAddress();
-    const guardianPublicKey = ec.starkCurve.getStarkKey(guardianPrivateKey);
-    // Needs to be done aftewards otherwise can't upgrade without providing both owner signature and guardian signature (Should be changed later)
-    await account.execute(
-      {
-        contractAddress: account.address,
-        entrypoint: "change_guardian",
-        calldata: CallData.compile({ new_guardian: guardianPublicKey }),
-      },
-      undefined,
-      { cairoVersion: "1" },
-    );
-    // need to create a classs that will extend Signer and mofidy signTransaction()
-    // Then account.signer = MyNewClass();
-    // Performing an operation that needs to be signed by both owner AND guardian
-    await account.execute(
-      {
-        contractAddress: account.address,
-        entrypoint: "change_guardian_backup",
-        calldata: CallData.compile({ new_guardian_backup: "0x42" }),
-      },
-      undefined,
-      { cairoVersion: "1" },
-    );
-  });
+
 });

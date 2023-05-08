@@ -1,16 +1,16 @@
-import { Account, CairoVersion, CallData, ec, hash, stark } from "starknet";
+import { Account, CairoVersion, CallData, Signer, ec, hash, stark } from "starknet";
 import { account, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
 
 async function deployOldAccount(
   proxyClassHash: string,
   oldArgentAccountClassHash: string,
-  privateKey?: string,
+  privateKey?: string | Signer,
   publicKey?: string,
 ) {
   // stark.randomAddress() for testing purposes only, this is not safe in production
   privateKey = privateKey || stark.randomAddress();
-  publicKey = publicKey || ec.starkCurve.getStarkKey(privateKey);
+  publicKey = publicKey || ec.starkCurve.getStarkKey(privateKey as string); // Need to force string type (maybe there is a better way?)
 
   const constructorCalldata = CallData.compile({
     implementation: oldArgentAccountClassHash,

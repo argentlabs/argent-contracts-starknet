@@ -1,7 +1,6 @@
 import { Account, CairoVersion, CallData, ec, hash, stark } from "starknet";
 import { account, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
-import { loadContract } from "./lib";
 
 async function deployOldAccount(proxyClassHash: string, oldArgentAccountClassHash: string, privateKey?: string) {
   // stark.randomAddress() for testing purposes only, this is not safe in production

@@ -41,13 +41,13 @@ describe("Test contract: ArgentAccount", function () {
     it("Deploy a contract without guardian", async function () {
       const contract = await deploAndLoadAccountContract(argentAccountClassHash, 12);
       const result = await contract.call("get_guardian");
-      expect(result).to.be.equal(BigInt(0));
+      expect(result).to.equal(0n);
     });
 
     it("Deploy a contract with guardian", async function () {
       const contract = await deploAndLoadAccountContract(argentAccountClassHash, 12, 42);
       const result = await contract.call("get_guardian");
-      expect(result).to.be.equal(BigInt(42));
+      expect(result).to.equal(42n);
     });
 
     it("Expect an error when owner is zero", async function () {
@@ -96,10 +96,10 @@ describe("Test contract: ArgentAccount", function () {
       await account.waitForTransaction(transferTxHash);
       const { balance: senderFinalBalance } = await ethContract.balanceOf(account.address);
       const { balance: recipientFinalalance } = await ethContract.balanceOf(recipient);
-      expect(senderInitialBalance.high).to.be.equal(senderFinalBalance.high);
+      expect(senderInitialBalance.high).to.equal(senderFinalBalance.high);
       // Before amount should be higher than (after + transfer) amount due to fee
       expect(Number(senderInitialBalance.low)).to.be.greaterThan(Number(senderFinalBalance.low) + 1000);
-      expect(uint256.uint256ToBN(recipientInitialBalance) + 1000n).to.be.equal(
+      expect(uint256.uint256ToBN(recipientInitialBalance) + 1000n).to.equal(
         uint256.uint256ToBN(recipientFinalalance),
       );
     });
@@ -137,13 +137,13 @@ describe("Test contract: ArgentAccount", function () {
       const { balance: senderFinalBalance } = await ethContract.balanceOf(account.address);
       const { balance: recipient1FinalBalance } = await ethContract.balanceOf(recipient1);
       const { balance: recipient2FinalBalance } = await ethContract.balanceOf(recipient2);
-      expect(senderInitialBalance.high).to.be.equal(senderFinalBalance.high);
+      expect(senderInitialBalance.high).to.equal(senderFinalBalance.high);
       // Before amount should be higher than (after + transfer) amount due to fee
       expect(Number(senderInitialBalance.low)).to.be.greaterThan(Number(senderFinalBalance.low) + 1000 + 42000);
-      expect(uint256.uint256ToBN(recipient1InitialBalance) + 1000n).to.be.equal(
+      expect(uint256.uint256ToBN(recipient1InitialBalance) + 1000n).to.equal(
         uint256.uint256ToBN(recipient1FinalBalance),
       );
-      expect(uint256.uint256ToBN(recipient2InitialBalance) + 42000n).to.be.equal(
+      expect(uint256.uint256ToBN(recipient2InitialBalance) + 42000n).to.equal(
         uint256.uint256ToBN(recipient2FinalBalance),
       );
     });
@@ -186,10 +186,10 @@ describe("Test contract: ArgentAccount", function () {
 
       const accountContract = await loadContract(account.address);
       const owner = await accountContract.get_owner();
-      expect(owner).to.be.equal(BigInt(starkKeyPub));
+      expect(owner).to.equal(BigInt(starkKeyPub));
       const guardianKeyPub = ec.starkCurve.getStarkKey("0x42");
       const guardian = await accountContract.get_guardian();
-      expect(guardian).to.be.equal(BigInt(guardianKeyPub));
+      expect(guardian).to.equal(BigInt(guardianKeyPub));
 
       await setTime(42);
       await account.execute(
@@ -202,8 +202,8 @@ describe("Test contract: ArgentAccount", function () {
         { cairoVersion: "1" },
       );
       const escape = await accountContract.get_escape();
-      expect(escape.escape_type).to.be.equal(1n);
-      expect(escape.active_at).to.be.equal(42n + 604800n);
+      expect(escape.escape_type).to.equal(1n);
+      expect(escape.active_at).to.equal(42n + 604800n);
     });
 
     it("Should be possible to escape a guardian by the owner alone", async function () {
@@ -240,10 +240,10 @@ describe("Test contract: ArgentAccount", function () {
 
       const accountContract = await loadContract(account.address);
       const escape = await accountContract.get_escape();
-      expect(escape.escape_type).to.be.equal(0n);
-      expect(escape.active_at).to.be.equal(0n);
+      expect(escape.escape_type).to.equal(0n);
+      expect(escape.active_at).to.equal(0n);
       const guardian = await accountContract.get_guardian();
-      expect(guardian).to.be.equal(BigInt("0x43"));
+      expect(guardian).to.equal(BigInt("0x43"));
     });
 
     it("Should use GUARDIAN signature when escaping owner", async function () {
@@ -271,7 +271,7 @@ describe("Test contract: ArgentAccount", function () {
       await setTime(42);
       const accountContract = await loadContract(account.address);
       const escape = await accountContract.get_escape();
-      expect(escape.escape_type).to.be.equal(2n);
+      expect(escape.escape_type).to.equal(2n);
       expect(Number(escape.active_at)).to.be.greaterThanOrEqual(Number(42n + 604800n));
     });
 
@@ -288,7 +288,7 @@ describe("Test contract: ArgentAccount", function () {
   
       const accountContract = await loadContract(account.address);
       const guardianBackupBefore = await accountContract.get_guardian_backup();
-      expect(guardianBackupBefore).to.be.equal(BigInt(0));
+      expect(guardianBackupBefore).to.equal(0n);
       account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
       await account.execute(
         {
@@ -300,7 +300,7 @@ describe("Test contract: ArgentAccount", function () {
         { cairoVersion: "1" },
       );
       const guardianBackupAfter = await accountContract.get_guardian_backup();
-      expect(guardianBackupAfter).to.be.equal(BigInt("0x42"));
+      expect(guardianBackupAfter).to.equal(BigInt("0x42"));
     });
   
   });

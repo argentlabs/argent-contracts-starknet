@@ -37,16 +37,20 @@ async function declareContract(contractName: string): Promise<string> {
   }
   const contract: CompiledSierra = json.parse(readFileSync(`./contracts/${contractName}.json`).toString("ascii"));
   const classHash = hash.computeContractClassHash(contract);
-  classHashCache[contractName] = classHash;
   if (await isClassHashDeclared(classHash)) {
+    classHashCache[contractName] = classHash;
     return classHash;
   }
   if ("sierra_program" in contract) {
     const casm: CompiledSierraCasm = json.parse(readFileSync(`./contracts/${contractName}.casm`).toString("ascii"));
-    return await actualDeclare({ contract, casm });
+    const returnedClashHash = await actualDeclare({ contract, casm });
+    expect(returnedClashHash).to.equal(classHash);
   } else {
-    return await actualDeclare({ contract });
+    const returnedClashHash = await actualDeclare({ contract });
+    expect(returnedClashHash).to.equal(classHash);
   }
+  classHashCache[contractName] = classHash;
+  return classHash;
 }
 
 async function actualDeclare(payload: DeclareContractPayload): Promise<string> {

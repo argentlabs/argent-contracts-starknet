@@ -6,7 +6,7 @@ Have [node and npm installed.](https://docs.npmjs.com/downloading-and-installing
 
 ## Install the devnet
 
-Install python dependencies (Run in project root folder)
+Install Python dependencies (run in project root folder)
 
 ```
 python3.9 -m venv ./venv

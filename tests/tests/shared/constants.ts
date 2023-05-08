@@ -14,8 +14,8 @@ export const provider = new FastProvider({ baseUrl });
 export const account = new Account(
   provider /* provider */,
   "0x347be35996a21f6bf0623e75dbce52baba918ad5ae8d83b6f416045ab22961a" /* address */,
-  "0xbdd640fb06671ad11c80317fa3b1799d" /*ok*/,
-); // TODO Try replace with argent account at first
+  "0xbdd640fb06671ad11c80317fa3b1799d" /* private key */,
+);
 
 export const ethAddress = "0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7";
 let ethContract: Contract;

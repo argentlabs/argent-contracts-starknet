@@ -4,7 +4,7 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "test": "tsc && mocha tests/*.spec.ts",
+    "test": "tsc && mocha tests/*.test.ts",
     "lint": "eslint . --fix",
     "prettier": "prettier --write ."
   },

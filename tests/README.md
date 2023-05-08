@@ -34,6 +34,7 @@ npm run test
 ```
 
 You also have access to the linter and a code formatter:
+
 ```shell
 npm run lint
 npm run prettier

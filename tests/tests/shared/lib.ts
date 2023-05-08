@@ -15,21 +15,47 @@ import {
 
 import { account, provider } from "./constants";
 
-// Could extends Account to add our specific fn but that's too early.
-async function declareContract(contractName: string) {
-  console.log(`\tDeclaring ${contractName}...`);
-  const contract: CompiledSierra = json.parse(readFileSync(`./contracts/${contractName}.json`).toString("ascii"));
+async function isClassHashDeclared(classHash: string): Promise<boolean> {
   try {
-    const casm: CompiledSierraCasm = json.parse(readFileSync(`./contracts/${contractName}.casm`).toString("ascii"));
-    return await actualDeclare({ contract, casm });
+    await provider.getClassByHash(classHash);
+    // class already declared
+    return true;
   } catch (e) {
-    return await actualDeclare({ contract });
+    // class not declared, go on
+    return false;
   }
 }
 
-async function actualDeclare(payload: DeclareContractPayload) {
+const classHashCache: { [contractName: string]: string } = {};
+
+// Could extends Account to add our specific fn but that's too early.
+async function declareContract(contractName: string): Promise<string> {
+  console.log(`\tDeclaring ${contractName}...`);
+  const cachedClass = classHashCache[contractName];
+  if (cachedClass) {
+    return cachedClass;
+  }
+  const contract: CompiledSierra = json.parse(readFileSync(`./contracts/${contractName}.json`).toString("ascii"));
+  const classHash = hash.computeContractClassHash(contract);
+  if (await isClassHashDeclared(classHash)) {
+    classHashCache[contractName] = classHash;
+    return classHash;
+  }
+  if ("sierra_program" in contract) {
+    const casm: CompiledSierraCasm = json.parse(readFileSync(`./contracts/${contractName}.casm`).toString("ascii"));
+    const returnedClashHash = await actualDeclare({ contract, casm });
+    expect(returnedClashHash).to.equal(classHash);
+  } else {
+    const returnedClashHash = await actualDeclare({ contract });
+    expect(returnedClashHash).to.equal(classHash);
+  }
+  classHashCache[contractName] = classHash;
+  return classHash;
+}
+
+async function actualDeclare(payload: DeclareContractPayload): Promise<string> {
   const hash = await account
-    .declare(payload)
+    .declare(payload, { maxFee: 1e18 }) // max fee avoids slow estimate
     .then(async (deployResponse) => {
       await account.waitForTransaction(deployResponse.transaction_hash);
       return deployResponse.class_hash;
@@ -41,7 +67,7 @@ async function actualDeclare(payload: DeclareContractPayload) {
   return hash;
 }
 
-// Could make a cache to optimize speed using cache
+// Could make a cache to optimize speed
 async function deployAndLoadContract(classHash: string, calldata: RawArgs = {}) {
   const constructorCalldata = CallData.compile(calldata);
   const { transaction_hash, contract_address } = await account.deployContract({ classHash, constructorCalldata });
@@ -56,7 +82,8 @@ async function loadContract(contract_address: string) {
   }
   return new Contract(testAbi, contract_address, provider);
 }
-async function deploAndLoadAccountContract(classHash: string, owner: number, guardian = 0) {
+
+async function deployAndLoadAccountContract(classHash: string, owner: number, guardian = 0) {
   return await deployAndLoadContract(classHash, { owner, guardian });
 }
 
@@ -101,7 +128,7 @@ export {
   declareContract,
   loadContract,
   deployAndLoadContract,
-  deploAndLoadAccountContract,
+  deployAndLoadAccountContract,
   expectRevertWithErrorMessage,
   expectEvent,
 };

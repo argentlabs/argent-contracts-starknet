@@ -2,15 +2,10 @@ import { Account, CairoVersion, CallData, ec, hash, stark } from "starknet";
 import { account, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
 
-async function deployOldAccount(
-  proxyClassHash: string,
-  oldArgentAccountClassHash: string,
-  privateKey?: string,
-  publicKey?: string,
-) {
+async function deployOldAccount(proxyClassHash: string, oldArgentAccountClassHash: string, privateKey?: string) {
   // stark.randomAddress() for testing purposes only, this is not safe in production
   privateKey = privateKey || stark.randomAddress();
-  publicKey = publicKey || ec.starkCurve.getStarkKey(privateKey);
+  const publicKey = ec.starkCurve.getStarkKey(privateKey);
 
   const constructorCalldata = CallData.compile({
     implementation: oldArgentAccountClassHash,
@@ -58,6 +53,7 @@ async function deployAccount(argentAccountClassHash: string) {
   await account.waitForTransaction(transaction_hash);
   return accountToDeploy;
 }
+
 async function upgradeAccount(
   accountToUpgrade: Account,
   argentAccountClassHash: string,
@@ -75,7 +71,7 @@ async function upgradeAccount(
   await provider.waitForTransaction(transferTxHash);
 }
 
-// TODO tmp method (we can't deploy cairo1 account yet)
+// TODO tmp method (we can't deploy cairo1 account yet), it'll be shorter
 async function getCairo1Account(
   proxyClassHash: string,
   oldArgentAccountClassHash: string,
@@ -86,4 +82,29 @@ async function getCairo1Account(
   return accountToUpgrade;
 }
 
-export { deployAccount, deployOldAccount, upgradeAccount, getCairo1Account };
+// TODO tmp method (we can't deploy cairo1 account yet), it'll be shorter
+async function deployCairo1AccountWithGuardian(
+  proxyClassHash: string,
+  oldArgentAccountClassHash: string,
+  argentAccountClassHash: string,
+  ownerPrivateKey: string,
+  guardianPrivateKey: string,
+) {
+  const account = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash, ownerPrivateKey);
+  const guardianPublicKey = ec.starkCurve.getStarkKey(guardianPrivateKey);
+  await upgradeAccount(account, argentAccountClassHash);
+  // Needs to be done aftewards otherwise can't upgrade without providing both owner signature and guardian signature
+  // This will be changed later
+  await account.execute(
+    {
+      contractAddress: account.address,
+      entrypoint: "change_guardian",
+      calldata: CallData.compile({ new_guardian: guardianPublicKey }),
+    },
+    undefined,
+    { cairoVersion: "1" },
+  );
+  return account;
+}
+
+export { deployAccount, deployOldAccount, upgradeAccount, getCairo1Account, deployCairo1AccountWithGuardian };

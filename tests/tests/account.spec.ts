@@ -1,6 +1,12 @@
 import { expect } from "chai";
 import { CallData, Signer, ec, num, stark, uint256 } from "starknet";
-import { deployAccount, deployOldAccount, getCairo1Account, upgradeAccount } from "./shared/account";
+import {
+  deployAccount,
+  deployCairo1AccountWithGuardian,
+  deployOldAccount,
+  getCairo1Account,
+  upgradeAccount,
+} from "./shared/account";
 import {
   account,
   declareContract,
@@ -175,23 +181,21 @@ describe("Test contract: ArgentAccount", function () {
     it("Should be possible to trigger escape guardian by the owner alone", async function () {
       const privateKey = stark.randomAddress();
       const starkKeyPub = ec.starkCurve.getStarkKey(privateKey);
-      const account = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash, privateKey, starkKeyPub);
-      await upgradeAccount(account, argentAccountClassHash);
-      // Needs to be done aftewards otherwise can't upgrade without providing both owner signature and guardian signature (Should be changed later)
-      await account.execute(
-        {
-          contractAddress: account.address,
-          entrypoint: "change_guardian",
-          calldata: CallData.compile({ new_guardian: "0x42" }),
-        },
-        undefined,
-        { cairoVersion: "1" },
+      const account = await deployCairo1AccountWithGuardian(
+        proxyClassHash,
+        oldArgentAccountClassHash,
+        argentAccountClassHash,
+        privateKey,
+        "0x42",
       );
+
       const accountContract = await loadContract(account.address);
       const owner = await accountContract.get_owner();
       expect(owner).to.be.equal(BigInt(starkKeyPub));
+      const guardianKeyPub = ec.starkCurve.getStarkKey("0x42");
       const guardian = await accountContract.get_guardian();
-      expect(guardian).to.be.equal(BigInt("0x42"));
+      expect(guardian).to.be.equal(BigInt(guardianKeyPub));
+
       await setTime(42);
       await account.execute(
         {
@@ -209,19 +213,14 @@ describe("Test contract: ArgentAccount", function () {
 
     it("Should be possible to escape a guardian by the owner alone", async function () {
       const privateKey = stark.randomAddress();
-      const starkKeyPub = ec.starkCurve.getStarkKey(privateKey);
-      const account = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash, privateKey, starkKeyPub);
-      await upgradeAccount(account, argentAccountClassHash);
-      // Needs to be done aftewards otherwise can't upgrade without providing both owner signature and guardian signature (Should be changed later)
-      await account.execute(
-        {
-          contractAddress: account.address,
-          entrypoint: "change_guardian",
-          calldata: CallData.compile({ new_guardian: "0x42" }),
-        },
-        undefined,
-        { cairoVersion: "1" },
+      const account = await deployCairo1AccountWithGuardian(
+        proxyClassHash,
+        oldArgentAccountClassHash,
+        argentAccountClassHash,
+        privateKey,
+        "0x42",
       );
+
       await setTime(42);
       await account.execute(
         {
@@ -254,22 +253,15 @@ describe("Test contract: ArgentAccount", function () {
 
     it("Should use GUARDIAN signature when excaping owner", async function () {
       const ownerPrivateKey = stark.randomAddress();
-      const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
-      const account = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash, ownerPrivateKey, ownerPublicKey);
-      await upgradeAccount(account, argentAccountClassHash);
       const guardianPrivateKey = stark.randomAddress();
-      const guardianPublicKey = ec.starkCurve.getStarkKey(guardianPrivateKey);
-      // Needs to be done aftewards otherwise can't upgrade without providing both owner signature and guardian signature (Should be changed later)
-      await account.execute(
-        {
-          contractAddress: account.address,
-          entrypoint: "change_guardian",
-          calldata: CallData.compile({ new_guardian: guardianPublicKey }),
-        },
-        undefined,
-        { cairoVersion: "1" },
+      const account = await deployCairo1AccountWithGuardian(
+        proxyClassHash,
+        oldArgentAccountClassHash,
+        argentAccountClassHash,
+        ownerPrivateKey,
+        guardianPrivateKey,
       );
-  
+
       account.signer = new Signer(guardianPrivateKey);
       await account.execute(
         {
@@ -293,5 +285,7 @@ describe("Test contract: ArgentAccount", function () {
     // TupleSize4LegacyHash::hash(0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), _signer::read()));
   });
 
-
+  xit("Should sign messages from OWNER and GUARDIAN when there is a GUARDIAN", async function () {
+    // TODO This will involve passing new owner + R + S And test that this iss correct:
+  });
 });

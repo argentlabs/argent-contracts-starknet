@@ -56,7 +56,7 @@ async function loadContract(contract_address: string) {
   }
   return new Contract(testAbi, contract_address, provider);
 }
-async function deploAndLoadAccountContract(classHash: string, owner: number, guardian = 0) {
+async function deployAndLoadAccountContract(classHash: string, owner: number, guardian = 0) {
   return await deployAndLoadContract(classHash, { owner, guardian });
 }
 
@@ -101,7 +101,7 @@ export {
   declareContract,
   loadContract,
   deployAndLoadContract,
-  deploAndLoadAccountContract,
+  deployAndLoadAccountContract,
   expectRevertWithErrorMessage,
   expectEvent,
 };

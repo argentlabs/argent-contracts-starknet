@@ -4,7 +4,7 @@ import { deployAccount, deployCairo1AccountWithGuardian, getCairo1Account } from
 import {
   account,
   declareContract,
-  deploAndLoadAccountContract,
+  deployAndLoadAccountContract,
   expectEvent,
   expectRevertWithErrorMessage,
   loadContract,
@@ -39,13 +39,13 @@ describe("Test contract: ArgentAccount", function () {
 
   xdescribe("Example tests", function () {
     it("Deploy a contract without guardian", async function () {
-      const contract = await deploAndLoadAccountContract(argentAccountClassHash, 12);
+      const contract = await deployAndLoadAccountContract(argentAccountClassHash, 12);
       const result = await contract.call("get_guardian");
       expect(result).to.equal(0n);
     });
 
     it("Deploy a contract with guardian", async function () {
-      const contract = await deploAndLoadAccountContract(argentAccountClassHash, 12, 42);
+      const contract = await deployAndLoadAccountContract(argentAccountClassHash, 12, 42);
       const result = await contract.call("get_guardian");
       expect(result).to.equal(42n);
     });

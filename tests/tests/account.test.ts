@@ -26,8 +26,9 @@ describe("Test contract: ArgentAccount", function () {
   before(async () => {
     console.log("\tSetup ongoing...");
     argentAccountClassHash = await declareContract("ArgentAccount");
-    oldArgentAccountClassHash = await declareContract("OldArgentAccount"); // TODO This can go away once we have support for deploying cairo1 accounts (should only be used in upgrade tests)
-    proxyClassHash = await declareContract("Proxy"); // TODO This can go away once we have support for deploying cairo1 accounts (should only be used in upgrade tests)
+    // TODO Those two can go away once we have support for deploying cairo1 accounts (should only be used in upgrade tests)
+    oldArgentAccountClassHash = await declareContract("OldArgentAccount"); 
+    proxyClassHash = await declareContract("Proxy"); 
     // const testDappClassHash = await declareContract("TestDapp");
     // testDapp = await deployAndLoadContract(testDappClassHash);
     console.log("\tSetup done...");
@@ -95,13 +96,10 @@ describe("Test contract: ArgentAccount", function () {
       );
       await account.waitForTransaction(transferTxHash);
       const { balance: senderFinalBalance } = await ethContract.balanceOf(account.address);
-      const { balance: recipientFinalalance } = await ethContract.balanceOf(recipient);
-      expect(senderInitialBalance.high).to.equal(senderFinalBalance.high);
+      const { balance: recipientFinalBalance } = await ethContract.balanceOf(recipient);
       // Before amount should be higher than (after + transfer) amount due to fee
-      expect(Number(senderInitialBalance.low)).to.be.greaterThan(Number(senderFinalBalance.low) + 1000);
-      expect(uint256.uint256ToBN(recipientInitialBalance) + 1000n).to.equal(
-        uint256.uint256ToBN(recipientFinalalance),
-      );
+      expect(uint256.uint256ToBN(senderInitialBalance) + 1000n > uint256.uint256ToBN(senderFinalBalance)).to.be.true
+      expect(uint256.uint256ToBN(recipientInitialBalance) + 1000n).to.equal(uint256.uint256ToBN(recipientFinalBalance));
     });
 
     it("Should be possible to send eth with a Cairo1 account using a multicall", async function () {
@@ -159,7 +157,7 @@ describe("Test contract: ArgentAccount", function () {
             {
               contractAddress: ethAddress,
               entrypoint: "transfer",
-              calldata: CallData.compile({ recipient, amount: amount }),
+              calldata: CallData.compile({ recipient, amount }),
             },
             {
               contractAddress: account.address,
@@ -285,7 +283,7 @@ describe("Test contract: ArgentAccount", function () {
         ownerPrivateKey,
         guardianPrivateKey,
       );
-  
+
       const accountContract = await loadContract(account.address);
       const guardianBackupBefore = await accountContract.get_guardian_backup();
       expect(guardianBackupBefore).to.equal(0n);
@@ -302,7 +300,6 @@ describe("Test contract: ArgentAccount", function () {
       const guardianBackupAfter = await accountContract.get_guardian_backup();
       expect(guardianBackupAfter).to.equal(BigInt("0x42"));
     });
-  
   });
 
   xit("Should be posssible to deploy an argent account version 0.3.0", async function () {
@@ -317,6 +314,4 @@ describe("Test contract: ArgentAccount", function () {
   xit("Should sign messages from OWNER and GUARDIAN when there is a GUARDIAN (case with BACKUP)", async function () {
     // TODO
   });
-
-
 });

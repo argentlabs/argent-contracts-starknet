@@ -27,7 +27,7 @@ xdescribe("Test Argent Account: upgrade", function () {
       contractAddress: accountToUpgrade.address,
       entrypoint: "getVersion",
     });
-    expect(shortString.decodeShortString(initialVersion.result[0])).eq("0.2.4");
+    expect(shortString.decodeShortString(initialVersion.result[0])).to.equal("0.2.4");
 
     await upgradeAccount(accountToUpgrade, argentAccountClassHash);
 
@@ -35,9 +35,9 @@ xdescribe("Test Argent Account: upgrade", function () {
       contractAddress: accountToUpgrade.address,
       entrypoint: "get_version",
     });
-    expect(shortString.decodeShortString(newVersion.result[0])).eq("0");
-    expect(shortString.decodeShortString(newVersion.result[1])).eq("3");
-    expect(shortString.decodeShortString(newVersion.result[2])).eq("0");
+    expect(shortString.decodeShortString(newVersion.result[0])).to.equal("0");
+    expect(shortString.decodeShortString(newVersion.result[1])).to.equal("3");
+    expect(shortString.decodeShortString(newVersion.result[2])).to.equal("0");
   });
 
   it("Should be possible to upgrade an account from version 0.3.0 to 0.3.1", async function () {
@@ -46,16 +46,16 @@ xdescribe("Test Argent Account: upgrade", function () {
       contractAddress: account.address,
       entrypoint: "get_version",
     });
-    expect(shortString.decodeShortString(currentVersion.result[0])).eq("0");
-    expect(shortString.decodeShortString(currentVersion.result[1])).eq("3");
-    expect(shortString.decodeShortString(currentVersion.result[2])).eq("0");
+    expect(shortString.decodeShortString(currentVersion.result[0])).to.equal("0");
+    expect(shortString.decodeShortString(currentVersion.result[1])).to.equal("3");
+    expect(shortString.decodeShortString(currentVersion.result[2])).to.equal("0");
     await upgradeAccount(account, argentAccountV1ClassHash, "1");
     const newVersion = await provider.callContract({
       contractAddress: account.address,
       entrypoint: "get_version",
     });
-    expect(shortString.decodeShortString(newVersion.result[0])).eq("0");
-    expect(shortString.decodeShortString(newVersion.result[1])).eq("3");
-    expect(shortString.decodeShortString(newVersion.result[2])).eq("1");
+    expect(shortString.decodeShortString(newVersion.result[0])).to.equal("0");
+    expect(shortString.decodeShortString(newVersion.result[1])).to.equal("3");
+    expect(shortString.decodeShortString(newVersion.result[2])).to.equal("1");
   });
 });

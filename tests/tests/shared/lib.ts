@@ -15,7 +15,6 @@ import {
 
 import { account, provider } from "./constants";
 
-// Could extends Account to add our specific fn but that's too early.
 async function declareContract(contractName: string) {
   console.log(`\tDeclaring ${contractName}...`);
   const contract: CompiledSierra = json.parse(readFileSync(`./contracts/${contractName}.json`).toString("ascii"));
@@ -41,7 +40,7 @@ async function actualDeclare(payload: DeclareContractPayload) {
   return hash;
 }
 
-// Could make a cache to optimize speed using cache
+// Could make a cache to optimize speed
 async function deployAndLoadContract(classHash: string, calldata: RawArgs = {}) {
   const constructorCalldata = CallData.compile(calldata);
   const { transaction_hash, contract_address } = await account.deployContract({ classHash, constructorCalldata });

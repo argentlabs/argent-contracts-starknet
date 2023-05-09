@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import { shortString } from "starknet";
-import { deployOldAccount, getCairo1Account, upgradeAccount } from "./shared/account";
-import { declareContract, provider } from "./shared/lib";
+import { declareContract, deployOldAccount, getCairo1Account, provider, upgradeAccount } from "./shared";
 
 describe("Test Argent Account: upgrade", function () {
   // Avoid timeout

@@ -82,10 +82,6 @@ async function loadContract(contract_address: string) {
   return new Contract(testAbi, contract_address, provider);
 }
 
-async function deployAndLoadAccountContract(classHash: string, owner: number, guardian = 0) {
-  return await deployAndLoadContract(classHash, { owner, guardian });
-}
-
 async function expectRevertWithErrorMessage(errorMessage: string, fn: () => void) {
   try {
     await fn();
@@ -121,13 +117,4 @@ function extractHashFromErrorOrCrash(e: string) {
   }
 }
 
-export {
-  provider,
-  account,
-  declareContract,
-  loadContract,
-  deployAndLoadContract,
-  deployAndLoadAccountContract,
-  expectRevertWithErrorMessage,
-  expectEvent,
-};
+export { declareContract, loadContract, deployAndLoadContract, expectRevertWithErrorMessage, expectEvent };

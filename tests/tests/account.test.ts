@@ -1,18 +1,20 @@
 import { expect } from "chai";
 import { CallData, Signer, ec, num, stark, uint256 } from "starknet";
-import { deployAccount, deployCairo1AccountWithGuardian, getCairo1Account } from "./shared/account";
 import {
+  ArgentSigner,
   account,
   declareContract,
   deployAndLoadAccountContract,
+  deployCairo1AccountWithGuardian,
+  ethAddress,
   expectEvent,
   expectRevertWithErrorMessage,
+  getCairo1Account,
+  getEthContract,
+  increaseTime,
   loadContract,
-} from "./shared/lib";
-
-import { ArgentSigner } from "./shared/argentSigner";
-import { ethAddress, getEthContract } from "./shared/constants";
-import { increaseTime, setTime } from "./shared/devnetInteraction";
+  setTime,
+} from "./shared";
 
 describe("Test contract: ArgentAccount", function () {
   // Avoid timeout

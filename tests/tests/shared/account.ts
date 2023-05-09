@@ -1,6 +1,7 @@
 import { Account, CairoVersion, CallData, ec, hash, stark } from "starknet";
 import { account, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
+import { deployAndLoadContract } from "./lib";
 
 async function deployOldAccount(proxyClassHash: string, oldArgentAccountClassHash: string, privateKey?: string) {
   // stark.randomAddress() for testing purposes only. This is not safe in production!
@@ -26,6 +27,10 @@ async function deployOldAccount(proxyClassHash: string, oldArgentAccountClassHas
   });
   await account.waitForTransaction(transaction_hash);
   return accountToDeploy;
+}
+
+async function deployAndLoadAccountContract(classHash: string, owner: number, guardian = 0) {
+  return await deployAndLoadContract(classHash, { owner, guardian });
 }
 
 // TODO Can't do YET
@@ -106,4 +111,11 @@ async function deployCairo1AccountWithGuardian(
   return account;
 }
 
-export { deployAccount, deployOldAccount, upgradeAccount, getCairo1Account, deployCairo1AccountWithGuardian };
+export {
+  deployAccount,
+  deployOldAccount,
+  deployAndLoadAccountContract,
+  upgradeAccount,
+  getCairo1Account,
+  deployCairo1AccountWithGuardian,
+};

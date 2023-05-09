@@ -24,14 +24,12 @@ describe("Test contract: ArgentAccount", function () {
   // let testDapp: Contract;
 
   before(async () => {
-    console.log("\tSetup ongoing...");
     argentAccountClassHash = await declareContract("ArgentAccount");
     // TODO Those two can go away once we have support for deploying cairo1 accounts (should only be used in upgrade tests)
     oldArgentAccountClassHash = await declareContract("OldArgentAccount");
     proxyClassHash = await declareContract("Proxy");
     // const testDappClassHash = await declareContract("TestDapp");
     // testDapp = await deployAndLoadContract(testDappClassHash);
-    console.log("\tSetup done...");
   });
 
   beforeEach(async () => {

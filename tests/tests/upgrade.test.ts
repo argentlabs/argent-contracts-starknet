@@ -13,12 +13,12 @@ describe("Test Argent Account: upgrade", function () {
   let proxyClassHash: string;
 
   before(async () => {
-    console.log("\tSetup ongoing...");
     argentAccountClassHash = await declareContract("ArgentAccount");
+    // This is the same as ArgentAccount but with a different version or name 
+    // Done to be able to test upgradability
     argentAccountV1ClassHash = await declareContract("ArgentAccountV1");
     oldArgentAccountClassHash = await declareContract("OldArgentAccount");
     proxyClassHash = await declareContract("Proxy");
-    console.log("\tSetup done...");
   });
 
   it("Should be posssible to deploy an argent account version 0.2.4 and upgrade it to cairo 1 version 0.3.0", async function () {

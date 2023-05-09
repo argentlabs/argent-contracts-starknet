@@ -6,9 +6,16 @@ Have [node and npm installed.](https://docs.npmjs.com/downloading-and-installing
 
 ## Install the devnet
 
-I'd recommend you do that in a virtual env following [this tutorial](https://docs.starknet.io/documentation/getting_started/environment_setup/).
+Install Python dependencies (run in project root folder)
 
-Then you can setup the devnet following [these instructions](https://0xspaceshard.github.io/starknet-devnet/docs/intro).
+```
+python3.9 -m venv ./venv
+source ./venv/bin/activate
+brew install gmp
+pip install -r requirements.txt
+```
+
+For more info check [Devnet instructions](https://0xspaceshard.github.io/starknet-devnet/docs/intro)
 
 Then you should be able to spawn a devnet using makefile:
 
@@ -18,7 +25,7 @@ make devnet
 
 ## Install the project
 
-Install all packages
+Install all packages (run in this folder `cd tests`)
 
 ```shell
 npm install

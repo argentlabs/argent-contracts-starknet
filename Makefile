@@ -22,7 +22,7 @@ make install-cairo:
 
 clone-cairo:
 	mkdir -p $(INSTALLATION_FOLDER)
-	git clone git@github.com:starkware-libs/cairo.git --branch $(CAIRO_VERSION)
+	git clone --branch $(CAIRO_VERSION) https://github.com/starkware-libs/cairo.git
 
 update-cairo:
 	git -C $(INSTALLATION_FOLDER) checkout $(CAIRO_VERSION)

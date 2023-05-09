@@ -1,11 +1,32 @@
-import { Abi, Call, InvocationsSignerDetails, Signature, Signer, ec, hash, transaction } from "starknet";
+import {
+  Abi,
+  Call,
+  DeclareSignerDetails,
+  DeployAccountSignerDetails,
+  InvocationsSignerDetails,
+  Signature,
+  Signer,
+  SignerInterface,
+  ec,
+  hash,
+  transaction,
+  typedData,
+} from "starknet";
 
-class ArgentSigner extends Signer {
-  protected guardianPk: string;
+/**
+ * This class allows to easily implement custom signers by overriding the `signRaw` method.
+ * This is based on Starknet.js implementation of Signer, but it delegates the actual signing to an abstract function
+ */
+abstract class FlexibleSigner implements SignerInterface {
+  abstract signRaw(messageHash: string): Promise<Signature>;
 
-  constructor(ownerPk: string, guardianPk: string) {
-    super(ownerPk);
-    this.guardianPk = guardianPk;
+  public async getPubKey(): Promise<string> {
+    throw Error("This signer allows multiple public keys");
+  }
+
+  public async signMessage(typedDataArgument: typedData.TypedData, accountAddress: string): Promise<Signature> {
+    const msgHash = typedData.getMessageHash(typedDataArgument, accountAddress);
+    return this.signRaw(msgHash);
   }
 
   public async signTransaction(
@@ -16,7 +37,7 @@ class ArgentSigner extends Signer {
     if (abis && abis.length !== transactions.length) {
       throw new Error("ABI must be provided for each transaction or no transaction");
     }
-
+    // now use abi to display decoded data somewhere, but as this signer is headless, we can't do that
     const calldata = transaction.getExecuteCalldata(transactions, transactionsDetail.cairoVersion);
 
     const msgHash = hash.calculateTransactionHash(
@@ -27,67 +48,99 @@ class ArgentSigner extends Signer {
       transactionsDetail.chainId,
       transactionsDetail.nonce,
     );
+    return this.signRaw(msgHash);
+  }
 
-    const ownerSignature = await ec.starkCurve.sign(msgHash, this.pk);
-    const guardianSignature = await ec.starkCurve.sign(msgHash, this.guardianPk);
+  public async signDeployAccountTransaction({
+    classHash,
+    contractAddress,
+    constructorCalldata,
+    addressSalt,
+    maxFee,
+    version,
+    chainId,
+    nonce,
+  }: DeployAccountSignerDetails) {
+    const msgHash = hash.calculateDeployAccountTransactionHash(
+      contractAddress,
+      classHash,
+      constructorCalldata,
+      addressSalt,
+      version,
+      maxFee,
+      chainId,
+      nonce,
+    );
 
-    return [
-      ownerSignature.r.toString(),
-      ownerSignature.s.toString(),
-      guardianSignature.r.toString(),
-      guardianSignature.s.toString(),
-    ];
+    return this.signRaw(msgHash);
+  }
+
+  public async signDeclareTransaction(
+    // contractClass: ContractClass,  // Should be used once class hash is present in ContractClass
+    { classHash, senderAddress, chainId, maxFee, version, nonce, compiledClassHash }: DeclareSignerDetails,
+  ) {
+    const msgHash = hash.calculateDeclareTransactionHash(
+      classHash,
+      senderAddress,
+      version,
+      maxFee,
+      chainId,
+      nonce,
+      compiledClassHash,
+    );
+
+    return this.signRaw(msgHash);
   }
 }
 
-// This is a wrong signer as the argent account expects the signature length to always be 2 or 4
-// This signer will make a signature of 6 length using signature from owner, guardian and guardian backup
-class ArgentSigner3Signatures extends Signer {
-  protected guardianPk: string;
-  protected guardianBackupPk: string;
+class ArgentSigner extends FlexibleSigner {
+  protected ownerPk: string;
+  protected guardianPk?: string;
 
-  constructor(ownerPk: string, guardianPk: string, guardianBackupPk: string) {
-    super(ownerPk);
+  constructor(ownerPk: string, guardianPk?: string) {
+    super();
+    this.ownerPk = ownerPk;
     this.guardianPk = guardianPk;
-    this.guardianBackupPk = guardianBackupPk;
+  }
+  public getOwnerKey(): string {
+    return ec.starkCurve.getStarkKey(this.ownerPk);
   }
 
-  public async signTransaction(
-    transactions: Call[],
-    transactionsDetail: InvocationsSignerDetails,
-    abis?: Abi[],
-  ): Promise<Signature> {
-    if (abis && abis.length !== transactions.length) {
-      throw new Error("ABI must be provided for each transaction or no transaction");
+  public getGuardianKey(): string | null {
+    if (this.guardianPk) {
+      return ec.starkCurve.getStarkKey(this.guardianPk);
+    } else {
+      return null;
     }
+  }
 
-    const calldata = transaction.getExecuteCalldata(transactions, transactionsDetail.cairoVersion);
-
-    const msgHash = hash.calculateTransactionHash(
-      transactionsDetail.walletAddress,
-      transactionsDetail.version,
-      calldata,
-      transactionsDetail.maxFee,
-      transactionsDetail.chainId,
-      transactionsDetail.nonce,
-    );
-
-    const ownerSignature = await ec.starkCurve.sign(msgHash, this.pk);
-    const guardianSignature = await ec.starkCurve.sign(msgHash, this.guardianPk);
-    const guardianBackupSignature = await ec.starkCurve.sign(msgHash, this.guardianBackupPk);
-
-    return [
-      ownerSignature.r.toString(),
-      ownerSignature.s.toString(),
-      guardianSignature.r.toString(),
-      guardianSignature.s.toString(),
-      guardianBackupSignature.r.toString(),
-      guardianBackupSignature.s.toString(),
-    ];
+  public async signRaw(msgHash: string): Promise<Signature> {
+    if (this.guardianPk) {
+      return new ConcatSigner([this.ownerPk, this.guardianPk]).signRaw(msgHash);
+    } else {
+      return ec.starkCurve.sign(msgHash, this.ownerPk);
+    }
   }
 }
 
-// TODO should we try signer that will put guardian signature first?
-// TODO try where signature is simply wrong
+class ConcatSigner extends FlexibleSigner {
+  protected privateKeys: string[];
 
-export { ArgentSigner, ArgentSigner3Signatures };
+  constructor(privateKeys: string[]) {
+    super();
+    this.privateKeys = privateKeys;
+  }
+
+  async signRaw(msgHash: string): Promise<Signature> {
+    return (
+      await Promise.all(
+        this.privateKeys.map(async (pk) => {
+          const signature = ec.starkCurve.sign(msgHash, pk);
+          return [signature.r.toString(), signature.s.toString()];
+        }),
+      )
+    ).flat();
+  }
+}
+
+export { ArgentSigner, ConcatSigner };

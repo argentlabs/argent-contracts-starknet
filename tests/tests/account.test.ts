@@ -176,11 +176,7 @@ describe("Test contract: ArgentAccount", function () {
       const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
       const guardianPrivateKey = stark.randomAddress();
       const guardianPublicKey = ec.starkCurve.getStarkKey(guardianPrivateKey);
-      const account = await deployAccount(
-        argentAccountClassHash,
-        ownerPrivateKey,
-        guardianPrivateKey,
-      );
+      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
 
       const accountContract = await loadContract(account.address);
       const owner = await accountContract.get_owner();
@@ -205,11 +201,7 @@ describe("Test contract: ArgentAccount", function () {
 
     it("Should be possible to escape a guardian by the owner alone", async function () {
       const privateKey = stark.randomAddress();
-      const account = await deployAccount(
-        argentAccountClassHash,
-        privateKey,
-        "0x42",
-      );
+      const account = await deployAccount(argentAccountClassHash, privateKey, "0x42");
 
       await setTime(42);
       await account.execute(
@@ -244,11 +236,7 @@ describe("Test contract: ArgentAccount", function () {
     it("Should use GUARDIAN signature when escaping owner", async function () {
       const ownerPrivateKey = stark.randomAddress();
       const guardianPrivateKey = stark.randomAddress();
-      const account = await deployAccount(
-        argentAccountClassHash,
-        ownerPrivateKey,
-        guardianPrivateKey,
-      );
+      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
 
       account.signer = new Signer(guardianPrivateKey);
       await account.execute(
@@ -271,11 +259,7 @@ describe("Test contract: ArgentAccount", function () {
     it("Should use signature from BOTH OWNER and GUARDIAN when there is a GUARDIAN", async function () {
       const ownerPrivateKey = stark.randomAddress();
       const guardianPrivateKey = stark.randomAddress();
-      const account = await deployAccount(
-        argentAccountClassHash,
-        ownerPrivateKey,
-        guardianPrivateKey,
-      );
+      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
 
       const accountContract = await loadContract(account.address);
       const guardianBackupBefore = await accountContract.get_guardian_backup();
@@ -299,11 +283,7 @@ describe("Test contract: ArgentAccount", function () {
       const guardianPrivateKey = stark.randomAddress();
       const guardianBackupPrivateKey = stark.randomAddress();
       const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
-      const account = await deployAccount(
-        argentAccountClassHash,
-        ownerPrivateKey,
-        guardianPrivateKey,
-      );
+      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
 
       const accountContract = await loadContract(account.address);
       const guardianBackupBefore = await accountContract.get_guardian_backup();
@@ -340,11 +320,7 @@ describe("Test contract: ArgentAccount", function () {
       const ownerPrivateKey = stark.randomAddress();
       const guardianPrivateKey = stark.randomAddress();
       const guardianBackupPrivateKey = stark.randomAddress();
-      const account = await deployAccount(
-        argentAccountClassHash,
-        ownerPrivateKey,
-        guardianPrivateKey,
-      );
+      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
       account.signer = new ArgentSigner3Signatures(ownerPrivateKey, guardianPrivateKey, guardianBackupPrivateKey);
 
       await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {
@@ -395,7 +371,7 @@ describe("Test contract: ArgentAccount", function () {
     const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
 
     // const msgHash = hash.computeHashOnElements([0, changeOwnerSelector, chainId, contractAddress, ownerPublicKey]);
-    const msgHash = hash.computeHashOnElements([ownerPublicKey, contractAddress, chainId, changeOwnerSelector,0 ]);
+    const msgHash = hash.computeHashOnElements([ownerPublicKey, contractAddress, chainId, changeOwnerSelector, 0]);
     const signature = await ec.starkCurve.sign(msgHash, newOwnerPrivateKey);
     // TupleSize4LegacyHash::hash(0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), _signer::read()));
     await account.execute(

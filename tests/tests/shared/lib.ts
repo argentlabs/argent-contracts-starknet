@@ -65,7 +65,6 @@ async function actualDeclare(payload: DeclareContractPayload): Promise<string> {
   return hash;
 }
 
-
 async function loadContract(contract_address: string) {
   const { abi: testAbi } = await provider.getClassAt(contract_address);
   if (!testAbi) {

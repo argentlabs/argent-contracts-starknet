@@ -1,9 +1,11 @@
-# ⚠️ Warning 
+# ⚠️ Warning
 
-The use of   
+The use of
+
 ```js
-stark.randomAddress()
-```  
+stark.randomAddress();
+```
+
 if here used for testing purposes only.  
 **This is not safe in production!**
 

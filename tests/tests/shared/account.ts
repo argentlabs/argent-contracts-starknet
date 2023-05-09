@@ -31,12 +31,16 @@ async function deployOldAccount(
   return accountToDeploy;
 }
 
-async function deployAccount(argentAccountClassHash: string, ownerPrivateKey?: string, guardianPrivateKey = "0"): Promise<Account> {
+async function deployAccount(
+  argentAccountClassHash: string,
+  ownerPrivateKey?: string,
+  guardianPrivateKey = "0",
+): Promise<Account> {
   ownerPrivateKey = ownerPrivateKey || stark.randomAddress();
   const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
-  const guardianPublicKey = guardianPrivateKey != "0" ? ec.starkCurve.getStarkKey(guardianPrivateKey): "0";
+  const guardianPublicKey = guardianPrivateKey != "0" ? ec.starkCurve.getStarkKey(guardianPrivateKey) : "0";
 
-  const constructorCalldata = CallData.compile({ owner: ownerPublicKey, guardian:guardianPublicKey});
+  const constructorCalldata = CallData.compile({ owner: ownerPublicKey, guardian: guardianPublicKey });
 
   // TODO This should be updated to use deployAccount and it should probably pay for its own deployemnt
   // Can't atm, waiting for starknetJS update
@@ -69,8 +73,4 @@ async function upgradeAccount(
   await provider.waitForTransaction(transferTxHash);
 }
 
-export {
-  deployAccount,
-  deployOldAccount,
-  upgradeAccount,
-};
+export { deployAccount, deployOldAccount, upgradeAccount };

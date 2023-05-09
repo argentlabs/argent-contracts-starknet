@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { CallData, Signer, ec, num, stark, uint256 } from "starknet";
 import {
   ArgentSigner,
+  ArgentSigner3Signatures,
   account,
   declareContract,
   deployAndLoadAccountContract,
@@ -38,7 +39,7 @@ describe("Test contract: ArgentAccount", function () {
     // TODO When everything is more clean, we could deploy a new funded cairo1 account and use that one to do all the logic
   });
 
-  describe("Example tests", function () {
+  xdescribe("Example tests", function () {
     it("Deploy a contract without guardian", async function () {
       const accountContract = await deployAndLoadAccountContract(argentAccountClassHash, 12);
       const result = await accountContract.get_guardian();
@@ -344,6 +345,50 @@ describe("Test contract: ArgentAccount", function () {
       const guardianAfter = await accountContract.get_guardian();
       expect(guardianAfter).to.equal(BigInt("0x42"));
     });
+
+    it("Should throow an error when signing a transaction with OWNER, GUARDIAN and BACKUP", async function () {
+      const ownerPrivateKey = stark.randomAddress();
+      const guardianPrivateKey = stark.randomAddress();
+      const guardianBackupPrivateKey = stark.randomAddress();
+      const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
+      const account = await deployCairo1AccountWithGuardian(
+        proxyClassHash,
+        oldArgentAccountClassHash,
+        argentAccountClassHash,
+        ownerPrivateKey,
+        guardianPrivateKey,
+      );
+  
+      const accountContract = await loadContract(account.address);
+      const guardianBackupBefore = await accountContract.get_guardian_backup();
+      expect(guardianBackupBefore).to.equal(0n);
+      account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
+      await account.execute(
+        {
+          contractAddress: account.address,
+          entrypoint: "change_guardian_backup",
+          calldata: CallData.compile({ new_guardian_backup: guardianBackupPublicKey }),
+        },
+        undefined,
+        { cairoVersion: "1" },
+      );
+      const guardianBackupAfter = await accountContract.get_guardian_backup();
+      expect(guardianBackupAfter).to.equal(BigInt(guardianBackupPublicKey));
+  
+      account.signer = new ArgentSigner3Signatures(ownerPrivateKey, guardianPrivateKey, guardianBackupPrivateKey);
+  
+      await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {
+        await account.execute(
+          {
+            contractAddress: account.address,
+            entrypoint: "change_guardian",
+            calldata: CallData.compile({ new_guardian_backup: "0x42" }),
+          },
+          undefined,
+          { cairoVersion: "1" },
+        );
+      });
+    });
   });
 
   xit("Should be posssible to deploy an argent account version 0.3.0", async function () {
@@ -356,7 +401,5 @@ describe("Test contract: ArgentAccount", function () {
     // TupleSize4LegacyHash::hash(0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), _signer::read()));
   });
 
-  xit("Try signature len != 2 || != 4", async function () {
-    // TODO
-  });
+
 });

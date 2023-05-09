@@ -1,19 +1,19 @@
 import { expect } from "chai";
-import { CallData, Signer, ec, num, stark, uint256 } from "starknet";
+import { CallData, Signer, ec, hash, num, stark, uint256 } from "starknet";
 import {
   ArgentSigner,
   ArgentSigner3Signatures,
   account,
   declareContract,
+  deployAccount,
   deployAndLoadAccountContract,
-  deployCairo1AccountWithGuardian,
   ethAddress,
   expectEvent,
   expectRevertWithErrorMessage,
-  getCairo1Account,
   getEthContract,
   increaseTime,
   loadContract,
+  provider,
   setTime,
 } from "./shared";
 
@@ -22,15 +22,10 @@ describe("Test contract: ArgentAccount", function () {
   this.timeout(320000);
 
   let argentAccountClassHash: string;
-  let oldArgentAccountClassHash: string;
-  let proxyClassHash: string;
   // let testDapp: Contract;
 
   before(async () => {
     argentAccountClassHash = await declareContract("ArgentAccount");
-    // TODO Those two can go away once we have support for deploying cairo1 accounts (should only be used in upgrade tests)
-    oldArgentAccountClassHash = await declareContract("OldArgentAccount");
-    proxyClassHash = await declareContract("Proxy");
     // const testDappClassHash = await declareContract("TestDapp");
     // testDapp = await deployAndLoadContract(testDappClassHash);
   });
@@ -75,7 +70,7 @@ describe("Test contract: ArgentAccount", function () {
     });
 
     it("Should be possible to send eth with a Cairo1 account", async function () {
-      const account = await getCairo1Account(proxyClassHash, oldArgentAccountClassHash, argentAccountClassHash);
+      const account = await deployAccount(argentAccountClassHash);
       const recipient = "0x42";
       const amount = uint256.bnToUint256(1000);
       const ethContract = await getEthContract();
@@ -104,7 +99,7 @@ describe("Test contract: ArgentAccount", function () {
     });
 
     it("Should be possible to send eth with a Cairo1 account using a multicall", async function () {
-      const account = await getCairo1Account(proxyClassHash, oldArgentAccountClassHash, argentAccountClassHash);
+      const account = await deployAccount(argentAccountClassHash);
       const recipient1 = "0x42";
       const amount1 = uint256.bnToUint256(1000);
       const recipient2 = "0x43";
@@ -148,7 +143,7 @@ describe("Test contract: ArgentAccount", function () {
     });
 
     it("Expect an error when a multicall contains a Call referencing the account itself", async function () {
-      const account = await getCairo1Account(proxyClassHash, oldArgentAccountClassHash, argentAccountClassHash);
+      const account = await deployAccount(argentAccountClassHash);
 
       await expectRevertWithErrorMessage("argent/no-multicall-to-self", async () => {
         const recipient = "0x42";
@@ -175,9 +170,7 @@ describe("Test contract: ArgentAccount", function () {
     it("Should be possible to trigger escape guardian by the owner alone", async function () {
       const privateKey = stark.randomAddress();
       const starkKeyPub = ec.starkCurve.getStarkKey(privateKey);
-      const account = await deployCairo1AccountWithGuardian(
-        proxyClassHash,
-        oldArgentAccountClassHash,
+      const account = await deployAccount(
         argentAccountClassHash,
         privateKey,
         "0x42",
@@ -207,9 +200,7 @@ describe("Test contract: ArgentAccount", function () {
 
     it("Should be possible to escape a guardian by the owner alone", async function () {
       const privateKey = stark.randomAddress();
-      const account = await deployCairo1AccountWithGuardian(
-        proxyClassHash,
-        oldArgentAccountClassHash,
+      const account = await deployAccount(
         argentAccountClassHash,
         privateKey,
         "0x42",
@@ -248,9 +239,7 @@ describe("Test contract: ArgentAccount", function () {
     it("Should use GUARDIAN signature when escaping owner", async function () {
       const ownerPrivateKey = stark.randomAddress();
       const guardianPrivateKey = stark.randomAddress();
-      const account = await deployCairo1AccountWithGuardian(
-        proxyClassHash,
-        oldArgentAccountClassHash,
+      const account = await deployAccount(
         argentAccountClassHash,
         ownerPrivateKey,
         guardianPrivateKey,
@@ -277,9 +266,7 @@ describe("Test contract: ArgentAccount", function () {
     it("Should use signature from BOTH OWNER and GUARDIAN when there is a GUARDIAN", async function () {
       const ownerPrivateKey = stark.randomAddress();
       const guardianPrivateKey = stark.randomAddress();
-      const account = await deployCairo1AccountWithGuardian(
-        proxyClassHash,
-        oldArgentAccountClassHash,
+      const account = await deployAccount(
         argentAccountClassHash,
         ownerPrivateKey,
         guardianPrivateKey,
@@ -307,9 +294,7 @@ describe("Test contract: ArgentAccount", function () {
       const guardianPrivateKey = stark.randomAddress();
       const guardianBackupPrivateKey = stark.randomAddress();
       const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
-      const account = await deployCairo1AccountWithGuardian(
-        proxyClassHash,
-        oldArgentAccountClassHash,
+      const account = await deployAccount(
         argentAccountClassHash,
         ownerPrivateKey,
         guardianPrivateKey,
@@ -346,19 +331,17 @@ describe("Test contract: ArgentAccount", function () {
       expect(guardianAfter).to.equal(BigInt("0x42"));
     });
 
-    it("Should throow an error when signing a transaction with OWNER, GUARDIAN and BACKUP", async function () {
+    it("Should throw an error when signing a transaction with OWNER, GUARDIAN and BACKUP", async function () {
       const ownerPrivateKey = stark.randomAddress();
       const guardianPrivateKey = stark.randomAddress();
       const guardianBackupPrivateKey = stark.randomAddress();
-      const account = await deployCairo1AccountWithGuardian(
-        proxyClassHash,
-        oldArgentAccountClassHash,
+      const account = await deployAccount(
         argentAccountClassHash,
         ownerPrivateKey,
         guardianPrivateKey,
       );
       account.signer = new ArgentSigner3Signatures(ownerPrivateKey, guardianPrivateKey, guardianBackupPrivateKey);
-  
+
       await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {
         await account.execute(
           {
@@ -371,17 +354,53 @@ describe("Test contract: ArgentAccount", function () {
         );
       });
     });
+
+    it("Should throw an error the signature given to change owner is invalid", async function () {
+      const account = await deployAccount(argentAccountClassHash);
+      const newOwnerPrivateKey = stark.randomAddress();
+      const new_owner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
+      await expectRevertWithErrorMessage("argent/invalid-owner-sig", async () => {
+        await account.execute(
+          {
+            contractAddress: account.address,
+            entrypoint: "change_owner",
+            calldata: CallData.compile({ new_owner, signature_r: "0x12", signature_s: "0x42" }),
+          },
+          undefined,
+          { cairoVersion: "1" },
+        );
+      });
+    });
   });
 
   xit("Should be posssible to deploy an argent account version 0.3.0", async function () {
     // await deployAccount(argentAccountClassHash);
-    // TODO Impossible atm needs not (yet) available version of Starknet
+    // TODO Impossible atm needs not (yet) deployAccount doesn't support yet cairo1 call structure
   });
 
-  xit("Should be possible change owner", async function () {
-    // TODO This will involve passing new owner + R + S And test that this iss correct
+  xit("Should throw an error the signature given to change owner is invalid", async function () {
+    const ownerPrivateKey = stark.randomAddress();
+
+    const account = await deployAccount(argentAccountClassHash, ownerPrivateKey);
+    const newOwnerPrivateKey = stark.randomAddress();
+    const new_owner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
+    const changeOwnerSelector = hash.getSelectorFromName("change_owner");
+    const chainId = await provider.getChainId();
+    const contractAddress = account.address;
+    const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
+
+    // const msgHash = hash.computeHashOnElements([0, changeOwnerSelector, chainId, contractAddress, ownerPublicKey]);
+    const msgHash = hash.computeHashOnElements([ownerPublicKey, contractAddress, chainId, changeOwnerSelector,0 ]);
+    const signature = await ec.starkCurve.sign(msgHash, newOwnerPrivateKey);
     // TupleSize4LegacyHash::hash(0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), _signer::read()));
+    await account.execute(
+      {
+        contractAddress: account.address,
+        entrypoint: "change_owner",
+        calldata: CallData.compile({ new_owner, signature_r: signature.r, signature_s: signature.s }),
+      },
+      undefined,
+      { cairoVersion: "1" },
+    );
   });
-
-
 });

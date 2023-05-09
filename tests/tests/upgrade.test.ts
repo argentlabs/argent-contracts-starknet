@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { shortString } from "starknet";
-import { declareContract, deployOldAccount, getCairo1Account, provider, upgradeAccount } from "./shared";
+import { declareContract, deployAccount, deployOldAccount, provider, upgradeAccount } from "./shared";
 
 describe("Test Argent Account: upgrade", function () {
   // Avoid timeout
@@ -40,7 +40,7 @@ describe("Test Argent Account: upgrade", function () {
   });
 
   it("Should be possible to upgrade an account from version 0.3.0 to 0.3.1", async function () {
-    const account = await getCairo1Account(proxyClassHash, oldArgentAccountClassHash, argentAccountClassHash);
+    const account = await deployAccount(argentAccountClassHash);
     const currentVersion = await provider.callContract({
       contractAddress: account.address,
       entrypoint: "get_version",

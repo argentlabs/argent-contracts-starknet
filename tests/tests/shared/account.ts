@@ -15,7 +15,7 @@ async function deployOldAccount(
   const constructorCalldata = CallData.compile({
     implementation: oldArgentAccountClassHash,
     selector: hash.getSelectorFromName("initialize"),
-    calldata: CallData.compile({ signer: publicKey, guardian: "0" }),
+    calldata: CallData.compile({ owner: publicKey, guardian: "0" }),
   });
 
   const contractAddress = hash.calculateContractAddressFromHash(publicKey, proxyClassHash, constructorCalldata, 0);
@@ -37,29 +37,25 @@ async function deployAndLoadAccountContract(classHash: string, owner: number, gu
   return await deployAndLoadContract(classHash, { owner, guardian });
 }
 
-// TODO Can't do YET
-async function deployAccount(argentAccountClassHash: string): Promise<Account> {
-  const privateKey = stark.randomAddress();
-  const publicKey = ec.starkCurve.getStarkKey(privateKey);
+async function deployAccount(argentAccountClassHash: string, ownerPrivateKey?: string, guardianPrivateKey = "0"): Promise<Account> {
+  // stark.randomAddress() for testing purposes only. This is not safe in production!
+  ownerPrivateKey = ownerPrivateKey || stark.randomAddress();
+  const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
+  const guardianPublicKey = guardianPrivateKey != "0" ? ec.starkCurve.getStarkKey(guardianPrivateKey): "0";
 
-  const constructorCalldata = CallData.compile({ signer: publicKey, guardian: "0" });
-  const contractAddress = hash.calculateContractAddressFromHash(
-    publicKey,
-    argentAccountClassHash,
-    constructorCalldata,
-    0,
-  );
+  const constructorCalldata = CallData.compile({ owner: ownerPublicKey, guardian:guardianPublicKey});
 
-  const accountToDeploy = new Account(provider, contractAddress, privateKey);
-  await fundAccount(accountToDeploy.address);
-
-  const { transaction_hash } = await account.deployAccount({
+  // TODO This should be updated to use deployAccount and it should probably pay for its own deployemnt
+  const { transaction_hash, contract_address } = await account.deployContract({
     classHash: argentAccountClassHash,
     constructorCalldata,
-    addressSalt: publicKey,
+    salt: ownerPublicKey,
   });
+  // Fund account the account before waiting for it to be deployed
+  await fundAccount(contract_address);
+  // So maybe by the time the account is funded, it is already deployed
   await account.waitForTransaction(transaction_hash);
-  return accountToDeploy;
+  return new Account(provider, contract_address, ownerPrivateKey);
 }
 
 async function upgradeAccount(
@@ -79,47 +75,9 @@ async function upgradeAccount(
   await provider.waitForTransaction(transferTxHash);
 }
 
-// TODO tmp method (we can't deploy cairo1 account yet), it'll be shorter
-async function getCairo1Account(
-  proxyClassHash: string,
-  oldArgentAccountClassHash: string,
-  argentAccountClassHash: string,
-): Promise<Account> {
-  const accountToUpgrade = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
-  await upgradeAccount(accountToUpgrade, argentAccountClassHash);
-  return accountToUpgrade;
-}
-
-// TODO tmp method (we can't deploy cairo1 account yet), it'll be shorter
-async function deployCairo1AccountWithGuardian(
-  proxyClassHash: string,
-  oldArgentAccountClassHash: string,
-  argentAccountClassHash: string,
-  ownerPrivateKey: string,
-  guardianPrivateKey: string,
-): Promise<Account> {
-  const account = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash, ownerPrivateKey);
-  const guardianPublicKey = ec.starkCurve.getStarkKey(guardianPrivateKey);
-  await upgradeAccount(account, argentAccountClassHash);
-  // Needs to be done aftewards otherwise can't upgrade without providing both owner signature and guardian signature
-  // This will be changed later
-  await account.execute(
-    {
-      contractAddress: account.address,
-      entrypoint: "change_guardian",
-      calldata: CallData.compile({ new_guardian: guardianPublicKey }),
-    },
-    undefined,
-    { cairoVersion: "1" },
-  );
-  return account;
-}
-
 export {
   deployAccount,
   deployOldAccount,
   deployAndLoadAccountContract,
   upgradeAccount,
-  getCairo1Account,
-  deployCairo1AccountWithGuardian,
 };

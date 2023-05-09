@@ -41,6 +41,7 @@ class ArgentSigner extends Signer {
 }
 
 // This is a wrong signer as the argent account expects the signature length to always be 2 or 4
+// This signer will make a signature of 6 length using signature from owner, guardian and guardian backup
 class ArgentSigner3Signatures extends Signer {
   protected guardianPk: string;
   protected guardianBackupPk: string;
@@ -86,6 +87,7 @@ class ArgentSigner3Signatures extends Signer {
   }
 }
 
-
+// TODO should we try signer that will put guardian signature first?
+// TODO try where signature is simply wrong
 
 export { ArgentSigner, ArgentSigner3Signatures };

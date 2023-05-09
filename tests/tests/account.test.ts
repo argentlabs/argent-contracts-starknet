@@ -6,7 +6,6 @@ import {
   account,
   declareContract,
   deployAccount,
-  deployAndLoadAccountContract,
   ethAddress,
   expectEvent,
   expectRevertWithErrorMessage,
@@ -36,15 +35,20 @@ describe("Test contract: ArgentAccount", function () {
 
   describe("Example tests", function () {
     it("Deploy a contract without guardian", async function () {
-      const accountContract = await deployAndLoadAccountContract(argentAccountClassHash, 12);
+      const account = await deployAccount(argentAccountClassHash);
+      const accountContract = await loadContract(account.address);
       const result = await accountContract.get_guardian();
       expect(result).to.equal(0n);
     });
 
     it("Deploy a contract with guardian", async function () {
-      const accountContract = await deployAndLoadAccountContract(argentAccountClassHash, 12, 42);
+      const ownerPrivateKey = stark.randomAddress();
+      const guardianPrivateKey = stark.randomAddress();
+      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
+      const accountContract = await loadContract(account.address);
       const result = await accountContract.get_guardian();
-      expect(result).to.equal(42n);
+      const guardianPublicKey = ec.starkCurve.getStarkKey(guardianPrivateKey);
+      expect(result).to.equal(BigInt(guardianPublicKey));
     });
 
     it("Expect an error when owner is zero", async function () {
@@ -168,20 +172,21 @@ describe("Test contract: ArgentAccount", function () {
     });
 
     it("Should be possible to trigger escape guardian by the owner alone", async function () {
-      const privateKey = stark.randomAddress();
-      const starkKeyPub = ec.starkCurve.getStarkKey(privateKey);
+      const ownerPrivateKey = stark.randomAddress();
+      const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
+      const guardianPrivateKey = stark.randomAddress();
+      const guardianPublicKey = ec.starkCurve.getStarkKey(guardianPrivateKey);
       const account = await deployAccount(
         argentAccountClassHash,
-        privateKey,
-        "0x42",
+        ownerPrivateKey,
+        guardianPrivateKey,
       );
 
       const accountContract = await loadContract(account.address);
       const owner = await accountContract.get_owner();
-      expect(owner).to.equal(BigInt(starkKeyPub));
-      const guardianKeyPub = ec.starkCurve.getStarkKey("0x42");
+      expect(owner).to.equal(BigInt(ownerPublicKey));
       const guardian = await accountContract.get_guardian();
-      expect(guardian).to.equal(BigInt(guardianKeyPub));
+      expect(guardian).to.equal(BigInt(guardianPublicKey));
 
       await setTime(42);
       await account.execute(

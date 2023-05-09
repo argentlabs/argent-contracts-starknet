@@ -1,13 +1,11 @@
 import { assert, expect } from "chai";
 import { readFileSync } from "fs";
 import {
-  CallData,
   CompiledSierra,
   CompiledSierraCasm,
   Contract,
   DeclareContractPayload,
   InvokeTransactionReceiptResponse,
-  RawArgs,
   hash,
   json,
   shortString,
@@ -67,12 +65,6 @@ async function actualDeclare(payload: DeclareContractPayload): Promise<string> {
   return hash;
 }
 
-async function deployAndLoadContract(classHash: string, calldata: RawArgs = {}): Promise<Contract> {
-  const constructorCalldata = CallData.compile(calldata);
-  const { transaction_hash, contract_address } = await account.deployContract({ classHash, constructorCalldata });
-  await provider.waitForTransaction(transaction_hash);
-  return loadContract(contract_address);
-}
 
 async function loadContract(contract_address: string) {
   const { abi: testAbi } = await provider.getClassAt(contract_address);
@@ -118,4 +110,4 @@ function extractHashFromErrorOrCrash(e: string) {
   }
 }
 
-export { declareContract, loadContract, deployAndLoadContract, expectRevertWithErrorMessage, expectEvent };
+export { declareContract, loadContract, expectRevertWithErrorMessage, expectEvent };

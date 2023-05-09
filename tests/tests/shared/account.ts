@@ -1,7 +1,6 @@
-import { Account, CairoVersion, CallData, Contract, ec, hash, stark } from "starknet";
+import { Account, CairoVersion, CallData, ec, hash, stark } from "starknet";
 import { account, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
-import { deployAndLoadContract } from "./lib";
 
 async function deployOldAccount(
   proxyClassHash: string,
@@ -31,10 +30,6 @@ async function deployOldAccount(
   });
   await account.waitForTransaction(transaction_hash);
   return accountToDeploy;
-}
-
-async function deployAndLoadAccountContract(classHash: string, owner: number, guardian = 0): Promise<Contract> {
-  return await deployAndLoadContract(classHash, { owner, guardian });
 }
 
 async function deployAccount(argentAccountClassHash: string, ownerPrivateKey?: string, guardianPrivateKey = "0"): Promise<Account> {
@@ -78,6 +73,5 @@ async function upgradeAccount(
 export {
   deployAccount,
   deployOldAccount,
-  deployAndLoadAccountContract,
   upgradeAccount,
 };

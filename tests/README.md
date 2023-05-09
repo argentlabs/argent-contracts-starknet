@@ -15,6 +15,8 @@ brew install gmp
 pip install -r requirements.txt
 ```
 
+For more info check [Devnet instructions](https://0xspaceshard.github.io/starknet-devnet/docs/intro)
+
 Then you should be able to spawn a devnet using makefile:
 
 ```shell
@@ -23,7 +25,7 @@ make devnet
 
 ## Install the project
 
-Install all packages (run in this folder)
+Install all packages (run in this folder `cd tests`)
 
 ```shell
 npm install

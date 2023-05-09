@@ -15,6 +15,8 @@ import {
 
 import { account, provider } from "./constants";
 
+const classHashCache: { [contractName: string]: string } = {};
+
 async function isClassHashDeclared(classHash: string): Promise<boolean> {
   try {
     await provider.getClassByHash(classHash);
@@ -25,8 +27,6 @@ async function isClassHashDeclared(classHash: string): Promise<boolean> {
     return false;
   }
 }
-
-const classHashCache: { [contractName: string]: string } = {};
 
 // Could extends Account to add our specific fn but that's too early.
 async function declareContract(contractName: string): Promise<string> {
@@ -67,7 +67,6 @@ async function actualDeclare(payload: DeclareContractPayload): Promise<string> {
   return hash;
 }
 
-// Could make a cache to optimize speed
 async function deployAndLoadContract(classHash: string, calldata: RawArgs = {}) {
   const constructorCalldata = CallData.compile(calldata);
   const { transaction_hash, contract_address } = await account.deployContract({ classHash, constructorCalldata });

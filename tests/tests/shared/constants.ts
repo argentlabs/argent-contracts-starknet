@@ -1,4 +1,4 @@
-import { Account, Contract, Provider, SequencerProvider } from "starknet";
+import { Account, Contract, SequencerProvider } from "starknet";
 import { loadContract } from "./lib";
 
 // Polls quickly for a local network

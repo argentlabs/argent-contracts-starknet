@@ -3,7 +3,7 @@ import { account, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
 
 async function deployOldAccount(proxyClassHash: string, oldArgentAccountClassHash: string, privateKey?: string) {
-  // stark.randomAddress() for testing purposes only, this is not safe in production
+  // stark.randomAddress() for testing purposes only. This is not safe in production!
   privateKey = privateKey || stark.randomAddress();
   const publicKey = ec.starkCurve.getStarkKey(privateKey);
 
@@ -29,7 +29,6 @@ async function deployOldAccount(proxyClassHash: string, oldArgentAccountClassHas
 }
 
 // TODO Can't do YET
-// TODO Could be handy to store the hash and rename to getAccount()
 async function deployAccount(argentAccountClassHash: string) {
   const privateKey = stark.randomAddress();
   const publicKey = ec.starkCurve.getStarkKey(privateKey);

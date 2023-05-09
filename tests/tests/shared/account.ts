@@ -41,6 +41,7 @@ async function deployAccount(argentAccountClassHash: string, ownerPrivateKey?: s
   const constructorCalldata = CallData.compile({ owner: ownerPublicKey, guardian:guardianPublicKey});
 
   // TODO This should be updated to use deployAccount and it should probably pay for its own deployemnt
+  // Can't atm, waiting for starknetJS update
   const { transaction_hash, contract_address } = await account.deployContract({
     classHash: argentAccountClassHash,
     constructorCalldata,

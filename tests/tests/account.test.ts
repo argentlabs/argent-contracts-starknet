@@ -40,14 +40,14 @@ describe("Test contract: ArgentAccount", function () {
 
   describe("Example tests", function () {
     it("Deploy a contract without guardian", async function () {
-      const contract = await deployAndLoadAccountContract(argentAccountClassHash, 12);
-      const result = await contract.call("get_guardian");
+      const accountContract = await deployAndLoadAccountContract(argentAccountClassHash, 12);
+      const result = await accountContract.get_guardian();
       expect(result).to.equal(0n);
     });
 
     it("Deploy a contract with guardian", async function () {
-      const contract = await deployAndLoadAccountContract(argentAccountClassHash, 12, 42);
-      const result = await contract.call("get_guardian");
+      const accountContract = await deployAndLoadAccountContract(argentAccountClassHash, 12, 42);
+      const result = await accountContract.get_guardian();
       expect(result).to.equal(42n);
     });
 

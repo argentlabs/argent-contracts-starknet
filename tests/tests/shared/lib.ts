@@ -67,7 +67,7 @@ async function actualDeclare(payload: DeclareContractPayload): Promise<string> {
   return hash;
 }
 
-async function deployAndLoadContract(classHash: string, calldata: RawArgs = {}) {
+async function deployAndLoadContract(classHash: string, calldata: RawArgs = {}): Promise<Contract> {
   const constructorCalldata = CallData.compile(calldata);
   const { transaction_hash, contract_address } = await account.deployContract({ classHash, constructorCalldata });
   await provider.waitForTransaction(transaction_hash);

@@ -1,9 +1,13 @@
-import { Account, CairoVersion, CallData, ec, hash, stark } from "starknet";
+import { Account, CairoVersion, CallData, Contract, ec, hash, stark } from "starknet";
 import { account, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
 import { deployAndLoadContract } from "./lib";
 
-async function deployOldAccount(proxyClassHash: string, oldArgentAccountClassHash: string, privateKey?: string) {
+async function deployOldAccount(
+  proxyClassHash: string,
+  oldArgentAccountClassHash: string,
+  privateKey?: string,
+): Promise<Account> {
   // stark.randomAddress() for testing purposes only. This is not safe in production!
   privateKey = privateKey || stark.randomAddress();
   const publicKey = ec.starkCurve.getStarkKey(privateKey);
@@ -29,12 +33,12 @@ async function deployOldAccount(proxyClassHash: string, oldArgentAccountClassHas
   return accountToDeploy;
 }
 
-async function deployAndLoadAccountContract(classHash: string, owner: number, guardian = 0) {
+async function deployAndLoadAccountContract(classHash: string, owner: number, guardian = 0): Promise<Contract> {
   return await deployAndLoadContract(classHash, { owner, guardian });
 }
 
 // TODO Can't do YET
-async function deployAccount(argentAccountClassHash: string) {
+async function deployAccount(argentAccountClassHash: string): Promise<Account> {
   const privateKey = stark.randomAddress();
   const publicKey = ec.starkCurve.getStarkKey(privateKey);
 
@@ -80,7 +84,7 @@ async function getCairo1Account(
   proxyClassHash: string,
   oldArgentAccountClassHash: string,
   argentAccountClassHash: string,
-) {
+): Promise<Account> {
   const accountToUpgrade = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
   await upgradeAccount(accountToUpgrade, argentAccountClassHash);
   return accountToUpgrade;
@@ -93,7 +97,7 @@ async function deployCairo1AccountWithGuardian(
   argentAccountClassHash: string,
   ownerPrivateKey: string,
   guardianPrivateKey: string,
-) {
+): Promise<Account> {
   const account = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash, ownerPrivateKey);
   const guardianPublicKey = ec.starkCurve.getStarkKey(guardianPrivateKey);
   await upgradeAccount(account, argentAccountClassHash);

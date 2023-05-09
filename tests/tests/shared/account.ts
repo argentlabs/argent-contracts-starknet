@@ -7,7 +7,6 @@ async function deployOldAccount(
   oldArgentAccountClassHash: string,
   privateKey?: string,
 ): Promise<Account> {
-  // stark.randomAddress() for testing purposes only. This is not safe in production!
   privateKey = privateKey || stark.randomAddress();
   const publicKey = ec.starkCurve.getStarkKey(privateKey);
 
@@ -33,7 +32,6 @@ async function deployOldAccount(
 }
 
 async function deployAccount(argentAccountClassHash: string, ownerPrivateKey?: string, guardianPrivateKey = "0"): Promise<Account> {
-  // stark.randomAddress() for testing purposes only. This is not safe in production!
   ownerPrivateKey = ownerPrivateKey || stark.randomAddress();
   const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
   const guardianPublicKey = guardianPrivateKey != "0" ? ec.starkCurve.getStarkKey(guardianPrivateKey): "0";

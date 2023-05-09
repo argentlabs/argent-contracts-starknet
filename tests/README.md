@@ -1,3 +1,12 @@
+# ⚠️ Warning 
+
+The use of   
+```js
+stark.randomAddress()
+```  
+if here used for testing purposes only.  
+**This is not safe in production!**
+
 # Prerequisite
 
 Have [node and npm installed.](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)

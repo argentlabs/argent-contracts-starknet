@@ -14,8 +14,8 @@ describe("Test Argent Account: upgrade", function () {
 
   before(async () => {
     argentAccountClassHash = await declareContract("ArgentAccount");
-    // This is the same as ArgentAccount but with a different version or name 
-    // Done to be able to test upgradability
+    // This is the same as ArgentAccount but with a different version (to have another class hash)
+    // Done to be able to test upgradability ()
     argentAccountV1ClassHash = await declareContract("ArgentAccountV1");
     oldArgentAccountClassHash = await declareContract("OldArgentAccount");
     proxyClassHash = await declareContract("Proxy");

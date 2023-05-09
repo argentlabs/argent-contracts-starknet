@@ -87,7 +87,6 @@ async function expectRevertWithErrorMessage(errorMessage: string, fn: () => void
     await fn();
     assert.fail("No error detected");
   } catch (e: any) {
-    console.log(e);
     expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
   }
 }
@@ -105,7 +104,8 @@ async function expectEvent(transactionHash: string, eventName: string, data: str
   if (event.length > 1) {
     assert.fail("Unsupported: Multiple events with same selector detected");
   }
-  expect(event[0].data).to.equal(data);
+  // Needs deep equality for array, can't do to.equal
+  expect(event[0].data).to.eql(data);
 }
 
 function extractHashFromErrorOrCrash(e: string) {

@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { shortString } from "starknet";
 import { declareContract, deployOldAccount, getCairo1Account, provider, upgradeAccount } from "./shared";
 
-xdescribe("Test Argent Account: upgrade", function () {
+describe("Test Argent Account: upgrade", function () {
   // Avoid timeout
   this.timeout(320000);
 

@@ -39,7 +39,7 @@ describe("Test contract: ArgentAccount", function () {
     // TODO When everything is more clean, we could deploy a new funded cairo1 account and use that one to do all the logic
   });
 
-  xdescribe("Example tests", function () {
+  describe("Example tests", function () {
     it("Deploy a contract without guardian", async function () {
       const accountContract = await deployAndLoadAccountContract(argentAccountClassHash, 12);
       const result = await accountContract.get_guardian();
@@ -350,7 +350,6 @@ describe("Test contract: ArgentAccount", function () {
       const ownerPrivateKey = stark.randomAddress();
       const guardianPrivateKey = stark.randomAddress();
       const guardianBackupPrivateKey = stark.randomAddress();
-      const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
       const account = await deployCairo1AccountWithGuardian(
         proxyClassHash,
         oldArgentAccountClassHash,
@@ -358,23 +357,6 @@ describe("Test contract: ArgentAccount", function () {
         ownerPrivateKey,
         guardianPrivateKey,
       );
-  
-      const accountContract = await loadContract(account.address);
-      const guardianBackupBefore = await accountContract.get_guardian_backup();
-      expect(guardianBackupBefore).to.equal(0n);
-      account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
-      await account.execute(
-        {
-          contractAddress: account.address,
-          entrypoint: "change_guardian_backup",
-          calldata: CallData.compile({ new_guardian_backup: guardianBackupPublicKey }),
-        },
-        undefined,
-        { cairoVersion: "1" },
-      );
-      const guardianBackupAfter = await accountContract.get_guardian_backup();
-      expect(guardianBackupAfter).to.equal(BigInt(guardianBackupPublicKey));
-  
       account.signer = new ArgentSigner3Signatures(ownerPrivateKey, guardianPrivateKey, guardianBackupPrivateKey);
   
       await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {

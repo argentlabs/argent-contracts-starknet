@@ -24,7 +24,7 @@ jobs:
       - name: PYTHON
         uses: actions/setup-python@v4
         with:
-            python-version: '3.10'
+            python-version: '3.9'
       - name: Step 2 - Downloading binaries
         run: curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
       - name: Step 3 - Unzipping binaries

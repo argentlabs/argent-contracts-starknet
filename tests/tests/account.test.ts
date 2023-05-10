@@ -16,7 +16,7 @@ import {
   setTime,
 } from "./shared";
 
-xdescribe("Test contract: ArgentAccount", function () {
+describe("Test contract: ArgentAccount", function () {
   // Avoid timeout
   this.timeout(320000);
 

@@ -521,6 +521,8 @@ mod ArgentAccount {
 
     /// Signature is the Signed Message of this hash:
     /// hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
+    /// hash = pedersen(hash, 4)
+
     fn assert_valid_new_owner(new_owner: felt252, signature_r: felt252, signature_s: felt252) {
         assert(new_owner != 0, 'argent/null-owner');
         let chain_id = get_tx_info().unbox().chain_id;

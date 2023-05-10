@@ -36,4 +36,6 @@ jobs:
       - name: Step 3 - Cloning repo
         run: make clone-cairo
       - name: Step 4 - Installing requirements
-        run: pip3 install -r requirements.txt
+        run: |
+            apt-get update && apt-get upgrade python-pip
+            pip install -r requirements.txt

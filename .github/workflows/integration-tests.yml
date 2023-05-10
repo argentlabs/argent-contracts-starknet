@@ -9,7 +9,7 @@ on:
     branches: 
       - develop
       - main
-      - chore/integration_tests # TODO REMOVE THIS AT THE END
+      - chore/integration_tests_ci # TODO REMOVE THIS AT THE END
   pull_request: 
     branches: 
       - develop

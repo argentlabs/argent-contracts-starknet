@@ -14,17 +14,17 @@ struct Call {
     calldata: Array<felt252>,
 }
 
-fn execute_multicall(calls: Array<Call>) -> Array<felt252> {
-    let mut result = ArrayTrait::new();
+fn execute_multicall(calls: Span<Call>) -> Span<Span<felt252>> {
+    let mut result : Array<Span<felt252>> = ArrayTrait::new();
     let mut calls = calls;
     let mut idx = 0;
     loop {
         check_enough_gas();
         match calls.pop_front() {
             Option::Some(call) => {
-                match call_contract_syscall(call.to, call.selector, call.calldata.span()) {
+                match call_contract_syscall(*call.to, *call.selector, call.calldata.span()) {
                     Result::Ok(mut retdata) => {
-                        result.append_all(ref retdata);
+                        result.append(retdata);
                         idx = idx + 1;
                     },
                     Result::Err(revert_reason) => {
@@ -40,5 +40,5 @@ fn execute_multicall(calls: Array<Call>) -> Array<felt252> {
             },
         };
     };
-    result
+    result.span()
 }

@@ -30,6 +30,7 @@ mod ArgentAccount {
     use lib::IErc165DispatcherTrait;
     use lib::IAccountUpgradeLibraryDispatcher;
     use lib::IAccountUpgradeDispatcherTrait;
+    use lib::SpanSerde;
 
     const NAME: felt252 = 'ArgentAccount';
 
@@ -82,7 +83,7 @@ mod ArgentAccount {
     fn AccountCreated(account: ContractAddress, key: felt252, guardian: felt252) {}
 
     #[event]
-    fn TransactionExecuted(hash: felt252, response: Array<felt252>) {}
+    fn TransactionExecuted(hash: felt252, response: Span<Span<felt252>>) {}
 
     #[event]
     fn EscapeOwnerTriggered(active_at: u64, new_owner: felt252) {}
@@ -178,16 +179,14 @@ mod ArgentAccount {
     }
 
     #[external]
-    #[raw_output]
-    fn __execute__(calls: Array<Call>) -> Span::<felt252> {
-        // TODO PUT BACK WHEN WE CAN MOCK IT
-        // let tx_info = get_tx_info().unbox();
-        // assert_correct_tx_version(tx_info.version);
+    fn __execute__(calls: Array<Call>) -> Span<Span<felt252>> {
+        let tx_info = get_tx_info().unbox();
+        // assert_correct_tx_version(tx_info.version); // TODO PUT BACK WHEN WE CAN MOCK IT
         assert_non_reentrant();
 
-        let retdata = execute_multicall(calls);
-        // TransactionExecuted(tx_info.transaction_hash, retdata);
-        retdata.span()
+        let retdata = execute_multicall(calls.span());
+        TransactionExecuted(tx_info.transaction_hash, retdata);
+        retdata
     }
 
     /// @notice Changes the owner

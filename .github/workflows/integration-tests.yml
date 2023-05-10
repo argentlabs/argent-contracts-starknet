@@ -27,7 +27,7 @@ jobs:
         run: tar -xvf $ARCHIVE_NAME
       - name: Step 4 - Make binaries available
         run: echo "./cairo/bin" >> $GITHUB_PATH
-      - name: Step 5 - Compiling ArgentAccount to JSON and CASM
-        run: |
-            starknet-compile ./contracts/account tests/contracts/ArgentAccount.json --allowed-libfuncs-list-name experimental_v0.1.0
-            starknet-sierra-compile ./tests/contracts/ArgentAccount.json ./tests/contracts/ArgentAccount.casm --allowed-libfuncs-list-name experimental_v0.1.0
+      - name: Step 5 - Compiling ArgentAccount to JSON
+        run: starknet-compile ./contracts/account tests/contracts/ArgentAccount.json --allowed-libfuncs-list-name experimental_v0.1.0
+      - name: Step 6 - Compiling ArgentAccount from JSON and CASM
+        run: starknet-sierra-compile ./tests/contracts/ArgentAccount.json ./tests/contracts/ArgentAccount.casm --allowed-libfuncs-list-name experimental_v0.1.0

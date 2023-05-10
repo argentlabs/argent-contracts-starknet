@@ -3,7 +3,7 @@ import sys
 sys.path.append('test')
 from utils.utilities import str_to_felt
 from utils.Signer import Signer
-from utils.utilities import pedersen_hash_list
+from starkware.cairo.common.hash_state import compute_hash_on_elements
 
 owner = Signer(1)
 guardian = Signer(2)
@@ -71,9 +71,8 @@ def calculate_sig_change_owner():
     chain_id = 0
     contract_address = 0
     old_owner = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca
-    amount_of_items_to_hash = 4
     
-    message_hash = pedersen_hash_list([change_owner_selector, chain_id, contract_address, old_owner, amount_of_items_to_hash])
+    message_hash = compute_hash_on_elements([change_owner_selector, chain_id, contract_address, old_owner])
 
     new_owner_r, new_owner_s = new_owner.sign(message_hash)
 

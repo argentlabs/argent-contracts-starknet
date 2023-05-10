@@ -24,7 +24,9 @@ jobs:
       - name: Step 2 - Downloading binaries
         run: curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
       - name: Step 3 - Unzipping binaries
-        run: tar -xvf $ARCHIVE_NAME
+        run: |
+            tar -xvf $ARCHIVE_NAME
+            mv cairo cairo_binaries
       - name: Step 4 - Make binaries available
         run: echo "./cairo_binaries/bin" >> $GITHUB_PATH
       - name: Step 5 - Compiling ArgentAccount to JSON

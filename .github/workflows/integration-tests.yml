@@ -37,6 +37,5 @@ jobs:
         run: make clone-cairo
       - name: Step 4 - Installing requirements
         run: |
-            sudo apt-get update
-            sudo apt-get upgrade python-pip
-            pip install -r requirements.txt
+            sudo pip3 install --upgrade pip
+            pip3 install -r requirements.txt

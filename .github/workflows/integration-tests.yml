@@ -44,6 +44,4 @@ jobs:
       - name: run devnet
         run: make devnet &
       - name: install tests
-        run: cd tests && npm install
-      - name: run
-        run: npm run test
+        run: cd tests && npm install && npm run test

@@ -2,7 +2,7 @@ name: Tests CI
 
 env:
   ARCHIVE_LINK: https://github.com/starkware-libs/cairo/releases/download/v1.0.0-alpha.7/release-x86_64-unknown-linux-musl.tar.gz
-  ARCHIVE_NAME: cairo.zip
+  ARCHIVE_NAME: cairo_binaries.zip
   
 on:
   push:
@@ -26,7 +26,7 @@ jobs:
       - name: Step 3 - Unzipping binaries
         run: tar -xvf $ARCHIVE_NAME
       - name: Step 4 - Make binaries available
-        run: echo "./cairo/bin" >> $GITHUB_PATH
+        run: echo "./cairo_binaries/bin" >> $GITHUB_PATH
       - name: Step 5 - Compiling ArgentAccount to JSON
         run: starknet-compile ./contracts/account tests/contracts/ArgentAccount.json --allowed-libfuncs-list-name experimental_v0.1.0
       - name: Step 6 - Compiling ArgentAccount from JSON and CASM

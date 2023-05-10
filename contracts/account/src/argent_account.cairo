@@ -519,9 +519,10 @@ mod ArgentAccount {
         }
     }
 
-    /// Signature is the Signed Message of this hash:
-    /// hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
-    /// hash = pedersen(hash, 4)
+    /// The signature is the result of signing the message hash with the new owner private key
+    /// The message hash is the result of hashing the array:
+    /// [change_owner selector, chainid, contract address, old_owner]
+    /// as specified here: https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
 
     fn assert_valid_new_owner(new_owner: felt252, signature_r: felt252, signature_s: felt252) {
         assert(new_owner != 0, 'argent/null-owner');

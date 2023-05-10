@@ -19,15 +19,6 @@ const new_owner_s: felt252 = 0x2533ad14e0d98389f0b9abbcd1b73d086af68fdfc9bf07d21
 const wrong_owner_r: felt252 = 0x4be5db0599a2e5943f207da3f9bf2dd091acf055b71a1643e9c35fcd7e2c0df;
 const wrong_owner_s: felt252 = 0x2e44d5bad55a0d692e02529e7060f352fde85fae8d5946f28c34a10a29bc83b;
 
-use hash::TupleSize3LegacyHash;
-use debug::PrintTrait;
-#[test]
-#[available_gas(2000000)]
-fn lama() {
-    let a = TupleSize3LegacyHash::hash(0, (1, 2, 2));
-    a.print();
-}
-
 #[test]
 #[available_gas(2000000)]
 fn initialize() {

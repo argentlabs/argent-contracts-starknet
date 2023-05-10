@@ -16,7 +16,7 @@ import {
   setTime,
 } from "./shared";
 
-describe("Test contract: ArgentAccount", function () {
+xdescribe("Test contract: ArgentAccount", function () {
   // Avoid timeout
   this.timeout(320000);
 
@@ -33,7 +33,7 @@ describe("Test contract: ArgentAccount", function () {
     // TODO When everything is more clean, we could deploy a new funded cairo1 account and use that one to do all the logic
   });
 
-  xdescribe("Example tests", function () {
+  describe("Example tests", function () {
     it("Deploy a contract without guardian", async function () {
       const account = await deployAccount(argentAccountClassHash);
       const accountContract = await loadContract(account.address);

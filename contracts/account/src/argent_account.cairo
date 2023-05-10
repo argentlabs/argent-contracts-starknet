@@ -5,6 +5,7 @@ mod ArgentAccount {
     use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
     use hash::TupleSize4LegacyHash;
+    use hash::LegacyHashFelt252;
 
     use starknet::ClassHash;
     use starknet::class_hash_const;
@@ -523,9 +524,12 @@ mod ArgentAccount {
     fn assert_valid_new_owner(new_owner: felt252, signature_r: felt252, signature_s: felt252) {
         assert(new_owner != 0, 'argent/null-owner');
         let chain_id = get_tx_info().unbox().chain_id;
-        let message_hash = TupleSize4LegacyHash::hash(
+        let mut message_hash = TupleSize4LegacyHash::hash(
             0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), _signer::read())
         );
+        // We now need to hash message_hash with the size of the array: (change_owner selector, chainid, contract address, old_owner)
+        // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
+        message_hash = LegacyHashFelt252::hash(message_hash, 4);
         let is_valid = check_ecdsa_signature(message_hash, new_owner, signature_r, signature_s);
         assert(is_valid, 'argent/invalid-owner-sig');
     }

@@ -47,6 +47,7 @@ async function deployAccount(
   const { transaction_hash, contract_address } = await account.deployContract({
     classHash: argentAccountClassHash,
     constructorCalldata,
+    // TODO Investigate if salt is useful?
     salt: ownerPublicKey,
   });
   // Fund account the account before waiting for it to be deployed

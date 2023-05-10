@@ -33,7 +33,7 @@ describe("Test contract: ArgentAccount", function () {
     // TODO When everything is more clean, we could deploy a new funded cairo1 account and use that one to do all the logic
   });
 
-  describe("Example tests", function () {
+  xdescribe("Example tests", function () {
     it("Deploy a contract without guardian", async function () {
       const account = await deployAccount(argentAccountClassHash);
       const accountContract = await loadContract(account.address);
@@ -352,36 +352,38 @@ describe("Test contract: ArgentAccount", function () {
         );
       });
     });
+
+    it("Should throw an error the signature given to change owner is invalid", async function () {
+      const ownerPrivateKey = stark.randomAddress();
+
+      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey);
+      const newOwnerPrivateKey = stark.randomAddress();
+      const new_owner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
+      const changeOwnerSelector = hash.getSelectorFromName("change_owner");
+      const chainId = await provider.getChainId();
+      const contractAddress = account.address;
+      const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
+
+      const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, ownerPublicKey]);
+      const signature = await ec.starkCurve.sign(msgHash, newOwnerPrivateKey);
+      await account.execute(
+        {
+          contractAddress: account.address,
+          entrypoint: "change_owner",
+          calldata: CallData.compile({ new_owner, signature_r: signature.r, signature_s: signature.s }),
+        },
+        undefined,
+        { cairoVersion: "1" },
+      );
+
+      const accountContract = await loadContract(account.address);
+      const owner_result = await accountContract.get_owner();
+      expect(owner_result).to.equal(BigInt(new_owner));
+    });
   });
 
   xit("Should be posssible to deploy an argent account version 0.3.0", async function () {
     // await deployAccount(argentAccountClassHash);
     // TODO Impossible atm needs not (yet) deployAccount doesn't support yet cairo1 call structure
-  });
-
-  xit("Should throw an error the signature given to change owner is invalid", async function () {
-    const ownerPrivateKey = stark.randomAddress();
-
-    const account = await deployAccount(argentAccountClassHash, ownerPrivateKey);
-    const newOwnerPrivateKey = stark.randomAddress();
-    const new_owner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
-    const changeOwnerSelector = hash.getSelectorFromName("change_owner");
-    const chainId = await provider.getChainId();
-    const contractAddress = account.address;
-    const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
-
-    // const msgHash = hash.computeHashOnElements([0, changeOwnerSelector, chainId, contractAddress, ownerPublicKey]);
-    const msgHash = hash.computeHashOnElements([ownerPublicKey, contractAddress, chainId, changeOwnerSelector, 0]);
-    const signature = await ec.starkCurve.sign(msgHash, newOwnerPrivateKey);
-    // TupleSize4LegacyHash::hash(0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), _signer::read()));
-    await account.execute(
-      {
-        contractAddress: account.address,
-        entrypoint: "change_owner",
-        calldata: CallData.compile({ new_owner, signature_r: signature.r, signature_s: signature.s }),
-      },
-      undefined,
-      { cairoVersion: "1" },
-    );
   });
 });

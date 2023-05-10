@@ -12,11 +12,21 @@ use account::tests::wrong_owner_pubkey;
 use account::tests::guardian_pubkey;
 
 const new_owner_pubkey: felt252 = 0xa7da05a4d664859ccd6e567b935cdfbfe3018c7771cb980892ef38878ae9bc;
-const new_owner_r: felt252 = 0x5b786ea6339eae95e7fbcabc43b4667f697738581f9762108515aea7a051342;
-const new_owner_s: felt252 = 0x4ded483cee51e8237a6f1c38e75042c1055ebdc22d3394d84b657f42cbdf32b;
+const new_owner_r: felt252 = 0x7f41f072c2741c4e3fe91552f1fbb19c9dd96c40e6b845c3a99776da9c6d309;
+const new_owner_s: felt252 = 0x2533ad14e0d98389f0b9abbcd1b73d086af68fdfc9bf07d21ebce84ab01e43b;
+
 
 const wrong_owner_r: felt252 = 0x4be5db0599a2e5943f207da3f9bf2dd091acf055b71a1643e9c35fcd7e2c0df;
 const wrong_owner_s: felt252 = 0x2e44d5bad55a0d692e02529e7060f352fde85fae8d5946f28c34a10a29bc83b;
+
+use hash::TupleSize3LegacyHash;
+use debug::PrintTrait;
+#[test]
+#[available_gas(2000000)]
+fn lama() {
+    let a = TupleSize3LegacyHash::hash(0, (1, 2, 2));
+    a.print();
+}
 
 #[test]
 #[available_gas(2000000)]

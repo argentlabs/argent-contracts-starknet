@@ -71,8 +71,9 @@ def calculate_sig_change_owner():
     chain_id = 0
     contract_address = 0
     old_owner = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca
+    amount_of_items_to_hash = 4
     
-    message_hash = pedersen_hash_list([change_owner_selector, chain_id, contract_address, old_owner])
+    message_hash = pedersen_hash_list([change_owner_selector, chain_id, contract_address, old_owner, amount_of_items_to_hash])
 
     new_owner_r, new_owner_s = new_owner.sign(message_hash)
 

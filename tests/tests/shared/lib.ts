@@ -5,6 +5,7 @@ import {
   CompiledSierraCasm,
   Contract,
   DeclareContractPayload,
+  Event,
   InvokeTransactionReceiptResponse,
   hash,
   json,
@@ -82,21 +83,20 @@ async function expectRevertWithErrorMessage(errorMessage: string, fn: () => void
   }
 }
 
-async function expectEvent(transactionHash: string, eventName: string, data: string[] = []) {
+async function expectEvent(transactionHash: string, event: Event) {
   const txReceiptDeployTest: InvokeTransactionReceiptResponse = await provider.waitForTransaction(transactionHash);
   if (!txReceiptDeployTest.events) {
     assert.fail("No events triggered");
   }
-  const selector = hash.getSelectorFromName(eventName);
-  const event = txReceiptDeployTest.events.filter((e) => e.keys[0] == selector);
-  if (event.length == 0) {
-    assert.fail(`No event detected in this transaction: ${transactionHash}`);
-  }
-  if (event.length > 1) {
-    assert.fail("Unsupported: Multiple events with same selector detected");
-  }
+  expect(event.keys.length).to.equal(1, "Unsupported: Multiple keys with same selector detected");
+  const selector = hash.getSelectorFromName(event.keys[0]);
+  const eventFiltered = txReceiptDeployTest.events.filter((e) => e.keys[0] == selector);
+  expect(eventFiltered.length != 0, `No event detected in this transaction: ${transactionHash}`).to.be.true;
+  expect(eventFiltered.length).to.equal(1, "Unsupported: Multiple events with same selector detected");
+  const currentEvent = eventFiltered[0];
+  expect(currentEvent.from_address).to.eql(event.from_address);
   // Needs deep equality for array, can't do to.equal
-  expect(event[0].data).to.eql(data);
+  expect(currentEvent.data).to.eql(event.data);
 }
 
 function extractHashFromErrorOrCrash(e: string) {

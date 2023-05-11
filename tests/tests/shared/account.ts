@@ -1,4 +1,4 @@
-import { Account, CairoVersion, CallData, ec, hash, stark } from "starknet";
+import { Account, CallData, ec, hash, stark } from "starknet";
 import { account, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
 
@@ -57,17 +57,12 @@ async function deployAccount(
   return new Account(provider, contract_address, ownerPrivateKey, "1");
 }
 
-async function upgradeAccount(
-  accountToUpgrade: Account,
-  argentAccountClassHash: string,
-) {
-  const { transaction_hash: transferTxHash } = await accountToUpgrade.execute(
-    {
-      contractAddress: accountToUpgrade.address,
-      entrypoint: "upgrade",
-      calldata: CallData.compile({ implementation: argentAccountClassHash, calldata: ["0"] }),
-    }
-  );
+async function upgradeAccount(accountToUpgrade: Account, argentAccountClassHash: string) {
+  const { transaction_hash: transferTxHash } = await accountToUpgrade.execute({
+    contractAddress: accountToUpgrade.address,
+    entrypoint: "upgrade",
+    calldata: CallData.compile({ implementation: argentAccountClassHash, calldata: ["0"] }),
+  });
   await provider.waitForTransaction(transferTxHash);
 }
 

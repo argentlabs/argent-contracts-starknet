@@ -88,7 +88,7 @@ async function expectEvent(transactionHash: string, event: Event) {
   if (!txReceiptDeployTest.events) {
     assert.fail("No events triggered");
   }
-  expect(event.keys.length).to.equal(1, "Unsupported: Multiple keys with same selector detected");
+  expect(event.keys.length).to.equal(1, "Unsupported: Multiple keys");
   const selector = hash.getSelectorFromName(event.keys[0]);
   const eventFiltered = txReceiptDeployTest.events.filter((e) => e.keys[0] == selector);
   expect(eventFiltered.length != 0, `No event detected in this transaction: ${transactionHash}`).to.be.true;

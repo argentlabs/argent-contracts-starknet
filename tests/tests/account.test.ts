@@ -3,7 +3,7 @@ import { CallData, Signer, ec, hash, num, stark, uint256 } from "starknet";
 import {
   ArgentSigner,
   ArgentSigner3Signatures,
-  account,
+  deployerAccount,
   declareContract,
   deployAccount,
   ethAddress,
@@ -53,7 +53,7 @@ describe("Test contract: ArgentAccount", function () {
 
     it("Expect an error when owner is zero", async function () {
       await expectRevertWithErrorMessage("argent/null-owner", async () => {
-        await account.deployContract({
+        await deployerAccount.deployContract({
           classHash: argentAccountClassHash,
           constructorCalldata: CallData.compile({ owner: 0, guardian: 12 }),
         });
@@ -64,7 +64,7 @@ describe("Test contract: ArgentAccount", function () {
       const owner = "21";
       const guardian = "42";
       const constructorCalldata = CallData.compile({ owner, guardian });
-      const { transaction_hash, contract_address } = await account.deployContract({
+      const { transaction_hash, contract_address } = await deployerAccount.deployContract({
         classHash: argentAccountClassHash,
         constructorCalldata,
       });

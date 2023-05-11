@@ -43,5 +43,9 @@ jobs:
         run: pip3 install -r requirements.txt
       - name: run devnet
         run: make devnet &
+      - name: Sleep for 2mn
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '2m'
       - name: install tests
         run: cd tests && npm install && npm run test

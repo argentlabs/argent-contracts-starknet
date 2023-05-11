@@ -1,6 +1,7 @@
 import {
   Abi,
   Call,
+  CallData,
   DeclareSignerDetails,
   DeployAccountSignerDetails,
   InvocationsSignerDetails,
@@ -63,7 +64,7 @@ abstract class RawSigner implements SignerInterface {
     const msgHash = hash.calculateDeployAccountTransactionHash(
       contractAddress,
       classHash,
-      constructorCalldata,
+      CallData.compile(constructorCalldata),
       addressSalt,
       version,
       maxFee,

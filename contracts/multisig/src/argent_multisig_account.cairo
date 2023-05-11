@@ -25,6 +25,8 @@ mod ArgentMultisigAccount {
     use lib::Version;
     use lib::IErc165LibraryDispatcher;
     use lib::IErc165DispatcherTrait;
+    use lib::SpanSerde;
+
     use multisig::IUpgradeTargetLibraryDispatcher;
     use multisig::IUpgradeTargetDispatcherTrait;
     use multisig::deserialize_array_signer_signature;
@@ -56,7 +58,7 @@ mod ArgentMultisigAccount {
     ) {}
 
     #[event]
-    fn TransactionExecuted(hash: felt252, response: Array<felt252>) {}
+    fn TransactionExecuted(hash: felt252, response: Span<Span<felt252>>) {}
 
     #[event]
     fn AccountUpgraded(new_implementation: ClassHash) {}
@@ -107,16 +109,14 @@ mod ArgentMultisigAccount {
     }
 
     #[external]
-    #[raw_output]
-    fn __execute__(calls: Array<Call>) -> Span::<felt252> {
+    fn __execute__(calls: Array<Call>) -> Span<Span<felt252>> {
         let tx_info = starknet::get_tx_info().unbox();
         assert_correct_tx_version(tx_info.version);
         assert_non_reentrant();
 
-        let retdata = execute_multicall(calls);
-        let retdata_span = retdata.span();
+        let retdata = execute_multicall(calls.span());
         TransactionExecuted(tx_info.transaction_hash, retdata);
-        retdata_span
+        retdata
     }
 
     #[external]

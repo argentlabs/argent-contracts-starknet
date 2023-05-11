@@ -4,8 +4,8 @@ use asserts::assert_no_self_call;
 use asserts::assert_non_reentrant;
 use asserts::assert_correct_tx_version;
 
-mod traits;
-use traits::ArrayTraitExt;
+mod span_serde;
+use span_serde::SpanSerde;
 
 // Structures 
 mod calls;

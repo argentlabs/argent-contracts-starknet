@@ -5,6 +5,7 @@ mod ArgentAccount {
     use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
     use hash::TupleSize4LegacyHash;
+    use hash::LegacyHashFelt252;
 
     use starknet::ClassHash;
     use starknet::class_hash_const;
@@ -29,6 +30,7 @@ mod ArgentAccount {
     use lib::IErc165DispatcherTrait;
     use lib::IAccountUpgradeLibraryDispatcher;
     use lib::IAccountUpgradeDispatcherTrait;
+    use lib::SpanSerde;
 
     const NAME: felt252 = 'ArgentAccount';
 
@@ -81,7 +83,7 @@ mod ArgentAccount {
     fn AccountCreated(account: ContractAddress, key: felt252, guardian: felt252) {}
 
     #[event]
-    fn TransactionExecuted(hash: felt252, response: Array<felt252>) {}
+    fn TransactionExecuted(hash: felt252, response: Span<Span<felt252>>) {}
 
     #[event]
     fn EscapeOwnerTriggered(active_at: u64, new_owner: felt252) {}
@@ -177,16 +179,14 @@ mod ArgentAccount {
     }
 
     #[external]
-    #[raw_output]
-    fn __execute__(calls: Array<Call>) -> Span::<felt252> {
-        // TODO PUT BACK WHEN WE CAN MOCK IT
-        // let tx_info = get_tx_info().unbox();
-        // assert_correct_tx_version(tx_info.version);
+    fn __execute__(calls: Array<Call>) -> Span<Span<felt252>> {
+        let tx_info = get_tx_info().unbox();
+        // assert_correct_tx_version(tx_info.version); // TODO PUT BACK WHEN WE CAN MOCK IT
         assert_non_reentrant();
 
-        let retdata = execute_multicall(calls);
-        // TransactionExecuted(tx_info.transaction_hash, retdata);
-        retdata.span()
+        let retdata = execute_multicall(calls.span());
+        TransactionExecuted(tx_info.transaction_hash, retdata);
+        retdata
     }
 
     /// @notice Changes the owner
@@ -518,14 +518,20 @@ mod ArgentAccount {
         }
     }
 
-    /// Signature is the Signed Message of this hash:
-    /// hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
+    /// The signature is the result of signing the message hash with the new owner private key
+    /// The message hash is the result of hashing the array:
+    /// [change_owner selector, chainid, contract address, old_owner]
+    /// as specified here: https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
+
     fn assert_valid_new_owner(new_owner: felt252, signature_r: felt252, signature_s: felt252) {
         assert(new_owner != 0, 'argent/null-owner');
         let chain_id = get_tx_info().unbox().chain_id;
-        let message_hash = TupleSize4LegacyHash::hash(
+        let mut message_hash = TupleSize4LegacyHash::hash(
             0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), _signer::read())
         );
+        // We now need to hash message_hash with the size of the array: (change_owner selector, chainid, contract address, old_owner)
+        // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
+        message_hash = LegacyHashFelt252::hash(message_hash, 4);
         let is_valid = check_ecdsa_signature(message_hash, new_owner, signature_r, signature_s);
         assert(is_valid, 'argent/invalid-owner-sig');
     }

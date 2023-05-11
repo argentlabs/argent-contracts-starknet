@@ -2,10 +2,10 @@ import { expect } from "chai";
 import { CallData, Signer, ec, hash, num, stark, uint256 } from "starknet";
 import {
   ArgentSigner,
-  ArgentSigner3Signatures,
-  deployerAccount,
+  ConcatSigner,
   declareContract,
   deployAccount,
+  deployerAccount,
   ethAddress,
   expectEvent,
   expectRevertWithErrorMessage,
@@ -249,7 +249,7 @@ describe("Test contract: ArgentAccount", function () {
       const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
       const accountContract = await loadContract(account.address);
 
-      account.signer = new ArgentSigner3Signatures(ownerPrivateKey, guardianPrivateKey, guardianBackupPrivateKey);
+      account.signer = new ConcatSigner([ownerPrivateKey, guardianPrivateKey, guardianBackupPrivateKey]);
 
       await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {
         await account.execute(accountContract.populateTransaction.change_guardian("0x42"));
@@ -280,7 +280,7 @@ describe("Test contract: ArgentAccount", function () {
       const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
 
       const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, ownerPublicKey]);
-      const signature = await ec.starkCurve.sign(msgHash, newOwnerPrivateKey);
+      const signature = ec.starkCurve.sign(msgHash, newOwnerPrivateKey);
       await account.execute(accountContract.populateTransaction.change_owner(newOwner, signature.r, signature.s));
 
       const owner_result = await accountContract.get_owner();

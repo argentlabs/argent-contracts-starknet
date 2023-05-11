@@ -115,16 +115,8 @@ describe("Test contract: ArgentAccount", function () {
       const { balance: recipient2InitialBalance } = await ethContract.balanceOf(recipient2);
 
       const { transaction_hash: transferTxHash } = await account.execute([
-        {
-          contractAddress: ethContract.address,
-          entrypoint: "transfer",
-          calldata: CallData.compile({ recipient: recipient1, amount: amount1 }),
-        },
-        {
-          contractAddress: ethContract.address,
-          entrypoint: "transfer",
-          calldata: CallData.compile({ recipient: recipient2, amount: amount2 }),
-        },
+        ethContract.populateTransaction.transfer(recipient1, amount1),
+        ethContract.populateTransaction.transfer(recipient2, amount2),
       ]);
       await account.waitForTransaction(transferTxHash);
 

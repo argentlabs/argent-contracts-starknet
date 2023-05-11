@@ -5,7 +5,7 @@
     "esModuleInterop": true,
     "module": "ESNext",
     "moduleResolution": "Node",
-    "lib": ["es2015", "dom"]
+    "lib": ["es2020", "dom"]
   },
   "ts-node": {
     "esm": true,

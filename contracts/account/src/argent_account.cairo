@@ -13,6 +13,7 @@ mod ArgentAccount {
     use starknet::get_block_timestamp;
     use starknet::get_contract_address;
     use starknet::get_tx_info;
+    use starknet::get_caller_address;
     use starknet::VALIDATED;
     use starknet::syscalls::replace_class_syscall;
 
@@ -20,8 +21,7 @@ mod ArgentAccount {
     use account::EscapeStatus;
 
     use account::ExternalCalls;
-    use account::hash_message_external_calls;
-    use lib::SpanSerde;
+    use account::hash_message_external_calls;  
 
     use lib::assert_correct_tx_version;
     use lib::assert_no_self_call;
@@ -77,6 +77,7 @@ mod ArgentAccount {
         _guardian: felt252,
         _guardian_backup: felt252,
         _escape: Escape,
+        external_nonce: felt252,
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -192,28 +193,45 @@ mod ArgentAccount {
         TransactionExecuted(tx_info.transaction_hash, retdata);
         retdata
     }
+    #[view]
+    fn get_hash_message_external_calls(external_calls: ExternalCalls) -> felt252 {
+        return hash_message_external_calls(@external_calls);
+    }
 
-    /// TODO return type as Array<Array<felt252>>
     #[external]
     fn execute_external_calls(
-        external_calls: ExternalCalls, signature: Array<felt252>
-    ) -> Span::<felt252> {
-        // TODO check nonce, expiry, sender...
+        external_calls: ExternalCalls , signature: Array<felt252>
+    ) -> Span<Span<felt252>> {
 
-        let hash = hash_message_external_calls(@external_calls);
+        // TODO nonces
+
+        // Checks
+        assert(get_caller_address() == external_calls.sender, 'argent/invalid-caller');
+
+        let block_timestamp = get_block_timestamp();
+        assert(
+            external_calls.min_timestamp <= block_timestamp & block_timestamp <= external_calls.max_timestamp,
+            'argent/invalid-timestamp'
+        );
+
+        assert(
+            external_nonce::read() != external_calls.nonce, 'argent/invalid-nonce'
+        ); // TODO this is not safe
+
         // TODO should i add some prefix here?
-        let (owner_signature, guardian_signature) = split_signatures(signature.span());
-        let is_valid = is_valid_owner_signature(hash, owner_signature);
-        assert(is_valid, 'argent/invalid-owner-sig');
-        if _guardian::read() != 0 {
-            let is_valid = is_valid_guardian_signature(hash, guardian_signature);
-            assert(is_valid, 'argent/invalid-guardian-sig');
-        }
+        let external_tx_hash = hash_message_external_calls(@external_calls);
 
-        // TODO update nonce
-        let retdata = execute_multicall(external_calls.calls);
-        // TransactionExecuted(tx_info.transaction_hash, retdata);
-        retdata.span()
+        // // TODO special checks for calls
+        let is_valid = is_valid_span_signature(external_tx_hash, signature.span());
+        assert(is_valid, 'argent/invalid-owner-sig');
+
+        // Effects
+        external_nonce::write(external_calls.nonce);
+
+        // Interactions
+        let retdata = execute_multicall(external_calls.calls.span());
+        TransactionExecuted(external_tx_hash, retdata); // TODO is it this event?
+        retdata
     }
 
     /// @notice Changes the owner

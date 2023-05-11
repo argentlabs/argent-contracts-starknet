@@ -31,5 +31,4 @@ impl TCopy: Copy<T>> of Serde<Span<T>> {
         let array = ArraySerde::deserialize(ref serialized)?;
         Option::Some(array.span())
     }
-
 }

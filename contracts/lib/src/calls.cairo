@@ -15,7 +15,7 @@ struct Call {
 }
 
 fn execute_multicall(calls: Span<Call>) -> Span<Span<felt252>> {
-    let mut result : Array<Span<felt252>> = ArrayTrait::new();
+    let mut result: Array<Span<felt252>> = ArrayTrait::new();
     let mut calls = calls;
     let mut idx = 0;
     loop {

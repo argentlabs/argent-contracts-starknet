@@ -16,17 +16,6 @@ import { account, provider } from "./constants";
 
 const classHashCache: { [contractName: string]: string } = {};
 
-async function isClassHashDeclared(classHash: string): Promise<boolean> {
-  try {
-    await provider.getClassByHash(classHash);
-    // class already declared
-    return true;
-  } catch (e) {
-    // class not declared, go on
-    return false;
-  }
-}
-
 // Could extends Account to add our specific fn but that's too early.
 async function declareContract(contractName: string): Promise<string> {
   console.log(`\tDeclaring ${contractName}...`);
@@ -35,35 +24,20 @@ async function declareContract(contractName: string): Promise<string> {
     return cachedClass;
   }
   const contract: CompiledSierra = json.parse(readFileSync(`./contracts/${contractName}.json`).toString("ascii"));
-  const classHash = hash.computeContractClassHash(contract);
-  if (await isClassHashDeclared(classHash)) {
-    classHashCache[contractName] = classHash;
-    return classHash;
-  }
+  let returnedClashHash;
   if ("sierra_program" in contract) {
     const casm: CompiledSierraCasm = json.parse(readFileSync(`./contracts/${contractName}.casm`).toString("ascii"));
-    const returnedClashHash = await actualDeclare({ contract, casm });
-    expect(returnedClashHash).to.equal(classHash);
+    returnedClashHash = await actualDeclare({ contract, casm });
   } else {
-    const returnedClashHash = await actualDeclare({ contract });
-    expect(returnedClashHash).to.equal(classHash);
+    returnedClashHash = await actualDeclare({ contract });
   }
-  classHashCache[contractName] = classHash;
-  return classHash;
+  classHashCache[contractName] = returnedClashHash;
+  return returnedClashHash;
 }
 
 async function actualDeclare(payload: DeclareContractPayload): Promise<string> {
-  const hash = await account
-    .declare(payload, { maxFee: 1e18 }) // max fee avoids slow estimate
-    .then(async (deployResponse) => {
-      await account.waitForTransaction(deployResponse.transaction_hash);
-      return deployResponse.class_hash;
-    })
-    .catch((e) => {
-      return extractHashFromErrorOrCrash(e);
-    });
-  console.log(`\t\t✅ Declared at ${hash}`);
-  return hash;
+  const { class_hash } = await account.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
+  return class_hash;
 }
 
 async function loadContract(contract_address: string) {
@@ -97,16 +71,6 @@ async function expectEvent(transactionHash: string, event: Event) {
   expect(currentEvent.from_address).to.eql(event.from_address);
   // Needs deep equality for array, can't do to.equal
   expect(currentEvent.data).to.eql(event.data);
-}
-
-function extractHashFromErrorOrCrash(e: string) {
-  const hashRegex = /hash\s+(0x[a-fA-F\d]+)/;
-  const matches = e.toString().match(hashRegex);
-  if (matches !== null) {
-    return matches[1];
-  } else {
-    throw e;
-  }
 }
 
 export { declareContract, loadContract, expectRevertWithErrorMessage, expectEvent };

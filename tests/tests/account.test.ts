@@ -2,10 +2,10 @@ import { expect } from "chai";
 import { CallData, Signer, ec, hash, num, stark, uint256 } from "starknet";
 import {
   ArgentSigner,
-  ArgentSigner3Signatures,
-  deployerAccount,
+  ConcatSigner,
   declareContract,
   deployAccount,
+  deployerAccount,
   ethAddress,
   expectEvent,
   expectRevertWithErrorMessage,
@@ -285,7 +285,7 @@ describe("Test contract: ArgentAccount", function () {
       const guardianPrivateKey = stark.randomAddress();
       const guardianBackupPrivateKey = stark.randomAddress();
       const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-      account.signer = new ArgentSigner3Signatures(ownerPrivateKey, guardianPrivateKey, guardianBackupPrivateKey);
+      account.signer = new ConcatSigner([ownerPrivateKey, guardianPrivateKey, guardianBackupPrivateKey]);
 
       await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {
         await account.execute({

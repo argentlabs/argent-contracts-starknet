@@ -5,7 +5,6 @@ import {
   DeployAccountSignerDetails,
   InvocationsSignerDetails,
   Signature,
-  Signer,
   SignerInterface,
   ec,
   hash,
@@ -17,7 +16,7 @@ import {
  * This class allows to easily implement custom signers by overriding the `signRaw` method.
  * This is based on Starknet.js implementation of Signer, but it delegates the actual signing to an abstract function
  */
-abstract class FlexibleSigner implements SignerInterface {
+abstract class RawSigner implements SignerInterface {
   abstract signRaw(messageHash: string): Promise<Signature>;
 
   public async getPubKey(): Promise<string> {
@@ -93,42 +92,40 @@ abstract class FlexibleSigner implements SignerInterface {
   }
 }
 
-class ArgentSigner extends FlexibleSigner {
-  protected ownerPk: string;
-  protected guardianPk?: string;
+class ArgentSigner extends RawSigner {
+  protected ownerPrivateKey: string;
+  protected guardianPrivateKey?: string;
 
-  constructor(ownerPk: string, guardianPk?: string) {
+  constructor(ownerPrivateKey: string, guardianPrivateKey?: string) {
     super();
-    this.ownerPk = ownerPk;
-    this.guardianPk = guardianPk;
+    this.ownerPrivateKey = ownerPrivateKey;
+    this.guardianPrivateKey = guardianPrivateKey;
   }
   public getOwnerKey(): string {
-    return ec.starkCurve.getStarkKey(this.ownerPk);
+    return ec.starkCurve.getStarkKey(this.ownerPrivateKey);
   }
 
   public getGuardianKey(): string | null {
-    if (this.guardianPk) {
-      return ec.starkCurve.getStarkKey(this.guardianPk);
+    if (this.guardianPrivateKey) {
+      return ec.starkCurve.getStarkKey(this.guardianPrivateKey);
     } else {
       return null;
     }
   }
 
   public async signRaw(msgHash: string): Promise<Signature> {
-    if (this.guardianPk) {
-      return new ConcatSigner([this.ownerPk, this.guardianPk]).signRaw(msgHash);
+    if (this.guardianPrivateKey) {
+      return new ConcatSigner([this.ownerPrivateKey, this.guardianPrivateKey]).signRaw(msgHash);
     } else {
-      return ec.starkCurve.sign(msgHash, this.ownerPk);
+      return ec.starkCurve.sign(msgHash, this.ownerPrivateKey);
     }
   }
 }
 
-class ConcatSigner extends FlexibleSigner {
-  protected privateKeys: string[];
+class ConcatSigner extends RawSigner {
 
-  constructor(privateKeys: string[]) {
+  constructor(protected privateKeys: string[]) {
     super();
-    this.privateKeys = privateKeys;
   }
 
   async signRaw(msgHash: string): Promise<Signature> {

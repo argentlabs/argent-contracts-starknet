@@ -6,12 +6,12 @@
   "scripts": {
     "test": "tsc && mocha tests/*.test.ts",
     "lint": "eslint . --fix",
-    "prettier": "prettier --write ."
+    "format": "prettier --write ."
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "starknet": "5.9.2"
+    "starknet": "5.10.0"
   },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.0",

@@ -5,26 +5,16 @@ import {
   CompiledSierraCasm,
   Contract,
   DeclareContractPayload,
+  Event,
   InvokeTransactionReceiptResponse,
   hash,
   json,
   shortString,
 } from "starknet";
 
-import { account, provider } from "./constants";
+import { deployerAccount, provider } from "./constants";
 
 const classHashCache: { [contractName: string]: string } = {};
-
-async function isClassHashDeclared(classHash: string): Promise<boolean> {
-  try {
-    await provider.getClassByHash(classHash);
-    // class already declared
-    return true;
-  } catch (e) {
-    // class not declared, go on
-    return false;
-  }
-}
 
 // Could extends Account to add our specific fn but that's too early.
 async function declareContract(contractName: string): Promise<string> {
@@ -34,35 +24,20 @@ async function declareContract(contractName: string): Promise<string> {
     return cachedClass;
   }
   const contract: CompiledSierra = json.parse(readFileSync(`./contracts/${contractName}.json`).toString("ascii"));
-  const classHash = hash.computeContractClassHash(contract);
-  if (await isClassHashDeclared(classHash)) {
-    classHashCache[contractName] = classHash;
-    return classHash;
-  }
+  let returnedClashHash;
   if ("sierra_program" in contract) {
     const casm: CompiledSierraCasm = json.parse(readFileSync(`./contracts/${contractName}.casm`).toString("ascii"));
-    const returnedClashHash = await actualDeclare({ contract, casm });
-    expect(returnedClashHash).to.equal(classHash);
+    returnedClashHash = await actualDeclare({ contract, casm });
   } else {
-    const returnedClashHash = await actualDeclare({ contract });
-    expect(returnedClashHash).to.equal(classHash);
+    returnedClashHash = await actualDeclare({ contract });
   }
-  classHashCache[contractName] = classHash;
-  return classHash;
+  classHashCache[contractName] = returnedClashHash;
+  return returnedClashHash;
 }
 
 async function actualDeclare(payload: DeclareContractPayload): Promise<string> {
-  const hash = await account
-    .declare(payload, { maxFee: 1e18 }) // max fee avoids slow estimate
-    .then(async (deployResponse) => {
-      await account.waitForTransaction(deployResponse.transaction_hash);
-      return deployResponse.class_hash;
-    })
-    .catch((e) => {
-      return extractHashFromErrorOrCrash(e);
-    });
-  console.log(`\t\t✅ Declared at ${hash}`);
-  return hash;
+  const { class_hash } = await deployerAccount.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
+  return class_hash;
 }
 
 async function loadContract(contract_address: string) {
@@ -82,31 +57,20 @@ async function expectRevertWithErrorMessage(errorMessage: string, fn: () => void
   }
 }
 
-async function expectEvent(transactionHash: string, eventName: string, data: string[] = []) {
+async function expectEvent(transactionHash: string, event: Event) {
   const txReceiptDeployTest: InvokeTransactionReceiptResponse = await provider.waitForTransaction(transactionHash);
   if (!txReceiptDeployTest.events) {
     assert.fail("No events triggered");
   }
-  const selector = hash.getSelectorFromName(eventName);
-  const event = txReceiptDeployTest.events.filter((e) => e.keys[0] == selector);
-  if (event.length == 0) {
-    assert.fail(`No event detected in this transaction: ${transactionHash}`);
-  }
-  if (event.length > 1) {
-    assert.fail("Unsupported: Multiple events with same selector detected");
-  }
+  expect(event.keys.length).to.equal(1, "Unsupported: Multiple keys");
+  const selector = hash.getSelectorFromName(event.keys[0]);
+  const eventFiltered = txReceiptDeployTest.events.filter((e) => e.keys[0] == selector);
+  expect(eventFiltered.length != 0, `No event detected in this transaction: ${transactionHash}`).to.be.true;
+  expect(eventFiltered.length).to.equal(1, "Unsupported: Multiple events with same selector detected");
+  const currentEvent = eventFiltered[0];
+  expect(currentEvent.from_address).to.eql(event.from_address);
   // Needs deep equality for array, can't do to.equal
-  expect(event[0].data).to.eql(data);
-}
-
-function extractHashFromErrorOrCrash(e: string) {
-  const hashRegex = /hash\s+(0x[a-fA-F\d]+)/;
-  const matches = e.toString().match(hashRegex);
-  if (matches !== null) {
-    return matches[1];
-  } else {
-    throw e;
-  }
+  expect(currentEvent.data).to.eql(event.data);
 }
 
 export { declareContract, loadContract, expectRevertWithErrorMessage, expectEvent };

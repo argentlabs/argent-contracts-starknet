@@ -8,6 +8,7 @@ use serde::ArraySerde;
 use traits::Into;
 
 
+// Eventually this will be implemented in the cairo core
 impl SpanSerde<T,
 impl TSerde: Serde<T>,
 impl TDrop: Drop<T>,

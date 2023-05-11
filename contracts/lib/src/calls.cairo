@@ -4,7 +4,6 @@ use array::SpanTrait;
 use starknet::call_contract_syscall;
 use starknet::ContractAddress;
 
-use lib::ArrayTraitExt;
 use lib::check_enough_gas;
 
 #[derive(Drop, Serde)]
@@ -15,7 +14,7 @@ struct Call {
 }
 
 fn execute_multicall(calls: Span<Call>) -> Span<Span<felt252>> {
-    let mut result : Array<Span<felt252>> = ArrayTrait::new();
+    let mut result: Array<Span<felt252>> = ArrayTrait::new();
     let mut calls = calls;
     let mut idx = 0;
     loop {

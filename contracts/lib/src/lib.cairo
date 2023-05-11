@@ -7,9 +7,6 @@ use asserts::assert_correct_tx_version;
 mod span_serde;
 use span_serde::SpanSerde;
 
-mod traits;
-use traits::ArrayTraitExt;
-
 // Structures 
 mod calls;
 use calls::Call;

@@ -93,13 +93,8 @@ abstract class RawSigner implements SignerInterface {
 }
 
 class ArgentSigner extends RawSigner {
-  protected ownerPrivateKey: string;
-  protected guardianPrivateKey?: string;
-
-  constructor(ownerPrivateKey: string, guardianPrivateKey?: string) {
+  constructor(protected ownerPrivateKey: string, protected guardianPrivateKey?: string) {
     super();
-    this.ownerPrivateKey = ownerPrivateKey;
-    this.guardianPrivateKey = guardianPrivateKey;
   }
   public getOwnerKey(): string {
     return ec.starkCurve.getStarkKey(this.ownerPrivateKey);
@@ -123,7 +118,6 @@ class ArgentSigner extends RawSigner {
 }
 
 class ConcatSigner extends RawSigner {
-
   constructor(protected privateKeys: string[]) {
     super();
   }

@@ -87,13 +87,10 @@ describe("Test contract: ArgentAccount", function () {
       ethContract.connect(account);
       // TODO it should be possible to do this at some point
       // await ethContract.transfer(recipient, amount);
-      const { transaction_hash: transferTxHash } = await account.execute([
-        {
-          contractAddress: ethContract.address,
-          entrypoint: "transfer",
-          calldata: CallData.compile({ recipient, amount }),
-        },
-      ]);
+      const { transaction_hash: transferTxHash } = await account.execute(
+        ethContract.populateTransaction.transfer(recipient, amount),
+      );
+
       await account.waitForTransaction(transferTxHash);
       const { balance: senderFinalBalance } = await ethContract.balanceOf(account.address);
       const { balance: recipientFinalBalance } = await ethContract.balanceOf(recipient);
@@ -115,16 +112,8 @@ describe("Test contract: ArgentAccount", function () {
       const { balance: recipient2InitialBalance } = await ethContract.balanceOf(recipient2);
 
       const { transaction_hash: transferTxHash } = await account.execute([
-        {
-          contractAddress: ethContract.address,
-          entrypoint: "transfer",
-          calldata: CallData.compile({ recipient: recipient1, amount: amount1 }),
-        },
-        {
-          contractAddress: ethContract.address,
-          entrypoint: "transfer",
-          calldata: CallData.compile({ recipient: recipient2, amount: amount2 }),
-        },
+        ethContract.populateTransaction.transfer(recipient1, amount1),
+        ethContract.populateTransaction.transfer(recipient2, amount2),
       ]);
       await account.waitForTransaction(transferTxHash);
 
@@ -144,21 +133,16 @@ describe("Test contract: ArgentAccount", function () {
 
     it("Expect an error when a multicall contains a Call referencing the account itself", async function () {
       const account = await deployAccount(argentAccountClassHash);
+      const accountContract = await loadContract(account.address);
+      const ethContract = await getEthContract();
 
       await expectRevertWithErrorMessage("argent/no-multicall-to-self", async () => {
         const recipient = "0x42";
         const amount = uint256.bnToUint256(1000);
+        const newOwner = "0x69";
         await account.execute([
-          {
-            contractAddress: ethAddress,
-            entrypoint: "transfer",
-            calldata: CallData.compile({ recipient, amount }),
-          },
-          {
-            contractAddress: account.address,
-            entrypoint: "trigger_escape_owner",
-            calldata: [],
-          },
+          ethContract.populateTransaction.transfer(recipient, amount),
+          accountContract.populateTransaction.trigger_escape_owner(newOwner),
         ]);
       });
     });
@@ -177,11 +161,10 @@ describe("Test contract: ArgentAccount", function () {
       expect(guardian).to.equal(BigInt(guardianPublicKey));
 
       await setTime(42);
-      await account.execute({
-        contractAddress: account.address,
-        entrypoint: "trigger_escape_guardian",
-        calldata: CallData.compile({ new_guardian: "0x43" }),
-      });
+      accountContract.connect(account);
+
+      await account.execute(accountContract.populateTransaction.trigger_escape_guardian("0x43"));
+
       const escape = await accountContract.get_escape();
       expect(escape.escape_type).to.equal(1n);
       expect(escape.active_at).to.equal(42n + 604800n);
@@ -190,22 +173,14 @@ describe("Test contract: ArgentAccount", function () {
     it("Should be possible to escape a guardian by the owner alone", async function () {
       const privateKey = stark.randomAddress();
       const account = await deployAccount(argentAccountClassHash, privateKey, "0x42");
+      const accountContract = await loadContract(account.address);
 
       await setTime(42);
-      await account.execute({
-        contractAddress: account.address,
-        entrypoint: "trigger_escape_guardian",
-        calldata: CallData.compile({ new_guardian: "0x43" }),
-      });
+      await account.execute(accountContract.populateTransaction.trigger_escape_guardian("0x43"));
       await increaseTime(604800);
 
-      await account.execute({
-        contractAddress: account.address,
-        entrypoint: "escape_guardian",
-        calldata: [],
-      });
+      await account.execute(accountContract.populateTransaction.escape_guardian());
 
-      const accountContract = await loadContract(account.address);
       const escape = await accountContract.get_escape();
       expect(escape.escape_type).to.equal(0n);
       expect(escape.active_at).to.equal(0n);
@@ -217,35 +192,28 @@ describe("Test contract: ArgentAccount", function () {
       const ownerPrivateKey = stark.randomAddress();
       const guardianPrivateKey = stark.randomAddress();
       const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
+      const accountContract = await loadContract(account.address);
 
       account.signer = new Signer(guardianPrivateKey);
-      await account.execute({
-        contractAddress: account.address,
-        entrypoint: "trigger_escape_owner",
-        calldata: CallData.compile({ new_owner: "0x42" }),
-      });
+      await account.execute(accountContract.populateTransaction.trigger_escape_owner("0x42"));
 
       await setTime(42);
-      const accountContract = await loadContract(account.address);
       const escape = await accountContract.get_escape();
       expect(escape.escape_type).to.equal(2n);
-      expect(Number(escape.active_at)).to.be.greaterThanOrEqual(Number(42n + 604800n));
+      expect(Number(escape.active_at)).to.be.greaterThanOrEqual(42 + 604800);
     });
 
     it("Should use signature from BOTH OWNER and GUARDIAN when there is a GUARDIAN", async function () {
       const ownerPrivateKey = stark.randomAddress();
       const guardianPrivateKey = stark.randomAddress();
       const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-
       const accountContract = await loadContract(account.address);
+
       const guardianBackupBefore = await accountContract.get_guardian_backup();
       expect(guardianBackupBefore).to.equal(0n);
       account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
-      await account.execute({
-        contractAddress: account.address,
-        entrypoint: "change_guardian_backup",
-        calldata: CallData.compile({ new_guardian_backup: "0x42" }),
-      });
+      await account.execute(accountContract.populateTransaction.change_guardian_backup("0x42"));
+
       const guardianBackupAfter = await accountContract.get_guardian_backup();
       expect(guardianBackupAfter).to.equal(BigInt("0x42"));
     });
@@ -256,26 +224,20 @@ describe("Test contract: ArgentAccount", function () {
       const guardianBackupPrivateKey = stark.randomAddress();
       const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
       const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-
       const accountContract = await loadContract(account.address);
+
       const guardianBackupBefore = await accountContract.get_guardian_backup();
       expect(guardianBackupBefore).to.equal(0n);
+
       account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
-      await account.execute({
-        contractAddress: account.address,
-        entrypoint: "change_guardian_backup",
-        calldata: CallData.compile({ new_guardian_backup: guardianBackupPublicKey }),
-      });
+      await account.execute(accountContract.populateTransaction.change_guardian_backup(guardianBackupPublicKey));
+
       const guardianBackupAfter = await accountContract.get_guardian_backup();
       expect(guardianBackupAfter).to.equal(BigInt(guardianBackupPublicKey));
 
       account.signer = new ArgentSigner(ownerPrivateKey, guardianBackupPrivateKey);
+      await account.execute(accountContract.populateTransaction.change_guardian("0x42"));
 
-      await account.execute({
-        contractAddress: account.address,
-        entrypoint: "change_guardian",
-        calldata: CallData.compile({ new_guardian_backup: "0x42" }),
-      });
       const guardianAfter = await accountContract.get_guardian();
       expect(guardianAfter).to.equal(BigInt("0x42"));
     });
@@ -285,27 +247,23 @@ describe("Test contract: ArgentAccount", function () {
       const guardianPrivateKey = stark.randomAddress();
       const guardianBackupPrivateKey = stark.randomAddress();
       const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
+      const accountContract = await loadContract(account.address);
+
       account.signer = new ConcatSigner([ownerPrivateKey, guardianPrivateKey, guardianBackupPrivateKey]);
 
       await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {
-        await account.execute({
-          contractAddress: account.address,
-          entrypoint: "change_guardian",
-          calldata: CallData.compile({ new_guardian_backup: "0x42" }),
-        });
+        await account.execute(accountContract.populateTransaction.change_guardian("0x42"));
       });
     });
 
     it("Should throw an error the signature given to change owner is invalid", async function () {
       const account = await deployAccount(argentAccountClassHash);
+      const accountContract = await loadContract(account.address);
       const newOwnerPrivateKey = stark.randomAddress();
-      const new_owner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
+      const newOwner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
+
       await expectRevertWithErrorMessage("argent/invalid-owner-sig", async () => {
-        await account.execute({
-          contractAddress: account.address,
-          entrypoint: "change_owner",
-          calldata: CallData.compile({ new_owner, signature_r: "0x12", signature_s: "0x42" }),
-        });
+        await account.execute(accountContract.populateTransaction.change_owner(newOwner, "0x12", "0x42"));
       });
     });
 
@@ -313,24 +271,20 @@ describe("Test contract: ArgentAccount", function () {
       const ownerPrivateKey = stark.randomAddress();
 
       const account = await deployAccount(argentAccountClassHash, ownerPrivateKey);
+      const accountContract = await loadContract(account.address);
       const newOwnerPrivateKey = stark.randomAddress();
-      const new_owner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
+      const newOwner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
       const changeOwnerSelector = hash.getSelectorFromName("change_owner");
       const chainId = await provider.getChainId();
       const contractAddress = account.address;
       const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
 
       const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, ownerPublicKey]);
-      const signature = await ec.starkCurve.sign(msgHash, newOwnerPrivateKey);
-      await account.execute({
-        contractAddress: account.address,
-        entrypoint: "change_owner",
-        calldata: CallData.compile({ new_owner, signature_r: signature.r, signature_s: signature.s }),
-      });
+      const signature = ec.starkCurve.sign(msgHash, newOwnerPrivateKey);
+      await account.execute(accountContract.populateTransaction.change_owner(newOwner, signature.r, signature.s));
 
-      const accountContract = await loadContract(account.address);
       const owner_result = await accountContract.get_owner();
-      expect(owner_result).to.equal(BigInt(new_owner));
+      expect(owner_result).to.equal(BigInt(newOwner));
     });
   });
 

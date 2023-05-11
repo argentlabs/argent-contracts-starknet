@@ -8,6 +8,7 @@ import {
   InvokeTransactionReceiptResponse,
   hash,
   json,
+  num,
   shortString,
 } from "starknet";
 

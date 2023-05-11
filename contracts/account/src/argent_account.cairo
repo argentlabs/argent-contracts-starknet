@@ -21,7 +21,7 @@ mod ArgentAccount {
     use account::EscapeStatus;
 
     use account::ExternalCalls;
-    use account::hash_message_external_calls;  
+    use account::hash_message_external_calls;
 
     use lib::assert_correct_tx_version;
     use lib::assert_no_self_call;
@@ -135,7 +135,6 @@ mod ArgentAccount {
     //                                     External functions                                     //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    
     #[external]
     fn __validate__(calls: Array::<Call>) -> felt252 {
         let tx_info = get_tx_info().unbox();
@@ -170,16 +169,11 @@ mod ArgentAccount {
         TransactionExecuted(tx_info.transaction_hash, retdata);
         retdata
     }
-    #[view]
-    fn get_hash_message_external_calls(external_calls: ExternalCalls) -> felt252 {
-        return hash_message_external_calls(@external_calls);
-    }
 
     #[external]
     fn execute_external_calls(
-        external_calls: ExternalCalls , signature: Array<felt252>
+        external_calls: ExternalCalls, signature: Array<felt252>
     ) -> Span<Span<felt252>> {
-
         // TODO nonces
 
         // Checks
@@ -199,8 +193,9 @@ mod ArgentAccount {
         // TODO should i add some prefix here?
         let external_tx_hash = hash_message_external_calls(external_calls_ref);
 
-        assert_valid_calls_and_signature(external_calls_ref.calls.span(), external_tx_hash, signature.span());
-        
+        assert_valid_calls_and_signature(
+            external_calls_ref.calls.span(), external_tx_hash, signature.span()
+        );
 
         // Effects
         external_nonce::write(external_calls.nonce);
@@ -486,11 +481,18 @@ mod ArgentAccount {
         is_valid_signature(hash, signatures)
     }
 
+    #[view]
+    fn get_hash_message_external_calls(external_calls: ExternalCalls) -> felt252 {
+        return hash_message_external_calls(@external_calls);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                          Internal                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    fn assert_valid_calls_and_signature(calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>) {
+    fn assert_valid_calls_and_signature(
+        calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
+    ) {
         let account_address = get_contract_address();
 
         if calls.len() == 1 {
@@ -498,15 +500,11 @@ mod ArgentAccount {
             if *call.to == account_address {
                 let selector = *call.selector;
                 if selector == ESCAPE_GUARDIAN_SELECTOR | selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
-                    let is_valid = is_valid_owner_signature(
-                        execution_hash, signature
-                    );
+                    let is_valid = is_valid_owner_signature(execution_hash, signature);
                     assert(is_valid, 'argent/invalid-owner-sig');
                 }
                 if selector == ESCAPE_OWNER_SELECTOR | selector == TRIGGER_ESCAPE_OWNER_SELECTOR {
-                    let is_valid = is_valid_guardian_signature(
-                        execution_hash, signature
-                    );
+                    let is_valid = is_valid_guardian_signature(execution_hash, signature);
                     assert(is_valid, 'argent/invalid-guardian-sig');
                 }
                 assert(selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
@@ -540,7 +538,9 @@ mod ArgentAccount {
         if _guardian::read() == 0 {
             assert(guardian_signature.is_empty(), 'argent/invalid-guardian-sig');
         } else {
-            assert(is_valid_guardian_signature(hash, guardian_signature), 'argent/invalid-guardian-sig');            
+            assert(
+                is_valid_guardian_signature(hash, guardian_signature), 'argent/invalid-guardian-sig'
+            );
         }
     }
 

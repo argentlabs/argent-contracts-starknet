@@ -23,7 +23,8 @@ struct StarkNetDomain {
 }
 
 // H('ExternalCalls(sender:felt,nonce:felt,min_timestamp:felt,max_timestamp:felt,calls_len:felt,calls:Call*)')
-const EXTERNAL_CALLS_TYPE_HASH: felt252 = 0x38642ecbd66c01219c8f4e61a0b0f4287567dca69120e3bf09b2b765b05f672;
+const EXTERNAL_CALLS_TYPE_HASH: felt252 =
+    0x38642ecbd66c01219c8f4e61a0b0f4287567dca69120e3bf09b2b765b05f672;
 
 #[derive(Drop, Serde)]
 struct ExternalCalls {
@@ -35,7 +36,8 @@ struct ExternalCalls {
 }
 
 // H('ExternalCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)')
-const EXTERNAL_CALL_TYPE_HASH: felt252 = 0x1bc515e812859cc94d04ef18a634bf57efd0b3d1cb66c6011fb433e1ae44a7;
+const EXTERNAL_CALL_TYPE_HASH: felt252 =
+    0x1bc515e812859cc94d04ef18a634bf57efd0b3d1cb66c6011fb433e1ae44a7;
 
 #[derive(Drop, Serde)]
 struct ExternalCall {

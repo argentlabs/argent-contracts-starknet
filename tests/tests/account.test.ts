@@ -90,9 +90,7 @@ describe("Test contract: ArgentAccount", function () {
             entrypoint: "transfer",
             calldata: CallData.compile({ recipient, amount }),
           },
-        ],
-        undefined,
-        { cairoVersion: "1" },
+        ]
       );
       await account.waitForTransaction(transferTxHash);
       const { balance: senderFinalBalance } = await ethContract.balanceOf(account.address);
@@ -126,9 +124,7 @@ describe("Test contract: ArgentAccount", function () {
             entrypoint: "transfer",
             calldata: CallData.compile({ recipient: recipient2, amount: amount2 }),
           },
-        ],
-        undefined,
-        { cairoVersion: "1" },
+        ]
       );
       await account.waitForTransaction(transferTxHash);
 
@@ -164,9 +160,7 @@ describe("Test contract: ArgentAccount", function () {
               entrypoint: "trigger_escape_owner",
               calldata: [],
             },
-          ],
-          undefined,
-          { cairoVersion: "1" },
+          ]
         );
       });
     });
@@ -190,9 +184,7 @@ describe("Test contract: ArgentAccount", function () {
           contractAddress: account.address,
           entrypoint: "trigger_escape_guardian",
           calldata: CallData.compile({ new_guardian: "0x43" }),
-        },
-        undefined,
-        { cairoVersion: "1" },
+        }
       );
       const escape = await accountContract.get_escape();
       expect(escape.escape_type).to.equal(1n);
@@ -209,9 +201,7 @@ describe("Test contract: ArgentAccount", function () {
           contractAddress: account.address,
           entrypoint: "trigger_escape_guardian",
           calldata: CallData.compile({ new_guardian: "0x43" }),
-        },
-        undefined,
-        { cairoVersion: "1" },
+        }
       );
       await increaseTime(604800);
 
@@ -220,9 +210,7 @@ describe("Test contract: ArgentAccount", function () {
           contractAddress: account.address,
           entrypoint: "escape_guardian",
           calldata: [],
-        },
-        undefined,
-        { cairoVersion: "1" },
+        }
       );
 
       const accountContract = await loadContract(account.address);
@@ -244,9 +232,7 @@ describe("Test contract: ArgentAccount", function () {
           contractAddress: account.address,
           entrypoint: "trigger_escape_owner",
           calldata: CallData.compile({ new_owner: "0x42" }),
-        },
-        undefined,
-        { cairoVersion: "1" },
+        }
       );
 
       await setTime(42);
@@ -270,9 +256,7 @@ describe("Test contract: ArgentAccount", function () {
           contractAddress: account.address,
           entrypoint: "change_guardian_backup",
           calldata: CallData.compile({ new_guardian_backup: "0x42" }),
-        },
-        undefined,
-        { cairoVersion: "1" },
+        }
       );
       const guardianBackupAfter = await accountContract.get_guardian_backup();
       expect(guardianBackupAfter).to.equal(BigInt("0x42"));
@@ -294,9 +278,7 @@ describe("Test contract: ArgentAccount", function () {
           contractAddress: account.address,
           entrypoint: "change_guardian_backup",
           calldata: CallData.compile({ new_guardian_backup: guardianBackupPublicKey }),
-        },
-        undefined,
-        { cairoVersion: "1" },
+        }
       );
       const guardianBackupAfter = await accountContract.get_guardian_backup();
       expect(guardianBackupAfter).to.equal(BigInt(guardianBackupPublicKey));
@@ -308,9 +290,7 @@ describe("Test contract: ArgentAccount", function () {
           contractAddress: account.address,
           entrypoint: "change_guardian",
           calldata: CallData.compile({ new_guardian_backup: "0x42" }),
-        },
-        undefined,
-        { cairoVersion: "1" },
+        }
       );
       const guardianAfter = await accountContract.get_guardian();
       expect(guardianAfter).to.equal(BigInt("0x42"));
@@ -329,9 +309,7 @@ describe("Test contract: ArgentAccount", function () {
             contractAddress: account.address,
             entrypoint: "change_guardian",
             calldata: CallData.compile({ new_guardian_backup: "0x42" }),
-          },
-          undefined,
-          { cairoVersion: "1" },
+          }
         );
       });
     });
@@ -346,9 +324,7 @@ describe("Test contract: ArgentAccount", function () {
             contractAddress: account.address,
             entrypoint: "change_owner",
             calldata: CallData.compile({ new_owner, signature_r: "0x12", signature_s: "0x42" }),
-          },
-          undefined,
-          { cairoVersion: "1" },
+          }
         );
       });
     });
@@ -371,9 +347,7 @@ describe("Test contract: ArgentAccount", function () {
           contractAddress: account.address,
           entrypoint: "change_owner",
           calldata: CallData.compile({ new_owner, signature_r: signature.r, signature_s: signature.s }),
-        },
-        undefined,
-        { cairoVersion: "1" },
+        }
       );
 
       const accountContract = await loadContract(account.address);

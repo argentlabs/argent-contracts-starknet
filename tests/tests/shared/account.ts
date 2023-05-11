@@ -54,22 +54,19 @@ async function deployAccount(
   await fundAccount(contract_address);
   // So maybe by the time the account is funded, it is already deployed
   await account.waitForTransaction(transaction_hash);
-  return new Account(provider, contract_address, ownerPrivateKey);
+  return new Account(provider, contract_address, ownerPrivateKey, "1");
 }
 
 async function upgradeAccount(
   accountToUpgrade: Account,
   argentAccountClassHash: string,
-  cairoVersion: CairoVersion = "0",
 ) {
   const { transaction_hash: transferTxHash } = await accountToUpgrade.execute(
     {
       contractAddress: accountToUpgrade.address,
       entrypoint: "upgrade",
       calldata: CallData.compile({ implementation: argentAccountClassHash, calldata: ["0"] }),
-    },
-    undefined,
-    { cairoVersion },
+    }
   );
   await provider.waitForTransaction(transferTxHash);
 }

@@ -77,7 +77,7 @@ mod ArgentAccount {
         _guardian: felt252,
         _guardian_backup: felt252,
         _escape: Escape,
-        external_nonce: felt252,
+        external_nonces: LegacyMap::<felt252, bool>,
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -174,8 +174,6 @@ mod ArgentAccount {
     fn execute_external_calls(
         external_calls: ExternalCalls, signature: Array<felt252>
     ) -> Span<Span<felt252>> {
-        // TODO nonces
-
         // Checks
         assert(get_caller_address() == external_calls.sender, 'argent/invalid-caller');
 
@@ -186,8 +184,8 @@ mod ArgentAccount {
         );
 
         assert(
-            external_nonce::read() != external_calls.nonce, 'argent/invalid-nonce'
-        ); // TODO this is not safe
+            external_nonces::read(external_calls.nonce) == false, 'argent/invalid-nonce'
+        );
 
         let external_calls_ref = @external_calls;
         // TODO should i add some prefix here?
@@ -198,7 +196,7 @@ mod ArgentAccount {
         );
 
         // Effects
-        external_nonce::write(external_calls.nonce);
+        external_nonces::write(external_calls.nonce, true);
 
         // Interactions
         let retdata = execute_multicall(external_calls.calls.span());

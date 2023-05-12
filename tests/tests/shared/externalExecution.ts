@@ -1,21 +1,4 @@
-import { expect } from "chai";
-import {
-  Account,
-  CairoVersion,
-  Call,
-  CallData,
-  Calldata,
-  RawCalldata,
-  Signer,
-  SignerInterface,
-  WeierstrassSignatureType,
-  ec,
-  hash,
-  num,
-  stark,
-  typedData,
-} from "starknet";
-import { provider } from "./constants";
+import { Call, CallData, num, SignerInterface, typedData, WeierstrassSignatureType } from "starknet";
 
 const types = {
   StarkNetDomain: [

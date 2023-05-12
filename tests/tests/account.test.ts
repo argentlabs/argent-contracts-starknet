@@ -123,7 +123,7 @@ describe("Test contract: ArgentAccount", function () {
         {
           contractAddress: ethContract.address,
           entrypoint: "transfer",
-          calldata: CallData.compile({ recipient: recipient2, amount: amount2 }),
+          calldata: CallData.compile({ recipient: recipient2, amount: amount1 }),
         },
       ]);
       await account.waitForTransaction(transferTxHash);

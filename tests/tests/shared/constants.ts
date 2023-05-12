@@ -8,6 +8,8 @@ class FastProvider extends SequencerProvider {
   }
 }
 
+const escapeSecurityPeriod = 7 * 24 * 60 * 60;
+
 const baseUrl = "http://127.0.0.1:5050";
 const provider = new FastProvider({ baseUrl });
 
@@ -28,4 +30,4 @@ async function getEthContract() {
   return ethContract;
 }
 
-export { baseUrl, provider, deployerAccount, ethAddress, getEthContract };
+export { baseUrl, provider, deployerAccount, ethAddress, getEthContract, escapeSecurityPeriod };

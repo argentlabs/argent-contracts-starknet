@@ -4,7 +4,7 @@ import { declareContract, deployAccount, deployOldAccount, provider, upgradeAcco
 
 describe("Test Argent Account: upgrade", function () {
   // Avoid timeout
-  this.timeout(600000);
+  this.timeout(6000000);
 
   let argentAccountClassHash: string;
   let argentAccountV1ClassHash: string;

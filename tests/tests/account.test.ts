@@ -18,7 +18,7 @@ import {
 
 describe("Test contract: ArgentAccount", function () {
   // Avoid timeout
-  this.timeout(3200000);
+  this.timeout(320000);
 
   let argentAccountClassHash: string;
   // let testDapp: Contract;

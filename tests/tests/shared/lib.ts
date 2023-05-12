@@ -36,7 +36,7 @@ async function declareContract(contractName: string): Promise<string> {
 }
 
 async function actualDeclare(payload: DeclareContractPayload): Promise<string> {
-  const { class_hash } = await deployerAccount.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
+  const { class_hash } = await deployerAccount.declare(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
   return class_hash;
 }
 

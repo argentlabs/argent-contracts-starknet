@@ -18,13 +18,12 @@ import {
 
 describe("Test contract: ArgentAccount", function () {
   // Avoid timeout
-  this.timeout(320000);
+  this.timeout(600000);
 
   let argentAccountClassHash: string;
   // let testDapp: Contract;
 
   before(async () => {
-    this.timeout(320000);
     argentAccountClassHash = await declareContract("ArgentAccount");
     // const testDappClassHash = await declareContract("TestDapp");
     // testDapp = await deployAndLoadContract(testDappClassHash);

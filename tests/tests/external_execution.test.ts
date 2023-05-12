@@ -4,7 +4,7 @@ import {
   ExternalCallsArguments,
   declareContract,
   deployAccount,
-  account as deployer,
+  deployerAccount,
   getExternalCallsCallData,
   getExternalTransactionCallData,
   getTypedDataHash,
@@ -28,7 +28,7 @@ describe.only("Test external execution", function () {
       const ownerSigner = new Signer((account.signer as any)["pk"]);
       const chainId = await provider.getChainId();
       const args: ExternalCallsArguments = {
-        sender: deployer.address,
+        sender: deployerAccount.address,
         nonce: 2,
         min_timestamp: 0,
         max_timestamp: 1713139200,
@@ -50,7 +50,7 @@ describe.only("Test external execution", function () {
       const expectedMessageHash = await getTypedDataHash(args, account.address, chainId);
       expect(foundHash).to.equal(expectedMessageHash);
 
-      const { transaction_hash: transferTxHash } = await deployer.execute([
+      const { transaction_hash: transferTxHash } = await deployerAccount.execute([
         {
           contractAddress: account.address,
           entrypoint: "execute_external_calls",

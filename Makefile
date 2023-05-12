@@ -61,13 +61,20 @@ devnet:
 		exit 1; \
 	fi
 	if nc -z 127.0.0.1 5050; then \
-		echo "Port is not free"; \
+		echo "Port is not free, You can kill a running devnet with \"make kill-devnet\""; \
 		exit 1; \
 	else \
 		echo "About to spawn a devnet"; \
 		export STARKNET_DEVNET_CAIRO_VM=python; \
 		starknet-devnet --cairo-compiler-manifest $(INSTALLATION_FOLDER_CARGO) --seed 42 --lite-mode; \
 	fi
+
+kill-devnet:
+	lsof -t -i tcp:5050 | xargs kill
+
+test-jsons:
+	./cairo/target/release/starknet-compile ./contracts/account ./tests/contracts/ArgentAccount.json --allowed-libfuncs-list-name experimental_v0.1.0 --replace-ids && \
+	./cairo/target/release/starknet-sierra-compile ./tests/contracts/ArgentAccount.json ./tests/contracts/ArgentAccount.casm --allowed-libfuncs-list-name experimental_v0.1.0 
 
 vscode:
 	cd cairo/vscode-cairo && cargo build --bin cairo-language-server --release && cd ../..

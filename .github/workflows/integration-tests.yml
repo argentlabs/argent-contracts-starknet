@@ -43,12 +43,9 @@ jobs:
         run: pip3 install -r requirements.txt
       - name: run devnet
         run: make devnet &
-      - name: wait devnet
-        uses: nev7n/wait_for_response@v1
+      - name: Sleep for 5mn
+        uses: jakejarvis/wait-action@master
         with:
-          url: 'http://127.0.0.1:5050/is_alive'
-          responseCode: 200
-          timeout: 600000
-          interval: 10000 # Check every 10s
+          time: '5m'
       - name: install tests
         run: cd tests && npm install && npm run test

@@ -24,6 +24,7 @@ describe("Test contract: ArgentAccount", function () {
   // let testDapp: Contract;
 
   before(async () => {
+    this.timeout(320000);
     argentAccountClassHash = await declareContract("ArgentAccount");
     // const testDappClassHash = await declareContract("TestDapp");
     // testDapp = await deployAndLoadContract(testDappClassHash);

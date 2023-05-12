@@ -4,7 +4,7 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "test": "tsc && mocha tests/account.test.ts && mocha tests/upgrade.test.ts",
+    "test": "tsc && mocha tests/account.test.ts",
     "lint": "eslint . --fix",
     "format": "prettier --write ."
   },

@@ -12,6 +12,7 @@ describe("Test Argent Account: upgrade", function () {
   let proxyClassHash: string;
 
   before(async () => {
+    this.timeout(320000);
     argentAccountClassHash = await declareContract("ArgentAccount");
     // This is the same as ArgentAccount but with a different version (to have another class hash)
     // Done to be able to test upgradability

@@ -49,6 +49,6 @@ jobs:
           url: 'http://127.0.0.1:5050/is_alive'
           responseCode: 200
           timeout: 600000
-          interval: 500
+          interval: 10000 # Check every 10s
       - name: install tests
         run: cd tests && npm install && npm run test

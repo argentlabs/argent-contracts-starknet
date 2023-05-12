@@ -9,7 +9,6 @@ on:
     branches: 
       - develop
       - main
-      - chore/integration_tests_ci # TODO REMOVE THIS AT THE END
   pull_request: 
     branches: 
       - develop
@@ -42,6 +41,6 @@ jobs:
       - name: Step 4 - Installing requirements
         run: pip3 install -r requirements.txt
       - name: run devnet
-        run: ./scripts/integration-tests.sh
+        run: ./scripts/run-devnet.sh
       - name: install tests
         run: cd tests && npm install && npm run test

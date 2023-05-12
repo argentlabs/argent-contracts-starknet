@@ -7,6 +7,8 @@ import {
   DeclareContractPayload,
   Event,
   InvokeTransactionReceiptResponse,
+  ec,
+  encode,
   hash,
   json,
   num,
@@ -14,6 +16,10 @@ import {
 } from "starknet";
 
 import { deployerAccount, provider } from "./constants";
+
+function randomPrivateKey(): string {
+  return "0x" + encode.buf2hex(ec.starkCurve.utils.randomPrivateKey());
+}
 
 const classHashCache: { [contractName: string]: string } = {};
 
@@ -74,4 +80,4 @@ async function expectEvent(transactionHash: string, event: Event) {
   expect(currentEvent.data).to.eql(event.data);
 }
 
-export { declareContract, loadContract, expectRevertWithErrorMessage, expectEvent };
+export { declareContract, loadContract, expectRevertWithErrorMessage, expectEvent, randomPrivateKey };

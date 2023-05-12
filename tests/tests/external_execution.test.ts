@@ -1,13 +1,15 @@
 import { expect } from "chai";
-import { Call, CallData, Signer, WeierstrassSignatureType, hash, typedData } from "starknet";
+import { Call, CallData, Signer, WeierstrassSignatureType, ec, hash, num, stark } from "starknet";
 import {
+  ArgentSigner,
   ExternalCallsArguments,
   declareContract,
   deployAccount,
   deployerAccount,
-  getExternalCallsCallData,
-  getExternalTransactionCallData,
+  getExternalCalls,
+  getExternalTransactionCall,
   getTypedDataHash,
+  loadContract,
   provider,
 } from "./shared";
 
@@ -22,10 +24,36 @@ describe.only("Test external execution", function () {
   });
 
   describe("Test external execution", function () {
-    it("Test external execution", async function () {
+    it("Test correct hash", async function () {
       const account = await deployAccount(argentAccountClassHash);
+      const accountContract = await loadContract(account.address);
 
-      const ownerSigner = new Signer((account.signer as any)["pk"]);
+      const chainId = await provider.getChainId();
+      const args: ExternalCallsArguments = {
+        sender: deployerAccount.address,
+        nonce: 2,
+        min_timestamp: 0,
+        max_timestamp: 1713139200,
+        calls: [
+          {
+            contractAddress: "0x0424242",
+            entrypoint: hash.getSelectorFromName("whatever_method"),
+            calldata: ["0x0", "0x1"],
+          },
+        ],
+      };
+
+      const foundHash = num.toHex(
+        await accountContract.get_hash_message_external_calls(getExternalCalls(args), { nonce: undefined }),
+      );
+      const expectedMessageHash = getTypedDataHash(args, account.address, chainId);
+      expect(foundHash).to.equal(expectedMessageHash);
+    });
+
+    it("Test external execution", async function () {
+      const accountSigner = new ArgentSigner();
+      const account = await deployAccount(argentAccountClassHash, accountSigner.ownerPrivateKey);
+
       const chainId = await provider.getChainId();
       const args: ExternalCallsArguments = {
         sender: deployerAccount.address,
@@ -39,24 +67,9 @@ describe.only("Test external execution", function () {
           },
         ],
       };
-
-      const foundHash = (
-        await provider.callContract({
-          contractAddress: account.address,
-          entrypoint: "get_hash_message_external_calls",
-          calldata: getExternalCallsCallData(args),
-        })
-      ).result[0];
-      const expectedMessageHash = await getTypedDataHash(args, account.address, chainId);
-      expect(foundHash).to.equal(expectedMessageHash);
-
-      const { transaction_hash: transferTxHash } = await deployerAccount.execute([
-        {
-          contractAddress: account.address,
-          entrypoint: "execute_external_calls",
-          calldata: await getExternalTransactionCallData(args, account.address, ownerSigner, chainId),
-        },
-      ]);
+      const { transaction_hash: transferTxHash } = await deployerAccount.execute(
+        await getExternalTransactionCall(args, account.address, accountSigner, chainId),
+      );
       const receipt = await provider.waitForTransaction(transferTxHash);
     });
   });

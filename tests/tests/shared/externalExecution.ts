@@ -7,6 +7,7 @@ import {
   Calldata,
   RawCalldata,
   Signer,
+  SignerInterface,
   WeierstrassSignatureType,
   ec,
   hash,
@@ -54,8 +55,8 @@ declare type ExternalCallsArguments = {
   calls: Call[];
 };
 
-function getExternalCallsCallData(externalCallsArguments: ExternalCallsArguments) {
-  return CallData.compile({
+function getExternalCalls(externalCallsArguments: ExternalCallsArguments) {
+  return {
     ...externalCallsArguments,
     calls: externalCallsArguments.calls.map((call) => {
       return {
@@ -64,7 +65,7 @@ function getExternalCallsCallData(externalCallsArguments: ExternalCallsArguments
         calldata: call.calldata ?? [],
       };
     }),
-  });
+  };
 }
 
 function getTypedDataHash(
@@ -95,22 +96,20 @@ function getTypedData(externalCallsArguments: ExternalCallsArguments, chainId: s
   };
 }
 
-async function getExternalTransactionCallData(
+async function getExternalTransactionCall(
   externalCallsArguments: ExternalCallsArguments,
   accountAddress: string,
-  signer: Signer,
+  signer: SignerInterface,
   chainId: string,
-): Promise<Calldata> {
+): Promise<Call> {
   const currentTypedData = getTypedData(externalCallsArguments, chainId);
   const signature = (await signer.signMessage(currentTypedData, accountAddress)) as WeierstrassSignatureType;
   const signatureArray = CallData.compile([signature.r, signature.s]);
-  return CallData.compile({ ...getExternalCallsCallData(externalCallsArguments), signatureArray });
+  return {
+    contractAddress: accountAddress,
+    entrypoint: "execute_external_calls",
+    calldata: CallData.compile({ ...getExternalCalls(externalCallsArguments), signatureArray }),
+  };
 }
 
-export {
-  getExternalTransactionCallData,
-  getTypedData,
-  getTypedDataHash,
-  getExternalCallsCallData,
-  ExternalCallsArguments,
-};
+export { getExternalTransactionCall, getTypedData, getTypedDataHash, getExternalCalls, ExternalCallsArguments };

@@ -8,10 +8,13 @@ import {
   Signature,
   SignerInterface,
   ec,
+  encode,
   hash,
+  num,
   transaction,
   typedData,
 } from "starknet";
+import { randomPrivateKey } from "./lib";
 
 /**
  * This class allows to easily implement custom signers by overriding the `signRaw` method.
@@ -94,7 +97,7 @@ abstract class RawSigner implements SignerInterface {
 }
 
 class ArgentSigner extends RawSigner {
-  constructor(protected ownerPrivateKey: string, protected guardianPrivateKey?: string) {
+  constructor(public ownerPrivateKey: string = randomPrivateKey(), public guardianPrivateKey?: string) {
     super();
   }
   public getOwnerKey(): string {

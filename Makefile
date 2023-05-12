@@ -33,6 +33,10 @@ build:
 compile-account: 
 	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/account account.json --allowed-libfuncs-list-name experimental_v0.1.0
 
+compile-account-test: 
+	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/account ./tests/contracts/ArgentAccount.json --allowed-libfuncs-list-name experimental_v0.1.0
+	./cairo/target/release/starknet-sierra-compile ./tests/contracts/ArgentAccount.json ./tests/contracts/ArgentAccount.casm --allowed-libfuncs-list-name experimental_v0.1.0
+
 test: 
 	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)
 

@@ -12,3 +12,5 @@ node_modules/
 target/
 
 .DS_Store
+./tests/contracts/ArgentAccount.json
+./tests/contracts/ArgentAccount.casm

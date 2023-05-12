@@ -1,5 +1,5 @@
-import { Account, CairoVersion, CallData, ec, hash, stark } from "starknet";
-import { account, provider } from "./constants";
+import { Account, CallData, ec, hash, stark } from "starknet";
+import { deployerAccount, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
 
 async function deployOldAccount(
@@ -27,7 +27,7 @@ async function deployOldAccount(
     contractAddress,
     addressSalt: publicKey,
   });
-  await account.waitForTransaction(transaction_hash);
+  await deployerAccount.waitForTransaction(transaction_hash);
   return accountToDeploy;
 }
 
@@ -44,7 +44,7 @@ async function deployAccount(
 
   // TODO This should be updated to use deployAccount and it should probably pay for its own deployemnt
   // Can't atm, waiting for starknetJS update
-  const { transaction_hash, contract_address } = await account.deployContract({
+  const { transaction_hash, contract_address } = await deployerAccount.deployContract({
     classHash: argentAccountClassHash,
     constructorCalldata,
     // TODO Investigate if salt is useful?
@@ -53,24 +53,16 @@ async function deployAccount(
   // Fund account the account before waiting for it to be deployed
   await fundAccount(contract_address);
   // So maybe by the time the account is funded, it is already deployed
-  await account.waitForTransaction(transaction_hash);
-  return new Account(provider, contract_address, ownerPrivateKey);
+  await deployerAccount.waitForTransaction(transaction_hash);
+  return new Account(provider, contract_address, ownerPrivateKey, "1");
 }
 
-async function upgradeAccount(
-  accountToUpgrade: Account,
-  argentAccountClassHash: string,
-  cairoVersion: CairoVersion = "0",
-) {
-  const { transaction_hash: transferTxHash } = await accountToUpgrade.execute(
-    {
-      contractAddress: accountToUpgrade.address,
-      entrypoint: "upgrade",
-      calldata: CallData.compile({ implementation: argentAccountClassHash, calldata: ["0"] }),
-    },
-    undefined,
-    { cairoVersion },
-  );
+async function upgradeAccount(accountToUpgrade: Account, argentAccountClassHash: string) {
+  const { transaction_hash: transferTxHash } = await accountToUpgrade.execute({
+    contractAddress: accountToUpgrade.address,
+    entrypoint: "upgrade",
+    calldata: CallData.compile({ implementation: argentAccountClassHash, calldata: ["0"] }),
+  });
   await provider.waitForTransaction(transferTxHash);
 }
 

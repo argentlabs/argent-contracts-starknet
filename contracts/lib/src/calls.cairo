@@ -4,7 +4,6 @@ use array::SpanTrait;
 use starknet::call_contract_syscall;
 use starknet::ContractAddress;
 
-use lib::ArrayTraitExt;
 use lib::check_enough_gas;
 
 #[derive(Drop, Serde)]

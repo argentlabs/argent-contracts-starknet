@@ -48,7 +48,7 @@ describe("Test Argent Account: upgrade", function () {
     expect(BigInt(currentVersion.result[0])).to.equal(BigInt(0));
     expect(BigInt(currentVersion.result[1])).to.equal(BigInt(3));
     expect(BigInt(currentVersion.result[2])).to.equal(BigInt(0));
-    await upgradeAccount(account, argentAccountV1ClassHash, "1");
+    await upgradeAccount(account, argentAccountV1ClassHash);
     const newVersion = await provider.callContract({
       contractAddress: account.address,
       entrypoint: "get_version",

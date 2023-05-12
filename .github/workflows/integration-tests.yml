@@ -42,12 +42,6 @@ jobs:
       - name: Step 4 - Installing requirements
         run: pip3 install -r requirements.txt
       - name: run devnet
-        run: make devnet &
-      # Found this to be the shortest time to wait
-      # Also tried with action that will try and ping the service to check if it is up (didn't work)
-      - name: Sleep for 2mn 
-        uses: jakejarvis/wait-action@master
-        with:
-          time: '2m'
+        run: ./scripts/integration-tests.sh
       - name: install tests
         run: cd tests && npm install && npm run test

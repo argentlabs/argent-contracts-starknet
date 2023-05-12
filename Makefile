@@ -66,7 +66,7 @@ devnet:
 	else \
 		echo "About to spawn a devnet"; \
 		export STARKNET_DEVNET_CAIRO_VM=python; \
-		starknet-devnet --cairo-compiler-manifest $(INSTALLATION_FOLDER_CARGO) --seed 42 --lite-mode --lite-mode --dump-on exit --dump-path ./dmp --load-path dmp; \
+		starknet-devnet --cairo-compiler-manifest $(INSTALLATION_FOLDER_CARGO) --seed 42 --lite-mode --lite-mode; \
 	fi
 
 vscode:

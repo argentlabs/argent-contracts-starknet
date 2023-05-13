@@ -273,7 +273,7 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
       });
     });
 
-    it("Expect retdata to contain multiple data when making a more complex transaction", async function () {
+    it("Expect retdata to contain multiple data when making a multicall transaction", async function () {
       const account = await deployAccount(argentAccountClassHash);
       const ethContract = await getEthContract();
       ethContract.connect(account);

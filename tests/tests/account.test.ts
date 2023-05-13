@@ -73,10 +73,10 @@ describe("ArgentAccount", function () {
       const guardianBackupBefore = await accountContract.get_guardian_backup();
       expect(guardianBackupBefore).to.equal(0n);
       account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
-      await account.execute(accountContract.populateTransaction.change_guardian_backup("0x42"));
+      await account.execute(accountContract.populateTransaction.change_guardian_backup(42));
 
       const guardianBackupAfter = await accountContract.get_guardian_backup();
-      expect(guardianBackupAfter).to.equal(BigInt("0x42"));
+      expect(guardianBackupAfter).to.equal(42n);
     });
 
     it("Should sign messages from OWNER and BACKUP_GUARDIAN when there is a GUARDIAN and a BACKUP", async function () {

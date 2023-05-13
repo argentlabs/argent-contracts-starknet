@@ -53,6 +53,7 @@ async function expectRevertWithErrorMessage(errorMessage: string, fn: () => void
     await fn();
     assert.fail("No error detected");
   } catch (e: any) {
+    // console.log(e);
     expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
   }
 }

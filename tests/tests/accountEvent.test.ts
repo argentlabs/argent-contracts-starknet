@@ -189,8 +189,9 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
     const argentAccountV1ClassHash = await declareContract("ArgentAccountV1");
     const accountContract = await loadContract(account.address);
 
-    
-    const { transaction_hash } = await account.execute(accountContract.populateTransaction.upgrade(argentAccountV1ClassHash, ["0"]));
+    const { transaction_hash } = await account.execute(
+      accountContract.populateTransaction.upgrade(argentAccountV1ClassHash, ["0"]),
+    );
 
     await expectEvent(transaction_hash, {
       from_address: account.address,
@@ -216,7 +217,40 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
       });
     });
 
-    // TODO add all cases when this is possible
+    it("Expect on trigger_escape_owner", async function () {
+      const ownerPrivateKey = stark.randomAddress();
+      const guardianPrivateKey = stark.randomAddress();
+      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
+      const accountContract = await loadContract(account.address);
+
+      account.signer = new Signer(guardianPrivateKey);
+      await account.execute(accountContract.populateTransaction.trigger_escape_owner("0x42"));
+      const { transaction_hash } = await account.execute(
+        accountContract.populateTransaction.trigger_escape_owner("0x42"),
+      );
+      await expectEvent(transaction_hash, {
+        from_address: account.address,
+        keys: ["EscapeCanceled"],
+        data: [],
+      });
+    });
+
+    it("Expect on trigger_escape_guardian", async function () {
+      const ownerPrivateKey = stark.randomAddress();
+      const guardianPrivateKey = stark.randomAddress();
+      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
+      const accountContract = await loadContract(account.address);
+
+      await account.execute(accountContract.populateTransaction.trigger_escape_guardian("0x42"));
+      const { transaction_hash } = await account.execute(
+        accountContract.populateTransaction.trigger_escape_guardian("0x42"),
+      );
+      await expectEvent(transaction_hash, {
+        from_address: account.address,
+        keys: ["EscapeCanceled"],
+        data: [],
+      });
+    });
   });
 
   describe("Multicall TransactionExecuted(transaction_hash, retdata)", function () {
@@ -273,4 +307,6 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
     });
     // TODO Could add some more tests regarding multicall later
   });
+
+  // TODO Check event NOT trigerred
 });

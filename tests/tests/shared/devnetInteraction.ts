@@ -9,9 +9,10 @@ async function fundAccount(address: string) {
   });
 }
 
-async function increaseTime(timeInSeconds: number) {
+async function increaseTime(timeInSeconds: number | bigint) {
+  const  timeInSecondsAsNumber = Number(timeInSeconds);
   await handlePost("increase_time", {
-    time: timeInSeconds,
+    time: timeInSecondsAsNumber,
   });
 }
 

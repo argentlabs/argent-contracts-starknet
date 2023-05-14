@@ -3,12 +3,12 @@ import {
   ConcatSigner,
   declareContract,
   deployAccount,
+  deployAccountV2,
   deployerAccount,
   escapeSecurityPeriod,
   expectEvent,
   getEthContract,
   increaseTime,
-  loadContract,
   provider,
   setTime,
 } from "./shared";
@@ -42,13 +42,11 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
   });
 
   it("Expect EscapeOwnerTriggered(active_at, new_owner) on trigger_escape_owner", async function () {
-    const ownerPrivateKey = stark.randomAddress();
-    const guardianPrivateKey = stark.randomAddress();
-    const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-    const accountContract = await loadContract(account.address);
+    const { account, accountContract, guardianPrivateKey } = await deployAccountV2(argentAccountClassHash);
+    account.signer = new Signer(guardianPrivateKey);
+
     const newOwner = "0x42";
     const activeAt = num.toHex(42 + escapeSecurityPeriod);
-    account.signer = new Signer(guardianPrivateKey);
     await setTime(42);
 
     const { transaction_hash } = await account.execute(
@@ -63,12 +61,10 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
   });
 
   it("Expect OwnerEscaped(new_signer) on escape_owner", async function () {
-    const ownerPrivateKey = stark.randomAddress();
-    const guardianPrivateKey = stark.randomAddress();
-    const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-    const accountContract = await loadContract(account.address);
-    const newOwner = "0x42";
+    const { account, accountContract, guardianPrivateKey } = await deployAccountV2(argentAccountClassHash);
     account.signer = new Signer(guardianPrivateKey);
+
+    const newOwner = "0x42";
     await setTime(42);
 
     await account.execute(accountContract.populateTransaction.trigger_escape_owner(newOwner));
@@ -84,10 +80,9 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
   });
 
   it("Expect EscapeGuardianTriggered(active_at, new_owner) on trigger_escape_guardian", async function () {
-    const ownerPrivateKey = stark.randomAddress();
-    const guardianPrivateKey = stark.randomAddress();
-    const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-    const accountContract = await loadContract(account.address);
+    const { account, accountContract, ownerPrivateKey } = await deployAccountV2(argentAccountClassHash);
+    account.signer = new Signer(ownerPrivateKey);
+
     const newGuardian = "0x42";
     const activeAt = num.toHex(42 + escapeSecurityPeriod);
     await setTime(42);
@@ -104,10 +99,8 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
   });
 
   it("Expect GuardianEscaped(new_signer) on escape_guardian", async function () {
-    const ownerPrivateKey = stark.randomAddress();
-    const guardianPrivateKey = stark.randomAddress();
-    const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-    const accountContract = await loadContract(account.address);
+    const { account, accountContract, ownerPrivateKey } = await deployAccountV2(argentAccountClassHash);
+    account.signer = new Signer(ownerPrivateKey);
     const newGuardian = "0x42";
     await setTime(42);
 
@@ -124,9 +117,8 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
   });
 
   it("Expect OwnerChanged(new_signer) on change_owner", async function () {
-    const ownerPrivateKey = stark.randomAddress();
-    const account = await deployAccount(argentAccountClassHash, ownerPrivateKey);
-    const accountContract = await loadContract(account.address);
+    const { account, accountContract, ownerPrivateKey } = await deployAccountV2(argentAccountClassHash);
+
     const newOwnerPrivateKey = stark.randomAddress();
     const newOwner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
     const changeOwnerSelector = hash.getSelectorFromName("change_owner");
@@ -148,9 +140,8 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
   });
 
   it("Expect GuardianChanged(new_guardian) on change_guardian", async function () {
-    const ownerPrivateKey = stark.randomAddress();
-    const account = await deployAccount(argentAccountClassHash, ownerPrivateKey);
-    const accountContract = await loadContract(account.address);
+    const { account, accountContract } = await deployAccountV2(argentAccountClassHash);
+
     const newGuardian = "0x42";
 
     const { transaction_hash } = await account.execute(
@@ -165,13 +156,9 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
   });
 
   it("Expect GuardianBackupChanged(new_guardian_backup) on change_guardian_backup", async function () {
-    const ownerPrivateKey = stark.randomAddress();
-    const guardianPrivateKey = stark.randomAddress();
-    const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-    const accountContract = await loadContract(account.address);
-    const newGuardianBackup = "0x42";
+    const { account, accountContract } = await deployAccountV2(argentAccountClassHash);
 
-    account.signer = new ConcatSigner([ownerPrivateKey, guardianPrivateKey]);
+    const newGuardianBackup = "0x42";
 
     const { transaction_hash } = await account.execute(
       accountContract.populateTransaction.change_guardian_backup(newGuardianBackup),
@@ -185,9 +172,8 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
   });
 
   it("Expect AccountUpgraded(new_implementation) on upgrade", async function () {
-    const account = await deployAccount(argentAccountClassHash);
+    const { account, accountContract } = await deployAccountV2(argentAccountClassHash);
     const argentAccountV1ClassHash = await declareContract("ArgentAccountV1");
-    const accountContract = await loadContract(account.address);
 
     const { transaction_hash } = await account.execute(
       accountContract.populateTransaction.upgrade(argentAccountV1ClassHash, ["0"]),
@@ -202,13 +188,14 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
 
   describe("Expect EscapeCanceled()", function () {
     it("Expect on cancel_escape", async function () {
-      const ownerPrivateKey = stark.randomAddress();
-      const guardianPrivateKey = stark.randomAddress();
-      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-      const accountContract = await loadContract(account.address);
+      const { account, accountContract, ownerPrivateKey, guardianPrivateKey } = await deployAccountV2(
+        argentAccountClassHash,
+      );
+      account.signer = new Signer(ownerPrivateKey);
 
       await account.execute(accountContract.populateTransaction.trigger_escape_guardian("0x42"));
-      account.signer = new ConcatSigner([ownerPrivateKey, guardianPrivateKey]);
+
+      account.signer = new ConcatSigner([ownerPrivateKey, guardianPrivateKey as string]);
       const { transaction_hash } = await account.execute(accountContract.populateTransaction.cancel_escape());
       await expectEvent(transaction_hash, {
         from_address: account.address,
@@ -218,12 +205,9 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
     });
 
     it("Expect on trigger_escape_owner", async function () {
-      const ownerPrivateKey = stark.randomAddress();
-      const guardianPrivateKey = stark.randomAddress();
-      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-      const accountContract = await loadContract(account.address);
-
+      const { account, accountContract, guardianPrivateKey } = await deployAccountV2(argentAccountClassHash);
       account.signer = new Signer(guardianPrivateKey);
+
       await account.execute(accountContract.populateTransaction.trigger_escape_owner("0x42"));
       const { transaction_hash } = await account.execute(
         accountContract.populateTransaction.trigger_escape_owner("0x42"),
@@ -236,10 +220,8 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
     });
 
     it("Expect on trigger_escape_guardian", async function () {
-      const ownerPrivateKey = stark.randomAddress();
-      const guardianPrivateKey = stark.randomAddress();
-      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-      const accountContract = await loadContract(account.address);
+      const { account, accountContract, ownerPrivateKey } = await deployAccountV2(argentAccountClassHash);
+      account.signer = new Signer(ownerPrivateKey);
 
       await account.execute(accountContract.populateTransaction.trigger_escape_guardian("0x42"));
       const { transaction_hash } = await account.execute(

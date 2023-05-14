@@ -10,6 +10,7 @@ export type AccountLeaked = {
   accountContract: Contract;
   ownerPrivateKey: string;
   guardianPrivateKey?: string;
+  guardianBackupPrivateKey?: string;
 };
 
 async function deployOldAccount(
@@ -98,6 +99,16 @@ async function deployAccountV2(argentAccountClassHash: string): Promise<AccountL
   };
 }
 
+async function deployAccountWithGuardianBackup(argentAccountClassHash: string): Promise<AccountLeaked> {
+  const guardianBackupPrivateKey = stark.randomAddress();
+  const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
+
+  const accountLeaked = await deployAccountV2(argentAccountClassHash);
+  await accountLeaked.account.execute(accountLeaked.accountContract.populateTransaction.change_guardian_backup(guardianBackupPublicKey));
+  accountLeaked.guardianBackupPrivateKey = guardianBackupPrivateKey;
+  return accountLeaked;
+}
+
 async function upgradeAccount(accountToUpgrade: Account, argentAccountClassHash: string) {
   const { transaction_hash: transferTxHash } = await accountToUpgrade.execute({
     contractAddress: accountToUpgrade.address,
@@ -107,4 +118,4 @@ async function upgradeAccount(accountToUpgrade: Account, argentAccountClassHash:
   await provider.waitForTransaction(transferTxHash);
 }
 
-export { deployAccount, deployAccountV2, deployOldAccount, upgradeAccount };
+export { deployAccount, deployAccountV2, deployAccountWithGuardianBackup, deployOldAccount, upgradeAccount };

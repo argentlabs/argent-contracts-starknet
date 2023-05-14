@@ -1,10 +1,10 @@
 import { expect } from "chai";
-import { Signer, ec, stark } from "starknet";
+import { Signer } from "starknet";
 import {
-  ConcatSigner,
   declareContract,
   deployAccount,
   deployAccountV2,
+  deployAccountWithGuardianBackup,
   expectRevertWithErrorMessage,
   increaseTime,
   loadContract,
@@ -44,8 +44,8 @@ describe("ArgentAccount: escape mechanism", function () {
         const { account, accountContract, ownerPrivateKey, guardianPrivateKey } = await deployAccountV2(
           argentAccountClassHash,
         );
-
         account.signer = new Signer(ownerPrivateKey);
+
         await account.execute(accountContract.populateTransaction.trigger_escape_guardian(42));
         const escape = await accountContract.get_escape();
         expect(escape.escape_type).to.equal(ESCAPE_TYPE_GUARDIAN);
@@ -79,18 +79,10 @@ describe("ArgentAccount: escape mechanism", function () {
 
     describe("Triggered with the guardian backup as a signer", function () {
       it("Expect the backup guardian to be able to trigger it alone", async function () {
-        const ownerPrivateKey = stark.randomAddress();
-        const guardianPrivateKey = stark.randomAddress();
-        const guardianBackupPrivateKey = stark.randomAddress();
-        const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
-        const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-        const accountContract = await loadContract(account.address);
-
-        account.signer = new ConcatSigner([ownerPrivateKey, guardianPrivateKey]);
-        await account.execute(accountContract.populateTransaction.change_guardian_backup(guardianBackupPublicKey));
-        await setTime(42);
-
+        const {account, accountContract, guardianBackupPrivateKey} = await deployAccountWithGuardianBackup(argentAccountClassHash);
         account.signer = new Signer(guardianBackupPrivateKey);
+
+        await setTime(42);
         await account.execute(accountContract.populateTransaction.trigger_escape_owner(42));
 
         const escape = await accountContract.get_escape();
@@ -99,18 +91,11 @@ describe("ArgentAccount: escape mechanism", function () {
       });
 
       it("Expect 'argent/cannot-override-escape' when the guardian is already being escaped calling from the guardian backup", async function () {
-        const ownerPrivateKey = stark.randomAddress();
-        const guardianPrivateKey = stark.randomAddress();
-        const guardianBackupPrivateKey = stark.randomAddress();
-        const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
-        const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-        const accountContract = await loadContract(account.address);
+        const {account, accountContract, ownerPrivateKey, guardianBackupPrivateKey} = await deployAccountWithGuardianBackup(argentAccountClassHash);
+        account.signer = new Signer(ownerPrivateKey);
 
-        account.signer = new ConcatSigner([ownerPrivateKey, guardianPrivateKey]);
-        await account.execute(accountContract.populateTransaction.change_guardian_backup(guardianBackupPublicKey));
         await setTime(42);
 
-        account.signer = new Signer(ownerPrivateKey);
         await account.execute(accountContract.populateTransaction.trigger_escape_guardian(42));
         const escape = await accountContract.get_escape();
         expect(escape.escape_type).to.equal(ESCAPE_TYPE_GUARDIAN);
@@ -214,18 +199,9 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     it("Expect 'argent/backup-should-be-null' escaping guardian to zero with guardian_backup being != 0", async function () {
-      const ownerPrivateKey = stark.randomAddress();
-      const guardianPrivateKey = stark.randomAddress();
-      const guardianBackupPrivateKey = stark.randomAddress();
-      const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
-      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-      const accountContract = await loadContract(account.address);
-
-      account.signer = new ConcatSigner([ownerPrivateKey, guardianPrivateKey]);
-      await account.execute(accountContract.populateTransaction.change_guardian_backup(guardianBackupPublicKey));
-      await setTime(42);
-
+      const {account, accountContract, ownerPrivateKey} = await deployAccountWithGuardianBackup(argentAccountClassHash);
       account.signer = new Signer(ownerPrivateKey);
+
       await expectRevertWithErrorMessage("argent/backup-should-be-null", async () => {
         await account.execute(accountContract.populateTransaction.trigger_escape_guardian(0));
       });
@@ -234,9 +210,8 @@ describe("ArgentAccount: escape mechanism", function () {
 
   describe("escape_guardian()", function () {
     it("Expect the owner to be able to escape the guardian alone", async function () {
-      const privateKey = stark.randomAddress();
-      const account = await deployAccount(argentAccountClassHash, privateKey, "0x42");
-      const accountContract = await loadContract(account.address);
+        const {account, accountContract, ownerPrivateKey} = await deployAccountV2(argentAccountClassHash);
+        account.signer = new Signer(ownerPrivateKey);
 
       await setTime(42);
       await account.execute(accountContract.populateTransaction.trigger_escape_guardian(43));

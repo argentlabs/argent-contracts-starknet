@@ -2,7 +2,6 @@ import { CallData, Signer, ec, hash, num, stark, uint256 } from "starknet";
 import {
   ConcatSigner,
   declareContract,
-  deployAccount,
   deployAccountV2,
   deployerAccount,
   escapeSecurityPeriod,
@@ -237,7 +236,7 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
 
   describe("Multicall TransactionExecuted(transaction_hash, retdata)", function () {
     it("Expect ret data to contain one array with one element when making a simple transaction", async function () {
-      const account = await deployAccount(argentAccountClassHash);
+      const { account } = await deployAccountV2(argentAccountClassHash);
       const ethContract = await getEthContract();
       ethContract.connect(account);
       const recipient = "0x42";
@@ -256,7 +255,7 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
     });
 
     it("Expect retdata to contain multiple data when making a multicall transaction", async function () {
-      const account = await deployAccount(argentAccountClassHash);
+      const { account } = await deployAccountV2(argentAccountClassHash);
       const ethContract = await getEthContract();
       ethContract.connect(account);
       const recipient = "0x33";

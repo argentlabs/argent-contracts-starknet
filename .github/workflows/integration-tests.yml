@@ -19,7 +19,7 @@ jobs:
       - name: Step 8 - Cloning repo
         run: make clone-cairo
       - name: making dir
-        run: mkdir ./target/
+        run: mkdir ./cairo/target/
       - name: Step 4 - Downloading binaries Unzipping binaries
         working-directory: ./cairo/target/
         run: |

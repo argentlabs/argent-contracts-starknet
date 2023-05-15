@@ -19,13 +19,13 @@ jobs:
       - name: Step 8 - Cloning repo
         run: make clone-cairo
       - name: making dir
-        run: mkdir ./cairo/target/
+        run: mkdir ./target/
       - name: Step 4 - Downloading binaries Unzipping binaries
         working-directory: ./cairo/target/
         run: |
             curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
             tar -xvf $ARCHIVE_NAME 
-            mv cairo release
+            mv cairo/bin release
       - name: Step 6 - Compiling ArgentAccount to JSON
         run: make compile-account-test
       - name: Step 9 - Installing requirements

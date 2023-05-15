@@ -22,13 +22,14 @@ struct StarkNetDomain {
     chain_id: felt252,
 }
 
-// H('ExternalExecution(sender:felt,min_timestamp:felt,max_timestamp:felt,calls_len:felt,calls:Call*)')
+// H('ExternalExecution(sender:felt,nonce:felt,min_timestamp:felt,max_timestamp:felt,calls_len:felt,calls:Call*)')
 const EXTERNAL_EXECUTION_TYPE_HASH: felt252 =
-    0x1a33dfa608bfc0d078004fbdb7f8323acd5d9236aed810c7927f8f50803d93b;
+    0x15371206e945a77f06e245fff996c983c4b0fd75364019e34362e8aff177294;
 
 #[derive(Drop, Serde)]
 struct ExternalExecution {
     sender: ContractAddress,
+    nonce: felt252,
     min_timestamp: u64,
     max_timestamp: u64,
     calls: Array<Call>
@@ -103,11 +104,12 @@ fn hash_external_execution(external_calls: @ExternalExecution) -> felt252 {
 
     let mut state = perdersen(0, EXTERNAL_EXECUTION_TYPE_HASH);
     state = perdersen(state, (*external_calls.sender).into());
+    state = perdersen(state, *external_calls.nonce);
     state = perdersen(state, (*external_calls.min_timestamp).into());
     state = perdersen(state, (*external_calls.max_timestamp).into());
     state = perdersen(state, external_calls.calls.len().into());
     state = perdersen(state, external_calls_state);
-    perdersen(state, 6)
+    perdersen(state, 7)
 }
 
 #[inline(always)]

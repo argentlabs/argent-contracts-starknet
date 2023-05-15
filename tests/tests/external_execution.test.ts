@@ -44,6 +44,7 @@ describe("Test external execution", function () {
       sender: deployerAccount.address,
       min_timestamp: 0,
       max_timestamp: 1713139200,
+      nonce: randomPrivateKey(),
       calls: [
         {
           to: "0x0424242",
@@ -72,6 +73,7 @@ describe("Test external execution", function () {
 
     const externalExecution: ExternalExecution = {
       sender: deployerAccount.address,
+      nonce: randomPrivateKey(),
       min_timestamp: initialTime - 100,
       max_timestamp: initialTime + 100,
       calls: [getExternalCall(testDapp.populateTransaction.set_number(42))],
@@ -116,7 +118,7 @@ describe("Test external execution", function () {
     expect(await testDapp.get_number(account.address)).eql(42n, "invalid new value");
 
     // ensure a transaction can't be replayed
-    await expectExecutionRevert("argent/repeated-external-exec", deployerAccount.execute(externalExecutionCall));
+    await expectExecutionRevert("argent/repeated-external-nonce", deployerAccount.execute(externalExecutionCall));
   });
 
   it("Owner only account", async function () {
@@ -125,6 +127,7 @@ describe("Test external execution", function () {
 
     const externalExecution: ExternalExecution = {
       sender: deployerAccount.address,
+      nonce: randomPrivateKey(),
       min_timestamp: 0,
       max_timestamp: initialTime + 100,
       calls: [getExternalCall(testDapp.populateTransaction.set_number(42))],
@@ -151,6 +154,7 @@ describe("Test external execution", function () {
 
     const externalExecution: ExternalExecution = {
       sender: deployerAccount.address,
+      nonce: randomPrivateKey(),
       min_timestamp: 0,
       max_timestamp: initialTime + 100,
       calls: [getExternalCall(accountContract.populateTransaction.trigger_escape_owner(42))],

@@ -76,7 +76,7 @@ mod ArgentAccount {
         _guardian: felt252,
         _guardian_backup: felt252,
         _escape: Escape,
-        external_executions: LegacyMap::<felt252, bool>,
+        external_nonces: LegacyMap::<felt252, bool>,
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -181,20 +181,18 @@ mod ArgentAccount {
             external_execution.min_timestamp <= block_timestamp & block_timestamp <= external_execution.max_timestamp,
             'argent/invalid-timestamp'
         );
+        let nonce = external_execution.nonce;
+        assert(external_nonces::read(nonce) == false, 'argent/repeated-external-nonce');
 
         let external_execution_ref = @external_execution;
         let external_tx_hash = hash_external_execution_message(external_execution_ref);
-
-        assert(
-            external_executions::read(external_tx_hash) == false, 'argent/repeated-external-exec'
-        );
 
         assert_valid_calls_and_signature(
             external_execution.calls.span(), external_tx_hash, signature.span()
         );
 
         // Effects
-        external_executions::write(external_tx_hash, true);
+        external_nonces::write(nonce, true);
 
         // Interactions
         let retdata = execute_multicall(external_execution_ref.calls.span());

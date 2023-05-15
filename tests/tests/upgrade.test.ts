@@ -22,7 +22,7 @@ describe("Test Argent Account: upgrade", function () {
 
   it("Should be posssible to deploy an argent account version 0.2.4 and upgrade it to cairo 1 version 0.3.0", async function () {
     const accountToUpgrade = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
-    const initialVersion = await provider.callContract({
+      const initialVersion = await provider.callContract({
       contractAddress: accountToUpgrade.address,
       entrypoint: "getVersion",
     });

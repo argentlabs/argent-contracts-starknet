@@ -3,9 +3,9 @@ import { CallData, Signer, ec, hash, num, stark, uint256 } from "starknet";
 import {
   ArgentSigner,
   ArgentSigner3Signatures,
-  deployerAccount,
   declareContract,
   deployAccount,
+  deployerAccount,
   ethAddress,
   expectEvent,
   expectRevertWithErrorMessage,

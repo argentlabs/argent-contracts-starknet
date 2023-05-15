@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { CallData, Signer, ec, hash, num, stark, uint256 } from "starknet";
 import {
   ArgentSigner,
+  ConcatSigner,
   declareContract,
   deployAccount,
   deployerAccount,

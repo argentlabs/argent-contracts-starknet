@@ -20,9 +20,8 @@ mod ArgentAccount {
     use account::Escape;
     use account::EscapeStatus;
 
-    use account::ExternalCalls;
-    use account::hash_message_external_calls;
-
+    use lib::ExternalExecution;
+    use lib::hash_external_execution_message;
     use lib::assert_correct_tx_version;
     use lib::assert_no_self_call;
     use lib::assert_non_reentrant;
@@ -77,7 +76,7 @@ mod ArgentAccount {
         _guardian: felt252,
         _guardian_backup: felt252,
         _escape: Escape,
-        external_nonces: LegacyMap::<felt252, bool>,
+        external_executions: LegacyMap::<felt252, bool>,
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,35 +170,34 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn execute_external_calls(
-        external_calls: ExternalCalls, signature: Array<felt252>
+    fn execute_external(
+        external_execution: ExternalExecution, signature: Array<felt252>
     ) -> Span<Span<felt252>> {
         // Checks
-        assert(get_caller_address() == external_calls.sender, 'argent/invalid-caller');
+        assert(get_caller_address() == external_execution.sender, 'argent/invalid-caller');
 
         let block_timestamp = get_block_timestamp();
         assert(
-            external_calls.min_timestamp <= block_timestamp & block_timestamp <= external_calls.max_timestamp,
+            external_execution.min_timestamp <= block_timestamp & block_timestamp <= external_execution.max_timestamp,
             'argent/invalid-timestamp'
         );
 
+        let external_execution_ref = @external_execution;
+        let external_tx_hash = hash_external_execution_message(external_execution_ref);
+
         assert(
-            external_nonces::read(external_calls.nonce) == false, 'argent/invalid-nonce'
+            external_executions::read(external_tx_hash) == false, 'argent/repeated-external-exec'
         );
 
-        let external_calls_ref = @external_calls;
-        // TODO should i add some prefix here?
-        let external_tx_hash = hash_message_external_calls(external_calls_ref);
-
         assert_valid_calls_and_signature(
-            external_calls_ref.calls.span(), external_tx_hash, signature.span()
+            external_execution.calls.span(), external_tx_hash, signature.span()
         );
 
         // Effects
-        external_nonces::write(external_calls.nonce, true);
+        external_executions::write(external_tx_hash, true);
 
         // Interactions
-        let retdata = execute_multicall(external_calls.calls.span());
+        let retdata = execute_multicall(external_execution_ref.calls.span());
         TransactionExecuted(external_tx_hash, retdata); // TODO is it this event?
         retdata
     }
@@ -480,8 +478,8 @@ mod ArgentAccount {
     }
 
     #[view]
-    fn get_hash_message_external_calls(external_calls: ExternalCalls) -> felt252 {
-        return hash_message_external_calls(@external_calls);
+    fn get_message_hash_external_execution(external_execution: ExternalExecution) -> felt252 {
+        return hash_external_execution_message(@external_execution);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

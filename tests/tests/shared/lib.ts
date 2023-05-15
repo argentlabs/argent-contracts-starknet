@@ -6,6 +6,7 @@ import {
   Contract,
   DeclareContractPayload,
   Event,
+  InvokeFunctionResponse,
   InvokeTransactionReceiptResponse,
   ec,
   encode,
@@ -80,4 +81,9 @@ async function expectEvent(transactionHash: string, event: Event) {
   expect(currentEvent.data).to.eql(event.data);
 }
 
-export { declareContract, loadContract, expectRevertWithErrorMessage, expectEvent, randomPrivateKey };
+async function waitForExecution(functionCall: Promise<InvokeFunctionResponse>) {
+  const { transaction_hash: transferTxHash } = await functionCall;
+  return await provider.waitForTransaction(transferTxHash);
+}
+
+export { declareContract, loadContract, expectRevertWithErrorMessage, expectEvent, randomPrivateKey, waitForExecution };

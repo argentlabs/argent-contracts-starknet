@@ -21,10 +21,10 @@ jobs:
       - name: Step 3 - Downloading binaries
         run: curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
       - name: Step 4 - Unzipping binaries
+        working-directory: ./cairo/target/
         run: |
-            tar -xvf $ARCHIVE_NAME ./cairo/target
-            mkdir ./cairo/target
-            mv ./cairo/target/cairo ./cairo/target/release
+            tar -xvf $ARCHIVE_NAME 
+            mv cairo release
       - name: Step 6 - Compiling ArgentAccount to JSON
         run: make compile-account-test
       - name: Step 9 - Installing requirements

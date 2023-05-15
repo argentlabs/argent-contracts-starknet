@@ -2,7 +2,7 @@
 
 if ! command -v starknet-devnet >/dev/null; then
   echo "starknet-devnet is not installed. Please install it and try again." >&2
-  echo "Maybe activate your venv using 'source <PATH_TO_VENV>'" >&2
+  echo "Maybe activate your venv using 'source path-to-venv/bin/activate'" >&2
   exit 1
 fi
 

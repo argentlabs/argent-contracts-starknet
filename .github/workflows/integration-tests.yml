@@ -16,25 +16,23 @@ jobs:
         uses: actions/setup-python@v4
         with:
             python-version: '3.9'
-      - name: Step 8 - Cloning repo
+      - name: Step 3 - Cloning repo
         run: make clone-cairo
-      - name: making dir
-        run: mkdir ./cairo/target/
-      - name: Step 4 - Downloading binaries Unzipping binaries
-        working-directory: ./cairo/target/
+      - name: Step 4 - Downloading binaries, unzipping them and making the binaries available
+        working-directory: ./cairo
         run: |
             curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
             tar -xvf $ARCHIVE_NAME 
-            mv cairo/bin release
-      - name: Step 6 - Compiling ArgentAccount to JSON
+            mv cairo/bin target/release
+      - name: Step 5 - Compiling ArgentAccount to JSON and CASM
         run: make compile-account-test
-      - name: Step 9 - Installing requirements
+      - name: Step 6 - Installing requirements
         run: pip3 install -r requirements.txt
-      - name: Step 10 - Start devnet in background
+      - name: Step 7 - Start devnet in background
         run: |
             make devnet &
             ./scripts/wait-devnet-ready.sh
-      - name: Step 11 - Run integrations tests
+      - name: Step 8 - Run integrations tests
         working-directory: ./tests
         run: |
           npm install 

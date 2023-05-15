@@ -18,11 +18,12 @@ jobs:
             python-version: '3.9'
       - name: Step 8 - Cloning repo
         run: make clone-cairo
-      - name: Step 3 - Downloading binaries
-        run: curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
-      - name: Step 4 - Unzipping binaries
+      - name: making dir
+        run: mkdir ./cairo/target/
+      - name: Step 4 - Downloading binaries Unzipping binaries
         working-directory: ./cairo/target/
         run: |
+            curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
             tar -xvf $ARCHIVE_NAME 
             mv cairo release
       - name: Step 6 - Compiling ArgentAccount to JSON

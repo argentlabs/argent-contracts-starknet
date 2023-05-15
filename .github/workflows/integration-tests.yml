@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3
-      - name: Step 2 - install correct python version
+      - name: Step 2 - Install correct python version
         uses: actions/setup-python@v4
         with:
             python-version: '3.9'
@@ -49,6 +49,6 @@ jobs:
       - name: Step 2 - Install project
         working-directory: ./tests
         run: npm install
-      - name: Step 2 - Install project
+      - name: Step 3 - Check correct formatting
         working-directory: ./tests
         run: npm run check-format

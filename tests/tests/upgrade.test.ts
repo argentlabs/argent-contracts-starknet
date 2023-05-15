@@ -35,7 +35,7 @@ describe("Test Argent Account: upgrade", function () {
       entrypoint: "get_version",
     });
     expect(BigInt(newVersion.result[0])).to.equal(BigInt(0));
-    expect(BigInt(newVersion.result[1])).to.equal(BigInt(1));
+    expect(BigInt(newVersion.result[1])).to.equal(BigInt(3));
     expect(BigInt(newVersion.result[2])).to.equal(BigInt(0));
   });
 

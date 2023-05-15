@@ -1,6 +1,6 @@
 import { CallData, Signer, ec, hash, num, stark, uint256 } from "starknet";
 import {
-  ConcatSigner,
+  ArgentSigner,
   declareContract,
   deployAccountV2,
   deployerAccount,
@@ -18,7 +18,6 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
 
   let argentAccountClassHash: string;
 
-  // TODO Should we be using RANDOM recipient to not have tests cases running into each other
   before(async () => {
     argentAccountClassHash = await declareContract("ArgentAccount");
   });
@@ -194,7 +193,7 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
 
       await account.execute(accountContract.populateTransaction.trigger_escape_guardian("0x42"));
 
-      account.signer = new ConcatSigner([ownerPrivateKey, guardianPrivateKey as string]);
+      account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
       const { transaction_hash } = await account.execute(accountContract.populateTransaction.cancel_escape());
       await expectEvent(transaction_hash, {
         from_address: account.address,

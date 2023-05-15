@@ -32,7 +32,7 @@ jobs:
         run: make clone-cairo
       - name: Step 4 - Installing requirements
         run: pip3 install -r requirements.txt
-      - name: run devnet
-        run: ./scripts/run-devnet.sh
-      - name: install tests
-        run: cd tests && npm install && npm run test
+      - name: Start devnet
+        run: make devnet-ci
+      - name: Run tests
+        run: cd tests && npm install && npm test

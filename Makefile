@@ -58,9 +58,5 @@ check-format:
 devnet:
 	INSTALLATION_FOLDER_CARGO=$(INSTALLATION_FOLDER_CARGO) ./scripts/start-devnet.sh
 
-devnet-ci:
-	$(MAKE) devnet &
-	./scripts/wait-devnet-ready.sh
-
 vscode:
 	cd cairo/vscode-cairo && cargo build --bin cairo-language-server --release && cd ../..

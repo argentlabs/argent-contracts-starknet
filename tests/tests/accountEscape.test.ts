@@ -315,6 +315,7 @@ describe("ArgentAccount: escape mechanism", function () {
         });
       });
 
+      // TODO Ongoing (need upgrade)
       it("Expect 'argent/null-owner' new_owner is zero", async function () {
         const { account, accountContract, ownerPrivateKey, guardianBackupPrivateKey } =
           await deployAccountWithGuardianBackup(argentAccountClassHash);
@@ -328,7 +329,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
         await setTime(42n + ESCAPE_SECURITY_PERIOD);
         account.signer = new Signer(guardianBackupPrivateKey);
-        await expectRevertWithErrorMessage("argent/invalid-escape", async () => {
+        await expectRevertWithErrorMessage("argent/null-owner", async () => {
           await account.execute(accountContract.populateTransaction.escape_owner());
         });
       });

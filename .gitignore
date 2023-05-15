@@ -5,8 +5,10 @@ __pycache__
 artifacts
 node.json
 .idea
+.vscode
+dist
 cairo/
+node_modules/
 target/
 
 .DS_Store
-.vscode/*

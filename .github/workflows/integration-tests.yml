@@ -4,15 +4,7 @@ env:
   ARCHIVE_LINK: https://github.com/starkware-libs/cairo/releases/download/v1.0.0-alpha.7/release-x86_64-unknown-linux-musl.tar.gz
   ARCHIVE_NAME: cairo_binaries.zip
   
-on:
-  push:
-    branches: 
-      - develop
-      - main
-  pull_request: 
-    branches: 
-      - develop
-      - main
+on: push
 
 jobs:
   tests:

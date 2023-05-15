@@ -70,7 +70,7 @@ devnet:
 	else \
 		echo "About to spawn a devnet"; \
 		export STARKNET_DEVNET_CAIRO_VM=python; \
-		starknet-devnet --cairo-compiler-manifest $(INSTALLATION_FOLDER_CARGO) --seed 42 --lite-mode; \
+		starknet-devnet --cairo-compiler-manifest $(INSTALLATION_FOLDER_CARGO) --seed 42 --lite-mode --timeout 320; \
 	fi
 
 vscode:

@@ -1,0 +1,54 @@
+name: Tests CI
+
+env:
+  ARCHIVE_LINK: https://github.com/starkware-libs/cairo/releases/download/v1.0.0-alpha.7/release-x86_64-unknown-linux-musl.tar.gz
+  ARCHIVE_NAME: cairo_binaries.zip
+  
+on: push
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Step 1 - Check out main branch
+        uses: actions/checkout@v3
+      - name: Step 2 - Install correct python version
+        uses: actions/setup-python@v4
+        with:
+            python-version: '3.9'
+      - name: Step 3 - Downloading binaries
+        run: curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
+      - name: Step 4 - Unzipping binaries
+        run: |
+            tar -xvf $ARCHIVE_NAME
+            mv cairo cairo_binaries
+      - name: Step 5 - Make binaries available
+        run: echo "./cairo_binaries/bin" >> $GITHUB_PATH
+      - name: Step 6 - Compiling ArgentAccount to JSON
+        run: starknet-compile ./contracts/account tests/contracts/ArgentAccount.json --allowed-libfuncs-list-name experimental_v0.1.0
+      - name: Step 7 - Compiling ArgentAccount from JSON and CASM
+        run: starknet-sierra-compile ./tests/contracts/ArgentAccount.json ./tests/contracts/ArgentAccount.casm --allowed-libfuncs-list-name experimental_v0.1.0
+      - name: Step 8 - Cloning repo
+        run: make clone-cairo
+      - name: Step 9 - Installing requirements
+        run: pip3 install -r requirements.txt
+      - name: Step 10 - Start devnet in background
+        run: |
+            make devnet &
+            ./scripts/wait-devnet-ready.sh
+      - name: Step 11 - Run integrations tests
+        working-directory: ./tests
+        run: |
+          npm install 
+          npm test
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Step 1 - Check out main branch
+        uses: actions/checkout@v3
+      - name: Step 2 - Install project
+        working-directory: ./tests
+        run: npm install
+      - name: Step 3 - Check correct formatting
+        working-directory: ./tests
+        run: npm run check-format

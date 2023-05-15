@@ -8,12 +8,9 @@ INSTALLATION_FOLDER_CARGO=$(INSTALLATION_FOLDER)/Cargo.toml
 SOURCE_FOLDER=./contracts
 CAIRO_VERSION=v1.0.0-alpha.7
 
-install: 
-	$(MAKE) install-cairo
-	$(MAKE) build
-	$(MAKE) vscode
+install: install-cairo build vscode
 
-make install-cairo:
+install-cairo:
 	if [ -d $(INSTALLATION_FOLDER) ]; then \
 		$(MAKE) update-cairo; \
 	else \
@@ -32,6 +29,10 @@ build:
 
 compile-account: 
 	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/account account.json --allowed-libfuncs-list-name experimental_v0.1.0
+
+compile-account-test: 
+	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/account ./tests/contracts/ArgentAccount.json --allowed-libfuncs-list-name experimental_v0.1.0
+	./cairo/target/release/starknet-sierra-compile ./tests/contracts/ArgentAccount.json ./tests/contracts/ArgentAccount.casm --allowed-libfuncs-list-name experimental_v0.1.0
 
 test: 
 	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)
@@ -55,19 +56,7 @@ check-format:
 	./cairo/target/release/cairo-format --check --recursive $(SOURCE_FOLDER)
 
 devnet:
-	if ! command -v starknet-devnet >/dev/null; then \
-		echo "starknet-devnet is not installed. Please install it and try again." >&2; \
-		echo "Maybe start your venv" >&2; \
-		exit 1; \
-	fi
-	if nc -z 127.0.0.1 5050; then \
-		echo "Port is not free, You can kill a running devnet with \"make kill-devnet\""; \
-		exit 1; \
-	else \
-		echo "About to spawn a devnet"; \
-		export STARKNET_DEVNET_CAIRO_VM=python; \
-		starknet-devnet --cairo-compiler-manifest $(INSTALLATION_FOLDER_CARGO) --seed 42 --lite-mode; \
-	fi
+	INSTALLATION_FOLDER_CARGO=$(INSTALLATION_FOLDER_CARGO) ./scripts/start-devnet.sh
 
 kill-devnet:
 	lsof -t -i tcp:5050 | xargs kill

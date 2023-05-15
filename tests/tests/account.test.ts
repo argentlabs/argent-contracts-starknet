@@ -23,6 +23,8 @@ describe("ArgentAccount", function () {
 
   beforeEach(async () => {
     // TODO When everything is more clean, we could deploy a new funded cairo1 account and use that one to do all the logic
+    // TODO We could dump and load, instead of redeploying an account each time
+    // TODO we could do a fastContract with maxFee to have faster tests
   });
 
   describe("Example tests", function () {

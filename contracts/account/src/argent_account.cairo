@@ -173,7 +173,9 @@ mod ArgentAccount {
 
     #[raw_input]
     #[external]
-    fn __validate_deploy__(class_hash: felt252, owner: felt252, guardian: felt252) -> felt252 {
+    fn __validate_deploy__(
+        class_hash: felt252, contract_address_salt: felt252, owner: felt252, guardian: felt252
+    ) -> felt252 {
         assert_is_valid_signature();
         VALIDATED
     }
@@ -426,7 +428,7 @@ mod ArgentAccount {
         get_name()
     }
 
-    // add back when updated to latest cairo version
+    // TODO add back when updated to latest cairo version
     // currently serde not working for enums
     /// Current escape if any, and its status
     // #[view]

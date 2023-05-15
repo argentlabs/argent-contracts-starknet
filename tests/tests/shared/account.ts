@@ -1,5 +1,5 @@
 import { Account, CallData, Contract, Signer, ec, hash, stark } from "starknet";
-import { ConcatSigner } from "./argentSigner";
+import { ArgentSigner, ConcatSigner } from "./argentSigner";
 import { deployerAccount, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
 import { loadContract } from "./lib";
@@ -53,19 +53,26 @@ async function deployAccount(
 
   const constructorCalldata = CallData.compile({ owner: ownerPublicKey, guardian: guardianPublicKey });
 
-  // TODO This should be updated to use deployAccount and it should probably pay for its own deployemnt
-  // Can't atm, waiting for starknetJS update
-  const { transaction_hash, contract_address } = await deployerAccount.deployContract({
+  const contractAddress = hash.calculateContractAddressFromHash(
+    ownerPublicKey,
+    argentAccountClassHash,
+    constructorCalldata,
+    0,
+  );
+  await fundAccount(contractAddress);
+
+  const account = new Account(provider, contractAddress, ownerPrivateKey, "1");
+  if (guardianPrivateKey != "0") {
+    account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
+  }
+  const { transaction_hash } = await account.deploySelf({
     classHash: argentAccountClassHash,
     constructorCalldata,
-    // TODO Investigate if salt is useful?
-    salt: ownerPublicKey,
+    addressSalt: ownerPublicKey,
   });
-  // Fund account the account before waiting for it to be deployed
-  await fundAccount(contract_address);
   // So maybe by the time the account is funded, it is already deployed
   await deployerAccount.waitForTransaction(transaction_hash);
-  return new Account(provider, contract_address, ownerPrivateKey, "1");
+  return account;
 }
 
 async function deployAccountV2(argentAccountClassHash: string): Promise<AccountLeaked> {

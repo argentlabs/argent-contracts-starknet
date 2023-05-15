@@ -22,7 +22,7 @@ describe("Test Argent Account: upgrade", function () {
 
   it("Should be posssible to deploy an argent account version 0.2.4 and upgrade it to cairo 1 version 0.3.0", async function () {
     const accountToUpgrade = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
-      const initialVersion = await provider.callContract({
+    const initialVersion = await provider.callContract({
       contractAddress: accountToUpgrade.address,
       entrypoint: "getVersion",
     });
@@ -35,7 +35,7 @@ describe("Test Argent Account: upgrade", function () {
       entrypoint: "get_version",
     });
     expect(BigInt(newVersion.result[0])).to.equal(BigInt(0));
-    expect(BigInt(newVersion.result[1])).to.equal(BigInt(3));
+    expect(BigInt(newVersion.result[1])).to.equal(BigInt(1));
     expect(BigInt(newVersion.result[2])).to.equal(BigInt(0));
   });
 

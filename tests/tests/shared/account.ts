@@ -1,4 +1,4 @@
-import { Account, CallData, Contract, ec, hash, stark } from "starknet";
+import { Account, CallData, Contract, Signer, ec, hash, stark } from "starknet";
 import { ConcatSigner } from "./argentSigner";
 import { deployerAccount, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
@@ -70,25 +70,9 @@ async function deployAccount(
 
 async function deployAccountV2(argentAccountClassHash: string): Promise<AccountLeaked> {
   const ownerPrivateKey = stark.randomAddress();
-  const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
   const guardianPrivateKey = stark.randomAddress();
-  const guardianPublicKey = ec.starkCurve.getStarkKey(guardianPrivateKey);
+  const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
 
-  const constructorCalldata = CallData.compile({ owner: ownerPublicKey, guardian: guardianPublicKey });
-
-  // TODO This should be updated to use deployAccount and it should probably pay for its own deployemnt
-  // Can't atm, waiting for starknetJS update
-  const { transaction_hash, contract_address } = await deployerAccount.deployContract({
-    classHash: argentAccountClassHash,
-    constructorCalldata,
-    // TODO Investigate if salt is useful?
-    salt: ownerPublicKey,
-  });
-  // Fund account the account before waiting for it to be deployed
-  await fundAccount(contract_address);
-  // So maybe by the time the account is funded, it is already deployed
-  await deployerAccount.waitForTransaction(transaction_hash);
-  const account = new Account(provider, contract_address, ownerPrivateKey, "1");
   account.signer = new ConcatSigner([ownerPrivateKey, guardianPrivateKey]);
   const accountContract = await loadContract(account.address);
   return {
@@ -99,12 +83,27 @@ async function deployAccountV2(argentAccountClassHash: string): Promise<AccountL
   };
 }
 
+async function deployAccountWithoutGuardian(argentAccountClassHash: string): Promise<AccountLeaked> {
+  const ownerPrivateKey = stark.randomAddress();
+  const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, "0");
+
+  account.signer = new Signer(ownerPrivateKey);
+  const accountContract = await loadContract(account.address);
+  return {
+    account,
+    accountContract,
+    ownerPrivateKey,
+  };
+}
+
 async function deployAccountWithGuardianBackup(argentAccountClassHash: string): Promise<AccountLeaked> {
   const guardianBackupPrivateKey = stark.randomAddress();
   const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
 
   const accountLeaked = await deployAccountV2(argentAccountClassHash);
-  await accountLeaked.account.execute(accountLeaked.accountContract.populateTransaction.change_guardian_backup(guardianBackupPublicKey));
+  await accountLeaked.account.execute(
+    accountLeaked.accountContract.populateTransaction.change_guardian_backup(guardianBackupPublicKey),
+  );
   accountLeaked.guardianBackupPrivateKey = guardianBackupPrivateKey;
   return accountLeaked;
 }
@@ -118,4 +117,11 @@ async function upgradeAccount(accountToUpgrade: Account, argentAccountClassHash:
   await provider.waitForTransaction(transferTxHash);
 }
 
-export { deployAccount, deployAccountV2, deployAccountWithGuardianBackup, deployOldAccount, upgradeAccount };
+export {
+  deployAccount,
+  deployAccountV2,
+  deployAccountWithGuardianBackup,
+  deployAccountWithoutGuardian,
+  deployOldAccount,
+  upgradeAccount,
+};

@@ -5,6 +5,7 @@ import {
   deployAccount,
   deployAccountV2,
   deployAccountWithGuardianBackup,
+  deployAccountWithoutGuardian,
   expectRevertWithErrorMessage,
   increaseTime,
   loadContract,
@@ -79,7 +80,9 @@ describe("ArgentAccount: escape mechanism", function () {
 
     describe("Triggered with the guardian backup as a signer", function () {
       it("Expect the backup guardian to be able to trigger it alone", async function () {
-        const {account, accountContract, guardianBackupPrivateKey} = await deployAccountWithGuardianBackup(argentAccountClassHash);
+        const { account, accountContract, guardianBackupPrivateKey } = await deployAccountWithGuardianBackup(
+          argentAccountClassHash,
+        );
         account.signer = new Signer(guardianBackupPrivateKey);
 
         await setTime(42);
@@ -91,7 +94,8 @@ describe("ArgentAccount: escape mechanism", function () {
       });
 
       it("Expect 'argent/cannot-override-escape' when the guardian is already being escaped calling from the guardian backup", async function () {
-        const {account, accountContract, ownerPrivateKey, guardianBackupPrivateKey} = await deployAccountWithGuardianBackup(argentAccountClassHash);
+        const { account, accountContract, ownerPrivateKey, guardianBackupPrivateKey } =
+          await deployAccountWithGuardianBackup(argentAccountClassHash);
         account.signer = new Signer(ownerPrivateKey);
 
         await setTime(42);
@@ -140,7 +144,7 @@ describe("ArgentAccount: escape mechanism", function () {
   });
 
   describe("escape_owner()", function () {
-    describe("Escaping the owner with the guardian as a signer", function () {
+    describe("Escaping with the guardian as a signer", function () {
       it("Expect the guardian to be able to escape the owner alone", async function () {
         const { account, accountContract, guardianPrivateKey } = await deployAccountV2(argentAccountClassHash);
         account.signer = new Signer(guardianPrivateKey);
@@ -159,8 +163,25 @@ describe("ArgentAccount: escape mechanism", function () {
       });
     });
 
-    describe("Escaping the owner with the guardian backup as a signer", function () {
-      // TODO
+    describe("Escaping with the guardian backup as a signer", function () {
+      it("Expect the guardian to be able to escape the owner alone", async function () {
+        const { account, accountContract, guardianBackupPrivateKey } = await deployAccountWithGuardianBackup(
+          argentAccountClassHash,
+        );
+        account.signer = new Signer(guardianBackupPrivateKey);
+
+        await setTime(42);
+        await account.execute(accountContract.populateTransaction.trigger_escape_owner(42));
+        await increaseTime(ESCAPE_SECURITY_PERIOD);
+
+        await account.execute(accountContract.populateTransaction.escape_owner());
+
+        const escape = await accountContract.get_escape();
+        expect(escape.escape_type).to.equal(0n);
+        expect(escape.active_at).to.equal(0n);
+        const guardian = await accountContract.get_owner();
+        expect(guardian).to.equal(42n);
+      });
     });
   });
 
@@ -187,8 +208,7 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     it("Expect 'argent/guardian-required' when guardian is zero", async function () {
-      const account = await deployAccount(argentAccountClassHash);
-      const accountContract = await loadContract(account.address);
+      const { account, accountContract } = await deployAccountWithoutGuardian(argentAccountClassHash);
 
       const guardian = await accountContract.get_guardian();
       expect(guardian).to.equal(0n);
@@ -199,7 +219,9 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     it("Expect 'argent/backup-should-be-null' escaping guardian to zero with guardian_backup being != 0", async function () {
-      const {account, accountContract, ownerPrivateKey} = await deployAccountWithGuardianBackup(argentAccountClassHash);
+      const { account, accountContract, ownerPrivateKey } = await deployAccountWithGuardianBackup(
+        argentAccountClassHash,
+      );
       account.signer = new Signer(ownerPrivateKey);
 
       await expectRevertWithErrorMessage("argent/backup-should-be-null", async () => {
@@ -210,8 +232,8 @@ describe("ArgentAccount: escape mechanism", function () {
 
   describe("escape_guardian()", function () {
     it("Expect the owner to be able to escape the guardian alone", async function () {
-        const {account, accountContract, ownerPrivateKey} = await deployAccountV2(argentAccountClassHash);
-        account.signer = new Signer(ownerPrivateKey);
+      const { account, accountContract, ownerPrivateKey } = await deployAccountV2(argentAccountClassHash);
+      account.signer = new Signer(ownerPrivateKey);
 
       await setTime(42);
       await account.execute(accountContract.populateTransaction.trigger_escape_guardian(43));

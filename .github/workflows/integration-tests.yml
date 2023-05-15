@@ -23,6 +23,7 @@ jobs:
       - name: Step 4 - Unzipping binaries
         run: |
             tar -xvf $ARCHIVE_NAME ./cairo/target
+            mkdir ./cairo/target
             mv ./cairo/target/cairo ./cairo/target/release
       - name: Step 6 - Compiling ArgentAccount to JSON
         run: make compile-account-test

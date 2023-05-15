@@ -18,7 +18,7 @@ jobs:
             python-version: '3.9'
       - name: Step 3 - Cloning repo
         run: make clone-cairo
-      - name: Step 4 - Downloading binaries, unzipping them and making the binaries available
+      - name: Step 4 - Downloading binaries, unzipping them and making them available
         working-directory: ./cairo
         run: |
             curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK

@@ -1,4 +1,4 @@
-name: Tests CI
+name: Cairo CI
 
 env:
   ARCHIVE_LINK: https://github.com/starkware-libs/cairo/releases/download/v1.0.0-alpha.7/release-x86_64-unknown-linux-musl.tar.gz

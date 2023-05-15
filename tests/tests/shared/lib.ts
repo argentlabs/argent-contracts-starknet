@@ -65,6 +65,15 @@ async function expectRevertWithErrorMessage(errorMessage: string, fn: () => void
   }
 }
 
+async function expectExecutionRevert(errorMessage: string, functionCall: Promise<InvokeFunctionResponse>) {
+  try {
+    await functionCall;
+    assert.fail("No error detected");
+  } catch (e: any) {
+    expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
+  }
+}
+
 async function expectEvent(transactionHash: string, event: Event) {
   const txReceiptDeployTest: InvokeTransactionReceiptResponse = await provider.waitForTransaction(transactionHash);
   if (!txReceiptDeployTest.events) {
@@ -86,4 +95,12 @@ async function waitForExecution(functionCall: Promise<InvokeFunctionResponse>) {
   return await provider.waitForTransaction(transferTxHash);
 }
 
-export { declareContract, loadContract, expectRevertWithErrorMessage, expectEvent, randomPrivateKey, waitForExecution };
+export {
+  declareContract,
+  loadContract,
+  expectRevertWithErrorMessage,
+  expectEvent,
+  randomPrivateKey,
+  waitForExecution,
+  expectExecutionRevert,
+};

@@ -198,7 +198,7 @@ mod ArgentAccount {
 
         // Interactions
         let retdata = execute_multicall(external_execution_ref.calls.span());
-        TransactionExecuted(external_tx_hash, retdata); // TODO is it this event?
+        TransactionExecuted(external_tx_hash, retdata);
         retdata
     }
 
@@ -498,10 +498,12 @@ mod ArgentAccount {
                 if selector == ESCAPE_GUARDIAN_SELECTOR | selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
                     let is_valid = is_valid_owner_signature(execution_hash, signature);
                     assert(is_valid, 'argent/invalid-owner-sig');
+                    return ();
                 }
                 if selector == ESCAPE_OWNER_SELECTOR | selector == TRIGGER_ESCAPE_OWNER_SELECTOR {
                     let is_valid = is_valid_guardian_signature(execution_hash, signature);
                     assert(is_valid, 'argent/invalid-guardian-sig');
+                    return ();
                 }
                 assert(selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
             }

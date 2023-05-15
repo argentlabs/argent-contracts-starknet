@@ -51,4 +51,4 @@ jobs:
         run: npm install
       - name: Step 2 - Install project
         working-directory: ./tests
-        run: npm format
+        run: npm run check-format

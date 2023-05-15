@@ -16,30 +16,34 @@ export type AccountLeaked = {
 async function deployOldAccount(
   proxyClassHash: string,
   oldArgentAccountClassHash: string,
-  privateKey?: string,
-): Promise<Account> {
-  privateKey = privateKey || stark.randomAddress();
-  const publicKey = ec.starkCurve.getStarkKey(privateKey);
+  guardianPrivateKey = "0",
+): Promise<AccountLeaked> {
+  const ownerPrivateKey = stark.randomAddress();
+  const publicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
+  const guardianPublicKey = guardianPrivateKey != "0" ? ec.starkCurve.getStarkKey(guardianPrivateKey) : "0";
 
   const constructorCalldata = CallData.compile({
     implementation: oldArgentAccountClassHash,
     selector: hash.getSelectorFromName("initialize"),
-    calldata: CallData.compile({ owner: publicKey, guardian: "0" }),
+    calldata: CallData.compile({ owner: publicKey, guardian: guardianPublicKey }),
   });
 
   const contractAddress = hash.calculateContractAddressFromHash(publicKey, proxyClassHash, constructorCalldata, 0);
 
-  const accountToDeploy = new Account(provider, contractAddress, privateKey);
-  await fundAccount(accountToDeploy.address);
-
-  const { transaction_hash } = await accountToDeploy.deployAccount({
+  const account = new Account(provider, contractAddress, ownerPrivateKey);
+  await fundAccount(account.address);
+  if (guardianPrivateKey != "0") {
+    account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
+  }
+  const { transaction_hash } = await account.deployAccount({
     classHash: proxyClassHash,
     constructorCalldata,
     contractAddress,
     addressSalt: publicKey,
   });
   await deployerAccount.waitForTransaction(transaction_hash);
-  return accountToDeploy;
+  const accountContract = await loadContract(account.address);
+  return { account, accountContract, ownerPrivateKey };
 }
 
 async function deployAccount(

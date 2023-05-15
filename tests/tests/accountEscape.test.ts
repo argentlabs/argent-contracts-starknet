@@ -1,13 +1,18 @@
 import { expect } from "chai";
-import { Signer } from "starknet";
+import { Account, CallData, Signer, num, stark } from "starknet";
 import {
+  ArgentSigner,
   declareContract,
   deployAccountV2,
   deployAccountWithGuardianBackup,
   deployAccountWithoutGuardian,
+  deployOldAccount,
   expectRevertWithErrorMessage,
   increaseTime,
+  loadContract,
+  provider,
   setTime,
+  upgradeAccount,
 } from "./shared";
 
 describe("ArgentAccount: escape mechanism", function () {
@@ -25,10 +30,15 @@ describe("ArgentAccount: escape mechanism", function () {
   //   Ready,
   //   Expired
   // }
+
   let argentAccountClassHash: string;
+  let oldArgentAccountClassHash: string;
+  let proxyClassHash: string;
 
   before(async () => {
     argentAccountClassHash = await declareContract("ArgentAccount");
+    oldArgentAccountClassHash = await declareContract("OldArgentAccount");
+    proxyClassHash = await declareContract("Proxy");
   });
 
   describe("trigger_escape_owner(new_owner)", function () {
@@ -315,20 +325,29 @@ describe("ArgentAccount: escape mechanism", function () {
         });
       });
 
-      // TODO Ongoing (need upgrade)
       it("Expect 'argent/null-owner' new_owner is zero", async function () {
-        const { account, accountContract, ownerPrivateKey, guardianBackupPrivateKey } =
-          await deployAccountWithGuardianBackup(argentAccountClassHash);
-        account.signer = new Signer(ownerPrivateKey);
+        const guardianPrivateKey = stark.randomAddress();
+        const { account, ownerPrivateKey } = await deployOldAccount(
+          proxyClassHash,
+          oldArgentAccountClassHash,
+          guardianPrivateKey,
+        );
+        account.signer = new Signer(guardianPrivateKey);
 
         await setTime(42);
-        await account.execute(accountContract.populateTransaction.trigger_escape_guardian(42));
-        const escape = await accountContract.get_escape();
-        expect(escape.escape_type).to.equal(ESCAPE_TYPE_GUARDIAN);
-        expect(escape.active_at).to.equal(42n + ESCAPE_SECURITY_PERIOD);
+        const { transaction_hash: transferTxHash } = await account.execute({
+          contractAddress: account.address,
+          entrypoint: "triggerEscapeSigner",
+        });
+        await provider.waitForTransaction(transferTxHash);
 
+        account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
+        await upgradeAccount(account, argentAccountClassHash);
+
+        const accountContract = await loadContract(account.address);
         await setTime(42n + ESCAPE_SECURITY_PERIOD);
-        account.signer = new Signer(guardianBackupPrivateKey);
+        account.cairoVersion = "1";
+        account.signer = new Signer(guardianPrivateKey);
         await expectRevertWithErrorMessage("argent/null-owner", async () => {
           await account.execute(accountContract.populateTransaction.escape_owner());
         });

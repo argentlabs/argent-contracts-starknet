@@ -310,9 +310,7 @@ mod ArgentAccount {
         // upgraded half way through,  then tries to finish the escape in new version
         assert(current_escape.new_signer != 0, 'argent/null-owner');
 
-        // clear escape
         _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
-        // update owner
         _signer::write(current_escape.new_signer);
         OwnerEscaped(current_escape.new_signer);
     }
@@ -337,9 +335,7 @@ mod ArgentAccount {
             assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
         }
 
-        // clear escape
         _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
-        //update guardian
         _guardian::write(current_escape.new_signer);
         GuardianEscaped(current_escape.new_signer);
     }

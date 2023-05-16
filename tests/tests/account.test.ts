@@ -25,6 +25,8 @@ describe("ArgentAccount", function () {
     // TODO we could do a fastContract with maxFee to have faster tests by ignoring fee estimation
   });
 
+  // TODO Write a test:
+  // assert_correct_tx_version(tx_info.version); in __execute__
   describe("Example tests", function () {
     it("Expect guardian and guardian backup to be 0 when deployed with an owner only", async function () {
       const account = await deployAccount(argentAccountClassHash);

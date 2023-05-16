@@ -256,10 +256,38 @@ describe("ArgentAccount: escape mechanism", function () {
           await account.execute(accountContract.populateTransaction.escape_owner());
         });
       });
+
+      it("Expect 'argent/null-owner' new_owner is zero", async function () {
+        const guardianPrivateKey = stark.randomAddress();
+        const { account, ownerPrivateKey } = await deployOldAccount(
+          proxyClassHash,
+          oldArgentAccountClassHash,
+          guardianPrivateKey,
+        );
+        account.signer = new Signer(guardianPrivateKey);
+
+        await setTime(randomTime);
+        const { transaction_hash: transferTxHash } = await account.execute({
+          contractAddress: account.address,
+          entrypoint: "triggerEscapeSigner",
+        });
+        await provider.waitForTransaction(transferTxHash);
+
+        account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
+        await upgradeAccount(account, argentAccountClassHash);
+
+        const accountContract = await loadContract(account.address);
+        await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
+        account.cairoVersion = "1";
+        account.signer = new Signer(guardianPrivateKey);
+        await expectRevertWithErrorMessage("argent/null-owner", async () => {
+          await account.execute(accountContract.populateTransaction.escape_owner());
+        });
+      });
     });
 
     describe("Escaping with the guardian backup as a signer", function () {
-      it("Expect the guardian to be able to escape the owner alone", async function () {
+      it("Expect the guardian backup to be able to escape the owner alone", async function () {
         const { account, accountContract, guardianBackupPrivateKey } = await deployAccountWithGuardianBackup(
           argentAccountClassHash,
         );
@@ -339,34 +367,6 @@ describe("ArgentAccount: escape mechanism", function () {
           await account.execute(accountContract.populateTransaction.escape_owner());
         });
       });
-
-      it("Expect 'argent/null-owner' new_owner is zero", async function () {
-        const guardianPrivateKey = stark.randomAddress();
-        const { account, ownerPrivateKey } = await deployOldAccount(
-          proxyClassHash,
-          oldArgentAccountClassHash,
-          guardianPrivateKey,
-        );
-        account.signer = new Signer(guardianPrivateKey);
-
-        await setTime(randomTime);
-        const { transaction_hash: transferTxHash } = await account.execute({
-          contractAddress: account.address,
-          entrypoint: "triggerEscapeSigner",
-        });
-        await provider.waitForTransaction(transferTxHash);
-
-        account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
-        await upgradeAccount(account, argentAccountClassHash);
-
-        const accountContract = await loadContract(account.address);
-        await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
-        account.cairoVersion = "1";
-        account.signer = new Signer(guardianPrivateKey);
-        await expectRevertWithErrorMessage("argent/null-owner", async () => {
-          await account.execute(accountContract.populateTransaction.escape_owner());
-        });
-      });
     });
   });
 
@@ -374,8 +374,8 @@ describe("ArgentAccount: escape mechanism", function () {
     it("Expect the owner to be able to trigger it alone", async function () {
       const { account, accountContract, ownerPrivateKey } = await deployAccountV2(argentAccountClassHash);
       account.signer = new Signer(ownerPrivateKey);
-      await setTime(randomTime);
 
+      await setTime(randomTime);
       await account.execute(accountContract.populateTransaction.trigger_escape_guardian(randomAddress));
 
       const escape = await accountContract.get_escape();
@@ -416,12 +416,17 @@ describe("ArgentAccount: escape mechanism", function () {
     });
   });
 
-  describe("escape_guardian()", function () {
+  describe.only("escape_guardian()", function () {
     it("Expect the owner to be able to escape the guardian alone", async function () {
-      const { account, accountContract, ownerPrivateKey } = await deployAccountV2(argentAccountClassHash);
+      const { account, accountContract, ownerPrivateKey, guardianPrivateKey } = await deployAccountV2(
+        argentAccountClassHash,
+      );
       account.signer = new Signer(ownerPrivateKey);
+      const guardianPublicKey = BigInt(ec.starkCurve.getStarkKey(guardianPrivateKey as string));
 
       await setTime(randomTime);
+      const oldGuardian = await accountContract.get_guardian();
+      expect(oldGuardian).to.equal(guardianPublicKey);
       await account.execute(accountContract.populateTransaction.trigger_escape_guardian(randomAddress));
       await increaseTime(ESCAPE_SECURITY_PERIOD);
 
@@ -431,8 +436,33 @@ describe("ArgentAccount: escape mechanism", function () {
       expect(escape.escape_type).to.equal(0n);
       expect(escape.active_at).to.equal(0n);
       expect(escape.new_signer).to.equal(0n);
+      const newGuardian = await accountContract.get_guardian();
+      expect(newGuardian).to.equal(randomAddress);
+    });
+
+    // TODO Override if owner being escaped
+
+    it("Expect 'argent/only-self' when called from another account", async function () {
+      const { account } = await deployAccountV2(argentAccountClassHash);
+      const { accountContract } = await deployAccountV2(argentAccountClassHash);
+
+      await expectRevertWithErrorMessage("argent/only-self", async () => {
+        await account.execute(accountContract.populateTransaction.escape_guardian());
+      });
+    });
+
+    it("Expect 'argent/guardian-required' when guardian is zero", async function () {
+      const { account, accountContract, ownerPrivateKey } = await deployAccountV2(argentAccountClassHash);
+
+      await account.execute(accountContract.populateTransaction.change_guardian(0));
+
       const guardian = await accountContract.get_guardian();
-      expect(guardian).to.equal(randomAddress);
+      expect(guardian).to.equal(0n);
+
+      account.signer = new Signer(ownerPrivateKey);
+      await expectRevertWithErrorMessage("argent/guardian-required", async () => {
+        await account.execute(accountContract.populateTransaction.escape_guardian());
+      });
     });
   });
 });

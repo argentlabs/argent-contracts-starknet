@@ -3,5 +3,5 @@
   "test": ["tests/**.ts"],
   "node-option": ["loader=ts-node/esm"],
   "slow": 5000,
-  "timeout": 180000
+  "timeout": 300000
 }

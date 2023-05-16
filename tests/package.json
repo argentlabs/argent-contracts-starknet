@@ -7,7 +7,6 @@
     "build": "tsc",
     "test": "tsc && mocha tests/*.test.ts",
     "test:list": "tsc && mocha --dry-run tests/*.test.ts",
-    "escape": "tsc && mocha tests/accountEscape.test.ts",
     "lint": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

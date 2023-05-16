@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { shortString } from "starknet";
+import { num, shortString } from "starknet";
 import { declareContract, deployAccount, deployOldAccount, provider, upgradeAccount } from "./shared";
 
 describe("Argent Account: upgrade", function () {
@@ -31,9 +31,9 @@ describe("Argent Account: upgrade", function () {
       contractAddress: accountToUpgrade.address,
       entrypoint: "get_version",
     });
-    expect(BigInt(newVersion.result[0])).to.equal(BigInt(0));
-    expect(BigInt(newVersion.result[1])).to.equal(BigInt(3));
-    expect(BigInt(newVersion.result[2])).to.equal(BigInt(0));
+    expect(newVersion.result[0]).to.equal(num.toHex(0));
+    expect(newVersion.result[1]).to.equal(num.toHex(3));
+    expect(newVersion.result[2]).to.equal(num.toHex(0));
   });
 
   it("Should be possible to upgrade an account from version 0.3.0 to 0.3.1", async function () {
@@ -42,16 +42,16 @@ describe("Argent Account: upgrade", function () {
       contractAddress: account.address,
       entrypoint: "get_version",
     });
-    expect(BigInt(currentVersion.result[0])).to.equal(BigInt(0));
-    expect(BigInt(currentVersion.result[1])).to.equal(BigInt(3));
-    expect(BigInt(currentVersion.result[2])).to.equal(BigInt(0));
+    expect(currentVersion.result[0]).to.equal(num.toHex(0));
+    expect(currentVersion.result[1]).to.equal(num.toHex(3));
+    expect(currentVersion.result[2]).to.equal(num.toHex(0));
     await upgradeAccount(account, argentAccountV1ClassHash);
     const newVersion = await provider.callContract({
       contractAddress: account.address,
       entrypoint: "get_version",
     });
-    expect(BigInt(newVersion.result[0])).to.equal(BigInt(0));
-    expect(BigInt(newVersion.result[1])).to.equal(BigInt(3));
-    expect(BigInt(newVersion.result[2])).to.equal(BigInt(1));
+    expect(newVersion.result[0]).to.equal(num.toHex(0));
+    expect(newVersion.result[1]).to.equal(num.toHex(3));
+    expect(newVersion.result[2]).to.equal(num.toHex(1));
   });
 });

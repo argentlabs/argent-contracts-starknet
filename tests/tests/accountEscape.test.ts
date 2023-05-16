@@ -16,9 +16,6 @@ import {
 } from "./shared";
 
 describe("ArgentAccount: escape mechanism", function () {
-  // Avoid timeout
-  this.timeout(320000);
-
   const ESCAPE_TYPE_GUARDIAN = 1n;
   const ESCAPE_TYPE_OWNER = 2n;
   const ESCAPE_SECURITY_PERIOD = 7n * 24n * 60n * 60n; // 7 days

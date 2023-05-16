@@ -3,9 +3,6 @@ import { shortString } from "starknet";
 import { declareContract, deployAccount, deployOldAccount, provider, upgradeAccount } from "./shared";
 
 describe("Argent Account: upgrade", function () {
-  // Avoid timeout
-  this.timeout(320000);
-
   let argentAccountClassHash: string;
   let argentAccountV1ClassHash: string;
   let oldArgentAccountClassHash: string;

@@ -13,9 +13,6 @@ import {
 } from "./shared";
 
 describe("ArgentAccount: Make sure all Events are being emitted", function () {
-  // Avoid timeout
-  this.timeout(320000);
-
   let argentAccountClassHash: string;
 
   before(async () => {

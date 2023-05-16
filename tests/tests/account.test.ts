@@ -12,9 +12,6 @@ import {
 } from "./shared";
 
 describe("ArgentAccount", function () {
-  // Avoid timeout
-  this.timeout(320000);
-
   let argentAccountClassHash: string;
 
   before(async () => {

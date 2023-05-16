@@ -10,9 +10,6 @@ import {
 } from "./shared";
 
 describe("ArgentAccount: multicall", function () {
-  // Avoid timeout
-  this.timeout(320000);
-
   let argentAccountClassHash: string;
   let testDappContract: Contract;
   let ethContract: Contract;

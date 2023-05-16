@@ -1,10 +1,10 @@
 import { CallData, Signer, ec, hash, num, stark, uint256 } from "starknet";
 import {
   ArgentSigner,
+  ESCAPE_SECURITY_PERIOD,
   declareContract,
   deployAccountV2,
   deployerAccount,
-  escapeSecurityPeriod,
   expectEvent,
   getEthContract,
   increaseTime,
@@ -41,7 +41,7 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
     account.signer = new Signer(guardianPrivateKey);
 
     const newOwner = "0x42";
-    const activeAt = num.toHex(42 + escapeSecurityPeriod);
+    const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
     await setTime(42);
 
     const { transaction_hash } = await account.execute(
@@ -79,7 +79,7 @@ describe("ArgentAccount: Make sure all Events are being emitted", function () {
     account.signer = new Signer(ownerPrivateKey);
 
     const newGuardian = "0x42";
-    const activeAt = num.toHex(42 + escapeSecurityPeriod);
+    const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
     await setTime(42);
 
     const { transaction_hash } = await account.execute(

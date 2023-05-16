@@ -46,6 +46,7 @@ async function deployOldAccount(
   return { account, accountContract, ownerPrivateKey };
 }
 
+// TODO Ideally this fn shouldn't beused anymore and we should only be using deployAccountV2 everywhere which we will then be able to rename
 async function deployAccount(
   argentAccountClassHash: string,
   ownerPrivateKey?: string,
@@ -64,7 +65,6 @@ async function deployAccount(
     0,
   );
   await fundAccount(contractAddress);
-
   const account = new Account(provider, contractAddress, ownerPrivateKey, "1");
   if (guardianPrivateKey != "0") {
     account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
@@ -74,7 +74,7 @@ async function deployAccount(
     constructorCalldata,
     addressSalt: ownerPublicKey,
   });
-  // So maybe by the time the account is funded, it is already deployed
+
   await deployerAccount.waitForTransaction(transaction_hash);
   return account;
 }

@@ -69,7 +69,7 @@ describe("Test external execution", function () {
       accountSigner.guardianPrivateKey,
     );
 
-    expect(await testDapp.get_number(account.address)).eql(0n, "invalid initial value");
+    await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
     const externalExecution: ExternalExecution = {
       sender: deployerAccount.address,
@@ -115,7 +115,7 @@ describe("Test external execution", function () {
 
     // normal scenario
     await waitForExecution(deployerAccount.execute(externalExecutionCall));
-    expect(await testDapp.get_number(account.address)).eql(42n, "invalid new value");
+    await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
 
     // ensure a transaction can't be replayed
     await expectExecutionRevert("argent/repeated-external-nonce", deployerAccount.execute(externalExecutionCall));
@@ -137,7 +137,7 @@ describe("Test external execution", function () {
     await setTime(initialTime);
 
     await waitForExecution(deployerAccount.execute(externalExecutionCall));
-    expect(await testDapp.get_number(account.address)).eql(42n, "invalid new value");
+    await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 
   it("Escape method", async function () {

@@ -182,7 +182,7 @@ mod ArgentAccount {
             'argent/invalid-timestamp'
         );
         let nonce = external_execution.nonce;
-        assert(external_nonces::read(nonce) == false, 'argent/repeated-external-nonce');
+        assert(!external_nonces::read(nonce), 'argent/repeated-external-nonce');
 
         let external_execution_ref = @external_execution;
         let external_tx_hash = hash_external_execution_message(external_execution_ref);

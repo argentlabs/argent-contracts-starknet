@@ -62,7 +62,7 @@ kill-devnet:
 	lsof -t -i tcp:5050 | xargs kill
 
 test-jsons:
-	./cairo/target/release/starknet-compile ./contracts/account ./tests/contracts/ArgentAccount.json --allowed-libfuncs-list-name experimental_v0.1.0 --replace-ids && \
+	./cairo/target/release/starknet-compile ./contracts/account ./tests/contracts/ArgentAccount.json --allowed-libfuncs-list-name experimental_v0.1.0 --replace-ids
 	./cairo/target/release/starknet-sierra-compile ./tests/contracts/ArgentAccount.json ./tests/contracts/ArgentAccount.casm --allowed-libfuncs-list-name experimental_v0.1.0 
 
 vscode:

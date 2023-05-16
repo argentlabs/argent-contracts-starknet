@@ -6,7 +6,6 @@ import {
   declareContract,
   deployAccount,
   deployerAccount,
-  ethAddress,
   expectEvent,
   expectRevertWithErrorMessage,
   getEthContract,

@@ -6,7 +6,8 @@
   "scripts": {
     "test": "tsc && mocha tests/*.test.ts",
     "lint": "eslint . --fix",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "author": "",
   "license": "ISC",

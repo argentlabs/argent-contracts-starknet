@@ -28,7 +28,7 @@ describe("Test outside execution", function () {
   before(async () => {
     argentAccountClassHash = await declareContract("ArgentAccount");
     const testDappClassHash = await declareContract("TestDapp");
-    const { transaction_hash, contract_address } = await deployerAccount.deployContract({
+    const { contract_address } = await deployerAccount.deployContract({
       classHash: testDappClassHash,
     });
     testDapp = await loadContract(contract_address);

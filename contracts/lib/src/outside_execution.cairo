@@ -10,6 +10,7 @@ use array::SpanTrait;
 use starknet::get_tx_info;
 use box::BoxTrait;
 use starknet::get_contract_address;
+use hash::pedersen;
 
 // H('StarkNetDomain(name:felt,version:felt,chainId:felt)')
 const STARKNET_DOMAIN_TYPE_HASH: felt252 =
@@ -46,18 +47,14 @@ struct OutsideCall {
     calldata: Array<felt252>,
 }
 
-#[inline(always)]
-fn perdersen(state: felt252, another: felt252) -> felt252 {
-    hash::LegacyHashFelt252::hash(state, another)
-}
 
 #[inline(always)]
 fn hash_domain(domain: @StarkNetDomain) -> felt252 {
-    let mut state = perdersen(0, STARKNET_DOMAIN_TYPE_HASH);
-    state = perdersen(state, *domain.name);
-    state = perdersen(state, *domain.version);
-    state = perdersen(state, *domain.chain_id);
-    perdersen(state, 4)
+    let mut state = pedersen(0, STARKNET_DOMAIN_TYPE_HASH);
+    state = pedersen(state, *domain.name);
+    state = pedersen(state, *domain.version);
+    state = pedersen(state, *domain.chain_id);
+    pedersen(state, 4)
 }
 
 fn hash_outside_call(outside_call: @Call) -> felt252 {
@@ -68,21 +65,21 @@ fn hash_outside_call(outside_call: @Call) -> felt252 {
         check_enough_gas();
         match data_span.pop_front() {
             Option::Some(item) => {
-                call_data_state = perdersen(call_data_state, *item);
+                call_data_state = pedersen(call_data_state, *item);
             },
             Option::None(_) => {
                 break ();
             },
         };
     };
-    call_data_state = perdersen(call_data_state, outside_call.calldata.len().into());
+    call_data_state = pedersen(call_data_state, outside_call.calldata.len().into());
 
-    let mut state = perdersen(0, OUTSIDE_CALL_TYPE_HASH);
-    state = perdersen(state, (*outside_call.to).into());
-    state = perdersen(state, *outside_call.selector);
-    state = perdersen(state, outside_call.calldata.len().into());
-    state = perdersen(state, call_data_state);
-    perdersen(state, 5)
+    let mut state = pedersen(0, OUTSIDE_CALL_TYPE_HASH);
+    state = pedersen(state, (*outside_call.to).into());
+    state = pedersen(state, *outside_call.selector);
+    state = pedersen(state, outside_call.calldata.len().into());
+    state = pedersen(state, call_data_state);
+    pedersen(state, 5)
 }
 
 fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
@@ -93,23 +90,23 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
         check_enough_gas();
         match calls_span.pop_front() {
             Option::Some(call) => {
-                outside_calls_state = perdersen(outside_calls_state, hash_outside_call(call));
+                outside_calls_state = pedersen(outside_calls_state, hash_outside_call(call));
             },
             Option::None(_) => {
                 break ();
             },
         };
     };
-    outside_calls_state = perdersen(outside_calls_state, outside_execution.calls.len().into());
+    outside_calls_state = pedersen(outside_calls_state, outside_execution.calls.len().into());
 
-    let mut state = perdersen(0, OUTSIDE_EXECUTION_TYPE_HASH);
-    state = perdersen(state, (*outside_execution.caller).into());
-    state = perdersen(state, *outside_execution.nonce);
-    state = perdersen(state, (*outside_execution.min_timestamp).into());
-    state = perdersen(state, (*outside_execution.max_timestamp).into());
-    state = perdersen(state, outside_execution.calls.len().into());
-    state = perdersen(state, outside_calls_state);
-    perdersen(state, 7)
+    let mut state = pedersen(0, OUTSIDE_EXECUTION_TYPE_HASH);
+    state = pedersen(state, (*outside_execution.caller).into());
+    state = pedersen(state, *outside_execution.nonce);
+    state = pedersen(state, (*outside_execution.min_timestamp).into());
+    state = pedersen(state, (*outside_execution.max_timestamp).into());
+    state = pedersen(state, outside_execution.calls.len().into());
+    state = pedersen(state, outside_calls_state);
+    pedersen(state, 7)
 }
 
 #[inline(always)]
@@ -117,9 +114,9 @@ fn hash_outside_execution_message(outside_execution: @OutsideExecution) -> felt2
     let domain = StarkNetDomain {
         name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id, 
     };
-    let mut state = perdersen(0, 'StarkNet Message');
-    state = perdersen(state, hash_domain(@domain));
-    state = perdersen(state, get_contract_address().into());
-    state = perdersen(state, hash_outside_execution(outside_execution));
-    perdersen(state, 4)
+    let mut state = pedersen(0, 'StarkNet Message');
+    state = pedersen(state, hash_domain(@domain));
+    state = pedersen(state, get_contract_address().into());
+    state = pedersen(state, hash_outside_execution(outside_execution));
+    pedersen(state, 4)
 }

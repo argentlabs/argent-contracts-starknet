@@ -118,7 +118,7 @@ class ArgentSigner extends RawSigner {
     if (this.guardianPrivateKey) {
       return new ConcatSigner([this.ownerPrivateKey, this.guardianPrivateKey]).signRaw(msgHash);
     } else {
-      const ownerSignature = (await ec.starkCurve.sign(msgHash, this.ownerPrivateKey)) as WeierstrassSignatureType;
+      const ownerSignature = ec.starkCurve.sign(msgHash, this.ownerPrivateKey) as WeierstrassSignatureType;
       return [ownerSignature.r.toString(), ownerSignature.s.toString()];
     }
   }

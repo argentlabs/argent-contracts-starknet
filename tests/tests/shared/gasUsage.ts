@@ -49,7 +49,7 @@ async function profileGasUsage(functionCall: Promise<InvokeFunctionResponse>) {
     gasPrice,
     storageDiffs,
   };
-  console.log(`${JSON.stringify(gasUsage)}`);
+  console.log(JSON.stringify(gasUsage));
 
   return receipt;
 }

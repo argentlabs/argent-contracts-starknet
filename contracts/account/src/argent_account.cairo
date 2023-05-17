@@ -188,18 +188,17 @@ mod ArgentAccount {
         let nonce = outside_execution.nonce;
         assert(!outside_nonces::read(nonce), 'argent/duplicated-outside-nonce');
 
-        let outside_execution_snapshot = @outside_execution;
-        let outside_tx_hash = hash_outside_execution_message(outside_execution_snapshot);
+        let outside_tx_hash = hash_outside_execution_message(@outside_execution);
 
-        assert_valid_calls_and_signature(
-            outside_execution.calls.span(), outside_tx_hash, signature.span()
-        );
+        let calls = outside_execution.calls.span();
+
+        assert_valid_calls_and_signature(calls, outside_tx_hash, signature.span());
 
         // Effects
         outside_nonces::write(nonce, true);
 
         // Interactions
-        let retdata = execute_multicall(outside_execution_snapshot.calls.span());
+        let retdata = execute_multicall(calls);
         TransactionExecuted(outside_tx_hash, retdata);
         retdata
     }

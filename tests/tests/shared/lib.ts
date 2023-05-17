@@ -49,7 +49,7 @@ async function loadContract(contract_address: string) {
   return new Contract(testAbi, contract_address, provider);
 }
 
-async function expectRevertWithErrorMessage(errorMessage: string, fn: () => void) {
+async function expectRevertWithErrorMessage(errorMessage: string, fn: () => Promise<void>) {
   try {
     await fn();
     assert.fail("No error detected");

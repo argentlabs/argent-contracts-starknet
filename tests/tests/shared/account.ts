@@ -5,7 +5,7 @@ import { fundAccount } from "./devnetInteraction";
 import { loadContract } from "./lib";
 
 // This is only for TESTS purposes and shouldn't be used in production
-export type ArgentAccount = {
+export interface ArgentAccount {
   account: Account;
   accountContract: Contract;
   ownerPrivateKey: string;

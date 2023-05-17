@@ -24,7 +24,7 @@ describe("ArgentAccount: multicall", function () {
     ethContract = await getEthContract();
   });
 
-  it("Should be possible to send eth with a Cairo1 account", async function () {
+  it("Should be possible to send eth", async function () {
     const account = await deployAccount(argentAccountClassHash);
     const recipient = "0x42";
     const amount = uint256.bnToUint256(1000);

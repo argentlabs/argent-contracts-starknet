@@ -59,4 +59,4 @@ jobs:
         run: npm install
       - name: Step 3 - Check correct linting
         working-directory: ./tests
-        run: npm run lint
+        run: npm run lint:check

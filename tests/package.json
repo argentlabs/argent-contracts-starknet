@@ -6,6 +6,7 @@
   "scripts": {
     "test": "tsc && mocha tests/*.test.ts",
     "lint": "eslint . --fix",
+    "lint:check": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

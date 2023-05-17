@@ -2,13 +2,13 @@ import { expect } from "chai";
 import { Contract, num } from "starknet";
 import {
   ArgentSigner,
-  ExternalExecution,
+  OutsideExecution,
   declareContract,
   deployAccount,
   deployerAccount,
   expectExecutionRevert,
-  getExternalCall,
-  getExternalExecutionCall,
+  getOutsideCall,
+  getOutsideExecutionCall,
   getTypedDataHash,
   loadContract,
   provider,
@@ -18,7 +18,7 @@ import {
 } from "./shared";
 
 const initialTime = 1713139200;
-describe("Test external execution", function () {
+describe("Test outside execution", function () {
   // Avoid timeout
   this.timeout(320000);
 
@@ -40,8 +40,8 @@ describe("Test external execution", function () {
 
     const chainId = await provider.getChainId();
 
-    const externalExecution: ExternalExecution = {
-      sender: deployerAccount.address,
+    const outsideExecution: OutsideExecution = {
+      caller: deployerAccount.address,
       min_timestamp: 0,
       max_timestamp: 1713139200,
       nonce: randomPrivateKey(),
@@ -55,9 +55,9 @@ describe("Test external execution", function () {
     };
 
     const foundHash = num.toHex(
-      await accountContract.get_message_hash_external_execution(externalExecution, { nonce: undefined }),
+      await accountContract.get_outside_execution_message_hash(outsideExecution, { nonce: undefined }),
     );
-    const expectedMessageHash = getTypedDataHash(externalExecution, account.address, chainId);
+    const expectedMessageHash = getTypedDataHash(outsideExecution, account.address, chainId);
     expect(foundHash).to.equal(expectedMessageHash);
   });
 
@@ -71,35 +71,35 @@ describe("Test external execution", function () {
 
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
-    const externalExecution: ExternalExecution = {
-      sender: deployerAccount.address,
+    const outsideExecution: OutsideExecution = {
+      caller: deployerAccount.address,
       nonce: randomPrivateKey(),
       min_timestamp: initialTime - 100,
       max_timestamp: initialTime + 100,
-      calls: [getExternalCall(testDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
     };
-    const externalExecutionCall = await getExternalExecutionCall(externalExecution, account.address, accountSigner);
+    const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, accountSigner);
 
     // ensure can't be run too early
     await setTime(initialTime - 200);
-    await expectExecutionRevert("argent/invalid-timestamp", deployerAccount.execute(externalExecutionCall));
+    await expectExecutionRevert("argent/invalid-timestamp", deployerAccount.execute(outsideExecutionCall));
 
     // ensure can't be run too late
     await setTime(initialTime + 200);
-    await expectExecutionRevert("argent/invalid-timestamp", deployerAccount.execute(externalExecutionCall));
+    await expectExecutionRevert("argent/invalid-timestamp", deployerAccount.execute(outsideExecutionCall));
 
-    // ensure the sender is as expected
+    // ensure the caller is as expected
     await expectExecutionRevert(
       "argent/invalid-caller",
       deployerAccount.execute(
-        await getExternalExecutionCall({ ...externalExecution, sender: "0x123" }, account.address, accountSigner),
+        await getOutsideExecutionCall({ ...outsideExecution, caller: "0x123" }, account.address, accountSigner),
       ),
     );
 
     await setTime(initialTime);
 
     // ensure the account address is checked
-    const wrongAccountCall = await getExternalExecutionCall(externalExecution, "0x123", accountSigner);
+    const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", accountSigner);
     await expectExecutionRevert(
       "argent/invalid-owner-sig",
       deployerAccount.execute({ ...wrongAccountCall, contractAddress: account.address }),
@@ -109,34 +109,34 @@ describe("Test external execution", function () {
     await expectExecutionRevert(
       "argent/invalid-owner-sig",
       deployerAccount.execute(
-        await getExternalExecutionCall(externalExecution, account.address, accountSigner, "ANOTHER_CHAIN"),
+        await getOutsideExecutionCall(outsideExecution, account.address, accountSigner, "ANOTHER_CHAIN"),
       ),
     );
 
     // normal scenario
-    await waitForExecution(deployerAccount.execute(externalExecutionCall));
+    await waitForExecution(deployerAccount.execute(outsideExecutionCall));
     await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
 
     // ensure a transaction can't be replayed
-    await expectExecutionRevert("argent/repeated-external-nonce", deployerAccount.execute(externalExecutionCall));
+    await expectExecutionRevert("argent/repeated-outside-nonce", deployerAccount.execute(outsideExecutionCall));
   });
 
   it("Owner only account", async function () {
     const accountSigner = new ArgentSigner();
     const account = await deployAccount(argentAccountClassHash, accountSigner.ownerPrivateKey);
 
-    const externalExecution: ExternalExecution = {
-      sender: deployerAccount.address,
+    const outsideExecution: OutsideExecution = {
+      caller: deployerAccount.address,
       nonce: randomPrivateKey(),
       min_timestamp: 0,
       max_timestamp: initialTime + 100,
-      calls: [getExternalCall(testDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
     };
-    const externalExecutionCall = await getExternalExecutionCall(externalExecution, account.address, accountSigner);
+    const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, accountSigner);
 
     await setTime(initialTime);
 
-    await waitForExecution(deployerAccount.execute(externalExecutionCall));
+    await waitForExecution(deployerAccount.execute(outsideExecutionCall));
     await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 
@@ -152,20 +152,16 @@ describe("Test external execution", function () {
 
     const accountContract = await loadContract(account.address);
 
-    const externalExecution: ExternalExecution = {
-      sender: deployerAccount.address,
+    const outsideExecution: OutsideExecution = {
+      caller: deployerAccount.address,
       nonce: randomPrivateKey(),
       min_timestamp: 0,
       max_timestamp: initialTime + 100,
-      calls: [getExternalCall(accountContract.populateTransaction.trigger_escape_owner(42))],
+      calls: [getOutsideCall(accountContract.populateTransaction.trigger_escape_owner(42))],
     };
-    const externalExecutionCall = await getExternalExecutionCall(
-      externalExecution,
-      account.address,
-      guardianOnlySigner,
-    );
+    const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, guardianOnlySigner);
 
-    await waitForExecution(deployerAccount.execute(externalExecutionCall));
+    await waitForExecution(deployerAccount.execute(outsideExecutionCall));
     const current_escape = await accountContract.get_escape();
     expect(current_escape.new_signer).eql(42n, "invalid new value");
   });

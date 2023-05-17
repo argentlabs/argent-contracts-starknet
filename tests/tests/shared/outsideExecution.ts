@@ -1,4 +1,4 @@
-import { Call, CallData, hash, num, RawArgs, SignerInterface, typedData, WeierstrassSignatureType } from "starknet";
+import { Call, CallData, hash, num, RawArgs, SignerInterface, typedData } from "starknet";
 import { provider } from "./constants";
 
 const types = {
@@ -7,15 +7,15 @@ const types = {
     { name: "version", type: "felt" },
     { name: "chainId", type: "felt" },
   ],
-  ExternalExecution: [
-    { name: "sender", type: "felt" },
+  OutsideExecution: [
+    { name: "caller", type: "felt" },
     { name: "nonce", type: "felt" },
     { name: "min_timestamp", type: "felt" },
     { name: "max_timestamp", type: "felt" },
     { name: "calls_len", type: "felt" },
-    { name: "calls", type: "ExternalCall*" },
+    { name: "calls", type: "OutsideCall*" },
   ],
-  ExternalCall: [
+  OutsideCall: [
     { name: "to", type: "felt" },
     { name: "selector", type: "felt" },
     { name: "calldata_len", type: "felt" },
@@ -25,27 +25,27 @@ const types = {
 
 function getDomain(chainId: string) {
   return {
-    name: "ArgentAccount.execute_external",
+    name: "Account.execute_from_outside",
     version: "1",
     chainId: chainId,
   };
 }
 
-declare type ExternalExecution = {
-  sender: string;
+declare type OutsideExecution = {
+  caller: string;
   nonce: num.BigNumberish;
   min_timestamp: num.BigNumberish;
   max_timestamp: num.BigNumberish;
-  calls: ExternalCall[];
+  calls: OutsideCall[];
 };
 
-declare type ExternalCall = {
+declare type OutsideCall = {
   to: string;
   selector: num.BigNumberish;
   calldata: RawArgs;
 };
 
-function getExternalCall(call: Call): ExternalCall {
+function getOutsideCall(call: Call): OutsideCall {
   return {
     to: call.contractAddress,
     selector: hash.getSelectorFromName(call.entrypoint),
@@ -54,22 +54,22 @@ function getExternalCall(call: Call): ExternalCall {
 }
 
 function getTypedDataHash(
-  externalExecution: ExternalExecution,
+  outsideExecution: OutsideExecution,
   accountAddress: num.BigNumberish,
   chainId: string,
 ): string {
-  return typedData.getMessageHash(getTypedData(externalExecution, chainId), accountAddress);
+  return typedData.getMessageHash(getTypedData(outsideExecution, chainId), accountAddress);
 }
 
-function getTypedData(externalExecution: ExternalExecution, chainId: string) {
+function getTypedData(outsideExecution: OutsideExecution, chainId: string) {
   return {
     types: types,
-    primaryType: "ExternalExecution",
+    primaryType: "OutsideExecution",
     domain: getDomain(chainId),
     message: {
-      ...externalExecution,
-      calls_len: externalExecution.calls.length,
-      calls: externalExecution.calls.map((call) => {
+      ...outsideExecution,
+      calls_len: outsideExecution.calls.length,
+      calls: outsideExecution.calls.map((call) => {
         return {
           ...call,
           calldata_len: call.calldata.length,
@@ -80,20 +80,20 @@ function getTypedData(externalExecution: ExternalExecution, chainId: string) {
   };
 }
 
-async function getExternalExecutionCall(
-  externalExecution: ExternalExecution,
+async function getOutsideExecutionCall(
+  outsideExecution: OutsideExecution,
   accountAddress: string,
   signer: SignerInterface,
   chainId?: string,
 ): Promise<Call> {
   chainId = chainId ?? (await provider.getChainId());
-  const currentTypedData = getTypedData(externalExecution, chainId);
+  const currentTypedData = getTypedData(outsideExecution, chainId);
   const signature = await signer.signMessage(currentTypedData, accountAddress);
   return {
     contractAddress: accountAddress,
-    entrypoint: "execute_external",
-    calldata: CallData.compile({ ...externalExecution, signature }),
+    entrypoint: "execute_from_outside",
+    calldata: CallData.compile({ ...outsideExecution, signature }),
   };
 }
 
-export { getExternalExecutionCall, getTypedData, getTypedDataHash, getExternalCall, ExternalExecution };
+export { getOutsideExecutionCall, getTypedData, getTypedDataHash, getOutsideCall, OutsideExecution };

@@ -11,7 +11,7 @@ export interface ArgentAccount {
   ownerPrivateKey: string;
   guardianPrivateKey?: string;
   guardianBackupPrivateKey?: string;
-};
+}
 
 async function deployOldAccount(
   proxyClassHash: string,

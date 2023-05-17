@@ -84,7 +84,7 @@ async function deployAccountV2(argentAccountClassHash: string): Promise<AccountL
   const guardianPrivateKey = stark.randomAddress();
   const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
 
-  account.signer = new ConcatSigner([ownerPrivateKey, guardianPrivateKey]);
+  account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
   const accountContract = await loadContract(account.address);
   return {
     account,

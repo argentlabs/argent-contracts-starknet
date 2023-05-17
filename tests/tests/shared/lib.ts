@@ -23,6 +23,7 @@ async function declareContract(contractName: string): Promise<string> {
   if (cachedClass) {
     return cachedClass;
   }
+  let a = 12;
   const contract: CompiledSierra = json.parse(readFileSync(`./contracts/${contractName}.json`).toString("ascii"));
   let returnedClashHash;
   if ("sierra_program" in contract) {

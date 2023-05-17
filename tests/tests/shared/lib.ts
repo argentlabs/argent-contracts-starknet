@@ -6,6 +6,7 @@ import {
   Contract,
   DeclareContractPayload,
   Event,
+  InvokeFunctionResponse,
   InvokeTransactionReceiptResponse,
   hash,
   json,
@@ -74,4 +75,9 @@ async function expectEvent(transactionHash: string, event: Event) {
   expect(currentEvent.data).to.eql(event.data);
 }
 
-export { declareContract, loadContract, expectRevertWithErrorMessage, expectEvent };
+async function expectEventWhile(event: Event, fn: () => Promise<InvokeFunctionResponse>) {
+  const { transaction_hash } = await fn();
+  expectEvent(transaction_hash, event);
+}
+
+export { declareContract, loadContract, expectRevertWithErrorMessage, expectEvent, expectEventWhile };

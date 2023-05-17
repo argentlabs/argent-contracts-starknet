@@ -10,7 +10,6 @@ import {
   deployAccountWithoutGuardian,
   deployOldAccount,
   expectRevertWithErrorMessage,
-  increaseTime,
   loadContract,
   provider,
   setTime,
@@ -94,18 +93,23 @@ describe("ArgentAccount: escape mechanism", function () {
         });
       });
 
-      it("Expect the guardian to be able to trigger it alone when the previous escape is expired", async function () {
-        const { account, accountContract, guardianPrivateKey } = await deployAccountV2(argentAccountClassHash);
+      it("Expect the guardian to be able to trigger it alone when the previous escape expired", async function () {
+        const { account, accountContract, ownerPrivateKey, guardianPrivateKey } = await deployAccountV2(
+          argentAccountClassHash,
+        );
         account.signer = new Signer(guardianPrivateKey);
+
         await setTime(randomTime);
-        await account.execute(accountContract.populateTransaction.trigger_escape_owner(randomAddress));
+        account.signer = new Signer(ownerPrivateKey);
+        await account.execute(accountContract.populateTransaction.trigger_escape_guardian(randomAddress));
         const escape = await accountContract.get_escape();
-        expect(escape.escape_type).to.equal(ESCAPE_TYPE_OWNER);
+        expect(escape.escape_type).to.equal(ESCAPE_TYPE_GUARDIAN);
         expect(escape.active_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
         expect(escape.new_signer).to.equal(randomAddress);
 
         randomAddress += 1n;
-        await increaseTime(ESCAPE_EXPIRY_PERIOD);
+        account.signer = new Signer(guardianPrivateKey);
+        await setTime(randomTime + ESCAPE_EXPIRY_PERIOD);
         await account.execute(accountContract.populateTransaction.trigger_escape_owner(randomAddress));
         const newEscape = await accountContract.get_escape();
         expect(newEscape.escape_type).to.equal(ESCAPE_TYPE_OWNER);
@@ -145,21 +149,21 @@ describe("ArgentAccount: escape mechanism", function () {
         });
       });
 
-      it("Expect the guardian to be able to trigger it alone when the previous escape is expired", async function () {
-        const { account, accountContract, guardianBackupPrivateKey } = await deployAccountWithGuardianBackup(
-          argentAccountClassHash,
-        );
-        account.signer = new Signer(guardianBackupPrivateKey);
-        await setTime(randomTime);
-        await account.execute(accountContract.populateTransaction.trigger_escape_owner(randomAddress));
+      it("Expect the guardian to be able to trigger it alone when the previous escape expired", async function () {
+        const { account, accountContract, ownerPrivateKey, guardianBackupPrivateKey } =
+          await deployAccountWithGuardianBackup(argentAccountClassHash);
+        account.signer = new Signer(ownerPrivateKey);
 
+        await setTime(randomTime);
+        await account.execute(accountContract.populateTransaction.trigger_escape_guardian(randomAddress));
         const escape = await accountContract.get_escape();
-        expect(escape.escape_type).to.equal(ESCAPE_TYPE_OWNER);
+        expect(escape.escape_type).to.equal(ESCAPE_TYPE_GUARDIAN);
         expect(escape.active_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
         expect(escape.new_signer).to.equal(randomAddress);
 
         randomAddress += 1n;
-        await increaseTime(ESCAPE_EXPIRY_PERIOD);
+        account.signer = new Signer(guardianBackupPrivateKey);
+        await setTime(randomTime + ESCAPE_EXPIRY_PERIOD);
         await account.execute(accountContract.populateTransaction.trigger_escape_owner(randomAddress));
         const newEscape = await accountContract.get_escape();
         expect(newEscape.escape_type).to.equal(ESCAPE_TYPE_OWNER);
@@ -186,7 +190,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
         await setTime(randomTime);
         await account.execute(accountContract.populateTransaction.trigger_escape_owner(randomAddress));
-        await increaseTime(ESCAPE_SECURITY_PERIOD);
+        await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
 
         await account.execute(accountContract.populateTransaction.escape_owner());
 
@@ -267,11 +271,11 @@ describe("ArgentAccount: escape mechanism", function () {
         account.signer = new Signer(guardianPrivateKey);
 
         await setTime(randomTime);
-        const { transaction_hash: transferTxHash } = await account.execute({
+        const { transaction_hash } = await account.execute({
           contractAddress: account.address,
           entrypoint: "triggerEscapeSigner",
         });
-        await provider.waitForTransaction(transferTxHash);
+        await provider.waitForTransaction(transaction_hash);
 
         account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
         await upgradeAccount(account, argentAccountClassHash);
@@ -295,10 +299,9 @@ describe("ArgentAccount: escape mechanism", function () {
 
         await setTime(randomTime);
         await account.execute(accountContract.populateTransaction.trigger_escape_owner(randomAddress));
-        await increaseTime(ESCAPE_SECURITY_PERIOD);
+        await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
 
         await account.execute(accountContract.populateTransaction.escape_owner());
-
         const escape = await accountContract.get_escape();
         expect(escape.escape_type).to.equal(0n);
         expect(escape.active_at).to.equal(0n);
@@ -399,14 +402,14 @@ describe("ArgentAccount: escape mechanism", function () {
       expect(escapeOwner.new_signer).to.equal(randomAddress);
 
       // Let some block pass
-      await increaseTime(10);
+      await setTime(randomTime + 10n);
       randomAddress += 1n;
       account.signer = new Signer(ownerPrivateKey);
       await account.execute(accountContract.populateTransaction.trigger_escape_guardian(randomAddress));
 
       const escapeGuardian = await accountContract.get_escape();
       expect(escapeGuardian.escape_type).to.equal(ESCAPE_TYPE_GUARDIAN);
-      expect(escapeGuardian.active_at > randomTime + ESCAPE_SECURITY_PERIOD + 10n).to.true;
+      expect(escapeGuardian.active_at).to.be.equal(randomTime + ESCAPE_SECURITY_PERIOD + 10n);
       expect(escapeGuardian.new_signer).to.equal(randomAddress);
     });
 
@@ -454,7 +457,7 @@ describe("ArgentAccount: escape mechanism", function () {
       const oldGuardian = await accountContract.get_guardian();
       expect(oldGuardian).to.equal(guardianPublicKey);
       await account.execute(accountContract.populateTransaction.trigger_escape_guardian(randomAddress));
-      await increaseTime(ESCAPE_SECURITY_PERIOD);
+      await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
 
       await account.execute(accountContract.populateTransaction.escape_guardian());
 

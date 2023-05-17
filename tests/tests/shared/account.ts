@@ -1,11 +1,11 @@
 import { Account, CallData, Contract, Signer, ec, hash, stark } from "starknet";
-import { ArgentSigner, ConcatSigner } from "./argentSigner";
+import { ArgentSigner } from "./argentSigner";
 import { deployerAccount, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
 import { loadContract } from "./lib";
 
-// This is only for TESTS purposes
-export type AccountLeaked = {
+// This is only for TESTS purposes and shouldn't be used in production
+export type ArgentAccount = {
   account: Account;
   accountContract: Contract;
   ownerPrivateKey: string;
@@ -17,7 +17,7 @@ async function deployOldAccount(
   proxyClassHash: string,
   oldArgentAccountClassHash: string,
   guardianPrivateKey = "0",
-): Promise<AccountLeaked> {
+): Promise<ArgentAccount> {
   const ownerPrivateKey = stark.randomAddress();
   const publicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
   const guardianPublicKey = guardianPrivateKey != "0" ? ec.starkCurve.getStarkKey(guardianPrivateKey) : "0";
@@ -79,7 +79,7 @@ async function deployAccount(
   return account;
 }
 
-async function deployAccountV2(argentAccountClassHash: string): Promise<AccountLeaked> {
+async function deployAccountV2(argentAccountClassHash: string): Promise<ArgentAccount> {
   const ownerPrivateKey = stark.randomAddress();
   const guardianPrivateKey = stark.randomAddress();
   const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
@@ -94,7 +94,7 @@ async function deployAccountV2(argentAccountClassHash: string): Promise<AccountL
   };
 }
 
-async function deployAccountWithoutGuardian(argentAccountClassHash: string): Promise<AccountLeaked> {
+async function deployAccountWithoutGuardian(argentAccountClassHash: string): Promise<ArgentAccount> {
   const ownerPrivateKey = stark.randomAddress();
   const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, "0");
 
@@ -107,16 +107,16 @@ async function deployAccountWithoutGuardian(argentAccountClassHash: string): Pro
   };
 }
 
-async function deployAccountWithGuardianBackup(argentAccountClassHash: string): Promise<AccountLeaked> {
+async function deployAccountWithGuardianBackup(argentAccountClassHash: string): Promise<ArgentAccount> {
   const guardianBackupPrivateKey = stark.randomAddress();
   const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
 
-  const accountLeaked = await deployAccountV2(argentAccountClassHash);
-  await accountLeaked.account.execute(
-    accountLeaked.accountContract.populateTransaction.change_guardian_backup(guardianBackupPublicKey),
+  const ArgentAccount = await deployAccountV2(argentAccountClassHash);
+  await ArgentAccount.account.execute(
+    ArgentAccount.accountContract.populateTransaction.change_guardian_backup(guardianBackupPublicKey),
   );
-  accountLeaked.guardianBackupPrivateKey = guardianBackupPrivateKey;
-  return accountLeaked;
+  ArgentAccount.guardianBackupPrivateKey = guardianBackupPrivateKey;
+  return ArgentAccount;
 }
 
 async function upgradeAccount(accountToUpgrade: Account, argentAccountClassHash: string) {

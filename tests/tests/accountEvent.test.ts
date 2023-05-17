@@ -13,7 +13,7 @@ import {
   setTime,
 } from "./shared";
 
-describe.only("Make sure all events are emitted", function () {
+describe("Make sure all events are emitted", function () {
   let argentAccountClassHash: string;
 
   before(async () => {

@@ -13,7 +13,7 @@ import {
   setTime,
 } from "./shared";
 
-describe("Make sure all events are emitted", function () {
+describe.only("Make sure all events are emitted", function () {
   let argentAccountClassHash: string;
 
   before(async () => {
@@ -49,9 +49,7 @@ describe("Make sure all events are emitted", function () {
         keys: ["EscapeOwnerTriggered"],
         data: [activeAt, newOwner],
       },
-      () => {
-        return account.execute(accountContract.populateTransaction.trigger_escape_owner(newOwner));
-      },
+      () => account.execute(accountContract.populateTransaction.trigger_escape_owner(newOwner)),
     );
   });
 
@@ -91,9 +89,7 @@ describe("Make sure all events are emitted", function () {
         keys: ["EscapeGuardianTriggered"],
         data: [activeAt, newGuardian],
       },
-      () => {
-        return account.execute(accountContract.populateTransaction.trigger_escape_guardian(newGuardian));
-      },
+      () => account.execute(accountContract.populateTransaction.trigger_escape_guardian(newGuardian)),
     );
   });
 
@@ -112,9 +108,7 @@ describe("Make sure all events are emitted", function () {
         keys: ["GuardianEscaped"],
         data: [newGuardian],
       },
-      () => {
-        return account.execute(accountContract.populateTransaction.escape_guardian());
-      },
+      () => account.execute(accountContract.populateTransaction.escape_guardian()),
     );
   });
 
@@ -137,9 +131,7 @@ describe("Make sure all events are emitted", function () {
         keys: ["OwnerChanged"],
         data: [newOwner],
       },
-      () => {
-        return account.execute(accountContract.populateTransaction.change_owner(newOwner, signature.r, signature.s));
-      },
+      () => account.execute(accountContract.populateTransaction.change_owner(newOwner, signature.r, signature.s)),
     );
   });
 
@@ -154,9 +146,7 @@ describe("Make sure all events are emitted", function () {
         keys: ["GuardianChanged"],
         data: [newGuardian],
       },
-      () => {
-        return account.execute(accountContract.populateTransaction.change_guardian(newGuardian));
-      },
+      () => account.execute(accountContract.populateTransaction.change_guardian(newGuardian)),
     );
   });
 
@@ -171,9 +161,7 @@ describe("Make sure all events are emitted", function () {
         keys: ["GuardianBackupChanged"],
         data: [newGuardianBackup],
       },
-      () => {
-        return account.execute(accountContract.populateTransaction.change_guardian_backup(newGuardianBackup));
-      },
+      () => account.execute(accountContract.populateTransaction.change_guardian_backup(newGuardianBackup)),
     );
   });
 
@@ -187,9 +175,7 @@ describe("Make sure all events are emitted", function () {
         keys: ["AccountUpgraded"],
         data: [argentAccountV1ClassHash],
       },
-      () => {
-        return account.execute(accountContract.populateTransaction.upgrade(argentAccountV1ClassHash, ["0"]));
-      },
+      () => account.execute(accountContract.populateTransaction.upgrade(argentAccountV1ClassHash, ["0"])),
     );
   });
 
@@ -209,9 +195,7 @@ describe("Make sure all events are emitted", function () {
           keys: ["EscapeCanceled"],
           data: [],
         },
-        () => {
-          return account.execute(accountContract.populateTransaction.cancel_escape());
-        },
+        () => account.execute(accountContract.populateTransaction.cancel_escape()),
       );
     });
 
@@ -227,9 +211,7 @@ describe("Make sure all events are emitted", function () {
           keys: ["EscapeCanceled"],
           data: [],
         },
-        () => {
-          return account.execute(accountContract.populateTransaction.trigger_escape_owner("0x42"));
-        },
+        () => account.execute(accountContract.populateTransaction.trigger_escape_owner("0x42")),
       );
     });
 

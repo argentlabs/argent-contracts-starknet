@@ -8,5 +8,5 @@
   "env": {
     "node": true
   },
-  "ignorePatterns": ["dist/**", "**/vendor/*.js"]
+  "ignorePatterns": ["dist/**"]
 }

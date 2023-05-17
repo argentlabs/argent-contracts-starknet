@@ -77,7 +77,7 @@ async function expectEvent(transactionHash: string, event: Event) {
 
 async function expectEventWhile(event: Event, fn: () => Promise<InvokeFunctionResponse>) {
   const { transaction_hash } = await fn();
-  expectEvent(transaction_hash, event);
+  await expectEvent(transaction_hash, event);
 }
 
 export { declareContract, loadContract, expectRevertWithErrorMessage, expectEvent, expectEventWhile };

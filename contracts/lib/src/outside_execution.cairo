@@ -85,8 +85,8 @@ fn hash_outside_call(outside_call: @Call) -> felt252 {
     perdersen(state, 5)
 }
 
-fn hash_outside_execution(outside_calls: @OutsideExecution) -> felt252 {
-    let mut calls_span = outside_calls.calls.span();
+fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
+    let mut calls_span = outside_execution.calls.span();
 
     let mut outside_calls_state: felt252 = 0;
     loop {
@@ -100,14 +100,14 @@ fn hash_outside_execution(outside_calls: @OutsideExecution) -> felt252 {
             },
         };
     };
-    outside_calls_state = perdersen(outside_calls_state, outside_calls.calls.len().into());
+    outside_calls_state = perdersen(outside_calls_state, outside_execution.calls.len().into());
 
     let mut state = perdersen(0, OUTSIDE_EXECUTION_TYPE_HASH);
-    state = perdersen(state, (*outside_calls.caller).into());
-    state = perdersen(state, *outside_calls.nonce);
-    state = perdersen(state, (*outside_calls.min_timestamp).into());
-    state = perdersen(state, (*outside_calls.max_timestamp).into());
-    state = perdersen(state, outside_calls.calls.len().into());
+    state = perdersen(state, (*outside_execution.caller).into());
+    state = perdersen(state, *outside_execution.nonce);
+    state = perdersen(state, (*outside_execution.min_timestamp).into());
+    state = perdersen(state, (*outside_execution.max_timestamp).into());
+    state = perdersen(state, outside_execution.calls.len().into());
     state = perdersen(state, outside_calls_state);
     perdersen(state, 7)
 }
@@ -115,9 +115,7 @@ fn hash_outside_execution(outside_calls: @OutsideExecution) -> felt252 {
 #[inline(always)]
 fn hash_outside_execution_message(outside_execution: @OutsideExecution) -> felt252 {
     let domain = StarkNetDomain {
-        name: 'Account.execute_from_outside',
-        version: 1,
-        chain_id: get_tx_info().unbox().chain_id,
+        name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id, 
     };
     let mut state = perdersen(0, 'StarkNet Message');
     state = perdersen(state, hash_domain(@domain));

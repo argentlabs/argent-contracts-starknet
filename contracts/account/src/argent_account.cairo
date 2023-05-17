@@ -16,6 +16,8 @@ mod ArgentAccount {
     use starknet::get_caller_address;
     use starknet::VALIDATED;
     use starknet::syscalls::replace_class_syscall;
+    use traits::Into;
+    use starknet::ContractAddressIntoFelt252;
 
     use account::Escape;
     use account::EscapeStatus;
@@ -174,7 +176,9 @@ mod ArgentAccount {
         outside_execution: OutsideExecution, signature: Array<felt252>
     ) -> Span<Span<felt252>> {
         // Checks
-        assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
+        if (outside_execution.caller.into() != 'ANY_CALLER') {
+            assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
+        }
 
         let block_timestamp = get_block_timestamp();
         assert(
@@ -182,10 +186,10 @@ mod ArgentAccount {
             'argent/invalid-timestamp'
         );
         let nonce = outside_execution.nonce;
-        assert(!outside_nonces::read(nonce), 'argent/repeated-outside-nonce');
+        assert(!outside_nonces::read(nonce), 'argent/duplicated-outside-nonce');
 
-        let outside_execution_ref = @outside_execution;
-        let outside_tx_hash = hash_outside_execution_message(outside_execution_ref);
+        let outside_execution_snapshot = @outside_execution;
+        let outside_tx_hash = hash_outside_execution_message(outside_execution_snapshot);
 
         assert_valid_calls_and_signature(
             outside_execution.calls.span(), outside_tx_hash, signature.span()
@@ -195,7 +199,7 @@ mod ArgentAccount {
         outside_nonces::write(nonce, true);
 
         // Interactions
-        let retdata = execute_multicall(outside_execution_ref.calls.span());
+        let retdata = execute_multicall(outside_execution_snapshot.calls.span());
         TransactionExecuted(outside_tx_hash, retdata);
         retdata
     }

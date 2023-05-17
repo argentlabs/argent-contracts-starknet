@@ -65,9 +65,9 @@ async function expectRevertWithErrorMessage(errorMessage: string, fn: () => void
   }
 }
 
-async function expectExecutionRevert(errorMessage: string, invocationPromise: Promise<InvokeFunctionResponse>) {
+async function expectExecutionRevert(errorMessage: string, invocationFunction: () => Promise<InvokeFunctionResponse>) {
   try {
-    await invocationPromise;
+    await invocationFunction();
     assert.fail("No error detected");
   } catch (e: any) {
     expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));

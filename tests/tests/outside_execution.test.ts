@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Contract, num } from "starknet";
+import { Contract, num, shortString } from "starknet";
 import {
   ArgentSigner,
   OutsideExecution,
@@ -82,15 +82,14 @@ describe("Test outside execution", function () {
 
     // ensure can't be run too early
     await setTime(initialTime - 200);
-    await expectExecutionRevert("argent/invalid-timestamp", deployerAccount.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/invalid-timestamp", () => deployerAccount.execute(outsideExecutionCall));
 
     // ensure can't be run too late
     await setTime(initialTime + 200);
-    await expectExecutionRevert("argent/invalid-timestamp", deployerAccount.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/invalid-timestamp", () => deployerAccount.execute(outsideExecutionCall));
 
     // ensure the caller is as expected
-    await expectExecutionRevert(
-      "argent/invalid-caller",
+    await expectExecutionRevert("argent/invalid-caller", async () =>
       deployerAccount.execute(
         await getOutsideExecutionCall({ ...outsideExecution, caller: "0x123" }, account.address, accountSigner),
       ),
@@ -100,14 +99,12 @@ describe("Test outside execution", function () {
 
     // ensure the account address is checked
     const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", accountSigner);
-    await expectExecutionRevert(
-      "argent/invalid-owner-sig",
+    await expectExecutionRevert("argent/invalid-owner-sig", () =>
       deployerAccount.execute({ ...wrongAccountCall, contractAddress: account.address }),
     );
 
     // ensure the chain id is checked
-    await expectExecutionRevert(
-      "argent/invalid-owner-sig",
+    await expectExecutionRevert("argent/invalid-owner-sig", async () =>
       deployerAccount.execute(
         await getOutsideExecutionCall(outsideExecution, account.address, accountSigner, "ANOTHER_CHAIN"),
       ),
@@ -118,7 +115,31 @@ describe("Test outside execution", function () {
     await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
 
     // ensure a transaction can't be replayed
-    await expectExecutionRevert("argent/repeated-outside-nonce", deployerAccount.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/duplicated-outside-nonce", () => deployerAccount.execute(outsideExecutionCall));
+  });
+
+  it("Avoid caller check if it caller is ANY_CALLER", async function () {
+    const accountSigner = new ArgentSigner(randomPrivateKey(), randomPrivateKey());
+    const account = await deployAccount(
+      argentAccountClassHash,
+      accountSigner.ownerPrivateKey,
+      accountSigner.guardianPrivateKey,
+    );
+
+    await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
+
+    const outsideExecution: OutsideExecution = {
+      caller: shortString.encodeShortString("ANY_CALLER"),
+      nonce: randomPrivateKey(),
+      min_timestamp: 0,
+      max_timestamp: initialTime + 100,
+      calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
+    };
+    const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, accountSigner);
+
+    // ensure the caller is no
+    await waitForExecution(deployerAccount.execute(outsideExecutionCall));
+    await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 
   it("Owner only account", async function () {

@@ -25,7 +25,7 @@ jobs:
             tar -xvf $ARCHIVE_NAME 
             mkdir -p target/release
             mv cairo/bin/* target/release
-      - name: Step 5 - Compiling Contracts to JSON and CASM
+      - name: Step 5 - Compiling contracts to JSON and CASM
         run: make compile-test
       - name: Step 6 - Installing requirements
         run: pip3 install -r requirements.txt

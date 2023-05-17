@@ -100,7 +100,7 @@ describe("ArgentAccount: multicall", function () {
     expect(finalNumber).to.equal(42n);
   });
 
-  it("Should keep the tx in correct", async function () {
+  it("Should keep the tx in correct order", async function () {
     const account = await deployAccount(argentAccountClassHash);
 
     const initalNumber = await testDappContract.get_number(account.address);

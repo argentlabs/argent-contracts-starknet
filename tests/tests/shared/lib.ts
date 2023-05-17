@@ -52,6 +52,7 @@ async function expectRevertWithErrorMessage(errorMessage: string, fn: () => void
   try {
     await fn();
     assert.fail("No error detected");
+    /* eslint-disable  @typescript-eslint/no-explicit-any */
   } catch (e: any) {
     expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
   }

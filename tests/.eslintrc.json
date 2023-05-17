@@ -8,8 +8,5 @@
   "env": {
     "node": true
   },
-  "ignorePatterns": ["dist/**", "**/vendor/*.js"],
-  "rules": {
-    "@typescript-eslint/no-explicit-any": "off"
-  }
+  "ignorePatterns": ["dist/**", "**/vendor/*.js"]
 }

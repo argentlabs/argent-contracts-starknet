@@ -28,8 +28,8 @@ describe("ArgentAccount: multicall", function () {
     const { account } = await deployAccount(argentAccountClassHash);
     const recipient = "0x42";
     const amount = uint256.bnToUint256(1000);
-    const { balance: senderInitialBalance } = await ethContract.balanceOf(account.address);
-    const { balance: recipientInitialBalance } = await ethContract.balanceOf(recipient);
+    const senderInitialBalance = await getEthBalance(ethContract, account.address);
+    const recipientInitialBalance = await getEthBalance(ethContract, recipient);
     ethContract.connect(account);
     // TODO it should be possible to do this at some point
     // await ethContract.transfer(recipient, amount);
@@ -38,23 +38,23 @@ describe("ArgentAccount: multicall", function () {
     );
 
     await account.waitForTransaction(transferTxHash);
-    const { balance: senderFinalBalance } = await ethContract.balanceOf(account.address);
-    const { balance: recipientFinalBalance } = await ethContract.balanceOf(recipient);
+    const senderFinalBalance = await getEthBalance(ethContract, account.address);
+    const recipientFinalBalance = await getEthBalance(ethContract, recipient);
     // Before amount should be higher than (after + transfer) amount due to fee
-    expect(uint256.uint256ToBN(senderInitialBalance) + 1000n > uint256.uint256ToBN(senderFinalBalance)).to.be.true;
-    expect(uint256.uint256ToBN(recipientInitialBalance) + 1000n).to.equal(uint256.uint256ToBN(recipientFinalBalance));
+    expect(senderInitialBalance + 1000n > senderFinalBalance).to.be.true;
+    expect(recipientInitialBalance + 1000n).to.equal(recipientFinalBalance);
   });
 
   it("Should be possible to send eth with a Cairo1 account using a multicall", async function () {
     const { account } = await deployAccount(argentAccountClassHash);
-    const recipient1 = "0x42";
+    const recipient1 = "42";
     const amount1 = uint256.bnToUint256(1000);
-    const recipient2 = "0x43";
+    const recipient2 = "43";
     const amount2 = uint256.bnToUint256(42000);
 
-    const { balance: senderInitialBalance } = await ethContract.balanceOf(account.address);
-    const { balance: recipient1InitialBalance } = await ethContract.balanceOf(recipient1);
-    const { balance: recipient2InitialBalance } = await ethContract.balanceOf(recipient2);
+    const senderInitialBalance = await getEthBalance(ethContract, account.address);
+    const recipient1InitialBalance = await getEthBalance(ethContract, recipient1);
+    const recipient2InitialBalance = await getEthBalance(ethContract, recipient2);
 
     const { transaction_hash: transferTxHash } = await account.execute([
       ethContract.populateTransaction.transfer(recipient1, amount1),
@@ -62,24 +62,21 @@ describe("ArgentAccount: multicall", function () {
     ]);
     await account.waitForTransaction(transferTxHash);
 
-    const { balance: senderFinalBalance } = await ethContract.balanceOf(account.address);
-    const { balance: recipient1FinalBalance } = await ethContract.balanceOf(recipient1);
-    const { balance: recipient2FinalBalance } = await ethContract.balanceOf(recipient2);
-    expect(uint256.uint256ToBN(senderInitialBalance) > uint256.uint256ToBN(senderFinalBalance) + 1000n + 4200n).to.be
-      .true;
-    expect(uint256.uint256ToBN(recipient1InitialBalance) + 1000n).to.equal(uint256.uint256ToBN(recipient1FinalBalance));
-    expect(uint256.uint256ToBN(recipient2InitialBalance) + 42000n).to.equal(
-      uint256.uint256ToBN(recipient2FinalBalance),
-    );
+    const senderFinalBalance = await getEthBalance(ethContract, account.address);
+    const recipient1FinalBalance = await getEthBalance(ethContract, recipient1);
+    const recipient2FinalBalance = await getEthBalance(ethContract, recipient2);
+    expect(senderInitialBalance > senderFinalBalance + 1000n + 4200n).to.be.true;
+    expect(recipient1InitialBalance + 1000n).to.equal(recipient1FinalBalance);
+    expect(recipient2InitialBalance + 42000n).to.equal(recipient2FinalBalance);
   });
 
   it("Should be possible to invoke different contracts in a multicall", async function () {
     const { account } = await deployAccount(argentAccountClassHash);
-    const recipient1 = "0x42";
+    const recipient1 = "42";
     const amount1 = uint256.bnToUint256(1000);
 
-    const { balance: senderInitialBalance } = await ethContract.balanceOf(account.address);
-    const { balance: recipient1InitialBalance } = await ethContract.balanceOf(recipient1);
+    const senderInitialBalance = await getEthBalance(ethContract, account.address);
+    const recipient1InitialBalance = await getEthBalance(ethContract, recipient1);
     const initalNumber = await testDappContract.get_number(account.address);
     expect(initalNumber).to.equal(0n);
 
@@ -89,13 +86,12 @@ describe("ArgentAccount: multicall", function () {
     ]);
     await account.waitForTransaction(transferTxHash);
 
-    const { balance: senderFinalBalance } = await ethContract.balanceOf(account.address);
-    const { balance: recipient1FinalBalance } = await ethContract.balanceOf(recipient1);
+    const senderFinalBalance = await getEthBalance(ethContract, account.address);
+    const recipient1FinalBalance = await getEthBalance(ethContract, recipient1);
     const finalNumber = await testDappContract.get_number(account.address);
-    expect(senderInitialBalance.high).to.equal(senderFinalBalance.high);
     // Before amount should be higher than (after + transfer) amount due to fee
-    expect(Number(senderInitialBalance.low)).to.be.greaterThan(Number(senderFinalBalance.low) + 1000 + 42000);
-    expect(uint256.uint256ToBN(recipient1InitialBalance) + 1000n).to.equal(uint256.uint256ToBN(recipient1FinalBalance));
+    expect(Number(senderInitialBalance)).to.be.greaterThan(Number(senderFinalBalance) + 1000 + 42000);
+    expect(recipient1InitialBalance + 1000n).to.equal(recipient1FinalBalance);
     expect(finalNumber).to.equal(42n);
   });
 
@@ -123,9 +119,9 @@ describe("ArgentAccount: multicall", function () {
     const { account, accountContract } = await deployAccount(argentAccountClassHash);
 
     await expectRevertWithErrorMessage("argent/no-multicall-to-self", async () => {
-      const recipient = "0x42";
+      const recipient = "42";
       const amount = uint256.bnToUint256(1000);
-      const newOwner = "0x69";
+      const newOwner = "69";
       await account.execute([
         ethContract.populateTransaction.transfer(recipient, amount),
         accountContract.populateTransaction.trigger_escape_owner(newOwner),
@@ -133,3 +129,7 @@ describe("ArgentAccount: multicall", function () {
     });
   });
 });
+
+async function getEthBalance(ethContract: Contract, accountAddress: string): Promise<bigint> {
+  return uint256.uint256ToBN((await ethContract.balanceOf(accountAddress)).balance);
+}

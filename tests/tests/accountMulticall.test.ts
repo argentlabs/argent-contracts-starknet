@@ -65,7 +65,8 @@ describe("ArgentAccount: multicall", function () {
     const { balance: senderFinalBalance } = await ethContract.balanceOf(account.address);
     const { balance: recipient1FinalBalance } = await ethContract.balanceOf(recipient1);
     const { balance: recipient2FinalBalance } = await ethContract.balanceOf(recipient2);
-    expect(uint256.uint256ToBN(senderInitialBalance) > uint256.uint256ToBN(senderFinalBalance) + 1000n + 4200n).to.be.true;
+    expect(uint256.uint256ToBN(senderInitialBalance) > uint256.uint256ToBN(senderFinalBalance) + 1000n + 4200n).to.be
+      .true;
     expect(uint256.uint256ToBN(recipient1InitialBalance) + 1000n).to.equal(uint256.uint256ToBN(recipient1FinalBalance));
     expect(uint256.uint256ToBN(recipient2InitialBalance) + 42000n).to.equal(
       uint256.uint256ToBN(recipient2FinalBalance),

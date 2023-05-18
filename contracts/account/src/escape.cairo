@@ -35,12 +35,12 @@ impl EscapeStatusInto of Into<EscapeStatus, felt252> {
 // can be deleted once partialEq can be successfully derived
 impl EscapeStatusPartialEq of PartialEq<EscapeStatus> {
     #[inline(always)]
-    fn eq(self: EscapeStatus, other: EscapeStatus) -> bool {
-        self.into() == other.into()
+    fn eq(lhs: EscapeStatus, rhs: EscapeStatus) -> bool {
+        lhs.into() == rhs.into()
     }
     #[inline(always)]
-    fn ne(self: EscapeStatus, other: EscapeStatus) -> bool {
-        !(self == other)
+    fn ne(lhs: EscapeStatus, rhs: EscapeStatus) -> bool {
+        !(lhs == rhs)
     }
 }
 

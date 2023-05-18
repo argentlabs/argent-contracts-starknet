@@ -1,36 +1,22 @@
 #[account_contract]
 mod ArgentAccount {
-    use array::ArrayTrait;
-    use array::SpanTrait;
+    use array::{ArrayTrait, SpanTrait};
     use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
-    use hash::TupleSize4LegacyHash;
-    use hash::LegacyHashFelt252;
+    use hash::{TupleSize4LegacyHash, LegacyHashFelt252};
 
-    use starknet::ClassHash;
-    use starknet::class_hash_const;
-    use starknet::ContractAddress;
-    use starknet::get_block_timestamp;
-    use starknet::get_contract_address;
-    use starknet::get_tx_info;
-    use starknet::VALIDATED;
-    use starknet::syscalls::replace_class_syscall;
+    use starknet::{
+        ClassHash, class_hash_const, ContractAddress, get_block_timestamp, get_contract_address,
+        get_tx_info, VALIDATED, syscalls::replace_class_syscall
+    };
 
-    use account::Escape;
-    use account::EscapeStatus;
+    use account::{Escape, EscapeStatus};
 
-    use lib::assert_correct_tx_version;
-    use lib::assert_no_self_call;
-    use lib::assert_non_reentrant;
-    use lib::assert_only_self;
-    use lib::execute_multicall;
-    use lib::Call;
-    use lib::Version;
-    use lib::IErc165LibraryDispatcher;
-    use lib::IErc165DispatcherTrait;
-    use lib::IAccountUpgradeLibraryDispatcher;
-    use lib::IAccountUpgradeDispatcherTrait;
-    use lib::SpanSerde;
+    use lib::{
+        assert_correct_tx_version, assert_no_self_call, assert_non_reentrant, assert_only_self,
+        execute_multicall, Call, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
+        IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait, SpanSerde
+    };
 
     const NAME: felt252 = 'ArgentAccount';
 

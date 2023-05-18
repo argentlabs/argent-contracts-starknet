@@ -1,10 +1,5 @@
-use array::ArrayTrait;
-use array::SpanTrait;
-
-use starknet::call_contract_syscall;
-use starknet::ContractAddress;
-
-use lib::check_enough_gas;
+use array::{ArrayTrait, SpanTrait};
+use starknet::{call_contract_syscall, ContractAddress};
 
 #[derive(Drop, Serde)]
 struct Call {
@@ -18,7 +13,6 @@ fn execute_multicall(calls: Span<Call>) -> Span<Span<felt252>> {
     let mut calls = calls;
     let mut idx = 0;
     loop {
-        check_enough_gas();
         match calls.pop_front() {
             Option::Some(call) => {
                 match call_contract_syscall(*call.to, *call.selector, call.calldata.span()) {

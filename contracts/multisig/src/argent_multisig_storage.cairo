@@ -9,8 +9,6 @@ mod MultisigStorage {
     use array::SpanTrait;
     use starknet::ClassHash;
 
-    use lib::check_enough_gas;
-
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                          Storage                                           //
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,8 +60,6 @@ mod MultisigStorage {
     }
 
     fn find_last_signer_recursive(from_signer: felt252) -> felt252 {
-        check_enough_gas();
-
         let next_signer = signer_list::read(from_signer);
         if (next_signer == 0) {
             return from_signer;
@@ -79,8 +75,6 @@ mod MultisigStorage {
     }
 
     fn find_signer_before_recursive(signer_after: felt252, from_signer: felt252) -> felt252 {
-        check_enough_gas();
-
         let next_signer = signer_list::read(from_signer);
         assert(next_signer != 0, 'argent/cant-find-signer-before');
 
@@ -91,8 +85,6 @@ mod MultisigStorage {
     }
 
     fn add_signers(mut signers_to_add: Span<felt252>, last_signer: felt252) {
-        check_enough_gas();
-
         match signers_to_add.pop_front() {
             Option::Some(signer_ref) => {
                 let signer = *signer_ref;
@@ -111,8 +103,6 @@ mod MultisigStorage {
     }
 
     fn remove_signers(mut signers_to_remove: Span<felt252>, last_signer: felt252) {
-        check_enough_gas();
-
         match signers_to_remove.pop_front() {
             Option::Some(signer_ref) => {
                 let signer = *signer_ref;
@@ -166,8 +156,6 @@ mod MultisigStorage {
     }
 
     fn load_from(from_signer: felt252) -> (usize, felt252) {
-        check_enough_gas();
-
         if (from_signer == 0) {
             // empty list
             return (0, 0);
@@ -187,8 +175,6 @@ mod MultisigStorage {
     }
 
     fn get_signers_len_from(from_signer: felt252) -> usize {
-        check_enough_gas();
-
         if (from_signer == 0) {
             // empty list
             return 0;
@@ -205,7 +191,6 @@ mod MultisigStorage {
     fn get_signers_from(
         from_signer: felt252, mut previous_signers: Array<felt252>
     ) -> Array<felt252> {
-        check_enough_gas();
         if (from_signer == 0) {
             // empty list
             return previous_signers;

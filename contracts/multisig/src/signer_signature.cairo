@@ -2,8 +2,6 @@ use array::ArrayTrait;
 use array::SpanTrait;
 use serde::Serde;
 
-use lib::check_enough_gas;
-
 #[derive(Copy, Drop, Serde)]
 struct SignerSignature {
     signer: felt252,
@@ -16,7 +14,6 @@ fn deserialize_array_signer_signature(
 ) -> Option<Span<SignerSignature>> {
     let mut output = ArrayTrait::new();
     loop {
-        check_enough_gas();
         if serialized.len() == 0 {
             break Option::Some(output.span());
         }

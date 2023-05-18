@@ -19,7 +19,6 @@ mod ArgentMultisigAccount {
     use lib::assert_no_self_call;
     use lib::assert_correct_tx_version;
     use lib::assert_non_reentrant;
-    use lib::check_enough_gas;
     use lib::execute_multicall;
     use lib::Call;
     use lib::Version;
@@ -363,7 +362,6 @@ mod ArgentMultisigAccount {
 
         let mut last_signer: felt252 = 0;
         loop {
-            check_enough_gas();
             match signer_signatures.pop_front() {
                 Option::Some(signer_sig_ref) => {
                     let signer_sig = *signer_sig_ref;

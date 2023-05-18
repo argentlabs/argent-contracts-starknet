@@ -4,12 +4,10 @@ use zeroable::Zeroable;
 use array::ArrayTrait;
 
 use account::ArgentAccount;
-
-use account::tests::initialize_account;
-use account::tests::initialize_account_without_guardian;
-use account::tests::owner_pubkey;
-use account::tests::wrong_owner_pubkey;
-use account::tests::guardian_pubkey;
+use account::tests::{
+    initialize_account, initialize_account_without_guardian, owner_pubkey, wrong_owner_pubkey,
+    guardian_pubkey
+};
 
 const new_owner_pubkey: felt252 = 0xa7da05a4d664859ccd6e567b935cdfbfe3018c7771cb980892ef38878ae9bc;
 const new_owner_r: felt252 = 0x7f41f072c2741c4e3fe91552f1fbb19c9dd96c40e6b845c3a99776da9c6d309;

@@ -67,11 +67,12 @@ async function expectRevertWithErrorMessage(errorMessage: string, fn: () => void
 
 async function expectExecutionRevert(errorMessage: string, invocationFunction: () => Promise<InvokeFunctionResponse>) {
   try {
-    await invocationFunction();
-    assert.fail("No error detected");
+    await waitForExecution(invocationFunction());
   } catch (e: any) {
     expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
+    return;
   }
+  assert.fail("No error detected");
 }
 
 async function expectEvent(transactionHash: string, event: Event) {

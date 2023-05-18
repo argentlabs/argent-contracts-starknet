@@ -117,16 +117,16 @@ describe("ArgentAccount: multicall", function () {
 
   it("Expect an error when a multicall contains a Call referencing the account itself", async function () {
     const { account, accountContract } = await deployAccount(argentAccountClassHash);
+    const recipient = "42";
+    const amount = uint256.bnToUint256(1000);
+    const newOwner = "69";
 
-    await expectRevertWithErrorMessage("argent/no-multicall-to-self", async () => {
-      const recipient = "42";
-      const amount = uint256.bnToUint256(1000);
-      const newOwner = "69";
-      await account.execute([
+    await expectRevertWithErrorMessage("argent/no-multicall-to-self", () =>
+      account.execute([
         ethContract.populateTransaction.transfer(recipient, amount),
         accountContract.populateTransaction.trigger_escape_owner(newOwner),
-      ]);
-    });
+      ]),
+    );
   });
 });
 

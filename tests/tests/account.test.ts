@@ -23,7 +23,6 @@ describe("ArgentAccount", function () {
     // TODO When everything is more clean, we could deploy a new funded cairo1 account and use that one to do all the logic
     // TODO We could dump and load, instead of redeploying an account each time
     // would fix also the fact that if we use some magic values for recipient, we wouldn't have any issue (such as (42))
-    // TODO we could do a fastContract with maxFee to have faster tests by ignoring fee estimation
   });
 
   // TODO Write a test:
@@ -55,12 +54,12 @@ describe("ArgentAccount", function () {
     });
 
     it("Expect an error when owner is zero", async function () {
-      await expectRevertWithErrorMessage("argent/null-owner", async () => {
-        await deployerAccount.deployContract({
+      await expectRevertWithErrorMessage("argent/null-owner", () =>
+        deployerAccount.deployContract({
           classHash: argentAccountClassHash,
           constructorCalldata: CallData.compile({ owner: 0, guardian: 12 }),
-        });
-      });
+        }),
+      );
     });
 
     it("Should use signature from BOTH OWNER and GUARDIAN when there is a GUARDIAN", async function () {
@@ -100,7 +99,7 @@ describe("ArgentAccount", function () {
       expect(guardianAfter).to.equal(BigInt("0x42"));
     });
 
-    it("Should throw an error when signing a transaction with OWNER, GUARDIAN and BACKUP", async function () {
+    it("Expect 'argent/invalid-signature-length' when signing a transaction with OWNER, GUARDIAN and BACKUP", async function () {
       const { account, accountContract, ownerPrivateKey, guardianPrivateKey, guardianBackupPrivateKey } =
         await deployAccountWithGuardianBackup(argentAccountClassHash);
 
@@ -110,19 +109,19 @@ describe("ArgentAccount", function () {
         guardianBackupPrivateKey as string,
       ]);
 
-      await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {
-        await account.execute(accountContract.populateTransaction.change_guardian("0x42"));
-      });
+      await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
+        account.execute(accountContract.populateTransaction.change_guardian("0x42")),
+      );
     });
 
-    it("Should throw an error the signature given to change owner is invalid", async function () {
+    it("Expect 'argent/invalid-owner-sig' when the signature to change owner is invalid", async function () {
       const { account, accountContract } = await deployAccount(argentAccountClassHash);
       const newOwnerPrivateKey = stark.randomAddress();
       const newOwner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
 
-      await expectRevertWithErrorMessage("argent/invalid-owner-sig", async () => {
-        await account.execute(accountContract.populateTransaction.change_owner(newOwner, "0x12", "0x42"));
-      });
+      await expectRevertWithErrorMessage("argent/invalid-owner-sig", () =>
+        account.execute(accountContract.populateTransaction.change_owner(newOwner, "12", "42")),
+      );
     });
 
     it("Should be possible to change_owner", async function () {

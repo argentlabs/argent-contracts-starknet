@@ -5,6 +5,7 @@ import {
   CompiledSierraCasm,
   Contract,
   DeclareContractPayload,
+  DeployContractUDCResponse,
   Event,
   InvokeFunctionResponse,
   InvokeTransactionReceiptResponse,
@@ -50,10 +51,13 @@ async function loadContract(contract_address: string) {
   return new Contract(testAbi, contract_address, provider);
 }
 
-async function expectRevertWithErrorMessage(errorMessage: string, fn: () => Promise<void>) {
+async function expectRevertWithErrorMessage(
+  errorMessage: string,
+  executeFn: () => Promise<DeployContractUDCResponse | InvokeFunctionResponse>,
+) {
   try {
-    await fn();
-    assert.fail("No error detected");
+    const {transaction_hash} = await executeFn();
+    await provider.waitForTransaction(transaction_hash);
   } catch (e: any) {
     // console.log(e);
     expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));

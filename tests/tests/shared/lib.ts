@@ -73,8 +73,9 @@ async function expectEvent(transactionHash: string, event: Event) {
   const currentEvent = eventFiltered[0];
   expect(currentEvent.from_address).to.eql(event.from_address);
   // Needs deep equality for array, can't do to.equal
-  const eventAsHex = event.data.map((e) => num.toHex(e));
-  expect(currentEvent.data).to.eql(eventAsHex);
+  const currentEventData = currentEvent.data.map((e) => num.toBigInt(e));
+  const eventData = event.data.map((e) => num.toBigInt(e));
+  expect(currentEventData).to.eql(eventData);
 }
 
 async function expectEventWhile(event: Event, fn: () => Promise<InvokeFunctionResponse>) {

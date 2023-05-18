@@ -5,9 +5,10 @@ import {
   ConcatSigner,
   declareContract,
   deployAccount,
+  deployAccountWithGuardianBackup,
+  deployAccountWithoutGuardian,
   deployerAccount,
   expectRevertWithErrorMessage,
-  loadContract,
   provider,
 } from "./shared";
 
@@ -29,8 +30,7 @@ describe("ArgentAccount", function () {
   // assert_correct_tx_version(tx_info.version); in __execute__
   describe("Example tests", function () {
     it("Expect guardian and guardian backup to be 0 when deployed with an owner only", async function () {
-      const account = await deployAccount(argentAccountClassHash);
-      const accountContract = await loadContract(account.address);
+      const { accountContract } = await deployAccountWithoutGuardian(argentAccountClassHash);
 
       const guardian = await accountContract.get_guardian();
       expect(guardian).to.equal(0n);
@@ -40,12 +40,9 @@ describe("ArgentAccount", function () {
     });
 
     it("Expect guardian backup to be 0 when deployed with an owner and a guardian", async function () {
-      const ownerPrivateKey = stark.randomAddress();
+      const { accountContract, ownerPrivateKey, guardianPrivateKey } = await deployAccount(argentAccountClassHash);
       const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
-      const guardianPrivateKey = stark.randomAddress();
-      const guardianPublicKey = ec.starkCurve.getStarkKey(guardianPrivateKey);
-      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-      const accountContract = await loadContract(account.address);
+      const guardianPublicKey = ec.starkCurve.getStarkKey(guardianPrivateKey as string);
 
       const owner = await accountContract.get_owner();
       expect(owner).to.equal(BigInt(ownerPublicKey));
@@ -67,10 +64,9 @@ describe("ArgentAccount", function () {
     });
 
     it("Should use signature from BOTH OWNER and GUARDIAN when there is a GUARDIAN", async function () {
-      const ownerPrivateKey = stark.randomAddress();
-      const guardianPrivateKey = stark.randomAddress();
-      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-      const accountContract = await loadContract(account.address);
+      const { account, accountContract, ownerPrivateKey, guardianPrivateKey } = await deployAccount(
+        argentAccountClassHash,
+      );
 
       const guardianBackupBefore = await accountContract.get_guardian_backup();
       expect(guardianBackupBefore).to.equal(0n);
@@ -82,12 +78,11 @@ describe("ArgentAccount", function () {
     });
 
     it("Should sign messages from OWNER and BACKUP_GUARDIAN when there is a GUARDIAN and a BACKUP", async function () {
-      const ownerPrivateKey = stark.randomAddress();
-      const guardianPrivateKey = stark.randomAddress();
       const guardianBackupPrivateKey = stark.randomAddress();
       const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
-      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-      const accountContract = await loadContract(account.address);
+      const { account, accountContract, ownerPrivateKey, guardianPrivateKey } = await deployAccount(
+        argentAccountClassHash,
+      );
 
       const guardianBackupBefore = await accountContract.get_guardian_backup();
       expect(guardianBackupBefore).to.equal(0n);
@@ -106,13 +101,14 @@ describe("ArgentAccount", function () {
     });
 
     it("Should throw an error when signing a transaction with OWNER, GUARDIAN and BACKUP", async function () {
-      const ownerPrivateKey = stark.randomAddress();
-      const guardianPrivateKey = stark.randomAddress();
-      const guardianBackupPrivateKey = stark.randomAddress();
-      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
-      const accountContract = await loadContract(account.address);
+      const { account, accountContract, ownerPrivateKey, guardianPrivateKey, guardianBackupPrivateKey } =
+        await deployAccountWithGuardianBackup(argentAccountClassHash);
 
-      account.signer = new ConcatSigner([ownerPrivateKey, guardianPrivateKey, guardianBackupPrivateKey]);
+      account.signer = new ConcatSigner([
+        ownerPrivateKey,
+        guardianPrivateKey as string,
+        guardianBackupPrivateKey as string,
+      ]);
 
       await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {
         await account.execute(accountContract.populateTransaction.change_guardian("0x42"));
@@ -120,8 +116,7 @@ describe("ArgentAccount", function () {
     });
 
     it("Should throw an error the signature given to change owner is invalid", async function () {
-      const account = await deployAccount(argentAccountClassHash);
-      const accountContract = await loadContract(account.address);
+      const { account, accountContract } = await deployAccount(argentAccountClassHash);
       const newOwnerPrivateKey = stark.randomAddress();
       const newOwner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
 
@@ -131,9 +126,7 @@ describe("ArgentAccount", function () {
     });
 
     it("Should be possible to change_owner", async function () {
-      const ownerPrivateKey = stark.randomAddress();
-      const account = await deployAccount(argentAccountClassHash, ownerPrivateKey);
-      const accountContract = await loadContract(account.address);
+      const { account, accountContract, ownerPrivateKey } = await deployAccount(argentAccountClassHash);
       const newOwnerPrivateKey = stark.randomAddress();
       const newOwner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
       const changeOwnerSelector = hash.getSelectorFromName("change_owner");

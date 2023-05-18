@@ -3,7 +3,7 @@ import {
   ArgentSigner,
   ESCAPE_SECURITY_PERIOD,
   declareContract,
-  deployAccountV2,
+  deployAccount,
   deployerAccount,
   expectEvent,
   expectEventWhile,
@@ -36,7 +36,7 @@ describe("Make sure all events are emitted", function () {
   });
 
   it("Expect 'EscapeOwnerTriggered(active_at, new_owner)' on trigger_escape_owner", async function () {
-    const { account, accountContract, guardianPrivateKey } = await deployAccountV2(argentAccountClassHash);
+    const { account, accountContract, guardianPrivateKey } = await deployAccount(argentAccountClassHash);
     account.signer = new Signer(guardianPrivateKey);
 
     const newOwner = "0x42";
@@ -54,7 +54,7 @@ describe("Make sure all events are emitted", function () {
   });
 
   it("Expect 'OwnerEscaped(new_signer)' on escape_owner", async function () {
-    const { account, accountContract, guardianPrivateKey } = await deployAccountV2(argentAccountClassHash);
+    const { account, accountContract, guardianPrivateKey } = await deployAccount(argentAccountClassHash);
     account.signer = new Signer(guardianPrivateKey);
 
     const newOwner = "0x42";
@@ -76,7 +76,7 @@ describe("Make sure all events are emitted", function () {
   });
 
   it("Expect 'EscapeGuardianTriggered(active_at, new_owner)' on trigger_escape_guardian", async function () {
-    const { account, accountContract, ownerPrivateKey } = await deployAccountV2(argentAccountClassHash);
+    const { account, accountContract, ownerPrivateKey } = await deployAccount(argentAccountClassHash);
     account.signer = new Signer(ownerPrivateKey);
 
     const newGuardian = "0x42";
@@ -94,7 +94,7 @@ describe("Make sure all events are emitted", function () {
   });
 
   it("Expect 'GuardianEscaped(new_signer)' on escape_guardian", async function () {
-    const { account, accountContract, ownerPrivateKey } = await deployAccountV2(argentAccountClassHash);
+    const { account, accountContract, ownerPrivateKey } = await deployAccount(argentAccountClassHash);
     account.signer = new Signer(ownerPrivateKey);
     const newGuardian = "0x42";
     await setTime(42);
@@ -113,7 +113,7 @@ describe("Make sure all events are emitted", function () {
   });
 
   it("Expect 'OwnerChanged(new_signer)' on change_owner", async function () {
-    const { account, accountContract, ownerPrivateKey } = await deployAccountV2(argentAccountClassHash);
+    const { account, accountContract, ownerPrivateKey } = await deployAccount(argentAccountClassHash);
 
     const newOwnerPrivateKey = stark.randomAddress();
     const newOwner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
@@ -136,7 +136,7 @@ describe("Make sure all events are emitted", function () {
   });
 
   it("Expect 'GuardianChanged(new_guardian)' on change_guardian", async function () {
-    const { account, accountContract } = await deployAccountV2(argentAccountClassHash);
+    const { account, accountContract } = await deployAccount(argentAccountClassHash);
 
     const newGuardian = "0x42";
 
@@ -151,7 +151,7 @@ describe("Make sure all events are emitted", function () {
   });
 
   it("Expect 'GuardianBackupChanged(new_guardian_backup)' on change_guardian_backup", async function () {
-    const { account, accountContract } = await deployAccountV2(argentAccountClassHash);
+    const { account, accountContract } = await deployAccount(argentAccountClassHash);
 
     const newGuardianBackup = "0x42";
 
@@ -166,7 +166,7 @@ describe("Make sure all events are emitted", function () {
   });
 
   it("Expect 'AccountUpgraded(new_implementation)' on upgrade", async function () {
-    const { account, accountContract } = await deployAccountV2(argentAccountClassHash);
+    const { account, accountContract } = await deployAccount(argentAccountClassHash);
     const argentAccountV1ClassHash = await declareContract("ArgentAccountV1");
 
     await expectEventWhile(
@@ -181,7 +181,7 @@ describe("Make sure all events are emitted", function () {
 
   describe("Expect 'EscapeCanceled()'", function () {
     it("Expected on cancel_escape", async function () {
-      const { account, accountContract, ownerPrivateKey, guardianPrivateKey } = await deployAccountV2(
+      const { account, accountContract, ownerPrivateKey, guardianPrivateKey } = await deployAccount(
         argentAccountClassHash,
       );
       account.signer = new Signer(ownerPrivateKey);
@@ -200,7 +200,7 @@ describe("Make sure all events are emitted", function () {
     });
 
     it("Expected on trigger_escape_owner", async function () {
-      const { account, accountContract, guardianPrivateKey } = await deployAccountV2(argentAccountClassHash);
+      const { account, accountContract, guardianPrivateKey } = await deployAccount(argentAccountClassHash);
       account.signer = new Signer(guardianPrivateKey);
 
       await account.execute(accountContract.populateTransaction.trigger_escape_owner("0x42"));
@@ -216,7 +216,7 @@ describe("Make sure all events are emitted", function () {
     });
 
     it("Expected on trigger_escape_guardian", async function () {
-      const { account, accountContract, ownerPrivateKey } = await deployAccountV2(argentAccountClassHash);
+      const { account, accountContract, ownerPrivateKey } = await deployAccount(argentAccountClassHash);
       account.signer = new Signer(ownerPrivateKey);
 
       await account.execute(accountContract.populateTransaction.trigger_escape_guardian("0x42"));
@@ -236,7 +236,7 @@ describe("Make sure all events are emitted", function () {
 
   describe("Expect 'TransactionExecuted(transaction_hash, retdata)' on multicall", function () {
     it("Expect ret data to contain one array with one element when making a simple transaction", async function () {
-      const { account } = await deployAccountV2(argentAccountClassHash);
+      const { account } = await deployAccount(argentAccountClassHash);
       const ethContract = await getEthContract();
       ethContract.connect(account);
 
@@ -255,7 +255,7 @@ describe("Make sure all events are emitted", function () {
     });
 
     it("Expect retdata to contain multiple data when making a multicall transaction", async function () {
-      const { account } = await deployAccountV2(argentAccountClassHash);
+      const { account } = await deployAccount(argentAccountClassHash);
       const ethContract = await getEthContract();
       ethContract.connect(account);
 

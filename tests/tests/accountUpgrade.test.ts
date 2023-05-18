@@ -37,7 +37,7 @@ describe("Argent Account: upgrade", function () {
   });
 
   it("Should be possible to upgrade an account from version 0.3.0 to 0.3.1", async function () {
-    const account = await deployAccount(argentAccountClassHash);
+    const { account } = await deployAccount(argentAccountClassHash);
     const currentVersion = await provider.callContract({
       contractAddress: account.address,
       entrypoint: "get_version",

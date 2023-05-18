@@ -25,7 +25,7 @@ describe("ArgentAccount: multicall", function () {
   });
 
   it("Should be possible to send eth", async function () {
-    const account = await deployAccount(argentAccountClassHash);
+    const { account } = await deployAccount(argentAccountClassHash);
     const recipient = "0x42";
     const amount = uint256.bnToUint256(1000);
     const { balance: senderInitialBalance } = await ethContract.balanceOf(account.address);
@@ -46,7 +46,7 @@ describe("ArgentAccount: multicall", function () {
   });
 
   it("Should be possible to send eth with a Cairo1 account using a multicall", async function () {
-    const account = await deployAccount(argentAccountClassHash);
+    const { account } = await deployAccount(argentAccountClassHash);
     const recipient1 = "0x42";
     const amount1 = uint256.bnToUint256(1000);
     const recipient2 = "0x43";
@@ -75,7 +75,7 @@ describe("ArgentAccount: multicall", function () {
   });
 
   it("Should be possible to invoke different contracts in a multicall", async function () {
-    const account = await deployAccount(argentAccountClassHash);
+    const { account } = await deployAccount(argentAccountClassHash);
     const recipient1 = "0x42";
     const amount1 = uint256.bnToUint256(1000);
 
@@ -101,7 +101,7 @@ describe("ArgentAccount: multicall", function () {
   });
 
   it("Should keep the tx in correct order", async function () {
-    const account = await deployAccount(argentAccountClassHash);
+    const { account } = await deployAccount(argentAccountClassHash);
 
     const initalNumber = await testDappContract.get_number(account.address);
     expect(initalNumber).to.equal(0n);
@@ -121,8 +121,7 @@ describe("ArgentAccount: multicall", function () {
   });
 
   it("Expect an error when a multicall contains a Call referencing the account itself", async function () {
-    const account = await deployAccount(argentAccountClassHash);
-    const accountContract = await loadContract(account.address);
+    const { account, accountContract } = await deployAccount(argentAccountClassHash);
 
     await expectRevertWithErrorMessage("argent/no-multicall-to-self", async () => {
       const recipient = "0x42";

@@ -29,7 +29,7 @@ async function deployOldAccount(proxyClassHash: string, oldArgentAccountClassHas
 
   const account = new Account(provider, contractAddress, ownerPrivateKey);
   account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
-  
+
   await fundAccount(account.address);
   const { transaction_hash } = await account.deployAccount({
     classHash: proxyClassHash,

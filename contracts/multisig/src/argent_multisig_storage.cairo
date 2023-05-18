@@ -5,8 +5,7 @@
 // Reading become a bit more expensive for some operations as it need to go through the full list for some operations
 #[contract]
 mod MultisigStorage {
-    use array::ArrayTrait;
-    use array::SpanTrait;
+    use array::{ArrayTrait, SpanTrait};
     use starknet::ClassHash;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

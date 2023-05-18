@@ -8,29 +8,21 @@ mod ArgentMultisigAccount {
     use traits::Into;
     use zeroable::Zeroable;
 
-    use starknet::get_contract_address;
-    use starknet::ContractAddressIntoFelt252;
-    use starknet::VALIDATED;
-    use starknet::syscalls::replace_class_syscall;
-    use starknet::ClassHash;
-    use starknet::class_hash_const;
+    use starknet::{
+        get_contract_address, ContractAddressIntoFelt252, VALIDATED,
+        syscalls::replace_class_syscall, ClassHash, class_hash_const
+    };
 
-    use lib::assert_only_self;
-    use lib::assert_no_self_call;
-    use lib::assert_correct_tx_version;
-    use lib::assert_non_reentrant;
-    use lib::execute_multicall;
-    use lib::Call;
-    use lib::Version;
-    use lib::IErc165LibraryDispatcher;
-    use lib::IErc165DispatcherTrait;
-    use lib::SpanSerde;
+    use lib::{
+        assert_only_self, assert_no_self_call, assert_correct_tx_version, assert_non_reentrant,
+        execute_multicall, Call, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
+        SpanSerde
+    };
 
-    use multisig::IUpgradeTargetLibraryDispatcher;
-    use multisig::IUpgradeTargetDispatcherTrait;
-    use multisig::deserialize_array_signer_signature;
-    use multisig::MultisigStorage;
-    use multisig::SignerSignature;
+    use multisig::{
+        IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait,
+        deserialize_array_signer_signature, MultisigStorage, SignerSignature
+    };
 
     const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;

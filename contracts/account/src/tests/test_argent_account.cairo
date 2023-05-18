@@ -1,7 +1,6 @@
 use starknet::contract_address_const;
 use starknet::testing::set_caller_address;
 use zeroable::Zeroable;
-use array::ArrayTrait;
 
 use account::ArgentAccount;
 use account::tests::{

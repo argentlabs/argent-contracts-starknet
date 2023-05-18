@@ -10,6 +10,7 @@ import {
   InvokeTransactionReceiptResponse,
   hash,
   json,
+  num,
   shortString,
 } from "starknet";
 
@@ -72,7 +73,8 @@ async function expectEvent(transactionHash: string, event: Event) {
   const currentEvent = eventFiltered[0];
   expect(currentEvent.from_address).to.eql(event.from_address);
   // Needs deep equality for array, can't do to.equal
-  expect(currentEvent.data).to.eql(event.data);
+  const eventAsHex = event.data.map((e) => num.toHex(e));
+  expect(currentEvent.data).to.eql(eventAsHex);
 }
 
 async function expectEventWhile(event: Event, fn: () => Promise<InvokeFunctionResponse>) {

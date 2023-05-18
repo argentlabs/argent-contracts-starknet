@@ -21,8 +21,8 @@ describe("Make sure all events are emitted", function () {
   });
 
   it("Expect 'AccountCreated(contract_address, owner, guardian)' when deploying an account", async function () {
-    const owner = "0x21";
-    const guardian = "0x42";
+    const owner = "21";
+    const guardian = "42";
     const constructorCalldata = CallData.compile({ owner, guardian });
     const { transaction_hash, contract_address } = await deployerAccount.deployContract({
       classHash: argentAccountClassHash,
@@ -39,7 +39,7 @@ describe("Make sure all events are emitted", function () {
     const { account, accountContract, guardianPrivateKey } = await deployAccount(argentAccountClassHash);
     account.signer = new Signer(guardianPrivateKey);
 
-    const newOwner = "0x42";
+    const newOwner = "42";
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
     await setTime(42);
 
@@ -57,7 +57,7 @@ describe("Make sure all events are emitted", function () {
     const { account, accountContract, guardianPrivateKey } = await deployAccount(argentAccountClassHash);
     account.signer = new Signer(guardianPrivateKey);
 
-    const newOwner = "0x42";
+    const newOwner = "42";
     await setTime(42);
 
     await account.execute(accountContract.populateTransaction.trigger_escape_owner(newOwner));
@@ -79,7 +79,7 @@ describe("Make sure all events are emitted", function () {
     const { account, accountContract, ownerPrivateKey } = await deployAccount(argentAccountClassHash);
     account.signer = new Signer(ownerPrivateKey);
 
-    const newGuardian = "0x42";
+    const newGuardian = "42";
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
     await setTime(42);
 
@@ -96,7 +96,7 @@ describe("Make sure all events are emitted", function () {
   it("Expect 'GuardianEscaped(new_signer)' on escape_guardian", async function () {
     const { account, accountContract, ownerPrivateKey } = await deployAccount(argentAccountClassHash);
     account.signer = new Signer(ownerPrivateKey);
-    const newGuardian = "0x42";
+    const newGuardian = "42";
     await setTime(42);
 
     await account.execute(accountContract.populateTransaction.trigger_escape_guardian(newGuardian));
@@ -138,7 +138,7 @@ describe("Make sure all events are emitted", function () {
   it("Expect 'GuardianChanged(new_guardian)' on change_guardian", async function () {
     const { account, accountContract } = await deployAccount(argentAccountClassHash);
 
-    const newGuardian = "0x42";
+    const newGuardian = "42";
 
     await expectEventWhile(
       {
@@ -153,7 +153,7 @@ describe("Make sure all events are emitted", function () {
   it("Expect 'GuardianBackupChanged(new_guardian_backup)' on change_guardian_backup", async function () {
     const { account, accountContract } = await deployAccount(argentAccountClassHash);
 
-    const newGuardianBackup = "0x42";
+    const newGuardianBackup = "42";
 
     await expectEventWhile(
       {
@@ -186,7 +186,7 @@ describe("Make sure all events are emitted", function () {
       );
       account.signer = new Signer(ownerPrivateKey);
 
-      await account.execute(accountContract.populateTransaction.trigger_escape_guardian("0x42"));
+      await account.execute(accountContract.populateTransaction.trigger_escape_guardian(42));
 
       account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
       await expectEventWhile(
@@ -203,7 +203,7 @@ describe("Make sure all events are emitted", function () {
       const { account, accountContract, guardianPrivateKey } = await deployAccount(argentAccountClassHash);
       account.signer = new Signer(guardianPrivateKey);
 
-      await account.execute(accountContract.populateTransaction.trigger_escape_owner("0x42"));
+      await account.execute(accountContract.populateTransaction.trigger_escape_owner(42));
 
       await expectEventWhile(
         {
@@ -211,7 +211,7 @@ describe("Make sure all events are emitted", function () {
           keys: ["EscapeCanceled"],
           data: [],
         },
-        () => account.execute(accountContract.populateTransaction.trigger_escape_owner("0x42")),
+        () => account.execute(accountContract.populateTransaction.trigger_escape_owner(42)),
       );
     });
 
@@ -219,7 +219,7 @@ describe("Make sure all events are emitted", function () {
       const { account, accountContract, ownerPrivateKey } = await deployAccount(argentAccountClassHash);
       account.signer = new Signer(ownerPrivateKey);
 
-      await account.execute(accountContract.populateTransaction.trigger_escape_guardian("0x42"));
+      await account.execute(accountContract.populateTransaction.trigger_escape_guardian(42));
 
       await expectEventWhile(
         {
@@ -228,7 +228,7 @@ describe("Make sure all events are emitted", function () {
           data: [],
         },
         () => {
-          return account.execute(accountContract.populateTransaction.trigger_escape_guardian("0x42"));
+          return account.execute(accountContract.populateTransaction.trigger_escape_guardian(42));
         },
       );
     });
@@ -240,17 +240,15 @@ describe("Make sure all events are emitted", function () {
       const ethContract = await getEthContract();
       ethContract.connect(account);
 
-      const recipient = "0x42";
+      const recipient = "42";
       const amount = uint256.bnToUint256(1000);
-      const retdata_total_len = num.toHex(1);
-      const first_retdata_len = num.toHex(1);
-      const first_retdata = num.toHex(1);
+      const first_retdata = [1];
       const { transaction_hash } = await account.execute(ethContract.populateTransaction.transfer(recipient, amount));
-
+      const data = CallData.compile([transaction_hash, [first_retdata]]);
       await expectEvent(transaction_hash, {
         from_address: account.address,
         keys: ["TransactionExecuted"],
-        data: [transaction_hash, retdata_total_len, first_retdata_len, first_retdata],
+        data,
       });
     });
 
@@ -260,31 +258,25 @@ describe("Make sure all events are emitted", function () {
       ethContract.connect(account);
 
       const recipient = "0x33";
-      const amount = uint256.bnToUint256(10);
-      const { balance } = await ethContract.balanceOf(recipient);
-      const retdata_total_len = num.toHex(2);
-      const first_retdata_len = num.toHex(1);
-      const first_retdata = num.toHex(1);
-      const sec_retdata_len = num.toHex(2);
-      const finalBalanceLow = num.toHex(BigInt(balance.low) + BigInt(amount.low));
-      const finalBalanceHigh = num.toHex(0);
+      const amount = 10n;
 
-      const { transaction_hash } = await account.execute([
-        ethContract.populateTransaction.transfer(recipient, amount),
+      const { balance: balanceUint256 } = await ethContract.balanceOf(recipient);
+      const balance = uint256.uint256ToBN(balanceUint256);
+
+      const finalBalance = uint256.bnToUint256(balance + amount);
+      const firstReturn = [1];
+      const secondReturn = [finalBalance.low, finalBalance.high];
+      const calls = [
+        ethContract.populateTransaction.transfer(recipient, uint256.bnToUint256(amount)),
         ethContract.populateTransaction.balanceOf(recipient),
-      ]);
+      ];
+
+      const { transaction_hash } = await account.execute(calls);
+      const data = CallData.compile([transaction_hash, [firstReturn, secondReturn]]);
       await expectEvent(transaction_hash, {
         from_address: account.address,
         keys: ["TransactionExecuted"],
-        data: [
-          transaction_hash,
-          retdata_total_len,
-          first_retdata_len,
-          first_retdata,
-          sec_retdata_len,
-          finalBalanceLow,
-          finalBalanceHigh,
-        ],
+        data,
       });
     });
     // TODO Could add some more tests regarding multicall later

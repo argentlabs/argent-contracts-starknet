@@ -27,7 +27,6 @@ class FastAccount extends Account {
     if (transactionsDetail && transactionsDetail.maxFee) {
       return super.execute(calls, abis, transactionsDetail);
     }
-    // return super.execute(calls, abis, transactionsDetail);
     return super.execute(calls, abis, { maxFee: BigInt(1e18), ...transactionsDetail });
   }
 }

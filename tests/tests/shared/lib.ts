@@ -56,7 +56,7 @@ async function expectRevertWithErrorMessage(
   executeFn: () => Promise<DeployContractUDCResponse | InvokeFunctionResponse>,
 ) {
   try {
-    const {transaction_hash} = await executeFn();
+    const { transaction_hash } = await executeFn();
     await provider.waitForTransaction(transaction_hash);
   } catch (e: any) {
     // console.log(e);

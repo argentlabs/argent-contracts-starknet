@@ -7,6 +7,10 @@ use asserts::assert_correct_tx_version;
 mod span_serde;
 use span_serde::SpanSerde;
 
+mod outside_execution;
+use outside_execution::OutsideExecution;
+use outside_execution::hash_outside_execution_message;
+
 // Structures 
 mod calls;
 use calls::Call;

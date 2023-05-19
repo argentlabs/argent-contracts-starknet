@@ -1,13 +1,14 @@
 import { Account, CallData, ec, hash, stark } from "starknet";
 import { deployerAccount, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
+import { randomPrivateKey } from "./lib";
 
 async function deployOldAccount(
   proxyClassHash: string,
   oldArgentAccountClassHash: string,
   privateKey?: string,
 ): Promise<Account> {
-  privateKey = privateKey || stark.randomAddress();
+  privateKey = privateKey || randomPrivateKey();
   const publicKey = ec.starkCurve.getStarkKey(privateKey);
 
   const constructorCalldata = CallData.compile({

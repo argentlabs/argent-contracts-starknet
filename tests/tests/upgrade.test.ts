@@ -53,8 +53,8 @@ describe("Test Argent Account: upgrade", function () {
       contractAddress: account.address,
       entrypoint: "get_version",
     });
-    expect(BigInt(newVersion.result[0])).to.equal(BigInt(42));
-    expect(BigInt(newVersion.result[1])).to.equal(BigInt(42));
-    expect(BigInt(newVersion.result[2])).to.equal(BigInt(42));
+    expect(BigInt(newVersion.result[0])).to.equal(42n);
+    expect(BigInt(newVersion.result[1])).to.equal(42n);
+    expect(BigInt(newVersion.result[2])).to.equal(42n);
   });
 });

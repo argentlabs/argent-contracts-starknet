@@ -98,7 +98,7 @@ abstract class RawSigner implements SignerInterface {
   }
 }
 
-class ArgentSigner extends RawSigner {
+export class ArgentSigner extends RawSigner {
   constructor(public ownerPrivateKey: string = randomPrivateKey(), public guardianPrivateKey?: string) {
     super();
   }
@@ -124,7 +124,7 @@ class ArgentSigner extends RawSigner {
   }
 }
 
-class ConcatSigner extends RawSigner {
+export class ConcatSigner extends RawSigner {
   constructor(protected privateKeys: string[]) {
     super();
   }
@@ -140,5 +140,3 @@ class ConcatSigner extends RawSigner {
     ).flat();
   }
 }
-
-export { ArgentSigner, ConcatSigner };

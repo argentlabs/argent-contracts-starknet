@@ -19,14 +19,14 @@ import {
 
 import { deployerAccount, provider } from "./constants";
 
-function randomPrivateKey(): string {
+export function randomPrivateKey(): string {
   return "0x" + encode.buf2hex(ec.starkCurve.utils.randomPrivateKey());
 }
 
 const classHashCache: { [contractName: string]: string } = {};
 
 // Could extends Account to add our specific fn but that's too early.
-async function declareContract(contractName: string): Promise<string> {
+export async function declareContract(contractName: string): Promise<string> {
   console.log(`\tDeclaring ${contractName}...`);
   const cachedClass = classHashCache[contractName];
   if (cachedClass) {
@@ -49,7 +49,7 @@ async function actualDeclare(payload: DeclareContractPayload): Promise<string> {
   return class_hash;
 }
 
-async function loadContract(contract_address: string) {
+export async function loadContract(contract_address: string) {
   const { abi: testAbi } = await provider.getClassAt(contract_address);
   if (!testAbi) {
     throw new Error("Error while getting ABI");
@@ -57,7 +57,7 @@ async function loadContract(contract_address: string) {
   return new Contract(testAbi, contract_address, provider);
 }
 
-async function expectRevertWithErrorMessage(
+export async function expectRevertWithErrorMessage(
   errorMessage: string,
   executeFn: () => Promise<DeployContractUDCResponse | InvokeFunctionResponse>,
 ) {
@@ -70,7 +70,10 @@ async function expectRevertWithErrorMessage(
   }
 }
 
-async function expectExecutionRevert(errorMessage: string, invocationFunction: () => Promise<InvokeFunctionResponse>) {
+export async function expectExecutionRevert(
+  errorMessage: string,
+  invocationFunction: () => Promise<InvokeFunctionResponse>,
+) {
   try {
     await invocationFunction();
     assert.fail("No error detected");
@@ -80,7 +83,7 @@ async function expectExecutionRevert(errorMessage: string, invocationFunction: (
   }
 }
 
-async function expectEvent(transactionHash: string, event: Event) {
+export async function expectEvent(transactionHash: string, event: Event) {
   const txReceiptDeployTest: InvokeTransactionReceiptResponse = await provider.waitForTransaction(transactionHash);
   if (!txReceiptDeployTest.events) {
     assert.fail("No events triggered");
@@ -97,22 +100,11 @@ async function expectEvent(transactionHash: string, event: Event) {
   const eventData = event.data.map((e) => num.toBigInt(e));
   expect(currentEventData).to.eql(eventData);
 }
-async function expectEventWhile(event: Event, fn: () => Promise<InvokeFunctionResponse>) {
+export async function expectEventWhile(event: Event, fn: () => Promise<InvokeFunctionResponse>) {
   const { transaction_hash } = await fn();
   await expectEvent(transaction_hash, event);
 }
-async function waitForExecution(response: Promise<InvokeFunctionResponse>) {
+export async function waitForExecution(response: Promise<InvokeFunctionResponse>) {
   const { transaction_hash: transferTxHash } = await response;
   return await provider.waitForTransaction(transferTxHash);
 }
-
-export {
-  declareContract,
-  loadContract,
-  expectRevertWithErrorMessage,
-  randomPrivateKey,
-  waitForExecution,
-  expectEvent,
-  expectEventWhile,
-  expectExecutionRevert,
-};

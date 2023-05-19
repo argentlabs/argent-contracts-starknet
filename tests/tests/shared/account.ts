@@ -13,7 +13,10 @@ export interface ArgentAccount {
   guardianBackupPrivateKey?: string;
 }
 
-async function deployOldAccount(proxyClassHash: string, oldArgentAccountClassHash: string): Promise<ArgentAccount> {
+export async function deployOldAccount(
+  proxyClassHash: string,
+  oldArgentAccountClassHash: string,
+): Promise<ArgentAccount> {
   const ownerPrivateKey = randomPrivateKey();
   const guardianPrivateKey = randomPrivateKey();
   const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
@@ -74,7 +77,7 @@ async function deployAccountInner(
   return account;
 }
 
-async function deployAccount(argentAccountClassHash: string): Promise<ArgentAccount> {
+export async function deployAccount(argentAccountClassHash: string): Promise<ArgentAccount> {
   const ownerPrivateKey = randomPrivateKey();
   const guardianPrivateKey = randomPrivateKey();
   const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
@@ -88,7 +91,7 @@ async function deployAccount(argentAccountClassHash: string): Promise<ArgentAcco
   };
 }
 
-async function deployAccountWithoutGuardian(argentAccountClassHash: string): Promise<ArgentAccount> {
+export async function deployAccountWithoutGuardian(argentAccountClassHash: string): Promise<ArgentAccount> {
   const ownerPrivateKey = randomPrivateKey();
   const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey);
   const accountContract = await loadContract(account.address);
@@ -100,7 +103,7 @@ async function deployAccountWithoutGuardian(argentAccountClassHash: string): Pro
   };
 }
 
-async function deployAccountWithGuardianBackup(argentAccountClassHash: string): Promise<ArgentAccount> {
+export async function deployAccountWithGuardianBackup(argentAccountClassHash: string): Promise<ArgentAccount> {
   const guardianBackupPrivateKey = randomPrivateKey();
   const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
 
@@ -114,7 +117,7 @@ async function deployAccountWithGuardianBackup(argentAccountClassHash: string): 
   return ArgentAccount;
 }
 
-async function upgradeAccount(accountToUpgrade: Account, argentAccountClassHash: string) {
+export async function upgradeAccount(accountToUpgrade: Account, argentAccountClassHash: string) {
   const { transaction_hash: transferTxHash } = await accountToUpgrade.execute({
     contractAddress: accountToUpgrade.address,
     entrypoint: "upgrade",
@@ -122,11 +125,3 @@ async function upgradeAccount(accountToUpgrade: Account, argentAccountClassHash:
   });
   await provider.waitForTransaction(transferTxHash);
 }
-
-export {
-  deployAccount,
-  deployAccountWithGuardianBackup,
-  deployAccountWithoutGuardian,
-  deployOldAccount,
-  upgradeAccount,
-};

@@ -1,7 +1,7 @@
 import { InvokeFunctionResponse, num } from "starknet";
 import { provider } from ".";
 
-async function profileGasUsage(functionCall: Promise<InvokeFunctionResponse>) {
+export async function profileGasUsage(functionCall: Promise<InvokeFunctionResponse>) {
   const { transaction_hash: transferTxHash } = await functionCall;
   const receipt = await provider.waitForTransaction(transferTxHash);
   const actualFee = num.hexToDecimalString(receipt.actual_fee as string) as unknown as number;
@@ -53,5 +53,3 @@ async function profileGasUsage(functionCall: Promise<InvokeFunctionResponse>) {
 
   return receipt;
 }
-
-export { profileGasUsage };

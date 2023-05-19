@@ -13,13 +13,14 @@ impl SpanSerde<T,
 impl TSerde: Serde<T>,
 impl TDrop: Drop<T>,
 impl TCopy: Copy<T>> of Serde<Span<T>> {
-    fn serialize(ref serialized: Array<felt252>, mut input: Span<T>) {
-        Serde::<usize>::serialize(ref serialized, input.len());
+    fn serialize(self: @Span<T>, ref output: Array<felt252>) {
+        let mut me: Span<T> = *self;
+        me.len().serialize(ref output);
+
         loop {
-            check_enough_gas();
-            match input.pop_front() {
+            match me.pop_front() {
                 Option::Some(value) => {
-                    TSerde::serialize(ref serialized, *value);
+                    value.serialize(ref output);
                 },
                 Option::None(_) => {
                     break ();

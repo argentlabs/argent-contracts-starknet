@@ -6,7 +6,6 @@ use zeroable::Zeroable;
 use starknet::get_contract_address;
 use starknet::get_caller_address;
 use starknet::ContractAddress;
-use starknet::ContractAddressZeroable;
 use starknet::ContractAddressIntoFelt252;
 
 use lib::Call;

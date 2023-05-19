@@ -4,7 +4,7 @@ import { declareContract, deployAccount, deployOldAccount, provider, upgradeAcco
 
 describe("Argent Account: upgrade", function () {
   let argentAccountClassHash: string;
-  let argentAccountV1ClassHash: string;
+  let argentAccountFutureClassHash: string;
   let oldArgentAccountClassHash: string;
   let proxyClassHash: string;
 
@@ -12,7 +12,7 @@ describe("Argent Account: upgrade", function () {
     argentAccountClassHash = await declareContract("ArgentAccount");
     // This is the same as ArgentAccount but with a different version (to have another class hash)
     // Done to be able to test upgradability
-    argentAccountV1ClassHash = await declareContract("ArgentAccountV1");
+    argentAccountFutureClassHash = await declareContract("ArgentAccountFutureVersion");
     oldArgentAccountClassHash = await declareContract("OldArgentAccount");
     proxyClassHash = await declareContract("Proxy");
   });
@@ -36,7 +36,7 @@ describe("Argent Account: upgrade", function () {
     expect(newVersion.result[2]).to.equal(num.toHex(0));
   });
 
-  it("Should be possible to upgrade an account from version 0.3.0 to 0.3.1", async function () {
+  it("Should be possible to upgrade an account from version 0.3.0 to FutureVersion", async function () {
     const { account } = await deployAccount(argentAccountClassHash);
     const currentVersion = await provider.callContract({
       contractAddress: account.address,
@@ -45,13 +45,13 @@ describe("Argent Account: upgrade", function () {
     expect(currentVersion.result[0]).to.equal(num.toHex(0));
     expect(currentVersion.result[1]).to.equal(num.toHex(3));
     expect(currentVersion.result[2]).to.equal(num.toHex(0));
-    await upgradeAccount(account, argentAccountV1ClassHash);
+    await upgradeAccount(account, argentAccountFutureClassHash);
     const newVersion = await provider.callContract({
       contractAddress: account.address,
       entrypoint: "get_version",
     });
-    expect(newVersion.result[0]).to.equal(num.toHex(0));
-    expect(newVersion.result[1]).to.equal(num.toHex(3));
-    expect(newVersion.result[2]).to.equal(num.toHex(1));
+    expect(newVersion.result[0]).to.equal(num.toHex(42));
+    expect(newVersion.result[1]).to.equal(num.toHex(42));
+    expect(newVersion.result[2]).to.equal(num.toHex(42));
   });
 });

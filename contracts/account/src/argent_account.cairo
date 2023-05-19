@@ -176,7 +176,7 @@ mod ArgentAccount {
         outside_execution: OutsideExecution, signature: Array<felt252>
     ) -> Span<Span<felt252>> {
         // Checks
-        if (outside_execution.caller.into() != 'ANY_CALLER') {
+        if outside_execution.caller.into() != 'ANY_CALLER' {
             assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
         }
 

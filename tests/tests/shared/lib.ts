@@ -90,8 +90,8 @@ async function expectEvent(transactionHash: string, event: Event) {
   expect(currentEvent.data).to.eql(event.data);
 }
 
-async function waitForExecution(functionCall: Promise<InvokeFunctionResponse>) {
-  const { transaction_hash: transferTxHash } = await functionCall;
+async function waitForExecution(response: Promise<InvokeFunctionResponse>) {
+  const { transaction_hash: transferTxHash } = await response;
   return await provider.waitForTransaction(transferTxHash);
 }
 

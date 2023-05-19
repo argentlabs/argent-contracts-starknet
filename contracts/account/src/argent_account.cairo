@@ -13,12 +13,17 @@ mod ArgentAccount {
     use starknet::get_block_timestamp;
     use starknet::get_contract_address;
     use starknet::get_tx_info;
+    use starknet::get_caller_address;
     use starknet::VALIDATED;
     use starknet::syscalls::replace_class_syscall;
+    use traits::Into;
+    use starknet::ContractAddressIntoFelt252;
 
     use account::Escape;
     use account::EscapeStatus;
 
+    use lib::OutsideExecution;
+    use lib::hash_outside_execution_message;
     use lib::assert_correct_tx_version;
     use lib::assert_no_self_call;
     use lib::assert_non_reentrant;
@@ -73,6 +78,7 @@ mod ArgentAccount {
         _guardian: felt252,
         _guardian_backup: felt252,
         _escape: Escape,
+        outside_nonces: LegacyMap::<felt252, bool>,
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -132,42 +138,16 @@ mod ArgentAccount {
 
     #[external]
     fn __validate__(calls: Array::<Call>) -> felt252 {
-        let account_address = get_contract_address();
-
-        if calls.len() == 1 {
-            let call = calls[0];
-            if *call.to == account_address {
-                let tx_info = get_tx_info().unbox();
-                let selector = *call.selector;
-                if selector == ESCAPE_GUARDIAN_SELECTOR | selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
-                    let is_valid = is_valid_owner_signature(
-                        tx_info.transaction_hash, tx_info.signature
-                    );
-                    assert(is_valid, 'argent/invalid-owner-sig');
-                    return VALIDATED;
-                }
-                if selector == ESCAPE_OWNER_SELECTOR | selector == TRIGGER_ESCAPE_OWNER_SELECTOR {
-                    let is_valid = is_valid_guardian_signature(
-                        tx_info.transaction_hash, tx_info.signature
-                    );
-                    assert(is_valid, 'argent/invalid-guardian-sig');
-                    return VALIDATED;
-                }
-                assert(selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
-            }
-        } else {
-            // make sure no call is to the account
-            assert_no_self_call(calls.span(), account_address);
-        }
-
-        assert_is_valid_signature();
-
+        let tx_info = get_tx_info().unbox();
+        assert_valid_calls_and_signature(calls.span(), tx_info.transaction_hash, tx_info.signature);
         VALIDATED
     }
 
     #[external]
     fn __validate_declare__(class_hash: felt252) -> felt252 {
-        assert_is_valid_signature();
+        // TODO validate tx version?
+        let tx_info = get_tx_info().unbox();
+        assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
         VALIDATED
     }
 
@@ -176,7 +156,9 @@ mod ArgentAccount {
     fn __validate_deploy__(
         class_hash: felt252, contract_address_salt: felt252, owner: felt252, guardian: felt252
     ) -> felt252 {
-        assert_is_valid_signature();
+        // TODO validate tx version?
+        let tx_info = get_tx_info().unbox();
+        assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
         VALIDATED
     }
 
@@ -188,6 +170,38 @@ mod ArgentAccount {
 
         let retdata = execute_multicall(calls.span());
         TransactionExecuted(tx_info.transaction_hash, retdata);
+        retdata
+    }
+
+    #[external]
+    fn execute_from_outside(
+        outside_execution: OutsideExecution, signature: Array<felt252>
+    ) -> Span<Span<felt252>> {
+        // Checks
+        if outside_execution.caller.into() != 'ANY_CALLER' {
+            assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
+        }
+
+        let block_timestamp = get_block_timestamp();
+        assert(
+            outside_execution.execute_after < block_timestamp & block_timestamp < outside_execution.execute_before,
+            'argent/invalid-timestamp'
+        );
+        let nonce = outside_execution.nonce;
+        assert(!outside_nonces::read(nonce), 'argent/duplicated-outside-nonce');
+
+        let outside_tx_hash = hash_outside_execution_message(@outside_execution);
+
+        let calls = outside_execution.calls.span();
+
+        assert_valid_calls_and_signature(calls, outside_tx_hash, signature.span());
+
+        // Effects
+        outside_nonces::write(nonce, true);
+
+        // Interactions
+        let retdata = execute_multicall(calls);
+        TransactionExecuted(outside_tx_hash, retdata);
         retdata
     }
 
@@ -462,22 +476,42 @@ mod ArgentAccount {
         is_valid_signature(hash, signatures)
     }
 
+    #[view]
+    fn get_outside_execution_message_hash(outside_execution: OutsideExecution) -> felt252 {
+        return hash_outside_execution_message(@outside_execution);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                          Internal                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    fn assert_is_valid_signature() {
-        let tx_info = get_tx_info().unbox();
-        let transaction_hash = tx_info.transaction_hash;
-        let full_signature = tx_info.signature;
+    fn assert_valid_calls_and_signature(
+        calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
+    ) {
+        let account_address = get_contract_address();
 
-        let (owner_signature, guardian_signature) = split_signatures(full_signature);
-        let is_valid = is_valid_owner_signature(transaction_hash, owner_signature);
-        assert(is_valid, 'argent/invalid-owner-sig');
-        if _guardian::read() != 0 {
-            let is_valid = is_valid_guardian_signature(transaction_hash, guardian_signature);
-            assert(is_valid, 'argent/invalid-guardian-sig');
+        if calls.len() == 1 {
+            let call = calls[0];
+            if *call.to == account_address {
+                let selector = *call.selector;
+                if selector == ESCAPE_GUARDIAN_SELECTOR | selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
+                    let is_valid = is_valid_owner_signature(execution_hash, signature);
+                    assert(is_valid, 'argent/invalid-owner-sig');
+                    return ();
+                }
+                if selector == ESCAPE_OWNER_SELECTOR | selector == TRIGGER_ESCAPE_OWNER_SELECTOR {
+                    let is_valid = is_valid_guardian_signature(execution_hash, signature);
+                    assert(is_valid, 'argent/invalid-guardian-sig');
+                    return ();
+                }
+                assert(selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
+            }
+        } else {
+            // make sure no call is to the account
+            assert_no_self_call(calls, account_address);
         }
+
+        assert_valid_span_signature(execution_hash, signature);
     }
 
     fn is_valid_span_signature(hash: felt252, signatures: Span<felt252>) -> bool {
@@ -490,6 +524,20 @@ mod ArgentAccount {
             guardian_signature.is_empty()
         } else {
             is_valid_guardian_signature(hash, guardian_signature)
+        }
+    }
+
+    fn assert_valid_span_signature(hash: felt252, signatures: Span<felt252>) {
+        let (owner_signature, guardian_signature) = split_signatures(signatures);
+        let is_valid = is_valid_owner_signature(hash, owner_signature);
+        assert(is_valid, 'argent/invalid-owner-sig');
+
+        if _guardian::read() == 0 {
+            assert(guardian_signature.is_empty(), 'argent/invalid-guardian-sig');
+        } else {
+            assert(
+                is_valid_guardian_signature(hash, guardian_signature), 'argent/invalid-guardian-sig'
+            );
         }
     }
 

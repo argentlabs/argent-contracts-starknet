@@ -2,7 +2,7 @@ import { Account, CallData, Contract, ec, hash, stark } from "starknet";
 import { ArgentSigner } from "./argentSigner";
 import { deployerAccount, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
-import { loadContract } from "./lib";
+import { loadContract, randomPrivateKey } from "./lib";
 
 // This is only for TESTS purposes and shouldn't be used in production
 export interface ArgentAccount {
@@ -75,8 +75,8 @@ async function deployAccountInner(
 }
 
 async function deployAccount(argentAccountClassHash: string): Promise<ArgentAccount> {
-  const ownerPrivateKey = stark.randomAddress();
-  const guardianPrivateKey = stark.randomAddress();
+  const ownerPrivateKey = randomPrivateKey();
+  const guardianPrivateKey = randomPrivateKey();
   const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
   const accountContract = await loadContract(account.address);
 

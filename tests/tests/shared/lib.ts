@@ -9,6 +9,8 @@ import {
   Event,
   InvokeFunctionResponse,
   InvokeTransactionReceiptResponse,
+  ec,
+  encode,
   hash,
   json,
   num,
@@ -16,6 +18,10 @@ import {
 } from "starknet";
 
 import { deployerAccount, provider } from "./constants";
+
+function randomPrivateKey(): string {
+  return "0x" + encode.buf2hex(ec.starkCurve.utils.randomPrivateKey());
+}
 
 const classHashCache: { [contractName: string]: string } = {};
 
@@ -64,6 +70,15 @@ async function expectRevertWithErrorMessage(
   }
 }
 
+async function expectExecutionRevert(errorMessage: string, invocationFunction: () => Promise<InvokeFunctionResponse>) {
+  try {
+    await invocationFunction();
+    assert.fail("No error detected");
+  } catch (e: any) {
+    expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
+  }
+}
+
 async function expectEvent(transactionHash: string, event: Event) {
   const txReceiptDeployTest: InvokeTransactionReceiptResponse = await provider.waitForTransaction(transactionHash);
   if (!txReceiptDeployTest.events) {
@@ -81,10 +96,22 @@ async function expectEvent(transactionHash: string, event: Event) {
   const eventData = event.data.map((e) => num.toBigInt(e));
   expect(currentEventData).to.eql(eventData);
 }
-
 async function expectEventWhile(event: Event, fn: () => Promise<InvokeFunctionResponse>) {
   const { transaction_hash } = await fn();
   await expectEvent(transaction_hash, event);
 }
+async function waitForExecution(response: Promise<InvokeFunctionResponse>) {
+  const { transaction_hash: transferTxHash } = await response;
+  return await provider.waitForTransaction(transferTxHash);
+}
 
-export { declareContract, loadContract, expectRevertWithErrorMessage, expectEvent, expectEventWhile };
+export {
+  declareContract,
+  loadContract,
+  expectRevertWithErrorMessage,
+  randomPrivateKey,
+  waitForExecution,
+  expectEvent,
+  expectEventWhile,
+  expectExecutionRevert,
+};

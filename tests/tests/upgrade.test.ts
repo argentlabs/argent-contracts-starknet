@@ -7,7 +7,7 @@ describe("Test Argent Account: upgrade", function () {
   this.timeout(320000);
 
   let argentAccountClassHash: string;
-  let argentAccountV1ClassHash: string;
+  let argentAccountFutureClassHash: string;
   let oldArgentAccountClassHash: string;
   let proxyClassHash: string;
 
@@ -15,7 +15,7 @@ describe("Test Argent Account: upgrade", function () {
     argentAccountClassHash = await declareContract("ArgentAccount");
     // This is the same as ArgentAccount but with a different version (to have another class hash)
     // Done to be able to test upgradability
-    argentAccountV1ClassHash = await declareContract("ArgentAccountV1");
+    argentAccountFutureClassHash = await declareContract("ArgentAccountFutureVersion");
     oldArgentAccountClassHash = await declareContract("OldArgentAccount");
     proxyClassHash = await declareContract("Proxy");
   });
@@ -39,7 +39,7 @@ describe("Test Argent Account: upgrade", function () {
     expect(BigInt(newVersion.result[2])).to.equal(BigInt(0));
   });
 
-  it("Should be possible to upgrade an account from version 0.3.0 to 0.3.1", async function () {
+  it("Should be possible to upgrade an account from version 0.3.0 to FutureVersion", async function () {
     const account = await deployAccount(argentAccountClassHash);
     const currentVersion = await provider.callContract({
       contractAddress: account.address,
@@ -48,13 +48,13 @@ describe("Test Argent Account: upgrade", function () {
     expect(BigInt(currentVersion.result[0])).to.equal(BigInt(0));
     expect(BigInt(currentVersion.result[1])).to.equal(BigInt(3));
     expect(BigInt(currentVersion.result[2])).to.equal(BigInt(0));
-    await upgradeAccount(account, argentAccountV1ClassHash);
+    await upgradeAccount(account, argentAccountFutureClassHash);
     const newVersion = await provider.callContract({
       contractAddress: account.address,
       entrypoint: "get_version",
     });
-    expect(BigInt(newVersion.result[0])).to.equal(BigInt(0));
-    expect(BigInt(newVersion.result[1])).to.equal(BigInt(3));
-    expect(BigInt(newVersion.result[2])).to.equal(BigInt(1));
+    expect(BigInt(newVersion.result[0])).to.equal(BigInt(42));
+    expect(BigInt(newVersion.result[1])).to.equal(BigInt(42));
+    expect(BigInt(newVersion.result[2])).to.equal(BigInt(42));
   });
 });

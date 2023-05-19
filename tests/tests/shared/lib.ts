@@ -94,16 +94,18 @@ export async function expectEvent(transactionHash: string, event: Event) {
   expect(eventFiltered.length != 0, `No event detected in this transaction: ${transactionHash}`).to.be.true;
   expect(eventFiltered.length).to.equal(1, "Unsupported: Multiple events with same selector detected");
   const currentEvent = eventFiltered[0];
-  expect(currentEvent.from_address).to.eql(event.from_address);
+  expect(currentEvent.from_address).to.deep.equal(event.from_address);
   // Needs deep equality for array, can't do to.equal
   const currentEventData = currentEvent.data.map((e) => num.toBigInt(e));
   const eventData = event.data.map((e) => num.toBigInt(e));
-  expect(currentEventData).to.eql(eventData);
+  expect(currentEventData).to.deep.equal(eventData);
 }
+
 export async function expectEventWhile(event: Event, fn: () => Promise<InvokeFunctionResponse>) {
   const { transaction_hash } = await fn();
   await expectEvent(transaction_hash, event);
 }
+
 export async function waitForExecution(response: Promise<InvokeFunctionResponse>) {
   const { transaction_hash: transferTxHash } = await response;
   return await provider.waitForTransaction(transferTxHash);

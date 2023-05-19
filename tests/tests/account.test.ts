@@ -10,6 +10,7 @@ import {
   deployerAccount,
   expectRevertWithErrorMessage,
   provider,
+  randomPrivateKey,
 } from "./shared";
 
 describe("ArgentAccount", function () {
@@ -77,7 +78,7 @@ describe("ArgentAccount", function () {
     });
 
     it("Should sign messages from OWNER and BACKUP_GUARDIAN when there is a GUARDIAN and a BACKUP", async function () {
-      const guardianBackupPrivateKey = stark.randomAddress();
+      const guardianBackupPrivateKey = randomPrivateKey();
       const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
       const { account, accountContract, ownerPrivateKey, guardianPrivateKey } = await deployAccount(
         argentAccountClassHash,
@@ -116,7 +117,7 @@ describe("ArgentAccount", function () {
 
     it("Expect 'argent/invalid-owner-sig' when the signature to change owner is invalid", async function () {
       const { account, accountContract } = await deployAccount(argentAccountClassHash);
-      const newOwnerPrivateKey = stark.randomAddress();
+      const newOwnerPrivateKey = randomPrivateKey();
       const newOwner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
 
       await expectRevertWithErrorMessage("argent/invalid-owner-sig", () =>
@@ -126,7 +127,7 @@ describe("ArgentAccount", function () {
 
     it("Should be possible to change_owner", async function () {
       const { account, accountContract, ownerPrivateKey } = await deployAccount(argentAccountClassHash);
-      const newOwnerPrivateKey = stark.randomAddress();
+      const newOwnerPrivateKey = randomPrivateKey();
       const newOwner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
       const changeOwnerSelector = hash.getSelectorFromName("change_owner");
       const chainId = await provider.getChainId();

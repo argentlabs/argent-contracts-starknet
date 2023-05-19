@@ -14,8 +14,8 @@ export interface ArgentAccount {
 }
 
 async function deployOldAccount(proxyClassHash: string, oldArgentAccountClassHash: string): Promise<ArgentAccount> {
-  const ownerPrivateKey = stark.randomAddress();
-  const guardianPrivateKey = stark.randomAddress();
+  const ownerPrivateKey = randomPrivateKey();
+  const guardianPrivateKey = randomPrivateKey();
   const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
   const guardianPublicKey = ec.starkCurve.getStarkKey(guardianPrivateKey);
 
@@ -89,7 +89,7 @@ async function deployAccount(argentAccountClassHash: string): Promise<ArgentAcco
 }
 
 async function deployAccountWithoutGuardian(argentAccountClassHash: string): Promise<ArgentAccount> {
-  const ownerPrivateKey = stark.randomAddress();
+  const ownerPrivateKey = randomPrivateKey();
   const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey);
   const accountContract = await loadContract(account.address);
 
@@ -101,7 +101,7 @@ async function deployAccountWithoutGuardian(argentAccountClassHash: string): Pro
 }
 
 async function deployAccountWithGuardianBackup(argentAccountClassHash: string): Promise<ArgentAccount> {
-  const guardianBackupPrivateKey = stark.randomAddress();
+  const guardianBackupPrivateKey = randomPrivateKey();
   const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
 
   const ArgentAccount = await deployAccount(argentAccountClassHash);

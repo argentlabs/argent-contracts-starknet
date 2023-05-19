@@ -12,6 +12,7 @@ import {
   expectRevertWithErrorMessage,
   loadContract,
   provider,
+  randomPrivateKey,
   setTime,
   upgradeAccount,
 } from "./shared";
@@ -61,8 +62,7 @@ describe("ArgentAccount: escape mechanism", function () {
   });
 
   beforeEach(async () => {
-    const randomPrivateKey = stark.randomAddress();
-    randomAddress = num.toBigInt(ec.starkCurve.getStarkKey(randomPrivateKey));
+    randomAddress = num.toBigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
     randomTime = BigInt(Math.floor(Math.random() * 1000));
   });
 

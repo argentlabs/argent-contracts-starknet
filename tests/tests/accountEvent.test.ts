@@ -10,6 +10,7 @@ import {
   getEthContract,
   increaseTime,
   provider,
+  randomPrivateKey,
   setTime,
 } from "./shared";
 
@@ -115,7 +116,7 @@ describe("Make sure all events are emitted", function () {
   it("Expect 'OwnerChanged(new_signer)' on change_owner", async function () {
     const { account, accountContract, ownerPrivateKey } = await deployAccount(argentAccountClassHash);
 
-    const newOwnerPrivateKey = stark.randomAddress();
+    const newOwnerPrivateKey = randomPrivateKey();
     const newOwner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
     const changeOwnerSelector = hash.getSelectorFromName("change_owner");
     const chainId = await provider.getChainId();

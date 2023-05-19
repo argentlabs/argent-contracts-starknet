@@ -7,15 +7,17 @@ mod ArgentAccount {
     use traits::Into;
 
     use starknet::{
-        ClassHash, class_hash_const, ContractAddress, get_block_timestamp, get_caller_address, get_contract_address,
-        get_tx_info, VALIDATED, syscalls::replace_class_syscall, ContractAddressIntoFelt252
+        ClassHash, class_hash_const, ContractAddress, get_block_timestamp, get_caller_address,
+        get_contract_address, get_tx_info, VALIDATED, syscalls::replace_class_syscall,
+        ContractAddressIntoFelt252
     };
 
     use account::{Escape, EscapeStatus};
     use lib::{
         assert_correct_tx_version, assert_no_self_call, assert_non_reentrant, assert_only_self,
         execute_multicall, Call, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
-        IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait, SpanSerde, OutsideExecution, hash_outside_execution_message
+        IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait, SpanSerde,
+        OutsideExecution, hash_outside_execution_message
     };
 
     const NAME: felt252 = 'ArgentAccount';

@@ -58,7 +58,6 @@ fn hash_outside_call(outside_call: @Call) -> felt252 {
 
     let mut call_data_state: felt252 = 0;
     loop {
-        check_enough_gas();
         match data_span.pop_front() {
             Option::Some(item) => {
                 call_data_state = pedersen(call_data_state, *item);
@@ -83,7 +82,6 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
 
     let mut outside_calls_state: felt252 = 0;
     loop {
-        check_enough_gas();
         match calls_span.pop_front() {
             Option::Some(call) => {
                 outside_calls_state = pedersen(outside_calls_state, hash_outside_call(call));

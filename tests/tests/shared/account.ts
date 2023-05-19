@@ -1,6 +1,6 @@
 import { Account, CallData, Contract, ec, hash, stark } from "starknet";
 import { ArgentSigner } from "./argentSigner";
-import { FastAccount, deployerAccount, provider } from "./constants";
+import { deployerAccount, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";
 import { loadContract } from "./lib";
 
@@ -27,7 +27,7 @@ async function deployOldAccount(proxyClassHash: string, oldArgentAccountClassHas
 
   const contractAddress = hash.calculateContractAddressFromHash(ownerPublicKey, proxyClassHash, constructorCalldata, 0);
 
-  const account = new FastAccount(provider, contractAddress, ownerPrivateKey);
+  const account = new Account(provider, contractAddress, ownerPrivateKey);
   account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
 
   await fundAccount(account.address);
@@ -60,7 +60,7 @@ async function deployAccountInner(
     0,
   );
   await fundAccount(contractAddress);
-  const account = new FastAccount(provider, contractAddress, ownerPrivateKey, "1");
+  const account = new Account(provider, contractAddress, ownerPrivateKey, "1");
   if (guardianPrivateKey) {
     account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
   }

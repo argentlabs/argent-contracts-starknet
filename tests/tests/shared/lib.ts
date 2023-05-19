@@ -83,7 +83,7 @@ export async function expectExecutionRevert(
   }
 }
 
-export async function expectEvent(transactionHash: string, event: Event) {
+async function expectEventFromHash(transactionHash: string, event: Event) {
   const txReceiptDeployTest: InvokeTransactionReceiptResponse = await provider.waitForTransaction(transactionHash);
   if (!txReceiptDeployTest.events) {
     assert.fail("No events triggered");
@@ -96,14 +96,16 @@ export async function expectEvent(transactionHash: string, event: Event) {
   const currentEvent = eventFiltered[0];
   expect(currentEvent.from_address).to.deep.equal(event.from_address);
   // Needs deep equality for array, can't do to.equal
-  const currentEventData = currentEvent.data.map((e) => num.toBigInt(e));
-  const eventData = event.data.map((e) => num.toBigInt(e));
+  const currentEventData = currentEvent.data.map(num.toBigInt);
+  const eventData = event.data.map(num.toBigInt);
   expect(currentEventData).to.deep.equal(eventData);
 }
 
-export async function expectEventWhile(event: Event, fn: () => Promise<InvokeFunctionResponse>) {
-  const { transaction_hash } = await fn();
-  await expectEvent(transaction_hash, event);
+export async function expectEvent(hashOrInvoke: string | (() => Promise<InvokeFunctionResponse>), event: Event) {
+  if (typeof hashOrInvoke !== "string") {
+    ({ transaction_hash: hashOrInvoke } = await hashOrInvoke());
+  }
+  await expectEventFromHash(hashOrInvoke, event);
 }
 
 export async function waitForExecution(response: Promise<InvokeFunctionResponse>) {

@@ -166,7 +166,7 @@ describe("Test contract: ArgentAccount", function () {
 
       const escape = await accountContract.get_escape();
       expect(escape.escape_type).to.equal(1n);
-      expect(escape.active_at).to.equal(42n + 604800n);
+      expect(escape.ready_at).to.equal(42n + 604800n);
     });
 
     it("Should be possible to escape a guardian by the owner alone", async function () {
@@ -182,7 +182,7 @@ describe("Test contract: ArgentAccount", function () {
 
       const escape = await accountContract.get_escape();
       expect(escape.escape_type).to.equal(0n);
-      expect(escape.active_at).to.equal(0n);
+      expect(escape.ready_at).to.equal(0n);
       const guardian = await accountContract.get_guardian();
       expect(guardian).to.equal(BigInt("0x43"));
     });
@@ -199,7 +199,7 @@ describe("Test contract: ArgentAccount", function () {
       await setTime(42);
       const escape = await accountContract.get_escape();
       expect(escape.escape_type).to.equal(2n);
-      expect(Number(escape.active_at)).to.be.greaterThanOrEqual(42 + 604800);
+      expect(Number(escape.ready_at)).to.be.greaterThanOrEqual(42 + 604800);
     });
 
     it("Should use signature from BOTH OWNER and GUARDIAN when there is a GUARDIAN", async function () {

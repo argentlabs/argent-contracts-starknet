@@ -105,10 +105,10 @@ mod ArgentAccount {
     fn TransactionExecuted(hash: felt252, response: Span<Span<felt252>>) {}
 
     #[event]
-    fn EscapeOwnerTriggered(active_at: u64, new_owner: felt252) {}
+    fn EscapeOwnerTriggered(ready_at: u64, new_owner: felt252) {}
 
     #[event]
-    fn EscapeGuardianTriggered(active_at: u64, new_guardian: felt252) {}
+    fn EscapeGuardianTriggered(ready_at: u64, new_guardian: felt252) {}
 
     #[event]
     fn OwnerEscaped(new_owner: felt252) {}
@@ -288,15 +288,15 @@ mod ArgentAccount {
         let current_escape = _escape::read();
         if (current_escape.escape_type == ESCAPE_TYPE_GUARDIAN) {
             assert(
-                get_escape_status(current_escape.active_at) == EscapeStatus::Expired(()),
+                get_escape_status(current_escape.ready_at) == EscapeStatus::Expired(()),
                 'argent/cannot-override-escape'
             );
         }
 
         reset_escape();
-        let active_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
-        _escape::write(Escape { active_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: new_owner });
-        EscapeOwnerTriggered(active_at, new_owner);
+        let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
+        _escape::write(Escape { ready_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: new_owner });
+        EscapeOwnerTriggered(ready_at, new_owner);
     }
 
     /// @notice Triggers the escape of the guardian when it is lost or compromised.
@@ -312,11 +312,11 @@ mod ArgentAccount {
 
         reset_escape();
 
-        let active_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
+        let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
         _escape::write(
-            Escape { active_at, escape_type: ESCAPE_TYPE_GUARDIAN, new_signer: new_guardian }
+            Escape { ready_at, escape_type: ESCAPE_TYPE_GUARDIAN, new_signer: new_guardian }
         );
-        EscapeGuardianTriggered(active_at, new_guardian);
+        EscapeGuardianTriggered(ready_at, new_guardian);
     }
 
     /// @notice Completes the escape and changes the owner after the security period
@@ -329,7 +329,7 @@ mod ArgentAccount {
 
         let current_escape = _escape::read();
 
-        let current_escape_status = get_escape_status(current_escape.active_at);
+        let current_escape_status = get_escape_status(current_escape.ready_at);
         assert(current_escape_status == EscapeStatus::Ready(()), 'argent/invalid-escape');
 
         reset_escape_attempts();
@@ -338,7 +338,7 @@ mod ArgentAccount {
         _signer::write(current_escape.new_signer);
         OwnerEscaped(current_escape.new_signer);
         // clear escape
-        _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
+        _escape::write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
     }
 
     /// @notice Completes the escape and changes the guardian after the security period
@@ -351,7 +351,7 @@ mod ArgentAccount {
 
         let current_escape = _escape::read();
         assert(
-            get_escape_status(current_escape.active_at) == EscapeStatus::Ready(()),
+            get_escape_status(current_escape.ready_at) == EscapeStatus::Ready(()),
             'argent/invalid-escape'
         );
 
@@ -361,7 +361,7 @@ mod ArgentAccount {
         _guardian::write(current_escape.new_signer);
         GuardianEscaped(current_escape.new_signer);
         // clear escape
-        _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
+        _escape::write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
     }
 
     /// @notice Cancels an ongoing escape if any.
@@ -370,8 +370,8 @@ mod ArgentAccount {
     fn cancel_escape() {
         assert_only_self();
         let current_escape = _escape::read();
-        let current_escape_status = get_escape_status(current_escape.active_at);
-        assert(current_escape_status != EscapeStatus::None(()), 'argent/no-active-escape');
+        let current_escape_status = get_escape_status(current_escape.ready_at);
+        assert(current_escape_status != EscapeStatus::None(()), 'argent/invalid-escape');
         reset_escape();
         reset_escape_attempts();
     }
@@ -453,6 +453,7 @@ mod ArgentAccount {
     fn get_guardian_escape_attempts() -> u32 {
         guardian_escape_attempts::read()
     }
+
     #[view]
     fn get_owner_escape_attempts() -> u32 {
         owner_escape_attempts::read()
@@ -464,7 +465,7 @@ mod ArgentAccount {
     // #[view]
     // fn get_escape_and_status() -> (Escape, EscapeStatus) {
     //     let current_escape = _escape::read();
-    //     (current_escape, get_escape_status(current_escape.active_at))
+    //     (current_escape, get_escape_status(current_escape.ready_at))
     // }
 
     // ERC165
@@ -526,9 +527,7 @@ mod ArgentAccount {
                     let new_owner: felt252 = Serde::deserialize(
                         ref calldata
                     ).expect('argent/invalid-call-data');
-                    if !calldata.is_empty() {
-                        panic_with_felt252('argent/invalid-call-data')
-                    }
+                    assert(calldata.is_empty(), 'argent/invalid-call-data');
                     assert(new_owner != 0, 'argent/null-owner');
                     assert_guardian_set();
 
@@ -543,9 +542,7 @@ mod ArgentAccount {
                         guardian_escape_attempts::write(current_attempts + 1);
                     }
 
-                    if !call.calldata.is_empty() {
-                        panic_with_felt252('argent/invalid-call-data')
-                    }
+                    assert(call.calldata.is_empty(), 'argent/invalid-call-data');
                     assert_guardian_set();
                     let current_escape = _escape::read();
                     assert(
@@ -569,9 +566,7 @@ mod ArgentAccount {
                     let new_guardian: felt252 = Serde::deserialize(
                         ref calldata
                     ).expect('argent/invalid-call-data');
-                    if !calldata.is_empty() {
-                        panic_with_felt252('argent/invalid-call-data')
-                    }
+                    assert(calldata.is_empty(), 'argent/invalid-call-data');
 
                     if new_guardian == 0 {
                         assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
@@ -587,9 +582,7 @@ mod ArgentAccount {
                         assert_valid_escape_parameters(current_attempts);
                         owner_escape_attempts::write(current_attempts + 1);
                     }
-                    if !call.calldata.is_empty() {
-                        panic_with_felt252('argent/invalid-call-data')
-                    }
+                    assert(call.calldata.is_empty(), 'argent/invalid-call-data');
                     assert_guardian_set();
                     let current_escape = _escape::read();
 
@@ -700,16 +693,16 @@ mod ArgentAccount {
         (full_signature.slice(0, 2), full_signature.slice(2, 2))
     }
 
-    fn get_escape_status(escape_active_at: u64) -> EscapeStatus {
-        if (escape_active_at == 0) {
+    fn get_escape_status(escape_ready_at: u64) -> EscapeStatus {
+        if (escape_ready_at == 0) {
             return EscapeStatus::None(());
         }
 
         let block_timestamp = get_block_timestamp();
-        if (block_timestamp < escape_active_at) {
+        if (block_timestamp < escape_ready_at) {
             return EscapeStatus::NotReady(());
         }
-        if (escape_active_at
+        if (escape_ready_at
             + ESCAPE_EXPIRY_PERIOD <= block_timestamp) {
                 return EscapeStatus::Expired(());
             }
@@ -719,11 +712,11 @@ mod ArgentAccount {
 
     #[inline(always)]
     fn reset_escape() {
-        let current_escape_status = get_escape_status(_escape::read().active_at);
+        let current_escape_status = get_escape_status(_escape::read().ready_at);
         if current_escape_status == EscapeStatus::None(()) {
             return ();
         }
-        _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
+        _escape::write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
         if (current_escape_status != EscapeStatus::Expired(())) {
             EscapeCanceled();
         }

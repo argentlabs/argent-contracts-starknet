@@ -182,7 +182,7 @@ mod ArgentAccount {
 
         let block_timestamp = get_block_timestamp();
         assert(
-            outside_execution.min_timestamp <= block_timestamp & block_timestamp <= outside_execution.max_timestamp,
+            outside_execution.execute_after < block_timestamp & block_timestamp < outside_execution.execute_before,
             'argent/invalid-timestamp'
         );
         let nonce = outside_execution.nonce;

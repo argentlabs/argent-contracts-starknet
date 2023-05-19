@@ -50,8 +50,8 @@ describe("Argent Account: upgrade", function () {
       contractAddress: account.address,
       entrypoint: "get_version",
     });
-    expect(newVersion.result[0]).to.equal(num.toHex(0));
-    expect(newVersion.result[1]).to.equal(num.toHex(3));
-    expect(newVersion.result[2]).to.equal(num.toHex(1));
+    expect(newVersion.result[0]).to.equal(num.toHex(42));
+    expect(newVersion.result[1]).to.equal(num.toHex(42));
+    expect(newVersion.result[2]).to.equal(num.toHex(42));
   });
 });

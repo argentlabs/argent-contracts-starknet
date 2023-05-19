@@ -23,16 +23,16 @@ struct StarkNetDomain {
     chain_id: felt252,
 }
 
-// H('OutsideExecution(caller:felt,nonce:felt,min_timestamp:felt,max_timestamp:felt,calls_len:felt,calls:Call*)')
+// H('OutsideExecution(caller:felt,nonce:felt,execute_after:felt,execute_before:felt,calls_len:felt,calls:Call*)')
 const OUTSIDE_EXECUTION_TYPE_HASH: felt252 =
-    0x129325d420651cb60aa9b3aee69dd93076b0a1e37970032cd533cc29a2e4f99;
+    0x11ff76fe3f640fa6f3d60bbd94a3b9d47141a2c96f87fdcfbeb2af1d03f7050;
 
 #[derive(Drop, Serde)]
 struct OutsideExecution {
     caller: ContractAddress,
     nonce: felt252,
-    min_timestamp: u64,
-    max_timestamp: u64,
+    execute_after: u64,
+    execute_before: u64,
     calls: Array<Call>
 }
 
@@ -102,8 +102,8 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
     let mut state = pedersen(0, OUTSIDE_EXECUTION_TYPE_HASH);
     state = pedersen(state, (*outside_execution.caller).into());
     state = pedersen(state, *outside_execution.nonce);
-    state = pedersen(state, (*outside_execution.min_timestamp).into());
-    state = pedersen(state, (*outside_execution.max_timestamp).into());
+    state = pedersen(state, (*outside_execution.execute_after).into());
+    state = pedersen(state, (*outside_execution.execute_before).into());
     state = pedersen(state, outside_execution.calls.len().into());
     state = pedersen(state, outside_calls_state);
     pedersen(state, 7)

@@ -10,8 +10,8 @@ const types = {
   OutsideExecution: [
     { name: "caller", type: "felt" },
     { name: "nonce", type: "felt" },
-    { name: "min_timestamp", type: "felt" },
-    { name: "max_timestamp", type: "felt" },
+    { name: "execute_after", type: "felt" },
+    { name: "execute_before", type: "felt" },
     { name: "calls_len", type: "felt" },
     { name: "calls", type: "OutsideCall*" },
   ],
@@ -34,8 +34,8 @@ function getDomain(chainId: string) {
 declare type OutsideExecution = {
   caller: string;
   nonce: num.BigNumberish;
-  min_timestamp: num.BigNumberish;
-  max_timestamp: num.BigNumberish;
+  execute_after: num.BigNumberish;
+  execute_before: num.BigNumberish;
   calls: OutsideCall[];
 };
 

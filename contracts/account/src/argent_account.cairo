@@ -193,13 +193,13 @@ mod ArgentAccount {
         outside_execution: OutsideExecution, signature: Array<felt252>
     ) -> Span<Span<felt252>> {
         // Checks
-        if (outside_execution.caller.into() != 'ANY_CALLER') {
+        if outside_execution.caller.into() != 'ANY_CALLER' {
             assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
         }
 
         let block_timestamp = get_block_timestamp();
         assert(
-            outside_execution.min_timestamp <= block_timestamp & block_timestamp <= outside_execution.max_timestamp,
+            outside_execution.execute_after < block_timestamp & block_timestamp < outside_execution.execute_before,
             'argent/invalid-timestamp'
         );
         let nonce = outside_execution.nonce;

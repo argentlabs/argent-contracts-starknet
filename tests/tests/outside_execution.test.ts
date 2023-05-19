@@ -42,8 +42,8 @@ describe("Test outside execution", function () {
 
     const outsideExecution: OutsideExecution = {
       caller: deployerAccount.address,
-      min_timestamp: 0,
-      max_timestamp: 1713139200,
+      execute_after: 0,
+      execute_before: 1713139200,
       nonce: randomPrivateKey(),
       calls: [
         {
@@ -74,8 +74,8 @@ describe("Test outside execution", function () {
     const outsideExecution: OutsideExecution = {
       caller: deployerAccount.address,
       nonce: randomPrivateKey(),
-      min_timestamp: initialTime - 100,
-      max_timestamp: initialTime + 100,
+      execute_after: initialTime - 100,
+      execute_before: initialTime + 100,
       calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, accountSigner);
@@ -131,8 +131,8 @@ describe("Test outside execution", function () {
     const outsideExecution: OutsideExecution = {
       caller: shortString.encodeShortString("ANY_CALLER"),
       nonce: randomPrivateKey(),
-      min_timestamp: 0,
-      max_timestamp: initialTime + 100,
+      execute_after: 0,
+      execute_before: initialTime + 100,
       calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, accountSigner);
@@ -149,8 +149,8 @@ describe("Test outside execution", function () {
     const outsideExecution: OutsideExecution = {
       caller: deployerAccount.address,
       nonce: randomPrivateKey(),
-      min_timestamp: 0,
-      max_timestamp: initialTime + 100,
+      execute_after: 0,
+      execute_before: initialTime + 100,
       calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, accountSigner);
@@ -176,14 +176,14 @@ describe("Test outside execution", function () {
     const outsideExecution: OutsideExecution = {
       caller: deployerAccount.address,
       nonce: randomPrivateKey(),
-      min_timestamp: 0,
-      max_timestamp: initialTime + 100,
+      execute_after: 0,
+      execute_before: initialTime + 100,
       calls: [getOutsideCall(accountContract.populateTransaction.trigger_escape_owner(42))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, guardianOnlySigner);
 
     await waitForExecution(deployerAccount.execute(outsideExecutionCall));
     const current_escape = await accountContract.get_escape();
-    expect(current_escape.new_signer).eql(42n, "invalid new value");
+    expect(current_escape.new_signer).to.equal(42n, "invalid new value");
   });
 });

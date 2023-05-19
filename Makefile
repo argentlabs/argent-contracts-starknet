@@ -58,5 +58,8 @@ check-format:
 devnet:
 	INSTALLATION_FOLDER_CARGO=$(INSTALLATION_FOLDER_CARGO) ./scripts/start-devnet.sh
 
+kill-devnet:
+	lsof -t -i tcp:5050 | xargs kill
+
 vscode:
 	cd cairo/vscode-cairo && cargo build --bin cairo-language-server --release && cd ../..

@@ -1,5 +1,10 @@
+import chai from "chai";
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
+chai.should();
 export * from "./account";
 export * from "./argentSigner";
 export * from "./constants";
 export * from "./devnetInteraction";
 export * from "./lib";
+export * from "./outsideExecution";

@@ -1,16 +1,12 @@
-use traits::Into;
-use traits::TryInto;
-use option::OptionTrait;
-use lib::Call;
-use starknet::ContractAddress;
-use starknet::ContractAddressIntoFelt252;
-use lib::check_enough_gas;
-use array::ArrayTrait;
-use array::SpanTrait;
-use starknet::get_tx_info;
+use array::{ArrayTrait, SpanTrait};
 use box::BoxTrait;
-use starknet::get_contract_address;
 use hash::pedersen;
+use traits::{Into, TryInto};
+use option::OptionTrait;
+
+use starknet::{ContractAddress, ContractAddressIntoFelt252, get_tx_info, get_contract_address};
+
+use lib::Call;
 
 // H('StarkNetDomain(name:felt,version:felt,chainId:felt)')
 const STARKNET_DOMAIN_TYPE_HASH: felt252 =

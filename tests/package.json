@@ -4,7 +4,9 @@
   "description": "",
   "type": "module",
   "scripts": {
+    "build": "tsc",
     "test": "tsc && mocha tests/*.test.ts",
+    "test:list": "tsc && mocha --dry-run tests/*.test.ts",
     "lint": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

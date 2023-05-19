@@ -1,4 +1,13 @@
-import { Account, Contract, SequencerProvider } from "starknet";
+import {
+  Abi,
+  Account,
+  AllowArray,
+  Call,
+  Contract,
+  InvocationsDetails,
+  InvokeFunctionResponse,
+  SequencerProvider,
+} from "starknet";
 import { loadContract } from "./lib";
 
 // Polls quickly for a local network
@@ -7,6 +16,9 @@ class FastProvider extends SequencerProvider {
     return super.waitForTransaction(txHash, { retryInterval: 250, ...options });
   }
 }
+
+const ESCAPE_SECURITY_PERIOD = 7n * 24n * 60n * 60n; // 7 days
+const ESCAPE_EXPIRY_PERIOD = 2n * 7n * 24n * 60n * 60n; // 14 days
 
 const baseUrl = "http://127.0.0.1:5050";
 const provider = new FastProvider({ baseUrl });
@@ -28,4 +40,4 @@ async function getEthContract() {
   return ethContract;
 }
 
-export { baseUrl, provider, deployerAccount, ethAddress, getEthContract };
+export { baseUrl, provider, deployerAccount, ethAddress, getEthContract, ESCAPE_SECURITY_PERIOD, ESCAPE_EXPIRY_PERIOD };

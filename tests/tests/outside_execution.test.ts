@@ -35,8 +35,7 @@ describe("Test outside execution", function () {
   });
 
   it("Correct message hash", async function () {
-    const account = await deployAccount(argentAccountClassHash);
-    const accountContract = await loadContract(account.address);
+    const { account, accountContract } = await deployAccount(argentAccountClassHash);
 
     const chainId = await provider.getChainId();
 
@@ -62,12 +61,7 @@ describe("Test outside execution", function () {
   });
 
   it("Basics", async function () {
-    const accountSigner = new ArgentSigner(randomPrivateKey(), randomPrivateKey());
-    const account = await deployAccount(
-      argentAccountClassHash,
-      accountSigner.ownerPrivateKey,
-      accountSigner.guardianPrivateKey,
-    );
+    const { account, guardianPrivateKey } = await deployAccount(argentAccountClassHash);
 
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
@@ -78,7 +72,7 @@ describe("Test outside execution", function () {
       execute_before: initialTime + 100,
       calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
     };
-    const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, accountSigner);
+    const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, account.signer);
 
     // ensure can't be run too early
     await setTime(initialTime - 200);
@@ -91,14 +85,14 @@ describe("Test outside execution", function () {
     // ensure the caller is as expected
     await expectExecutionRevert("argent/invalid-caller", async () =>
       deployerAccount.execute(
-        await getOutsideExecutionCall({ ...outsideExecution, caller: "0x123" }, account.address, accountSigner),
+        await getOutsideExecutionCall({ ...outsideExecution, caller: "0x123" }, account.address, account.signer),
       ),
     );
 
     await setTime(initialTime);
 
     // ensure the account address is checked
-    const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", accountSigner);
+    const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", account.signer);
     await expectExecutionRevert("argent/invalid-owner-sig", () =>
       deployerAccount.execute({ ...wrongAccountCall, contractAddress: account.address }),
     );
@@ -106,7 +100,7 @@ describe("Test outside execution", function () {
     // ensure the chain id is checked
     await expectExecutionRevert("argent/invalid-owner-sig", async () =>
       deployerAccount.execute(
-        await getOutsideExecutionCall(outsideExecution, account.address, accountSigner, "ANOTHER_CHAIN"),
+        await getOutsideExecutionCall(outsideExecution, account.address, account.signer, "ANOTHER_CHAIN"),
       ),
     );
 
@@ -119,12 +113,7 @@ describe("Test outside execution", function () {
   });
 
   it("Avoid caller check if it caller is ANY_CALLER", async function () {
-    const accountSigner = new ArgentSigner(randomPrivateKey(), randomPrivateKey());
-    const account = await deployAccount(
-      argentAccountClassHash,
-      accountSigner.ownerPrivateKey,
-      accountSigner.guardianPrivateKey,
-    );
+    const { account } = await deployAccount(argentAccountClassHash);
 
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
@@ -135,7 +124,7 @@ describe("Test outside execution", function () {
       execute_before: initialTime + 100,
       calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
     };
-    const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, accountSigner);
+    const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, account.signer);
 
     // ensure the caller is no
     await waitForExecution(deployerAccount.execute(outsideExecutionCall));
@@ -143,8 +132,7 @@ describe("Test outside execution", function () {
   });
 
   it("Owner only account", async function () {
-    const accountSigner = new ArgentSigner();
-    const account = await deployAccount(argentAccountClassHash, accountSigner.ownerPrivateKey);
+    const { account } = await deployAccount(argentAccountClassHash);
 
     const outsideExecution: OutsideExecution = {
       caller: deployerAccount.address,
@@ -153,7 +141,7 @@ describe("Test outside execution", function () {
       execute_before: initialTime + 100,
       calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
     };
-    const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, accountSigner);
+    const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, account.signer);
 
     await setTime(initialTime);
 
@@ -162,16 +150,7 @@ describe("Test outside execution", function () {
   });
 
   it("Escape method", async function () {
-    const accountSigner = new ArgentSigner(randomPrivateKey(), randomPrivateKey());
-    const guardianOnlySigner = new ArgentSigner(accountSigner.guardianPrivateKey);
-
-    const account = await deployAccount(
-      argentAccountClassHash,
-      accountSigner.ownerPrivateKey,
-      accountSigner.guardianPrivateKey,
-    );
-
-    const accountContract = await loadContract(account.address);
+    const { account, accountContract, guardianPrivateKey } = await deployAccount(argentAccountClassHash);
 
     const outsideExecution: OutsideExecution = {
       caller: deployerAccount.address,
@@ -180,7 +159,11 @@ describe("Test outside execution", function () {
       execute_before: initialTime + 100,
       calls: [getOutsideCall(accountContract.populateTransaction.trigger_escape_owner(42))],
     };
-    const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, guardianOnlySigner);
+    const outsideExecutionCall = await getOutsideExecutionCall(
+      outsideExecution,
+      account.address,
+      new ArgentSigner(guardianPrivateKey),
+    );
 
     await waitForExecution(deployerAccount.execute(outsideExecutionCall));
     const current_escape = await accountContract.get_escape();

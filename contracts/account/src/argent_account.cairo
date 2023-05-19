@@ -153,7 +153,9 @@ mod ArgentAccount {
 
     #[raw_input]
     #[external]
-    fn __validate_deploy__(class_hash: felt252, owner: felt252, guardian: felt252) -> felt252 {
+    fn __validate_deploy__(
+        class_hash: felt252, contract_address_salt: felt252, owner: felt252, guardian: felt252
+    ) -> felt252 {
         // TODO validate tx version?
         let tx_info = get_tx_info().unbox();
         assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
@@ -322,9 +324,7 @@ mod ArgentAccount {
         // upgraded half way through,  then tries to finish the escape in new version
         assert(current_escape.new_signer != 0, 'argent/null-owner');
 
-        // clear escape
         _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
-        // update owner
         _signer::write(current_escape.new_signer);
         OwnerEscaped(current_escape.new_signer);
     }
@@ -349,9 +349,7 @@ mod ArgentAccount {
             assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
         }
 
-        // clear escape
         _escape::write(Escape { active_at: 0, escape_type: 0, new_signer: 0 });
-        //update guardian
         _guardian::write(current_escape.new_signer);
         GuardianEscaped(current_escape.new_signer);
     }
@@ -440,7 +438,7 @@ mod ArgentAccount {
         get_name()
     }
 
-    // add back when updated to latest cairo version
+    // TODO add back when updated to latest cairo version
     // currently serde not working for enums
     /// Current escape if any, and its status
     // #[view]

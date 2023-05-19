@@ -4,20 +4,22 @@ import { baseUrl } from "./constants";
 async function fundAccount(address: string) {
   await handlePost("mint", {
     address,
-    amount: 18e18,
+    amount: 1e18,
     lite: true,
   });
 }
 
-async function increaseTime(timeInSeconds: number) {
+async function increaseTime(timeInSeconds: number | bigint) {
+  const timeInSecondsAsNumber = Number(timeInSeconds);
   await handlePost("increase_time", {
-    time: timeInSeconds,
+    time: timeInSecondsAsNumber,
   });
 }
 
-async function setTime(timeInSeconds: number) {
+async function setTime(timeInSeconds: number | bigint) {
+  const timeInSecondsAsNumber = Number(timeInSeconds);
   await handlePost("set_time", {
-    time: timeInSeconds,
+    time: timeInSecondsAsNumber,
   });
 }
 

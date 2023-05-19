@@ -89,8 +89,10 @@ mod ArgentAccount {
         _escape: Escape,
         outside_nonces: LegacyMap::<felt252, bool>,
         /// Keeps track of how many escaping tx the guardian has submitted. Used to limit the number of transactions the account will pay for
+        /// It resets when an escape is completed or canceled
         guardian_escape_attempts: u32,
         /// Keeps track of how many escaping tx the owner has submitted. Used to limit the number of transactions the account will pay for
+        /// It resets when an escape is completed or canceled
         owner_escape_attempts: u32
     }
 

@@ -8,6 +8,7 @@
     "test": "tsc && mocha tests/*.test.ts",
     "test:list": "tsc && mocha --dry-run tests/*.test.ts",
     "lint": "eslint . --fix",
+    "lint:check": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

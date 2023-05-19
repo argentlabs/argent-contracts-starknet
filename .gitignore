@@ -14,3 +14,5 @@ target/
 .DS_Store
 tests/contracts/ArgentAccount.json
 tests/contracts/ArgentAccount.casm
+tests/contracts/TestDapp.json
+tests/contracts/TestDapp.casm

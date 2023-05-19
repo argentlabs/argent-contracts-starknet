@@ -1,13 +1,10 @@
 import { expect } from "chai";
-import { shortString } from "starknet";
+import { num, shortString } from "starknet";
 import { declareContract, deployAccount, deployOldAccount, provider, upgradeAccount } from "./shared";
 
-describe("Test Argent Account: upgrade", function () {
-  // Avoid timeout
-  this.timeout(320000);
-
+describe("Argent Account: upgrade", function () {
   let argentAccountClassHash: string;
-  let argentAccountV1ClassHash: string;
+  let argentAccountFutureClassHash: string;
   let oldArgentAccountClassHash: string;
   let proxyClassHash: string;
 
@@ -15,13 +12,13 @@ describe("Test Argent Account: upgrade", function () {
     argentAccountClassHash = await declareContract("ArgentAccount");
     // This is the same as ArgentAccount but with a different version (to have another class hash)
     // Done to be able to test upgradability
-    argentAccountV1ClassHash = await declareContract("ArgentAccountV1");
+    argentAccountFutureClassHash = await declareContract("ArgentAccountFutureVersion");
     oldArgentAccountClassHash = await declareContract("OldArgentAccount");
     proxyClassHash = await declareContract("Proxy");
   });
 
   it("Should be posssible to deploy an argent account version 0.2.4 and upgrade it to cairo 1 version 0.3.0", async function () {
-    const accountToUpgrade = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
+    const { account: accountToUpgrade } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
     const initialVersion = await provider.callContract({
       contractAddress: accountToUpgrade.address,
       entrypoint: "getVersion",
@@ -34,27 +31,27 @@ describe("Test Argent Account: upgrade", function () {
       contractAddress: accountToUpgrade.address,
       entrypoint: "get_version",
     });
-    expect(BigInt(newVersion.result[0])).to.equal(BigInt(0));
-    expect(BigInt(newVersion.result[1])).to.equal(BigInt(3));
-    expect(BigInt(newVersion.result[2])).to.equal(BigInt(0));
+    expect(newVersion.result[0]).to.equal(num.toHex(0));
+    expect(newVersion.result[1]).to.equal(num.toHex(3));
+    expect(newVersion.result[2]).to.equal(num.toHex(0));
   });
 
-  it("Should be possible to upgrade an account from version 0.3.0 to 0.3.1", async function () {
-    const account = await deployAccount(argentAccountClassHash);
+  it("Should be possible to upgrade an account from version 0.3.0 to FutureVersion", async function () {
+    const { account } = await deployAccount(argentAccountClassHash);
     const currentVersion = await provider.callContract({
       contractAddress: account.address,
       entrypoint: "get_version",
     });
-    expect(BigInt(currentVersion.result[0])).to.equal(BigInt(0));
-    expect(BigInt(currentVersion.result[1])).to.equal(BigInt(3));
-    expect(BigInt(currentVersion.result[2])).to.equal(BigInt(0));
-    await upgradeAccount(account, argentAccountV1ClassHash);
+    expect(currentVersion.result[0]).to.equal(num.toHex(0));
+    expect(currentVersion.result[1]).to.equal(num.toHex(3));
+    expect(currentVersion.result[2]).to.equal(num.toHex(0));
+    await upgradeAccount(account, argentAccountFutureClassHash);
     const newVersion = await provider.callContract({
       contractAddress: account.address,
       entrypoint: "get_version",
     });
-    expect(BigInt(newVersion.result[0])).to.equal(BigInt(0));
-    expect(BigInt(newVersion.result[1])).to.equal(BigInt(3));
-    expect(BigInt(newVersion.result[2])).to.equal(BigInt(1));
+    expect(newVersion.result[0]).to.equal(num.toHex(0));
+    expect(newVersion.result[1]).to.equal(num.toHex(3));
+    expect(newVersion.result[2]).to.equal(num.toHex(1));
   });
 });

@@ -4,8 +4,11 @@
   "description": "",
   "type": "module",
   "scripts": {
+    "build": "tsc",
     "test": "tsc && mocha tests/*.test.ts",
+    "test:list": "tsc && mocha --dry-run tests/*.test.ts",
     "lint": "eslint . --fix",
+    "lint:check": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -17,11 +20,13 @@
   "devDependencies": {
     "@tsconfig/node18": "^2.0.0",
     "@types/chai": "^4.3.4",
+    "@types/chai-as-promised": "^7.1.5",
     "@types/mocha": "^10.0.1",
     "@types/node": "^18.15.11",
     "@typescript-eslint/eslint-plugin": "^5.59.0",
     "@typescript-eslint/parser": "^5.59.0",
     "chai": "^4.3.7",
+    "chai-as-promised": "^7.1.1",
     "eslint": "^8.38.0",
     "mocha": "^10.2.0",
     "prettier": "^2.8.7",

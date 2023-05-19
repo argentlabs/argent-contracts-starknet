@@ -1,5 +1,6 @@
 import {
   Abi,
+  ArraySignatureType,
   Call,
   CallData,
   DeclareSignerDetails,
@@ -7,11 +8,15 @@ import {
   InvocationsSignerDetails,
   Signature,
   SignerInterface,
+  WeierstrassSignatureType,
   ec,
+  encode,
   hash,
+  num,
   transaction,
   typedData,
 } from "starknet";
+import { randomPrivateKey } from "./lib";
 
 /**
  * This class allows to easily implement custom signers by overriding the `signRaw` method.
@@ -94,7 +99,7 @@ abstract class RawSigner implements SignerInterface {
 }
 
 class ArgentSigner extends RawSigner {
-  constructor(protected ownerPrivateKey: string, protected guardianPrivateKey?: string) {
+  constructor(public ownerPrivateKey: string = randomPrivateKey(), public guardianPrivateKey?: string) {
     super();
   }
   public getOwnerKey(): string {
@@ -109,11 +114,12 @@ class ArgentSigner extends RawSigner {
     }
   }
 
-  public async signRaw(msgHash: string): Promise<Signature> {
+  public async signRaw(msgHash: string): Promise<ArraySignatureType> {
     if (this.guardianPrivateKey) {
       return new ConcatSigner([this.ownerPrivateKey, this.guardianPrivateKey]).signRaw(msgHash);
     } else {
-      return ec.starkCurve.sign(msgHash, this.ownerPrivateKey);
+      const ownerSignature = ec.starkCurve.sign(msgHash, this.ownerPrivateKey) as WeierstrassSignatureType;
+      return [ownerSignature.r.toString(), ownerSignature.s.toString()];
     }
   }
 }
@@ -123,7 +129,7 @@ class ConcatSigner extends RawSigner {
     super();
   }
 
-  async signRaw(msgHash: string): Promise<Signature> {
+  async signRaw(msgHash: string): Promise<ArraySignatureType> {
     return (
       await Promise.all(
         this.privateKeys.map(async (pk) => {

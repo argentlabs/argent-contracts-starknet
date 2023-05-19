@@ -184,6 +184,6 @@ describe("Test outside execution", function () {
 
     await waitForExecution(deployerAccount.execute(outsideExecutionCall));
     const current_escape = await accountContract.get_escape();
-    expect(current_escape.new_signer).eql(42n, "invalid new value");
+    expect(current_escape.new_signer).to.equal(42n, "invalid new value");
   });
 });

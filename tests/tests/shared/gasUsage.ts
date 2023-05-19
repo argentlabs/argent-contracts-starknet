@@ -1,8 +1,7 @@
 import { InvokeFunctionResponse, num } from "starknet";
 import { provider } from ".";
 
-export async function profileGasUsage(functionCall: Promise<InvokeFunctionResponse>) {
-  const { transaction_hash: transferTxHash } = await functionCall;
+export async function profileGasUsage({ transaction_hash: transferTxHash }: InvokeFunctionResponse) {
   const receipt = await provider.waitForTransaction(transferTxHash);
   const actualFee = num.hexToDecimalString(receipt.actual_fee as string) as unknown as number;
   const executionResources = (receipt as any)["execution_resources"];
@@ -26,7 +25,7 @@ export async function profileGasUsage(functionCall: Promise<InvokeFunctionRespon
     n_steps: executionResources.n_steps,
   };
   const gasPerComputationCategory: { [categoryName: string]: number } = Object.entries(executionResourcesFlat)
-    .filter(([resource, usage]) => resource in gasWeights)
+    .filter(([resource]) => resource in gasWeights)
     .map(([resource, usage]) => [resource, Math.ceil(usage * gasWeights[resource])])
     .reduce((acc: { [categoryName: string]: number }, [resource, value]) => {
       acc[resource] = value as number;

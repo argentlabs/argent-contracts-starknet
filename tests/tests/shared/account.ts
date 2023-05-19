@@ -5,7 +5,7 @@ import { fundAccount } from "./devnetInteraction";
 import { loadContract, randomPrivateKey } from "./lib";
 
 // This is only for TESTS purposes and shouldn't be used in production
-export interface ArgentAccount {
+export interface ArgentWallet {
   account: Account;
   accountContract: Contract;
   ownerPrivateKey: string;
@@ -16,7 +16,7 @@ export interface ArgentAccount {
 export async function deployOldAccount(
   proxyClassHash: string,
   oldArgentAccountClassHash: string,
-): Promise<ArgentAccount> {
+): Promise<ArgentWallet> {
   const ownerPrivateKey = randomPrivateKey();
   const guardianPrivateKey = randomPrivateKey();
   const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
@@ -77,44 +77,35 @@ async function deployAccountInner(
   return account;
 }
 
-export async function deployAccount(argentAccountClassHash: string): Promise<ArgentAccount> {
+export async function deployAccount(argentAccountClassHash: string): Promise<ArgentWallet> {
   const ownerPrivateKey = randomPrivateKey();
   const guardianPrivateKey = randomPrivateKey();
   const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
   const accountContract = await loadContract(account.address);
 
-  return {
-    account,
-    accountContract,
-    ownerPrivateKey,
-    guardianPrivateKey,
-  };
+  return { account, accountContract, ownerPrivateKey, guardianPrivateKey };
 }
 
-export async function deployAccountWithoutGuardian(argentAccountClassHash: string): Promise<ArgentAccount> {
+export async function deployAccountWithoutGuardian(argentAccountClassHash: string): Promise<ArgentWallet> {
   const ownerPrivateKey = randomPrivateKey();
   const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey);
   const accountContract = await loadContract(account.address);
 
-  return {
-    account,
-    accountContract,
-    ownerPrivateKey,
-  };
+  return { account, accountContract, ownerPrivateKey };
 }
 
-export async function deployAccountWithGuardianBackup(argentAccountClassHash: string): Promise<ArgentAccount> {
+export async function deployAccountWithGuardianBackup(argentAccountClassHash: string): Promise<ArgentWallet> {
   const guardianBackupPrivateKey = randomPrivateKey();
   const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
 
-  const ArgentAccount = await deployAccount(argentAccountClassHash);
-  await ArgentAccount.account.execute(
-    ArgentAccount.accountContract.populateTransaction.change_guardian_backup(guardianBackupPublicKey),
+  const wallet = await deployAccount(argentAccountClassHash);
+  await wallet.account.execute(
+    wallet.accountContract.populateTransaction.change_guardian_backup(guardianBackupPublicKey),
   );
 
-  ArgentAccount.account.signer = new ArgentSigner(ArgentAccount.ownerPrivateKey, guardianBackupPrivateKey);
-  ArgentAccount.guardianBackupPrivateKey = guardianBackupPrivateKey;
-  return ArgentAccount;
+  wallet.account.signer = new ArgentSigner(wallet.ownerPrivateKey, guardianBackupPrivateKey);
+  wallet.guardianBackupPrivateKey = guardianBackupPrivateKey;
+  return wallet;
 }
 
 export async function upgradeAccount(accountToUpgrade: Account, argentAccountClassHash: string) {

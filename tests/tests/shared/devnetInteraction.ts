@@ -14,18 +14,13 @@ export async function setTime(timeInSeconds: number | bigint) {
 }
 
 async function handlePost(path: string, payload: RawArgs) {
-  try {
-    const response = await fetch(`${baseUrl}/${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.error(error);
-    throw error;
+  const response = await fetch(`${baseUrl}/${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
   }
+  return await response.json();
 }

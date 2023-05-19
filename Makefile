@@ -34,7 +34,6 @@ compile-account-test:
 	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/account ./tests/contracts/ArgentAccount.json --allowed-libfuncs-list-name experimental_v0.1.0
 	./cairo/target/release/starknet-sierra-compile ./tests/contracts/ArgentAccount.json ./tests/contracts/ArgentAccount.casm --allowed-libfuncs-list-name experimental_v0.1.0
 
-
 compile-multisig-test: 
 	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/multisig ./tests/contracts/ArgentMultisig.json --allowed-libfuncs-list-name experimental_v0.1.0 --contract-path multisig::argent_multisig_account::ArgentMultisigAccount
 	./cairo/target/release/starknet-sierra-compile ./tests/contracts/ArgentMultisig.json ./tests/contracts/ArgentMultisig.casm --allowed-libfuncs-list-name experimental_v0.1.0

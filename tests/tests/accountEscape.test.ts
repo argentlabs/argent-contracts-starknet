@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Account, Contract, Signer, ec, num, stark } from "starknet";
+import { Account, Contract, Signer, ec, num } from "starknet";
 import {
   ArgentSigner,
   ESCAPE_EXPIRY_PERIOD,

@@ -10,9 +10,7 @@ import {
   SignerInterface,
   WeierstrassSignatureType,
   ec,
-  encode,
   hash,
-  num,
   transaction,
   typedData,
 } from "starknet";

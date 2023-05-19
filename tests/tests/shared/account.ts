@@ -1,4 +1,4 @@
-import { Account, CallData, Contract, ec, hash, stark } from "starknet";
+import { Account, CallData, Contract, ec, hash } from "starknet";
 import { ArgentSigner } from "./argentSigner";
 import { deployerAccount, provider } from "./constants";
 import { fundAccount } from "./devnetInteraction";

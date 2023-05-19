@@ -1,13 +1,4 @@
-import {
-  Abi,
-  Account,
-  AllowArray,
-  Call,
-  Contract,
-  InvocationsDetails,
-  InvokeFunctionResponse,
-  SequencerProvider,
-} from "starknet";
+import { Account, Contract, SequencerProvider } from "starknet";
 import { loadContract } from "./lib";
 
 // Polls quickly for a local network

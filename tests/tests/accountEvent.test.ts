@@ -1,4 +1,4 @@
-import { CallData, Signer, ec, hash, num, stark, uint256 } from "starknet";
+import { CallData, Signer, ec, hash, num, uint256 } from "starknet";
 import {
   ArgentSigner,
   ESCAPE_SECURITY_PERIOD,

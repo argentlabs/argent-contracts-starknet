@@ -1,5 +1,5 @@
 .env
-venv/
+venv
 .pytest_cache
 __pycache__
 artifacts
@@ -7,12 +7,12 @@ node.json
 .idea
 .vscode
 dist
-cairo/
-node_modules/
-target/
+cairo
+node_modules
+target
 
 .DS_Store
-tests/contracts/ArgentAccount.json
-tests/contracts/ArgentAccount.casm
-tests/contracts/TestDapp.json
-tests/contracts/TestDapp.casm
+tests/fixtures/ArgentAccount.json
+tests/fixtures/ArgentAccount.casm
+tests/fixtures/TestDapp.json
+tests/fixtures/TestDapp.casm

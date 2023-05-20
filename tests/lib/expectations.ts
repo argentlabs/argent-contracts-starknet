@@ -23,10 +23,7 @@ export async function expectRevertWithErrorMessage(
   }
 }
 
-export async function expectExecutionRevert(
-  errorMessage: string,
-  execute: () => Promise<InvokeFunctionResponse>,
-) {
+export async function expectExecutionRevert(errorMessage: string, execute: () => Promise<InvokeFunctionResponse>) {
   try {
     await execute();
     assert.fail("No error detected");

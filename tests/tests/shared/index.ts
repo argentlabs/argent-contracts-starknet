@@ -5,6 +5,6 @@ chai.should();
 export * from "./account";
 export * from "./argentSigner";
 export * from "./constants";
-export * from "./devnetInteraction";
+export * from "./devnet";
 export * from "./lib";
 export * from "./outsideExecution";

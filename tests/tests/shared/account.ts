@@ -1,7 +1,7 @@
 import { Account, CallData, Contract, ec, hash } from "starknet";
 import { ArgentSigner } from "./argentSigner";
 import { deployerAccount, provider } from "./constants";
-import { fundAccount } from "./devnetInteraction";
+import { fundAccount } from "./devnet";
 import { loadContract, randomPrivateKey } from "./lib";
 
 // This is only for TESTS purposes and shouldn't be used in production

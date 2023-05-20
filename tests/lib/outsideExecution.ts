@@ -1,5 +1,5 @@
 import { Call, CallData, hash, num, RawArgs, SignerInterface, typedData } from "starknet";
-import { provider } from "./constants";
+import { provider } from "./provider";
 
 const types = {
   StarkNetDomain: [

@@ -14,7 +14,7 @@ import {
   transaction,
   typedData,
 } from "starknet";
-import { randomPrivateKey } from "./lib";
+import { randomPrivateKey } from "./accounts";
 
 /**
  * This class allows to easily implement custom signers by overriding the `signRaw` method.

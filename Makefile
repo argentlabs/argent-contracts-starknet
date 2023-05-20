@@ -8,7 +8,9 @@ INSTALLATION_FOLDER_CARGO=$(INSTALLATION_FOLDER)/Cargo.toml
 SOURCE_FOLDER=./contracts
 CAIRO_VERSION=v1.0.0
 
-install: install-cairo build vscode
+all: install build
+
+install: install-cairo install-integration build vscode
 
 install-cairo:
 	if [ -d $(INSTALLATION_FOLDER) ]; then \
@@ -16,6 +18,10 @@ install-cairo:
 	else \
 		$(MAKE) clone-cairo; \
 	fi
+
+# TODO: also install python venv and requirements?
+install-integration:
+	yarn
 
 clone-cairo:
 	mkdir -p $(INSTALLATION_FOLDER)
@@ -54,6 +60,9 @@ test-multicall:
 
 test-multisig: 
 	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)/multisig
+
+test-integration: fixtures
+	yarn test
 
 format:
 	./cairo/target/release/cairo-format --recursive $(SOURCE_FOLDER) --print-parsing-errors

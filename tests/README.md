@@ -1,6 +1,6 @@
 # Prerequisite
 
-Have [node and npm installed.](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+User [nvm](https://github.com/nvm-sh/nvm) to manage your Node versions.
 
 # Installation
 
@@ -23,23 +23,23 @@ Then you should be able to spawn a devnet using makefile:
 make devnet
 ```
 
-## Install the project
+## Install JS dependencies
 
 Install all packages (run in this folder `cd tests`)
 
 ```shell
-npm install
+yarn
 ```
 
 ```shell
-npm run test
+yarn test
 ```
 
 You also have access to the linter and a code formatter:
 
 ```shell
-npm run lint
-npm run prettier
+yarn lint
+yarn format
 ```
 
 # Contracts

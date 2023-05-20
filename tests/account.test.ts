@@ -11,7 +11,7 @@ import {
   expectRevertWithErrorMessage,
   provider,
   randomPrivateKey,
-} from "./shared";
+} from "./lib";
 
 describe("ArgentAccount", function () {
   let argentAccountClassHash: string;

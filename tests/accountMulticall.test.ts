@@ -7,7 +7,7 @@ import {
   expectRevertWithErrorMessage,
   getEthContract,
   loadContract,
-} from "./shared";
+} from "./lib";
 
 describe("ArgentAccount: multicall", function () {
   let argentAccountClassHash: string;

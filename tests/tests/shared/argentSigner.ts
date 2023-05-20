@@ -108,7 +108,7 @@ export class ArgentSigner extends RawSigner {
   public getGuardianKey(): string | null {
     if (this.guardianPrivateKey) {
       return ec.starkCurve.getStarkKey(this.guardianPrivateKey);
-    } 
+    }
     return null;
   }
 

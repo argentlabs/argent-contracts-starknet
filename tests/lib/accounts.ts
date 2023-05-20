@@ -13,7 +13,7 @@ export interface ArgentWallet {
   guardianBackupPrivateKey?: string;
 }
 
-export const deployerAccount = new Account(
+export const deployer = new Account(
   provider /* provider */,
   "0x347be35996a21f6bf0623e75dbce52baba918ad5ae8d83b6f416045ab22961a" /* address */,
   "0xbdd640fb06671ad11c80317fa3b1799d" /* private key */,
@@ -50,7 +50,7 @@ export async function deployOldAccount(
     contractAddress,
     addressSalt: ownerPublicKey,
   });
-  await deployerAccount.waitForTransaction(transaction_hash);
+  await deployer.waitForTransaction(transaction_hash);
   const accountContract = await loadContract(account.address);
   return { account, accountContract, ownerPrivateKey, guardianPrivateKey };
 }
@@ -83,7 +83,7 @@ async function deployAccountInner(
     constructorCalldata,
     addressSalt: ownerPublicKey,
   });
-  await deployerAccount.waitForTransaction(transaction_hash);
+  await deployer.waitForTransaction(transaction_hash);
   return account;
 }
 

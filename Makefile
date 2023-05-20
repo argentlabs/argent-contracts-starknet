@@ -69,3 +69,7 @@ kill-devnet:
 
 vscode:
 	cd cairo/vscode-cairo && cargo build --bin cairo-language-server --release && cd ../..
+
+clean:
+	rm -rf cairo dist node_modules venv
+	git reset --hard HEAD

@@ -141,11 +141,11 @@ yarn format
 
 ### Contract fixtures
 
-The [contracts folder](./contracts/) contains all the contracts already deployed (both json and casm).  
+The [fixtures folder](./tests/fixtures/) contains pre-compiled contracts used for tests (both json and casm).  
 To add or update a contract there run the command:
 
 ```shell
-./cairo/target/release/starknet-compile ./contracts/account tests/contracts/${FILE_NAME}.json --allowed-libfuncs-list-name experimental_v0.1.0
+./cairo/target/release/starknet-compile ./contracts/account ./tests/fixtures/${FILE_NAME}.json --allowed-libfuncs-list-name experimental_v0.1.0
 
-./cairo/target/release/starknet-sierra-compile ./tests/contracts/${FILE_NAME}.json ./tests/contracts/${FILE_NAME}.casm --allowed-libfuncs-list-name experimental_v0.1.0
+./cairo/target/release/starknet-sierra-compile ./tests/fixtures/${FILE_NAME}.json ./tests/fixtures/${FILE_NAME}.casm --allowed-libfuncs-list-name experimental_v0.1.0
 ```

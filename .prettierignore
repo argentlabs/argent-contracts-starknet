@@ -2,3 +2,4 @@ cairo
 contracts
 venv
 tests/fixtures
+dist

@@ -32,10 +32,12 @@ export async function declareContract(contractName: string): Promise<string> {
   if (cachedClass) {
     return cachedClass;
   }
-  const contract: CompiledSierra = json.parse(readFileSync(`./contracts/${contractName}.json`).toString("ascii"));
+  const contract: CompiledSierra = json.parse(readFileSync(`./tests/fixtures/${contractName}.json`).toString("ascii"));
   let returnedClashHash;
   if ("sierra_program" in contract) {
-    const casm: CompiledSierraCasm = json.parse(readFileSync(`./contracts/${contractName}.casm`).toString("ascii"));
+    const casm: CompiledSierraCasm = json.parse(
+      readFileSync(`./tests/fixtures/${contractName}.casm`).toString("ascii"),
+    );
     returnedClashHash = await actualDeclare({ contract, casm });
   } else {
     returnedClashHash = await actualDeclare({ contract });

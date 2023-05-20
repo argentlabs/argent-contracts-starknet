@@ -1,17 +1,19 @@
 .env
+.idea
+.vscode
+.DS_Store
+
 venv
 .pytest_cache
 __pycache__
 artifacts
-node.json
-.idea
-.vscode
 dist
-cairo
-node_modules
 target
+node_modules
+node.json
 
-.DS_Store
+cairo
+account.json
 tests/fixtures/ArgentAccount.json
 tests/fixtures/ArgentAccount.casm
 tests/fixtures/TestDapp.json

@@ -150,4 +150,4 @@ yarn format
 ### Contract fixtures
 
 The [fixtures folder](./tests/fixtures/) contains pre-compiled contracts used for tests (both json and casm).  
-To add or update a contract there, have a look at the `fixtures` makefile target.
+To add or update a contract, have a look at the [`fixtures` makefile target](./Makefile).

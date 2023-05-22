@@ -495,6 +495,8 @@ mod ArgentAccount {
         calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>, is_from_outside: bool
     ) {
         let account_address = get_contract_address();
+        let tx_info = get_tx_info().unbox();
+        assert_correct_tx_version(tx_info.version);
 
         if calls.len() == 1 {
             let call = calls[0];
@@ -596,8 +598,6 @@ mod ArgentAccount {
 
     fn assert_valid_escape_parameters(attempts: u32) {
         let tx_info = get_tx_info().unbox();
-        // Might prevent estimation using the __validate__ method so we only do the check in this case
-        assert_correct_tx_version(tx_info.version);
         assert(tx_info.max_fee <= MAX_ESCAPE_MAX_FEE, 'argent/max-fee-too-high');
         assert(attempts < MAX_ESCAPE_ATTEMPTS, 'argent/max-escape-attempts');
     }

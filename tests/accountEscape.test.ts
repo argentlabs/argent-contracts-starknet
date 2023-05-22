@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Account, Contract, Signer, ec, num, stark } from "starknet";
+import { Account, Contract, Signer, ec, num } from "starknet";
 import {
   ArgentSigner,
   ESCAPE_EXPIRY_PERIOD,
@@ -15,7 +15,7 @@ import {
   randomPrivateKey,
   setTime,
   upgradeAccount,
-} from "./shared";
+} from "./lib";
 
 describe("ArgentAccount: escape mechanism", function () {
   const ESCAPE_TYPE_GUARDIAN = 1n;

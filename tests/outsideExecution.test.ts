@@ -15,7 +15,7 @@ import {
   randomPrivateKey,
   setTime,
   waitForExecution,
-} from "./shared";
+} from "./lib";
 
 const initialTime = 1713139200;
 describe("Test outside execution", function () {
@@ -61,7 +61,7 @@ describe("Test outside execution", function () {
   });
 
   it("Basics", async function () {
-    const { account, guardianPrivateKey } = await deployAccount(argentAccountClassHash);
+    const { account } = await deployAccount(argentAccountClassHash);
 
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 

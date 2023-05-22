@@ -1,5 +1,5 @@
 import { Call, CallData, hash, num, RawArgs, SignerInterface, typedData } from "starknet";
-import { provider } from "./constants";
+import { provider } from "./provider";
 
 const types = {
   StarkNetDomain: [
@@ -31,21 +31,21 @@ function getDomain(chainId: string) {
   };
 }
 
-declare type OutsideExecution = {
+export interface OutsideExecution {
   caller: string;
   nonce: num.BigNumberish;
   execute_after: num.BigNumberish;
   execute_before: num.BigNumberish;
   calls: OutsideCall[];
-};
+}
 
-declare type OutsideCall = {
+export interface OutsideCall {
   to: string;
   selector: num.BigNumberish;
   calldata: RawArgs;
-};
+}
 
-function getOutsideCall(call: Call): OutsideCall {
+export function getOutsideCall(call: Call): OutsideCall {
   return {
     to: call.contractAddress,
     selector: hash.getSelectorFromName(call.entrypoint),
@@ -53,7 +53,7 @@ function getOutsideCall(call: Call): OutsideCall {
   };
 }
 
-function getTypedDataHash(
+export function getTypedDataHash(
   outsideExecution: OutsideExecution,
   accountAddress: num.BigNumberish,
   chainId: string,
@@ -61,7 +61,7 @@ function getTypedDataHash(
   return typedData.getMessageHash(getTypedData(outsideExecution, chainId), accountAddress);
 }
 
-function getTypedData(outsideExecution: OutsideExecution, chainId: string) {
+export function getTypedData(outsideExecution: OutsideExecution, chainId: string) {
   return {
     types: types,
     primaryType: "OutsideExecution",
@@ -80,7 +80,7 @@ function getTypedData(outsideExecution: OutsideExecution, chainId: string) {
   };
 }
 
-async function getOutsideExecutionCall(
+export async function getOutsideExecutionCall(
   outsideExecution: OutsideExecution,
   accountAddress: string,
   signer: SignerInterface,
@@ -95,5 +95,3 @@ async function getOutsideExecutionCall(
     calldata: CallData.compile({ ...outsideExecution, signature }),
   };
 }
-
-export { getOutsideExecutionCall, getTypedData, getTypedDataHash, getOutsideCall, OutsideExecution };

@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { num, shortString } from "starknet";
-import { declareContract, deployAccount, deployOldAccount, provider, upgradeAccount } from "./shared";
+import { declareContract, deployAccount, deployOldAccount, provider, upgradeAccount } from "./lib";
 
 describe("Argent Account: upgrade", function () {
   let argentAccountClassHash: string;
@@ -31,9 +31,7 @@ describe("Argent Account: upgrade", function () {
       contractAddress: accountToUpgrade.address,
       entrypoint: "get_version",
     });
-    expect(newVersion.result[0]).to.equal(num.toHex(0));
-    expect(newVersion.result[1]).to.equal(num.toHex(3));
-    expect(newVersion.result[2]).to.equal(num.toHex(0));
+    expect(newVersion.result).to.deep.equal([0, 3, 0].map(num.toHex));
   });
 
   it("Should be possible to upgrade an account from version 0.3.0 to FutureVersion", async function () {
@@ -42,16 +40,12 @@ describe("Argent Account: upgrade", function () {
       contractAddress: account.address,
       entrypoint: "get_version",
     });
-    expect(currentVersion.result[0]).to.equal(num.toHex(0));
-    expect(currentVersion.result[1]).to.equal(num.toHex(3));
-    expect(currentVersion.result[2]).to.equal(num.toHex(0));
+    expect(currentVersion.result).to.deep.equal([0, 3, 0].map(num.toHex));
     await upgradeAccount(account, argentAccountFutureClassHash);
     const newVersion = await provider.callContract({
       contractAddress: account.address,
       entrypoint: "get_version",
     });
-    expect(newVersion.result[0]).to.equal(num.toHex(42));
-    expect(newVersion.result[1]).to.equal(num.toHex(42));
-    expect(newVersion.result[2]).to.equal(num.toHex(42));
+    expect(newVersion.result).to.deep.equal([42, 42, 42].map(num.toHex));
   });
 });

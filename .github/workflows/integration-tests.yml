@@ -3,7 +3,7 @@ name: Integration CI
 env:
   ARCHIVE_LINK: https://github.com/starkware-libs/cairo/releases/download/v1.0.0/release-x86_64-unknown-linux-musl.tar.gz
   ARCHIVE_NAME: cairo_binaries.zip
-  
+
 on: push
 
 jobs:
@@ -15,48 +15,43 @@ jobs:
       - name: Step 2 - Install correct python version
         uses: actions/setup-python@v4
         with:
-            python-version: '3.9'
+          python-version: "3.9"
       - name: Step 3 - Cloning repo
         run: make clone-cairo
       - name: Step 4 - Downloading binaries, unzipping them and making them available
         working-directory: ./cairo
         run: |
-            curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
-            tar -xvf $ARCHIVE_NAME 
-            mkdir -p target/release
-            mv cairo/bin/* target/release
-      - name: Step 5 - Compiling contracts to JSON and CASM
-        run: make compile-test
+          curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
+          tar -xvf $ARCHIVE_NAME 
+          mkdir -p target/release
+          mv cairo/bin/* target/release
+      - name: Step 5 - Compiling test fixtures
+        run: make fixtures
       - name: Step 6 - Installing requirements
         run: pip3 install -r requirements.txt
       - name: Step 7 - Start devnet in background
         run: |
-            make devnet &
-            ./scripts/wait-devnet-ready.sh
+          make devnet &
+          ./scripts/wait-devnet-ready.sh
       - name: Step 8 - Run integrations tests
-        working-directory: ./tests
         run: |
-          npm install 
-          npm test
+          yarn install --frozen-lockfile
+          yarn test
   format:
     runs-on: ubuntu-latest
     steps:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3
       - name: Step 2 - Install project
-        working-directory: ./tests
-        run: npm install
+        run: yarn install --frozen-lockfile
       - name: Step 3 - Check correct formatting
-        working-directory: ./tests
-        run: npm run format:check
+        run: yarn format:check
   lint:
     runs-on: ubuntu-latest
     steps:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3
       - name: Step 2 - Install project
-        working-directory: ./tests
-        run: npm install
+        run: yarn install --frozen-lockfile
       - name: Step 3 - Check correct linting
-        working-directory: ./tests
-        run: npm run lint:check
+        run: yarn lint:check

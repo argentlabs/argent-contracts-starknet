@@ -3,10 +3,9 @@ import {
   declareContract,
   deployAccount,
   expectExecutionRevert,
-  loadContract,
   randomPrivateKey,
   waitForExecution,
-} from "./shared";
+} from "./lib";
 
 describe("Gas griefing", function () {
   this.timeout(320000);

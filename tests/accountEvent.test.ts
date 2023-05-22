@@ -4,7 +4,7 @@ import {
   ESCAPE_SECURITY_PERIOD,
   declareContract,
   deployAccount,
-  deployerAccount,
+  deployer,
   expectEvent,
   getEthContract,
   increaseTime,
@@ -24,7 +24,7 @@ describe("Make sure all events are emitted", function () {
     const owner = "21";
     const guardian = "42";
     const constructorCalldata = CallData.compile({ owner, guardian });
-    const { transaction_hash, contract_address } = await deployerAccount.deployContract({
+    const { transaction_hash, contract_address } = await deployer.deployContract({
       classHash: argentAccountClassHash,
       constructorCalldata,
     });

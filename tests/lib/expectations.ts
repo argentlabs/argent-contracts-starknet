@@ -13,23 +13,19 @@ import { provider } from "./provider";
 
 export async function expectRevertWithErrorMessage(
   errorMessage: string,
-  executeFn: () => Promise<DeployContractUDCResponse | InvokeFunctionResponse>,
+  execute: () => Promise<DeployContractUDCResponse | InvokeFunctionResponse>,
 ) {
   try {
-    const { transaction_hash } = await executeFn();
+    const { transaction_hash } = await execute();
     await provider.waitForTransaction(transaction_hash);
   } catch (e: any) {
-    // console.log(e);
     expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
   }
 }
 
-export async function expectExecutionRevert(
-  errorMessage: string,
-  invocationFunction: () => Promise<InvokeFunctionResponse>,
-) {
+export async function expectExecutionRevert(errorMessage: string, execute: () => Promise<InvokeFunctionResponse>) {
   try {
-    await waitForExecution(invocationFunction());
+    await waitForTransaction(await execute());
     /* eslint-disable  @typescript-eslint/no-explicit-any */
   } catch (e: any) {
     expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
@@ -63,7 +59,6 @@ export async function expectEvent(hashOrInvoke: string | (() => Promise<InvokeFu
   await expectEventFromHash(hashOrInvoke, event);
 }
 
-export async function waitForExecution(response: Promise<InvokeFunctionResponse>) {
-  const { transaction_hash: transferTxHash } = await response;
+export async function waitForTransaction({ transaction_hash: transferTxHash }: InvokeFunctionResponse) {
   return await provider.waitForTransaction(transferTxHash);
 }

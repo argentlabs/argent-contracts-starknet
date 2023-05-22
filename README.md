@@ -45,7 +45,7 @@ As explained here https://github.com/starkware-libs/cairo#prerequisites
 run
 
 ```
-make install
+make
 ```
 
 ### Setup vscode extension (optional)
@@ -122,14 +122,22 @@ make devnet
 
 ### Install JS dependencies
 
-Install all packages (run in this folder `cd tests`)
+Install all packages:
 
 ```shell
 yarn
 ```
 
+Run all integration tests:
+
 ```shell
-yarn test
+make test-integration
+```
+
+Run single integration test file (need to run previous command first):
+
+```shell
+yarn mocha ./tests/accountEscape.test.ts
 ```
 
 You also have access to the linter and a code formatter:
@@ -142,10 +150,4 @@ yarn format
 ### Contract fixtures
 
 The [fixtures folder](./tests/fixtures/) contains pre-compiled contracts used for tests (both json and casm).  
-To add or update a contract there run the command:
-
-```shell
-./cairo/target/release/starknet-compile ./contracts/account ./tests/fixtures/${FILE_NAME}.json --allowed-libfuncs-list-name experimental_v0.1.0
-
-./cairo/target/release/starknet-sierra-compile ./tests/fixtures/${FILE_NAME}.json ./tests/fixtures/${FILE_NAME}.casm --allowed-libfuncs-list-name experimental_v0.1.0
-```
+To add or update a contract, have a look at the [`fixtures` makefile target](./Makefile).

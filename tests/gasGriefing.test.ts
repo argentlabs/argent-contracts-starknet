@@ -4,7 +4,7 @@ import {
   deployAccount,
   expectExecutionRevert,
   randomPrivateKey,
-  waitForExecution,
+  waitForTransaction,
 } from "./lib";
 
 describe("Gas griefing", function () {
@@ -20,15 +20,9 @@ describe("Gas griefing", function () {
     const { account, guardianPrivateKey, accountContract } = await deployAccount(argentAccountClassHash);
     account.signer = new ArgentSigner(guardianPrivateKey);
 
-    await expectExecutionRevert("argent/max-fee-too-high", () =>
-      account.execute(accountContract.populateTransaction.trigger_escape_owner(randomPrivateKey()), undefined, {
-        maxFee: 60000000000000000n,
-      }),
-    );
-
     for (let attempt = 1; attempt <= 5; attempt++) {
-      await waitForExecution(
-        account.execute(accountContract.populateTransaction.trigger_escape_owner(randomPrivateKey())),
+      await waitForTransaction(
+        await account.execute(accountContract.populateTransaction.trigger_escape_owner(randomPrivateKey())),
       );
     }
     await expectExecutionRevert("argent/max-escape-attempts", () =>

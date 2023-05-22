@@ -8,7 +8,7 @@ INSTALLATION_FOLDER_CARGO=$(INSTALLATION_FOLDER)/Cargo.toml
 SOURCE_FOLDER=./contracts
 CAIRO_VERSION=v1.0.0
 
-all: install build
+all: install build compile-account
 
 install: install-cairo install-integration build vscode
 

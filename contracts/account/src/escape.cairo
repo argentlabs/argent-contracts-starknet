@@ -3,9 +3,11 @@ use starknet::{
     storage_address_from_base_and_offset
 };
 use traits::{Into, TryInto};
-use option::OptionTrait;
+use option::{Option, OptionTrait};
+use serde::Serde;
+use array::{ArrayTrait, SpanTrait};
 
-#[derive(Drop, Copy)]
+#[derive(Drop, Copy, Serde, PartialEq)]
 enum EscapeStatus {
     /// No escape triggered, or it was canceled
     None: (),
@@ -17,31 +19,8 @@ enum EscapeStatus {
     Expired: ()
 }
 
-// can be deleted once partialEq can be successfully derived
-impl EscapeStatusInto of Into<EscapeStatus, felt252> {
-    fn into(self: EscapeStatus) -> felt252 {
-        match self {
-            EscapeStatus::None(()) => 0,
-            EscapeStatus::NotReady(()) => 1,
-            EscapeStatus::Ready(()) => 2,
-            EscapeStatus::Expired(()) => 3,
-        }
-    }
-}
 
-// can be deleted once partialEq can be successfully derived
-impl EscapeStatusPartialEq of PartialEq<EscapeStatus> {
-    #[inline(always)]
-    fn eq(lhs: EscapeStatus, rhs: EscapeStatus) -> bool {
-        lhs.into() == rhs.into()
-    }
-    #[inline(always)]
-    fn ne(lhs: EscapeStatus, rhs: EscapeStatus) -> bool {
-        !(lhs == rhs)
-    }
-}
-
-#[derive(Drop, Copy, Serde)]
+#[derive(Drop, Copy, Serde, StorageAccess)]
 struct Escape {
     // timestamp for activation of escape mode, 0 otherwise
     ready_at: u64,

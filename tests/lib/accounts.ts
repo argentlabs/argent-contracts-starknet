@@ -3,6 +3,7 @@ import { loadContract } from "./contracts";
 import { fundAccount } from "./devnet";
 import { provider } from "./provider";
 import { ArgentSigner } from "./signers";
+import {expect} from "chai";
 
 // This is only for TESTS purposes and shouldn't be used in production
 export interface ArgentWallet {
@@ -129,4 +130,26 @@ export async function upgradeAccount(
     calldata: CallData.compile({ implementation: argentAccountClassHash, calldata }),
   });
   return await provider.waitForTransaction(transferTxHash);
+}
+
+
+export enum EscapeStatus {
+  None,
+  NotReady,
+  Ready,
+  Expired,
+}
+
+
+export async function getEscapeStatus(accountContract: Contract): Promise<EscapeStatus> {
+  // StarknetJs parsing is broken so we do it manually
+  const result = (await accountContract.call("get_escape_and_status", undefined, {parseResponse: false})) as string[];
+  expect(result.length).to.equal(4)
+  switch (BigInt(result[3])) {
+    case 0n : return EscapeStatus.None
+    case 1n : return EscapeStatus.NotReady
+    case 2n : return EscapeStatus.Ready
+    case 3n : return EscapeStatus.Expired
+  }
+  expect.fail(`Unknown value ${result[3]}`)
 }

@@ -5,7 +5,7 @@ import {
   OutsideExecution,
   declareContract,
   deployAccount,
-  deployerAccount,
+  deployer,
   expectExecutionRevert,
   getOutsideCall,
   getOutsideExecutionCall,
@@ -14,7 +14,7 @@ import {
   provider,
   randomPrivateKey,
   setTime,
-  waitForExecution,
+  waitForTransaction,
 } from "./lib";
 
 const initialTime = 1713139200;
@@ -28,7 +28,7 @@ describe("Test outside execution", function () {
   before(async () => {
     argentAccountClassHash = await declareContract("ArgentAccount");
     const testDappClassHash = await declareContract("TestDapp");
-    const { contract_address } = await deployerAccount.deployContract({
+    const { contract_address } = await deployer.deployContract({
       classHash: testDappClassHash,
     });
     testDapp = await loadContract(contract_address);
@@ -40,7 +40,7 @@ describe("Test outside execution", function () {
     const chainId = await provider.getChainId();
 
     const outsideExecution: OutsideExecution = {
-      caller: deployerAccount.address,
+      caller: deployer.address,
       execute_after: 0,
       execute_before: 1713139200,
       nonce: randomPrivateKey(),
@@ -66,7 +66,7 @@ describe("Test outside execution", function () {
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
     const outsideExecution: OutsideExecution = {
-      caller: deployerAccount.address,
+      caller: deployer.address,
       nonce: randomPrivateKey(),
       execute_after: initialTime - 100,
       execute_before: initialTime + 100,
@@ -76,15 +76,15 @@ describe("Test outside execution", function () {
 
     // ensure can't be run too early
     await setTime(initialTime - 200);
-    await expectExecutionRevert("argent/invalid-timestamp", () => deployerAccount.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
 
     // ensure can't be run too late
     await setTime(initialTime + 200);
-    await expectExecutionRevert("argent/invalid-timestamp", () => deployerAccount.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
 
     // ensure the caller is as expected
     await expectExecutionRevert("argent/invalid-caller", async () =>
-      deployerAccount.execute(
+      deployer.execute(
         await getOutsideExecutionCall({ ...outsideExecution, caller: "0x123" }, account.address, account.signer),
       ),
     );
@@ -94,22 +94,22 @@ describe("Test outside execution", function () {
     // ensure the account address is checked
     const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", account.signer);
     await expectExecutionRevert("argent/invalid-owner-sig", () =>
-      deployerAccount.execute({ ...wrongAccountCall, contractAddress: account.address }),
+      deployer.execute({ ...wrongAccountCall, contractAddress: account.address }),
     );
 
     // ensure the chain id is checked
     await expectExecutionRevert("argent/invalid-owner-sig", async () =>
-      deployerAccount.execute(
+      deployer.execute(
         await getOutsideExecutionCall(outsideExecution, account.address, account.signer, "ANOTHER_CHAIN"),
       ),
     );
 
     // normal scenario
-    await waitForExecution(deployerAccount.execute(outsideExecutionCall));
+    await waitForTransaction(await deployer.execute(outsideExecutionCall));
     await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
 
     // ensure a transaction can't be replayed
-    await expectExecutionRevert("argent/duplicated-outside-nonce", () => deployerAccount.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/duplicated-outside-nonce", () => deployer.execute(outsideExecutionCall));
   });
 
   it("Avoid caller check if it caller is ANY_CALLER", async function () {
@@ -127,7 +127,7 @@ describe("Test outside execution", function () {
     const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, account.signer);
 
     // ensure the caller is no
-    await waitForExecution(deployerAccount.execute(outsideExecutionCall));
+    await waitForTransaction(await deployer.execute(outsideExecutionCall));
     await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 
@@ -135,7 +135,7 @@ describe("Test outside execution", function () {
     const { account } = await deployAccount(argentAccountClassHash);
 
     const outsideExecution: OutsideExecution = {
-      caller: deployerAccount.address,
+      caller: deployer.address,
       nonce: randomPrivateKey(),
       execute_after: 0,
       execute_before: initialTime + 100,
@@ -145,7 +145,7 @@ describe("Test outside execution", function () {
 
     await setTime(initialTime);
 
-    await waitForExecution(deployerAccount.execute(outsideExecutionCall));
+    await waitForTransaction(await deployer.execute(outsideExecutionCall));
     await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 
@@ -153,7 +153,7 @@ describe("Test outside execution", function () {
     const { account, accountContract, guardianPrivateKey } = await deployAccount(argentAccountClassHash);
 
     const outsideExecution: OutsideExecution = {
-      caller: deployerAccount.address,
+      caller: deployer.address,
       nonce: randomPrivateKey(),
       execute_after: 0,
       execute_before: initialTime + 100,
@@ -165,7 +165,7 @@ describe("Test outside execution", function () {
       new ArgentSigner(guardianPrivateKey),
     );
 
-    await waitForExecution(deployerAccount.execute(outsideExecutionCall));
+    await waitForTransaction(await deployer.execute(outsideExecutionCall));
     const current_escape = await accountContract.get_escape();
     expect(current_escape.new_signer).to.equal(42n, "invalid new value");
   });

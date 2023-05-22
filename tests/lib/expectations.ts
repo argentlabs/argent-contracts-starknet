@@ -37,11 +37,7 @@ export async function expectExecutionRevert(errorMessage: string, execute: () =>
 }
 
 async function expectEventFromHash(transactionHash: string, event: Event) {
-  const txReceipt = await provider.waitForTransaction(transactionHash);
-  await expectEventFromReceipt(txReceipt, event);
-}
-
-export async function expectEventFromReceipt(txReceipt: InvokeTransactionReceiptResponse, event: Event) {
+  const txReceipt: InvokeTransactionReceiptResponse = await provider.waitForTransaction(transactionHash);
   if (!txReceipt.events) {
     assert.fail("No events triggered");
   }

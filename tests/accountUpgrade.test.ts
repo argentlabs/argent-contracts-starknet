@@ -11,7 +11,7 @@ import {
   upgradeAccount,
 } from "./lib";
 
-describe.only("Argent Account: upgrade", function () {
+describe("Argent Account: upgrade", function () {
   let argentAccountClassHash: string;
   let argentAccountFutureClassHash: string;
   let oldArgentAccountClassHash: string;

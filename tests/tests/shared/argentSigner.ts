@@ -10,9 +10,7 @@ import {
   SignerInterface,
   WeierstrassSignatureType,
   ec,
-  encode,
   hash,
-  num,
   transaction,
   typedData,
 } from "starknet";
@@ -98,10 +96,11 @@ abstract class RawSigner implements SignerInterface {
   }
 }
 
-class ArgentSigner extends RawSigner {
+export class ArgentSigner extends RawSigner {
   constructor(public ownerPrivateKey: string = randomPrivateKey(), public guardianPrivateKey?: string) {
     super();
   }
+
   public getOwnerKey(): string {
     return ec.starkCurve.getStarkKey(this.ownerPrivateKey);
   }
@@ -109,22 +108,20 @@ class ArgentSigner extends RawSigner {
   public getGuardianKey(): string | null {
     if (this.guardianPrivateKey) {
       return ec.starkCurve.getStarkKey(this.guardianPrivateKey);
-    } else {
-      return null;
     }
+    return null;
   }
 
   public async signRaw(msgHash: string): Promise<ArraySignatureType> {
     if (this.guardianPrivateKey) {
       return new ConcatSigner([this.ownerPrivateKey, this.guardianPrivateKey]).signRaw(msgHash);
-    } else {
-      const ownerSignature = ec.starkCurve.sign(msgHash, this.ownerPrivateKey) as WeierstrassSignatureType;
-      return [ownerSignature.r.toString(), ownerSignature.s.toString()];
     }
+    const ownerSignature = ec.starkCurve.sign(msgHash, this.ownerPrivateKey) as WeierstrassSignatureType;
+    return [ownerSignature.r.toString(), ownerSignature.s.toString()];
   }
 }
 
-class ConcatSigner extends RawSigner {
+export class ConcatSigner extends RawSigner {
   constructor(protected privateKeys: string[]) {
     super();
   }
@@ -132,13 +129,11 @@ class ConcatSigner extends RawSigner {
   async signRaw(msgHash: string): Promise<ArraySignatureType> {
     return (
       await Promise.all(
-        this.privateKeys.map(async (pk) => {
-          const signature = ec.starkCurve.sign(msgHash, pk);
+        this.privateKeys.map(async (privateKey) => {
+          const signature = ec.starkCurve.sign(msgHash, privateKey);
           return [signature.r.toString(), signature.s.toString()];
         }),
       )
     ).flat();
   }
 }
-
-export { ArgentSigner, ConcatSigner };

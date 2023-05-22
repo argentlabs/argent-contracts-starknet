@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, ec, hash, stark } from "starknet";
+import { CallData, ec, hash } from "starknet";
 import {
   ArgentSigner,
   ConcatSigner,

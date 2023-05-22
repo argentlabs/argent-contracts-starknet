@@ -18,17 +18,8 @@ describe("Gas griefing", function () {
   });
 
   it("Block guardian attempts", async function () {
-    const accountSigner = new ArgentSigner(randomPrivateKey(), randomPrivateKey());
-    const guardianOnlySigner = new ArgentSigner(accountSigner.guardianPrivateKey);
-
-    const account = await deployAccount(
-      argentAccountClassHash,
-      accountSigner.ownerPrivateKey,
-      accountSigner.guardianPrivateKey,
-    );
-
-    const accountContract = await loadContract(account.address);
-    account.signer = guardianOnlySigner;
+    const { account, guardianPrivateKey, accountContract } = await deployAccount(argentAccountClassHash);
+    account.signer = new ArgentSigner(guardianPrivateKey);
 
     await expectExecutionRevert("argent/max-fee-too-high", () =>
       account.execute(accountContract.populateTransaction.trigger_escape_owner(randomPrivateKey()), undefined, {
@@ -47,17 +38,8 @@ describe("Gas griefing", function () {
   });
 
   it("Block high fee", async function () {
-    const accountSigner = new ArgentSigner(randomPrivateKey(), randomPrivateKey());
-    const guardianOnlySigner = new ArgentSigner(accountSigner.guardianPrivateKey);
-
-    const account = await deployAccount(
-      argentAccountClassHash,
-      accountSigner.ownerPrivateKey,
-      accountSigner.guardianPrivateKey,
-    );
-
-    const accountContract = await loadContract(account.address);
-    account.signer = guardianOnlySigner;
+    const { account, accountContract, guardianPrivateKey } = await deployAccount(argentAccountClassHash);
+    account.signer = new ArgentSigner(guardianPrivateKey);
     await expectExecutionRevert("argent/max-fee-too-high", () =>
       account.execute(accountContract.populateTransaction.trigger_escape_owner(randomPrivateKey()), undefined, {
         maxFee: 60000000000000000,

@@ -7,5 +7,6 @@
   "extends": ["plugin:@typescript-eslint/recommended"],
   "env": {
     "node": true
-  }
+  },
+  "ignorePatterns": ["dist/**"]
 }

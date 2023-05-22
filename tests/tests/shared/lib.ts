@@ -5,6 +5,7 @@ import {
   CompiledSierraCasm,
   Contract,
   DeclareContractPayload,
+  DeployContractUDCResponse,
   Event,
   InvokeFunctionResponse,
   InvokeTransactionReceiptResponse,
@@ -56,11 +57,15 @@ async function loadContract(contract_address: string) {
   return new Contract(testAbi, contract_address, provider);
 }
 
-async function expectRevertWithErrorMessage(errorMessage: string, fn: () => void) {
+async function expectRevertWithErrorMessage(
+  errorMessage: string,
+  executeFn: () => Promise<DeployContractUDCResponse | InvokeFunctionResponse>,
+) {
   try {
-    await fn();
-    assert.fail("No error detected");
+    const { transaction_hash } = await executeFn();
+    await provider.waitForTransaction(transaction_hash);
   } catch (e: any) {
+    // console.log(e);
     expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
   }
 }
@@ -88,9 +93,14 @@ async function expectEvent(transactionHash: string, event: Event) {
   const currentEvent = eventFiltered[0];
   expect(currentEvent.from_address).to.eql(event.from_address);
   // Needs deep equality for array, can't do to.equal
-  expect(currentEvent.data).to.eql(event.data);
+  const currentEventData = currentEvent.data.map((e) => num.toBigInt(e));
+  const eventData = event.data.map((e) => num.toBigInt(e));
+  expect(currentEventData).to.eql(eventData);
 }
-
+async function expectEventWhile(event: Event, fn: () => Promise<InvokeFunctionResponse>) {
+  const { transaction_hash } = await fn();
+  await expectEvent(transaction_hash, event);
+}
 async function waitForExecution(response: Promise<InvokeFunctionResponse>) {
   const { transaction_hash: transferTxHash } = await response;
   return await provider.waitForTransaction(transferTxHash);
@@ -100,8 +110,9 @@ export {
   declareContract,
   loadContract,
   expectRevertWithErrorMessage,
-  expectEvent,
   randomPrivateKey,
   waitForExecution,
+  expectEvent,
+  expectEventWhile,
   expectExecutionRevert,
 };

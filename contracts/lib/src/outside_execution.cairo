@@ -1,16 +1,12 @@
-use traits::Into;
-use traits::TryInto;
-use option::OptionTrait;
-use lib::Call;
-use starknet::ContractAddress;
-use starknet::ContractAddressIntoFelt252;
-use lib::check_enough_gas;
-use array::ArrayTrait;
-use array::SpanTrait;
-use starknet::get_tx_info;
+use array::{ArrayTrait, SpanTrait};
 use box::BoxTrait;
-use starknet::get_contract_address;
 use hash::pedersen;
+use traits::{Into, TryInto};
+use option::OptionTrait;
+
+use starknet::{ContractAddress, ContractAddressIntoFelt252, get_tx_info, get_contract_address};
+
+use lib::Call;
 
 // H('StarkNetDomain(name:felt,version:felt,chainId:felt)')
 const STARKNET_DOMAIN_TYPE_HASH: felt252 =
@@ -62,7 +58,6 @@ fn hash_outside_call(outside_call: @Call) -> felt252 {
 
     let mut call_data_state: felt252 = 0;
     loop {
-        check_enough_gas();
         match data_span.pop_front() {
             Option::Some(item) => {
                 call_data_state = pedersen(call_data_state, *item);
@@ -87,7 +82,6 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
 
     let mut outside_calls_state: felt252 = 0;
     loop {
-        check_enough_gas();
         match calls_span.pop_front() {
             Option::Some(call) => {
                 outside_calls_state = pedersen(outside_calls_state, hash_outside_call(call));

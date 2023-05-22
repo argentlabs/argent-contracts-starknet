@@ -11,7 +11,7 @@ import {
   provider,
   randomPrivateKey,
   setTime,
-} from "./shared";
+} from "./lib";
 
 describe("Make sure all events are emitted", function () {
   let argentAccountClassHash: string;

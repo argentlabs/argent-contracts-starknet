@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { num, shortString } from "starknet";
-import { declareContract, deployAccount, deployOldAccount, provider, upgradeAccount } from "./shared";
+import { declareContract, deployAccount, deployOldAccount, provider, upgradeAccount } from "./lib";
 
 describe("Argent Account: upgrade", function () {
   let argentAccountClassHash: string;

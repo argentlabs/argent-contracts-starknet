@@ -15,7 +15,7 @@ import {
   randomPrivateKey,
   setTime,
   upgradeAccount,
-} from "./shared";
+} from "./lib";
 
 describe("ArgentAccount: escape mechanism", function () {
   const ESCAPE_TYPE_GUARDIAN = 1n;

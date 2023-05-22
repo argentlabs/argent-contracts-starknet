@@ -15,7 +15,7 @@ import {
   randomPrivateKey,
   setTime,
   waitForExecution,
-} from "./shared";
+} from "./lib";
 
 const initialTime = 1713139200;
 describe("Test outside execution", function () {

@@ -1,63 +1,15 @@
 import { assert, expect } from "chai";
-import { readFileSync } from "fs";
 import {
-  CompiledSierra,
-  CompiledSierraCasm,
-  Contract,
-  DeclareContractPayload,
   DeployContractUDCResponse,
   Event,
   InvokeFunctionResponse,
   InvokeTransactionReceiptResponse,
-  ec,
-  encode,
   hash,
-  json,
   num,
   shortString,
 } from "starknet";
 
-import { deployerAccount, provider } from "./constants";
-
-export function randomPrivateKey(): string {
-  return "0x" + encode.buf2hex(ec.starkCurve.utils.randomPrivateKey());
-}
-
-const classHashCache: { [contractName: string]: string } = {};
-
-// Could extends Account to add our specific fn but that's too early.
-export async function declareContract(contractName: string): Promise<string> {
-  console.log(`\tDeclaring ${contractName}...`);
-  const cachedClass = classHashCache[contractName];
-  if (cachedClass) {
-    return cachedClass;
-  }
-  const contract: CompiledSierra = json.parse(readFileSync(`./tests/fixtures/${contractName}.json`).toString("ascii"));
-  let returnedClashHash;
-  if ("sierra_program" in contract) {
-    const casm: CompiledSierraCasm = json.parse(
-      readFileSync(`./tests/fixtures/${contractName}.casm`).toString("ascii"),
-    );
-    returnedClashHash = await actualDeclare({ contract, casm });
-  } else {
-    returnedClashHash = await actualDeclare({ contract });
-  }
-  classHashCache[contractName] = returnedClashHash;
-  return returnedClashHash;
-}
-
-async function actualDeclare(payload: DeclareContractPayload): Promise<string> {
-  const { class_hash } = await deployerAccount.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
-  return class_hash;
-}
-
-export async function loadContract(contract_address: string) {
-  const { abi: testAbi } = await provider.getClassAt(contract_address);
-  if (!testAbi) {
-    throw new Error("Error while getting ABI");
-  }
-  return new Contract(testAbi, contract_address, provider);
-}
+import { provider } from "./provider";
 
 export async function expectRevertWithErrorMessage(
   errorMessage: string,

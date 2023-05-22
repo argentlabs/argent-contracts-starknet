@@ -1,5 +1,5 @@
 import { RawArgs } from "starknet";
-import { baseUrl } from "./constants";
+import { baseUrl } from "./provider";
 
 export async function fundAccount(address: string) {
   await handlePost("mint", { address, amount: 1e18, lite: true });

@@ -1,5 +1,5 @@
 import { InvokeFunctionResponse, num } from "starknet";
-import { provider } from ".";
+import { provider } from "./provider";
 
 export async function profileGasUsage({ transaction_hash: transferTxHash }: InvokeFunctionResponse) {
   const receipt = await provider.waitForTransaction(transferTxHash);

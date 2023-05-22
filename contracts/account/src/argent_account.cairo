@@ -513,8 +513,8 @@ mod ArgentAccount {
                     let mut calldata: Span::<felt252> = call.calldata.span();
                     let new_owner: felt252 = Serde::deserialize(
                         ref calldata
-                    ).expect('argent/invalid-call-data');
-                    assert(calldata.is_empty(), 'argent/invalid-call-data');
+                    ).expect('argent/invalid-calldata');
+                    assert(calldata.is_empty(), 'argent/invalid-calldata');
                     assert(new_owner != 0, 'argent/null-owner');
                     assert_guardian_set();
 
@@ -529,7 +529,7 @@ mod ArgentAccount {
                         guardian_escape_attempts::write(current_attempts + 1);
                     }
 
-                    assert(call.calldata.is_empty(), 'argent/invalid-call-data');
+                    assert(call.calldata.is_empty(), 'argent/invalid-calldata');
                     assert_guardian_set();
                     let current_escape = _escape::read();
                     assert(
@@ -552,8 +552,8 @@ mod ArgentAccount {
                     let mut calldata: Span::<felt252> = call.calldata.span();
                     let new_guardian: felt252 = Serde::deserialize(
                         ref calldata
-                    ).expect('argent/invalid-call-data');
-                    assert(calldata.is_empty(), 'argent/invalid-call-data');
+                    ).expect('argent/invalid-calldata');
+                    assert(calldata.is_empty(), 'argent/invalid-calldata');
 
                     if new_guardian == 0 {
                         assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
@@ -569,7 +569,7 @@ mod ArgentAccount {
                         assert_valid_escape_parameters(current_attempts);
                         owner_escape_attempts::write(current_attempts + 1);
                     }
-                    assert(call.calldata.is_empty(), 'argent/invalid-call-data');
+                    assert(call.calldata.is_empty(), 'argent/invalid-calldata');
                     assert_guardian_set();
                     let current_escape = _escape::read();
 

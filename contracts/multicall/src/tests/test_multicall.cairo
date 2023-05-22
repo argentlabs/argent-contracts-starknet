@@ -1,9 +1,7 @@
-use array::ArrayTrait;
-use array::SpanTrait;
+use array::{ArrayTrait, SpanTrait};
 
 use starknet::contract_address_const;
-use starknet::testing::set_caller_address;
-use starknet::testing::set_block_number;
+use starknet::testing::{set_caller_address, set_block_number};
 
 use lib::Call;
 use lib::execute_multicall;

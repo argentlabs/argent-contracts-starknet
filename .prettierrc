@@ -4,6 +4,5 @@
   "trailingComma": "all",
   "singleQuote": false,
   "semi": true,
-  "printWidth": 120,
-  "organizeImportsSkipDestructiveCodeActions": true
+  "printWidth": 120
 }

@@ -8,7 +8,9 @@ INSTALLATION_FOLDER_CARGO=$(INSTALLATION_FOLDER)/Cargo.toml
 SOURCE_FOLDER=./contracts
 CAIRO_VERSION=v1.0.0
 
-install: install-cairo build vscode
+all: install build compile-account
+
+install: install-cairo install-integration build vscode
 
 install-cairo:
 	if [ -d $(INSTALLATION_FOLDER) ]; then \
@@ -16,6 +18,10 @@ install-cairo:
 	else \
 		$(MAKE) clone-cairo; \
 	fi
+
+# TODO: also install python venv and requirements?
+install-integration:
+	yarn
 
 clone-cairo:
 	mkdir -p $(INSTALLATION_FOLDER)
@@ -30,15 +36,15 @@ build:
 compile-account: 
 	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/account account.json --allowed-libfuncs-list-name experimental_v0.1.0
 
-compile-test: 
-	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/account ./tests/contracts/ArgentAccount.json --allowed-libfuncs-list-name experimental_v0.1.0
-	./cairo/target/release/starknet-sierra-compile ./tests/contracts/ArgentAccount.json ./tests/contracts/ArgentAccount.casm --allowed-libfuncs-list-name experimental_v0.1.0
-	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/multicall/src/test_dapp.cairo ./tests/contracts/TestDapp.json --allowed-libfuncs-list-name experimental_v0.1.0
-	./cairo/target/release/starknet-sierra-compile ./tests/contracts/TestDapp.json ./tests/contracts/TestDapp.casm --allowed-libfuncs-list-name experimental_v0.1.0
+fixtures: 
+	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/account ./tests/fixtures/ArgentAccount.json --allowed-libfuncs-list-name experimental_v0.1.0
+	./cairo/target/release/starknet-sierra-compile ./tests/fixtures/ArgentAccount.json ./tests/fixtures/ArgentAccount.casm --allowed-libfuncs-list-name experimental_v0.1.0
+	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/multicall/src/test_dapp.cairo ./tests/fixtures/TestDapp.json --allowed-libfuncs-list-name experimental_v0.1.0
+	./cairo/target/release/starknet-sierra-compile ./tests/fixtures/TestDapp.json ./tests/fixtures/TestDapp.casm --allowed-libfuncs-list-name experimental_v0.1.0
 
-compile-multisig-test: 
-	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/multisig ./tests/contracts/ArgentMultisig.json --allowed-libfuncs-list-name experimental_v0.1.0 --contract-path multisig::argent_multisig_account::ArgentMultisigAccount
-	./cairo/target/release/starknet-sierra-compile ./tests/contracts/ArgentMultisig.json ./tests/contracts/ArgentMultisig.casm --allowed-libfuncs-list-name experimental_v0.1.0
+fixtures-multisig: 
+	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/multisig ./tests/fixtures/ArgentMultisig.json --allowed-libfuncs-list-name experimental_v0.1.0 --contract-path multisig::argent_multisig_account::ArgentMultisigAccount
+	./cairo/target/release/starknet-sierra-compile ./tests/fixtures/ArgentMultisig.json ./tests/fixtures/ArgentMultisig.casm --allowed-libfuncs-list-name experimental_v0.1.0
 
 test: 
 	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)
@@ -55,6 +61,9 @@ test-multicall:
 test-multisig: 
 	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)/multisig
 
+test-integration: fixtures
+	yarn test
+
 format:
 	./cairo/target/release/cairo-format --recursive $(SOURCE_FOLDER) --print-parsing-errors
 
@@ -69,3 +78,7 @@ kill-devnet:
 
 vscode:
 	cd cairo/vscode-cairo && cargo build --bin cairo-language-server --release && cd ../..
+
+clean:
+	rm -rf cairo dist node_modules venv
+	git reset --hard HEAD

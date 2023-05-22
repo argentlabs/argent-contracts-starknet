@@ -3,11 +3,11 @@ import { Contract, uint256 } from "starknet";
 import {
   declareContract,
   deployAccount,
-  deployerAccount,
+  deployer,
   expectRevertWithErrorMessage,
   getEthContract,
   loadContract,
-} from "./shared";
+} from "./lib";
 
 describe("ArgentAccount: multicall", function () {
   let argentAccountClassHash: string;
@@ -17,7 +17,7 @@ describe("ArgentAccount: multicall", function () {
   before(async () => {
     argentAccountClassHash = await declareContract("ArgentAccount");
     const testDappClassHash = await declareContract("TestDapp");
-    const { contract_address } = await deployerAccount.deployContract({
+    const { contract_address } = await deployer.deployContract({
       classHash: testDappClassHash,
     });
     testDappContract = await loadContract(contract_address);

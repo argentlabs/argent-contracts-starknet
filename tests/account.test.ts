@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, ec, hash, stark } from "starknet";
+import { CallData, ec, hash } from "starknet";
 import {
   ArgentSigner,
   ConcatSigner,
@@ -7,11 +7,11 @@ import {
   deployAccount,
   deployAccountWithGuardianBackup,
   deployAccountWithoutGuardian,
-  deployerAccount,
+  deployer,
   expectRevertWithErrorMessage,
   provider,
   randomPrivateKey,
-} from "./shared";
+} from "./lib";
 
 describe("ArgentAccount", function () {
   let argentAccountClassHash: string;
@@ -56,7 +56,7 @@ describe("ArgentAccount", function () {
 
     it("Expect an error when owner is zero", async function () {
       await expectRevertWithErrorMessage("argent/null-owner", () =>
-        deployerAccount.deployContract({
+        deployer.deployContract({
           classHash: argentAccountClassHash,
           constructorCalldata: CallData.compile({ owner: 0, guardian: 12 }),
         }),

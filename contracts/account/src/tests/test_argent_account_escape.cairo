@@ -1,11 +1,9 @@
 use zeroable::Zeroable;
 use starknet::contract_address_const;
-use starknet::testing::set_block_timestamp;
-use starknet::testing::set_caller_address;
+use starknet::testing::{set_block_timestamp, set_caller_address};
 
 use account::ArgentAccount;
-use account::tests::initialize_account;
-use account::tests::initialize_account_without_guardian;
+use account::tests::{initialize_account, initialize_account_without_guardian};
 
 const DEFAULT_TIMESTAMP: u64 = 42;
 const ESCAPE_SECURITY_PERIOD: u64 = 604800; // 7 * 24 * 60 * 60;  // 7 days

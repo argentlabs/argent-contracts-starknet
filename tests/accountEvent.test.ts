@@ -1,18 +1,17 @@
-import { CallData, Signer, ec, hash, num, stark, uint256 } from "starknet";
+import { CallData, Signer, ec, hash, num, uint256 } from "starknet";
 import {
   ArgentSigner,
   ESCAPE_SECURITY_PERIOD,
   declareContract,
   deployAccount,
-  deployerAccount,
+  deployer,
   expectEvent,
-  expectEventWhile,
   getEthContract,
   increaseTime,
   provider,
   randomPrivateKey,
   setTime,
-} from "./shared";
+} from "./lib";
 
 describe("Make sure all events are emitted", function () {
   let argentAccountClassHash: string;
@@ -25,7 +24,7 @@ describe("Make sure all events are emitted", function () {
     const owner = "21";
     const guardian = "42";
     const constructorCalldata = CallData.compile({ owner, guardian });
-    const { transaction_hash, contract_address } = await deployerAccount.deployContract({
+    const { transaction_hash, contract_address } = await deployer.deployContract({
       classHash: argentAccountClassHash,
       constructorCalldata,
     });
@@ -44,14 +43,11 @@ describe("Make sure all events are emitted", function () {
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
     await setTime(42);
 
-    await expectEventWhile(
-      {
-        from_address: account.address,
-        keys: ["EscapeOwnerTriggered"],
-        data: [activeAt, newOwner],
-      },
-      () => account.execute(accountContract.populateTransaction.trigger_escape_owner(newOwner)),
-    );
+    await expectEvent(() => account.execute(accountContract.populateTransaction.trigger_escape_owner(newOwner)), {
+      from_address: account.address,
+      keys: ["EscapeOwnerTriggered"],
+      data: [activeAt, newOwner],
+    });
   });
 
   it("Expect 'OwnerEscaped(new_signer)' on escape_owner", async function () {
@@ -64,16 +60,11 @@ describe("Make sure all events are emitted", function () {
     await account.execute(accountContract.populateTransaction.trigger_escape_owner(newOwner));
     await increaseTime(ESCAPE_SECURITY_PERIOD);
 
-    await expectEventWhile(
-      {
-        from_address: account.address,
-        keys: ["OwnerEscaped"],
-        data: [newOwner],
-      },
-      () => {
-        return account.execute(accountContract.populateTransaction.escape_owner());
-      },
-    );
+    await expectEvent(() => account.execute(accountContract.populateTransaction.escape_owner()), {
+      from_address: account.address,
+      keys: ["OwnerEscaped"],
+      data: [newOwner],
+    });
   });
 
   it("Expect 'EscapeGuardianTriggered(active_at, new_owner)' on trigger_escape_guardian", async function () {
@@ -84,14 +75,11 @@ describe("Make sure all events are emitted", function () {
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
     await setTime(42);
 
-    await expectEventWhile(
-      {
-        from_address: account.address,
-        keys: ["EscapeGuardianTriggered"],
-        data: [activeAt, newGuardian],
-      },
-      () => account.execute(accountContract.populateTransaction.trigger_escape_guardian(newGuardian)),
-    );
+    await expectEvent(() => account.execute(accountContract.populateTransaction.trigger_escape_guardian(newGuardian)), {
+      from_address: account.address,
+      keys: ["EscapeGuardianTriggered"],
+      data: [activeAt, newGuardian],
+    });
   });
 
   it("Expect 'GuardianEscaped(new_signer)' on escape_guardian", async function () {
@@ -103,14 +91,11 @@ describe("Make sure all events are emitted", function () {
     await account.execute(accountContract.populateTransaction.trigger_escape_guardian(newGuardian));
     await increaseTime(ESCAPE_SECURITY_PERIOD);
 
-    await expectEventWhile(
-      {
-        from_address: account.address,
-        keys: ["GuardianEscaped"],
-        data: [newGuardian],
-      },
-      () => account.execute(accountContract.populateTransaction.escape_guardian()),
-    );
+    await expectEvent(() => account.execute(accountContract.populateTransaction.escape_guardian()), {
+      from_address: account.address,
+      keys: ["GuardianEscaped"],
+      data: [newGuardian],
+    });
   });
 
   it("Expect 'OwnerChanged(new_signer)' on change_owner", async function () {
@@ -126,13 +111,13 @@ describe("Make sure all events are emitted", function () {
     const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, ownerPublicKey]);
     const signature = ec.starkCurve.sign(msgHash, newOwnerPrivateKey);
 
-    await expectEventWhile(
+    await expectEvent(
+      () => account.execute(accountContract.populateTransaction.change_owner(newOwner, signature.r, signature.s)),
       {
         from_address: account.address,
         keys: ["OwnerChanged"],
         data: [newOwner],
       },
-      () => account.execute(accountContract.populateTransaction.change_owner(newOwner, signature.r, signature.s)),
     );
   });
 
@@ -141,14 +126,11 @@ describe("Make sure all events are emitted", function () {
 
     const newGuardian = "42";
 
-    await expectEventWhile(
-      {
-        from_address: account.address,
-        keys: ["GuardianChanged"],
-        data: [newGuardian],
-      },
-      () => account.execute(accountContract.populateTransaction.change_guardian(newGuardian)),
-    );
+    await expectEvent(() => account.execute(accountContract.populateTransaction.change_guardian(newGuardian)), {
+      from_address: account.address,
+      keys: ["GuardianChanged"],
+      data: [newGuardian],
+    });
   });
 
   it("Expect 'GuardianBackupChanged(new_guardian_backup)' on change_guardian_backup", async function () {
@@ -156,27 +138,27 @@ describe("Make sure all events are emitted", function () {
 
     const newGuardianBackup = "42";
 
-    await expectEventWhile(
+    await expectEvent(
+      () => account.execute(accountContract.populateTransaction.change_guardian_backup(newGuardianBackup)),
       {
         from_address: account.address,
         keys: ["GuardianBackupChanged"],
         data: [newGuardianBackup],
       },
-      () => account.execute(accountContract.populateTransaction.change_guardian_backup(newGuardianBackup)),
     );
   });
 
   it("Expect 'AccountUpgraded(new_implementation)' on upgrade", async function () {
     const { account, accountContract } = await deployAccount(argentAccountClassHash);
-    const argentAccountV1ClassHash = await declareContract("ArgentAccountV1");
+    const argentAccountFutureClassHash = await declareContract("ArgentAccountFutureVersion");
 
-    await expectEventWhile(
+    await expectEvent(
+      () => account.execute(accountContract.populateTransaction.upgrade(argentAccountFutureClassHash, ["0"])),
       {
         from_address: account.address,
         keys: ["AccountUpgraded"],
-        data: [argentAccountV1ClassHash],
+        data: [argentAccountFutureClassHash],
       },
-      () => account.execute(accountContract.populateTransaction.upgrade(argentAccountV1ClassHash, ["0"])),
     );
   });
 
@@ -190,14 +172,11 @@ describe("Make sure all events are emitted", function () {
       await account.execute(accountContract.populateTransaction.trigger_escape_guardian(42));
 
       account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
-      await expectEventWhile(
-        {
-          from_address: account.address,
-          keys: ["EscapeCanceled"],
-          data: [],
-        },
-        () => account.execute(accountContract.populateTransaction.cancel_escape()),
-      );
+      await expectEvent(() => account.execute(accountContract.populateTransaction.cancel_escape()), {
+        from_address: account.address,
+        keys: ["EscapeCanceled"],
+        data: [],
+      });
     });
 
     it("Expected on trigger_escape_owner", async function () {
@@ -206,14 +185,11 @@ describe("Make sure all events are emitted", function () {
 
       await account.execute(accountContract.populateTransaction.trigger_escape_owner(42));
 
-      await expectEventWhile(
-        {
-          from_address: account.address,
-          keys: ["EscapeCanceled"],
-          data: [],
-        },
-        () => account.execute(accountContract.populateTransaction.trigger_escape_owner(42)),
-      );
+      await expectEvent(() => account.execute(accountContract.populateTransaction.trigger_escape_owner(42)), {
+        from_address: account.address,
+        keys: ["EscapeCanceled"],
+        data: [],
+      });
     });
 
     it("Expected on trigger_escape_guardian", async function () {
@@ -222,16 +198,11 @@ describe("Make sure all events are emitted", function () {
 
       await account.execute(accountContract.populateTransaction.trigger_escape_guardian(42));
 
-      await expectEventWhile(
-        {
-          from_address: account.address,
-          keys: ["EscapeCanceled"],
-          data: [],
-        },
-        () => {
-          return account.execute(accountContract.populateTransaction.trigger_escape_guardian(42));
-        },
-      );
+      await expectEvent(() => account.execute(accountContract.populateTransaction.trigger_escape_guardian(42)), {
+        from_address: account.address,
+        keys: ["EscapeCanceled"],
+        data: [],
+      });
     });
   });
 

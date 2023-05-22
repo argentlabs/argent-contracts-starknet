@@ -1,8 +1,8 @@
-import { Account, CallData, Contract, ec, encode, hash } from "starknet";
+import { Account, CallData, Contract, ec, hash } from "starknet";
 import { loadContract } from "./contracts";
 import { fundAccount } from "./devnet";
 import { provider } from "./provider";
-import { ArgentSigner } from "./signers";
+import { ArgentSigner, randomPrivateKey } from "./signers";
 
 // This is only for TESTS purposes and shouldn't be used in production
 export interface ArgentWallet {
@@ -18,10 +18,6 @@ export const deployer = new Account(
   "0x347be35996a21f6bf0623e75dbce52baba918ad5ae8d83b6f416045ab22961a" /* address */,
   "0xbdd640fb06671ad11c80317fa3b1799d" /* private key */,
 );
-
-export function randomPrivateKey(): string {
-  return "0x" + encode.buf2hex(ec.starkCurve.utils.randomPrivateKey());
-}
 
 export async function deployOldAccount(
   proxyClassHash: string,

@@ -16,5 +16,7 @@ cairo
 account.json
 tests/fixtures/ArgentAccount.json
 tests/fixtures/ArgentAccount.casm
+tests/fixtures/ArgentMultisigAccount.json
+tests/fixtures/ArgentMultisigAccount.casm
 tests/fixtures/TestDapp.json
 tests/fixtures/TestDapp.casm

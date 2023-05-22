@@ -7,7 +7,7 @@ import {
   deployAccount,
   deployAccountWithGuardianBackup,
   deployAccountWithoutGuardian,
-  deployerAccount,
+  deployer,
   expectRevertWithErrorMessage,
   provider,
   randomPrivateKey,
@@ -56,7 +56,7 @@ describe("ArgentAccount", function () {
 
     it("Expect an error when owner is zero", async function () {
       await expectRevertWithErrorMessage("argent/null-owner", () =>
-        deployerAccount.deployContract({
+        deployer.deployContract({
           classHash: argentAccountClassHash,
           constructorCalldata: CallData.compile({ owner: 0, guardian: 12 }),
         }),

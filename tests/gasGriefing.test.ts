@@ -4,7 +4,7 @@ import {
   deployAccount,
   expectExecutionRevert,
   randomPrivateKey,
-  waitForExecution,
+  waitForTransaction,
 } from "./lib";
 
 describe("Gas griefing", function () {
@@ -27,8 +27,8 @@ describe("Gas griefing", function () {
     );
 
     for (let attempt = 1; attempt <= 5; attempt++) {
-      await waitForExecution(
-        account.execute(accountContract.populateTransaction.trigger_escape_owner(randomPrivateKey())),
+      await waitForTransaction(
+        await account.execute(accountContract.populateTransaction.trigger_escape_owner(randomPrivateKey())),
       );
     }
     await expectExecutionRevert("argent/max-escape-attempts", () =>

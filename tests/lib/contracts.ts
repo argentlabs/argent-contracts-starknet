@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import { CompiledSierra, CompiledSierraCasm, Contract, DeclareContractPayload, json } from "starknet";
-import { deployerAccount } from "./accounts";
+import { deployer } from "./accounts";
 import { provider } from "./provider";
 
 const classHashCache: Record<string, string> = {};
@@ -38,7 +38,7 @@ export async function declareContract(contractName: string): Promise<string> {
 }
 
 async function actualDeclare(payload: DeclareContractPayload): Promise<string> {
-  const { class_hash } = await deployerAccount.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
+  const { class_hash } = await deployer.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
   return class_hash;
 }
 

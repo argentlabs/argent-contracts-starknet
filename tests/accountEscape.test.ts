@@ -19,7 +19,7 @@ import {
   upgradeAccount,
 } from "./lib";
 
-describe.only("ArgentAccount: escape mechanism", function () {
+describe("ArgentAccount: escape mechanism", function () {
   const ESCAPE_TYPE_GUARDIAN = 1n;
   const ESCAPE_TYPE_OWNER = 2n;
 

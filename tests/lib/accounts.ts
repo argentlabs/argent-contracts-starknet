@@ -1,9 +1,9 @@
+import { expect } from "chai";
 import { Account, CallData, Contract, InvokeTransactionReceiptResponse, RawCalldata, ec, encode, hash } from "starknet";
 import { loadContract } from "./contracts";
 import { fundAccount } from "./devnet";
 import { provider } from "./provider";
 import { ArgentSigner } from "./signers";
-import {expect} from "chai";
 
 // This is only for TESTS purposes and shouldn't be used in production
 export interface ArgentWallet {
@@ -132,7 +132,6 @@ export async function upgradeAccount(
   return await provider.waitForTransaction(transferTxHash);
 }
 
-
 export enum EscapeStatus {
   None,
   NotReady,
@@ -140,16 +139,19 @@ export enum EscapeStatus {
   Expired,
 }
 
-
 export async function getEscapeStatus(accountContract: Contract): Promise<EscapeStatus> {
   // StarknetJs parsing is broken so we do it manually
-  const result = (await accountContract.call("get_escape_and_status", undefined, {parseResponse: false})) as string[];
-  expect(result.length).to.equal(4)
+  const result = (await accountContract.call("get_escape_and_status", undefined, { parseResponse: false })) as string[];
+  expect(result.length).to.equal(4);
   switch (BigInt(result[3])) {
-    case 0n : return EscapeStatus.None
-    case 1n : return EscapeStatus.NotReady
-    case 2n : return EscapeStatus.Ready
-    case 3n : return EscapeStatus.Expired
+    case 0n:
+      return EscapeStatus.None;
+    case 1n:
+      return EscapeStatus.NotReady;
+    case 2n:
+      return EscapeStatus.Ready;
+    case 3n:
+      return EscapeStatus.Expired;
   }
-  expect.fail(`Unknown value ${result[3]}`)
+  expect.fail(`Unknown value ${result[3]}`);
 }

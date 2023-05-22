@@ -168,15 +168,15 @@ describe("Make sure all events are emitted", function () {
 
   it("Expect 'AccountUpgraded(new_implementation)' on upgrade", async function () {
     const { account, accountContract } = await deployAccount(argentAccountClassHash);
-    const argentAccountV1ClassHash = await declareContract("ArgentAccountV1");
+    const argentAccountFutureClassHash = await declareContract("ArgentAccountFutureVersion");
 
     await expectEventWhile(
       {
         from_address: account.address,
         keys: ["AccountUpgraded"],
-        data: [argentAccountV1ClassHash],
+        data: [argentAccountFutureClassHash],
       },
-      () => account.execute(accountContract.populateTransaction.upgrade(argentAccountV1ClassHash, ["0"])),
+      () => account.execute(accountContract.populateTransaction.upgrade(argentAccountFutureClassHash, ["0"])),
     );
   });
 

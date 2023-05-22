@@ -2,12 +2,9 @@
 mod Multicall {
     use box::BoxTrait;
     use starknet::get_block_info;
-    use array::SpanTrait;
-    use array::ArrayTrait;
+    use array::{SpanTrait, ArrayTrait};
 
-    use lib::Call;
-    use lib::execute_multicall;
-    use lib::SpanSerde;
+    use lib::{Call, execute_multicall, SpanSerde};
 
     #[view]
     fn aggregate(calls: Array<Call>) -> (u64, Span<Span<felt252>>) {

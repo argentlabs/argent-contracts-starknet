@@ -1,11 +1,8 @@
-use starknet::StorageAccess;
-use starknet::StorageBaseAddress;
-use starknet::SyscallResult;
-use starknet::storage_read_syscall;
-use starknet::storage_write_syscall;
-use starknet::storage_address_from_base_and_offset;
-use traits::Into;
-use traits::TryInto;
+use starknet::{
+    StorageAccess, StorageBaseAddress, SyscallResult, storage_read_syscall, storage_write_syscall,
+    storage_address_from_base_and_offset
+};
+use traits::{Into, TryInto};
 use option::OptionTrait;
 
 #[derive(Drop, Copy)]

@@ -1,7 +1,6 @@
 #[contract]
 mod TestDapp {
-    use starknet::get_caller_address;
-    use starknet::ContractAddress;
+    use starknet::{get_caller_address, ContractAddress};
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                           Storage                                          //

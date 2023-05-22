@@ -25,8 +25,6 @@ This allows for better UX.
 
 **For extra safety, it's recommended to deploy the account before depositing large amounts in the account**.
 
-
 ## Upgrade
 
 To enable the model to evolve, the account implements an `upgrade` method that replaces the implementation. Calling this method, as any other method, requires the approval from `threshold` owners.
-

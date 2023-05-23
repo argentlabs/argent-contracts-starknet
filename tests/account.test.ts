@@ -33,7 +33,6 @@ describe("ArgentAccount", function () {
       const { accountContract, ownerPrivateKey } = await deployAccountWithoutGuardian(argentAccountClassHash);
       const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
 
-
       const owner = await accountContract.get_owner();
       expect(owner).to.equal(BigInt(ownerPublicKey));
       const guardian = await accountContract.get_guardian();

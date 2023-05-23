@@ -45,7 +45,6 @@ fn execute_multicall_test_dapp_2() {
     assert(*retdata[2] == 42, '42 2');
 }
 
-
 #[test]
 #[available_gas(2000000)]
 fn execute_multicall_test_dapp_3() {
@@ -119,7 +118,6 @@ fn create_simple_call() -> Call {
 fn create_simple_call_with_data(number: felt252) -> Call {
     create_call_with(42, number)
 }
-
 
 fn create_set_number_call(number: felt252) -> Call {
     create_call_with(1, number)

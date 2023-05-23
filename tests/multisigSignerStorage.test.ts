@@ -15,25 +15,25 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 1;
 
-      const new_signer_1 = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
-      const new_signer_2 = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+      const newSigner1 = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+      const newSigner2 = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      const is_signer_0 = await accountContract.is_signer(signers[0]);
-      const is_signer_1 = await accountContract.is_signer(new_signer_1);
-      expect(is_signer_0).to.be.true;
-      expect(is_signer_1).to.be.false;
+      const isSigner0 = await accountContract.is_signer(signers[0]);
+      const isSigner1 = await accountContract.is_signer(newSigner1);
+      expect(isSigner0).to.be.true;
+      expect(isSigner1).to.be.false;
 
-      await accountContract.add_signers(threshold, [new_signer_1]);
+      await accountContract.add_signers(threshold, [newSigner1]);
 
-      const is_new_signer_1 = await accountContract.is_signer(new_signer_1);
-      expect(is_new_signer_1).to.be.true;
+      const isNewSigner1 = await accountContract.is_signer(newSigner1);
+      expect(isNewSigner1).to.be.true;
 
-      await accountContract.add_signers(threshold, [new_signer_2]);
+      await accountContract.add_signers(threshold, [newSigner2]);
 
-      const is_signer_2 = await accountContract.is_signer(new_signer_2);
-      expect(is_signer_2).to.be.true;
+      const isSigner2 = await accountContract.is_signer(newSigner2);
+      expect(isSigner2).to.be.true;
     });
 
     it("Expect 'argent/already-a-signer' when adding a new signer already in the linked list", async function () {
@@ -57,8 +57,8 @@ describe("ArgentMultisig: signer storage", function () {
 
       await accountContract.remove_signers(threshold, [signers[0]]);
 
-      const is_signer_0 = await accountContract.is_signer(signers[0]);
-      expect(is_signer_0).to.be.false;
+      const isSigner0 = await accountContract.is_signer(signers[0]);
+      expect(isSigner0).to.be.false;
     });
 
     it("Should remove middle signer", async function () {
@@ -69,8 +69,8 @@ describe("ArgentMultisig: signer storage", function () {
 
       await accountContract.remove_signers(threshold, [signers[1]]);
 
-      const is_signer_1 = await accountContract.is_signer(signers[1]);
-      expect(is_signer_1).to.be.false;
+      const isSigner1 = await accountContract.is_signer(signers[1]);
+      expect(isSigner1).to.be.false;
     });
 
     it("Should remove last signer", async function () {
@@ -81,8 +81,8 @@ describe("ArgentMultisig: signer storage", function () {
 
       await accountContract.remove_signers(threshold, [signers[2]]);
 
-      const is_signer_2 = await accountContract.is_signer(signers[2]);
-      expect(is_signer_2).to.be.false;
+      const isSigner2 = await accountContract.is_signer(signers[2]);
+      expect(isSigner2).to.be.false;
     });
 
     it("Should remove first and middle signer", async function () {
@@ -93,11 +93,11 @@ describe("ArgentMultisig: signer storage", function () {
 
       await accountContract.remove_signers(threshold, [signers[0], signers[1]]);
 
-      const is_signer_0 = await accountContract.is_signer(signers[0]);
-      expect(is_signer_0).to.be.false;
+      const isSigner0 = await accountContract.is_signer(signers[0]);
+      expect(isSigner0).to.be.false;
 
-      const is_signer_1 = await accountContract.is_signer(signers[1]);
-      expect(is_signer_1).to.be.false;
+      const isSigner1 = await accountContract.is_signer(signers[1]);
+      expect(isSigner1).to.be.false;
     });
 
     it("Should remove first and last signer", async function () {
@@ -108,11 +108,11 @@ describe("ArgentMultisig: signer storage", function () {
 
       await accountContract.remove_signers(threshold, [signers[0], signers[2]]);
 
-      const is_signer_0 = await accountContract.is_signer(signers[0]);
-      expect(is_signer_0).to.be.false;
+      const isSigner0 = await accountContract.is_signer(signers[0]);
+      expect(isSigner0).to.be.false;
 
-      const is_signer_2 = await accountContract.is_signer(signers[2]);
-      expect(is_signer_2).to.be.false;
+      const isSigner2 = await accountContract.is_signer(signers[2]);
+      expect(isSigner2).to.be.false;
     });
 
     it("Should remove middle and last signer", async function () {
@@ -123,11 +123,11 @@ describe("ArgentMultisig: signer storage", function () {
 
       await accountContract.remove_signers(threshold, [signers[1], signers[2]]);
 
-      const is_signer_1 = await accountContract.is_signer(signers[1]);
-      expect(is_signer_1).to.be.false;
+      const isSigner1 = await accountContract.is_signer(signers[1]);
+      expect(isSigner1).to.be.false;
 
-      const is_signer_2 = await accountContract.is_signer(signers[2]);
-      expect(is_signer_2).to.be.false;
+      const isSigner2 = await accountContract.is_signer(signers[2]);
+      expect(isSigner2).to.be.false;
     });
 
     it("Should remove middle and first signer", async function () {
@@ -138,11 +138,11 @@ describe("ArgentMultisig: signer storage", function () {
 
       await accountContract.remove_signers(threshold, [signers[1], signers[0]]);
 
-      const is_signer_1 = await accountContract.is_signer(signers[1]);
-      expect(is_signer_1).to.be.false;
+      const isSigner1 = await accountContract.is_signer(signers[1]);
+      expect(isSigner1).to.be.false;
 
-      const is_signer_0 = await accountContract.is_signer(signers[0]);
-      expect(is_signer_0).to.be.false;
+      const isSigner0 = await accountContract.is_signer(signers[0]);
+      expect(isSigner0).to.be.false;
     });
 
     it("Should remove last and first signer", async function () {
@@ -153,11 +153,11 @@ describe("ArgentMultisig: signer storage", function () {
 
       await accountContract.remove_signers(threshold, [signers[2], signers[0]]);
 
-      const is_signer_2 = await accountContract.is_signer(signers[2]);
-      expect(is_signer_2).to.be.false;
+      const isSigner2 = await accountContract.is_signer(signers[2]);
+      expect(isSigner2).to.be.false;
 
-      const is_signer_0 = await accountContract.is_signer(signers[0]);
-      expect(is_signer_0).to.be.false;
+      const isSigner0 = await accountContract.is_signer(signers[0]);
+      expect(isSigner0).to.be.false;
     });
 
     it("Should remove last and middle signer", async function () {
@@ -168,23 +168,23 @@ describe("ArgentMultisig: signer storage", function () {
 
       await accountContract.remove_signers(threshold, [signers[2], signers[1]]);
 
-      const is_signer_2 = await accountContract.is_signer(signers[2]);
-      expect(is_signer_2).to.be.false;
+      const isSigner2 = await accountContract.is_signer(signers[2]);
+      expect(isSigner2).to.be.false;
 
-      const is_signer_1 = await accountContract.is_signer(signers[1]);
-      expect(is_signer_1).to.be.false;
+      const isSigner1 = await accountContract.is_signer(signers[1]);
+      expect(isSigner1).to.be.false;
     });
 
     it("Expect 'argent/not-a-signer' when removing a non-existent signer", async function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const non_signer = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+      const nonSigner = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
 
       const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
       await expectRevertWithErrorMessage("argent/not-a-signer", () =>
-        accountContract.remove_signers(threshold, [non_signer]),
+        accountContract.remove_signers(threshold, [nonSigner]),
       );
     });
 
@@ -202,56 +202,56 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 1;
 
-      const new_signer = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+      const newSigner = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await accountContract.replace_signer(signers[0], new_signer);
+      await accountContract.replace_signer(signers[0], newSigner);
 
-      const is_new_signer = await accountContract.is_signer(new_signer);
-      expect(is_new_signer).to.be.true;
+      const isNewSigner = await accountContract.is_signer(newSigner);
+      expect(isNewSigner).to.be.true;
     });
 
     it("Should replace first signer", async function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const new_signer = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+      const newSigner = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await accountContract.replace_signer(signers[0], new_signer);
+      await accountContract.replace_signer(signers[0], newSigner);
 
-      const signers_list = await accountContract.get_signers();
-      expect(signers_list).to.have.ordered.members([new_signer, signers[1], signers[2]]);
+      const signersList = await accountContract.get_signers();
+      expect(signersList).to.have.ordered.members([newSigner, signers[1], signers[2]]);
     });
 
     it("Should replace middle signer", async function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const new_signer = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+      const newSigner = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await accountContract.replace_signer(signers[1], new_signer);
+      await accountContract.replace_signer(signers[1], newSigner);
 
-      const signers_list = await accountContract.get_signers();
-      expect(signers_list).to.have.ordered.members([signers[0], new_signer, signers[2]]);
+      const signersList = await accountContract.get_signers();
+      expect(signersList).to.have.ordered.members([signers[0], newSigner, signers[2]]);
     });
 
     it("Should replace last signer", async function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const new_signer = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+      const newSigner = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await accountContract.replace_signer(signers[2], new_signer);
+      await accountContract.replace_signer(signers[2], newSigner);
 
-      const signers_list = await accountContract.get_signers();
-      expect(signers_list).to.have.ordered.members([signers[0], signers[1], new_signer]);
+      const signersList = await accountContract.get_signers();
+      expect(signersList).to.have.ordered.members([signers[0], signers[1], newSigner]);
     });
   });
 
@@ -259,13 +259,13 @@ describe("ArgentMultisig: signer storage", function () {
     const threshold = 1;
     const signersLength = 3;
 
-    const non_signer = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
-    const new_signer = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+    const nonSigner = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+    const newSigner = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
 
     const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
     await expectRevertWithErrorMessage("argent/not-a-signer", () =>
-      accountContract.replace_signer(non_signer, new_signer),
+      accountContract.replace_signer(nonSigner, newSigner),
     );
   });
 

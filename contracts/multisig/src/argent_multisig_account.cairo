@@ -8,27 +8,30 @@ mod ArgentMultisigAccount {
     use zeroable::Zeroable;
     use starknet::{
         get_contract_address, ContractAddressIntoFelt252, VALIDATED,
-        syscalls::replace_class_syscall, ClassHash, class_hash_const
+        syscalls::replace_class_syscall, ClassHash, class_hash_const, get_block_timestamp,
+        get_caller_address, get_tx_info
     };
 
     use lib::{
         assert_only_self, assert_no_self_call, assert_correct_tx_version, assert_non_reentrant,
         execute_multicall, Call, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
-        SpanSerde
+        SpanSerde, OutsideExecution, hash_outside_execution_message, ERC165_IERC165_INTERFACE_ID,
+        ERC165_ACCOUNT_INTERFACE_ID, ERC165_OLD_ACCOUNT_INTERFACE_ID, ERC1271_VALIDATED
     };
     use multisig::{
         IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait,
         deserialize_array_signer_signature, MultisigStorage, SignerSignature
     };
 
-    const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
-    const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
-    const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt252 = 0x3943f10f;
 
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
-        738349667340360233096752603318170676063569407717437256101137432051386874767; // execute_after_upgrade
+        738349667340360233096752603318170676063569407717437256101137432051386874767; // starknet_keccak('execute_after_upgrade')
 
     const NAME: felt252 = 'ArgentMultisig';
+    const VERSION_MAYOR: u8 = 1;
+    const VERSION_MINOR: u8 = 0;
+    const VERSION_PATCH: u8 = 0;
+    const VERSION_COMPAT: felt252 = '1.0.0';
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 
@@ -76,22 +79,8 @@ mod ArgentMultisigAccount {
 
     #[external]
     fn __validate__(calls: Array<Call>) -> felt252 {
-        let account_address = get_contract_address();
-
-        if calls.len() == 1 {
-            let call = calls[0];
-            if (*call.to).into() == account_address.into() {
-                // This should only be called after an upgrade, never directly
-                assert(*call.selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
-            }
-        } else {
-            // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions
-            // and this restriction will reduce the attack surface
-            assert_no_self_call(calls.span(), account_address);
-        }
-
-        assert_is_valid_tx_signature();
-
+        let tx_info = get_tx_info().unbox();
+        assert_valid_calls_and_signature(calls.span(), tx_info.transaction_hash, tx_info.signature);
         VALIDATED
     }
 
@@ -125,6 +114,7 @@ mod ArgentMultisigAccount {
         signers: Array<felt252>
     ) -> felt252 {
         let tx_info = starknet::get_tx_info().unbox();
+        assert_correct_tx_version(tx_info.version);
 
         let parsed_signatures = deserialize_array_signer_signature(
             tx_info.signature
@@ -243,19 +233,17 @@ mod ArgentMultisigAccount {
         }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
         assert(supports_interface, 'argent/invalid-implementation');
 
-        let old_version = get_version();
         replace_class_syscall(implementation).unwrap_syscall();
-        let return_data = IUpgradeTargetLibraryDispatcher {
-            class_hash: implementation
-        }.execute_after_upgrade(old_version, calldata);
-
         AccountUpgraded(implementation);
-        return_data
+
+        IUpgradeTargetLibraryDispatcher {
+            class_hash: implementation
+        }.execute_after_upgrade(calldata)
     }
 
     /// see `IUpgradeTarget`
     #[external]
-    fn execute_after_upgrade(previous_version: Version, data: Array<felt252>) -> Array<felt252> {
+    fn execute_after_upgrade(data: Array<felt252>) -> Array<felt252> {
         assert_only_self();
         assert(data.len() == 0, 'argent/unexpected-data');
 
@@ -265,6 +253,38 @@ mod ArgentMultisigAccount {
             MultisigStorage::set_implementation(class_hash_const::<0>());
         }
         ArrayTrait::new()
+    }
+
+    #[external]
+    fn execute_from_outside(
+        outside_execution: OutsideExecution, signature: Array<felt252>
+    ) -> Span<Span<felt252>> {
+        // Checks
+        if outside_execution.caller.into() != 'ANY_CALLER' {
+            assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
+        }
+
+        let block_timestamp = get_block_timestamp();
+        assert(
+            outside_execution.execute_after < block_timestamp & block_timestamp < outside_execution.execute_before,
+            'argent/invalid-timestamp'
+        );
+        let nonce = outside_execution.nonce;
+        assert(!MultisigStorage::get_outside_nonce(nonce), 'argent/duplicated-outside-nonce');
+
+        let outside_tx_hash = hash_outside_execution_message(@outside_execution);
+
+        let calls = outside_execution.calls.span();
+
+        assert_valid_calls_and_signature(calls, outside_tx_hash, signature.span());
+
+        // Effects
+        MultisigStorage::set_outside_nonce(nonce, true);
+
+        // Interactions
+        let retdata = execute_multicall(calls);
+        TransactionExecuted(outside_tx_hash, retdata);
+        retdata
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -277,8 +297,18 @@ mod ArgentMultisigAccount {
     }
 
     #[view]
+    fn getName() -> felt252 {
+        get_name()
+    }
+
+    #[view]
     fn get_version() -> Version {
-        Version { major: 0, minor: 1, patch: 0 }
+        Version { major: VERSION_MAYOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
+    }
+
+    #[view]
+    fn getVersion() -> felt252 {
+        VERSION_COMPAT
     }
 
     /// @dev Returns the threshold, the number of signers required to control this account
@@ -310,6 +340,14 @@ mod ArgentMultisigAccount {
             false
         }
     }
+    #[view]
+    fn supportsInterface(interface_id: felt252) -> felt252 {
+        if supports_interface(interface_id) {
+            1
+        } else {
+            0
+        }
+    }
 
     /// @dev Assert that the given signature is a valid signature from one of the multisig owners
     #[view]
@@ -329,16 +367,54 @@ mod ArgentMultisigAccount {
         check_ecdsa_signature(hash, signer, signature_r, signature_s)
     }
 
+    // ERC1271
     #[view]
-    fn is_valid_signature(hash: felt252, signature: Array<felt252>) -> bool {
-        is_valid_signature_span(hash, signature.span())
+    fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> felt252 {
+        if is_valid_span_signature(hash, signatures.span()) {
+            ERC1271_VALIDATED
+        } else {
+            0
+        }
+    }
+
+    #[view]
+    fn isValidSignature(hash: felt252, signatures: Array<felt252>) -> felt252 {
+        is_valid_signature(hash, signatures)
+    }
+
+    #[view]
+    fn get_outside_execution_message_hash(outside_execution: OutsideExecution) -> felt252 {
+        return hash_outside_execution_message(@outside_execution);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                   Internal Functions                                       //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    fn is_valid_signature_span(hash: felt252, signature: Span<felt252>) -> bool {
+    fn assert_valid_calls_and_signature(
+        calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
+    ) {
+        let account_address = get_contract_address();
+        let tx_info = get_tx_info().unbox();
+        assert_correct_tx_version(tx_info.version);
+
+        if calls.len() == 1 {
+            let call = calls[0];
+            if (*call.to).into() == account_address.into() {
+                // This should only be called after an upgrade, never directly
+                assert(*call.selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
+            }
+        } else {
+            // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions
+            // and this restriction will reduce the attack surface
+            assert_no_self_call(calls, account_address);
+        }
+
+        let valid = is_valid_span_signature(execution_hash, signature);
+        assert(valid, 'argent/invalid-signature');
+    }
+
+    fn is_valid_span_signature(hash: felt252, signature: Span<felt252>) -> bool {
         let threshold = MultisigStorage::get_threshold();
         assert(threshold != 0, 'argent/uninitialized');
 
@@ -372,12 +448,6 @@ mod ArgentMultisigAccount {
                 }
             };
         }
-    }
-
-    fn assert_is_valid_tx_signature() {
-        let tx_info = starknet::get_tx_info().unbox();
-        let valid = is_valid_signature_span(tx_info.transaction_hash, tx_info.signature);
-        assert(valid, 'argent/invalid-signature');
     }
 
     fn assert_valid_threshold_and_signers_count(threshold: usize, signers_len: usize) {

@@ -16,6 +16,7 @@ mod MultisigStorage {
         signer_list: LegacyMap<felt252, felt252>,
         threshold: usize,
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
+        outside_nonces: LegacyMap<felt252, bool>,
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -212,6 +213,14 @@ mod MultisigStorage {
 
     fn set_implementation(implementation: ClassHash) {
         _implementation::write(implementation);
+    }
+
+    fn get_outside_nonce(nonce: felt252) -> bool {
+        outside_nonces::read(nonce)
+    }
+
+    fn set_outside_nonce(nonce: felt252, used: bool) {
+        outside_nonces::write(nonce, used)
     }
 }
 

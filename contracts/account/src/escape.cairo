@@ -19,7 +19,6 @@ enum EscapeStatus {
     Expired: ()
 }
 
-
 #[derive(Drop, Copy, Serde, StorageAccess)]
 struct Escape {
     // timestamp for activation of escape mode, 0 otherwise

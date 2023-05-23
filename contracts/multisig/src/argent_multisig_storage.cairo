@@ -25,11 +25,11 @@ mod MultisigStorage {
     // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
     // Otherwise cost increases with the list size
     fn is_signer(signer: felt252) -> bool {
-        if (signer == 0) {
+        if signer == 0 {
             return false;
         }
         let next_signer = signer_list::read(signer);
-        if (next_signer != 0) {
+        if next_signer != 0 {
             return true;
         }
         // check if its the latest
@@ -40,12 +40,12 @@ mod MultisigStorage {
 
     // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
     fn is_signer_using_last(signer: felt252, last_signer: felt252) -> bool {
-        if (signer == 0) {
+        if signer == 0 {
             return false;
         }
 
         let next_signer = signer_list::read(signer);
-        if (next_signer != 0) {
+        if next_signer != 0 {
             return true;
         }
 
@@ -60,7 +60,7 @@ mod MultisigStorage {
 
     fn find_last_signer_recursive(from_signer: felt252) -> felt252 {
         let next_signer = signer_list::read(from_signer);
-        if (next_signer == 0) {
+        if next_signer == 0 {
             return from_signer;
         }
         find_last_signer_recursive(next_signer)
@@ -77,7 +77,7 @@ mod MultisigStorage {
         let next_signer = signer_list::read(from_signer);
         assert(next_signer != 0, 'argent/cant-find-signer-before');
 
-        if (next_signer == signer_after) {
+        if next_signer == signer_after {
             return from_signer;
         }
         find_signer_before_recursive(signer_after: signer_after, from_signer: next_signer)
@@ -115,7 +115,7 @@ mod MultisigStorage {
 
                 signer_list::write(previous_signer, next_signer);
 
-                if (next_signer == 0) {
+                if next_signer == 0 {
                     // Removing the last item
                     remove_signers(signers_to_remove, last_signer: previous_signer);
                 } else {
@@ -155,13 +155,13 @@ mod MultisigStorage {
     }
 
     fn load_from(from_signer: felt252) -> (usize, felt252) {
-        if (from_signer == 0) {
+        if from_signer == 0 {
             // empty list
             return (0, 0);
         }
 
         let next_signer = signer_list::read(from_signer);
-        if (next_signer == 0) {
+        if next_signer == 0 {
             return (1, from_signer);
         }
         let (next_length, last_signer) = load_from(next_signer);
@@ -174,7 +174,7 @@ mod MultisigStorage {
     }
 
     fn get_signers_len_from(from_signer: felt252) -> usize {
-        if (from_signer == 0) {
+        if from_signer == 0 {
             // empty list
             return 0;
         }
@@ -190,7 +190,7 @@ mod MultisigStorage {
     fn get_signers_from(
         from_signer: felt252, mut previous_signers: Array<felt252>
     ) -> Array<felt252> {
-        if (from_signer == 0) {
+        if from_signer == 0 {
             // empty list
             return previous_signers;
         }

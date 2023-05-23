@@ -39,7 +39,8 @@ export async function deployOldAccount(
     calldata: CallData.compile({ owner: ownerPublicKey, guardian: guardianPublicKey }),
   });
 
-  const contractAddress = hash.calculateContractAddressFromHash(ownerPublicKey, proxyClassHash, constructorCalldata, 0);
+  const salt = randomPrivateKey();
+  const contractAddress = hash.calculateContractAddressFromHash(salt, proxyClassHash, constructorCalldata, 0);
 
   const account = new Account(provider, contractAddress, ownerPrivateKey);
   account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
@@ -49,7 +50,7 @@ export async function deployOldAccount(
     classHash: proxyClassHash,
     constructorCalldata,
     contractAddress,
-    addressSalt: ownerPublicKey,
+    addressSalt: salt,
   });
   await deployer.waitForTransaction(transaction_hash);
   const accountContract = await loadContract(account.address);
@@ -67,12 +68,8 @@ async function deployAccountInner(
 
   const constructorCalldata = CallData.compile({ owner: ownerPublicKey, guardian: guardianPublicKey });
 
-  const contractAddress = hash.calculateContractAddressFromHash(
-    ownerPublicKey,
-    argentAccountClassHash,
-    constructorCalldata,
-    0,
-  );
+  const salt = randomPrivateKey();
+  const contractAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, constructorCalldata, 0);
   await fundAccount(contractAddress);
   const account = new Account(provider, contractAddress, ownerPrivateKey, "1");
   if (guardianPrivateKey) {
@@ -82,7 +79,7 @@ async function deployAccountInner(
   const { transaction_hash } = await account.deploySelf({
     classHash: argentAccountClassHash,
     constructorCalldata,
-    addressSalt: ownerPublicKey,
+    addressSalt: salt,
   });
   await deployer.waitForTransaction(transaction_hash);
   return account;

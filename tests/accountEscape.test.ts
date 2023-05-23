@@ -191,7 +191,7 @@ describe("ArgentAccount: escape mechanism", function () {
             await setTime(randomTime);
             await account.execute(accountContract.populateTransaction.trigger_escape_owner(randomAddress));
             await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
-            await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.NotReady);
+            await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.Ready);
 
             await account.execute(accountContract.populateTransaction.escape_owner());
 

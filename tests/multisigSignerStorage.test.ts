@@ -18,23 +18,19 @@ describe("ArgentMultisig: signer storage", function () {
       const new_signer_1 = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
       const new_signer_2 = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
 
-      const { account, accountContract, signers } = await deployMultisig(
-        multisigAccountClassHash,
-        threshold,
-        signersLength,
-      );
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
       const is_signer_0 = await accountContract.is_signer(signers[0]);
-      const is_signer_1 = await accountContract.is_signer(signers[0]);
+      const is_signer_1 = await accountContract.is_signer(new_signer_1);
       expect(is_signer_0).to.be.true;
       expect(is_signer_1).to.be.false;
 
-      await account.execute(accountContract.populateTransaction.add_signers(threshold, [new_signer_1]));
+      await accountContract.add_signers(threshold, [new_signer_1]);
 
       const is_new_signer_1 = await accountContract.is_signer(new_signer_1);
       expect(is_new_signer_1).to.be.true;
 
-      await account.execute(accountContract.populateTransaction.add_signers(threshold, [new_signer_2]));
+      await accountContract.add_signers(threshold, [new_signer_2]);
 
       const is_signer_2 = await accountContract.is_signer(new_signer_2);
       expect(is_signer_2).to.be.true;

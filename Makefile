@@ -41,8 +41,6 @@ fixtures:
 	./cairo/target/release/starknet-sierra-compile ./tests/fixtures/ArgentAccount.json ./tests/fixtures/ArgentAccount.casm --allowed-libfuncs-list-name experimental_v0.1.0
 	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/multicall/src/test_dapp.cairo ./tests/fixtures/TestDapp.json --allowed-libfuncs-list-name experimental_v0.1.0
 	./cairo/target/release/starknet-sierra-compile ./tests/fixtures/TestDapp.json ./tests/fixtures/TestDapp.casm --allowed-libfuncs-list-name experimental_v0.1.0
-	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/multicall/src/test_dapp.cairo ./tests/fixtures/TestDapp2.json --allowed-libfuncs-list-name experimental_v0.1.0
-	./cairo/target/release/starknet-sierra-compile ./tests/fixtures/TestDapp2.json ./tests/fixtures/TestDapp2.casm --allowed-libfuncs-list-name experimental_v0.1.0
 	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/multisig ./tests/fixtures/ArgentMultisigAccount.json --allowed-libfuncs-list-name experimental_v0.1.0 --contract-path multisig::argent_multisig_account::ArgentMultisigAccount
 	./cairo/target/release/starknet-sierra-compile ./tests/fixtures/ArgentMultisigAccount.json ./tests/fixtures/ArgentMultisigAccount.casm --allowed-libfuncs-list-name experimental_v0.1.0
 

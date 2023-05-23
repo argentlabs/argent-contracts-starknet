@@ -18,15 +18,12 @@ mod ArgentAccount {
         assert_correct_tx_version, assert_no_self_call, assert_non_reentrant, assert_only_self,
         execute_multicall, Call, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
         IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait, SpanSerde,
-        OutsideExecution, hash_outside_execution_message
+        OutsideExecution, hash_outside_execution_message, ERC165_IERC165_INTERFACE_ID,
+        ERC165_ACCOUNT_INTERFACE_ID, ERC165_OLD_ACCOUNT_INTERFACE_ID, ERC1271_VALIDATED
     };
 
     const NAME: felt252 = 'ArgentAccount';
 
-    const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
-    const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
-    const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt252 = 0x3943f10f;
-    const ERC1271_VALIDATED: felt252 = 0x1626ba7e;
 
     /// Time it takes for the escape to become ready after being triggered
     const ESCAPE_SECURITY_PERIOD: u64 = 604800; // 7 * 24 * 60 * 60;  // 7 days

@@ -27,7 +27,7 @@ mod ArgentMultisigAccount {
         738349667340360233096752603318170676063569407717437256101137432051386874767; // starknet_keccak('execute_after_upgrade')
 
     const NAME: felt252 = 'ArgentMultisig';
-    const VERSION_MAYOR: u8 = 1;
+    const VERSION_MAJOR: u8 = 1;
     const VERSION_MINOR: u8 = 0;
     const VERSION_PATCH: u8 = 0;
     const VERSION_COMPAT: felt252 = '1.0.0';
@@ -302,7 +302,7 @@ mod ArgentMultisigAccount {
 
     #[view]
     fn get_version() -> Version {
-        Version { major: VERSION_MAYOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
+        Version { major: VERSION_MAJOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
     }
 
     #[view]

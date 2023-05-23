@@ -10,11 +10,11 @@ import {
   SignerInterface,
   WeierstrassSignatureType,
   ec,
+  encode,
   hash,
   transaction,
   typedData,
 } from "starknet";
-import { randomPrivateKey } from "./accounts";
 
 /**
  * This class allows to easily implement custom signers by overriding the `signRaw` method.
@@ -122,18 +122,39 @@ export class ArgentSigner extends RawSigner {
 }
 
 export class ConcatSigner extends RawSigner {
-  constructor(protected privateKeys: string[]) {
+  constructor(public privateKeys: string[]) {
     super();
   }
 
   async signRaw(msgHash: string): Promise<ArraySignatureType> {
-    return (
-      await Promise.all(
-        this.privateKeys.map(async (privateKey) => {
-          const signature = ec.starkCurve.sign(msgHash, privateKey);
-          return [signature.r.toString(), signature.s.toString()];
-        }),
-      )
-    ).flat();
+    return this.privateKeys
+      .map((privateKey) => {
+        const signature = ec.starkCurve.sign(msgHash, privateKey);
+        return [signature.r.toString(), signature.s.toString()];
+      })
+      .flat();
   }
+}
+
+export class MultisigSigner extends RawSigner {
+  constructor(public privateKeys: string[]) {
+    super();
+  }
+
+  async signRaw(msgHash: string): Promise<ArraySignatureType> {
+    const signerSignatures = this.privateKeys.map((privateKey) => {
+      const signer = ec.starkCurve.getStarkKey(privateKey);
+      const { r, s } = ec.starkCurve.sign(msgHash, privateKey);
+      return { signer, signature_r: r.toString(), signature_s: s.toString() };
+    });
+    return CallData.compile(signerSignatures);
+  }
+}
+
+export function randomPrivateKey(): string {
+  return "0x" + encode.buf2hex(ec.starkCurve.utils.randomPrivateKey());
+}
+
+export function randomPrivateKeys(length: number): string[] {
+  return Array.from({ length }, randomPrivateKey);
 }

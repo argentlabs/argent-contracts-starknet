@@ -35,7 +35,8 @@ export async function deployOldAccount(
     calldata: CallData.compile({ owner: ownerPublicKey, guardian: guardianPublicKey }),
   });
 
-  const contractAddress = hash.calculateContractAddressFromHash(ownerPublicKey, proxyClassHash, constructorCalldata, 0);
+  const salt = randomPrivateKey();
+  const contractAddress = hash.calculateContractAddressFromHash(salt, proxyClassHash, constructorCalldata, 0);
 
   const account = new Account(provider, contractAddress, ownerPrivateKey);
   account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
@@ -45,7 +46,7 @@ export async function deployOldAccount(
     classHash: proxyClassHash,
     constructorCalldata,
     contractAddress,
-    addressSalt: ownerPublicKey,
+    addressSalt: salt,
   });
   await deployer.waitForTransaction(transaction_hash);
   const accountContract = await loadContract(account.address);
@@ -56,6 +57,7 @@ async function deployAccountInner(
   argentAccountClassHash: string,
   ownerPrivateKey: string,
   guardianPrivateKey?: string,
+  salt: string = randomPrivateKey(),
 ): Promise<Account> {
   const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
 
@@ -63,12 +65,7 @@ async function deployAccountInner(
 
   const constructorCalldata = CallData.compile({ owner: ownerPublicKey, guardian: guardianPublicKey });
 
-  const contractAddress = hash.calculateContractAddressFromHash(
-    ownerPublicKey,
-    argentAccountClassHash,
-    constructorCalldata,
-    0,
-  );
+  const contractAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, constructorCalldata, 0);
   await fundAccount(contractAddress);
   const account = new Account(provider, contractAddress, ownerPrivateKey, "1");
   if (guardianPrivateKey) {
@@ -78,7 +75,7 @@ async function deployAccountInner(
   const { transaction_hash } = await account.deploySelf({
     classHash: argentAccountClassHash,
     constructorCalldata,
-    addressSalt: ownerPublicKey,
+    addressSalt: salt,
   });
   await deployer.waitForTransaction(transaction_hash);
   return account;
@@ -93,11 +90,13 @@ export async function deployAccount(argentAccountClassHash: string): Promise<Arg
   return { account, accountContract, ownerPrivateKey, guardianPrivateKey };
 }
 
-export async function deployAccountWithoutGuardian(argentAccountClassHash: string): Promise<ArgentWallet> {
-  const ownerPrivateKey = randomPrivateKey();
-  const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey);
+export async function deployAccountWithoutGuardian(
+  argentAccountClassHash: string,
+  ownerPrivateKey: string = randomPrivateKey(),
+  salt: string = randomPrivateKey(),
+): Promise<ArgentWallet> {
+  const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey, undefined, salt);
   const accountContract = await loadContract(account.address);
-
   return { account, accountContract, ownerPrivateKey };
 }
 

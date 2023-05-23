@@ -3,9 +3,11 @@ use starknet::{
     storage_address_from_base_and_offset
 };
 use traits::{Into, TryInto};
-use option::OptionTrait;
+use option::{Option, OptionTrait};
+use serde::Serde;
+use array::{ArrayTrait, SpanTrait};
 
-#[derive(Drop, Copy)]
+#[derive(Drop, Copy, Serde, PartialEq)]
 enum EscapeStatus {
     /// No escape triggered, or it was canceled
     None: (),
@@ -17,34 +19,11 @@ enum EscapeStatus {
     Expired: ()
 }
 
-// can be deleted once partialEq can be successfully derived
-impl EscapeStatusInto of Into<EscapeStatus, felt252> {
-    fn into(self: EscapeStatus) -> felt252 {
-        match self {
-            EscapeStatus::None(()) => 0,
-            EscapeStatus::NotReady(()) => 1,
-            EscapeStatus::Ready(()) => 2,
-            EscapeStatus::Expired(()) => 3,
-        }
-    }
-}
 
-// can be deleted once partialEq can be successfully derived
-impl EscapeStatusPartialEq of PartialEq<EscapeStatus> {
-    #[inline(always)]
-    fn eq(lhs: EscapeStatus, rhs: EscapeStatus) -> bool {
-        lhs.into() == rhs.into()
-    }
-    #[inline(always)]
-    fn ne(lhs: EscapeStatus, rhs: EscapeStatus) -> bool {
-        !(lhs == rhs)
-    }
-}
-
-#[derive(Drop, Copy, Serde)]
+#[derive(Drop, Copy, Serde, StorageAccess)]
 struct Escape {
     // timestamp for activation of escape mode, 0 otherwise
-    active_at: u64,
+    ready_at: u64,
     // None, Guardian, Owner
     escape_type: felt252, // TODO Change to enum? ==> Can't do ATM because would have to impl partialEq, update storage, etc etc
     // new owner or new guardian address
@@ -55,7 +34,7 @@ impl StorageAccessEscape of StorageAccess<Escape> {
     fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult<Escape> {
         Result::Ok(
             Escape {
-                active_at: storage_read_syscall(
+                ready_at: storage_read_syscall(
                     address_domain, storage_address_from_base_and_offset(base, 0)
                 )?.try_into().unwrap(),
                 escape_type: storage_read_syscall(
@@ -69,7 +48,7 @@ impl StorageAccessEscape of StorageAccess<Escape> {
     }
     fn write(address_domain: u32, base: StorageBaseAddress, value: Escape) -> SyscallResult<()> {
         storage_write_syscall(
-            address_domain, storage_address_from_base_and_offset(base, 0), value.active_at.into()
+            address_domain, storage_address_from_base_and_offset(base, 0), value.ready_at.into()
         )?;
         storage_write_syscall(
             address_domain, storage_address_from_base_and_offset(base, 1), value.escape_type

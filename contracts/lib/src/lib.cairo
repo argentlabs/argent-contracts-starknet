@@ -19,6 +19,14 @@ use calls::execute_multicall;
 mod version;
 use version::Version;
 
+mod erc165;
+use erc165::{
+    ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_OLD_ACCOUNT_INTERFACE_ID
+};
+
+mod erc1271;
+use erc1271::{ERC1271_VALIDATED};
+
 #[abi]
 trait IErc165 {
     fn supports_interface(interface_id: felt252) -> bool;

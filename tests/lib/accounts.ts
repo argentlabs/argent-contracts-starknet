@@ -143,15 +143,7 @@ export async function getEscapeStatus(accountContract: Contract): Promise<Escape
   // StarknetJs parsing is broken so we do it manually
   const result = (await accountContract.call("get_escape_and_status", undefined, { parseResponse: false })) as string[];
   expect(result.length).to.equal(4);
-  switch (BigInt(result[3])) {
-    case 0n:
-      return EscapeStatus.None;
-    case 1n:
-      return EscapeStatus.NotReady;
-    case 2n:
-      return EscapeStatus.Ready;
-    case 3n:
-      return EscapeStatus.Expired;
-  }
-  expect.fail(`Unknown value ${result[3]}`);
+  const status = Number(result[3]);
+  expect(status).to.be.lessThan(4, `Unknown status ${status}`);
+  return status;
 }

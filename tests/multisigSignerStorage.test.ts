@@ -164,4 +164,61 @@ describe("ArgentMultisig: signer storage", function () {
       expect(is_signer_1).to.be.false;
     });
   });
+  describe("replace_signers(signer_to_remove, signer_to_add)", function () {
+    it("Should replace one signer", async function () {
+      const threshold = 1;
+      const signersLength = 1;
+
+      const new_signer = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+
+      await accountContract.replace_signer(signers[0], new_signer);
+
+      const is_new_signer = await accountContract.is_signer(new_signer);
+      expect(is_new_signer).to.be.true;
+    });
+
+    it("Should replace first signer", async function () {
+      const threshold = 1;
+      const signersLength = 3;
+
+      const new_signer = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+
+      await accountContract.replace_signer(signers[0], new_signer);
+
+      const signers_list = await accountContract.get_signers();
+      expect(signers_list).to.have.ordered.members([new_signer, signers[1], signers[2]]);
+    });
+
+    it("Should replace middle signer", async function () {
+      const threshold = 1;
+      const signersLength = 3;
+
+      const new_signer = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+
+      await accountContract.replace_signer(signers[1], new_signer);
+
+      const signers_list = await accountContract.get_signers();
+      expect(signers_list).to.have.ordered.members([signers[0], new_signer, signers[2]]);
+    });
+
+    it("Should replace last signer", async function () {
+      const threshold = 1;
+      const signersLength = 3;
+
+      const new_signer = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+
+      await accountContract.replace_signer(signers[2], new_signer);
+
+      const signers_list = await accountContract.get_signers();
+      expect(signers_list).to.have.ordered.members([signers[0], signers[1], new_signer]);
+    });
+  });
 });

@@ -24,7 +24,7 @@ struct Escape {
     // timestamp for activation of escape mode, 0 otherwise
     ready_at: u64,
     // None, Guardian, Owner
-    escape_type: felt252, // TODO Change to enum? ==> Can't do ATM because would have to impl partialEq, update storage, etc etc
+    escape_type: felt252,
     // new owner or new guardian address
     new_signer: felt252,
 }

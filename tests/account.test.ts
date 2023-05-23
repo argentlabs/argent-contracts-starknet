@@ -20,14 +20,6 @@ describe("ArgentAccount", function () {
     argentAccountClassHash = await declareContract("ArgentAccount");
   });
 
-  beforeEach(async () => {
-    // TODO When everything is more clean, we could deploy a new funded cairo1 account and use that one to do all the logic
-    // TODO We could dump and load, instead of redeploying an account each time
-    // would fix also the fact that if we use some magic values for recipient, we wouldn't have any issue (such as (42))
-  });
-
-  // TODO Write a test:
-  // assert_correct_tx_version(tx_info.version); in __execute__
   describe("Example tests", function () {
     it("Deploy current version", async function () {
       const { accountContract, ownerPrivateKey } = await deployAccountWithoutGuardian(argentAccountClassHash);

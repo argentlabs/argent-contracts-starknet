@@ -24,7 +24,6 @@ fn assert_non_reentrant() {
 
 #[inline(always)]
 fn assert_correct_tx_version(tx_version: felt252) {
-    // TODO Once we have || => can be one liner
     if tx_version != TRANSACTION_VERSION {
         assert(tx_version == QUERY_VERSION, 'argent/invalid-tx-version');
     }

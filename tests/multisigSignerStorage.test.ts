@@ -1,32 +1,43 @@
-import { CallData, shortString } from "starknet";
-import { declareContract, expectEvent } from "./lib";
-import { deployMultisig} from "./lib/multisig";
 import { expect } from "chai";
-
+import { ec } from "starknet";
+import { declareContract, randomPrivateKey } from "./lib";
+import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: signer storage", function () {
-
   let multisigAccountClassHash: string;
 
-    before(async () => {
-        multisigAccountClassHash = await declareContract("ArgentMultisigAccount");
-      });
+  before(async () => {
+    multisigAccountClassHash = await declareContract("ArgentMultisigAccount");
+  });
 
-      describe("add_signers(new_threshold, signers_to_add)", function () {
-        it("Should add one new signer and update threshold", async function () {
-            const threshold = 1;
-            const signersLength = 1;
-      
-            const { accountContract, signers, receipt } = await deployMultisig(
-              multisigAccountClassHash,
-              threshold,
-              signersLength,
-            );
-            const is_signer = await accountContract.is_signer(signers[0]);
-            expect(is_signer).to.be.true;
-            
-        });
+  describe("add_signers(new_threshold, signers_to_add)", function () {
+    it("Should add one new signer and update threshold", async function () {
+      const threshold = 1;
+      const signersLength = 1;
+
+      const new_signer_1 = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+      const new_signer_2 = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+
+      const { account, accountContract, signers } = await deployMultisig(
+        multisigAccountClassHash,
+        threshold,
+        signersLength,
+      );
+
+      const is_signer_0 = await accountContract.is_signer(signers[0]);
+      const is_signer_1 = await accountContract.is_signer(signers[0]);
+      expect(is_signer_0).to.be.true;
+      expect(is_signer_1).to.be.false;
+
+      await account.execute(accountContract.populateTransaction.add_signers(threshold, [new_signer_1]));
+
+      const is_new_signer_1 = await accountContract.is_signer(new_signer_1);
+      expect(is_new_signer_1).to.be.true;
+
+      await account.execute(accountContract.populateTransaction.add_signers(threshold, [new_signer_2]));
+
+      const is_signer_2 = await accountContract.is_signer(new_signer_2);
+      expect(is_signer_2).to.be.true;
     });
-    
-
+  });
 });

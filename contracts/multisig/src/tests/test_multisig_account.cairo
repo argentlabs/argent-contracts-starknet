@@ -117,7 +117,7 @@ fn get_name() {
 #[test]
 fn get_version() {
     let version = ArgentMultisigAccount::get_version();
-    assert(version.major == 0, 'Version major = 0');
-    assert(version.minor == 1, 'Version minor = 1');
-    assert(version.patch == 0, 'Version patch = 0');
+    assert(version.major == 1, 'Version major');
+    assert(version.minor == 0, 'Version minor');
+    assert(version.patch == 0, 'Version patch');
 }

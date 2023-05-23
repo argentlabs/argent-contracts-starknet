@@ -17,6 +17,8 @@ const signer_2_signature_r: felt252 =
 const signer_2_signature_s: felt252 =
     3047778680024311010844701802416003052323696285920266547201663937333620527443;
 
+use lib::{ERC1271_VALIDATED};
+
 #[test]
 #[available_gas(20000000)]
 fn test_signature() {
@@ -30,7 +32,7 @@ fn test_signature() {
     signature.append(signer_1_signature_r);
     signature.append(signer_1_signature_s);
     let valid_signature = ArgentMultisigAccount::is_valid_signature(message_hash, signature);
-    assert(valid_signature, 'bad signature');
+    assert(valid_signature == ERC1271_VALIDATED, 'bad signature');
 }
 
 #[test]
@@ -51,7 +53,7 @@ fn test_double_signature() {
     signature.append(signer_2_signature_r);
     signature.append(signer_2_signature_s);
     let valid_signature = ArgentMultisigAccount::is_valid_signature(message_hash, signature);
-    assert(valid_signature, 'bad signature');
+    assert(valid_signature == ERC1271_VALIDATED, 'bad signature');
 }
 
 #[test]

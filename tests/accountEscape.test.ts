@@ -165,7 +165,7 @@ describe("ArgentAccount: escape mechanism", function () {
       await provider.waitForTransaction(transaction_hash);
 
       account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
-      await upgradeAccount(account, argentAccountClassHash);
+      await upgradeAccount(account, argentAccountClassHash, ["0"]);
 
       const accountContract = await loadContract(account.address);
       await setTime(randomTime + ESCAPE_SECURITY_PERIOD);

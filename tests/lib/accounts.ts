@@ -61,6 +61,7 @@ async function deployAccountInner(
   argentAccountClassHash: string,
   ownerPrivateKey: string,
   guardianPrivateKey?: string,
+  salt: string = randomPrivateKey(),
 ): Promise<Account> {
   const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
 
@@ -68,7 +69,6 @@ async function deployAccountInner(
 
   const constructorCalldata = CallData.compile({ owner: ownerPublicKey, guardian: guardianPublicKey });
 
-  const salt = randomPrivateKey();
   const contractAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, constructorCalldata, 0);
   await fundAccount(contractAddress);
   const account = new Account(provider, contractAddress, ownerPrivateKey, "1");
@@ -94,11 +94,13 @@ export async function deployAccount(argentAccountClassHash: string): Promise<Arg
   return { account, accountContract, ownerPrivateKey, guardianPrivateKey };
 }
 
-export async function deployAccountWithoutGuardian(argentAccountClassHash: string): Promise<ArgentWallet> {
-  const ownerPrivateKey = randomPrivateKey();
-  const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey);
+export async function deployAccountWithoutGuardian(
+  argentAccountClassHash: string,
+  ownerPrivateKey: string = randomPrivateKey(),
+  salt: string = randomPrivateKey(),
+): Promise<ArgentWallet> {
+  const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey, salt);
   const accountContract = await loadContract(account.address);
-
   return { account, accountContract, ownerPrivateKey };
 }
 

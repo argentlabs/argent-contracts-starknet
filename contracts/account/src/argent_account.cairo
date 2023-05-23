@@ -371,12 +371,11 @@ mod ArgentAccount {
         assert(supports_interface, 'argent/invalid-implementation');
 
         replace_class_syscall(implementation).unwrap_syscall();
-        let retdata = IAccountUpgradeLibraryDispatcher {
-            class_hash: implementation
-        }.execute_after_upgrade(calldata);
-
         AccountUpgraded(implementation);
-        retdata
+
+        IAccountUpgradeLibraryDispatcher {
+            class_hash: implementation
+        }.execute_after_upgrade(calldata)
     }
 
     #[external]

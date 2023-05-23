@@ -1,5 +1,4 @@
 mod test_argent_account;
-mod test_argent_account_escape;
 mod test_argent_account_signatures;
 
 use array::ArrayTrait;

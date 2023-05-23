@@ -25,11 +25,13 @@ export async function expectRevertWithErrorMessage(
 
 export async function expectExecutionRevert(errorMessage: string, execute: () => Promise<InvokeFunctionResponse>) {
   try {
-    await execute();
-    assert.fail("No error detected");
+    await waitForTransaction(await execute());
+    /* eslint-disable  @typescript-eslint/no-explicit-any */
   } catch (e: any) {
     expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
+    return;
   }
+  assert.fail("No error detected");
 }
 
 async function expectEventFromHash(transactionHash: string, event: Event) {

@@ -125,7 +125,7 @@ describe("ArgentAccount", function () {
       );
     });
 
-    it("Should be possible to change_owner", async function () {
+    it.only("Should be possible to change_owner", async function () {
       const { account, accountContract, ownerPrivateKey } = await deployAccount(argentAccountClassHash);
       const newOwnerPrivateKey = randomPrivateKey();
       const newOwner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);

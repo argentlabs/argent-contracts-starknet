@@ -3,5 +3,8 @@
   "test": ["tests/**.ts"],
   "node-option": ["loader=ts-node/esm"],
   "slow": 5000,
-  "timeout": 300000
+  "timeout": 300000,
+  "rules": {
+    "mocha/no-exclusive-tests": "error"
+  }
 }

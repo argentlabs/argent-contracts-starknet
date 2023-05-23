@@ -73,7 +73,7 @@ describe("ArgentAccount", function () {
       const guardianBackupBefore = await accountContract.get_guardian_backup();
       expect(guardianBackupBefore).to.equal(0n);
       account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
-      await account.execute(accountContract.populateTransaction.change_guardian_backup(42));
+      await accountContract.change_guardian_backup(42);
 
       const guardianBackupAfter = await accountContract.get_guardian_backup();
       expect(guardianBackupAfter).to.equal(42n);
@@ -90,13 +90,13 @@ describe("ArgentAccount", function () {
       expect(guardianBackupBefore).to.equal(0n);
 
       account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
-      await account.execute(accountContract.populateTransaction.change_guardian_backup(guardianBackupPublicKey));
+      await accountContract.change_guardian_backup(guardianBackupPublicKey);
 
       const guardianBackupAfter = await accountContract.get_guardian_backup();
       expect(guardianBackupAfter).to.equal(BigInt(guardianBackupPublicKey));
 
       account.signer = new ArgentSigner(ownerPrivateKey, guardianBackupPrivateKey);
-      await account.execute(accountContract.populateTransaction.change_guardian("0x42"));
+      await accountContract.change_guardian("0x42");
 
       const guardianAfter = await accountContract.get_guardian();
       expect(guardianAfter).to.equal(BigInt("0x42"));
@@ -113,7 +113,7 @@ describe("ArgentAccount", function () {
       ]);
 
       await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
-        account.execute(accountContract.populateTransaction.change_guardian("0x42")),
+        accountContract.change_guardian("0x42"),
       );
     });
 
@@ -123,7 +123,7 @@ describe("ArgentAccount", function () {
       const newOwner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
 
       await expectRevertWithErrorMessage("argent/invalid-owner-sig", () =>
-        account.execute(accountContract.populateTransaction.change_owner(newOwner, "12", "42")),
+        accountContract.change_owner(newOwner, "12", "42"),
       );
     });
 
@@ -138,7 +138,7 @@ describe("ArgentAccount", function () {
 
       const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, ownerPublicKey]);
       const signature = ec.starkCurve.sign(msgHash, newOwnerPrivateKey);
-      await account.execute(accountContract.populateTransaction.change_owner(newOwner, signature.r, signature.s));
+      await accountContract.change_owner(newOwner, signature.r, signature.s);
 
       const owner_result = await accountContract.get_owner();
       expect(owner_result).to.equal(BigInt(newOwner));

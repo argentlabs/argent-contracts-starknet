@@ -27,6 +27,20 @@ fn initialize() {
 
 #[test]
 #[available_gas(2000000)]
+#[should_panic(expected: ('argent/invalid-tx-version', ))]
+fn check_transaction_version_on_execute() {
+    ArgentAccount::__execute__(ArrayTrait::new());
+}
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('argent/invalid-tx-version', ))]
+fn check_transaction_version_on_validate() {
+    ArgentAccount::__validate__(ArrayTrait::new());
+}
+
+#[test]
+#[available_gas(2000000)]
 #[should_panic(expected: ('argent/null-owner', ))]
 fn initialize_with_null_owner() {
     ArgentAccount::constructor(0, 2);

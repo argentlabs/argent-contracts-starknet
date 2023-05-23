@@ -1,7 +1,7 @@
 use array::ArrayTrait;
 use traits::Into;
 
-use multisig::ArgentMultisigAccount;
+use multisig::ArgentMultisig;
 
 const message_hash: felt252 = 424242;
 
@@ -25,13 +25,13 @@ fn test_signature() {
     let threshold = 1;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
-    ArgentMultisigAccount::constructor(threshold, signers_array);
+    ArgentMultisig::constructor(threshold, signers_array);
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(signer_pubkey_1);
     signature.append(signer_1_signature_r);
     signature.append(signer_1_signature_s);
-    let valid_signature = ArgentMultisigAccount::is_valid_signature(message_hash, signature);
+    let valid_signature = ArgentMultisig::is_valid_signature(message_hash, signature);
     assert(valid_signature == ERC1271_VALIDATED, 'bad signature');
 }
 
@@ -43,7 +43,7 @@ fn test_double_signature() {
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
-    ArgentMultisigAccount::constructor(threshold, signers_array);
+    ArgentMultisig::constructor(threshold, signers_array);
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(signer_pubkey_1);
@@ -52,7 +52,7 @@ fn test_double_signature() {
     signature.append(signer_pubkey_2);
     signature.append(signer_2_signature_r);
     signature.append(signer_2_signature_s);
-    let valid_signature = ArgentMultisigAccount::is_valid_signature(message_hash, signature);
+    let valid_signature = ArgentMultisig::is_valid_signature(message_hash, signature);
     assert(valid_signature == ERC1271_VALIDATED, 'bad signature');
 }
 
@@ -64,7 +64,7 @@ fn test_double_signature_order() {
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
-    ArgentMultisigAccount::constructor(threshold, signers_array);
+    ArgentMultisig::constructor(threshold, signers_array);
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(signer_pubkey_2);
@@ -73,7 +73,7 @@ fn test_double_signature_order() {
     signature.append(signer_pubkey_1);
     signature.append(signer_1_signature_r);
     signature.append(signer_1_signature_s);
-    ArgentMultisigAccount::is_valid_signature(message_hash, signature);
+    ArgentMultisig::is_valid_signature(message_hash, signature);
 }
 
 #[test]
@@ -84,7 +84,7 @@ fn test_same_owner_twice() {
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
-    ArgentMultisigAccount::constructor(threshold, signers_array);
+    ArgentMultisig::constructor(threshold, signers_array);
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(signer_pubkey_1);
@@ -93,7 +93,7 @@ fn test_same_owner_twice() {
     signature.append(signer_pubkey_1);
     signature.append(signer_1_signature_r);
     signature.append(signer_1_signature_s);
-    ArgentMultisigAccount::is_valid_signature(message_hash, signature);
+    ArgentMultisig::is_valid_signature(message_hash, signature);
 }
 
 #[test]
@@ -104,13 +104,13 @@ fn test_missing_owner_signature() {
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
-    ArgentMultisigAccount::constructor(threshold, signers_array);
+    ArgentMultisig::constructor(threshold, signers_array);
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(signer_pubkey_1);
     signature.append(signer_1_signature_r);
     signature.append(signer_1_signature_s);
-    ArgentMultisigAccount::is_valid_signature(message_hash, signature);
+    ArgentMultisig::is_valid_signature(message_hash, signature);
 }
 
 #[test]
@@ -120,7 +120,7 @@ fn test_short_signature() {
     let threshold = 1;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
-    ArgentMultisigAccount::constructor(threshold, signers_array);
+    ArgentMultisig::constructor(threshold, signers_array);
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(signer_pubkey_1);
@@ -129,7 +129,7 @@ fn test_short_signature() {
     signature.append(signer_pubkey_1);
     signature.append(signer_1_signature_r);
     signature.append(signer_1_signature_s);
-    ArgentMultisigAccount::is_valid_signature(message_hash, signature);
+    ArgentMultisig::is_valid_signature(message_hash, signature);
 }
 
 #[test]
@@ -139,9 +139,9 @@ fn test_long_signature() {
     let threshold = 1;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
-    ArgentMultisigAccount::constructor(threshold, signers_array);
+    ArgentMultisig::constructor(threshold, signers_array);
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(42);
-    ArgentMultisigAccount::is_valid_signature(message_hash, signature);
+    ArgentMultisig::is_valid_signature(message_hash, signature);
 }

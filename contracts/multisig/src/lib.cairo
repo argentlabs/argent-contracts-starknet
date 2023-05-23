@@ -7,8 +7,8 @@ trait IUpgradeTarget {
     fn execute_after_upgrade(data: Array<felt252>) -> Array<felt252>;
 }
 
-mod argent_multisig_account;
-use argent_multisig_account::ArgentMultisigAccount;
+mod argent_multisig;
+use argent_multisig::ArgentMultisig;
 
 mod argent_multisig_storage;
 use argent_multisig_storage::MultisigStorage;

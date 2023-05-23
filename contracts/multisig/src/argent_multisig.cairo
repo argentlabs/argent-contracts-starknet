@@ -1,5 +1,5 @@
 #[account_contract]
-mod ArgentMultisigAccount {
+mod ArgentMultisig {
     use array::{ArrayTrait, SpanTrait};
     use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;

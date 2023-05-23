@@ -2,11 +2,11 @@ import { CallData, shortString } from "starknet";
 import { declareContract, expectEvent } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
-describe("ArgentMultisigAccount", function () {
+describe("ArgentMultisig", function () {
   let multisigAccountClassHash: string;
 
   before(async () => {
-    multisigAccountClassHash = await declareContract("ArgentMultisigAccount");
+    multisigAccountClassHash = await declareContract("ArgentMultisig");
   });
 
   describe("Initialization", function () {

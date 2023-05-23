@@ -25,7 +25,7 @@ describe("Test outside execution", function () {
   let testDapp: Contract;
 
   before(async () => {
-    multisigClassHash = await declareContract("ArgentMultisigAccount");
+    multisigClassHash = await declareContract("ArgentMultisig");
     const testDappClassHash = await declareContract("TestDapp");
     const { contract_address } = await deployer.deployContract({
       classHash: testDappClassHash,

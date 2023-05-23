@@ -155,6 +155,6 @@ export function randomPrivateKey(): string {
   return "0x" + encode.buf2hex(ec.starkCurve.utils.randomPrivateKey());
 }
 
-export function randomPrivateKeys(count: number): string[] {
-  return Array.from({ length: count }, randomPrivateKey);
+export function randomPrivateKeys(length: number): string[] {
+  return Array.from({ length }, randomPrivateKey);
 }

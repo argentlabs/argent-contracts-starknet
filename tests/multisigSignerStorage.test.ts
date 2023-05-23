@@ -7,7 +7,7 @@ describe("ArgentMultisig: signer storage", function () {
   let multisigAccountClassHash: string;
 
   before(async () => {
-    multisigAccountClassHash = await declareContract("ArgentMultisigAccount");
+    multisigAccountClassHash = await declareContract("ArgentMultisig");
   });
 
   describe("add_signers(new_threshold, signers_to_add)", function () {

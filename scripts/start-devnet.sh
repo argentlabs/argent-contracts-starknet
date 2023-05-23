@@ -11,6 +11,6 @@ if nc -z 127.0.0.1 5050; then
   exit 1
 else
   echo "About to spawn a devnet"
-  export STARKNET_DEVNET_CAIRO_VM=python
+  export STARKNET_DEVNET_CAIRO_VM=rust
   starknet-devnet --cairo-compiler-manifest $INSTALLATION_FOLDER_CARGO --seed 42 --lite-mode --timeout 320
 fi

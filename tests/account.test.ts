@@ -20,16 +20,8 @@ describe("ArgentAccount", function () {
     argentAccountClassHash = await declareContract("ArgentAccount");
   });
 
-  beforeEach(async () => {
-    // TODO When everything is more clean, we could deploy a new funded cairo1 account and use that one to do all the logic
-    // TODO We could dump and load, instead of redeploying an account each time
-    // would fix also the fact that if we use some magic values for recipient, we wouldn't have any issue (such as (42))
-  });
-
-  // TODO Write a test:
-  // assert_correct_tx_version(tx_info.version); in __execute__
   describe("Example tests", function () {
-    it("Should be posssible to deploy an argent account version 0.3.0", async function () {
+    it("Deploy current version", async function () {
       const { accountContract, ownerPrivateKey } = await deployAccountWithoutGuardian(argentAccountClassHash);
       const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
 
@@ -39,6 +31,22 @@ describe("ArgentAccount", function () {
       expect(guardian).to.equal(0n);
       const guardianBackup = await accountContract.get_guardian_backup();
       expect(guardianBackup).to.equal(0n);
+    });
+
+    it("Deploy two accounts with the same owner", async function () {
+      const privateKey = randomPrivateKey();
+      const { accountContract: accountContract1 } = await deployAccountWithoutGuardian(
+        argentAccountClassHash,
+        privateKey,
+      );
+      const { accountContract: accountContract2 } = await deployAccountWithoutGuardian(
+        argentAccountClassHash,
+        privateKey,
+      );
+      const owner1 = await accountContract1.get_owner();
+      const owner2 = await accountContract1.get_owner();
+      expect(owner1).to.equal(owner2);
+      expect(accountContract1.address != accountContract2.address).to.be.true;
     });
 
     it("Expect guardian backup to be 0 when deployed with an owner and a guardian", async function () {

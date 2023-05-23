@@ -73,7 +73,6 @@ fn change_threshold() {
     assert(ArgentMultisigAccount::get_threshold() == 2, 'new threshold not set');
 }
 
-
 #[test]
 #[available_gas(20000000)]
 fn add_signers() {
@@ -93,7 +92,6 @@ fn add_signers() {
     assert(signers.len() == 2, 'invalid signers length');
     assert(ArgentMultisigAccount::get_threshold() == 2, 'new threshold not set');
 }
-
 
 #[test]
 #[available_gas(20000000)]

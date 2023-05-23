@@ -43,7 +43,6 @@ struct OutsideCall {
     calldata: Array<felt252>,
 }
 
-
 #[inline(always)]
 fn hash_domain(domain: @StarkNetDomain) -> felt252 {
     let mut state = pedersen(0, STARKNET_DOMAIN_TYPE_HASH);

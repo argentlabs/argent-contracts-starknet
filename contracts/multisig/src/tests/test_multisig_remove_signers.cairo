@@ -44,7 +44,6 @@ fn remove_signers_center() {
     assert(ArgentMultisigAccount::is_signer(signer_pubkey_3), 'signer 3 was removed');
 }
 
-
 #[test]
 #[available_gas(20000000)]
 fn remove_signers_last() {
@@ -149,7 +148,6 @@ fn remove_2_and_1() {
     assert(ArgentMultisigAccount::is_signer(signer_pubkey_3), 'signer 3 was removed');
 }
 
-
 #[test]
 #[available_gas(20000000)]
 fn remove_3_and_1() {
@@ -204,7 +202,6 @@ fn remove_invalid_signers() {
     signer_to_remove.append(10);
     ArgentMultisigAccount::remove_signers(1, signer_to_remove);
 }
-
 
 #[test]
 #[available_gas(20000000)]

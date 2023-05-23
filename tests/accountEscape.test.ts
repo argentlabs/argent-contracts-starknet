@@ -100,7 +100,7 @@ describe("ArgentAccount: escape mechanism", function () {
             expect(escape.escape_type).to.equal(ESCAPE_TYPE_OWNER);
             expect(escape.ready_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
             expect(escape.new_signer).to.equal(randomAddress);
-            expect(await getEscapeStatus(accountContract)).to.equal(EscapeStatus.NotReady);
+            await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.NotReady);
           });
 
           it(`Triggered by ${type}. Expect 'argent/cannot-override-escape' when the owner is already being escaped`, async function () {
@@ -128,12 +128,12 @@ describe("ArgentAccount: escape mechanism", function () {
             expect(escape.escape_type).to.equal(ESCAPE_TYPE_GUARDIAN);
             expect(escape.ready_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
             expect(escape.new_signer).to.equal(randomAddress);
-            expect(await getEscapeStatus(accountContract)).to.equal(EscapeStatus.NotReady);
+            await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.NotReady);
 
             randomAddress += 1n;
             account.signer = new Signer(otherPrivateKey);
             await setTime(randomTime + ESCAPE_EXPIRY_PERIOD);
-            expect(await getEscapeStatus(accountContract)).to.equal(EscapeStatus.Expired);
+            await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.Expired);
             await account.execute(accountContract.populateTransaction.trigger_escape_owner(randomAddress));
             const newEscape = await accountContract.get_escape();
             expect(newEscape.escape_type).to.equal(ESCAPE_TYPE_OWNER);
@@ -191,7 +191,7 @@ describe("ArgentAccount: escape mechanism", function () {
             await setTime(randomTime);
             await account.execute(accountContract.populateTransaction.trigger_escape_owner(randomAddress));
             await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
-            expect(await getEscapeStatus(accountContract)).to.equal(EscapeStatus.Ready);
+            await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.NotReady);
 
             await account.execute(accountContract.populateTransaction.escape_owner());
 
@@ -199,7 +199,7 @@ describe("ArgentAccount: escape mechanism", function () {
             expect(escape.escape_type).to.equal(0n);
             expect(escape.ready_at).to.equal(0n);
             expect(escape.new_signer).to.equal(0n);
-            expect(await getEscapeStatus(accountContract)).to.equal(EscapeStatus.None);
+            await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.None);
 
             const guardian = await accountContract.get_owner();
             expect(guardian).to.equal(randomAddress);

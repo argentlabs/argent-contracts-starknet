@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, ec, hash } from "starknet";
+import { Account, CallData, ec, hash } from "starknet";
 import {
   ArgentSigner,
   ConcatSigner,
@@ -9,6 +9,8 @@ import {
   deployAccountWithoutGuardian,
   deployer,
   expectRevertWithErrorMessage,
+  fundAccount,
+  loadContract,
   provider,
   randomPrivateKey,
 } from "./lib";
@@ -141,10 +143,36 @@ describe("ArgentAccount", function () {
       const owner_result = await accountContract.get_owner();
       expect(owner_result).to.equal(BigInt(newOwner));
     });
-  });
 
-  xit("Should be posssible to deploy an argent account version 0.3.0", async function () {
-    // await deployAccount(argentAccountClassHash);
-    // TODO Impossible atm needs not (yet) deployAccount doesn't support yet cairo1 call structure
+    it("Should be posssible to deploy an argent account version 0.3.0", async function () {
+      const ownerPrivateKey = randomPrivateKey();
+      const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
+
+      const constructorCalldata = CallData.compile({ owner: ownerPublicKey, guardian: 0 });
+
+      const contractAddress = hash.calculateContractAddressFromHash(
+        ownerPublicKey,
+        argentAccountClassHash,
+        constructorCalldata,
+        0,
+      );
+      await fundAccount(contractAddress);
+      const account = new Account(provider, contractAddress, ownerPrivateKey, "1");
+
+      const { transaction_hash } = await account.deploySelf({
+        classHash: argentAccountClassHash,
+        constructorCalldata,
+        addressSalt: ownerPublicKey,
+      });
+      await deployer.waitForTransaction(transaction_hash);
+      const accountContract = await loadContract(account.address);
+
+      const owner = await accountContract.get_owner();
+      expect(owner).to.equal(BigInt(ownerPublicKey));
+      const guardian = await accountContract.get_guardian();
+      expect(guardian).to.equal(0n);
+      const guardianBackup = await accountContract.get_guardian_backup();
+      expect(guardianBackup).to.equal(0n);
+    });
   });
 });

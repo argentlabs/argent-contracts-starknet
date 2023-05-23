@@ -60,7 +60,7 @@ test-multisig:
 	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)/multisig
 
 test-integration: fixtures
-	yarn test
+	yarn test:ci
 
 format:
 	./cairo/target/release/cairo-format --recursive $(SOURCE_FOLDER) --print-parsing-errors

@@ -37,10 +37,10 @@ fn assert_correct_declare_version(tx_version: felt252) {
     if tx_version == SIERRA_DECLARE_VERSION {
         return ();
     }
-    if tx_version == QUERY_VERSION {
+    if tx_version == CASM_DECLARE_VERSION {
         return ();
     }
-    assert(tx_version == CASM_DECLARE_VERSION, 'argent/invalid-contract-version');
+    assert(tx_version == QUERY_VERSION, 'argent/invalid-contract-version');
 }
 
 fn assert_no_self_call(mut calls: Span::<Call>, self: ContractAddress) {

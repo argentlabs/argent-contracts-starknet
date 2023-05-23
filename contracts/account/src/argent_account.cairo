@@ -361,9 +361,8 @@ mod ArgentAccount {
         reset_escape_attempts();
     }
 
-    // TODO This could be a trait we impl in another file?
     #[external]
-    fn upgrade(implementation: ClassHash, calldata: Array<felt252>) {
+    fn upgrade(implementation: ClassHash, calldata: Array<felt252>) -> Array::<felt252> {
         assert_only_self();
 
         let supports_interface = IErc165LibraryDispatcher {
@@ -372,12 +371,11 @@ mod ArgentAccount {
         assert(supports_interface, 'argent/invalid-implementation');
 
         replace_class_syscall(implementation).unwrap_syscall();
-        // TODO pass the old version to the callback, careful with backwards compatibility
+        AccountUpgraded(implementation);
+
         IAccountUpgradeLibraryDispatcher {
             class_hash: implementation
-        }.execute_after_upgrade(calldata);
-
-        AccountUpgraded(implementation);
+        }.execute_after_upgrade(calldata)
     }
 
     #[external]
@@ -388,8 +386,25 @@ mod ArgentAccount {
             replace_class_syscall(implementation).unwrap_syscall();
             _implementation::write(class_hash_const::<0>());
         }
-        ArrayTrait::new()
+
+        if (data.is_empty()) {
+            return ArrayTrait::new();
+        }
+
+        let mut data_span = data.span();
+        let calls = serde::Serde::<Array<Call>>::deserialize(
+            ref data_span
+        ).expect('argent/invalid-calls');
+        assert(data_span.is_empty(), 'argent/invalid-calls');
+
+        assert_no_self_call(calls.span(), get_contract_address());
+
+        let multicall_return = execute_multicall(calls.span());
+        let mut output = ArrayTrait::<felt252>::new();
+        multicall_return.serialize(ref output);
+        output
     }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                       View functions                                       //
     ////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,12 +1,23 @@
 import { expect } from "chai";
-import { num, shortString } from "starknet";
-import { declareContract, deployAccount, deployOldAccount, provider, upgradeAccount } from "./lib";
+import { Contract } from "starknet";
+import {
+  declareContract,
+  deployAccount,
+  deployOldAccount,
+  deployer,
+  getUpgradeDataLegacy,
+  loadContract,
+  provider,
+  upgradeAccount,
+} from "./lib";
 
 describe("Argent Account: upgrade", function () {
   let argentAccountClassHash: string;
   let argentAccountFutureClassHash: string;
   let oldArgentAccountClassHash: string;
   let proxyClassHash: string;
+  let testDappClassHash: string;
+  let testDapp: Contract;
 
   before(async () => {
     argentAccountClassHash = await declareContract("ArgentAccount");
@@ -15,37 +26,42 @@ describe("Argent Account: upgrade", function () {
     argentAccountFutureClassHash = await declareContract("ArgentAccountFutureVersion");
     oldArgentAccountClassHash = await declareContract("OldArgentAccount");
     proxyClassHash = await declareContract("Proxy");
+    testDappClassHash = await declareContract("TestDapp");
+    const { contract_address } = await deployer.deployContract({
+      classHash: testDappClassHash,
+    });
+    testDapp = await loadContract(contract_address);
   });
 
-  it("Should be posssible to deploy an argent account version 0.2.4 and upgrade it to cairo 1 version 0.3.0", async function () {
-    const { account: accountToUpgrade } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
-    const initialVersion = await provider.callContract({
-      contractAddress: accountToUpgrade.address,
-      entrypoint: "getVersion",
-    });
-    expect(shortString.decodeShortString(initialVersion.result[0])).to.equal("0.2.4");
-
-    await upgradeAccount(accountToUpgrade, argentAccountClassHash);
-
-    const newVersion = await provider.callContract({
-      contractAddress: accountToUpgrade.address,
-      entrypoint: "get_version",
-    });
-    expect(newVersion.result).to.deep.equal([0, 3, 0].map(num.toHex));
+  it("Upgrade cairo 0 to current version", async function () {
+    const { account } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
+    await upgradeAccount(account, argentAccountClassHash, ["0"]);
+    const newClashHash = await provider.getClassHashAt(account.address);
+    expect(BigInt(newClashHash)).to.equal(BigInt(argentAccountClassHash));
   });
 
-  it("Should be possible to upgrade an account from version 0.3.0 to FutureVersion", async function () {
+  it("Upgrade cairo 0 to cairo 1 with multicall", async function () {
+    const { account } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
+    await upgradeAccount(
+      account,
+      argentAccountClassHash,
+      getUpgradeDataLegacy([testDapp.populateTransaction.set_number(42)]),
+    );
+    expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+    await testDapp.get_number(account.address).should.eventually.equal(42n);
+  });
+
+  it("Upgrade from current version FutureVersion", async function () {
     const { account } = await deployAccount(argentAccountClassHash);
-    const currentVersion = await provider.callContract({
-      contractAddress: account.address,
-      entrypoint: "get_version",
-    });
-    expect(currentVersion.result).to.deep.equal([0, 3, 0].map(num.toHex));
     await upgradeAccount(account, argentAccountFutureClassHash);
-    const newVersion = await provider.callContract({
-      contractAddress: account.address,
-      entrypoint: "get_version",
-    });
-    expect(newVersion.result).to.deep.equal([42, 42, 42].map(num.toHex));
+    expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountFutureClassHash));
+  });
+
+  it("Reject invalid upgrade targets", async function () {
+    const { account } = await deployAccount(argentAccountClassHash);
+    await upgradeAccount(account, "0x01").should.be.rejectedWith("Class with hash 0x1 is not declared");
+    await upgradeAccount(account, testDappClassHash).should.be.rejectedWith(
+      `Entry point 0xfe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283 not found in contract with class hash ${testDappClassHash}`,
+    );
   });
 });

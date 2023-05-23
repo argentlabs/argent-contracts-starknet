@@ -1,4 +1,4 @@
-import { Account, CallData, Contract, ec, hash } from "starknet";
+import { Account, CallData, Contract, InvokeTransactionReceiptResponse, RawCalldata, ec, hash } from "starknet";
 import { loadContract } from "./contracts";
 import { fundAccount } from "./devnet";
 import { provider } from "./provider";
@@ -114,11 +114,15 @@ export async function deployAccountWithGuardianBackup(argentAccountClassHash: st
   return wallet;
 }
 
-export async function upgradeAccount(accountToUpgrade: Account, argentAccountClassHash: string) {
+export async function upgradeAccount(
+  accountToUpgrade: Account,
+  argentAccountClassHash: string,
+  calldata: RawCalldata = [],
+): Promise<InvokeTransactionReceiptResponse> {
   const { transaction_hash: transferTxHash } = await accountToUpgrade.execute({
     contractAddress: accountToUpgrade.address,
     entrypoint: "upgrade",
-    calldata: CallData.compile({ implementation: argentAccountClassHash, calldata: ["0"] }),
+    calldata: CallData.compile({ implementation: argentAccountClassHash, calldata }),
   });
-  await provider.waitForTransaction(transferTxHash);
+  return await provider.waitForTransaction(transferTxHash);
 }

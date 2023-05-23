@@ -127,11 +127,10 @@ export class ConcatSigner extends RawSigner {
   }
 
   async signRaw(msgHash: string): Promise<ArraySignatureType> {
-    const promises = this.privateKeys.map(async (privateKey) => {
+    return this.privateKeys.map((privateKey) => {
       const signature = ec.starkCurve.sign(msgHash, privateKey);
       return [signature.r.toString(), signature.s.toString()];
-    });
-    return (await Promise.all(promises)).flat();
+    }).flat();
   }
 }
 

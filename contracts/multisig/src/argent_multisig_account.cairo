@@ -23,7 +23,6 @@ mod ArgentMultisigAccount {
         deserialize_array_signer_signature, MultisigStorage, SignerSignature
     };
 
-
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
         738349667340360233096752603318170676063569407717437256101137432051386874767; // starknet_keccak('execute_after_upgrade')
 

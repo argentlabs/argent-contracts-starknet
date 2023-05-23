@@ -1,3 +1,4 @@
+import { expect } from "chai";
 import { Account, CallData, Contract, InvokeTransactionReceiptResponse, RawCalldata, ec, hash } from "starknet";
 import { loadContract } from "./contracts";
 import { fundAccount } from "./devnet";
@@ -125,4 +126,20 @@ export async function upgradeAccount(
     calldata: CallData.compile({ implementation: argentAccountClassHash, calldata }),
   });
   return await provider.waitForTransaction(transferTxHash);
+}
+
+export enum EscapeStatus {
+  None,
+  NotReady,
+  Ready,
+  Expired,
+}
+
+export async function getEscapeStatus(accountContract: Contract): Promise<EscapeStatus> {
+  // StarknetJs parsing is broken so we do it manually
+  const result = (await accountContract.call("get_escape_and_status", undefined, { parseResponse: false })) as string[];
+  expect(result.length).to.equal(4);
+  const status = Number(result[3]);
+  expect(status).to.be.lessThan(4, `Unknown status ${status}`);
+  return status;
 }

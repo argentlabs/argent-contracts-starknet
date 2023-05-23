@@ -31,12 +31,7 @@ describe("ArgentAccount: multicall", function () {
     const senderInitialBalance = await getEthBalance(ethContract, account.address);
     const recipientInitialBalance = await getEthBalance(ethContract, recipient);
     ethContract.connect(account);
-    // TODO it should be possible to do this at some point
-    // await ethContract.transfer(recipient, amount);
-    const { transaction_hash: transferTxHash } = await account.execute(
-      ethContract.populateTransaction.transfer(recipient, amount),
-    );
-
+    const { transaction_hash: transferTxHash } = await ethContract.transfer(recipient, amount);
     await account.waitForTransaction(transferTxHash);
     const senderFinalBalance = await getEthBalance(ethContract, account.address);
     const recipientFinalBalance = await getEthBalance(ethContract, recipient);

@@ -1,4 +1,5 @@
-import { declareContract, randomPrivateKeys } from "./lib";
+import { CallData } from "starknet";
+import { declareContract, expectEvent } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisigAccount", function () {
@@ -11,9 +12,19 @@ describe("ArgentMultisigAccount", function () {
   describe("Initialization", function () {
     it("Should deploy multisig contract", async function () {
       const threshold = 1;
-      const privateKeys = randomPrivateKeys(2);
+      const signersLength = 2;
 
-      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, privateKeys);
+      const { accountContract, signers, receipt } = await deployMultisig(
+        multisigAccountClassHash,
+        threshold,
+        signersLength,
+      );
+
+      await expectEvent(receipt, {
+        from_address: accountContract.address,
+        keys: ["ConfigurationUpdated"],
+        data: CallData.compile([threshold, signersLength, signers, []]),
+      });
 
       await accountContract.get_threshold().should.eventually.equal(1n);
       await accountContract.get_signers().should.eventually.deep.equal(signers);

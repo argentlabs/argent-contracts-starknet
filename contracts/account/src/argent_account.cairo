@@ -163,7 +163,7 @@ mod ArgentAccount {
     #[external]
     fn __execute__(calls: Array<Call>) -> Span<Span<felt252>> {
         let tx_info = get_tx_info().unbox();
-        // assert_correct_tx_version(tx_info.version); // TODO PUT BACK WHEN WE CAN MOCK IT
+        assert_correct_tx_version(tx_info.version);
         assert_non_reentrant();
 
         let retdata = execute_multicall(calls.span());

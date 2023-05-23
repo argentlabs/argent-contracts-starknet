@@ -459,14 +459,12 @@ mod ArgentAccount {
         owner_escape_attempts::read()
     }
 
-    // TODO add back when updated to latest cairo version
-    // currently serde not working for enums
     /// Current escape if any, and its status
-    // #[view]
-    // fn get_escape_and_status() -> (Escape, EscapeStatus) {
-    //     let current_escape = _escape::read();
-    //     (current_escape, get_escape_status(current_escape.ready_at))
-    // }
+    #[view]
+    fn get_escape_and_status() -> (Escape, EscapeStatus) {
+        let current_escape = _escape::read();
+        (current_escape, get_escape_status(current_escape.ready_at))
+    }
 
     // ERC165
     #[view]

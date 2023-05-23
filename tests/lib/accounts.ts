@@ -93,7 +93,7 @@ export async function deployAccount(argentAccountClassHash: string): Promise<Arg
   const guardianPrivateKey = randomPrivateKey();
   const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
   const accountContract = await loadContract(account.address);
-
+  accountContract.connect(account);
   return { account, accountContract, ownerPrivateKey, guardianPrivateKey };
 }
 

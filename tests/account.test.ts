@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Account, CallData, ec, hash } from "starknet";
+import { CallData, ec, hash } from "starknet";
 import {
   ArgentSigner,
   ConcatSigner,
@@ -9,8 +9,6 @@ import {
   deployAccountWithoutGuardian,
   deployer,
   expectRevertWithErrorMessage,
-  fundAccount,
-  loadContract,
   provider,
   randomPrivateKey,
 } from "./lib";

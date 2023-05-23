@@ -95,7 +95,7 @@ export async function deployAccountWithoutGuardian(
   ownerPrivateKey: string = randomPrivateKey(),
   salt: string = randomPrivateKey(),
 ): Promise<ArgentWallet> {
-  const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey, salt);
+  const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey, undefined,  salt);
   const accountContract = await loadContract(account.address);
   return { account, accountContract, ownerPrivateKey };
 }

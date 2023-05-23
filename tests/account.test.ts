@@ -29,12 +29,14 @@ describe("ArgentAccount", function () {
   // TODO Write a test:
   // assert_correct_tx_version(tx_info.version); in __execute__
   describe("Example tests", function () {
-    it("Expect guardian and guardian backup to be 0 when deployed with an owner only", async function () {
-      const { accountContract } = await deployAccountWithoutGuardian(argentAccountClassHash);
+    it("Should be posssible to deploy an argent account version 0.3.0", async function () {
+      const { accountContract, ownerPrivateKey } = await deployAccountWithoutGuardian(argentAccountClassHash);
+      const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
 
+      const owner = await accountContract.get_owner();
+      expect(owner).to.equal(BigInt(ownerPublicKey));
       const guardian = await accountContract.get_guardian();
       expect(guardian).to.equal(0n);
-
       const guardianBackup = await accountContract.get_guardian_backup();
       expect(guardianBackup).to.equal(0n);
     });
@@ -141,10 +143,5 @@ describe("ArgentAccount", function () {
       const owner_result = await accountContract.get_owner();
       expect(owner_result).to.equal(BigInt(newOwner));
     });
-  });
-
-  xit("Should be posssible to deploy an argent account version 0.3.0", async function () {
-    // await deployAccount(argentAccountClassHash);
-    // TODO Impossible atm needs not (yet) deployAccount doesn't support yet cairo1 call structure
   });
 });

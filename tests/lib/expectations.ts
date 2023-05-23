@@ -53,10 +53,11 @@ export async function expectEvent(
   param: string | InvokeTransactionReceiptResponse | (() => Promise<InvokeFunctionResponse>),
   event: Event,
 ) {
+  if (typeof param === "function") {
+    ({ transaction_hash: param } = await param());
+  }
   if (typeof param === "string") {
     param = await provider.waitForTransaction(param);
-  } else if (typeof param === "function") {
-    param = await param();
   }
   await expectEventFromReceipt(param, event);
 }

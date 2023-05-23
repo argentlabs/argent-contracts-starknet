@@ -28,7 +28,7 @@ describe("ArgentAccount", function () {
 
   // TODO Write a test:
   // assert_correct_tx_version(tx_info.version); in __execute__
-  describe.only("Example tests", function () {
+  describe("Example tests", function () {
     it("Expect guardian and guardian backup to be 0 when deployed with an owner only", async function () {
       const { accountContract } = await deployAccountWithoutGuardian(argentAccountClassHash);
 

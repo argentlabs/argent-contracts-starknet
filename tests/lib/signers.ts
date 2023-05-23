@@ -137,13 +137,12 @@ export class ConcatSigner extends RawSigner {
 }
 
 export class MultisigSigner extends RawSigner {
-  constructor(public privateKeys: string[]) {
+  constructor(public keys: KeyPair[]) {
     super();
   }
 
   async signRaw(msgHash: string): Promise<ArraySignatureType> {
-    const signerSignatures = this.privateKeys.map((privateKey) => {
-      const signer = ec.starkCurve.getStarkKey(privateKey);
+    const signerSignatures = this.keys.map(({ privateKey, publicKey: signer }) => {
       const { r, s } = ec.starkCurve.sign(msgHash, privateKey);
       return { signer, signature_r: r.toString(), signature_s: s.toString() };
     });
@@ -151,10 +150,16 @@ export class MultisigSigner extends RawSigner {
   }
 }
 
+export class KeyPair {
+  public readonly publicKey: string;
+
+  constructor(public readonly privateKey: string = randomPrivateKey()) {
+    this.publicKey = ec.starkCurve.getStarkKey(this.privateKey);
+  }
+}
+
 export function randomPrivateKey(): string {
   return "0x" + encode.buf2hex(ec.starkCurve.utils.randomPrivateKey());
 }
 
-export function randomPrivateKeys(length: number): string[] {
-  return Array.from({ length }, randomPrivateKey);
-}
+export const randomKeyPairs = (length: number) => Array.from({ length }, () => new KeyPair());

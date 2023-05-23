@@ -19,7 +19,6 @@ install-cairo:
 		$(MAKE) clone-cairo; \
 	fi
 
-
 install-integration:
 	yarn
 

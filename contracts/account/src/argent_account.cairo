@@ -18,7 +18,7 @@ mod ArgentAccount {
         assert_correct_tx_version, assert_no_self_call, assert_non_reentrant, assert_only_self,
         execute_multicall, Call, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
         IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait, SpanSerde,
-        OutsideExecution, hash_outside_execution_message
+        OutsideExecution, hash_outside_execution_message, assert_correct_declare_version
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -143,8 +143,8 @@ mod ArgentAccount {
 
     #[external]
     fn __validate_declare__(class_hash: felt252) -> felt252 {
-        // TODO validate tx version?
         let tx_info = get_tx_info().unbox();
+        assert_correct_declare_version(tx_info.version);
         assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
         VALIDATED
     }
@@ -154,8 +154,8 @@ mod ArgentAccount {
     fn __validate_deploy__(
         class_hash: felt252, contract_address_salt: felt252, owner: felt252, guardian: felt252
     ) -> felt252 {
-        // TODO validate tx version?
         let tx_info = get_tx_info().unbox();
+        assert_correct_tx_version(tx_info.version);
         assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
         VALIDATED
     }

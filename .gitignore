@@ -20,3 +20,5 @@ tests/fixtures/ArgentMultisigAccount.json
 tests/fixtures/ArgentMultisigAccount.casm
 tests/fixtures/TestDapp.json
 tests/fixtures/TestDapp.casm
+dump
+package-lock.json

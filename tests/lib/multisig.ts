@@ -36,7 +36,7 @@ export async function deployMultisig(
 
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
-  return { account, accountContract, privateKeys, signers, receipt };
+  return { account, accountContract, keys, signers, receipt };
 }
 
 const sortedKeyPairs = (length: number) => randomKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));

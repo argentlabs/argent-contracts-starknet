@@ -35,6 +35,7 @@ export async function deployMultisig(
   const receipt = await deployer.waitForTransaction(transaction_hash);
 
   const accountContract = await loadContract(account.address);
+  accountContract.connect(account);
   return { account, accountContract, keys, signers, receipt };
 }
 

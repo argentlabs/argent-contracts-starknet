@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ec } from "starknet";
-import { declareContract, randomPrivateKey } from "./lib";
+import { declareContract, expectRevertWithErrorMessage, randomPrivateKey } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: signer storage", function () {
@@ -220,5 +220,30 @@ describe("ArgentMultisig: signer storage", function () {
       const signers_list = await accountContract.get_signers();
       expect(signers_list).to.have.ordered.members([signers[0], signers[1], new_signer]);
     });
+  });
+
+  it("Expect 'argent/not-a-signer' when replacing a non-existing signer", async function () {
+    const threshold = 1;
+    const signersLength = 3;
+
+    const non_signer = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+    const new_signer = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+
+    const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+
+    await expectRevertWithErrorMessage("argent/not-a-signer", () =>
+      accountContract.replace_signer(non_signer, new_signer),
+    );
+  });
+
+  it("Expect 'argent/already-a-signer' when replacing a signer with an existing one", async function () {
+    const threshold = 1;
+    const signersLength = 3;
+
+    const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+
+    await expectRevertWithErrorMessage("argent/already-a-signer", () =>
+      accountContract.replace_signer(signers[0], signers[1]),
+    );
   });
 });

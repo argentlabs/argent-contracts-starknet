@@ -35,7 +35,7 @@ describe("Make sure all events are emitted", function () {
     });
   });
 
-  it("Expect 'EscapeOwnerTriggered(active_at, new_owner)' on trigger_escape_owner", async function () {
+  it("Expect 'EscapeOwnerTriggered(ready_at, new_owner)' on trigger_escape_owner", async function () {
     const { account, accountContract, guardianPrivateKey } = await deployAccount(argentAccountClassHash);
     account.signer = new Signer(guardianPrivateKey);
 
@@ -67,7 +67,7 @@ describe("Make sure all events are emitted", function () {
     });
   });
 
-  it("Expect 'EscapeGuardianTriggered(active_at, new_owner)' on trigger_escape_guardian", async function () {
+  it("Expect 'EscapeGuardianTriggered(ready_at, new_owner)' on trigger_escape_guardian", async function () {
     const { account, accountContract, ownerPrivateKey } = await deployAccount(argentAccountClassHash);
     account.signer = new Signer(ownerPrivateKey);
 

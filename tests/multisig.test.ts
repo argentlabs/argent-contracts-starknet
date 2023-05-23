@@ -29,7 +29,7 @@ describe("ArgentMultisigAccount", function () {
       await accountContract.get_threshold().should.eventually.equal(1n);
       await accountContract.get_signers().should.eventually.deep.equal(signers);
       await accountContract.get_name().should.eventually.equal(BigInt(shortString.encodeShortString("ArgentMultisig")));
-      await accountContract.get_version().should.eventually.deep.equal({ major: 0n, minor: 1n, patch: 0n });
+      await accountContract.get_version().should.eventually.deep.equal({ major: 1n, minor: 0n, patch: 0n });
     });
   });
 });

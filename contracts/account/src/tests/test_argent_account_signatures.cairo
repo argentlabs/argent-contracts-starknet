@@ -181,7 +181,6 @@ fn invalid_signature_length_with_guardian() {
     assert(!is_valid_signature(message_hash, signatures), 'invalid signature');
 }
 
-
 #[test]
 #[available_gas(2000000)]
 fn split_signatures() {
@@ -194,7 +193,6 @@ fn split_signatures() {
     assert(*full[0] == 21, 'Idx 0 should be 21');
     assert(*full[1] == 42, 'Idx 1 should be 42');
 }
-
 
 #[test]
 #[available_gas(2000000)]

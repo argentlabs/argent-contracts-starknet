@@ -1,13 +1,11 @@
 #[account_contract]
 mod ArgentMultisigAccount {
-    use array::ArrayTrait;
-    use array::SpanTrait;
+    use array::{ArrayTrait, SpanTrait};
     use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
     use option::OptionTrait;
     use traits::Into;
     use zeroable::Zeroable;
-
     use starknet::{
         get_contract_address, ContractAddressIntoFelt252, VALIDATED,
         syscalls::replace_class_syscall, ClassHash, class_hash_const
@@ -18,7 +16,6 @@ mod ArgentMultisigAccount {
         execute_multicall, Call, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
         SpanSerde
     };
-
     use multisig::{
         IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait,
         deserialize_array_signer_signature, MultisigStorage, SignerSignature
@@ -27,7 +24,6 @@ mod ArgentMultisigAccount {
     const ERC165_IERC165_INTERFACE_ID: felt252 = 0x01ffc9a7;
     const ERC165_ACCOUNT_INTERFACE_ID: felt252 = 0xa66bd575;
     const ERC165_OLD_ACCOUNT_INTERFACE_ID: felt252 = 0x3943f10f;
-
 
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
         738349667340360233096752603318170676063569407717437256101137432051386874767; // execute_after_upgrade
@@ -239,7 +235,7 @@ mod ArgentMultisigAccount {
     /// @param implementation class hash of the new implementation 
     /// @return retdata The data returned by `execute_after_upgrade`
     #[external]
-    fn upgrade(implementation: ClassHash, calldata: Array<felt252>) -> Array::<felt252> {
+    fn upgrade(implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
         assert_only_self();
 
         let supports_interface = IErc165LibraryDispatcher {
@@ -257,10 +253,9 @@ mod ArgentMultisigAccount {
         return_data
     }
 
-
     /// see `IUpgradeTarget`
     #[external]
-    fn execute_after_upgrade(previous_version: Version, data: Array<felt252>) -> Array::<felt252> {
+    fn execute_after_upgrade(previous_version: Version, data: Array<felt252>) -> Array<felt252> {
         assert_only_self();
         assert(data.len() == 0, 'argent/unexpected-data');
 

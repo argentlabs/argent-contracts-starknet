@@ -19,7 +19,7 @@ install-cairo:
 		$(MAKE) clone-cairo; \
 	fi
 
-# TODO: also install python venv and requirements?
+
 install-integration:
 	yarn
 

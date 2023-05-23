@@ -253,6 +253,4 @@ describe("Make sure all events are emitted", function () {
     });
     // TODO Could add some more tests regarding multicall later
   });
-
-  // TODO Check event NOT trigerred
 });

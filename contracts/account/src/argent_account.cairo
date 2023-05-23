@@ -31,13 +31,10 @@ mod ArgentAccount {
 
     /// Time it takes for the escape to become ready after being triggered
     const ESCAPE_SECURITY_PERIOD: u64 = 604800; // 7 * 24 * 60 * 60;  // 7 days
-
     ///  The escape will be ready and can be completed for this duration
     const ESCAPE_EXPIRY_PERIOD: u64 = 604800; // 7 * 24 * 60 * 60;  // 7 days
-
     const ESCAPE_TYPE_GUARDIAN: felt252 = 1;
     const ESCAPE_TYPE_OWNER: felt252 = 2;
-
 
     const TRIGGER_ESCAPE_GUARDIAN_SELECTOR: felt252 =
         73865429733192804476769961144708816295126306469589518371407068321865763651; // starknet_keccak('trigger_escape_guardian')
@@ -51,7 +48,6 @@ mod ArgentAccount {
         738349667340360233096752603318170676063569407717437256101137432051386874767; // starknet_keccak('execute_after_upgrade')
     const CHANGE_OWNER_SELECTOR: felt252 =
         658036363289841962501247229249022783727527757834043681434485756469236076608; // starknet_keccak('change_owner')
-
 
     /// Limit escape attempts by only one party
     const MAX_ESCAPE_ATTEMPTS: u32 = 5;
@@ -68,7 +64,7 @@ mod ArgentAccount {
         _guardian: felt252,
         _guardian_backup: felt252,
         _escape: Escape,
-        outside_nonces: LegacyMap::<felt252, bool>,
+        outside_nonces: LegacyMap<felt252, bool>,
         /// Keeps track of how many escaping tx the guardian has submitted. Used to limit the number of transactions the account will pay for
         /// It resets when an escape is completed or canceled
         guardian_escape_attempts: u32,
@@ -133,7 +129,7 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[external]
-    fn __validate__(calls: Array::<Call>) -> felt252 {
+    fn __validate__(calls: Array<Call>) -> felt252 {
         let tx_info = get_tx_info().unbox();
         assert_valid_calls_and_signature(
             calls.span(), tx_info.transaction_hash, tx_info.signature, is_from_outside: false
@@ -271,7 +267,7 @@ mod ArgentAccount {
 
         // no escape if there is a guardian escape triggered by the owner in progress
         let current_escape = _escape::read();
-        if (current_escape.escape_type == ESCAPE_TYPE_GUARDIAN) {
+        if current_escape.escape_type == ESCAPE_TYPE_GUARDIAN {
             assert(
                 get_escape_status(current_escape.ready_at) == EscapeStatus::Expired(()),
                 'argent/cannot-override-escape'
@@ -362,7 +358,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn upgrade(implementation: ClassHash, calldata: Array<felt252>) -> Array::<felt252> {
+    fn upgrade(implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
         assert_only_self();
 
         let supports_interface = IErc165LibraryDispatcher {
@@ -379,7 +375,7 @@ mod ArgentAccount {
     }
 
     #[external]
-    fn execute_after_upgrade(data: Array<felt252>) -> Array::<felt252> {
+    fn execute_after_upgrade(data: Array<felt252>) -> Array<felt252> {
         assert_only_self();
         let implementation = _implementation::read();
         if implementation != class_hash_const::<0>() {
@@ -387,7 +383,7 @@ mod ArgentAccount {
             _implementation::write(class_hash_const::<0>());
         }
 
-        if (data.is_empty()) {
+        if data.is_empty() {
             return ArrayTrait::new();
         }
 
@@ -473,7 +469,7 @@ mod ArgentAccount {
     }
     #[view]
     fn supportsInterface(interface_id: felt252) -> felt252 {
-        if (supports_interface(interface_id)) {
+        if supports_interface(interface_id) {
             1
         } else {
             0
@@ -517,13 +513,13 @@ mod ArgentAccount {
                 let selector = *call.selector;
 
                 if selector == TRIGGER_ESCAPE_OWNER_SELECTOR {
-                    if (!is_from_outside) {
+                    if !is_from_outside {
                         let current_attempts = guardian_escape_attempts::read();
                         assert_valid_escape_parameters(current_attempts);
                         guardian_escape_attempts::write(current_attempts + 1);
                     }
 
-                    let mut calldata: Span::<felt252> = call.calldata.span();
+                    let mut calldata: Span<felt252> = call.calldata.span();
                     let new_owner: felt252 = Serde::deserialize(
                         ref calldata
                     ).expect('argent/invalid-calldata');
@@ -536,7 +532,7 @@ mod ArgentAccount {
                     return (); // valid
                 }
                 if selector == ESCAPE_OWNER_SELECTOR {
-                    if (!is_from_outside) {
+                    if !is_from_outside {
                         let current_attempts = guardian_escape_attempts::read();
                         assert_valid_escape_parameters(current_attempts);
                         guardian_escape_attempts::write(current_attempts + 1);
@@ -557,12 +553,12 @@ mod ArgentAccount {
                     return (); // valid
                 }
                 if selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
-                    if (!is_from_outside) {
+                    if !is_from_outside {
                         let current_attempts = owner_escape_attempts::read();
                         assert_valid_escape_parameters(current_attempts);
                         owner_escape_attempts::write(current_attempts + 1);
                     }
-                    let mut calldata: Span::<felt252> = call.calldata.span();
+                    let mut calldata: Span<felt252> = call.calldata.span();
                     let new_guardian: felt252 = Serde::deserialize(
                         ref calldata
                     ).expect('argent/invalid-calldata');
@@ -577,7 +573,7 @@ mod ArgentAccount {
                     return (); // valid
                 }
                 if selector == ESCAPE_GUARDIAN_SELECTOR {
-                    if (!is_from_outside) {
+                    if !is_from_outside {
                         let current_attempts = owner_escape_attempts::read();
                         assert_valid_escape_parameters(current_attempts);
                         owner_escape_attempts::write(current_attempts + 1);
@@ -683,7 +679,7 @@ mod ArgentAccount {
         assert(is_valid, 'argent/invalid-owner-sig');
     }
 
-    fn split_signatures(full_signature: Span<felt252>) -> (Span::<felt252>, Span::<felt252>) {
+    fn split_signatures(full_signature: Span<felt252>) -> (Span<felt252>, Span<felt252>) {
         if full_signature.len() == 2 {
             return (full_signature, ArrayTrait::new().span());
         }
@@ -692,16 +688,16 @@ mod ArgentAccount {
     }
 
     fn get_escape_status(escape_ready_at: u64) -> EscapeStatus {
-        if (escape_ready_at == 0) {
+        if escape_ready_at == 0 {
             return EscapeStatus::None(());
         }
 
         let block_timestamp = get_block_timestamp();
-        if (block_timestamp < escape_ready_at) {
+        if block_timestamp < escape_ready_at {
             return EscapeStatus::NotReady(());
         }
-        if (escape_ready_at
-            + ESCAPE_EXPIRY_PERIOD <= block_timestamp) {
+        if escape_ready_at
+            + ESCAPE_EXPIRY_PERIOD <= block_timestamp {
                 return EscapeStatus::Expired(());
             }
 
@@ -715,7 +711,7 @@ mod ArgentAccount {
             return ();
         }
         _escape::write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
-        if (current_escape_status != EscapeStatus::Expired(())) {
+        if current_escape_status != EscapeStatus::Expired(()) {
             EscapeCanceled();
         }
     }

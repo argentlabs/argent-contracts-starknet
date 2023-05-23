@@ -25,7 +25,6 @@ fn replace_signer_1() {
     assert(ArgentMultisigAccount::is_signer(signer_to_add), 'new was not added');
 }
 
-
 #[test]
 #[available_gas(20000000)]
 fn replace_signer_start() {
@@ -85,7 +84,6 @@ fn replace_signer_end() {
     assert(ArgentMultisigAccount::is_signer(signer_pubkey_1), 'signer 1 was removed');
     assert(ArgentMultisigAccount::is_signer(signer_pubkey_2), 'signer 2 was removed');
 }
-
 
 #[test]
 #[available_gas(20000000)]

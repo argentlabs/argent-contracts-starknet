@@ -190,10 +190,9 @@ mod ArgentAccount {
         retdata
     }
 
-    /// @notice This method allows anywone to submit a transaction in behalf of the account as long as they have the relevant signatures
-    /// @param outside_execution Every parameted that is included by the parameter `signature`
-    /// @param signature A valid signature from the parties needed to execute the transaction. The parties are signing the Eip712 message enconding `OutsideExecution`
-    /// @dev can only be set to 0 if there is no guardian backup set
+    /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
+    /// @param outside_execution The parameters of the transaction to execute
+    /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
     /// @notice This method allows reentrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
     #[external]
     fn execute_from_outside(

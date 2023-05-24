@@ -60,7 +60,7 @@ describe("Test outside execution", function () {
   });
 
   it("Basics", async function () {
-    const { account, accountContract } = await deployMultisig(
+    const { account } = await deployMultisig(
       multisigClassHash,
       1 /* threshold */,
       2 /* signers count */,

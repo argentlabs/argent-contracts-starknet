@@ -1,14 +1,12 @@
-# Argent Multisig on Starknet
+# Argent Multisig
 
-_Warning: This project is still in alpha. It has not been audited yet and should not be used to store significant value._
+## High-Level Specification
 
-# Overview
-
-This account requires multiple signatures from different parties to authorize any operations. This helps to increase security as the account can still be safe even if one party gets compromised.
+The Argent Multisig account is a typical n-of-m  multisig that requires multiple signatures from different parties to authorize any operations. This helps to increase security as the account can still be safe even if one party gets compromised.
 
 The account is controlled by multiple owners (or `signer`), and to generate a valid account signature you need at least some number of owner signatures. The minimum number of owners that need to sign is called the `threshold`.
 
-This account leverages account abstraction, so the account can pay for its own transaction fees
+This account leverages account abstraction, so the account can pay for its own transaction fees.
 
 A valid account signature is just a list of many individual owner signatures. This account signature can be used as a Starknet transaction signature or in the `is_valid_signature` method.
 

@@ -57,10 +57,11 @@ mod ArgentAccount {
 
     struct Storage {
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
-        _signer: felt252,
-        _guardian: felt252,
-        _guardian_backup: felt252,
-        _escape: Escape,
+        _signer: felt252, /// Current account owner
+        _guardian: felt252, /// Current account guardian
+        _guardian_backup: felt252, /// Current account backup guardian
+        _escape: Escape, /// The ongoing escape, if any
+        /// Keeps track of used nonces for outside transactions (`execute_from_outside`)
         outside_nonces: LegacyMap<felt252, bool>,
         /// Keeps track of how many escaping tx the guardian has submitted. Used to limit the number of transactions the account will pay for
         /// It resets when an escape is completed or canceled
@@ -74,36 +75,62 @@ mod ArgentAccount {
     //                                           Events                                           //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /// @notice Emitted exactly once when the account is initialized
+    /// @param account The account address
+    /// @param owner The owner address
+    /// @param guardian The guardian address
     #[event]
-    fn AccountCreated(account: ContractAddress, key: felt252, guardian: felt252) {}
+    fn AccountCreated(account: ContractAddress, owner: felt252, guardian: felt252) {}
 
+    /// @notice Emitted when the account executes a transaction
+    /// @param hash The transaction hash
+    /// @param response The data returned by the methods called
     #[event]
     fn TransactionExecuted(hash: felt252, response: Span<Span<felt252>>) {}
 
+    /// @notice Owner escape was triggered by the guardian
+    /// @param ready_at when the escape can be completed
+    /// @param new_owner new owner address to be set after the security period
     #[event]
     fn EscapeOwnerTriggered(ready_at: u64, new_owner: felt252) {}
 
+    /// @notice Guardian escape was triggered by the owner
+    /// @param ready_at when the escape can be completed
+    /// @param new_guardian address of the new guardian to be set after the security period. O if the guardian will be removed
     #[event]
     fn EscapeGuardianTriggered(ready_at: u64, new_guardian: felt252) {}
 
+    /// @notice Owner escape was completed and there is a new account owner
+    /// @param new_owner new owner address
     #[event]
     fn OwnerEscaped(new_owner: felt252) {}
 
+    /// @notice Guardian escape was completed and there is a new account guardian
+    /// @param new_guardian address of the new guardian or 0 if it was removed
     #[event]
     fn GuardianEscaped(new_guardian: felt252) {}
 
+    /// An ongoing escape was canceled
     #[event]
     fn EscapeCanceled() {}
 
+    /// @notice The account owner was changed
+    /// @param new_owner new owner address
     #[event]
     fn OwnerChanged(new_owner: felt252) {}
 
+    /// @notice The account guardian was changed or removed
+    /// @param new_guardian address of the new guardian or 0 if it was removed
     #[event]
     fn GuardianChanged(new_guardian: felt252) {}
 
+    /// @notice The account backup guardian was changed or removed
+    /// @param new_guardian address of the backup guardian or 0 if it was removed
     #[event]
     fn GuardianBackupChanged(new_guardian: felt252) {}
 
+    /// @notice Emitted when the implementation of the account changes
+    /// @param new_implementation The new implementation
     #[event]
     fn AccountUpgraded(new_implementation: ClassHash) {}
 
@@ -163,6 +190,10 @@ mod ArgentAccount {
         retdata
     }
 
+    /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
+    /// @param outside_execution The parameters of the transaction to execute
+    /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
+    /// @notice This method allows reentrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
     #[external]
     fn execute_from_outside(
         outside_execution: OutsideExecution, signature: Array<felt252>
@@ -353,6 +384,12 @@ mod ArgentAccount {
         reset_escape_attempts();
     }
 
+    /// @notice Upgrades the implementation of the account
+    /// @dev Also call `execute_after_upgrade` on the new implementation
+    /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
+    /// @param implementation The address of the new implementation
+    /// @param calldata Data to pass to the the implementation in `execute_after_upgrade`
+    /// @return retdata The data returned by `execute_after_upgrade`
     #[external]
     fn upgrade(implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
         assert_only_self();
@@ -370,6 +407,9 @@ mod ArgentAccount {
         }.execute_after_upgrade(calldata)
     }
 
+    /// @dev Logic to execute after an upgrade.
+    /// Can only be called by the account after a call to `upgrade`.
+    /// @param data Generic call data that can be passed to the method for future upgrade logic
     #[external]
     fn execute_after_upgrade(data: Array<felt252>) -> Array<felt252> {
         assert_only_self();
@@ -392,7 +432,7 @@ mod ArgentAccount {
         assert_no_self_call(calls.span(), get_contract_address());
 
         let multicall_return = execute_multicall(calls.span());
-        let mut output = ArrayTrait::<felt252>::new();
+        let mut output = ArrayTrait::new();
         multicall_return.serialize(ref output);
         output
     }
@@ -421,11 +461,13 @@ mod ArgentAccount {
         _escape::read()
     }
 
+    /// Semantic version of this contract
     #[view]
     fn get_version() -> Version {
         Version { major: 0, minor: 3, patch: 0 }
     }
 
+    /// Deprecated method for compatibility reasons
     #[view]
     fn getVersion() -> felt252 {
         '0.3.0'
@@ -436,6 +478,7 @@ mod ArgentAccount {
         NAME
     }
 
+    /// Deprecated method for compatibility reasons
     #[view]
     fn getName() -> felt252 {
         get_name()
@@ -475,6 +518,7 @@ mod ArgentAccount {
     }
 
     #[view]
+    /// Deprecated method for compatibility reasons
     fn supportsInterface(interface_id: felt252) -> felt252 {
         if supports_interface(interface_id) {
             1
@@ -493,11 +537,13 @@ mod ArgentAccount {
         }
     }
 
+    /// Deprecated method for compatibility reasons
     #[view]
     fn isValidSignature(hash: felt252, signatures: Array<felt252>) -> felt252 {
         is_valid_signature(hash, signatures)
     }
 
+    /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
     #[view]
     fn get_outside_execution_message_hash(outside_execution: OutsideExecution) -> felt252 {
         return hash_outside_execution_message(@outside_execution);

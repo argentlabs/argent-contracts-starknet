@@ -8,13 +8,14 @@ The primary key called the `owner` is typically stored on the user's device. A s
 
 The user can always opt-out of the guardian service and manage the guardian key himself. Alternatively he/she can add a second `guardian_backup` key to the account that has the same role as the `guardian` and can be used as the ultimate censorship resistance guarantee. The account can only have a `guardian_backup` when the `guardian` is set.
 
-By default the account can execute a sequence of operations such as calling external contracts called a multicall. A multicall will fail if one of the inner call fails. If one of the inner call is to the account itself then the multicall must be of length 1.
+By default the account can execute a sequence of operations such as calling external contracts in a multicall. A multicall will fail if one of the inner call fails. Whenever a function of the account must be called (`change_owner`, `trigger_escape_guardian`, `upgrade`, etc), it should be the only call performed in this multicall.
 
 In addition to the main `__execute__` entry point used by the Starknet protocol, the account can also be called by an external party via the `execute_from_outside` method to e.g. enable sponsored transactions. The calling party must provide a valid signature (`owner` and/or `guardian`) for the target execution.
 
 Normal operations of the wallet (calling external contracts via `__execute__` or `execute_from_outside`, `change_owner`, `change_guardian`, `change_guardian_backup`, `cancel_escape`, `upgrade`) require the approval of the `owner` and a `guardian` to be executed.
 
-Each party alone can trigger the `escape` mode (a.k.a. recovery) on the wallet if the other party is not cooperating or lost. An escape takes 7 days before being active, after which the non-cooperating party can be replaced.
+Each party alone can trigger the `escape` mode (a.k.a. recovery) on the wallet if the other party is not cooperating or lost. An escape takes 7 days before being active, after which the non-cooperating party can be replaced. The escape expires 7 days after being active.
+ 
 The wallet is asymmetric in favor of the `owner` who can override an escape triggered by a `guardian`.
 
 A triggered escape can always be cancelled with the approval of the `owner` and a `guardian`.
@@ -23,7 +24,7 @@ We assume that the `owner` key is backed up such that the probability of the `ow
 
 Under this model we can build a simple yet highly secure non-custodial wallet.
 
-To enable that model to evolve the account can be upgraded. Upgrading the wallet to a new implementation requires the approval of both the `owner` and a `guardian`. At the end of the upgrade, a call to `execute_after_upgrade` is made on the new implementation of the account to perform some maintenance if needed (e.g. migrate sate).  
+To enable that model to evolve the account can be upgraded. Upgrading the wallet to a new implementation requires the approval of both the `owner` and a `guardian`. At the end of the upgrade, a call to `execute_after_upgrade` is made on the new implementation of the account to perform some maintenance if needed (e.g. migrate state).  
 
 | Action                  | Owner  | Guardian | Comments                                  |
 | ----------------------- | ------ | -------- | ----------------------------------------- |

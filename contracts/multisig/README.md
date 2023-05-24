@@ -2,15 +2,19 @@
 
 ## High-Level Specification
 
-The Argent Multisig account is a typical n-of-m  multisig that requires multiple signatures from different parties to authorize any operations. This helps to increase security as the account can still be safe even if one party gets compromised.
+The Argent Multisig account is a typical n-of-m  multisig. It requires multiple signatures from different parties to authorize any operation from the account.
 
-The account is controlled by multiple owners (or `signer`), and to generate a valid account signature you need at least some number of owner signatures. The minimum number of owners that need to sign is called the `threshold`.
+The account is controlled by multiple owners (or `signers`). The number of owners that need to approve an operation is called the `threshold`.
 
 This account leverages account abstraction, so the account can pay for its own transaction fees.
 
-A valid account signature is just a list of many individual owner signatures. This account signature can be used as a Starknet transaction signature or in the `is_valid_signature` method.
+A valid account signature is a list of `threshold` individual owner signatures. This account signature can be used to validate a Starknet transaction or an off-chain message through the `is_valid_signature` method.
 
-Any operation that changes the security parameters, like adding/removing/changing owners, upgrading, or changing the threshold will also require the approval (signature) of enough owners (current threshold).
+Any operation that changes the security parameters of the account, like adding/removing/changing owners, upgrading, or changing the threshold will also require the approval (signature) of `threshold` owners.
+
+By default the account can execute a sequence of operations such as calling external contracts in a multicall. A multicall will fail if one of the inner call fails. Whenever a function of the account must be called (`add_signers`, `remove_signers`, `upgrade`, etc), it should be the only call performed in this multicall.
+
+In addition to the main `__execute__` entry point used by the Starknet protocol, the account can also be called by an external party via the `execute_from_outside` method to e.g. enable sponsored transactions. The calling party must provide a valid account signature for the target execution.
 
 ## Signature format
 

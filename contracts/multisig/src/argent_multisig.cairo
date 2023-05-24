@@ -84,13 +84,13 @@ mod ArgentMultisig {
     }
 
     #[external]
-    fn __execute__(calls: Array<Call>) -> Span<Span<felt252>> {
+    fn __execute__(calls: Array<Call>) -> Array<Span<felt252>> {
         let tx_info = starknet::get_tx_info().unbox();
         assert_correct_tx_version(tx_info.version);
         assert_non_reentrant();
 
         let retdata = execute_multicall(calls.span());
-        TransactionExecuted(tx_info.transaction_hash, retdata);
+        TransactionExecuted(tx_info.transaction_hash, retdata.span());
         retdata
     }
 
@@ -257,7 +257,7 @@ mod ArgentMultisig {
     #[external]
     fn execute_from_outside(
         outside_execution: OutsideExecution, signature: Array<felt252>
-    ) -> Span<Span<felt252>> {
+    ) -> Array<Span<felt252>> {
         // Checks
         if outside_execution.caller.into() != 'ANY_CALLER' {
             assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
@@ -282,7 +282,7 @@ mod ArgentMultisig {
 
         // Interactions
         let retdata = execute_multicall(calls);
-        TransactionExecuted(outside_tx_hash, retdata);
+        TransactionExecuted(outside_tx_hash, retdata.span());
         retdata
     }
 

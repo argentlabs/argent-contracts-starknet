@@ -423,7 +423,7 @@ mod ArgentMultisig {
 
         if calls.len() == 1 {
             let call = calls[0];
-            if (*call.to).into() == account_address.into() {
+            if *call.to == account_address {
                 // This should only be called after an upgrade, never directly
                 assert(*call.selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
             }
@@ -451,10 +451,9 @@ mod ArgentMultisig {
             match signer_signatures.pop_front() {
                 Option::Some(signer_sig_ref) => {
                     let signer_sig = *signer_sig_ref;
-                    assert(
-                        signer_sig.signer.into() > last_signer.into(),
-                        'argent/signatures-not-sorted'
-                    );
+                    let last_signer_uint: u256 = last_signer.into();
+                    let signer_uint: u256 = signer_sig.signer.into();
+                    assert(signer_uint > last_signer_uint, 'argent/signatures-not-sorted');
                     let is_valid = is_valid_signer_signature(
                         hash: hash,
                         signer: signer_sig.signer,

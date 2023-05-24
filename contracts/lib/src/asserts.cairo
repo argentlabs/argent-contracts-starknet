@@ -15,7 +15,7 @@ const QUERY_VERSION: felt252 =
 
 #[inline(always)]
 fn assert_only_self() {
-    assert(get_contract_address().into() == get_caller_address().into(), 'argent/only-self');
+    assert(get_contract_address() == get_caller_address(), 'argent/only-self');
 }
 
 #[inline(always)]
@@ -38,7 +38,7 @@ fn assert_correct_declare_version(tx_version: felt252) {
 fn assert_no_self_call(mut calls: Span::<Call>, self: ContractAddress) {
     match calls.pop_front() {
         Option::Some(call) => {
-            assert((*call.to).into() != self.into(), 'argent/no-multicall-to-self');
+            assert(*call.to != self, 'argent/no-multicall-to-self');
             assert_no_self_call(calls, self);
         },
         Option::None(_) => (),

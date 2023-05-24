@@ -107,8 +107,7 @@ export async function deployAccountWithGuardianBackup(argentAccountClassHash: st
   const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
 
   const wallet = await deployAccount(argentAccountClassHash);
-  await 
-    wallet.accountContract.change_guardian_backup(guardianBackupPublicKey);
+  await wallet.accountContract.change_guardian_backup(guardianBackupPublicKey);
 
   wallet.account.signer = new ArgentSigner(wallet.ownerPrivateKey, guardianBackupPrivateKey);
   wallet.guardianBackupPrivateKey = guardianBackupPrivateKey;

@@ -60,11 +60,7 @@ describe("Test outside execution", function () {
   });
 
   it("Basics", async function () {
-    const { account } = await deployMultisig(
-      multisigClassHash,
-      1 /* threshold */,
-      2 /* signers count */,
-    );
+    const { account } = await deployMultisig(multisigClassHash, 1 /* threshold */, 2 /* signers count */);
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
     const outsideExecution: OutsideExecution = {

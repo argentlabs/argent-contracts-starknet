@@ -2,8 +2,9 @@ use lib::Version;
 
 #[abi]
 trait IUpgradeTarget {
-    /// @dev This will be called on the new implementation when there is an upgrade to it
-    /// @param calldata Data passed to this function
+    /// @dev Logic to execute after an upgrade.
+    /// Can only be called by the account after a call to `upgrade`.
+    /// @param data Generic call data that can be passed to the method for future upgrade logic
     fn execute_after_upgrade(data: Array<felt252>) -> Array<felt252>;
 }
 

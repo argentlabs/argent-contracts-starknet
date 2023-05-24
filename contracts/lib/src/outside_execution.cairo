@@ -25,10 +25,16 @@ const OUTSIDE_EXECUTION_TYPE_HASH: felt252 =
 
 #[derive(Drop, Serde)]
 struct OutsideExecution {
+    /// @notice Only the address specified here will be allowed to call `execute_from_outside`
+    /// As an exception, to opt-out of this check, the value 'ANY_CALLER' can be used
     caller: ContractAddress,
+    /// It can be any value as long as it's unique. Prevents signature reuse
     nonce: felt252,
+    /// `execute_from_outside` only succeeds if executing after this time
     execute_after: u64,
+    /// `execute_from_outside` only succeeds if executing before this time
     execute_before: u64,
+    /// The calls that will be executed by the Account
     calls: Array<Call>
 }
 

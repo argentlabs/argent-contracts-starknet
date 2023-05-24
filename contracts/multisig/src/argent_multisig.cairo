@@ -39,6 +39,11 @@ mod ArgentMultisig {
     //                                           Events                                           //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /// @notice Emitted when the multisig configuration changes
+    /// @param new_threshold New threshold
+    /// @param new_signers_count The number of signers after the update
+    /// @param added_signers Signers added in this update
+    /// @param removed_signers Signers removed by this update
     #[event]
     fn ConfigurationUpdated(
         new_threshold: usize,
@@ -47,9 +52,14 @@ mod ArgentMultisig {
         removed_signers: Array<felt252>
     ) {}
 
+    /// @notice Emitted when the account executes a transaction
+    /// @param hash The transaction hash
+    /// @param response The data returned by the methods called
     #[event]
     fn TransactionExecuted(hash: felt252, response: Span<Span<felt252>>) {}
 
+    /// @notice Emitted when the implementation of the account changes
+    /// @param new_implementation The new implementation
     #[event]
     fn AccountUpgraded(new_implementation: ClassHash) {}
 
@@ -254,6 +264,10 @@ mod ArgentMultisig {
         ArrayTrait::new()
     }
 
+    /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
+    /// @param outside_execution The parameters of the transaction to execute
+    /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
+    /// @notice This method allows reentrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
     #[external]
     fn execute_from_outside(
         outside_execution: OutsideExecution, signature: Array<felt252>
@@ -295,16 +309,19 @@ mod ArgentMultisig {
         NAME
     }
 
+    /// Deprecated method for compatibility reasons
     #[view]
     fn getName() -> felt252 {
         get_name()
     }
 
+    /// Semantic version of this contract
     #[view]
     fn get_version() -> Version {
         Version { major: VERSION_MAJOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
     }
 
+    /// Deprecated method for compatibility reasons
     #[view]
     fn getVersion() -> felt252 {
         VERSION_COMPAT
@@ -342,7 +359,7 @@ mod ArgentMultisig {
         }
     }
 
-    #[view]
+    /// Deprecated method for compatibility reasons
     fn supportsInterface(interface_id: felt252) -> felt252 {
         if supports_interface(interface_id) {
             1
@@ -351,7 +368,8 @@ mod ArgentMultisig {
         }
     }
 
-    /// @dev Assert that the given signature is a valid signature from one of the multisig owners
+    /// Asserts that the given signature is a valid signature from one of the multisig owners
+    /// Deprecated method for compatibility reasons
     #[view]
     fn assert_valid_signer_signature(
         hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
@@ -361,6 +379,7 @@ mod ArgentMultisig {
     }
 
     #[view]
+    /// Checks if a given signature is a valid signature from one of the multisig owners
     fn is_valid_signer_signature(
         hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
     ) -> bool {
@@ -380,10 +399,12 @@ mod ArgentMultisig {
     }
 
     #[view]
+    /// Deprecated method for compatibility reasons
     fn isValidSignature(hash: felt252, signatures: Array<felt252>) -> felt252 {
         is_valid_signature(hash, signatures)
     }
 
+    /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
     #[view]
     fn get_outside_execution_message_hash(outside_execution: OutsideExecution) -> felt252 {
         return hash_outside_execution_message(@outside_execution);

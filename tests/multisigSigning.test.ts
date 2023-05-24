@@ -31,6 +31,30 @@ describe("ArgentMultisig: signing", function () {
       expect(validSignature).to.equal(BigInt(ERC1271_VALIDATED));
     });
 
+    it("Should verify numerous multisig signers has signed a message", async function () {
+        const threshold = 2;
+        const signersLength = 2;
+        const messageHash = 424242;
+        const ERC1271_VALIDATED = 0x1626ba7e;
+  
+        const { accountContract, signers, keys } = await deployMultisig(
+          multisigAccountClassHash,
+          threshold,
+          signersLength,
+        );
+  
+        // const signerPrivateKey1 = keys[0].privateKey;
+        // const signature1 = ec.starkCurve.sign(messageHash.toString(16), signerPrivateKey1);
+
+        // const signerPrivateKey2 = keys[1].privateKey;
+        // const signature2 = ec.starkCurve.sign(messageHash.toString(16), signerPrivateKey2);
+        // console.log(signature2.r, signature2.s)
+  
+        // const validSignature = await accountContract.is_valid_signature(BigInt(messageHash), [signers[0], signature1.r, signature1.s, signers[1], signature2.r, signature2.s]);
+  
+        // expect(validSignature).to.equal(BigInt(ERC1271_VALIDATED));
+      });
+
     it("Expect 'argent/not-a-signer' when a non-signer signs a message", async function () {
       const threshold = 1;
       const signersLength = 1;

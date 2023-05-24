@@ -45,5 +45,17 @@ describe("ArgentMultisig: signing", function () {
         accountContract.is_valid_signature(BigInt(messageHash), [invalidSigner, r, s]),
       );
     });
+
+    it("Expect 'argent/invalid-signature-length' when the signature is improperly formatted/empty", async function () {
+      const threshold = 1;
+      const signersLength = 1;
+      const messageHash = 424242;
+
+      const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+
+      await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
+        accountContract.is_valid_signature(BigInt(messageHash), []),
+      );
+    });
   });
 });

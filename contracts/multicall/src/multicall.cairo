@@ -7,7 +7,7 @@ mod Multicall {
     use lib::{Call, execute_multicall, SpanSerde};
 
     #[view]
-    fn aggregate(calls: Array<Call>) -> (u64, Span<Span<felt252>>) {
+    fn aggregate(calls: Array<Call>) -> (u64, Array<Span<felt252>>) {
         let block_number = get_block_info().unbox().block_number;
         (block_number, execute_multicall(calls.span()))
     }

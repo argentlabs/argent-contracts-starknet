@@ -55,77 +55,80 @@ mod MultisigStorage {
 
     // Return the last signer or zero if no signers. Cost increases with the list size
     fn find_last_signer() -> felt252 {
-        let first_signer = signer_list::read(0);
-        find_last_signer_recursive(from_signer: first_signer)
-    }
-
-    fn find_last_signer_recursive(from_signer: felt252) -> felt252 {
-        let next_signer = signer_list::read(from_signer);
-        if next_signer == 0 {
-            return from_signer;
+        let mut current_signer = signer_list::read(0);
+        loop {
+            let next_signer = signer_list::read(current_signer);
+            if next_signer == 0 {
+                break current_signer;
+            }
+            current_signer = next_signer;
         }
-        find_last_signer_recursive(next_signer)
     }
 
     // Returns the signer before `signer_after` or 0 if the signer is the first one. 
     // Reverts if `signer_after` is not found
     // Cost increases with the list size
     fn find_signer_before(signer_after: felt252) -> felt252 {
-        find_signer_before_recursive(signer_after, from_signer: 0)
-    }
+        let mut current_signer = 0;
+        loop {
+            let next_signer = signer_list::read(current_signer);
+            assert(next_signer != 0, 'argent/cant-find-signer-before');
 
-    fn find_signer_before_recursive(signer_after: felt252, from_signer: felt252) -> felt252 {
-        let next_signer = signer_list::read(from_signer);
-        assert(next_signer != 0, 'argent/cant-find-signer-before');
-
-        if next_signer == signer_after {
-            return from_signer;
-        }
-        find_signer_before_recursive(signer_after: signer_after, from_signer: next_signer)
-    }
-
-    fn add_signers(mut signers_to_add: Span<felt252>, last_signer: felt252) {
-        match signers_to_add.pop_front() {
-            Option::Some(signer_ref) => {
-                let signer = *signer_ref;
-                assert(signer != 0, 'argent/invalid-zero-signer');
-
-                let current_signer_status = is_signer_using_last(signer, last_signer);
-                assert(!current_signer_status, 'argent/already-a-signer');
-
-                // Signers are added at the end of the list
-                signer_list::write(last_signer, signer);
-
-                add_signers(signers_to_add, last_signer: signer);
-            },
-            Option::None(()) => (),
+            if next_signer == signer_after {
+                break current_signer;
+            }
+            current_signer = next_signer;
         }
     }
 
-    fn remove_signers(mut signers_to_remove: Span<felt252>, last_signer: felt252) {
-        match signers_to_remove.pop_front() {
-            Option::Some(signer_ref) => {
-                let signer = *signer_ref;
-                let current_signer_status = is_signer_using_last(signer, last_signer);
-                assert(current_signer_status, 'argent/not-a-signer');
+    fn add_signers(mut signers_to_add: Span<felt252>, mut last_signer: felt252) {
+        loop {
+            match signers_to_add.pop_front() {
+                Option::Some(signer_ref) => {
+                    let signer = *signer_ref;
+                    assert(signer != 0, 'argent/invalid-zero-signer');
 
-                // Signer pointer set to 0, Previous pointer set to the next in the list
+                    let current_signer_status = is_signer_using_last(signer, last_signer);
+                    assert(!current_signer_status, 'argent/already-a-signer');
 
-                let previous_signer = find_signer_before(signer);
-                let next_signer = signer_list::read(signer);
+                    // Signers are added at the end of the list
+                    signer_list::write(last_signer, signer);
+                    last_signer = signer;
+                },
+                Option::None(()) => {
+                    break ();
+                },
+            };
+        }
+    }
 
-                signer_list::write(previous_signer, next_signer);
+    fn remove_signers(mut signers_to_remove: Span<felt252>, mut last_signer: felt252) {
+        loop {
+            match signers_to_remove.pop_front() {
+                Option::Some(signer_ref) => {
+                    let signer = *signer_ref;
+                    let current_signer_status = is_signer_using_last(signer, last_signer);
+                    assert(current_signer_status, 'argent/not-a-signer');
 
-                if next_signer == 0 {
-                    // Removing the last item
-                    remove_signers(signers_to_remove, last_signer: previous_signer);
-                } else {
-                    // Removing an item in the middle
-                    signer_list::write(signer, 0);
-                    remove_signers(signers_to_remove, last_signer);
-                }
-            },
-            Option::None(()) => (),
+                    // Signer pointer set to 0, Previous pointer set to the next in the list
+
+                    let previous_signer = find_signer_before(signer);
+                    let next_signer = signer_list::read(signer);
+
+                    signer_list::write(previous_signer, next_signer);
+
+                    if next_signer == 0 {
+                        // Removing the last item
+                        last_signer = previous_signer;
+                    } else {
+                        // Removing an item in the middle
+                        signer_list::write(signer, 0);
+                    }
+                },
+                Option::None(()) => {
+                    break ();
+                },
+            };
         }
     }
 
@@ -152,51 +155,44 @@ mod MultisigStorage {
     // Returns the number of signers and the last signer (or zero if the list is empty). Cost increases with the list size
     // returns (signers_len, last_signer)
     fn load() -> (usize, felt252) {
-        load_from(signer_list::read(0))
+        let mut current_signer = 0;
+        let mut size = 0;
+        loop {
+            let next_signer = signer_list::read(current_signer);
+            if next_signer == 0 {
+                break (size, current_signer);
+            }
+            current_signer = next_signer;
+            size += 1;
+        }
     }
 
-    fn load_from(from_signer: felt252) -> (usize, felt252) {
-        if from_signer == 0 {
-            // empty list
-            return (0, 0);
-        }
-
-        let next_signer = signer_list::read(from_signer);
-        if next_signer == 0 {
-            return (1, from_signer);
-        }
-        let (next_length, last_signer) = load_from(next_signer);
-        (next_length + 1, last_signer)
-    }
 
     // Returns the number of signers. Cost increases with the list size
     fn get_signers_len() -> usize {
-        get_signers_len_from(signer_list::read(0))
-    }
-
-    fn get_signers_len_from(from_signer: felt252) -> usize {
-        if from_signer == 0 {
-            // empty list
-            return 0;
+        let mut current_signer = signer_list::read(0);
+        let mut size = 0;
+        loop {
+            if current_signer == 0 {
+                break size;
+            }
+            let current_signer = signer_list::read(current_signer);
+            size += 1;
         }
-        let next_signer = signer_list::read(from_signer);
-        let next_length = get_signers_len_from(next_signer);
-        next_length + 1
     }
 
     fn get_signers() -> Array<felt252> {
-        get_signers_from(from_signer: signer_list::read(0), previous_signers: ArrayTrait::new())
-    }
-
-    fn get_signers_from(
-        from_signer: felt252, mut previous_signers: Array<felt252>
-    ) -> Array<felt252> {
-        if from_signer == 0 {
-            // empty list
-            return previous_signers;
-        }
-        previous_signers.append(from_signer);
-        get_signers_from(signer_list::read(from_signer), previous_signers)
+        let mut current_signer = signer_list::read(0);
+        let mut signers = ArrayTrait::new();
+        loop {
+            if current_signer == 0 {
+                // Can't break signers atm because "variable was previously moved"
+                break ();
+            }
+            signers.append(current_signer);
+            current_signer = signer_list::read(current_signer);
+        };
+        signers
     }
 
     fn get_threshold() -> usize {

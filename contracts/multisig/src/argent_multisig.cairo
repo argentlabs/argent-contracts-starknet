@@ -264,7 +264,7 @@ mod ArgentMultisig {
         ArrayTrait::new()
     }
 
-   /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
+    /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
     /// @param outside_execution The parameters of the transaction to execute
     /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
     /// @notice This method allows reentrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.

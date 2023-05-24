@@ -16,7 +16,8 @@ mod ArgentMultisig {
         assert_only_self, assert_no_self_call, assert_correct_tx_version, assert_non_reentrant,
         execute_multicall, Call, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
         SpanSerde, OutsideExecution, hash_outside_execution_message, ERC165_IERC165_INTERFACE_ID,
-        ERC165_ACCOUNT_INTERFACE_ID, ERC165_OLD_ACCOUNT_INTERFACE_ID, ERC1271_VALIDATED
+        ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
+        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED
     };
     use multisig::{
         IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait,
@@ -350,7 +351,9 @@ mod ArgentMultisig {
             true
         } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
             true
-        } else if interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID {
+        } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_1 {
+            true
+        } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_2 {
             true
         } else {
             false
@@ -358,7 +361,6 @@ mod ArgentMultisig {
     }
 
     /// Deprecated method for compatibility reasons
-    #[view]
     fn supportsInterface(interface_id: felt252) -> felt252 {
         if supports_interface(interface_id) {
             1

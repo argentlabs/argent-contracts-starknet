@@ -82,53 +82,47 @@ mod MultisigStorage {
     }
 
     fn add_signers(mut signers_to_add: Span<felt252>, mut last_signer: felt252) {
-        loop {
-            match signers_to_add.pop_front() {
-                Option::Some(signer_ref) => {
-                    let signer = *signer_ref;
-                    assert(signer != 0, 'argent/invalid-zero-signer');
+        match signers_to_add.pop_front() {
+            Option::Some(signer_ref) => {
+                let signer = *signer_ref;
+                assert(signer != 0, 'argent/invalid-zero-signer');
 
-                    let current_signer_status = is_signer_using_last(signer, last_signer);
-                    assert(!current_signer_status, 'argent/already-a-signer');
+                let current_signer_status = is_signer_using_last(signer, last_signer);
+                assert(!current_signer_status, 'argent/already-a-signer');
 
-                    // Signers are added at the end of the list
-                    signer_list::write(last_signer, signer);
-                    last_signer = signer;
-                },
-                Option::None(()) => {
-                    break ();
-                },
-            };
+                // Signers are added at the end of the list
+                signer_list::write(last_signer, signer);
+
+                add_signers(signers_to_add, last_signer: signer);
+            },
+            Option::None(()) => (),
         }
     }
 
     fn remove_signers(mut signers_to_remove: Span<felt252>, mut last_signer: felt252) {
-        loop {
-            match signers_to_remove.pop_front() {
-                Option::Some(signer_ref) => {
-                    let signer = *signer_ref;
-                    let current_signer_status = is_signer_using_last(signer, last_signer);
-                    assert(current_signer_status, 'argent/not-a-signer');
+        match signers_to_remove.pop_front() {
+            Option::Some(signer_ref) => {
+                let signer = *signer_ref;
+                let current_signer_status = is_signer_using_last(signer, last_signer);
+                assert(current_signer_status, 'argent/not-a-signer');
 
-                    // Signer pointer set to 0, Previous pointer set to the next in the list
+                // Signer pointer set to 0, Previous pointer set to the next in the list
 
-                    let previous_signer = find_signer_before(signer);
-                    let next_signer = signer_list::read(signer);
+                let previous_signer = find_signer_before(signer);
+                let next_signer = signer_list::read(signer);
 
-                    signer_list::write(previous_signer, next_signer);
+                signer_list::write(previous_signer, next_signer);
 
-                    if next_signer == 0 {
-                        // Removing the last item
-                        last_signer = previous_signer;
-                    } else {
-                        // Removing an item in the middle
-                        signer_list::write(signer, 0);
-                    }
-                },
-                Option::None(()) => {
-                    break ();
-                },
-            };
+                if next_signer == 0 {
+                    // Removing the last item
+                    remove_signers(signers_to_remove, last_signer: previous_signer);
+                } else {
+                    // Removing an item in the middle
+                    signer_list::write(signer, 0);
+                    remove_signers(signers_to_remove, last_signer);
+                }
+            },
+            Option::None(()) => (),
         }
     }
 

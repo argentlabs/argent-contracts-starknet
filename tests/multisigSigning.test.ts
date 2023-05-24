@@ -59,6 +59,24 @@ describe("ArgentMultisig: signing", function () {
       ]);
 
       expect(validSignature).to.equal(BigInt(ERC1271_VALIDATED));
+    });
+
+    it("Should verify that signatures are in the correct order/not repeated", async function () {
+      const threshold = 2;
+      const signersLength = 2;
+      const messageHash = 424242;
+
+      const { accountContract, signers, keys } = await deployMultisig(
+        multisigAccountClassHash,
+        threshold,
+        signersLength,
+      );
+
+      const signerPrivateKey1 = keys[0].privateKey;
+      const signature1 = ec.starkCurve.sign(messageHash.toString(16), signerPrivateKey1);
+
+      const signerPrivateKey2 = keys[1].privateKey;
+      const signature2 = ec.starkCurve.sign(messageHash.toString(16), signerPrivateKey2);
 
       await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
         accountContract.is_valid_signature(BigInt(messageHash), [
@@ -87,7 +105,6 @@ describe("ArgentMultisig: signing", function () {
       const threshold = 2;
       const signersLength = 2;
       const messageHash = 424242;
-      const ERC1271_VALIDATED = 0x1626ba7e;
 
       const { accountContract, signers, keys } = await deployMultisig(
         multisigAccountClassHash,

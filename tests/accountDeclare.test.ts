@@ -1,7 +1,17 @@
 import { expect } from "chai";
 import { readFileSync } from "fs";
 import { CompiledSierra, CompiledSierraCasm, json } from "starknet";
-import { declareContract, deployAccount, deployer, dump, expectRevertWithErrorMessage, load, provider, removeFromCache, restart } from "./lib";
+import {
+  declareContract,
+  deployAccount,
+  deployer,
+  dump,
+  expectRevertWithErrorMessage,
+  load,
+  provider,
+  removeFromCache,
+  restart,
+} from "./lib";
 
 describe("Declare", function () {
   let argentAccountClassHash: string;

@@ -50,12 +50,12 @@ describe("ArgentMultisig: signing", function () {
       const signature2 = ec.starkCurve.sign(messageHash, signerPrivateKey2);
 
       const validSignature = await accountContract.is_valid_signature(BigInt(messageHash), [
-          signers[0],
-          signature1.r,
-          signature1.s,
-          signers[1],
-          signature2.r,
-          signature2.s,
+        signers[0],
+        signature1.r,
+        signature1.s,
+        signers[1],
+        signature2.r,
+        signature2.s,
       ]);
 
       expect(validSignature).to.equal(BigInt(ERC1271_VALIDATED));

@@ -147,7 +147,7 @@ describe("ArgentMultisig: signing", function () {
       );
 
       const signerPrivateKey = keys[0].privateKey;
-      const { r, s } = ec.starkCurve.sign(messageHash, signerPrivateKey);
+      const { r } = ec.starkCurve.sign(messageHash, signerPrivateKey);
 
       await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
         accountContract.is_valid_signature(BigInt(messageHash), [signers[0], r]),

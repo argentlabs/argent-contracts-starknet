@@ -2,7 +2,7 @@
 
 ## Specification
 
-See [Argent Account](contracts/account/src/argent_account.cairo) and [Argent Multisig](contracts/multisig/src/argent_multisig.cairo) for more details.
+See [Argent Account](contracts/account/README.md) and [Argent Multisig](contracts/multisig/README.md) for more details.
 
 ## Development
 

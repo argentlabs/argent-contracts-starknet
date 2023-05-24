@@ -27,10 +27,10 @@ mod ArgentMultisig {
         738349667340360233096752603318170676063569407717437256101137432051386874767; // starknet_keccak('execute_after_upgrade')
 
     const NAME: felt252 = 'ArgentMultisig';
-    const VERSION_MAJOR: u8 = 1;
-    const VERSION_MINOR: u8 = 0;
+    const VERSION_MAJOR: u8 = 0;
+    const VERSION_MINOR: u8 = 1;
     const VERSION_PATCH: u8 = 0;
-    const VERSION_COMPAT: felt252 = '1.0.0';
+    const VERSION_COMPAT: felt252 = '0.1.0';
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 

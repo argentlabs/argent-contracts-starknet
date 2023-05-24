@@ -81,7 +81,7 @@ mod MultisigStorage {
         }
     }
 
-    fn add_signers(mut signers_to_add: Span<felt252>, mut last_signer: felt252) {
+    fn add_signers(mut signers_to_add: Span<felt252>, last_signer: felt252) {
         match signers_to_add.pop_front() {
             Option::Some(signer_ref) => {
                 let signer = *signer_ref;
@@ -99,7 +99,7 @@ mod MultisigStorage {
         }
     }
 
-    fn remove_signers(mut signers_to_remove: Span<felt252>, mut last_signer: felt252) {
+    fn remove_signers(mut signers_to_remove: Span<felt252>, last_signer: felt252) {
         match signers_to_remove.pop_front() {
             Option::Some(signer_ref) => {
                 let signer = *signer_ref;

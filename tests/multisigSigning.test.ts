@@ -31,7 +31,7 @@ describe("ArgentMultisig: signing", function () {
       expect(validSignature).to.equal(BigInt(ERC1271_VALIDATED));
     });
 
-    it("Should verify numerous multisig owners have signed a message and signatures are in the correct order/not repeated", async function () {
+    it("Should verify numerous multisig owners have signed a message", async function () {
       const threshold = 2;
       const signersLength = 2;
       const messageHash = num.toHex(424242);
@@ -50,12 +50,12 @@ describe("ArgentMultisig: signing", function () {
       const signature2 = ec.starkCurve.sign(messageHash, signerPrivateKey2);
 
       const validSignature = await accountContract.is_valid_signature(BigInt(messageHash), [
-        signers[0],
-        signature1.r,
-        signature1.s,
-        signers[1],
-        signature2.r,
-        signature2.s,
+          signers[0],
+          signature1.r,
+          signature1.s,
+          signers[1],
+          signature2.r,
+          signature2.s,
       ]);
 
       expect(validSignature).to.equal(BigInt(ERC1271_VALIDATED));

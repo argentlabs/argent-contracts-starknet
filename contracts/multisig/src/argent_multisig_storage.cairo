@@ -170,7 +170,7 @@ mod MultisigStorage {
             if current_signer == 0 {
                 break size;
             }
-            let current_signer = signer_list::read(current_signer);
+            current_signer = signer_list::read(current_signer);
             size += 1;
         }
     }

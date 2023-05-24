@@ -19,8 +19,8 @@ mod ArgentAccount {
         execute_multicall, Call, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
         IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait, SpanSerde,
         OutsideExecution, hash_outside_execution_message, assert_correct_declare_version,
-        ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_OLD_ACCOUNT_INTERFACE_ID,
-        ERC1271_VALIDATED
+        ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
+        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -461,8 +461,19 @@ mod ArgentAccount {
     // ERC165
     #[view]
     fn supports_interface(interface_id: felt252) -> bool {
-        interface_id == ERC165_IERC165_INTERFACE_ID | interface_id == ERC165_ACCOUNT_INTERFACE_ID | interface_id == ERC165_OLD_ACCOUNT_INTERFACE_ID
+        if interface_id == ERC165_IERC165_INTERFACE_ID {
+            true
+        } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
+            true
+        } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_1 {
+            true
+        } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_2 {
+            true
+        } else {
+            false
+        }
     }
+
     #[view]
     fn supportsInterface(interface_id: felt252) -> felt252 {
         if supports_interface(interface_id) {

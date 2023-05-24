@@ -11,7 +11,7 @@ describe("ArgentMultisig: signing", function () {
   });
 
   describe("is_valid_signature(hash, signatures)", function () {
-    it("Should verify that a multisig signer has signed a message", async function () {
+    it("Should verify that a multisig owner has signed a message", async function () {
       const threshold = 1;
       const signersLength = 1;
       const messageHash = 424242;
@@ -31,7 +31,7 @@ describe("ArgentMultisig: signing", function () {
       expect(validSignature).to.equal(BigInt(ERC1271_VALIDATED));
     });
 
-    it("Should verify numerous multisig signers has signed a message", async function () {
+    it("Should verify numerous multisig owners has signed a message and signatures are in the correct order/not repeated", async function () {
       const threshold = 2;
       const signersLength = 2;
       const messageHash = 424242;
@@ -59,9 +59,51 @@ describe("ArgentMultisig: signing", function () {
       ]);
 
       expect(validSignature).to.equal(BigInt(ERC1271_VALIDATED));
+
+      await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
+        accountContract.is_valid_signature(BigInt(messageHash), [
+          signers[1],
+          signature2.r,
+          signature2.s,
+          signers[0],
+          signature1.r,
+          signature1.s,
+        ]),
+      );
+
+      await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
+        accountContract.is_valid_signature(BigInt(messageHash), [
+          signers[0],
+          signature1.r,
+          signature1.s,
+          signers[0],
+          signature1.r,
+          signature1.s,
+        ]),
+      );
     });
 
-    it("Expect 'argent/not-a-signer' when a non-signer signs a message", async function () {
+    it("Expect 'argent/invalid-signature-length' when an owner's signature is missing", async function () {
+      const threshold = 2;
+      const signersLength = 2;
+      const messageHash = 424242;
+      const ERC1271_VALIDATED = 0x1626ba7e;
+
+      const { accountContract, signers, keys } = await deployMultisig(
+        multisigAccountClassHash,
+        threshold,
+        signersLength,
+      );
+
+      const signerPrivateKey1 = keys[0].privateKey;
+      const signature1 = ec.starkCurve.sign(messageHash.toString(16), signerPrivateKey1);
+
+      await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
+        accountContract.is_valid_signature(BigInt(messageHash), [signers[0], signature1.r, signature1.s]),
+      );
+    });
+
+    it("Expect 'argent/not-a-signer' when a non-owner signs a message", async function () {
       const threshold = 1;
       const signersLength = 1;
       const messageHash = 424242;
@@ -81,7 +123,18 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 1;
       const messageHash = 424242;
 
-      const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, keys, signers } = await deployMultisig(
+        multisigAccountClassHash,
+        threshold,
+        signersLength,
+      );
+
+      const signerPrivateKey = keys[0].privateKey;
+      const { r, s } = ec.starkCurve.sign(messageHash.toString(16), signerPrivateKey);
+
+      await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
+        accountContract.is_valid_signature(BigInt(messageHash), [signers[0], r]),
+      );
 
       await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
         accountContract.is_valid_signature(BigInt(messageHash), []),

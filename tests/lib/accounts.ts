@@ -50,6 +50,7 @@ export async function deployOldAccount(
   });
   await deployer.waitForTransaction(transaction_hash);
   const accountContract = await loadContract(account.address);
+  accountContract.connect(account);
   return { account, accountContract, ownerPrivateKey, guardianPrivateKey };
 }
 
@@ -97,6 +98,7 @@ export async function deployAccountWithoutGuardian(
 ): Promise<ArgentWallet> {
   const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey, undefined, salt);
   const accountContract = await loadContract(account.address);
+  accountContract.connect(account);
   return { account, accountContract, ownerPrivateKey };
 }
 
@@ -105,12 +107,11 @@ export async function deployAccountWithGuardianBackup(argentAccountClassHash: st
   const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
 
   const wallet = await deployAccount(argentAccountClassHash);
-  await wallet.account.execute(
-    wallet.accountContract.populateTransaction.change_guardian_backup(guardianBackupPublicKey),
-  );
+  await wallet.accountContract.change_guardian_backup(guardianBackupPublicKey);
 
   wallet.account.signer = new ArgentSigner(wallet.ownerPrivateKey, guardianBackupPrivateKey);
   wallet.guardianBackupPrivateKey = guardianBackupPrivateKey;
+  wallet.accountContract.connect(wallet.account);
   return wallet;
 }
 

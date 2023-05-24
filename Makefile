@@ -79,3 +79,4 @@ vscode:
 clean:
 	rm -rf cairo dist node_modules venv
 	git reset --hard HEAD
+	rm dump

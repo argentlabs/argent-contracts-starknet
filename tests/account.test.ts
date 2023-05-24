@@ -126,7 +126,7 @@ describe("ArgentAccount", function () {
     });
 
     it("Expect 'argent/invalid-owner-sig' when the signature to change owner is invalid", async function () {
-      const { account, accountContract } = await deployAccount(argentAccountClassHash);
+      const { accountContract } = await deployAccount(argentAccountClassHash);
       const newOwnerPrivateKey = randomPrivateKey();
       const newOwner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
 

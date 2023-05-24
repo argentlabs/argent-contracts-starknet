@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ec, num} from "starknet";
+import { ec, num } from "starknet";
 import { declareContract, expectRevertWithErrorMessage, randomPrivateKey } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
@@ -61,7 +61,7 @@ describe("ArgentMultisig: signing", function () {
       expect(validSignature).to.equal(BigInt(ERC1271_VALIDATED));
     });
 
-    it("Should verify that signatures are in the correct order/not repeated", async function () {
+    it("Should verify that signatures are in the correct order", async function () {
       const threshold = 2;
       const signersLength = 2;
       const messageHash = num.toHex(424242);
@@ -88,6 +88,21 @@ describe("ArgentMultisig: signing", function () {
           signature1.s,
         ]),
       );
+    });
+
+    it("Should verify that signatures are in the not repeated", async function () {
+      const threshold = 2;
+      const signersLength = 2;
+      const messageHash = num.toHex(424242);
+
+      const { accountContract, signers, keys } = await deployMultisig(
+        multisigAccountClassHash,
+        threshold,
+        signersLength,
+      );
+
+      const signerPrivateKey1 = keys[0].privateKey;
+      const signature1 = ec.starkCurve.sign(messageHash, signerPrivateKey1);
 
       await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
         accountContract.is_valid_signature(BigInt(messageHash), [

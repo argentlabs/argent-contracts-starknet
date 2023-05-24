@@ -1,12 +1,14 @@
 import { expect } from "chai";
-import { Contract, uint256 } from "starknet";
+import { Contract, num, uint256 } from "starknet";
 import {
   declareContract,
   deployAccount,
   deployer,
+  expectEvent,
   expectRevertWithErrorMessage,
   getEthContract,
   loadContract,
+  waitForTransaction,
 } from "./lib";
 
 describe("ArgentAccount: multicall", function () {
@@ -122,6 +124,30 @@ describe("ArgentAccount: multicall", function () {
         accountContract.populateTransaction.trigger_escape_owner(newOwner),
       ]),
     );
+  });
+
+  it("Valid return data", async function () {
+    const { account } = await deployAccount(argentAccountClassHash);
+    const calls = [
+      testDappContract.populateTransaction.increase_number(1),
+      testDappContract.populateTransaction.increase_number(10),
+    ];
+    const receipt = await waitForTransaction(await account.execute(calls));
+
+    const expectedReturnCall1 = [num.toHex(1)];
+    const expectedReturnCall2 = [num.toHex(11)];
+    const expectedReturnData = [
+      num.toHex(calls.length),
+      num.toHex(expectedReturnCall1.length),
+      ...expectedReturnCall1,
+      num.toHex(expectedReturnCall2.length),
+      ...expectedReturnCall2,
+    ];
+    await expectEvent(receipt, {
+      from_address: account.address,
+      keys: ["TransactionExecuted"],
+      data: [receipt.transaction_hash, ...expectedReturnData],
+    });
   });
 });
 

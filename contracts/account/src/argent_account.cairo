@@ -18,8 +18,9 @@ mod ArgentAccount {
         assert_correct_tx_version, assert_no_self_call, assert_non_reentrant, assert_only_self,
         execute_multicall, Call, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
         IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait, SpanSerde,
-        OutsideExecution, hash_outside_execution_message, ERC165_IERC165_INTERFACE_ID,
-        ERC165_ACCOUNT_INTERFACE_ID, ERC165_OLD_ACCOUNT_INTERFACE_ID, ERC1271_VALIDATED
+        OutsideExecution, hash_outside_execution_message, assert_correct_declare_version,
+        ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_OLD_ACCOUNT_INTERFACE_ID,
+        ERC1271_VALIDATED
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -135,8 +136,8 @@ mod ArgentAccount {
 
     #[external]
     fn __validate_declare__(class_hash: felt252) -> felt252 {
-        // TODO validate tx version?
         let tx_info = get_tx_info().unbox();
+        assert_correct_declare_version(tx_info.version);
         assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
         VALIDATED
     }
@@ -146,8 +147,8 @@ mod ArgentAccount {
     fn __validate_deploy__(
         class_hash: felt252, contract_address_salt: felt252, owner: felt252, guardian: felt252
     ) -> felt252 {
-        // TODO validate tx version?
         let tx_info = get_tx_info().unbox();
+        assert_correct_tx_version(tx_info.version);
         assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
         VALIDATED
     }
@@ -686,7 +687,7 @@ mod ArgentAccount {
         let mut guardian_signature = ArrayTrait::new();
         guardian_signature.append(*full_signature[2]);
         guardian_signature.append(*full_signature[3]);
-        (owner_signature.span(), guardian_signature.span())
+        (full_signature.slice(0, 2), full_signature.slice(2, 2))
     }
 
     fn get_escape_status(escape_ready_at: u64) -> EscapeStatus {

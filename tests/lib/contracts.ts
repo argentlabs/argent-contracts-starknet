@@ -16,6 +16,10 @@ export async function getEthContract() {
   return ethContract;
 }
 
+export function removeFromCache(contractName: string) {
+  delete classHashCache[contractName];
+}
+
 // Could extends Account to add our specific fn but that's too early.
 export async function declareContract(contractName: string): Promise<string> {
   console.log(`\tDeclaring ${contractName}...`);

@@ -2,6 +2,10 @@
 
 _Warning: StarkNet is still in alpha, so is this project. In particular the `argent_account.cairo` and `argent_multisig.cairo` contracts have not been audited yet and should not be used to store significant value._
 
+## Specification
+
+See [Argent Account](contracts/account/src/argent_account.cairo) and [Argent Multisig](contracts/multisig/src/argent_multisig.cairo) for more details.
+
 ## Development
 
 ### Setup Rust

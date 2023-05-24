@@ -29,7 +29,7 @@ export async function deployMultisig(
 
   const deploymentSigner = new MultisigSigner([keys[0]]);
   const account = new Account(provider, contractAddress, deploymentSigner, "1");
-  account.signer = new MultisigSigner(keys.slice(0, threshold));
+  account.signer = new MultisigSigner(keys.slice(0, 1));
 
   const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt });
   const receipt = await deployer.waitForTransaction(transaction_hash);

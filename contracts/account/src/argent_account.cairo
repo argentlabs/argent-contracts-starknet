@@ -142,7 +142,6 @@ mod ArgentAccount {
         VALIDATED
     }
 
-    #[raw_input]
     #[external]
     fn __validate_deploy__(
         class_hash: felt252, contract_address_salt: felt252, owner: felt252, guardian: felt252

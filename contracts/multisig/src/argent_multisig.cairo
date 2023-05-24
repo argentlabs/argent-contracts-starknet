@@ -104,7 +104,6 @@ mod ArgentMultisig {
     // This allows for better UX. UI must make clear that the funds are not safe from a bad signer until the deployment happens.
     /// @dev Validates signature for self deployment.
     /// @dev If signers can't be trusted, it's recommended to start with a 1:1 multisig and add other signers late
-    #[raw_input]
     #[external]
     fn __validate_deploy__(
         class_hash: felt252,

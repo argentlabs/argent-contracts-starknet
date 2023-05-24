@@ -36,6 +36,7 @@ export async function deployMultisig(
 
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
+  account.signer = new MultisigSigner(keys.slice(0, threshold));
   return { account, accountContract, keys, signers, receipt };
 }
 

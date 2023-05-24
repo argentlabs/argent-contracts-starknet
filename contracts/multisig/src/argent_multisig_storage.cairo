@@ -55,33 +55,30 @@ mod MultisigStorage {
 
     // Return the last signer or zero if no signers. Cost increases with the list size
     fn find_last_signer() -> felt252 {
-        let first_signer = signer_list::read(0);
-        find_last_signer_recursive(from_signer: first_signer)
-    }
-
-    fn find_last_signer_recursive(from_signer: felt252) -> felt252 {
-        let next_signer = signer_list::read(from_signer);
-        if next_signer == 0 {
-            return from_signer;
+        let mut current_signer = signer_list::read(0);
+        loop {
+            let next_signer = signer_list::read(current_signer);
+            if next_signer == 0 {
+                break current_signer;
+            }
+            current_signer = next_signer;
         }
-        find_last_signer_recursive(next_signer)
     }
 
     // Returns the signer before `signer_after` or 0 if the signer is the first one. 
     // Reverts if `signer_after` is not found
     // Cost increases with the list size
     fn find_signer_before(signer_after: felt252) -> felt252 {
-        find_signer_before_recursive(signer_after, from_signer: 0)
-    }
+        let mut current_signer = 0;
+        loop {
+            let next_signer = signer_list::read(current_signer);
+            assert(next_signer != 0, 'argent/cant-find-signer-before');
 
-    fn find_signer_before_recursive(signer_after: felt252, from_signer: felt252) -> felt252 {
-        let next_signer = signer_list::read(from_signer);
-        assert(next_signer != 0, 'argent/cant-find-signer-before');
-
-        if next_signer == signer_after {
-            return from_signer;
+            if next_signer == signer_after {
+                break current_signer;
+            }
+            current_signer = next_signer;
         }
-        find_signer_before_recursive(signer_after: signer_after, from_signer: next_signer)
     }
 
     fn add_signers(mut signers_to_add: Span<felt252>, last_signer: felt252) {
@@ -152,51 +149,44 @@ mod MultisigStorage {
     // Returns the number of signers and the last signer (or zero if the list is empty). Cost increases with the list size
     // returns (signers_len, last_signer)
     fn load() -> (usize, felt252) {
-        load_from(signer_list::read(0))
+        let mut current_signer = 0;
+        let mut size = 0;
+        loop {
+            let next_signer = signer_list::read(current_signer);
+            if next_signer == 0 {
+                break (size, current_signer);
+            }
+            current_signer = next_signer;
+            size += 1;
+        }
     }
 
-    fn load_from(from_signer: felt252) -> (usize, felt252) {
-        if from_signer == 0 {
-            // empty list
-            return (0, 0);
-        }
-
-        let next_signer = signer_list::read(from_signer);
-        if next_signer == 0 {
-            return (1, from_signer);
-        }
-        let (next_length, last_signer) = load_from(next_signer);
-        (next_length + 1, last_signer)
-    }
 
     // Returns the number of signers. Cost increases with the list size
     fn get_signers_len() -> usize {
-        get_signers_len_from(signer_list::read(0))
-    }
-
-    fn get_signers_len_from(from_signer: felt252) -> usize {
-        if from_signer == 0 {
-            // empty list
-            return 0;
+        let mut current_signer = signer_list::read(0);
+        let mut size = 0;
+        loop {
+            if current_signer == 0 {
+                break size;
+            }
+            current_signer = signer_list::read(current_signer);
+            size += 1;
         }
-        let next_signer = signer_list::read(from_signer);
-        let next_length = get_signers_len_from(next_signer);
-        next_length + 1
     }
 
     fn get_signers() -> Array<felt252> {
-        get_signers_from(from_signer: signer_list::read(0), previous_signers: ArrayTrait::new())
-    }
-
-    fn get_signers_from(
-        from_signer: felt252, mut previous_signers: Array<felt252>
-    ) -> Array<felt252> {
-        if from_signer == 0 {
-            // empty list
-            return previous_signers;
-        }
-        previous_signers.append(from_signer);
-        get_signers_from(signer_list::read(from_signer), previous_signers)
+        let mut current_signer = signer_list::read(0);
+        let mut signers = ArrayTrait::new();
+        loop {
+            if current_signer == 0 {
+                // Can't break signers atm because "variable was previously moved"
+                break ();
+            }
+            signers.append(current_signer);
+            current_signer = signer_list::read(current_signer);
+        };
+        signers
     }
 
     fn get_threshold() -> usize {

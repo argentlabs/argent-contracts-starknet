@@ -31,7 +31,7 @@ describe("ArgentMultisig: signing", function () {
       expect(validSignature).to.equal(BigInt(ERC1271_VALIDATED));
     });
 
-    it("Should verify numerous multisig owners has signed a message and signatures are in the correct order/not repeated", async function () {
+    it("Should verify numerous multisig owners have signed a message and signatures are in the correct order/not repeated", async function () {
       const threshold = 2;
       const signersLength = 2;
       const messageHash = num.toHex(424242);

@@ -40,6 +40,7 @@ export async function deployMultisig(
   return { account, accountContract, keys, signers, receipt };
 }
 
-const sortedKeyPairs = (length: number) => randomKeyPairs(length).sort((a, b) => (BigInt(a.publicKey) < BigInt(b.publicKey) ? -1 : 1));
+const sortedKeyPairs = (length: number) =>
+  randomKeyPairs(length).sort((a, b) => (BigInt(a.publicKey) < BigInt(b.publicKey) ? -1 : 1));
 
 export const keysToSigners = (keys: KeyPair[]) => keys.map(({ publicKey }) => publicKey).map(BigInt);

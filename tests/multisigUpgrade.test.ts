@@ -21,7 +21,7 @@ describe("Argent Multisig: upgrade", function () {
     testDapp = await loadContract(contract_address);
   });
 
-  it("Upgrade from current version FutureVersion", async function () {
+  it("Upgrade from current version to FutureVersionMultisig", async function () {
     const threshold = 1;
     const signersLength = 1;
     const { account } = await deployMultisig(argentAccountClassHash, threshold, signersLength);

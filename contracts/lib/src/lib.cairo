@@ -12,6 +12,9 @@ mod outside_execution;
 use outside_execution::OutsideExecution;
 use outside_execution::hash_outside_execution_message;
 
+mod test_dapp;
+use test_dapp::TestDapp;
+
 // Structures 
 mod calls;
 use calls::Call;

@@ -29,16 +29,18 @@ export async function deployMultisig(
 
   const deploymentSigner = new MultisigSigner([keys[0]]);
   const account = new Account(provider, contractAddress, deploymentSigner, "1");
-  account.signer = new MultisigSigner(keys.slice(0, threshold));
+  account.signer = new MultisigSigner(keys.slice(0, 1));
 
   const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt });
   const receipt = await deployer.waitForTransaction(transaction_hash);
 
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
+  account.signer = new MultisigSigner(keys.slice(0, threshold));
   return { account, accountContract, keys, signers, receipt };
 }
 
-const sortedKeyPairs = (length: number) => randomKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));
+const sortedKeyPairs = (length: number) =>
+  randomKeyPairs(length).sort((a, b) => (BigInt(a.publicKey) < BigInt(b.publicKey) ? -1 : 1));
 
 export const keysToSigners = (keys: KeyPair[]) => keys.map(({ publicKey }) => publicKey).map(BigInt);

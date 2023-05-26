@@ -1,5 +1,5 @@
 import { CallData, shortString } from "starknet";
-import { KeyPair, declareContract, expectEvent, expectRevertWithErrorMessage } from "./lib";
+import { declareContract, expectEvent, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig", function () {
@@ -33,7 +33,7 @@ describe("ArgentMultisig", function () {
     await accountContract.is_signer(signers[0]).should.eventually.be.true;
     await accountContract.is_signer(signers[1]).should.eventually.be.true;
     await accountContract.is_signer(0).should.eventually.be.false;
-    await accountContract.is_signer(new KeyPair().publicKey).should.eventually.be.false;
+    await accountContract.is_signer(randomKeyPair().publicKey).should.eventually.be.false;
 
     await expectRevertWithErrorMessage("argent/non-null-caller", () => accountContract.__validate__([]));
   });

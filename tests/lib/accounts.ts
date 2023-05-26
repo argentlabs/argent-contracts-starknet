@@ -1,17 +1,17 @@
 import { expect } from "chai";
-import { Account, CallData, Contract, InvokeTransactionReceiptResponse, RawCalldata, ec, hash } from "starknet";
+import { Account, CallData, Contract, InvokeTransactionReceiptResponse, RawCalldata, hash } from "starknet";
 import { loadContract } from "./contracts";
 import { fundAccount } from "./devnet";
 import { provider } from "./provider";
-import { ArgentSigner, randomPrivateKey } from "./signers";
+import { ArgentSigner, KeyPair, randomKeyPair } from "./signers";
 
 // This is only for TESTS purposes and shouldn't be used in production
 export interface ArgentWallet {
   account: Account;
   accountContract: Contract;
-  ownerPrivateKey: string;
-  guardianPrivateKey?: string;
-  guardianBackupPrivateKey?: string;
+  owner: KeyPair;
+  guardian?: KeyPair;
+  guardianBackup?: KeyPair;
 }
 
 export const deployer = new Account(
@@ -24,22 +24,20 @@ export async function deployOldAccount(
   proxyClassHash: string,
   oldArgentAccountClassHash: string,
 ): Promise<ArgentWallet> {
-  const ownerPrivateKey = randomPrivateKey();
-  const guardianPrivateKey = randomPrivateKey();
-  const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
-  const guardianPublicKey = ec.starkCurve.getStarkKey(guardianPrivateKey);
+  const owner = randomKeyPair();
+  const guardian = randomKeyPair();
 
   const constructorCalldata = CallData.compile({
     implementation: oldArgentAccountClassHash,
     selector: hash.getSelectorFromName("initialize"),
-    calldata: CallData.compile({ owner: ownerPublicKey, guardian: guardianPublicKey }),
+    calldata: CallData.compile({ owner: owner.publicKey, guardian: guardian.publicKey }),
   });
 
-  const salt = randomPrivateKey();
+  const salt = randomKeyPair().privateKey;
   const contractAddress = hash.calculateContractAddressFromHash(salt, proxyClassHash, constructorCalldata, 0);
 
-  const account = new Account(provider, contractAddress, ownerPrivateKey);
-  account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
+  const account = new Account(provider, contractAddress, owner.privateKey);
+  account.signer = new ArgentSigner(owner.privateKey, guardian.privateKey);
 
   await fundAccount(account.address);
   const { transaction_hash } = await account.deployAccount({
@@ -51,26 +49,22 @@ export async function deployOldAccount(
   await deployer.waitForTransaction(transaction_hash);
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
-  return { account, accountContract, ownerPrivateKey, guardianPrivateKey };
+  return { account, accountContract, owner, guardian };
 }
 
 async function deployAccountInner(
   argentAccountClassHash: string,
-  ownerPrivateKey: string,
-  guardianPrivateKey?: string,
-  salt: string = randomPrivateKey(),
+  owner: KeyPair,
+  guardian?: KeyPair,
+  salt: string = randomKeyPair().privateKey,
 ): Promise<Account> {
-  const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
-
-  const guardianPublicKey = guardianPrivateKey ? ec.starkCurve.getStarkKey(guardianPrivateKey) : "0";
-
-  const constructorCalldata = CallData.compile({ owner: ownerPublicKey, guardian: guardianPublicKey });
+  const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian?.publicKey ?? 0n });
 
   const contractAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, constructorCalldata, 0);
   await fundAccount(contractAddress);
-  const account = new Account(provider, contractAddress, ownerPrivateKey, "1");
-  if (guardianPrivateKey) {
-    account.signer = new ArgentSigner(ownerPrivateKey, guardianPrivateKey);
+  const account = new Account(provider, contractAddress, owner.privateKey, "1");
+  if (guardian) {
+    account.signer = new ArgentSigner(owner.privateKey, guardian.privateKey);
   }
 
   const { transaction_hash } = await account.deploySelf({
@@ -83,34 +77,33 @@ async function deployAccountInner(
 }
 
 export async function deployAccount(argentAccountClassHash: string): Promise<ArgentWallet> {
-  const ownerPrivateKey = randomPrivateKey();
-  const guardianPrivateKey = randomPrivateKey();
-  const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey, guardianPrivateKey);
+  const owner = randomKeyPair();
+  const guardian = randomKeyPair();
+  const account = await deployAccountInner(argentAccountClassHash, owner, guardian);
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
-  return { account, accountContract, ownerPrivateKey, guardianPrivateKey };
+  return { account, accountContract, owner, guardian };
 }
 
 export async function deployAccountWithoutGuardian(
   argentAccountClassHash: string,
-  ownerPrivateKey: string = randomPrivateKey(),
-  salt: string = randomPrivateKey(),
+  owner: KeyPair = randomKeyPair(),
+  salt: string = randomKeyPair().privateKey,
 ): Promise<ArgentWallet> {
-  const account = await deployAccountInner(argentAccountClassHash, ownerPrivateKey, undefined, salt);
+  const account = await deployAccountInner(argentAccountClassHash, owner, undefined, salt);
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
-  return { account, accountContract, ownerPrivateKey };
+  return { account, accountContract, owner };
 }
 
 export async function deployAccountWithGuardianBackup(argentAccountClassHash: string): Promise<ArgentWallet> {
-  const guardianBackupPrivateKey = randomPrivateKey();
-  const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
+  const guardianBackup = randomKeyPair();
 
   const wallet = await deployAccount(argentAccountClassHash);
-  await wallet.accountContract.change_guardian_backup(guardianBackupPublicKey);
+  await wallet.accountContract.change_guardian_backup(guardianBackup.publicKey);
 
-  wallet.account.signer = new ArgentSigner(wallet.ownerPrivateKey, guardianBackupPrivateKey);
-  wallet.guardianBackupPrivateKey = guardianBackupPrivateKey;
+  wallet.account.signer = new ArgentSigner(wallet.owner.privateKey, guardianBackup.privateKey);
+  wallet.guardianBackup = guardianBackup;
   wallet.accountContract.connect(wallet.account);
   return wallet;
 }

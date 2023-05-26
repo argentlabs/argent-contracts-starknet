@@ -97,7 +97,7 @@ abstract class RawSigner implements SignerInterface {
 }
 
 export class ArgentSigner extends RawSigner {
-  constructor(public ownerPrivateKey: string = randomPrivateKey(), public guardianPrivateKey?: string) {
+  constructor(public ownerPrivateKey: string = randomKeyPair().privateKey, public guardianPrivateKey?: string) {
     super();
   }
 
@@ -150,16 +150,15 @@ export class MultisigSigner extends RawSigner {
   }
 }
 
-export class KeyPair {
-  public readonly publicKey: string;
-
-  constructor(public readonly privateKey: string = randomPrivateKey()) {
-    this.publicKey = ec.starkCurve.getStarkKey(this.privateKey);
-  }
+export interface KeyPair {
+  readonly publicKey: string;
+  readonly privateKey: string;
 }
 
-export function randomPrivateKey(): string {
-  return "0x" + encode.buf2hex(ec.starkCurve.utils.randomPrivateKey());
-}
+export const randomKeyPair = () => {
+  const privateKey = "0x" + encode.buf2hex(ec.starkCurve.utils.randomPrivateKey());
+  const publicKey = ec.starkCurve.getStarkKey(privateKey);
+  return { publicKey, privateKey };
+};
 
-export const randomKeyPairs = (length: number) => Array.from({ length }, () => new KeyPair());
+export const randomKeyPairs = (length: number) => Array.from({ length }, randomKeyPair);

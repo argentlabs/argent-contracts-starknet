@@ -12,7 +12,7 @@ import {
   getTypedDataHash,
   loadContract,
   provider,
-  randomPrivateKey,
+  randomKeyPair,
   setTime,
   waitForTransaction,
 } from "./lib";
@@ -43,7 +43,7 @@ describe("ArgentAccount: outside execution", function () {
       caller: deployer.address,
       execute_after: 0,
       execute_before: 1713139200,
-      nonce: randomPrivateKey(),
+      nonce: randomKeyPair().publicKey,
       calls: [
         {
           to: "0x0424242",
@@ -67,7 +67,7 @@ describe("ArgentAccount: outside execution", function () {
 
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,
-      nonce: randomPrivateKey(),
+      nonce: randomKeyPair().publicKey,
       execute_after: initialTime - 100,
       execute_before: initialTime + 100,
       calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
@@ -119,7 +119,7 @@ describe("ArgentAccount: outside execution", function () {
 
     const outsideExecution: OutsideExecution = {
       caller: shortString.encodeShortString("ANY_CALLER"),
-      nonce: randomPrivateKey(),
+      nonce: randomKeyPair().publicKey,
       execute_after: 0,
       execute_before: initialTime + 100,
       calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
@@ -136,7 +136,7 @@ describe("ArgentAccount: outside execution", function () {
 
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,
-      nonce: randomPrivateKey(),
+      nonce: randomKeyPair().publicKey,
       execute_after: 0,
       execute_before: initialTime + 100,
       calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
@@ -150,11 +150,11 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Escape method", async function () {
-    const { account, accountContract, guardianPrivateKey } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
 
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,
-      nonce: randomPrivateKey(),
+      nonce: randomKeyPair().publicKey,
       execute_after: 0,
       execute_before: initialTime + 100,
       calls: [getOutsideCall(accountContract.populateTransaction.trigger_escape_owner(42))],
@@ -162,7 +162,7 @@ describe("ArgentAccount: outside execution", function () {
     const outsideExecutionCall = await getOutsideExecutionCall(
       outsideExecution,
       account.address,
-      new ArgentSigner(guardianPrivateKey),
+      new ArgentSigner(guardian?.privateKey),
     );
 
     await waitForTransaction(await deployer.execute(outsideExecutionCall));

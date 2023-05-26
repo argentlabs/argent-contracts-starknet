@@ -1,6 +1,5 @@
 import { expect } from "chai";
-import { ec } from "starknet";
-import { declareContract, expectRevertWithErrorMessage, randomPrivateKey } from "./lib";
+import { declareContract, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: signer storage", function () {
@@ -15,8 +14,8 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 1;
 
-      const newSigner1 = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
-      const newSigner2 = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+      const newSigner1 = BigInt(randomKeyPair().publicKey);
+      const newSigner2 = BigInt(randomKeyPair().publicKey);
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
@@ -179,7 +178,7 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const nonSigner = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+      const nonSigner = BigInt(randomKeyPair().publicKey);
 
       const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
@@ -202,7 +201,7 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 1;
 
-      const newSigner = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+      const newSigner = BigInt(randomKeyPair().publicKey);
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
@@ -216,7 +215,7 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const newSigner = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+      const newSigner = BigInt(randomKeyPair().publicKey);
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
@@ -230,7 +229,7 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const newSigner = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+      const newSigner = BigInt(randomKeyPair().publicKey);
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
@@ -244,7 +243,7 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const newSigner = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+      const newSigner = BigInt(randomKeyPair().publicKey);
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
@@ -259,8 +258,8 @@ describe("ArgentMultisig: signer storage", function () {
     const threshold = 1;
     const signersLength = 3;
 
-    const nonSigner = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
-    const newSigner = BigInt(ec.starkCurve.getStarkKey(randomPrivateKey()));
+    const nonSigner = BigInt(randomKeyPair().publicKey);
+    const newSigner = BigInt(randomKeyPair().publicKey);
 
     const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 

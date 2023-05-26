@@ -13,7 +13,7 @@ mod ArgentMultisig {
     };
 
     use lib::{
-        assert_only_self, assert_no_self_call, assert_correct_tx_version, assert_non_reentrant,
+        assert_only_self, assert_no_self_call, assert_correct_tx_version, assert_caller_is_null,
         execute_multicall, Call, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
         SpanSerde, OutsideExecution, hash_outside_execution_message, ERC165_IERC165_INTERFACE_ID,
         ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
@@ -89,6 +89,7 @@ mod ArgentMultisig {
 
     #[external]
     fn __validate__(calls: Array<Call>) -> felt252 {
+        assert_caller_is_null();
         let tx_info = get_tx_info().unbox();
         assert_valid_calls_and_signature(calls.span(), tx_info.transaction_hash, tx_info.signature);
         VALIDATED
@@ -96,9 +97,9 @@ mod ArgentMultisig {
 
     #[external]
     fn __execute__(calls: Array<Call>) -> Array<Span<felt252>> {
+        assert_caller_is_null();
         let tx_info = starknet::get_tx_info().unbox();
         assert_correct_tx_version(tx_info.version);
-        assert_non_reentrant();
 
         let retdata = execute_multicall(calls.span());
         TransactionExecuted(tx_info.transaction_hash, retdata.span());

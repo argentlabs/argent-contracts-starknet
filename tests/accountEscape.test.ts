@@ -22,7 +22,6 @@ import {
 } from "./lib";
 
 describe("ArgentAccount: escape mechanism", function () {
-
   let argentAccountClassHash: string;
   let oldArgentAccountClassHash: string;
   let proxyClassHash: string;

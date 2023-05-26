@@ -11,7 +11,7 @@ use debug::PrintTrait;
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/multicall-failed-', 0, 'CONTRACT_NOT_DEPLOYED'))]
+#[should_panic(expected: ('argent/multicall-failed', 0, 'CONTRACT_NOT_DEPLOYED'))]
 fn execute_multicall_simple() {
     let call = Call {
         to: contract_address_const::<42>(), selector: 43, calldata: ArrayTrait::new()

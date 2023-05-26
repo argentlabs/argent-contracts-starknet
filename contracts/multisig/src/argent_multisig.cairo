@@ -255,6 +255,12 @@ mod ArgentMultisig {
     #[external]
     fn execute_after_upgrade(data: Array<felt252>) -> Array<felt252> {
         assert_only_self();
+
+        // Check basic invariants
+        assert_valid_threshold_and_signers_count(
+            MultisigStorage::get_threshold(), MultisigStorage::get_signers_len()
+        );
+
         assert(data.len() == 0, 'argent/unexpected-data');
         ArrayTrait::new()
     }

@@ -3,7 +3,7 @@ import { deployer } from "./accounts";
 import { loadContract } from "./contracts";
 import { fundAccount } from "./devnet";
 import { provider } from "./provider";
-import { KeyPair, MultisigSigner, randomKeyPairs, randomPrivateKey } from "./signers";
+import { KeyPair, MultisigSigner, randomKeyPair, randomKeyPairs } from "./signers";
 
 export interface MultisigWallet {
   account: Account;
@@ -22,7 +22,7 @@ export async function deployMultisig(
   const keys = sortedKeyPairs(signersLength);
   const signers = keysToSigners(keys);
   const constructorCalldata = CallData.compile({ threshold, signers });
-  const addressSalt = randomPrivateKey();
+  const addressSalt = randomKeyPair().privateKey;
 
   const contractAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
   await fundAccount(contractAddress);

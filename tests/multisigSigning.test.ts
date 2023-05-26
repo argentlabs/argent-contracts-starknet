@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ec, num } from "starknet";
-import { declareContract, expectRevertWithErrorMessage, randomPrivateKey } from "./lib";
+import { declareContract, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: signing", function () {
@@ -141,12 +141,11 @@ describe("ArgentMultisig: signing", function () {
       const messageHash = num.toHex(424242);
 
       const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
-      const invalidPrivateKey = randomPrivateKey();
-      const invalidSigner = BigInt(ec.starkCurve.getStarkKey(invalidPrivateKey));
-      const { r, s } = ec.starkCurve.sign(messageHash, invalidPrivateKey);
+      const invalid = randomKeyPair();
+      const { r, s } = ec.starkCurve.sign(messageHash, invalid.privateKey);
 
       await expectRevertWithErrorMessage("argent/not-a-signer", () =>
-        accountContract.is_valid_signature(BigInt(messageHash), [invalidSigner, r, s]),
+        accountContract.is_valid_signature(BigInt(messageHash), [invalid.publicKey, r, s]),
       );
     });
 

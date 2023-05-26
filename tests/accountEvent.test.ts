@@ -99,44 +99,44 @@ describe("Make sure all events are emitted", function () {
   });
 
   it("Expect 'OwnerChanged(new_signer)' on change_owner", async function () {
-    const { account, accountContract, ownerPrivateKey } = await deployAccount(argentAccountClassHash);
+    const { accountContract, ownerPrivateKey } = await deployAccount(argentAccountClassHash);
 
     const newOwnerPrivateKey = randomPrivateKey();
     const newOwner = ec.starkCurve.getStarkKey(newOwnerPrivateKey);
     const changeOwnerSelector = hash.getSelectorFromName("change_owner");
     const chainId = await provider.getChainId();
-    const contractAddress = account.address;
+    const contractAddress = accountContract.address;
     const ownerPublicKey = ec.starkCurve.getStarkKey(ownerPrivateKey);
 
     const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, ownerPublicKey]);
     const signature = ec.starkCurve.sign(msgHash, newOwnerPrivateKey);
 
     await expectEvent(() => accountContract.change_owner(newOwner, signature.r, signature.s), {
-      from_address: account.address,
+      from_address: accountContract.address,
       keys: ["OwnerChanged"],
       data: [newOwner],
     });
   });
 
   it("Expect 'GuardianChanged(new_guardian)' on change_guardian", async function () {
-    const { account, accountContract } = await deployAccount(argentAccountClassHash);
+    const { accountContract } = await deployAccount(argentAccountClassHash);
 
     const newGuardian = "42";
 
     await expectEvent(() => accountContract.change_guardian(newGuardian), {
-      from_address: account.address,
+      from_address: accountContract.address,
       keys: ["GuardianChanged"],
       data: [newGuardian],
     });
   });
 
   it("Expect 'GuardianBackupChanged(new_guardian_backup)' on change_guardian_backup", async function () {
-    const { account, accountContract } = await deployAccount(argentAccountClassHash);
+    const { accountContract } = await deployAccount(argentAccountClassHash);
 
     const newGuardianBackup = "42";
 
     await expectEvent(() => accountContract.change_guardian_backup(newGuardianBackup), {
-      from_address: account.address,
+      from_address: accountContract.address,
       keys: ["GuardianBackupChanged"],
       data: [newGuardianBackup],
     });

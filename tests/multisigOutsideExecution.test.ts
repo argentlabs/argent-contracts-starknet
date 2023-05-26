@@ -10,14 +10,14 @@ import {
   getTypedDataHash,
   loadContract,
   provider,
-  randomPrivateKey,
+  randomKeyPair,
   setTime,
   waitForTransaction,
 } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 const initialTime = 1713139200;
-describe("Test outside execution", function () {
+describe("ArgentMultisig: outside execution", function () {
   // Avoid timeout
   this.timeout(320000);
 
@@ -42,7 +42,7 @@ describe("Test outside execution", function () {
       caller: deployer.address,
       execute_after: 0,
       execute_before: 1713139200,
-      nonce: randomPrivateKey(),
+      nonce: randomKeyPair().privateKey,
       calls: [
         {
           to: "0x0424242",
@@ -65,7 +65,7 @@ describe("Test outside execution", function () {
 
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,
-      nonce: randomPrivateKey(),
+      nonce: randomKeyPair().privateKey,
       execute_after: initialTime - 100,
       execute_before: initialTime + 100,
       calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
@@ -117,7 +117,7 @@ describe("Test outside execution", function () {
 
     const outsideExecution: OutsideExecution = {
       caller: shortString.encodeShortString("ANY_CALLER"),
-      nonce: randomPrivateKey(),
+      nonce: randomKeyPair().privateKey,
       execute_after: 0,
       execute_before: initialTime + 100,
       calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],

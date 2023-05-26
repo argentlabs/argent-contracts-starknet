@@ -13,7 +13,7 @@ import {
   restart,
 } from "./lib";
 
-describe("Declare", function () {
+describe("ArgentAccount: declare", function () {
   let argentAccountClassHash: string;
 
   beforeEach(async () => {

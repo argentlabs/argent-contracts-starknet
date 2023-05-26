@@ -35,7 +35,7 @@ fn assert_correct_tx_version(tx_version: felt252) {
 #[inline(always)]
 fn assert_correct_declare_version(tx_version: felt252) {
     if tx_version != SIERRA_DECLARE_VERSION {
-        assert(tx_version == QUERY_VERSION, 'argent/invalid-tx-version');
+        assert(tx_version == SIERRA_QUERY_VERSION, 'argent/invalid-tx-version');
     }
 }
 

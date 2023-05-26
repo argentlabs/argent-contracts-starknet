@@ -1,16 +1,20 @@
 import { expect } from "chai";
-import { CallData, ec, hash } from "starknet";
+import { CallData, Signer, ec, hash } from "starknet";
 import {
   ArgentSigner,
   ConcatSigner,
+  ESCAPE_SECURITY_PERIOD,
+  ESCAPE_TYPE_OWNER,
   declareContract,
   deployAccount,
   deployAccountWithGuardianBackup,
   deployAccountWithoutGuardian,
   deployer,
   expectRevertWithErrorMessage,
+  increaseTime,
   provider,
   randomKeyPair,
+  setTime,
 } from "./lib";
 
 describe("ArgentAccount", function () {
@@ -113,30 +117,75 @@ describe("ArgentAccount", function () {
     );
   });
 
-  it("Expect 'argent/invalid-owner-sig' when the signature to change owner is invalid", async function () {
-    const { accountContract } = await deployAccount(argentAccountClassHash);
-    await expectRevertWithErrorMessage("argent/invalid-owner-sig", () =>
-      accountContract.change_owner(randomKeyPair().publicKey, "12", "42"),
-    );
-  });
-
-  it("Should be possible to change_owner", async function () {
-    const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
-    const newOwner = randomKeyPair();
-    const changeOwnerSelector = hash.getSelectorFromName("change_owner");
-    const chainId = await provider.getChainId();
-    const contractAddress = account.address;
-
-    const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
-    const signature = ec.starkCurve.sign(msgHash, newOwner.privateKey);
-    await accountContract.change_owner(newOwner.publicKey, signature.r, signature.s);
-
-    const owner_result = await accountContract.get_owner();
-    expect(owner_result).to.equal(BigInt(newOwner.publicKey));
-  });
-
   it("Should be impossible to call __validate__ from outside", async function () {
     const { accountContract } = await deployAccount(argentAccountClassHash);
     await expectRevertWithErrorMessage("argent/non-null-caller", () => accountContract.__validate__([]));
+  });
+
+  describe("change_owner(new_owner, signature_r, signature_s)", function () {
+    it("Should be possible to change_owner", async function () {
+      const { accountContract, owner } = await deployAccount(argentAccountClassHash);
+      const newOwner = randomKeyPair();
+      const changeOwnerSelector = hash.getSelectorFromName("change_owner");
+      const chainId = await provider.getChainId();
+      const contractAddress = accountContract.address;
+
+      const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
+      const signature = ec.starkCurve.sign(msgHash, newOwner.privateKey);
+      await accountContract.change_owner(newOwner.publicKey, signature.r, signature.s);
+
+      const owner_result = await accountContract.get_owner();
+      expect(owner_result).to.equal(BigInt(newOwner.publicKey));
+    });
+
+    it("Expect 'argent/only-self' when called from another account", async function () {
+      const { account } = await deployAccount(argentAccountClassHash);
+      const { accountContract } = await deployAccount(argentAccountClassHash);
+      accountContract.connect(account);
+      await expectRevertWithErrorMessage("argent/only-self", () => accountContract.change_owner(12, 13, 14));
+    });
+
+    it("Expect 'argent/null-owner' when new_owner is zero", async function () {
+      const { accountContract } = await deployAccount(argentAccountClassHash);
+      await expectRevertWithErrorMessage("argent/null-owner", () => accountContract.change_owner(0, 13, 14));
+    });
+
+    it("Expect 'argent/invalid-owner-sig' when the signature to change owner is invalid", async function () {
+      const { accountContract } = await deployAccount(argentAccountClassHash);
+      await expectRevertWithErrorMessage("argent/invalid-owner-sig", () => accountContract.change_owner(11, 12, 42));
+    });
+
+    it("Expect the escape to be reset", async function () {
+      const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
+
+      const newOwner = randomKeyPair();
+      account.signer = new Signer(guardian?.privateKey);
+
+      await setTime(42);
+      await accountContract.trigger_escape_owner(newOwner.publicKey);
+      const escape = await accountContract.get_escape();
+      expect(escape.escape_type).to.equal(ESCAPE_TYPE_OWNER);
+      expect(escape.ready_at).to.equal(42n + ESCAPE_SECURITY_PERIOD);
+      expect(escape.new_signer).to.equal(BigInt(newOwner.publicKey));
+      await increaseTime(10);
+
+      account.signer = new ArgentSigner(owner.privateKey, guardian?.privateKey);
+      const changeOwnerSelector = hash.getSelectorFromName("change_owner");
+      const chainId = await provider.getChainId();
+      const contractAddress = accountContract.address;
+      const ownerPublicKey = ec.starkCurve.getStarkKey(owner.privateKey);
+
+      const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, ownerPublicKey]);
+      const signature = ec.starkCurve.sign(msgHash, newOwner.privateKey);
+      await accountContract.change_owner(newOwner.publicKey, signature.r, signature.s);
+
+      const owner_result = await accountContract.get_owner();
+      expect(owner_result).to.equal(BigInt(newOwner.publicKey));
+
+      const escapeReset = await accountContract.get_escape();
+      expect(escapeReset.escape_type).to.equal(0n);
+      expect(escapeReset.ready_at).to.equal(0n);
+      expect(escapeReset.new_signer).to.equal(0n);
+    });
   });
 });

@@ -156,9 +156,7 @@ describe("ArgentAccount: events", function () {
 
   describe("Expect 'EscapeCanceled()'", function () {
     it("Expected on cancel_escape", async function () {
-      const { account, accountContract, owner, guardian } = await deployAccount(
-        argentAccountClassHash,
-      );
+      const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
       account.signer = new Signer(owner.privateKey);
 
       await accountContract.trigger_escape_guardian(42);

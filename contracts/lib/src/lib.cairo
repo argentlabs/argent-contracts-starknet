@@ -1,7 +1,7 @@
 mod asserts;
 use asserts::assert_only_self;
 use asserts::assert_no_self_call;
-use asserts::assert_non_reentrant;
+use asserts::assert_caller_is_null;
 use asserts::assert_correct_tx_version;
 use asserts::assert_correct_declare_version;
 

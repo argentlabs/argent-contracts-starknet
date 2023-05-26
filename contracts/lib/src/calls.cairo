@@ -21,10 +21,7 @@ fn execute_multicall(calls: Span<Call>) -> Array<Span<felt252>> {
                         idx = idx + 1;
                     },
                     Result::Err(revert_reason) => {
-                        let mut data = ArrayTrait::new();
-                        data.append('argent/multicall-failed-');
-                        data.append(idx);
-                        panic(data);
+                        panic_with(idx, revert_reason);
                     },
                 }
             },
@@ -34,4 +31,21 @@ fn execute_multicall(calls: Span<Call>) -> Array<Span<felt252>> {
         };
     };
     result
+}
+
+fn panic_with(index: felt252, mut revert_reason: Array<felt252>) {
+    let mut data = ArrayTrait::new();
+    data.append('argent/multicall-failed-');
+    data.append(index);
+    loop {
+        match revert_reason.pop_front() {
+            Option::Some(reason) => {
+                data.append(reason);
+            },
+            Option::None(()) => {
+                break ();
+            },
+        };
+    };
+    panic(data);
 }

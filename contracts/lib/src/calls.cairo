@@ -1,5 +1,6 @@
 use array::{ArrayTrait, SpanTrait};
 use starknet::{call_contract_syscall, ContractAddress};
+use lib::ArrayExtTrait;
 
 #[derive(Drop, Serde)]
 struct Call {
@@ -22,8 +23,9 @@ fn execute_multicall(calls: Span<Call>) -> Array<Span<felt252>> {
                     },
                     Result::Err(revert_reason) => {
                         let mut data = ArrayTrait::new();
-                        data.append('argent/multicall-failed-');
+                        data.append('argent/multicall-failed');
                         data.append(idx);
+                        data.append_all(revert_reason);
                         panic(data);
                     },
                 }

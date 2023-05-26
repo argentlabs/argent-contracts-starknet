@@ -1,6 +1,6 @@
-use lib::ArrayExtTrait;
 use array::{ArrayTrait, SpanTrait};
 use starknet::{call_contract_syscall, ContractAddress};
+use lib::ArrayExtTrait;
 
 #[derive(Drop, Serde)]
 struct Call {

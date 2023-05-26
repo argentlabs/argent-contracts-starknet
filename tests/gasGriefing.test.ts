@@ -33,7 +33,7 @@ describe("Gas griefing", function () {
     account.signer = new ArgentSigner(guardianPrivateKey);
     await expectExecutionRevert("argent/max-fee-too-high", () =>
       account.execute(accountContract.populateTransaction.trigger_escape_owner(randomPrivateKey()), undefined, {
-        maxFee: 60000000000000000,
+        maxFee: "60000000000000000",
       }),
     );
   });

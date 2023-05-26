@@ -14,8 +14,8 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 1;
 
-      const newSigner1 = BigInt(randomKeyPair().publicKey);
-      const newSigner2 = BigInt(randomKeyPair().publicKey);
+      const newSigner1 = randomKeyPair().publicKey;
+      const newSigner2 = randomKeyPair().publicKey;
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
@@ -201,7 +201,7 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 1;
 
-      const newSigner = BigInt(randomKeyPair().publicKey);
+      const newSigner = randomKeyPair().publicKey;
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
@@ -229,7 +229,7 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const newSigner = BigInt(randomKeyPair().publicKey);
+      const newSigner = randomKeyPair().publicKey;
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
@@ -258,8 +258,8 @@ describe("ArgentMultisig: signer storage", function () {
     const threshold = 1;
     const signersLength = 3;
 
-    const nonSigner = BigInt(randomKeyPair().publicKey);
-    const newSigner = BigInt(randomKeyPair().publicKey);
+    const nonSigner = randomKeyPair().publicKey;
+    const newSigner = randomKeyPair().publicKey;
 
     const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 

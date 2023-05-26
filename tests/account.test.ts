@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, ec, hash } from "starknet";
+import { CallData, hash } from "starknet";
 import {
   ArgentSigner,
   ConcatSigner,
@@ -24,7 +24,7 @@ describe("ArgentAccount", function () {
     const { accountContract, owner } = await deployAccountWithoutGuardian(argentAccountClassHash);
 
     const ownerAddress = await accountContract.get_owner();
-    expect(ownerAddress).to.equal(BigInt(owner.publicKey));
+    expect(ownerAddress).to.equal(owner.publicKey);
     const guardianAddress = await accountContract.get_guardian();
     expect(guardianAddress).to.equal(0n);
     const guardianBackupAddress = await accountContract.get_guardian_backup();
@@ -45,10 +45,10 @@ describe("ArgentAccount", function () {
     const { accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
 
     const ownerAddress = await accountContract.get_owner();
-    expect(ownerAddress).to.equal(BigInt(owner.publicKey));
+    expect(ownerAddress).to.equal(owner.publicKey);
 
     const guardianAddress = await accountContract.get_guardian();
-    expect(guardianAddress).to.equal(BigInt(guardian?.publicKey ?? 0n));
+    expect(guardianAddress).to.equal(guardian?.publicKey ?? 0n);
 
     const guardianBackupAddress = await accountContract.get_guardian_backup();
     expect(guardianBackupAddress).to.equal(0n);
@@ -68,7 +68,7 @@ describe("ArgentAccount", function () {
 
     const guardianBackupBefore = await accountContract.get_guardian_backup();
     expect(guardianBackupBefore).to.equal(0n);
-    account.signer = new ArgentSigner(owner.privateKey, guardian?.privateKey);
+    account.signer = new ArgentSigner(owner, guardian);
     await accountContract.change_guardian_backup(42);
 
     const guardianBackupAfter = await accountContract.get_guardian_backup();
@@ -77,20 +77,18 @@ describe("ArgentAccount", function () {
 
   it("Should sign messages from OWNER and BACKUP_GUARDIAN when there is a GUARDIAN and a BACKUP", async function () {
     const guardianBackup = randomKeyPair();
-    // const guardianBackupPrivateKey = randomPrivateKey();
-    // const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
     const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
 
     const guardianBackupBefore = await accountContract.get_guardian_backup();
     expect(guardianBackupBefore).to.equal(0n);
 
-    account.signer = new ArgentSigner(owner.privateKey, guardian?.privateKey);
+    account.signer = new ArgentSigner(owner, guardian);
     await accountContract.change_guardian_backup(guardianBackup.publicKey);
 
     const guardianBackupAfter = await accountContract.get_guardian_backup();
-    expect(guardianBackupAfter).to.equal(BigInt(guardianBackup.publicKey));
+    expect(guardianBackupAfter).to.equal(guardianBackup.publicKey);
 
-    account.signer = new ArgentSigner(owner.privateKey, guardianBackup.privateKey);
+    account.signer = new ArgentSigner(owner, guardianBackup);
     await accountContract.change_guardian("0x42");
 
     const guardianAfter = await accountContract.get_guardian();
@@ -102,11 +100,7 @@ describe("ArgentAccount", function () {
       argentAccountClassHash,
     );
 
-    account.signer = new ConcatSigner([
-      owner.privateKey,
-      guardian?.privateKey as string,
-      guardianBackup?.privateKey as string,
-    ]);
+    account.signer = new ConcatSigner([owner, guardian, guardianBackup]);
 
     await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
       accountContract.change_guardian("0x42"),
@@ -128,11 +122,11 @@ describe("ArgentAccount", function () {
     const contractAddress = account.address;
 
     const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
-    const signature = ec.starkCurve.sign(msgHash, newOwner.privateKey);
+    const signature = newOwner.signHash(msgHash);
     await accountContract.change_owner(newOwner.publicKey, signature.r, signature.s);
 
-    const owner_result = await accountContract.get_owner();
-    expect(owner_result).to.equal(BigInt(newOwner.publicKey));
+    const ownerResult = await accountContract.get_owner();
+    expect(ownerResult).to.equal(newOwner.publicKey);
   });
 
   it("Should be impossible to call __validate__ from outside", async function () {

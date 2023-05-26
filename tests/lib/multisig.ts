@@ -1,4 +1,4 @@
-import { Account, CallData, Contract, GetTransactionReceiptResponse, hash } from "starknet";
+import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num } from "starknet";
 import { deployer } from "./accounts";
 import { loadContract } from "./contracts";
 import { fundAccount } from "./devnet";
@@ -22,7 +22,7 @@ export async function deployMultisig(
   const keys = sortedKeyPairs(signersLength);
   const signers = keysToSigners(keys);
   const constructorCalldata = CallData.compile({ threshold, signers });
-  const addressSalt = randomKeyPair().privateKey;
+  const addressSalt = num.toHex(randomKeyPair().privateKey);
 
   const contractAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
   await fundAccount(contractAddress);
@@ -39,7 +39,6 @@ export async function deployMultisig(
   return { account, accountContract, keys, signers, receipt };
 }
 
-const sortedKeyPairs = (length: number) =>
-  randomKeyPairs(length).sort((a, b) => (BigInt(a.publicKey) < BigInt(b.publicKey) ? -1 : 1));
+const sortedKeyPairs = (length: number) => randomKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));
 
 export const keysToSigners = (keys: KeyPair[]) => keys.map(({ publicKey }) => publicKey).map(BigInt);

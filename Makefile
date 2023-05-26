@@ -13,7 +13,7 @@ SOURCE_FOLDER=./contracts
 CAIRO_VERSION=v1.0.0
 FIXTURES_FOLDER = ./tests/fixtures
 
-all: install build compile-account fixtures
+all: install build fixtures
 
 install: install-cairo install-integration build vscode
 

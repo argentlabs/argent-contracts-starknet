@@ -23,7 +23,7 @@ fn execute_multicall(calls: Span<Call>) -> Array<Span<felt252>> {
                     },
                     Result::Err(revert_reason) => {
                         let mut data = ArrayTrait::new();
-                        data.append('argent/multicall-failed-');
+                        data.append('argent/multicall-failed');
                         data.append(idx);
                         data.append_all(revert_reason);
                         panic(data);

@@ -9,9 +9,11 @@ use starknet::{
 use lib::Call;
 
 const TRANSACTION_VERSION: felt252 = 1;
-const SIERRA_DECLARE_VERSION: felt252 = 2;
 const QUERY_VERSION: felt252 =
     340282366920938463463374607431768211457; // 2**128 + TRANSACTION_VERSION
+const SIERRA_DECLARE_VERSION: felt252 = 2;
+const SIERRA_QUERY_VERSION: felt252 =
+    340282366920938463463374607431768211458; // 2**128 + SIERRA_DECLARE_VERSION
 
 #[inline(always)]
 fn assert_only_self() {
@@ -32,7 +34,9 @@ fn assert_correct_tx_version(tx_version: felt252) {
 
 #[inline(always)]
 fn assert_correct_declare_version(tx_version: felt252) {
-    assert(tx_version == SIERRA_DECLARE_VERSION, 'argent/invalid-contract-version');
+    if tx_version != SIERRA_DECLARE_VERSION {
+        assert(tx_version == QUERY_VERSION, 'argent/invalid-tx-version');
+    }
 }
 
 fn assert_no_self_call(mut calls: Span::<Call>, self: ContractAddress) {

@@ -416,7 +416,7 @@ mod ArgentAccount {
 
         // Check basic invariants
         assert(_signer::read() != 0, 'argent/null-owner');
-        if _guardian_backup::read() == 0 {
+        if _guardian::read() == 0 {
             assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
         }
 

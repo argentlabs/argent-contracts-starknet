@@ -13,7 +13,7 @@ import {
   setTime,
 } from "./lib";
 
-describe("Make sure all events are emitted", function () {
+describe("ArgentAccount: events", function () {
   let argentAccountClassHash: string;
 
   before(async () => {

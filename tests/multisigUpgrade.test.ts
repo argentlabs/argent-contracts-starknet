@@ -3,7 +3,7 @@ import { Contract } from "starknet";
 import { declareContract, deployer, loadContract, provider, upgradeAccount } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
-describe("Argent Multisig: upgrade", function () {
+describe("ArgentMultisig: upgrade", function () {
   let argentMultisig: string;
   let argentMultisigFutureClassHash: string;
   let testDappClassHash: string;

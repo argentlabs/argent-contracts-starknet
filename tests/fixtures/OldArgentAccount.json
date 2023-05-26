@@ -685,7 +685,7 @@
         "value": "argent: account not initialized"
       },
       {
-        "accessible_scopes": ["contracts.account.library", "contracts.account.library.assert_caller_is_null"],
+        "accessible_scopes": ["contracts.account.library", "contracts.account.library.assert_non_reentrant"],
         "end_pc": 848,
         "flow_tracking_data": {
           "ap_tracking": {
@@ -21913,7 +21913,7 @@
           }
         },
         "843": {
-          "accessible_scopes": ["contracts.account.library", "contracts.account.library.assert_caller_is_null"],
+          "accessible_scopes": ["contracts.account.library", "contracts.account.library.assert_non_reentrant"],
           "flow_tracking_data": null,
           "hints": [],
           "inst": {
@@ -21951,7 +21951,7 @@
           }
         },
         "844": {
-          "accessible_scopes": ["contracts.account.library", "contracts.account.library.assert_caller_is_null"],
+          "accessible_scopes": ["contracts.account.library", "contracts.account.library.assert_non_reentrant"],
           "flow_tracking_data": null,
           "hints": [],
           "inst": {
@@ -21965,7 +21965,7 @@
           }
         },
         "846": {
-          "accessible_scopes": ["contracts.account.library", "contracts.account.library.assert_caller_is_null"],
+          "accessible_scopes": ["contracts.account.library", "contracts.account.library.assert_non_reentrant"],
           "flow_tracking_data": null,
           "hints": [],
           "inst": {
@@ -21979,7 +21979,7 @@
           }
         },
         "848": {
-          "accessible_scopes": ["contracts.account.library", "contracts.account.library.assert_caller_is_null"],
+          "accessible_scopes": ["contracts.account.library", "contracts.account.library.assert_non_reentrant"],
           "flow_tracking_data": null,
           "hints": [],
           "inst": {
@@ -22029,7 +22029,7 @@
           }
         },
         "849": {
-          "accessible_scopes": ["contracts.account.library", "contracts.account.library.assert_caller_is_null"],
+          "accessible_scopes": ["contracts.account.library", "contracts.account.library.assert_non_reentrant"],
           "flow_tracking_data": null,
           "hints": [],
           "inst": {
@@ -74240,8 +74240,8 @@
         "destination": "contracts.account.library.assert_no_self_call",
         "type": "alias"
       },
-      "__main__.assert_caller_is_null": {
-        "destination": "contracts.account.library.assert_caller_is_null",
+      "__main__.assert_non_reentrant": {
+        "destination": "contracts.account.library.assert_non_reentrant",
         "type": "alias"
       },
       "__main__.assert_not_zero": {
@@ -78251,19 +78251,19 @@
         "type": "const",
         "value": 0
       },
-      "contracts.account.library.assert_caller_is_null": {
+      "contracts.account.library.assert_non_reentrant": {
         "decorators": [],
         "pc": 843,
         "type": "function"
       },
-      "contracts.account.library.assert_caller_is_null.Args": {
-        "full_name": "contracts.account.library.assert_caller_is_null.Args",
+      "contracts.account.library.assert_non_reentrant.Args": {
+        "full_name": "contracts.account.library.assert_non_reentrant.Args",
         "members": {},
         "size": 0,
         "type": "struct"
       },
-      "contracts.account.library.assert_caller_is_null.ImplicitArgs": {
-        "full_name": "contracts.account.library.assert_caller_is_null.ImplicitArgs",
+      "contracts.account.library.assert_non_reentrant.ImplicitArgs": {
+        "full_name": "contracts.account.library.assert_non_reentrant.ImplicitArgs",
         "members": {
           "syscall_ptr": {
             "cairo_type": "felt*",
@@ -78273,11 +78273,11 @@
         "size": 1,
         "type": "struct"
       },
-      "contracts.account.library.assert_caller_is_null.Return": {
+      "contracts.account.library.assert_non_reentrant.Return": {
         "cairo_type": "()",
         "type": "type_definition"
       },
-      "contracts.account.library.assert_caller_is_null.SIZEOF_LOCALS": {
+      "contracts.account.library.assert_non_reentrant.SIZEOF_LOCALS": {
         "type": "const",
         "value": 0
       },

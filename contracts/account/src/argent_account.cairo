@@ -413,6 +413,13 @@ mod ArgentAccount {
     #[external]
     fn execute_after_upgrade(data: Array<felt252>) -> Array<felt252> {
         assert_only_self();
+
+        // Check basic invariants
+        assert(_signer::read() != 0, 'argent/null-owner');
+        if _guardian_backup::read() == 0 {
+            assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
+        }
+
         let implementation = _implementation::read();
         if implementation != class_hash_const::<0>() {
             replace_class_syscall(implementation).unwrap_syscall();

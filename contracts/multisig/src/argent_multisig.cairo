@@ -237,6 +237,11 @@ mod ArgentMultisig {
     fn upgrade(implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
         assert_only_self();
 
+        // Check basic invariants
+        assert_valid_threshold_and_signers_count(
+            MultisigStorage::get_threshold(), MultisigStorage::get_signers_len()
+        );
+
         let supports_interface = IErc165LibraryDispatcher {
             class_hash: implementation
         }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);

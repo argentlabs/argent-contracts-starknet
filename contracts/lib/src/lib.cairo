@@ -17,6 +17,7 @@ use test_dapp::TestDapp;
 
 
 mod array_ext;
+use array_ext::ArrayExtTrait;
 
 // Structures 
 mod calls;

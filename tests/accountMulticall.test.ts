@@ -126,6 +126,19 @@ describe("ArgentAccount: multicall", function () {
     );
   });
 
+  // // TODO ONGOING
+  // it.only("LAMA", async function () {
+  //   const { account } = await deployAccount(argentAccountClassHash);
+
+  //   await expectRevertWithErrorMessage("argent/no-multicall-to-self", () =>
+  //     account.execute(
+  //       [testDappContract.populateTransaction.throw_error(12), testDappContract.populateTransaction.throw_error(12)],
+  //       undefined,
+  //       { maxFee: 1e18 },
+  //     ),
+  //   );
+  // });
+
   it("Valid return data", async function () {
     const { account } = await deployAccount(argentAccountClassHash);
     const calls = [

@@ -1,4 +1,4 @@
-use lib::array_ext::ArrayExtTrait;
+use lib::ArrayExtTrait;
 use array::{ArrayTrait, SpanTrait};
 use starknet::{call_contract_syscall, ContractAddress};
 

@@ -109,7 +109,7 @@ describe("ArgentAccount: events", function () {
     const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
     const signature = ec.starkCurve.sign(msgHash, newOwner.privateKey);
 
-    await expectEvent(() => accountContract.change_owner(newOwner, signature.r, signature.s), {
+    await expectEvent(() => accountContract.change_owner(newOwner.publicKey, signature.r, signature.s), {
       from_address: account.address,
       keys: ["OwnerChanged"],
       data: [newOwner.publicKey],

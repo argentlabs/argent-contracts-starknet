@@ -15,6 +15,7 @@ import {
 
 describe("Declare", function () {
   let argentAccountClassHash: string;
+
   beforeEach(async () => {
     await dump();
     await restart();
@@ -25,6 +26,7 @@ describe("Declare", function () {
   afterEach(async () => {
     await load();
   });
+
   it("Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) ", async function () {
     const { account } = await deployAccount(argentAccountClassHash);
     const contract: CompiledSierra = json.parse(readFileSync("./tests/fixtures/Proxy.json").toString("ascii"));

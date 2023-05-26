@@ -19,8 +19,8 @@ fn assert_only_self() {
 }
 
 #[inline(always)]
-fn assert_non_reentrant() {
-    assert(get_caller_address().is_zero(), 'argent/no-reentrant-call');
+fn assert_caller_is_null() {
+    assert(get_caller_address().is_zero(), 'argent/non-null-caller');
 }
 
 #[inline(always)]

@@ -15,7 +15,7 @@ mod ArgentAccount {
 
     use account::{Escape, EscapeStatus};
     use lib::{
-        assert_correct_tx_version, assert_no_self_call, assert_non_reentrant, assert_only_self,
+        assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
         execute_multicall, Call, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
         IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait, SpanSerde,
         OutsideExecution, hash_outside_execution_message, assert_correct_declare_version,
@@ -154,6 +154,7 @@ mod ArgentAccount {
 
     #[external]
     fn __validate__(calls: Array<Call>) -> felt252 {
+        assert_caller_is_null();
         let tx_info = get_tx_info().unbox();
         assert_valid_calls_and_signature(
             calls.span(), tx_info.transaction_hash, tx_info.signature, is_from_outside: false
@@ -181,9 +182,9 @@ mod ArgentAccount {
 
     #[external]
     fn __execute__(calls: Array<Call>) -> Array<Span<felt252>> {
+        assert_caller_is_null();
         let tx_info = get_tx_info().unbox();
         assert_correct_tx_version(tx_info.version);
-        assert_non_reentrant();
 
         let retdata = execute_multicall(calls.span());
         TransactionExecuted(tx_info.transaction_hash, retdata.span());
@@ -413,6 +414,13 @@ mod ArgentAccount {
     #[external]
     fn execute_after_upgrade(data: Array<felt252>) -> Array<felt252> {
         assert_only_self();
+
+        // Check basic invariants
+        assert(_signer::read() != 0, 'argent/null-owner');
+        if _guardian::read() == 0 {
+            assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
+        }
+
         let implementation = _implementation::read();
         if implementation != class_hash_const::<0>() {
             replace_class_syscall(implementation).unwrap_syscall();

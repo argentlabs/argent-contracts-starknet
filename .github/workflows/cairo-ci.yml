@@ -31,6 +31,9 @@ jobs:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3
 
+      - name: Step 1b - Check out main branch
+        run: echo ref is $GITHUB_REF
+
       - name: Step 2 - Downloading binaries
         run: curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
 

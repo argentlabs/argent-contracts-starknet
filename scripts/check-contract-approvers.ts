@@ -6,7 +6,7 @@ if (Number.isNaN(minApprovers)) {
   process.exit(1);
 }
 
-exec("gh pr view 141 --json files,reviews", (err, stdout, stderr) => {
+exec("gh pr view --json files,reviews", (err, stdout, stderr) => {
   if (stderr) {
     console.error(stderr);
   }

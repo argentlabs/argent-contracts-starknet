@@ -13,35 +13,35 @@ jobs:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3
 
-      # - name: Step 2 - Install correct python version
-      #   uses: actions/setup-python@v4
-      #   with:
-      #     python-version: "3.9"
-      #     cache: "pip"
+      - name: Step 2 - Install correct python version
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+          cache: "pip"
 
-      # - name: Step 3 - Cloning repo
-      #   run: make clone-cairo
+      - name: Step 3 - Cloning repo
+        run: make clone-cairo
 
-      # - name: Step 4 - Downloading binaries, unzipping them and making them available
-      #   working-directory: ./cairo
-      #   run: |
-      #     curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
-      #     tar -xvf $ARCHIVE_NAME
-      #     mkdir -p target/release
-      #     mv cairo/bin/* target/release
+      - name: Step 4 - Downloading binaries, unzipping them and making them available
+        working-directory: ./cairo
+        run: |
+          curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
+          tar -xvf $ARCHIVE_NAME
+          mkdir -p target/release
+          mv cairo/bin/* target/release
 
-      # - name: Step 5 - Installing requirements
-      #   run: pip3 install -r requirements.txt
+      - name: Step 5 - Installing requirements
+        run: pip3 install -r requirements.txt
 
-      # - name: Step 6 - Start devnet in background
-      #   run: |
-      #     make devnet &
-      #     ./scripts/wait-devnet-ready.sh
+      - name: Step 6 - Start devnet in background
+        run: |
+          make devnet &
+          ./scripts/wait-devnet-ready.sh
 
-      # - name: Step 7 - Run integrations tests
-      #   run: |
-      #     yarn install --frozen-lockfile
-      #     make test-integration
+      - name: Step 7 - Run integrations tests
+        run: |
+          yarn install --frozen-lockfile
+          make test-integration
 
   format:
     runs-on: ubuntu-latest
@@ -51,20 +51,6 @@ jobs:
 
       - name: Step 2 - Install project
         run: yarn install --frozen-lockfile
-
-      - name: STEP
-        run: |
-          echo GITHUB_REF is $GITHUB_REF
-          echo PR_NUMBER is $PR_NUMBER
-          echo event number is ${{ github.event.number }}
-          echo "::set-output name=pull_request_number::$(gh pr view --json number -q .number || echo "")"
-          echo pull_request_number ${{ steps.pr.outputs.pull_request_number }}
-          echo octokit
-          yarn ts-node scripts/contract-approvals.ts
-          echo octokit end
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.number }}
 
       - name: Step 3 - Check correct formatting
         run: yarn format:check

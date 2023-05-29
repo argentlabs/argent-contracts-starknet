@@ -36,7 +36,10 @@ jobs:
           echo GITHUB_REF is $GITHUB_REF
           echo PR_NUMBER is $PR_NUMBER
           echo event number is ${{ github.event.number }}
+          echo "::set-output name=pull_request_number::$(gh pr view --json number -q .number || echo "")"
+          echo pull_request_number ${{ steps.pr.outputs.pull_request_number }}
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.number }}
 
       - name: Step 2 - Downloading binaries

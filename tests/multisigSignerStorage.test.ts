@@ -31,13 +31,11 @@ describe("ArgentMultisig: signer storage", function () {
       expect(isNewSigner1).to.be.true;
 
       const expectedNewSignerCount = 3;
-      const addedSignersLen = 1;
-      const removedSignersLen = 0;
 
       await expectEvent(() => accountContract.add_signers(threshold, [newSigner2]), {
         from_address: accountContract.address,
         keys: ["ConfigurationUpdated"],
-        data: CallData.compile([threshold, expectedNewSignerCount, addedSignersLen, newSigner2, removedSignersLen]),
+        data: CallData.compile([threshold, expectedNewSignerCount,[newSigner2], []]),
       });
     });
 
@@ -61,13 +59,11 @@ describe("ArgentMultisig: signer storage", function () {
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
       const expectedNewSignerCount = 2;
-      const addedSignersLen = 0;
-      const removedSignersLen = 1;
 
       await expectEvent(() => accountContract.remove_signers(threshold, [signers[0]]), {
         from_address: accountContract.address,
         keys: ["ConfigurationUpdated"],
-        data: CallData.compile([threshold, expectedNewSignerCount, addedSignersLen, removedSignersLen, signers[0]]),
+        data: CallData.compile([threshold, expectedNewSignerCount, [], [signers[0]]]),
       });
 
       const isSigner0 = await accountContract.is_signer(signers[0]);
@@ -220,8 +216,6 @@ describe("ArgentMultisig: signer storage", function () {
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
       const expectedNewSignerCount = 1;
-      const addedSignersLen = 1;
-      const removedSignersLen = 1;
 
       await expectEvent(() => accountContract.replace_signer(signers[0], newSigner), {
         from_address: accountContract.address,
@@ -229,10 +223,8 @@ describe("ArgentMultisig: signer storage", function () {
         data: CallData.compile([
           threshold,
           expectedNewSignerCount,
-          addedSignersLen,
-          newSigner,
-          removedSignersLen,
-          signers[0],
+          [newSigner],
+          [signers[0]],
         ]),
       });
 

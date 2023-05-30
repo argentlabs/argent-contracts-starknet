@@ -56,10 +56,9 @@ describe("ArgentMultisig: Execute", function () {
 
     account.signer = new MultisigSigner(keys.slice(0, 1));
 
-    const { transaction_hash: transferTxHash } = await account.execute([
-      testDappContract.populateTransaction.set_number(42),
-    ]);
-    await account.waitForTransaction(transferTxHash);
+    testDappContract.connect(account);
+    const { transaction_hash } = await testDappContract.set_number(42);
+    await account.waitForTransaction(transaction_hash);
 
     const finalNumber = await testDappContract.get_number(account.address);
     expect(finalNumber).to.equal(42n);
@@ -73,10 +72,9 @@ describe("ArgentMultisig: Execute", function () {
 
     account.signer = new MultisigSigner(keys.slice(0, 3));
 
-    const { transaction_hash: transferTxHash } = await account.execute([
-      testDappContract.populateTransaction.set_number(42),
-    ]);
-    await account.waitForTransaction(transferTxHash);
+    testDappContract.connect(account);
+    const { transaction_hash } = await testDappContract.set_number(42);
+    await account.waitForTransaction(transaction_hash);
 
     const finalNumber = await testDappContract.get_number(account.address);
     expect(finalNumber).to.equal(42n);

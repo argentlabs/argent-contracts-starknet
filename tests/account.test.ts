@@ -93,10 +93,10 @@ describe("ArgentAccount", function () {
     expect(guardianBackupAfter).to.equal(guardianBackup.publicKey);
 
     account.signer = new ArgentSigner(owner, guardianBackup);
-    await accountContract.change_guardian("0x42");
+    await accountContract.change_guardian(42n);
 
     const guardianAfter = await accountContract.get_guardian();
-    expect(guardianAfter).to.equal(BigInt("0x42"));
+    expect(guardianAfter).to.equal(42n);
   });
 
   it("Expect 'argent/invalid-signature-length' when signing a transaction with OWNER, GUARDIAN and BACKUP", async function () {
@@ -160,7 +160,7 @@ describe("ArgentAccount", function () {
       const escape = await accountContract.get_escape();
       expect(escape.escape_type).to.equal(ESCAPE_TYPE_OWNER);
       expect(escape.ready_at).to.equal(42n + ESCAPE_SECURITY_PERIOD);
-      expect(escape.new_signer).to.equal(BigInt(newOwner.publicKey));
+      expect(escape.new_signer).to.equal(newOwner.publicKey);
       await increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);

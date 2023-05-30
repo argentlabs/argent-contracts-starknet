@@ -325,7 +325,7 @@ describe("ArgentMultisig: signer storage", function () {
       const signersLength = 3;
 
       const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
-      
+
       const initialThreshold = await accountContract.get_threshold();
       expect(initialThreshold).to.be.equal(BigInt(threshold));
 

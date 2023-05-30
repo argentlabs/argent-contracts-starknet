@@ -1,6 +1,6 @@
 import { expect } from "chai";
-import { Contract } from "starknet";
-import { MultisigSigner, declareContract, deployer, expectRevertWithErrorMessage, loadContract } from "./lib";
+import { Contract, num } from "starknet";
+import { MultisigSigner, declareContract, deployer, expectEvent, expectRevertWithErrorMessage, loadContract } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: Execute", function () {
@@ -17,7 +17,7 @@ describe("ArgentMultisig: Execute", function () {
   });
 
   describe("Multisig single transaction", function () {
-    it.only("Should be able to execute a transaction using one owner when (signer_list = 1, threshold = 1)", async function () {
+    it("Should be able to execute a transaction using one owner when (signer_list = 1, threshold = 1)", async function () {
       const threshold = 1;
       const signersLength = 1;
 
@@ -26,13 +26,30 @@ describe("ArgentMultisig: Execute", function () {
       const initalNumber = await testDappContract.get_number(account.address);
       expect(initalNumber).to.equal(0n);
 
-      const { transaction_hash: transferTxHash } = await account.execute([
-        testDappContract.populateTransaction.set_number(42),
-      ]);
-      await account.waitForTransaction(transferTxHash);
+      const call = [
+        testDappContract.populateTransaction.increase_number(42),
+      ]
+
+      const execute = await account.execute(call);
+      
+      const receipt = await account.waitForTransaction(execute.transaction_hash);
 
       const finalNumber = await testDappContract.get_number(account.address);
       expect(finalNumber).to.equal(42n);
+
+      const expectedReturnCall = [num.toHex(finalNumber)];
+      const expectedReturnData = [
+        num.toHex(call.length),
+        num.toHex(expectedReturnCall.length),
+        ...expectedReturnCall,
+      ];
+
+      await expectEvent(receipt, {
+        from_address: account.address,
+        keys: ["TransactionExecuted"],
+        data: [receipt.transaction_hash, ...expectedReturnData],
+      });
+      
     });
 
     it("Should be able to execute a transaction using one owner when (signer_list > 1, threshold = 1) ", async function () {
@@ -42,9 +59,6 @@ describe("ArgentMultisig: Execute", function () {
       const { account, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
       account.signer = new MultisigSigner(keys.slice(0, 3));
-
-      const initalNumber = await testDappContract.get_number(account.address);
-      expect(initalNumber).to.equal(0n);
 
       const { transaction_hash: transferTxHash } = await account.execute([
         testDappContract.populateTransaction.set_number(42),
@@ -63,13 +77,28 @@ describe("ArgentMultisig: Execute", function () {
 
       account.signer = new MultisigSigner(keys.slice(0, 3));
 
-      const initalNumber = await testDappContract.get_number(account.address);
-      expect(initalNumber).to.equal(0n);
-
       const { transaction_hash: transferTxHash } = await account.execute([
         testDappContract.populateTransaction.set_number(42),
       ]);
       await account.waitForTransaction(transferTxHash);
+
+      const finalNumber = await testDappContract.get_number(account.address);
+      expect(finalNumber).to.equal(42n);
+    });
+    
+    it("Should be able to execute multiples transactions using multiple owners when (signer_list > 1, threshold > 1)", async function () {
+      const threshold = 3;
+      const signersLength = 5;
+
+      const { account, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+
+      account.signer = new MultisigSigner(keys.slice(0, 3));
+      const calls = await account.execute([
+        testDappContract.populateTransaction.increase_number(2),
+        testDappContract.populateTransaction.increase_number(40),
+      ]);
+
+      await account.waitForTransaction(calls.transaction_hash);
 
       const finalNumber = await testDappContract.get_number(account.address);
       expect(finalNumber).to.equal(42n);

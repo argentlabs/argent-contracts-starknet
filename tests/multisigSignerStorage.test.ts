@@ -45,7 +45,7 @@ describe("ArgentMultisig: signer storage", function () {
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      const newSigner1 = BigInt(randomKeyPair().publicKey);
+      const newSigner1 = randomKeyPair().publicKey;
 
       // adding a signer that is already an owner
       await expectRevertWithErrorMessage("argent/already-a-signer", () =>

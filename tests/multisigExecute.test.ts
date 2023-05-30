@@ -57,7 +57,7 @@ describe("ArgentMultisig: Execute", function () {
 
     const { account, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-    account.signer = new MultisigSigner(keys.slice(0, 3));
+    account.signer = new MultisigSigner(keys.slice(0, 1));
 
     const { transaction_hash: transferTxHash } = await account.execute([
       testDappContract.populateTransaction.set_number(42),

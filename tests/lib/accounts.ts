@@ -135,7 +135,7 @@ export enum EscapeStatus {
   Expired,
 }
 
-export async function hasEscapeOngoing(accountContract: Contract): Promise<boolean> {
+export async function hasOngoingEscape(accountContract: Contract): Promise<boolean> {
   const escape = await accountContract.get_escape();
   return escape.escape_type != 0n && escape.ready_at != 0n && escape.new_signer != 0n;
 }

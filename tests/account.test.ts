@@ -9,7 +9,7 @@ import {
   deployAccountWithoutGuardian,
   deployer,
   expectRevertWithErrorMessage,
-  hasEscapeOngoing,
+  hasOngoingEscape,
   increaseTime,
   provider,
   randomKeyPair,
@@ -142,7 +142,7 @@ describe("ArgentAccount", function () {
 
       await setTime(42);
       await accountContract.trigger_escape_owner(newOwner.publicKey);
-      await hasEscapeOngoing(accountContract).should.eventually.be.true;
+      await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
@@ -155,7 +155,7 @@ describe("ArgentAccount", function () {
       await accountContract.change_owner(newOwner.publicKey, r, s);
 
       await accountContract.get_owner().should.eventually.equal(newOwner.publicKey);
-      await hasEscapeOngoing(accountContract).should.eventually.be.false;
+      await hasOngoingEscape(accountContract).should.eventually.be.false;
     });
   });
 
@@ -192,20 +192,20 @@ describe("ArgentAccount", function () {
     it("Expect the escape to be reset", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
       account.signer = guardian;
-      
+
       const newOwner = randomKeyPair();
       const newGuardian = 12n;
 
       await setTime(42);
       await accountContract.trigger_escape_owner(newOwner.publicKey);
-      await hasEscapeOngoing(accountContract).should.eventually.be.true;
+      await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
       await accountContract.change_guardian(newGuardian);
 
       await accountContract.get_guardian().should.eventually.equal(newGuardian);
-      await hasEscapeOngoing(accountContract).should.eventually.be.false;
+      await hasOngoingEscape(accountContract).should.eventually.be.false;
     });
   });
 
@@ -249,14 +249,14 @@ describe("ArgentAccount", function () {
 
       await setTime(42);
       await accountContract.trigger_escape_owner(newOwner.publicKey);
-      await hasEscapeOngoing(accountContract).should.eventually.be.true;
+      await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
       await accountContract.change_guardian_backup(newGuardian);
 
       await accountContract.get_guardian_backup().should.eventually.equal(newGuardian);
-      await hasEscapeOngoing(accountContract).should.eventually.be.false;
+      await hasOngoingEscape(accountContract).should.eventually.be.false;
     });
   });
 });

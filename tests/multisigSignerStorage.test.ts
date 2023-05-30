@@ -65,7 +65,7 @@ describe("ArgentMultisig: signer storage", function () {
       );
       // adding a threshold that is greater than the number of signers
       await expectRevertWithErrorMessage("argent/bad-threshold", () =>
-        accountContract.add_signers(signersLength + 1, [newSigner1]),
+        accountContract.add_signers(signersLength + 2, [newSigner1]),
       );
     });
   });

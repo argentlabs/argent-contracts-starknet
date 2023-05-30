@@ -3,7 +3,7 @@ import { Contract} from "starknet";
 import { MultisigSigner, declareContract, deployer, expectEvent, expectRevertWithErrorMessage, loadContract} from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
-describe("ArgentMultisig: multicall", function () {
+describe("ArgentMultisig: Execute", function () {
   let multisigAccountClassHash: string;
   let testDappContract: Contract;
 

@@ -105,8 +105,7 @@ export class ArgentSigner extends RawSigner {
     if (this.guardian) {
       return new ConcatSigner([this.owner, this.guardian]).signRaw(messageHash);
     }
-    const { r, s } = this.owner.signHash(messageHash);
-    return [r, s];
+    return this.owner.signHash(messageHash);
   }
 }
 
@@ -116,12 +115,7 @@ export class ConcatSigner extends RawSigner {
   }
 
   async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    return this.keys
-      .map((key) => {
-        const { r, s } = key.signHash(messageHash);
-        return [r, s];
-      })
-      .flat();
+    return this.keys.map((key) => key.signHash(messageHash)).flat();
   }
 }
 
@@ -132,8 +126,8 @@ export class MultisigSigner extends RawSigner {
 
   async signRaw(messageHash: string): Promise<ArraySignatureType> {
     const signerSignatures = this.keys.map((key) => {
-      const { r, s } = key.signHash(messageHash);
-      return { signer: key.publicKey, signature_r: r, signature_s: s };
+      const [signature_r, signature_s] = key.signHash(messageHash);
+      return { signer: key.publicKey, signature_r, signature_s };
     });
     return CallData.compile(signerSignatures);
   }
@@ -154,7 +148,7 @@ export class KeyPair extends Signer {
 
   public signHash(messageHash: string) {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
-    return { r: r.toString(), s: s.toString() };
+    return [r.toString(), s.toString()];
   }
 }
 

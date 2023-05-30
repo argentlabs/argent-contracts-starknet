@@ -125,8 +125,8 @@ describe("ArgentAccount", function () {
       const contractAddress = accountContract.address;
 
       const messageHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
-      const signature = newOwner.signHash(messageHash);
-      await accountContract.change_owner(newOwner.publicKey, signature.r, signature.s);
+      const [r, s] = newOwner.signHash(messageHash);
+      await accountContract.change_owner(newOwner.publicKey, r, s);
 
       const ownerResult = await accountContract.get_owner();
       expect(ownerResult).to.equal(newOwner.publicKey);
@@ -169,8 +169,8 @@ describe("ArgentAccount", function () {
       const contractAddress = accountContract.address;
 
       const messageHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
-      const signature = newOwner.signHash(messageHash);
-      await accountContract.change_owner(newOwner.publicKey, signature.r, signature.s);
+      const [r, s] = newOwner.signHash(messageHash);
+      await accountContract.change_owner(newOwner.publicKey, r, s);
 
       const ownerResult = await accountContract.get_owner();
       expect(ownerResult).to.equal(newOwner.publicKey);

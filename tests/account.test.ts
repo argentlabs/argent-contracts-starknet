@@ -227,7 +227,7 @@ describe("ArgentAccount", function () {
     });
   });
 
-  describe.only("change_guardian_backup(new_guardian)", function () {
+  describe("change_guardian_backup(new_guardian)", function () {
     it("Should be possible to change_guardian_backup", async function () {
       const { accountContract } = await deployAccountWithGuardianBackup(argentAccountClassHash);
       const newGuardianBackup = 12n;
@@ -256,7 +256,9 @@ describe("ArgentAccount", function () {
     });
 
     it("Expect the escape to be reset", async function () {
-      const { account, accountContract, owner, guardian } = await deployAccountWithGuardianBackup(argentAccountClassHash);
+      const { account, accountContract, owner, guardian } = await deployAccountWithGuardianBackup(
+        argentAccountClassHash,
+      );
 
       const newOwner = randomKeyPair();
       account.signer = new Signer(guardian?.privateKey);

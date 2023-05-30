@@ -64,7 +64,9 @@ describe("ArgentMultisig: signer storage", function () {
         accountContract.add_signers(0, [newSigner1]),
       );
       // adding a threshold that is greater than the number of signers
-      await expectRevertWithErrorMessage("argent/bad-threshold", () => accountContract.add_signers(5, [newSigner1]));
+      await expectRevertWithErrorMessage("argent/bad-threshold", () =>
+        accountContract.add_signers(signersLength + 1, [newSigner1]),
+      );
     });
   });
 
@@ -316,5 +318,39 @@ describe("ArgentMultisig: signer storage", function () {
     await expectRevertWithErrorMessage("argent/invalid-zero-signer", () =>
       accountContract.replace_signer(signers[0], 0n),
     );
+  });
+  describe("replace_signers(signer_to_remove, signer_to_add)", function () {
+    it("Should replace one signer", async function () {
+      const threshold = 1;
+      const signersLength = 3;
+
+      const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      
+      const initialThreshold = await accountContract.get_threshold();
+      expect(initialThreshold).to.be.equal(BigInt(threshold));
+
+      const newThreshold = 2;
+      await expectEvent(() => accountContract.change_threshold(newThreshold), {
+        from_address: accountContract.address,
+        keys: ["ConfigurationUpdated"],
+        data: CallData.compile([newThreshold, 3, [], []]),
+      });
+      const updatedThreshold = await accountContract.get_threshold();
+      expect(updatedThreshold).to.be.equal(BigInt(newThreshold));
+    });
+
+    it("Expect 'argent/invalid-threshold' or 'argent/bad-threshold' if threshold is not correctly set (0 or > no. owners)", async function () {
+      const threshold = 1;
+      const signersLength = 3;
+
+      const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+
+      // adding a threshold that is greater than the number of signers
+      await expectRevertWithErrorMessage("argent/bad-threshold", () =>
+        accountContract.change_threshold(signersLength + 1),
+      );
+      // adding a 0 threshold
+      await expectRevertWithErrorMessage("argent/invalid-threshold", () => accountContract.change_threshold(0));
+    });
   });
 });

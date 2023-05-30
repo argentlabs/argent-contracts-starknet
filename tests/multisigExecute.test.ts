@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Contract, num } from "starknet";
+import { CallData, Contract } from "starknet";
 import {
   MultisigSigner,
   declareContract,
@@ -41,13 +41,12 @@ describe("ArgentMultisig: Execute", function () {
     const finalNumber = await testDappContract.get_number(account.address);
     expect(finalNumber).to.equal(42n);
 
-    const expectedReturnCall = [num.toHex(finalNumber)];
-    const expectedReturnData = [num.toHex(call.length), num.toHex(expectedReturnCall.length), ...expectedReturnCall];
+    const expectedReturnCallLen = 1;
 
     await expectEvent(receipt, {
       from_address: account.address,
       keys: ["TransactionExecuted"],
-      data: [receipt.transaction_hash, ...expectedReturnData],
+      data: CallData.compile([receipt.transaction_hash, call.length, expectedReturnCallLen, finalNumber]),
     });
   });
 

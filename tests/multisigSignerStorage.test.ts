@@ -313,6 +313,8 @@ describe("ArgentMultisig: signer storage", function () {
       accountContract.replace_signer(signers[0], signers[0]),
     );
     // replacing a signer with 0
-    await expectRevertWithErrorMessage("argent/invalid-zero-signer", () => accountContract.replace_signer(signers[0], 0n));
+    await expectRevertWithErrorMessage("argent/invalid-zero-signer", () =>
+      accountContract.replace_signer(signers[0], 0n),
+    );
   });
 });

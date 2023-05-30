@@ -1,5 +1,6 @@
 import { expect } from "chai";
-import { declareContract, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
+import { CallData } from "starknet";
+import { declareContract, expectEvent, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: signer storage", function () {
@@ -29,10 +30,15 @@ describe("ArgentMultisig: signer storage", function () {
       const isNewSigner1 = await accountContract.is_signer(newSigner1);
       expect(isNewSigner1).to.be.true;
 
-      await accountContract.add_signers(threshold, [newSigner2]);
+      const expectedNewSignerCount = 3;
+      const addedSignersLen = 1;
+      const removedSignersLen = 0;
 
-      const isSigner2 = await accountContract.is_signer(newSigner2);
-      expect(isSigner2).to.be.true;
+      await expectEvent(() => accountContract.add_signers(threshold, [newSigner2]), {
+        from_address: accountContract.address,
+        keys: ["ConfigurationUpdated"],
+        data: CallData.compile([threshold, expectedNewSignerCount, addedSignersLen, newSigner2, removedSignersLen]),
+      });
     });
 
     it("Expect 'argent/already-a-signer' when adding a new signer already in the linked list", async function () {
@@ -54,7 +60,15 @@ describe("ArgentMultisig: signer storage", function () {
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await accountContract.remove_signers(threshold, [signers[0]]);
+      const expectedNewSignerCount = 2;
+      const addedSignersLen = 0;
+      const removedSignersLen = 1;
+
+      await expectEvent(() => accountContract.remove_signers(threshold, [signers[0]]), {
+        from_address: accountContract.address,
+        keys: ["ConfigurationUpdated"],
+        data: CallData.compile([threshold, expectedNewSignerCount, addedSignersLen, removedSignersLen, signers[0]]),
+      });
 
       const isSigner0 = await accountContract.is_signer(signers[0]);
       expect(isSigner0).to.be.false;
@@ -205,7 +219,22 @@ describe("ArgentMultisig: signer storage", function () {
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await accountContract.replace_signer(signers[0], newSigner);
+      const expectedNewSignerCount = 1;
+      const addedSignersLen = 1;
+      const removedSignersLen = 1;
+
+      await expectEvent(() => accountContract.replace_signer(signers[0], newSigner), {
+        from_address: accountContract.address,
+        keys: ["ConfigurationUpdated"],
+        data: CallData.compile([
+          threshold,
+          expectedNewSignerCount,
+          addedSignersLen,
+          newSigner,
+          removedSignersLen,
+          signers[0],
+        ]),
+      });
 
       const isNewSigner = await accountContract.is_signer(newSigner);
       expect(isNewSigner).to.be.true;

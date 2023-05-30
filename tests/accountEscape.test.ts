@@ -322,7 +322,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
       await setTime(randomTime);
       const oldGuardian = await accountContract.get_guardian();
-      expect(oldGuardian).to.equal(guardian?.publicKey ?? 0);
+      expect(oldGuardian).to.equal(guardian.publicKey);
       await accountContract.trigger_escape_guardian(randomAddress);
       await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
 

@@ -48,7 +48,7 @@ describe("ArgentAccount", function () {
     expect(ownerAddress).to.equal(owner.publicKey);
 
     const guardianAddress = await accountContract.get_guardian();
-    expect(guardianAddress).to.equal(guardian?.publicKey ?? 0n);
+    expect(guardianAddress).to.equal(guardian.publicKey);
 
     const guardianBackupAddress = await accountContract.get_guardian_backup();
     expect(guardianBackupAddress).to.equal(0n);

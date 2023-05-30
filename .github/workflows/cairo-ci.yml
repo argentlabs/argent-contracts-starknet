@@ -43,7 +43,7 @@ jobs:
       - name: Step 5 - Check formatting
         run: cairo-format --check --recursive ./contracts
 
-  approvers:
+  contract-approvers:
     runs-on: ubuntu-latest
     steps:
       - name: Step 1 - Check out main branch
@@ -53,6 +53,6 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Step 3 - Check approvers count
-        run: yarn ts-node scripts/check-contract-approvers.ts 3
+        run: yarn ts-node ./scripts/check-contract-approvers.ts 3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

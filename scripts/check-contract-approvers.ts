@@ -24,7 +24,7 @@ exec("gh pr view --json files,reviews", (err, stdout, stderr) => {
   const approvals = reviews.filter(({ state }) => state === "APPROVED").map(({ author }) => author.login);
   const approvers = new Set(approvals).size;
   if (approvers < minApprovers) {
-    console.error(`Need at least ${minApprovers} approvers for smart contract changes, got ${approvals.length}`);
+    console.error(`\nNeed at least ${minApprovers} approvers for smart contract changes, got ${approvals.length}\n`);
     return process.exit(1);
   } else {
     console.log(`✨ ${approvers} approvers for smart contract changes`);

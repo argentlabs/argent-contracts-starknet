@@ -33,7 +33,7 @@ describe("ArgentMultisig: Execute", function () {
     expect(initalNumber).to.equal(0n);
 
     testDappContract.connect(account);
-    const { transaction_hash } = await testDappContract.set_number(42);
+    const { transaction_hash } = await testDappContract.increase_number(42);
     const response = await account.waitForTransaction(transaction_hash);
 
     const finalNumber = await testDappContract.get_number(account.address);

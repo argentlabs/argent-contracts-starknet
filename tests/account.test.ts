@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, Signer, ec, hash } from "starknet";
+import { CallData, hash } from "starknet";
 import {
   ArgentSigner,
   ConcatSigner,
@@ -28,7 +28,7 @@ describe("ArgentAccount", function () {
     const { accountContract, owner } = await deployAccountWithoutGuardian(argentAccountClassHash);
 
     const ownerAddress = await accountContract.get_owner();
-    expect(ownerAddress).to.equal(BigInt(owner.publicKey));
+    expect(ownerAddress).to.equal(owner.publicKey);
     const guardianAddress = await accountContract.get_guardian();
     expect(guardianAddress).to.equal(0n);
     const guardianBackupAddress = await accountContract.get_guardian_backup();
@@ -49,10 +49,10 @@ describe("ArgentAccount", function () {
     const { accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
 
     const ownerAddress = await accountContract.get_owner();
-    expect(ownerAddress).to.equal(BigInt(owner.publicKey));
+    expect(ownerAddress).to.equal(owner.publicKey);
 
     const guardianAddress = await accountContract.get_guardian();
-    expect(guardianAddress).to.equal(BigInt(guardian?.publicKey ?? 0n));
+    expect(guardianAddress).to.equal(guardian.publicKey);
 
     const guardianBackupAddress = await accountContract.get_guardian_backup();
     expect(guardianBackupAddress).to.equal(0n);
@@ -72,7 +72,7 @@ describe("ArgentAccount", function () {
 
     const guardianBackupBefore = await accountContract.get_guardian_backup();
     expect(guardianBackupBefore).to.equal(0n);
-    account.signer = new ArgentSigner(owner.privateKey, guardian?.privateKey);
+    account.signer = new ArgentSigner(owner, guardian);
     await accountContract.change_guardian_backup(42);
 
     const guardianBackupAfter = await accountContract.get_guardian_backup();
@@ -81,24 +81,22 @@ describe("ArgentAccount", function () {
 
   it("Should sign messages from OWNER and BACKUP_GUARDIAN when there is a GUARDIAN and a BACKUP", async function () {
     const guardianBackup = randomKeyPair();
-    // const guardianBackupPrivateKey = randomPrivateKey();
-    // const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
     const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
 
     const guardianBackupBefore = await accountContract.get_guardian_backup();
     expect(guardianBackupBefore).to.equal(0n);
 
-    account.signer = new ArgentSigner(owner.privateKey, guardian?.privateKey);
+    account.signer = new ArgentSigner(owner, guardian);
     await accountContract.change_guardian_backup(guardianBackup.publicKey);
 
     const guardianBackupAfter = await accountContract.get_guardian_backup();
-    expect(guardianBackupAfter).to.equal(BigInt(guardianBackup.publicKey));
+    expect(guardianBackupAfter).to.equal(guardianBackup.publicKey);
 
-    account.signer = new ArgentSigner(owner.privateKey, guardianBackup.privateKey);
-    await accountContract.change_guardian("0x42");
+    account.signer = new ArgentSigner(owner, guardianBackup);
+    await accountContract.change_guardian(42n);
 
     const guardianAfter = await accountContract.get_guardian();
-    expect(guardianAfter).to.equal(BigInt("0x42"));
+    expect(guardianAfter).to.equal(42n);
   });
 
   it("Expect 'argent/invalid-signature-length' when signing a transaction with OWNER, GUARDIAN and BACKUP", async function () {
@@ -106,11 +104,7 @@ describe("ArgentAccount", function () {
       argentAccountClassHash,
     );
 
-    account.signer = new ConcatSigner([
-      owner.privateKey,
-      guardian?.privateKey as string,
-      guardianBackup?.privateKey as string,
-    ]);
+    account.signer = new ConcatSigner([owner, guardian, guardianBackup]);
 
     await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
       accountContract.change_guardian("0x42"),
@@ -130,12 +124,12 @@ describe("ArgentAccount", function () {
       const chainId = await provider.getChainId();
       const contractAddress = accountContract.address;
 
-      const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
-      const signature = ec.starkCurve.sign(msgHash, newOwner.privateKey);
-      await accountContract.change_owner(newOwner.publicKey, signature.r, signature.s);
+      const messageHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
+      const [r, s] = newOwner.signHash(messageHash);
+      await accountContract.change_owner(newOwner.publicKey, r, s);
 
-      const owner_result = await accountContract.get_owner();
-      expect(owner_result).to.equal(BigInt(newOwner.publicKey));
+      const ownerResult = await accountContract.get_owner();
+      expect(ownerResult).to.equal(newOwner.publicKey);
     });
 
     it("Expect 'argent/only-self' when called from another account", async function () {
@@ -159,28 +153,27 @@ describe("ArgentAccount", function () {
       const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
 
       const newOwner = randomKeyPair();
-      account.signer = new Signer(guardian?.privateKey);
+      account.signer = guardian;
 
       await setTime(42);
       await accountContract.trigger_escape_owner(newOwner.publicKey);
       const escape = await accountContract.get_escape();
       expect(escape.escape_type).to.equal(ESCAPE_TYPE_OWNER);
       expect(escape.ready_at).to.equal(42n + ESCAPE_SECURITY_PERIOD);
-      expect(escape.new_signer).to.equal(BigInt(newOwner.publicKey));
+      expect(escape.new_signer).to.equal(newOwner.publicKey);
       await increaseTime(10);
 
-      account.signer = new ArgentSigner(owner.privateKey, guardian?.privateKey);
+      account.signer = new ArgentSigner(owner, guardian);
       const changeOwnerSelector = hash.getSelectorFromName("change_owner");
       const chainId = await provider.getChainId();
       const contractAddress = accountContract.address;
-      const ownerPublicKey = ec.starkCurve.getStarkKey(owner.privateKey);
 
-      const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, ownerPublicKey]);
-      const signature = ec.starkCurve.sign(msgHash, newOwner.privateKey);
-      await accountContract.change_owner(newOwner.publicKey, signature.r, signature.s);
+      const messageHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
+      const [r, s] = newOwner.signHash(messageHash);
+      await accountContract.change_owner(newOwner.publicKey, r, s);
 
-      const owner_result = await accountContract.get_owner();
-      expect(owner_result).to.equal(BigInt(newOwner.publicKey));
+      const ownerResult = await accountContract.get_owner();
+      expect(ownerResult).to.equal(newOwner.publicKey);
 
       const escapeReset = await accountContract.get_escape();
       expect(escapeReset.escape_type).to.equal(0n);

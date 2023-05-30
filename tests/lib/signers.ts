@@ -7,8 +7,8 @@ import {
   DeployAccountSignerDetails,
   InvocationsSignerDetails,
   Signature,
+  Signer,
   SignerInterface,
-  WeierstrassSignatureType,
   ec,
   encode,
   hash,
@@ -28,8 +28,8 @@ abstract class RawSigner implements SignerInterface {
   }
 
   public async signMessage(typedDataArgument: typedData.TypedData, accountAddress: string): Promise<Signature> {
-    const msgHash = typedData.getMessageHash(typedDataArgument, accountAddress);
-    return this.signRaw(msgHash);
+    const messageHash = typedData.getMessageHash(typedDataArgument, accountAddress);
+    return this.signRaw(messageHash);
   }
 
   public async signTransaction(
@@ -43,7 +43,7 @@ abstract class RawSigner implements SignerInterface {
     // now use abi to display decoded data somewhere, but as this signer is headless, we can't do that
     const calldata = transaction.getExecuteCalldata(transactions, transactionsDetail.cairoVersion);
 
-    const msgHash = hash.calculateTransactionHash(
+    const messageHash = hash.calculateTransactionHash(
       transactionsDetail.walletAddress,
       transactionsDetail.version,
       calldata,
@@ -51,7 +51,7 @@ abstract class RawSigner implements SignerInterface {
       transactionsDetail.chainId,
       transactionsDetail.nonce,
     );
-    return this.signRaw(msgHash);
+    return this.signRaw(messageHash);
   }
 
   public async signDeployAccountTransaction({
@@ -64,7 +64,7 @@ abstract class RawSigner implements SignerInterface {
     chainId,
     nonce,
   }: DeployAccountSignerDetails) {
-    const msgHash = hash.calculateDeployAccountTransactionHash(
+    const messageHash = hash.calculateDeployAccountTransactionHash(
       contractAddress,
       classHash,
       CallData.compile(constructorCalldata),
@@ -75,14 +75,14 @@ abstract class RawSigner implements SignerInterface {
       nonce,
     );
 
-    return this.signRaw(msgHash);
+    return this.signRaw(messageHash);
   }
 
   public async signDeclareTransaction(
     // contractClass: ContractClass,  // Should be used once class hash is present in ContractClass
     { classHash, senderAddress, chainId, maxFee, version, nonce, compiledClassHash }: DeclareSignerDetails,
   ) {
-    const msgHash = hash.calculateDeclareTransactionHash(
+    const messageHash = hash.calculateDeclareTransactionHash(
       classHash,
       senderAddress,
       version,
@@ -92,47 +92,30 @@ abstract class RawSigner implements SignerInterface {
       compiledClassHash,
     );
 
-    return this.signRaw(msgHash);
+    return this.signRaw(messageHash);
   }
 }
 
 export class ArgentSigner extends RawSigner {
-  constructor(public ownerPrivateKey: string = randomKeyPair().privateKey, public guardianPrivateKey?: string) {
+  constructor(public owner: KeyPair = randomKeyPair(), public guardian?: KeyPair) {
     super();
   }
 
-  public getOwnerKey(): string {
-    return ec.starkCurve.getStarkKey(this.ownerPrivateKey);
-  }
-
-  public getGuardianKey(): string | null {
-    if (this.guardianPrivateKey) {
-      return ec.starkCurve.getStarkKey(this.guardianPrivateKey);
+  public async signRaw(messageHash: string): Promise<ArraySignatureType> {
+    if (this.guardian) {
+      return new ConcatSigner([this.owner, this.guardian]).signRaw(messageHash);
     }
-    return null;
-  }
-
-  public async signRaw(msgHash: string): Promise<ArraySignatureType> {
-    if (this.guardianPrivateKey) {
-      return new ConcatSigner([this.ownerPrivateKey, this.guardianPrivateKey]).signRaw(msgHash);
-    }
-    const ownerSignature = ec.starkCurve.sign(msgHash, this.ownerPrivateKey) as WeierstrassSignatureType;
-    return [ownerSignature.r.toString(), ownerSignature.s.toString()];
+    return this.owner.signHash(messageHash);
   }
 }
 
 export class ConcatSigner extends RawSigner {
-  constructor(public privateKeys: string[]) {
+  constructor(public keys: KeyPair[]) {
     super();
   }
 
-  async signRaw(msgHash: string): Promise<ArraySignatureType> {
-    return this.privateKeys
-      .map((privateKey) => {
-        const signature = ec.starkCurve.sign(msgHash, privateKey);
-        return [signature.r.toString(), signature.s.toString()];
-      })
-      .flat();
+  async signRaw(messageHash: string): Promise<ArraySignatureType> {
+    return this.keys.map((key) => key.signHash(messageHash)).flat();
   }
 }
 
@@ -141,24 +124,34 @@ export class MultisigSigner extends RawSigner {
     super();
   }
 
-  async signRaw(msgHash: string): Promise<ArraySignatureType> {
-    const signerSignatures = this.keys.map(({ privateKey, publicKey: signer }) => {
-      const { r, s } = ec.starkCurve.sign(msgHash, privateKey);
-      return { signer, signature_r: r.toString(), signature_s: s.toString() };
+  async signRaw(messageHash: string): Promise<ArraySignatureType> {
+    const signerSignatures = this.keys.map((key) => {
+      const [signature_r, signature_s] = key.signHash(messageHash);
+      return { signer: key.publicKey, signature_r, signature_s };
     });
     return CallData.compile(signerSignatures);
   }
 }
 
-export interface KeyPair {
-  readonly publicKey: string;
-  readonly privateKey: string;
+export class KeyPair extends Signer {
+  constructor() {
+    super(`0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`);
+  }
+
+  public get privateKey() {
+    return BigInt(this.pk as string);
+  }
+
+  public get publicKey() {
+    return BigInt(ec.starkCurve.getStarkKey(this.pk));
+  }
+
+  public signHash(messageHash: string) {
+    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
+    return [r.toString(), s.toString()];
+  }
 }
 
-export const randomKeyPair = () => {
-  const privateKey = "0x" + encode.buf2hex(ec.starkCurve.utils.randomPrivateKey());
-  const publicKey = ec.starkCurve.getStarkKey(privateKey);
-  return { publicKey, privateKey };
-};
+export const randomKeyPair = () => new KeyPair();
 
 export const randomKeyPairs = (length: number) => Array.from({ length }, randomKeyPair);

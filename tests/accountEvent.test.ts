@@ -1,4 +1,4 @@
-import { CallData, Signer, ec, hash, num, uint256 } from "starknet";
+import { CallData, hash, num, uint256 } from "starknet";
 import {
   ArgentSigner,
   ESCAPE_SECURITY_PERIOD,
@@ -37,7 +37,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'EscapeOwnerTriggered(ready_at, new_owner)' on trigger_escape_owner", async function () {
     const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
-    account.signer = new Signer(guardian?.privateKey);
+    account.signer = guardian;
 
     const newOwner = "42";
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
@@ -52,7 +52,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'OwnerEscaped(new_signer)' on escape_owner", async function () {
     const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
-    account.signer = new Signer(guardian?.privateKey);
+    account.signer = guardian;
 
     const newOwner = "42";
     await setTime(42);
@@ -69,7 +69,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'EscapeGuardianTriggered(ready_at, new_owner)' on trigger_escape_guardian", async function () {
     const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
-    account.signer = new Signer(owner.privateKey);
+    account.signer = owner;
 
     const newGuardian = "42";
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
@@ -84,7 +84,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'GuardianEscaped(new_signer)' on escape_guardian", async function () {
     const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
-    account.signer = new Signer(owner.privateKey);
+    account.signer = owner;
     const newGuardian = "42";
     await setTime(42);
 
@@ -107,12 +107,12 @@ describe("ArgentAccount: events", function () {
     const contractAddress = accountContract.address;
 
     const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
-    const signature = ec.starkCurve.sign(msgHash, newOwner.privateKey);
+    const [r, s] = newOwner.signHash(msgHash);
 
-    await expectEvent(() => accountContract.change_owner(newOwner.publicKey, signature.r, signature.s), {
+    await expectEvent(() => accountContract.change_owner(newOwner.publicKey, r, s), {
       from_address: accountContract.address,
       keys: ["OwnerChanged"],
-      data: [newOwner.publicKey],
+      data: [newOwner.publicKey.toString()],
     });
   });
 
@@ -157,11 +157,11 @@ describe("ArgentAccount: events", function () {
   describe("Expect 'EscapeCanceled()'", function () {
     it("Expected on cancel_escape", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
-      account.signer = new Signer(owner.privateKey);
+      account.signer = owner;
 
       await accountContract.trigger_escape_guardian(42);
 
-      account.signer = new ArgentSigner(owner.privateKey, guardian?.privateKey);
+      account.signer = new ArgentSigner(owner, guardian);
       await expectEvent(() => accountContract.cancel_escape(), {
         from_address: account.address,
         keys: ["EscapeCanceled"],
@@ -171,7 +171,7 @@ describe("ArgentAccount: events", function () {
 
     it("Expected on trigger_escape_owner", async function () {
       const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
-      account.signer = new Signer(guardian?.privateKey);
+      account.signer = guardian;
 
       await accountContract.trigger_escape_owner(42);
 
@@ -184,7 +184,7 @@ describe("ArgentAccount: events", function () {
 
     it("Expected on trigger_escape_guardian", async function () {
       const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
-      account.signer = new Signer(owner.privateKey);
+      account.signer = owner;
 
       await accountContract.trigger_escape_guardian(42);
 

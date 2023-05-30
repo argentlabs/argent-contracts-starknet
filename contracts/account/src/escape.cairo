@@ -9,7 +9,7 @@ use array::{ArrayTrait, SpanTrait};
 
 #[derive(Drop, Copy, Serde, PartialEq)]
 enum EscapeStatus {
-    /// No escape triggered, or it was canceled
+    /// No escape triggered, or it was canceled.
     None: (),
     /// Escape was triggered and it's waiting for the `escapeSecurityPeriod`
     NotReady: (),

@@ -13,7 +13,6 @@ import {
   increaseTime,
   provider,
   randomKeyPair,
-  setTime,
 } from "./lib";
 
 describe("ArgentAccount", function () {
@@ -140,7 +139,6 @@ describe("ArgentAccount", function () {
       const newOwner = randomKeyPair();
       account.signer = guardian;
 
-      await setTime(42);
       await accountContract.trigger_escape_owner(newOwner.publicKey);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
@@ -196,7 +194,6 @@ describe("ArgentAccount", function () {
       const newOwner = randomKeyPair();
       const newGuardian = 12n;
 
-      await setTime(42);
       await accountContract.trigger_escape_owner(newOwner.publicKey);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
@@ -247,7 +244,6 @@ describe("ArgentAccount", function () {
       account.signer = guardian;
       const newGuardian = 12n;
 
-      await setTime(42);
       await accountContract.trigger_escape_owner(newOwner.publicKey);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);

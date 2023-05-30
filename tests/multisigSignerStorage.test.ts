@@ -47,15 +47,23 @@ describe("ArgentMultisig: signer storage", function () {
 
       const newSigner1 = BigInt(randomKeyPair().publicKey);
 
+      // adding a signer that is already an owner
       await expectRevertWithErrorMessage("argent/already-a-signer", () =>
         accountContract.add_signers(threshold, [signers[1]]),
       );
+      // adding two of the same signers in the same call
+      await expectRevertWithErrorMessage("argent/already-a-signer", () =>
+        accountContract.add_signers(threshold, [newSigner1, newSigner1]),
+      );
+      // adding a zero signer
       await expectRevertWithErrorMessage("argent/invalid-zero-signer", () =>
         accountContract.add_signers(threshold, [0n]),
       );
+      // adding a zero threshold
       await expectRevertWithErrorMessage("argent/invalid-threshold", () =>
         accountContract.add_signers(0, [newSigner1]),
       );
+      // adding a threshold that is greater than the number of signers
       await expectRevertWithErrorMessage("argent/bad-threshold", () => accountContract.add_signers(5, [newSigner1]));
     });
   });
@@ -193,26 +201,30 @@ describe("ArgentMultisig: signer storage", function () {
       expect(isSigner1).to.be.false;
     });
 
-    it("Expect 'argent/not-a-signer' when removing a non-existent signer", async function () {
+    it("Expect revert message under different conditions ('not-a-signer', invalid-zero-signer', 'bad/invalid-threshold')", async function () {
       const threshold = 1;
       const signersLength = 3;
 
       const nonSigner = randomKeyPair().publicKey;
 
-      const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
+      // removing a non-signer
       await expectRevertWithErrorMessage("argent/not-a-signer", () =>
         accountContract.remove_signers(threshold, [nonSigner]),
       );
-    });
-
-    it("Expect 'argent/bad-threshold' when new threshold is invalid (< number of remaining signers)", async function () {
-      const threshold = 1;
-      const signersLength = 3;
-
-      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
-
+      // removing a 0 signer
+      await expectRevertWithErrorMessage("argent/not-a-signer", () => accountContract.remove_signers(threshold, [0n]));
+      // removing same signer twice in one call
+      await expectRevertWithErrorMessage("argent/not-a-signer", () =>
+        accountContract.remove_signers(threshold, [signers[0], signers[0]]),
+      );
+      // removing a signer and updating threshold > owners
       await expectRevertWithErrorMessage("argent/bad-threshold", () => accountContract.remove_signers(3, [signers[1]]));
+      // removing a signer and updating threshold to 0
+      await expectRevertWithErrorMessage("argent/invalid-threshold", () =>
+        accountContract.remove_signers(0, [signers[1]]),
+      );
     });
   });
   describe("replace_signers(signer_to_remove, signer_to_add)", function () {

@@ -191,9 +191,9 @@ describe("ArgentAccount", function () {
 
     it("Expect the escape to be reset", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
-
-      const newOwner = randomKeyPair();
       account.signer = guardian;
+      
+      const newOwner = randomKeyPair();
       const newGuardian = 12n;
 
       await setTime(42);

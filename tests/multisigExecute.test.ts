@@ -85,7 +85,7 @@ describe("ArgentMultisig: Execute", function () {
     expect(finalNumber).to.equal(42n);
   });
 
-  it("Should be able to execute multiples transactions using multiple owners when (signer_list > 1, threshold > 1)", async function () {
+  it("Should be able to execute multiple transactions using multiple owners when (signer_list > 1, threshold > 1)", async function () {
     const threshold = 3;
     const signersLength = 5;
 

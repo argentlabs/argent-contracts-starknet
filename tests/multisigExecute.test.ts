@@ -23,7 +23,7 @@ describe("ArgentMultisig: Execute", function () {
     testDappContract = await loadContract(contract_address);
   });
 
-  it.only("Should be able to execute a transaction using one owner when (signer_list = 1, threshold = 1)", async function () {
+  it("Should be able to execute a transaction using one owner when (signer_list = 1, threshold = 1)", async function () {
     const threshold = 1;
     const signersLength = 1;
 

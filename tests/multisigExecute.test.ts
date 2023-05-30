@@ -1,6 +1,13 @@
 import { expect } from "chai";
 import { Contract, num } from "starknet";
-import { MultisigSigner, declareContract, deployer, expectEvent, expectRevertWithErrorMessage, loadContract } from "./lib";
+import {
+  MultisigSigner,
+  declareContract,
+  deployer,
+  expectEvent,
+  expectRevertWithErrorMessage,
+  loadContract,
+} from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: Execute", function () {
@@ -26,30 +33,23 @@ describe("ArgentMultisig: Execute", function () {
       const initalNumber = await testDappContract.get_number(account.address);
       expect(initalNumber).to.equal(0n);
 
-      const call = [
-        testDappContract.populateTransaction.increase_number(42),
-      ]
+      const call = [testDappContract.populateTransaction.increase_number(42)];
 
       const execute = await account.execute(call);
-      
+
       const receipt = await account.waitForTransaction(execute.transaction_hash);
 
       const finalNumber = await testDappContract.get_number(account.address);
       expect(finalNumber).to.equal(42n);
 
       const expectedReturnCall = [num.toHex(finalNumber)];
-      const expectedReturnData = [
-        num.toHex(call.length),
-        num.toHex(expectedReturnCall.length),
-        ...expectedReturnCall,
-      ];
+      const expectedReturnData = [num.toHex(call.length), num.toHex(expectedReturnCall.length), ...expectedReturnCall];
 
       await expectEvent(receipt, {
         from_address: account.address,
         keys: ["TransactionExecuted"],
         data: [receipt.transaction_hash, ...expectedReturnData],
       });
-      
     });
 
     it("Should be able to execute a transaction using one owner when (signer_list > 1, threshold = 1) ", async function () {
@@ -85,7 +85,7 @@ describe("ArgentMultisig: Execute", function () {
       const finalNumber = await testDappContract.get_number(account.address);
       expect(finalNumber).to.equal(42n);
     });
-    
+
     it("Should be able to execute multiples transactions using multiple owners when (signer_list > 1, threshold > 1)", async function () {
       const threshold = 3;
       const signersLength = 5;

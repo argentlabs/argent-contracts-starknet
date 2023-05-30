@@ -32,19 +32,17 @@ describe("ArgentMultisig: Execute", function () {
     const initalNumber = await testDappContract.get_number(account.address);
     expect(initalNumber).to.equal(0n);
 
-    const call = [testDappContract.populateTransaction.increase_number(42)];
-
-    const execute = await account.execute(call);
-
-    const receipt = await account.waitForTransaction(execute.transaction_hash);
+    testDappContract.connect(account);
+    const { transaction_hash } = await testDappContract.set_number(42);
+    const response = await account.waitForTransaction(transaction_hash);
 
     const finalNumber = await testDappContract.get_number(account.address);
     expect(finalNumber).to.equal(42n);
 
-    await expectEvent(receipt, {
+    await expectEvent(response, {
       from_address: account.address,
       keys: ["TransactionExecuted"],
-      data: CallData.compile([receipt.transaction_hash, [[finalNumber]]]),
+      data: CallData.compile([response.transaction_hash, [[finalNumber]]]),
     });
   });
 
@@ -104,13 +102,15 @@ describe("ArgentMultisig: Execute", function () {
 
     const { account, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
+    testDappContract.connect(account);
+
     // change order of signers
     const wrongSignerOrder = [keys[1], keys[3], keys[0]];
     account.signer = new MultisigSigner(wrongSignerOrder);
 
     await expectRevertWithErrorMessage(
       "argent/signatures-not-sorted",
-      async () => await account.execute([testDappContract.populateTransaction.set_number(42)]),
+      async () => await testDappContract.set_number(42),
     );
 
     // repeated signers
@@ -119,7 +119,7 @@ describe("ArgentMultisig: Execute", function () {
 
     await expectRevertWithErrorMessage(
       "argent/signatures-not-sorted",
-      async () => await account.execute([testDappContract.populateTransaction.set_number(42)]),
+      async () => await testDappContract.set_number(42),
     );
   });
 });

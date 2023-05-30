@@ -35,19 +35,28 @@ describe("ArgentMultisig: signer storage", function () {
       await expectEvent(() => accountContract.add_signers(threshold, [newSigner2]), {
         from_address: accountContract.address,
         keys: ["ConfigurationUpdated"],
-        data: CallData.compile([threshold, expectedNewSignerCount,[newSigner2], []]),
+        data: CallData.compile([threshold, expectedNewSignerCount, [newSigner2], []]),
       });
     });
 
-    it("Expect 'argent/already-a-signer' when adding a new signer already in the linked list", async function () {
+    it("Expect revert message under different conditions ('already-a-signer', invalid-zero-signer', 'bad/invalid-threshold')", async function () {
       const threshold = 1;
       const signersLength = 3;
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
+      const newSigner1 = BigInt(randomKeyPair().publicKey);
+
       await expectRevertWithErrorMessage("argent/already-a-signer", () =>
         accountContract.add_signers(threshold, [signers[1]]),
       );
+      await expectRevertWithErrorMessage("argent/invalid-zero-signer", () =>
+        accountContract.add_signers(threshold, [0n]),
+      );
+      await expectRevertWithErrorMessage("argent/invalid-threshold", () =>
+        accountContract.add_signers(0, [newSigner1]),
+      );
+      await expectRevertWithErrorMessage("argent/bad-threshold", () => accountContract.add_signers(5, [newSigner1]));
     });
   });
 
@@ -220,12 +229,7 @@ describe("ArgentMultisig: signer storage", function () {
       await expectEvent(() => accountContract.replace_signer(signers[0], newSigner), {
         from_address: accountContract.address,
         keys: ["ConfigurationUpdated"],
-        data: CallData.compile([
-          threshold,
-          expectedNewSignerCount,
-          [newSigner],
-          [signers[0]],
-        ]),
+        data: CallData.compile([threshold, expectedNewSignerCount, [newSigner], [signers[0]]]),
       });
 
       const isNewSigner = await accountContract.is_signer(newSigner);

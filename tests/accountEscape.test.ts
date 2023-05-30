@@ -4,6 +4,8 @@ import {
   ArgentWallet,
   ESCAPE_EXPIRY_PERIOD,
   ESCAPE_SECURITY_PERIOD,
+  ESCAPE_TYPE_GUARDIAN,
+  ESCAPE_TYPE_OWNER,
   EscapeStatus,
   KeyPair,
   declareContract,
@@ -21,9 +23,6 @@ import {
 } from "./lib";
 
 describe("ArgentAccount: escape mechanism", function () {
-  const ESCAPE_TYPE_GUARDIAN = 1n;
-  const ESCAPE_TYPE_OWNER = 2n;
-
   let argentAccountClassHash: string;
   let oldArgentAccountClassHash: string;
   let proxyClassHash: string;

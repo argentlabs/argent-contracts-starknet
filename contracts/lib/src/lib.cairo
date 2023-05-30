@@ -15,6 +15,10 @@ use outside_execution::hash_outside_execution_message;
 mod test_dapp;
 use test_dapp::TestDapp;
 
+
+mod array_ext;
+use array_ext::ArrayExtTrait;
+
 // Structures 
 mod calls;
 use calls::Call;

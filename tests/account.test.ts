@@ -226,4 +226,58 @@ describe("ArgentAccount", function () {
       expect(escapeReset.new_signer).to.equal(0n);
     });
   });
+
+  describe.only("change_guardian_backup(new_guardian)", function () {
+    it("Should be possible to change_guardian_backup", async function () {
+      const { accountContract } = await deployAccountWithGuardianBackup(argentAccountClassHash);
+      const newGuardianBackup = 12n;
+      await accountContract.change_guardian_backup(newGuardianBackup);
+
+      await accountContract.get_guardian_backup().should.eventually.equal(newGuardianBackup);
+    });
+
+    it("Should be possible to change_guardian_backup to zero", async function () {
+      const { accountContract } = await deployAccountWithGuardianBackup(argentAccountClassHash);
+      await accountContract.change_guardian_backup(0);
+
+      await accountContract.get_guardian_backup().should.eventually.equal(0n);
+    });
+
+    it("Expect 'argent/only-self' when called from another account", async function () {
+      const { account } = await deployAccountWithGuardianBackup(argentAccountClassHash);
+      const { accountContract } = await deployAccountWithGuardianBackup(argentAccountClassHash);
+      accountContract.connect(account);
+      await expectRevertWithErrorMessage("argent/only-self", () => accountContract.change_guardian_backup(12));
+    });
+
+    it("Expect 'argent/guardian-required'' when guardian == 0 and setting a guardian backup ", async function () {
+      const { accountContract } = await deployAccountWithoutGuardian(argentAccountClassHash);
+      await expectRevertWithErrorMessage("argent/guardian-required", () => accountContract.change_guardian_backup(12));
+    });
+
+    it("Expect the escape to be reset", async function () {
+      const { account, accountContract, owner, guardian } = await deployAccountWithGuardianBackup(argentAccountClassHash);
+
+      const newOwner = randomKeyPair();
+      account.signer = new Signer(guardian?.privateKey);
+      const newGuardian = 12n;
+
+      await setTime(42);
+      await accountContract.trigger_escape_owner(newOwner.publicKey);
+      const escape = await accountContract.get_escape();
+      expect(escape.escape_type).to.equal(ESCAPE_TYPE_OWNER);
+      expect(escape.ready_at).to.equal(42n + ESCAPE_SECURITY_PERIOD);
+      expect(escape.new_signer).to.equal(BigInt(newOwner.publicKey));
+      await increaseTime(10);
+
+      account.signer = new ArgentSigner(owner.privateKey, guardian?.privateKey);
+      await accountContract.change_guardian_backup(newGuardian);
+
+      await accountContract.get_guardian_backup().should.eventually.equal(newGuardian);
+      const escapeReset = await accountContract.get_escape();
+      expect(escapeReset.escape_type).to.equal(0n);
+      expect(escapeReset.ready_at).to.equal(0n);
+      expect(escapeReset.new_signer).to.equal(0n);
+    });
+  });
 });

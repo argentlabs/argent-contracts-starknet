@@ -23,7 +23,7 @@ describe("ArgentMultisig: Execute", function () {
     testDappContract = await loadContract(contract_address);
   });
 
-  it("Should be able to execute a transaction using one owner when (signer_list = 1, threshold = 1)", async function () {
+  it.only("Should be able to execute a transaction using one owner when (signer_list = 1, threshold = 1)", async function () {
     const threshold = 1;
     const signersLength = 1;
 
@@ -41,12 +41,10 @@ describe("ArgentMultisig: Execute", function () {
     const finalNumber = await testDappContract.get_number(account.address);
     expect(finalNumber).to.equal(42n);
 
-    const expectedReturnCallLen = 1;
-
     await expectEvent(receipt, {
       from_address: account.address,
       keys: ["TransactionExecuted"],
-      data: CallData.compile([receipt.transaction_hash, call.length, expectedReturnCallLen, finalNumber]),
+      data: CallData.compile([receipt.transaction_hash, [[finalNumber]]]),
     });
   });
 

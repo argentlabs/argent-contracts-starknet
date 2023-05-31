@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "test": "tsc && mocha tests/*.test.ts",
-    "test:ci": "tsc && mocha tests/*.test.ts --forbid-only --forbid-pending",
+    "test:ci": "tsc && mocha tests/*.test.ts --forbid-only",
     "test:list": "tsc && mocha --dry-run tests/*.test.ts",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",

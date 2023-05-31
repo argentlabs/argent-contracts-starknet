@@ -471,7 +471,7 @@ mod ArgentAccount {
     /// Semantic version of this contract
     #[view]
     fn get_version() -> Version {
-        Version { major: 0, minor: 3, patch: 1 }
+        Version { major: 0, minor: 3, patch: 0 }
     }
 
     /// Deprecated method for compatibility reasons

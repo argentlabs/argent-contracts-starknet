@@ -26,7 +26,7 @@ fn execute_multicall_simple() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/multicall-failed', 2, 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/multicall-failed', 2, 'test dapp reverted', 'ENTRYPOINT_FAILED'))]
 fn execute_multicall_at_one() {
     let calldataDeploy = ArrayTrait::new();
     let (address0, _) = deploy_syscall(

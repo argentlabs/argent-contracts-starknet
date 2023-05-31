@@ -37,6 +37,9 @@ describe("ArgentMultisig: signer storage", function () {
         keys: ["ConfigurationUpdated"],
         data: CallData.compile([threshold, expectedNewSignerCount, [newSigner2], []]),
       });
+
+      const isSigner2 = await accountContract.is_signer(newSigner2);
+      expect(isSigner2).to.be.true;
     });
 
     it("Expect revert message under different conditions ('already-a-signer', invalid-zero-signer', 'bad/invalid-threshold')", async function () {

@@ -433,8 +433,7 @@ mod ArgentAccount {
         }
 
         let mut data_span = data.span();
-        let calls = serde::Serde::<Array<Call>>::deserialize(ref data_span)
-            .expect('argent/invalid-calls');
+        let calls: Array<Call> = Serde::deserialize(ref data_span).expect('argent/invalid-calls');
         assert(data_span.is_empty(), 'argent/invalid-calls');
 
         assert_no_self_call(calls.span(), get_contract_address());
@@ -472,7 +471,7 @@ mod ArgentAccount {
     /// Semantic version of this contract
     #[view]
     fn get_version() -> Version {
-        Version { major: 0, minor: 3, patch: 0 }
+        Version { major: 0, minor: 3, patch: 1 }
     }
 
     /// Deprecated method for compatibility reasons

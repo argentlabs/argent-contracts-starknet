@@ -30,7 +30,7 @@ mod ArgentMultisig {
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION_MAJOR: u8 = 0;
     const VERSION_MINOR: u8 = 1;
-    const VERSION_PATCH: u8 = 0;
+    const VERSION_PATCH: u8 = 1;
     const VERSION_COMPAT: felt252 = '0.1.0';
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;

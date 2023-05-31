@@ -8,10 +8,9 @@ use traits::Into;
 
 
 // Eventually this will be implemented in the cairo core
-impl SpanSerde<T,
-impl TSerde: Serde<T>,
-impl TDrop: Drop<T>,
-impl TCopy: Copy<T>> of Serde<Span<T>> {
+impl SpanSerde<
+    T, impl TSerde: Serde<T>, impl TDrop: Drop<T>, impl TCopy: Copy<T>
+> of Serde<Span<T>> {
     fn serialize(self: @Span<T>, ref output: Array<felt252>) {
         (*self).len().serialize(ref output);
         serialize_array_helper(*self, ref output);

@@ -206,7 +206,8 @@ mod ArgentAccount {
 
         let block_timestamp = get_block_timestamp();
         assert(
-            outside_execution.execute_after < block_timestamp & block_timestamp < outside_execution.execute_before,
+            outside_execution.execute_after < block_timestamp
+                & block_timestamp < outside_execution.execute_before,
             'argent/invalid-timestamp'
         );
         let nonce = outside_execution.nonce;
@@ -432,9 +433,8 @@ mod ArgentAccount {
         }
 
         let mut data_span = data.span();
-        let calls = serde::Serde::<Array<Call>>::deserialize(
-            ref data_span
-        ).expect('argent/invalid-calls');
+        let calls = serde::Serde::<Array<Call>>::deserialize(ref data_span)
+            .expect('argent/invalid-calls');
         assert(data_span.is_empty(), 'argent/invalid-calls');
 
         assert_no_self_call(calls.span(), get_contract_address());
@@ -581,9 +581,8 @@ mod ArgentAccount {
                     }
 
                     let mut calldata: Span<felt252> = call.calldata.span();
-                    let new_owner: felt252 = Serde::deserialize(
-                        ref calldata
-                    ).expect('argent/invalid-calldata');
+                    let new_owner: felt252 = Serde::deserialize(ref calldata)
+                        .expect('argent/invalid-calldata');
                     assert(calldata.is_empty(), 'argent/invalid-calldata');
                     assert(new_owner != 0, 'argent/null-owner');
                     assert_guardian_set();
@@ -620,9 +619,8 @@ mod ArgentAccount {
                         owner_escape_attempts::write(current_attempts + 1);
                     }
                     let mut calldata: Span<felt252> = call.calldata.span();
-                    let new_guardian: felt252 = Serde::deserialize(
-                        ref calldata
-                    ).expect('argent/invalid-calldata');
+                    let new_guardian: felt252 = Serde::deserialize(ref calldata)
+                        .expect('argent/invalid-calldata');
                     assert(calldata.is_empty(), 'argent/invalid-calldata');
 
                     if new_guardian == 0 {
@@ -751,7 +749,7 @@ mod ArgentAccount {
         let mut guardian_signature = ArrayTrait::new();
         guardian_signature.append(*full_signature[2]);
         guardian_signature.append(*full_signature[3]);
-        (full_signature.slice(0, 2), full_signature.slice(2, 2))
+        (owner_signature.span(), guardian_signature.span())
     }
 
     fn get_escape_status(escape_ready_at: u64) -> EscapeStatus {
@@ -763,10 +761,9 @@ mod ArgentAccount {
         if block_timestamp < escape_ready_at {
             return EscapeStatus::NotReady(());
         }
-        if escape_ready_at
-            + ESCAPE_EXPIRY_PERIOD <= block_timestamp {
-                return EscapeStatus::Expired(());
-            }
+        if escape_ready_at + ESCAPE_EXPIRY_PERIOD <= block_timestamp {
+            return EscapeStatus::Expired(());
+        }
 
         EscapeStatus::Ready(())
     }

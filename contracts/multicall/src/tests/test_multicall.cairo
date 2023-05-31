@@ -31,7 +31,8 @@ fn execute_multicall_at_one() {
     let calldataDeploy = ArrayTrait::new();
     let (address0, _) = deploy_syscall(
         TestDapp::TEST_CLASS_HASH.try_into().unwrap(), 0, calldataDeploy.span(), false
-    ).unwrap();
+    )
+        .unwrap();
 
     let mut calldata1 = ArrayTrait::new();
     calldata1.append(12);

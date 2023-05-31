@@ -35,7 +35,9 @@ impl StorageAccessEscape of StorageAccess<Escape> {
             Escape {
                 ready_at: storage_read_syscall(
                     address_domain, storage_address_from_base_and_offset(base, 0)
-                )?.try_into().unwrap(),
+                )?
+                    .try_into()
+                    .unwrap(),
                 escape_type: storage_read_syscall(
                     address_domain, storage_address_from_base_and_offset(base, 1)
                 )?,

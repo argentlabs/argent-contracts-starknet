@@ -7,6 +7,10 @@ if (Number.isNaN(minApprovers)) {
 }
 
 exec("gh pr view --json files,reviews", (err, stdout, stderr) => {
+  if (stderr.includes("no pull requests found")) {
+    console.log("✨  Not in a pull request");
+    return;
+  }
   if (stderr) {
     console.error(stderr);
   }
@@ -17,16 +21,16 @@ exec("gh pr view --json files,reviews", (err, stdout, stderr) => {
 
   const contractsChanged = files.map(({ path }) => path).filter((path: string) => path.match(/\.(sol|cairo)$/));
   if (contractsChanged.length === 0) {
-    console.log("✨ No smart contracts changes");
+    console.log("✨  No smart contracts changes");
     return;
   }
 
   const approvals = reviews.filter(({ state }) => state === "APPROVED").map(({ author }) => author.login);
   const approvers = new Set(approvals).size;
   if (approvers < minApprovers) {
-    console.error(`\nNeed at least ${minApprovers} approvers for smart contract changes, got ${approvals.length}\n`);
+    console.error(`\nNeed at least ${minApprovers} approvers for smart contract changes, got ${approvers}\n`);
     return process.exit(1);
   } else {
-    console.log(`✨ ${approvers} approvers for smart contract changes`);
+    console.log(`✨  ${approvers} approvers for smart contract changes`);
   }
 });

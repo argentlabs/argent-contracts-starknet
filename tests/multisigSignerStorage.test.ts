@@ -52,7 +52,7 @@ describe("ArgentMultisig: signer storage", function () {
         );
       });
 
-      it("Expect 'argent/zero-signer' if adding a zero signer", async function () {
+      it("Expect 'argent/zero-signer' when adding a zero signer", async function () {
         const { accountContract, threshold } = await deployMultisig1_3(multisigAccountClassHash);
 
         // adding a zero signer

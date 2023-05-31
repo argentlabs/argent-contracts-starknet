@@ -84,7 +84,6 @@ describe("ArgentMultisig: signer storage", function () {
       });
 
       await accountContract.is_signer(signers[0]).should.eventually.be.false;
-    
     });
 
     it("Should remove middle signer", async function () {
@@ -106,7 +105,6 @@ describe("ArgentMultisig: signer storage", function () {
 
       await accountContract.remove_signers(threshold, [signers[2]]);
       await accountContract.is_signer(signers[2]).should.eventually.be.false;
-      
     });
 
     it("Should remove first and middle signer", async function () {
@@ -120,7 +118,6 @@ describe("ArgentMultisig: signer storage", function () {
       await accountContract.is_signer(signers[0]).should.eventually.be.false;
       await accountContract.is_signer(signers[1]).should.eventually.be.false;
       await accountContract.is_signer(signers[2]).should.eventually.be.true;
-
     });
 
     it("Should remove first and last signer", async function () {
@@ -134,7 +131,6 @@ describe("ArgentMultisig: signer storage", function () {
       await accountContract.is_signer(signers[0]).should.eventually.be.false;
       await accountContract.is_signer(signers[2]).should.eventually.be.false;
       await accountContract.is_signer(signers[1]).should.eventually.be.true;
-
     });
 
     it("Should remove middle and last signer", async function () {
@@ -161,7 +157,6 @@ describe("ArgentMultisig: signer storage", function () {
       await accountContract.is_signer(signers[1]).should.eventually.be.false;
       await accountContract.is_signer(signers[0]).should.eventually.be.false;
       await accountContract.is_signer(signers[2]).should.eventually.be.true;
-
     });
 
     it("Should remove last and first signer", async function () {
@@ -175,7 +170,6 @@ describe("ArgentMultisig: signer storage", function () {
       await accountContract.is_signer(signers[2]).should.eventually.be.false;
       await accountContract.is_signer(signers[0]).should.eventually.be.false;
       await accountContract.is_signer(signers[1]).should.eventually.be.true;
-
     });
 
     it("Should remove last and middle signer", async function () {

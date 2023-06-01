@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, Contract } from "starknet";
+import { CallData, Contract, num } from "starknet";
 import {
   MultisigSigner,
   declareContract,
@@ -57,8 +57,7 @@ describe("ArgentMultisig: Execute", function () {
     const { transaction_hash } = await testDappContract.set_number(42);
     await account.waitForTransaction(transaction_hash);
 
-    const finalNumber = await testDappContract.get_number(account.address);
-    expect(finalNumber).to.equal(42n);
+    testDappContract.get_number(account.address).should.eventually.equal(42n);
   });
 
   it("Should be able to execute a transaction using multiple owners when (signer_list > 1, threshold > 1)", async function () {
@@ -73,8 +72,7 @@ describe("ArgentMultisig: Execute", function () {
     const { transaction_hash } = await testDappContract.set_number(42);
     await account.waitForTransaction(transaction_hash);
 
-    const finalNumber = await testDappContract.get_number(account.address);
-    expect(finalNumber).to.equal(42n);
+    testDappContract.get_number(account.address).should.eventually.equal(42n);
   });
 
   it("Should be able to execute multiple transactions using multiple owners when (signer_list > 1, threshold > 1)", async function () {
@@ -91,8 +89,7 @@ describe("ArgentMultisig: Execute", function () {
 
     await account.waitForTransaction(calls.transaction_hash);
 
-    const finalNumber = await testDappContract.get_number(account.address);
-    expect(finalNumber).to.equal(42n);
+    testDappContract.get_number(account.address).should.eventually.equal(42n);
   });
 
   it("Expect 'argent/signatures-not-sorted' when tx signed in incorrect/repeated order (signer_list > 1, threshold > 1)", async function () {

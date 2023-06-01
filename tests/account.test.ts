@@ -255,4 +255,21 @@ describe("ArgentAccount", function () {
       await hasOngoingEscape(accountContract).should.eventually.be.false;
     });
   });
+
+  it("Expect 'Entry point X not found' when calling the constructor", async function () {
+    const { account } = await deployAccount(argentAccountClassHash);
+    try {
+      const { transaction_hash } = await account.execute({
+        contractAddress: account.address,
+        entrypoint: "constructor",
+        calldata: CallData.compile({ owner: 12, guardian: 13 }),
+      });
+      await provider.waitForTransaction(transaction_hash);
+    } catch (e: any) {
+      const selector = hash.getSelector("constructor");
+      expect(e.toString()).to.contain(
+        `Entry point ${selector} not found in contract with class hash ${argentAccountClassHash}`,
+      );
+    }
+  });
 });

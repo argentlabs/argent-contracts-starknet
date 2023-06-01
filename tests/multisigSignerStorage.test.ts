@@ -255,25 +255,37 @@ describe("ArgentMultisig: signer storage", function () {
       expect(signersList).to.have.ordered.members([signers[0], signers[1], newSigner]);
     });
   });
+  describe("replace_signers(signer_to_remove, signer_to_add)", function () {
+    it("Expect 'argent/not-a-signer' when replacing a non owner", async function () {
+      const nonSigner = randomKeyPair().publicKey;
+      const newSigner = randomKeyPair().publicKey;
 
-  it("Expect revert message under different conditions ('not-a-signer', already-a-signer', 'invalid-zero-signer')", async function () {
-    const nonSigner = randomKeyPair().publicKey;
-    const newSigner = randomKeyPair().publicKey;
+      const { accountContract, signers } = await deployMultisig1_3(multisigAccountClassHash);
+      // trying to replace a non-signer
+      await expectRevertWithErrorMessage("argent/not-a-signer", () =>
+        accountContract.replace_signer(nonSigner, newSigner),
+      );
+    });
+    it("Expect 'argent/already-a-signer' when replacing an owner with one already in the list", async function () {
+      const { accountContract, signers } = await deployMultisig1_3(multisigAccountClassHash);
 
+      // replacing a signer with an existing one
+      await expectRevertWithErrorMessage("argent/already-a-signer", () =>
+        accountContract.replace_signer(signers[0], signers[1]),
+      );
+    });
+    it("Expect 'argent/already-a-signer' when replacing an owner with themselves", async function () {
+      const { accountContract, signers } = await deployMultisig1_3(multisigAccountClassHash);
+
+      // replacing a signer with itself
+      await expectRevertWithErrorMessage("argent/already-a-signer", () =>
+        accountContract.replace_signer(signers[0], signers[0]),
+      );
+    });
+  });
+  it("Expect 'argent/invalid-zero-signer' when replacing an owner with a zero signer", async function () {
     const { accountContract, signers } = await deployMultisig1_3(multisigAccountClassHash);
 
-    // trying to replace a non-signer
-    await expectRevertWithErrorMessage("argent/not-a-signer", () =>
-      accountContract.replace_signer(nonSigner, newSigner),
-    );
-    // replacing a signer with an existing one
-    await expectRevertWithErrorMessage("argent/already-a-signer", () =>
-      accountContract.replace_signer(signers[0], signers[1]),
-    );
-    // replacing a signer with itself
-    await expectRevertWithErrorMessage("argent/already-a-signer", () =>
-      accountContract.replace_signer(signers[0], signers[0]),
-    );
     // replacing a signer with 0
     await expectRevertWithErrorMessage("argent/invalid-zero-signer", () =>
       accountContract.replace_signer(signers[0], 0n),

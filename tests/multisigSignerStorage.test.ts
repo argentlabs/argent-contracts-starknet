@@ -89,47 +89,38 @@ describe("ArgentMultisig: signer storage", function () {
       {
         description: "Should remove first",
         signersToRemove: [0],
-        remainingSigners: [1, 2],
       },
       {
         description: "Should remove middle signer",
         signersToRemove: [1],
-        remainingSigners: [0, 2],
       },
       {
         description: "Should remove last signer",
         signersToRemove: [2],
-        remainingSigners: [0, 1],
       },
       {
         description: "Should remove first and middle signer",
         signersToRemove: [0, 1],
-        remainingSigners: [2],
       },
       {
         description: "Should remove middle and first signer",
         signersToRemove: [1, 0],
-        remainingSigners: [2],
       },
       {
         description: "Should remove first and last signer",
         signersToRemove: [0, 2],
-        remainingSigners: [1],
       },
       {
         description: "Should remove last and first signer",
         signersToRemove: [2, 0],
-        remainingSigners: [1],
       },
       {
         description: "Should remove middle and last signer",
         signersToRemove: [1, 2],
-        remainingSigners: [0],
       },
       {
         description: "Should remove last and middle signer",
         signersToRemove: [2, 1],
-        remainingSigners: [0],
       },
     ];
     it("Should remove first signer and update threshold", async function () {
@@ -152,6 +143,8 @@ describe("ArgentMultisig: signer storage", function () {
       it(testCase.description, async function () {
         const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
 
+        const remainingSigners = signers.filter((_, index) => !testCase.signersToRemove.includes(index));
+
         await accountContract.remove_signers(
           threshold,
           testCase.signersToRemove.map((index) => signers[index]),
@@ -161,8 +154,8 @@ describe("ArgentMultisig: signer storage", function () {
           await accountContract.is_signer(signers[signerIndex]).should.eventually.be.false;
         });
 
-        testCase.remainingSigners.forEach(async (signerIndex) => {
-          await accountContract.is_signer(signers[signerIndex]).should.eventually.be.true;
+        remainingSigners.forEach(async (signerIndex) => {
+          await accountContract.is_signer(signers[Number(signerIndex)]).should.eventually.be.true;
         });
 
         await accountContract.get_threshold().should.eventually.equal(threshold);

@@ -266,10 +266,9 @@ describe("ArgentAccount", function () {
       });
       await provider.waitForTransaction(transaction_hash);
     } catch (e: any) {
+      const selector = hash.getSelector("constructor");
       expect(e.toString()).to.contain(
-        `Entry point ${hash.getSelector(
-          "constructor",
-        )} not found in contract with class hash ${argentAccountClassHash}`,
+        `Entry point ${selector} not found in contract with class hash ${argentAccountClassHash}`,
       );
     }
   });

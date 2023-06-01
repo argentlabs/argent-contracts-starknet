@@ -5,7 +5,6 @@ export async function profileGasUsage({ transaction_hash: txHash }: InvokeFuncti
   const trace: TransactionTraceResponse = await provider.getTransactionTrace(txHash);
   const receipt = await provider.waitForTransaction(txHash);
   const actualFee = num.hexToDecimalString(receipt.actual_fee as string) as unknown as number;
-  // const executionResources = (receipt as any)["execution_resources"];
 
   const executionResourcesByPhase: ExecutionResources[] = [
     trace.validate_invocation!.execution_resources!,

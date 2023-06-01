@@ -12,7 +12,7 @@
     "lint:check": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "profile": "ts-node scripts/account-profile.ts"
+    "profile": "ts-node scripts/profile-account.ts"
   },
   "author": "",
   "license": "ISC",

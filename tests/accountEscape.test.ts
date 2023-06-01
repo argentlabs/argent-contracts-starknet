@@ -430,6 +430,22 @@ describe("ArgentAccount: escape mechanism", function () {
       await hasOngoingEscape(accountContract).should.eventually.be.false;
     });
 
+    it("Expect the escape to be canceled even if expired", async function () {
+      const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
+      account.signer = owner;
+
+      await setTime(randomTime);
+      await accountContract.trigger_escape_guardian(randomAddress);
+      await hasOngoingEscape(accountContract).should.eventually.be.true;
+
+      await setTime(randomTime + ESCAPE_EXPIRY_PERIOD + 1n);
+      account.signer = new ArgentSigner(owner, guardian);
+      await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.Expired);
+      
+      await accountContract.cancel_escape();
+      await hasOngoingEscape(accountContract).should.eventually.be.false;
+    });
+
     it("Expect 'argent/only-self' when called from another account", async function () {
       const { account } = await deployAccount(argentAccountClassHash);
       const { accountContract } = await deployAccount(argentAccountClassHash);

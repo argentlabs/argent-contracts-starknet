@@ -1,7 +1,13 @@
 import { expect } from "chai";
 import { CallData } from "starknet";
-import { declareContract, expectEvent, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
-import { deployMultisig, deployMultisig1_3 } from "./lib/multisig";
+import {
+  declareContract,
+  deployMultisig,
+  deployMultisig1_3,
+  expectEvent,
+  expectRevertWithErrorMessage,
+  randomKeyPair,
+} from "./lib";
 
 describe("ArgentMultisig: signer storage", function () {
   let multisigAccountClassHash: string;

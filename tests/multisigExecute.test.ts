@@ -34,15 +34,14 @@ describe("ArgentMultisig: Execute", function () {
 
     testDappContract.connect(account);
     const { transaction_hash } = await testDappContract.increase_number(42);
-    const response = await account.waitForTransaction(transaction_hash);
 
     const finalNumber = await testDappContract.get_number(account.address);
     expect(finalNumber).to.equal(42n);
 
-    await expectEvent(response, {
+    await expectEvent(transaction_hash, {
       from_address: account.address,
       keys: ["TransactionExecuted"],
-      data: CallData.compile([response.transaction_hash, [[finalNumber]]]),
+      data: CallData.compile([transaction_hash, [[num.toHex(finalNumber)]]])
     });
   });
 

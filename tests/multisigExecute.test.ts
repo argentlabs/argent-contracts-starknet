@@ -89,7 +89,7 @@ describe("ArgentMultisig: Execute", function () {
     await testDappContract.get_number(account.address).should.eventually.equal(42n);
   });
 
-  it("Expect 'argent/signatures-not-sorted' when tx signed in incorrect/repeated order (signer_list > 1, threshold > 1)", async function () {
+  it("Expect 'argent/signatures-not-sorted' when signed tx is given in the wrong order (signer_list > 1, threshold > 1)", async function () {
     const threshold = 3;
     const signersLength = 5;
 
@@ -105,6 +105,15 @@ describe("ArgentMultisig: Execute", function () {
       "argent/signatures-not-sorted",
       async () => await testDappContract.set_number(42),
     );
+  });
+
+  it("Expect 'argent/signatures-not-sorted' when tx is signed by one owner twice (signer_list > 1, threshold > 1)", async function () {
+    const threshold = 3;
+    const signersLength = 5;
+
+    const { account, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+
+    testDappContract.connect(account);
 
     // repeated signers
     const repeatedSigners = [keys[0], keys[0], keys[1]];

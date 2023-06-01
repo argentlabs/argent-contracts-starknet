@@ -85,113 +85,88 @@ describe("ArgentMultisig: signer storage", function () {
   });
 
   describe("remove_signers(new_threshold, signers_to_remove)", function () {
-    it("Should remove first signer", async function () {
-      const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
-
-      const expectedNewSignerCount = 2;
-
-      await expectEvent(() => accountContract.remove_signers(threshold, [signers[0]]), {
-        from_address: accountContract.address,
-        keys: ["ConfigurationUpdated"],
-        data: CallData.compile([threshold, expectedNewSignerCount, [], [signers[0]]]),
-      });
-
-      await accountContract.is_signer(signers[0]).should.eventually.be.false;
-      await accountContract.get_threshold().should.eventually.equal(threshold);
-    });
-
+    const testCases = [
+      {
+        description: "Should remove first",
+        signersToRemove: [0],
+        remainingSigners: [1, 2],
+      },
+      {
+        description: "Should remove middle signer",
+        signersToRemove: [1],
+        remainingSigners: [0, 2],
+      },
+      {
+        description: "Should remove last signer",
+        signersToRemove: [2],
+        remainingSigners: [0, 1],
+      },
+      {
+        description: "Should remove first and middle signer",
+        signersToRemove: [0, 1],
+        remainingSigners: [2],
+      },
+      {
+        description: "Should remove middle and first signer",
+        signersToRemove: [1, 0],
+        remainingSigners: [2],
+      },
+      {
+        description: "Should remove first and last signer",
+        signersToRemove: [0, 2],
+        remainingSigners: [1],
+      },
+      {
+        description: "Should remove last and first signer",
+        signersToRemove: [2, 0],
+        remainingSigners: [1],
+      },
+      {
+        description: "Should remove middle and last signer",
+        signersToRemove: [1, 2],
+        remainingSigners: [0],
+      },
+      {
+        description: "Should remove last and middle signer",
+        signersToRemove: [2, 1],
+        remainingSigners: [0],
+      },
+    ];
     it("Should remove first signer and update threshold", async function () {
       const { accountContract, signers } = await deployMultisig1_3(multisigAccountClassHash);
 
-      const newThreshold = 1n;
+      const newThreshold = 2n;
+      const expectedNewSignerCount = 2;
 
-      await accountContract.remove_signers(newThreshold, [signers[0]]);
+      await expectEvent(() => accountContract.remove_signers(newThreshold, [signers[0]]), {
+        from_address: accountContract.address,
+        keys: ["ConfigurationUpdated"],
+        data: CallData.compile([newThreshold, expectedNewSignerCount, [], [signers[0]]]),
+      });
 
       await accountContract.is_signer(signers[0]).should.eventually.be.false;
       await accountContract.get_threshold().should.eventually.equal(newThreshold);
     });
 
-    it("Should remove middle signer", async function () {
-      const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
+    testCases.forEach((testCase) => {
+      it(testCase.description, async function () {
+        const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
 
-      await accountContract.remove_signers(threshold, [signers[1]]);
+        await accountContract.remove_signers(
+          threshold,
+          testCase.signersToRemove.map((index) => signers[index]),
+        );
 
-      accountContract.is_signer(signers[1]).should.eventually.be.false;
-      await accountContract.get_threshold().should.eventually.equal(threshold);
-    });
+        testCase.signersToRemove.forEach(async (signerIndex) => {
+          await accountContract.is_signer(signers[signerIndex]).should.eventually.be.false;
+        });
 
-    it("Should remove last signer", async function () {
-      const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
+        testCase.remainingSigners.forEach(async (signerIndex) => {
+          await accountContract.is_signer(signers[signerIndex]).should.eventually.be.true;
+        });
 
-      await accountContract.remove_signers(threshold, [signers[2]]);
-      await accountContract.is_signer(signers[2]).should.eventually.be.false;
-      await accountContract.get_threshold().should.eventually.equal(threshold);
-    });
-
-    it("Should remove first and middle signer", async function () {
-      const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
-
-      await accountContract.remove_signers(threshold, [signers[0], signers[1]]);
-
-      await accountContract.is_signer(signers[0]).should.eventually.be.false;
-      await accountContract.is_signer(signers[1]).should.eventually.be.false;
-      await accountContract.is_signer(signers[2]).should.eventually.be.true;
-      await accountContract.get_threshold().should.eventually.equal(threshold);
-    });
-
-    it("Should remove first and last signer", async function () {
-      const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
-
-      await accountContract.remove_signers(threshold, [signers[0], signers[2]]);
-
-      await accountContract.is_signer(signers[0]).should.eventually.be.false;
-      await accountContract.is_signer(signers[2]).should.eventually.be.false;
-      await accountContract.is_signer(signers[1]).should.eventually.be.true;
-      await accountContract.get_threshold().should.eventually.equal(threshold);
-    });
-
-    it("Should remove middle and last signer", async function () {
-      const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
-
-      await accountContract.remove_signers(threshold, [signers[1], signers[2]]);
-
-      await accountContract.is_signer(signers[1]).should.eventually.be.false;
-      await accountContract.is_signer(signers[2]).should.eventually.be.false;
-      await accountContract.is_signer(signers[0]).should.eventually.be.true;
-      await accountContract.get_threshold().should.eventually.equal(threshold);
-    });
-
-    it("Should remove middle and first signer", async function () {
-      const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
-
-      await accountContract.remove_signers(threshold, [signers[1], signers[0]]);
-
-      await accountContract.is_signer(signers[1]).should.eventually.be.false;
-      await accountContract.is_signer(signers[0]).should.eventually.be.false;
-      await accountContract.is_signer(signers[2]).should.eventually.be.true;
-      await accountContract.get_threshold().should.eventually.equal(threshold);
-    });
-
-    it("Should remove last and first signer", async function () {
-      const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
-
-      await accountContract.remove_signers(threshold, [signers[2], signers[0]]);
-
-      await accountContract.is_signer(signers[2]).should.eventually.be.false;
-      await accountContract.is_signer(signers[0]).should.eventually.be.false;
-      await accountContract.is_signer(signers[1]).should.eventually.be.true;
-      await accountContract.get_threshold().should.eventually.equal(threshold);
-    });
-
-    it("Should remove last and middle signer", async function () {
-      const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
-
-      await accountContract.remove_signers(threshold, [signers[2], signers[1]]);
-
-      await accountContract.is_signer(signers[2]).should.eventually.be.false;
-      await accountContract.is_signer(signers[1]).should.eventually.be.false;
-      await accountContract.is_signer(signers[0]).should.eventually.be.true;
-      await accountContract.get_threshold().should.eventually.equal(threshold);
+        await accountContract.get_threshold().should.eventually.equal(threshold);
+      });
     });
 
     describe("Test all possible revert errors when removing signers", function () {

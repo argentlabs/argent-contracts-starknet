@@ -441,7 +441,7 @@ describe("ArgentAccount: escape mechanism", function () {
       await setTime(randomTime + ESCAPE_EXPIRY_PERIOD + 1n);
       account.signer = new ArgentSigner(owner, guardian);
       await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.Expired);
-      
+
       await accountContract.cancel_escape();
       await hasOngoingEscape(accountContract).should.eventually.be.false;
     });

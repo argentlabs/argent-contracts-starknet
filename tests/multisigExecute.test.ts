@@ -29,8 +29,7 @@ describe("ArgentMultisig: Execute", function () {
 
     const { account } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-    const initalNumber = await testDappContract.get_number(account.address);
-    expect(initalNumber).to.equal(0n);
+    await testDappContract.get_number(account.address).should.eventually.equal(0n);
 
     testDappContract.connect(account);
     const { transaction_hash } = await testDappContract.increase_number(42);
@@ -54,10 +53,9 @@ describe("ArgentMultisig: Execute", function () {
     account.signer = new MultisigSigner(keys.slice(0, 1));
 
     testDappContract.connect(account);
-    const { transaction_hash } = await testDappContract.set_number(42);
-    await account.waitForTransaction(transaction_hash);
+    await testDappContract.set_number(42);
 
-    testDappContract.get_number(account.address).should.eventually.equal(42n);
+    await testDappContract.get_number(account.address).should.eventually.equal(42n);
   });
 
   it("Should be able to execute a transaction using multiple owners when (signer_list > 1, threshold > 1)", async function () {
@@ -69,10 +67,9 @@ describe("ArgentMultisig: Execute", function () {
     account.signer = new MultisigSigner(keys.slice(0, 3));
 
     testDappContract.connect(account);
-    const { transaction_hash } = await testDappContract.set_number(42);
-    await account.waitForTransaction(transaction_hash);
+    await testDappContract.set_number(42);
 
-    testDappContract.get_number(account.address).should.eventually.equal(42n);
+    await testDappContract.get_number(account.address).should.eventually.equal(42n);
   });
 
   it("Should be able to execute multiple transactions using multiple owners when (signer_list > 1, threshold > 1)", async function () {
@@ -89,7 +86,7 @@ describe("ArgentMultisig: Execute", function () {
 
     await account.waitForTransaction(calls.transaction_hash);
 
-    testDappContract.get_number(account.address).should.eventually.equal(42n);
+    await testDappContract.get_number(account.address).should.eventually.equal(42n);
   });
 
   it("Expect 'argent/signatures-not-sorted' when tx signed in incorrect/repeated order (signer_list > 1, threshold > 1)", async function () {

@@ -10,7 +10,7 @@ export interface MultisigWallet {
   accountContract: Contract;
   keys: KeyPair[];
   signers: bigint[]; // public keys
-  threshold: number;
+  threshold: bigint;
   receipt: GetTransactionReceiptResponse;
 }
 
@@ -37,7 +37,7 @@ export async function deployMultisig(
   const accountContract = await loadContract(account.address);
   account.signer = new MultisigSigner(keys.slice(0, threshold));
   accountContract.connect(account);
-  return { account, accountContract, keys, signers, receipt, threshold };
+  return { account, accountContract, keys, signers, receipt, threshold: BigInt(threshold) };
 }
 
 export async function deployMultisig1_3(classHash: string, deploymentIndexes: number[] = [0]): Promise<MultisigWallet> {

@@ -35,6 +35,7 @@ describe("ArgentMultisig: signer storage", function () {
         data: CallData.compile([threshold, expectedNewSignerCount, [newSigner2], []]),
       });
       await accountContract.is_signer(newSigner2).should.eventually.be.true;
+      await accountContract.get_threshold().should.eventually.equal(BigInt(threshold));
     });
     describe("Test all possible revert errors when adding signers", function () {
       it("Expect 'argent/already-a-signer' if adding an owner already in the list", async function () {
@@ -90,18 +91,18 @@ describe("ArgentMultisig: signer storage", function () {
       });
 
       await accountContract.is_signer(signers[0]).should.eventually.be.false;
-      await accountContract.get_threshold().should.eventually.equal(BigInt(threshold));
+      await accountContract.get_threshold().should.eventually.equal(threshold);
     });
 
     it("Should remove first signer and update threshold", async function () {
-      const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
+      const { accountContract, signers } = await deployMultisig1_3(multisigAccountClassHash);
 
-      const newThreshold = 1;
+      const newThreshold = 1n;
 
       await accountContract.remove_signers(newThreshold, [signers[0]]);
 
       await accountContract.is_signer(signers[0]).should.eventually.be.false;
-      await accountContract.get_threshold().should.eventually.equal(BigInt(newThreshold));
+      await accountContract.get_threshold().should.eventually.equal(newThreshold);
     });
 
     it("Should remove middle signer", async function () {
@@ -110,7 +111,7 @@ describe("ArgentMultisig: signer storage", function () {
       await accountContract.remove_signers(threshold, [signers[1]]);
 
       accountContract.is_signer(signers[1]).should.eventually.be.false;
-      await accountContract.get_threshold().should.eventually.equal(BigInt(threshold));
+      await accountContract.get_threshold().should.eventually.equal(threshold);
     });
 
     it("Should remove last signer", async function () {
@@ -118,7 +119,7 @@ describe("ArgentMultisig: signer storage", function () {
 
       await accountContract.remove_signers(threshold, [signers[2]]);
       await accountContract.is_signer(signers[2]).should.eventually.be.false;
-      await accountContract.get_threshold().should.eventually.equal(BigInt(threshold));
+      await accountContract.get_threshold().should.eventually.equal(threshold);
     });
 
     it("Should remove first and middle signer", async function () {
@@ -129,7 +130,7 @@ describe("ArgentMultisig: signer storage", function () {
       await accountContract.is_signer(signers[0]).should.eventually.be.false;
       await accountContract.is_signer(signers[1]).should.eventually.be.false;
       await accountContract.is_signer(signers[2]).should.eventually.be.true;
-      await accountContract.get_threshold().should.eventually.equal(BigInt(threshold));
+      await accountContract.get_threshold().should.eventually.equal(threshold);
     });
 
     it("Should remove first and last signer", async function () {
@@ -140,7 +141,7 @@ describe("ArgentMultisig: signer storage", function () {
       await accountContract.is_signer(signers[0]).should.eventually.be.false;
       await accountContract.is_signer(signers[2]).should.eventually.be.false;
       await accountContract.is_signer(signers[1]).should.eventually.be.true;
-      await accountContract.get_threshold().should.eventually.equal(BigInt(threshold));
+      await accountContract.get_threshold().should.eventually.equal(threshold);
     });
 
     it("Should remove middle and last signer", async function () {
@@ -151,7 +152,7 @@ describe("ArgentMultisig: signer storage", function () {
       await accountContract.is_signer(signers[1]).should.eventually.be.false;
       await accountContract.is_signer(signers[2]).should.eventually.be.false;
       await accountContract.is_signer(signers[0]).should.eventually.be.true;
-      await accountContract.get_threshold().should.eventually.equal(BigInt(threshold));
+      await accountContract.get_threshold().should.eventually.equal(threshold);
     });
 
     it("Should remove middle and first signer", async function () {
@@ -162,7 +163,7 @@ describe("ArgentMultisig: signer storage", function () {
       await accountContract.is_signer(signers[1]).should.eventually.be.false;
       await accountContract.is_signer(signers[0]).should.eventually.be.false;
       await accountContract.is_signer(signers[2]).should.eventually.be.true;
-      await accountContract.get_threshold().should.eventually.equal(BigInt(threshold));
+      await accountContract.get_threshold().should.eventually.equal(threshold);
     });
 
     it("Should remove last and first signer", async function () {
@@ -173,7 +174,7 @@ describe("ArgentMultisig: signer storage", function () {
       await accountContract.is_signer(signers[2]).should.eventually.be.false;
       await accountContract.is_signer(signers[0]).should.eventually.be.false;
       await accountContract.is_signer(signers[1]).should.eventually.be.true;
-      await accountContract.get_threshold().should.eventually.equal(BigInt(threshold));
+      await accountContract.get_threshold().should.eventually.equal(threshold);
     });
 
     it("Should remove last and middle signer", async function () {
@@ -184,7 +185,7 @@ describe("ArgentMultisig: signer storage", function () {
       await accountContract.is_signer(signers[2]).should.eventually.be.false;
       await accountContract.is_signer(signers[1]).should.eventually.be.false;
       await accountContract.is_signer(signers[0]).should.eventually.be.true;
-      await accountContract.get_threshold().should.eventually.equal(BigInt(threshold));
+      await accountContract.get_threshold().should.eventually.equal(threshold);
     });
 
     describe("Test all possible revert errors when removing signers", function () {
@@ -302,16 +303,16 @@ describe("ArgentMultisig: signer storage", function () {
       const { accountContract, threshold } = await deployMultisig1_3(multisigAccountClassHash);
 
       const initialThreshold = await accountContract.get_threshold();
-      expect(initialThreshold).to.equal(BigInt(threshold));
+      expect(initialThreshold).to.equal(threshold);
 
-      const newThreshold = 2;
+      const newThreshold = 2n;
       await expectEvent(() => accountContract.change_threshold(newThreshold), {
         from_address: accountContract.address,
         keys: ["ConfigurationUpdated"],
         data: CallData.compile([newThreshold, 3, [], []]),
       });
       const updatedThreshold = await accountContract.get_threshold();
-      expect(updatedThreshold).to.be.equal(BigInt(newThreshold));
+      expect(updatedThreshold).to.be.equal(newThreshold);
     });
 
     it("Expect 'argent/invalid-threshold' or 'argent/bad-threshold' if threshold is not correctly set (0 or > no. owners)", async function () {

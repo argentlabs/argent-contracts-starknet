@@ -255,12 +255,12 @@ describe("ArgentMultisig: signer storage", function () {
       expect(signersList).to.have.ordered.members([signers[0], signers[1], newSigner]);
     });
   });
-  describe("replace_signers(signer_to_remove, signer_to_add)", function () {
+  describe("Expect revert messages under different conditions when trying to replace an owner", function () {
     it("Expect 'argent/not-a-signer' when replacing a non owner", async function () {
       const nonSigner = randomKeyPair().publicKey;
       const newSigner = randomKeyPair().publicKey;
 
-      const { accountContract, signers } = await deployMultisig1_3(multisigAccountClassHash);
+      const { accountContract } = await deployMultisig1_3(multisigAccountClassHash);
       // trying to replace a non-signer
       await expectRevertWithErrorMessage("argent/not-a-signer", () =>
         accountContract.replace_signer(nonSigner, newSigner),
@@ -282,14 +282,14 @@ describe("ArgentMultisig: signer storage", function () {
         accountContract.replace_signer(signers[0], signers[0]),
       );
     });
-  });
-  it("Expect 'argent/invalid-zero-signer' when replacing an owner with a zero signer", async function () {
-    const { accountContract, signers } = await deployMultisig1_3(multisigAccountClassHash);
+    it("Expect 'argent/invalid-zero-signer' when replacing an owner with a zero signer", async function () {
+      const { accountContract, signers } = await deployMultisig1_3(multisigAccountClassHash);
 
-    // replacing a signer with 0
-    await expectRevertWithErrorMessage("argent/invalid-zero-signer", () =>
-      accountContract.replace_signer(signers[0], 0n),
-    );
+      // replacing a signer with 0
+      await expectRevertWithErrorMessage("argent/invalid-zero-signer", () =>
+        accountContract.replace_signer(signers[0], 0n),
+      );
+    });
   });
   describe("replace_signers(signer_to_remove, signer_to_add)", function () {
     it("Should replace one signer", async function () {

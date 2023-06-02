@@ -135,7 +135,7 @@ describe("ArgentMultisig: signer storage", function () {
       it.only(`Removing at index(es): ${indicesToRemove}`, async function () {
         const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
 
-        const remainingSigners = signers.filter((_, index) => !testCase.signersToRemove.includes(index));
+        const remainingSigners = signers.filter((_, index) => !testCase.signersToRemove.includes(index)).map(Number);
 
         await accountContract.remove_signers(
           threshold,
@@ -147,7 +147,7 @@ describe("ArgentMultisig: signer storage", function () {
         });
 
         remainingSigners.forEach(async (signerIndex) => {
-          await accountContract.is_signer(signers[Number(signerIndex)]).should.eventually.be.true;
+          await accountContract.is_signer(signers[signerIndex]).should.eventually.be.true;
         });
 
         await accountContract.get_threshold().should.eventually.equal(threshold);

@@ -87,7 +87,7 @@ describe("ArgentMultisig: signer storage", function () {
   describe("remove_signers(new_threshold, signers_to_remove)", function () {
     const testCases = [
       {
-        description: "Should remove first",
+        description: "Should remove first signer",
         signersToRemove: [0],
       },
       {

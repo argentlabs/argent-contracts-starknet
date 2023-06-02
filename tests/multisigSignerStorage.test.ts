@@ -132,7 +132,7 @@ describe("ArgentMultisig: signer storage", function () {
 
     testCases.forEach((testCase) => {
       const indicesToRemove = testCase.signersToRemove.join(", ");
-      it.only(`Removing at index(es): ${indicesToRemove}`, async function () {
+      it(`Removing at index(es): ${indicesToRemove}`, async function () {
         const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
 
         const remainingSigners = signers.filter((_, index) => !testCase.signersToRemove.includes(index)).map(Number);

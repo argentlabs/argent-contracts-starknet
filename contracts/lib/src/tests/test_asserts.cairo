@@ -56,9 +56,10 @@ fn test_no_self_call_1() {
     let self = contract_address_const::<42>();
     set_caller_address(self);
     let mut calls = ArrayTrait::new();
-    calls.append(
-        Call { to: contract_address_const::<1>(), selector: 100, calldata: ArrayTrait::new() }
-    );
+    let call1 = Call {
+        to: contract_address_const::<1>(), selector: 100, calldata: ArrayTrait::new()
+    };
+    calls.append(call1);
     asserts::assert_no_self_call(calls.span(), self);
 }
 
@@ -68,12 +69,14 @@ fn test_no_self_call_2() {
     let self = contract_address_const::<42>();
     set_caller_address(self);
     let mut calls = ArrayTrait::new();
-    calls.append(
-        Call { to: contract_address_const::<2>(), selector: 100, calldata: ArrayTrait::new() }
-    );
-    calls.append(
-        Call { to: contract_address_const::<3>(), selector: 200, calldata: ArrayTrait::new() }
-    );
+    let call1 = Call {
+        to: contract_address_const::<2>(), selector: 100, calldata: ArrayTrait::new()
+    };
+    let call2 = Call {
+        to: contract_address_const::<3>(), selector: 200, calldata: ArrayTrait::new()
+    };
+    calls.append(call1);
+    calls.append(call2);
     asserts::assert_no_self_call(calls.span(), self);
 }
 
@@ -95,9 +98,10 @@ fn test_no_self_call_invalid_2() {
     let self = contract_address_const::<42>();
     set_caller_address(self);
     let mut calls = ArrayTrait::new();
-    calls.append(
-        Call { to: contract_address_const::<1>(), selector: 100, calldata: ArrayTrait::new() }
-    );
+    let call1 = Call {
+        to: contract_address_const::<1>(), selector: 100, calldata: ArrayTrait::new()
+    };
+    calls.append(call1);
     calls.append(Call { to: self, selector: 200, calldata: ArrayTrait::new() });
     asserts::assert_no_self_call(calls.span(), self);
 }

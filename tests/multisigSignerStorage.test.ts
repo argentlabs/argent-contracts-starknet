@@ -87,39 +87,30 @@ describe("ArgentMultisig: signer storage", function () {
   describe("remove_signers(new_threshold, signers_to_remove)", function () {
     const testCases = [
       {
-        description: "Should remove first signer",
         signersToRemove: [0],
       },
       {
-        description: "Should remove middle signer",
         signersToRemove: [1],
       },
       {
-        description: "Should remove last signer",
         signersToRemove: [2],
       },
       {
-        description: "Should remove first and middle signer",
         signersToRemove: [0, 1],
       },
       {
-        description: "Should remove middle and first signer",
         signersToRemove: [1, 0],
       },
       {
-        description: "Should remove first and last signer",
         signersToRemove: [0, 2],
       },
       {
-        description: "Should remove last and first signer",
         signersToRemove: [2, 0],
       },
       {
-        description: "Should remove middle and last signer",
         signersToRemove: [1, 2],
       },
       {
-        description: "Should remove last and middle signer",
         signersToRemove: [2, 1],
       },
     ];
@@ -140,7 +131,8 @@ describe("ArgentMultisig: signer storage", function () {
     });
 
     testCases.forEach((testCase) => {
-      it(testCase.description, async function () {
+      const indicesToRemove = testCase.signersToRemove.join(", ");
+      it.only(`Removing at index(es): ${indicesToRemove}`, async function () {
         const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
 
         const remainingSigners = signers.filter((_, index) => !testCase.signersToRemove.includes(index));

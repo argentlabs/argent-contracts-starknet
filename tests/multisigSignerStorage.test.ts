@@ -85,35 +85,7 @@ describe("ArgentMultisig: signer storage", function () {
   });
 
   describe("remove_signers(new_threshold, signers_to_remove)", function () {
-    const testCases = [
-      {
-        signersToRemove: [0],
-      },
-      {
-        signersToRemove: [1],
-      },
-      {
-        signersToRemove: [2],
-      },
-      {
-        signersToRemove: [0, 1],
-      },
-      {
-        signersToRemove: [1, 0],
-      },
-      {
-        signersToRemove: [0, 2],
-      },
-      {
-        signersToRemove: [2, 0],
-      },
-      {
-        signersToRemove: [1, 2],
-      },
-      {
-        signersToRemove: [2, 1],
-      },
-    ];
+    const signersToRemove = [[0], [1], [2], [0, 1], [1, 0], [0, 2], [2, 0], [1, 2], [2, 1]];
     it("Should remove first signer and update threshold", async function () {
       const { accountContract, signers } = await deployMultisig1_3(multisigAccountClassHash);
 
@@ -130,19 +102,19 @@ describe("ArgentMultisig: signer storage", function () {
       await accountContract.get_threshold().should.eventually.equal(newThreshold);
     });
 
-    testCases.forEach((testCase) => {
-      const indicesToRemove = testCase.signersToRemove.join(", ");
+    signersToRemove.forEach((testCase) => {
+      const indicesToRemove = testCase.join(", ");
       it(`Removing at index(es): ${indicesToRemove}`, async function () {
         const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
 
-        const remainingSigners = signers.filter((_, index) => !testCase.signersToRemove.includes(index)).map(Number);
+        const remainingSigners = signers.filter((_, index) => !testCase.includes(index)).map(Number);
 
         await accountContract.remove_signers(
           threshold,
-          testCase.signersToRemove.map((index) => signers[index]),
+          testCase.map((index) => signers[index]),
         );
 
-        testCase.signersToRemove.forEach(async (signerIndex) => {
+        testCase.forEach(async (signerIndex) => {
           await accountContract.is_signer(signers[signerIndex]).should.eventually.be.false;
         });
 

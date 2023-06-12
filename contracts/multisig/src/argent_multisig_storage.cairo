@@ -3,7 +3,7 @@
 // This allows to retrieve the list of owners easily.
 // In terms of storage this will use one storage slot per signer
 // Reading become a bit more expensive for some operations as it need to go through the full list for some operations
-#[contract]
+#[starknet::contract]
 mod MultisigStorage {
     use array::{ArrayTrait, SpanTrait};
     use starknet::ClassHash;

@@ -5,8 +5,8 @@ use asserts::assert_caller_is_null;
 use asserts::assert_correct_tx_version;
 use asserts::assert_correct_declare_version;
 
-mod span_serde;
-use span_serde::SpanSerde;
+// mod span_serde;
+// use span_serde::SpanSerde;
 
 mod outside_execution;
 use outside_execution::OutsideExecution;
@@ -26,7 +26,6 @@ use calls::execute_multicall;
 
 mod version;
 use version::Version;
-
 mod erc165;
 use erc165::{
     ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
@@ -36,15 +35,16 @@ use erc165::{
 mod erc1271;
 use erc1271::{ERC1271_VALIDATED};
 
-#[abi]
-trait IErc165 {
-    fn supports_interface(interface_id: felt252) -> bool;
+#[starknet::interface]
+trait IErc165<TContractState> {
+    fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
 }
 
-#[abi]
-trait IAccountUpgrade {
-    fn execute_after_upgrade(data: Array<felt252>) -> Array::<felt252>;
+#[starknet::interface]
+trait IAccountUpgrade<TContractState> {
+    fn execute_after_upgrade(self: @TContractState, data: Array<felt252>) -> Array::<felt252>;
 }
 
 #[cfg(test)]
 mod tests;
+

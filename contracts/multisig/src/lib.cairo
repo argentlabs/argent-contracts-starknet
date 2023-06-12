@@ -1,6 +1,6 @@
 use lib::Version;
 
-#[abi]
+#[starknet::interface]
 trait IUpgradeTarget {
     /// @dev Logic to execute after an upgrade.
     /// Can only be called by the account after a call to `upgrade`.

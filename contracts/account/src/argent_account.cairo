@@ -11,9 +11,22 @@ trait IExecuteFromOutside<TContractState> {
     ) -> felt252;
 }
 
+// TODO Split in 2 with OLD Interface?
 #[starknet::interface]
 trait IArgentAccount<TContractState> {
     fn get_owner(self: @TContractState) -> felt252;
+    fn get_guardian(self: @TContractState) -> felt252;
+    fn get_guardian_backup(self: @TContractState) -> felt252;
+    fn get_escape(self: @TContractState) -> Escape;
+    /// Semantic version of this contract
+    fn get_version(self: @TContractState) -> Version;
+    /// Deprecated method for compatibility reasons
+    fn getVersion(self: @TContractState) -> felt252;
+    fn get_name(self: @TContractState) -> felt252;
+    /// Deprecated method for compatibility reasons
+    fn getName(self: @TContractState) -> felt252;
+    fn get_guardian_escape_attempts(self: @TContractState) -> u32;
+    fn get_owner_escape_attempts(self: @TContractState) -> u32;
 }
 
 #[starknet::contract]
@@ -500,54 +513,54 @@ mod ArgentAccount {
         fn get_owner(self: @ContractState) -> felt252 {
             self._signer.read()
         }
-    }
 
-    #[view]
-    fn get_guardian(self: @ContractState) -> felt252 {
-        self._guardian.read()
-    }
+        #[view]
+        fn get_guardian(self: @ContractState) -> felt252 {
+            self._guardian.read()
+        }
 
-    #[view]
-    fn get_guardian_backup(self: @ContractState) -> felt252 {
-        self._guardian_backup.read()
-    }
+        #[view]
+        fn get_guardian_backup(self: @ContractState) -> felt252 {
+            self._guardian_backup.read()
+        }
 
-    #[view]
-    fn get_escape(self: @ContractState) -> Escape {
-        self._escape.read()
-    }
+        #[view]
+        fn get_escape(self: @ContractState) -> Escape {
+            self._escape.read()
+        }
 
-    /// Semantic version of this contract
-    #[view]
-    fn get_version(self: @ContractState) -> Version {
-        Version { major: 0, minor: 3, patch: 0 }
-    }
+        /// Semantic version of this contract
+        #[view]
+        fn get_version(self: @ContractState) -> Version {
+            Version { major: 0, minor: 3, patch: 0 }
+        }
 
-    /// Deprecated method for compatibility reasons
-    #[view]
-    fn getVersion(self: @ContractState) -> felt252 {
-        '0.3.0'
-    }
+        /// Deprecated method for compatibility reasons
+        #[view]
+        fn getVersion(self: @ContractState) -> felt252 {
+            '0.3.0'
+        }
 
-    #[view]
-    fn get_name(self: @ContractState) -> felt252 {
-        NAME
-    }
+        #[view]
+        fn get_name(self: @ContractState) -> felt252 {
+            NAME
+        }
 
-    /// Deprecated method for compatibility reasons
-    #[view]
-    fn getName(self: @ContractState) -> felt252 {
-        get_name(self)
-    }
+        /// Deprecated method for compatibility reasons
+        #[view]
+        fn getName(self: @ContractState) -> felt252 {
+            get_name(self)
+        }
 
-    #[view]
-    fn get_guardian_escape_attempts(self: @ContractState) -> u32 {
-        self.guardian_escape_attempts.read()
-    }
+        #[view]
+        fn get_guardian_escape_attempts(self: @ContractState) -> u32 {
+            self.guardian_escape_attempts.read()
+        }
 
-    #[view]
-    fn get_owner_escape_attempts(self: @ContractState) -> u32 {
-        self.owner_escape_attempts.read()
+        #[view]
+        fn get_owner_escape_attempts(self: @ContractState) -> u32 {
+            self.owner_escape_attempts.read()
+        }
     }
 
     /// Current escape if any, and its status

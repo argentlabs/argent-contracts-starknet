@@ -1,5 +1,14 @@
 import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num } from "starknet";
-import { deployer, loadContract, fundAccount, provider, KeyPair, MultisigSigner, randomKeyPair, randomKeyPairs } from ".";
+import {
+  KeyPair,
+  MultisigSigner,
+  deployer,
+  fundAccount,
+  loadContract,
+  provider,
+  randomKeyPair,
+  randomKeyPairs,
+} from ".";
 
 export interface MultisigWallet {
   account: Account;

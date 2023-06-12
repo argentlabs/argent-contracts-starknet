@@ -3,11 +3,11 @@ import { CallData, Contract, num } from "starknet";
 import {
   MultisigSigner,
   declareContract,
+  deployMultisig,
   deployer,
   expectEvent,
   expectRevertWithErrorMessage,
   loadContract,
-  deployMultisig,
 } from "./lib";
 
 describe("ArgentMultisig: Execute", function () {

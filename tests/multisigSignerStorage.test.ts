@@ -47,7 +47,6 @@ describe("ArgentMultisig: signer storage", function () {
       it("Expect 'argent/already-a-signer' if adding an owner already in the list", async function () {
         const { accountContract, signers, threshold } = await deployMultisig1_3(multisigAccountClassHash);
 
-        // adding a signer that is already an owner
         await expectRevertWithErrorMessage("argent/already-a-signer", () =>
           accountContract.add_signers(threshold, [signers[1]]),
         );
@@ -58,7 +57,6 @@ describe("ArgentMultisig: signer storage", function () {
 
         const newSigner1 = randomKeyPair().publicKey;
 
-        // adding two of the same signers in the same call
         await expectRevertWithErrorMessage("argent/already-a-signer", () =>
           accountContract.add_signers(threshold, [newSigner1, newSigner1]),
         );
@@ -72,15 +70,20 @@ describe("ArgentMultisig: signer storage", function () {
         );
       });
 
-      it("Expect 'bad/invalid-threshold' if changing to a zero threshold or threshold > no. owners", async function () {
-        const { accountContract, signers } = await deployMultisig1_3(multisigAccountClassHash);
+      it("Expect 'bad/invalid-threshold' if changing to a zero threshold", async function () {
+        const { accountContract } = await deployMultisig1_3(multisigAccountClassHash);
 
         const newSigner1 = randomKeyPair().publicKey;
-        // adding a zero threshold
         await expectRevertWithErrorMessage("argent/invalid-threshold", () =>
           accountContract.add_signers(0, [newSigner1]),
         );
-        // adding a threshold that is greater than the number of signers
+      });
+
+      it("Expect 'bad/invalid-threshold' if threshold > no. owners", async function () {
+        const { accountContract, signers } = await deployMultisig1_3(multisigAccountClassHash);
+
+        const newSigner1 = randomKeyPair().publicKey;
+
         await expectRevertWithErrorMessage("argent/bad-threshold", () =>
           accountContract.add_signers(signers.length + 2, [newSigner1]),
         );

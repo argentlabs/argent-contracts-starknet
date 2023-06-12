@@ -19,7 +19,7 @@ enum EscapeStatus {
     Expired: ()
 }
 
-#[derive(Drop, Copy, Serde, StorageAccess)]
+#[derive(Drop, Copy, Serde, storage_access::StorageAccess)]
 struct Escape {
     // timestamp for activation of escape mode, 0 otherwise
     ready_at: u64,
@@ -27,35 +27,4 @@ struct Escape {
     escape_type: felt252,
     // new owner or new guardian address
     new_signer: felt252,
-}
-
-impl StorageAccessEscape of StorageAccess<Escape> {
-    fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult<Escape> {
-        Result::Ok(
-            Escape {
-                ready_at: storage_read_syscall(
-                    address_domain, storage_address_from_base_and_offset(base, 0)
-                )?
-                    .try_into()
-                    .unwrap(),
-                escape_type: storage_read_syscall(
-                    address_domain, storage_address_from_base_and_offset(base, 1)
-                )?,
-                new_signer: storage_read_syscall(
-                    address_domain, storage_address_from_base_and_offset(base, 2)
-                )?,
-            }
-        )
-    }
-    fn write(address_domain: u32, base: StorageBaseAddress, value: Escape) -> SyscallResult<()> {
-        storage_write_syscall(
-            address_domain, storage_address_from_base_and_offset(base, 0), value.ready_at.into()
-        )?;
-        storage_write_syscall(
-            address_domain, storage_address_from_base_and_offset(base, 1), value.escape_type
-        )?;
-        storage_write_syscall(
-            address_domain, storage_address_from_base_and_offset(base, 2), value.new_signer
-        )
-    }
 }

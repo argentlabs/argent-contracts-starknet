@@ -1,13 +1,6 @@
 use array::{ArrayTrait, SpanTrait};
-use starknet::{call_contract_syscall, ContractAddress};
+use starknet::{call_contract_syscall, ContractAddress, account::Call};
 use lib::ArrayExtTrait;
-
-#[derive(Drop, Serde)]
-struct Call {
-    to: ContractAddress,
-    selector: felt252,
-    calldata: Array<felt252>,
-}
 
 fn execute_multicall(calls: Span<Call>) -> Array<Span<felt252>> {
     let mut result: Array<Span<felt252>> = ArrayTrait::new();

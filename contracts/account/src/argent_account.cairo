@@ -1,4 +1,13 @@
-#[account_contract]
+use lib::OutsideExecution;
+// TODO Naming interface sucks
+#[starknet::interface]
+trait IExecuteFromOutside<TContractState> {
+    fn execute_from_outside(
+        ref self: TContractState, outside_execution: @OutsideExecution, signature: Array<felt252>
+    ) -> Array<Span<felt252>>;
+}
+
+#[starknet::contract]
 mod ArgentAccount {
     use array::{ArrayTrait, SpanTrait};
     use box::BoxTrait;
@@ -9,17 +18,17 @@ mod ArgentAccount {
     use serde::Serde;
     use starknet::{
         ClassHash, class_hash_const, ContractAddress, get_block_timestamp, get_caller_address,
-        get_contract_address, get_tx_info, VALIDATED, syscalls::replace_class_syscall,
-        ContractAddressIntoFelt252
+        get_execution_info, get_contract_address, get_tx_info, VALIDATED,
+        syscalls::replace_class_syscall, ContractAddressIntoFelt252, account::Call
     };
 
     use account::{Escape, EscapeStatus};
     use lib::{
         assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
-        execute_multicall, Call, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
-        IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait, SpanSerde,
-        OutsideExecution, hash_outside_execution_message, assert_correct_declare_version,
-        ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
+        execute_multicall, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
+        IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait, OutsideExecution,
+        hash_outside_execution_message, assert_correct_declare_version, ERC165_IERC165_INTERFACE_ID,
+        ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
         ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED
     };
 
@@ -55,6 +64,7 @@ mod ArgentAccount {
     //                                           Storage                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    #[storage]
     struct Storage {
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         _signer: felt252, /// Current account owner
@@ -139,12 +149,12 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[constructor]
-    fn constructor(owner: felt252, guardian: felt252) {
+    fn constructor(ref self: ContractState, owner: felt252, guardian: felt252) {
         assert(owner != 0, 'argent/null-owner');
 
-        _signer::write(owner);
-        _guardian::write(guardian);
-        _guardian_backup::write(0);
+        self._signer.write(owner);
+        self._guardian.write(guardian);
+        self._guardian_backup.write(0);
         AccountCreated(get_contract_address(), owner, guardian);
     }
 
@@ -152,82 +162,93 @@ mod ArgentAccount {
     //                                     External functions                                     //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    #[external]
-    fn __validate__(calls: Array<Call>) -> felt252 {
-        assert_caller_is_null();
-        let tx_info = get_tx_info().unbox();
-        assert_valid_calls_and_signature(
-            calls.span(), tx_info.transaction_hash, tx_info.signature, is_from_outside: false
-        );
-        VALIDATED
-    }
+    #[external(v0)]
+    impl AccountContractImpl of starknet::account::AccountContract<ContractState> {
+        fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
+            assert_caller_is_null();
+            let tx_info = get_tx_info().unbox();
+            assert_valid_calls_and_signature(
+                ref self,
+                calls.span(),
+                tx_info.transaction_hash,
+                tx_info.signature,
+                is_from_outside: false
+            );
+            VALIDATED
+        }
 
-    #[external]
-    fn __validate_declare__(class_hash: felt252) -> felt252 {
-        let tx_info = get_tx_info().unbox();
-        assert_correct_declare_version(tx_info.version);
-        assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
-        VALIDATED
+        fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
+            let tx_info = get_tx_info().unbox();
+            assert_correct_declare_version(tx_info.version);
+            assert_valid_span_signature(self, tx_info.transaction_hash, tx_info.signature);
+            VALIDATED
+        }
+
+        fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
+            assert_caller_is_null();
+            let tx_info = get_tx_info().unbox();
+            assert_correct_tx_version(tx_info.version);
+
+            let retdata = execute_multicall(calls.span());
+            TransactionExecuted(tx_info.transaction_hash, retdata.span());
+            retdata
+        }
     }
 
     #[external]
     fn __validate_deploy__(
-        class_hash: felt252, contract_address_salt: felt252, owner: felt252, guardian: felt252
+        self: @ContractState,
+        class_hash: felt252,
+        contract_address_salt: felt252,
+        owner: felt252,
+        guardian: felt252
     ) -> felt252 {
         let tx_info = get_tx_info().unbox();
         assert_correct_tx_version(tx_info.version);
-        assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
+        assert_valid_span_signature(self, tx_info.transaction_hash, tx_info.signature);
         VALIDATED
     }
 
-    #[external]
-    fn __execute__(calls: Array<Call>) -> Array<Span<felt252>> {
-        assert_caller_is_null();
-        let tx_info = get_tx_info().unbox();
-        assert_correct_tx_version(tx_info.version);
 
-        let retdata = execute_multicall(calls.span());
-        TransactionExecuted(tx_info.transaction_hash, retdata.span());
-        retdata
-    }
+    #[external(v0)]
+    impl ExecuteFromOutsideImpl of super::IExecuteFromOutside<ContractState> {
+        /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
+        /// @param outside_execution The parameters of the transaction to execute
+        /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
+        /// @notice This method allows reentrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
+        fn execute_from_outside(
+            ref self: ContractState, outside_execution: @OutsideExecution, signature: Array<felt252>
+        ) -> Array<Span<felt252>> {
+            // Checks
+            if (*outside_execution.caller).into() != 'ANY_CALLER' {
+                assert(get_caller_address() == *outside_execution.caller, 'argent/invalid-caller');
+            }
 
-    /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
-    /// @param outside_execution The parameters of the transaction to execute
-    /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
-    /// @notice This method allows reentrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
-    #[external]
-    fn execute_from_outside(
-        outside_execution: OutsideExecution, signature: Array<felt252>
-    ) -> Array<Span<felt252>> {
-        // Checks
-        if outside_execution.caller.into() != 'ANY_CALLER' {
-            assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
+            let block_timestamp = get_block_timestamp();
+            assert(
+                *outside_execution.execute_after < block_timestamp
+                    && block_timestamp < *outside_execution.execute_before,
+                'argent/invalid-timestamp'
+            );
+            let nonce = *outside_execution.nonce;
+            assert(!self.outside_nonces.read(nonce), 'argent/duplicated-outside-nonce');
+
+            let outside_tx_hash = hash_outside_execution_message(outside_execution);
+
+            let calls = outside_execution.calls.span();
+
+            assert_valid_calls_and_signature(
+                ref self, calls, outside_tx_hash, signature.span(), is_from_outside: true
+            );
+
+            // Effects
+            self.outside_nonces.write(nonce, true);
+
+            // Interactions
+            let retdata = execute_multicall(calls);
+            TransactionExecuted(outside_tx_hash, retdata.span());
+            retdata
         }
-
-        let block_timestamp = get_block_timestamp();
-        assert(
-            outside_execution.execute_after < block_timestamp
-                & block_timestamp < outside_execution.execute_before,
-            'argent/invalid-timestamp'
-        );
-        let nonce = outside_execution.nonce;
-        assert(!outside_nonces::read(nonce), 'argent/duplicated-outside-nonce');
-
-        let outside_tx_hash = hash_outside_execution_message(@outside_execution);
-
-        let calls = outside_execution.calls.span();
-
-        assert_valid_calls_and_signature(
-            calls, outside_tx_hash, signature.span(), is_from_outside: true
-        );
-
-        // Effects
-        outside_nonces::write(nonce, true);
-
-        // Interactions
-        let retdata = execute_multicall(calls);
-        TransactionExecuted(outside_tx_hash, retdata.span());
-        retdata
     }
 
     /// @notice Changes the owner
@@ -239,14 +260,16 @@ mod ArgentAccount {
     /// Signature is the Signed Message of this hash:
     /// hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
     #[external]
-    fn change_owner(new_owner: felt252, signature_r: felt252, signature_s: felt252) {
+    fn change_owner(
+        ref self: ContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252
+    ) {
         assert_only_self();
-        assert_valid_new_owner(new_owner, signature_r, signature_s);
+        assert_valid_new_owner(@self, new_owner, signature_r, signature_s);
 
-        reset_escape();
-        reset_escape_attempts();
+        reset_escape(ref self);
+        reset_escape_attempts(ref self);
 
-        _signer::write(new_owner);
+        self._signer.write(new_owner);
         OwnerChanged(new_owner);
     }
 
@@ -255,17 +278,17 @@ mod ArgentAccount {
     /// @param new_guardian The address of the new guardian, or 0 to disable the guardian
     /// @dev can only be set to 0 if there is no guardian backup set
     #[external]
-    fn change_guardian(new_guardian: felt252) {
+    fn change_guardian(ref self: ContractState, new_guardian: felt252) {
         assert_only_self();
         // There cannot be a guardian_backup when there is no guardian
         if new_guardian == 0 {
-            assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
+            assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
         }
 
-        reset_escape();
-        reset_escape_attempts();
+        reset_escape(ref self);
+        reset_escape_attempts(ref self);
 
-        _guardian::write(new_guardian);
+        self._guardian.write(new_guardian);
         GuardianChanged(new_guardian);
     }
 
@@ -273,14 +296,14 @@ mod ArgentAccount {
     /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
     /// @param new_guardian_backup The address of the new backup guardian, or 0 to disable the backup guardian
     #[external]
-    fn change_guardian_backup(new_guardian_backup: felt252) {
+    fn change_guardian_backup(ref self: ContractState, new_guardian_backup: felt252) {
         assert_only_self();
-        assert_guardian_set();
+        assert_guardian_set(@self);
 
-        reset_escape();
-        reset_escape_attempts();
+        reset_escape(ref self);
+        reset_escape_attempts(ref self);
 
-        _guardian_backup::write(new_guardian_backup);
+        self._guardian_backup.write(new_guardian_backup);
         GuardianBackupChanged(new_guardian_backup);
     }
 
@@ -291,11 +314,11 @@ mod ArgentAccount {
     /// @dev This method assumes that there is a guardian, and that `_newOwner` is not 0.
     /// This must be guaranteed before calling this method, usually when validating the transaction.
     #[external]
-    fn trigger_escape_owner(new_owner: felt252) {
+    fn trigger_escape_owner(ref self: ContractState, new_owner: felt252) {
         assert_only_self();
 
         // no escape if there is a guardian escape triggered by the owner in progress
-        let current_escape = _escape::read();
+        let current_escape = self._escape.read();
         if current_escape.escape_type == ESCAPE_TYPE_GUARDIAN {
             assert(
                 get_escape_status(current_escape.ready_at) == EscapeStatus::Expired(()),
@@ -303,9 +326,11 @@ mod ArgentAccount {
             );
         }
 
-        reset_escape();
+        reset_escape(ref self);
         let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
-        _escape::write(Escape { ready_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: new_owner });
+        self
+            ._escape
+            .write(Escape { ready_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: new_owner });
         EscapeOwnerTriggered(ready_at, new_owner);
     }
 
@@ -317,15 +342,17 @@ mod ArgentAccount {
     /// if there is no guardian backup.
     /// This must be guaranteed before calling this method, usually when validating the transaction
     #[external]
-    fn trigger_escape_guardian(new_guardian: felt252) {
+    fn trigger_escape_guardian(ref self: ContractState, new_guardian: felt252) {
         assert_only_self();
 
-        reset_escape();
+        reset_escape(ref self);
 
         let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
-        _escape::write(
-            Escape { ready_at, escape_type: ESCAPE_TYPE_GUARDIAN, new_signer: new_guardian }
-        );
+        self
+            ._escape
+            .write(
+                Escape { ready_at, escape_type: ESCAPE_TYPE_GUARDIAN, new_signer: new_guardian }
+            );
         EscapeGuardianTriggered(ready_at, new_guardian);
     }
 
@@ -334,21 +361,21 @@ mod ArgentAccount {
     /// @dev This method assumes that there is a guardian, and that the there is an escape for the owner.
     /// This must be guaranteed before calling this method, usually when validating the transaction.
     #[external]
-    fn escape_owner() {
+    fn escape_owner(ref self: ContractState) {
         assert_only_self();
 
-        let current_escape = _escape::read();
+        let current_escape = self._escape.read();
 
         let current_escape_status = get_escape_status(current_escape.ready_at);
         assert(current_escape_status == EscapeStatus::Ready(()), 'argent/invalid-escape');
 
-        reset_escape_attempts();
+        reset_escape_attempts(ref self);
 
         // update owner
-        _signer::write(current_escape.new_signer);
+        self._signer.write(current_escape.new_signer);
         OwnerEscaped(current_escape.new_signer);
         // clear escape
-        _escape::write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
+        self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
     }
 
     /// @notice Completes the escape and changes the guardian after the security period
@@ -356,34 +383,34 @@ mod ArgentAccount {
     /// @dev This method assumes that there is a guardian, and that the there is an escape for the guardian.
     /// This must be guaranteed before calling this method. Usually when validating the transaction.
     #[external]
-    fn escape_guardian() {
+    fn escape_guardian(ref self: ContractState) {
         assert_only_self();
 
-        let current_escape = _escape::read();
+        let current_escape = self._escape.read();
         assert(
             get_escape_status(current_escape.ready_at) == EscapeStatus::Ready(()),
             'argent/invalid-escape'
         );
 
-        reset_escape_attempts();
+        reset_escape_attempts(ref self);
 
         //update guardian
-        _guardian::write(current_escape.new_signer);
+        self._guardian.write(current_escape.new_signer);
         GuardianEscaped(current_escape.new_signer);
         // clear escape
-        _escape::write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
+        self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
     }
 
     /// @notice Cancels an ongoing escape if any.
     /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
     #[external]
-    fn cancel_escape() {
+    fn cancel_escape(ref self: ContractState) {
         assert_only_self();
-        let current_escape = _escape::read();
+        let current_escape = self._escape.read();
         let current_escape_status = get_escape_status(current_escape.ready_at);
         assert(current_escape_status != EscapeStatus::None(()), 'argent/invalid-escape');
-        reset_escape();
-        reset_escape_attempts();
+        reset_escape(ref self);
+        reset_escape_attempts(ref self);
     }
 
     /// @notice Upgrades the implementation of the account
@@ -393,7 +420,9 @@ mod ArgentAccount {
     /// @param calldata Data to pass to the the implementation in `execute_after_upgrade`
     /// @return retdata The data returned by `execute_after_upgrade`
     #[external]
-    fn upgrade(implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
+    fn upgrade(
+        ref self: ContractState, implementation: ClassHash, calldata: Array<felt252>
+    ) -> Array<felt252> {
         assert_only_self();
 
         let supports_interface = IErc165LibraryDispatcher {
@@ -413,19 +442,19 @@ mod ArgentAccount {
     /// Can only be called by the account after a call to `upgrade`.
     /// @param data Generic call data that can be passed to the method for future upgrade logic
     #[external]
-    fn execute_after_upgrade(data: Array<felt252>) -> Array<felt252> {
+    fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
         assert_only_self();
 
         // Check basic invariants
-        assert(_signer::read() != 0, 'argent/null-owner');
-        if _guardian::read() == 0 {
-            assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
+        assert(self._signer.read() != 0, 'argent/null-owner');
+        if self._guardian.read() == 0 {
+            assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
         }
 
-        let implementation = _implementation::read();
+        let implementation = self._implementation.read();
         if implementation != class_hash_const::<0>() {
             replace_class_syscall(implementation).unwrap_syscall();
-            _implementation::write(class_hash_const::<0>());
+            self._implementation.write(class_hash_const::<0>());
         }
 
         if data.is_empty() {
@@ -449,68 +478,68 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[view]
-    fn get_owner() -> felt252 {
-        _signer::read()
+    fn get_owner(self: @ContractState) -> felt252 {
+        self._signer.read()
     }
 
     #[view]
-    fn get_guardian() -> felt252 {
-        _guardian::read()
+    fn get_guardian(self: @ContractState) -> felt252 {
+        self._guardian.read()
     }
 
     #[view]
-    fn get_guardian_backup() -> felt252 {
-        _guardian_backup::read()
+    fn get_guardian_backup(self: @ContractState) -> felt252 {
+        self._guardian_backup.read()
     }
 
     #[view]
-    fn get_escape() -> Escape {
-        _escape::read()
+    fn get_escape(self: @ContractState) -> Escape {
+        self._escape.read()
     }
 
     /// Semantic version of this contract
     #[view]
-    fn get_version() -> Version {
+    fn get_version(self: @ContractState) -> Version {
         Version { major: 0, minor: 3, patch: 0 }
     }
 
     /// Deprecated method for compatibility reasons
     #[view]
-    fn getVersion() -> felt252 {
+    fn getVersion(self: @ContractState) -> felt252 {
         '0.3.0'
     }
 
     #[view]
-    fn get_name() -> felt252 {
+    fn get_name(self: @ContractState) -> felt252 {
         NAME
     }
 
     /// Deprecated method for compatibility reasons
     #[view]
-    fn getName() -> felt252 {
-        get_name()
+    fn getName(self: @ContractState) -> felt252 {
+        get_name(self)
     }
 
     #[view]
-    fn get_guardian_escape_attempts() -> u32 {
-        guardian_escape_attempts::read()
+    fn get_guardian_escape_attempts(self: @ContractState) -> u32 {
+        self.guardian_escape_attempts.read()
     }
 
     #[view]
-    fn get_owner_escape_attempts() -> u32 {
-        owner_escape_attempts::read()
+    fn get_owner_escape_attempts(self: @ContractState) -> u32 {
+        self.owner_escape_attempts.read()
     }
 
     /// Current escape if any, and its status
     #[view]
-    fn get_escape_and_status() -> (Escape, EscapeStatus) {
-        let current_escape = _escape::read();
+    fn get_escape_and_status(self: @ContractState) -> (Escape, EscapeStatus) {
+        let current_escape = self._escape.read();
         (current_escape, get_escape_status(current_escape.ready_at))
     }
 
     // ERC165
     #[view]
-    fn supports_interface(interface_id: felt252) -> bool {
+    fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
         if interface_id == ERC165_IERC165_INTERFACE_ID {
             true
         } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
@@ -526,8 +555,8 @@ mod ArgentAccount {
 
     #[view]
     /// Deprecated method for compatibility reasons
-    fn supportsInterface(interface_id: felt252) -> felt252 {
-        if supports_interface(interface_id) {
+    fn supportsInterface(self: @ContractState, interface_id: felt252) -> felt252 {
+        if supports_interface(self, interface_id) {
             1
         } else {
             0
@@ -536,8 +565,10 @@ mod ArgentAccount {
 
     // ERC1271
     #[view]
-    fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> felt252 {
-        if is_valid_span_signature(hash, signatures.span()) {
+    fn is_valid_signature(
+        self: @ContractState, hash: felt252, signatures: Array<felt252>
+    ) -> felt252 {
+        if is_valid_span_signature(self, hash, signatures.span()) {
             ERC1271_VALIDATED
         } else {
             0
@@ -546,13 +577,17 @@ mod ArgentAccount {
 
     /// Deprecated method for compatibility reasons
     #[view]
-    fn isValidSignature(hash: felt252, signatures: Array<felt252>) -> felt252 {
-        is_valid_signature(hash, signatures)
+    fn isValidSignature(
+        self: @ContractState, hash: felt252, signatures: Array<felt252>
+    ) -> felt252 {
+        is_valid_signature(self, hash, signatures)
     }
 
     /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
     #[view]
-    fn get_outside_execution_message_hash(outside_execution: OutsideExecution) -> felt252 {
+    fn get_outside_execution_message_hash(
+        self: @ContractState, outside_execution: OutsideExecution
+    ) -> felt252 {
         return hash_outside_execution_message(@outside_execution);
     }
 
@@ -561,22 +596,27 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     fn assert_valid_calls_and_signature(
-        calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>, is_from_outside: bool
+        ref self: ContractState,
+        calls: Span<Call>,
+        execution_hash: felt252,
+        signature: Span<felt252>,
+        is_from_outside: bool
     ) {
-        let account_address = get_contract_address();
-        let tx_info = get_tx_info().unbox();
+        let execution_info = get_execution_info().unbox();
+        let account_address = execution_info.contract_address;
+        let tx_info = execution_info.tx_info.unbox();
         assert_correct_tx_version(tx_info.version);
 
         if calls.len() == 1 {
-            let call = calls[0];
+            let call = calls.at(0);
             if *call.to == account_address {
                 let selector = *call.selector;
 
                 if selector == TRIGGER_ESCAPE_OWNER_SELECTOR {
                     if !is_from_outside {
-                        let current_attempts = guardian_escape_attempts::read();
+                        let current_attempts = self.guardian_escape_attempts.read();
                         assert_valid_escape_parameters(current_attempts);
-                        guardian_escape_attempts::write(current_attempts + 1);
+                        self.guardian_escape_attempts.write(current_attempts + 1);
                     }
 
                     let mut calldata: Span<felt252> = call.calldata.span();
@@ -584,22 +624,22 @@ mod ArgentAccount {
                         .expect('argent/invalid-calldata');
                     assert(calldata.is_empty(), 'argent/invalid-calldata');
                     assert(new_owner != 0, 'argent/null-owner');
-                    assert_guardian_set();
+                    assert_guardian_set(@self);
 
-                    let is_valid = is_valid_guardian_signature(execution_hash, signature);
+                    let is_valid = is_valid_guardian_signature(@self, execution_hash, signature);
                     assert(is_valid, 'argent/invalid-guardian-sig');
                     return (); // valid
                 }
                 if selector == ESCAPE_OWNER_SELECTOR {
                     if !is_from_outside {
-                        let current_attempts = guardian_escape_attempts::read();
+                        let current_attempts = self.guardian_escape_attempts.read();
                         assert_valid_escape_parameters(current_attempts);
-                        guardian_escape_attempts::write(current_attempts + 1);
+                        self.guardian_escape_attempts.write(current_attempts + 1);
                     }
 
                     assert(call.calldata.is_empty(), 'argent/invalid-calldata');
-                    assert_guardian_set();
-                    let current_escape = _escape::read();
+                    assert_guardian_set(@self);
+                    let current_escape = self._escape.read();
                     assert(
                         current_escape.escape_type == ESCAPE_TYPE_OWNER, 'argent/invalid-escape'
                     );
@@ -607,15 +647,15 @@ mod ArgentAccount {
                     // upgraded half way through,  then tries to finish the escape in new version
                     assert(current_escape.new_signer != 0, 'argent/null-owner');
 
-                    let is_valid = is_valid_guardian_signature(execution_hash, signature);
+                    let is_valid = is_valid_guardian_signature(@self, execution_hash, signature);
                     assert(is_valid, 'argent/invalid-guardian-sig');
                     return (); // valid
                 }
                 if selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
                     if !is_from_outside {
-                        let current_attempts = owner_escape_attempts::read();
+                        let current_attempts = self.owner_escape_attempts.read();
                         assert_valid_escape_parameters(current_attempts);
-                        owner_escape_attempts::write(current_attempts + 1);
+                        self.owner_escape_attempts.write(current_attempts + 1);
                     }
                     let mut calldata: Span<felt252> = call.calldata.span();
                     let new_guardian: felt252 = Serde::deserialize(ref calldata)
@@ -623,22 +663,22 @@ mod ArgentAccount {
                     assert(calldata.is_empty(), 'argent/invalid-calldata');
 
                     if new_guardian == 0 {
-                        assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
+                        assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
                     }
-                    assert_guardian_set();
-                    let is_valid = is_valid_owner_signature(execution_hash, signature);
+                    assert_guardian_set(@self);
+                    let is_valid = is_valid_owner_signature(@self, execution_hash, signature);
                     assert(is_valid, 'argent/invalid-owner-sig');
                     return (); // valid
                 }
                 if selector == ESCAPE_GUARDIAN_SELECTOR {
                     if !is_from_outside {
-                        let current_attempts = owner_escape_attempts::read();
+                        let current_attempts = self.owner_escape_attempts.read();
                         assert_valid_escape_parameters(current_attempts);
-                        owner_escape_attempts::write(current_attempts + 1);
+                        self.owner_escape_attempts.write(current_attempts + 1);
                     }
                     assert(call.calldata.is_empty(), 'argent/invalid-calldata');
-                    assert_guardian_set();
-                    let current_escape = _escape::read();
+                    assert_guardian_set(@self);
+                    let current_escape = self._escape.read();
 
                     assert(
                         current_escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'argent/invalid-escape'
@@ -647,9 +687,9 @@ mod ArgentAccount {
                     // needed if user started escape in old cairo version and
                     // upgraded half way through, then tries to finish the escape in new version
                     if current_escape.new_signer == 0 {
-                        assert(_guardian_backup::read() == 0, 'argent/backup-should-be-null');
+                        assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
                     }
-                    let is_valid = is_valid_owner_signature(execution_hash, signature);
+                    let is_valid = is_valid_owner_signature(@self, execution_hash, signature);
                     assert(is_valid, 'argent/invalid-owner-sig');
                     return (); // valid
                 }
@@ -660,7 +700,7 @@ mod ArgentAccount {
             assert_no_self_call(calls, account_address);
         }
 
-        assert_valid_span_signature(execution_hash, signature);
+        assert_valid_span_signature(@self, execution_hash, signature);
     }
 
     fn assert_valid_escape_parameters(attempts: u32) {
@@ -669,53 +709,60 @@ mod ArgentAccount {
         assert(attempts < MAX_ESCAPE_ATTEMPTS, 'argent/max-escape-attempts');
     }
 
-    fn is_valid_span_signature(hash: felt252, signatures: Span<felt252>) -> bool {
+    fn is_valid_span_signature(
+        self: @ContractState, hash: felt252, signatures: Span<felt252>
+    ) -> bool {
         let (owner_signature, guardian_signature) = split_signatures(signatures);
-        let is_valid = is_valid_owner_signature(hash, owner_signature);
+        let is_valid = is_valid_owner_signature(self, hash, owner_signature);
         if !is_valid {
             return false;
         }
-        if _guardian::read() == 0 {
+        if self._guardian.read() == 0 {
             guardian_signature.is_empty()
         } else {
-            is_valid_guardian_signature(hash, guardian_signature)
+            is_valid_guardian_signature(self, hash, guardian_signature)
         }
     }
 
-    fn assert_valid_span_signature(hash: felt252, signatures: Span<felt252>) {
+    fn assert_valid_span_signature(self: @ContractState, hash: felt252, signatures: Span<felt252>) {
         let (owner_signature, guardian_signature) = split_signatures(signatures);
-        let is_valid = is_valid_owner_signature(hash, owner_signature);
+        let is_valid = is_valid_owner_signature(self, hash, owner_signature);
         assert(is_valid, 'argent/invalid-owner-sig');
 
-        if _guardian::read() == 0 {
+        if self._guardian.read() == 0 {
             assert(guardian_signature.is_empty(), 'argent/invalid-guardian-sig');
         } else {
             assert(
-                is_valid_guardian_signature(hash, guardian_signature), 'argent/invalid-guardian-sig'
+                is_valid_guardian_signature(self, hash, guardian_signature),
+                'argent/invalid-guardian-sig'
             );
         }
     }
 
-    fn is_valid_owner_signature(hash: felt252, signature: Span<felt252>) -> bool {
+    fn is_valid_owner_signature(
+        self: @ContractState, hash: felt252, signature: Span<felt252>
+    ) -> bool {
         if signature.len() != 2 {
             return false;
         }
         let signature_r = *signature[0];
         let signature_s = *signature[1];
-        check_ecdsa_signature(hash, _signer::read(), signature_r, signature_s)
+        check_ecdsa_signature(hash, self._signer.read(), signature_r, signature_s)
     }
 
-    fn is_valid_guardian_signature(hash: felt252, signature: Span<felt252>) -> bool {
+    fn is_valid_guardian_signature(
+        self: @ContractState, hash: felt252, signature: Span<felt252>
+    ) -> bool {
         if signature.len() != 2 {
             return false;
         }
         let signature_r = *signature[0];
         let signature_s = *signature[1];
-        let is_valid = check_ecdsa_signature(hash, _guardian::read(), signature_r, signature_s);
+        let is_valid = check_ecdsa_signature(hash, self._guardian.read(), signature_r, signature_s);
         if is_valid {
             true
         } else {
-            check_ecdsa_signature(hash, _guardian_backup::read(), signature_r, signature_s)
+            check_ecdsa_signature(hash, self._guardian_backup.read(), signature_r, signature_s)
         }
     }
 
@@ -724,11 +771,13 @@ mod ArgentAccount {
     /// [change_owner selector, chainid, contract address, old_owner]
     /// as specified here: https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
 
-    fn assert_valid_new_owner(new_owner: felt252, signature_r: felt252, signature_s: felt252) {
+    fn assert_valid_new_owner(
+        self: @ContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252
+    ) {
         assert(new_owner != 0, 'argent/null-owner');
         let chain_id = get_tx_info().unbox().chain_id;
         let mut message_hash = TupleSize4LegacyHash::hash(
-            0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), _signer::read())
+            0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), self._signer.read())
         );
         // We now need to hash message_hash with the size of the array: (change_owner selector, chainid, contract address, old_owner)
         // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
@@ -768,25 +817,25 @@ mod ArgentAccount {
     }
 
     #[inline(always)]
-    fn reset_escape() {
-        let current_escape_status = get_escape_status(_escape::read().ready_at);
+    fn reset_escape(ref self: ContractState) {
+        let current_escape_status = get_escape_status(self._escape.read().ready_at);
         if current_escape_status == EscapeStatus::None(()) {
             return ();
         }
-        _escape::write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
+        self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
         if current_escape_status != EscapeStatus::Expired(()) {
             EscapeCanceled();
         }
     }
 
     #[inline(always)]
-    fn assert_guardian_set() {
-        assert(_guardian::read() != 0, 'argent/guardian-required');
+    fn assert_guardian_set(self: @ContractState) {
+        assert(self._guardian.read() != 0, 'argent/guardian-required');
     }
 
     #[inline(always)]
-    fn reset_escape_attempts() {
-        owner_escape_attempts::write(0);
-        guardian_escape_attempts::write(0);
+    fn reset_escape_attempts(ref self: ContractState) {
+        self.owner_escape_attempts.write(0);
+        self.guardian_escape_attempts.write(0);
     }
 }

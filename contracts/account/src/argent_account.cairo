@@ -11,6 +11,11 @@ trait IExecuteFromOutside<TContractState> {
     ) -> felt252;
 }
 
+#[starknet::interface]
+trait IArgentAccount<TContractState> {
+    fn get_owner(self: @TContractState) -> felt252;
+}
+
 #[starknet::contract]
 mod ArgentAccount {
     use array::{ArrayTrait, SpanTrait};
@@ -489,9 +494,12 @@ mod ArgentAccount {
     //                                       View functions                                       //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    #[view]
-    fn get_owner(self: @ContractState) -> felt252 {
-        self._signer.read()
+    #[external(v0)]
+    impl ArgentAccountImpl of super::IArgentAccount<ContractState> {
+        #[view]
+        fn get_owner(self: @ContractState) -> felt252 {
+            self._signer.read()
+        }
     }
 
     #[view]

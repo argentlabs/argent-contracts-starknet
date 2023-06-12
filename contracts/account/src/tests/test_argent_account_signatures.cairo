@@ -2,7 +2,8 @@ use array::{ArrayTrait, SpanTrait};
 
 use account::ArgentAccount;
 use account::tests::{
-    owner_pubkey, guardian_pubkey, initialize_account, initialize_account_without_guardian
+    owner_pubkey, guardian_pubkey, initialize_default_account,
+    initialize_default_account_without_guardian
 };
 
 const message_hash: felt252 = 0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8;
@@ -49,7 +50,7 @@ fn is_valid_signature(hash: felt252, signatures: Array<felt252>) -> bool {
 #[test]
 #[available_gas(2000000)]
 fn valid_no_guardian() {
-    initialize_account_without_guardian();
+    initialize_default_account_without_guardian();
     let signatures = single_signature(owner_r, owner_s);
     assert(is_valid_signature(message_hash, signatures), 'invalid signature');
 }
@@ -57,7 +58,7 @@ fn valid_no_guardian() {
 #[test]
 #[available_gas(2000000)]
 fn valid_with_guardian() {
-    initialize_account();
+    initialize_default_account();
     let signatures = double_signature(owner_r, owner_s, guardian_r, guardian_s);
     assert(is_valid_signature(message_hash, signatures), 'invalid signature');
 }
@@ -74,7 +75,7 @@ fn valid_with_guardian_backup() {
 #[test]
 #[available_gas(2000000)]
 fn invalid_hash_1() {
-    initialize_account_without_guardian();
+    initialize_default_account_without_guardian();
     let signatures = single_signature(owner_r, owner_s);
     assert(!is_valid_signature(0, signatures), 'invalid signature');
 }
@@ -82,7 +83,7 @@ fn invalid_hash_1() {
 #[test]
 #[available_gas(2000000)]
 fn invalid_hash_2() {
-    initialize_account_without_guardian();
+    initialize_default_account_without_guardian();
     let signatures = single_signature(owner_r, owner_s);
     assert(!is_valid_signature(123, signatures), 'invalid signature');
 }
@@ -90,7 +91,7 @@ fn invalid_hash_2() {
 #[test]
 #[available_gas(2000000)]
 fn invalid_owner_without_guardian() {
-    initialize_account_without_guardian();
+    initialize_default_account_without_guardian();
     let signatures = single_signature(0, 0);
     assert(!is_valid_signature(message_hash, signatures), 'invalid signature 1');
     let signatures = single_signature(wrong_owner_r, wrong_owner_s);
@@ -102,7 +103,7 @@ fn invalid_owner_without_guardian() {
 #[test]
 #[available_gas(2000000)]
 fn invalid_owner_with_guardian() {
-    initialize_account();
+    initialize_default_account();
     let signatures = double_signature(0, 0, guardian_r, guardian_s);
     assert(!is_valid_signature(message_hash, signatures), 'invalid signature 1');
     let signatures = double_signature(42, 99, guardian_r, guardian_s);
@@ -116,7 +117,7 @@ fn invalid_owner_with_guardian() {
 #[test]
 #[available_gas(2000000)]
 fn valid_owner_with_invalid_guardian() {
-    initialize_account();
+    initialize_default_account();
     let signatures = double_signature(owner_r, owner_s, 0, 0);
     assert(!is_valid_signature(message_hash, signatures), 'invalid signature 1');
     let signatures = double_signature(owner_r, owner_s, 42, 69);
@@ -130,7 +131,7 @@ fn valid_owner_with_invalid_guardian() {
 #[test]
 #[available_gas(2000000)]
 fn invalid_owner_with_invalid_guardian() {
-    initialize_account();
+    initialize_default_account();
     let signatures = double_signature(0, 0, 0, 0);
     assert(!is_valid_signature(message_hash, signatures), 'invalid signature 1');
     let signatures = double_signature(42, 99, 534, 123);
@@ -149,7 +150,7 @@ fn invalid_owner_with_invalid_guardian() {
 #[available_gas(2000000)]
 #[should_panic(expected: ('argent/invalid-signature-length', ))]
 fn invalid_empty_signature_without_guardian() {
-    initialize_account_without_guardian();
+    initialize_default_account_without_guardian();
     let signatures = ArrayTrait::new();
     is_valid_signature(message_hash, signatures);
 }
@@ -157,7 +158,7 @@ fn invalid_empty_signature_without_guardian() {
 #[test]
 #[available_gas(2000000)]
 fn invalid_signature_length_without_guardian() {
-    initialize_account_without_guardian();
+    initialize_default_account_without_guardian();
     let signatures = double_signature(owner_r, owner_s, guardian_r, guardian_s);
     assert(!is_valid_signature(message_hash, signatures), 'invalid signature');
 }
@@ -166,7 +167,7 @@ fn invalid_signature_length_without_guardian() {
 #[available_gas(2000000)]
 #[should_panic(expected: ('argent/invalid-signature-length', ))]
 fn invalid_empty_signature_with_guardian() {
-    initialize_account();
+    initialize_default_account();
     let signatures = ArrayTrait::new();
     is_valid_signature(message_hash, signatures);
 }
@@ -174,7 +175,7 @@ fn invalid_empty_signature_with_guardian() {
 #[test]
 #[available_gas(2000000)]
 fn invalid_signature_length_with_guardian() {
-    initialize_account();
+    initialize_default_account();
     let signatures = single_signature(owner_r, owner_s);
     assert(!is_valid_signature(message_hash, signatures), 'invalid signature');
     let signatures = single_signature(guardian_r, guardian_s);

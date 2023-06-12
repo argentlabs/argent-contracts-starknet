@@ -11,7 +11,8 @@
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "profile": "ts-node scripts/profile-account.ts"
   },
   "author": "",
   "license": "ISC",

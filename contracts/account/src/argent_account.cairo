@@ -3,8 +3,12 @@ use lib::OutsideExecution;
 #[starknet::interface]
 trait IExecuteFromOutside<TContractState> {
     fn execute_from_outside(
-        ref self: TContractState, outside_execution: @OutsideExecution, signature: Array<felt252>
+        ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>
     ) -> Array<Span<felt252>>;
+
+    fn get_outside_execution_message_hash(
+        self: @TContractState, outside_execution: OutsideExecution
+    ) -> felt252;
 }
 
 #[starknet::contract]
@@ -217,25 +221,25 @@ mod ArgentAccount {
         /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
         /// @notice This method allows reentrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
         fn execute_from_outside(
-            ref self: ContractState, outside_execution: @OutsideExecution, signature: Array<felt252>
+            ref self: ContractState, outside_execution: OutsideExecution, signature: Array<felt252>
         ) -> Array<Span<felt252>> {
             // Checks
-            if (*outside_execution.caller).into() != 'ANY_CALLER' {
-                assert(get_caller_address() == *outside_execution.caller, 'argent/invalid-caller');
+            if (outside_execution.caller).into() != 'ANY_CALLER' {
+                assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
             }
 
             let block_timestamp = get_block_timestamp();
             assert(
-                *outside_execution.execute_after < block_timestamp
-                    && block_timestamp < *outside_execution.execute_before,
+                outside_execution.execute_after < block_timestamp
+                    && block_timestamp < outside_execution.execute_before,
                 'argent/invalid-timestamp'
             );
-            let nonce = *outside_execution.nonce;
+            let nonce = outside_execution.nonce;
             assert(!self.outside_nonces.read(nonce), 'argent/duplicated-outside-nonce');
 
-            let outside_tx_hash = hash_outside_execution_message(outside_execution);
+            let outside_tx_hash = hash_outside_execution_message(@outside_execution);
 
-            let calls = outside_execution.calls.span();
+            let calls = outside_execution.calls;
 
             assert_valid_calls_and_signature(
                 ref self, calls, outside_tx_hash, signature.span(), is_from_outside: true
@@ -248,6 +252,14 @@ mod ArgentAccount {
             let retdata = execute_multicall(calls);
             TransactionExecuted(outside_tx_hash, retdata.span());
             retdata
+        }
+
+        /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
+        #[view]
+        fn get_outside_execution_message_hash(
+            self: @ContractState, outside_execution: OutsideExecution
+        ) -> felt252 {
+            return hash_outside_execution_message(@outside_execution);
         }
     }
 
@@ -581,14 +593,6 @@ mod ArgentAccount {
         self: @ContractState, hash: felt252, signatures: Array<felt252>
     ) -> felt252 {
         is_valid_signature(self, hash, signatures)
-    }
-
-    /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
-    #[view]
-    fn get_outside_execution_message_hash(
-        self: @ContractState, outside_execution: OutsideExecution
-    ) -> felt252 {
-        return hash_outside_execution_message(@outside_execution);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

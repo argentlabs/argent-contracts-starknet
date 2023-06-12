@@ -7,8 +7,8 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   loadContract,
+  deployMultisig,
 } from "./lib";
-import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: Execute", function () {
   let multisigAccountClassHash: string;

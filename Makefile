@@ -10,7 +10,7 @@ LIB_FOLDER= $(SOURCE_FOLDER)/lib
 MULTISIG_FOLDER= $(SOURCE_FOLDER)/multisig
 MULTICALL_FOLDER= $(SOURCE_FOLDER)/multicall
 SOURCE_FOLDER=./contracts
-CAIRO_VERSION=v2.0.0-rc0
+CAIRO_VERSION=v2.0.0-rc1
 FIXTURES_FOLDER = ./tests/fixtures
 
 all: install build fixtures
@@ -47,6 +47,14 @@ fixtures:
 	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/TestDapp.json $(FIXTURES_FOLDER)/TestDapp.casm --allowed-libfuncs-list-name experimental_v0.1.0
 	./cairo/target/release/starknet-compile $(MULTISIG_FOLDER) $(FIXTURES_FOLDER)/ArgentMultisig.json --allowed-libfuncs-list-name experimental_v0.1.0 --contract-path multisig::argent_multisig::ArgentMultisig
 	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/ArgentMultisig.json $(FIXTURES_FOLDER)/ArgentMultisig.casm --allowed-libfuncs-list-name experimental_v0.1.0
+
+ffixtures: 
+	./cairo/target/release/starknet-compile $(ACCOUNT_FOLDER) $(FIXTURES_FOLDER)/ArgentAccount.json --contract-path account::argent_account::ArgentAccount
+	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/ArgentAccount.json $(FIXTURES_FOLDER)/ArgentAccount.casm
+	./cairo/target/release/starknet-compile $(ACCOUNT_FOLDER) $(FIXTURES_FOLDER)/TestDapp.json --contract-path lib::test_dapp::TestDapp
+	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/TestDapp.json $(FIXTURES_FOLDER)/TestDapp.casm
+	
+
 
 test: 
 	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)

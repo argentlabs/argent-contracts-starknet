@@ -2,12 +2,13 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 trait ITestDapp<TContractState> {
-    fn get_number(self: @TContractState, user: ContractAddress) -> felt252;
     fn set_number(ref self: TContractState, number: felt252);
     fn set_number_double(ref self: TContractState, number: felt252);
     fn set_number_times3(ref self: TContractState, number: felt252);
     fn increase_number(ref self: TContractState, number: felt252) -> felt252;
     fn throw_error(ref self: TContractState, number: felt252);
+
+    fn get_number(self: @TContractState, user: ContractAddress) -> felt252;
 }
 
 #[starknet::contract]

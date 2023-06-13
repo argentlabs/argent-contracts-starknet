@@ -342,7 +342,6 @@ mod ArgentAccount {
         }
 
         /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
-        #[view]
         fn get_outside_execution_message_hash(
             self: @ContractState, outside_execution: OutsideExecution
         ) -> felt252 {
@@ -668,6 +667,7 @@ mod ArgentAccount {
         }
     }
 
+    // TODO Still need to fix it here 
     /// Deprecated method for compatibility reasons
     // fn supportsInterface(self: @ContractState, interface_id: felt252) -> felt252 {
     //     if supports_interface(self, interface_id) {
@@ -678,24 +678,24 @@ mod ArgentAccount {
     // }
 
     // ERC1271
-    #[view]
-    fn is_valid_signature(
-        self: @ContractState, hash: felt252, signatures: Array<felt252>
-    ) -> felt252 {
-        if is_valid_span_signature(self, hash, signatures.span()) {
-            ERC1271_VALIDATED
-        } else {
-            0
-        }
-    }
+    // #[view]
+    // fn is_valid_signature(
+    //     self: @ContractState, hash: felt252, signatures: Array<felt252>
+    // ) -> felt252 {
+    //     if is_valid_span_signature(self, hash, signatures.span()) {
+    //         ERC1271_VALIDATED
+    //     } else {
+    //         0
+    //     }
+    // }
 
-    /// Deprecated method for compatibility reasons
-    #[view]
-    fn isValidSignature(
-        self: @ContractState, hash: felt252, signatures: Array<felt252>
-    ) -> felt252 {
-        is_valid_signature(self, hash, signatures)
-    }
+    // /// Deprecated method for compatibility reasons
+    // #[view]
+    // fn isValidSignature(
+    //     self: @ContractState, hash: felt252, signatures: Array<felt252>
+    // ) -> felt252 {
+    //     is_valid_signature(self, hash, signatures)
+    // }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                          Internal                                          //

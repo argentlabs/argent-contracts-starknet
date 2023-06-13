@@ -28,21 +28,22 @@ mod version;
 use version::Version;
 mod erc165;
 use erc165::{
-    ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
-    ERC165_ACCOUNT_INTERFACE_ID_OLD_2
+    IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
+    ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
+    ERC165_ACCOUNT_INTERFACE_ID_OLD_2,
 };
 
 mod erc1271;
 use erc1271::{ERC1271_VALIDATED};
 
-#[starknet::interface]
-trait IErc165<TContractState> {
-    fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
-}
+use starknet::ClassHash;
 
 #[starknet::interface]
 trait IAccountUpgrade<TContractState> {
-    fn execute_after_upgrade(self: @TContractState, data: Array<felt252>) -> Array::<felt252>;
+    fn upgrade(
+        ref self: TContractState, implementation: ClassHash, calldata: Array<felt252>
+    ) -> Array<felt252>;
+    fn execute_after_upgrade(ref self: TContractState, data: Array<felt252>) -> Array<felt252>;
 }
 
 #[cfg(test)]

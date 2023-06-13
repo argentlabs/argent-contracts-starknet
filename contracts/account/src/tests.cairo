@@ -2,8 +2,6 @@ mod test_argent_account;
 // mod test_argent_account_signatures;
 
 use array::ArrayTrait;
-use account::ArgentAccount;
-use account::IArgentAccountDispatcher;
 use starknet::syscalls::{deploy_syscall, get_block_hash_syscall};
 use traits::Into;
 use traits::TryInto;
@@ -12,6 +10,44 @@ use option::OptionTrait;
 use starknet::SyscallResultTrait;
 use starknet::class_hash::Felt252TryIntoClassHash;
 
+use account::{Escape, EscapeStatus, ArgentAccount};
+use lib::{Version, Call};
+
+
+#[starknet::interface]
+trait ITestArgentAccount<TContractState> {
+    // AccountContract
+    fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
+    fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
+    fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
+    // IArgentAccount
+    fn change_owner(
+        ref self: TContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252
+    );
+    fn change_guardian(ref self: TContractState, new_guardian: felt252);
+    fn change_guardian_backup(ref self: TContractState, new_guardian_backup: felt252);
+    fn trigger_escape_owner(ref self: TContractState, new_owner: felt252);
+
+    fn trigger_escape_guardian(ref self: TContractState, new_guardian: felt252);
+    fn escape_owner(ref self: TContractState);
+    fn escape_guardian(ref self: TContractState);
+    fn cancel_escape(ref self: TContractState);
+
+    fn get_owner(self: @TContractState) -> felt252;
+    fn get_guardian(self: @TContractState) -> felt252;
+    fn get_guardian_backup(self: @TContractState) -> felt252;
+    fn get_escape(self: @TContractState) -> Escape;
+    fn get_version(self: @TContractState) -> Version;
+    fn get_name(self: @TContractState) -> felt252;
+    fn get_guardian_escape_attempts(self: @TContractState) -> u32;
+    fn get_owner_escape_attempts(self: @TContractState) -> u32;
+    fn get_escape_and_status(self: @TContractState) -> (Escape, EscapeStatus);
+    // IOldArgentAccount
+    fn getVersion(self: @TContractState) -> felt252;
+    fn getName(self: @TContractState) -> felt252;
+    // IErc165
+    fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
+}
 
 const owner_pubkey: felt252 = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;
 const guardian_pubkey: felt252 = 0x759ca09377679ecd535a81e83039658bf40959283187c654c5416f439403cf5;
@@ -20,32 +56,32 @@ const wrong_owner_pubkey: felt252 =
 const wrong_guardian_pubkey: felt252 =
     0x6eeee2b0c71d681692559735e08a2c3ba04e7347c0c18d4d49b83bb89771591;
 
-fn initialize_default_account() -> IArgentAccountDispatcher {
+fn initialize_default_account() -> ITestArgentAccountDispatcher {
     let mut calldata = ArrayTrait::new();
     calldata.append(owner_pubkey);
     calldata.append(guardian_pubkey);
     initialize_default_account_with(calldata.span())
 }
 
-fn initialize_account(owner: felt252, gaurdian: felt252) -> IArgentAccountDispatcher {
+fn initialize_account(owner: felt252, gaurdian: felt252) -> ITestArgentAccountDispatcher {
     let mut calldata = ArrayTrait::new();
     calldata.append(owner);
     calldata.append(gaurdian);
     initialize_default_account_with(calldata.span())
 }
 
-fn initialize_default_account_without_guardian() -> IArgentAccountDispatcher {
+fn initialize_default_account_without_guardian() -> ITestArgentAccountDispatcher {
     let mut calldata = ArrayTrait::new();
     calldata.append(owner_pubkey);
     calldata.append(0);
     initialize_default_account_with(calldata.span())
 }
 
-fn initialize_default_account_with(calldata: Span<felt252>) -> IArgentAccountDispatcher {
+fn initialize_default_account_with(calldata: Span<felt252>) -> ITestArgentAccountDispatcher {
     let (contract_address, _) = deploy_syscall(
         ArgentAccount::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata, true
     )
         .unwrap();
-    IArgentAccountDispatcher { contract_address }
+    ITestArgentAccountDispatcher { contract_address }
 }
 

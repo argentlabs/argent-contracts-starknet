@@ -2,7 +2,7 @@ use starknet::contract_address_const;
 use starknet::testing::set_caller_address;
 use zeroable::Zeroable;
 
-use account::{ArgentAccount, IArgentAccountDispatcherTrait};
+use account::tests::{ITestArgentAccountDispatcherTrait};
 use account::tests::{
     initialize_default_account, initialize_default_account_without_guardian, owner_pubkey,
     wrong_owner_pubkey, guardian_pubkey, initialize_account
@@ -20,8 +20,8 @@ const wrong_owner_s: felt252 = 0x2e44d5bad55a0d692e02529e7060f352fde85fae8d5946f
 fn initialize() {
     let account = initialize_account(1, 2);
     assert(account.get_owner() == 1, 'value should be 1');
-// assert(account.get_guardian() == 2, 'value should be 2');
-// assert(account.get_guardian_backup() == 0, 'value should be 0');
+    assert(account.get_guardian() == 2, 'value should be 2');
+    assert(account.get_guardian_backup() == 0, 'value should be 0');
 }
 // #[test]
 // #[available_gas(2000000)]
@@ -37,47 +37,47 @@ fn initialize() {
 //     ArgentAccount::__validate__(ArrayTrait::new());
 // }
 
-// #[test]
-// #[available_gas(2000000)]
-// #[should_panic(expected: ('argent/null-owner', ))]
-// fn initialize_with_null_owner() {
-//     ArgentAccount::constructor(0, 2);
-// }
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('Result::unwrap failed.', ))]
+// #[should_panic(expected: ('argent/null-owner', ))] // TODO Should be this one
+fn initialize_with_null_owner() {
+    initialize_account(0, 2);
+}
+#[test]
+#[available_gas(2000000)]
+fn initialized_no_guardian_no_backup() {
+    let account = initialize_account(1, 0);
+    assert(account.get_owner() == 1, 'value should be 1');
+    assert(account.get_guardian() == 0, 'guardian should be zero');
+    assert(account.get_guardian_backup() == 0, 'guardian backup should be zero');
+}
 
-// #[test]
-// #[available_gas(2000000)]
-// fn initialized_no_guardian_no_backup() {
-//     ArgentAccount::constructor(1, 0);
-//     assert(ArgentAccount::get_owner() == 1, 'value should be 1');
-//     assert(ArgentAccount::get_guardian() == 0, 'guardian should be zero');
-//     assert(ArgentAccount::get_guardian_backup() == 0, 'guardian backup should be zero');
-// }
+#[test]
+#[available_gas(2000000)]
+fn erc165_unsupported_interfaces() {
+    let account = initialize_default_account();
+    assert(!account.supports_interface(0), 'Should not support 0');
+    assert(!account.supports_interface(0xffffffff), 'Should not support 0xffffffff');
+}
 
-// #[test]
-// #[available_gas(2000000)]
-// fn erc165_unsupported_interfaces() {
-//     assert(!ArgentAccount::supports_interface(0), 'Should not support 0');
-//     assert(!ArgentAccount::supports_interface(0xffffffff), 'Should not support 0xffffffff');
-// }
-
-// #[test]
-// #[available_gas(2000000)]
-// fn erc165_supported_interfaces() {
-//     assert(ArgentAccount::supports_interface(0x01ffc9a7), 'ERC165_IERC165_INTERFACE_ID');
-//     assert(ArgentAccount::supports_interface(0xa66bd575), 'ERC165_ACCOUNT_INTERFACE_ID');
-//     assert(ArgentAccount::supports_interface(0x3943f10f), 'ERC165_OLD_ACCOUNT_INTERFACE_ID');
-// }
-
+#[test]
+#[available_gas(2000000)]
+fn erc165_supported_interfaces() {
+    let account = initialize_default_account();
+    assert(account.supports_interface(0x01ffc9a7), 'ERC165_IERC165_INTERFACE_ID');
+    assert(account.supports_interface(0xa66bd575), 'ERC165_ACCOUNT_INTERFACE_ID');
+    assert(account.supports_interface(0x3943f10f), 'ERC165_OLD_ACCOUNT_INTERFACE_ID');
+}
 // #[test]
 // #[available_gas(2000000)]
 // fn change_owner() {
-//     initialize_default_account();
-//     assert(ArgentAccount::get_owner() == owner_pubkey, 'value should be 1');
+//     let account = initialize_default_account();
+//     assert(account.get_owner() == owner_pubkey, 'value should be 1');
 
-//     ArgentAccount::change_owner(new_owner_pubkey, new_owner_r, new_owner_s);
-//     assert(ArgentAccount::get_owner() == new_owner_pubkey, 'value should be new owner pub');
+//     account.change_owner(new_owner_pubkey, new_owner_r, new_owner_s);
+//     assert(account.get_owner() == new_owner_pubkey, 'value should be new owner pub');
 // }
-
 // #[test]
 // #[available_gas(2000000)]
 // #[should_panic(expected: ('argent/only-self', ))]

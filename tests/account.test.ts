@@ -24,7 +24,7 @@ describe("ArgentAccount", function () {
     argentAccountClassHash = await declareContract("ArgentAccount");
   });
 
-  it.only("Deploy current version", async function () {
+  it("Deploy current version", async function () {
     const { accountContract, owner } = await deployAccountWithoutGuardian(argentAccountClassHash);
 
     const ownerAddress = await accountContract.get_owner();

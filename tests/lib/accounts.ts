@@ -72,7 +72,6 @@ async function deployAccountInner(
     constructorCalldata,
     addressSalt: salt,
   });
-  console.log(transaction_hash);
   await deployer.waitForTransaction(transaction_hash);
   return account;
 }

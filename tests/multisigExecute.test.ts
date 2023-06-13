@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, Contract, num } from "starknet";
+import { CallData, Contract } from "starknet";
 import {
   MultisigSigner,
   declareContract,
@@ -40,7 +40,7 @@ describe("ArgentMultisig: Execute", function () {
     await expectEvent(transaction_hash, {
       from_address: account.address,
       keys: ["TransactionExecuted"],
-      data: CallData.compile([transaction_hash, [[num.toHex(finalNumber)]]]),
+      data: CallData.compile([transaction_hash, [[finalNumber]]]),
     });
   });
 

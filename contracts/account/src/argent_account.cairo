@@ -131,17 +131,26 @@ mod ArgentAccount {
     //                                           Events                                           //
     ////////////////////////////////////////////////////////////////////////////////////////////////
     #[event]
-    #[derive(starknet::Event)]
+    #[derive(Drop, starknet::Event)]
     enum Event {
         AccountCreated: AccountCreated,
         TransactionExecuted: TransactionExecuted,
+        EscapeOwnerTriggered: EscapeOwnerTriggered,
+        EscapeGuardianTriggered: EscapeGuardianTriggered,
+        OwnerEscaped: OwnerEscaped,
+        GuardianEscaped: GuardianEscaped,
+        EscapeCanceled: EscapeCanceled,
+        OwnerChanged: OwnerChanged,
+        GuardianChanged: GuardianChanged,
+        GuardianBackupChanged: GuardianBackupChanged,
+        AccountUpgraded: AccountUpgraded,
     }
     /// @notice Emitted exactly once when the account is initialized
     /// @param account The account address
     /// @param owner The owner address
     /// @param guardian The guardian address
     // TODO Assess EACH EVENT should be a key and what should be data only
-    #[derive(starknet::Event)]
+    #[derive(Drop, starknet::Event)]
     struct AccountCreated {
         #[key]
         account: ContractAddress,
@@ -153,7 +162,7 @@ mod ArgentAccount {
     /// @notice Emitted when the account executes a transaction
     /// @param hash The transaction hash
     /// @param response The data returned by the methods called
-    #[derive(starknet::Event)]
+    #[derive(Drop, starknet::Event)]
     struct TransactionExecuted {
         hash: felt252,
         response: Span<Span<felt252>>
@@ -162,7 +171,7 @@ mod ArgentAccount {
     /// @notice Owner escape was triggered by the guardian
     /// @param ready_at when the escape can be completed
     /// @param new_owner new owner address to be set after the security period
-    #[derive(starknet::Event)]
+    #[derive(Drop, starknet::Event)]
     struct EscapeOwnerTriggered {
         ready_at: u64,
         new_owner: felt252
@@ -171,7 +180,7 @@ mod ArgentAccount {
     /// @notice Guardian escape was triggered by the owner
     /// @param ready_at when the escape can be completed
     /// @param new_guardian address of the new guardian to be set after the security period. O if the guardian will be removed
-    #[derive(starknet::Event)]
+    #[derive(Drop, starknet::Event)]
     struct EscapeGuardianTriggered {
         ready_at: u64,
         new_guardian: felt252
@@ -179,46 +188,47 @@ mod ArgentAccount {
 
     /// @notice Owner escape was completed and there is a new account owner
     /// @param new_owner new owner address
-    #[derive(starknet::Event)]
+    #[derive(Drop, starknet::Event)]
     struct OwnerEscaped {
         new_owner: felt252
     }
 
     /// @notice Guardian escape was completed and there is a new account guardian
     /// @param new_guardian address of the new guardian or 0 if it was removed
-    #[derive(starknet::Event)]
+    #[derive(Drop, starknet::Event)]
     struct GuardianEscaped {
         new_guardian: felt252
     }
 
     /// An ongoing escape was canceled
-    #[derive(starknet::Event)]
+    #[derive(Drop, starknet::Event)]
     struct EscapeCanceled {}
 
     /// @notice The account owner was changed
     /// @param new_owner new owner address
-    #[derive(starknet::Event)]
+    #[derive(Drop, starknet::Event)]
     struct OwnerChanged {
         new_owner: felt252
     }
 
     /// @notice The account guardian was changed or removed
     /// @param new_guardian address of the new guardian or 0 if it was removed
-    #[derive(starknet::Event)]
+    #[derive(Drop, starknet::Event)]
     struct GuardianChanged {
         new_guardian: felt252
     }
 
     /// @notice The account backup guardian was changed or removed
-    /// @param new_guardian address of the backup guardian or 0 if it was removed
-    #[derive(starknet::Event)]
+    /// @param new_guardian_backup address of the backup guardian or 0 if it was removed
+    #[derive(Drop, starknet::Event)]
     struct GuardianBackupChanged {
-        new_guardian: felt252
+        new_guardian_backup: felt252
     }
 
     /// @notice Emitted when the implementation of the account changes
     /// @param new_implementation The new implementation
-    #[derive(starknet::Event)]
+    // TODO Could this maybe be deported in another file? along with the interface
+    #[derive(Drop, starknet::Event)]
     struct AccountUpgraded {
         new_implementation: ClassHash
     }
@@ -322,7 +332,12 @@ mod ArgentAccount {
 
             // Interactions
             let retdata = execute_multicall(calls);
-            TransactionExecuted(outside_tx_hash, retdata.span());
+            self
+                .emit(
+                    Event::TransactionExecuted(
+                        TransactionExecuted { hash: outside_tx_hash, response: retdata.span() }
+                    )
+                );
             retdata
         }
 
@@ -345,20 +360,20 @@ mod ArgentAccount {
         /// @param calldata Data to pass to the the implementation in `execute_after_upgrade`
         /// @return retdata The data returned by `execute_after_upgrade`
         fn upgrade(
-            ref self: ContractState, implementation: ClassHash, calldata: Array<felt252>
+            ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>
         ) -> Array<felt252> {
             assert_only_self();
 
             let supports_interface = IErc165LibraryDispatcher {
-                class_hash: implementation
+                class_hash: new_implementation
             }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
             assert(supports_interface, 'argent/invalid-implementation');
 
-            replace_class_syscall(implementation).unwrap_syscall();
-            AccountUpgraded(implementation);
+            replace_class_syscall(new_implementation).unwrap_syscall();
+            self.emit(Event::AccountUpgraded(AccountUpgraded { new_implementation }));
 
             IAccountUpgradeLibraryDispatcher {
-                class_hash: implementation
+                class_hash: new_implementation
             }.execute_after_upgrade(calldata)
         }
 
@@ -435,7 +450,7 @@ mod ArgentAccount {
             reset_escape_attempts(ref self);
 
             self._signer.write(new_owner);
-            OwnerChanged(new_owner);
+            self.emit(Event::OwnerChanged(OwnerChanged { new_owner }));
         }
 
         /// @notice Changes the guardian
@@ -453,7 +468,7 @@ mod ArgentAccount {
             reset_escape_attempts(ref self);
 
             self._guardian.write(new_guardian);
-            GuardianChanged(new_guardian);
+            self.emit(Event::GuardianChanged(GuardianChanged { new_guardian }));
         }
 
         /// @notice Changes the backup guardian
@@ -467,7 +482,7 @@ mod ArgentAccount {
             reset_escape_attempts(ref self);
 
             self._guardian_backup.write(new_guardian_backup);
-            GuardianBackupChanged(new_guardian_backup);
+            self.emit(Event::GuardianBackupChanged(GuardianBackupChanged { new_guardian_backup }));
         }
 
         /// @notice Triggers the escape of the owner when it is lost or compromised.
@@ -493,7 +508,7 @@ mod ArgentAccount {
             self
                 ._escape
                 .write(Escape { ready_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: new_owner });
-            EscapeOwnerTriggered(ready_at, new_owner);
+            self.emit(Event::EscapeOwnerTriggered(EscapeOwnerTriggered { ready_at, new_owner }));
         }
 
         /// @notice Triggers the escape of the guardian when it is lost or compromised.
@@ -514,7 +529,12 @@ mod ArgentAccount {
                 .write(
                     Escape { ready_at, escape_type: ESCAPE_TYPE_GUARDIAN, new_signer: new_guardian }
                 );
-            EscapeGuardianTriggered(ready_at, new_guardian);
+            self
+                .emit(
+                    Event::EscapeGuardianTriggered(
+                        EscapeGuardianTriggered { ready_at, new_guardian }
+                    )
+                );
         }
 
         /// @notice Completes the escape and changes the owner after the security period
@@ -533,7 +553,7 @@ mod ArgentAccount {
 
             // update owner
             self._signer.write(current_escape.new_signer);
-            OwnerEscaped(current_escape.new_signer);
+            self.emit(Event::OwnerEscaped(OwnerEscaped { new_owner: current_escape.new_signer }));
             // clear escape
             self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
         }
@@ -555,7 +575,12 @@ mod ArgentAccount {
 
             //update guardian
             self._guardian.write(current_escape.new_signer);
-            GuardianEscaped(current_escape.new_signer);
+            self
+                .emit(
+                    Event::GuardianEscaped(
+                        GuardianEscaped { new_guardian: current_escape.new_signer }
+                    )
+                );
             // clear escape
             self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
         }
@@ -905,7 +930,7 @@ mod ArgentAccount {
         }
         self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
         if current_escape_status != EscapeStatus::Expired(()) {
-            EscapeCanceled();
+            self.emit(Event::EscapeCanceled(EscapeCanceled {}));
         }
     }
 

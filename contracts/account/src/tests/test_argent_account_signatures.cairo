@@ -58,14 +58,13 @@ fn valid_no_guardian() {
         'invalid signature'
     );
 }
-// #[test]
-// #[available_gas(2000000)]
-// fn valid_with_guardian() {
-//     initialize_account();
-//     let signatures = double_signature(owner_r, owner_s, guardian_r, guardian_s);
-//     assert(is_valid_signature(message_hash, signatures), 'invalid signature');
-// }
 
+#[test]
+#[available_gas(2000000)]
+fn valid_with_guardian() {
+    let signatures = double_signature(owner_r, owner_s, guardian_r, guardian_s);
+    assert(is_valid_signature(initialize_account(), message_hash, signatures), 'invalid signature');
+}
 // #[test]
 // #[available_gas(2000000)]
 // fn valid_with_guardian_backup() {
@@ -75,34 +74,45 @@ fn valid_no_guardian() {
 //     assert(is_valid_signature(message_hash, signatures), 'invalid signature');
 // }
 
-// #[test]
-// #[available_gas(2000000)]
-// fn invalid_hash_1() {
-//     initialize_account_without_guardian();
-//     let signatures = single_signature(owner_r, owner_s);
-//     assert(!is_valid_signature(0, signatures), 'invalid signature');
-// }
+#[test]
+#[available_gas(2000000)]
+fn invalid_hash_1() {
+    let signatures = single_signature(owner_r, owner_s);
+    assert(
+        !is_valid_signature(initialize_account_without_guardian(), 0, signatures),
+        'invalid signature'
+    );
+}
 
-// #[test]
-// #[available_gas(2000000)]
-// fn invalid_hash_2() {
-//     initialize_account_without_guardian();
-//     let signatures = single_signature(owner_r, owner_s);
-//     assert(!is_valid_signature(123, signatures), 'invalid signature');
-// }
+#[test]
+#[available_gas(2000000)]
+fn invalid_hash_2() {
+    let signatures = single_signature(owner_r, owner_s);
+    assert(
+        !is_valid_signature(initialize_account_without_guardian(), 123, signatures),
+        'invalid signature'
+    );
+}
 
-// #[test]
-// #[available_gas(2000000)]
-// fn invalid_owner_without_guardian() {
-//     initialize_account_without_guardian();
-//     let signatures = single_signature(0, 0);
-//     assert(!is_valid_signature(message_hash, signatures), 'invalid signature 1');
-//     let signatures = single_signature(wrong_owner_r, wrong_owner_s);
-//     assert(!is_valid_signature(message_hash, signatures), 'invalid signature 2');
-//     let signatures = single_signature(guardian_r, guardian_s);
-//     assert(!is_valid_signature(message_hash, signatures), 'invalid signature 3');
-// }
-
+#[test]
+#[available_gas(2000000)]
+fn invalid_owner_without_guardian() {
+    let signatures = single_signature(0, 0);
+    assert(
+        !is_valid_signature(initialize_account_without_guardian(), message_hash, signatures),
+        'invalid signature 1'
+    );
+    let signatures = single_signature(wrong_owner_r, wrong_owner_s);
+    assert(
+        !is_valid_signature(initialize_account_without_guardian(), message_hash, signatures),
+        'invalid signature 2'
+    );
+    let signatures = single_signature(guardian_r, guardian_s);
+    assert(
+        !is_valid_signature(initialize_account_without_guardian(), message_hash, signatures),
+        'invalid signature 3'
+    );
+}
 // #[test]
 // #[available_gas(2000000)]
 // fn invalid_owner_with_guardian() {

@@ -2,13 +2,15 @@ mod test_argent_account;
 // mod test_argent_account_signatures;
 
 use array::ArrayTrait;
-use starknet::syscalls::{deploy_syscall, get_block_hash_syscall};
 use traits::Into;
 use traits::TryInto;
 use result::ResultTrait;
 use option::OptionTrait;
-use starknet::SyscallResultTrait;
+
+use starknet::{contract_address_const, SyscallResultTrait};
 use starknet::class_hash::Felt252TryIntoClassHash;
+use starknet::syscalls::{deploy_syscall, get_block_hash_syscall};
+use starknet::testing::{set_caller_address, set_contract_address, set_signature};
 
 use account::{Escape, EscapeStatus, ArgentAccount};
 use lib::{Version, Call};
@@ -57,10 +59,7 @@ const wrong_guardian_pubkey: felt252 =
     0x6eeee2b0c71d681692559735e08a2c3ba04e7347c0c18d4d49b83bb89771591;
 
 fn initialize_default_account() -> ITestArgentAccountDispatcher {
-    let mut calldata = ArrayTrait::new();
-    calldata.append(owner_pubkey);
-    calldata.append(guardian_pubkey);
-    initialize_default_account_with(calldata.span())
+    initialize_account(owner_pubkey, guardian_pubkey)
 }
 
 fn initialize_account(owner: felt252, gaurdian: felt252) -> ITestArgentAccountDispatcher {
@@ -82,6 +81,7 @@ fn initialize_default_account_with(calldata: Span<felt252>) -> ITestArgentAccoun
         ArgentAccount::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata, true
     )
         .unwrap();
+    set_caller_address(contract_address_const::<1>());
+    set_contract_address(contract_address_const::<1>());
     ITestArgentAccountDispatcher { contract_address }
 }
-

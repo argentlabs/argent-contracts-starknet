@@ -1,5 +1,6 @@
 use starknet::contract_address_const;
-use starknet::testing::set_caller_address;
+use starknet::testing::{set_caller_address, set_contract_address, set_signature};
+use array::ArrayTrait;
 use zeroable::Zeroable;
 
 use account::tests::{ITestArgentAccountDispatcherTrait};
@@ -69,6 +70,15 @@ fn erc165_supported_interfaces() {
     assert(account.supports_interface(0xa66bd575), 'ERC165_ACCOUNT_INTERFACE_ID');
     assert(account.supports_interface(0x3943f10f), 'ERC165_OLD_ACCOUNT_INTERFACE_ID');
 }
+
+
+// set_caller_address(contract_address_const::<1>());
+// set_contract_address(contract_address_const::<1>());
+// let mut signature = ArrayTrait::new();
+// signature.append(0x7f41f072c2741c4e3fe91552f1fbb19c9dd96c40e6b845c3a99776da9c6d309);
+// signature.append(0x7f41f072c2741c4e3fe91552f1fbb19c9dd96c40e6b845c3a99776da9c6d309);
+// set_signature(signature.span());
+
 // #[test]
 // #[available_gas(2000000)]
 // fn change_owner() {
@@ -78,23 +88,25 @@ fn erc165_supported_interfaces() {
 //     account.change_owner(new_owner_pubkey, new_owner_r, new_owner_s);
 //     assert(account.get_owner() == new_owner_pubkey, 'value should be new owner pub');
 // }
-// #[test]
-// #[available_gas(2000000)]
-// #[should_panic(expected: ('argent/only-self', ))]
-// fn change_owner_only_self() {
-//     initialize_default_account();
-//     set_caller_address(contract_address_const::<42>());
-//     ArgentAccount::change_owner(new_owner_pubkey, new_owner_r, new_owner_s);
-// }
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('argent/only-self', 'ENTRYPOINT_FAILED'))]
+fn change_owner_only_self() {
+    let account = initialize_default_account();
+    set_caller_address(contract_address_const::<42>());
+    account.change_owner(new_owner_pubkey, new_owner_r, new_owner_s);
+}
 
-// #[test]
-// #[available_gas(2000000)]
-// #[should_panic(expected: ('argent/null-owner', ))]
-// fn change_owner_to_zero() {
-//     initialize_default_account();
-//     ArgentAccount::change_owner(0, new_owner_r, new_owner_s);
-// }
-
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('argent/null-owner', 'ENTRYPOINT_FAILED'))]
+fn change_owner_to_zero() {
+    let account = initialize_default_account();
+    set_caller_address(contract_address_const::<1>());
+    set_contract_address(contract_address_const::<1>());
+    initialize_default_account();
+    account.change_owner(0, new_owner_r, new_owner_s);
+}
 // #[test]
 // #[available_gas(2000000)]
 // #[should_panic(expected: ('argent/invalid-owner-sig', ))]

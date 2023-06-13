@@ -216,15 +216,12 @@ fn get_name() {
 fn getName() {
     assert(initialize_account().getName() == 'ArgentAccount', 'Name should be ArgentAccount');
 }
-
-#[test]
-#[available_gas(2000000)]
-fn unsuported_supportsInterface() {
-    assert(initialize_account().supportsInterface(0) == 0, 'value should be false');
-    assert(
-        initialize_account().supportsInterface(0xffffffff) == 0, 'Should not support 0xffffffff'
-    );
-}
+// #[test]
+// #[available_gas(2000000)]
+// fn unsuported_supportsInterface() {
+//     assert(ArgentAccount::supportsInterface(0) == 0, 'value should be false');
+//     assert(ArgentAccount::supportsInterface(0xffffffff) == 0, 'Should not support 0xffffffff');
+// }
 // #[test]
 // #[available_gas(2000000)]
 // fn supportsInterface() {

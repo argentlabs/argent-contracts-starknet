@@ -199,7 +199,7 @@ fn get_name() {
 
 #[test]
 fn getName() {
-    assert(ArgentAccount::get_name() == 'ArgentAccount', 'Name should be ArgentAccount');
+    assert(ArgentAccount::getName() == 'ArgentAccount', 'Name should be ArgentAccount');
 }
 
 #[test]

@@ -58,25 +58,23 @@ const wrong_owner_pubkey: felt252 =
 const wrong_guardian_pubkey: felt252 =
     0x6eeee2b0c71d681692559735e08a2c3ba04e7347c0c18d4d49b83bb89771591;
 
-fn initialize_default_account() -> ITestArgentAccountDispatcher {
-    initialize_account(owner_pubkey, guardian_pubkey)
+fn initialize_account() -> ITestArgentAccountDispatcher {
+    initialize_account_with(owner_pubkey, guardian_pubkey)
 }
 
-fn initialize_account(owner: felt252, gaurdian: felt252) -> ITestArgentAccountDispatcher {
+fn initialize_account_without_guardian() -> ITestArgentAccountDispatcher {
+    initialize_account_with(owner_pubkey, 0)
+}
+
+fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAccountDispatcher {
     let mut calldata = ArrayTrait::new();
     calldata.append(owner);
-    calldata.append(gaurdian);
-    initialize_default_account_with(calldata.span())
+    calldata.append(guardian);
+    initialize_account_with_calldata(calldata.span())
 }
 
-fn initialize_default_account_without_guardian() -> ITestArgentAccountDispatcher {
-    let mut calldata = ArrayTrait::new();
-    calldata.append(owner_pubkey);
-    calldata.append(0);
-    initialize_default_account_with(calldata.span())
-}
 
-fn initialize_default_account_with(calldata: Span<felt252>) -> ITestArgentAccountDispatcher {
+fn initialize_account_with_calldata(calldata: Span<felt252>) -> ITestArgentAccountDispatcher {
     let (contract_address, _) = deploy_syscall(
         ArgentAccount::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata, true
     )

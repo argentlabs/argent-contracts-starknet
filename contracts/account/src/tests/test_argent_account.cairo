@@ -189,14 +189,15 @@ fn change_invalid_guardian_backup() {
     let account = initialize_default_account_without_guardian();
     account.change_guardian_backup(33);
 }
-// #[test]
-// fn get_version() {
-//     let version = ArgentAccount::get_version();
-//     assert(version.major == 0, 'Version major = 0');
-//     assert(version.minor == 3, 'Version minor = 3');
-//     assert(version.patch == 0, 'Version patch = 0');
-// }
 
+#[test]
+fn get_version() {
+    let account = initialize_default_account();
+    let version = account.get_version();
+    assert(version.major == 0, 'Version major = 0');
+    assert(version.minor == 3, 'Version minor = 3');
+    assert(version.patch == 0, 'Version patch = 0');
+}
 // #[test]
 // fn getVersion() {
 //     assert(ArgentAccount::getVersion() == '0.3.0', 'Version should be 0.3.0');

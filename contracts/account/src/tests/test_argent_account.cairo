@@ -3,10 +3,10 @@ use starknet::testing::{set_caller_address, set_contract_address, set_signature}
 use array::ArrayTrait;
 use zeroable::Zeroable;
 
-use account::tests::{ITestArgentAccountDispatcherTrait};
+use account::ArgentAccount;
 use account::tests::{
-    initialize_account, initialize_account_without_guardian, owner_pubkey, wrong_owner_pubkey,
-    guardian_pubkey, initialize_account_with
+    ITestArgentAccountDispatcherTrait, initialize_account, initialize_account_without_guardian,
+    owner_pubkey, wrong_owner_pubkey, guardian_pubkey, initialize_account_with
 };
 
 const new_owner_pubkey: felt252 = 0xa7da05a4d664859ccd6e567b935cdfbfe3018c7771cb980892ef38878ae9bc;
@@ -216,44 +216,46 @@ fn get_name() {
 fn getName() {
     assert(initialize_account().getName() == 'ArgentAccount', 'Name should be ArgentAccount');
 }
+// TODO Not supported atm
 // #[test]
 // #[available_gas(2000000)]
 // fn unsuported_supportsInterface() {
-//     assert(ArgentAccount::supportsInterface(0) == 0, 'value should be false');
-//     assert(ArgentAccount::supportsInterface(0xffffffff) == 0, 'Should not support 0xffffffff');
+//     assert(initialize_account().supportsInterface(0) == 0, 'value should be false');
+//     assert(
+//         initialize_account().supportsInterface(0xffffffff) == 0, 'Should not support 0xffffffff'
+//     );
 // }
 // #[test]
 // #[available_gas(2000000)]
 // fn supportsInterface() {
-//     assert(ArgentAccount::supportsInterface(0x01ffc9a7) == 1, 'ERC165_IERC165_INTERFACE_ID');
-//     assert(ArgentAccount::supportsInterface(0xa66bd575) == 1, 'ERC165_ACCOUNT_INTERFACE_ID');
-//     assert(ArgentAccount::supportsInterface(0x3943f10f) == 1, 'ERC165_OLD_ACCOUNT_INTERFACE_ID');
+//     assert(initialize_account().supportsInterface(0x01ffc9a7) == 1, 'ERC165_IERC165_INTERFACE_ID');
+//     assert(initialize_account().supportsInterface(0xa66bd575) == 1, 'ERC165_ACCOUNT_INTERFACE_ID');
+//     assert(initialize_account().supportsInterface(0x3943f10f) == 1, 'ERC165_OLD_ACCOUNT_INTERFACE_ID');
 // }
 
-// #[test]
-// #[available_gas(2000000)]
-// fn test_selectors() {
-//     // Double check to ensure it IS and STAYS correct
-//     assert(
-//         ArgentAccount::TRIGGER_ESCAPE_GUARDIAN_SELECTOR == 73865429733192804476769961144708816295126306469589518371407068321865763651,
-//         'trigger_escape_guardian'
-//     );
-//     assert(
-//         ArgentAccount::TRIGGER_ESCAPE_OWNER_SELECTOR == 1099763735485822105046709698985960101896351570185083824040512300972207240555,
-//         'trigger_escape_owner'
-//     );
-//     assert(
-//         ArgentAccount::ESCAPE_GUARDIAN_SELECTOR == 1662889347576632967292303062205906116436469425870979472602094601074614456040,
-//         'escape_guardian'
-//     );
-//     assert(
-//         ArgentAccount::ESCAPE_OWNER_SELECTOR == 1621457541430776841129472853859989177600163870003012244140335395142204209277,
-//         'escape_owner'
-//     );
-//     assert(
-//         ArgentAccount::EXECUTE_AFTER_UPGRADE_SELECTOR == 738349667340360233096752603318170676063569407717437256101137432051386874767,
-//         'execute_after_upgrade'
-//     );
-// }
-
+#[test]
+#[available_gas(2000000)]
+fn test_selectors() {
+    // Double check to ensure it IS and STAYS correct
+    assert(
+        ArgentAccount::TRIGGER_ESCAPE_GUARDIAN_SELECTOR == 73865429733192804476769961144708816295126306469589518371407068321865763651,
+        'trigger_escape_guardian'
+    );
+    assert(
+        ArgentAccount::TRIGGER_ESCAPE_OWNER_SELECTOR == 1099763735485822105046709698985960101896351570185083824040512300972207240555,
+        'trigger_escape_owner'
+    );
+    assert(
+        ArgentAccount::ESCAPE_GUARDIAN_SELECTOR == 1662889347576632967292303062205906116436469425870979472602094601074614456040,
+        'escape_guardian'
+    );
+    assert(
+        ArgentAccount::ESCAPE_OWNER_SELECTOR == 1621457541430776841129472853859989177600163870003012244140335395142204209277,
+        'escape_owner'
+    );
+    assert(
+        ArgentAccount::EXECUTE_AFTER_UPGRADE_SELECTOR == 738349667340360233096752603318170676063569407717437256101137432051386874767,
+        'execute_after_upgrade'
+    );
+}
 

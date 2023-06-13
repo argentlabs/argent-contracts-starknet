@@ -88,6 +88,7 @@ fn erc165_supported_interfaces() {
 //     account.change_owner(new_owner_pubkey, new_owner_r, new_owner_s);
 //     assert(account.get_owner() == new_owner_pubkey, 'value should be new owner pub');
 // }
+
 #[test]
 #[available_gas(2000000)]
 #[should_panic(expected: ('argent/only-self', 'ENTRYPOINT_FAILED'))]
@@ -102,52 +103,56 @@ fn change_owner_only_self() {
 #[should_panic(expected: ('argent/null-owner', 'ENTRYPOINT_FAILED'))]
 fn change_owner_to_zero() {
     let account = initialize_default_account();
-    set_caller_address(contract_address_const::<1>());
-    set_contract_address(contract_address_const::<1>());
+    set_caller_and_contract_addresses();
     initialize_default_account();
     account.change_owner(0, new_owner_r, new_owner_s);
 }
-// #[test]
-// #[available_gas(2000000)]
-// #[should_panic(expected: ('argent/invalid-owner-sig', ))]
-// fn change_owner_invalid_message() {
-//     initialize_default_account();
-//     ArgentAccount::change_owner(new_owner_pubkey, wrong_owner_r, wrong_owner_s);
-// }
 
-// #[test]
-// #[available_gas(2000000)]
-// #[should_panic(expected: ('argent/invalid-owner-sig', ))]
-// fn change_owner_wrong_pub_key() {
-//     initialize_default_account();
-//     ArgentAccount::change_owner(wrong_owner_pubkey, new_owner_r, new_owner_s);
-// }
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('argent/invalid-owner-sig', 'ENTRYPOINT_FAILED'))]
+fn change_owner_invalid_message() {
+    let account = initialize_default_account();
+    set_caller_and_contract_addresses();
+    account.change_owner(new_owner_pubkey, wrong_owner_r, wrong_owner_s);
+}
 
-// #[test]
-// #[available_gas(2000000)]
-// fn change_guardian() {
-//     initialize_default_account();
-//     ArgentAccount::change_guardian(22);
-//     assert(ArgentAccount::get_guardian() == 22, 'value should be 22');
-// }
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('argent/invalid-owner-sig', 'ENTRYPOINT_FAILED'))]
+fn change_owner_wrong_pub_key() {
+    let account = initialize_default_account();
+    set_caller_and_contract_addresses();
+    account.change_owner(wrong_owner_pubkey, new_owner_r, new_owner_s);
+}
 
-// #[test]
-// #[available_gas(2000000)]
-// #[should_panic(expected: ('argent/only-self', ))]
-// fn change_guardian_only_self() {
-//     initialize_default_account();
-//     set_caller_address(contract_address_const::<42>());
-//     ArgentAccount::change_guardian(22);
-// }
+#[test]
+#[available_gas(2000000)]
+fn change_guardian() {
+    let account = initialize_default_account();
+    set_caller_and_contract_addresses();
+    account.change_guardian(22);
+    assert(account.get_guardian() == 22, 'value should be 22');
+}
 
-// #[test]
-// #[available_gas(2000000)]
-// #[should_panic(expected: ('argent/backup-should-be-null', ))]
-// fn change_guardian_to_zero() {
-//     ArgentAccount::constructor(owner_pubkey, guardian_pubkey);
-//     ArgentAccount::_guardian_backup::write(42);
-//     ArgentAccount::change_guardian(0);
-// }
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('argent/only-self', 'ENTRYPOINT_FAILED'))]
+fn change_guardian_only_self() {
+    let account = initialize_default_account();
+    set_caller_address(contract_address_const::<42>());
+    account.change_guardian(22);
+}
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('argent/backup-should-be-null', 'ENTRYPOINT_FAILED'))]
+fn change_guardian_to_zero() {
+    let account = initialize_default_account();
+    set_caller_and_contract_addresses();
+    account.change_guardian_backup(42);
+    account.change_guardian(0);
+}
 
 // #[test]
 // #[available_gas(2000000)]
@@ -254,4 +259,7 @@ fn change_owner_to_zero() {
 //     );
 // }
 
-
+fn set_caller_and_contract_addresses() {
+    set_caller_address(contract_address_const::<1>());
+    set_contract_address(contract_address_const::<1>());
+}

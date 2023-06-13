@@ -1,5 +1,5 @@
 mod test_argent_account;
-// mod test_argent_account_signatures;
+mod test_argent_account_signatures;
 
 use array::ArrayTrait;
 use traits::Into;
@@ -49,6 +49,10 @@ trait ITestArgentAccount<TContractState> {
     fn getName(self: @TContractState) -> felt252;
     // IErc165
     fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
+    // IErc1271
+    fn is_valid_signature(
+        self: @TContractState, hash: felt252, signatures: Array<felt252>
+    ) -> felt252;
 }
 
 const owner_pubkey: felt252 = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;

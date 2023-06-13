@@ -34,7 +34,7 @@ use erc165::{
 };
 
 mod erc1271;
-use erc1271::{ERC1271_VALIDATED};
+use erc1271::{ERC1271_VALIDATED, IErc1271, IErc1271LibraryDispatcher, IErc1271DispatcherTrait};
 
 use starknet::ClassHash;
 

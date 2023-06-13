@@ -29,7 +29,6 @@ trait IArgentAccount<TContractState> {
     fn change_guardian(ref self: TContractState, new_guardian: felt252);
     fn change_guardian_backup(ref self: TContractState, new_guardian_backup: felt252);
     fn trigger_escape_owner(ref self: TContractState, new_owner: felt252);
-
     fn trigger_escape_guardian(ref self: TContractState, new_guardian: felt252);
     fn escape_owner(ref self: TContractState);
     fn escape_guardian(ref self: TContractState);

@@ -75,14 +75,6 @@ fn erc165_supported_interfaces() {
     assert(account.supports_interface(0x3943f10f), 'ERC165_OLD_ACCOUNT_INTERFACE_ID');
 }
 
-
-// set_caller_address(contract_address_const::<1>());
-// set_contract_address(contract_address_const::<1>());
-// let mut signature = ArrayTrait::new();
-// signature.append(0x7f41f072c2741c4e3fe91552f1fbb19c9dd96c40e6b845c3a99776da9c6d309);
-// signature.append(0x7f41f072c2741c4e3fe91552f1fbb19c9dd96c40e6b845c3a99776da9c6d309);
-// set_signature(signature.span());
-
 // #[test]
 // #[available_gas(2000000)]
 // fn change_owner() {
@@ -220,22 +212,24 @@ fn get_name() {
 fn getName() {
     assert(initialize_account().getName() == 'ArgentAccount', 'Name should be ArgentAccount');
 }
-// TODO Not supported atm
-// #[test]
-// #[available_gas(2000000)]
-// fn unsuported_supportsInterface() {
-//     assert(initialize_account().supportsInterface(0) == 0, 'value should be false');
-//     assert(
-//         initialize_account().supportsInterface(0xffffffff) == 0, 'Should not support 0xffffffff'
-//     );
-// }
-// #[test]
-// #[available_gas(2000000)]
-// fn supportsInterface() {
-//     assert(initialize_account().supportsInterface(0x01ffc9a7) == 1, 'ERC165_IERC165_INTERFACE_ID');
-//     assert(initialize_account().supportsInterface(0xa66bd575) == 1, 'ERC165_ACCOUNT_INTERFACE_ID');
-//     assert(initialize_account().supportsInterface(0x3943f10f) == 1, 'ERC165_OLD_ACCOUNT_INTERFACE_ID');
-// }
+#[test]
+#[available_gas(2000000)]
+fn unsuported_supportsInterface() {
+    assert(initialize_account().supportsInterface(0) == 0, 'value should be false');
+    assert(
+        initialize_account().supportsInterface(0xffffffff) == 0, 'Should not support 0xffffffff'
+    );
+}
+
+#[test]
+#[available_gas(2000000)]
+fn supportsInterface() {
+    assert(initialize_account().supportsInterface(0x01ffc9a7) == 1, 'ERC165_IERC165_INTERFACE_ID');
+    assert(initialize_account().supportsInterface(0xa66bd575) == 1, 'ERC165_ACCOUNT_INTERFACE_ID');
+    assert(
+        initialize_account().supportsInterface(0x3943f10f) == 1, 'ERC165_OLD_ACCOUNT_INTERFACE_ID'
+    );
+}
 
 #[test]
 #[available_gas(2000000)]

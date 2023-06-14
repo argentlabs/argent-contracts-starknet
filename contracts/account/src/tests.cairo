@@ -49,6 +49,7 @@ trait ITestArgentAccount<TContractState> {
     fn getName(self: @TContractState) -> felt252;
     // IErc165
     fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
+    fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
     // IErc1271
     fn is_valid_signature(
         self: @TContractState, hash: felt252, signatures: Array<felt252>

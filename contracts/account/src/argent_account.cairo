@@ -2,6 +2,8 @@ use lib::{OutsideExecution, Version};
 use account::{Escape, EscapeStatus};
 use starknet::{ClassHash};
 // TODO Naming interface sucks
+
+// TODO This could def be in its own contract using ownable pattern!
 #[starknet::interface]
 trait IExecuteFromOutside<TContractState> {
     fn execute_from_outside(
@@ -50,6 +52,10 @@ trait IArgentAccount<TContractState> {
 trait IOldArgentAccount<TContractState> {
     fn getVersion(self: @TContractState) -> felt252;
     fn getName(self: @TContractState) -> felt252;
+    fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
+    fn isValidSignature(
+        self: @TContractState, hash: felt252, signatures: Array<felt252>
+    ) -> felt252;
 }
 
 #[starknet::contract]
@@ -618,7 +624,7 @@ mod ArgentAccount {
 
 
         fn get_name(self: @ContractState) -> felt252 {
-            NAME
+            get_name()
         }
 
 
@@ -642,39 +648,33 @@ mod ArgentAccount {
         fn getVersion(self: @ContractState) -> felt252 {
             '0.3.0'
         }
-        // TODO Call get_name instead
         fn getName(self: @ContractState) -> felt252 {
-            NAME
+            get_name()
+        }
+
+        /// Deprecated method for compatibility reasons
+        fn supportsInterface(self: @ContractState, interface_id: felt252) -> felt252 {
+            if supports_interface(interface_id) {
+                1
+            } else {
+                0
+            }
+        }
+        /// Deprecated method for compatibility reasons
+        #[view]
+        fn isValidSignature(
+            self: @ContractState, hash: felt252, signatures: Array<felt252>
+        ) -> felt252 {
+            is_valid_signature(self, hash, signatures)
         }
     }
-
 
     #[external(v0)]
     impl Erc165Impl of IErc165<ContractState> {
         fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
-            if interface_id == ERC165_IERC165_INTERFACE_ID {
-                true
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
-                true
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_1 {
-                true
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_2 {
-                true
-            } else {
-                false
-            }
+            supports_interface(interface_id)
         }
     }
-
-    // TODO Still need to fix it here 
-    /// Deprecated method for compatibility reasons
-    // fn supportsInterface(self: @ContractState, interface_id: felt252) -> felt252 {
-    //     if supports_interface(self, interface_id) {
-    //         1
-    //     } else {
-    //         0
-    //     }
-    // }
 
     // ERC1271
     #[external(v0)]
@@ -682,25 +682,42 @@ mod ArgentAccount {
         fn is_valid_signature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
-            if is_valid_span_signature(self, hash, signatures.span()) {
-                ERC1271_VALIDATED
-            } else {
-                0
-            }
+            is_valid_signature(self, hash, signatures)
         }
     }
 
-    // /// Deprecated method for compatibility reasons
-    // #[view]
-    // fn isValidSignature(
-    //     self: @ContractState, hash: felt252, signatures: Array<felt252>
-    // ) -> felt252 {
-    //     is_valid_signature(self, hash, signatures)
-    // }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                          Internal                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    fn get_name() -> felt252 {
+        NAME
+    }
+
+    fn supports_interface(interface_id: felt252) -> bool {
+        if interface_id == ERC165_IERC165_INTERFACE_ID {
+            true
+        } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
+            true
+        } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_1 {
+            true
+        } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_2 {
+            true
+        } else {
+            false
+        }
+    }
+
+    fn is_valid_signature(
+        self: @ContractState, hash: felt252, signatures: Array<felt252>
+    ) -> felt252 {
+        if is_valid_span_signature(self, hash, signatures.span()) {
+            ERC1271_VALIDATED
+        } else {
+            0
+        }
+    }
 
     fn assert_valid_calls_and_signature(
         ref self: ContractState,

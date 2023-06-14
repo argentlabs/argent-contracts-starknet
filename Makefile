@@ -10,7 +10,7 @@ LIB_FOLDER= $(SOURCE_FOLDER)/lib
 MULTISIG_FOLDER= $(SOURCE_FOLDER)/multisig
 MULTICALL_FOLDER= $(SOURCE_FOLDER)/multicall
 SOURCE_FOLDER=./contracts
-CAIRO_VERSION=v2.0.0-rc1
+CAIRO_VERSION=v2.0.0-rc2
 FIXTURES_FOLDER = ./tests/fixtures
 
 all: install build fixtures
@@ -55,6 +55,7 @@ fixtures-v2:
 	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/TestDapp.json $(FIXTURES_FOLDER)/TestDapp.casm
 	
 
+test-v2: test-account test-lib
 
 test: 
 	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)

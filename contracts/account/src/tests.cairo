@@ -78,7 +78,6 @@ fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAcco
         ArgentAccount::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), true
     )
         .unwrap();
-    set_caller_address(contract_address_const::<1>());
     set_contract_address(contract_address_const::<1>());
     ITestArgentAccountDispatcher { contract_address }
 }

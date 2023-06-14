@@ -24,11 +24,15 @@ fn initialize() {
     assert(account.get_guardian() == 2, 'value should be 2');
     assert(account.get_guardian_backup() == 0, 'value should be 0');
 }
+
+// TODO For some reason set_caller_address ain't working 
 // #[test]
 // #[available_gas(2000000)]
-// #[should_panic(expected: ('argent/invalid-tx-version', ))]
+// #[should_panic(expected: ('argent/invalid-tx-version', 'ENTRYPOINT_FAILED'))]
 // fn check_transaction_version_on_execute() {
-//     ArgentAccount::__execute__(ArrayTrait::new());
+//     let account = initialize_account();
+//     set_caller_address(contract_address_const::<0>());
+//     account.__execute__(ArrayTrait::new());
 // }
 
 // #[test]

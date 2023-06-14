@@ -1,9 +1,7 @@
 use lib::{OutsideExecution, Version};
 use account::{Escape, EscapeStatus};
 use starknet::{ClassHash};
-// TODO Naming interface sucks
 
-// TODO This could def be in its own contract using ownable pattern!
 #[starknet::interface]
 trait IExecuteFromOutside<TContractState> {
     fn execute_from_outside(
@@ -154,7 +152,6 @@ mod ArgentAccount {
     /// @param account The account address
     /// @param owner The owner address
     /// @param guardian The guardian address
-    // TODO Assess EACH EVENT should be a key and what should be data only
     #[derive(Drop, starknet::Event)]
     struct AccountCreated {
         #[key]
@@ -232,7 +229,6 @@ mod ArgentAccount {
 
     /// @notice Emitted when the implementation of the account changes
     /// @param new_implementation The new implementation
-    // TODO Could this maybe be deported in another file? along with the interface
     #[derive(Drop, starknet::Event)]
     struct AccountUpgraded {
         new_implementation: ClassHash

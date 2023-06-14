@@ -1,5 +1,5 @@
 use starknet::contract_address_const;
-use starknet::testing::{set_caller_address, set_contract_address, set_signature};
+use starknet::testing::{set_version, set_caller_address, set_contract_address, set_signature};
 use array::ArrayTrait;
 use zeroable::Zeroable;
 
@@ -26,21 +26,25 @@ fn initialize() {
 }
 
 // TODO For some reason set_caller_address ain't working 
-// #[test]
-// #[available_gas(2000000)]
-// #[should_panic(expected: ('argent/invalid-tx-version', 'ENTRYPOINT_FAILED'))]
-// fn check_transaction_version_on_execute() {
-//     let account = initialize_account();
-//     set_caller_address(contract_address_const::<0>());
-//     account.__execute__(ArrayTrait::new());
-// }
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('argent/invalid-tx-version', 'ENTRYPOINT_FAILED'))]
+fn check_transaction_version_on_execute() {
+    let account = initialize_account();
+    set_contract_address(contract_address_const::<0>());
+    set_version(32);
+    account.__execute__(ArrayTrait::new());
+}
 
-// #[test]
-// #[available_gas(2000000)]
-// #[should_panic(expected: ('argent/invalid-tx-version', ))]
-// fn check_transaction_version_on_validate() {
-//     ArgentAccount::__validate__(ArrayTrait::new());
-// }
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('argent/invalid-tx-version', 'ENTRYPOINT_FAILED'))]
+fn check_transaction_version_on_validate() {
+    let account = initialize_account();
+    set_contract_address(contract_address_const::<0>());
+    set_version(32);
+    account.__validate__(ArrayTrait::new());
+}
 
 #[test]
 #[available_gas(2000000)]

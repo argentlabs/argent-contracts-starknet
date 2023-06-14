@@ -4,7 +4,7 @@ use option::OptionTrait;
 use result::ResultTrait;
 
 use starknet::{contract_address_const, deploy_syscall, Felt252TryIntoClassHash};
-use starknet::testing::{set_caller_address, set_block_number};
+use starknet::testing::{set_block_number};
 
 use lib::{Call, execute_multicall, TestDapp};
 use multicall::aggregate;

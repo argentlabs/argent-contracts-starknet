@@ -25,7 +25,6 @@ fn initialize() {
     assert(account.get_guardian_backup() == 0, 'value should be 0');
 }
 
-// TODO For some reason set_caller_address ain't working 
 #[test]
 #[available_gas(2000000)]
 #[should_panic(expected: ('argent/invalid-tx-version', 'ENTRYPOINT_FAILED'))]

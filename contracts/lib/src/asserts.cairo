@@ -19,7 +19,7 @@ const SIERRA_QUERY_VERSION: felt252 =
 fn assert_only_self() {
     assert(get_contract_address() == get_caller_address(), 'argent/only-self');
 }
-use debug::PrintTrait;
+
 #[inline(always)]
 fn assert_caller_is_null() {
     assert(get_caller_address().is_zero(), 'argent/non-null-caller');

@@ -78,11 +78,9 @@ fn valid_with_guardian_backup() {
 #[test]
 #[available_gas(2000000)]
 fn invalid_hash_1() {
+    let acc = initialize_account_without_guardian();
     let signatures = single_signature(owner_r, owner_s);
-    assert(
-        !is_valid_signature(initialize_account_without_guardian(), 0, signatures),
-        'invalid signature'
-    );
+    assert(!is_valid_signature(acc, 0, signatures), 'invalid signature');
 }
 
 #[test]

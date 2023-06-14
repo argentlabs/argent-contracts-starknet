@@ -2,7 +2,6 @@ mod test_argent_account;
 mod test_argent_account_signatures;
 
 use array::ArrayTrait;
-use traits::Into;
 use traits::TryInto;
 use result::ResultTrait;
 use option::OptionTrait;
@@ -15,7 +14,7 @@ use starknet::testing::{set_caller_address, set_contract_address, set_signature}
 use account::{Escape, EscapeStatus, ArgentAccount};
 use lib::{Version, Call};
 
-
+// TODO Do we need one global itnerface for testing?
 #[starknet::interface]
 trait ITestArgentAccount<TContractState> {
     // AccountContract
@@ -23,18 +22,25 @@ trait ITestArgentAccount<TContractState> {
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
     // IArgentAccount
+    fn __validate_deploy__(
+        self: @TContractState,
+        class_hash: felt252,
+        contract_address_salt: felt252,
+        owner: felt252,
+        guardian: felt252
+    ) -> felt252;
+    // External
     fn change_owner(
         ref self: TContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252
     );
     fn change_guardian(ref self: TContractState, new_guardian: felt252);
     fn change_guardian_backup(ref self: TContractState, new_guardian_backup: felt252);
     fn trigger_escape_owner(ref self: TContractState, new_owner: felt252);
-
     fn trigger_escape_guardian(ref self: TContractState, new_guardian: felt252);
     fn escape_owner(ref self: TContractState);
     fn escape_guardian(ref self: TContractState);
     fn cancel_escape(ref self: TContractState);
-
+    // Views
     fn get_owner(self: @TContractState) -> felt252;
     fn get_guardian(self: @TContractState) -> felt252;
     fn get_guardian_backup(self: @TContractState) -> felt252;
@@ -44,12 +50,18 @@ trait ITestArgentAccount<TContractState> {
     fn get_guardian_escape_attempts(self: @TContractState) -> u32;
     fn get_owner_escape_attempts(self: @TContractState) -> u32;
     fn get_escape_and_status(self: @TContractState) -> (Escape, EscapeStatus);
+
     // IOldArgentAccount
     fn getVersion(self: @TContractState) -> felt252;
     fn getName(self: @TContractState) -> felt252;
+    fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
+    fn isValidSignature(
+        self: @TContractState, hash: felt252, signatures: Array<felt252>
+    ) -> felt252;
+
     // IErc165
     fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
-    fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
+
     // IErc1271
     fn is_valid_signature(
         self: @TContractState, hash: felt252, signatures: Array<felt252>

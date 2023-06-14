@@ -48,7 +48,7 @@ fixtures:
 	./cairo/target/release/starknet-compile $(MULTISIG_FOLDER) $(FIXTURES_FOLDER)/ArgentMultisig.json --allowed-libfuncs-list-name experimental_v0.1.0 --contract-path multisig::argent_multisig::ArgentMultisig
 	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/ArgentMultisig.json $(FIXTURES_FOLDER)/ArgentMultisig.casm --allowed-libfuncs-list-name experimental_v0.1.0
 
-ffixtures: 
+fixtures-v2: 
 	./cairo/target/release/starknet-compile $(ACCOUNT_FOLDER) $(FIXTURES_FOLDER)/ArgentAccount.json --contract-path account::argent_account::ArgentAccount --allowed-libfuncs-list-name all
 	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/ArgentAccount.json $(FIXTURES_FOLDER)/ArgentAccount.casm
 	./cairo/target/release/starknet-compile $(ACCOUNT_FOLDER) $(FIXTURES_FOLDER)/TestDapp.json --contract-path lib::test_dapp::TestDapp --allowed-libfuncs-list-name all

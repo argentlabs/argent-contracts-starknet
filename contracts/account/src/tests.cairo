@@ -74,13 +74,8 @@ fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAcco
     let mut calldata = ArrayTrait::new();
     calldata.append(owner);
     calldata.append(guardian);
-    initialize_account_with_calldata(calldata.span())
-}
-
-
-fn initialize_account_with_calldata(calldata: Span<felt252>) -> ITestArgentAccountDispatcher {
     let (contract_address, _) = deploy_syscall(
-        ArgentAccount::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata, true
+        ArgentAccount::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), true
     )
         .unwrap();
     set_caller_address(contract_address_const::<1>());

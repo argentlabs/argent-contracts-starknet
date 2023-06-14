@@ -55,7 +55,7 @@ fixtures-v2:
 	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/TestDapp.json $(FIXTURES_FOLDER)/TestDapp.casm
 	
 
-test-v2: test-account test-lib
+test-v2: test-account test-lib test-multicall
 
 test: 
 	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)

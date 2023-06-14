@@ -68,9 +68,9 @@ mod ArgentAccount {
     use starknet::{
         ClassHash, class_hash_const, ContractAddress, get_block_timestamp, get_caller_address,
         get_execution_info, get_contract_address, get_tx_info, VALIDATED,
-        syscalls::replace_class_syscall, ContractAddressIntoFelt252, account::Call
+        syscalls::replace_class_syscall, ContractAddressIntoFelt252
     };
-
+    use starknet::account::{Call, AccountContract};
     use account::{Escape, EscapeStatus};
     use lib::{
         assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
@@ -258,7 +258,7 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[external(v0)]
-    impl AccountContractImpl of starknet::account::AccountContract<ContractState> {
+    impl AccountContractImpl of AccountContract<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();

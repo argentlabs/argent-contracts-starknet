@@ -1,12 +1,10 @@
 use array::ArrayTrait;
 use zeroable::Zeroable;
-use starknet::testing::set_caller_address;
-use starknet::testing::set_contract_address;
-use starknet::contract_address_const;
-use starknet::get_contract_address;
+use starknet::testing::{set_caller_address, set_contract_address};
+use starknet::account::Call;
+use starknet::{contract_address_const, get_contract_address};
 
 use lib::asserts;
-use lib::Call;
 
 #[test]
 #[available_gas(2000000)]

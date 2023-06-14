@@ -9,13 +9,13 @@ mod ArgentMultisig {
     use starknet::{
         get_contract_address, ContractAddressIntoFelt252, VALIDATED,
         syscalls::replace_class_syscall, ClassHash, class_hash_const, get_block_timestamp,
-        get_caller_address, get_tx_info
+        get_caller_address, get_tx_info, acocunt::Call
     };
 
     use lib::{
         assert_only_self, assert_no_self_call, assert_correct_tx_version, assert_caller_is_null,
-        execute_multicall, Call, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
-        SpanSerde, OutsideExecution, hash_outside_execution_message, ERC165_IERC165_INTERFACE_ID,
+        execute_multicall, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait, SpanSerde,
+        OutsideExecution, hash_outside_execution_message, ERC165_IERC165_INTERFACE_ID,
         ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
         ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED
     };

@@ -8,11 +8,12 @@ use option::OptionTrait;
 
 use starknet::{contract_address_const, SyscallResultTrait};
 use starknet::class_hash::Felt252TryIntoClassHash;
+use starknet::account::Call;
 use starknet::syscalls::{deploy_syscall, get_block_hash_syscall};
 use starknet::testing::{set_contract_address, set_signature};
 
 use account::{Escape, EscapeStatus, ArgentAccount};
-use lib::{Version, Call};
+use lib::Version;
 
 // TODO Do we need one global itnerface for testing?
 #[starknet::interface]

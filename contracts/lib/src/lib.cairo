@@ -16,7 +16,6 @@ use array_ext::ArrayExtTrait;
 
 // Structures 
 mod calls;
-use calls::Call;
 use calls::execute_multicall;
 
 mod version;

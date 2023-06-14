@@ -3,10 +3,10 @@ use traits::TryInto;
 use option::OptionTrait;
 use result::ResultTrait;
 
-use starknet::{contract_address_const, deploy_syscall, Felt252TryIntoClassHash};
+use starknet::{contract_address_const, deploy_syscall, Felt252TryIntoClassHash, account::Call};
 use starknet::testing::{set_block_number};
 
-use lib::{Call, execute_multicall, TestDapp};
+use lib::{execute_multicall, TestDapp};
 use multicall::aggregate;
 use debug::PrintTrait;
 

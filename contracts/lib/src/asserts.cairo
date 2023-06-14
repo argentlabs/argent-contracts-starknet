@@ -6,7 +6,7 @@ use starknet::{
     get_contract_address, get_caller_address, ContractAddress, ContractAddressIntoFelt252
 };
 
-use lib::Call;
+use starknet::account::Call;
 
 const TRANSACTION_VERSION: felt252 = 1;
 const QUERY_VERSION: felt252 =

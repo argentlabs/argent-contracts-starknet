@@ -1,5 +1,4 @@
 use starknet::account::Call;
-use lib::execute_multicall;
 
 #[starknet::interface]
 trait IMulticall<TContractState> {
@@ -8,19 +7,21 @@ trait IMulticall<TContractState> {
 
 #[starknet::contract]
 mod Multicall {
-    use box::BoxTrait;
-    use starknet::get_block_info;
-    use array::{SpanTrait, ArrayTrait};
+    use array::ArrayTrait;
 
+    use starknet::info::get_block_number;
     use starknet::account::Call;
-    use lib::{execute_multicall};
+
+    use lib::execute_multicall;
 
     #[storage]
     struct Storage {}
 
-    #[view]
-    fn aggregate(calls: Array<Call>) -> (u64, Array<Span<felt252>>) {
-        let block_number = get_block_info().unbox().block_number;
-        (block_number, execute_multicall(calls.span()))
+    #[external(v0)]
+    impl MulticallImpl of super::IMulticall<ContractState> {
+        #[view]
+        fn aggregate(self: @ContractState, calls: Array<Call>) -> (u64, Array<Span<felt252>>) {
+            (get_block_number(), execute_multicall(calls.span()))
+        }
     }
 }

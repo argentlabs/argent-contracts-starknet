@@ -27,7 +27,7 @@ mod TestDapp {
 
 
     #[external(v0)]
-    impl ITestDappImpl of super::ITestDapp<ContractState> {
+    impl TestDappImpl of super::ITestDapp<ContractState> {
         ////////////////////////////////////////////////////////////////////////////////////////////////
         //                                     External functions                                     //
         ////////////////////////////////////////////////////////////////////////////////////////////////

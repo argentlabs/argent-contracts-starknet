@@ -22,7 +22,6 @@ fn assert_only_self() {
 use debug::PrintTrait;
 #[inline(always)]
 fn assert_caller_is_null() {
-    get_caller_address().print();
     assert(get_caller_address().is_zero(), 'argent/non-null-caller');
 }
 

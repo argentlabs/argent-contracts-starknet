@@ -10,8 +10,8 @@ use account::tests::{
 };
 
 const new_owner_pubkey: felt252 = 0xa7da05a4d664859ccd6e567b935cdfbfe3018c7771cb980892ef38878ae9bc;
-const new_owner_r: felt252 = 0x7f41f072c2741c4e3fe91552f1fbb19c9dd96c40e6b845c3a99776da9c6d309;
-const new_owner_s: felt252 = 0x2533ad14e0d98389f0b9abbcd1b73d086af68fdfc9bf07d21ebce84ab01e43b;
+const new_owner_r: felt252 = 0x3e242301b001c97a5be2b3a165fae7abf72027cb8b1ca4713580d52d9ff008e;
+const new_owner_s: felt252 = 0x758f108a8beed1dec98d054740287611882d7633bb1b94c73728aaff777bf6c;
 
 const wrong_owner_r: felt252 = 0x4be5db0599a2e5943f207da3f9bf2dd091acf055b71a1643e9c35fcd7e2c0df;
 const wrong_owner_s: felt252 = 0x2e44d5bad55a0d692e02529e7060f352fde85fae8d5946f28c34a10a29bc83b;
@@ -78,15 +78,16 @@ fn erc165_supported_interfaces() {
     assert(account.supports_interface(0x3943f10f), 'ERC165_OLD_ACCOUNT_INTERFACE_ID');
 }
 
-// #[test]
-// #[available_gas(2000000)]
-// fn change_owner() {
-//     let account = initialize_account();
-//     assert(account.get_owner() == owner_pubkey, 'value should be 1');
+#[test]
+#[available_gas(2000000)]
+fn change_owner() {
+    let account = initialize_account();
+    assert(account.get_owner() == owner_pubkey, 'value should be 1');
 
-//     account.change_owner(new_owner_pubkey, new_owner_r, new_owner_s);
-//     assert(account.get_owner() == new_owner_pubkey, 'value should be new owner pub');
-// }
+    set_contract_address(contract_address_const::<1>());
+    account.change_owner(new_owner_pubkey, new_owner_r, new_owner_s);
+    assert(account.get_owner() == new_owner_pubkey, 'value should be new owner pub');
+}
 
 #[test]
 #[available_gas(2000000)]

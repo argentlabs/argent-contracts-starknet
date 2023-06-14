@@ -69,7 +69,7 @@ def calculate_sig_change_owner():
     # message_hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
     change_owner_selector = 658036363289841962501247229249022783727527757834043681434485756469236076608
     chain_id = 0
-    contract_address = 0
+    contract_address = 1
     old_owner = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca
     
     message_hash = compute_hash_on_elements([change_owner_selector, chain_id, contract_address, old_owner])

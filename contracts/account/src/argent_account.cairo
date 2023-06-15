@@ -70,7 +70,7 @@ mod ArgentAccount {
         get_execution_info, get_contract_address, get_tx_info, VALIDATED,
         syscalls::replace_class_syscall, ContractAddressIntoFelt252
     };
-    use starknet::account::{Call, AccountContract};
+    use starknet::account::{Call};
     use account::{Escape, EscapeStatus};
     use lib::{
         assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
@@ -79,7 +79,7 @@ mod ArgentAccount {
         IAccountUpgradeDispatcherTrait, OutsideExecution, hash_outside_execution_message,
         assert_correct_declare_version, ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID,
         ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED,
-        IErc165, IErc1271,
+        IErc165, IErc1271, AccountContract,
     };
 
     const NAME: felt252 = 'ArgentAccount';

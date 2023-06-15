@@ -73,13 +73,13 @@ mod ArgentMultisig {
         syscalls::replace_class_syscall, ClassHash, class_hash_const, get_block_timestamp,
         get_caller_address, get_tx_info
     };
-    use starknet::account::{Call, AccountContract};
+    use starknet::account::{Call};
 
     use lib::{
-        assert_only_self, assert_no_self_call, assert_correct_tx_version, assert_caller_is_null,
-        execute_multicall, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
-        OutsideExecution, hash_outside_execution_message, ERC165_IERC165_INTERFACE_ID,
-        ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
+        AccountContract, assert_only_self, assert_no_self_call, assert_correct_tx_version,
+        assert_caller_is_null, execute_multicall, Version, IErc165LibraryDispatcher,
+        IErc165DispatcherTrait, OutsideExecution, hash_outside_execution_message,
+        ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
         ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IAccountUpgrade,
         IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait
     };

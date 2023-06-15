@@ -360,6 +360,7 @@ mod ArgentMultisig {
         }
     }
 
+    #[view]
     /// Deprecated method for compatibility reasons
     fn supportsInterface(interface_id: felt252) -> felt252 {
         if supports_interface(interface_id) {

@@ -75,10 +75,11 @@ mod ArgentAccount {
     use lib::{
         assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
         execute_multicall, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
-        IErc1271DispatcherTrait, IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait,
-        OutsideExecution, hash_outside_execution_message, assert_correct_declare_version,
-        ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
-        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IErc165, IErc1271, IAccountUpgrade
+        IErc1271DispatcherTrait, IAccountUpgrade, IAccountUpgradeLibraryDispatcher,
+        IAccountUpgradeDispatcherTrait, OutsideExecution, hash_outside_execution_message,
+        assert_correct_declare_version, ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID,
+        ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED,
+        IErc165, IErc1271,
     };
 
     const NAME: felt252 = 'ArgentAccount';

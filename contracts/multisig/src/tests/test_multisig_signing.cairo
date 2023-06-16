@@ -1,9 +1,8 @@
 use array::ArrayTrait;
 use traits::Into;
 
-use multisig::ArgentMultisig;
 use multisig::tests::{
-    ITestArgentMultisigDispatcher, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
+    ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
     initialize_multisig_with_one_signer, signer_pubkey_1, signer_pubkey_2
 };
 

@@ -8,9 +8,7 @@ trait IMulticall<TContractState> {
 #[starknet::contract]
 mod Multicall {
     use array::ArrayTrait;
-
-    use starknet::info::get_block_number;
-    use starknet::account::Call;
+    use starknet::{info::get_block_number, account::Call};
 
     use lib::execute_multicall;
 

@@ -6,9 +6,10 @@ use result::ResultTrait;
 use option::OptionTrait;
 use traits::TryInto;
 
-use starknet::{contract_address_const, Felt252TryIntoClassHash, deploy_syscall};
-use starknet::account::Call;
-use starknet::testing::set_contract_address;
+use starknet::{
+    contract_address_const, Felt252TryIntoClassHash, deploy_syscall, account::Call,
+    testing::set_contract_address
+};
 
 use account::{Escape, EscapeStatus, ArgentAccount};
 use lib::Version;

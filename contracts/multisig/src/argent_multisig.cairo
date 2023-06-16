@@ -474,8 +474,8 @@ mod ArgentMultisig {
         signature_r: felt252,
         signature_s: felt252
     ) -> bool {
-        // let is_signer = self.is_signer(signer);
-        // assert(is_signer, 'argent/not-a-signer');
+        let is_signer = self.is_signer(signer);
+        assert(is_signer, 'argent/not-a-signer');
         check_ecdsa_signature(hash, signer, signature_r, signature_s)
     }
 
@@ -508,9 +508,7 @@ mod ArgentMultisig {
             assert_only_self();
 
             // Check basic invariants
-            // assert_valid_threshold_and_signers_count(
-            //     self.get_threshold(), self.get_signers_len()
-            // );
+            assert_valid_threshold_and_signers_count(self.get_threshold(), self.get_signers_len());
 
             assert(data.len() == 0, 'argent/unexpected-data');
             ArrayTrait::new()
@@ -537,7 +535,7 @@ mod ArgentMultisig {
                 'argent/invalid-timestamp'
             );
             let nonce = outside_execution.nonce;
-            // assert(!self.get_outside_nonce(nonce), 'argent/duplicated-outside-nonce');
+            assert(!self.get_outside_nonce(nonce), 'argent/duplicated-outside-nonce');
 
             let outside_tx_hash = hash_outside_execution_message(@outside_execution);
 
@@ -546,7 +544,7 @@ mod ArgentMultisig {
             assert_valid_calls_and_signature(@self, calls, outside_tx_hash, signature.span());
 
             // Effects
-            // self.set_outside_nonce(nonce, true);
+            self.set_outside_nonce(nonce, true);
 
             // Interactions
             let retdata = execute_multicall(calls);
@@ -598,8 +596,7 @@ mod ArgentMultisig {
     fn is_valid_span_signature(
         self: @ContractState, hash: felt252, signature: Span<felt252>
     ) -> bool {
-        // let threshold = self.get_threshold();
-        let threshold = 2;
+        let threshold = self.get_threshold();
         assert(threshold != 0, 'argent/uninitialized');
 
         let mut signer_signatures = deserialize_array_signer_signature(signature)

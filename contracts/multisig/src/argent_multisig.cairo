@@ -56,13 +56,11 @@ mod ArgentMultisig {
     use ecdsa::check_ecdsa_signature;
     use option::OptionTrait;
     use traits::Into;
-    use zeroable::Zeroable;
     use starknet::{
         get_contract_address, ContractAddressIntoFelt252, VALIDATED,
         syscalls::replace_class_syscall, ClassHash, class_hash_const, get_block_timestamp,
-        get_caller_address, get_tx_info
+        get_caller_address, get_tx_info, account::Call
     };
-    use starknet::account::{Call};
 
     use lib::{
         AccountContract, assert_only_self, assert_no_self_call, assert_correct_tx_version,
@@ -72,7 +70,7 @@ mod ArgentMultisig {
         ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IAccountUpgrade,
         IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait, IExecuteFromOutside
     };
-    use multisig::{deserialize_array_signer_signature, SignerSignature};
+    use multisig::deserialize_array_signer_signature;
 
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
         738349667340360233096752603318170676063569407717437256101137432051386874767; // starknet_keccak('execute_after_upgrade')

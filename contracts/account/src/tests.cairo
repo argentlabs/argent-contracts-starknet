@@ -4,12 +4,13 @@ mod test_argent_account_signatures;
 use array::ArrayTrait;
 use result::ResultTrait;
 use option::OptionTrait;
+use traits::TryInto;
 
-use starknet::{contract_address_const, SyscallResultTrait};
+use starknet::contract_address_const;
 use starknet::class_hash::Felt252TryIntoClassHash;
 use starknet::account::Call;
 use starknet::syscalls::{deploy_syscall, get_block_hash_syscall};
-use starknet::testing::{set_contract_address, set_signature};
+use starknet::testing::set_contract_address;
 
 use account::{Escape, EscapeStatus, ArgentAccount};
 use lib::Version;

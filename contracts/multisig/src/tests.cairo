@@ -15,6 +15,8 @@ use option::OptionTrait;
 use result::ResultTrait;
 use starknet::syscalls::{deploy_syscall};
 use starknet::account::Call;
+use starknet::testing::set_contract_address;
+use starknet::contract_address_const;
 use lib::Version;
 
 #[starknet::interface]
@@ -23,7 +25,7 @@ trait ITestArgentMultisig<TContractState> {
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
-    // IBag
+    // ITestArgentMultisig
     fn __validate_deploy__(
         self: @TContractState,
         class_hash: felt252,
@@ -103,5 +105,7 @@ fn initialize_multisig_with(
         ArgentMultisig::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), true
     )
         .unwrap();
+
+    set_contract_address(contract_address_const::<1>());
     ITestArgentMultisigDispatcher { contract_address }
 }

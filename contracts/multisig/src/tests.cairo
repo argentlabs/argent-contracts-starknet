@@ -82,7 +82,6 @@ fn initialize_multisig() -> ITestArgentMultisigDispatcher {
 }
 
 
-use debug::PrintTrait;
 fn initialize_multisig_with(
     threshold: usize, mut signers: Span<felt252>
 ) -> ITestArgentMultisigDispatcher {

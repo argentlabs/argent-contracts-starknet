@@ -4,17 +4,15 @@ use traits::Into;
 use multisig::ArgentMultisig;
 use multisig::tests::{
     initialize_multisig, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3,
-    ITestArgentMultisigDispatcher, ITestArgentMultisigDispatcherTrait, initialize_multisig_with
+    ITestArgentMultisigDispatcher, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
+    initialize_multisig_with_one_signer
 };
 
 #[test]
 #[available_gas(20000000)]
 fn replace_signer_1() {
     // init
-    let threshold = 1;
-    let mut signers_array = ArrayTrait::new();
-    signers_array.append(signer_pubkey_1);
-    let multisig = initialize_multisig_with(threshold, signers_array.span());
+    let multisig = initialize_multisig_with_one_signer();
 
     // replace signer
     let signer_to_add = signer_pubkey_2;

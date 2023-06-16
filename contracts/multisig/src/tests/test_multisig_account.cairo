@@ -4,17 +4,15 @@ use traits::Into;
 use multisig::ArgentMultisig;
 use multisig::tests::{
     initialize_multisig, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3,
-    ITestArgentMultisigDispatcher, ITestArgentMultisigDispatcherTrait, initialize_multisig_with
+    ITestArgentMultisigDispatcher, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
+    initialize_multisig_with_one_signer
 };
 
 #[test]
 #[available_gas(20000000)]
 fn valid_initialize() {
-    let threshold = 1;
-    let mut signers_array = ArrayTrait::new();
-    signers_array.append(signer_pubkey_1);
-    let multisig = initialize_multisig_with(threshold, signers_array.span());
-    assert(multisig.get_threshold() == threshold, 'threshold not set');
+    let multisig = initialize_multisig_with_one_signer();
+    assert(multisig.get_threshold() == 1, 'threshold not set');
     // test if is signer correctly returns true
     assert(multisig.is_signer(signer_pubkey_1), 'is signer cant find signer');
 
@@ -72,10 +70,7 @@ fn change_threshold() {
 #[available_gas(20000000)]
 fn add_signers() {
     // init
-    let threshold = 1;
-    let mut signers_array = ArrayTrait::new();
-    signers_array.append(signer_pubkey_1);
-    let multisig = initialize_multisig_with(threshold, signers_array.span());
+    let multisig = initialize_multisig_with_one_signer();
 
     // add signer
     let mut new_signers = ArrayTrait::new();
@@ -93,10 +88,7 @@ fn add_signers() {
 #[should_panic(expected: ('argent/already-a-signer', 'ENTRYPOINT_FAILED'))]
 fn add_signer_already_in_list() {
     // init
-    let threshold = 1;
-    let mut signers_array = ArrayTrait::new();
-    signers_array.append(signer_pubkey_1);
-    let multisig = initialize_multisig_with(threshold, signers_array.span());
+    let multisig = initialize_multisig_with_one_signer();
 
     // add signer
     let mut new_signers = ArrayTrait::new();

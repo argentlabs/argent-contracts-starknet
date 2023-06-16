@@ -52,24 +52,25 @@ mod ArgentAccount {
     use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
     use hash::{TupleSize4LegacyHash, LegacyHashFelt252};
-    use traits::Into;
     use option::{OptionTrait, OptionTraitImpl};
     use serde::Serde;
+    use traits::Into;
     use starknet::{
         ClassHash, class_hash_const, ContractAddress, get_block_timestamp, get_caller_address,
-        get_execution_info, get_contract_address, get_tx_info, VALIDATED,
-        syscalls::replace_class_syscall, ContractAddressIntoFelt252
+        get_execution_info, get_contract_address, get_tx_info, VALIDATED
     };
-    use starknet::account::{Call};
+    use starknet::account::Call;
+    use starknet::syscalls::{replace_class_syscall};
+
     use account::{Escape, EscapeStatus};
     use lib::{
         assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
         execute_multicall, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
-        IErc1271DispatcherTrait, IAccountUpgrade, IAccountUpgradeLibraryDispatcher,
-        IAccountUpgradeDispatcherTrait, OutsideExecution, hash_outside_execution_message,
-        assert_correct_declare_version, ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID,
-        ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED,
-        IErc165, IErc1271, AccountContract, IExecuteFromOutside
+        IAccountUpgrade, IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait,
+        OutsideExecution, hash_outside_execution_message, assert_correct_declare_version,
+        ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
+        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IErc165, IErc1271, AccountContract,
+        IExecuteFromOutside
     };
 
     const NAME: felt252 = 'ArgentAccount';

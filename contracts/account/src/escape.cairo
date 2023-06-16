@@ -1,12 +1,3 @@
-use starknet::{
-    StorageAccess, StorageBaseAddress, SyscallResult, storage_read_syscall, storage_write_syscall,
-    storage_address_from_base_and_offset
-};
-use traits::{Into, TryInto};
-use option::{Option, OptionTrait};
-use serde::Serde;
-use array::{ArrayTrait, SpanTrait};
-
 #[derive(Drop, Copy, Serde, PartialEq)]
 enum EscapeStatus {
     /// No escape triggered, or it was canceled

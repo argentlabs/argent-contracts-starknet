@@ -242,17 +242,22 @@ mod ArgentMultisig {
         /// @param new_threshold New threshold
         fn change_threshold(ref self: ContractState, new_threshold: usize) {
             assert_only_self();
-        // let signers_len = MultisigStorage::get_signers_len();
+            let signers_len = self.get_signers_len();
 
-        // assert_valid_threshold_and_signers_count(new_threshold, signers_len);
-        // MultisigStorage::set_threshold(new_threshold);
+            assert_valid_threshold_and_signers_count(new_threshold, signers_len);
+            self.set_threshold(new_threshold);
 
-        // ConfigurationUpdated(
-        //     new_threshold: new_threshold,
-        //     new_signers_count: signers_len,
-        //     added_signers: ArrayTrait::new(),
-        //     removed_signers: ArrayTrait::new()
-        // );
+            self
+                .emit(
+                    Event::ConfigurationUpdated(
+                        ConfigurationUpdated {
+                            new_threshold: new_threshold,
+                            new_signers_count: signers_len,
+                            added_signers: ArrayTrait::new(),
+                            removed_signers: ArrayTrait::new()
+                        }
+                    )
+                );
         }
 
 
@@ -264,20 +269,25 @@ mod ArgentMultisig {
             ref self: ContractState, new_threshold: usize, signers_to_add: Array<felt252>
         ) {
             assert_only_self();
-        // let (signers_len, last_signer) = MultisigStorage::load();
+            let (signers_len, last_signer) = self.load();
 
-        // let new_signers_len = signers_len + signers_to_add.len();
-        // assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
+            let new_signers_len = signers_len + signers_to_add.len();
+            assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
 
-        // MultisigStorage::add_signers(signers_to_add.span(), last_signer);
-        // MultisigStorage::set_threshold(new_threshold);
+            self.add_signers(signers_to_add.span(), last_signer);
+            self.set_threshold(new_threshold);
 
-        // ConfigurationUpdated(
-        //     new_threshold: new_threshold,
-        //     new_signers_count: new_signers_len,
-        //     added_signers: signers_to_add,
-        //     removed_signers: ArrayTrait::new()
-        // );
+            self
+                .emit(
+                    Event::ConfigurationUpdated(
+                        ConfigurationUpdated {
+                            new_threshold: new_threshold,
+                            new_signers_count: new_signers_len,
+                            added_signers: signers_to_add,
+                            removed_signers: ArrayTrait::new()
+                        }
+                    )
+                );
         }
 
         /// @dev Removes account signers, additionally sets a new threshold
@@ -287,20 +297,25 @@ mod ArgentMultisig {
             ref self: ContractState, new_threshold: usize, signers_to_remove: Array<felt252>
         ) {
             assert_only_self();
-        // let (signers_len, last_signer) = MultisigStorage::load();
+            let (signers_len, last_signer) = self.load();
 
-        // let new_signers_len = signers_len - signers_to_remove.len();
-        // assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
+            let new_signers_len = signers_len - signers_to_remove.len();
+            assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
 
-        // MultisigStorage::remove_signers(signers_to_remove.span(), last_signer);
-        // MultisigStorage::set_threshold(new_threshold);
+            self.remove_signers(signers_to_remove.span(), last_signer);
+            self.set_threshold(new_threshold);
 
-        // ConfigurationUpdated(
-        //     new_threshold: new_threshold,
-        //     new_signers_count: new_signers_len,
-        //     added_signers: ArrayTrait::new(),
-        //     removed_signers: signers_to_remove
-        // );
+            self
+                .emit(
+                    Event::ConfigurationUpdated(
+                        ConfigurationUpdated {
+                            new_threshold: new_threshold,
+                            new_signers_count: new_signers_len,
+                            added_signers: ArrayTrait::new(),
+                            removed_signers: signers_to_remove
+                        }
+                    )
+                );
         }
 
         /// @dev Replace one signer with a different one
@@ -310,23 +325,26 @@ mod ArgentMultisig {
             ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252
         ) {
             assert_only_self();
-            // let (signers_len, last_signer) = MultisigStorage::load();
-            // let signers_len = 2;
+            let (signers_len, last_signer) = self.load();
 
-            // MultisigStorage::replace_signer(signer_to_remove, signer_to_add, last_signer);
+            self.replace_signer(signer_to_remove, signer_to_add, last_signer);
 
             let mut added_signers = ArrayTrait::new();
             added_signers.append(signer_to_add);
 
             let mut removed_signer = ArrayTrait::new();
             removed_signer.append(signer_to_remove);
-        // ConfigurationUpdated(
-        //     // new_threshold: MultisigStorage::get_threshold(),
-        //     new_threshold: 2,
-        //     new_signers_count: signers_len,
-        //     added_signers: added_signers,
-        //     removed_signers: removed_signer
-        // );
+            self
+                .emit(
+                    Event::ConfigurationUpdated(
+                        ConfigurationUpdated {
+                            new_threshold: self.get_threshold(),
+                            new_signers_count: signers_len,
+                            added_signers: added_signers,
+                            removed_signers: removed_signer
+                        }
+                    )
+                );
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -359,12 +377,12 @@ mod ArgentMultisig {
 
         fn get_signers(self: @ContractState) -> Array<felt252> {
             ArrayTrait::new()
-        // MultisigStorage::get_signers()
+        // self.get_signers()
         }
 
         fn is_signer(self: @ContractState, signer: felt252) -> bool {
             true
-        // MultisigStorage::is_signer(signer)
+        // self.is_signer(signer)
         }
 
         // ERC165
@@ -456,7 +474,7 @@ mod ArgentMultisig {
         signature_r: felt252,
         signature_s: felt252
     ) -> bool {
-        // let is_signer = MultisigStorage::is_signer(signer);
+        // let is_signer = self.is_signer(signer);
         // assert(is_signer, 'argent/not-a-signer');
         check_ecdsa_signature(hash, signer, signature_r, signature_s)
     }
@@ -491,7 +509,7 @@ mod ArgentMultisig {
 
             // Check basic invariants
             // assert_valid_threshold_and_signers_count(
-            //     MultisigStorage::get_threshold(), MultisigStorage::get_signers_len()
+            //     self.get_threshold(), self.get_signers_len()
             // );
 
             assert(data.len() == 0, 'argent/unexpected-data');
@@ -519,7 +537,7 @@ mod ArgentMultisig {
                 'argent/invalid-timestamp'
             );
             let nonce = outside_execution.nonce;
-            // assert(!MultisigStorage::get_outside_nonce(nonce), 'argent/duplicated-outside-nonce');
+            // assert(!self.get_outside_nonce(nonce), 'argent/duplicated-outside-nonce');
 
             let outside_tx_hash = hash_outside_execution_message(@outside_execution);
 
@@ -528,7 +546,7 @@ mod ArgentMultisig {
             assert_valid_calls_and_signature(@self, calls, outside_tx_hash, signature.span());
 
             // Effects
-            // MultisigStorage::set_outside_nonce(nonce, true);
+            // self.set_outside_nonce(nonce, true);
 
             // Interactions
             let retdata = execute_multicall(calls);
@@ -580,7 +598,7 @@ mod ArgentMultisig {
     fn is_valid_span_signature(
         self: @ContractState, hash: felt252, signature: Span<felt252>
     ) -> bool {
-        // let threshold = MultisigStorage::get_threshold();
+        // let threshold = self.get_threshold();
         let threshold = 2;
         assert(threshold != 0, 'argent/uninitialized');
 

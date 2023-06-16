@@ -81,7 +81,6 @@ fn initialize_multisig() -> ITestArgentMultisigDispatcher {
     initialize_multisig_with(threshold, signers_array.span())
 }
 
-
 fn initialize_multisig_with(
     threshold: usize, mut signers: Span<felt252>
 ) -> ITestArgentMultisigDispatcher {

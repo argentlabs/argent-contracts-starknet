@@ -2,7 +2,10 @@ use array::ArrayTrait;
 use traits::Into;
 
 use multisig::ArgentMultisig;
-use multisig::tests::{initialize_multisig, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3};
+use multisig::tests::{
+    initialize_multisig, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3,
+    ITestArgentMultisigDispatcher, ITestArgentMultisigDispatcherTrait, initialize_multisig_with
+};
 
 #[test]
 #[available_gas(20000000)]
@@ -11,7 +14,7 @@ fn replace_signer_1() {
     let threshold = 1;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
-    multisig.constructor(threshold, signers_array);
+    let multisig = initialize_multisig_with(threshold, signers_array.span());
 
     // replace signer
     let signer_to_add = signer_pubkey_2;
@@ -29,7 +32,7 @@ fn replace_signer_1() {
 #[available_gas(20000000)]
 fn replace_signer_start() {
     // init
-    initialize_multisig();
+    let multisig = initialize_multisig();
 
     // replace signer
     let signer_to_add = 5;
@@ -49,7 +52,7 @@ fn replace_signer_start() {
 #[available_gas(20000000)]
 fn replace_signer_middle() {
     // init
-    initialize_multisig();
+    let multisig = initialize_multisig();
 
     // replace signer
     let signer_to_add = 5;
@@ -69,7 +72,7 @@ fn replace_signer_middle() {
 #[available_gas(20000000)]
 fn replace_signer_end() {
     // init
-    initialize_multisig();
+    let multisig = initialize_multisig();
 
     // replace signer
     let signer_to_add = 5;
@@ -87,10 +90,10 @@ fn replace_signer_end() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/not-a-signer', ))]
+#[should_panic(expected: ('argent/not-a-signer', 'ENTRYPOINT_FAILED'))]
 fn replace_invalid_signer() {
     // init
-    initialize_multisig();
+    let multisig = initialize_multisig();
 
     // replace signer
     let signer_to_add = 5;
@@ -100,10 +103,10 @@ fn replace_invalid_signer() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/already-a-signer', ))]
+#[should_panic(expected: ('argent/already-a-signer', 'ENTRYPOINT_FAILED'))]
 fn replace_already_signer() {
     // init
-    initialize_multisig();
+    let multisig = initialize_multisig();
 
     // replace signer
     multisig.replace_signer(signer_pubkey_3, signer_pubkey_1);

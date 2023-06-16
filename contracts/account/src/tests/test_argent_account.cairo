@@ -221,18 +221,18 @@ fn getName() {
 #[test]
 #[available_gas(2000000)]
 fn unsuported_supportsInterface() {
-    let acc = initialize_account();
-    assert(acc.supportsInterface(0) == 0, 'value should be false');
-    assert(acc.supportsInterface(0xffffffff) == 0, 'Should not support 0xffffffff');
+    let account = initialize_account();
+    assert(account.supportsInterface(0) == 0, 'value should be false');
+    assert(account.supportsInterface(0xffffffff) == 0, 'Should not support 0xffffffff');
 }
 
 #[test]
 #[available_gas(2000000)]
 fn supportsInterface() {
-    let acc = initialize_account();
-    assert(acc.supportsInterface(0x01ffc9a7) == 1, 'ERC165_IERC165_INTERFACE_ID');
-    assert(acc.supportsInterface(0xa66bd575) == 1, 'ERC165_ACCOUNT_INTERFACE_ID');
-    assert(acc.supportsInterface(0x3943f10f) == 1, 'ERC165_OLD_ACCOUNT_INTERFACE_ID');
+    let account = initialize_account();
+    assert(account.supportsInterface(0x01ffc9a7) == 1, 'ERC165_IERC165_INTERFACE_ID');
+    assert(account.supportsInterface(0xa66bd575) == 1, 'ERC165_ACCOUNT_INTERFACE_ID');
+    assert(account.supportsInterface(0x3943f10f) == 1, 'ERC165_OLD_ACCOUNT_INTERFACE_ID');
 }
 
 #[test]

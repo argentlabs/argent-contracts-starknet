@@ -207,9 +207,9 @@ mod ArgentMultisig {
 
     #[external(v0)]
     impl ArgentMultisigImpl of super::IArgentMultisig<ContractState> {
-        // Self deployment meaning that the multisig pays for it's own deployment fee.
-        // In this scenario the multisig only requires the signature from one of the owners.
-        // This allows for better UX. UI must make clear that the funds are not safe from a bad signer until the deployment happens.
+        /// Self deployment meaning that the multisig pays for it's own deployment fee.
+        /// In this scenario the multisig only requires the signature from one of the owners.
+        /// This allows for better UX. UI must make clear that the funds are not safe from a bad signer until the deployment happens.
         /// @dev Validates signature for self deployment.
         /// @dev If signers can't be trusted, it's recommended to start with a 1:1 multisig and add other signers late
         fn __validate_deploy__(
@@ -376,13 +376,11 @@ mod ArgentMultisig {
         }
 
         fn get_signers(self: @ContractState) -> Array<felt252> {
-            ArrayTrait::new()
-        // self.get_signers()
+            self.get_signers()
         }
 
         fn is_signer(self: @ContractState, signer: felt252) -> bool {
-            true
-        // self.is_signer(signer)
+            self.is_signer(signer)
         }
 
         // ERC165

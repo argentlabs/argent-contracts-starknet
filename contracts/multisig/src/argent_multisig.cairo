@@ -51,7 +51,7 @@ trait IArgentMultisig<TContractState> {
 
 #[starknet::contract]
 mod ArgentMultisig {
-    use array::{ArrayTrait, SpanTrait};
+    use array::{ArrayTrait};
     use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
     use option::OptionTrait;

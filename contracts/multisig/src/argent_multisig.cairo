@@ -12,7 +12,7 @@ trait IExecuteFromOutside<TContractState> {
 }
 
 #[starknet::interface]
-trait IBag<TContractState> {
+trait IArgentMultisig<TContractState> {
     fn __validate_deploy__(
         self: @TContractState,
         class_hash: felt252,
@@ -99,9 +99,12 @@ mod ArgentMultisig {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                           Events                                           //
     ////////////////////////////////////////////////////////////////////////////////////////////////
-
     #[storage]
-    struct Storage {}
+    struct Storage {
+        signer_list: LegacyMap<felt252, felt252>,
+        threshold: usize,
+        outside_nonces: LegacyMap<felt252, bool>,
+    }
 
     #[event]
     #[derive(Drop, starknet::Event)]
@@ -148,8 +151,8 @@ mod ArgentMultisig {
         let signers_len = signers.len();
         assert_valid_threshold_and_signers_count(threshold, signers_len);
 
-        // MultisigStorage::add_signers(signers.span(), last_signer: 0);
-        // MultisigStorage::set_threshold(threshold);
+        self.add_signers(signers.span(), last_signer: 0);
+        self.set_threshold(threshold);
 
         self
             .emit(
@@ -203,7 +206,7 @@ mod ArgentMultisig {
 
 
     #[external(v0)]
-    impl BagImpl of super::IBag<ContractState> {
+    impl ArgentMultisigImpl of super::IArgentMultisig<ContractState> {
         // Self deployment meaning that the multisig pays for it's own deployment fee.
         // In this scenario the multisig only requires the signature from one of the owners.
         // This allows for better UX. UI must make clear that the funds are not safe from a bad signer until the deployment happens.
@@ -351,8 +354,7 @@ mod ArgentMultisig {
 
         /// @dev Returns the threshold, the number of signers required to control this account
         fn get_threshold(self: @ContractState) -> usize {
-            2
-        // MultisigStorage::get_threshold()
+            self.get_threshold()
         }
 
         fn get_signers(self: @ContractState) -> Array<felt252> {
@@ -618,5 +620,210 @@ mod ArgentMultisig {
         assert(signers_len != 0, 'argent/invalid-signers-len');
         assert(signers_len <= MAX_SIGNERS_COUNT, 'argent/invalid-signers-len');
         assert(threshold <= signers_len, 'argent/bad-threshold');
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                    Multisig Storage                                        //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    #[generate_trait]
+    impl MultisigStorageImpl of MultisigStorage {
+        ////////////////////////////////////////////////////////////////////////////////////////////////
+        //                                          Internal                                          //
+        ////////////////////////////////////////////////////////////////////////////////////////////////
+
+        // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
+        // Otherwise cost increases with the list size
+        fn is_signer(self: @ContractState, signer: felt252) -> bool {
+            if signer == 0 {
+                return false;
+            }
+            let next_signer = self.signer_list.read(signer);
+            if next_signer != 0 {
+                return true;
+            }
+            // check if its the latest
+            let last_signer = self.find_last_signer();
+
+            last_signer == signer
+        }
+
+        // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
+        fn is_signer_using_last(
+            self: @ContractState, signer: felt252, last_signer: felt252
+        ) -> bool {
+            if signer == 0 {
+                return false;
+            }
+
+            let next_signer = self.signer_list.read(signer);
+            if next_signer != 0 {
+                return true;
+            }
+
+            last_signer == signer
+        }
+
+        // Return the last signer or zero if no signers. Cost increases with the list size
+        fn find_last_signer(self: @ContractState) -> felt252 {
+            let mut current_signer = self.signer_list.read(0);
+            loop {
+                let next_signer = self.signer_list.read(current_signer);
+                if next_signer == 0 {
+                    break current_signer;
+                }
+                current_signer = next_signer;
+            }
+        }
+
+        // Returns the signer before `signer_after` or 0 if the signer is the first one. 
+        // Reverts if `signer_after` is not found
+        // Cost increases with the list size
+        fn find_signer_before(self: @ContractState, signer_after: felt252) -> felt252 {
+            let mut current_signer = 0;
+            loop {
+                let next_signer = self.signer_list.read(current_signer);
+                assert(next_signer != 0, 'argent/cant-find-signer-before');
+
+                if next_signer == signer_after {
+                    break current_signer;
+                }
+                current_signer = next_signer;
+            }
+        }
+
+        fn add_signers(
+            ref self: ContractState, mut signers_to_add: Span<felt252>, last_signer: felt252
+        ) {
+            match signers_to_add.pop_front() {
+                Option::Some(signer_ref) => {
+                    let signer = *signer_ref;
+                    assert(signer != 0, 'argent/invalid-zero-signer');
+
+                    let current_signer_status = self.is_signer_using_last(signer, last_signer);
+                    assert(!current_signer_status, 'argent/already-a-signer');
+
+                    // Signers are added at the end of the list
+                    self.signer_list.write(last_signer, signer);
+
+                    self.add_signers(signers_to_add, last_signer: signer);
+                },
+                Option::None(()) => (),
+            }
+        }
+
+        fn remove_signers(
+            ref self: ContractState, mut signers_to_remove: Span<felt252>, last_signer: felt252
+        ) {
+            match signers_to_remove.pop_front() {
+                Option::Some(signer_ref) => {
+                    let signer = *signer_ref;
+                    let current_signer_status = self.is_signer_using_last(signer, last_signer);
+                    assert(current_signer_status, 'argent/not-a-signer');
+
+                    // Signer pointer set to 0, Previous pointer set to the next in the list
+
+                    let previous_signer = self.find_signer_before(signer);
+                    let next_signer = self.signer_list.read(signer);
+
+                    self.signer_list.write(previous_signer, next_signer);
+
+                    if next_signer == 0 {
+                        // Removing the last item
+                        self.remove_signers(signers_to_remove, last_signer: previous_signer);
+                    } else {
+                        // Removing an item in the middle
+                        self.signer_list.write(signer, 0);
+                        self.remove_signers(signers_to_remove, last_signer);
+                    }
+                },
+                Option::None(()) => (),
+            }
+        }
+
+        fn replace_signer(
+            ref self: ContractState,
+            signer_to_remove: felt252,
+            signer_to_add: felt252,
+            last_signer: felt252
+        ) {
+            assert(signer_to_add != 0, 'argent/invalid-zero-signer');
+
+            let signer_to_add_status = self.is_signer_using_last(signer_to_add, last_signer);
+            assert(!signer_to_add_status, 'argent/already-a-signer');
+
+            let signer_to_remove_status = self.is_signer_using_last(signer_to_remove, last_signer);
+            assert(signer_to_remove_status, 'argent/not-a-signer');
+
+            // removed signer will point to 0
+            // previous signer will point to the new one
+            // new signer will point to the next one
+            let previous_signer = self.find_signer_before(signer_to_remove);
+            let next_signer = self.signer_list.read(signer_to_remove);
+
+            self.signer_list.write(signer_to_remove, 0);
+            self.signer_list.write(previous_signer, signer_to_add);
+            self.signer_list.write(signer_to_add, next_signer);
+        }
+
+        // Returns the number of signers and the last signer (or zero if the list is empty). Cost increases with the list size
+        // returns (signers_len, last_signer)
+        fn load(self: @ContractState) -> (usize, felt252) {
+            let mut current_signer = 0;
+            let mut size = 0;
+            loop {
+                let next_signer = self.signer_list.read(current_signer);
+                if next_signer == 0 {
+                    break (size, current_signer);
+                }
+                current_signer = next_signer;
+                size += 1;
+            }
+        }
+
+
+        // Returns the number of signers. Cost increases with the list size
+        fn get_signers_len(self: @ContractState) -> usize {
+            let mut current_signer = self.signer_list.read(0);
+            let mut size = 0;
+            loop {
+                if current_signer == 0 {
+                    break size;
+                }
+                current_signer = self.signer_list.read(current_signer);
+                size += 1;
+            }
+        }
+
+        fn get_signers(self: @ContractState) -> Array<felt252> {
+            let mut current_signer = self.signer_list.read(0);
+            let mut signers = ArrayTrait::new();
+            loop {
+                if current_signer == 0 {
+                    // Can't break signers atm because "variable was previously moved"
+                    break ();
+                }
+                signers.append(current_signer);
+                current_signer = self.signer_list.read(current_signer);
+            };
+            signers
+        }
+
+        fn get_threshold(self: @ContractState) -> usize {
+            self.threshold.read()
+        }
+
+        fn set_threshold(ref self: ContractState, threshold: usize) {
+            self.threshold.write(threshold);
+        }
+
+        fn get_outside_nonce(self: @ContractState, nonce: felt252) -> bool {
+            self.outside_nonces.read(nonce)
+        }
+
+        fn set_outside_nonce(ref self: ContractState, nonce: felt252, used: bool) {
+            self.outside_nonces.write(nonce, used)
+        }
     }
 }

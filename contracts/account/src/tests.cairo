@@ -2,7 +2,6 @@ mod test_argent_account;
 mod test_argent_account_signatures;
 
 use array::ArrayTrait;
-use traits::TryInto;
 use result::ResultTrait;
 use option::OptionTrait;
 

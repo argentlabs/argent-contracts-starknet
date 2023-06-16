@@ -19,7 +19,7 @@ use argent_multisig::ArgentMultisig;
 mod signer_signature;
 use signer_signature::SignerSignature;
 use signer_signature::deserialize_array_signer_signature;
-// #[cfg(test)]
-// mod tests;
 
+#[cfg(test)]
+mod tests;
 

@@ -15,6 +15,7 @@ trait IExecuteFromOutside<TContractState> {
 
 #[starknet::interface]
 trait IArgentAccount<TContractState> {
+    // TODO This should move into its own impl
     fn __validate_deploy__(
         self: @TContractState,
         class_hash: felt252,

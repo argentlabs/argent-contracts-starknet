@@ -1,18 +1,7 @@
-use lib::{OutsideExecution, Version};
+use lib::Version;
 use account::{Escape, EscapeStatus};
-use starknet::{ClassHash};
 
-#[starknet::interface]
-trait IExecuteFromOutside<TContractState> {
-    fn execute_from_outside(
-        ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>
-    ) -> Array<Span<felt252>>;
-
-    fn get_outside_execution_message_hash(
-        self: @TContractState, outside_execution: OutsideExecution
-    ) -> felt252;
-}
-
+// TODO Move all these interfaces in a IArgentAccount file?
 #[starknet::interface]
 trait IArgentAccount<TContractState> {
     // TODO This should move into its own impl
@@ -80,7 +69,7 @@ mod ArgentAccount {
         IAccountUpgradeDispatcherTrait, OutsideExecution, hash_outside_execution_message,
         assert_correct_declare_version, ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID,
         ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED,
-        IErc165, IErc1271, AccountContract,
+        IErc165, IErc1271, AccountContract, IExecuteFromOutside
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -300,7 +289,7 @@ mod ArgentAccount {
     }
 
     #[external(v0)]
-    impl ExecuteFromOutsideImpl of super::IExecuteFromOutside<ContractState> {
+    impl ExecuteFromOutsideImpl of IExecuteFromOutside<ContractState> {
         /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
         /// @param outside_execution The parameters of the transaction to execute
         /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`

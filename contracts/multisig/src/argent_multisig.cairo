@@ -1,15 +1,4 @@
-use lib::{OutsideExecution, Version};
-
-#[starknet::interface]
-trait IExecuteFromOutside<TContractState> {
-    fn execute_from_outside(
-        ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>
-    ) -> Array<Span<felt252>>;
-
-    fn get_outside_execution_message_hash(
-        self: @TContractState, outside_execution: OutsideExecution
-    ) -> felt252;
-}
+use lib::Version;
 
 #[starknet::interface]
 trait IArgentMultisig<TContractState> {
@@ -81,7 +70,7 @@ mod ArgentMultisig {
         IErc165DispatcherTrait, OutsideExecution, hash_outside_execution_message,
         ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
         ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IAccountUpgrade,
-        IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait
+        IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait, IExecuteFromOutside
     };
     use multisig::{deserialize_array_signer_signature, SignerSignature};
 
@@ -513,7 +502,7 @@ mod ArgentMultisig {
         }
     }
 
-    impl ExecuteFromOutsideImpl of super::IExecuteFromOutside<ContractState> {
+    impl ExecuteFromOutsideImpl of IExecuteFromOutside<ContractState> {
         /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
         /// @param outside_execution The parameters of the transaction to execute
         /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`

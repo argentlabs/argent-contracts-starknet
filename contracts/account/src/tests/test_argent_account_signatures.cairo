@@ -2,7 +2,7 @@ use array::{ArrayTrait, SpanTrait};
 
 use account::ArgentAccount;
 use account::tests::{
-    ITestArgentAccountDispatcher, ITestArgentAccountDispatcherTrait, owner_pubkey, guardian_pubkey,
+    ITestArgentAccountDispatcher, ITestArgentAccountDispatcherTrait, owner_pubkey,
     initialize_account, initialize_account_without_guardian, initialize_account_with
 };
 

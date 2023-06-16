@@ -34,7 +34,7 @@ use erc1271::{ERC1271_VALIDATED, IErc1271, IErc1271LibraryDispatcher, IErc1271Di
 mod interfaces;
 use interfaces::{
     IAccountUpgrade, IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait,
-    AccountContract
+    AccountContract, IExecuteFromOutside
 };
 
 #[cfg(test)]

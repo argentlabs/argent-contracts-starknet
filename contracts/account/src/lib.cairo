@@ -1,5 +1,5 @@
 mod argent_account;
-use argent_account::{IArgentAccount, ArgentAccount};
+use argent_account::ArgentAccount;
 
 mod escape;
 use escape::{Escape, EscapeStatus};

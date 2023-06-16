@@ -57,10 +57,9 @@ mod ArgentAccount {
     use traits::Into;
     use starknet::{
         ClassHash, class_hash_const, ContractAddress, get_block_timestamp, get_caller_address,
-        get_execution_info, get_contract_address, get_tx_info, VALIDATED
+        get_execution_info, get_contract_address, get_tx_info, VALIDATED, replace_class_syscall
     };
     use starknet::account::Call;
-    use starknet::syscalls::{replace_class_syscall};
 
     use account::{Escape, EscapeStatus};
     use lib::{

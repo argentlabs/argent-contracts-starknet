@@ -1,4 +1,5 @@
 use array::ArrayTrait;
+
 trait ArrayExtTrait<T> {
     fn append_all(ref self: Array<T>, value: Array<T>);
 }

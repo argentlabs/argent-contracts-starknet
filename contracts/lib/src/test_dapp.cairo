@@ -14,7 +14,6 @@ trait ITestDapp<TContractState> {
 #[starknet::contract]
 mod TestDapp {
     use starknet::{get_caller_address, ContractAddress};
-    use super::ITestDapp;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                           Storage                                          //

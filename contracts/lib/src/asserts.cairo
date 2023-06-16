@@ -2,9 +2,7 @@ use array::{ArrayTrait, SpanTrait};
 use traits::Into;
 use zeroable::Zeroable;
 
-use starknet::{
-    get_contract_address, get_caller_address, ContractAddress, ContractAddressIntoFelt252
-};
+use starknet::{get_contract_address, get_caller_address, ContractAddress};
 
 use starknet::account::Call;
 

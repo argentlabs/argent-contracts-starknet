@@ -1,5 +1,6 @@
 use array::{ArrayTrait, SpanTrait};
-use starknet::{call_contract_syscall, ContractAddress, account::Call};
+use starknet::{call_contract_syscall, account::Call};
+
 use lib::ArrayExtTrait;
 
 fn execute_multicall(calls: Span<Call>) -> Array<Span<felt252>> {

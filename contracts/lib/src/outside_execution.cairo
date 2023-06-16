@@ -1,12 +1,8 @@
 use array::{ArrayTrait, SpanTrait};
 use box::BoxTrait;
 use hash::pedersen;
-use traits::{Into, TryInto};
-use option::OptionTrait;
-
-use starknet::{
-    ContractAddress, ContractAddressIntoFelt252, get_tx_info, get_contract_address, account::Call
-};
+use traits::Into;
+use starknet::{ContractAddress, get_tx_info, get_contract_address, account::Call};
 
 // H('StarkNetDomain(name:felt,version:felt,chainId:felt)')
 const STARKNET_DOMAIN_TYPE_HASH: felt252 =

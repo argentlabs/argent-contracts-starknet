@@ -2,9 +2,8 @@ use array::{ArrayTrait, SpanTrait};
 use traits::Into;
 use zeroable::Zeroable;
 
-use starknet::{get_contract_address, get_caller_address, ContractAddress};
+use starknet::{get_contract_address, get_caller_address, ContractAddress, account::Call};
 
-use starknet::account::Call;
 
 const TRANSACTION_VERSION: felt252 = 1;
 const QUERY_VERSION: felt252 =

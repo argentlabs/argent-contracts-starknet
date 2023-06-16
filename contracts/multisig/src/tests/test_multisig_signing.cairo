@@ -2,6 +2,9 @@ use array::ArrayTrait;
 use traits::Into;
 
 use multisig::ArgentMultisig;
+use multisig::tests::{
+    ITestArgentMultisigDispatcher, ITestArgentMultisigDispatcherTrait, initialize_multisig_with
+};
 
 const message_hash: felt252 = 424242;
 
@@ -25,7 +28,7 @@ fn test_signature() {
     let threshold = 1;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
-    multisig.constructor(threshold, signers_array);
+    let multisig = initialize_multisig_with(threshold, signers_array.span());
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(signer_pubkey_1);
@@ -43,7 +46,7 @@ fn test_double_signature() {
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
-    multisig.constructor(threshold, signers_array);
+    let multisig = initialize_multisig_with(threshold, signers_array.span());
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(signer_pubkey_1);
@@ -58,13 +61,13 @@ fn test_double_signature() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/signatures-not-sorted', ))]
+#[should_panic(expected: ('argent/signatures-not-sorted', 'ENTRYPOINT_FAILED'))]
 fn test_double_signature_order() {
     let threshold = 2;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
-    multisig.constructor(threshold, signers_array);
+    let multisig = initialize_multisig_with(threshold, signers_array.span());
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(signer_pubkey_2);
@@ -78,13 +81,13 @@ fn test_double_signature_order() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/signatures-not-sorted', ))]
+#[should_panic(expected: ('argent/signatures-not-sorted', 'ENTRYPOINT_FAILED'))]
 fn test_same_owner_twice() {
     let threshold = 2;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
-    multisig.constructor(threshold, signers_array);
+    let multisig = initialize_multisig_with(threshold, signers_array.span());
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(signer_pubkey_1);
@@ -98,13 +101,13 @@ fn test_same_owner_twice() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', ))]
+#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
 fn test_missing_owner_signature() {
     let threshold = 2;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
     signers_array.append(signer_pubkey_2);
-    multisig.constructor(threshold, signers_array);
+    let multisig = initialize_multisig_with(threshold, signers_array.span());
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(signer_pubkey_1);
@@ -115,12 +118,12 @@ fn test_missing_owner_signature() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', ))]
+#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
 fn test_short_signature() {
     let threshold = 1;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
-    multisig.constructor(threshold, signers_array);
+    let multisig = initialize_multisig_with(threshold, signers_array.span());
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(signer_pubkey_1);
@@ -134,12 +137,12 @@ fn test_short_signature() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', ))]
+#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
 fn test_long_signature() {
     let threshold = 1;
     let mut signers_array = ArrayTrait::new();
     signers_array.append(signer_pubkey_1);
-    multisig.constructor(threshold, signers_array);
+    let multisig = initialize_multisig_with(threshold, signers_array.span());
 
     let mut signature = ArrayTrait::<felt252>::new();
     signature.append(42);

@@ -13,10 +13,9 @@ use array::{ArrayTrait, SpanTrait};
 use traits::{TryInto, Into};
 use option::OptionTrait;
 use result::ResultTrait;
-use starknet::syscalls::{deploy_syscall};
-use starknet::account::Call;
-use starknet::testing::set_contract_address;
-use starknet::contract_address_const;
+use starknet::{
+    contract_address_const, syscalls::deploy_syscall, account::Call, testing::set_contract_address
+};
 use lib::Version;
 
 #[starknet::interface]

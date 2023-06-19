@@ -3,7 +3,7 @@ use option::OptionTrait;
 use result::ResultTrait;
 use traits::TryInto;
 
-use starknet::{deploy_syscall};
+use starknet::deploy_syscall;
 
 use multisig::{
     ArgentMultisig,

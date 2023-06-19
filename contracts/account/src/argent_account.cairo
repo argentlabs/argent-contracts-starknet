@@ -73,6 +73,10 @@ mod ArgentAccount {
     };
 
     const NAME: felt252 = 'ArgentAccount';
+    const VERSION_MAJOR: u8 = 0;
+    const VERSION_MINOR: u8 = 3;
+    const VERSION_PATCH: u8 = 0;
+    const VERSION_COMPAT: felt252 = '0.3.0';
 
 
     /// Time it takes for the escape to become ready after being triggered
@@ -610,7 +614,7 @@ mod ArgentAccount {
 
         /// Semantic version of this contract
         fn get_version(self: @ContractState) -> Version {
-            Version { major: 0, minor: 3, patch: 0 }
+            Version { major: VERSION_MAJOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
         }
 
 
@@ -672,7 +676,7 @@ mod ArgentAccount {
         impl Erc1271: IErc1271<ContractState>,
     > of super::IOldArgentAccount<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
-            '0.3.0'
+            VERSION_COMPAT
         }
         fn getName(self: @ContractState) -> felt252 {
             ArgentAccount::get_name(self)

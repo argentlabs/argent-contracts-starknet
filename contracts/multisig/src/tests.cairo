@@ -92,7 +92,6 @@ fn initialize_multisig_with_one_signer() -> ITestArgentMultisigDispatcher {
 fn initialize_multisig_with(
     threshold: usize, mut signers: Span<felt252>
 ) -> ITestArgentMultisigDispatcher {
-    // set_contract_address(contract_address_const::<1>());
     let mut calldata = ArrayTrait::new();
     calldata.append(threshold.into());
     calldata.append(signers.len().into());

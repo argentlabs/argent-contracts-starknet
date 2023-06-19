@@ -35,7 +35,7 @@ trait IArgentAccount<TContractState> {
     fn get_escape_and_status(self: @TContractState) -> (Escape, EscapeStatus);
 }
 
-/// Deprecated method for compatibility reasons
+/// Deprecated methods for compatibility reasons
 #[starknet::interface]
 trait IOldArgentAccount<TContractState> {
     fn getVersion(self: @TContractState) -> felt252;

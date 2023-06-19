@@ -373,28 +373,12 @@ mod ArgentMultisig {
 
         // ERC165
         fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
-            if interface_id == ERC165_IERC165_INTERFACE_ID {
-                true
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
-                true
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_1 {
-                true
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_2 {
-                true
-            } else {
-                false
-            }
+            self.supports_interface_inner(interface_id)
         }
 
         /// Deprecated method for compatibility reasons
         fn supportsInterface(self: @ContractState, interface_id: felt252) -> felt252 {
-            if interface_id == ERC165_IERC165_INTERFACE_ID {
-                1
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
-                1
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_1 {
-                1
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_2 {
+            if self.supports_interface_inner(interface_id) {
                 1
             } else {
                 0
@@ -611,6 +595,20 @@ mod ArgentMultisig {
             }
         }
 
+        fn supports_interface_inner(self: @ContractState, interface_id: felt252) -> bool {
+            if interface_id == ERC165_IERC165_INTERFACE_ID {
+                true
+            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
+                true
+            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_1 {
+                true
+            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_2 {
+                true
+            } else {
+                false
+            }
+        }
+
         fn is_valid_signer_signature_inner(
             self: @ContractState,
             hash: felt252,
@@ -639,10 +637,6 @@ mod ArgentMultisig {
 
     #[generate_trait]
     impl MultisigStorageImpl of MultisigStorage {
-        ////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                          Internal                                          //
-        ////////////////////////////////////////////////////////////////////////////////////////////////
-
         // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
         // Otherwise cost increases with the list size
         fn is_signer(self: @ContractState, signer: felt252) -> bool {

@@ -38,6 +38,7 @@ trait IArgentMultisig<TContractState> {
     ) -> bool;
 }
 
+// TODO Should this be one itnerface in lib as the ArgentAccount uses the same?
 /// Deprecated methods for compatibility reasons
 #[starknet::interface]
 trait IOldArgentMultisig<TContractState> {

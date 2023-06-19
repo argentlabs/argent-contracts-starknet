@@ -280,14 +280,10 @@ mod ArgentAccount {
             assert_correct_tx_version(tx_info.version);
 
             let retdata = execute_multicall(calls.span());
-            self
-                .emit(
-                    Event::TransactionExecuted(
-                        TransactionExecuted {
-                            hash: tx_info.transaction_hash, response: retdata.span()
-                        }
-                    )
-                );
+
+            let hash = tx_info.transaction_hash;
+            let response = retdata.span();
+            self.emit(Event::TransactionExecuted(TransactionExecuted { hash, response }));
             retdata
         }
     }
@@ -329,12 +325,10 @@ mod ArgentAccount {
 
             // Interactions
             let retdata = execute_multicall(calls);
-            self
-                .emit(
-                    Event::TransactionExecuted(
-                        TransactionExecuted { hash: outside_tx_hash, response: retdata.span() }
-                    )
-                );
+
+            let hash = outside_tx_hash;
+            let response = retdata.span();
+            self.emit(Event::TransactionExecuted(TransactionExecuted { hash, response }));
             retdata
         }
 

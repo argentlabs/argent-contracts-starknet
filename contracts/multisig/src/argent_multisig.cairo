@@ -1,3 +1,4 @@
+use multisig::argent_multisig::IArgentMultisig;
 use lib::Version;
 
 #[starknet::interface]
@@ -136,19 +137,19 @@ mod ArgentMultisig {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[constructor]
-    fn constructor(ref self: ContractState, threshold: usize, signers: Array<felt252>) {
-        let signers_len = signers.len();
-        assert_valid_threshold_and_signers_count(threshold, signers_len);
+    fn constructor(ref self: ContractState, new_threshold: usize, signers: Array<felt252>) {
+        let new_signers_count = signers.len();
+        assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
         self.add_signers(signers.span(), last_signer: 0);
-        self.set_threshold(threshold);
+        self.set_threshold(new_threshold);
 
         self
             .emit(
                 Event::ConfigurationUpdated(
                     ConfigurationUpdated {
-                        new_threshold: threshold,
-                        new_signers_count: signers_len,
+                        new_threshold,
+                        new_signers_count,
                         added_signers: signers,
                         removed_signers: ArrayTrait::new()
                     }
@@ -182,14 +183,10 @@ mod ArgentMultisig {
             assert_correct_tx_version(tx_info.version);
 
             let retdata = execute_multicall(calls.span());
-            self
-                .emit(
-                    Event::TransactionExecuted(
-                        TransactionExecuted {
-                            hash: tx_info.transaction_hash, response: retdata.span()
-                        }
-                    )
-                );
+
+            let hash = tx_info.transaction_hash;
+            let response = retdata.span();
+            self.emit(Event::TransactionExecuted(TransactionExecuted { hash, response }));
             retdata
         }
     }
@@ -227,12 +224,10 @@ mod ArgentMultisig {
 
             // Interactions
             let retdata = execute_multicall(calls);
-            self
-                .emit(
-                    Event::TransactionExecuted(
-                        TransactionExecuted { hash: outside_tx_hash, response: retdata.span() }
-                    )
-                );
+
+            let hash = outside_tx_hash;
+            let response = retdata.span();
+            self.emit(Event::TransactionExecuted(TransactionExecuted { hash, response }));
             retdata
         }
 
@@ -281,17 +276,17 @@ mod ArgentMultisig {
         /// @param new_threshold New threshold
         fn change_threshold(ref self: ContractState, new_threshold: usize) {
             assert_only_self();
-            let signers_len = self.get_signers_len();
+            let new_signers_count = self.get_signers_len();
 
-            assert_valid_threshold_and_signers_count(new_threshold, signers_len);
+            assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
             self.set_threshold(new_threshold);
 
             self
                 .emit(
                     Event::ConfigurationUpdated(
                         ConfigurationUpdated {
-                            new_threshold: new_threshold,
-                            new_signers_count: signers_len,
+                            new_threshold,
+                            new_signers_count,
                             added_signers: ArrayTrait::new(),
                             removed_signers: ArrayTrait::new()
                         }
@@ -310,8 +305,8 @@ mod ArgentMultisig {
             assert_only_self();
             let (signers_len, last_signer) = self.load();
 
-            let new_signers_len = signers_len + signers_to_add.len();
-            assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
+            let new_signers_count = signers_len + signers_to_add.len();
+            assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
             self.add_signers(signers_to_add.span(), last_signer);
             self.set_threshold(new_threshold);
@@ -320,8 +315,8 @@ mod ArgentMultisig {
                 .emit(
                     Event::ConfigurationUpdated(
                         ConfigurationUpdated {
-                            new_threshold: new_threshold,
-                            new_signers_count: new_signers_len,
+                            new_threshold,
+                            new_signers_count,
                             added_signers: signers_to_add,
                             removed_signers: ArrayTrait::new()
                         }
@@ -338,8 +333,8 @@ mod ArgentMultisig {
             assert_only_self();
             let (signers_len, last_signer) = self.load();
 
-            let new_signers_len = signers_len - signers_to_remove.len();
-            assert_valid_threshold_and_signers_count(new_threshold, new_signers_len);
+            let new_signers_count = signers_len - signers_to_remove.len();
+            assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
             self.remove_signers(signers_to_remove.span(), last_signer);
             self.set_threshold(new_threshold);
@@ -348,8 +343,8 @@ mod ArgentMultisig {
                 .emit(
                     Event::ConfigurationUpdated(
                         ConfigurationUpdated {
-                            new_threshold: new_threshold,
-                            new_signers_count: new_signers_len,
+                            new_threshold,
+                            new_signers_count,
                             added_signers: ArrayTrait::new(),
                             removed_signers: signers_to_remove
                         }
@@ -364,23 +359,23 @@ mod ArgentMultisig {
             ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252
         ) {
             assert_only_self();
-            let (signers_len, last_signer) = self.load();
+            let (new_signers_count, last_signer) = self.load();
 
             self.replace_signer(signer_to_remove, signer_to_add, last_signer);
 
             let mut added_signers = ArrayTrait::new();
             added_signers.append(signer_to_add);
 
-            let mut removed_signer = ArrayTrait::new();
-            removed_signer.append(signer_to_remove);
+            let mut removed_signers = ArrayTrait::new();
+            removed_signers.append(signer_to_remove);
             self
                 .emit(
                     Event::ConfigurationUpdated(
                         ConfigurationUpdated {
                             new_threshold: self.get_threshold(),
-                            new_signers_count: signers_len,
-                            added_signers: added_signers,
-                            removed_signers: removed_signer
+                            new_signers_count,
+                            added_signers,
+                            removed_signers
                         }
                     )
                 );

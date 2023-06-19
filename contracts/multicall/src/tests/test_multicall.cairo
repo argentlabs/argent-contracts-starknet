@@ -24,10 +24,8 @@ fn execute_multicall_simple() {
 #[should_panic(expected: ('argent/multicall-failed', 2, 'test dapp reverted', 'ENTRYPOINT_FAILED'))]
 fn execute_multicall_at_one() {
     let calldataDeploy = ArrayTrait::new();
-    let (address0, _) = deploy_syscall(
-        TestDapp::TEST_CLASS_HASH.try_into().unwrap(), 0, calldataDeploy.span(), false
-    )
-        .unwrap();
+    let class_hash = TestDapp::TEST_CLASS_HASH.try_into().unwrap();
+    let (address0, _) = deploy_syscall(class_hash, 0, calldataDeploy.span(), false).unwrap();
 
     let mut calldata1 = ArrayTrait::new();
     calldata1.append(12);

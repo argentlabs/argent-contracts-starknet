@@ -55,10 +55,8 @@ fn invalid_threshold() {
     calldata.append(1);
     calldata.append(signer_pubkey_1);
 
-    let mut err = deploy_syscall(
-        ArgentMultisig::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), true
-    )
-        .unwrap_err();
+    let class_hash = ArgentMultisig::TEST_CLASS_HASH.try_into().unwrap();
+    let mut err = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap_err();
     assert(@err.pop_front().unwrap() == @'argent/bad-threshold', 'Should be argent/bad-threshold');
 }
 

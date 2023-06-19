@@ -106,10 +106,8 @@ fn initialize_multisig_with(
         };
     };
 
-    let (contract_address, _) = deploy_syscall(
-        ArgentMultisig::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), true
-    )
-        .unwrap();
+    let class_hash = ArgentMultisig::TEST_CLASS_HASH.try_into().unwrap();
+    let (contract_address, _) = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap();
 
     set_contract_address(contract_address_const::<1>());
     ITestArgentMultisigDispatcher { contract_address }

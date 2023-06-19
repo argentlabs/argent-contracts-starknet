@@ -58,10 +58,8 @@ fn initialize_with_null_owner() {
     let mut calldata = ArrayTrait::new();
     calldata.append(0);
     calldata.append(12);
-    let mut err = deploy_syscall(
-        ArgentAccount::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), true
-    )
-        .unwrap_err();
+    let class_hash = ArgentAccount::TEST_CLASS_HASH.try_into().unwrap();
+    let mut err = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap_err();
     assert(@err.pop_front().unwrap() == @'argent/null-owner', 'Should be argent/null-owner');
 }
 #[test]

@@ -143,17 +143,13 @@ mod ArgentMultisig {
         self.add_signers(signers.span(), last_signer: 0);
         self.set_threshold(new_threshold);
 
-        self
-            .emit(
-                Event::ConfigurationUpdated(
-                    ConfigurationUpdated {
-                        new_threshold,
-                        new_signers_count,
-                        added_signers: signers,
-                        removed_signers: ArrayTrait::new()
-                    }
-                )
-            );
+        let config = ConfigurationUpdated {
+            new_threshold,
+            new_signers_count,
+            added_signers: signers,
+            removed_signers: ArrayTrait::new()
+        };
+        self.emit(Event::ConfigurationUpdated(config));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -280,17 +276,13 @@ mod ArgentMultisig {
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
             self.set_threshold(new_threshold);
 
-            self
-                .emit(
-                    Event::ConfigurationUpdated(
-                        ConfigurationUpdated {
-                            new_threshold,
-                            new_signers_count,
-                            added_signers: ArrayTrait::new(),
-                            removed_signers: ArrayTrait::new()
-                        }
-                    )
-                );
+            let config = ConfigurationUpdated {
+                new_threshold,
+                new_signers_count,
+                added_signers: ArrayTrait::new(),
+                removed_signers: ArrayTrait::new()
+            };
+            self.emit(Event::ConfigurationUpdated(config));
         }
 
 
@@ -310,17 +302,13 @@ mod ArgentMultisig {
             self.add_signers(signers_to_add.span(), last_signer);
             self.set_threshold(new_threshold);
 
-            self
-                .emit(
-                    Event::ConfigurationUpdated(
-                        ConfigurationUpdated {
-                            new_threshold,
-                            new_signers_count,
-                            added_signers: signers_to_add,
-                            removed_signers: ArrayTrait::new()
-                        }
-                    )
-                );
+            let config = ConfigurationUpdated {
+                new_threshold,
+                new_signers_count,
+                added_signers: signers_to_add,
+                removed_signers: ArrayTrait::new()
+            };
+            self.emit(Event::ConfigurationUpdated(config));
         }
 
         /// @dev Removes account signers, additionally sets a new threshold
@@ -338,17 +326,13 @@ mod ArgentMultisig {
             self.remove_signers(signers_to_remove.span(), last_signer);
             self.set_threshold(new_threshold);
 
-            self
-                .emit(
-                    Event::ConfigurationUpdated(
-                        ConfigurationUpdated {
-                            new_threshold,
-                            new_signers_count,
-                            added_signers: ArrayTrait::new(),
-                            removed_signers: signers_to_remove
-                        }
-                    )
-                );
+            let config = ConfigurationUpdated {
+                new_threshold,
+                new_signers_count,
+                added_signers: ArrayTrait::new(),
+                removed_signers: signers_to_remove
+            };
+            self.emit(Event::ConfigurationUpdated(config));
         }
 
         /// @dev Replace one signer with a different one
@@ -367,17 +351,14 @@ mod ArgentMultisig {
 
             let mut removed_signers = ArrayTrait::new();
             removed_signers.append(signer_to_remove);
-            self
-                .emit(
-                    Event::ConfigurationUpdated(
-                        ConfigurationUpdated {
-                            new_threshold: self.get_threshold(),
-                            new_signers_count,
-                            added_signers,
-                            removed_signers
-                        }
-                    )
-                );
+
+            let config = ConfigurationUpdated {
+                new_threshold: self.get_threshold(),
+                new_signers_count,
+                added_signers,
+                removed_signers
+            };
+            self.emit(Event::ConfigurationUpdated(config));
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////

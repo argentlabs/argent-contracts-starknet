@@ -64,8 +64,8 @@ mod ArgentAccount {
     use account::{Escape, EscapeStatus};
     use lib::{
         assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
-        execute_multicall, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait,
-        IAccountUpgrade, IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait,
+        execute_multicall, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait, IUpgradeable,
+        IUpgradeTarget, IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait,
         OutsideExecution, hash_outside_execution_message, assert_correct_declare_version,
         ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
         ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IErc165, IErc1271, AccountContract,
@@ -344,7 +344,7 @@ mod ArgentAccount {
 
 
     #[external(v0)]
-    impl ArgentUpgradeAccountImpl of IAccountUpgrade<ContractState> {
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
         /// @notice Upgrades the implementation of the account
         /// @dev Also call `execute_after_upgrade` on the new implementation
         /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
@@ -364,11 +364,14 @@ mod ArgentAccount {
             replace_class_syscall(new_implementation).unwrap_syscall();
             self.emit(Event::AccountUpgraded(AccountUpgraded { new_implementation }));
 
-            IAccountUpgradeLibraryDispatcher {
+            IUpgradeTargetLibraryDispatcher {
                 class_hash: new_implementation
             }.execute_after_upgrade(calldata)
         }
+    }
 
+    #[external(v0)]
+    impl UpgradeTargetImpl of IUpgradeTarget<ContractState> {
         /// @dev Logic to execute after an upgrade.
         /// Can only be called by the account after a call to `upgrade`.
         /// @param data Generic call data that can be passed to the method for future upgrade logic

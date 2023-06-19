@@ -67,8 +67,8 @@ mod ArgentMultisig {
         assert_caller_is_null, execute_multicall, Version, IErc165LibraryDispatcher,
         IErc165DispatcherTrait, OutsideExecution, hash_outside_execution_message,
         ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
-        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IAccountUpgrade,
-        IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait, IExecuteFromOutside
+        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IUpgradeable, IUpgradeTarget,
+        IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait, IExecuteFromOutside
     };
     use multisig::deserialize_array_signer_signature;
 
@@ -427,7 +427,7 @@ mod ArgentMultisig {
 
 
     #[external(v0)]
-    impl ArgentUpgradeAccountImpl of IAccountUpgrade<ContractState> {
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
         /// @dev Can be called by the account to upgrade the implementation
         /// @param calldata Will be passed to the new implementation `execute_after_upgrade` method
         /// @param implementation class hash of the new implementation 
@@ -445,11 +445,14 @@ mod ArgentMultisig {
             replace_class_syscall(new_implementation).unwrap_syscall();
             self.emit(Event::AccountUpgraded(AccountUpgraded { new_implementation }));
 
-            IAccountUpgradeLibraryDispatcher {
+            IUpgradeTargetLibraryDispatcher {
                 class_hash: new_implementation
             }.execute_after_upgrade(calldata)
         }
+    }
 
+    #[external(v0)]
+    impl UpgradeTargetImpl of IUpgradeTarget<ContractState> {
         /// see `IUpgradeTarget`
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();

@@ -32,7 +32,10 @@ mod erc1271;
 use erc1271::{ERC1271_VALIDATED, IErc1271, IErc1271LibraryDispatcher, IErc1271DispatcherTrait};
 
 mod upgrade;
-use upgrade::{IAccountUpgrade, IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait};
+use upgrade::{
+    IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait, IUpgradeTarget,
+    IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait
+};
 
 #[cfg(test)]
 mod tests;

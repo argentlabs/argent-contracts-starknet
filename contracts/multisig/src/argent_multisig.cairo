@@ -163,9 +163,10 @@ mod ArgentMultisig {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
-            assert_valid_calls_and_signature(
-                @self, calls.span(), tx_info.transaction_hash, tx_info.signature
-            );
+            self
+                .assert_valid_calls_and_signature(
+                    calls.span(), tx_info.transaction_hash, tx_info.signature
+                );
             VALIDATED
         }
 
@@ -214,13 +215,13 @@ mod ArgentMultisig {
             assert(parsed_signatures.len() == 1, 'argent/invalid-signature-length');
 
             let signer_sig = *parsed_signatures.at(0);
-            let valid_signer_signature = is_valid_signer_signature_rename(
-                self,
-                tx_info.transaction_hash,
-                signer_sig.signer,
-                signer_sig.signature_r,
-                signer_sig.signature_s
-            );
+            let valid_signer_signature = self
+                .is_valid_signer_signature_inner(
+                    tx_info.transaction_hash,
+                    signer_sig.signer,
+                    signer_sig.signature_r,
+                    signer_sig.signature_s
+                );
             assert(valid_signer_signature, 'argent/invalid-signature');
             VALIDATED
         }
@@ -409,9 +410,8 @@ mod ArgentMultisig {
             signature_r: felt252,
             signature_s: felt252
         ) {
-            let is_valid = is_valid_signer_signature_rename(
-                self, hash, signer, signature_r, signature_s
-            );
+            let is_valid = self
+                .is_valid_signer_signature_inner(hash, signer, signature_r, signature_s);
             assert(is_valid, 'argent/invalid-signature');
         }
 
@@ -423,46 +423,24 @@ mod ArgentMultisig {
             signature_r: felt252,
             signature_s: felt252
         ) -> bool {
-            is_valid_signer_signature_rename(self, hash, signer, signature_r, signature_s)
+            self.is_valid_signer_signature_inner(hash, signer, signature_r, signature_s)
         }
 
         // ERC1271
         fn is_valid_signature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
-            is_valid_signature_rename(self, hash, signatures)
+            self.is_valid_signature_inner(hash, signatures)
         }
 
         /// Deprecated method for compatibility reasons
         fn isValidSignature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
-            is_valid_signature_rename(self, hash, signatures)
+            self.is_valid_signature_inner(hash, signatures)
         }
     }
 
-    // ERC1271
-    fn is_valid_signature_rename(
-        self: @ContractState, hash: felt252, signatures: Array<felt252>
-    ) -> felt252 {
-        if is_valid_span_signature(self, hash, signatures.span()) {
-            ERC1271_VALIDATED
-        } else {
-            0
-        }
-    }
-
-    fn is_valid_signer_signature_rename(
-        self: @ContractState,
-        hash: felt252,
-        signer: felt252,
-        signature_r: felt252,
-        signature_s: felt252
-    ) -> bool {
-        let is_signer = self.is_signer(signer);
-        assert(is_signer, 'argent/not-a-signer');
-        check_ecdsa_signature(hash, signer, signature_r, signature_s)
-    }
 
     #[external(v0)]
     impl ArgentUpgradeAccountImpl of IAccountUpgrade<ContractState> {
@@ -526,7 +504,7 @@ mod ArgentMultisig {
 
             let calls = outside_execution.calls;
 
-            assert_valid_calls_and_signature(@self, calls, outside_tx_hash, signature.span());
+            self.assert_valid_calls_and_signature(calls, outside_tx_hash, signature.span());
 
             // Effects
             self.set_outside_nonce(nonce, true);
@@ -555,65 +533,97 @@ mod ArgentMultisig {
     //                                   Internal Functions                                       //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    fn assert_valid_calls_and_signature(
-        self: @ContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
-    ) {
-        let account_address = get_contract_address();
-        let tx_info = get_tx_info().unbox();
-        assert_correct_tx_version(tx_info.version);
+    // TODO RENAME
+    #[generate_trait]
+    impl PrivateSection of PrivateSectionTrait {
+        fn assert_valid_calls_and_signature(
+            self: @ContractState,
+            calls: Span<Call>,
+            execution_hash: felt252,
+            signature: Span<felt252>
+        ) {
+            let account_address = get_contract_address();
+            let tx_info = get_tx_info().unbox();
+            assert_correct_tx_version(tx_info.version);
 
-        if calls.len() == 1 {
-            let call = calls.at(0);
-            if *call.to == account_address {
-                // This should only be called after an upgrade, never directly
-                assert(*call.selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
-            }
-        } else {
-            // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions
-            // and this restriction will reduce the attack surface
-            assert_no_self_call(calls, account_address);
-        }
-
-        let valid = is_valid_span_signature(self, execution_hash, signature);
-        assert(valid, 'argent/invalid-signature');
-    }
-
-    fn is_valid_span_signature(
-        self: @ContractState, hash: felt252, signature: Span<felt252>
-    ) -> bool {
-        let threshold = self.get_threshold();
-        assert(threshold != 0, 'argent/uninitialized');
-
-        let mut signer_signatures = deserialize_array_signer_signature(signature)
-            .expect('argent/invalid-signature-length');
-        assert(signer_signatures.len() == threshold, 'argent/invalid-signature-length');
-
-        let mut last_signer: felt252 = 0;
-        loop {
-            match signer_signatures.pop_front() {
-                Option::Some(signer_sig_ref) => {
-                    let signer_sig = *signer_sig_ref;
-                    let last_signer_uint: u256 = last_signer.into();
-                    let signer_uint: u256 = signer_sig.signer.into();
-                    assert(signer_uint > last_signer_uint, 'argent/signatures-not-sorted');
-                    let is_valid = is_valid_signer_signature_rename(
-                        self,
-                        hash,
-                        signer: signer_sig.signer,
-                        signature_r: signer_sig.signature_r,
-                        signature_s: signer_sig.signature_s,
+            if calls.len() == 1 {
+                let call = calls.at(0);
+                if *call.to == account_address {
+                    // This should only be called after an upgrade, never directly
+                    assert(
+                        *call.selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call'
                     );
-                    if !is_valid {
-                        break false;
-                    }
-                    last_signer = signer_sig.signer;
-                },
-                Option::None(_) => {
-                    break true;
                 }
-            };
+            } else {
+                // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions
+                // and this restriction will reduce the attack surface
+                assert_no_self_call(calls, account_address);
+            }
+
+            let valid = self.is_valid_span_signature(execution_hash, signature);
+            assert(valid, 'argent/invalid-signature');
+        }
+        fn is_valid_span_signature(
+            self: @ContractState, hash: felt252, signature: Span<felt252>
+        ) -> bool {
+            let threshold = self.get_threshold();
+            assert(threshold != 0, 'argent/uninitialized');
+
+            let mut signer_signatures = deserialize_array_signer_signature(signature)
+                .expect('argent/invalid-signature-length');
+            assert(signer_signatures.len() == threshold, 'argent/invalid-signature-length');
+
+            let mut last_signer: felt252 = 0;
+            loop {
+                match signer_signatures.pop_front() {
+                    Option::Some(signer_sig_ref) => {
+                        let signer_sig = *signer_sig_ref;
+                        let last_signer_uint: u256 = last_signer.into();
+                        let signer_uint: u256 = signer_sig.signer.into();
+                        assert(signer_uint > last_signer_uint, 'argent/signatures-not-sorted');
+                        let is_valid = self
+                            .is_valid_signer_signature_inner(
+                                hash,
+                                signer: signer_sig.signer,
+                                signature_r: signer_sig.signature_r,
+                                signature_s: signer_sig.signature_s,
+                            );
+                        if !is_valid {
+                            break false;
+                        }
+                        last_signer = signer_sig.signer;
+                    },
+                    Option::None(_) => {
+                        break true;
+                    }
+                };
+            }
+        }
+
+
+        fn is_valid_signature_inner(
+            self: @ContractState, hash: felt252, signatures: Array<felt252>
+        ) -> felt252 {
+            if self.is_valid_span_signature(hash, signatures.span()) {
+                ERC1271_VALIDATED
+            } else {
+                0
+            }
+        }
+
+        fn is_valid_signer_signature_inner(
+            self: @ContractState,
+            hash: felt252,
+            signer: felt252,
+            signature_r: felt252,
+            signature_s: felt252
+        ) -> bool {
+            let is_signer = self.is_signer(signer);
+            assert(is_signer, 'argent/not-a-signer');
+            check_ecdsa_signature(hash, signer, signature_r, signature_s)
         }
     }
+
 
     fn assert_valid_threshold_and_signers_count(threshold: usize, signers_len: usize) {
         assert(threshold != 0, 'argent/invalid-threshold');

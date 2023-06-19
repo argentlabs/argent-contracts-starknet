@@ -615,7 +615,7 @@ mod ArgentAccount {
 
 
         fn get_name(self: @ContractState) -> felt252 {
-            get_name()
+            NAME
         }
 
 
@@ -635,17 +635,52 @@ mod ArgentAccount {
     }
 
     #[external(v0)]
-    impl OldArgentAccountImpl of super::IOldArgentAccount<ContractState> {
+    impl Erc165Impl of IErc165<ContractState> {
+        fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
+            if interface_id == ERC165_IERC165_INTERFACE_ID {
+                true
+            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
+                true
+            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_1 {
+                true
+            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_2 {
+                true
+            } else {
+                false
+            }
+        }
+    }
+
+    // ERC1271
+    #[external(v0)]
+    impl Erc1271Impl of IErc1271<ContractState> {
+        fn is_valid_signature(
+            self: @ContractState, hash: felt252, signatures: Array<felt252>
+        ) -> felt252 {
+            if self.is_valid_span_signature(hash, signatures.span()) {
+                ERC1271_VALIDATED
+            } else {
+                0
+            }
+        }
+    }
+
+    #[external(v0)]
+    impl OldArgentAccountImpl<
+        impl ArgentAccount: super::IArgentAccount<ContractState>,
+        impl Erc165: IErc165<ContractState>,
+        impl Erc1271: IErc1271<ContractState>,
+    > of super::IOldArgentAccount<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
             '0.3.0'
         }
         fn getName(self: @ContractState) -> felt252 {
-            get_name()
+            ArgentAccount::get_name(self)
         }
 
         /// Deprecated method for compatibility reasons
         fn supportsInterface(self: @ContractState, interface_id: felt252) -> felt252 {
-            if supports_interface(interface_id) {
+            if Erc165::supports_interface(self, interface_id) {
                 1
             } else {
                 0
@@ -656,63 +691,17 @@ mod ArgentAccount {
         fn isValidSignature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
-            self.is_valid_signature_inner(hash, signatures)
+            Erc1271::is_valid_signature(self, hash, signatures)
         }
     }
-
-    #[external(v0)]
-    impl Erc165Impl of IErc165<ContractState> {
-        fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
-            supports_interface(interface_id)
-        }
-    }
-
-    // ERC1271
-    #[external(v0)]
-    impl Erc1271Impl of IErc1271<ContractState> {
-        fn is_valid_signature(
-            self: @ContractState, hash: felt252, signatures: Array<felt252>
-        ) -> felt252 {
-            self.is_valid_signature_inner(hash, signatures)
-        }
-    }
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //                                          Internal                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    fn get_name() -> felt252 {
-        NAME
-    }
-
-    fn supports_interface(interface_id: felt252) -> bool {
-        if interface_id == ERC165_IERC165_INTERFACE_ID {
-            true
-        } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
-            true
-        } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_1 {
-            true
-        } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_2 {
-            true
-        } else {
-            false
-        }
-    }
-
     // TODO RENAME
     #[generate_trait]
     impl PrivateSection of PrivateSectionTrait {
-        fn is_valid_signature_inner(
-            self: @ContractState, hash: felt252, signatures: Array<felt252>
-        ) -> felt252 {
-            if self.is_valid_span_signature(hash, signatures.span()) {
-                ERC1271_VALIDATED
-            } else {
-                0
-            }
-        }
-
         fn assert_valid_calls_and_signature(
             ref self: ContractState,
             calls: Span<Call>,

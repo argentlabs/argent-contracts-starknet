@@ -1,7 +1,12 @@
-use starknet::contract_address_const;
-use starknet::testing::{set_version, set_contract_address};
 use array::ArrayTrait;
+use option::OptionTrait;
+use result::ResultTrait;
+use traits::TryInto;
 use zeroable::Zeroable;
+
+use starknet::{
+    contract_address_const, deploy_syscall, testing::{set_version, set_contract_address}
+};
 
 use account::{
     ArgentAccount,
@@ -49,10 +54,15 @@ fn check_transaction_version_on_validate() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Result::unwrap failed.', ))]
-// #[should_panic(expected: ('argent/null-owner', ))] // TODO Should be this one
 fn initialize_with_null_owner() {
-    initialize_account_with(0, 2);
+    let mut calldata = ArrayTrait::new();
+    calldata.append(0);
+    calldata.append(12);
+    let mut err = deploy_syscall(
+        ArgentAccount::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), true
+    )
+        .unwrap_err();
+    assert(@err.pop_front().unwrap() == @'argent/null-owner', 'Should be argent/null-owner');
 }
 #[test]
 #[available_gas(2000000)]

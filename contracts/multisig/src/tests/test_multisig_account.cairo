@@ -1,8 +1,16 @@
 use array::ArrayTrait;
+use option::OptionTrait;
+use result::ResultTrait;
+use traits::TryInto;
 
-use multisig::tests::{
-    initialize_multisig, signer_pubkey_1, signer_pubkey_2, ITestArgentMultisigDispatcherTrait,
-    initialize_multisig_with, initialize_multisig_with_one_signer
+use starknet::{deploy_syscall};
+
+use multisig::{
+    ArgentMultisig,
+    tests::{
+        initialize_multisig, signer_pubkey_1, signer_pubkey_2, ITestArgentMultisigDispatcherTrait,
+        initialize_multisig_with, initialize_multisig_with_one_signer
+    }
 };
 
 #[test]
@@ -40,14 +48,18 @@ fn valid_initialize_two_signers() {
 
 #[test]
 #[available_gas(20000000)]
-// #[should_panic(expected: ('argent/bad-threshold', ))] // TODO Should be this one
-#[should_panic(expected: ('Result::unwrap failed.', ))]
 fn invalid_threshold() {
     let threshold = 3;
-    let mut signers_array = ArrayTrait::new();
-    signers_array.append(signer_pubkey_1);
-    signers_array.append(signer_pubkey_2);
-    let multisig = initialize_multisig_with(threshold, signers_array.span());
+    let mut calldata = ArrayTrait::new();
+    calldata.append(threshold);
+    calldata.append(1);
+    calldata.append(signer_pubkey_1);
+
+    let mut err = deploy_syscall(
+        ArgentMultisig::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), true
+    )
+        .unwrap_err();
+    assert(@err.pop_front().unwrap() == @'argent/bad-threshold', 'Should be argent/bad-threshold');
 }
 
 #[test]

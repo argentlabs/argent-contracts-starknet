@@ -2,8 +2,8 @@ mod test_argent_account;
 mod test_argent_account_signatures;
 
 use array::ArrayTrait;
-use result::ResultTrait;
 use option::OptionTrait;
+use result::ResultTrait;
 use traits::TryInto;
 
 use starknet::{
@@ -14,7 +14,7 @@ use starknet::{
 use account::{Escape, EscapeStatus, ArgentAccount};
 use lib::Version;
 
-// TODO Do we need one global itnerface for testing?
+// TODO Do we need one global interface for testing?
 #[starknet::interface]
 trait ITestArgentAccount<TContractState> {
     // AccountContract

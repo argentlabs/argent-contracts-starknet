@@ -18,14 +18,10 @@ trait IArgentMultisig<TContractState> {
     fn replace_signer(ref self: TContractState, signer_to_remove: felt252, signer_to_add: felt252);
     // Views
     fn get_name(self: @TContractState) -> felt252;
-    fn getName(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
-    fn getVersion(self: @TContractState) -> felt252;
     fn get_threshold(self: @TContractState) -> usize;
     fn get_signers(self: @TContractState) -> Array<felt252>;
     fn is_signer(self: @TContractState, signer: felt252) -> bool;
-    fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
-    fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
     fn assert_valid_signer_signature(
         self: @TContractState,
         hash: felt252,
@@ -40,10 +36,14 @@ trait IArgentMultisig<TContractState> {
         signature_r: felt252,
         signature_s: felt252
     ) -> bool;
+}
 
-    fn is_valid_signature(
-        self: @TContractState, hash: felt252, signatures: Array<felt252>
-    ) -> felt252;
+/// Deprecated methods for compatibility reasons
+#[starknet::interface]
+trait IOldArgentMultisig<TContractState> {
+    fn getVersion(self: @TContractState) -> felt252;
+    fn getName(self: @TContractState) -> felt252;
+    fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
     fn isValidSignature(
         self: @TContractState, hash: felt252, signatures: Array<felt252>
     ) -> felt252;
@@ -68,7 +68,8 @@ mod ArgentMultisig {
         IErc165DispatcherTrait, OutsideExecution, hash_outside_execution_message,
         ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
         ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IUpgradeable, IUpgradeTarget,
-        IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait, IExecuteFromOutside
+        IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait, IExecuteFromOutside,
+        IErc165, IErc1271
     };
     use multisig::deserialize_array_signer_signature;
 
@@ -192,6 +193,55 @@ mod ArgentMultisig {
         }
     }
 
+    impl ExecuteFromOutsideImpl of IExecuteFromOutside<ContractState> {
+        /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
+        /// @param outside_execution The parameters of the transaction to execute
+        /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
+        /// @notice This method allows reentrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
+        fn execute_from_outside(
+            ref self: ContractState, outside_execution: OutsideExecution, signature: Array<felt252>
+        ) -> Array<Span<felt252>> {
+            // Checks
+            if outside_execution.caller.into() != 'ANY_CALLER' {
+                assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
+            }
+
+            let block_timestamp = get_block_timestamp();
+            assert(
+                outside_execution.execute_after < block_timestamp
+                    && block_timestamp < outside_execution.execute_before,
+                'argent/invalid-timestamp'
+            );
+            let nonce = outside_execution.nonce;
+            assert(!self.get_outside_nonce(nonce), 'argent/duplicated-outside-nonce');
+
+            let outside_tx_hash = hash_outside_execution_message(@outside_execution);
+
+            let calls = outside_execution.calls;
+
+            self.assert_valid_calls_and_signature(calls, outside_tx_hash, signature.span());
+
+            // Effects
+            self.set_outside_nonce(nonce, true);
+
+            // Interactions
+            let retdata = execute_multicall(calls);
+            self
+                .emit(
+                    Event::TransactionExecuted(
+                        TransactionExecuted { hash: outside_tx_hash, response: retdata.span() }
+                    )
+                );
+            retdata
+        }
+
+        /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
+        fn get_outside_execution_message_hash(
+            self: @ContractState, outside_execution: OutsideExecution
+        ) -> felt252 {
+            return hash_outside_execution_message(@outside_execution);
+        }
+    }
 
     #[external(v0)]
     impl ArgentMultisigImpl of super::IArgentMultisig<ContractState> {
@@ -343,19 +393,9 @@ mod ArgentMultisig {
             NAME
         }
 
-        /// Deprecated method for compatibility reasons
-        fn getName(self: @ContractState, ) -> felt252 {
-            NAME
-        }
-
         /// Semantic version of this contract
         fn get_version(self: @ContractState) -> Version {
             Version { major: VERSION_MAJOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
-        }
-
-        /// Deprecated method for compatibility reasons
-        fn getVersion(self: @ContractState) -> felt252 {
-            VERSION_COMPAT
         }
 
         /// @dev Returns the threshold, the number of signers required to control this account
@@ -371,22 +411,7 @@ mod ArgentMultisig {
             self.is_signer(signer)
         }
 
-        // ERC165
-        fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
-            self.supports_interface_inner(interface_id)
-        }
-
-        /// Deprecated method for compatibility reasons
-        fn supportsInterface(self: @ContractState, interface_id: felt252) -> felt252 {
-            if self.supports_interface_inner(interface_id) {
-                1
-            } else {
-                0
-            }
-        }
-
         /// Asserts that the given signature is a valid signature from one of the multisig owners
-        /// Deprecated method for compatibility reasons
         fn assert_valid_signer_signature(
             self: @ContractState,
             hash: felt252,
@@ -409,16 +434,28 @@ mod ArgentMultisig {
         ) -> bool {
             self.is_valid_signer_signature_inner(hash, signer, signature_r, signature_s)
         }
+    }
 
-        // ERC1271
-        fn is_valid_signature(
-            self: @ContractState, hash: felt252, signatures: Array<felt252>
-        ) -> felt252 {
-            self.is_valid_signature_inner(hash, signatures)
+    #[external(v0)]
+    impl Erc165Impl of IErc165<ContractState> {
+        fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
+            if interface_id == ERC165_IERC165_INTERFACE_ID {
+                true
+            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
+                true
+            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_1 {
+                true
+            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_2 {
+                true
+            } else {
+                false
+            }
         }
+    }
 
-        /// Deprecated method for compatibility reasons
-        fn isValidSignature(
+    #[external(v0)]
+    impl Erc1271Impl of IErc1271<ContractState> {
+        fn is_valid_signature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
             self.is_valid_signature_inner(hash, signatures)
@@ -465,54 +502,33 @@ mod ArgentMultisig {
         }
     }
 
-    impl ExecuteFromOutsideImpl of IExecuteFromOutside<ContractState> {
-        /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
-        /// @param outside_execution The parameters of the transaction to execute
-        /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
-        /// @notice This method allows reentrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
-        fn execute_from_outside(
-            ref self: ContractState, outside_execution: OutsideExecution, signature: Array<felt252>
-        ) -> Array<Span<felt252>> {
-            // Checks
-            if outside_execution.caller.into() != 'ANY_CALLER' {
-                assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
-            }
 
-            let block_timestamp = get_block_timestamp();
-            assert(
-                outside_execution.execute_after < block_timestamp
-                    && block_timestamp < outside_execution.execute_before,
-                'argent/invalid-timestamp'
-            );
-            let nonce = outside_execution.nonce;
-            assert(!self.get_outside_nonce(nonce), 'argent/duplicated-outside-nonce');
-
-            let outside_tx_hash = hash_outside_execution_message(@outside_execution);
-
-            let calls = outside_execution.calls;
-
-            self.assert_valid_calls_and_signature(calls, outside_tx_hash, signature.span());
-
-            // Effects
-            self.set_outside_nonce(nonce, true);
-
-            // Interactions
-            let retdata = execute_multicall(calls);
-            self
-                .emit(
-                    Event::TransactionExecuted(
-                        TransactionExecuted { hash: outside_tx_hash, response: retdata.span() }
-                    )
-                );
-            retdata
+    #[external(v0)]
+    impl OldArgentMultisigImpl<
+        impl ArgentMultisig: super::IArgentMultisig<ContractState>,
+        impl Erc165: IErc165<ContractState>,
+        impl Erc1271: IErc1271<ContractState>,
+    > of super::IOldArgentMultisig<ContractState> {
+        fn getVersion(self: @ContractState) -> felt252 {
+            VERSION_COMPAT
         }
 
+        fn getName(self: @ContractState) -> felt252 {
+            ArgentMultisig::get_name(self)
+        }
 
-        /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
-        fn get_outside_execution_message_hash(
-            self: @ContractState, outside_execution: OutsideExecution
+        fn supportsInterface(self: @ContractState, interface_id: felt252) -> felt252 {
+            if Erc165::supports_interface(self, interface_id) {
+                1
+            } else {
+                0
+            }
+        }
+
+        fn isValidSignature(
+            self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
-            return hash_outside_execution_message(@outside_execution);
+            Erc1271::is_valid_signature(self, hash, signatures)
         }
     }
 
@@ -595,20 +611,6 @@ mod ArgentMultisig {
                 ERC1271_VALIDATED
             } else {
                 0
-            }
-        }
-
-        fn supports_interface_inner(self: @ContractState, interface_id: felt252) -> bool {
-            if interface_id == ERC165_IERC165_INTERFACE_ID {
-                true
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
-                true
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_1 {
-                true
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_2 {
-                true
-            } else {
-                false
             }
         }
 

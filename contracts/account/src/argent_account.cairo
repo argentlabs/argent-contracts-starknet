@@ -678,11 +678,11 @@ mod ArgentAccount {
         fn getVersion(self: @ContractState) -> felt252 {
             VERSION_COMPAT
         }
+
         fn getName(self: @ContractState) -> felt252 {
             ArgentAccount::get_name(self)
         }
 
-        /// Deprecated method for compatibility reasons
         fn supportsInterface(self: @ContractState, interface_id: felt252) -> felt252 {
             if Erc165::supports_interface(self, interface_id) {
                 1
@@ -690,8 +690,7 @@ mod ArgentAccount {
                 0
             }
         }
-        /// Deprecated method for compatibility reasons
-        #[view]
+
         fn isValidSignature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {

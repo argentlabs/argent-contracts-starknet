@@ -113,7 +113,6 @@ fn change_owner_only_self() {
 #[should_panic(expected: ('argent/null-owner', 'ENTRYPOINT_FAILED'))]
 fn change_owner_to_zero() {
     let account = initialize_account();
-    initialize_account();
     account.change_owner(0, new_owner_r, new_owner_s);
 }
 

@@ -687,7 +687,6 @@ mod ArgentAccount {
     //                                          Internal                                          //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // TODO RENAME
     #[generate_trait]
     impl PrivateSection of PrivateSectionTrait {
         fn assert_valid_calls_and_signature(

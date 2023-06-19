@@ -574,12 +574,8 @@ mod ArgentAccount {
 
             //update guardian
             self._guardian.write(current_escape.new_signer);
-            self
-                .emit(
-                    Event::GuardianEscaped(
-                        GuardianEscaped { new_guardian: current_escape.new_signer }
-                    )
-                );
+            let new_guardian = current_escape.new_signer;
+            self.emit(Event::GuardianEscaped(GuardianEscaped { new_guardian }));
             // clear escape
             self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
         }

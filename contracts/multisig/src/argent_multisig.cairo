@@ -537,6 +537,7 @@ mod ArgentMultisig {
             let valid = self.is_valid_span_signature(execution_hash, signature);
             assert(valid, 'argent/invalid-signature');
         }
+
         fn is_valid_span_signature(
             self: @ContractState, hash: felt252, signature: Span<felt252>
         ) -> bool {

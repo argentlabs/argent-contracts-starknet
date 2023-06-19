@@ -653,7 +653,7 @@ mod ArgentAccount {
         fn isValidSignature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
-            is_valid_signature(self, hash, signatures)
+            self.is_valid_signature_inner(hash, signatures)
         }
     }
 
@@ -670,7 +670,7 @@ mod ArgentAccount {
         fn is_valid_signature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
-            is_valid_signature(self, hash, signatures)
+            self.is_valid_signature_inner(hash, signatures)
         }
     }
 
@@ -697,19 +697,19 @@ mod ArgentAccount {
         }
     }
 
-    fn is_valid_signature(
-        self: @ContractState, hash: felt252, signatures: Array<felt252>
-    ) -> felt252 {
-        if self.is_valid_span_signature(hash, signatures.span()) {
-            ERC1271_VALIDATED
-        } else {
-            0
-        }
-    }
-
     // TODO RENAME
     #[generate_trait]
     impl PrivateSection of PrivateSectionTrait {
+        fn is_valid_signature_inner(
+            self: @ContractState, hash: felt252, signatures: Array<felt252>
+        ) -> felt252 {
+            if self.is_valid_span_signature(hash, signatures.span()) {
+                ERC1271_VALIDATED
+            } else {
+                0
+            }
+        }
+
         fn assert_valid_calls_and_signature(
             ref self: ContractState,
             calls: Span<Call>,

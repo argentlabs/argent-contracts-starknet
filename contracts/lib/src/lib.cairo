@@ -33,8 +33,7 @@ use erc1271::{ERC1271_VALIDATED, IErc1271, IErc1271LibraryDispatcher, IErc1271Di
 
 mod upgrade;
 use upgrade::{
-    IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait, IUpgradeTarget,
-    IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait
+    IUpgradeable, IUpgradeTarget, IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait
 };
 
 #[cfg(test)]

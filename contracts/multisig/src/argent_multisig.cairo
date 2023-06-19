@@ -361,10 +361,6 @@ mod ArgentMultisig {
             self.emit(Event::ConfigurationUpdated(config));
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                       View functions                                       //
-        ////////////////////////////////////////////////////////////////////////////////////////////////
-
         fn get_name(self: @ContractState) -> felt252 {
             NAME
         }

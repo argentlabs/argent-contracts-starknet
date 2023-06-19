@@ -27,9 +27,6 @@ mod TestDapp {
 
     #[external(v0)]
     impl TestDappImpl of super::ITestDapp<ContractState> {
-        ////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                     External functions                                     //
-        ////////////////////////////////////////////////////////////////////////////////////////////////
         fn set_number(ref self: ContractState, number: felt252) {
             self.stored_number.write(get_caller_address(), number);
         }
@@ -53,10 +50,6 @@ mod TestDapp {
         fn throw_error(ref self: ContractState, number: felt252) {
             assert(0 == 1, 'test dapp reverted')
         }
-
-        ////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                       View functions                                       //
-        ////////////////////////////////////////////////////////////////////////////////////////////////
 
         fn get_number(self: @ContractState, user: ContractAddress) -> felt252 {
             self.stored_number.read(user)

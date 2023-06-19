@@ -406,10 +406,6 @@ mod ArgentAccount {
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                       View functions                                       //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
     #[external(v0)]
     impl ArgentAccountImpl of super::IArgentAccount<ContractState> {
         fn __validate_deploy__(

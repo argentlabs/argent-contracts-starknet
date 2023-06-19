@@ -17,7 +17,6 @@ mod Multicall {
 
     #[external(v0)]
     impl MulticallImpl of super::IMulticall<ContractState> {
-        #[view]
         fn aggregate(self: @ContractState, calls: Array<Call>) -> (u64, Array<Span<felt252>>) {
             (get_block_number(), execute_multicall(calls.span()))
         }

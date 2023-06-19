@@ -4,6 +4,18 @@ use hash::pedersen;
 use traits::Into;
 use starknet::{ContractAddress, get_tx_info, get_contract_address, account::Call};
 
+#[starknet::interface]
+trait IExecuteFromOutside<TContractState> {
+    fn execute_from_outside(
+        ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>
+    ) -> Array<Span<felt252>>;
+
+    fn get_outside_execution_message_hash(
+        self: @TContractState, outside_execution: OutsideExecution
+    ) -> felt252;
+}
+
+
 // H('StarkNetDomain(name:felt,version:felt,chainId:felt)')
 const STARKNET_DOMAIN_TYPE_HASH: felt252 =
     0x1bfc207425a47a5dfa1a50a4f5241203f50624ca5fdf5e18755765416b8e288;

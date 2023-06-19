@@ -5,7 +5,7 @@ use asserts::{
 };
 
 mod outside_execution;
-use outside_execution::{OutsideExecution, hash_outside_execution_message};
+use outside_execution::{OutsideExecution, hash_outside_execution_message, IExecuteFromOutside};
 
 mod test_dapp;
 use test_dapp::TestDapp;
@@ -31,11 +31,16 @@ use erc165::{
 mod erc1271;
 use erc1271::{ERC1271_VALIDATED, IErc1271, IErc1271LibraryDispatcher, IErc1271DispatcherTrait};
 
-mod interfaces;
-use interfaces::{
-    IAccountUpgrade, IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait,
-    AccountContract, IExecuteFromOutside
-};
+mod upgrade;
+use upgrade::{IAccountUpgrade, IAccountUpgradeLibraryDispatcher, IAccountUpgradeDispatcherTrait};
 
 #[cfg(test)]
 mod tests;
+
+use starknet::account::Call;
+// TODO Delete as we should use SN interface
+trait AccountContract<TContractState> {
+    fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
+    fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
+    fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
+}

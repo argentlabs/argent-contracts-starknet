@@ -10,7 +10,7 @@ LIB_FOLDER= $(SOURCE_FOLDER)/lib
 MULTISIG_FOLDER= $(SOURCE_FOLDER)/multisig
 MULTICALL_FOLDER= $(SOURCE_FOLDER)/multicall
 SOURCE_FOLDER=./contracts
-CAIRO_VERSION=v2.0.0-rc2
+CAIRO_VERSION=v2.0.0-rc3
 FIXTURES_FOLDER = ./tests/fixtures
 
 all: install build fixtures

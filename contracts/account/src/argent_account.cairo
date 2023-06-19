@@ -438,8 +438,8 @@ mod ArgentAccount {
             assert_only_self();
             self.assert_valid_new_owner(new_owner, signature_r, signature_s);
 
-            reset_escape(ref self);
-            reset_escape_attempts(ref self);
+            self.reset_escape();
+            self.reset_escape_attempts();
 
             self._signer.write(new_owner);
             self.emit(Event::OwnerChanged(OwnerChanged { new_owner }));
@@ -456,8 +456,8 @@ mod ArgentAccount {
                 assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
             }
 
-            reset_escape(ref self);
-            reset_escape_attempts(ref self);
+            self.reset_escape();
+            self.reset_escape_attempts();
 
             self._guardian.write(new_guardian);
             self.emit(Event::GuardianChanged(GuardianChanged { new_guardian }));
@@ -468,10 +468,10 @@ mod ArgentAccount {
         /// @param new_guardian_backup The address of the new backup guardian, or 0 to disable the backup guardian
         fn change_guardian_backup(ref self: ContractState, new_guardian_backup: felt252) {
             assert_only_self();
-            assert_guardian_set(@self);
+            self.assert_guardian_set();
 
-            reset_escape(ref self);
-            reset_escape_attempts(ref self);
+            self.reset_escape();
+            self.reset_escape_attempts();
 
             self._guardian_backup.write(new_guardian_backup);
             self.emit(Event::GuardianBackupChanged(GuardianBackupChanged { new_guardian_backup }));
@@ -495,7 +495,7 @@ mod ArgentAccount {
                 );
             }
 
-            reset_escape(ref self);
+            self.reset_escape();
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
             self
                 ._escape
@@ -513,7 +513,7 @@ mod ArgentAccount {
         fn trigger_escape_guardian(ref self: ContractState, new_guardian: felt252) {
             assert_only_self();
 
-            reset_escape(ref self);
+            self.reset_escape();
 
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
             self
@@ -541,7 +541,7 @@ mod ArgentAccount {
             let current_escape_status = get_escape_status(current_escape.ready_at);
             assert(current_escape_status == EscapeStatus::Ready(()), 'argent/invalid-escape');
 
-            reset_escape_attempts(ref self);
+            self.reset_escape_attempts();
 
             // update owner
             self._signer.write(current_escape.new_signer);
@@ -563,7 +563,7 @@ mod ArgentAccount {
                 'argent/invalid-escape'
             );
 
-            reset_escape_attempts(ref self);
+            self.reset_escape_attempts();
 
             //update guardian
             self._guardian.write(current_escape.new_signer);
@@ -584,8 +584,8 @@ mod ArgentAccount {
             let current_escape = self._escape.read();
             let current_escape_status = get_escape_status(current_escape.ready_at);
             assert(current_escape_status != EscapeStatus::None(()), 'argent/invalid-escape');
-            reset_escape(ref self);
-            reset_escape_attempts(ref self);
+            self.reset_escape();
+            self.reset_escape_attempts();
         }
 
 
@@ -739,7 +739,7 @@ mod ArgentAccount {
                             .expect('argent/invalid-calldata');
                         assert(calldata.is_empty(), 'argent/invalid-calldata');
                         assert(new_owner != 0, 'argent/null-owner');
-                        assert_guardian_set(@self);
+                        self.assert_guardian_set();
 
                         let is_valid = self.is_valid_guardian_signature(execution_hash, signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');
@@ -753,7 +753,7 @@ mod ArgentAccount {
                         }
 
                         assert(call.calldata.is_empty(), 'argent/invalid-calldata');
-                        assert_guardian_set(@self);
+                        self.assert_guardian_set();
                         let current_escape = self._escape.read();
                         assert(
                             current_escape.escape_type == ESCAPE_TYPE_OWNER, 'argent/invalid-escape'
@@ -782,7 +782,7 @@ mod ArgentAccount {
                                 self._guardian_backup.read() == 0, 'argent/backup-should-be-null'
                             );
                         }
-                        assert_guardian_set(@self);
+                        self.assert_guardian_set();
                         let is_valid = self.is_valid_owner_signature(execution_hash, signature);
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return (); // valid
@@ -794,7 +794,7 @@ mod ArgentAccount {
                             self.owner_escape_attempts.write(current_attempts + 1);
                         }
                         assert(call.calldata.is_empty(), 'argent/invalid-calldata');
-                        assert_guardian_set(@self);
+                        self.assert_guardian_set();
                         let current_escape = self._escape.read();
 
                         assert(
@@ -903,6 +903,30 @@ mod ArgentAccount {
             let is_valid = check_ecdsa_signature(message_hash, new_owner, signature_r, signature_s);
             assert(is_valid, 'argent/invalid-owner-sig');
         }
+
+
+        #[inline(always)]
+        fn reset_escape(ref self: ContractState) {
+            let current_escape_status = get_escape_status(self._escape.read().ready_at);
+            if current_escape_status == EscapeStatus::None(()) {
+                return ();
+            }
+            self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
+            if current_escape_status != EscapeStatus::Expired(()) {
+                self.emit(Event::EscapeCanceled(EscapeCanceled {}));
+            }
+        }
+
+        #[inline(always)]
+        fn assert_guardian_set(self: @ContractState) {
+            assert(self._guardian.read() != 0, 'argent/guardian-required');
+        }
+
+        #[inline(always)]
+        fn reset_escape_attempts(ref self: ContractState) {
+            self.owner_escape_attempts.write(0);
+            self.guardian_escape_attempts.write(0);
+        }
     }
 
 
@@ -940,28 +964,5 @@ mod ArgentAccount {
         }
 
         EscapeStatus::Ready(())
-    }
-
-    #[inline(always)]
-    fn reset_escape(ref self: ContractState) {
-        let current_escape_status = get_escape_status(self._escape.read().ready_at);
-        if current_escape_status == EscapeStatus::None(()) {
-            return ();
-        }
-        self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
-        if current_escape_status != EscapeStatus::Expired(()) {
-            self.emit(Event::EscapeCanceled(EscapeCanceled {}));
-        }
-    }
-
-    #[inline(always)]
-    fn assert_guardian_set(self: @ContractState) {
-        assert(self._guardian.read() != 0, 'argent/guardian-required');
-    }
-
-    #[inline(always)]
-    fn reset_escape_attempts(ref self: ContractState) {
-        self.owner_escape_attempts.write(0);
-        self.guardian_escape_attempts.write(0);
     }
 }

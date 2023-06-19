@@ -13,7 +13,7 @@ impl ArrayExtImpl<T, impl TDrop: Drop<T>> of ArrayExtTrait<T> {
                     self.append(reason);
                 },
                 Option::None(()) => {
-                    break ();
+                    break;
                 },
             };
         };

@@ -733,7 +733,7 @@ mod ArgentAccount {
 
                         let is_valid = self.is_valid_guardian_signature(execution_hash, signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');
-                        return (); // valid
+                        return; // valid
                     }
                     if selector == ESCAPE_OWNER_SELECTOR {
                         if !is_from_outside {
@@ -754,7 +754,7 @@ mod ArgentAccount {
 
                         let is_valid = self.is_valid_guardian_signature(execution_hash, signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');
-                        return (); // valid
+                        return; // valid
                     }
                     if selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
                         if !is_from_outside {
@@ -775,7 +775,7 @@ mod ArgentAccount {
                         self.assert_guardian_set();
                         let is_valid = self.is_valid_owner_signature(execution_hash, signature);
                         assert(is_valid, 'argent/invalid-owner-sig');
-                        return (); // valid
+                        return; // valid
                     }
                     if selector == ESCAPE_GUARDIAN_SELECTOR {
                         if !is_from_outside {
@@ -801,7 +801,7 @@ mod ArgentAccount {
                         }
                         let is_valid = self.is_valid_owner_signature(execution_hash, signature);
                         assert(is_valid, 'argent/invalid-owner-sig');
-                        return (); // valid
+                        return; // valid
                     }
                     assert(selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
                 }
@@ -899,7 +899,7 @@ mod ArgentAccount {
         fn reset_escape(ref self: ContractState) {
             let current_escape_status = get_escape_status(self._escape.read().ready_at);
             if current_escape_status == EscapeStatus::None(()) {
-                return ();
+                return;
             }
             self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
             if current_escape_status != EscapeStatus::Expired(()) {

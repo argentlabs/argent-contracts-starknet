@@ -812,7 +812,7 @@ mod ArgentMultisig {
             loop {
                 if current_signer == 0 {
                     // Can't break signers atm because "variable was previously moved"
-                    break ();
+                    break;
                 }
                 signers.append(current_signer);
                 current_signer = self.signer_list.read(current_signer);

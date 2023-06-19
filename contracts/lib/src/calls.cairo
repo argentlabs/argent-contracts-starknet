@@ -25,7 +25,7 @@ fn execute_multicall(calls: Span<Call>) -> Array<Span<felt252>> {
                 }
             },
             Option::None(_) => {
-                break ();
+                break;
             },
         };
     };

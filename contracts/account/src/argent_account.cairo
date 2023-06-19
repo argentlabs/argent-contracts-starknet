@@ -523,11 +523,10 @@ mod ArgentAccount {
             self.reset_escape();
 
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
-            self
-                ._escape
-                .write(
-                    Escape { ready_at, escape_type: ESCAPE_TYPE_GUARDIAN, new_signer: new_guardian }
-                );
+            let escape = Escape {
+                ready_at, escape_type: ESCAPE_TYPE_GUARDIAN, new_signer: new_guardian
+            };
+            self._escape.write(escape);
             self
                 .emit(
                     Event::EscapeGuardianTriggered(

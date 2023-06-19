@@ -1,4 +1,3 @@
-use multisig::argent_multisig::IArgentMultisig;
 use lib::Version;
 
 #[starknet::interface]

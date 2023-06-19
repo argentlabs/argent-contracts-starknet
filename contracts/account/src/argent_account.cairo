@@ -253,13 +253,13 @@ mod ArgentAccount {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
-            assert_valid_calls_and_signature(
-                ref self,
-                calls.span(),
-                tx_info.transaction_hash,
-                tx_info.signature,
-                is_from_outside: false
-            );
+            self
+                .assert_valid_calls_and_signature(
+                    calls.span(),
+                    tx_info.transaction_hash,
+                    tx_info.signature,
+                    is_from_outside: false
+                );
             VALIDATED
         }
 
@@ -315,9 +315,10 @@ mod ArgentAccount {
 
             let calls = outside_execution.calls;
 
-            assert_valid_calls_and_signature(
-                ref self, calls, outside_tx_hash, signature.span(), is_from_outside: true
-            );
+            self
+                .assert_valid_calls_and_signature(
+                    calls, outside_tx_hash, signature.span(), is_from_outside: true
+                );
 
             // Effects
             self.outside_nonces.write(nonce, true);
@@ -706,113 +707,127 @@ mod ArgentAccount {
         }
     }
 
-    fn assert_valid_calls_and_signature(
-        ref self: ContractState,
-        calls: Span<Call>,
-        execution_hash: felt252,
-        signature: Span<felt252>,
-        is_from_outside: bool
-    ) {
-        let execution_info = get_execution_info().unbox();
-        let account_address = execution_info.contract_address;
-        let tx_info = execution_info.tx_info.unbox();
-        assert_correct_tx_version(tx_info.version);
+    // TODO RENAME
+    #[generate_trait]
+    impl PrivateSection of PrivateSectionTrait {
+        fn assert_valid_calls_and_signature(
+            ref self: ContractState,
+            calls: Span<Call>,
+            execution_hash: felt252,
+            signature: Span<felt252>,
+            is_from_outside: bool
+        ) {
+            let execution_info = get_execution_info().unbox();
+            let account_address = execution_info.contract_address;
+            let tx_info = execution_info.tx_info.unbox();
+            assert_correct_tx_version(tx_info.version);
 
-        if calls.len() == 1 {
-            let call = calls.at(0);
-            if *call.to == account_address {
-                let selector = *call.selector;
+            if calls.len() == 1 {
+                let call = calls.at(0);
+                if *call.to == account_address {
+                    let selector = *call.selector;
 
-                if selector == TRIGGER_ESCAPE_OWNER_SELECTOR {
-                    if !is_from_outside {
-                        let current_attempts = self.guardian_escape_attempts.read();
-                        assert_valid_escape_parameters(current_attempts);
-                        self.guardian_escape_attempts.write(current_attempts + 1);
+                    if selector == TRIGGER_ESCAPE_OWNER_SELECTOR {
+                        if !is_from_outside {
+                            let current_attempts = self.guardian_escape_attempts.read();
+                            assert_valid_escape_parameters(current_attempts);
+                            self.guardian_escape_attempts.write(current_attempts + 1);
+                        }
+
+                        let mut calldata: Span<felt252> = call.calldata.span();
+                        let new_owner: felt252 = Serde::deserialize(ref calldata)
+                            .expect('argent/invalid-calldata');
+                        assert(calldata.is_empty(), 'argent/invalid-calldata');
+                        assert(new_owner != 0, 'argent/null-owner');
+                        assert_guardian_set(@self);
+
+                        let is_valid = is_valid_guardian_signature(
+                            @self, execution_hash, signature
+                        );
+                        assert(is_valid, 'argent/invalid-guardian-sig');
+                        return (); // valid
                     }
+                    if selector == ESCAPE_OWNER_SELECTOR {
+                        if !is_from_outside {
+                            let current_attempts = self.guardian_escape_attempts.read();
+                            assert_valid_escape_parameters(current_attempts);
+                            self.guardian_escape_attempts.write(current_attempts + 1);
+                        }
 
-                    let mut calldata: Span<felt252> = call.calldata.span();
-                    let new_owner: felt252 = Serde::deserialize(ref calldata)
-                        .expect('argent/invalid-calldata');
-                    assert(calldata.is_empty(), 'argent/invalid-calldata');
-                    assert(new_owner != 0, 'argent/null-owner');
-                    assert_guardian_set(@self);
+                        assert(call.calldata.is_empty(), 'argent/invalid-calldata');
+                        assert_guardian_set(@self);
+                        let current_escape = self._escape.read();
+                        assert(
+                            current_escape.escape_type == ESCAPE_TYPE_OWNER, 'argent/invalid-escape'
+                        );
+                        // needed if user started escape in old cairo version and
+                        // upgraded half way through,  then tries to finish the escape in new version
+                        assert(current_escape.new_signer != 0, 'argent/null-owner');
 
-                    let is_valid = is_valid_guardian_signature(@self, execution_hash, signature);
-                    assert(is_valid, 'argent/invalid-guardian-sig');
-                    return (); // valid
+                        let is_valid = is_valid_guardian_signature(
+                            @self, execution_hash, signature
+                        );
+                        assert(is_valid, 'argent/invalid-guardian-sig');
+                        return (); // valid
+                    }
+                    if selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
+                        if !is_from_outside {
+                            let current_attempts = self.owner_escape_attempts.read();
+                            assert_valid_escape_parameters(current_attempts);
+                            self.owner_escape_attempts.write(current_attempts + 1);
+                        }
+                        let mut calldata: Span<felt252> = call.calldata.span();
+                        let new_guardian: felt252 = Serde::deserialize(ref calldata)
+                            .expect('argent/invalid-calldata');
+                        assert(calldata.is_empty(), 'argent/invalid-calldata');
+
+                        if new_guardian == 0 {
+                            assert(
+                                self._guardian_backup.read() == 0, 'argent/backup-should-be-null'
+                            );
+                        }
+                        assert_guardian_set(@self);
+                        let is_valid = is_valid_owner_signature(@self, execution_hash, signature);
+                        assert(is_valid, 'argent/invalid-owner-sig');
+                        return (); // valid
+                    }
+                    if selector == ESCAPE_GUARDIAN_SELECTOR {
+                        if !is_from_outside {
+                            let current_attempts = self.owner_escape_attempts.read();
+                            assert_valid_escape_parameters(current_attempts);
+                            self.owner_escape_attempts.write(current_attempts + 1);
+                        }
+                        assert(call.calldata.is_empty(), 'argent/invalid-calldata');
+                        assert_guardian_set(@self);
+                        let current_escape = self._escape.read();
+
+                        assert(
+                            current_escape.escape_type == ESCAPE_TYPE_GUARDIAN,
+                            'argent/invalid-escape'
+                        );
+
+                        // needed if user started escape in old cairo version and
+                        // upgraded half way through, then tries to finish the escape in new version
+                        if current_escape.new_signer == 0 {
+                            assert(
+                                self._guardian_backup.read() == 0, 'argent/backup-should-be-null'
+                            );
+                        }
+                        let is_valid = is_valid_owner_signature(@self, execution_hash, signature);
+                        assert(is_valid, 'argent/invalid-owner-sig');
+                        return (); // valid
+                    }
+                    assert(selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
                 }
-                if selector == ESCAPE_OWNER_SELECTOR {
-                    if !is_from_outside {
-                        let current_attempts = self.guardian_escape_attempts.read();
-                        assert_valid_escape_parameters(current_attempts);
-                        self.guardian_escape_attempts.write(current_attempts + 1);
-                    }
-
-                    assert(call.calldata.is_empty(), 'argent/invalid-calldata');
-                    assert_guardian_set(@self);
-                    let current_escape = self._escape.read();
-                    assert(
-                        current_escape.escape_type == ESCAPE_TYPE_OWNER, 'argent/invalid-escape'
-                    );
-                    // needed if user started escape in old cairo version and
-                    // upgraded half way through,  then tries to finish the escape in new version
-                    assert(current_escape.new_signer != 0, 'argent/null-owner');
-
-                    let is_valid = is_valid_guardian_signature(@self, execution_hash, signature);
-                    assert(is_valid, 'argent/invalid-guardian-sig');
-                    return (); // valid
-                }
-                if selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
-                    if !is_from_outside {
-                        let current_attempts = self.owner_escape_attempts.read();
-                        assert_valid_escape_parameters(current_attempts);
-                        self.owner_escape_attempts.write(current_attempts + 1);
-                    }
-                    let mut calldata: Span<felt252> = call.calldata.span();
-                    let new_guardian: felt252 = Serde::deserialize(ref calldata)
-                        .expect('argent/invalid-calldata');
-                    assert(calldata.is_empty(), 'argent/invalid-calldata');
-
-                    if new_guardian == 0 {
-                        assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
-                    }
-                    assert_guardian_set(@self);
-                    let is_valid = is_valid_owner_signature(@self, execution_hash, signature);
-                    assert(is_valid, 'argent/invalid-owner-sig');
-                    return (); // valid
-                }
-                if selector == ESCAPE_GUARDIAN_SELECTOR {
-                    if !is_from_outside {
-                        let current_attempts = self.owner_escape_attempts.read();
-                        assert_valid_escape_parameters(current_attempts);
-                        self.owner_escape_attempts.write(current_attempts + 1);
-                    }
-                    assert(call.calldata.is_empty(), 'argent/invalid-calldata');
-                    assert_guardian_set(@self);
-                    let current_escape = self._escape.read();
-
-                    assert(
-                        current_escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'argent/invalid-escape'
-                    );
-
-                    // needed if user started escape in old cairo version and
-                    // upgraded half way through, then tries to finish the escape in new version
-                    if current_escape.new_signer == 0 {
-                        assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
-                    }
-                    let is_valid = is_valid_owner_signature(@self, execution_hash, signature);
-                    assert(is_valid, 'argent/invalid-owner-sig');
-                    return (); // valid
-                }
-                assert(selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
+            } else {
+                // make sure no call is to the account
+                assert_no_self_call(calls, account_address);
             }
-        } else {
-            // make sure no call is to the account
-            assert_no_self_call(calls, account_address);
-        }
 
-        assert_valid_span_signature(@self, execution_hash, signature);
+            assert_valid_span_signature(@self, execution_hash, signature);
+        }
     }
+
 
     fn assert_valid_escape_parameters(attempts: u32) {
         let tx_info = get_tx_info().unbox();

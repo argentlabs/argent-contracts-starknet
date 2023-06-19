@@ -266,7 +266,7 @@ mod ArgentAccount {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_declare_version(tx_info.version);
-            assert_valid_span_signature(self, tx_info.transaction_hash, tx_info.signature);
+            self.assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
 
@@ -420,7 +420,7 @@ mod ArgentAccount {
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_tx_version(tx_info.version);
-            assert_valid_span_signature(self, tx_info.transaction_hash, tx_info.signature);
+            self.assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
 
@@ -436,7 +436,7 @@ mod ArgentAccount {
             ref self: ContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252
         ) {
             assert_only_self();
-            assert_valid_new_owner(@self, new_owner, signature_r, signature_s);
+            self.assert_valid_new_owner(new_owner, signature_r, signature_s);
 
             reset_escape(ref self);
             reset_escape_attempts(ref self);
@@ -700,7 +700,7 @@ mod ArgentAccount {
     fn is_valid_signature(
         self: @ContractState, hash: felt252, signatures: Array<felt252>
     ) -> felt252 {
-        if is_valid_span_signature(self, hash, signatures.span()) {
+        if self.is_valid_span_signature(hash, signatures.span()) {
             ERC1271_VALIDATED
         } else {
             0
@@ -741,9 +741,7 @@ mod ArgentAccount {
                         assert(new_owner != 0, 'argent/null-owner');
                         assert_guardian_set(@self);
 
-                        let is_valid = is_valid_guardian_signature(
-                            @self, execution_hash, signature
-                        );
+                        let is_valid = self.is_valid_guardian_signature(execution_hash, signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');
                         return (); // valid
                     }
@@ -764,9 +762,7 @@ mod ArgentAccount {
                         // upgraded half way through,  then tries to finish the escape in new version
                         assert(current_escape.new_signer != 0, 'argent/null-owner');
 
-                        let is_valid = is_valid_guardian_signature(
-                            @self, execution_hash, signature
-                        );
+                        let is_valid = self.is_valid_guardian_signature(execution_hash, signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');
                         return (); // valid
                     }
@@ -787,7 +783,7 @@ mod ArgentAccount {
                             );
                         }
                         assert_guardian_set(@self);
-                        let is_valid = is_valid_owner_signature(@self, execution_hash, signature);
+                        let is_valid = self.is_valid_owner_signature(execution_hash, signature);
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return (); // valid
                     }
@@ -813,7 +809,7 @@ mod ArgentAccount {
                                 self._guardian_backup.read() == 0, 'argent/backup-should-be-null'
                             );
                         }
-                        let is_valid = is_valid_owner_signature(@self, execution_hash, signature);
+                        let is_valid = self.is_valid_owner_signature(execution_hash, signature);
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return (); // valid
                     }
@@ -824,7 +820,88 @@ mod ArgentAccount {
                 assert_no_self_call(calls, account_address);
             }
 
-            assert_valid_span_signature(@self, execution_hash, signature);
+            self.assert_valid_span_signature(execution_hash, signature);
+        }
+
+        fn is_valid_span_signature(
+            self: @ContractState, hash: felt252, signatures: Span<felt252>
+        ) -> bool {
+            let (owner_signature, guardian_signature) = split_signatures(signatures);
+            let is_valid = self.is_valid_owner_signature(hash, owner_signature);
+            if !is_valid {
+                return false;
+            }
+            if self._guardian.read() == 0 {
+                guardian_signature.is_empty()
+            } else {
+                self.is_valid_guardian_signature(hash, guardian_signature)
+            }
+        }
+
+        fn assert_valid_span_signature(
+            self: @ContractState, hash: felt252, signatures: Span<felt252>
+        ) {
+            let (owner_signature, guardian_signature) = split_signatures(signatures);
+            let is_valid = self.is_valid_owner_signature(hash, owner_signature);
+            assert(is_valid, 'argent/invalid-owner-sig');
+
+            if self._guardian.read() == 0 {
+                assert(guardian_signature.is_empty(), 'argent/invalid-guardian-sig');
+            } else {
+                assert(
+                    self.is_valid_guardian_signature(hash, guardian_signature),
+                    'argent/invalid-guardian-sig'
+                );
+            }
+        }
+
+        fn is_valid_owner_signature(
+            self: @ContractState, hash: felt252, signature: Span<felt252>
+        ) -> bool {
+            if signature.len() != 2 {
+                return false;
+            }
+            let signature_r = *signature[0];
+            let signature_s = *signature[1];
+            check_ecdsa_signature(hash, self._signer.read(), signature_r, signature_s)
+        }
+
+        fn is_valid_guardian_signature(
+            self: @ContractState, hash: felt252, signature: Span<felt252>
+        ) -> bool {
+            if signature.len() != 2 {
+                return false;
+            }
+            let signature_r = *signature[0];
+            let signature_s = *signature[1];
+            let is_valid = check_ecdsa_signature(
+                hash, self._guardian.read(), signature_r, signature_s
+            );
+            if is_valid {
+                true
+            } else {
+                check_ecdsa_signature(hash, self._guardian_backup.read(), signature_r, signature_s)
+            }
+        }
+
+        /// The signature is the result of signing the message hash with the new owner private key
+        /// The message hash is the result of hashing the array:
+        /// [change_owner selector, chainid, contract address, old_owner]
+        /// as specified here: https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
+
+        fn assert_valid_new_owner(
+            self: @ContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252
+        ) {
+            assert(new_owner != 0, 'argent/null-owner');
+            let chain_id = get_tx_info().unbox().chain_id;
+            let mut message_hash = TupleSize4LegacyHash::hash(
+                0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), self._signer.read())
+            );
+            // We now need to hash message_hash with the size of the array: (change_owner selector, chainid, contract address, old_owner)
+            // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
+            message_hash = LegacyHashFelt252::hash(message_hash, 4);
+            let is_valid = check_ecdsa_signature(message_hash, new_owner, signature_r, signature_s);
+            assert(is_valid, 'argent/invalid-owner-sig');
         }
     }
 
@@ -833,83 +910,6 @@ mod ArgentAccount {
         let tx_info = get_tx_info().unbox();
         assert(tx_info.max_fee <= MAX_ESCAPE_MAX_FEE, 'argent/max-fee-too-high');
         assert(attempts < MAX_ESCAPE_ATTEMPTS, 'argent/max-escape-attempts');
-    }
-
-    fn is_valid_span_signature(
-        self: @ContractState, hash: felt252, signatures: Span<felt252>
-    ) -> bool {
-        let (owner_signature, guardian_signature) = split_signatures(signatures);
-        let is_valid = is_valid_owner_signature(self, hash, owner_signature);
-        if !is_valid {
-            return false;
-        }
-        if self._guardian.read() == 0 {
-            guardian_signature.is_empty()
-        } else {
-            is_valid_guardian_signature(self, hash, guardian_signature)
-        }
-    }
-
-    fn assert_valid_span_signature(self: @ContractState, hash: felt252, signatures: Span<felt252>) {
-        let (owner_signature, guardian_signature) = split_signatures(signatures);
-        let is_valid = is_valid_owner_signature(self, hash, owner_signature);
-        assert(is_valid, 'argent/invalid-owner-sig');
-
-        if self._guardian.read() == 0 {
-            assert(guardian_signature.is_empty(), 'argent/invalid-guardian-sig');
-        } else {
-            assert(
-                is_valid_guardian_signature(self, hash, guardian_signature),
-                'argent/invalid-guardian-sig'
-            );
-        }
-    }
-
-    fn is_valid_owner_signature(
-        self: @ContractState, hash: felt252, signature: Span<felt252>
-    ) -> bool {
-        if signature.len() != 2 {
-            return false;
-        }
-        let signature_r = *signature[0];
-        let signature_s = *signature[1];
-        check_ecdsa_signature(hash, self._signer.read(), signature_r, signature_s)
-    }
-
-    fn is_valid_guardian_signature(
-        self: @ContractState, hash: felt252, signature: Span<felt252>
-    ) -> bool {
-        if signature.len() != 2 {
-            return false;
-        }
-        let signature_r = *signature[0];
-        let signature_s = *signature[1];
-        let is_valid = check_ecdsa_signature(hash, self._guardian.read(), signature_r, signature_s);
-        if is_valid {
-            true
-        } else {
-            check_ecdsa_signature(hash, self._guardian_backup.read(), signature_r, signature_s)
-        }
-    }
-
-    /// The signature is the result of signing the message hash with the new owner private key
-    /// The message hash is the result of hashing the array:
-    /// [change_owner selector, chainid, contract address, old_owner]
-    /// as specified here: https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
-
-    fn assert_valid_new_owner(
-        self: @ContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252
-    ) {
-        assert(new_owner != 0, 'argent/null-owner');
-        let chain_id = get_tx_info().unbox().chain_id;
-        let mut message_hash = TupleSize4LegacyHash::hash(
-            0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), self._signer.read())
-        );
-        // We now need to hash message_hash with the size of the array: (change_owner selector, chainid, contract address, old_owner)
-        // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
-        message_hash = LegacyHashFelt252::hash(message_hash, 4);
-        let is_valid = check_ecdsa_signature(message_hash, new_owner, signature_r, signature_s);
-        assert(is_valid, 'argent/invalid-owner-sig');
     }
 
     fn split_signatures(full_signature: Span<felt252>) -> (Span<felt252>, Span<felt252>) {

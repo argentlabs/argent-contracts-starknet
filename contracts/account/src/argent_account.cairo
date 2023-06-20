@@ -688,7 +688,7 @@ mod ArgentAccount {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[generate_trait]
-    impl PrivateSection of PrivateSectionTrait {
+    impl Private of PrivateTrait {
         fn assert_valid_calls_and_signature(
             ref self: ContractState,
             calls: Span<Call>,

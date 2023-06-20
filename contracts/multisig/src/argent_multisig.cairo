@@ -509,7 +509,7 @@ mod ArgentMultisig {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[generate_trait]
-    impl PrivateSection of PrivateSectionTrait {
+    impl Private of PrivateTrait {
         fn assert_valid_calls_and_signature(
             self: @ContractState,
             calls: Span<Call>,

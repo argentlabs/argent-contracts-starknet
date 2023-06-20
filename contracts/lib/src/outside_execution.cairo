@@ -5,7 +5,7 @@ use traits::Into;
 use starknet::{ContractAddress, get_tx_info, get_contract_address, account::Call};
 
 #[starknet::interface]
-trait IExecuteFromOutside<TContractState> {
+trait IOutsideExecution<TContractState> {
     fn execute_from_outside(
         ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>
     ) -> Array<Span<felt252>>;

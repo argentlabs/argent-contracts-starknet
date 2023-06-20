@@ -69,7 +69,7 @@ mod ArgentAccount {
         OutsideExecution, hash_outside_execution_message, assert_correct_declare_version,
         ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
         ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IErc165, IErc1271, AccountContract,
-        IExecuteFromOutside
+        IOutsideExecution
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -289,7 +289,7 @@ mod ArgentAccount {
     }
 
     #[external(v0)]
-    impl ExecuteFromOutsideImpl of IExecuteFromOutside<ContractState> {
+    impl ExecuteFromOutsideImpl of IOutsideExecution<ContractState> {
         /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
         /// @param outside_execution The parameters of the transaction to execute
         /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`

@@ -5,7 +5,7 @@ use asserts::{
 };
 
 mod outside_execution;
-use outside_execution::{OutsideExecution, hash_outside_execution_message, IExecuteFromOutside};
+use outside_execution::{OutsideExecution, hash_outside_execution_message, IOutsideExecution};
 
 mod test_dapp;
 use test_dapp::TestDapp;

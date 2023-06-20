@@ -69,8 +69,8 @@ mod ArgentMultisig {
         IErc165DispatcherTrait, OutsideExecution, hash_outside_execution_message,
         ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
         ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IUpgradeable, IUpgradeTarget,
-        IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait, IExecuteFromOutside,
-        IErc165, IErc1271
+        IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait, IOutsideExecution, IErc165,
+        IErc1271
     };
     use multisig::deserialize_array_signer_signature;
 
@@ -186,7 +186,7 @@ mod ArgentMultisig {
         }
     }
 
-    impl ExecuteFromOutsideImpl of IExecuteFromOutside<ContractState> {
+    impl ExecuteFromOutsideImpl of IOutsideExecution<ContractState> {
         /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
         /// @param outside_execution The parameters of the transaction to execute
         /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`

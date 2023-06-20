@@ -1,4 +1,6 @@
-use lib::Version;
+mod interface;
+use interface::IArgentMultisig;
+use interface::IOldArgentMultisig;
 
 mod argent_multisig;
 use argent_multisig::ArgentMultisig;

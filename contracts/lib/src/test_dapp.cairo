@@ -15,10 +15,6 @@ trait ITestDapp<TContractState> {
 mod TestDapp {
     use starknet::{get_caller_address, ContractAddress};
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                           Storage                                          //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
     #[storage]
     struct Storage {
         stored_number: LegacyMap<ContractAddress, felt252>, 

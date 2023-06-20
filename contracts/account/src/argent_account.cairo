@@ -56,10 +56,6 @@ mod ArgentAccount {
     /// Limits fee in escapes
     const MAX_ESCAPE_MAX_FEE: u128 = 50000000000000000; // 0.05 ETH
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                           Storage                                          //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
     #[storage]
     struct Storage {
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
@@ -77,9 +73,6 @@ mod ArgentAccount {
         owner_escape_attempts: u32
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                           Events                                           //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
@@ -181,10 +174,6 @@ mod ArgentAccount {
         new_implementation: ClassHash
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                        Constructor                                         //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
     #[constructor]
     fn constructor(ref self: ContractState, owner: felt252, guardian: felt252) {
         assert(owner != 0, 'argent/null-owner');
@@ -199,10 +188,6 @@ mod ArgentAccount {
                 )
             );
     }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                     External functions                                     //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[external(v0)]
     impl AccountContractImpl of AccountContract<ContractState> {
@@ -634,10 +619,6 @@ mod ArgentAccount {
             Erc1271::is_valid_signature(self, hash, signatures)
         }
     }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                          Internal                                          //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[generate_trait]
     impl Private of PrivateTrait {

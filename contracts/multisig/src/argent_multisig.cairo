@@ -35,9 +35,6 @@ mod ArgentMultisig {
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                           Events                                           //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
     #[storage]
     struct Storage {
         signer_list: LegacyMap<felt252, felt252>,
@@ -81,10 +78,6 @@ mod ArgentMultisig {
         new_implementation: ClassHash
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                     Constructor                                            //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
     #[constructor]
     fn constructor(ref self: ContractState, new_threshold: usize, signers: Array<felt252>) {
         let new_signers_count = signers.len();
@@ -101,10 +94,6 @@ mod ArgentMultisig {
         };
         self.emit(Event::ConfigurationUpdated(config));
     }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                     External functions                                     //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[external(v0)]
     impl AccountContractImpl of AccountContract<ContractState> {
@@ -454,10 +443,6 @@ mod ArgentMultisig {
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                   Internal Functions                                       //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
     #[generate_trait]
     impl Private of PrivateTrait {
         fn assert_valid_calls_and_signature(
@@ -556,11 +541,6 @@ mod ArgentMultisig {
         assert(signers_len <= MAX_SIGNERS_COUNT, 'argent/invalid-signers-len');
         assert(threshold <= signers_len, 'argent/bad-threshold');
     }
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                    Multisig Storage                                        //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[generate_trait]
     impl MultisigStorageImpl of MultisigStorage {

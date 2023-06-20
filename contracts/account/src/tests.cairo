@@ -89,6 +89,8 @@ fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAcco
     calldata.append(guardian);
     let class_hash = ArgentAccount::TEST_CLASS_HASH.try_into().unwrap();
     let (contract_address, _) = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap();
+
+    // This will set the caller for subsequent calls (avoid 'argent/only-self')
     set_contract_address(contract_address_const::<1>());
     ITestArgentAccountDispatcher { contract_address }
 }

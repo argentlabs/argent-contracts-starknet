@@ -1,10 +1,9 @@
 use lib::Version;
 use account::{Escape, EscapeStatus};
 
-// TODO Move all these interfaces in a IArgentAccount file?
 #[starknet::interface]
 trait IArgentAccount<TContractState> {
-    // TODO This should move into its own impl
+    // TODO Should this move into its own impl?
     fn __validate_deploy__(
         self: @TContractState,
         class_hash: felt252,

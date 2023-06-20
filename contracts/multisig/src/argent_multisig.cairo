@@ -84,7 +84,7 @@ mod ArgentMultisig {
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
         self.add_signers(signers.span(), last_signer: 0);
-        self.set_threshold(new_threshold);
+        self.threshold.write(new_threshold);
 
         let config = ConfigurationUpdated {
             new_threshold,
@@ -145,7 +145,7 @@ mod ArgentMultisig {
                 'argent/invalid-timestamp'
             );
             let nonce = outside_execution.nonce;
-            assert(!self.get_outside_nonce(nonce), 'argent/duplicated-outside-nonce');
+            assert(!self.outside_nonces.read(nonce), 'argent/duplicated-outside-nonce');
 
             let outside_tx_hash = hash_outside_execution_message(@outside_execution);
 
@@ -154,7 +154,7 @@ mod ArgentMultisig {
             self.assert_valid_calls_and_signature(calls, outside_tx_hash, signature.span());
 
             // Effects
-            self.set_outside_nonce(nonce, true);
+            self.outside_nonces.write(nonce, true);
 
             // Interactions
             let retdata = execute_multicall(calls);
@@ -213,7 +213,7 @@ mod ArgentMultisig {
             let new_signers_count = self.get_signers_len();
 
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
-            self.set_threshold(new_threshold);
+            self.threshold.write(new_threshold);
 
             let config = ConfigurationUpdated {
                 new_threshold,
@@ -239,7 +239,7 @@ mod ArgentMultisig {
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
             self.add_signers(signers_to_add.span(), last_signer);
-            self.set_threshold(new_threshold);
+            self.threshold.write(new_threshold);
 
             let config = ConfigurationUpdated {
                 new_threshold,
@@ -263,7 +263,7 @@ mod ArgentMultisig {
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
             self.remove_signers(signers_to_remove.span(), last_signer);
-            self.set_threshold(new_threshold);
+            self.threshold.write(new_threshold);
 
             let config = ConfigurationUpdated {
                 new_threshold,
@@ -292,7 +292,7 @@ mod ArgentMultisig {
             removed_signers.append(signer_to_remove);
 
             let config = ConfigurationUpdated {
-                new_threshold: self.get_threshold(),
+                new_threshold: self.threshold.read(),
                 new_signers_count,
                 added_signers,
                 removed_signers
@@ -311,7 +311,7 @@ mod ArgentMultisig {
 
         /// @dev Returns the threshold, the number of signers required to control this account
         fn get_threshold(self: @ContractState) -> usize {
-            self.get_threshold()
+            self.threshold.read()
         }
 
         fn get_signers(self: @ContractState) -> Array<felt252> {
@@ -406,7 +406,7 @@ mod ArgentMultisig {
             assert_only_self();
 
             // Check basic invariants
-            assert_valid_threshold_and_signers_count(self.get_threshold(), self.get_signers_len());
+            assert_valid_threshold_and_signers_count(self.threshold.read(), self.get_signers_len());
 
             assert(data.len() == 0, 'argent/unexpected-data');
             ArrayTrait::new()
@@ -476,7 +476,7 @@ mod ArgentMultisig {
         fn is_valid_span_signature(
             self: @ContractState, hash: felt252, signature: Span<felt252>
         ) -> bool {
-            let threshold = self.get_threshold();
+            let threshold = self.threshold.read();
             assert(threshold != 0, 'argent/uninitialized');
 
             let mut signer_signatures = deserialize_array_signer_signature(signature)
@@ -719,22 +719,6 @@ mod ArgentMultisig {
                 current_signer = self.signer_list.read(current_signer);
             };
             signers
-        }
-
-        fn get_threshold(self: @ContractState) -> usize {
-            self.threshold.read()
-        }
-
-        fn set_threshold(ref self: ContractState, threshold: usize) {
-            self.threshold.write(threshold);
-        }
-
-        fn get_outside_nonce(self: @ContractState, nonce: felt252) -> bool {
-            self.outside_nonces.read(nonce)
-        }
-
-        fn set_outside_nonce(ref self: ContractState, nonce: felt252, used: bool) {
-            self.outside_nonces.write(nonce, used)
         }
     }
 }

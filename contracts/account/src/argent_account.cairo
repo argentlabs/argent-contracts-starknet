@@ -227,10 +227,6 @@ mod ArgentAccount {
 
     #[external(v0)]
     impl ExecuteFromOutsideImpl of IOutsideExecution<ContractState> {
-        /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
-        /// @param outside_execution The parameters of the transaction to execute
-        /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
-        /// @notice This method allows reentrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
         fn execute_from_outside(
             ref self: ContractState, outside_execution: OutsideExecution, signature: Array<felt252>
         ) -> Array<Span<felt252>> {
@@ -269,7 +265,6 @@ mod ArgentAccount {
             retdata
         }
 
-        /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
         fn get_outside_execution_message_hash(
             self: @ContractState, outside_execution: OutsideExecution
         ) -> felt252 {
@@ -280,12 +275,7 @@ mod ArgentAccount {
 
     #[external(v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
-        /// @notice Upgrades the implementation of the account
-        /// @dev Also call `execute_after_upgrade` on the new implementation
         /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
-        /// @param implementation The address of the new implementation
-        /// @param calldata Data to pass to the the implementation in `execute_after_upgrade`
-        /// @return retdata The data returned by `execute_after_upgrade`
         fn upgrade(
             ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>
         ) -> Array<felt252> {
@@ -307,9 +297,6 @@ mod ArgentAccount {
 
     #[external(v0)]
     impl UpgradeTargetImpl of IUpgradeTarget<ContractState> {
-        /// @dev Logic to execute after an upgrade.
-        /// Can only be called by the account after a call to `upgrade`.
-        /// @param data Generic call data that can be passed to the method for future upgrade logic
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
@@ -358,14 +345,6 @@ mod ArgentAccount {
             VALIDATED
         }
 
-        /// @notice Changes the owner
-        /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
-        /// @param new_owner New owner address
-        /// @param signature_r Signature R from the new owner 
-        /// @param signature_S Signature S from the new owner 
-        /// Signature is required to prevent changing to an address which is not in control of the user
-        /// Signature is the Signed Message of this hash:
-        /// hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
         fn change_owner(
             ref self: ContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252
         ) {
@@ -379,10 +358,6 @@ mod ArgentAccount {
             self.emit(Event::OwnerChanged(OwnerChanged { new_owner }));
         }
 
-        /// @notice Changes the guardian
-        /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
-        /// @param new_guardian The address of the new guardian, or 0 to disable the guardian
-        /// @dev can only be set to 0 if there is no guardian backup set
         fn change_guardian(ref self: ContractState, new_guardian: felt252) {
             assert_only_self();
             // There cannot be a guardian_backup when there is no guardian
@@ -397,9 +372,6 @@ mod ArgentAccount {
             self.emit(Event::GuardianChanged(GuardianChanged { new_guardian }));
         }
 
-        /// @notice Changes the backup guardian
-        /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
-        /// @param new_guardian_backup The address of the new backup guardian, or 0 to disable the backup guardian
         fn change_guardian_backup(ref self: ContractState, new_guardian_backup: felt252) {
             assert_only_self();
             self.assert_guardian_set();
@@ -411,12 +383,6 @@ mod ArgentAccount {
             self.emit(Event::GuardianBackupChanged(GuardianBackupChanged { new_guardian_backup }));
         }
 
-        /// @notice Triggers the escape of the owner when it is lost or compromised.
-        /// Must be called by the account and authorised by just a guardian.
-        /// Cannot override an ongoing escape of the guardian.
-        /// @param new_owner The new account owner if the escape completes
-        /// @dev This method assumes that there is a guardian, and that `_newOwner` is not 0.
-        /// This must be guaranteed before calling this method, usually when validating the transaction.
         fn trigger_escape_owner(ref self: ContractState, new_owner: felt252) {
             assert_only_self();
 
@@ -437,13 +403,6 @@ mod ArgentAccount {
             self.emit(Event::EscapeOwnerTriggered(EscapeOwnerTriggered { ready_at, new_owner }));
         }
 
-        /// @notice Triggers the escape of the guardian when it is lost or compromised.
-        /// Must be called by the account and authorised by the owner alone.
-        /// Can override an ongoing escape of the owner.
-        /// @param new_guardian The new account guardian if the escape completes
-        /// @dev This method assumes that there is a guardian, and that `new_guardian` can only be 0
-        /// if there is no guardian backup.
-        /// This must be guaranteed before calling this method, usually when validating the transaction
         fn trigger_escape_guardian(ref self: ContractState, new_guardian: felt252) {
             assert_only_self();
 
@@ -462,10 +421,6 @@ mod ArgentAccount {
                 );
         }
 
-        /// @notice Completes the escape and changes the owner after the security period
-        /// Must be called by the account and authorised by just a guardian
-        /// @dev This method assumes that there is a guardian, and that the there is an escape for the owner.
-        /// This must be guaranteed before calling this method, usually when validating the transaction.
         fn escape_owner(ref self: ContractState) {
             assert_only_self();
 
@@ -483,10 +438,6 @@ mod ArgentAccount {
             self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
         }
 
-        /// @notice Completes the escape and changes the guardian after the security period
-        /// Must be called by the account and authorised by just the owner
-        /// @dev This method assumes that there is a guardian, and that the there is an escape for the guardian.
-        /// This must be guaranteed before calling this method. Usually when validating the transaction.
         fn escape_guardian(ref self: ContractState) {
             assert_only_self();
 
@@ -506,8 +457,6 @@ mod ArgentAccount {
             self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
         }
 
-        /// @notice Cancels an ongoing escape if any.
-        /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
         fn cancel_escape(ref self: ContractState) {
             assert_only_self();
             let current_escape = self._escape.read();
@@ -800,7 +749,6 @@ mod ArgentAccount {
         /// The message hash is the result of hashing the array:
         /// [change_owner selector, chainid, contract address, old_owner]
         /// as specified here: https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
-
         fn assert_valid_new_owner(
             self: @ContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252
         ) {

@@ -126,10 +126,6 @@ mod ArgentMultisig {
     }
 
     impl ExecuteFromOutsideImpl of IOutsideExecution<ContractState> {
-        /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
-        /// @param outside_execution The parameters of the transaction to execute
-        /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
-        /// @notice This method allows reentrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
         fn execute_from_outside(
             ref self: ContractState, outside_execution: OutsideExecution, signature: Array<felt252>
         ) -> Array<Span<felt252>> {
@@ -165,7 +161,6 @@ mod ArgentMultisig {
             retdata
         }
 
-        /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
         fn get_outside_execution_message_hash(
             self: @ContractState, outside_execution: OutsideExecution
         ) -> felt252 {
@@ -175,11 +170,6 @@ mod ArgentMultisig {
 
     #[external(v0)]
     impl ArgentMultisigImpl of super::IArgentMultisig<ContractState> {
-        /// Self deployment meaning that the multisig pays for it's own deployment fee.
-        /// In this scenario the multisig only requires the signature from one of the owners.
-        /// This allows for better UX. UI must make clear that the funds are not safe from a bad signer until the deployment happens.
-        /// @dev Validates signature for self deployment.
-        /// @dev If signers can't be trusted, it's recommended to start with a 1:1 multisig and add other signers late
         fn __validate_deploy__(
             self: @ContractState,
             class_hash: felt252,
@@ -206,8 +196,6 @@ mod ArgentMultisig {
             VALIDATED
         }
 
-        /// @dev Change threshold
-        /// @param new_threshold New threshold
         fn change_threshold(ref self: ContractState, new_threshold: usize) {
             assert_only_self();
             let new_signers_count = self.get_signers_len();
@@ -224,11 +212,6 @@ mod ArgentMultisig {
             self.emit(Event::ConfigurationUpdated(config));
         }
 
-
-        /// @dev Adds new signers to the account, additionally sets a new threshold
-        /// @param new_threshold New threshold
-        /// @param signers_to_add An array with all the signers to add
-        /// @dev will revert when trying to add a user already in the list
         fn add_signers(
             ref self: ContractState, new_threshold: usize, signers_to_add: Array<felt252>
         ) {
@@ -250,9 +233,6 @@ mod ArgentMultisig {
             self.emit(Event::ConfigurationUpdated(config));
         }
 
-        /// @dev Removes account signers, additionally sets a new threshold
-        /// @param new_threshold New threshold
-        /// @param signers_to_remove Should contain only current signers, otherwise it will revert
         fn remove_signers(
             ref self: ContractState, new_threshold: usize, signers_to_remove: Array<felt252>
         ) {
@@ -274,9 +254,6 @@ mod ArgentMultisig {
             self.emit(Event::ConfigurationUpdated(config));
         }
 
-        /// @dev Replace one signer with a different one
-        /// @param signer_to_remove Signer to remove
-        /// @param signer_to_add Signer to add
         fn replace_signer(
             ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252
         ) {
@@ -309,7 +286,6 @@ mod ArgentMultisig {
             Version { major: VERSION_MAJOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
         }
 
-        /// @dev Returns the threshold, the number of signers required to control this account
         fn get_threshold(self: @ContractState) -> usize {
             self.threshold.read()
         }
@@ -322,7 +298,6 @@ mod ArgentMultisig {
             self.is_signer(signer)
         }
 
-        /// Asserts that the given signature is a valid signature from one of the multisig owners
         fn assert_valid_signer_signature(
             self: @ContractState,
             hash: felt252,
@@ -335,7 +310,6 @@ mod ArgentMultisig {
             assert(is_valid, 'argent/invalid-signature');
         }
 
-        /// Checks if a given signature is a valid signature from one of the multisig owners
         fn is_valid_signer_signature(
             self: @ContractState,
             hash: felt252,
@@ -377,9 +351,6 @@ mod ArgentMultisig {
     #[external(v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         /// @dev Can be called by the account to upgrade the implementation
-        /// @param calldata Will be passed to the new implementation `execute_after_upgrade` method
-        /// @param implementation class hash of the new implementation 
-        /// @return retdata The data returned by `execute_after_upgrade`
         fn upgrade(
             ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>
         ) -> Array<felt252> {
@@ -401,7 +372,6 @@ mod ArgentMultisig {
 
     #[external(v0)]
     impl UpgradeTargetImpl of IUpgradeTarget<ContractState> {
-        /// see `IUpgradeTarget`
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 

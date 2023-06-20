@@ -6,15 +6,19 @@ use starknet::{ContractAddress, get_tx_info, get_contract_address, account::Call
 
 #[starknet::interface]
 trait IOutsideExecution<TContractState> {
+    /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
+    /// @param outside_execution The parameters of the transaction to execute
+    /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
+    /// @notice This method allows reentrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
     fn execute_from_outside(
         ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>
     ) -> Array<Span<felt252>>;
 
+    /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
     fn get_outside_execution_message_hash(
         self: @TContractState, outside_execution: OutsideExecution
     ) -> felt252;
 }
-
 
 // H('StarkNetDomain(name:felt,version:felt,chainId:felt)')
 const STARKNET_DOMAIN_TYPE_HASH: felt252 =

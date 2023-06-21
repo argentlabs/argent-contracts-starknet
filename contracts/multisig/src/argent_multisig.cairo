@@ -92,7 +92,7 @@ mod ArgentMultisig {
             added_signers: signers,
             removed_signers: ArrayTrait::new()
         };
-        self.emit(Event::ConfigurationUpdated(config));
+        self.emit(config);
     }
 
     #[external(v0)]
@@ -120,7 +120,7 @@ mod ArgentMultisig {
 
             let hash = tx_info.transaction_hash;
             let response = retdata.span();
-            self.emit(Event::TransactionExecuted(TransactionExecuted { hash, response }));
+            self.emit(TransactionExecuted { hash, response });
             retdata
         }
     }
@@ -158,7 +158,7 @@ mod ArgentMultisig {
 
             let hash = outside_tx_hash;
             let response = retdata.span();
-            self.emit(Event::TransactionExecuted(TransactionExecuted { hash, response }));
+            self.emit(TransactionExecuted { hash, response });
             retdata
         }
 
@@ -210,7 +210,7 @@ mod ArgentMultisig {
                 added_signers: ArrayTrait::new(),
                 removed_signers: ArrayTrait::new()
             };
-            self.emit(Event::ConfigurationUpdated(config));
+            self.emit(config);
         }
 
         fn add_signers(
@@ -231,7 +231,7 @@ mod ArgentMultisig {
                 added_signers: signers_to_add,
                 removed_signers: ArrayTrait::new()
             };
-            self.emit(Event::ConfigurationUpdated(config));
+            self.emit(config);
         }
 
         fn remove_signers(
@@ -252,7 +252,7 @@ mod ArgentMultisig {
                 added_signers: ArrayTrait::new(),
                 removed_signers: signers_to_remove
             };
-            self.emit(Event::ConfigurationUpdated(config));
+            self.emit(config);
         }
 
         fn replace_signer(
@@ -275,7 +275,7 @@ mod ArgentMultisig {
                 added_signers,
                 removed_signers
             };
-            self.emit(Event::ConfigurationUpdated(config));
+            self.emit(config);
         }
 
         fn get_name(self: @ContractState) -> felt252 {
@@ -363,7 +363,7 @@ mod ArgentMultisig {
             assert(supports_interface, 'argent/invalid-implementation');
 
             replace_class_syscall(new_implementation).unwrap_syscall();
-            self.emit(Event::AccountUpgraded(AccountUpgraded { new_implementation }));
+            self.emit(AccountUpgraded { new_implementation });
 
             IUpgradeTargetLibraryDispatcher {
                 class_hash: new_implementation

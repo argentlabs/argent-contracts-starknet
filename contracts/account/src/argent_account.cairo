@@ -179,12 +179,7 @@ mod ArgentAccount {
         self._signer.write(owner);
         self._guardian.write(guardian);
         self._guardian_backup.write(0);
-        self
-            .emit(
-                Event::AccountCreated(
-                    AccountCreated { account: get_contract_address(), owner, guardian }
-                )
-            );
+        self.emit(AccountCreated { account: get_contract_address(), owner, guardian });
     }
 
     #[external(v0)]
@@ -218,7 +213,7 @@ mod ArgentAccount {
 
             let hash = tx_info.transaction_hash;
             let response = retdata.span();
-            self.emit(Event::TransactionExecuted(TransactionExecuted { hash, response }));
+            self.emit(TransactionExecuted { hash, response });
             retdata
         }
     }
@@ -259,7 +254,7 @@ mod ArgentAccount {
 
             let hash = outside_tx_hash;
             let response = retdata.span();
-            self.emit(Event::TransactionExecuted(TransactionExecuted { hash, response }));
+            self.emit(TransactionExecuted { hash, response });
             retdata
         }
 
@@ -285,7 +280,7 @@ mod ArgentAccount {
             assert(supports_interface, 'argent/invalid-implementation');
 
             replace_class_syscall(new_implementation).unwrap_syscall();
-            self.emit(Event::AccountUpgraded(AccountUpgraded { new_implementation }));
+            self.emit(AccountUpgraded { new_implementation });
 
             IUpgradeTargetLibraryDispatcher {
                 class_hash: new_implementation
@@ -353,7 +348,7 @@ mod ArgentAccount {
             self.reset_escape_attempts();
 
             self._signer.write(new_owner);
-            self.emit(Event::OwnerChanged(OwnerChanged { new_owner }));
+            self.emit(OwnerChanged { new_owner });
         }
 
         fn change_guardian(ref self: ContractState, new_guardian: felt252) {
@@ -367,7 +362,7 @@ mod ArgentAccount {
             self.reset_escape_attempts();
 
             self._guardian.write(new_guardian);
-            self.emit(Event::GuardianChanged(GuardianChanged { new_guardian }));
+            self.emit(GuardianChanged { new_guardian });
         }
 
         fn change_guardian_backup(ref self: ContractState, new_guardian_backup: felt252) {
@@ -378,7 +373,7 @@ mod ArgentAccount {
             self.reset_escape_attempts();
 
             self._guardian_backup.write(new_guardian_backup);
-            self.emit(Event::GuardianBackupChanged(GuardianBackupChanged { new_guardian_backup }));
+            self.emit(GuardianBackupChanged { new_guardian_backup });
         }
 
         fn trigger_escape_owner(ref self: ContractState, new_owner: felt252) {
@@ -398,7 +393,7 @@ mod ArgentAccount {
             self
                 ._escape
                 .write(Escape { ready_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: new_owner });
-            self.emit(Event::EscapeOwnerTriggered(EscapeOwnerTriggered { ready_at, new_owner }));
+            self.emit(EscapeOwnerTriggered { ready_at, new_owner });
         }
 
         fn trigger_escape_guardian(ref self: ContractState, new_guardian: felt252) {
@@ -411,12 +406,7 @@ mod ArgentAccount {
                 ready_at, escape_type: ESCAPE_TYPE_GUARDIAN, new_signer: new_guardian
             };
             self._escape.write(escape);
-            self
-                .emit(
-                    Event::EscapeGuardianTriggered(
-                        EscapeGuardianTriggered { ready_at, new_guardian }
-                    )
-                );
+            self.emit(EscapeGuardianTriggered { ready_at, new_guardian });
         }
 
         fn escape_owner(ref self: ContractState) {
@@ -431,7 +421,7 @@ mod ArgentAccount {
 
             // update owner
             self._signer.write(current_escape.new_signer);
-            self.emit(Event::OwnerEscaped(OwnerEscaped { new_owner: current_escape.new_signer }));
+            self.emit(OwnerEscaped { new_owner: current_escape.new_signer });
             // clear escape
             self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
         }
@@ -449,8 +439,7 @@ mod ArgentAccount {
 
             //update guardian
             self._guardian.write(current_escape.new_signer);
-            let new_guardian = current_escape.new_signer;
-            self.emit(Event::GuardianEscaped(GuardianEscaped { new_guardian }));
+            self.emit(GuardianEscaped { new_guardian: current_escape.new_signer });
             // clear escape
             self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
         }
@@ -771,7 +760,7 @@ mod ArgentAccount {
             }
             self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
             if current_escape_status != EscapeStatus::Expired(()) {
-                self.emit(Event::EscapeCanceled(EscapeCanceled {}));
+                self.emit(EscapeCanceled {});
             }
         }
 

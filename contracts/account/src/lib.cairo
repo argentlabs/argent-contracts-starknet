@@ -1,6 +1,6 @@
 mod interface;
 use interface::IArgentAccount;
-use interface::IOldArgentAccount;
+use interface::IDeprecatedArgentAccount;
 
 mod argent_account;
 use argent_account::ArgentAccount;

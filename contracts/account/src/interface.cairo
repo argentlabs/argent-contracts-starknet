@@ -86,7 +86,7 @@ trait IArgentAccount<TContractState> {
 // TODO This could be common with the multisig 
 /// Deprecated methods for compatibility reasons
 #[starknet::interface]
-trait IOldArgentAccount<TContractState> {
+trait IDeprecatedArgentAccount<TContractState> {
     fn getVersion(self: @TContractState) -> felt252;
     fn getName(self: @TContractState) -> felt252;
     fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;

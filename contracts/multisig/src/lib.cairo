@@ -1,6 +1,6 @@
 mod interface;
 use interface::IArgentMultisig;
-use interface::IOldArgentMultisig;
+use interface::IDeprecatedArgentMultisig;
 
 mod argent_multisig;
 use argent_multisig::ArgentMultisig;

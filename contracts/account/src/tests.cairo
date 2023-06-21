@@ -51,7 +51,7 @@ trait ITestArgentAccount<TContractState> {
     fn get_owner_escape_attempts(self: @TContractState) -> u32;
     fn get_escape_and_status(self: @TContractState) -> (Escape, EscapeStatus);
 
-    // IOldArgentAccount
+    // IDeprecatedArgentAccount
     fn getVersion(self: @TContractState) -> felt252;
     fn getName(self: @TContractState) -> felt252;
     fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;

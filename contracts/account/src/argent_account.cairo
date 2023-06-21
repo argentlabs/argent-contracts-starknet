@@ -13,7 +13,7 @@ mod ArgentAccount {
         account::Call
     };
 
-    use account::{Escape, EscapeStatus, IArgentAccount, IOldArgentAccount};
+    use account::{Escape, EscapeStatus, IArgentAccount, IDeprecatedArgentAccount};
     use lib::{
         assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
         execute_multicall, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait, IUpgradeable,
@@ -545,7 +545,7 @@ mod ArgentAccount {
         impl ArgentAccount: IArgentAccount<ContractState>,
         impl Erc165: IErc165<ContractState>,
         impl Erc1271: IErc1271<ContractState>,
-    > of IOldArgentAccount<ContractState> {
+    > of IDeprecatedArgentAccount<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
             VERSION_COMPAT
         }

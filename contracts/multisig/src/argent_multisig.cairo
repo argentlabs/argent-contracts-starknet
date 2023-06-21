@@ -22,7 +22,7 @@ mod ArgentMultisig {
         IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait, IOutsideExecution, IErc165,
         IErc1271
     };
-    use multisig::{deserialize_array_signer_signature, IOldArgentMultisig};
+    use multisig::{deserialize_array_signer_signature, IDeprecatedArgentMultisig};
 
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
         738349667340360233096752603318170676063569407717437256101137432051386874767; // starknet_keccak('execute_after_upgrade')
@@ -389,7 +389,7 @@ mod ArgentMultisig {
         impl ArgentMultisig: super::IArgentMultisig<ContractState>,
         impl Erc165: IErc165<ContractState>,
         impl Erc1271: IErc1271<ContractState>,
-    > of IOldArgentMultisig<ContractState> {
+    > of IDeprecatedArgentMultisig<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
             VERSION_COMPAT
         }

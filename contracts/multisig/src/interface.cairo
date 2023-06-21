@@ -68,7 +68,7 @@ trait IArgentMultisig<TContractState> {
 // TODO Should this be one itnerface in lib as the ArgentAccount uses the same?
 /// Deprecated methods for compatibility reasons
 #[starknet::interface]
-trait IOldArgentMultisig<TContractState> {
+trait IDeprecatedArgentMultisig<TContractState> {
     fn getVersion(self: @TContractState) -> felt252;
     fn getName(self: @TContractState) -> felt252;
     fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;

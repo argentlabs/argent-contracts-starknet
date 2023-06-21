@@ -10,7 +10,7 @@ LIB_FOLDER= $(SOURCE_FOLDER)/lib
 MULTISIG_FOLDER= $(SOURCE_FOLDER)/multisig
 MULTICALL_FOLDER= $(SOURCE_FOLDER)/multicall
 SOURCE_FOLDER=./contracts
-CAIRO_VERSION=v2.0.0-rc3
+CAIRO_VERSION=v2.0.0-rc4
 FIXTURES_FOLDER = ./tests/fixtures
 
 all: install build fixtures
@@ -32,6 +32,8 @@ clone-cairo:
 	git clone --branch $(CAIRO_VERSION) https://github.com/starkware-libs/cairo.git
 
 update-cairo:
+	git -C $(INSTALLATION_FOLDER) checkout main 
+	git -C $(INSTALLATION_FOLDER) pull 
 	git -C $(INSTALLATION_FOLDER) checkout $(CAIRO_VERSION)
 
 build:

@@ -11,7 +11,7 @@ describe("ArgentMultisig: upgrade", function () {
     argentMultisig = await declareContract("ArgentMultisig");
     // This is the same as Argent Multisig but with a different version (to have another class hash)
     // Done to be able to test upgradability
-    argentMultisigFutureClassHash = await declareContract("FutureArgentMultisig");
+    argentMultisigFutureClassHash = await declareContract("ArgentMultisigFutureVersion");
     testDappClassHash = await declareContract("TestDapp");
   });
 

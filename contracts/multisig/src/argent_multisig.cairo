@@ -126,9 +126,8 @@ mod ArgentMultisig {
         let tx_info = starknet::get_tx_info().unbox();
         assert_correct_tx_version(tx_info.version);
 
-        let parsed_signatures = deserialize_array_signer_signature(
-            tx_info.signature
-        ).expect('argent/invalid-signature-length');
+        let parsed_signatures = deserialize_array_signer_signature(tx_info.signature)
+            .expect('argent/invalid-signature-length');
         assert(parsed_signatures.len() == 1, 'argent/invalid-signature-length');
 
         let signer_sig = *parsed_signatures[0];
@@ -280,7 +279,8 @@ mod ArgentMultisig {
 
         let block_timestamp = get_block_timestamp();
         assert(
-            outside_execution.execute_after < block_timestamp & block_timestamp < outside_execution.execute_before,
+            outside_execution.execute_after < block_timestamp
+                & block_timestamp < outside_execution.execute_before,
             'argent/invalid-timestamp'
         );
         let nonce = outside_execution.nonce;
@@ -360,6 +360,7 @@ mod ArgentMultisig {
         }
     }
 
+    #[view]
     /// Deprecated method for compatibility reasons
     fn supportsInterface(interface_id: felt252) -> felt252 {
         if supports_interface(interface_id) {
@@ -442,9 +443,8 @@ mod ArgentMultisig {
         let threshold = MultisigStorage::get_threshold();
         assert(threshold != 0, 'argent/uninitialized');
 
-        let mut signer_signatures = deserialize_array_signer_signature(
-            signature
-        ).expect('argent/invalid-signature-length');
+        let mut signer_signatures = deserialize_array_signer_signature(signature)
+            .expect('argent/invalid-signature-length');
         assert(signer_signatures.len() == threshold, 'argent/invalid-signature-length');
 
         let mut last_signer: felt252 = 0;

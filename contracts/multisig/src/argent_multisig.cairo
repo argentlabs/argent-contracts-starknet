@@ -125,6 +125,7 @@ mod ArgentMultisig {
         }
     }
 
+    #[external(v0)]
     impl ExecuteFromOutsideImpl of IOutsideExecution<ContractState> {
         fn execute_from_outside(
             ref self: ContractState, outside_execution: OutsideExecution, signature: Array<felt252>

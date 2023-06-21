@@ -94,9 +94,7 @@ mod ArgentAccount {
     /// @param guardian The guardian address
     #[derive(Drop, starknet::Event)]
     struct AccountCreated {
-        #[key]
         account: ContractAddress,
-        #[key]
         owner: felt252,
         guardian: felt252
     }

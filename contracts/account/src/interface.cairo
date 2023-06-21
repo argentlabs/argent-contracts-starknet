@@ -3,7 +3,6 @@ use account::{Escape, EscapeStatus};
 
 #[starknet::interface]
 trait IArgentAccount<TContractState> {
-    // TODO Should this move into its own impl?
     fn __validate_deploy__(
         self: @TContractState,
         class_hash: felt252,
@@ -83,7 +82,6 @@ trait IArgentAccount<TContractState> {
     fn get_escape_and_status(self: @TContractState) -> (Escape, EscapeStatus);
 }
 
-// TODO This could be common with the multisig 
 /// Deprecated methods for compatibility reasons
 #[starknet::interface]
 trait IDeprecatedArgentAccount<TContractState> {

@@ -51,7 +51,7 @@ export async function loadContract(contract_address: string) {
   if (!testAbi) {
     throw new Error("Error while getting ABI");
   }
-  // TODO WARNING THIS IS A TEMPORARY FIX WHILE WE WAIT FOR SNJS TO BE UPDATED 
+  // TODO WARNING THIS IS A TEMPORARY FIX WHILE WE WAIT FOR SNJS TO BE UPDATED
   // Allows to pull back the function from one level down
   const parsedAbi = testAbi.flatMap((e) => {
     if (e.type == "interface") {

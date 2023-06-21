@@ -2,7 +2,7 @@ use array::ArrayTrait;
 use traits::TryInto;
 use option::OptionTrait;
 use result::ResultTrait;
-use starknet::{contract_address_const, deploy_syscall, account::Call, testing::set_block_number};
+use starknet::{contract_address_const, deploy_syscall, account::Call};
 
 use lib::{execute_multicall, TestDapp};
 

@@ -1,4 +1,4 @@
-use array::{ArrayTrait, SpanTrait};
+use array::SpanTrait;
 use traits::Into;
 use zeroable::Zeroable;
 

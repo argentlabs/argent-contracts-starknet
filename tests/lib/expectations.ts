@@ -40,7 +40,7 @@ async function expectEventFromReceipt(receipt: InvokeTransactionReceiptResponse,
   if (!receipt.events) {
     assert.fail("No events triggered");
   }
-  expect(event.keys.length).to.equal(1, "Unsupported: Multiple keys");
+  expect(event.keys.length).to.be.greaterThan(0, "Unsupported: No keys");
   const selector = hash.getSelectorFromName(event.keys[0]);
   const eventFiltered = receipt.events.filter((e) => e.keys[0] == selector);
   expect(eventFiltered.length != 0, `No event detected in this transaction`).to.be.true;
@@ -48,6 +48,10 @@ async function expectEventFromReceipt(receipt: InvokeTransactionReceiptResponse,
   const currentEvent = eventFiltered[0];
   expect(currentEvent.from_address).to.deep.equal(event.from_address);
   // Needs deep equality for array, can't do to.equal
+  const currentEventKeys = currentEvent.keys.map(num.toBigInt);
+  const eventKeys = [selector].concat(event.keys.slice(1)).map(num.toBigInt);
+  expect(currentEventKeys).to.deep.equal(eventKeys);
+
   const currentEventData = currentEvent.data.map(num.toBigInt);
   const eventData = event.data.map(num.toBigInt);
   expect(currentEventData).to.deep.equal(eventData);

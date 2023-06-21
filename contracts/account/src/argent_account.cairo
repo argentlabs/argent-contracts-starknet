@@ -93,11 +93,11 @@ mod ArgentAccount {
     /// @param owner The owner address
     /// @param guardian The guardian address
     #[derive(Drop, starknet::Event)]
-struct AccountCreated {
-    #[key]
-    owner: felt252,
-    guardian: felt252
-}
+    struct AccountCreated {
+        #[key]
+        owner: felt252,
+        guardian: felt252
+    }
 
     /// @notice Emitted when the account executes a transaction
     /// @param hash The transaction hash

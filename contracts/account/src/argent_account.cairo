@@ -251,9 +251,7 @@ mod ArgentAccount {
             // Interactions
             let retdata = execute_multicall(calls);
 
-            let hash = outside_tx_hash;
-            let response = retdata.span();
-            self.emit(TransactionExecuted { hash, response });
+            self.emit(TransactionExecuted { hash: outside_tx_hash, response: retdata.span() });
             retdata
         }
 

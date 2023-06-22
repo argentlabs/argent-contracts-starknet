@@ -5,7 +5,7 @@ use asserts::{
 };
 
 mod account;
-use account::IAccount;
+use account::{ERC1271_VALIDATED, IAccount};
 
 mod outside_execution;
 use outside_execution::{OutsideExecution, hash_outside_execution_message, IOutsideExecution};
@@ -28,9 +28,6 @@ use erc165::{
     ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
     ERC165_ACCOUNT_INTERFACE_ID_OLD_2,
 };
-
-mod erc1271;
-use erc1271::{ERC1271_VALIDATED, IErc1271, IErc1271LibraryDispatcher, IErc1271DispatcherTrait};
 
 mod upgrade;
 use upgrade::{

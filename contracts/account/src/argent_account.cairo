@@ -15,13 +15,13 @@ mod ArgentAccount {
 
     use account::{Escape, EscapeStatus, IArgentAccount, IDeprecatedArgentAccount};
     use lib::{
-        assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
-        execute_multicall, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait, IUpgradeable,
-        IUpgradeTarget, IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait,
-        OutsideExecution, hash_outside_execution_message, assert_correct_declare_version,
-        ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
-        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IErc165, IErc1271, IAccount,
-        IOutsideExecution
+        IAccount, assert_correct_tx_version, assert_no_self_call, assert_caller_is_null,
+        assert_only_self, execute_multicall, Version, IErc165LibraryDispatcher,
+        IErc165DispatcherTrait, IUpgradeable, IUpgradeTarget, IUpgradeTargetLibraryDispatcher,
+        IUpgradeTargetDispatcherTrait, OutsideExecution, hash_outside_execution_message,
+        assert_correct_declare_version, ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID,
+        ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED,
+        IErc165, IOutsideExecution
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -182,7 +182,7 @@ mod ArgentAccount {
     }
 
     #[external(v0)]
-    impl IAccountImpl of IAccount<ContractState> {
+    impl Account of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
@@ -214,6 +214,16 @@ mod ArgentAccount {
             let response = retdata.span();
             self.emit(TransactionExecuted { hash, response });
             retdata
+        }
+
+        fn is_valid_signature(
+            self: @ContractState, hash: felt252, signatures: Array<felt252>
+        ) -> felt252 {
+            if self.is_valid_span_signature(hash, signatures.span()) {
+                ERC1271_VALIDATED
+            } else {
+                0
+            }
         }
     }
 
@@ -505,25 +515,11 @@ mod ArgentAccount {
         }
     }
 
-    // ERC1271
-    #[external(v0)]
-    impl Erc1271Impl of IErc1271<ContractState> {
-        fn is_valid_signature(
-            self: @ContractState, hash: felt252, signatures: Array<felt252>
-        ) -> felt252 {
-            if self.is_valid_span_signature(hash, signatures.span()) {
-                ERC1271_VALIDATED
-            } else {
-                0
-            }
-        }
-    }
-
     #[external(v0)]
     impl OldArgentAccountImpl<
         impl ArgentAccount: IArgentAccount<ContractState>,
+        impl Account: IAccount<ContractState>,
         impl Erc165: IErc165<ContractState>,
-        impl Erc1271: IErc1271<ContractState>,
     > of IDeprecatedArgentAccount<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
             VERSION_COMPAT
@@ -544,7 +540,7 @@ mod ArgentAccount {
         fn isValidSignature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
-            Erc1271::is_valid_signature(self, hash, signatures)
+            Account::is_valid_signature(self, hash, signatures)
         }
     }
 

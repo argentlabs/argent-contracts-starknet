@@ -20,7 +20,6 @@ mod ArgentMultisig {
         ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
         ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IUpgradeable, IUpgradeTarget,
         IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait, IOutsideExecution, IErc165,
-        IErc1271
     };
     use multisig::{deserialize_array_signer_signature, IDeprecatedArgentMultisig};
 
@@ -96,7 +95,7 @@ mod ArgentMultisig {
     }
 
     #[external(v0)]
-    impl IAccountImpl of IAccount<ContractState> {
+    impl Account of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
@@ -122,6 +121,16 @@ mod ArgentMultisig {
             let response = retdata.span();
             self.emit(TransactionExecuted { hash, response });
             retdata
+        }
+
+        fn is_valid_signature(
+            self: @ContractState, hash: felt252, signatures: Array<felt252>
+        ) -> felt252 {
+            if self.is_valid_span_signature(hash, signatures.span()) {
+                ERC1271_VALIDATED
+            } else {
+                0
+            }
         }
     }
 
@@ -187,7 +196,7 @@ mod ArgentMultisig {
 
             let signer_sig = *parsed_signatures.at(0);
             let valid_signer_signature = self
-                .is_valid_signer_signature_inner(
+                .is_valid_signer_signature(
                     tx_info.transaction_hash,
                     signer_sig.signer,
                     signer_sig.signature_r,
@@ -306,8 +315,7 @@ mod ArgentMultisig {
             signature_r: felt252,
             signature_s: felt252
         ) {
-            let is_valid = self
-                .is_valid_signer_signature_inner(hash, signer, signature_r, signature_s);
+            let is_valid = self.is_valid_signer_signature(hash, signer, signature_r, signature_s);
             assert(is_valid, 'argent/invalid-signature');
         }
 
@@ -318,7 +326,7 @@ mod ArgentMultisig {
             signature_r: felt252,
             signature_s: felt252
         ) -> bool {
-            self.is_valid_signer_signature_inner(hash, signer, signature_r, signature_s)
+            self.is_valid_signer_signature(hash, signer, signature_r, signature_s)
         }
     }
 
@@ -336,15 +344,6 @@ mod ArgentMultisig {
             } else {
                 false
             }
-        }
-    }
-
-    #[external(v0)]
-    impl Erc1271Impl of IErc1271<ContractState> {
-        fn is_valid_signature(
-            self: @ContractState, hash: felt252, signatures: Array<felt252>
-        ) -> felt252 {
-            self.is_valid_signature_inner(hash, signatures)
         }
     }
 
@@ -387,7 +386,7 @@ mod ArgentMultisig {
     impl OldArgentMultisigImpl<
         impl ArgentMultisig: super::IArgentMultisig<ContractState>,
         impl Erc165: IErc165<ContractState>,
-        impl Erc1271: IErc1271<ContractState>,
+        impl Account: IAccount<ContractState>,
     > of IDeprecatedArgentMultisig<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
             VERSION_COMPAT
@@ -408,7 +407,7 @@ mod ArgentMultisig {
         fn isValidSignature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
-            Erc1271::is_valid_signature(self, hash, signatures)
+            Account::is_valid_signature(self, hash, signatures)
         }
     }
 
@@ -461,7 +460,7 @@ mod ArgentMultisig {
                         let signer_uint: u256 = signer_sig.signer.into();
                         assert(signer_uint > last_signer_uint, 'argent/signatures-not-sorted');
                         let is_valid = self
-                            .is_valid_signer_signature_inner(
+                            .is_valid_signer_signature(
                                 hash,
                                 signer: signer_sig.signer,
                                 signature_r: signer_sig.signature_r,
@@ -479,17 +478,7 @@ mod ArgentMultisig {
             }
         }
 
-        fn is_valid_signature_inner(
-            self: @ContractState, hash: felt252, signatures: Array<felt252>
-        ) -> felt252 {
-            if self.is_valid_span_signature(hash, signatures.span()) {
-                ERC1271_VALIDATED
-            } else {
-                0
-            }
-        }
-
-        fn is_valid_signer_signature_inner(
+        fn is_valid_signer_signature(
             self: @ContractState,
             hash: felt252,
             signer: felt252,

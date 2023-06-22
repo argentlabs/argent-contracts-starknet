@@ -386,9 +386,8 @@ mod ArgentAccount {
 
             self.reset_escape();
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
-            self
-                ._escape
-                .write(Escape { ready_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: new_owner });
+            let escape = Escape { ready_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: new_owner };
+            self._escape.write(escape);
             self.emit(EscapeOwnerTriggered { ready_at, new_owner });
         }
 

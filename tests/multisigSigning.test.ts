@@ -17,16 +17,12 @@ describe("ArgentMultisig: signing", function () {
       const messageHash = num.toHex(424242);
       const ERC1271_VALIDATED = 0x1626ba7e;
 
-      const { IAccount, signers, keys } = await deployMultisig(
-        multisigAccountClassHash,
-        threshold,
-        signersLength,
-      );
+      const { accountContract, signers, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
       const signerPrivateKey = keys[0].privateKey;
       const { r, s } = ec.starkCurve.sign(messageHash, signerPrivateKey);
 
-      const validSignature = await IAccount.is_valid_signature(BigInt(messageHash), [signers[0], r, s]);
+      const validSignature = await accountContract.is_valid_signature(BigInt(messageHash), [signers[0], r, s]);
 
       expect(validSignature).to.equal(BigInt(ERC1271_VALIDATED));
     });
@@ -37,11 +33,7 @@ describe("ArgentMultisig: signing", function () {
       const messageHash = num.toHex(424242);
       const ERC1271_VALIDATED = 0x1626ba7e;
 
-      const { IAccount, signers, keys } = await deployMultisig(
-        multisigAccountClassHash,
-        threshold,
-        signersLength,
-      );
+      const { accountContract, signers, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
       const signerPrivateKey1 = keys[0].privateKey;
       const signature1 = ec.starkCurve.sign(messageHash, signerPrivateKey1);
@@ -49,7 +41,7 @@ describe("ArgentMultisig: signing", function () {
       const signerPrivateKey2 = keys[1].privateKey;
       const signature2 = ec.starkCurve.sign(messageHash, signerPrivateKey2);
 
-      const validSignature = await IAccount.is_valid_signature(BigInt(messageHash), [
+      const validSignature = await accountContract.is_valid_signature(BigInt(messageHash), [
         signers[0],
         signature1.r,
         signature1.s,
@@ -66,11 +58,7 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 2;
       const messageHash = num.toHex(424242);
 
-      const { IAccount, signers, keys } = await deployMultisig(
-        multisigAccountClassHash,
-        threshold,
-        signersLength,
-      );
+      const { accountContract, signers, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
       const signerPrivateKey1 = keys[0].privateKey;
       const signature1 = ec.starkCurve.sign(messageHash, signerPrivateKey1);
@@ -79,7 +67,7 @@ describe("ArgentMultisig: signing", function () {
       const signature2 = ec.starkCurve.sign(messageHash, signerPrivateKey2);
 
       await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
-        IAccount.is_valid_signature(BigInt(messageHash), [
+        accountContract.is_valid_signature(BigInt(messageHash), [
           signers[1],
           signature2.r,
           signature2.s,
@@ -95,17 +83,13 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 2;
       const messageHash = num.toHex(424242);
 
-      const { IAccount, signers, keys } = await deployMultisig(
-        multisigAccountClassHash,
-        threshold,
-        signersLength,
-      );
+      const { accountContract, signers, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
       const signerPrivateKey1 = keys[0].privateKey;
       const signature1 = ec.starkCurve.sign(messageHash, signerPrivateKey1);
 
       await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
-        IAccount.is_valid_signature(BigInt(messageHash), [
+        accountContract.is_valid_signature(BigInt(messageHash), [
           signers[0],
           signature1.r,
           signature1.s,
@@ -121,17 +105,13 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 2;
       const messageHash = num.toHex(424242);
 
-      const { IAccount, signers, keys } = await deployMultisig(
-        multisigAccountClassHash,
-        threshold,
-        signersLength,
-      );
+      const { accountContract, signers, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
       const signerPrivateKey1 = keys[0].privateKey;
       const signature1 = ec.starkCurve.sign(messageHash, signerPrivateKey1);
 
       await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
-        IAccount.is_valid_signature(BigInt(messageHash), [signers[0], signature1.r, signature1.s]),
+        accountContract.is_valid_signature(BigInt(messageHash), [signers[0], signature1.r, signature1.s]),
       );
     });
 
@@ -140,12 +120,12 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 1;
       const messageHash = num.toHex(424242);
 
-      const { IAccount } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
       const invalid = randomKeyPair();
       const { r, s } = ec.starkCurve.sign(messageHash, invalid.privateKey);
 
       await expectRevertWithErrorMessage("argent/not-a-signer", () =>
-        IAccount.is_valid_signature(BigInt(messageHash), [invalid.publicKey, r, s]),
+        accountContract.is_valid_signature(BigInt(messageHash), [invalid.publicKey, r, s]),
       );
     });
 
@@ -154,21 +134,17 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 1;
       const messageHash = num.toHex(424242);
 
-      const { IAccount, keys, signers } = await deployMultisig(
-        multisigAccountClassHash,
-        threshold,
-        signersLength,
-      );
+      const { accountContract, keys, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
       const signerPrivateKey = keys[0].privateKey;
       const { r } = ec.starkCurve.sign(messageHash, signerPrivateKey);
 
       await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
-        IAccount.is_valid_signature(BigInt(messageHash), [signers[0], r]),
+        accountContract.is_valid_signature(BigInt(messageHash), [signers[0], r]),
       );
 
       await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
-        IAccount.is_valid_signature(BigInt(messageHash), []),
+        accountContract.is_valid_signature(BigInt(messageHash), []),
       );
     });
   });

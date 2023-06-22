@@ -34,7 +34,7 @@ describe("ArgentMultisig: outside execution", function () {
   });
 
   it("Correct message hash", async function () {
-    const { IAccount } = await deployMultisig(multisigClassHash, 1 /* threshold */, 2 /* signers count */);
+    const { accountContract } = await deployMultisig(multisigClassHash, 1 /* threshold */, 2 /* signers count */);
 
     const chainId = await provider.getChainId();
 
@@ -53,9 +53,9 @@ describe("ArgentMultisig: outside execution", function () {
     };
 
     const foundHash = num.toHex(
-      await IAccount.get_outside_execution_message_hash(outsideExecution, { nonce: undefined }),
+      await accountContract.get_outside_execution_message_hash(outsideExecution, { nonce: undefined }),
     );
-    const expectedMessageHash = getTypedDataHash(outsideExecution, IAccount.address, chainId);
+    const expectedMessageHash = getTypedDataHash(outsideExecution, accountContract.address, chainId);
     expect(foundHash).to.equal(expectedMessageHash);
   });
 

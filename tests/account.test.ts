@@ -25,36 +25,36 @@ describe("ArgentAccount", function () {
   });
 
   it("Deploy current version", async function () {
-    const { IAccount, owner } = await deployAccountWithoutGuardian(argentAccountClassHash);
+    const { accountContract, owner } = await deployAccountWithoutGuardian(argentAccountClassHash);
 
-    const ownerAddress = await IAccount.get_owner();
+    const ownerAddress = await accountContract.get_owner();
     expect(ownerAddress).to.equal(BigInt(owner.publicKey));
-    const guardianAddress = await IAccount.get_guardian();
+    const guardianAddress = await accountContract.get_guardian();
     expect(guardianAddress).to.equal(0n);
-    const guardianBackupAddress = await IAccount.get_guardian_backup();
+    const guardianBackupAddress = await accountContract.get_guardian_backup();
     expect(guardianBackupAddress).to.equal(0n);
   });
 
   it("Deploy two accounts with the same owner", async function () {
     const owner = randomKeyPair();
-    const { IAccount: IAccount1 } = await deployAccountWithoutGuardian(argentAccountClassHash, owner);
-    const { IAccount: IAccount2 } = await deployAccountWithoutGuardian(argentAccountClassHash, owner);
-    const owner1 = await IAccount1.get_owner();
-    const owner2 = await IAccount1.get_owner();
+    const { accountContract: accountContract1 } = await deployAccountWithoutGuardian(argentAccountClassHash, owner);
+    const { accountContract: accountContract2 } = await deployAccountWithoutGuardian(argentAccountClassHash, owner);
+    const owner1 = await accountContract1.get_owner();
+    const owner2 = await accountContract1.get_owner();
     expect(owner1).to.equal(owner2);
-    expect(IAccount1.address != IAccount2.address).to.be.true;
+    expect(accountContract1.address != accountContract2.address).to.be.true;
   });
 
   it("Expect guardian backup to be 0 when deployed with an owner and a guardian", async function () {
-    const { IAccount, owner, guardian } = await deployAccount(argentAccountClassHash);
+    const { accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
 
-    const ownerAddress = await IAccount.get_owner();
+    const ownerAddress = await accountContract.get_owner();
     expect(ownerAddress).to.equal(BigInt(owner.publicKey));
 
-    const guardianAddress = await IAccount.get_guardian();
+    const guardianAddress = await accountContract.get_guardian();
     expect(guardianAddress).to.equal(BigInt(guardian?.publicKey ?? 0n));
 
-    const guardianBackupAddress = await IAccount.get_guardian_backup();
+    const guardianBackupAddress = await accountContract.get_guardian_backup();
     expect(guardianBackupAddress).to.equal(0n);
   });
 
@@ -68,14 +68,14 @@ describe("ArgentAccount", function () {
   });
 
   it("Should use signature from BOTH OWNER and GUARDIAN when there is a GUARDIAN", async function () {
-    const { account, IAccount, owner, guardian } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
 
-    const guardianBackupBefore = await IAccount.get_guardian_backup();
+    const guardianBackupBefore = await accountContract.get_guardian_backup();
     expect(guardianBackupBefore).to.equal(0n);
     account.signer = new ArgentSigner(owner.privateKey, guardian?.privateKey);
-    await IAccount.change_guardian_backup(42);
+    await accountContract.change_guardian_backup(42);
 
-    const guardianBackupAfter = await IAccount.get_guardian_backup();
+    const guardianBackupAfter = await accountContract.get_guardian_backup();
     expect(guardianBackupAfter).to.equal(42n);
   });
 
@@ -83,26 +83,26 @@ describe("ArgentAccount", function () {
     const guardianBackup = randomKeyPair();
     // const guardianBackupPrivateKey = randomPrivateKey();
     // const guardianBackupPublicKey = ec.starkCurve.getStarkKey(guardianBackupPrivateKey);
-    const { account, IAccount, owner, guardian } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
 
-    const guardianBackupBefore = await IAccount.get_guardian_backup();
+    const guardianBackupBefore = await accountContract.get_guardian_backup();
     expect(guardianBackupBefore).to.equal(0n);
 
     account.signer = new ArgentSigner(owner.privateKey, guardian?.privateKey);
-    await IAccount.change_guardian_backup(guardianBackup.publicKey);
+    await accountContract.change_guardian_backup(guardianBackup.publicKey);
 
-    const guardianBackupAfter = await IAccount.get_guardian_backup();
+    const guardianBackupAfter = await accountContract.get_guardian_backup();
     expect(guardianBackupAfter).to.equal(BigInt(guardianBackup.publicKey));
 
     account.signer = new ArgentSigner(owner.privateKey, guardianBackup.privateKey);
-    await IAccount.change_guardian("0x42");
+    await accountContract.change_guardian("0x42");
 
-    const guardianAfter = await IAccount.get_guardian();
+    const guardianAfter = await accountContract.get_guardian();
     expect(guardianAfter).to.equal(BigInt("0x42"));
   });
 
   it("Expect 'argent/invalid-signature-length' when signing a transaction with OWNER, GUARDIAN and BACKUP", async function () {
-    const { account, IAccount, owner, guardian, guardianBackup } = await deployAccountWithGuardianBackup(
+    const { account, accountContract, owner, guardian, guardianBackup } = await deployAccountWithGuardianBackup(
       argentAccountClassHash,
     );
 
@@ -112,58 +112,56 @@ describe("ArgentAccount", function () {
       guardianBackup?.privateKey as string,
     ]);
 
-    await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
-      IAccount.change_guardian("0x42"),
-    );
+    await expectRevertWithErrorMessage("argent/invalid-signature-length", () => accountContract.change_guardian("0x42"));
   });
 
   it("Should be impossible to call __validate__ from outside", async function () {
-    const { IAccount } = await deployAccount(argentAccountClassHash);
-    await expectRevertWithErrorMessage("argent/non-null-caller", () => IAccount.__validate__([]));
+    const { accountContract } = await deployAccount(argentAccountClassHash);
+    await expectRevertWithErrorMessage("argent/non-null-caller", () => accountContract.__validate__([]));
   });
 
   describe("change_owner(new_owner, signature_r, signature_s)", function () {
     it("Should be possible to change_owner", async function () {
-      const { IAccount, owner } = await deployAccount(argentAccountClassHash);
+      const { accountContract, owner } = await deployAccount(argentAccountClassHash);
       const newOwner = randomKeyPair();
       const changeOwnerSelector = hash.getSelectorFromName("change_owner");
       const chainId = await provider.getChainId();
-      const contractAddress = IAccount.address;
+      const contractAddress = accountContract.address;
 
       const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
       const signature = ec.starkCurve.sign(msgHash, newOwner.privateKey);
-      await IAccount.change_owner(newOwner.publicKey, signature.r, signature.s);
+      await accountContract.change_owner(newOwner.publicKey, signature.r, signature.s);
 
-      const owner_result = await IAccount.get_owner();
+      const owner_result = await accountContract.get_owner();
       expect(owner_result).to.equal(BigInt(newOwner.publicKey));
     });
 
     it("Expect 'argent/only-self' when called from another account", async function () {
       const { account } = await deployAccount(argentAccountClassHash);
-      const { IAccount } = await deployAccount(argentAccountClassHash);
-      IAccount.connect(account);
-      await expectRevertWithErrorMessage("argent/only-self", () => IAccount.change_owner(12, 13, 14));
+      const { accountContract } = await deployAccount(argentAccountClassHash);
+      accountContract.connect(account);
+      await expectRevertWithErrorMessage("argent/only-self", () => accountContract.change_owner(12, 13, 14));
     });
 
     it("Expect 'argent/null-owner' when new_owner is zero", async function () {
-      const { IAccount } = await deployAccount(argentAccountClassHash);
-      await expectRevertWithErrorMessage("argent/null-owner", () => IAccount.change_owner(0, 13, 14));
+      const { accountContract } = await deployAccount(argentAccountClassHash);
+      await expectRevertWithErrorMessage("argent/null-owner", () => accountContract.change_owner(0, 13, 14));
     });
 
     it("Expect 'argent/invalid-owner-sig' when the signature to change owner is invalid", async function () {
-      const { IAccount } = await deployAccount(argentAccountClassHash);
-      await expectRevertWithErrorMessage("argent/invalid-owner-sig", () => IAccount.change_owner(11, 12, 42));
+      const { accountContract } = await deployAccount(argentAccountClassHash);
+      await expectRevertWithErrorMessage("argent/invalid-owner-sig", () => accountContract.change_owner(11, 12, 42));
     });
 
     it("Expect the escape to be reset", async function () {
-      const { account, IAccount, owner, guardian } = await deployAccount(argentAccountClassHash);
+      const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
 
       const newOwner = randomKeyPair();
       account.signer = new Signer(guardian?.privateKey);
 
       await setTime(42);
-      await IAccount.trigger_escape_owner(newOwner.publicKey);
-      const escape = await IAccount.get_escape();
+      await accountContract.trigger_escape_owner(newOwner.publicKey);
+      const escape = await accountContract.get_escape();
       expect(escape.escape_type).to.equal(ESCAPE_TYPE_OWNER);
       expect(escape.ready_at).to.equal(42n + ESCAPE_SECURITY_PERIOD);
       expect(escape.new_signer).to.equal(BigInt(newOwner.publicKey));
@@ -172,17 +170,17 @@ describe("ArgentAccount", function () {
       account.signer = new ArgentSigner(owner.privateKey, guardian?.privateKey);
       const changeOwnerSelector = hash.getSelectorFromName("change_owner");
       const chainId = await provider.getChainId();
-      const contractAddress = IAccount.address;
+      const contractAddress = accountContract.address;
       const ownerPublicKey = ec.starkCurve.getStarkKey(owner.privateKey);
 
       const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, ownerPublicKey]);
       const signature = ec.starkCurve.sign(msgHash, newOwner.privateKey);
-      await IAccount.change_owner(newOwner.publicKey, signature.r, signature.s);
+      await accountContract.change_owner(newOwner.publicKey, signature.r, signature.s);
 
-      const owner_result = await IAccount.get_owner();
+      const owner_result = await accountContract.get_owner();
       expect(owner_result).to.equal(BigInt(newOwner.publicKey));
 
-      const escapeReset = await IAccount.get_escape();
+      const escapeReset = await accountContract.get_escape();
       expect(escapeReset.escape_type).to.equal(0n);
       expect(escapeReset.ready_at).to.equal(0n);
       expect(escapeReset.new_signer).to.equal(0n);

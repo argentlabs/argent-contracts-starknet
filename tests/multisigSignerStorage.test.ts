@@ -17,21 +17,21 @@ describe("ArgentMultisig: signer storage", function () {
       const newSigner1 = BigInt(randomKeyPair().publicKey);
       const newSigner2 = BigInt(randomKeyPair().publicKey);
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      const isSigner0 = await IAccount.is_signer(signers[0]);
-      const isSigner1 = await IAccount.is_signer(newSigner1);
+      const isSigner0 = await accountContract.is_signer(signers[0]);
+      const isSigner1 = await accountContract.is_signer(newSigner1);
       expect(isSigner0).to.be.true;
       expect(isSigner1).to.be.false;
 
-      await IAccount.add_signers(threshold, [newSigner1]);
+      await accountContract.add_signers(threshold, [newSigner1]);
 
-      const isNewSigner1 = await IAccount.is_signer(newSigner1);
+      const isNewSigner1 = await accountContract.is_signer(newSigner1);
       expect(isNewSigner1).to.be.true;
 
-      await IAccount.add_signers(threshold, [newSigner2]);
+      await accountContract.add_signers(threshold, [newSigner2]);
 
-      const isSigner2 = await IAccount.is_signer(newSigner2);
+      const isSigner2 = await accountContract.is_signer(newSigner2);
       expect(isSigner2).to.be.true;
     });
 
@@ -39,10 +39,10 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
       await expectRevertWithErrorMessage("argent/already-a-signer", () =>
-        IAccount.add_signers(threshold, [signers[1]]),
+        accountContract.add_signers(threshold, [signers[1]]),
       );
     });
   });
@@ -52,11 +52,11 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await IAccount.remove_signers(threshold, [signers[0]]);
+      await accountContract.remove_signers(threshold, [signers[0]]);
 
-      const isSigner0 = await IAccount.is_signer(signers[0]);
+      const isSigner0 = await accountContract.is_signer(signers[0]);
       expect(isSigner0).to.be.false;
     });
 
@@ -64,11 +64,11 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await IAccount.remove_signers(threshold, [signers[1]]);
+      await accountContract.remove_signers(threshold, [signers[1]]);
 
-      const isSigner1 = await IAccount.is_signer(signers[1]);
+      const isSigner1 = await accountContract.is_signer(signers[1]);
       expect(isSigner1).to.be.false;
     });
 
@@ -76,11 +76,11 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await IAccount.remove_signers(threshold, [signers[2]]);
+      await accountContract.remove_signers(threshold, [signers[2]]);
 
-      const isSigner2 = await IAccount.is_signer(signers[2]);
+      const isSigner2 = await accountContract.is_signer(signers[2]);
       expect(isSigner2).to.be.false;
     });
 
@@ -88,14 +88,14 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await IAccount.remove_signers(threshold, [signers[0], signers[1]]);
+      await accountContract.remove_signers(threshold, [signers[0], signers[1]]);
 
-      const isSigner0 = await IAccount.is_signer(signers[0]);
+      const isSigner0 = await accountContract.is_signer(signers[0]);
       expect(isSigner0).to.be.false;
 
-      const isSigner1 = await IAccount.is_signer(signers[1]);
+      const isSigner1 = await accountContract.is_signer(signers[1]);
       expect(isSigner1).to.be.false;
     });
 
@@ -103,14 +103,14 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await IAccount.remove_signers(threshold, [signers[0], signers[2]]);
+      await accountContract.remove_signers(threshold, [signers[0], signers[2]]);
 
-      const isSigner0 = await IAccount.is_signer(signers[0]);
+      const isSigner0 = await accountContract.is_signer(signers[0]);
       expect(isSigner0).to.be.false;
 
-      const isSigner2 = await IAccount.is_signer(signers[2]);
+      const isSigner2 = await accountContract.is_signer(signers[2]);
       expect(isSigner2).to.be.false;
     });
 
@@ -118,14 +118,14 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await IAccount.remove_signers(threshold, [signers[1], signers[2]]);
+      await accountContract.remove_signers(threshold, [signers[1], signers[2]]);
 
-      const isSigner1 = await IAccount.is_signer(signers[1]);
+      const isSigner1 = await accountContract.is_signer(signers[1]);
       expect(isSigner1).to.be.false;
 
-      const isSigner2 = await IAccount.is_signer(signers[2]);
+      const isSigner2 = await accountContract.is_signer(signers[2]);
       expect(isSigner2).to.be.false;
     });
 
@@ -133,14 +133,14 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await IAccount.remove_signers(threshold, [signers[1], signers[0]]);
+      await accountContract.remove_signers(threshold, [signers[1], signers[0]]);
 
-      const isSigner1 = await IAccount.is_signer(signers[1]);
+      const isSigner1 = await accountContract.is_signer(signers[1]);
       expect(isSigner1).to.be.false;
 
-      const isSigner0 = await IAccount.is_signer(signers[0]);
+      const isSigner0 = await accountContract.is_signer(signers[0]);
       expect(isSigner0).to.be.false;
     });
 
@@ -148,14 +148,14 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await IAccount.remove_signers(threshold, [signers[2], signers[0]]);
+      await accountContract.remove_signers(threshold, [signers[2], signers[0]]);
 
-      const isSigner2 = await IAccount.is_signer(signers[2]);
+      const isSigner2 = await accountContract.is_signer(signers[2]);
       expect(isSigner2).to.be.false;
 
-      const isSigner0 = await IAccount.is_signer(signers[0]);
+      const isSigner0 = await accountContract.is_signer(signers[0]);
       expect(isSigner0).to.be.false;
     });
 
@@ -163,14 +163,14 @@ describe("ArgentMultisig: signer storage", function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await IAccount.remove_signers(threshold, [signers[2], signers[1]]);
+      await accountContract.remove_signers(threshold, [signers[2], signers[1]]);
 
-      const isSigner2 = await IAccount.is_signer(signers[2]);
+      const isSigner2 = await accountContract.is_signer(signers[2]);
       expect(isSigner2).to.be.false;
 
-      const isSigner1 = await IAccount.is_signer(signers[1]);
+      const isSigner1 = await accountContract.is_signer(signers[1]);
       expect(isSigner1).to.be.false;
     });
 
@@ -180,20 +180,18 @@ describe("ArgentMultisig: signer storage", function () {
 
       const nonSigner = BigInt(randomKeyPair().publicKey);
 
-      const { IAccount } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await expectRevertWithErrorMessage("argent/not-a-signer", () =>
-        IAccount.remove_signers(threshold, [nonSigner]),
-      );
+      await expectRevertWithErrorMessage("argent/not-a-signer", () => accountContract.remove_signers(threshold, [nonSigner]));
     });
 
     it("Expect 'argent/bad-threshold' when new threshold is invalid (< number of remaining signers)", async function () {
       const threshold = 1;
       const signersLength = 3;
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await expectRevertWithErrorMessage("argent/bad-threshold", () => IAccount.remove_signers(3, [signers[1]]));
+      await expectRevertWithErrorMessage("argent/bad-threshold", () => accountContract.remove_signers(3, [signers[1]]));
     });
   });
   describe("replace_signers(signer_to_remove, signer_to_add)", function () {
@@ -203,11 +201,11 @@ describe("ArgentMultisig: signer storage", function () {
 
       const newSigner = BigInt(randomKeyPair().publicKey);
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await IAccount.replace_signer(signers[0], newSigner);
+      await accountContract.replace_signer(signers[0], newSigner);
 
-      const isNewSigner = await IAccount.is_signer(newSigner);
+      const isNewSigner = await accountContract.is_signer(newSigner);
       expect(isNewSigner).to.be.true;
     });
 
@@ -217,11 +215,11 @@ describe("ArgentMultisig: signer storage", function () {
 
       const newSigner = BigInt(randomKeyPair().publicKey);
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await IAccount.replace_signer(signers[0], newSigner);
+      await accountContract.replace_signer(signers[0], newSigner);
 
-      const signersList = await IAccount.get_signers();
+      const signersList = await accountContract.get_signers();
       expect(signersList).to.have.ordered.members([newSigner, signers[1], signers[2]]);
     });
 
@@ -231,11 +229,11 @@ describe("ArgentMultisig: signer storage", function () {
 
       const newSigner = BigInt(randomKeyPair().publicKey);
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await IAccount.replace_signer(signers[1], newSigner);
+      await accountContract.replace_signer(signers[1], newSigner);
 
-      const signersList = await IAccount.get_signers();
+      const signersList = await accountContract.get_signers();
       expect(signersList).to.have.ordered.members([signers[0], newSigner, signers[2]]);
     });
 
@@ -245,11 +243,11 @@ describe("ArgentMultisig: signer storage", function () {
 
       const newSigner = BigInt(randomKeyPair().publicKey);
 
-      const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      await IAccount.replace_signer(signers[2], newSigner);
+      await accountContract.replace_signer(signers[2], newSigner);
 
-      const signersList = await IAccount.get_signers();
+      const signersList = await accountContract.get_signers();
       expect(signersList).to.have.ordered.members([signers[0], signers[1], newSigner]);
     });
   });
@@ -261,21 +259,19 @@ describe("ArgentMultisig: signer storage", function () {
     const nonSigner = BigInt(randomKeyPair().publicKey);
     const newSigner = BigInt(randomKeyPair().publicKey);
 
-    const { IAccount } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+    const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-    await expectRevertWithErrorMessage("argent/not-a-signer", () =>
-      IAccount.replace_signer(nonSigner, newSigner),
-    );
+    await expectRevertWithErrorMessage("argent/not-a-signer", () => accountContract.replace_signer(nonSigner, newSigner));
   });
 
   it("Expect 'argent/already-a-signer' when replacing a signer with an existing one", async function () {
     const threshold = 1;
     const signersLength = 3;
 
-    const { IAccount, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+    const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
     await expectRevertWithErrorMessage("argent/already-a-signer", () =>
-      IAccount.replace_signer(signers[0], signers[1]),
+      accountContract.replace_signer(signers[0], signers[1]),
     );
   });
 });

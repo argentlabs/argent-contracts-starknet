@@ -7,7 +7,7 @@ import { KeyPair, MultisigSigner, randomKeyPair, randomKeyPairs } from "./signer
 
 export interface MultisigWallet {
   account: Account;
-  IAccount: Contract;
+  accountContract: Contract;
   keys: KeyPair[];
   signers: bigint[]; // public keys
   receipt: GetTransactionReceiptResponse;
@@ -33,10 +33,10 @@ export async function deployMultisig(
   const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt });
   const receipt = await deployer.waitForTransaction(transaction_hash);
 
-  const IAccount = await loadContract(account.address);
+  const accountContract = await loadContract(account.address);
   account.signer = new MultisigSigner(keys.slice(0, threshold));
-  IAccount.connect(account);
-  return { account, IAccount, keys, signers, receipt };
+  accountContract.connect(account);
+  return { account, accountContract, keys, signers, receipt };
 }
 
 const sortedKeyPairs = (length: number) =>

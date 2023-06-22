@@ -36,14 +36,14 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'EscapeOwnerTriggered(ready_at, new_owner)' on trigger_escape_owner", async function () {
-    const { account, IAccount, guardian } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
     account.signer = new Signer(guardian?.privateKey);
 
     const newOwner = "42";
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
     await setTime(42);
 
-    await expectEvent(() => IAccount.trigger_escape_owner(newOwner), {
+    await expectEvent(() => accountContract.trigger_escape_owner(newOwner), {
       from_address: account.address,
       keys: ["EscapeOwnerTriggered"],
       data: [activeAt, newOwner],
@@ -51,16 +51,16 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'OwnerEscaped(new_signer)' on escape_owner", async function () {
-    const { account, IAccount, guardian } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
     account.signer = new Signer(guardian?.privateKey);
 
     const newOwner = "42";
     await setTime(42);
 
-    await IAccount.trigger_escape_owner(newOwner);
+    await accountContract.trigger_escape_owner(newOwner);
     await increaseTime(ESCAPE_SECURITY_PERIOD);
 
-    await expectEvent(() => IAccount.escape_owner(), {
+    await expectEvent(() => accountContract.escape_owner(), {
       from_address: account.address,
       keys: ["OwnerEscaped"],
       data: [newOwner],
@@ -68,14 +68,14 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'EscapeGuardianTriggered(ready_at, new_owner)' on trigger_escape_guardian", async function () {
-    const { account, IAccount, owner } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
     account.signer = new Signer(owner.privateKey);
 
     const newGuardian = "42";
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
     await setTime(42);
 
-    await expectEvent(() => IAccount.trigger_escape_guardian(newGuardian), {
+    await expectEvent(() => accountContract.trigger_escape_guardian(newGuardian), {
       from_address: account.address,
       keys: ["EscapeGuardianTriggered"],
       data: [activeAt, newGuardian],
@@ -83,15 +83,15 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'GuardianEscaped(new_signer)' on escape_guardian", async function () {
-    const { account, IAccount, owner } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
     account.signer = new Signer(owner.privateKey);
     const newGuardian = "42";
     await setTime(42);
 
-    await IAccount.trigger_escape_guardian(newGuardian);
+    await accountContract.trigger_escape_guardian(newGuardian);
     await increaseTime(ESCAPE_SECURITY_PERIOD);
 
-    await expectEvent(() => IAccount.escape_guardian(), {
+    await expectEvent(() => accountContract.escape_guardian(), {
       from_address: account.address,
       keys: ["GuardianEscaped"],
       data: [newGuardian],
@@ -99,53 +99,53 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'OwnerChanged(new_signer)' on change_owner", async function () {
-    const { IAccount, owner } = await deployAccount(argentAccountClassHash);
+    const { accountContract, owner } = await deployAccount(argentAccountClassHash);
 
     const newOwner = randomKeyPair();
     const changeOwnerSelector = hash.getSelectorFromName("change_owner");
     const chainId = await provider.getChainId();
-    const contractAddress = IAccount.address;
+    const contractAddress = accountContract.address;
 
     const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
     const signature = ec.starkCurve.sign(msgHash, newOwner.privateKey);
 
-    await expectEvent(() => IAccount.change_owner(newOwner.publicKey, signature.r, signature.s), {
-      from_address: IAccount.address,
+    await expectEvent(() => accountContract.change_owner(newOwner.publicKey, signature.r, signature.s), {
+      from_address: accountContract.address,
       keys: ["OwnerChanged"],
       data: [newOwner.publicKey],
     });
   });
 
   it("Expect 'GuardianChanged(new_guardian)' on change_guardian", async function () {
-    const { IAccount } = await deployAccount(argentAccountClassHash);
+    const { accountContract } = await deployAccount(argentAccountClassHash);
 
     const newGuardian = "42";
 
-    await expectEvent(() => IAccount.change_guardian(newGuardian), {
-      from_address: IAccount.address,
+    await expectEvent(() => accountContract.change_guardian(newGuardian), {
+      from_address: accountContract.address,
       keys: ["GuardianChanged"],
       data: [newGuardian],
     });
   });
 
   it("Expect 'GuardianBackupChanged(new_guardian_backup)' on change_guardian_backup", async function () {
-    const { IAccount } = await deployAccount(argentAccountClassHash);
+    const { accountContract } = await deployAccount(argentAccountClassHash);
 
     const newGuardianBackup = "42";
 
-    await expectEvent(() => IAccount.change_guardian_backup(newGuardianBackup), {
-      from_address: IAccount.address,
+    await expectEvent(() => accountContract.change_guardian_backup(newGuardianBackup), {
+      from_address: accountContract.address,
       keys: ["GuardianBackupChanged"],
       data: [newGuardianBackup],
     });
   });
 
   it("Expect 'AccountUpgraded(new_implementation)' on upgrade", async function () {
-    const { account, IAccount } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract } = await deployAccount(argentAccountClassHash);
     const argentAccountFutureClassHash = await declareContract("ArgentAccountFutureVersion");
 
     await expectEvent(
-      () => account.execute(IAccount.populateTransaction.upgrade(argentAccountFutureClassHash, ["0"])),
+      () => account.execute(accountContract.populateTransaction.upgrade(argentAccountFutureClassHash, ["0"])),
       {
         from_address: account.address,
         keys: ["AccountUpgraded"],
@@ -156,13 +156,13 @@ describe("ArgentAccount: events", function () {
 
   describe("Expect 'EscapeCanceled()'", function () {
     it("Expected on cancel_escape", async function () {
-      const { account, IAccount, owner, guardian } = await deployAccount(argentAccountClassHash);
+      const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
       account.signer = new Signer(owner.privateKey);
 
-      await IAccount.trigger_escape_guardian(42);
+      await accountContract.trigger_escape_guardian(42);
 
       account.signer = new ArgentSigner(owner.privateKey, guardian?.privateKey);
-      await expectEvent(() => IAccount.cancel_escape(), {
+      await expectEvent(() => accountContract.cancel_escape(), {
         from_address: account.address,
         keys: ["EscapeCanceled"],
         data: [],
@@ -170,12 +170,12 @@ describe("ArgentAccount: events", function () {
     });
 
     it("Expected on trigger_escape_owner", async function () {
-      const { account, IAccount, guardian } = await deployAccount(argentAccountClassHash);
+      const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
       account.signer = new Signer(guardian?.privateKey);
 
-      await IAccount.trigger_escape_owner(42);
+      await accountContract.trigger_escape_owner(42);
 
-      await expectEvent(() => IAccount.trigger_escape_owner(42), {
+      await expectEvent(() => accountContract.trigger_escape_owner(42), {
         from_address: account.address,
         keys: ["EscapeCanceled"],
         data: [],
@@ -183,12 +183,12 @@ describe("ArgentAccount: events", function () {
     });
 
     it("Expected on trigger_escape_guardian", async function () {
-      const { account, IAccount, owner } = await deployAccount(argentAccountClassHash);
+      const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
       account.signer = new Signer(owner.privateKey);
 
-      await IAccount.trigger_escape_guardian(42);
+      await accountContract.trigger_escape_guardian(42);
 
-      await expectEvent(() => IAccount.trigger_escape_guardian(42), {
+      await expectEvent(() => accountContract.trigger_escape_guardian(42), {
         from_address: account.address,
         keys: ["EscapeCanceled"],
         data: [],

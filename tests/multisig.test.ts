@@ -13,29 +13,29 @@ describe("ArgentMultisig", function () {
     const threshold = 1;
     const signersLength = 2;
 
-    const { accountContract, signers, receipt } = await deployMultisig(
+    const { IAccount, signers, receipt } = await deployMultisig(
       multisigAccountClassHash,
       threshold,
       signersLength,
     );
 
     await expectEvent(receipt, {
-      from_address: accountContract.address,
+      from_address: IAccount.address,
       keys: ["ConfigurationUpdated"],
       data: CallData.compile([threshold, signersLength, signers, []]),
     });
 
-    await accountContract.get_threshold().should.eventually.equal(1n);
-    await accountContract.get_signers().should.eventually.deep.equal(signers);
-    await accountContract.get_name().should.eventually.equal(BigInt(shortString.encodeShortString("ArgentMultisig")));
-    await accountContract.get_version().should.eventually.deep.equal({ major: 0n, minor: 1n, patch: 0n });
+    await IAccount.get_threshold().should.eventually.equal(1n);
+    await IAccount.get_signers().should.eventually.deep.equal(signers);
+    await IAccount.get_name().should.eventually.equal(BigInt(shortString.encodeShortString("ArgentMultisig")));
+    await IAccount.get_version().should.eventually.deep.equal({ major: 0n, minor: 1n, patch: 0n });
 
-    await accountContract.is_signer(signers[0]).should.eventually.be.true;
-    await accountContract.is_signer(signers[1]).should.eventually.be.true;
-    await accountContract.is_signer(0).should.eventually.be.false;
-    await accountContract.is_signer(randomKeyPair().publicKey).should.eventually.be.false;
+    await IAccount.is_signer(signers[0]).should.eventually.be.true;
+    await IAccount.is_signer(signers[1]).should.eventually.be.true;
+    await IAccount.is_signer(0).should.eventually.be.false;
+    await IAccount.is_signer(randomKeyPair().publicKey).should.eventually.be.false;
 
-    await expectRevertWithErrorMessage("argent/non-null-caller", () => accountContract.__validate__([]));
+    await expectRevertWithErrorMessage("argent/non-null-caller", () => IAccount.__validate__([]));
   });
 
   it("Should fail to deploy with invalid signatures", async function () {

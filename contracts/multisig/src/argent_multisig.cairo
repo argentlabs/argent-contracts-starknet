@@ -14,7 +14,7 @@ mod ArgentMultisig {
     };
 
     use lib::{
-        AccountContract, assert_only_self, assert_no_self_call, assert_correct_tx_version,
+        IAccount, assert_only_self, assert_no_self_call, assert_correct_tx_version,
         assert_caller_is_null, execute_multicall, Version, IErc165LibraryDispatcher,
         IErc165DispatcherTrait, OutsideExecution, hash_outside_execution_message,
         ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
@@ -96,7 +96,7 @@ mod ArgentMultisig {
     }
 
     #[external(v0)]
-    impl AccountContractImpl of AccountContract<ContractState> {
+    impl IAccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();

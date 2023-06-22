@@ -35,7 +35,7 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Correct message hash", async function () {
-    const { account, accountContract } = await deployAccount(argentAccountClassHash);
+    const { account, IAccount } = await deployAccount(argentAccountClassHash);
 
     const chainId = await provider.getChainId();
 
@@ -54,7 +54,7 @@ describe("ArgentAccount: outside execution", function () {
     };
 
     const foundHash = num.toHex(
-      await accountContract.get_outside_execution_message_hash(outsideExecution, { nonce: undefined }),
+      await IAccount.get_outside_execution_message_hash(outsideExecution, { nonce: undefined }),
     );
     const expectedMessageHash = getTypedDataHash(outsideExecution, account.address, chainId);
     expect(foundHash).to.equal(expectedMessageHash);
@@ -150,14 +150,14 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Escape method", async function () {
-    const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
+    const { account, IAccount, guardian } = await deployAccount(argentAccountClassHash);
 
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,
       nonce: randomKeyPair().publicKey,
       execute_after: 0,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(accountContract.populateTransaction.trigger_escape_owner(42))],
+      calls: [getOutsideCall(IAccount.populateTransaction.trigger_escape_owner(42))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(
       outsideExecution,
@@ -166,7 +166,7 @@ describe("ArgentAccount: outside execution", function () {
     );
 
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
-    const current_escape = await accountContract.get_escape();
+    const current_escape = await IAccount.get_escape();
     expect(current_escape.new_signer).to.equal(42n, "invalid new value");
   });
 });

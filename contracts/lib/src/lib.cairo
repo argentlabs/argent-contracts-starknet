@@ -4,6 +4,9 @@ use asserts::{
     assert_correct_declare_version
 };
 
+mod account;
+use account::IAccount;
+
 mod outside_execution;
 use outside_execution::{OutsideExecution, hash_outside_execution_message, IOutsideExecution};
 
@@ -13,7 +16,6 @@ use test_dapp::TestDapp;
 mod array_ext;
 use array_ext::ArrayExtTrait;
 
-// Structures 
 mod calls;
 use calls::execute_multicall;
 
@@ -37,11 +39,3 @@ use upgrade::{
 
 #[cfg(test)]
 mod tests;
-
-// TODO Delete as we should use SN interface
-use starknet::account::Call;
-trait AccountContract<TContractState> {
-    fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
-    fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
-    fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
-}

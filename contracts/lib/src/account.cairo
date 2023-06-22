@@ -1,4 +1,5 @@
 use starknet::account::Call;
+
 trait IAccount<TContractState> {
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;

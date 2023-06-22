@@ -20,7 +20,7 @@ mod ArgentAccount {
         IUpgradeTarget, IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait,
         OutsideExecution, hash_outside_execution_message, assert_correct_declare_version,
         ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
-        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IErc165, IErc1271, AccountContract,
+        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IErc165, IErc1271, IAccount,
         IOutsideExecution
     };
 
@@ -182,7 +182,7 @@ mod ArgentAccount {
     }
 
     #[external(v0)]
-    impl AccountContractImpl of AccountContract<ContractState> {
+    impl IAccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();

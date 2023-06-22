@@ -8,7 +8,7 @@ import { ArgentSigner, KeyPair, randomKeyPair } from "./signers";
 // This is only for TESTS purposes and shouldn't be used in production
 export interface ArgentWallet {
   account: Account;
-  accountContract: Contract;
+  IAccount: Contract;
   owner: KeyPair;
   guardian?: KeyPair;
   guardianBackup?: KeyPair;
@@ -47,9 +47,9 @@ export async function deployOldAccount(
     addressSalt: salt,
   });
   await deployer.waitForTransaction(transaction_hash);
-  const accountContract = await loadContract(account.address);
-  accountContract.connect(account);
-  return { account, accountContract, owner, guardian };
+  const IAccount = await loadContract(account.address);
+  IAccount.connect(account);
+  return { account, IAccount, owner, guardian };
 }
 
 async function deployAccountInner(
@@ -80,9 +80,9 @@ export async function deployAccount(argentAccountClassHash: string): Promise<Arg
   const owner = randomKeyPair();
   const guardian = randomKeyPair();
   const account = await deployAccountInner(argentAccountClassHash, owner, guardian);
-  const accountContract = await loadContract(account.address);
-  accountContract.connect(account);
-  return { account, accountContract, owner, guardian };
+  const IAccount = await loadContract(account.address);
+  IAccount.connect(account);
+  return { account, IAccount, owner, guardian };
 }
 
 export async function deployAccountWithoutGuardian(
@@ -91,20 +91,20 @@ export async function deployAccountWithoutGuardian(
   salt: string = randomKeyPair().privateKey,
 ): Promise<ArgentWallet> {
   const account = await deployAccountInner(argentAccountClassHash, owner, undefined, salt);
-  const accountContract = await loadContract(account.address);
-  accountContract.connect(account);
-  return { account, accountContract, owner };
+  const IAccount = await loadContract(account.address);
+  IAccount.connect(account);
+  return { account, IAccount, owner };
 }
 
 export async function deployAccountWithGuardianBackup(argentAccountClassHash: string): Promise<ArgentWallet> {
   const guardianBackup = randomKeyPair();
 
   const wallet = await deployAccount(argentAccountClassHash);
-  await wallet.accountContract.change_guardian_backup(guardianBackup.publicKey);
+  await wallet.IAccount.change_guardian_backup(guardianBackup.publicKey);
 
   wallet.account.signer = new ArgentSigner(wallet.owner.privateKey, guardianBackup.privateKey);
   wallet.guardianBackup = guardianBackup;
-  wallet.accountContract.connect(wallet.account);
+  wallet.IAccount.connect(wallet.account);
   return wallet;
 }
 
@@ -128,9 +128,9 @@ export enum EscapeStatus {
   Expired,
 }
 
-export async function getEscapeStatus(accountContract: Contract): Promise<EscapeStatus> {
+export async function getEscapeStatus(IAccount: Contract): Promise<EscapeStatus> {
   // StarknetJs parsing is broken so we do it manually
-  const result = (await accountContract.call("get_escape_and_status", undefined, { parseResponse: false })) as string[];
+  const result = (await IAccount.call("get_escape_and_status", undefined, { parseResponse: false })) as string[];
   expect(result.length).to.equal(4);
   const status = Number(result[3]);
   expect(status).to.be.lessThan(4, `Unknown status ${status}`);

@@ -61,7 +61,7 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Basics", async function () {
-    const { account } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract } = await deployAccount(argentAccountClassHash);
 
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
@@ -105,8 +105,10 @@ describe("ArgentAccount: outside execution", function () {
     );
 
     // normal scenario
+    await accountContract.get_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
     await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await accountContract.get_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
 
     // ensure a transaction can't be replayed
     await expectExecutionRevert("argent/duplicated-outside-nonce", () => deployer.execute(outsideExecutionCall));

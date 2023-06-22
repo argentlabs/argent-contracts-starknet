@@ -18,6 +18,9 @@ trait IOutsideExecution<TContractState> {
     fn get_outside_execution_message_hash(
         self: @TContractState, outside_execution: OutsideExecution
     ) -> felt252;
+
+    /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
+    fn get_outside_execution_nonce(self: @TContractState, nonce: felt252) -> bool;
 }
 
 // H('StarkNetDomain(name:felt,version:felt,chainId:felt)')

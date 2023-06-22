@@ -268,7 +268,11 @@ mod ArgentAccount {
         fn get_outside_execution_message_hash(
             self: @ContractState, outside_execution: OutsideExecution
         ) -> felt252 {
-            return hash_outside_execution_message(@outside_execution);
+            hash_outside_execution_message(@outside_execution)
+        }
+
+        fn get_outside_execution_nonce(self: @ContractState, nonce: felt252) -> bool {
+            self.outside_nonces.read(nonce)
         }
     }
 

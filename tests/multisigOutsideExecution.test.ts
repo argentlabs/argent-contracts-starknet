@@ -60,7 +60,11 @@ describe("ArgentMultisig: outside execution", function () {
   });
 
   it("Basics", async function () {
-    const { account } = await deployMultisig(multisigClassHash, 1 /* threshold */, 2 /* signers count */);
+    const { account, accountContract } = await deployMultisig(
+      multisigClassHash,
+      1 /* threshold */,
+      2 /* signers count */,
+    );
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
     const outsideExecution: OutsideExecution = {
@@ -103,8 +107,10 @@ describe("ArgentMultisig: outside execution", function () {
     );
 
     // normal scenario
+    await accountContract.get_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
     await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await accountContract.get_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
 
     // ensure a transaction can't be replayed
     await expectExecutionRevert("argent/duplicated-outside-nonce", () => deployer.execute(outsideExecutionCall));

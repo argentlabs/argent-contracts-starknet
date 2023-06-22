@@ -112,7 +112,7 @@ mod ArgentMultisig {
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
             assert_caller_is_null();
-            let tx_info = starknet::get_tx_info().unbox();
+            let tx_info = get_tx_info().unbox();
             assert_correct_tx_version(tx_info.version);
 
             let retdata = execute_multicall(calls.span());

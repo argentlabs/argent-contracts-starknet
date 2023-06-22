@@ -30,7 +30,6 @@ mod ArgentAccount {
     const VERSION_PATCH: u8 = 0;
     const VERSION_COMPAT: felt252 = '0.3.0';
 
-
     /// Time it takes for the escape to become ready after being triggered
     const ESCAPE_SECURITY_PERIOD: u64 = 604800; // 7 * 24 * 60 * 60;  // 7 days
     ///  The escape will be ready and can be completed for this duration
@@ -265,7 +264,6 @@ mod ArgentAccount {
         }
     }
 
-
     #[external(v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
@@ -453,7 +451,6 @@ mod ArgentAccount {
             self.reset_escape_attempts();
         }
 
-
         fn get_owner(self: @ContractState) -> felt252 {
             self._signer.read()
         }
@@ -475,11 +472,9 @@ mod ArgentAccount {
             Version { major: VERSION_MAJOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
         }
 
-
         fn get_name(self: @ContractState) -> felt252 {
             NAME
         }
-
 
         fn get_guardian_escape_attempts(self: @ContractState) -> u32 {
             self.guardian_escape_attempts.read()
@@ -751,7 +746,6 @@ mod ArgentAccount {
             assert(is_valid, 'argent/invalid-owner-sig');
         }
 
-
         #[inline(always)]
         fn reset_escape(ref self: ContractState) {
             let current_escape_status = get_escape_status(self._escape.read().ready_at);
@@ -775,7 +769,6 @@ mod ArgentAccount {
             self.guardian_escape_attempts.write(0);
         }
     }
-
 
     fn assert_valid_escape_parameters(attempts: u32) {
         let tx_info = get_tx_info().unbox();

@@ -3,7 +3,6 @@ use zeroable::Zeroable;
 
 use starknet::{get_contract_address, get_caller_address, ContractAddress, account::Call};
 
-
 const TRANSACTION_VERSION: felt252 = 1;
 const QUERY_VERSION: felt252 =
     340282366920938463463374607431768211457; // 2**128 + TRANSACTION_VERSION

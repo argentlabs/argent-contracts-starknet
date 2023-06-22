@@ -32,13 +32,13 @@ clone-cairo:
 	git clone --branch $(CAIRO_VERSION) https://github.com/starkware-libs/cairo.git
 
 update-cairo:
-ifneq ($(git -C $(INSTALLATION_FOLDER) status | grep -e $(CAIRO_VERSION)),0) 
-	echo "Already on $(CAIRO_VERSION)"
-else
-	git -C $(INSTALLATION_FOLDER) checkout main 
-	git -C $(INSTALLATION_FOLDER) pull 
-	git -C $(INSTALLATION_FOLDER) checkout $(CAIRO_VERSION)
-endif
+	if [ "$$(git -C $(INSTALLATION_FOLDER) status | grep -e $(CAIRO_VERSION))" ]; then \
+		echo "Already on $(CAIRO_VERSION)"; \
+	else \
+		git -C $(INSTALLATION_FOLDER) checkout main; \
+		git -C $(INSTALLATION_FOLDER) pull; \
+		git -C $(INSTALLATION_FOLDER) checkout $(CAIRO_VERSION); \
+	fi
 
 build:
 	cargo build --manifest-path $(INSTALLATION_FOLDER_CARGO) --workspace --release

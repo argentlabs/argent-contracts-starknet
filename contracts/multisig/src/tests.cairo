@@ -72,7 +72,6 @@ trait ITestArgentMultisig<TContractState> {
     ) -> felt252;
 }
 
-
 fn initialize_multisig() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
     let mut signers_array = ArrayTrait::new();

@@ -348,7 +348,6 @@ mod ArgentMultisig {
         }
     }
 
-
     #[external(v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         /// @dev Can be called by the account to upgrade the implementation
@@ -383,7 +382,6 @@ mod ArgentMultisig {
             ArrayTrait::new()
         }
     }
-
 
     #[external(v0)]
     impl OldArgentMultisigImpl<
@@ -481,7 +479,6 @@ mod ArgentMultisig {
             }
         }
 
-
         fn is_valid_signature_inner(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
@@ -504,7 +501,6 @@ mod ArgentMultisig {
             check_ecdsa_signature(hash, signer, signature_r, signature_s)
         }
     }
-
 
     fn assert_valid_threshold_and_signers_count(threshold: usize, signers_len: usize) {
         assert(threshold != 0, 'argent/invalid-threshold');
@@ -663,7 +659,6 @@ mod ArgentMultisig {
                 size += 1;
             }
         }
-
 
         // Returns the number of signers. Cost increases with the list size
         fn get_signers_len(self: @ContractState) -> usize {

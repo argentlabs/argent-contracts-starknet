@@ -10,7 +10,6 @@ use outside_execution::{OutsideExecution, hash_outside_execution_message, IOutsi
 mod test_dapp;
 use test_dapp::TestDapp;
 
-
 mod array_ext;
 use array_ext::ArrayExtTrait;
 

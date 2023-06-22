@@ -19,7 +19,7 @@ trait IOutsideExecution<TContractState> {
         self: @TContractState, outside_execution: OutsideExecution
     ) -> felt252;
 
-    /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
+    /// Get the status of a given nonce, true if the nonce was burned
     fn get_outside_execution_nonce(self: @TContractState, nonce: felt252) -> bool;
 }
 

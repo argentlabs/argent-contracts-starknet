@@ -112,7 +112,9 @@ describe("ArgentAccount", function () {
       guardianBackup?.privateKey as string,
     ]);
 
-    await expectRevertWithErrorMessage("argent/invalid-signature-length", () => accountContract.change_guardian("0x42"));
+    await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
+      accountContract.change_guardian("0x42"),
+    );
   });
 
   it("Should be impossible to call __validate__ from outside", async function () {

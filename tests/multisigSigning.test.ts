@@ -17,7 +17,11 @@ describe("ArgentMultisig: signing", function () {
       const messageHash = num.toHex(424242);
       const ERC1271_VALIDATED = 0x1626ba7e;
 
-      const { accountContract, signers, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers, keys } = await deployMultisig(
+        multisigAccountClassHash,
+        threshold,
+        signersLength,
+      );
 
       const signerPrivateKey = keys[0].privateKey;
       const { r, s } = ec.starkCurve.sign(messageHash, signerPrivateKey);
@@ -33,7 +37,11 @@ describe("ArgentMultisig: signing", function () {
       const messageHash = num.toHex(424242);
       const ERC1271_VALIDATED = 0x1626ba7e;
 
-      const { accountContract, signers, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers, keys } = await deployMultisig(
+        multisigAccountClassHash,
+        threshold,
+        signersLength,
+      );
 
       const signerPrivateKey1 = keys[0].privateKey;
       const signature1 = ec.starkCurve.sign(messageHash, signerPrivateKey1);
@@ -58,7 +66,11 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 2;
       const messageHash = num.toHex(424242);
 
-      const { accountContract, signers, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers, keys } = await deployMultisig(
+        multisigAccountClassHash,
+        threshold,
+        signersLength,
+      );
 
       const signerPrivateKey1 = keys[0].privateKey;
       const signature1 = ec.starkCurve.sign(messageHash, signerPrivateKey1);
@@ -83,7 +95,11 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 2;
       const messageHash = num.toHex(424242);
 
-      const { accountContract, signers, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers, keys } = await deployMultisig(
+        multisigAccountClassHash,
+        threshold,
+        signersLength,
+      );
 
       const signerPrivateKey1 = keys[0].privateKey;
       const signature1 = ec.starkCurve.sign(messageHash, signerPrivateKey1);
@@ -105,7 +121,11 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 2;
       const messageHash = num.toHex(424242);
 
-      const { accountContract, signers, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers, keys } = await deployMultisig(
+        multisigAccountClassHash,
+        threshold,
+        signersLength,
+      );
 
       const signerPrivateKey1 = keys[0].privateKey;
       const signature1 = ec.starkCurve.sign(messageHash, signerPrivateKey1);
@@ -134,7 +154,11 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 1;
       const messageHash = num.toHex(424242);
 
-      const { accountContract, keys, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, keys, signers } = await deployMultisig(
+        multisigAccountClassHash,
+        threshold,
+        signersLength,
+      );
 
       const signerPrivateKey = keys[0].privateKey;
       const { r } = ec.starkCurve.sign(messageHash, signerPrivateKey);

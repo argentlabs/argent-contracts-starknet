@@ -13,7 +13,11 @@ describe("ArgentMultisig", function () {
     const threshold = 1;
     const signersLength = 2;
 
-    const { accountContract, signers, receipt } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+    const { accountContract, signers, receipt } = await deployMultisig(
+      multisigAccountClassHash,
+      threshold,
+      signersLength,
+    );
 
     await expectEvent(receipt, {
       from_address: accountContract.address,

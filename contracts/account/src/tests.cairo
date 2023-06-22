@@ -14,7 +14,6 @@ use starknet::{
 use account::{Escape, EscapeStatus, ArgentAccount};
 use lib::Version;
 
-// TODO Do we need one global interface for testing?
 #[starknet::interface]
 trait ITestArgentAccount<TContractState> {
     // IAccount

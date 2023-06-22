@@ -6,8 +6,6 @@ trait IAccount<TContractState> {
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
-
-    // IErc1271
     fn is_valid_signature(
         self: @TContractState, hash: felt252, signatures: Array<felt252>
     ) -> felt252;

@@ -179,6 +179,41 @@ mod ArgentMultisig {
     }
 
     #[external(v0)]
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// @dev Can be called by the account to upgrade the implementation
+        fn upgrade(
+            ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>
+        ) -> Array<felt252> {
+            assert_only_self();
+
+            let supports_interface = IErc165LibraryDispatcher {
+                class_hash: new_implementation
+            }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
+            assert(supports_interface, 'argent/invalid-implementation');
+
+            replace_class_syscall(new_implementation).unwrap_syscall();
+            self.emit(AccountUpgraded { new_implementation });
+
+            IUpgradeTargetLibraryDispatcher {
+                class_hash: new_implementation
+            }.execute_after_upgrade(calldata)
+        }
+    }
+
+    #[external(v0)]
+    impl UpgradeTargetImpl of IUpgradeTarget<ContractState> {
+        fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
+            assert_only_self();
+
+            // Check basic invariants
+            assert_valid_threshold_and_signers_count(self.threshold.read(), self.get_signers_len());
+
+            assert(data.len() == 0, 'argent/unexpected-data');
+            ArrayTrait::new()
+        }
+    }
+
+    #[external(v0)]
     impl ArgentMultisigImpl of super::IArgentMultisig<ContractState> {
         fn __validate_deploy__(
             self: @ContractState,
@@ -344,41 +379,6 @@ mod ArgentMultisig {
             } else {
                 false
             }
-        }
-    }
-
-    #[external(v0)]
-    impl UpgradeableImpl of IUpgradeable<ContractState> {
-        /// @dev Can be called by the account to upgrade the implementation
-        fn upgrade(
-            ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>
-        ) -> Array<felt252> {
-            assert_only_self();
-
-            let supports_interface = IErc165LibraryDispatcher {
-                class_hash: new_implementation
-            }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
-            assert(supports_interface, 'argent/invalid-implementation');
-
-            replace_class_syscall(new_implementation).unwrap_syscall();
-            self.emit(AccountUpgraded { new_implementation });
-
-            IUpgradeTargetLibraryDispatcher {
-                class_hash: new_implementation
-            }.execute_after_upgrade(calldata)
-        }
-    }
-
-    #[external(v0)]
-    impl UpgradeTargetImpl of IUpgradeTarget<ContractState> {
-        fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
-            assert_only_self();
-
-            // Check basic invariants
-            assert_valid_threshold_and_signers_count(self.threshold.read(), self.get_signers_len());
-
-            assert(data.len() == 0, 'argent/unexpected-data');
-            ArrayTrait::new()
         }
     }
 

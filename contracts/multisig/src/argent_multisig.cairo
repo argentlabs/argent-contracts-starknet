@@ -66,6 +66,7 @@ mod ArgentMultisig {
     /// @param response The data returned by the methods called
     #[derive(Drop, starknet::Event)]
     struct TransactionExecuted {
+        #[key]
         hash: felt252,
         response: Span<Span<felt252>>
     }
@@ -337,17 +338,6 @@ mod ArgentMultisig {
 
         fn is_signer(self: @ContractState, signer: felt252) -> bool {
             self.is_signer(signer)
-        }
-
-        fn assert_valid_signer_signature(
-            self: @ContractState,
-            hash: felt252,
-            signer: felt252,
-            signature_r: felt252,
-            signature_s: felt252
-        ) {
-            let is_valid = self.is_valid_signer_signature(hash, signer, signature_r, signature_s);
-            assert(is_valid, 'argent/invalid-signature');
         }
 
         fn is_valid_signer_signature(

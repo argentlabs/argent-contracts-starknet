@@ -5,10 +5,16 @@ use asserts::{
 };
 
 mod account;
-use account::{ERC1271_VALIDATED, IAccount};
+use account::{
+    ERC1271_VALIDATED, IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
+    ERC165_ACCOUNT_INTERFACE_ID_OLD_2
+};
 
 mod outside_execution;
-use outside_execution::{OutsideExecution, hash_outside_execution_message, IOutsideExecution};
+use outside_execution::{
+    OutsideExecution, hash_outside_execution_message, IOutsideExecution,
+    ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
+};
 
 mod test_dapp;
 use test_dapp::TestDapp;
@@ -25,8 +31,7 @@ use version::Version;
 mod erc165;
 use erc165::{
     IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
-    ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
-    ERC165_ACCOUNT_INTERFACE_ID_OLD_2,
+    ERC165_IERC165_INTERFACE_ID_OLD
 };
 
 mod upgrade;

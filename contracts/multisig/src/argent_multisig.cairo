@@ -17,9 +17,10 @@ mod ArgentMultisig {
         IAccount, assert_only_self, assert_no_self_call, assert_correct_tx_version,
         assert_caller_is_null, execute_multicall, Version, IErc165LibraryDispatcher,
         IErc165DispatcherTrait, OutsideExecution, hash_outside_execution_message,
-        ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
-        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IUpgradeable,
-        IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait, IOutsideExecution, IErc165,
+        ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_IERC165_INTERFACE_ID_OLD,
+        ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED,
+        IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait, IOutsideExecution,
+        ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, IErc165,
     };
     use multisig::{deserialize_array_signer_signature, IDeprecatedArgentMultisig};
 
@@ -361,6 +362,10 @@ mod ArgentMultisig {
             if interface_id == ERC165_IERC165_INTERFACE_ID {
                 true
             } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
+                true
+            } else if interface_id == ERC165_OUTSIDE_EXECUTION_INTERFACE_ID {
+                true
+            } else if interface_id == ERC165_IERC165_INTERFACE_ID_OLD {
                 true
             } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_1 {
                 true

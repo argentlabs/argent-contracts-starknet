@@ -18,10 +18,11 @@ mod ArgentAccount {
         IAccount, assert_correct_tx_version, assert_no_self_call, assert_caller_is_null,
         assert_only_self, execute_multicall, Version, IErc165LibraryDispatcher,
         IErc165DispatcherTrait, OutsideExecution, hash_outside_execution_message,
-        assert_correct_declare_version, ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID,
+        assert_correct_declare_version, ERC165_IERC165_INTERFACE_ID,
+        ERC165_IERC165_INTERFACE_ID_OLD, ERC165_ACCOUNT_INTERFACE_ID,
         ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED,
-        IErc165, IOutsideExecution, IUpgradeable, IUpgradeableLibraryDispatcher,
-        IUpgradeableDispatcherTrait,
+        IErc165, IOutsideExecution, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, IUpgradeable,
+        IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait,
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -506,6 +507,10 @@ mod ArgentAccount {
             if interface_id == ERC165_IERC165_INTERFACE_ID {
                 true
             } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
+                true
+            } else if interface_id == ERC165_OUTSIDE_EXECUTION_INTERFACE_ID {
+                true
+            } else if interface_id == ERC165_IERC165_INTERFACE_ID_OLD {
                 true
             } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_1 {
                 true

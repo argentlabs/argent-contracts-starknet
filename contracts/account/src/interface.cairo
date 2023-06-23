@@ -3,6 +3,7 @@ use account::{Escape, EscapeStatus};
 
 #[starknet::interface]
 trait IArgentAccount<TContractState> {
+    fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate_deploy__(
         self: @TContractState,
         class_hash: felt252,

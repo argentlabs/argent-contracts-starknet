@@ -18,8 +18,8 @@ mod ArgentMultisig {
         assert_caller_is_null, execute_multicall, Version, IErc165LibraryDispatcher,
         IErc165DispatcherTrait, OutsideExecution, hash_outside_execution_message,
         ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
-        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IUpgradeable, IUpgradeTarget,
-        IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait, IOutsideExecution, IErc165,
+        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IUpgradeable,
+        IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait, IOutsideExecution, IErc165,
     };
     use multisig::{deserialize_array_signer_signature, IDeprecatedArgentMultisig};
 
@@ -106,13 +106,9 @@ mod ArgentMultisig {
             VALIDATED
         }
 
-        fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
-            panic_with_felt252('argent/declare-not-available') // Not implemented yet
-        }
-
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
             assert_caller_is_null();
-            let tx_info = starknet::get_tx_info().unbox();
+            let tx_info = get_tx_info().unbox();
             assert_correct_tx_version(tx_info.version);
 
             let retdata = execute_multicall(calls.span());
@@ -198,14 +194,10 @@ mod ArgentMultisig {
             replace_class_syscall(new_implementation).unwrap_syscall();
             self.emit(AccountUpgraded { new_implementation });
 
-            IUpgradeTargetLibraryDispatcher {
+            IUpgradeableLibraryDispatcher {
                 class_hash: new_implementation
             }.execute_after_upgrade(calldata)
         }
-    }
-
-    #[external(v0)]
-    impl UpgradeTargetImpl of IUpgradeTarget<ContractState> {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
@@ -219,6 +211,10 @@ mod ArgentMultisig {
 
     #[external(v0)]
     impl ArgentMultisigImpl of super::IArgentMultisig<ContractState> {
+        fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
+            panic_with_felt252('argent/declare-not-available') // Not implemented yet
+        }
+
         fn __validate_deploy__(
             self: @ContractState,
             class_hash: felt252,

@@ -3,9 +3,8 @@ use starknet::{call_contract_syscall, account::Call};
 
 use lib::ArrayExtTrait;
 
-fn execute_multicall(calls: Span<Call>) -> Array<Span<felt252>> {
+fn execute_multicall(mut calls: Span<Call>) -> Array<Span<felt252>> {
     let mut result: Array<Span<felt252>> = ArrayTrait::new();
-    let mut calls = calls;
     let mut idx = 0;
     loop {
         match calls.pop_front() {

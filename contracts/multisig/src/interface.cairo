@@ -15,7 +15,6 @@ trait IArgentMultisig<TContractState> {
         threshold: usize,
         signers: Array<felt252>
     ) -> felt252;
-    // External
 
     /// @dev Change threshold
     /// @param new_threshold New threshold
@@ -38,7 +37,7 @@ trait IArgentMultisig<TContractState> {
     /// @param signer_to_remove Signer to remove
     /// @param signer_to_add Signer to add
     fn replace_signer(ref self: TContractState, signer_to_remove: felt252, signer_to_add: felt252);
-    // Views
+
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
 
@@ -46,15 +45,6 @@ trait IArgentMultisig<TContractState> {
     fn get_threshold(self: @TContractState) -> usize;
     fn get_signers(self: @TContractState) -> Array<felt252>;
     fn is_signer(self: @TContractState, signer: felt252) -> bool;
-
-    /// Asserts that the given signature is a valid signature from one of the multisig owners
-    fn assert_valid_signer_signature(
-        self: @TContractState,
-        hash: felt252,
-        signer: felt252,
-        signature_r: felt252,
-        signature_s: felt252
-    );
 
     /// Checks if a given signature is a valid signature from one of the multisig owners
     fn is_valid_signer_signature(

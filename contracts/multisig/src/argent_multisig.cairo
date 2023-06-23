@@ -340,17 +340,6 @@ mod ArgentMultisig {
             self.is_signer(signer)
         }
 
-        fn assert_valid_signer_signature(
-            self: @ContractState,
-            hash: felt252,
-            signer: felt252,
-            signature_r: felt252,
-            signature_s: felt252
-        ) {
-            let is_valid = self.is_valid_signer_signature(hash, signer, signature_r, signature_s);
-            assert(is_valid, 'argent/invalid-signature');
-        }
-
         fn is_valid_signer_signature(
             self: @ContractState,
             hash: felt252,

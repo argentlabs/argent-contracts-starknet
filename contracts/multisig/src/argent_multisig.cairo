@@ -446,14 +446,13 @@ mod ArgentMultisig {
                 .expect('argent/invalid-signature-length');
             assert(signer_signatures.len() == threshold, 'argent/invalid-signature-length');
 
-            let mut last_signer: felt252 = 0;
+            let mut last_signer: u256 = 0;
             loop {
                 match signer_signatures.pop_front() {
                     Option::Some(signer_sig_ref) => {
                         let signer_sig = *signer_sig_ref;
-                        let last_signer_uint: u256 = last_signer.into();
                         let signer_uint: u256 = signer_sig.signer.into();
-                        assert(signer_uint > last_signer_uint, 'argent/signatures-not-sorted');
+                        assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
                         let is_valid = self
                             .is_valid_signer_signature(
                                 hash,
@@ -464,7 +463,7 @@ mod ArgentMultisig {
                         if !is_valid {
                             break false;
                         }
-                        last_signer = signer_sig.signer;
+                        last_signer = signer_uint;
                     },
                     Option::None(_) => {
                         break true;

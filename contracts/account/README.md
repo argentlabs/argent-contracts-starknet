@@ -38,5 +38,3 @@ To enable that model to evolve the account can be upgraded. Upgrading the wallet
 | Escape Owner            |        | X        | After security period                     |
 | Cancel Escape           | X      | X        |                                           |
 | Upgrade                 | X      | X        |                                           |
-
-

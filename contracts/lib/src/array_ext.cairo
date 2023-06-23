@@ -1,8 +1,8 @@
 use array::ArrayTrait;
+
 trait ArrayExtTrait<T> {
     fn append_all(ref self: Array<T>, value: Array<T>);
 }
-
 
 impl ArrayExtImpl<T, impl TDrop: Drop<T>> of ArrayExtTrait<T> {
     fn append_all(ref self: Array<T>, mut value: Array<T>) {
@@ -12,7 +12,7 @@ impl ArrayExtImpl<T, impl TDrop: Drop<T>> of ArrayExtTrait<T> {
                     self.append(reason);
                 },
                 Option::None(()) => {
-                    break ();
+                    break;
                 },
             };
         };

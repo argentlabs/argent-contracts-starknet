@@ -264,8 +264,8 @@ mod ArgentAccount {
             hash_outside_execution_message(@outside_execution)
         }
 
-        fn get_outside_execution_nonce(self: @ContractState, nonce: felt252) -> bool {
-            self.outside_nonces.read(nonce)
+        fn is_valid_outside_execution_nonce(self: @ContractState, nonce: felt252) -> bool {
+            !self.outside_nonces.read(nonce)
         }
     }
 

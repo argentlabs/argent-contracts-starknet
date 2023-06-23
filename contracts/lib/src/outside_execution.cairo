@@ -19,8 +19,8 @@ trait IOutsideExecution<TContractState> {
         self: @TContractState, outside_execution: OutsideExecution
     ) -> felt252;
 
-    /// Get the status of a given nonce, true if the nonce was burned
-    fn get_outside_execution_nonce(self: @TContractState, nonce: felt252) -> bool;
+    /// Get the status of a given nonce, true if the nonce is available to use
+    fn is_valid_outside_execution_nonce(self: @TContractState, nonce: felt252) -> bool;
 }
 
 // H('StarkNetDomain(name:felt,version:felt,chainId:felt)')

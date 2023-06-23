@@ -271,4 +271,3 @@ fn test_selectors() {
         'change_owner'
     );
 }
-

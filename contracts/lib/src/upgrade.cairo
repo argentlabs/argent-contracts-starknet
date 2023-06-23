@@ -10,13 +10,9 @@ trait IUpgradeable<TContractState> {
     fn upgrade(
         ref self: TContractState, new_implementation: ClassHash, calldata: Array<felt252>
     ) -> Array<felt252>;
-}
 
-#[starknet::interface]
-trait IUpgradeTarget<TContractState> {
     /// @dev Logic to execute after an upgrade.
     /// Can only be called by the account after a call to `upgrade`.
     /// @param data Generic call data that can be passed to the method for future upgrade logic
     fn execute_after_upgrade(ref self: TContractState, data: Array<felt252>) -> Array<felt252>;
 }
-

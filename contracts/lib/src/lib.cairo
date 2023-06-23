@@ -30,9 +30,7 @@ use erc165::{
 };
 
 mod upgrade;
-use upgrade::{
-    IUpgradeable, IUpgradeTarget, IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait
-};
+use upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait};
 
 #[cfg(test)]
 mod tests;

@@ -66,6 +66,7 @@ mod ArgentMultisig {
     /// @param response The data returned by the methods called
     #[derive(Drop, starknet::Event)]
     struct TransactionExecuted {
+        #[key]
         hash: felt252,
         response: Span<Span<felt252>>
     }

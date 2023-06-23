@@ -93,7 +93,7 @@ mod ArgentAccount {
     /// @param guardian The guardian address
     #[derive(Drop, starknet::Event)]
     struct AccountCreated {
-        account: ContractAddress,
+        #[key]
         owner: felt252,
         guardian: felt252
     }
@@ -103,6 +103,7 @@ mod ArgentAccount {
     /// @param response The data returned by the methods called
     #[derive(Drop, starknet::Event)]
     struct TransactionExecuted {
+        #[key]
         hash: felt252,
         response: Span<Span<felt252>>
     }
@@ -178,7 +179,7 @@ mod ArgentAccount {
         self._signer.write(owner);
         self._guardian.write(guardian);
         self._guardian_backup.write(0);
-        self.emit(AccountCreated { account: get_contract_address(), owner, guardian });
+        self.emit(AccountCreated { owner, guardian });
     }
 
     #[external(v0)]

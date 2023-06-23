@@ -20,11 +20,14 @@ use lib::Version;
 
 #[starknet::interface]
 trait ITestArgentMultisig<TContractState> {
-    // AccountContract
+    // IAccount
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
-    // ITestArgentMultisig
+    fn is_valid_signature(
+        self: @TContractState, hash: felt252, signatures: Array<felt252>
+    ) -> felt252;
+    // IArgentMultisig
     fn __validate_deploy__(
         self: @TContractState,
         class_hash: felt252,
@@ -41,14 +44,10 @@ trait ITestArgentMultisig<TContractState> {
     fn replace_signer(ref self: TContractState, signer_to_remove: felt252, signer_to_add: felt252);
     // Views
     fn get_name(self: @TContractState) -> felt252;
-    fn getName(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
-    fn getVersion(self: @TContractState) -> felt252;
     fn get_threshold(self: @TContractState) -> usize;
     fn get_signers(self: @TContractState) -> Array<felt252>;
     fn is_signer(self: @TContractState, signer: felt252) -> bool;
-    fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
-    fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
     fn assert_valid_signer_signature(
         self: @TContractState,
         hash: felt252,
@@ -64,14 +63,17 @@ trait ITestArgentMultisig<TContractState> {
         signature_s: felt252
     ) -> bool;
 
-    fn is_valid_signature(
-        self: @TContractState, hash: felt252, signatures: Array<felt252>
-    ) -> felt252;
+    // IErc165
+    fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
+
+    // IDeprecatedArgentMultisig
+    fn getVersion(self: @TContractState) -> felt252;
+    fn getName(self: @TContractState) -> felt252;
+    fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
     fn isValidSignature(
         self: @TContractState, hash: felt252, signatures: Array<felt252>
     ) -> felt252;
 }
-
 
 fn initialize_multisig() -> ITestArgentMultisigDispatcher {
     let threshold = 1;

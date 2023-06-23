@@ -14,13 +14,16 @@ use starknet::{
 use account::{Escape, EscapeStatus, ArgentAccount};
 use lib::Version;
 
-// TODO Do we need one global interface for testing?
 #[starknet::interface]
 trait ITestArgentAccount<TContractState> {
-    // AccountContract
+    // IAccount
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
+    fn is_valid_signature(
+        self: @TContractState, hash: felt252, signatures: Array<felt252>
+    ) -> felt252;
+
     // IArgentAccount
     fn __validate_deploy__(
         self: @TContractState,
@@ -51,19 +54,14 @@ trait ITestArgentAccount<TContractState> {
     fn get_owner_escape_attempts(self: @TContractState) -> u32;
     fn get_escape_and_status(self: @TContractState) -> (Escape, EscapeStatus);
 
+    // IErc165
+    fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
+
     // IDeprecatedArgentAccount
     fn getVersion(self: @TContractState) -> felt252;
     fn getName(self: @TContractState) -> felt252;
     fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
     fn isValidSignature(
-        self: @TContractState, hash: felt252, signatures: Array<felt252>
-    ) -> felt252;
-
-    // IErc165
-    fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
-
-    // IErc1271
-    fn is_valid_signature(
         self: @TContractState, hash: felt252, signatures: Array<felt252>
     ) -> felt252;
 }

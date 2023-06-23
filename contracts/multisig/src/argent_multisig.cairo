@@ -14,13 +14,12 @@ mod ArgentMultisig {
     };
 
     use lib::{
-        AccountContract, assert_only_self, assert_no_self_call, assert_correct_tx_version,
+        IAccount, assert_only_self, assert_no_self_call, assert_correct_tx_version,
         assert_caller_is_null, execute_multicall, Version, IErc165LibraryDispatcher,
         IErc165DispatcherTrait, OutsideExecution, hash_outside_execution_message,
         ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
-        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IUpgradeable, IUpgradeTarget,
-        IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait, IOutsideExecution, IErc165,
-        IErc1271
+        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IUpgradeable,
+        IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait, IOutsideExecution, IErc165,
     };
     use multisig::{deserialize_array_signer_signature, IDeprecatedArgentMultisig};
 
@@ -97,7 +96,7 @@ mod ArgentMultisig {
     }
 
     #[external(v0)]
-    impl AccountContractImpl of AccountContract<ContractState> {
+    impl Account of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
@@ -108,13 +107,9 @@ mod ArgentMultisig {
             VALIDATED
         }
 
-        fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
-            panic_with_felt252('argent/declare-not-available') // Not implemented yet
-        }
-
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
             assert_caller_is_null();
-            let tx_info = starknet::get_tx_info().unbox();
+            let tx_info = get_tx_info().unbox();
             assert_correct_tx_version(tx_info.version);
 
             let retdata = execute_multicall(calls.span());
@@ -123,6 +118,16 @@ mod ArgentMultisig {
             let response = retdata.span();
             self.emit(TransactionExecuted { hash, response });
             retdata
+        }
+
+        fn is_valid_signature(
+            self: @ContractState, hash: felt252, signatures: Array<felt252>
+        ) -> felt252 {
+            if self.is_valid_span_signature(hash, signatures.span()) {
+                ERC1271_VALIDATED
+            } else {
+                0
+            }
         }
     }
 
@@ -171,7 +176,42 @@ mod ArgentMultisig {
     }
 
     #[external(v0)]
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// @dev Can be called by the account to upgrade the implementation
+        fn upgrade(
+            ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>
+        ) -> Array<felt252> {
+            assert_only_self();
+
+            let supports_interface = IErc165LibraryDispatcher {
+                class_hash: new_implementation
+            }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
+            assert(supports_interface, 'argent/invalid-implementation');
+
+            replace_class_syscall(new_implementation).unwrap_syscall();
+            self.emit(AccountUpgraded { new_implementation });
+
+            IUpgradeableLibraryDispatcher {
+                class_hash: new_implementation
+            }.execute_after_upgrade(calldata)
+        }
+        fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
+            assert_only_self();
+
+            // Check basic invariants
+            assert_valid_threshold_and_signers_count(self.threshold.read(), self.get_signers_len());
+
+            assert(data.len() == 0, 'argent/unexpected-data');
+            ArrayTrait::new()
+        }
+    }
+
+    #[external(v0)]
     impl ArgentMultisigImpl of super::IArgentMultisig<ContractState> {
+        fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
+            panic_with_felt252('argent/declare-not-available') // Not implemented yet
+        }
+
         fn __validate_deploy__(
             self: @ContractState,
             class_hash: felt252,
@@ -188,7 +228,7 @@ mod ArgentMultisig {
 
             let signer_sig = *parsed_signatures.at(0);
             let valid_signer_signature = self
-                .is_valid_signer_signature_inner(
+                .is_valid_signer_signature(
                     tx_info.transaction_hash,
                     signer_sig.signer,
                     signer_sig.signature_r,
@@ -307,8 +347,7 @@ mod ArgentMultisig {
             signature_r: felt252,
             signature_s: felt252
         ) {
-            let is_valid = self
-                .is_valid_signer_signature_inner(hash, signer, signature_r, signature_s);
+            let is_valid = self.is_valid_signer_signature(hash, signer, signature_r, signature_s);
             assert(is_valid, 'argent/invalid-signature');
         }
 
@@ -319,7 +358,7 @@ mod ArgentMultisig {
             signature_r: felt252,
             signature_s: felt252
         ) -> bool {
-            self.is_valid_signer_signature_inner(hash, signer, signature_r, signature_s)
+            self.is_valid_signer_signature(hash, signer, signature_r, signature_s)
         }
     }
 
@@ -341,56 +380,10 @@ mod ArgentMultisig {
     }
 
     #[external(v0)]
-    impl Erc1271Impl of IErc1271<ContractState> {
-        fn is_valid_signature(
-            self: @ContractState, hash: felt252, signatures: Array<felt252>
-        ) -> felt252 {
-            self.is_valid_signature_inner(hash, signatures)
-        }
-    }
-
-
-    #[external(v0)]
-    impl UpgradeableImpl of IUpgradeable<ContractState> {
-        /// @dev Can be called by the account to upgrade the implementation
-        fn upgrade(
-            ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>
-        ) -> Array<felt252> {
-            assert_only_self();
-
-            let supports_interface = IErc165LibraryDispatcher {
-                class_hash: new_implementation
-            }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
-            assert(supports_interface, 'argent/invalid-implementation');
-
-            replace_class_syscall(new_implementation).unwrap_syscall();
-            self.emit(AccountUpgraded { new_implementation });
-
-            IUpgradeTargetLibraryDispatcher {
-                class_hash: new_implementation
-            }.execute_after_upgrade(calldata)
-        }
-    }
-
-    #[external(v0)]
-    impl UpgradeTargetImpl of IUpgradeTarget<ContractState> {
-        fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
-            assert_only_self();
-
-            // Check basic invariants
-            assert_valid_threshold_and_signers_count(self.threshold.read(), self.get_signers_len());
-
-            assert(data.len() == 0, 'argent/unexpected-data');
-            ArrayTrait::new()
-        }
-    }
-
-
-    #[external(v0)]
     impl OldArgentMultisigImpl<
         impl ArgentMultisig: super::IArgentMultisig<ContractState>,
         impl Erc165: IErc165<ContractState>,
-        impl Erc1271: IErc1271<ContractState>,
+        impl Account: IAccount<ContractState>,
     > of IDeprecatedArgentMultisig<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
             VERSION_COMPAT
@@ -411,7 +404,7 @@ mod ArgentMultisig {
         fn isValidSignature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
-            Erc1271::is_valid_signature(self, hash, signatures)
+            Account::is_valid_signature(self, hash, signatures)
         }
     }
 
@@ -464,7 +457,7 @@ mod ArgentMultisig {
                         let signer_uint: u256 = signer_sig.signer.into();
                         assert(signer_uint > last_signer_uint, 'argent/signatures-not-sorted');
                         let is_valid = self
-                            .is_valid_signer_signature_inner(
+                            .is_valid_signer_signature(
                                 hash,
                                 signer: signer_sig.signer,
                                 signature_r: signer_sig.signature_r,
@@ -482,18 +475,7 @@ mod ArgentMultisig {
             }
         }
 
-
-        fn is_valid_signature_inner(
-            self: @ContractState, hash: felt252, signatures: Array<felt252>
-        ) -> felt252 {
-            if self.is_valid_span_signature(hash, signatures.span()) {
-                ERC1271_VALIDATED
-            } else {
-                0
-            }
-        }
-
-        fn is_valid_signer_signature_inner(
+        fn is_valid_signer_signature(
             self: @ContractState,
             hash: felt252,
             signer: felt252,
@@ -505,7 +487,6 @@ mod ArgentMultisig {
             check_ecdsa_signature(hash, signer, signature_r, signature_s)
         }
     }
-
 
     fn assert_valid_threshold_and_signers_count(threshold: usize, signers_len: usize) {
         assert(threshold != 0, 'argent/invalid-threshold');
@@ -664,7 +645,6 @@ mod ArgentMultisig {
                 size += 1;
             }
         }
-
 
         // Returns the number of signers. Cost increases with the list size
         fn get_signers_len(self: @ContractState) -> usize {

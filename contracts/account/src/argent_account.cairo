@@ -15,13 +15,13 @@ mod ArgentAccount {
 
     use account::{Escape, EscapeStatus, IArgentAccount, IDeprecatedArgentAccount};
     use lib::{
-        assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
-        execute_multicall, Version, IErc165LibraryDispatcher, IErc165DispatcherTrait, IUpgradeable,
-        IUpgradeTarget, IUpgradeTargetLibraryDispatcher, IUpgradeTargetDispatcherTrait,
-        OutsideExecution, hash_outside_execution_message, assert_correct_declare_version,
-        ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
-        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED, IErc165, IErc1271, AccountContract,
-        IOutsideExecution
+        IAccount, assert_correct_tx_version, assert_no_self_call, assert_caller_is_null,
+        assert_only_self, execute_multicall, Version, IErc165LibraryDispatcher,
+        IErc165DispatcherTrait, OutsideExecution, hash_outside_execution_message,
+        assert_correct_declare_version, ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID,
+        ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED,
+        IErc165, IOutsideExecution, IUpgradeable, IUpgradeableLibraryDispatcher,
+        IUpgradeableDispatcherTrait,
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -29,7 +29,6 @@ mod ArgentAccount {
     const VERSION_MINOR: u8 = 3;
     const VERSION_PATCH: u8 = 0;
     const VERSION_COMPAT: felt252 = '0.3.0';
-
 
     /// Time it takes for the escape to become ready after being triggered
     const ESCAPE_SECURITY_PERIOD: u64 = 604800; // 7 * 24 * 60 * 60;  // 7 days
@@ -184,7 +183,7 @@ mod ArgentAccount {
     }
 
     #[external(v0)]
-    impl AccountContractImpl of AccountContract<ContractState> {
+    impl Account of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
@@ -195,13 +194,6 @@ mod ArgentAccount {
                     tx_info.signature,
                     is_from_outside: false
                 );
-            VALIDATED
-        }
-
-        fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
-            let tx_info = get_tx_info().unbox();
-            assert_correct_declare_version(tx_info.version);
-            self.assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
 
@@ -217,6 +209,16 @@ mod ArgentAccount {
             self.emit(TransactionExecuted { hash, response });
             retdata
         }
+
+        fn is_valid_signature(
+            self: @ContractState, hash: felt252, signatures: Array<felt252>
+        ) -> felt252 {
+            if self.is_valid_span_signature(hash, signatures.span()) {
+                ERC1271_VALIDATED
+            } else {
+                0
+            }
+        }
     }
 
     #[external(v0)]
@@ -225,7 +227,7 @@ mod ArgentAccount {
             ref self: ContractState, outside_execution: OutsideExecution, signature: Array<felt252>
         ) -> Array<Span<felt252>> {
             // Checks
-            if (outside_execution.caller).into() != 'ANY_CALLER' {
+            if outside_execution.caller.into() != 'ANY_CALLER' {
                 assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
             }
 
@@ -253,9 +255,7 @@ mod ArgentAccount {
             // Interactions
             let retdata = execute_multicall(calls);
 
-            let hash = outside_tx_hash;
-            let response = retdata.span();
-            self.emit(TransactionExecuted { hash, response });
+            self.emit(TransactionExecuted { hash: outside_tx_hash, response: retdata.span() });
             retdata
         }
 
@@ -265,7 +265,6 @@ mod ArgentAccount {
             return hash_outside_execution_message(@outside_execution);
         }
     }
-
 
     #[external(v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
@@ -283,14 +282,11 @@ mod ArgentAccount {
             replace_class_syscall(new_implementation).unwrap_syscall();
             self.emit(AccountUpgraded { new_implementation });
 
-            IUpgradeTargetLibraryDispatcher {
+            IUpgradeableLibraryDispatcher {
                 class_hash: new_implementation
             }.execute_after_upgrade(calldata)
         }
-    }
 
-    #[external(v0)]
-    impl UpgradeTargetImpl of IUpgradeTarget<ContractState> {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
@@ -326,6 +322,13 @@ mod ArgentAccount {
 
     #[external(v0)]
     impl ArgentAccountImpl of IArgentAccount<ContractState> {
+        fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
+            let tx_info = get_tx_info().unbox();
+            assert_correct_declare_version(tx_info.version);
+            self.assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
+            VALIDATED
+        }
+
         fn __validate_deploy__(
             self: @ContractState,
             class_hash: felt252,
@@ -391,9 +394,8 @@ mod ArgentAccount {
 
             self.reset_escape();
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
-            self
-                ._escape
-                .write(Escape { ready_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: new_owner });
+            let escape = Escape { ready_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: new_owner };
+            self._escape.write(escape);
             self.emit(EscapeOwnerTriggered { ready_at, new_owner });
         }
 
@@ -454,7 +456,6 @@ mod ArgentAccount {
             self.reset_escape_attempts();
         }
 
-
         fn get_owner(self: @ContractState) -> felt252 {
             self._signer.read()
         }
@@ -476,11 +477,9 @@ mod ArgentAccount {
             Version { major: VERSION_MAJOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
         }
 
-
         fn get_name(self: @ContractState) -> felt252 {
             NAME
         }
-
 
         fn get_guardian_escape_attempts(self: @ContractState) -> u32 {
             self.guardian_escape_attempts.read()
@@ -514,25 +513,11 @@ mod ArgentAccount {
         }
     }
 
-    // ERC1271
-    #[external(v0)]
-    impl Erc1271Impl of IErc1271<ContractState> {
-        fn is_valid_signature(
-            self: @ContractState, hash: felt252, signatures: Array<felt252>
-        ) -> felt252 {
-            if self.is_valid_span_signature(hash, signatures.span()) {
-                ERC1271_VALIDATED
-            } else {
-                0
-            }
-        }
-    }
-
     #[external(v0)]
     impl OldArgentAccountImpl<
         impl ArgentAccount: IArgentAccount<ContractState>,
+        impl Account: IAccount<ContractState>,
         impl Erc165: IErc165<ContractState>,
-        impl Erc1271: IErc1271<ContractState>,
     > of IDeprecatedArgentAccount<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
             VERSION_COMPAT
@@ -553,7 +538,7 @@ mod ArgentAccount {
         fn isValidSignature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
-            Erc1271::is_valid_signature(self, hash, signatures)
+            Account::is_valid_signature(self, hash, signatures)
         }
     }
 
@@ -752,7 +737,6 @@ mod ArgentAccount {
             assert(is_valid, 'argent/invalid-owner-sig');
         }
 
-
         #[inline(always)]
         fn reset_escape(ref self: ContractState) {
             let current_escape_status = get_escape_status(self._escape.read().ready_at);
@@ -776,7 +760,6 @@ mod ArgentAccount {
             self.guardian_escape_attempts.write(0);
         }
     }
-
 
     fn assert_valid_escape_parameters(attempts: u32) {
         let tx_info = get_tx_info().unbox();

@@ -10,7 +10,7 @@ fn execute_multicall(mut calls: Span<Call>) -> Array<Span<felt252>> {
         match calls.pop_front() {
             Option::Some(call) => {
                 match call_contract_syscall(*call.to, *call.selector, call.calldata.span()) {
-                    Result::Ok(mut retdata) => {
+                    Result::Ok(retdata) => {
                         result.append(retdata);
                         idx = idx + 1;
                     },

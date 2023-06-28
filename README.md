@@ -121,3 +121,7 @@ yarn format
 
 The [fixtures folder](./tests/fixtures/) contains pre-compiled contracts used for tests (both json and casm).  
 To add or update a contract, have a look at the [`fixtures` makefile target](./Makefile).
+
+### Interface IDs
+
+We support legacy interface IDs for compatibility reasons. But new interfaces IDs will follow [SNIP-5](https://github.com/ericnordelo/SNIPs/blob/feat/standard-interface-detection/SNIPS/snip-5.md#how-interfaces-are-identified)

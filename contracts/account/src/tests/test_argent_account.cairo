@@ -83,9 +83,25 @@ fn erc165_unsupported_interfaces() {
 #[available_gas(2000000)]
 fn erc165_supported_interfaces() {
     let account = initialize_account();
-    assert(account.supports_interface(0x01ffc9a7), 'ERC165_IERC165_INTERFACE_ID');
-    assert(account.supports_interface(0xa66bd575), 'ERC165_ACCOUNT_INTERFACE_ID');
-    assert(account.supports_interface(0x3943f10f), 'ERC165_OLD_ACCOUNT_INTERFACE_ID');
+    assert(
+        account
+            .supports_interface(0x3f918d17e5ee77373b56385708f855659a07f75997f365cf87748628532a055),
+        'IERC165'
+    );
+    assert(account.supports_interface(0x01ffc9a7), 'IERC165_OLD');
+    assert(
+        account
+            .supports_interface(0x32a450d0828523e159d5faa1f8bc3c94c05c819aeb09ec5527cd8795b5b5067),
+        'IACCOUNT'
+    );
+    assert(account.supports_interface(0xa66bd575), 'IACCOUNT_OLD_1');
+    assert(account.supports_interface(0x3943f10f), 'IACCOUNT_OLD_2');
+
+    assert(
+        account
+            .supports_interface(0x3a8eb057036a72671e68e4bad061bbf5740d19351298b5e2960d72d76d34cb9),
+        'OUTSIDE_EXECUTION'
+    );
 }
 
 #[test]

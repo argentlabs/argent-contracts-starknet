@@ -4,6 +4,11 @@ use hash::pedersen;
 use traits::Into;
 use starknet::{ContractAddress, get_tx_info, get_contract_address, account::Call};
 
+const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID: felt252 =
+    0x3a8eb057036a72671e68e4bad061bbf5740d19351298b5e2960d72d76d34cb9;
+
+/// Interface ID: 0x3a8eb057036a72671e68e4bad061bbf5740d19351298b5e2960d72d76d34cb9
+// get_outside_execution_message_hash is not part of the standard interface
 #[starknet::interface]
 trait IOutsideExecution<TContractState> {
     /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
@@ -14,13 +19,13 @@ trait IOutsideExecution<TContractState> {
         ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>
     ) -> Array<Span<felt252>>;
 
+    /// Get the status of a given nonce, true if the nonce is available to use
+    fn is_valid_outside_execution_nonce(self: @TContractState, nonce: felt252) -> bool;
+
     /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
     fn get_outside_execution_message_hash(
         self: @TContractState, outside_execution: OutsideExecution
     ) -> felt252;
-
-    /// Get the status of a given nonce, true if the nonce is available to use
-    fn is_valid_outside_execution_nonce(self: @TContractState, nonce: felt252) -> bool;
 }
 
 // H('StarkNetDomain(name:felt,version:felt,chainId:felt)')

@@ -10,7 +10,7 @@ LIB_FOLDER= $(SOURCE_FOLDER)/lib
 MULTISIG_FOLDER= $(SOURCE_FOLDER)/multisig
 MULTICALL_FOLDER= $(SOURCE_FOLDER)/multicall
 SOURCE_FOLDER=./contracts
-CAIRO_VERSION=v1.1.0
+CAIRO_VERSION=v2.0.0-rc5
 FIXTURES_FOLDER = ./tests/fixtures
 
 all: install build fixtures
@@ -32,21 +32,27 @@ clone-cairo:
 	git clone --branch $(CAIRO_VERSION) https://github.com/starkware-libs/cairo.git
 
 update-cairo:
-	git -C $(INSTALLATION_FOLDER) checkout $(CAIRO_VERSION)
+	if [ "$$(git -C $(INSTALLATION_FOLDER) status | grep -e $(CAIRO_VERSION))" ]; then \
+		echo "Already on $(CAIRO_VERSION)"; \
+	else \
+		git -C $(INSTALLATION_FOLDER) checkout main; \
+		git -C $(INSTALLATION_FOLDER) pull; \
+		git -C $(INSTALLATION_FOLDER) checkout $(CAIRO_VERSION); \
+	fi
 
 build:
 	cargo build --manifest-path $(INSTALLATION_FOLDER_CARGO) --workspace --release
 
 compile-account: 
-	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/account account.json --allowed-libfuncs-list-name experimental_v0.1.0
+	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/account account.json --allowed-libfuncs-list-name all
 
 fixtures: 
-	./cairo/target/release/starknet-compile $(ACCOUNT_FOLDER) $(FIXTURES_FOLDER)/ArgentAccount.json --allowed-libfuncs-list-name experimental_v0.1.0 --contract-path account::argent_account::ArgentAccount
-	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/ArgentAccount.json $(FIXTURES_FOLDER)/ArgentAccount.casm --allowed-libfuncs-list-name experimental_v0.1.0
-	./cairo/target/release/starknet-compile $(LIB_FOLDER) $(FIXTURES_FOLDER)/TestDapp.json --allowed-libfuncs-list-name experimental_v0.1.0
-	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/TestDapp.json $(FIXTURES_FOLDER)/TestDapp.casm --allowed-libfuncs-list-name experimental_v0.1.0
-	./cairo/target/release/starknet-compile $(MULTISIG_FOLDER) $(FIXTURES_FOLDER)/ArgentMultisig.json --allowed-libfuncs-list-name experimental_v0.1.0 --contract-path multisig::argent_multisig::ArgentMultisig
-	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/ArgentMultisig.json $(FIXTURES_FOLDER)/ArgentMultisig.casm --allowed-libfuncs-list-name experimental_v0.1.0
+	./cairo/target/release/starknet-compile $(ACCOUNT_FOLDER) $(FIXTURES_FOLDER)/ArgentAccount.json --allowed-libfuncs-list-name all --contract-path account::argent_account::ArgentAccount
+	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/ArgentAccount.json $(FIXTURES_FOLDER)/ArgentAccount.casm --allowed-libfuncs-list-name all
+	./cairo/target/release/starknet-compile $(LIB_FOLDER) $(FIXTURES_FOLDER)/TestDapp.json --allowed-libfuncs-list-name all
+	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/TestDapp.json $(FIXTURES_FOLDER)/TestDapp.casm --allowed-libfuncs-list-name all
+	./cairo/target/release/starknet-compile $(MULTISIG_FOLDER) $(FIXTURES_FOLDER)/ArgentMultisig.json --allowed-libfuncs-list-name all --contract-path multisig::argent_multisig::ArgentMultisig
+	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/ArgentMultisig.json $(FIXTURES_FOLDER)/ArgentMultisig.casm --allowed-libfuncs-list-name all
 
 test: 
 	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)

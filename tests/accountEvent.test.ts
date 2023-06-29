@@ -20,7 +20,7 @@ describe("ArgentAccount: events", function () {
     argentAccountClassHash = await declareContract("ArgentAccount");
   });
 
-  it("Expect 'AccountCreated(contract_address, owner, guardian)' when deploying an account", async function () {
+  it("Expect 'AccountCreated(owner, guardian)' when deploying an account", async function () {
     const owner = "21";
     const guardian = "42";
     const constructorCalldata = CallData.compile({ owner, guardian });
@@ -30,8 +30,8 @@ describe("ArgentAccount: events", function () {
     });
     await expectEvent(transaction_hash, {
       from_address: contract_address,
-      keys: ["AccountCreated"],
-      data: [contract_address, owner, guardian],
+      keys: ["AccountCreated", owner],
+      data: [guardian],
     });
   });
 
@@ -206,11 +206,10 @@ describe("ArgentAccount: events", function () {
       const amount = uint256.bnToUint256(1000);
       const first_retdata = [1];
       const { transaction_hash } = await ethContract.transfer(recipient, amount);
-      const data = CallData.compile([transaction_hash, [first_retdata]]);
       await expectEvent(transaction_hash, {
         from_address: account.address,
-        keys: ["TransactionExecuted"],
-        data,
+        keys: ["TransactionExecuted", transaction_hash],
+        data: CallData.compile([[first_retdata]]),
       });
     });
 
@@ -233,11 +232,10 @@ describe("ArgentAccount: events", function () {
         ethContract.populateTransaction.transfer(recipient, uint256.bnToUint256(amount)),
         ethContract.populateTransaction.balanceOf(recipient),
       ]);
-      const data = CallData.compile([transaction_hash, [firstReturn, secondReturn]]);
       await expectEvent(transaction_hash, {
         from_address: account.address,
-        keys: ["TransactionExecuted"],
-        data,
+        keys: ["TransactionExecuted", transaction_hash],
+        data: CallData.compile([[firstReturn, secondReturn]]),
       });
     });
     // TODO Could add some more tests regarding multicall later

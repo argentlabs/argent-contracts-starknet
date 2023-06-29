@@ -1,27 +1,28 @@
 mod asserts;
-use asserts::assert_only_self;
-use asserts::assert_no_self_call;
-use asserts::assert_caller_is_null;
-use asserts::assert_correct_tx_version;
-use asserts::assert_correct_declare_version;
+use asserts::{
+    assert_only_self, assert_no_self_call, assert_caller_is_null, assert_correct_tx_version,
+    assert_correct_declare_version
+};
 
-mod span_serde;
-use span_serde::SpanSerde;
+mod account;
+use account::{
+    ERC1271_VALIDATED, IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
+    ERC165_ACCOUNT_INTERFACE_ID_OLD_2
+};
 
 mod outside_execution;
-use outside_execution::OutsideExecution;
-use outside_execution::hash_outside_execution_message;
+use outside_execution::{
+    OutsideExecution, hash_outside_execution_message, IOutsideExecution,
+    ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
+};
 
 mod test_dapp;
 use test_dapp::TestDapp;
 
-
 mod array_ext;
 use array_ext::ArrayExtTrait;
 
-// Structures 
 mod calls;
-use calls::Call;
 use calls::execute_multicall;
 
 mod version;
@@ -29,22 +30,12 @@ use version::Version;
 
 mod erc165;
 use erc165::{
-    ERC165_IERC165_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
-    ERC165_ACCOUNT_INTERFACE_ID_OLD_2
+    IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
+    ERC165_IERC165_INTERFACE_ID_OLD
 };
 
-mod erc1271;
-use erc1271::{ERC1271_VALIDATED};
-
-#[abi]
-trait IErc165 {
-    fn supports_interface(interface_id: felt252) -> bool;
-}
-
-#[abi]
-trait IAccountUpgrade {
-    fn execute_after_upgrade(data: Array<felt252>) -> Array::<felt252>;
-}
+mod upgrade;
+use upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait};
 
 #[cfg(test)]
 mod tests;

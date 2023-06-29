@@ -1,12 +1,32 @@
 use array::{ArrayTrait, SpanTrait};
 use box::BoxTrait;
 use hash::pedersen;
-use traits::{Into, TryInto};
-use option::OptionTrait;
+use traits::Into;
+use starknet::{ContractAddress, get_tx_info, get_contract_address, account::Call};
 
-use starknet::{ContractAddress, ContractAddressIntoFelt252, get_tx_info, get_contract_address};
+const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID: felt252 =
+    0x3a8eb057036a72671e68e4bad061bbf5740d19351298b5e2960d72d76d34cb9;
 
-use lib::Call;
+/// Interface ID: 0x3a8eb057036a72671e68e4bad061bbf5740d19351298b5e2960d72d76d34cb9
+// get_outside_execution_message_hash is not part of the standard interface
+#[starknet::interface]
+trait IOutsideExecution<TContractState> {
+    /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
+    /// @param outside_execution The parameters of the transaction to execute
+    /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
+    /// @notice This method allows reentrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
+    fn execute_from_outside(
+        ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>
+    ) -> Array<Span<felt252>>;
+
+    /// Get the status of a given nonce, true if the nonce is available to use
+    fn is_valid_outside_execution_nonce(self: @TContractState, nonce: felt252) -> bool;
+
+    /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
+    fn get_outside_execution_message_hash(
+        self: @TContractState, outside_execution: OutsideExecution
+    ) -> felt252;
+}
 
 // H('StarkNetDomain(name:felt,version:felt,chainId:felt)')
 const STARKNET_DOMAIN_TYPE_HASH: felt252 =
@@ -23,7 +43,7 @@ struct StarkNetDomain {
 const OUTSIDE_EXECUTION_TYPE_HASH: felt252 =
     0x11ff76fe3f640fa6f3d60bbd94a3b9d47141a2c96f87fdcfbeb2af1d03f7050;
 
-#[derive(Drop, Serde)]
+#[derive(Copy, Drop, Serde)]
 struct OutsideExecution {
     /// @notice Only the address specified here will be allowed to call `execute_from_outside`
     /// As an exception, to opt-out of this check, the value 'ANY_CALLER' can be used
@@ -35,7 +55,7 @@ struct OutsideExecution {
     /// `execute_from_outside` only succeeds if executing before this time
     execute_before: u64,
     /// The calls that will be executed by the Account
-    calls: Array<Call>
+    calls: Span<Call>
 }
 
 // H('OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)')
@@ -68,7 +88,7 @@ fn hash_outside_call(outside_call: @Call) -> felt252 {
                 call_data_state = pedersen(call_data_state, *item);
             },
             Option::None(_) => {
-                break ();
+                break;
             },
         };
     };
@@ -83,7 +103,7 @@ fn hash_outside_call(outside_call: @Call) -> felt252 {
 }
 
 fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
-    let mut calls_span = outside_execution.calls.span();
+    let mut calls_span = *outside_execution.calls;
 
     let mut outside_calls_state: felt252 = 0;
     loop {
@@ -92,18 +112,18 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
                 outside_calls_state = pedersen(outside_calls_state, hash_outside_call(call));
             },
             Option::None(_) => {
-                break ();
+                break;
             },
         };
     };
-    outside_calls_state = pedersen(outside_calls_state, outside_execution.calls.len().into());
+    outside_calls_state = pedersen(outside_calls_state, (*outside_execution.calls).len().into());
 
     let mut state = pedersen(0, OUTSIDE_EXECUTION_TYPE_HASH);
     state = pedersen(state, (*outside_execution.caller).into());
     state = pedersen(state, *outside_execution.nonce);
     state = pedersen(state, (*outside_execution.execute_after).into());
     state = pedersen(state, (*outside_execution.execute_before).into());
-    state = pedersen(state, outside_execution.calls.len().into());
+    state = pedersen(state, (*outside_execution.calls).len().into());
     state = pedersen(state, outside_calls_state);
     pedersen(state, 7)
 }

@@ -1,12 +1,7 @@
-use array::{ArrayTrait, SpanTrait};
-use traits::Into;
+use array::SpanTrait;
 use zeroable::Zeroable;
 
-use starknet::{
-    get_contract_address, get_caller_address, ContractAddress, ContractAddressIntoFelt252
-};
-
-use lib::Call;
+use starknet::{get_contract_address, get_caller_address, ContractAddress, account::Call};
 
 const TRANSACTION_VERSION: felt252 = 1;
 const QUERY_VERSION: felt252 =
@@ -46,7 +41,7 @@ fn assert_no_self_call(mut calls: Span::<Call>, self: ContractAddress) {
                 assert(*call.to != self, 'argent/no-multicall-to-self');
             },
             Option::None(_) => {
-                break ();
+                break;
             },
         };
     }

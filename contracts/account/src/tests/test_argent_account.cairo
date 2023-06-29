@@ -99,7 +99,7 @@ fn erc165_supported_interfaces() {
 
     assert(
         account
-            .supports_interface(0x3a8eb057036a72671e68e4bad061bbf5740d19351298b5e2960d72d76d34cb9),
+            .supports_interface(0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181),
         'OUTSIDE_EXECUTION'
     );
 }

@@ -34,6 +34,6 @@ async function handlePost(path: string, payload?: RawArgs) {
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
-    throw new Error(`HTTP error! Status: ${response.status}`);
+    throw new Error(`HTTP error! Status: ${response.status} Message: ${await response.text()}`);
   }
 }

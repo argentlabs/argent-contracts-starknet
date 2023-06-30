@@ -28,7 +28,7 @@ describe("ArgentMultisig: signing", function () {
 
       const validSignature = await accountContract.is_valid_signature(BigInt(messageHash), [signers[0], r, s]);
 
-      expect(validSignature).to.equal(BigInt(ERC1271_VALIDATED));
+      expect(validSignature).to.be.true;
     });
 
     it("Should verify numerous multisig owners have signed a message", async function () {
@@ -58,7 +58,7 @@ describe("ArgentMultisig: signing", function () {
         signature2.s,
       ]);
 
-      expect(validSignature).to.equal(BigInt(ERC1271_VALIDATED));
+      expect(validSignature).to.be.true;
     });
 
     it("Should verify that signatures are in the correct order", async function () {

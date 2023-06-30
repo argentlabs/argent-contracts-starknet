@@ -5,9 +5,9 @@ use traits::Into;
 use starknet::{ContractAddress, get_tx_info, get_contract_address, account::Call};
 
 const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID: felt252 =
-    0x3a8eb057036a72671e68e4bad061bbf5740d19351298b5e2960d72d76d34cb9;
+    0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181;
 
-/// Interface ID: 0x3a8eb057036a72671e68e4bad061bbf5740d19351298b5e2960d72d76d34cb9
+/// Interface ID: 0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181
 // get_outside_execution_message_hash is not part of the standard interface
 #[starknet::interface]
 trait IOutsideExecution<TContractState> {

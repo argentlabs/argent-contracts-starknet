@@ -45,18 +45,12 @@ fn single_signature(r: felt252, s: felt252) -> Array<felt252> {
     signatures
 }
 
-fn is_valid_signature(
-    account: ITestArgentAccountDispatcher, hash: felt252, signatures: Array<felt252>
-) -> bool {
-    account.is_valid_signature(hash, signatures) == ArgentAccount::ERC1271_VALIDATED
-}
-
 #[test]
 #[available_gas(2000000)]
 fn valid_no_guardian() {
     let signatures = single_signature(owner_r, owner_s);
     assert(
-        is_valid_signature(initialize_account_without_guardian(), message_hash, signatures),
+        initialize_account_without_guardian().is_valid_signature(message_hash, signatures),
         'invalid signature'
     );
 }
@@ -65,7 +59,7 @@ fn valid_no_guardian() {
 #[available_gas(2000000)]
 fn valid_with_guardian() {
     let signatures = double_signature(owner_r, owner_s, guardian_r, guardian_s);
-    assert(is_valid_signature(initialize_account(), message_hash, signatures), 'invalid signature');
+    assert(initialize_account().is_valid_signature(message_hash, signatures), 'invalid signature');
 }
 
 #[test]
@@ -74,7 +68,7 @@ fn valid_with_guardian_backup() {
     let account = initialize_account_with(owner_pubkey, 1);
     account.change_guardian_backup(guardian_backup_pubkey);
     let signatures = double_signature(owner_r, owner_s, guardian_backup_r, guardian_backup_s);
-    assert(is_valid_signature(account, message_hash, signatures), 'invalid signature');
+    assert(account.is_valid_signature(message_hash, signatures), 'invalid signature');
 }
 
 #[test]
@@ -82,7 +76,7 @@ fn valid_with_guardian_backup() {
 fn invalid_hash_1() {
     let account = initialize_account_without_guardian();
     let signatures = single_signature(owner_r, owner_s);
-    assert(!is_valid_signature(account, 0, signatures), 'invalid signature');
+    assert(!account.is_valid_signature(0, signatures), 'invalid signature');
 }
 
 #[test]
@@ -90,7 +84,7 @@ fn invalid_hash_1() {
 fn invalid_hash_2() {
     let account = initialize_account_without_guardian();
     let signatures = single_signature(owner_r, owner_s);
-    assert(!is_valid_signature(account, 123, signatures), 'invalid signature');
+    assert(!account.is_valid_signature(123, signatures), 'invalid signature');
 }
 
 #[test]
@@ -98,11 +92,11 @@ fn invalid_hash_2() {
 fn invalid_owner_without_guardian() {
     let account = initialize_account_without_guardian();
     let signatures = single_signature(0, 0);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 1');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 1');
     let signatures = single_signature(wrong_owner_r, wrong_owner_s);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 2');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 2');
     let signatures = single_signature(guardian_r, guardian_s);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 3');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 3');
 }
 
 #[test]
@@ -110,13 +104,13 @@ fn invalid_owner_without_guardian() {
 fn invalid_owner_with_guardian() {
     let account = initialize_account();
     let signatures = double_signature(0, 0, guardian_r, guardian_s);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 1');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 1');
     let signatures = double_signature(42, 99, guardian_r, guardian_s);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 2');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 2');
     let signatures = double_signature(wrong_owner_r, wrong_owner_s, guardian_r, guardian_s);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 3');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 3');
     let signatures = double_signature(guardian_r, guardian_s, guardian_r, guardian_s);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 4');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 4');
 }
 
 #[test]
@@ -124,13 +118,13 @@ fn invalid_owner_with_guardian() {
 fn valid_owner_with_invalid_guardian() {
     let account = initialize_account();
     let signatures = double_signature(owner_r, owner_s, 0, 0);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 1');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 1');
     let signatures = double_signature(owner_r, owner_s, 42, 69);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 2');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 2');
     let signatures = double_signature(owner_r, owner_s, wrong_guardian_r, wrong_guardian_s);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 3');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 3');
     let signatures = double_signature(owner_r, owner_s, owner_r, owner_s);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 4');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 4');
 }
 
 #[test]
@@ -138,17 +132,17 @@ fn valid_owner_with_invalid_guardian() {
 fn invalid_owner_with_invalid_guardian() {
     let account = initialize_account();
     let signatures = double_signature(0, 0, 0, 0);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 1');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 1');
     let signatures = double_signature(42, 99, 534, 123);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 2');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 2');
     let signatures = double_signature(wrong_owner_r, wrong_owner_s, 0, 0);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 3');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 3');
     let signatures = double_signature(0, 0, wrong_guardian_r, wrong_guardian_s);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 4');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 4');
     let signatures = double_signature(
         wrong_owner_r, wrong_owner_s, wrong_guardian_r, wrong_guardian_s
     );
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature 5');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature 5');
 }
 
 #[test]
@@ -157,7 +151,7 @@ fn invalid_owner_with_invalid_guardian() {
 fn invalid_empty_signature_without_guardian() {
     let account = initialize_account_without_guardian();
     let signatures = ArrayTrait::new();
-    is_valid_signature(account, message_hash, signatures);
+    account.is_valid_signature(message_hash, signatures);
 }
 
 #[test]
@@ -165,7 +159,7 @@ fn invalid_empty_signature_without_guardian() {
 fn invalid_signature_length_without_guardian() {
     let account = initialize_account_without_guardian();
     let signatures = double_signature(owner_r, owner_s, guardian_r, guardian_s);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature');
 }
 
 #[test]
@@ -174,7 +168,7 @@ fn invalid_signature_length_without_guardian() {
 fn invalid_empty_signature_with_guardian() {
     let account = initialize_account();
     let signatures = ArrayTrait::new();
-    is_valid_signature(account, message_hash, signatures);
+    account.is_valid_signature(message_hash, signatures);
 }
 
 #[test]
@@ -182,9 +176,9 @@ fn invalid_empty_signature_with_guardian() {
 fn invalid_signature_length_with_guardian() {
     let account = initialize_account();
     let signatures = single_signature(owner_r, owner_s);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature');
     let signatures = single_signature(guardian_r, guardian_s);
-    assert(!is_valid_signature(account, message_hash, signatures), 'invalid signature');
+    assert(!account.is_valid_signature(message_hash, signatures), 'invalid signature');
 }
 
 #[test]

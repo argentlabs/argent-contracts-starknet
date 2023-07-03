@@ -123,12 +123,8 @@ mod ArgentMultisig {
 
         fn is_valid_signature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
-        ) -> felt252 {
-            if self.is_valid_span_signature(hash, signatures.span()) {
-                ERC1271_VALIDATED
-            } else {
-                0
-            }
+        ) -> bool {
+            self.is_valid_span_signature(hash, signatures.span())
         }
     }
 
@@ -402,7 +398,8 @@ mod ArgentMultisig {
         fn isValidSignature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
-            Account::is_valid_signature(self, hash, signatures)
+            assert(Account::is_valid_signature(self, hash, signatures), 'argent/invalid-signature');
+            1
         }
     }
 

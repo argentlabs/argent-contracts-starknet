@@ -29,8 +29,7 @@ fn test_signature() {
     signature.append(signer_pubkey_1);
     signature.append(signer_1_signature_r);
     signature.append(signer_1_signature_s);
-    let valid_signature = multisig.is_valid_signature(message_hash, signature);
-    assert(valid_signature == ERC1271_VALIDATED, 'bad signature');
+    assert(multisig.is_valid_signature(message_hash, signature), 'bad signature');
 }
 
 #[test]
@@ -50,8 +49,7 @@ fn test_double_signature() {
     signature.append(signer_pubkey_2);
     signature.append(signer_2_signature_r);
     signature.append(signer_2_signature_s);
-    let valid_signature = multisig.is_valid_signature(message_hash, signature);
-    assert(valid_signature == ERC1271_VALIDATED, 'bad signature');
+    assert(multisig.is_valid_signature(message_hash, signature), 'bad signature');
 }
 
 #[test]

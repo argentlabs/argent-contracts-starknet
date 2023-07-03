@@ -39,8 +39,8 @@ describe("ArgentMultisig: Execute", function () {
 
     await expectEvent(transaction_hash, {
       from_address: account.address,
-      keys: ["TransactionExecuted"],
-      data: CallData.compile([transaction_hash, [[finalNumber]]]),
+      keys: ["TransactionExecuted", transaction_hash],
+      data: CallData.compile([[[finalNumber]]]),
     });
   });
 

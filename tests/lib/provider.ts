@@ -11,8 +11,8 @@ export class FastProvider extends SequencerProvider {
   }
 }
 
-export const baseUrl = "http://127.0.0.1:5050";
+// export const baseUrl = "http://127.0.0.1:5050";
 // export const baseUrl = constants.BaseUrl.SN_GOERLI;
-// export const baseUrl = "https://external.integration.starknet.io/";
+export const baseUrl = "https://external.integration.starknet.io/";
 
 export const provider = new FastProvider({ baseUrl });

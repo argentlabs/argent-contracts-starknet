@@ -212,9 +212,13 @@ mod ArgentAccount {
         }
 
         fn is_valid_signature(
-            self: @ContractState, hash: felt252, signatures: Array<felt252>
-        ) -> bool {
-            self.is_valid_span_signature(hash, signatures.span())
+            self: @ContractState, hash: felt252, signature: Array<felt252>
+        ) -> felt252 {
+            if self.is_valid_span_signature(hash, signature.span()) {
+                VALIDATED
+            } else {
+                0
+            }
         }
     }
 
@@ -543,7 +547,10 @@ mod ArgentAccount {
         fn isValidSignature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
-            assert(Account::is_valid_signature(self, hash, signatures), 'argent/invalid-signature');
+            assert(
+                Account::is_valid_signature(self, hash, signatures) == VALIDATED,
+                'argent/invalid-signature'
+            );
             1
         }
     }

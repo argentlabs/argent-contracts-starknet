@@ -20,8 +20,8 @@ mod ArgentAccount {
         IErc165DispatcherTrait, OutsideExecution, hash_outside_execution_message,
         assert_correct_declare_version, ERC165_IERC165_INTERFACE_ID,
         ERC165_IERC165_INTERFACE_ID_OLD, ERC165_ACCOUNT_INTERFACE_ID,
-        ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED,
-        IErc165, IOutsideExecution, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, IUpgradeable,
+        ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2, IErc165,
+        IOutsideExecution, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, IUpgradeable,
         IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait,
     };
 

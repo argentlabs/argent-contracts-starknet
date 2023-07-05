@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ec, num } from "starknet";
+import { ec, num, shortString } from "starknet";
 import { declareContract, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
@@ -9,7 +9,7 @@ describe("ArgentMultisig: signing", function () {
   before(async () => {
     multisigAccountClassHash = await declareContract("ArgentMultisig");
   });
-  const VALID = BigInt(0x56414c4944);
+  const VALID = BigInt(shortString.encodeShortString("VALID"));
 
   describe("is_valid_signature(hash, signatures)", function () {
     it("Should verify that a multisig owner has signed a message", async function () {

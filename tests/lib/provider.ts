@@ -8,10 +8,9 @@ export class FastProvider extends SequencerProvider {
 
   waitForTransaction(txHash: string, options = {}) {
     if (this.isDevnet) {
-      return super.waitForTransaction(txHash, { retryInterval: 250, ...options });
-    } else {
-      return super.waitForTransaction(txHash, options);
+      options = { retryInterval: 250, ...options };
     }
+    return super.waitForTransaction(txHash, options);
   }
 }
 

@@ -1,18 +1,25 @@
 import "dotenv/config";
-import { Account, constants } from "starknet";
-import { FastProvider, declareContract, deployAccount, loadContract, provider } from "../tests/lib";
-
-const address = process.env.ADDRESS as string;
-const privateKey = process.env.PRIVATE_KEY as string;
-const deployer = new Account(provider, address, privateKey);
-
-console.log("deployer address:", deployer.address);
+import { declareContract, deployAccount, deployer, loadContract, provider } from "../tests/lib";
 
 // console.log("deployer nonce:", await provider.getNonceForAddress(deployer.address));
 // console.log("deployer code:", await provider.getCode(deployer.address));
 
+// const recipient = "42";
+// const amount = uint256.bnToUint256(1);
+// const ethContract = await getEthContract();
+// console.log("ethContract:", ethContract);
+// ethContract.connect(deployer);
+// const { transaction_hash } = await ethContract.invoke("transfer", CallData.compile([recipient, 1, 0]));
+// console.log("hash", transaction_hash);
+// const receipt = await provider.waitForTransaction(transaction_hash);
+// console.log("receipt", receipt);
+
+// const first_retdata = [1];
+// const { transaction_hash } = await ethContract.transfer(recipient, amount);
+// console.log("hash:", transaction_hash);
+
 const argentAccountClassHash = await declareContract("ArgentAccount", true);
-// const argentAccountClassHash = "0x7d297762e06d3c29c9d66a8c72379c4486d3aa7c1ea8beeb11732ca795c8cc6";
+// const argentAccountClassHash = "0x30d1ee3c42995c53c3d0bdc2ab448bdf7af64c2004e813ad4661b5be2565b8d";
 console.log("ArgentAccount class hash:", argentAccountClassHash);
 
 console.log("Deploying new account");

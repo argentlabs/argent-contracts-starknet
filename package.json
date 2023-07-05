@@ -19,7 +19,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "starknet": "5.10.2"
+    "starknet": "5.14.1"
   },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.0",

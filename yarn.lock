@@ -78,13 +78,6 @@
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
-"@noble/curves@^0.8.2":
-  version "0.8.3"
-  resolved "https://registry.npmjs.org/@noble/curves/-/curves-0.8.3.tgz"
-  integrity sha512-OqaOf4RWDaCRuBKJLDURrgVxjLmneGsiCXGuzYB5y95YithZMA6w4uk34DHSm0rKMrrYiaeZj48/81EvaAScLQ==
-  dependencies:
-    "@noble/hashes" "1.3.0"
-
 "@noble/curves@~1.0.0":
   version "1.0.0"
   resolved "https://registry.npmjs.org/@noble/curves/-/curves-1.0.0.tgz"
@@ -956,9 +949,9 @@ merge2@^1.3.0, merge2@^1.4.1:
   resolved "https://registry.npmjs.org/merge2/-/merge2-1.4.1.tgz"
   integrity sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==
 
-micro-starknet@^0.2.1:
+micro-starknet@~0.2.1:
   version "0.2.3"
-  resolved "https://registry.npmjs.org/micro-starknet/-/micro-starknet-0.2.3.tgz"
+  resolved "https://registry.yarnpkg.com/micro-starknet/-/micro-starknet-0.2.3.tgz#ff4e7caf599255d2110e9c57bb483dfaf493ccb3"
   integrity sha512-6XBcC+GerlwJSR4iA0VaeXtS2wrayWFcA4PEzrJPMuFmWCaUtuGIq5K/DB5F/XgnL54/zl2Bxo690Lj7mYVA8A==
   dependencies:
     "@noble/curves" "~1.0.0"
@@ -1229,15 +1222,15 @@ slash@^3.0.0:
   resolved "https://registry.npmjs.org/slash/-/slash-3.0.0.tgz"
   integrity sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==
 
-starknet@5.10.2:
-  version "5.10.2"
-  resolved "https://registry.npmjs.org/starknet/-/starknet-5.10.2.tgz"
-  integrity sha512-KdZI6srNXrjicTj7+xwLasIchjXumfr5o28HFv4+7AtjyDtzzwzN7SrVQI936nylwl4hPywn38E0CDkKJGH1bg==
+starknet@^5.14.1:
+  version "5.14.1"
+  resolved "https://registry.yarnpkg.com/starknet/-/starknet-5.14.1.tgz#97fa5f99c4c24e42ffa315cfda525461d09d6087"
+  integrity sha512-EtJwQ6RmFsqSLGuMP+PRp4DwNsMYXy63HDnd1plLCdQKl3FMYajqNKf5RbDl03uGU0uE5ctGp+OW3firHuv6IA==
   dependencies:
-    "@noble/curves" "^0.8.2"
+    "@noble/curves" "~1.0.0"
     isomorphic-fetch "^3.0.0"
     lossless-json "^2.0.8"
-    micro-starknet "^0.2.1"
+    micro-starknet "~0.2.1"
     pako "^2.0.4"
     url-join "^4.0.1"
 

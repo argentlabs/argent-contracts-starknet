@@ -91,7 +91,7 @@ fn erc165_supported_interfaces() {
     assert(account.supports_interface(0x01ffc9a7), 'IERC165_OLD');
     assert(
         account
-            .supports_interface(0x32a450d0828523e159d5faa1f8bc3c94c05c819aeb09ec5527cd8795b5b5067),
+            .supports_interface(0x2ceccef7f994940b3962a6c67e0ba4fcd37df7d131417c604f91e03caecc1cd),
         'IACCOUNT'
     );
     assert(account.supports_interface(0xa66bd575), 'IACCOUNT_OLD_1');

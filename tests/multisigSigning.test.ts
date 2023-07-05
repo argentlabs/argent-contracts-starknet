@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { num } from "starknet";
+import { num, shortString } from "starknet";
 import { declareContract, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
@@ -9,13 +9,13 @@ describe("ArgentMultisig: signing", function () {
   before(async () => {
     multisigAccountClassHash = await declareContract("ArgentMultisig");
   });
+  const VALID = BigInt(shortString.encodeShortString("VALID"));
 
   describe("is_valid_signature(hash, signatures)", function () {
     it("Should verify that a multisig owner has signed a message", async function () {
       const threshold = 1;
       const signersLength = 1;
       const messageHash = num.toHex(424242);
-      const ERC1271_VALIDATED = 0x1626ba7e;
 
       const { accountContract, signers, keys } = await deployMultisig(
         multisigAccountClassHash,
@@ -25,16 +25,15 @@ describe("ArgentMultisig: signing", function () {
 
       const [r, s] = keys[0].signHash(messageHash);
 
-      const validSignature = await accountContract.is_valid_signature(BigInt(messageHash), [signers[0], r, s]);
+      const validSignatureResult = await accountContract.is_valid_signature(BigInt(messageHash), [signers[0], r, s]);
 
-      expect(validSignature).to.be.true;
+      expect(validSignatureResult).to.equal(VALID);
     });
 
     it("Should verify numerous multisig owners have signed a message", async function () {
       const threshold = 2;
       const signersLength = 2;
       const messageHash = num.toHex(424242);
-      const ERC1271_VALIDATED = 0x1626ba7e;
 
       const { accountContract, signers, keys } = await deployMultisig(
         multisigAccountClassHash,
@@ -45,7 +44,7 @@ describe("ArgentMultisig: signing", function () {
       const [r1, s1] = keys[0].signHash(messageHash);
       const [r2, s2] = keys[1].signHash(messageHash);
 
-      const validSignature = await accountContract.is_valid_signature(BigInt(messageHash), [
+      const validSignatureResult = await accountContract.is_valid_signature(BigInt(messageHash), [
         signers[0],
         r1,
         s1,
@@ -54,7 +53,7 @@ describe("ArgentMultisig: signing", function () {
         s2,
       ]);
 
-      expect(validSignature).to.be.true;
+      expect(validSignatureResult).to.equal(VALID);
     });
 
     it("Should verify that signatures are in the correct order", async function () {

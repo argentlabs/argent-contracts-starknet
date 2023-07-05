@@ -20,8 +20,8 @@ mod ArgentAccount {
         IErc165DispatcherTrait, OutsideExecution, hash_outside_execution_message,
         assert_correct_declare_version, ERC165_IERC165_INTERFACE_ID,
         ERC165_IERC165_INTERFACE_ID_OLD, ERC165_ACCOUNT_INTERFACE_ID,
-        ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2, ERC1271_VALIDATED,
-        IErc165, IOutsideExecution, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, IUpgradeable,
+        ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2, IErc165,
+        IOutsideExecution, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, IUpgradeable,
         IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait,
     };
 
@@ -212,9 +212,13 @@ mod ArgentAccount {
         }
 
         fn is_valid_signature(
-            self: @ContractState, hash: felt252, signatures: Array<felt252>
-        ) -> bool {
-            self.is_valid_span_signature(hash, signatures.span())
+            self: @ContractState, hash: felt252, signature: Array<felt252>
+        ) -> felt252 {
+            if self.is_valid_span_signature(hash, signature.span()) {
+                VALIDATED
+            } else {
+                0
+            }
         }
     }
 
@@ -543,7 +547,10 @@ mod ArgentAccount {
         fn isValidSignature(
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
-            assert(Account::is_valid_signature(self, hash, signatures), 'argent/invalid-signature');
+            assert(
+                Account::is_valid_signature(self, hash, signatures) == VALIDATED,
+                'argent/invalid-signature'
+            );
             1
         }
     }

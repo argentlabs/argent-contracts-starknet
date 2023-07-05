@@ -15,7 +15,7 @@ import {
   randomKeyPair,
 } from "./lib";
 
-describe.only("ArgentAccount", function () {
+describe("ArgentAccount", function () {
   let argentAccountClassHash: string;
 
   before(async () => {

@@ -15,3 +15,5 @@ export class FastProvider extends SequencerProvider {
 }
 
 export const provider = new FastProvider({ baseUrl: process.env.BASE_URL || "http://127.0.0.1:5050" });
+
+console.log("Provider:", provider.baseUrl);

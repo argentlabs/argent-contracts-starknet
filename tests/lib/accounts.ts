@@ -1,5 +1,13 @@
 import { expect } from "chai";
-import { Account, CallData, Contract, InvokeTransactionReceiptResponse, RawCalldata, hash, num } from "starknet";
+import {
+  Account,
+  CallData,
+  Contract,
+  InvokeTransactionReceiptResponse,
+  RawCalldata,
+  hash,
+  num,
+} from "starknet";
 import { getEthContract, loadContract } from "./contracts";
 import { mintEth } from "./devnet";
 import { provider } from "./provider";
@@ -33,6 +41,8 @@ export const deployer = (() => {
   }
   throw new Error("Missing deployer address or private key, please set ADDRESS and PRIVATE_KEY env variables.");
 })();
+
+console.log("Deployer:", deployer.address);
 
 export async function deployOldAccount(
   proxyClassHash: string,
@@ -137,13 +147,14 @@ export async function upgradeAccount(
   return await provider.waitForTransaction(transferTxHash);
 }
 
-export async function fundAccount(address: string, amount: number | bigint): Promise<void> {
+export async function fundAccount(recipient: string, amount: number | bigint): Promise<void> {
   if (provider.isDevnet) {
-    return await mintEth(address);
+    return await mintEth(recipient);
   }
   const ethContract = await getEthContract();
   ethContract.connect(deployer);
-  return await ethContract.transfer(address, amount);
+
+  await ethContract.invoke("transfer", CallData.compile([recipient, amount, 0]));
 }
 
 export enum EscapeStatus {

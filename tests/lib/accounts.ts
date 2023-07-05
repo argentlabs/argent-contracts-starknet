@@ -1,13 +1,5 @@
 import { expect } from "chai";
-import {
-  Account,
-  CallData,
-  Contract,
-  InvokeTransactionReceiptResponse,
-  RawCalldata,
-  hash,
-  num,
-} from "starknet";
+import { Account, CallData, Contract, InvokeTransactionReceiptResponse, RawCalldata, hash, num } from "starknet";
 import { getEthContract, loadContract } from "./contracts";
 import { mintEth } from "./devnet";
 import { provider } from "./provider";
@@ -85,7 +77,7 @@ async function deployAccountInner(
   const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian?.publicKey ?? 0n });
 
   const contractAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, constructorCalldata, 0);
-  await fundAccount(contractAddress, 1e16);
+  await fundAccount(contractAddress, 1e15); // 0.001 ETH
   const account = new Account(provider, contractAddress, owner, "1");
   if (guardian) {
     account.signer = new ArgentSigner(owner, guardian);

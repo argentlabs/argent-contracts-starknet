@@ -1,9 +1,13 @@
-import { SequencerProvider, constants } from "starknet";
+import { SequencerProvider } from "starknet";
 
 // Polls quickly for a local network
 export class FastProvider extends SequencerProvider {
+  get isDevnet() {
+    return this.baseUrl.startsWith("http://127.0.0.1:");
+  }
+
   waitForTransaction(txHash: string, options = {}) {
-    if (this.baseUrl.startsWith("http://127.0.0.1:")) {
+    if (this.isDevnet) {
       return super.waitForTransaction(txHash, { retryInterval: 250, ...options });
     } else {
       return super.waitForTransaction(txHash, options);
@@ -11,8 +15,4 @@ export class FastProvider extends SequencerProvider {
   }
 }
 
-// export const baseUrl = "http://127.0.0.1:5050";
-export const baseUrl = constants.BaseUrl.SN_GOERLI;
-// export const baseUrl = "https://external.integration.starknet.io/";
-
-export const provider = new FastProvider({ baseUrl });
+export const provider = new FastProvider({ baseUrl: process.env.BASE_URL || "http://127.0.0.1:5050" });

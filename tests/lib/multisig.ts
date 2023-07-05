@@ -1,14 +1,5 @@
 import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num } from "starknet";
-import {
-  KeyPair,
-  MultisigSigner,
-  deployer,
-  fundAccount,
-  loadContract,
-  provider,
-  randomKeyPair,
-  randomKeyPairs,
-} from ".";
+import { KeyPair, MultisigSigner, loadContract, mintEth, provider, randomKeyPair, randomKeyPairs } from ".";
 
 export interface MultisigWallet {
   account: Account;
@@ -31,13 +22,13 @@ export async function deployMultisig(
   const addressSalt = num.toHex(randomKeyPair().privateKey);
 
   const contractAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
-  await fundAccount(contractAddress);
+  await mintEth(contractAddress);
 
   const deploymentSigner = new MultisigSigner(keys.filter((_, i) => deploymentIndexes.includes(i)));
   const account = new Account(provider, contractAddress, deploymentSigner, "1");
 
   const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt });
-  const receipt = await deployer.waitForTransaction(transaction_hash);
+  const receipt = await provider.waitForTransaction(transaction_hash);
 
   const accountContract = await loadContract(account.address);
   account.signer = new MultisigSigner(keys.slice(0, threshold));

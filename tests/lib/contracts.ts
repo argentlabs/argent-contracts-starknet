@@ -21,7 +21,7 @@ export function removeFromCache(contractName: string) {
 }
 
 // Could extends Account to add our specific fn but that's too early.
-export async function declareContract(contractName: string, wait = true): Promise<string> {
+export async function declareContract(contractName: string, wait = false): Promise<string> {
   console.log(`\tDeclaring ${contractName}...`);
   const cachedClass = classHashCache[contractName];
   if (cachedClass) {
@@ -47,6 +47,6 @@ export async function loadContract(contract_address: string) {
   }
   // TODO WARNING THIS IS A TEMPORARY FIX WHILE WE WAIT FOR SNJS TO BE UPDATED
   // Allows to pull back the function from one level down
-  const parsedAbi = abi.flatMap((e) => e.type == "interface" ? e.items : e);
+  const parsedAbi = abi.flatMap((e) => (e.type == "interface" ? e.items : e));
   return new Contract(parsedAbi, contract_address, provider);
 }

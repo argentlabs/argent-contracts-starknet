@@ -1,7 +1,7 @@
 name: Integration CI
 
 env:
-  ARCHIVE_LINK: https://github.com/starkware-libs/cairo/releases/download/v2.0.0-rc6/release-x86_64-unknown-linux-musl.tar.gz
+  ARCHIVE_LINK: https://github.com/starkware-libs/cairo/releases/download/v2.0.0/release-x86_64-unknown-linux-musl.tar.gz
   ARCHIVE_NAME: cairo_binaries.zip
 
 on: push

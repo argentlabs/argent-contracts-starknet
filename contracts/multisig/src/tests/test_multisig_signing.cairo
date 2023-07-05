@@ -5,6 +5,7 @@ use multisig::tests::{
     ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
     initialize_multisig_with_one_signer, signer_pubkey_1, signer_pubkey_2
 };
+use starknet::VALIDATED;
 
 const message_hash: felt252 = 424242;
 
@@ -18,8 +19,6 @@ const signer_2_signature_r: felt252 =
 const signer_2_signature_s: felt252 =
     3047778680024311010844701802416003052323696285920266547201663937333620527443;
 
-use lib::ERC1271_VALIDATED;
-
 #[test]
 #[available_gas(20000000)]
 fn test_signature() {
@@ -29,7 +28,7 @@ fn test_signature() {
     signature.append(signer_pubkey_1);
     signature.append(signer_1_signature_r);
     signature.append(signer_1_signature_s);
-    assert(multisig.is_valid_signature(message_hash, signature), 'bad signature');
+    assert(multisig.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
 }
 
 #[test]
@@ -49,7 +48,7 @@ fn test_double_signature() {
     signature.append(signer_pubkey_2);
     signature.append(signer_2_signature_r);
     signature.append(signer_2_signature_s);
-    assert(multisig.is_valid_signature(message_hash, signature), 'bad signature');
+    assert(multisig.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
 }
 
 #[test]

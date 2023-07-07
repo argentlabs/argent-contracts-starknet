@@ -26,7 +26,7 @@ export const deployer = (() => {
   if (provider.isDevnet) {
     const devnetAddress = "0x347be35996a21f6bf0623e75dbce52baba918ad5ae8d83b6f416045ab22961a";
     const devnetPrivateKey = "0xbdd640fb06671ad11c80317fa3b1799d";
-    return new Account(provider, address || devnetAddress, privateKey || devnetPrivateKey);
+    return new Account(provider, devnetAddress, devnetPrivateKey);
   }
   if (address && privateKey) {
     return new Account(provider, address, privateKey);

@@ -24,7 +24,6 @@ export function removeFromCache(contractName: string) {
 export async function declareContract(contractName: string): Promise<string> {
   const cachedClass = classHashCache[contractName];
   if (cachedClass) {
-    console.log(`\t${contractName} declared from cache`);
     return cachedClass;
   }
   const contract: CompiledSierra = json.parse(readFileSync(`./tests/fixtures/${contractName}.json`).toString("ascii"));
@@ -36,9 +35,7 @@ export async function declareContract(contractName: string): Promise<string> {
   if (transaction_hash) {
     await provider.waitForTransaction(transaction_hash);
     console.log(`\t${contractName} declared`);
-  } else {
-    console.log(`\t${contractName} already declared`);
-  }
+  } 
   classHashCache[contractName] = class_hash;
   return class_hash;
 }

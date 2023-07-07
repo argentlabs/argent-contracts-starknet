@@ -35,7 +35,7 @@ export async function declareContract(contractName: string): Promise<string> {
   if (transaction_hash) {
     await provider.waitForTransaction(transaction_hash);
     console.log(`\t${contractName} declared`);
-  } 
+  }
   classHashCache[contractName] = class_hash;
   return class_hash;
 }

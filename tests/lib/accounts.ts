@@ -20,14 +20,13 @@ export interface ArgentWalletWithGuardianAndBackup extends ArgentWalletWithGuard
 }
 
 export const deployer = (() => {
-  const address = process.env.ADDRESS;
-  const privateKey = process.env.PRIVATE_KEY;
-
   if (provider.isDevnet) {
     const devnetAddress = "0x347be35996a21f6bf0623e75dbce52baba918ad5ae8d83b6f416045ab22961a";
     const devnetPrivateKey = "0xbdd640fb06671ad11c80317fa3b1799d";
     return new Account(provider, devnetAddress, devnetPrivateKey);
   }
+  const address = process.env.ADDRESS;
+  const privateKey = process.env.PRIVATE_KEY;
   if (address && privateKey) {
     return new Account(provider, address, privateKey);
   }

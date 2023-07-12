@@ -1,8 +1,8 @@
-import { ExecutionResources, InvokeFunctionResponse, num, Sequencer } from "starknet";
+import { ExecutionResources, InvokeFunctionResponse, num, TransactionTraceResponse } from "starknet";
 import { provider } from "./provider";
 
 export async function profileGasUsage({ transaction_hash: txHash }: InvokeFunctionResponse) {
-  const trace: Sequencer.TransactionTraceResponse = await provider.getTransactionTrace(txHash);
+  const trace: TransactionTraceResponse = await provider.getTransactionTrace(txHash);
   const receipt = await provider.waitForTransaction(txHash);
   const actualFee = num.hexToDecimalString(receipt.actual_fee as string) as unknown as number;
 

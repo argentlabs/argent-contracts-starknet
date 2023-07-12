@@ -97,10 +97,7 @@ abstract class RawSigner implements SignerInterface {
 }
 
 export class ArgentSigner extends RawSigner {
-  constructor(
-    public owner: KeyPair = randomKeyPair(),
-    public guardian?: KeyPair,
-  ) {
+  constructor(public owner: KeyPair = randomKeyPair(), public guardian?: KeyPair) {
     super();
   }
 

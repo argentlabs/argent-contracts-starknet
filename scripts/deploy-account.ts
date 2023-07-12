@@ -7,7 +7,7 @@ const testDappClassHash = await declareContract("TestDapp", false);
 console.log("TestDapp class hash:", testDappClassHash);
 
 console.log("Deploying new account");
-const {account, owner, guardian } = await deployAccount(argentAccountClassHash);
+const { account, owner, guardian } = await deployAccount(argentAccountClassHash);
 console.log("Account address:", account.address);
 console.log("Account owner private key:", owner.privateKey);
 console.log("Account guardian private key:", guardian.privateKey);

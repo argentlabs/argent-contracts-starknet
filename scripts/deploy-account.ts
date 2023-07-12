@@ -7,11 +7,10 @@ const testDappClassHash = await declareContract("TestDapp", false);
 console.log("TestDapp class hash:", testDappClassHash);
 
 console.log("Deploying new account");
-const wallet = await deployAccount(argentAccountClassHash);
-const { account } = wallet;
+const {account, owner, guardian } = await deployAccount(argentAccountClassHash);
 console.log("Account address:", account.address);
-console.log("Account owner private key:", wallet.owner.privateKey);
-console.log("Account guardian private key:", wallet.guardian.privateKey);
+console.log("Account owner private key:", owner.privateKey);
+console.log("Account guardian private key:", guardian.privateKey);
 
 console.log("Deploying new test dapp");
 const { contract_address } = await deployer.deployContract({ classHash: testDappClassHash });

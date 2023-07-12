@@ -33,11 +33,27 @@ export async function declareContract(contractName: string, wait = true): Promis
   }
   const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
   if (wait && transaction_hash) {
-    await provider.waitForTransaction(transaction_hash);
+    await try_wait(transaction_hash);
     console.log(`\t${contractName} declared`);
   }
   classHashCache[contractName] = class_hash;
   return class_hash;
+}
+
+async function try_wait(transaction_hash: string, loop = 0):Promise<void> {
+  try {
+    await provider.waitForTransaction(transaction_hash);
+    return;
+  } catch (e) {
+    if (loop >= 6) {
+      console.log(e);
+      process.exit(1);
+    } else {
+      console.log(`\tSleeping ${loop}`);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return await try_wait(transaction_hash, loop + 1);
+    }
+  }
 }
 
 export async function loadContract(contract_address: string) {

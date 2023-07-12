@@ -1,9 +1,9 @@
 import "dotenv/config";
 import { declareContract, deployAccount, deployer, loadContract, provider } from "../tests/lib";
 
-const argentAccountClassHash = await declareContract("ArgentAccount", false);
+const argentAccountClassHash = await declareContract("ArgentAccount", true);
 console.log("ArgentAccount class hash:", argentAccountClassHash);
-const testDappClassHash = await declareContract("TestDapp", false);
+const testDappClassHash = await declareContract("TestDapp", true);
 console.log("TestDapp class hash:", testDappClassHash);
 
 console.log("Deploying new account");

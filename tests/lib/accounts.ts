@@ -1,5 +1,14 @@
 import { expect } from "chai";
-import { Account, CallData, Contract, InvokeTransactionReceiptResponse, RawCalldata, hash, num } from "starknet";
+import {
+  Account,
+  CallData,
+  Contract,
+  InvokeTransactionReceiptResponse,
+  RawCalldata,
+  hash,
+  num,
+  uint256,
+} from "starknet";
 import { getEthContract, loadContract } from "./contracts";
 import { mintEth } from "./devnet";
 import { provider } from "./provider";
@@ -145,7 +154,8 @@ export async function fundAccount(recipient: string, amount: number | bigint): P
   const ethContract = await getEthContract();
   ethContract.connect(deployer);
 
-  await ethContract.invoke("transfer", CallData.compile([recipient, amount, 0]));
+  const bn = uint256.bnToUint256(amount);
+  await ethContract.invoke("transfer", CallData.compile([recipient, bn.low, bn.high]));
 }
 
 export enum EscapeStatus {

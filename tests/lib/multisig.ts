@@ -1,15 +1,21 @@
-import { Account, CallData, Contract, GetTransactionReceiptResponse, hash } from "starknet";
-import { deployer } from "./accounts";
-import { loadContract } from "./contracts";
-import { fundAccount } from "./devnet";
-import { provider } from "./provider";
-import { KeyPair, MultisigSigner, randomKeyPair, randomKeyPairs } from "./signers";
+import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num } from "starknet";
+import {
+  KeyPair,
+  MultisigSigner,
+  deployer,
+  fundAccount,
+  loadContract,
+  provider,
+  randomKeyPair,
+  randomKeyPairs,
+} from ".";
 
 export interface MultisigWallet {
   account: Account;
   accountContract: Contract;
   keys: KeyPair[];
   signers: bigint[]; // public keys
+  threshold: bigint;
   receipt: GetTransactionReceiptResponse;
 }
 
@@ -22,7 +28,7 @@ export async function deployMultisig(
   const keys = sortedKeyPairs(signersLength);
   const signers = keysToSigners(keys);
   const constructorCalldata = CallData.compile({ threshold, signers });
-  const addressSalt = randomKeyPair().privateKey;
+  const addressSalt = num.toHex(randomKeyPair().privateKey);
 
   const contractAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
   await fundAccount(contractAddress);
@@ -36,10 +42,13 @@ export async function deployMultisig(
   const accountContract = await loadContract(account.address);
   account.signer = new MultisigSigner(keys.slice(0, threshold));
   accountContract.connect(account);
-  return { account, accountContract, keys, signers, receipt };
+  return { account, accountContract, keys, signers, receipt, threshold: BigInt(threshold) };
 }
 
-const sortedKeyPairs = (length: number) =>
-  randomKeyPairs(length).sort((a, b) => (BigInt(a.publicKey) < BigInt(b.publicKey) ? -1 : 1));
+export async function deployMultisig1_3(classHash: string, deploymentIndexes: number[] = [0]): Promise<MultisigWallet> {
+  return deployMultisig(classHash, 1, 3, deploymentIndexes);
+}
+
+const sortedKeyPairs = (length: number) => randomKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));
 
 export const keysToSigners = (keys: KeyPair[]) => keys.map(({ publicKey }) => publicKey).map(BigInt);

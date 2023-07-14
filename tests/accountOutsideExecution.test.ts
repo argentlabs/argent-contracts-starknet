@@ -164,7 +164,7 @@ describe("ArgentAccount: outside execution", function () {
     const outsideExecutionCall = await getOutsideExecutionCall(
       outsideExecution,
       account.address,
-      new ArgentSigner(guardian?.privateKey),
+      new ArgentSigner(guardian),
     );
 
     await waitForTransaction(await deployer.execute(outsideExecutionCall));

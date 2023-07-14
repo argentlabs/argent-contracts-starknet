@@ -14,6 +14,7 @@ export * from "./accounts";
 export * from "./contracts";
 export * from "./devnet";
 export * from "./expectations";
+export * from "./multisig";
 export * from "./outsideExecution";
 export * from "./provider";
 export * from "./signers";

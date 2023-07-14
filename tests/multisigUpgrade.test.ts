@@ -1,13 +1,11 @@
 import { expect } from "chai";
-import { Contract } from "starknet";
-import { declareContract, deployer, loadContract, provider, upgradeAccount } from "./lib";
+import { declareContract, provider, upgradeAccount } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: upgrade", function () {
   let argentMultisig: string;
   let argentMultisigFutureClassHash: string;
   let testDappClassHash: string;
-  let testDapp: Contract;
 
   before(async () => {
     argentMultisig = await declareContract("ArgentMultisig");
@@ -15,10 +13,6 @@ describe("ArgentMultisig: upgrade", function () {
     // Done to be able to test upgradability
     argentMultisigFutureClassHash = await declareContract("ArgentMultisigFutureVersion");
     testDappClassHash = await declareContract("TestDapp");
-    const { contract_address } = await deployer.deployContract({
-      classHash: testDappClassHash,
-    });
-    testDapp = await loadContract(contract_address);
   });
 
   it("Upgrade from current version to FutureVersionMultisig", async function () {

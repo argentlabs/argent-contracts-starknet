@@ -26,7 +26,7 @@ jobs:
         working-directory: ./cairo
         run: |
           curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
-          tar -xvf $ARCHIVE_NAME 
+          tar -xvf $ARCHIVE_NAME
           mkdir -p target/release
           mv cairo/bin/* target/release
 

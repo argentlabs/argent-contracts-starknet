@@ -1,4 +1,4 @@
 0x45bb3b296122454fb31d45c48da6143df12bcf58311dcd75193df42d79f8dd2: 0.3.0-rc2 (goerli-1, goerli-2)
 0x5ff858f178257126353d03db2e50410c7cb399d9fc68b67ffe127d9b8b2a33c: 0.3.0-rc2 tweaked with version 0.3.99 (goerli-1, goerli-2)
 
-cairo 0 clash hashes stored here https://www.notion.so/argenthq/11e1b194b0304124b05f6118e450e553?v=46e893ed521f4850ba801d1747cc84ef
+cairo 0 clash hashes stored here https://argenthq.notion.site/argenthq/11e1b194b0304124b05f6118e450e553?v=46e893ed521f4850ba801d1747cc84ef

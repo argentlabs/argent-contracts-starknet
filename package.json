@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "deploy": "make && ts-node scripts/deploy-account.ts",
+    "deploy": "scarb --release build && ts-node scripts/deploy-account.ts",
     "test": "scarb --release && tsc && mocha tests/*.test.ts",
     "test:multisig": "scarb --release && tsc && mocha tests/multisig*.test.ts",
     "test:ci": "scarb --release build && tsc && mocha tests/*.test.ts --forbid-only --forbid-pending",
@@ -14,7 +14,7 @@
     "lint:check": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "profile": "ts-node scripts/profile-account.ts"
+    "profile": "scarb --release && ts-node scripts/profile-account.ts"
   },
   "author": "",
   "license": "ISC",

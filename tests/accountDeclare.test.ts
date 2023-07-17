@@ -36,7 +36,7 @@ describe("ArgentAccount: declare", function () {
 
   it("Expect the account to be able to declare a Cairo contract version2 (SIERRA)", async function () {
     const testDappClassHash = await declareContract("TestDapp");
-    let compiledClassHash = await provider.getCompiledClassByClassHash(testDappClassHash);
+    const compiledClassHash = await provider.getCompiledClassByClassHash(testDappClassHash);
     expect(Promise.resolve(compiledClassHash)).to.exist;
   });
 });

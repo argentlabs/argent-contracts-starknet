@@ -21,7 +21,7 @@ import {
   randomKeyPair,
   setTime,
   upgradeAccount,
-  declareContractFixtures
+  declareContractFixtures,
 } from "./lib";
 
 describe("ArgentAccount: escape mechanism", function () {

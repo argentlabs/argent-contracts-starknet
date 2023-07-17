@@ -9,7 +9,7 @@ import {
   loadContract,
   provider,
   upgradeAccount,
-  declareContractFixtures
+  declareContractFixtures,
 } from "./lib";
 
 describe("ArgentAccount: upgrade", function () {

@@ -3,3 +3,4 @@ venv
 target
 dist
 .github
+tests/fixtures

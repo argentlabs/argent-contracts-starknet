@@ -6,15 +6,15 @@
   "scripts": {
     "build": "tsc",
     "deploy": "scarb --release build && ts-node scripts/deploy-account.ts",
-    "test": "scarb --release && tsc && mocha tests/*.test.ts",
-    "test:multisig": "scarb --release && tsc && mocha tests/multisig*.test.ts",
+    "test": "scarb --release build && tsc && mocha tests/*.test.ts",
+    "test:multisig": "scarb --release build && tsc && mocha tests/multisig*.test.ts",
     "test:ci": "scarb --release build && tsc && mocha tests/*.test.ts --forbid-only --forbid-pending",
-    "test:list": "scarb --release && tsc && mocha --dry-run tests/*.test.ts",
+    "test:list": "scarb --release build && tsc && mocha --dry-run tests/*.test.ts",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "profile": "scarb --release && ts-node scripts/profile-account.ts"
+    "profile": "scarb --release build  && ts-node scripts/profile-account.ts"
   },
   "author": "",
   "license": "ISC",

@@ -25,18 +25,18 @@ export function removeFromCache(contractName: string) {
 }
 
 // Could extends Account to add our specific fn but that's too early.
-export async function declareContract(contractName: string, wait = true): Promise<string> {
+export async function declareContract(contractName: string, wait = true, folder: string = contractsFolder): Promise<string> {
   const cachedClass = classHashCache[contractName];
   if (cachedClass) {
     return cachedClass;
   }
   const contract: CompiledSierra = json.parse(
-    readFileSync(`${contractsFolder}${contractsPrefix}${contractName}.sierra.json`).toString("ascii"),
+    readFileSync(`${folder}${contractsPrefix}${contractName}.sierra.json`).toString("ascii"),
   );
   const payload: DeclareContractPayload = { contract };
   if ("sierra_program" in contract) {
     payload.casm = json.parse(
-      readFileSync(`${contractsFolder}${contractsPrefix}${contractName}.casm.json`).toString("ascii"),
+      readFileSync(`${folder}${contractsPrefix}${contractName}.casm.json`).toString("ascii"),
     );
   }
   const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
@@ -48,24 +48,9 @@ export async function declareContract(contractName: string, wait = true): Promis
   return class_hash;
 }
 
-// Could extends Account to add our specific fn but that's too early.
+
 export async function declareContractFixtures(contractName: string, wait = true): Promise<string> {
-  const contract: CompiledSierra = json.parse(
-    readFileSync(`${fixturesFolder}${contractsPrefix}${contractName}.sierra.json`).toString("ascii"),
-  );
-  const payload: DeclareContractPayload = { contract };
-  if ("sierra_program" in contract) {
-    payload.casm = json.parse(
-      readFileSync(`${fixturesFolder}${contractsPrefix}${contractName}.casm.json`).toString("ascii"),
-    );
-  }
-  const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
-  if (wait && transaction_hash) {
-    await provider.waitForTransaction(transaction_hash);
-    console.log(`\t${contractName} declared`);
-  }
-  classHashCache[contractName] = class_hash;
-  return class_hash;
+  return declareContract(contractName, wait, fixturesFolder);
 }
 
 export async function loadContract(contract_address: string) {

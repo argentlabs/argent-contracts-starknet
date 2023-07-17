@@ -18,7 +18,7 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v ${{ env.SCARB_VERSION }}
 
       - name: Step 3 - Make sure we can build
-        run: scarb build
+        run: scarb --release build
 
       - name: Step 4 - Run all cairo tests
         run: scarb test

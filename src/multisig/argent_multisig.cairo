@@ -1,5 +1,6 @@
-
-use argent_contracts::multisig::interface::{IArgentMultisig}; // For some reason (fn colliding with same name) I have to import it here and use super
+use argent_contracts::multisig::interface::{
+    IArgentMultisig
+}; // For some reason (fn colliding with same name) I have to import it here and use super
 #[starknet::contract]
 mod ArgentMultisig {
     use array::{ArrayTrait, SpanTrait};
@@ -14,11 +15,24 @@ mod ArgentMultisig {
     };
 
     use argent_contracts::library::{
-        account::{IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2 }, asserts::{assert_correct_tx_version, assert_no_self_call, assert_caller_is_null,
-        assert_only_self, assert_correct_declare_version}, calls::execute_multicall, version::Version, erc165::{IErc165, IErc165LibraryDispatcher,
-        IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID, ERC165_IERC165_INTERFACE_ID_OLD, }, 
-        outside_execution::{OutsideExecution, IOutsideExecution, hash_outside_execution_message, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID},
-        upgrade::{IUpgradeable,IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
+        account::{
+            IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
+            ERC165_ACCOUNT_INTERFACE_ID_OLD_2
+        },
+        asserts::{
+            assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
+            assert_correct_declare_version
+        },
+        calls::execute_multicall, version::Version,
+        erc165::{
+            IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
+            ERC165_IERC165_INTERFACE_ID_OLD,
+        },
+        outside_execution::{
+            OutsideExecution, IOutsideExecution, hash_outside_execution_message,
+            ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
+        },
+        upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
     use argent_contracts::multisig::signer_signature::{deserialize_array_signer_signature};
     use argent_contracts::multisig::interface::{IDeprecatedArgentMultisig};

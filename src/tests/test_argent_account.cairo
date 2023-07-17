@@ -9,8 +9,10 @@ use starknet::{
 };
 
 use argent_contracts::account::argent_account::ArgentAccount;
-use argent_contracts::tests::setup::account_test_setup::{ITestArgentAccountDispatcherTrait, owner_pubkey, wrong_owner_pubkey,
-        initialize_account_with, initialize_account, initialize_account_without_guardian};
+use argent_contracts::tests::setup::account_test_setup::{
+    ITestArgentAccountDispatcherTrait, owner_pubkey, wrong_owner_pubkey, initialize_account_with,
+    initialize_account, initialize_account_without_guardian
+};
 
 const new_owner_pubkey: felt252 = 0xa7da05a4d664859ccd6e567b935cdfbfe3018c7771cb980892ef38878ae9bc;
 const new_owner_r: felt252 = 0x3e242301b001c97a5be2b3a165fae7abf72027cb8b1ca4713580d52d9ff008e;

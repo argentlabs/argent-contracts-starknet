@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { declareContract, provider, upgradeAccount } from "./lib";
+import { declareContract, provider, upgradeAccount, declareContractFixtures } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: upgrade", function () {
@@ -11,7 +11,7 @@ describe("ArgentMultisig: upgrade", function () {
     argentMultisig = await declareContract("ArgentMultisig");
     // This is the same as Argent Multisig but with a different version (to have another class hash)
     // Done to be able to test upgradability
-    argentMultisigFutureClassHash = await declareContract("ArgentMultisigFutureVersion");
+    argentMultisigFutureClassHash = await declareContractFixtures("ArgentMultisigFutureVersion");
     testDappClassHash = await declareContract("TestDapp");
   });
 

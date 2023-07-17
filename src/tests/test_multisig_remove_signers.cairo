@@ -1,9 +1,6 @@
 use array::ArrayTrait;
 
-use multisig::tests::{
-    initialize_multisig, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3,
-    ITestArgentMultisigDispatcherTrait
-};
+use argent_contracts::tests::setup::multisig_test_setup::{ initialize_multisig, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3, ITestArgentMultisigDispatcherTrait};
 
 #[test]
 #[available_gas(20000000)]

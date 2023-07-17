@@ -15,7 +15,7 @@ In addition to the main `__execute__` entry point used by the Starknet protocol,
 Normal operations of the wallet (calling external contracts via `__execute__` or `execute_from_outside`, `change_owner`, `change_guardian`, `change_guardian_backup`, `cancel_escape`, `upgrade`) require the approval of the `owner` and a `guardian` to be executed.
 
 Each party alone can trigger the `escape` mode (a.k.a. recovery) on the wallet if the other party is not cooperating or lost. An escape takes 7 days before being active, after which the non-cooperating party can be replaced. The escape expires 7 days after being active.
- 
+
 The wallet is asymmetric in favor of the `owner` who can override an escape triggered by a `guardian`.
 
 A triggered escape can always be cancelled with the approval of the `owner` and a `guardian`.
@@ -24,17 +24,17 @@ We assume that the `owner` key is backed up such that the probability of the `ow
 
 Under this model we can build a simple yet highly secure non-custodial wallet.
 
-To enable that model to evolve the account can be upgraded. Upgrading the wallet to a new implementation requires the approval of both the `owner` and a `guardian`. At the end of the upgrade, a call to `execute_after_upgrade` is made on the new implementation of the account to perform some maintenance if needed (e.g. migrate state).  
+To enable that model to evolve the account can be upgraded. Upgrading the wallet to a new implementation requires the approval of both the `owner` and a `guardian`. At the end of the upgrade, a call to `execute_after_upgrade` is made on the new implementation of the account to perform some maintenance if needed (e.g. migrate state).
 
-| Action                  | Owner  | Guardian | Comments                                  |
-| ----------------------- | ------ | -------- | ----------------------------------------- |
-| Multicall               | X      | X        |                                           |
-| Change Owner            | X      | X        |                                           |
-| Change Guardian         | X      | X        |                                           |
-| Change Guardian Backup  | X      | X        |                                           |
-| Trigger Escape Guardian | X      |          | Can override an escape owner in progress |
-| Trigger Escape Owner    |        | X        | Fail if escape guardian in progress       |
-| Escape Guardian         | X      |          | After security period                     |
-| Escape Owner            |        | X        | After security period                     |
-| Cancel Escape           | X      | X        |                                           |
-| Upgrade                 | X      | X        |                                           |
+| Action                  | Owner | Guardian | Comments                                 |
+| ----------------------- | ----- | -------- | ---------------------------------------- |
+| Multicall               | X     | X        |                                          |
+| Change Owner            | X     | X        |                                          |
+| Change Guardian         | X     | X        |                                          |
+| Change Guardian Backup  | X     | X        |                                          |
+| Trigger Escape Guardian | X     |          | Can override an escape owner in progress |
+| Trigger Escape Owner    |       | X        | Fail if escape guardian in progress      |
+| Escape Guardian         | X     |          | After security period                    |
+| Escape Owner            |       | X        | After security period                    |
+| Cancel Escape           | X     | X        |                                          |
+| Upgrade                 | X     | X        |                                          |

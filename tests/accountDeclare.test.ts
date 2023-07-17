@@ -26,7 +26,7 @@ describe("ArgentAccount: declare", function () {
     await load();
   });
 
-  it.only("Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) ", async function () {
+  it("Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) ", async function () {
     const { account } = await deployAccount(argentAccountClassHash);
     const contract: CompiledSierra = json.parse(
       readFileSync("./target/release/argent_contracts_Proxy.sierra.json").toString("ascii"),
@@ -34,7 +34,7 @@ describe("ArgentAccount: declare", function () {
     expectRevertWithErrorMessage("argent/invalid-contract-version", () => account.declare({ contract }));
   });
 
-  it.only("Expect the account to be able to declare a Cairo contract version2 (SIERRA)", async function () {
+  it("Expect the account to be able to declare a Cairo contract version2 (SIERRA)", async function () {
     const { account } = await deployAccount(argentAccountClassHash);
     const contract: CompiledSierra = json.parse(
       readFileSync("./target/release/argent_contracts_TestDapp.sierra.json").toString("ascii"),

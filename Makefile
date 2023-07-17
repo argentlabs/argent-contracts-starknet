@@ -40,8 +40,6 @@ update-cairo:
 		git -C $(INSTALLATION_FOLDER) checkout $(CAIRO_VERSION); \
 	fi
 
-build:
-	cargo build --manifest-path $(INSTALLATION_FOLDER_CARGO) --workspace --release
 
 compile-account: 
 	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/account account.json --allowed-libfuncs-list-name all
@@ -54,38 +52,14 @@ fixtures:
 	./cairo/target/release/starknet-compile $(MULTISIG_FOLDER) $(FIXTURES_FOLDER)/ArgentMultisig.json --allowed-libfuncs-list-name all --contract-path multisig::argent_multisig::ArgentMultisig
 	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/ArgentMultisig.json $(FIXTURES_FOLDER)/ArgentMultisig.casm --allowed-libfuncs-list-name all
 
-test: 
-	./cairo/target/release/cairo-test --starknet $(SOURCE_FOLDER)
-
-test-account: 
-	./cairo/target/release/cairo-test --starknet $(ACCOUNT_FOLDER)
-
-test-lib: 
-	./cairo/target/release/cairo-test --starknet $(LIB_FOLDER)
-
-test-multicall: 
-	./cairo/target/release/cairo-test --starknet $(MULTICALL_FOLDER)
-
-test-multisig: 
-	./cairo/target/release/cairo-test --starknet $(MULTISIG_FOLDER)
-
 test-integration: fixtures
 	yarn test:ci
-
-format:
-	./cairo/target/release/cairo-format --recursive $(SOURCE_FOLDER) --print-parsing-errors
-
-check-format:
-	./cairo/target/release/cairo-format --check --recursive $(SOURCE_FOLDER)
 
 devnet:
 	INSTALLATION_FOLDER_CARGO=$(INSTALLATION_FOLDER_CARGO) ./scripts/start-devnet.sh
 
 kill-devnet:
 	lsof -t -i tcp:5050 | xargs kill
-
-vscode:
-	cd cairo/vscode-cairo && cargo build --bin cairo-language-server --release && cd ../..
 
 clean:
 	rm -rf cairo dist node_modules venv

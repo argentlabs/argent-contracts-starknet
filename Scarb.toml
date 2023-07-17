@@ -11,3 +11,6 @@ allowed-libfuncs-list.name = "audited"
 
 [dependencies]
 starknet = "=2.0.0"
+
+[scripts]
+format = "scarb fmt && yarn format"

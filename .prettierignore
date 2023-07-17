@@ -1,5 +1,5 @@
 cairo
-contracts
 venv
-tests/fixtures
+target
 dist
+.github

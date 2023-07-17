@@ -2,7 +2,7 @@
 
 ## High-Level Specification
 
-The Argent Multisig account is a typical n-of-m  multisig. It requires multiple signatures from different parties to authorize any operation from the account.
+The Argent Multisig account is a typical n-of-m multisig. It requires multiple signatures from different parties to authorize any operation from the account.
 
 The account is controlled by multiple owners (or `signers`). The number of owners that need to approve an operation is called the `threshold`.
 

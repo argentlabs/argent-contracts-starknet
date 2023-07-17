@@ -14,4 +14,7 @@ starknet = "=2.0.0"
 
 [scripts]
 format = "scarb fmt && yarn format"
+lint = "yarn lint"
 start-devnet = "INSTALLATION_FOLDER_CARGO=./cairo/Cargo.toml ./scripts/start-devnet.sh"
+integration-tests = "yarn test:ci"
+profile = "yarn profile"

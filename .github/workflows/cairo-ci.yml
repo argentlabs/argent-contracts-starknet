@@ -1,10 +1,10 @@
 name: Cairo CI
 
-env:
-  ARCHIVE_LINK: https://github.com/starkware-libs/cairo/releases/download/v2.0.0/release-x86_64-unknown-linux-musl.tar.gz
-  ARCHIVE_NAME: cairo.zip
-
 on: push
+
+env:
+  SCARB_VERSION: 0.5.0
+
 
 jobs:
   tests:
@@ -13,17 +13,16 @@ jobs:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3
 
-      - name: Step 2 - Downloading binaries
-        run: curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
+      - name: Step 2 - Setup Scarb
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v ${{ env.SCARB_VERSION }}
 
-      - name: Step 3 - Unzipping binaries
-        run: tar -xvf $ARCHIVE_NAME
+      - name: Step 3 - Make sure we can build
+        run: scarb build
 
-      - name: Step 4 - Make binaries available
-        run: echo "./cairo/bin" >> $GITHUB_PATH
+      - name: Step 4 - Run all cairo tests
+        run: scarb test
 
-      - name: Step 5 - Run all tests
-        run: cairo-test --starknet ./contracts
 
   format:
     runs-on: ubuntu-latest
@@ -31,17 +30,12 @@ jobs:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3
 
-      - name: Step 2 - Downloading binaries
-        run: curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
+      - name: Step 2 - Setup Scarb
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v ${{ env.SCARB_VERSION }}
 
-      - name: Step 3 - Unzipping binaries
-        run: tar -xvf $ARCHIVE_NAME
-
-      - name: Step 4 - Make binaries available
-        run: echo "./cairo/bin" >> $GITHUB_PATH
-
-      - name: Step 5 - Check formatting
-        run: cairo-format --check --recursive ./contracts
+      - name: Step 3 - Check formatting
+        run: scarb fmt --check
 
   contract-approvers:
     runs-on: ubuntu-latest

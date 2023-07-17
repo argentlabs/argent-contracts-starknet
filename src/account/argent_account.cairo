@@ -13,16 +13,14 @@ mod ArgentAccount {
         account::Call
     };
 
-    use account::{Escape, EscapeStatus, IArgentAccount, IDeprecatedArgentAccount};
-    use lib::{
-        IAccount, assert_correct_tx_version, assert_no_self_call, assert_caller_is_null,
-        assert_only_self, execute_multicall, Version, IErc165LibraryDispatcher,
-        IErc165DispatcherTrait, OutsideExecution, hash_outside_execution_message,
-        assert_correct_declare_version, ERC165_IERC165_INTERFACE_ID,
-        ERC165_IERC165_INTERFACE_ID_OLD, ERC165_ACCOUNT_INTERFACE_ID,
-        ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2, IErc165,
-        IOutsideExecution, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, IUpgradeable,
-        IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait,
+    use argent_contracts::account::escape::{Escape, EscapeStatus};
+    use argent_contracts::account::interface::{IArgentAccount, IDeprecatedArgentAccount};
+    use argent_contracts::library::{
+        account::{IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2 }, asserts::{assert_correct_tx_version, assert_no_self_call, assert_caller_is_null,
+        assert_only_self, assert_correct_declare_version}, calls::execute_multicall, version::Version, erc165::{IErc165, IErc165LibraryDispatcher,
+        IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID, ERC165_IERC165_INTERFACE_ID_OLD, }, 
+        outside_execution::{OutsideExecution, IOutsideExecution, hash_outside_execution_message, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID},
+        upgrade::{IUpgradeable,IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
 
     const NAME: felt252 = 'ArgentAccount';

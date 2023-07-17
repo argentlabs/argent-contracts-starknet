@@ -1,5 +1,5 @@
-use lib::Version;
-use account::{Escape, EscapeStatus};
+use argent_contracts::library::version::Version;
+use argent_contracts::account::escape::{Escape, EscapeStatus};
 
 #[starknet::interface]
 trait IArgentAccount<TContractState> {

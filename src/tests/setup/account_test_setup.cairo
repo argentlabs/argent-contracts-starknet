@@ -1,6 +1,3 @@
-mod test_argent_account;
-mod test_argent_account_signatures;
-
 use array::ArrayTrait;
 use option::OptionTrait;
 use result::ResultTrait;
@@ -11,8 +8,9 @@ use starknet::{
     testing::set_contract_address
 };
 
-use account::{Escape, EscapeStatus, ArgentAccount};
-use lib::Version;
+use argent_contracts::account::escape::{Escape, EscapeStatus};
+use argent_contracts::account::argent_account::ArgentAccount;
+use argent_contracts::library::version::Version;
 
 #[starknet::interface]
 trait ITestArgentAccount<TContractState> {

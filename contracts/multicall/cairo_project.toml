@@ -1,3 +1,0 @@
-[crate_roots]
-multicall = "src"
-lib = "../lib/src"

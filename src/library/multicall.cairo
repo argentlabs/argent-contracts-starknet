@@ -10,7 +10,7 @@ mod Multicall {
     use array::ArrayTrait;
     use starknet::{info::get_block_number, account::Call};
 
-    use lib::execute_multicall;
+    use argent_contracts::library::calls::execute_multicall;
 
     #[storage]
     struct Storage {}

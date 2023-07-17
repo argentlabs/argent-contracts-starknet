@@ -4,7 +4,7 @@ use option::OptionTrait;
 use result::ResultTrait;
 use starknet::{contract_address_const, deploy_syscall, account::Call};
 
-use lib::{execute_multicall, TestDapp};
+use argent_contracts::library::{calls::execute_multicall, test_dapp::TestDapp};
 
 #[test]
 #[available_gas(2000000)]

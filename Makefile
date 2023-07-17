@@ -3,15 +3,15 @@
 # Because we have a folder called test we need PHONY to avoid collision
 .PHONY: test 
 
+CAIRO_VERSION=v2.0.0
 INSTALLATION_FOLDER=./cairo
 INSTALLATION_FOLDER_CARGO=$(INSTALLATION_FOLDER)/Cargo.toml
-ACCOUNT_FOLDER= $(SOURCE_FOLDER)/account
-LIB_FOLDER= $(SOURCE_FOLDER)/lib
-MULTISIG_FOLDER= $(SOURCE_FOLDER)/multisig
-MULTICALL_FOLDER= $(SOURCE_FOLDER)/multicall
+ACCOUNT_FOLDER=$(SOURCE_FOLDER)/account
+LIB_FOLDER=$(SOURCE_FOLDER)/lib
+MULTISIG_FOLDER=$(SOURCE_FOLDER)/multisig
+MULTICALL_FOLDER=$(SOURCE_FOLDER)/multicall
 SOURCE_FOLDER=./contracts
-CAIRO_VERSION=v2.0.0
-FIXTURES_FOLDER = ./tests/fixtures
+FIXTURES_FOLDER=./tests/fixtures
 
 all: install build fixtures
 

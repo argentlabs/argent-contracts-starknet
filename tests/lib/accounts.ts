@@ -1,7 +1,16 @@
 import { expect } from "chai";
-import { Account, CallData, Contract, InvokeTransactionReceiptResponse, RawCalldata, hash, num } from "starknet";
-import { loadContract } from "./contracts";
-import { fundAccount } from "./devnet";
+import {
+  Account,
+  CallData,
+  Contract,
+  InvokeTransactionReceiptResponse,
+  RawCalldata,
+  hash,
+  num,
+  uint256,
+} from "starknet";
+import { getEthContract, loadContract } from "./contracts";
+import { mintEth } from "./devnet";
 import { provider } from "./provider";
 import { ArgentSigner, KeyPair, randomKeyPair } from "./signers";
 
@@ -19,11 +28,21 @@ export interface ArgentWalletWithGuardianAndBackup extends ArgentWalletWithGuard
   guardianBackup: KeyPair;
 }
 
-export const deployer = new Account(
-  provider /* provider */,
-  "0x347be35996a21f6bf0623e75dbce52baba918ad5ae8d83b6f416045ab22961a" /* address */,
-  "0xbdd640fb06671ad11c80317fa3b1799d" /* private key */,
-);
+export const deployer = (() => {
+  if (provider.isDevnet) {
+    const devnetAddress = "0x347be35996a21f6bf0623e75dbce52baba918ad5ae8d83b6f416045ab22961a";
+    const devnetPrivateKey = "0xbdd640fb06671ad11c80317fa3b1799d";
+    return new Account(provider, devnetAddress, devnetPrivateKey);
+  }
+  const address = process.env.ADDRESS;
+  const privateKey = process.env.PRIVATE_KEY;
+  if (address && privateKey) {
+    return new Account(provider, address, privateKey);
+  }
+  throw new Error("Missing deployer address or private key, please set ADDRESS and PRIVATE_KEY env variables.");
+})();
+
+console.log("Deployer:", deployer.address);
 
 export async function deployOldAccount(
   proxyClassHash: string,
@@ -44,14 +63,14 @@ export async function deployOldAccount(
   const account = new Account(provider, contractAddress, owner);
   account.signer = new ArgentSigner(owner, guardian);
 
-  await fundAccount(account.address);
+  await mintEth(account.address);
   const { transaction_hash } = await account.deployAccount({
     classHash: proxyClassHash,
     constructorCalldata,
     contractAddress,
     addressSalt: salt,
   });
-  await deployer.waitForTransaction(transaction_hash);
+  await provider.waitForTransaction(transaction_hash);
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
   return { account, accountContract, owner, guardian };
@@ -66,7 +85,7 @@ async function deployAccountInner(
   const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian?.publicKey ?? 0n });
 
   const contractAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, constructorCalldata, 0);
-  await fundAccount(contractAddress);
+  await fundAccount(contractAddress, 1e15); // 0.001 ETH
   const account = new Account(provider, contractAddress, owner, "1");
   if (guardian) {
     account.signer = new ArgentSigner(owner, guardian);
@@ -77,7 +96,7 @@ async function deployAccountInner(
     constructorCalldata,
     addressSalt: salt,
   });
-  await deployer.waitForTransaction(transaction_hash);
+  await provider.waitForTransaction(transaction_hash);
   return account;
 }
 
@@ -126,6 +145,17 @@ export async function upgradeAccount(
     calldata: CallData.compile({ implementation: argentAccountClassHash, calldata }),
   });
   return await provider.waitForTransaction(transferTxHash);
+}
+
+export async function fundAccount(recipient: string, amount: number | bigint): Promise<void> {
+  if (provider.isDevnet) {
+    return await mintEth(recipient);
+  }
+  const ethContract = await getEthContract();
+  ethContract.connect(deployer);
+
+  const bn = uint256.bnToUint256(amount);
+  await ethContract.invoke("transfer", CallData.compile([recipient, bn.low, bn.high]));
 }
 
 export enum EscapeStatus {

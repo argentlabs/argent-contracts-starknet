@@ -4,7 +4,6 @@ import { CompiledSierra, CompiledSierraCasm, json } from "starknet";
 import {
   declareContract,
   deployAccount,
-  deployer,
   dump,
   expectRevertWithErrorMessage,
   load,
@@ -38,7 +37,7 @@ describe("ArgentAccount: declare", function () {
     const contract: CompiledSierra = json.parse(readFileSync("./tests/fixtures/TestDapp.json").toString("ascii"));
     const casm: CompiledSierraCasm = json.parse(readFileSync("./tests/fixtures/TestDapp.casm").toString("ascii"));
     const { class_hash, transaction_hash } = await account.declare({ contract, casm });
-    await deployer.waitForTransaction(transaction_hash);
+    await provider.waitForTransaction(transaction_hash);
     expect(provider.getCompiledClassByClassHash(class_hash)).to.exist;
   });
 });

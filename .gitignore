@@ -13,16 +13,6 @@ node.json
 
 cairo
 account.json
-target/dev
-target/release/argent_ArgentAccount.sierra.json
-target/release/argent_ArgentAccount.casm.json
-target/release/argent_ArgentMultisig.sierra.json
-target/release/argent_ArgentMultisig.casm.json
-target/release/argent_TestDapp.casm.json
-target/release/argent_TestDapp.sierra.json
-target/release/argent_Multicall.casm.json
-target/release/argent_Multicall.sierra.json
-target/release/argent.starknet_artifacts.json
-target/CACHEDIR.TAG
+target/
 dump
 package-lock.json

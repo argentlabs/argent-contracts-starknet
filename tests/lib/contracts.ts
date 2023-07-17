@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { CompiledSierra, CompiledSierraCasm, Contract, DeclareContractPayload, json } from "starknet";
+import { CompiledSierra, Contract, DeclareContractPayload, json } from "starknet";
 import { deployer } from "./accounts";
 import { provider } from "./provider";
 
@@ -24,46 +24,32 @@ export function removeFromCache(contractName: string) {
 }
 
 // Could extends Account to add our specific fn but that's too early.
-export async function declareContract(contractName: string): Promise<string> {
-  console.log(`\tDeclaring ${contractName}...`);
+export async function declareContract(contractName: string, wait = true): Promise<string> {
   const cachedClass = classHashCache[contractName];
   if (cachedClass) {
     return cachedClass;
   }
-  const contract: CompiledSierra = json.parse(
-    readFileSync(`${contractsFolder}${contractsPrefix}${contractName}.sierra.json`).toString("ascii"),
-  );
-  let returnedClashHash;
+  const contract: CompiledSierra = json.parse(readFileSync(`${contractsFolder}${contractsPrefix}${contractName}.sierra.json`).toString("ascii"));
+  const payload: DeclareContractPayload = { contract };
   if ("sierra_program" in contract) {
-    const casm: CompiledSierraCasm = json.parse(
-      readFileSync(`${contractsFolder}${contractsPrefix}${contractName}.casm.json`).toString("ascii"),
-    );
-    returnedClashHash = await actualDeclare({ contract, casm });
-  } else {
-    returnedClashHash = await actualDeclare({ contract });
+    payload.casm = json.parse(readFileSync(`${contractsFolder}${contractsPrefix}${contractName}.casm.json`).toString("ascii"));
   }
-  classHashCache[contractName] = returnedClashHash;
-  return returnedClashHash;
-}
-
-async function actualDeclare(payload: DeclareContractPayload): Promise<string> {
-  const { class_hash } = await deployer.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
+  const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
+  if (wait && transaction_hash) {
+    await provider.waitForTransaction(transaction_hash);
+    console.log(`\t${contractName} declared`);
+  }
+  classHashCache[contractName] = class_hash;
   return class_hash;
 }
 
 export async function loadContract(contract_address: string) {
-  const { abi: testAbi } = await provider.getClassAt(contract_address);
-  if (!testAbi) {
+  const { abi } = await provider.getClassAt(contract_address);
+  if (!abi) {
     throw new Error("Error while getting ABI");
   }
   // TODO WARNING THIS IS A TEMPORARY FIX WHILE WE WAIT FOR SNJS TO BE UPDATED
   // Allows to pull back the function from one level down
-  const parsedAbi = testAbi.flatMap((e) => {
-    if (e.type == "interface") {
-      return e.items;
-    } else {
-      return e;
-    }
-  });
+  const parsedAbi = abi.flatMap((e) => (e.type == "interface" ? e.items : e));
   return new Contract(parsedAbi, contract_address, provider);
 }

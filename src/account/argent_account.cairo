@@ -13,9 +13,9 @@ mod ArgentAccount {
         account::Call
     };
 
-    use argent_contracts::account::escape::{Escape, EscapeStatus};
-    use argent_contracts::account::interface::{IArgentAccount, IDeprecatedArgentAccount};
-    use argent_contracts::library::{
+    use argent::account::escape::{Escape, EscapeStatus};
+    use argent::account::interface::{IArgentAccount, IDeprecatedArgentAccount};
+    use argent::common::{
         account::{
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
             ERC165_ACCOUNT_INTERFACE_ID_OLD_2

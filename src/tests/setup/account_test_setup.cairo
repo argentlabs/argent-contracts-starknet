@@ -8,9 +8,9 @@ use starknet::{
     testing::set_contract_address
 };
 
-use argent_contracts::account::escape::{Escape, EscapeStatus};
-use argent_contracts::account::argent_account::ArgentAccount;
-use argent_contracts::library::version::Version;
+use argent::account::escape::{Escape, EscapeStatus};
+use argent::account::argent_account::ArgentAccount;
+use argent::common::version::Version;
 
 #[starknet::interface]
 trait ITestArgentAccount<TContractState> {

@@ -8,8 +8,8 @@ use starknet::{
     contract_address_const, deploy_syscall, testing::{set_version, set_contract_address}
 };
 
-use argent_contracts::account::argent_account::ArgentAccount;
-use argent_contracts::tests::setup::account_test_setup::{
+use argent::account::argent_account::ArgentAccount;
+use argent::tests::setup::account_test_setup::{
     ITestArgentAccountDispatcherTrait, owner_pubkey, wrong_owner_pubkey, initialize_account_with,
     initialize_account, initialize_account_without_guardian
 };

@@ -2,7 +2,7 @@ use array::ArrayTrait;
 use traits::Into;
 
 
-use argent_contracts::tests::setup::multisig_test_setup::{
+use argent::tests::setup::multisig_test_setup::{
     initialize_multisig, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3,
     ITestArgentMultisigDispatcherTrait, initialize_multisig_with_one_signer
 };

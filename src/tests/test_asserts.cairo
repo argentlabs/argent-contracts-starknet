@@ -3,7 +3,7 @@ use starknet::{
     contract_address_const, testing::{set_caller_address, set_contract_address}, account::Call
 };
 
-use argent_contracts::library::asserts;
+use argent::common::asserts;
 
 #[test]
 #[available_gas(2000000)]

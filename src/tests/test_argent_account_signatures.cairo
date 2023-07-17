@@ -1,7 +1,7 @@
 use array::{ArrayTrait, SpanTrait};
 
-use argent_contracts::account::argent_account::ArgentAccount;
-use argent_contracts::tests::setup::account_test_setup::{
+use argent::account::argent_account::ArgentAccount;
+use argent::tests::setup::account_test_setup::{
     ITestArgentAccountDispatcher, ITestArgentAccountDispatcherTrait, owner_pubkey,
     initialize_account, initialize_account_without_guardian, initialize_account_with
 };

@@ -5,8 +5,8 @@ use result::ResultTrait;
 use starknet::{
     contract_address_const, syscalls::deploy_syscall, account::Call, testing::set_contract_address
 };
-use argent_contracts::library::version::Version;
-use argent_contracts::multisig::argent_multisig::ArgentMultisig;
+use argent::common::version::Version;
+use argent::multisig::argent_multisig::ArgentMultisig;
 
 
 const signer_pubkey_1: felt252 = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;

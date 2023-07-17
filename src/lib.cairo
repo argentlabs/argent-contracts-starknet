@@ -1,4 +1,4 @@
 mod tests;
 mod account;
-mod library;
+mod common;
 mod multisig;

@@ -1,4 +1,4 @@
-use argent_contracts::multisig::interface::{
+use argent::multisig::interface::{
     IArgentMultisig
 }; // For some reason (fn colliding with same name) I have to import it here and use super
 #[starknet::contract]
@@ -14,7 +14,7 @@ mod ArgentMultisig {
         get_caller_address, get_tx_info, account::Call
     };
 
-    use argent_contracts::library::{
+    use argent::common::{
         account::{
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
             ERC165_ACCOUNT_INTERFACE_ID_OLD_2
@@ -34,8 +34,8 @@ mod ArgentMultisig {
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
-    use argent_contracts::multisig::signer_signature::{deserialize_array_signer_signature};
-    use argent_contracts::multisig::interface::{IDeprecatedArgentMultisig};
+    use argent::multisig::signer_signature::{deserialize_array_signer_signature};
+    use argent::multisig::interface::{IDeprecatedArgentMultisig};
 
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
         738349667340360233096752603318170676063569407717437256101137432051386874767; // starknet_keccak('execute_after_upgrade')

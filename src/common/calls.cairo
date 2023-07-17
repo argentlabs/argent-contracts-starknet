@@ -1,7 +1,7 @@
 use array::{ArrayTrait, SpanTrait};
 use starknet::{call_contract_syscall, account::Call};
 
-use argent_contracts::library::array_ext::ArrayExtTrait;
+use argent::common::array_ext::ArrayExtTrait;
 
 fn execute_multicall(mut calls: Span<Call>) -> Array<Span<felt252>> {
     let mut result: Array<Span<felt252>> = ArrayTrait::new();

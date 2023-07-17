@@ -11,12 +11,6 @@ install-devnet-cairo:
 	mkdir -p $(DEVNET_CAIRO_INSTALLATION_FOLDER)
 	git clone --branch $(DEVNET_CAIRO_VERSION) https://github.com/starkware-libs/cairo.git
 	
-
-all: install build 
-
-test-integration: 
-	yarn test:ci
-
 kill-devnet:
 	lsof -t -i tcp:5050 | xargs kill
 

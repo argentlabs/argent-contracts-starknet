@@ -8,6 +8,9 @@ const classHashCache: Record<string, string> = {};
 export const ethAddress = "0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7";
 let ethContract: Contract;
 
+export const contractsFolder = "./target/dev/";
+export const contractsPrefix = "argent_contracts_";
+
 export async function getEthContract() {
   if (ethContract) {
     return ethContract;
@@ -27,11 +30,13 @@ export async function declareContract(contractName: string): Promise<string> {
   if (cachedClass) {
     return cachedClass;
   }
-  const contract: CompiledSierra = json.parse(readFileSync(`./tests/fixtures/${contractName}.json`).toString("ascii"));
+  const contract: CompiledSierra = json.parse(
+    readFileSync(`${contractsFolder}${contractsPrefix}${contractName}.sierra.json`).toString("ascii"),
+  );
   let returnedClashHash;
   if ("sierra_program" in contract) {
     const casm: CompiledSierraCasm = json.parse(
-      readFileSync(`./tests/fixtures/${contractName}.casm`).toString("ascii"),
+      readFileSync(`${contractsFolder}${contractsPrefix}${contractName}.casm.json`).toString("ascii"),
     );
     returnedClashHash = await actualDeclare({ contract, casm });
   } else {

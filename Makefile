@@ -3,60 +3,19 @@
 # Because we have a folder called test we need PHONY to avoid collision
 .PHONY: test 
 
-INSTALLATION_FOLDER=./cairo
-INSTALLATION_FOLDER_CARGO=$(INSTALLATION_FOLDER)/Cargo.toml
-ACCOUNT_FOLDER= $(SOURCE_FOLDER)/account
-LIB_FOLDER= $(SOURCE_FOLDER)/lib
-MULTISIG_FOLDER= $(SOURCE_FOLDER)/multisig
-MULTICALL_FOLDER= $(SOURCE_FOLDER)/multicall
-SOURCE_FOLDER=./contracts
-CAIRO_VERSION=v2.0.0
-FIXTURES_FOLDER = ./tests/fixtures
 
-all: install build fixtures
+DEVNET_CAIRO_INSTALLATION_FOLDER=./cairo
+DEVNET_CAIRO_VERSION=v2.0.0
 
-install: install-cairo install-integration build vscode
+install-devnet-cairo:
+	mkdir -p $(DEVNET_CAIRO_INSTALLATION_FOLDER)
+	git clone --branch $(DEVNET_CAIRO_VERSION) https://github.com/starkware-libs/cairo.git
+	
 
-install-cairo:
-	if [ -d $(INSTALLATION_FOLDER) ]; then \
-		$(MAKE) update-cairo; \
-	else \
-		$(MAKE) clone-cairo; \
-	fi
+all: install build 
 
-install-integration:
-	yarn
-
-clone-cairo:
-	mkdir -p $(INSTALLATION_FOLDER)
-	git clone --branch $(CAIRO_VERSION) https://github.com/starkware-libs/cairo.git
-
-update-cairo:
-	if [ "$$(git -C $(INSTALLATION_FOLDER) status | grep -e $(CAIRO_VERSION))" ]; then \
-		echo "Already on $(CAIRO_VERSION)"; \
-	else \
-		git -C $(INSTALLATION_FOLDER) checkout main; \
-		git -C $(INSTALLATION_FOLDER) pull; \
-		git -C $(INSTALLATION_FOLDER) checkout $(CAIRO_VERSION); \
-	fi
-
-
-compile-account: 
-	./cairo/target/release/starknet-compile $(SOURCE_FOLDER)/account account.json --allowed-libfuncs-list-name all
-
-fixtures: 
-	./cairo/target/release/starknet-compile $(ACCOUNT_FOLDER) $(FIXTURES_FOLDER)/ArgentAccount.json --allowed-libfuncs-list-name all --contract-path account::argent_account::ArgentAccount
-	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/ArgentAccount.json $(FIXTURES_FOLDER)/ArgentAccount.casm --allowed-libfuncs-list-name all
-	./cairo/target/release/starknet-compile $(LIB_FOLDER) $(FIXTURES_FOLDER)/TestDapp.json --allowed-libfuncs-list-name all
-	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/TestDapp.json $(FIXTURES_FOLDER)/TestDapp.casm --allowed-libfuncs-list-name all
-	./cairo/target/release/starknet-compile $(MULTISIG_FOLDER) $(FIXTURES_FOLDER)/ArgentMultisig.json --allowed-libfuncs-list-name all --contract-path multisig::argent_multisig::ArgentMultisig
-	./cairo/target/release/starknet-sierra-compile $(FIXTURES_FOLDER)/ArgentMultisig.json $(FIXTURES_FOLDER)/ArgentMultisig.casm --allowed-libfuncs-list-name all
-
-test-integration: fixtures
+test-integration: 
 	yarn test:ci
-
-devnet:
-	INSTALLATION_FOLDER_CARGO=$(INSTALLATION_FOLDER_CARGO) ./scripts/start-devnet.sh
 
 kill-devnet:
 	lsof -t -i tcp:5050 | xargs kill

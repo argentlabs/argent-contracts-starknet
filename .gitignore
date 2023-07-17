@@ -8,17 +8,20 @@ venv
 __pycache__
 artifacts
 dist
-target
 node_modules
 node.json
 
 cairo
 account.json
-tests/fixtures/ArgentAccount.json
-tests/fixtures/ArgentAccount.casm
-tests/fixtures/ArgentMultisig.json
-tests/fixtures/ArgentMultisig.casm
-tests/fixtures/TestDapp.json
-tests/fixtures/TestDapp.casm
+target/dev/argent_contracts_ArgentAccount.sierra.json
+target/dev/argent_contracts_ArgentAccount.casm.json
+target/dev/argent_contracts_ArgentMultisig.sierra.json
+target/dev/argent_contracts_ArgentMultisig.casm.json
+target/dev/argent_contracts_TestDapp.casm.json
+target/dev/argent_contracts_TestDapp.sierra.json
+target/dev/argent_contracts_Multicall.casm.json
+target/dev/argent_contracts_Multicall.sierra.json
+target/dev/argent_contracts.starknet_artifacts.json
+target/CACHEDIR.TAG
 dump
 package-lock.json

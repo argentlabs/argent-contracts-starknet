@@ -38,5 +38,6 @@ describe("ArgentAccount: declare", function () {
     const testDappClassHash = await declareContract("TestDapp");
     const compiledClassHash = await provider.getCompiledClassByClassHash(testDappClassHash);
     expect(Promise.resolve(compiledClassHash)).to.exist;
+    removeFromCache("TestDapp");
   });
 });

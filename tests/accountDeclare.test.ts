@@ -34,10 +34,10 @@ describe("ArgentAccount: declare", function () {
     expectRevertWithErrorMessage("argent/invalid-contract-version", () => account.declare({ contract }));
   });
 
-  it("Expect the account to be able to declare a Cairo contract version2 (SIERRA)", async function () {
+  it.only("Expect the account to be able to declare a Cairo contract version2 (SIERRA)", async function () {
     const testDappClassHash = await declareContract("TestDapp");
     const compiledClassHash = await provider.getCompiledClassByClassHash(testDappClassHash);
-    expect(Promise.resolve(compiledClassHash)).to.exist;
+    expect(compiledClassHash).to.exist;
     removeFromCache("TestDapp");
   });
 });

@@ -33,7 +33,7 @@ describe("ArgentMultisig: outside execution", function () {
     testDapp = await loadContract(contract_address);
   });
 
-  it.only("Correct message hash", async function () {
+  it("Correct message hash", async function () {
     const { accountContract } = await deployMultisig(multisigClassHash, 1 /* threshold */, 2 /* signers count */);
 
     const chainId = await provider.getChainId();
@@ -59,7 +59,7 @@ describe("ArgentMultisig: outside execution", function () {
     expect(foundHash).to.equal(expectedMessageHash);
   });
 
-  it.only("Basics", async function () {
+  it("Basics", async function () {
     const { account, accountContract } = await deployMultisig(
       multisigClassHash,
       1 /* threshold */,
@@ -116,7 +116,7 @@ describe("ArgentMultisig: outside execution", function () {
     await expectExecutionRevert("argent/duplicated-outside-nonce", () => deployer.execute(outsideExecutionCall));
   });
 
-  it.only("Avoid caller check if it caller is ANY_CALLER", async function () {
+  it("Avoid caller check if it caller is ANY_CALLER", async function () {
     const { account } = await deployMultisig(multisigClassHash, 1 /* threshold */, 2 /* signers count */);
 
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");

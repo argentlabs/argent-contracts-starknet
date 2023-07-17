@@ -51,7 +51,7 @@ export async function declareContract(
 }
 
 export async function declareContractFixtures(contractName: string, wait = true): Promise<string> {
-  return declareContract(contractName, wait, fixturesFolder);
+  return await declareContract(contractName, wait, fixturesFolder);
 }
 
 export async function loadContract(contract_address: string) {

@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { readFileSync } from "fs";
-import { CompiledSierra, CompiledSierraCasm, json } from "starknet";
+import { CompiledSierra, json } from "starknet";
 import {
   declareContract,
   deployAccount,

@@ -29,10 +29,14 @@ export async function declareContract(contractName: string, wait = true): Promis
   if (cachedClass) {
     return cachedClass;
   }
-  const contract: CompiledSierra = json.parse(readFileSync(`${contractsFolder}${contractsPrefix}${contractName}.sierra.json`).toString("ascii"));
+  const contract: CompiledSierra = json.parse(
+    readFileSync(`${contractsFolder}${contractsPrefix}${contractName}.sierra.json`).toString("ascii"),
+  );
   const payload: DeclareContractPayload = { contract };
   if ("sierra_program" in contract) {
-    payload.casm = json.parse(readFileSync(`${contractsFolder}${contractsPrefix}${contractName}.casm.json`).toString("ascii"));
+    payload.casm = json.parse(
+      readFileSync(`${contractsFolder}${contractsPrefix}${contractName}.casm.json`).toString("ascii"),
+    );
   }
   const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
   if (wait && transaction_hash) {

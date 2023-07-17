@@ -25,7 +25,11 @@ export function removeFromCache(contractName: string) {
 }
 
 // Could extends Account to add our specific fn but that's too early.
-export async function declareContract(contractName: string, wait = true, folder: string = contractsFolder): Promise<string> {
+export async function declareContract(
+  contractName: string,
+  wait = true,
+  folder: string = contractsFolder,
+): Promise<string> {
   const cachedClass = classHashCache[contractName];
   if (cachedClass) {
     return cachedClass;
@@ -35,9 +39,7 @@ export async function declareContract(contractName: string, wait = true, folder:
   );
   const payload: DeclareContractPayload = { contract };
   if ("sierra_program" in contract) {
-    payload.casm = json.parse(
-      readFileSync(`${folder}${contractsPrefix}${contractName}.casm.json`).toString("ascii"),
-    );
+    payload.casm = json.parse(readFileSync(`${folder}${contractsPrefix}${contractName}.casm.json`).toString("ascii"));
   }
   const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
   if (wait && transaction_hash) {
@@ -47,7 +49,6 @@ export async function declareContract(contractName: string, wait = true, folder:
   classHashCache[contractName] = class_hash;
   return class_hash;
 }
-
 
 export async function declareContractFixtures(contractName: string, wait = true): Promise<string> {
   return declareContract(contractName, wait, fixturesFolder);

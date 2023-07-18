@@ -25,11 +25,7 @@ export function removeFromCache(contractName: string) {
 }
 
 // Could extends Account to add our specific fn but that's too early.
-export async function declareContract(
-  contractName: string,
-  wait = true,
-  folder = contractsFolder,
-): Promise<string> {
+export async function declareContract(contractName: string, wait = true, folder = contractsFolder): Promise<string> {
   const cachedClass = classHashCache[contractName];
   if (cachedClass) {
     return cachedClass;

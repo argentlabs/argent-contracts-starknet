@@ -7,7 +7,6 @@ use argent::tests::setup::multisig_test_setup::{
     ITestArgentMultisigDispatcherTrait, initialize_multisig_with_one_signer
 };
 
-
 #[test]
 #[available_gas(20000000)]
 fn replace_signer_1() {

@@ -11,6 +11,7 @@ import {
   provider,
   randomKeyPair,
   setTime,
+  waitForTransaction,
 } from "./lib";
 
 describe("ArgentAccount: events", function () {
@@ -20,7 +21,7 @@ describe("ArgentAccount: events", function () {
     argentAccountClassHash = await declareContract("ArgentAccount");
   });
 
-  it("Expect 'AccountCreated(owner, guardian)' when deploying an account", async function () {
+  it("Expect 'AccountCreated' and 'OwnerAddded' when deploying an account", async function () {
     const owner = "21";
     const guardian = "42";
     const constructorCalldata = CallData.compile({ owner, guardian });
@@ -32,6 +33,11 @@ describe("ArgentAccount: events", function () {
       from_address: contract_address,
       keys: ["AccountCreated", owner],
       data: [guardian],
+    });
+    await expectEvent(transaction_hash, {
+      from_address: contract_address,
+      keys: ["OwnerAdded", owner],
+      data: [],
     });
   });
 
@@ -50,8 +56,8 @@ describe("ArgentAccount: events", function () {
     });
   });
 
-  it("Expect 'OwnerEscaped(new_signer)' on escape_owner", async function () {
-    const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
+  it("Expect 'OwnerEscaped', 'OwnerRemoved' and 'OwnerAdded' on escape_owner", async function () {
+    const { account, accountContract, guardian, owner } = await deployAccount(argentAccountClassHash);
     account.signer = guardian;
 
     const newOwner = "42";
@@ -59,11 +65,23 @@ describe("ArgentAccount: events", function () {
 
     await accountContract.trigger_escape_owner(newOwner);
     await increaseTime(ESCAPE_SECURITY_PERIOD);
-
-    await expectEvent(() => accountContract.escape_owner(), {
+    const receipt = await waitForTransaction(await accountContract.escape_owner());
+    await expectEvent(receipt, {
       from_address: account.address,
       keys: ["OwnerEscaped"],
       data: [newOwner],
+    });
+
+    await expectEvent(receipt, {
+      from_address: account.address,
+      keys: ["OwnerRemoved", owner.publicKey.toString()],
+      data: [],
+    });
+
+    await expectEvent(receipt, {
+      from_address: account.address,
+      keys: ["OwnerAdded", newOwner],
+      data: [],
     });
   });
 
@@ -98,7 +116,7 @@ describe("ArgentAccount: events", function () {
     });
   });
 
-  it("Expect 'OwnerChanged(new_signer)' on change_owner", async function () {
+  it("Expect 'OwnerChanged', 'OwnerRemoved' and 'OwnerAdded' on change_owner", async function () {
     const { accountContract, owner } = await deployAccount(argentAccountClassHash);
 
     const newOwner = randomKeyPair();
@@ -108,11 +126,23 @@ describe("ArgentAccount: events", function () {
 
     const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
     const [r, s] = newOwner.signHash(msgHash);
-
-    await expectEvent(() => accountContract.change_owner(newOwner.publicKey, r, s), {
+    const receipt = await waitForTransaction(await accountContract.change_owner(newOwner.publicKey, r, s));
+    await expectEvent(receipt, {
       from_address: accountContract.address,
       keys: ["OwnerChanged"],
       data: [newOwner.publicKey.toString()],
+    });
+
+    await expectEvent(receipt, {
+      from_address: accountContract.address,
+      keys: ["OwnerRemoved", owner.publicKey.toString()],
+      data: [],
+    });
+
+    await expectEvent(receipt, {
+      from_address: accountContract.address,
+      keys: ["OwnerAdded", newOwner.publicKey.toString()],
+      data: [],
     });
   });
 

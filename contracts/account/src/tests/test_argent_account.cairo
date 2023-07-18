@@ -232,6 +232,12 @@ fn getVersion() {
 
 #[test]
 #[available_gas(2000000)]
+fn get_vendor() {
+    assert(initialize_account().get_vendor() == 'argent', 'vendor should be argent');
+}
+
+#[test]
+#[available_gas(2000000)]
 fn get_name() {
     assert(initialize_account().get_name() == 'ArgentAccount', 'Name should be ArgentAccount');
 }

@@ -75,6 +75,7 @@ trait IArgentAccount<TContractState> {
     fn get_guardian_backup(self: @TContractState) -> felt252;
     fn get_escape(self: @TContractState) -> Escape;
     fn get_version(self: @TContractState) -> Version;
+    fn get_vendor(self: @TContractState) -> felt252;
     fn get_name(self: @TContractState) -> felt252;
     fn get_guardian_escape_attempts(self: @TContractState) -> u32;
     fn get_owner_escape_attempts(self: @TContractState) -> u32;

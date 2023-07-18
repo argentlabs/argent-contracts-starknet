@@ -28,7 +28,7 @@ export function removeFromCache(contractName: string) {
 export async function declareContract(
   contractName: string,
   wait = true,
-  folder: string = contractsFolder,
+  folder = contractsFolder,
 ): Promise<string> {
   const cachedClass = classHashCache[contractName];
   if (cachedClass) {

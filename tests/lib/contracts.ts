@@ -50,7 +50,7 @@ export async function declareContract(
   return class_hash;
 }
 
-export async function declareContractFixtures(contractName: string, wait = true): Promise<string> {
+export async function declareFixtureContract(contractName: string, wait = true): Promise<string> {
   return await declareContract(contractName, wait, fixturesFolder);
 }
 

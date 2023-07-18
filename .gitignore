@@ -8,11 +8,11 @@ venv
 __pycache__
 artifacts
 dist
+target
 node_modules
 node.json
 
 cairo
 account.json
-target/
 dump
 package-lock.json

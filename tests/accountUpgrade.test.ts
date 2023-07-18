@@ -9,7 +9,7 @@ import {
   loadContract,
   provider,
   upgradeAccount,
-  declareContractFixtures,
+  declareFixtureContract,
 } from "./lib";
 
 describe("ArgentAccount: upgrade", function () {
@@ -24,9 +24,9 @@ describe("ArgentAccount: upgrade", function () {
     argentAccountClassHash = await declareContract("ArgentAccount");
     // This is the same as ArgentAccount but with a different version (to have another class hash)
     // Done to be able to test upgradability
-    argentAccountFutureClassHash = await declareContractFixtures("ArgentAccountFutureVersion");
-    oldArgentAccountClassHash = await declareContractFixtures("OldArgentAccount");
-    proxyClassHash = await declareContractFixtures("Proxy");
+    argentAccountFutureClassHash = await declareFixtureContract("ArgentAccountFutureVersion");
+    oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
+    proxyClassHash = await declareFixtureContract("Proxy");
     testDappClassHash = await declareContract("TestDapp");
     const { contract_address } = await deployer.deployContract({
       classHash: testDappClassHash,

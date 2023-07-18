@@ -14,7 +14,7 @@
     "lint:check": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "profile": "scarb --release build  && ts-node scripts/profile-account.ts"
+    "profile": "scarb --release build && ts-node scripts/profile-account.ts"
   },
   "author": "",
   "license": "ISC",

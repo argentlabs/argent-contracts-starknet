@@ -91,7 +91,7 @@ mod ArgentAccount {
         OwnerAdded: OwnerAdded,
         OwnerRemoved: OwnerRemoved,
     }
-    
+
     /// @notice Emitted exactly once when the account is initialized
     /// @param account The account address
     /// @param owner The owner address
@@ -177,14 +177,18 @@ mod ArgentAccount {
         new_implementation: ClassHash
     }
 
-    /// Emitted when owners changed, also when the account is created, or when it's updated to cairo 1
+
+    /// This event is part of an account discoverability standard, SNIP not yet created
+    /// Emitted when an account owner is added, including when the account is created.
+    /// Should also be emitted with the current owners when upgrading an account to Cairo1
     #[derive(Drop, starknet::Event)]
     struct OwnerAdded {
         #[key]
         new_owner_guid: felt252,
     }
 
-    /// Emitted when an owner is no longer valid
+    /// This event is part of an account discoverability standard, SNIP not yet created
+    /// Emitted when an an account owner is removed
     #[derive(Drop, starknet::Event)]
     struct OwnerRemoved {
         #[key]

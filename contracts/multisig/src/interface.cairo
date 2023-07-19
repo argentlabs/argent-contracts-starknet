@@ -40,6 +40,7 @@ trait IArgentMultisig<TContractState> {
 
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
+    fn get_vendor(self: @TContractState) -> felt252;
 
     /// @dev Returns the threshold, the number of signers required to control this account
     fn get_threshold(self: @TContractState) -> usize;

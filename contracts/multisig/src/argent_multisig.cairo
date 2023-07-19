@@ -27,6 +27,7 @@ mod ArgentMultisig {
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
         738349667340360233096752603318170676063569407717437256101137432051386874767; // starknet_keccak('execute_after_upgrade')
 
+    const VENDOR: felt252 = 'argent';
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION_MAJOR: u8 = 0;
     const VERSION_MINOR: u8 = 1;
@@ -45,21 +46,17 @@ mod ArgentMultisig {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        ConfigurationUpdated: ConfigurationUpdated,
+        ThresholdUpdated: ThresholdUpdated,
         TransactionExecuted: TransactionExecuted,
-        AccountUpgraded: AccountUpgraded
+        AccountUpgraded: AccountUpgraded,
+        OwnerAdded: OwnerAdded,
+        OwnerRemoved: OwnerRemoved
     }
-    /// @notice Emitted when the multisig configuration changes
+    /// @notice Emitted when the multisig threshold changes
     /// @param new_threshold New threshold
-    /// @param new_signers_count The number of signers after the update
-    /// @param added_signers Signers added in this update
-    /// @param removed_signers Signers removed by this update
     #[derive(Drop, starknet::Event)]
-    struct ConfigurationUpdated {
-        new_threshold: usize,
-        new_signers_count: usize,
-        added_signers: Array<felt252>,
-        removed_signers: Array<felt252>
+    struct ThresholdUpdated {
+        new_threshold: usize, 
     }
 
     /// @notice Emitted when the account executes a transaction
@@ -79,6 +76,24 @@ mod ArgentMultisig {
         new_implementation: ClassHash
     }
 
+    /// This event is part of an account discoverability standard, SNIP not yet created
+    /// Emitted when an account owner is added, including when the account is created.
+    /// Should also be emitted with the current owners when upgrading an account to Cairo1
+    #[derive(Drop, starknet::Event)]
+    struct OwnerAdded {
+        #[key]
+        new_owner_guid: felt252,
+    }
+
+    /// This event is part of an account discoverability standard, SNIP not yet created
+    /// Emitted when an an account owner is removed
+    #[derive(Drop, starknet::Event)]
+    struct OwnerRemoved {
+        #[key]
+        removed_owner_guid: felt252,
+    }
+
+
     #[constructor]
     fn constructor(ref self: ContractState, new_threshold: usize, signers: Array<felt252>) {
         let new_signers_count = signers.len();
@@ -87,13 +102,18 @@ mod ArgentMultisig {
         self.add_signers(signers.span(), last_signer: 0);
         self.threshold.write(new_threshold);
 
-        let config = ConfigurationUpdated {
-            new_threshold,
-            new_signers_count,
-            added_signers: signers,
-            removed_signers: ArrayTrait::new()
+        let mut signers_added = signers.span();
+        loop {
+            match signers_added.pop_front() {
+                Option::Some(added_signer) => {
+                    self.emit(OwnerAdded { new_owner_guid: *added_signer });
+                },
+                Option::None(_) => {
+                    break;
+                }
+            };
         };
-        self.emit(config);
+        self.emit(ThresholdUpdated { new_threshold });
     }
 
     #[external(v0)]
@@ -245,18 +265,12 @@ mod ArgentMultisig {
 
         fn change_threshold(ref self: ContractState, new_threshold: usize) {
             assert_only_self();
+            assert(new_threshold != self.threshold.read(), 'argent/same-threshold');
             let new_signers_count = self.get_signers_len();
 
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
             self.threshold.write(new_threshold);
-
-            let config = ConfigurationUpdated {
-                new_threshold,
-                new_signers_count,
-                added_signers: ArrayTrait::new(),
-                removed_signers: ArrayTrait::new()
-            };
-            self.emit(config);
+            self.emit(ThresholdUpdated { new_threshold });
         }
 
         fn add_signers(
@@ -264,20 +278,28 @@ mod ArgentMultisig {
         ) {
             assert_only_self();
             let (signers_len, last_signer) = self.load();
+            let previous_threshold = self.threshold.read();
 
             let new_signers_count = signers_len + signers_to_add.len();
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
-
             self.add_signers(signers_to_add.span(), last_signer);
             self.threshold.write(new_threshold);
 
-            let config = ConfigurationUpdated {
-                new_threshold,
-                new_signers_count,
-                added_signers: signers_to_add,
-                removed_signers: ArrayTrait::new()
+            if previous_threshold != new_threshold {
+                self.emit(ThresholdUpdated { new_threshold });
+            }
+
+            let mut signers_added = signers_to_add.span();
+            loop {
+                match signers_added.pop_front() {
+                    Option::Some(added_signer) => {
+                        self.emit(OwnerAdded { new_owner_guid: *added_signer });
+                    },
+                    Option::None(_) => {
+                        break;
+                    }
+                };
             };
-            self.emit(config);
         }
 
         fn remove_signers(
@@ -285,6 +307,7 @@ mod ArgentMultisig {
         ) {
             assert_only_self();
             let (signers_len, last_signer) = self.load();
+            let previous_threshold = self.threshold.read();
 
             let new_signers_count = signers_len - signers_to_remove.len();
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
@@ -292,13 +315,21 @@ mod ArgentMultisig {
             self.remove_signers(signers_to_remove.span(), last_signer);
             self.threshold.write(new_threshold);
 
-            let config = ConfigurationUpdated {
-                new_threshold,
-                new_signers_count,
-                added_signers: ArrayTrait::new(),
-                removed_signers: signers_to_remove
+            if previous_threshold != new_threshold {
+                self.emit(ThresholdUpdated { new_threshold });
+            }
+
+            let mut signers_removed = signers_to_remove.span();
+            loop {
+                match signers_removed.pop_front() {
+                    Option::Some(removed_signer) => {
+                        self.emit(OwnerRemoved { removed_owner_guid: *removed_signer });
+                    },
+                    Option::None(_) => {
+                        break;
+                    }
+                };
             };
-            self.emit(config);
         }
 
         fn replace_signer(
@@ -309,19 +340,8 @@ mod ArgentMultisig {
 
             self.replace_signer(signer_to_remove, signer_to_add, last_signer);
 
-            let mut added_signers = ArrayTrait::new();
-            added_signers.append(signer_to_add);
-
-            let mut removed_signers = ArrayTrait::new();
-            removed_signers.append(signer_to_remove);
-
-            let config = ConfigurationUpdated {
-                new_threshold: self.threshold.read(),
-                new_signers_count,
-                added_signers,
-                removed_signers
-            };
-            self.emit(config);
+            self.emit(OwnerRemoved { removed_owner_guid: signer_to_remove });
+            self.emit(OwnerAdded { new_owner_guid: signer_to_add });
         }
 
         fn get_name(self: @ContractState) -> felt252 {
@@ -331,6 +351,10 @@ mod ArgentMultisig {
         /// Semantic version of this contract
         fn get_version(self: @ContractState) -> Version {
             Version { major: VERSION_MAJOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
+        }
+
+        fn get_vendor(self: @ContractState) -> felt252 {
+            VENDOR
         }
 
         fn get_threshold(self: @ContractState) -> usize {

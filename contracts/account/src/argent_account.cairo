@@ -91,6 +91,7 @@ mod ArgentAccount {
         OwnerAdded: OwnerAdded,
         OwnerRemoved: OwnerRemoved,
     }
+    
     /// @notice Emitted exactly once when the account is initialized
     /// @param account The account address
     /// @param owner The owner address

@@ -7,14 +7,6 @@ env:
 
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: software-mansion/setup-scarb@v1
-        with:
-          scarb-version: ${{ env.SCARB_VERSION }}
-      - run: scarb build
   tests:
     runs-on: ubuntu-latest
     steps:

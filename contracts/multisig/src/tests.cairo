@@ -45,7 +45,6 @@ trait ITestArgentMultisig<TContractState> {
     // Views
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
-    fn get_vendor(self: @TContractState) -> felt252;
     fn get_threshold(self: @TContractState) -> usize;
     fn get_signers(self: @TContractState) -> Array<felt252>;
     fn is_signer(self: @TContractState, signer: felt252) -> bool;

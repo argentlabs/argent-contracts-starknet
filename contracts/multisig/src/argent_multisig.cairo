@@ -27,7 +27,6 @@ mod ArgentMultisig {
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
         738349667340360233096752603318170676063569407717437256101137432051386874767; // starknet_keccak('execute_after_upgrade')
 
-    const VENDOR: felt252 = 'argent';
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION_MAJOR: u8 = 0;
     const VERSION_MINOR: u8 = 1;
@@ -351,10 +350,6 @@ mod ArgentMultisig {
         /// Semantic version of this contract
         fn get_version(self: @ContractState) -> Version {
             Version { major: VERSION_MAJOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
-        }
-
-        fn get_vendor(self: @ContractState) -> felt252 {
-            VENDOR
         }
 
         fn get_threshold(self: @ContractState) -> usize {

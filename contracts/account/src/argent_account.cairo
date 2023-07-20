@@ -25,7 +25,6 @@ mod ArgentAccount {
         IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait,
     };
 
-    const VENDOR: felt252 = 'argent';
     const NAME: felt252 = 'ArgentAccount';
     const VERSION_MAJOR: u8 = 0;
     const VERSION_MINOR: u8 = 3;
@@ -513,10 +512,6 @@ mod ArgentAccount {
         /// Semantic version of this contract
         fn get_version(self: @ContractState) -> Version {
             Version { major: VERSION_MAJOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
-        }
-
-        fn get_vendor(self: @ContractState) -> felt252 {
-            VENDOR
         }
 
         fn get_name(self: @ContractState) -> felt252 {

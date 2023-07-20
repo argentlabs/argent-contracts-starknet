@@ -1,8 +1,5 @@
 # Won't write the called command in the console
 .SILENT:
-# Because we have a folder called test we need PHONY to avoid collision
-.PHONY: test 
-
 
 DEVNET_CAIRO_INSTALLATION_FOLDER=./cairo
 DEVNET_CAIRO_VERSION=v2.0.0

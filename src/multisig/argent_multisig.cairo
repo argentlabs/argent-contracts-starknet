@@ -1,6 +1,6 @@
-use argent::multisig::interface::{
-    IArgentMultisig
-}; // For some reason (fn colliding with same name) I have to import it here and use super
+// For some reason (fn colliding with same name) I have to import it here and use super
+use argent::multisig::interface::{IArgentMultisig};
+
 #[starknet::contract]
 mod ArgentMultisig {
     use array::{ArrayTrait, SpanTrait};

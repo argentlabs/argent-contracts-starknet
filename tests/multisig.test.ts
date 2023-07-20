@@ -37,7 +37,6 @@ describe("ArgentMultisig", function () {
     await accountContract.get_signers().should.eventually.deep.equal(signers);
     await accountContract.get_name().should.eventually.equal(BigInt(shortString.encodeShortString("ArgentMultisig")));
     await accountContract.get_version().should.eventually.deep.equal({ major: 0n, minor: 1n, patch: 0n });
-    await accountContract.get_vendor().should.eventually.equal(BigInt(shortString.encodeShortString("argent")));
 
     await accountContract.is_signer(signers[0]).should.eventually.be.true;
     await accountContract.is_signer(signers[1]).should.eventually.be.true;

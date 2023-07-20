@@ -117,10 +117,3 @@ fn get_version() {
     assert(version.minor == 1, 'Version minor');
     assert(version.patch == 0, 'Version patch');
 }
-
-#[test]
-#[available_gas(20000000)]
-fn get_vendor() {
-    assert(initialize_multisig().get_vendor() == 'argent', 'Vendor should be argent');
-}
-

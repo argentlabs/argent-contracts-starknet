@@ -187,7 +187,7 @@ mod ArgentAccount {
     }
 
     /// This event is part of an account discoverability standard, SNIP not yet created
-    /// Emitted when an an account owner is removed
+    /// Emitted when an account owner is removed
     #[derive(Drop, starknet::Event)]
     struct OwnerRemoved {
         #[key]

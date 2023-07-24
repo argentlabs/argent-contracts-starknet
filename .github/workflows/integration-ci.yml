@@ -38,7 +38,7 @@ jobs:
           ./scripts/wait-devnet-ready.sh
 
       - name: Run integration tests
-        run: scarb run integration-tests
+        run: scarb run test-ci
 
   format:
     runs-on: ubuntu-latest
@@ -50,7 +50,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Step 3 - Check correct formatting
-        run: yarn format:check
+        run: yarn prettier --check .
 
   lint:
     runs-on: ubuntu-latest
@@ -62,4 +62,4 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Step 3 - Check correct linting
-        run: yarn lint:check
+        run: yarn eslint .

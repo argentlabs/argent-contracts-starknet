@@ -8,9 +8,8 @@ const classHashCache: Record<string, string> = {};
 export const ethAddress = "0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7";
 let ethContract: Contract;
 
-export const contractsFolder = "./target/release/";
-export const fixturesFolder = "./tests/fixtures/";
-export const contractsPrefix = "argent_";
+export const contractsFolder = "./target/release/argent_";
+export const fixturesFolder = "./tests/fixtures/argent_";
 
 export async function getEthContract() {
   if (ethContract) {
@@ -31,11 +30,11 @@ export async function declareContract(contractName: string, wait = true, folder 
     return cachedClass;
   }
   const contract: CompiledSierra = json.parse(
-    readFileSync(`${folder}${contractsPrefix}${contractName}.sierra.json`).toString("ascii"),
+    readFileSync(`${folder}${contractName}.sierra.json`).toString("ascii"),
   );
   const payload: DeclareContractPayload = { contract };
   if ("sierra_program" in contract) {
-    payload.casm = json.parse(readFileSync(`${folder}${contractsPrefix}${contractName}.casm.json`).toString("ascii"));
+    payload.casm = json.parse(readFileSync(`${folder}${contractName}.casm.json`).toString("ascii"));
   }
   const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
   if (wait && transaction_hash) {

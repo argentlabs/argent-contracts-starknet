@@ -31,7 +31,9 @@ export async function declareContract(contractName: string, wait = true): Promis
   if ("sierra_program" in contract) {
     payload.casm = json.parse(readFileSync(`./tests/fixtures/${contractName}.casm`).toString("ascii"));
   }
-  const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
+  const skipSimulation = provider.isDevnet;
+  const maxFee = skipSimulation ? 1e18 : undefined;
+  const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee }); // max fee avoids slow estimate
   if (wait && transaction_hash) {
     await provider.waitForTransaction(transaction_hash);
     console.log(`\t${contractName} declared`);

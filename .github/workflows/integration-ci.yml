@@ -1,9 +1,5 @@
 name: Integration CI
 
-env:
-  SCARB_VERSION: 0.5.0
-
-
 on: push
 
 jobs:
@@ -14,10 +10,13 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Scarb
-        uses: software-mansion/setup-scarb@v1
+        id: get-scarb-version
+        run:
+          echo "::set-output name=SCARB_VERSION::$(awk '{print $2}' .tool-versions)"
+      - uses: software-mansion/setup-scarb@v1
         with:
-          scarb-version: ${{ env.SCARB_VERSION }}
-
+          scarb-version: ${{ steps.get-scarb-version.outputs.SCARB_VERSION }}
+          
       - name: Install Python
         uses: actions/setup-python@v4
         with:

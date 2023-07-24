@@ -2,27 +2,31 @@ name: Cairo CI
 
 on: push
 
-env:
-  SCARB_VERSION: 0.5.0
-
-
 jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Setup Scarb
+        id: get-scarb-version
+        run:
+          echo "::set-output name=SCARB_VERSION::$(awk '{print $2}' .tool-versions)"
       - uses: software-mansion/setup-scarb@v1
         with:
-          scarb-version: ${{ env.SCARB_VERSION }}
+          scarb-version: ${{ steps.get-scarb-version.outputs.SCARB_VERSION }}
       - run: scarb test
   
   format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Setup Scarb
+        id: get-scarb-version
+        run:
+          echo "::set-output name=SCARB_VERSION::$(awk '{print $2}' .tool-versions)"
       - uses: software-mansion/setup-scarb@v1
         with:
-          scarb-version: ${{ env.SCARB_VERSION }}
+          scarb-version: ${{ steps.get-scarb-version.outputs.SCARB_VERSION }}
       - run: scarb fmt --check
 
   contract-approvers:

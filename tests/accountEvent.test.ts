@@ -11,6 +11,7 @@ import {
   provider,
   randomKeyPair,
   setTime,
+  declareFixtureContract,
 } from "./lib";
 
 describe("ArgentAccount: events", function () {
@@ -142,7 +143,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'AccountUpgraded(new_implementation)' on upgrade", async function () {
     const { account, accountContract } = await deployAccount(argentAccountClassHash);
-    const argentAccountFutureClassHash = await declareContract("ArgentAccountFutureVersion");
+    const argentAccountFutureClassHash = await declareFixtureContract("ArgentAccountFutureVersion");
 
     await expectEvent(
       () => account.execute(accountContract.populateTransaction.upgrade(argentAccountFutureClassHash, ["0"])),

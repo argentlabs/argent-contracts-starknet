@@ -8,6 +8,9 @@ const classHashCache: Record<string, string> = {};
 export const ethAddress = "0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7";
 let ethContract: Contract;
 
+export const contractsFolder = "./target/release/argent_";
+export const fixturesFolder = "./tests/fixtures/argent_";
+
 export async function getEthContract() {
   if (ethContract) {
     return ethContract;
@@ -21,15 +24,15 @@ export function removeFromCache(contractName: string) {
 }
 
 // Could extends Account to add our specific fn but that's too early.
-export async function declareContract(contractName: string, wait = true): Promise<string> {
+export async function declareContract(contractName: string, wait = true, folder = contractsFolder): Promise<string> {
   const cachedClass = classHashCache[contractName];
   if (cachedClass) {
     return cachedClass;
   }
-  const contract: CompiledSierra = json.parse(readFileSync(`./tests/fixtures/${contractName}.json`).toString("ascii"));
+  const contract: CompiledSierra = json.parse(readFileSync(`${folder}${contractName}.sierra.json`).toString("ascii"));
   const payload: DeclareContractPayload = { contract };
   if ("sierra_program" in contract) {
-    payload.casm = json.parse(readFileSync(`./tests/fixtures/${contractName}.casm`).toString("ascii"));
+    payload.casm = json.parse(readFileSync(`${folder}${contractName}.casm.json`).toString("ascii"));
   }
   const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee: 1e18 }); // max fee avoids slow estimate
   if (wait && transaction_hash) {
@@ -38,6 +41,10 @@ export async function declareContract(contractName: string, wait = true): Promis
   }
   classHashCache[contractName] = class_hash;
   return class_hash;
+}
+
+export async function declareFixtureContract(contractName: string, wait = true): Promise<string> {
+  return await declareContract(contractName, wait, fixturesFolder);
 }
 
 export async function loadContract(contract_address: string) {

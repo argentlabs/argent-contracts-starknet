@@ -21,6 +21,7 @@ import {
   randomKeyPair,
   setTime,
   upgradeAccount,
+  declareFixtureContract,
 } from "./lib";
 
 describe("ArgentAccount: escape mechanism", function () {
@@ -58,8 +59,8 @@ describe("ArgentAccount: escape mechanism", function () {
 
   before(async () => {
     argentAccountClassHash = await declareContract("ArgentAccount");
-    oldArgentAccountClassHash = await declareContract("OldArgentAccount");
-    proxyClassHash = await declareContract("Proxy");
+    oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
+    proxyClassHash = await declareFixtureContract("Proxy");
   });
 
   beforeEach(async () => {

@@ -1,47 +1,44 @@
 name: Integration CI
 
-env:
-  ARCHIVE_LINK: https://github.com/starkware-libs/cairo/releases/download/v2.0.0/release-x86_64-unknown-linux-musl.tar.gz
-  ARCHIVE_NAME: cairo_binaries.zip
-
 on: push
 
 jobs:
-  tests:
+  integration-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Step 1 - Check out main branch
+      - name: Check out main branch
         uses: actions/checkout@v3
 
-      - name: Step 2 - Install correct python version
+      - name: Setup Scarb
+        id: get-scarb-version
+        run:
+          echo "::set-output name=SCARB_VERSION::$(awk '{print $2}' .tool-versions)"
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: ${{ steps.get-scarb-version.outputs.SCARB_VERSION }}
+          
+      - name: Install Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.9"
           cache: "pip"
 
-      - name: Step 3 - Cloning repo
-        run: make clone-cairo
-
-      - name: Step 4 - Downloading binaries, unzipping them and making them available
-        working-directory: ./cairo
-        run: |
-          curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
-          tar -xvf $ARCHIVE_NAME
-          mkdir -p target/release
-          mv cairo/bin/* target/release
-
-      - name: Step 5 - Installing requirements
+      - name: Install python requirements
         run: pip3 install -r requirements.txt
 
-      - name: Step 6 - Start devnet in background
+      - name: Install cairo for devnet
+        run: make install-devnet-cairo
+
+      - name: Install project
+        run: yarn install --frozen-lockfile
+
+      - name: Start devnet in background
         run: |
-          make devnet &
+          scarb run start-devnet &
           ./scripts/wait-devnet-ready.sh
 
-      - name: Step 7 - Run integrations tests
-        run: |
-          yarn install --frozen-lockfile
-          make test-integration
+      - name: Run integration tests
+        run: scarb run test-ci
 
   format:
     runs-on: ubuntu-latest
@@ -53,7 +50,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Step 3 - Check correct formatting
-        run: yarn format:check
+        run: yarn prettier --check .
 
   lint:
     runs-on: ubuntu-latest
@@ -65,4 +62,4 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Step 3 - Check correct linting
-        run: yarn lint:check
+        run: yarn eslint .

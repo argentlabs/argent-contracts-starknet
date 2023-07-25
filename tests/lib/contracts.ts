@@ -29,9 +29,7 @@ export async function declareContract(contractName: string, wait = true, folder 
   if (cachedClass) {
     return cachedClass;
   }
-  const contract: CompiledSierra = json.parse(
-    readFileSync(`${folder}${contractName}.sierra.json`).toString("ascii"),
-  );
+  const contract: CompiledSierra = json.parse(readFileSync(`${folder}${contractName}.sierra.json`).toString("ascii"));
   const payload: DeclareContractPayload = { contract };
   if ("sierra_program" in contract) {
     payload.casm = json.parse(readFileSync(`${folder}${contractName}.casm.json`).toString("ascii"));

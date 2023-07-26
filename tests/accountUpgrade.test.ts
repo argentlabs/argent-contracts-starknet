@@ -9,6 +9,7 @@ import {
   loadContract,
   provider,
   upgradeAccount,
+  expectEvent,
 } from "./lib";
 
 describe("ArgentAccount: upgrade", function () {
@@ -34,21 +35,31 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Upgrade cairo 0 to current version", async function () {
-    const { account } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
-    await upgradeAccount(account, argentAccountClassHash, ["0"]);
+    const { account, owner } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
+    const receipt = await upgradeAccount(account, argentAccountClassHash, ["0"]);
     const newClashHash = await provider.getClassHashAt(account.address);
     expect(BigInt(newClashHash)).to.equal(BigInt(argentAccountClassHash));
+    await expectEvent(receipt, {
+      from_address: account.address,
+      keys: ["OwnerAdded", owner.publicKey.toString()],
+      data: [],
+    });
   });
 
   it("Upgrade cairo 0 to cairo 1 with multicall", async function () {
-    const { account } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
-    await upgradeAccount(
+    const { account, owner } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
+    const receipt = await upgradeAccount(
       account,
       argentAccountClassHash,
       getUpgradeDataLegacy([testDapp.populateTransaction.set_number(42)]),
     );
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
     await testDapp.get_number(account.address).should.eventually.equal(42n);
+    await expectEvent(receipt, {
+      from_address: account.address,
+      keys: ["OwnerAdded", owner.publicKey.toString()],
+      data: [],
+    });
   });
 
   it("Upgrade from current version FutureVersion", async function () {

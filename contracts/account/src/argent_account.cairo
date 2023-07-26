@@ -176,10 +176,9 @@ mod ArgentAccount {
         new_implementation: ClassHash
     }
 
-
     /// This event is part of an account discoverability standard, SNIP not yet created
     /// Emitted when an account owner is added, including when the account is created.
-    /// Should also be emitted with the current owners when upgrading an account to Cairo1
+    /// Should also be emitted with the current owners when upgrading an account from Cairo 0
     #[derive(Drop, starknet::Event)]
     struct OwnerAdded {
         #[key]
@@ -187,7 +186,7 @@ mod ArgentAccount {
     }
 
     /// This event is part of an account discoverability standard, SNIP not yet created
-    /// Emitted when an an account owner is removed
+    /// Emitted when an account owner is removed
     #[derive(Drop, starknet::Event)]
     struct OwnerRemoved {
         #[key]

@@ -352,8 +352,21 @@ mod ArgentMultisig {
 
             self.replace_signer(signer_to_remove, signer_to_add, last_signer);
 
+<<<<<<< HEAD
             self.emit(OwnerRemoved { removed_owner_guid: signer_to_remove });
             self.emit(OwnerAdded { new_owner_guid: signer_to_add });
+=======
+            let added_signers = array![signer_to_add];
+            let removed_signers = array![signer_to_remove];
+
+            let config = ConfigurationUpdated {
+                new_threshold: self.threshold.read(),
+                new_signers_count,
+                added_signers,
+                removed_signers
+            };
+            self.emit(config);
+>>>>>>> b0cb4fb (Upgrade to cairo 2.1)
         }
 
         fn get_name(self: @ContractState) -> felt252 {

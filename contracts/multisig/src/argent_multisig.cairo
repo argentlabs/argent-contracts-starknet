@@ -77,7 +77,6 @@ mod ArgentMultisig {
 
     /// This event is part of an account discoverability standard, SNIP not yet created
     /// Emitted when an account owner is added, including when the account is created.
-    /// Should also be emitted with the current owners when upgrading an account to Cairo1
     #[derive(Drop, starknet::Event)]
     struct OwnerAdded {
         #[key]

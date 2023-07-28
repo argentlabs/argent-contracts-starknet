@@ -21,9 +21,17 @@ describe("ArgentMultisig", function () {
 
     await expectEvent(receipt, {
       from_address: accountContract.address,
-      keys: ["ConfigurationUpdated"],
-      data: CallData.compile([threshold, signersLength, signers, []]),
+      eventName: "ThresholdUpdated",
+      data: CallData.compile([threshold]),
     });
+
+    for (const signer of signers) {
+      await expectEvent(receipt, {
+        from_address: accountContract.address,
+        eventName: "OwnerAdded",
+        additionalKeys: [signer.toString()],
+      });
+    }
 
     await accountContract.get_threshold().should.eventually.equal(1n);
     await accountContract.get_signers().should.eventually.deep.equal(signers);

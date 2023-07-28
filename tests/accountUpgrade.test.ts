@@ -41,8 +41,8 @@ describe("ArgentAccount: upgrade", function () {
     expect(BigInt(newClashHash)).to.equal(BigInt(argentAccountClassHash));
     await expectEvent(receipt, {
       from_address: account.address,
-      keys: ["OwnerAdded", owner.publicKey.toString()],
-      data: [],
+      eventName: "OwnerAdded",
+      additionalKeys: [owner.publicKey.toString()],
     });
   });
 
@@ -57,8 +57,8 @@ describe("ArgentAccount: upgrade", function () {
     await testDapp.get_number(account.address).should.eventually.equal(42n);
     await expectEvent(receipt, {
       from_address: account.address,
-      keys: ["OwnerAdded", owner.publicKey.toString()],
-      data: [],
+      eventName: "OwnerAdded",
+      additionalKeys: [owner.publicKey.toString()],
     });
   });
 

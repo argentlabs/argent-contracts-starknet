@@ -117,4 +117,3 @@ fn get_version() {
     assert(version.minor == 1, 'Version minor');
     assert(version.patch == 0, 'Version patch');
 }
-

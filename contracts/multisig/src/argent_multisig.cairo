@@ -100,6 +100,8 @@ mod ArgentMultisig {
         self.add_signers(signers.span(), last_signer: 0);
         self.threshold.write(new_threshold);
 
+        self.emit(ThresholdUpdated { new_threshold });
+
         let mut signers_added = signers.span();
         loop {
             match signers_added.pop_front() {
@@ -111,7 +113,6 @@ mod ArgentMultisig {
                 }
             };
         };
-        self.emit(ThresholdUpdated { new_threshold });
     }
 
     #[external(v0)]

@@ -131,7 +131,7 @@ fn valid_owner_with_invalid_guardian() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(2300000)]
 fn invalid_owner_with_invalid_guardian() {
     let account = initialize_account();
     let signatures = double_signature(0, 0, 0, 0);

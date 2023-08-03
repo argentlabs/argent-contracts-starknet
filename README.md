@@ -72,13 +72,19 @@ scarb test
 
 ## Test the contracts (JavaScript)
 
-### Install the devnet
+### Install the devnet (run in project root folder)
 
 Use [nvm](https://github.com/nvm-sh/nvm) to manage your Node versions.
 
-Install Python dependencies (run in project root folder)
+Install devnet
 
+```shell
+make install-devnet-cairo
 ```
+
+Install Python dependencies
+
+```shell
 python3.9 -m venv ./venv
 source ./venv/bin/activate
 brew install gmp

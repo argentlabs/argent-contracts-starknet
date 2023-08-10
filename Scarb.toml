@@ -10,7 +10,7 @@ casm = true
 allowed-libfuncs-list.name = "audited"
 
 [dependencies]
-starknet = "=2.1.0-rc2"
+starknet = "=2.1.0"
 
 [scripts]
 format = "scarb fmt && yarn prettier --write ."

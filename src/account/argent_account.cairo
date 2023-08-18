@@ -98,7 +98,10 @@ mod ArgentAccount {
         GuardianChanged: GuardianChanged,
         GuardianBackupChanged: GuardianBackupChanged,
         AccountUpgraded: AccountUpgraded,
+        OwnerAdded: OwnerAdded,
+        OwnerRemoved: OwnerRemoved,
     }
+
     /// @notice Emitted exactly once when the account is initialized
     /// @param account The account address
     /// @param owner The owner address
@@ -184,6 +187,23 @@ mod ArgentAccount {
         new_implementation: ClassHash
     }
 
+    /// This event is part of an account discoverability standard, SNIP not yet created
+    /// Emitted when an account owner is added, including when the account is created.
+    /// Should also be emitted with the current owners when upgrading an account from Cairo 0
+    #[derive(Drop, starknet::Event)]
+    struct OwnerAdded {
+        #[key]
+        new_owner_guid: felt252,
+    }
+
+    /// This event is part of an account discoverability standard, SNIP not yet created
+    /// Emitted when an account owner is removed
+    #[derive(Drop, starknet::Event)]
+    struct OwnerRemoved {
+        #[key]
+        removed_owner_guid: felt252,
+    }
+
     #[constructor]
     fn constructor(ref self: ContractState, owner: felt252, guardian: felt252) {
         assert(owner != 0, 'argent/null-owner');
@@ -192,6 +212,7 @@ mod ArgentAccount {
         self._guardian.write(guardian);
         self._guardian_backup.write(0);
         self.emit(AccountCreated { owner, guardian });
+        self.emit(OwnerAdded { new_owner_guid: owner });
     }
 
     #[external(v0)]
@@ -316,6 +337,8 @@ mod ArgentAccount {
             if implementation != class_hash_const::<0>() {
                 replace_class_syscall(implementation).unwrap_syscall();
                 self._implementation.write(class_hash_const::<0>());
+                // Technically the owner is not added here, but we emit the event since it wasn't emitted in previous versions
+                self.emit(OwnerAdded { new_owner_guid: self._signer.read() });
             }
 
             if data.is_empty() {
@@ -367,8 +390,12 @@ mod ArgentAccount {
             self.reset_escape();
             self.reset_escape_attempts();
 
+            let old_owner = self._signer.read();
+
             self._signer.write(new_owner);
             self.emit(OwnerChanged { new_owner });
+            self.emit(OwnerRemoved { removed_owner_guid: old_owner });
+            self.emit(OwnerAdded { new_owner_guid: new_owner });
         }
 
         fn change_guardian(ref self: ContractState, new_guardian: felt252) {
@@ -439,8 +466,12 @@ mod ArgentAccount {
             self.reset_escape_attempts();
 
             // update owner
+            let old_owner = self._signer.read();
             self._signer.write(current_escape.new_signer);
             self.emit(OwnerEscaped { new_owner: current_escape.new_signer });
+            self.emit(OwnerRemoved { removed_owner_guid: old_owner });
+            self.emit(OwnerAdded { new_owner_guid: current_escape.new_signer });
+
             // clear escape
             self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
         }

@@ -11,6 +11,7 @@ import {
   provider,
   randomKeyPair,
   setTime,
+  waitForTransaction,
   declareFixtureContract,
 } from "./lib";
 
@@ -21,7 +22,7 @@ describe("ArgentAccount: events", function () {
     argentAccountClassHash = await declareContract("ArgentAccount");
   });
 
-  it("Expect 'AccountCreated(owner, guardian)' when deploying an account", async function () {
+  it("Expect 'AccountCreated' and 'OwnerAddded' when deploying an account", async function () {
     const owner = "21";
     const guardian = "42";
     const constructorCalldata = CallData.compile({ owner, guardian });
@@ -29,10 +30,18 @@ describe("ArgentAccount: events", function () {
       classHash: argentAccountClassHash,
       constructorCalldata,
     });
+
     await expectEvent(transaction_hash, {
       from_address: contract_address,
-      keys: ["AccountCreated", owner],
+      eventName: "AccountCreated",
+      additionalKeys: [owner],
       data: [guardian],
+    });
+
+    await expectEvent(transaction_hash, {
+      from_address: contract_address,
+      eventName: "OwnerAdded",
+      additionalKeys: [owner],
     });
   });
 
@@ -46,13 +55,13 @@ describe("ArgentAccount: events", function () {
 
     await expectEvent(() => accountContract.trigger_escape_owner(newOwner), {
       from_address: account.address,
-      keys: ["EscapeOwnerTriggered"],
+      eventName: "EscapeOwnerTriggered",
       data: [activeAt, newOwner],
     });
   });
 
-  it("Expect 'OwnerEscaped(new_signer)' on escape_owner", async function () {
-    const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
+  it("Expect 'OwnerEscaped', 'OwnerRemoved' and 'OwnerAdded' on escape_owner", async function () {
+    const { account, accountContract, guardian, owner } = await deployAccount(argentAccountClassHash);
     account.signer = guardian;
 
     const newOwner = "42";
@@ -60,11 +69,23 @@ describe("ArgentAccount: events", function () {
 
     await accountContract.trigger_escape_owner(newOwner);
     await increaseTime(ESCAPE_SECURITY_PERIOD);
-
-    await expectEvent(() => accountContract.escape_owner(), {
+    const receipt = await waitForTransaction(await accountContract.escape_owner());
+    await expectEvent(receipt, {
       from_address: account.address,
-      keys: ["OwnerEscaped"],
+      eventName: "OwnerEscaped",
       data: [newOwner],
+    });
+
+    await expectEvent(receipt, {
+      from_address: account.address,
+      eventName: "OwnerRemoved",
+      additionalKeys: [owner.publicKey.toString()],
+    });
+
+    await expectEvent(receipt, {
+      from_address: account.address,
+      eventName: "OwnerAdded",
+      additionalKeys: [newOwner],
     });
   });
 
@@ -78,7 +99,7 @@ describe("ArgentAccount: events", function () {
 
     await expectEvent(() => accountContract.trigger_escape_guardian(newGuardian), {
       from_address: account.address,
-      keys: ["EscapeGuardianTriggered"],
+      eventName: "EscapeGuardianTriggered",
       data: [activeAt, newGuardian],
     });
   });
@@ -94,12 +115,12 @@ describe("ArgentAccount: events", function () {
 
     await expectEvent(() => accountContract.escape_guardian(), {
       from_address: account.address,
-      keys: ["GuardianEscaped"],
+      eventName: "GuardianEscaped",
       data: [newGuardian],
     });
   });
 
-  it("Expect 'OwnerChanged(new_signer)' on change_owner", async function () {
+  it("Expect 'OwnerChanged', 'OwnerRemoved' and 'OwnerAdded' on change_owner", async function () {
     const { accountContract, owner } = await deployAccount(argentAccountClassHash);
 
     const newOwner = randomKeyPair();
@@ -109,11 +130,23 @@ describe("ArgentAccount: events", function () {
 
     const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
     const [r, s] = newOwner.signHash(msgHash);
-
-    await expectEvent(() => accountContract.change_owner(newOwner.publicKey, r, s), {
+    const receipt = await waitForTransaction(await accountContract.change_owner(newOwner.publicKey, r, s));
+    await expectEvent(receipt, {
       from_address: accountContract.address,
-      keys: ["OwnerChanged"],
+      eventName: "OwnerChanged",
       data: [newOwner.publicKey.toString()],
+    });
+
+    await expectEvent(receipt, {
+      from_address: accountContract.address,
+      eventName: "OwnerRemoved",
+      additionalKeys: [owner.publicKey.toString()],
+    });
+
+    await expectEvent(receipt, {
+      from_address: accountContract.address,
+      eventName: "OwnerAdded",
+      additionalKeys: [newOwner.publicKey.toString()],
     });
   });
 
@@ -124,7 +157,7 @@ describe("ArgentAccount: events", function () {
 
     await expectEvent(() => accountContract.change_guardian(newGuardian), {
       from_address: accountContract.address,
-      keys: ["GuardianChanged"],
+      eventName: "GuardianChanged",
       data: [newGuardian],
     });
   });
@@ -136,7 +169,7 @@ describe("ArgentAccount: events", function () {
 
     await expectEvent(() => accountContract.change_guardian_backup(newGuardianBackup), {
       from_address: accountContract.address,
-      keys: ["GuardianBackupChanged"],
+      eventName: "GuardianBackupChanged",
       data: [newGuardianBackup],
     });
   });
@@ -149,7 +182,7 @@ describe("ArgentAccount: events", function () {
       () => account.execute(accountContract.populateTransaction.upgrade(argentAccountFutureClassHash, ["0"])),
       {
         from_address: account.address,
-        keys: ["AccountUpgraded"],
+        eventName: "AccountUpgraded",
         data: [argentAccountFutureClassHash],
       },
     );
@@ -165,8 +198,7 @@ describe("ArgentAccount: events", function () {
       account.signer = new ArgentSigner(owner, guardian);
       await expectEvent(() => accountContract.cancel_escape(), {
         from_address: account.address,
-        keys: ["EscapeCanceled"],
-        data: [],
+        eventName: "EscapeCanceled",
       });
     });
 
@@ -178,8 +210,7 @@ describe("ArgentAccount: events", function () {
 
       await expectEvent(() => accountContract.trigger_escape_owner(42), {
         from_address: account.address,
-        keys: ["EscapeCanceled"],
-        data: [],
+        eventName: "EscapeCanceled",
       });
     });
 
@@ -191,8 +222,7 @@ describe("ArgentAccount: events", function () {
 
       await expectEvent(() => accountContract.trigger_escape_guardian(42), {
         from_address: account.address,
-        keys: ["EscapeCanceled"],
-        data: [],
+        eventName: "EscapeCanceled",
       });
     });
   });
@@ -209,7 +239,8 @@ describe("ArgentAccount: events", function () {
       const { transaction_hash } = await ethContract.transfer(recipient, amount);
       await expectEvent(transaction_hash, {
         from_address: account.address,
-        keys: ["TransactionExecuted", transaction_hash],
+        eventName: "TransactionExecuted",
+        additionalKeys: [transaction_hash],
         data: CallData.compile([[first_retdata]]),
       });
     });
@@ -235,7 +266,8 @@ describe("ArgentAccount: events", function () {
       ]);
       await expectEvent(transaction_hash, {
         from_address: account.address,
-        keys: ["TransactionExecuted", transaction_hash],
+        eventName: "TransactionExecuted",
+        additionalKeys: [transaction_hash],
         data: CallData.compile([[firstReturn, secondReturn]]),
       });
     });

@@ -18,30 +18,43 @@ describe("ArgentMultisig: signer storage", function () {
 
   describe("add_signers(new_threshold, signers_to_add)", function () {
     it("Should add one new signer", async function () {
-      const threshold = 1;
       const signersLength = 1;
 
       const newSigner1 = randomKeyPair().publicKey;
       const newSigner2 = randomKeyPair().publicKey;
+      const newSigner3 = randomKeyPair().publicKey;
 
-      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, 1, signersLength);
 
       await accountContract.is_signer(signers[0]).should.eventually.be.true;
       await accountContract.is_signer(newSigner1).should.eventually.be.false;
 
-      await accountContract.add_signers(threshold, [newSigner1]);
-
+      await accountContract.add_signers(1, [newSigner1]);
       await accountContract.is_signer(newSigner1).should.eventually.be.true;
 
-      const expectedNewSignerCount = 3;
+      const new_threshold = 2;
 
-      await expectEvent(() => accountContract.add_signers(threshold, [newSigner2]), {
+      const { transaction_hash } = await accountContract.add_signers(new_threshold, [newSigner2, newSigner3]);
+
+      await expectEvent(transaction_hash, {
         from_address: accountContract.address,
-        keys: ["ConfigurationUpdated"],
-        data: CallData.compile([threshold, expectedNewSignerCount, [newSigner2], []]),
+        eventName: "ThresholdUpdated",
+        data: CallData.compile([new_threshold]),
+      });
+
+      await expectEvent(transaction_hash, {
+        from_address: accountContract.address,
+        eventName: "OwnerAdded",
+        additionalKeys: [newSigner2.toString()],
+      });
+      await expectEvent(transaction_hash, {
+        from_address: accountContract.address,
+        eventName: "OwnerAdded",
+        additionalKeys: [newSigner3.toString()],
       });
       await accountContract.is_signer(newSigner2).should.eventually.be.true;
-      await accountContract.get_threshold().should.eventually.equal(BigInt(threshold));
+      await accountContract.is_signer(newSigner3).should.eventually.be.true;
+      await accountContract.get_threshold().should.eventually.equal(BigInt(new_threshold));
     });
     describe("Test all possible revert errors when adding signers", function () {
       it("Expect 'argent/already-a-signer' if adding an owner already in the list", async function () {
@@ -97,12 +110,19 @@ describe("ArgentMultisig: signer storage", function () {
       const { accountContract, signers } = await deployMultisig1_3(multisigAccountClassHash);
 
       const newThreshold = 2n;
-      const expectedNewSignerCount = 2;
 
-      await expectEvent(() => accountContract.remove_signers(newThreshold, [signers[0]]), {
+      const { transaction_hash } = await accountContract.remove_signers(newThreshold, [signers[0]]);
+
+      await expectEvent(transaction_hash, {
         from_address: accountContract.address,
-        keys: ["ConfigurationUpdated"],
-        data: CallData.compile([newThreshold, expectedNewSignerCount, [], [signers[0]]]),
+        eventName: "ThresholdUpdated",
+        data: CallData.compile([newThreshold]),
+      });
+
+      await expectEvent(transaction_hash, {
+        from_address: accountContract.address,
+        eventName: "OwnerRemoved",
+        additionalKeys: [signers[0].toString()],
       });
 
       await accountContract.is_signer(signers[0]).should.eventually.be.false;
@@ -185,14 +205,18 @@ describe("ArgentMultisig: signer storage", function () {
 
       const { accountContract, signers } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      const expectedNewSignerCount = 1;
+      const { transaction_hash } = await accountContract.replace_signer(signers[0], newSigner);
 
-      await expectEvent(() => accountContract.replace_signer(signers[0], newSigner), {
+      await expectEvent(transaction_hash, {
         from_address: accountContract.address,
-        keys: ["ConfigurationUpdated"],
-        data: CallData.compile([threshold, expectedNewSignerCount, [newSigner], [signers[0]]]),
+        eventName: "OwnerRemoved",
+        additionalKeys: [signers[0].toString()],
       });
-
+      await expectEvent(transaction_hash, {
+        from_address: accountContract.address,
+        eventName: "OwnerAdded",
+        additionalKeys: [newSigner.toString()],
+      });
       await accountContract.is_signer(newSigner).should.eventually.be.true;
     });
 
@@ -262,18 +286,19 @@ describe("ArgentMultisig: signer storage", function () {
       );
     });
   });
-  describe("replace_signers(signer_to_remove, signer_to_add)", function () {
-    it("Should replace one signer", async function () {
+  describe("change threshold", function () {
+    it("change threshold", async function () {
       const { accountContract, threshold } = await deployMultisig1_3(multisigAccountClassHash);
 
       const initialThreshold = await accountContract.get_threshold();
       expect(initialThreshold).to.equal(threshold);
 
       const newThreshold = 2n;
-      await expectEvent(() => accountContract.change_threshold(newThreshold), {
+      const { transaction_hash } = await accountContract.change_threshold(newThreshold);
+      await expectEvent(transaction_hash, {
         from_address: accountContract.address,
-        keys: ["ConfigurationUpdated"],
-        data: CallData.compile([newThreshold, 3, [], []]),
+        eventName: "ThresholdUpdated",
+        data: CallData.compile([newThreshold]),
       });
       const updatedThreshold = await accountContract.get_threshold();
       expect(updatedThreshold).to.be.equal(newThreshold);

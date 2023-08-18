@@ -40,30 +40,6 @@ Then go to the vscode extension setting and fill "Language Server Path" using th
 
 Original docs in case it changes: https://github.com/starkware-libs/cairo/tree/main/vscode-cairo
 
-## How to deploy a contract
-
-Make sure you have some eth on the network you plan to deploy.
-
-To deploy a contract you first need to declare it (if it is already declared jump this).
-
-Open your argent wallet:
-
-1. Go to Settings >> Developer settings >> Smart contract development >> Declare smart contract.
-2. Pick the json file of your contract (not the abi). Make sure to copy the contract class hash.
-3. Select the network and the account with which you'll pay.
-4. Hit declare and wait.
-5. If you didn't already, you can copy the class hash.
-
-Now that your contract is declared, you can deploy it.  
-Open your argent wallet:
-
-1. Go to Settings >> Developer settings >> Smart contract development >> Deploy smart contract.
-2. Paste the contract class hash.
-3. Select the network, and the account with which you'll pay.
-4. Specify a salt or hit generate random.
-5. Enable "Unique address" if needed.
-6. Hit deploy and wait.
-
 ## Test the contracts (Cairo)
 
 ```
@@ -135,3 +111,14 @@ To add or update a contract, have a look at the [`fixtures` makefile target](./M
 
 We support legacy interface IDs for compatibility reasons. But new interfaces IDs will follow [SNIP-5](https://github.com/ericnordelo/SNIPs/blob/feat/standard-interface-detection/SNIPS/snip-5.md#how-interfaces-are-identified)
 Tool to calculate the interface ids: https://github.com/ericnordelo/src5-rs
+
+## Release checklist
+
+- Bump version if needed (new deployment in mainnet)
+- Setup your .env file with the deployer info and run `yarn deploy` to declare the accounts
+- Verify the contracts if possible
+- Deploy to as many envs as possible: goerli-1, goerli-2, integration...
+- Update the contents of the `deployments` folder with the new addresses
+- Tag the commit used for the release (include the same name as in the `deployments` folder for easy tracking)
+- Create release in github if needed
+- Make this checklist better if you learned something during the process

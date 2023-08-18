@@ -147,15 +147,16 @@ export async function upgradeAccount(
   return await provider.waitForTransaction(transferTxHash);
 }
 
-export async function fundAccount(recipient: string, amount: number | bigint): Promise<void> {
+export async function fundAccount(recipient: string, amount: number | bigint) {
   if (provider.isDevnet) {
-    return await mintEth(recipient);
+    await mintEth(recipient);
+    return;
   }
   const ethContract = await getEthContract();
   ethContract.connect(deployer);
 
   const bn = uint256.bnToUint256(amount);
-  await ethContract.invoke("transfer", CallData.compile([recipient, bn.low, bn.high]));
+  return ethContract.invoke("transfer", CallData.compile([recipient, bn.low, bn.high]));
 }
 
 export enum EscapeStatus {

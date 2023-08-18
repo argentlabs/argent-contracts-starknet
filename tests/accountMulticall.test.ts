@@ -145,7 +145,8 @@ describe("ArgentAccount: multicall", function () {
     ];
     await expectEvent(receipt, {
       from_address: account.address,
-      keys: ["TransactionExecuted", receipt.transaction_hash],
+      eventName: "TransactionExecuted",
+      additionalKeys: [receipt.transaction_hash],
       data: expectedReturnData,
     });
   });

@@ -6,28 +6,22 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Scarb
-        id: get-scarb-version
-        run:
-          echo "::set-output name=SCARB_VERSION::$(awk '{print $2}' .tool-versions)"
-      - uses: software-mansion/setup-scarb@v1
-        with:
-          scarb-version: ${{ steps.get-scarb-version.outputs.SCARB_VERSION }}
-      - run: scarb test
+      - name: Step 1 - Check out main branch
+        uses: actions/checkout@v3
+      - name: Step 2 - Getting scarb
+        uses: software-mansion/setup-scarb@v1
+      - name: Step 3 - Testing
+        run: scarb test
   
   format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Scarb
-        id: get-scarb-version
-        run:
-          echo "::set-output name=SCARB_VERSION::$(awk '{print $2}' .tool-versions)"
-      - uses: software-mansion/setup-scarb@v1
-        with:
-          scarb-version: ${{ steps.get-scarb-version.outputs.SCARB_VERSION }}
-      - run: scarb fmt --check
+      - name: Step 1 - Check out main branch
+        uses: actions/checkout@v3
+      - name: Step 2 - Getting scarb
+        uses: software-mansion/setup-scarb@v1
+      - name: Step 3 - Checking format
+        run: scarb fmt --check
 
   contract-approvers:
     runs-on: ubuntu-latest

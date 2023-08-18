@@ -9,7 +9,7 @@ See [Argent Account](contracts/account/README.md) and [Argent Multisig](contract
 ### Setup Rust
 
 Please refer to [these instructions](https://docs.cairo-lang.org/getting_started/prerequisits.html).  
-You can skip the clone the Cairo repository step, as this will be done automatically through the Makefile.  
+You can skip cloning the Cairo repository, as this will be done automatically through the Makefile.  
 If you are a developer, we recommend you to install the Cairo extension. You can find it on the vscode Extensions Marketplace by looking for "Cairo 1.0".
 
 ### Setup project

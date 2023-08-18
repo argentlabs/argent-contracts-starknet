@@ -1,0 +1,3 @@
+[crate_roots]
+multisig = "src"
+lib = "../lib/src"

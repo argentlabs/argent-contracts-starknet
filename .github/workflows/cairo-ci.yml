@@ -1,0 +1,58 @@
+name: Cairo CI
+
+env:
+  ARCHIVE_LINK: https://github.com/starkware-libs/cairo/releases/download/v2.0.0/release-x86_64-unknown-linux-musl.tar.gz
+  ARCHIVE_NAME: cairo.zip
+
+on: push
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Step 1 - Check out main branch
+        uses: actions/checkout@v3
+
+      - name: Step 2 - Downloading binaries
+        run: curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
+
+      - name: Step 3 - Unzipping binaries
+        run: tar -xvf $ARCHIVE_NAME
+
+      - name: Step 4 - Make binaries available
+        run: echo "./cairo/bin" >> $GITHUB_PATH
+
+      - name: Step 5 - Run all tests
+        run: cairo-test --starknet ./contracts
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Step 1 - Check out main branch
+        uses: actions/checkout@v3
+
+      - name: Step 2 - Downloading binaries
+        run: curl -L -o $ARCHIVE_NAME $ARCHIVE_LINK
+
+      - name: Step 3 - Unzipping binaries
+        run: tar -xvf $ARCHIVE_NAME
+
+      - name: Step 4 - Make binaries available
+        run: echo "./cairo/bin" >> $GITHUB_PATH
+
+      - name: Step 5 - Check formatting
+        run: cairo-format --check --recursive ./contracts
+
+  contract-approvers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Step 1 - Check out main branch
+        uses: actions/checkout@v3
+
+      - name: Step 2 - Install project
+        run: yarn install --frozen-lockfile
+
+      - name: Step 3 - Check approvers count
+        run: yarn ts-node ./scripts/check-contract-approvers.ts 3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -43,7 +43,7 @@ pip install -r requirements.txt
 
 For more info check [Devnet instructions](https://0xspaceshard.github.io/starknet-devnet/docs/intro)
 
-Then you should be able to spawn a devnet using the Makefile:
+Then you should be able to spawn a devnet by running the following make command:
 
 ```shell
 make devnet

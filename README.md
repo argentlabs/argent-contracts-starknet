@@ -30,7 +30,7 @@ make test
 
 ### Install the devnet
 
-We advise you to use [nvm](https://github.com/nvm-sh/nvm) to manage your Node versions.
+We advise that you use [nvm](https://github.com/nvm-sh/nvm) to manage your Node versions.
 
 Install Python dependencies (run in project root folder)
 

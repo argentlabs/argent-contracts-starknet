@@ -6,7 +6,7 @@ console.log("ArgentMultisig class hash:", multisigClassHash);
 const testDappClassHash = await declareContract("TestDapp", true);
 console.log("TestDapp class hash:", testDappClassHash);
 
-console.log("Deploying new account");
+console.log("Deploying new multisig");
 
 const threshold = 1;
 const signersLength = 2;

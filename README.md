@@ -1,4 +1,4 @@
-# Argent Accounts on StarkNet
+# Argent Accounts on Starknet
 
 ## Specification
 
@@ -8,38 +8,21 @@ See [Argent Account](contracts/account/README.md) and [Argent Multisig](contract
 
 ### Setup Rust
 
-As explained here https://github.com/starkware-libs/cairo#prerequisites
+Please refer to [these instructions](https://docs.cairo-lang.org/getting_started/prerequisits.html).  
+You can skip the clone the Cairo repository step, as this will be done automatically through the Makefile.  
+If you are a developer, we recommend you to install the Cairo extension. You can find it on the vscode Extensions Marketplace by looking for "Cairo 1.0".
 
 ### Setup project
 
 run
 
-```
+```shell
 make
 ```
 
-### Setup vscode extension (optional)
-
-```
-cd cairo/vscode-cairo
-sudo npm install --global @vscode/vsce
-npm install
-vsce package
-code --install-extension cairo1*.vsix
-cd ../..
-```
-
-Then go to the vscode extension setting and fill "Language Server Path" using the path appropriate for your machine
-
-```
-/FULL_PATH_TO_THIS_FOLDER/cairo/target/release/cairo-language-server
-```
-
-Original docs in case it changes: https://github.com/starkware-libs/cairo/tree/main/vscode-cairo
-
 ## Test the contracts (Cairo)
 
-```
+```shell
 make test
 ```
 
@@ -47,11 +30,11 @@ make test
 
 ### Install the devnet
 
-User [nvm](https://github.com/nvm-sh/nvm) to manage your Node versions.
+We advise you to use [nvm](https://github.com/nvm-sh/nvm) to manage your Node versions.
 
 Install Python dependencies (run in project root folder)
 
-```
+```shell
 python3.9 -m venv ./venv
 source ./venv/bin/activate
 brew install gmp
@@ -60,7 +43,7 @@ pip install -r requirements.txt
 
 For more info check [Devnet instructions](https://0xspaceshard.github.io/starknet-devnet/docs/intro)
 
-Then you should be able to spawn a devnet using makefile:
+Then you should be able to spawn a devnet using the Makefile:
 
 ```shell
 make devnet
@@ -96,20 +79,20 @@ yarn format
 ### Contract fixtures
 
 The [fixtures folder](./tests/fixtures/) contains pre-compiled contracts used for tests (both json and casm).  
-To add or update a contract, have a look at the [`fixtures` makefile target](./Makefile).
+To add or update a contract, have a look at the [`fixtures` Makefile target](./Makefile).
 
 ### Interface IDs
 
 We support legacy interface IDs for compatibility reasons. But new interfaces IDs will follow [SNIP-5](https://github.com/ericnordelo/SNIPs/blob/feat/standard-interface-detection/SNIPS/snip-5.md#how-interfaces-are-identified)
-Tool to calculate the interface ids: https://github.com/ericnordelo/src5-rs
+Tool to calculate the interface IDs: https://github.com/ericnordelo/src5-rs
 
 ## Release checklist
 
 - Bump version if needed (new deployment in mainnet)
-- Setup your .env file with the deployer info and run `yarn deploy` to declare the accounts
+- Set up your .env file with the deployer info and run `yarn deploy` to declare the accounts
 - Verify the contracts if possible
-- Deploy to as many envs as possible: goerli-1, goerli-2, integration...
+- Deploy to as many environments as possible: mainnet, goerli-1, goerli-2 or integration
 - Update the contents of the `deployments` folder with the new addresses
 - Tag the commit used for the release (include the same name as in the `deployments` folder for easy tracking)
-- Create release in github if needed
+- Create release in GitHub if needed
 - Make this checklist better if you learned something during the process

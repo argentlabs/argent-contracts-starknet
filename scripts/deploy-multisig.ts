@@ -1,16 +1,23 @@
 import "dotenv/config";
-import { declareContract, deployAccount, deployer, loadContract, provider } from "../tests/lib";
+import { declareContract, deployer, deployMultisig, loadContract, provider } from "../tests/lib";
 
-const argentAccountClassHash = await declareContract("ArgentAccount", true);
-console.log("ArgentAccount class hash:", argentAccountClassHash);
+const multisigClassHash = await declareContract("ArgentMultisig", true);
+console.log("ArgentMultisig class hash:", multisigClassHash);
 const testDappClassHash = await declareContract("TestDapp", true);
 console.log("TestDapp class hash:", testDappClassHash);
 
-console.log("Deploying new account");
-const { account, owner, guardian } = await deployAccount(argentAccountClassHash);
+console.log("Deploying new multisig");
+
+const threshold = 1;
+const signersLength = 2;
+const { account, keys, signers } = await deployMultisig(multisigClassHash, threshold, signersLength);
+
 console.log("Account address:", account.address);
-console.log("Account owner private key:", owner.privateKey);
-console.log("Account guardian private key:", guardian.privateKey);
+console.log("Account signers:", signers);
+console.log(
+  "Account private keys:",
+  keys.map(({ privateKey }) => privateKey),
+);
 
 console.log("Deploying new test dapp");
 const { contract_address } = await deployer.deployContract({ classHash: testDappClassHash });

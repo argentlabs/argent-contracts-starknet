@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { readFileSync } from "fs";
-import { CompiledSierra, CompiledSierraCasm, json } from "starknet";
+import { CompiledSierra, json } from "starknet";
 import {
   declareContract,
   deployAccount,
@@ -28,16 +28,16 @@ describe("ArgentAccount: declare", function () {
 
   it("Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) ", async function () {
     const { account } = await deployAccount(argentAccountClassHash);
-    const contract: CompiledSierra = json.parse(readFileSync("./tests/fixtures/Proxy.json").toString("ascii"));
+    const contract: CompiledSierra = json.parse(
+      readFileSync("./tests/fixtures/argent_Proxy.sierra.json").toString("ascii"),
+    );
     expectRevertWithErrorMessage("argent/invalid-contract-version", () => account.declare({ contract }));
   });
 
   it("Expect the account to be able to declare a Cairo contract version2 (SIERRA)", async function () {
-    const { account } = await deployAccount(argentAccountClassHash);
-    const contract: CompiledSierra = json.parse(readFileSync("./tests/fixtures/TestDapp.json").toString("ascii"));
-    const casm: CompiledSierraCasm = json.parse(readFileSync("./tests/fixtures/TestDapp.casm").toString("ascii"));
-    const { class_hash, transaction_hash } = await account.declare({ contract, casm });
-    await provider.waitForTransaction(transaction_hash);
-    expect(provider.getCompiledClassByClassHash(class_hash)).to.exist;
+    const testDappClassHash = await declareContract("TestDapp");
+    const compiledClassHash = await provider.getCompiledClassByClassHash(testDappClassHash);
+    expect(compiledClassHash).to.exist;
+    removeFromCache("TestDapp");
   });
 });

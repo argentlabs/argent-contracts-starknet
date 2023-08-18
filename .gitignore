@@ -14,11 +14,5 @@ node.json
 
 cairo
 account.json
-tests/fixtures/ArgentAccount.json
-tests/fixtures/ArgentAccount.casm
-tests/fixtures/ArgentMultisig.json
-tests/fixtures/ArgentMultisig.casm
-tests/fixtures/TestDapp.json
-tests/fixtures/TestDapp.casm
 dump
 package-lock.json

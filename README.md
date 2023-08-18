@@ -10,12 +10,15 @@ See [Argent Account](contracts/account/README.md) and [Argent Multisig](contract
 
 As explained here https://github.com/starkware-libs/cairo#prerequisites
 
-### Setup project
+### Setup asdf
 
-run
+As explained here https://asdf-vm.com/guide/getting-started.html
 
-```
-make
+### Setup scarb
+
+```shell
+asdf plugin add scarb
+asdf install
 ```
 
 ### Setup vscode extension (optional)
@@ -40,18 +43,24 @@ Original docs in case it changes: https://github.com/starkware-libs/cairo/tree/m
 ## Test the contracts (Cairo)
 
 ```
-make test
+scarb test
 ```
 
 ## Test the contracts (JavaScript)
 
-### Install the devnet
+### Install the devnet (run in project root folder)
 
-User [nvm](https://github.com/nvm-sh/nvm) to manage your Node versions.
+Use [nvm](https://github.com/nvm-sh/nvm) to manage your Node versions.
 
-Install Python dependencies (run in project root folder)
+Install devnet
 
+```shell
+make install-devnet-cairo
 ```
+
+Install Python dependencies
+
+```shell
 python3.9 -m venv ./venv
 source ./venv/bin/activate
 brew install gmp
@@ -60,10 +69,10 @@ pip install -r requirements.txt
 
 For more info check [Devnet instructions](https://0xspaceshard.github.io/starknet-devnet/docs/intro)
 
-Then you should be able to spawn a devnet using makefile:
+Then you should be able to spawn a devnet:
 
 ```shell
-make devnet
+scarb run start-devnet
 ```
 
 ### Install JS dependencies
@@ -77,7 +86,7 @@ yarn
 Run all integration tests:
 
 ```shell
-make test-integration
+scarb run test-ts
 ```
 
 Run single integration test file (need to run previous command first):

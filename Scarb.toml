@@ -1,0 +1,26 @@
+[package]
+name = "argent"
+version = "0.1.0"
+
+# See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest
+
+[[target.starknet-contract]]
+sierra = true
+casm = true
+allowed-libfuncs-list.name = "audited"
+
+[dependencies]
+starknet = "=2.0.0"
+
+[scripts]
+format = "scarb fmt && yarn prettier --write ."
+format-check = "yarn prettier --check ."
+lint = "yarn eslint --fix ."
+lint-check = "yarn eslint ."
+test-ci= "scarb --release build && tsc && yarn mocha tests/*.test.ts --forbid-only --forbid-pending"
+test-ts = "scarb --release build && yarn tsc && yarn mocha tests/*.test.ts"
+test-multisig = "scarb --release build && yarn tsc && yarn mocha tests/multisig*.test.ts"
+test-list = "scarb --release build && yarn tsc && yarn mocha --dry-run tests/*.test.ts"
+start-devnet = "INSTALLATION_FOLDER_CARGO=./cairo/Cargo.toml ./scripts/start-devnet.sh"
+profile = "scarb --release build && yarn ts-node scripts/profile-account.ts"
+deploy = "scarb --release build && yarn ts-node scripts/deploy-account.ts"

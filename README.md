@@ -2,7 +2,7 @@
 
 ## Specification
 
-See [Argent Account](contracts/account/README.md) and [Argent Multisig](contracts/multisig/README.md) for more details.
+See [Argent Account](src/account/README.md) and [Argent Multisig](src/multisig/README.md) for more details.
 
 ## Development
 

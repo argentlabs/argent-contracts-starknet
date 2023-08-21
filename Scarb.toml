@@ -14,9 +14,7 @@ starknet = "=2.0.0"
 
 [scripts]
 format = "scarb fmt && yarn prettier --write ."
-format-check = "yarn prettier --check ."
-lint = "yarn eslint --fix ."
-lint-check = "yarn eslint ."
+lint = "yarn eslint ."
 test-ts = "scarb --release build && yarn tsc && yarn mocha tests/*.test.ts"
 test-multisig = "scarb --release build && yarn tsc && yarn mocha tests/multisig*.test.ts"
 test-list = "scarb --release build && yarn tsc && yarn mocha --dry-run tests/*.test.ts"

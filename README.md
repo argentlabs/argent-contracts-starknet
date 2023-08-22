@@ -2,7 +2,7 @@
 
 ## Specification
 
-See [Argent Account](contracts/account/README.md) and [Argent Multisig](contracts/multisig/README.md) for more details.
+See [Argent Account](src/account/README.md) and [Argent Multisig](src/multisig/README.md) for more details.
 
 ## Development
 
@@ -12,16 +12,10 @@ Please refer to [these instructions](https://docs.cairo-lang.org/getting_started
 You can skip cloning the Cairo repository, as this will be done automatically through the Makefile.  
 If you are a developer, we recommend that you install the Cairo extension. You can find it in the vscode Extensions Marketplace by looking for "Cairo 1.0".
 
-### Setup asdf
-
-As explained here https://asdf-vm.com/guide/getting-started.html
-
 ### Setup scarb
 
-```shell
-asdf plugin add scarb
-asdf install
-```
+Refer to this documentation: https://docs.swmansion.com/scarb/download.html#install-via-asdf  
+Thanks to the [.tool-versions file](./.tool-versions), you don't need to install a specific scarb version. The correct one will be automatically downloaded and installed.
 
 ## Test the contracts (Cairo)
 
@@ -81,8 +75,8 @@ yarn mocha ./tests/accountEscape.test.ts
 You also have access to the linter and a code formatter:
 
 ```shell
-yarn lint
-yarn format
+scarb run lint
+scarb run format
 ```
 
 ### Contract fixtures

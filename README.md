@@ -75,8 +75,8 @@ yarn mocha ./tests/accountEscape.test.ts
 You also have access to the linter and a code formatter:
 
 ```shell
-yarn lint
-yarn format
+scarb run lint
+scarb run format
 ```
 
 ### Contract fixtures

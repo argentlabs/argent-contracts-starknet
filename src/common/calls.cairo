@@ -4,7 +4,7 @@ use starknet::{call_contract_syscall, account::Call};
 use argent::common::array_ext::ArrayExtTrait;
 
 fn execute_multicall(mut calls: Span<Call>) -> Array<Span<felt252>> {
-    let mut result: Array<Span<felt252>> = ArrayTrait::new();
+    let mut result: Array<Span<felt252>> = array![];
     let mut idx = 0;
     loop {
         match calls.pop_front() {

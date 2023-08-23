@@ -11,8 +11,8 @@ import {
   provider,
   randomKeyPair,
   setTime,
-  waitForTransaction,
   declareFixtureContract,
+  waitForTransaction,
 } from "./lib";
 
 describe("ArgentAccount: events", function () {

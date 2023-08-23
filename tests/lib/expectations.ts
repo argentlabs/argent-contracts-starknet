@@ -8,6 +8,7 @@ import {
   num,
   shortString,
 } from "starknet";
+import * as _ from "lodash";
 
 import { provider } from "./provider";
 
@@ -37,29 +38,37 @@ export async function expectExecutionRevert(errorMessage: string, execute: () =>
 }
 
 async function expectEventFromReceipt(receipt: InvokeTransactionReceiptResponse, event: Event) {
-  if (!receipt.events) {
-    assert.fail("No events triggered");
-  }
   expect(event.keys.length).to.be.greaterThan(0, "Unsupported: No keys");
-  const selector = hash.getSelectorFromName(event.keys[0]);
-  const eventFiltered = receipt.events.filter((e) => e.keys[0] == selector);
-  expect(eventFiltered.length != 0, `No event detected in this transaction`).to.be.true;
-  expect(eventFiltered.length).to.equal(1, "Unsupported: Multiple events with same selector detected");
-  const currentEvent = eventFiltered[0];
-  expect(currentEvent.from_address).to.deep.equal(event.from_address);
-  // Needs deep equality for array, can't do to.equal
-  const currentEventKeys = currentEvent.keys.map(num.toBigInt);
-  const eventKeys = [selector].concat(event.keys.slice(1)).map(num.toBigInt);
-  expect(currentEventKeys).to.deep.equal(eventKeys);
+  const events = receipt.events ?? [];
+  const normalizedEvent = normalizeEvent(event);
+  const matches = events.filter((e) => _.default.isEqual(normalizeEvent(e), normalizedEvent)).length;
+  if (matches == 0) {
+    assert(false, "No matches detected in this transaction`");
+  } else if (matches > 1) {
+    assert(false, "Multiple matches detected in this transaction`");
+  }
+}
 
-  const currentEventData = currentEvent.data.map(num.toBigInt);
-  const eventData = event.data.map(num.toBigInt);
-  expect(currentEventData).to.deep.equal(eventData);
+function normalizeEvent(event: Event): Event {
+  return {
+    from_address: event.from_address.toLowerCase(),
+    keys: event.keys.map(num.toBigInt).map((key) => key.toString()),
+    data: event.data.map(num.toBigInt).map((data) => data.toString()),
+  };
+}
+
+function convertToEvent(eventWithName: EventWithName): Event {
+  const selector = hash.getSelectorFromName(eventWithName.eventName);
+  return {
+    from_address: eventWithName.from_address,
+    keys: [selector].concat(eventWithName.additionalKeys ?? []),
+    data: eventWithName.data ?? [],
+  };
 }
 
 export async function expectEvent(
   param: string | InvokeTransactionReceiptResponse | (() => Promise<InvokeFunctionResponse>),
-  event: Event,
+  event: Event | EventWithName,
 ) {
   if (typeof param === "function") {
     ({ transaction_hash: param } = await param());
@@ -67,9 +76,19 @@ export async function expectEvent(
   if (typeof param === "string") {
     param = await provider.waitForTransaction(param);
   }
+  if ("eventName" in event) {
+    event = convertToEvent(event);
+  }
   await expectEventFromReceipt(param, event);
 }
 
 export async function waitForTransaction({ transaction_hash }: InvokeFunctionResponse) {
   return await provider.waitForTransaction(transaction_hash);
+}
+
+export interface EventWithName {
+  from_address: string;
+  eventName: string;
+  additionalKeys?: Array<string>;
+  data?: Array<string>;
 }

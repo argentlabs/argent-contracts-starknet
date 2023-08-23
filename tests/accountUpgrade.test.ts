@@ -9,8 +9,8 @@ import {
   loadContract,
   provider,
   upgradeAccount,
-  declareFixtureContract,
   expectEvent,
+  declareFixtureContract,
 } from "./lib";
 
 describe("ArgentAccount: upgrade", function () {

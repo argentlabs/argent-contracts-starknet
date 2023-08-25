@@ -97,7 +97,7 @@ fn initialize_multisig_with(
             Option::Some(signer) => {
                 calldata.append(*signer)
             },
-            Option::None(()) => {
+            Option::None => {
                 break;
             },
         };

@@ -11,7 +11,7 @@ impl ArrayExtImpl<T, impl TDrop: Drop<T>> of ArrayExtTrait<T> {
                 Option::Some(item) => {
                     self.append(item);
                 },
-                Option::None(()) => {
+                Option::None => {
                     break;
                 },
             };

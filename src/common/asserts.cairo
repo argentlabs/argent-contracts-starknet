@@ -40,7 +40,7 @@ fn assert_no_self_call(mut calls: Span::<Call>, self: ContractAddress) {
             Option::Some(call) => {
                 assert(*call.to != self, 'argent/no-multicall-to-self');
             },
-            Option::None(_) => {
+            Option::None => {
                 break;
             },
         };

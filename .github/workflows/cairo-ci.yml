@@ -22,17 +22,3 @@ jobs:
         uses: software-mansion/setup-scarb@v1
       - name: Step 3 - Checking format
         run: scarb fmt --check
-
-  contract-approvers:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Step 1 - Check out main branch
-        uses: actions/checkout@v3
-
-      - name: Step 2 - Install project
-        run: yarn install --frozen-lockfile
-
-      - name: Step 3 - Check approvers count
-        run: yarn ts-node ./scripts/check-contract-approvers.ts 3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

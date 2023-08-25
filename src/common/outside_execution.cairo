@@ -87,7 +87,7 @@ fn hash_outside_call(outside_call: @Call) -> felt252 {
             Option::Some(item) => {
                 call_data_state = pedersen(call_data_state, *item);
             },
-            Option::None(_) => {
+            Option::None => {
                 break;
             },
         };
@@ -111,7 +111,7 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
             Option::Some(call) => {
                 outside_calls_state = pedersen(outside_calls_state, hash_outside_call(call));
             },
-            Option::None(_) => {
+            Option::None => {
                 break;
             },
         };

@@ -10,7 +10,7 @@ enum EscapeStatus {
     Expired: ()
 }
 
-#[derive(Drop, Copy, Serde, storage_access::StorageAccess)]
+#[derive(Drop, Copy, Serde, starknet::Store)]
 struct Escape {
     // timestamp for activation of escape mode, 0 otherwise
     ready_at: u64,

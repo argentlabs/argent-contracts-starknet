@@ -123,11 +123,7 @@ fn valid_owner_with_invalid_guardian() {
 }
 
 #[test]
-<<<<<<< HEAD
-#[available_gas(2300000)]
-=======
 #[available_gas(3000000)]
->>>>>>> b0cb4fb (Upgrade to cairo 2.1)
 fn invalid_owner_with_invalid_guardian() {
     let account = initialize_account();
     let signatures = double_signature(0, 0, 0, 0);

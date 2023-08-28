@@ -29,19 +29,11 @@ const wrong_guardian_r: felt252 = 0x5e5375b33d31fea164fb58c97ae0f9354863af5274f4
 const wrong_guardian_s: felt252 = 0x649c2cc2696a1f257534f03d913f869daae675467ed2f994b94059341e68929;
 
 fn double_signature(r1: felt252, s1: felt252, r2: felt252, s2: felt252) -> Array<felt252> {
-    let mut signatures = ArrayTrait::new();
-    signatures.append(r1);
-    signatures.append(s1);
-    signatures.append(r2);
-    signatures.append(s2);
-    signatures
+    array![r1, s1, r2, s2]
 }
 
 fn single_signature(r: felt252, s: felt252) -> Array<felt252> {
-    let mut signatures = ArrayTrait::new();
-    signatures.append(r);
-    signatures.append(s);
-    signatures
+    array![r, s]
 }
 
 #[test]
@@ -131,7 +123,7 @@ fn valid_owner_with_invalid_guardian() {
 }
 
 #[test]
-#[available_gas(2300000)]
+#[available_gas(3000000)]
 fn invalid_owner_with_invalid_guardian() {
     let account = initialize_account();
     let signatures = double_signature(0, 0, 0, 0);
@@ -187,10 +179,7 @@ fn invalid_signature_length_with_guardian() {
 #[test]
 #[available_gas(2000000)]
 fn split_signatures() {
-    let mut arr = ArrayTrait::new();
-    arr.append(21);
-    arr.append(42);
-    let (full, empty) = ArgentAccount::split_signatures(arr.span());
+    let (full, empty) = ArgentAccount::split_signatures(array![21, 42].span());
     assert(full.len() == 2, 'Len should be 2');
     assert(empty.len() == 0, 'Len should be 0');
     assert(*full[0] == 21, 'Idx 0 should be 21');
@@ -201,21 +190,13 @@ fn split_signatures() {
 #[available_gas(2000000)]
 #[should_panic(expected: ('argent/invalid-signature-length', ))]
 fn split_signatures_wrong_lenght() {
-    let mut arr = ArrayTrait::new();
-    arr.append(21);
-    arr.append(42);
-    arr.append(45);
-    ArgentAccount::split_signatures(arr.span());
+    ArgentAccount::split_signatures(array![21, 42, 45].span());
 }
 
 #[test]
 #[available_gas(2000000)]
 fn split_signatures_length_4() {
-    let mut arr = ArrayTrait::new();
-    arr.append(21);
-    arr.append(42);
-    arr.append(23);
-    arr.append(69);
+    let arr = array![21, 42, 23, 69];
     let (owner, guardian) = ArgentAccount::split_signatures(arr.span());
     assert(owner.len() == 2, 'Len owner should be 2');
     assert(guardian.len() == 2, 'Len guardian should be 0');

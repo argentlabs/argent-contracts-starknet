@@ -64,6 +64,7 @@ mod ArgentMultisig {
         OwnerAdded: OwnerAdded,
         OwnerRemoved: OwnerRemoved
     }
+
     /// @notice Emitted when the multisig threshold changes
     /// @param new_threshold New threshold
     #[derive(Drop, starknet::Event)]
@@ -103,7 +104,6 @@ mod ArgentMultisig {
         #[key]
         removed_owner_guid: felt252,
     }
-
 
     #[constructor]
     fn constructor(ref self: ContractState, new_threshold: usize, signers: Array<felt252>) {
@@ -232,6 +232,7 @@ mod ArgentMultisig {
                 class_hash: new_implementation
             }.execute_after_upgrade(calldata)
         }
+
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
@@ -239,7 +240,7 @@ mod ArgentMultisig {
             assert_valid_threshold_and_signers_count(self.threshold.read(), self.get_signers_len());
 
             assert(data.len() == 0, 'argent/unexpected-data');
-            ArrayTrait::new()
+            array![]
         }
     }
 
@@ -694,7 +695,7 @@ mod ArgentMultisig {
 
         fn get_signers(self: @ContractState) -> Array<felt252> {
             let mut current_signer = self.signer_list.read(0);
-            let mut signers = ArrayTrait::new();
+            let mut signers = array![];
             loop {
                 if current_signer == 0 {
                     // Can't break signers atm because "variable was previously moved"

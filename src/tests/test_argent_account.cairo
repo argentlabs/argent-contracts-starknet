@@ -53,13 +53,11 @@ fn check_transaction_version_on_validate() {
 #[test]
 #[available_gas(2000000)]
 fn initialize_with_null_owner() {
-    let mut calldata = ArrayTrait::new();
-    calldata.append(0);
-    calldata.append(12);
     let class_hash = ArgentAccount::TEST_CLASS_HASH.try_into().unwrap();
-    let mut err = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap_err();
+    let mut err = deploy_syscall(class_hash, 0, array![0, 12].span(), true).unwrap_err();
     assert(@err.pop_front().unwrap() == @'argent/null-owner', 'Should be argent/null-owner');
 }
+
 #[test]
 #[available_gas(2000000)]
 fn initialized_no_guardian_no_backup() {

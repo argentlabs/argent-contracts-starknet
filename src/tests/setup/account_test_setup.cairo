@@ -80,9 +80,7 @@ fn initialize_account_without_guardian() -> ITestArgentAccountDispatcher {
 }
 
 fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAccountDispatcher {
-    let mut calldata = ArrayTrait::new();
-    calldata.append(owner);
-    calldata.append(guardian);
+    let calldata = array![owner, guardian];
     let class_hash = ArgentAccount::TEST_CLASS_HASH.try_into().unwrap();
     let (contract_address, _) = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap();
 

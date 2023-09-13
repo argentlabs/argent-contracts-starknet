@@ -99,14 +99,16 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
     loop {
         match calls_span.pop_front() {
             Option::Some(call) => {
-                outside_calls_state = pedersen::pedersen(outside_calls_state, hash_outside_call(call));
+                outside_calls_state =
+                    pedersen::pedersen(outside_calls_state, hash_outside_call(call));
             },
             Option::None => {
                 break;
             },
         };
     };
-    outside_calls_state = pedersen::pedersen(outside_calls_state, (*outside_execution.calls).len().into());
+    outside_calls_state =
+        pedersen::pedersen(outside_calls_state, (*outside_execution.calls).len().into());
 
     pedersen_hash_span(
         array![
@@ -125,7 +127,7 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
 #[inline(always)]
 fn hash_outside_execution_message(outside_execution: @OutsideExecution) -> felt252 {
     let domain = StarkNetDomain {
-        name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id, 
+        name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id,
     };
 
     pedersen_hash_span(

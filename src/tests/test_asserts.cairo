@@ -15,7 +15,7 @@ fn test_assert_only_self() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/only-self', ))]
+#[should_panic(expected: ('argent/only-self',))]
 fn test_assert_only_self_panic() {
     set_caller_address(contract_address_const::<42>());
     set_contract_address(contract_address_const::<69>());
@@ -33,7 +33,7 @@ fn assert_correct_tx_version_query_version() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/invalid-tx-version', ))]
+#[should_panic(expected: ('argent/invalid-tx-version',))]
 fn assert_correct_tx_version_invalid_tx() {
     asserts::assert_correct_tx_version(4);
 }
@@ -68,7 +68,7 @@ fn test_no_self_call_2() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/no-multicall-to-self', ))]
+#[should_panic(expected: ('argent/no-multicall-to-self',))]
 fn test_no_self_call_invalid() {
     let self = contract_address_const::<42>();
     set_caller_address(self);
@@ -78,7 +78,7 @@ fn test_no_self_call_invalid() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/no-multicall-to-self', ))]
+#[should_panic(expected: ('argent/no-multicall-to-self',))]
 fn test_no_self_call_invalid_2() {
     let self = contract_address_const::<42>();
     set_caller_address(self);

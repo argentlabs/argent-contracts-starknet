@@ -188,7 +188,7 @@ fn split_signatures() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', ))]
+#[should_panic(expected: ('argent/invalid-signature-length',))]
 fn split_signatures_wrong_lenght() {
     ArgentAccount::split_signatures(array![21, 42, 45].span());
 }

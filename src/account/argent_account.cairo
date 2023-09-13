@@ -311,17 +311,15 @@ mod ArgentAccount {
         ) -> Array<felt252> {
             assert_only_self();
 
-            let supports_interface = IErc165LibraryDispatcher {
-                class_hash: new_implementation
-            }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
+            let supports_interface = IErc165LibraryDispatcher { class_hash: new_implementation }
+                .supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
             assert(supports_interface, 'argent/invalid-implementation');
 
             replace_class_syscall(new_implementation).unwrap();
             self.emit(AccountUpgraded { new_implementation });
 
-            IUpgradeableLibraryDispatcher {
-                class_hash: new_implementation
-            }.execute_after_upgrade(calldata)
+            IUpgradeableLibraryDispatcher { class_hash: new_implementation }
+                .execute_after_upgrade(calldata)
         }
 
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {

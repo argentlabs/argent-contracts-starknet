@@ -23,7 +23,10 @@ mod multisig {
 }
 #[cfg(test)]
 mod tests {
-    mod setup;
+    mod setup {
+        mod account_test_setup;
+        mod multisig_test_setup;
+    }
     mod test_argent_account_signatures;
     mod test_argent_account;
     mod test_asserts;

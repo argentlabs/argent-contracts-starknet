@@ -1,5 +1,3 @@
-use array::{ArrayTrait, SpanTrait};
-
 use argent::account::argent_account::ArgentAccount;
 use argent::tests::setup::account_test_setup::{
     ITestArgentAccountDispatcher, ITestArgentAccountDispatcherTrait, owner_pubkey,

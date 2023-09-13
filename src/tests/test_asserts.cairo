@@ -1,4 +1,3 @@
-use array::ArrayTrait;
 use starknet::{
     contract_address_const, testing::{set_caller_address, set_contract_address}, account::Call
 };

@@ -1,5 +1,3 @@
-use serde::Serde;
-
 #[derive(Copy, Drop, Serde)]
 struct SignerSignature {
     signer: felt252,

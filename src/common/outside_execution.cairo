@@ -1,5 +1,5 @@
 use starknet::{ContractAddress, get_tx_info, get_contract_address, account::Call};
-use argent::common::pedersen::pedersen_hash_span;
+use argent::common::pedersen::pedersen_hash_array;
 
 const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID: felt252 =
     0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181;
@@ -68,7 +68,7 @@ struct OutsideCall {
 
 #[inline(always)]
 fn hash_domain(domain: @StarkNetDomain) -> felt252 {
-    pedersen_hash_span(
+    pedersen_hash_array(
         array![STARKNET_DOMAIN_TYPE_HASH, *domain.name, *domain.version, *domain.chain_id, 4]
     )
 }
@@ -78,9 +78,9 @@ fn hash_outside_call(outside_call: @Call) -> felt252 {
 
     let mut data = outside_call.calldata.clone();
     data.append(calldata_len);
-    let call_data_state = pedersen_hash_span(data);
+    let call_data_state = pedersen_hash_array(data);
 
-    pedersen_hash_span(
+    pedersen_hash_array(
         array![
             OUTSIDE_CALL_TYPE_HASH,
             (*outside_call.to).into(),
@@ -110,7 +110,7 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
     outside_calls_state =
         pedersen::pedersen(outside_calls_state, (*outside_execution.calls).len().into());
 
-    pedersen_hash_span(
+    pedersen_hash_array(
         array![
             OUTSIDE_EXECUTION_TYPE_HASH,
             (*outside_execution.caller).into(),
@@ -130,7 +130,7 @@ fn hash_outside_execution_message(outside_execution: @OutsideExecution) -> felt2
         name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id,
     };
 
-    pedersen_hash_span(
+    pedersen_hash_array(
         array![
             'StarkNet Message',
             hash_domain(@domain),

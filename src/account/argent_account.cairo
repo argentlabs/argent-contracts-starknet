@@ -1,11 +1,6 @@
 #[starknet::contract]
 mod ArgentAccount {
-    use array::{ArrayTrait, SpanTrait};
-    use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
-    use option::{OptionTrait, OptionTraitImpl};
-    use serde::Serde;
-    use traits::Into;
     use starknet::{
         ClassHash, class_hash_const, ContractAddress, get_block_timestamp, get_caller_address,
         get_execution_info, get_contract_address, get_tx_info, VALIDATED, replace_class_syscall,
@@ -32,7 +27,7 @@ mod ArgentAccount {
             OutsideExecution, IOutsideExecution, hash_outside_execution_message,
             ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
         },
-        pedersen::pedersen_hash_span,
+        pedersen::pedersen_hash_array,
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
 
@@ -43,24 +38,18 @@ mod ArgentAccount {
     const VERSION_COMPAT: felt252 = '0.3.0';
 
     /// Time it takes for the escape to become ready after being triggered
-    const ESCAPE_SECURITY_PERIOD: u64 = 604800; // 7 * 24 * 60 * 60;  // 7 days
+    const ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
     ///  The escape will be ready and can be completed for this duration
-    const ESCAPE_EXPIRY_PERIOD: u64 = 604800; // 7 * 24 * 60 * 60;  // 7 days
+    const ESCAPE_EXPIRY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
     const ESCAPE_TYPE_GUARDIAN: felt252 = 1;
     const ESCAPE_TYPE_OWNER: felt252 = 2;
 
-    const TRIGGER_ESCAPE_GUARDIAN_SELECTOR: felt252 =
-        73865429733192804476769961144708816295126306469589518371407068321865763651; // starknet_keccak('trigger_escape_guardian')
-    const TRIGGER_ESCAPE_OWNER_SELECTOR: felt252 =
-        1099763735485822105046709698985960101896351570185083824040512300972207240555; // starknet_keccak('trigger_escape_owner')
-    const ESCAPE_GUARDIAN_SELECTOR: felt252 =
-        1662889347576632967292303062205906116436469425870979472602094601074614456040; // starknet_keccak('escape_guardian')
-    const ESCAPE_OWNER_SELECTOR: felt252 =
-        1621457541430776841129472853859989177600163870003012244140335395142204209277; // starknet_keccak'(escape_owner')
-    const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
-        738349667340360233096752603318170676063569407717437256101137432051386874767; // starknet_keccak('execute_after_upgrade')
-    const CHANGE_OWNER_SELECTOR: felt252 =
-        658036363289841962501247229249022783727527757834043681434485756469236076608; // starknet_keccak('change_owner')
+    const TRIGGER_ESCAPE_GUARDIAN_SELECTOR: felt252 = selector!("trigger_escape_guardian");
+    const TRIGGER_ESCAPE_OWNER_SELECTOR: felt252 = selector!("trigger_escape_owner");
+    const ESCAPE_GUARDIAN_SELECTOR: felt252 = selector!("escape_guardian");
+    const ESCAPE_OWNER_SELECTOR: felt252 = selector!("escape_owner");
+    const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 = selector!("execute_after_upgrade");
+    const CHANGE_OWNER_SELECTOR: felt252 = selector!("change_owner");
 
     /// Limit escape attempts by only one party
     const MAX_ESCAPE_ATTEMPTS: u32 = 5;
@@ -340,7 +329,7 @@ mod ArgentAccount {
             }
 
             if data.is_empty() {
-                return ArrayTrait::new();
+                return array![];
             }
 
             let mut data_span = data.span();
@@ -351,7 +340,7 @@ mod ArgentAccount {
             assert_no_self_call(calls.span(), get_contract_address());
 
             let multicall_return = execute_multicall(calls.span());
-            let mut output = ArrayTrait::new();
+            let mut output = array![];
             multicall_return.serialize(ref output);
             output
         }
@@ -428,7 +417,7 @@ mod ArgentAccount {
             let current_escape = self._escape.read();
             if current_escape.escape_type == ESCAPE_TYPE_GUARDIAN {
                 assert(
-                    get_escape_status(current_escape.ready_at) == EscapeStatus::Expired(()),
+                    get_escape_status(current_escape.ready_at) == EscapeStatus::Expired,
                     'argent/cannot-override-escape'
                 );
             }
@@ -459,7 +448,7 @@ mod ArgentAccount {
             let current_escape = self._escape.read();
 
             let current_escape_status = get_escape_status(current_escape.ready_at);
-            assert(current_escape_status == EscapeStatus::Ready(()), 'argent/invalid-escape');
+            assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
             self.reset_escape_attempts();
 
@@ -479,7 +468,7 @@ mod ArgentAccount {
 
             let current_escape = self._escape.read();
             assert(
-                get_escape_status(current_escape.ready_at) == EscapeStatus::Ready(()),
+                get_escape_status(current_escape.ready_at) == EscapeStatus::Ready,
                 'argent/invalid-escape'
             );
 
@@ -496,7 +485,7 @@ mod ArgentAccount {
             assert_only_self();
             let current_escape = self._escape.read();
             let current_escape_status = get_escape_status(current_escape.ready_at);
-            assert(current_escape_status != EscapeStatus::None(()), 'argent/invalid-escape');
+            assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
             self.reset_escape();
             self.reset_escape_attempts();
         }
@@ -782,7 +771,7 @@ mod ArgentAccount {
             let chain_id = get_tx_info().unbox().chain_id;
             // We now need to hash message_hash with the size of the array: (change_owner selector, chainid, contract address, old_owner)
             // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
-            let message_hash = pedersen_hash_span(
+            let message_hash = pedersen_hash_array(
                 array![
                     CHANGE_OWNER_SELECTOR,
                     chain_id,
@@ -798,11 +787,11 @@ mod ArgentAccount {
         #[inline(always)]
         fn reset_escape(ref self: ContractState) {
             let current_escape_status = get_escape_status(self._escape.read().ready_at);
-            if current_escape_status == EscapeStatus::None(()) {
+            if current_escape_status == EscapeStatus::None {
                 return;
             }
             self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
-            if current_escape_status != EscapeStatus::Expired(()) {
+            if current_escape_status != EscapeStatus::Expired {
                 self.emit(EscapeCanceled {});
             }
         }
@@ -827,7 +816,7 @@ mod ArgentAccount {
 
     fn split_signatures(full_signature: Span<felt252>) -> (Span<felt252>, Span<felt252>) {
         if full_signature.len() == 2 {
-            return (full_signature, ArrayTrait::new().span());
+            return (full_signature, array![].span());
         }
         assert(full_signature.len() == 4, 'argent/invalid-signature-length');
         let owner_signature = full_signature.slice(0, 2);
@@ -837,17 +826,17 @@ mod ArgentAccount {
 
     fn get_escape_status(escape_ready_at: u64) -> EscapeStatus {
         if escape_ready_at == 0 {
-            return EscapeStatus::None(());
+            return EscapeStatus::None;
         }
 
         let block_timestamp = get_block_timestamp();
         if block_timestamp < escape_ready_at {
-            return EscapeStatus::NotReady(());
+            return EscapeStatus::NotReady;
         }
         if escape_ready_at + ESCAPE_EXPIRY_PERIOD <= block_timestamp {
-            return EscapeStatus::Expired(());
+            return EscapeStatus::Expired;
         }
 
-        EscapeStatus::Ready(())
+        EscapeStatus::Ready
     }
 }

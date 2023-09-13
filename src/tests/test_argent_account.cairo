@@ -1,9 +1,3 @@
-use array::ArrayTrait;
-use option::OptionTrait;
-use result::ResultTrait;
-use traits::TryInto;
-use zeroable::Zeroable;
-
 use starknet::{
     contract_address_const, deploy_syscall, testing::{set_version, set_contract_address}
 };

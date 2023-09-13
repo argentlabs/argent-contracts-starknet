@@ -1,4 +1,3 @@
-use array::{ArrayTrait, SpanTrait};
 use starknet::{call_contract_syscall, account::Call};
 
 use argent::common::array_ext::ArrayExtTrait;

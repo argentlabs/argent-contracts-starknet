@@ -3,11 +3,7 @@ use argent::multisig::interface::{IArgentMultisig};
 
 #[starknet::contract]
 mod ArgentMultisig {
-    use array::{ArrayTrait, SpanTrait};
-    use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
-    use option::OptionTrait;
-    use traits::Into;
     use starknet::{
         get_contract_address, ContractAddressIntoFelt252, VALIDATED,
         syscalls::replace_class_syscall, ClassHash, class_hash_const, get_block_timestamp,
@@ -110,7 +106,7 @@ mod ArgentMultisig {
         let new_signers_count = signers.len();
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-        self.add_signers_storage(signers.span(), last_signer: 0);
+        self.add_signers_inner(signers.span(), last_signer: 0);
         self.threshold.write(new_threshold);
 
         self.emit(ThresholdUpdated { new_threshold });
@@ -293,7 +289,7 @@ mod ArgentMultisig {
 
             let new_signers_count = signers_len + signers_to_add.len();
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
-            self.add_signers_storage(signers_to_add.span(), last_signer);
+            self.add_signers_inner(signers_to_add.span(), last_signer);
             self.threshold.write(new_threshold);
 
             if previous_threshold != new_threshold {
@@ -589,7 +585,7 @@ mod ArgentMultisig {
             }
         }
 
-        fn add_signers_storage(
+        fn add_signers_inner(
             ref self: ContractState, mut signers_to_add: Span<felt252>, last_signer: felt252
         ) {
             match signers_to_add.pop_front() {
@@ -603,7 +599,7 @@ mod ArgentMultisig {
                     // Signers are added at the end of the list
                     self.signer_list.write(last_signer, signer);
 
-                    self.add_signers_storage(signers_to_add, last_signer: signer);
+                    self.add_signers_inner(signers_to_add, last_signer: signer);
                 },
                 Option::None => (),
             }

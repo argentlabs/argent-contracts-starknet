@@ -1,5 +1,35 @@
-mod account;
-mod common;
-mod multisig;
+mod account {
+    mod argent_account;
+    mod interface;
+    mod escape;
+}
+mod common {
+    mod account;
+    mod array_ext;
+    mod asserts;
+    mod calls;
+    mod erc165;
+    mod outside_execution;
+    mod test_dapp;
+    mod upgrade;
+    mod version;
+    mod multicall;
+    mod pedersen;
+}
+mod multisig {
+    mod argent_multisig;
+    mod interface;
+    mod signer_signature;
+}
 #[cfg(test)]
-mod tests;
+mod tests {
+    mod setup;
+    mod test_argent_account_signatures;
+    mod test_argent_account;
+    mod test_asserts;
+    mod test_multicall;
+    mod test_multisig_account;
+    mod test_multisig_remove_signers;
+    mod test_multisig_replace_signers;
+    mod test_multisig_signing;
+}

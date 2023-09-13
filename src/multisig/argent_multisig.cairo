@@ -110,7 +110,7 @@ mod ArgentMultisig {
         let new_signers_count = signers.len();
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-        self.add_signers(signers.span(), last_signer: 0);
+        self.add_signers_storage(signers.span(), last_signer: 0);
         self.threshold.write(new_threshold);
 
         self.emit(ThresholdUpdated { new_threshold });
@@ -225,7 +225,7 @@ mod ArgentMultisig {
             }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
             assert(supports_interface, 'argent/invalid-implementation');
 
-            replace_class_syscall(new_implementation).unwrap_syscall();
+            replace_class_syscall(new_implementation).unwrap();
             self.emit(AccountUpgraded { new_implementation });
 
             IUpgradeableLibraryDispatcher {
@@ -266,7 +266,7 @@ mod ArgentMultisig {
 
             let signer_sig = *parsed_signatures.at(0);
             let valid_signer_signature = self
-                .is_valid_signer_signature(
+                .is_valid_signer_signature_inner(
                     tx_info.transaction_hash,
                     signer_sig.signer,
                     signer_sig.signature_r,
@@ -295,7 +295,7 @@ mod ArgentMultisig {
 
             let new_signers_count = signers_len + signers_to_add.len();
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
-            self.add_signers(signers_to_add.span(), last_signer);
+            self.add_signers_storage(signers_to_add.span(), last_signer);
             self.threshold.write(new_threshold);
 
             if previous_threshold != new_threshold {
@@ -325,7 +325,7 @@ mod ArgentMultisig {
             let new_signers_count = signers_len - signers_to_remove.len();
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-            self.remove_signers(signers_to_remove.span(), last_signer);
+            self.remove_signers_inner(signers_to_remove.span(), last_signer);
             self.threshold.write(new_threshold);
 
             if previous_threshold != new_threshold {
@@ -351,7 +351,7 @@ mod ArgentMultisig {
             assert_only_self();
             let (new_signers_count, last_signer) = self.load();
 
-            self.replace_signer(signer_to_remove, signer_to_add, last_signer);
+            self.replace_signer_inner(signer_to_remove, signer_to_add, last_signer);
 
             self.emit(OwnerRemoved { removed_owner_guid: signer_to_remove });
             self.emit(OwnerAdded { new_owner_guid: signer_to_add });
@@ -371,11 +371,11 @@ mod ArgentMultisig {
         }
 
         fn get_signers(self: @ContractState) -> Array<felt252> {
-            self.get_signers()
+            self.get_signers_inner()
         }
 
         fn is_signer(self: @ContractState, signer: felt252) -> bool {
-            self.is_signer(signer)
+            self.is_signer_inner(signer)
         }
 
         fn is_valid_signer_signature(
@@ -385,7 +385,7 @@ mod ArgentMultisig {
             signature_r: felt252,
             signature_s: felt252
         ) -> bool {
-            self.is_valid_signer_signature(hash, signer, signature_r, signature_s)
+            self.is_valid_signer_signature_inner(hash, signer, signature_r, signature_s)
         }
     }
 
@@ -509,14 +509,14 @@ mod ArgentMultisig {
             }
         }
 
-        fn is_valid_signer_signature(
+        fn is_valid_signer_signature_inner(
             self: @ContractState,
             hash: felt252,
             signer: felt252,
             signature_r: felt252,
             signature_s: felt252
         ) -> bool {
-            let is_signer = self.is_signer(signer);
+            let is_signer = self.is_signer_inner(signer);
             assert(is_signer, 'argent/not-a-signer');
             check_ecdsa_signature(hash, signer, signature_r, signature_s)
         }
@@ -533,7 +533,7 @@ mod ArgentMultisig {
     impl MultisigStorageImpl of MultisigStorage {
         // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
         // Otherwise cost increases with the list size
-        fn is_signer(self: @ContractState, signer: felt252) -> bool {
+        fn is_signer_inner(self: @ContractState, signer: felt252) -> bool {
             if signer == 0 {
                 return false;
             }
@@ -591,7 +591,7 @@ mod ArgentMultisig {
             }
         }
 
-        fn add_signers(
+        fn add_signers_storage(
             ref self: ContractState, mut signers_to_add: Span<felt252>, last_signer: felt252
         ) {
             match signers_to_add.pop_front() {
@@ -605,13 +605,13 @@ mod ArgentMultisig {
                     // Signers are added at the end of the list
                     self.signer_list.write(last_signer, signer);
 
-                    self.add_signers(signers_to_add, last_signer: signer);
+                    self.add_signers_storage(signers_to_add, last_signer: signer);
                 },
                 Option::None => (),
             }
         }
 
-        fn remove_signers(
+        fn remove_signers_inner(
             ref self: ContractState, mut signers_to_remove: Span<felt252>, last_signer: felt252
         ) {
             match signers_to_remove.pop_front() {
@@ -629,18 +629,18 @@ mod ArgentMultisig {
 
                     if next_signer == 0 {
                         // Removing the last item
-                        self.remove_signers(signers_to_remove, last_signer: previous_signer);
+                        self.remove_signers_inner(signers_to_remove, last_signer: previous_signer);
                     } else {
                         // Removing an item in the middle
                         self.signer_list.write(signer, 0);
-                        self.remove_signers(signers_to_remove, last_signer);
+                        self.remove_signers_inner(signers_to_remove, last_signer);
                     }
                 },
                 Option::None => (),
             }
         }
 
-        fn replace_signer(
+        fn replace_signer_inner(
             ref self: ContractState,
             signer_to_remove: felt252,
             signer_to_add: felt252,
@@ -693,7 +693,7 @@ mod ArgentMultisig {
             }
         }
 
-        fn get_signers(self: @ContractState) -> Array<felt252> {
+        fn get_signers_inner(self: @ContractState) -> Array<felt252> {
             let mut current_signer = self.signer_list.read(0);
             let mut signers = array![];
             loop {

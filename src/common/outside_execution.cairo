@@ -1,8 +1,5 @@
-use array::{ArrayTrait, SpanTrait};
-use box::BoxTrait;
-use hash::pedersen;
-use traits::Into;
 use starknet::{ContractAddress, get_tx_info, get_contract_address, account::Call};
+use argent::common::pedersen::pedersen_hash_span;
 
 const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID: felt252 =
     0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181;
@@ -71,35 +68,28 @@ struct OutsideCall {
 
 #[inline(always)]
 fn hash_domain(domain: @StarkNetDomain) -> felt252 {
-    let mut state = pedersen(0, STARKNET_DOMAIN_TYPE_HASH);
-    state = pedersen(state, *domain.name);
-    state = pedersen(state, *domain.version);
-    state = pedersen(state, *domain.chain_id);
-    pedersen(state, 4)
+    pedersen_hash_span(
+        array![STARKNET_DOMAIN_TYPE_HASH, *domain.name, *domain.version, *domain.chain_id, 4]
+    )
 }
 
 fn hash_outside_call(outside_call: @Call) -> felt252 {
-    let mut data_span = outside_call.calldata.span();
+    let calldata_len = outside_call.calldata.len().into();
 
-    let mut call_data_state: felt252 = 0;
-    loop {
-        match data_span.pop_front() {
-            Option::Some(item) => {
-                call_data_state = pedersen(call_data_state, *item);
-            },
-            Option::None => {
-                break;
-            },
-        };
-    };
-    call_data_state = pedersen(call_data_state, outside_call.calldata.len().into());
+    let mut data = outside_call.calldata.clone();
+    data.append(calldata_len);
+    let call_data_state = pedersen_hash_span(data);
 
-    let mut state = pedersen(0, OUTSIDE_CALL_TYPE_HASH);
-    state = pedersen(state, (*outside_call.to).into());
-    state = pedersen(state, *outside_call.selector);
-    state = pedersen(state, outside_call.calldata.len().into());
-    state = pedersen(state, call_data_state);
-    pedersen(state, 5)
+    pedersen_hash_span(
+        array![
+            OUTSIDE_CALL_TYPE_HASH,
+            (*outside_call.to).into(),
+            *outside_call.selector,
+            calldata_len,
+            call_data_state,
+            5
+        ]
+    )
 }
 
 fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
@@ -109,23 +99,27 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
     loop {
         match calls_span.pop_front() {
             Option::Some(call) => {
-                outside_calls_state = pedersen(outside_calls_state, hash_outside_call(call));
+                outside_calls_state = pedersen::pedersen(outside_calls_state, hash_outside_call(call));
             },
             Option::None => {
                 break;
             },
         };
     };
-    outside_calls_state = pedersen(outside_calls_state, (*outside_execution.calls).len().into());
+    outside_calls_state = pedersen::pedersen(outside_calls_state, (*outside_execution.calls).len().into());
 
-    let mut state = pedersen(0, OUTSIDE_EXECUTION_TYPE_HASH);
-    state = pedersen(state, (*outside_execution.caller).into());
-    state = pedersen(state, *outside_execution.nonce);
-    state = pedersen(state, (*outside_execution.execute_after).into());
-    state = pedersen(state, (*outside_execution.execute_before).into());
-    state = pedersen(state, (*outside_execution.calls).len().into());
-    state = pedersen(state, outside_calls_state);
-    pedersen(state, 7)
+    pedersen_hash_span(
+        array![
+            OUTSIDE_EXECUTION_TYPE_HASH,
+            (*outside_execution.caller).into(),
+            *outside_execution.nonce,
+            (*outside_execution.execute_after).into(),
+            (*outside_execution.execute_before).into(),
+            (*outside_execution.calls).len().into(),
+            outside_calls_state,
+            7
+        ]
+    )
 }
 
 #[inline(always)]
@@ -133,9 +127,14 @@ fn hash_outside_execution_message(outside_execution: @OutsideExecution) -> felt2
     let domain = StarkNetDomain {
         name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id, 
     };
-    let mut state = pedersen(0, 'StarkNet Message');
-    state = pedersen(state, hash_domain(@domain));
-    state = pedersen(state, get_contract_address().into());
-    state = pedersen(state, hash_outside_execution(outside_execution));
-    pedersen(state, 4)
+
+    pedersen_hash_span(
+        array![
+            'StarkNet Message',
+            hash_domain(@domain),
+            get_contract_address().into(),
+            hash_outside_execution(outside_execution),
+            4
+        ]
+    )
 }

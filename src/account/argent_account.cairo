@@ -3,7 +3,6 @@ mod ArgentAccount {
     use array::{ArrayTrait, SpanTrait};
     use box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
-    use hash::{TupleSize4LegacyHash, LegacyHashFelt252};
     use option::{OptionTrait, OptionTraitImpl};
     use serde::Serde;
     use traits::Into;
@@ -33,6 +32,7 @@ mod ArgentAccount {
             OutsideExecution, IOutsideExecution, hash_outside_execution_message,
             ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
         },
+        pedersen::pedersen_hash_span,
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
 
@@ -316,7 +316,7 @@ mod ArgentAccount {
             }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
             assert(supports_interface, 'argent/invalid-implementation');
 
-            replace_class_syscall(new_implementation).unwrap_syscall();
+            replace_class_syscall(new_implementation).unwrap();
             self.emit(AccountUpgraded { new_implementation });
 
             IUpgradeableLibraryDispatcher {
@@ -335,7 +335,7 @@ mod ArgentAccount {
 
             let implementation = self._implementation.read();
             if implementation != class_hash_const::<0>() {
-                replace_class_syscall(implementation).unwrap_syscall();
+                replace_class_syscall(implementation).unwrap();
                 self._implementation.write(class_hash_const::<0>());
                 // Technically the owner is not added here, but we emit the event since it wasn't emitted in previous versions
                 self.emit(OwnerAdded { new_owner_guid: self._signer.read() });
@@ -782,12 +782,17 @@ mod ArgentAccount {
         ) {
             assert(new_owner != 0, 'argent/null-owner');
             let chain_id = get_tx_info().unbox().chain_id;
-            let mut message_hash = TupleSize4LegacyHash::hash(
-                0, (CHANGE_OWNER_SELECTOR, chain_id, get_contract_address(), self._signer.read())
-            );
             // We now need to hash message_hash with the size of the array: (change_owner selector, chainid, contract address, old_owner)
             // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
-            message_hash = LegacyHashFelt252::hash(message_hash, 4);
+            let message_hash = pedersen_hash_span(
+                array![
+                    CHANGE_OWNER_SELECTOR,
+                    chain_id,
+                    get_contract_address().into(),
+                    self._signer.read(),
+                    4
+                ]
+            );
             let is_valid = check_ecdsa_signature(message_hash, new_owner, signature_r, signature_s);
             assert(is_valid, 'argent/invalid-owner-sig');
         }

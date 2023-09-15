@@ -252,40 +252,34 @@ fn supportsInterface() {
 #[available_gas(2000000)]
 fn test_selectors() {
     // Double check to ensure it IS and STAYS correct
+    let selector = selector!("trigger_escape_guardian");
     assert(
-        selector!(
-            "trigger_escape_guardian"
-        ) == 73865429733192804476769961144708816295126306469589518371407068321865763651,
+        selector == 73865429733192804476769961144708816295126306469589518371407068321865763651,
         'trigger_escape_guardian'
     );
+    let selector = selector!("trigger_escape_owner");
     assert(
-        selector!(
-            "trigger_escape_owner"
-        ) == 1099763735485822105046709698985960101896351570185083824040512300972207240555,
+        selector == 1099763735485822105046709698985960101896351570185083824040512300972207240555,
         'trigger_escape_owner'
     );
+    let selector = selector!("escape_guardian");
     assert(
-        selector!(
-            "escape_guardian"
-        ) == 1662889347576632967292303062205906116436469425870979472602094601074614456040,
+        selector == 1662889347576632967292303062205906116436469425870979472602094601074614456040,
         'escape_guardian'
     );
+    let selector = selector!("escape_owner");
     assert(
-        selector!(
-            "escape_owner"
-        ) == 1621457541430776841129472853859989177600163870003012244140335395142204209277,
+        selector == 1621457541430776841129472853859989177600163870003012244140335395142204209277,
         'escape_owner'
     );
+    let selector = selector!("execute_after_upgrade");
     assert(
-        selector!(
-            "execute_after_upgrade"
-        ) == 738349667340360233096752603318170676063569407717437256101137432051386874767,
+        selector == 738349667340360233096752603318170676063569407717437256101137432051386874767,
         'execute_after_upgrade'
     );
+    let selector = selector!("change_owner");
     assert(
-        selector!(
-            "change_owner"
-        ) == 658036363289841962501247229249022783727527757834043681434485756469236076608,
+        selector == 658036363289841962501247229249022783727527757834043681434485756469236076608,
         'change_owner'
     );
 }

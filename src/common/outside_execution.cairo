@@ -74,22 +74,21 @@ fn hash_domain(domain: @StarkNetDomain) -> felt252 {
         .update(*domain.name)
         .update(*domain.version)
         .update(*domain.chain_id)
+        .update(4)
         .finalize()
 }
 
 fn hash_outside_call(outside_call: @Call) -> felt252 {
+    let mut state = PedersenTrait::new(0);
+    let mut calldata_span = outside_call.calldata.span();
     let calldata_len = outside_call.calldata.len().into();
-    let mut data_span = outside_call.calldata.span();
-
-    let calldata_state = PedersenTrait::new(0);
-    loop {
-        match data_span.pop_front() {
+    let calldata_hash = loop {
+        match calldata_span.pop_front() {
             Option::Some(item) => {
-                calldata_state.update(*item);
+                state = state.update(*item);
             },
             Option::None => {
-                calldata_state.update(calldata_len);
-                break;
+                break state.update(calldata_len).finalize();
             },
         };
     };
@@ -99,23 +98,22 @@ fn hash_outside_call(outside_call: @Call) -> felt252 {
         .update((*outside_call.to).into())
         .update(*outside_call.selector)
         .update(calldata_len)
-        .update(calldata_state.finalize())
+        .update(calldata_hash)
+        .update(5)
         .finalize()
 }
 
 fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
-    let calls_len = (*outside_execution.calls).len().into();
+    let mut state = PedersenTrait::new(0);
     let mut calls_span = *outside_execution.calls;
-
-    let outside_calls_state = PedersenTrait::new(0);
-    loop {
+    let calls_len = (*outside_execution.calls).len().into();
+    let calls_hash = loop {
         match calls_span.pop_front() {
             Option::Some(call) => {
-                outside_calls_state.update(hash_outside_call(call));
+                state = state.update(hash_outside_call(call));
             },
             Option::None => {
-                outside_calls_state.update(calls_len);
-                break;
+                break state.update(calls_len).finalize();
             },
         };
     };
@@ -127,7 +125,8 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
         .update((*outside_execution.execute_after).into())
         .update((*outside_execution.execute_before).into())
         .update(calls_len)
-        .update(outside_calls_state.finalize())
+        .update(calls_hash)
+        .update(7)
         .finalize()
 }
 

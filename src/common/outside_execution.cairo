@@ -1,5 +1,6 @@
+use hash::HashStateTrait;
+use pedersen::PedersenTrait;
 use starknet::{ContractAddress, get_tx_info, get_contract_address, account::Call};
-use argent::common::pedersen::pedersen_hash_array;
 
 const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID: felt252 =
     0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181;
@@ -68,60 +69,66 @@ struct OutsideCall {
 
 #[inline(always)]
 fn hash_domain(domain: @StarkNetDomain) -> felt252 {
-    pedersen_hash_array(
-        array![STARKNET_DOMAIN_TYPE_HASH, *domain.name, *domain.version, *domain.chain_id, 4]
-    )
+    PedersenTrait::new(0)
+        .update(STARKNET_DOMAIN_TYPE_HASH)
+        .update(*domain.name)
+        .update(*domain.version)
+        .update(*domain.chain_id)
+        .finalize()
 }
 
 fn hash_outside_call(outside_call: @Call) -> felt252 {
     let calldata_len = outside_call.calldata.len().into();
+    let mut data_span = outside_call.calldata.span();
 
-    let mut data = outside_call.calldata.clone();
-    data.append(calldata_len);
-    let call_data_state = pedersen_hash_array(data);
-
-    pedersen_hash_array(
-        array![
-            OUTSIDE_CALL_TYPE_HASH,
-            (*outside_call.to).into(),
-            *outside_call.selector,
-            calldata_len,
-            call_data_state,
-            5
-        ]
-    )
-}
-
-fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
-    let mut calls_span = *outside_execution.calls;
-
-    let mut outside_calls_state: felt252 = 0;
+    let calldata_state = PedersenTrait::new(0);
     loop {
-        match calls_span.pop_front() {
-            Option::Some(call) => {
-                outside_calls_state =
-                    pedersen::pedersen(outside_calls_state, hash_outside_call(call));
+        match data_span.pop_front() {
+            Option::Some(item) => {
+                calldata_state.update(*item);
             },
             Option::None => {
+                calldata_state.update(calldata_len);
                 break;
             },
         };
     };
-    outside_calls_state =
-        pedersen::pedersen(outside_calls_state, (*outside_execution.calls).len().into());
 
-    pedersen_hash_array(
-        array![
-            OUTSIDE_EXECUTION_TYPE_HASH,
-            (*outside_execution.caller).into(),
-            *outside_execution.nonce,
-            (*outside_execution.execute_after).into(),
-            (*outside_execution.execute_before).into(),
-            (*outside_execution.calls).len().into(),
-            outside_calls_state,
-            7
-        ]
-    )
+    PedersenTrait::new(0)
+        .update(OUTSIDE_CALL_TYPE_HASH)
+        .update((*outside_call.to).into())
+        .update(*outside_call.selector)
+        .update(calldata_len)
+        .update(calldata_state.finalize())
+        .finalize()
+}
+
+fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
+    let calls_len = (*outside_execution.calls).len().into();
+    let mut calls_span = *outside_execution.calls;
+
+    let outside_calls_state = PedersenTrait::new(0);
+    loop {
+        match calls_span.pop_front() {
+            Option::Some(call) => {
+                outside_calls_state.update(hash_outside_call(call));
+            },
+            Option::None => {
+                outside_calls_state.update(calls_len);
+                break;
+            },
+        };
+    };
+
+    PedersenTrait::new(0)
+        .update(OUTSIDE_EXECUTION_TYPE_HASH)
+        .update((*outside_execution.caller).into())
+        .update(*outside_execution.nonce)
+        .update((*outside_execution.execute_after).into())
+        .update((*outside_execution.execute_before).into())
+        .update(calls_len)
+        .update(outside_calls_state.finalize())
+        .finalize()
 }
 
 #[inline(always)]
@@ -130,13 +137,11 @@ fn hash_outside_execution_message(outside_execution: @OutsideExecution) -> felt2
         name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id,
     };
 
-    pedersen_hash_array(
-        array![
-            'StarkNet Message',
-            hash_domain(@domain),
-            get_contract_address().into(),
-            hash_outside_execution(outside_execution),
-            4
-        ]
-    )
+    PedersenTrait::new(0)
+        .update('StarkNet Message')
+        .update(hash_domain(@domain))
+        .update(get_contract_address().into())
+        .update(hash_outside_execution(outside_execution))
+        .update(4)
+        .finalize()
 }

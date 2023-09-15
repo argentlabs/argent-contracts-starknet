@@ -1,6 +1,8 @@
 #[starknet::contract]
 mod ArgentAccount {
     use ecdsa::check_ecdsa_signature;
+    use hash::HashStateTrait;
+    use pedersen::PedersenTrait;
     use starknet::{
         ClassHash, class_hash_const, ContractAddress, get_block_timestamp, get_caller_address,
         get_execution_info, get_contract_address, get_tx_info, VALIDATED, replace_class_syscall,
@@ -27,7 +29,6 @@ mod ArgentAccount {
             OutsideExecution, IOutsideExecution, hash_outside_execution_message,
             ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
         },
-        pedersen::pedersen_hash_array,
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
 
@@ -771,15 +772,13 @@ mod ArgentAccount {
             let chain_id = get_tx_info().unbox().chain_id;
             // We now need to hash message_hash with the size of the array: (change_owner selector, chainid, contract address, old_owner)
             // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
-            let message_hash = pedersen_hash_array(
-                array![
-                    CHANGE_OWNER_SELECTOR,
-                    chain_id,
-                    get_contract_address().into(),
-                    self._signer.read(),
-                    4
-                ]
-            );
+            let message_hash = PedersenTrait::new(0)
+                .update(CHANGE_OWNER_SELECTOR)
+                .update(chain_id)
+                .update(get_contract_address().into())
+                .update(self._signer.read())
+                .update(4)
+                .finalize();
             let is_valid = check_ecdsa_signature(message_hash, new_owner, signature_r, signature_s);
             assert(is_valid, 'argent/invalid-owner-sig');
         }

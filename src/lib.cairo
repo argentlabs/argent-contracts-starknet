@@ -14,7 +14,6 @@ mod common {
     mod upgrade;
     mod version;
     mod multicall;
-    mod pedersen;
 }
 mod multisig {
     mod argent_multisig;

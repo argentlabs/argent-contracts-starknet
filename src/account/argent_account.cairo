@@ -45,13 +45,6 @@ mod ArgentAccount {
     const ESCAPE_TYPE_GUARDIAN: felt252 = 1;
     const ESCAPE_TYPE_OWNER: felt252 = 2;
 
-    const TRIGGER_ESCAPE_GUARDIAN_SELECTOR: felt252 = selector!("trigger_escape_guardian");
-    const TRIGGER_ESCAPE_OWNER_SELECTOR: felt252 = selector!("trigger_escape_owner");
-    const ESCAPE_GUARDIAN_SELECTOR: felt252 = selector!("escape_guardian");
-    const ESCAPE_OWNER_SELECTOR: felt252 = selector!("escape_owner");
-    const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 = selector!("execute_after_upgrade");
-    const CHANGE_OWNER_SELECTOR: felt252 = selector!("change_owner");
-
     /// Limit escape attempts by only one party
     const MAX_ESCAPE_ATTEMPTS: u32 = 5;
     /// Limits fee in escapes
@@ -604,7 +597,7 @@ mod ArgentAccount {
                 if *call.to == account_address {
                     let selector = *call.selector;
 
-                    if selector == TRIGGER_ESCAPE_OWNER_SELECTOR {
+                    if selector == selector!("trigger_escape_owner") {
                         if !is_from_outside {
                             let current_attempts = self.guardian_escape_attempts.read();
                             assert_valid_escape_parameters(current_attempts);
@@ -622,7 +615,7 @@ mod ArgentAccount {
                         assert(is_valid, 'argent/invalid-guardian-sig');
                         return; // valid
                     }
-                    if selector == ESCAPE_OWNER_SELECTOR {
+                    if selector == selector!("escape_owner") {
                         if !is_from_outside {
                             let current_attempts = self.guardian_escape_attempts.read();
                             assert_valid_escape_parameters(current_attempts);
@@ -643,7 +636,7 @@ mod ArgentAccount {
                         assert(is_valid, 'argent/invalid-guardian-sig');
                         return; // valid
                     }
-                    if selector == TRIGGER_ESCAPE_GUARDIAN_SELECTOR {
+                    if selector == selector!("trigger_escape_guardian") {
                         if !is_from_outside {
                             let current_attempts = self.owner_escape_attempts.read();
                             assert_valid_escape_parameters(current_attempts);
@@ -664,7 +657,7 @@ mod ArgentAccount {
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return; // valid
                     }
-                    if selector == ESCAPE_GUARDIAN_SELECTOR {
+                    if selector == selector!("escape_guardian") {
                         if !is_from_outside {
                             let current_attempts = self.owner_escape_attempts.read();
                             assert_valid_escape_parameters(current_attempts);
@@ -690,7 +683,7 @@ mod ArgentAccount {
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return; // valid
                     }
-                    assert(selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call');
+                    assert(selector != selector!("execute_after_upgrade"), 'argent/forbidden-call');
                 }
             } else {
                 // make sure no call is to the account
@@ -773,7 +766,7 @@ mod ArgentAccount {
             // We now need to hash message_hash with the size of the array: (change_owner selector, chainid, contract address, old_owner)
             // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
             let message_hash = PedersenTrait::new(0)
-                .update(CHANGE_OWNER_SELECTOR)
+                .update(selector!("change_owner"))
                 .update(chain_id)
                 .update(get_contract_address().into())
                 .update(self._signer.read())

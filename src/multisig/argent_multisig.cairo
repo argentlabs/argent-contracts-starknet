@@ -33,9 +33,6 @@ mod ArgentMultisig {
     use argent::multisig::signer_signature::{deserialize_array_signer_signature};
     use argent::multisig::interface::{IDeprecatedArgentMultisig};
 
-    const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
-        738349667340360233096752603318170676063569407717437256101137432051386874767; // starknet_keccak('execute_after_upgrade')
-
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION_MAJOR: u8 = 0;
     const VERSION_MINOR: u8 = 1;
@@ -454,7 +451,8 @@ mod ArgentMultisig {
                 if *call.to == account_address {
                     // This should only be called after an upgrade, never directly
                     assert(
-                        *call.selector != EXECUTE_AFTER_UPGRADE_SELECTOR, 'argent/forbidden-call'
+                        *call.selector != selector!("execute_after_upgrade"),
+                        'argent/forbidden-call'
                     );
                 }
             } else {

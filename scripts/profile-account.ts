@@ -22,14 +22,14 @@ const ethusd = 1600n;
 const table: Record<string, any> = {};
 async function reportProfile(name: string, response: InvokeFunctionResponse) {
   const report = await profileGasUsage(response);
-  const { actualFee, gasUsed, computationGas } = report;
+  const { actualFee, gasUsed, computationGas, executionResources } = report;
   console.dir(report, { depth: null });
   const feeUsd = Number(actualFee) / Number(ethusd * 10n ** 9n);
   table[name] = {
     actualFee: Number(actualFee),
     feeUsd: Number(feeUsd.toFixed(2)),
     gasUsed: Number(gasUsed),
-    computationGas: Number(computationGas),
+    ...executionResources,
   };
 }
 

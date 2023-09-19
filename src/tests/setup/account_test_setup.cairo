@@ -1,6 +1,5 @@
 use starknet::{
-    contract_address_const, deploy_syscall, account::Call,
-    testing::set_contract_address
+    contract_address_const, deploy_syscall, account::Call, testing::set_contract_address
 };
 
 use argent::account::escape::{Escape, EscapeStatus};

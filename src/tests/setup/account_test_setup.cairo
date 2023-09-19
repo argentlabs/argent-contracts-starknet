@@ -1,5 +1,5 @@
 use starknet::{
-    contract_address_const, Felt252TryIntoClassHash, deploy_syscall, account::Call,
+    contract_address_const, deploy_syscall, account::Call,
     testing::set_contract_address
 };
 

@@ -4,7 +4,7 @@ mod ArgentAccount {
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
-        ClassHash, class_hash_const, ContractAddress, get_block_timestamp, get_caller_address,
+        ClassHash, ContractAddress, get_block_timestamp, get_caller_address,
         get_execution_info, get_contract_address, get_tx_info, VALIDATED, replace_class_syscall,
         account::Call
     };
@@ -315,9 +315,9 @@ mod ArgentAccount {
             }
 
             let implementation = self._implementation.read();
-            if implementation != class_hash_const::<0>() {
+            if implementation != Zeroable::zero() {
                 replace_class_syscall(implementation).unwrap();
-                self._implementation.write(class_hash_const::<0>());
+                self._implementation.write(Zeroable::zero());
                 // Technically the owner is not added here, but we emit the event since it wasn't emitted in previous versions
                 self.emit(OwnerAdded { new_owner_guid: self._signer.read() });
             }

@@ -4,7 +4,7 @@ mod ArgentAccount {
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
-        ClassHash, ContractAddress, get_block_timestamp, get_caller_address, get_execution_info,
+        ClassHash, get_block_timestamp, get_caller_address, get_execution_info,
         get_contract_address, get_tx_info, VALIDATED, replace_class_syscall, account::Call
     };
 

@@ -1,5 +1,7 @@
+import { InvokeFunctionResponse } from "starknet";
 import {
   declareContract,
+  declareFixtureContract,
   deployAccount,
   deployAccountWithoutGuardian,
   deployer,
@@ -9,32 +11,50 @@ import {
 import { profileGasUsage } from "../tests/lib/gas";
 
 const argentAccountClassHash = await declareContract("ArgentAccount");
-const oldArgentAccountClassHash = await declareContract("OldArgentAccount");
-const proxyClassHash = await declareContract("Proxy");
+const oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
+const proxyClassHash = await declareFixtureContract("Proxy");
 const testDappClassHash = await declareContract("TestDapp");
 const { contract_address } = await deployer.deployContract({ classHash: testDappClassHash });
 const testDappContract = await loadContract(contract_address);
 
+const ethusd = 1600n;
+
+const table: Record<string, any> = {};
+async function reportProfile(name: string, response: InvokeFunctionResponse) {
+  const report = await profileGasUsage(response);
+  const { actualFee, gasUsed, computationGas } = report;
+  console.dir(report, { depth: null });
+  const feeUsd = Number(actualFee) / Number(ethusd * 10n ** 9n);
+  table[name] = {
+    actualFee: Number(actualFee),
+    feeUsd: Number(feeUsd.toFixed(2)),
+    gasUsed: Number(gasUsed),
+    computationGas: Number(computationGas),
+  };
+}
+
 {
-  console.log("Old Account");
+  const name = "Old Account";
+  console.log(name);
   const { account } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
   testDappContract.connect(account);
-  const receipt = await testDappContract.set_number(42);
-  await profileGasUsage(receipt);
+  await reportProfile(name, await testDappContract.set_number(42));
 }
 
 {
-  console.log("New Account");
+  const name = "New Account";
+  console.log(name);
   const { account } = await deployAccount(argentAccountClassHash);
   testDappContract.connect(account);
-  const receipt = await testDappContract.set_number(42);
-  await profileGasUsage(receipt);
+  await reportProfile(name, await testDappContract.set_number(42));
 }
 
 {
-  console.log("New Account without guardian");
+  const name = "New Account without guardian";
+  console.log(name);
   const { account } = await deployAccountWithoutGuardian(argentAccountClassHash);
   testDappContract.connect(account);
-  const receipt = await testDappContract.set_number(42);
-  await profileGasUsage(receipt);
+  await reportProfile(name, await testDappContract.set_number(42));
 }
+
+console.table(table);

@@ -26,10 +26,6 @@ trait IOutsideExecution<TContractState> {
     ) -> felt252;
 }
 
-// H('StarkNetDomain(name:felt,version:felt,chainId:felt)')
-const STARKNET_DOMAIN_TYPE_HASH: felt252 =
-    0x1bfc207425a47a5dfa1a50a4f5241203f50624ca5fdf5e18755765416b8e288;
-
 #[derive(Drop)]
 struct StarkNetDomain {
     name: felt252,
@@ -56,10 +52,6 @@ struct OutsideExecution {
     calls: Span<Call>
 }
 
-// H('OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)')
-const OUTSIDE_CALL_TYPE_HASH: felt252 =
-    0xf00de1fccbb286f9a020ba8821ee936b1deea42a5c485c11ccdc82c8bebb3a;
-
 #[derive(Drop, Serde)]
 struct OutsideCall {
     to: ContractAddress,
@@ -70,7 +62,7 @@ struct OutsideCall {
 #[inline(always)]
 fn hash_domain(domain: @StarkNetDomain) -> felt252 {
     PedersenTrait::new(0)
-        .update(STARKNET_DOMAIN_TYPE_HASH)
+        .update(selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)"))
         .update(*domain.name)
         .update(*domain.version)
         .update(*domain.chain_id)
@@ -94,7 +86,7 @@ fn hash_outside_call(outside_call: @Call) -> felt252 {
     };
 
     PedersenTrait::new(0)
-        .update(OUTSIDE_CALL_TYPE_HASH)
+        .update(selector!("OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)"))
         .update((*outside_call.to).into())
         .update(*outside_call.selector)
         .update(calldata_len)

@@ -1,7 +1,3 @@
-use array::ArrayTrait;
-use traits::TryInto;
-use option::OptionTrait;
-use result::ResultTrait;
 use starknet::{contract_address_const, deploy_syscall, account::Call};
 
 use argent::common::{calls::execute_multicall, test_dapp::TestDapp};

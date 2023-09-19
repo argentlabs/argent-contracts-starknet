@@ -17,7 +17,7 @@ mod TestDapp {
 
     #[storage]
     struct Storage {
-        stored_number: LegacyMap<ContractAddress, felt252>, 
+        stored_number: LegacyMap<ContractAddress, felt252>,
     }
 
     #[external(v0)]

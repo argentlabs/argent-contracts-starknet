@@ -24,9 +24,7 @@ fn valid_initialize() {
 #[available_gas(20000000)]
 fn valid_initialize_two_signers() {
     let threshold = 1;
-    let mut signers_array = ArrayTrait::new();
-    signers_array.append(signer_pubkey_1);
-    signers_array.append(signer_pubkey_2);
+    let signers_array = array![signer_pubkey_1, signer_pubkey_2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
     // test if is signer correctly returns true
     assert(multisig.is_signer(signer_pubkey_1), 'is signer cant find signer 1');
@@ -43,10 +41,7 @@ fn valid_initialize_two_signers() {
 #[available_gas(20000000)]
 fn invalid_threshold() {
     let threshold = 3;
-    let mut calldata = ArrayTrait::new();
-    calldata.append(threshold);
-    calldata.append(1);
-    calldata.append(signer_pubkey_1);
+    let calldata = array![threshold, 1, signer_pubkey_1];
 
     let class_hash = ArgentMultisig::TEST_CLASS_HASH.try_into().unwrap();
     let mut err = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap_err();
@@ -57,9 +52,7 @@ fn invalid_threshold() {
 #[available_gas(20000000)]
 fn change_threshold() {
     let threshold = 1;
-    let mut signers_array = ArrayTrait::new();
-    signers_array.append(1);
-    signers_array.append(2);
+    let signers_array = array![1, 2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
 
     multisig.change_threshold(2);
@@ -73,8 +66,7 @@ fn add_signers() {
     let multisig = initialize_multisig_with_one_signer();
 
     // add signer
-    let mut new_signers = ArrayTrait::new();
-    new_signers.append(signer_pubkey_2);
+    let new_signers = array![signer_pubkey_2];
     multisig.add_signers(2, new_signers);
 
     // check 
@@ -91,8 +83,7 @@ fn add_signer_already_in_list() {
     let multisig = initialize_multisig_with_one_signer();
 
     // add signer
-    let mut new_signers = ArrayTrait::new();
-    new_signers.append(signer_pubkey_1);
+    let new_signers = array![signer_pubkey_1];
     multisig.add_signers(2, new_signers);
 }
 

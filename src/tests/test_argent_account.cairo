@@ -31,7 +31,7 @@ fn check_transaction_version_on_execute() {
     let account = initialize_account();
     set_contract_address(contract_address_const::<0>());
     set_version(32);
-    account.__execute__(ArrayTrait::new());
+    account.__execute__(array![]);
 }
 
 #[test]
@@ -41,7 +41,7 @@ fn check_transaction_version_on_validate() {
     let account = initialize_account();
     set_contract_address(contract_address_const::<0>());
     set_version(32);
-    account.__validate__(ArrayTrait::new());
+    account.__validate__(array![]);
 }
 
 #[test]

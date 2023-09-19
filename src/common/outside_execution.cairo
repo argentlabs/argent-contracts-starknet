@@ -1,4 +1,4 @@
-use hash::HashStateTrait;
+use hash::{HashStateTrait, HashStateExTrait};
 use pedersen::PedersenTrait;
 use starknet::{ContractAddress, get_tx_info, get_contract_address, account::Call};
 
@@ -26,7 +26,7 @@ trait IOutsideExecution<TContractState> {
     ) -> felt252;
 }
 
-#[derive(Drop)]
+#[derive(Copy, Drop, Hash)]
 struct StarkNetDomain {
     name: felt252,
     version: felt252,
@@ -62,11 +62,9 @@ struct OutsideCall {
 #[inline(always)]
 fn hash_domain(domain: @StarkNetDomain) -> felt252 {
     PedersenTrait::new(0)
-        .update(selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)"))
-        .update(*domain.name)
-        .update(*domain.version)
-        .update(*domain.chain_id)
-        .update(4)
+        .update_with(selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)"))
+        .update_with(*domain)
+        .update_with(4)
         .finalize()
 }
 
@@ -111,7 +109,11 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
     };
 
     PedersenTrait::new(0)
-        .update(OUTSIDE_EXECUTION_TYPE_HASH)
+        .update(
+            selector!(
+                "OutsideExecution(caller:felt,nonce:felt,execute_after:felt,execute_before:felt,calls_len:felt,calls:OutsideCall*)OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)"
+            )
+        )
         .update((*outside_execution.caller).into())
         .update(*outside_execution.nonce)
         .update((*outside_execution.execute_after).into())

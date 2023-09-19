@@ -143,7 +143,7 @@ fn invalid_owner_with_invalid_guardian() {
 #[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
 fn invalid_empty_signature_without_guardian() {
     let account = initialize_account_without_guardian();
-    let signatures = ArrayTrait::new();
+    let signatures = array![];
     account.is_valid_signature(message_hash, signatures);
 }
 
@@ -160,7 +160,7 @@ fn invalid_signature_length_without_guardian() {
 #[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
 fn invalid_empty_signature_with_guardian() {
     let account = initialize_account();
-    let signatures = ArrayTrait::new();
+    let signatures = array![];
     account.is_valid_signature(message_hash, signatures);
 }
 

@@ -67,26 +67,20 @@ trait ITestArgentMultisig<TContractState> {
 
 fn initialize_multisig() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
-    let mut signers_array = ArrayTrait::new();
-    signers_array.append(signer_pubkey_1);
-    signers_array.append(signer_pubkey_2);
-    signers_array.append(signer_pubkey_3);
+    let signers_array = array![signer_pubkey_1, signer_pubkey_2, signer_pubkey_3];
     initialize_multisig_with(threshold, signers_array.span())
 }
 
 fn initialize_multisig_with_one_signer() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
-    let mut signers_array = ArrayTrait::new();
-    signers_array.append(signer_pubkey_1);
+    let signers_array = array![signer_pubkey_1];
     initialize_multisig_with(threshold, signers_array.span())
 }
 
 fn initialize_multisig_with(
     threshold: usize, mut signers: Span<felt252>
 ) -> ITestArgentMultisigDispatcher {
-    let mut calldata = ArrayTrait::new();
-    calldata.append(threshold.into());
-    calldata.append(signers.len().into());
+    let mut calldata = array![threshold.into(), signers.len().into(),];
     loop {
         match signers.pop_front() {
             Option::Some(signer) => {

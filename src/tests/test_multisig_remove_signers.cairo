@@ -10,8 +10,7 @@ fn remove_signers_first() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let mut signer_to_remove = ArrayTrait::new();
-    signer_to_remove.append(signer_pubkey_1);
+    let signer_to_remove = array![signer_pubkey_1];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
@@ -29,8 +28,7 @@ fn remove_signers_center() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let mut signer_to_remove = ArrayTrait::new();
-    signer_to_remove.append(signer_pubkey_2);
+    let signer_to_remove = array![signer_pubkey_2];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
@@ -49,8 +47,7 @@ fn remove_signers_last() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let mut signer_to_remove = ArrayTrait::new();
-    signer_to_remove.append(signer_pubkey_3);
+    let signer_to_remove = array![signer_pubkey_3];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
@@ -69,9 +66,7 @@ fn remove_1_and_2() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let mut signer_to_remove = ArrayTrait::new();
-    signer_to_remove.append(signer_pubkey_1);
-    signer_to_remove.append(signer_pubkey_2);
+    let signer_to_remove = array![signer_pubkey_1, signer_pubkey_2];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
@@ -90,9 +85,7 @@ fn remove_1_and_3() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let mut signer_to_remove = ArrayTrait::new();
-    signer_to_remove.append(signer_pubkey_1);
-    signer_to_remove.append(signer_pubkey_3);
+    let signer_to_remove = array![signer_pubkey_1, signer_pubkey_3];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
@@ -111,9 +104,7 @@ fn remove_2_and_3() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let mut signer_to_remove = ArrayTrait::new();
-    signer_to_remove.append(signer_pubkey_2);
-    signer_to_remove.append(signer_pubkey_3);
+    let signer_to_remove = array![signer_pubkey_2, signer_pubkey_3];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
@@ -132,9 +123,7 @@ fn remove_2_and_1() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let mut signer_to_remove = ArrayTrait::new();
-    signer_to_remove.append(signer_pubkey_2);
-    signer_to_remove.append(signer_pubkey_1);
+    let signer_to_remove = array![signer_pubkey_2, signer_pubkey_1];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
@@ -153,9 +142,7 @@ fn remove_3_and_1() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let mut signer_to_remove = ArrayTrait::new();
-    signer_to_remove.append(signer_pubkey_3);
-    signer_to_remove.append(signer_pubkey_1);
+    let signer_to_remove = array![signer_pubkey_3, signer_pubkey_1];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
@@ -174,9 +161,7 @@ fn remove_3_and_2() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let mut signer_to_remove = ArrayTrait::new();
-    signer_to_remove.append(signer_pubkey_3);
-    signer_to_remove.append(signer_pubkey_2);
+    let signer_to_remove = array![signer_pubkey_2, signer_pubkey_3];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
@@ -196,8 +181,7 @@ fn remove_invalid_signers() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let mut signer_to_remove = ArrayTrait::new();
-    signer_to_remove.append(10);
+    let signer_to_remove = array![10];
     multisig.remove_signers(1, signer_to_remove);
 }
 
@@ -209,8 +193,6 @@ fn remove_signers_invalid_threshold() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let mut signer_to_remove = ArrayTrait::new();
-    signer_to_remove.append(signer_pubkey_1);
-    signer_to_remove.append(signer_pubkey_2);
+    let signer_to_remove = array![signer_pubkey_1, signer_pubkey_2];
     multisig.remove_signers(2, signer_to_remove);
 }

@@ -1,11 +1,5 @@
-use array::ArrayTrait;
-use option::OptionTrait;
-use result::ResultTrait;
-use traits::TryInto;
-
 use starknet::{
-    contract_address_const, Felt252TryIntoClassHash, deploy_syscall, account::Call,
-    testing::set_contract_address
+    contract_address_const, deploy_syscall, account::Call, testing::set_contract_address
 };
 
 use argent::account::escape::{Escape, EscapeStatus};

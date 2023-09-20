@@ -1,4 +1,4 @@
-import { add, maxBy, mergeWith, omit, sum } from "lodash-es";
+import { add, maxBy, mergeWith, omit, sortBy, sum } from "lodash-es";
 import { ExecutionResources, InvokeFunctionResponse, Sequencer } from "starknet";
 import { provider } from "./provider";
 
@@ -49,6 +49,8 @@ export async function profileGasUsage({ transaction_hash: txHash }: InvokeFuncti
   const computationGas = BigInt(gasPerComputationCategory[maxComputationCategory]);
   const l1CalldataGas = gasUsed - computationGas;
 
+  const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
+
   return {
     actualFee,
     gasUsed,
@@ -56,7 +58,7 @@ export async function profileGasUsage({ transaction_hash: txHash }: InvokeFuncti
     computationGas,
     maxComputationCategory,
     gasPerComputationCategory,
-    executionResources: omit(executionResources, "n_memory_holes"),
+    executionResources: omit(sortedResources, "n_memory_holes"),
     n_memory_holes: executionResources.n_memory_holes,
     gasPrice,
     storageDiffs,

@@ -8,7 +8,7 @@ import {
   num,
   shortString,
 } from "starknet";
-import * as _ from "lodash";
+import { isEqual } from "lodash-es";
 
 import { provider } from "./provider";
 
@@ -41,7 +41,7 @@ async function expectEventFromReceipt(receipt: InvokeTransactionReceiptResponse,
   expect(event.keys.length).to.be.greaterThan(0, "Unsupported: No keys");
   const events = receipt.events ?? [];
   const normalizedEvent = normalizeEvent(event);
-  const matches = events.filter((e) => _.default.isEqual(normalizeEvent(e), normalizedEvent)).length;
+  const matches = events.filter((e) => isEqual(normalizeEvent(e), normalizedEvent)).length;
   if (matches == 0) {
     assert(false, "No matches detected in this transaction`");
   } else if (matches > 1) {

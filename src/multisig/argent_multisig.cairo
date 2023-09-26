@@ -30,7 +30,7 @@ mod ArgentMultisig {
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
-    use argent::multisig::signer_signature::{deserialize_array_signer_signature};
+    use argent::multisig::signer_signature::{SignerType, deserialize_array_signer_signature};
     use argent::multisig::interface::{IDeprecatedArgentMultisig};
 
     const NAME: felt252 = 'ArgentMultisig';
@@ -255,15 +255,15 @@ mod ArgentMultisig {
                 .expect('argent/invalid-signature-length');
             assert(parsed_signatures.len() == 1, 'argent/invalid-signature-length');
 
-            let signer_sig = *parsed_signatures.at(0);
-            let valid_signer_signature = self
-                .is_valid_signer_signature_inner(
-                    tx_info.transaction_hash,
-                    signer_sig.signer,
-                    signer_sig.signature_r,
-                    signer_sig.signature_s
-                );
-            assert(valid_signer_signature, 'argent/invalid-signature');
+            // let signer_sig = *parsed_signatures.at(0);
+            // let valid_signer_signature = self
+            //     .is_valid_signer_signature_inner(
+            //         tx_info.transaction_hash,
+            //         signer_sig.signer,
+            //         signer_sig.signature_r,
+            //         signer_sig.signature_s
+            //     );
+            // assert(valid_signer_signature, 'argent/invalid-signature');
             VALIDATED
         }
 
@@ -373,10 +373,10 @@ mod ArgentMultisig {
             self: @ContractState,
             hash: felt252,
             signer: felt252,
-            signature_r: felt252,
-            signature_s: felt252
+            signer_type: SignerType,
+            signature: Span<felt252>
         ) -> bool {
-            self.is_valid_signer_signature_inner(hash, signer, signature_r, signature_s)
+            self.is_valid_signer_signature_inner(hash, signer, signer_type, signature)
         }
     }
 
@@ -486,8 +486,8 @@ mod ArgentMultisig {
                             .is_valid_signer_signature(
                                 hash,
                                 signer: signer_sig.signer,
-                                signature_r: signer_sig.signature_r,
-                                signature_s: signer_sig.signature_s,
+                                signer_type: signer_sig.signer_type,
+                                signature: signer_sig.signature,
                             );
                         if !is_valid {
                             break false;
@@ -505,12 +505,18 @@ mod ArgentMultisig {
             self: @ContractState,
             hash: felt252,
             signer: felt252,
-            signature_r: felt252,
-            signature_s: felt252
+            signer_type: SignerType,
+            signature: Span<felt252>
         ) -> bool {
             let is_signer = self.is_signer_inner(signer);
             assert(is_signer, 'argent/not-a-signer');
-            check_ecdsa_signature(hash, signer, signature_r, signature_s)
+            match signer_type {
+                SignerType::Starknet => {
+                    check_ecdsa_signature(hash, signer, *signature.at(0), *signature.at(1))
+                },
+                SignerType::Ethereum => false,
+                SignerType::Webauthn => false
+            }
         }
     }
 

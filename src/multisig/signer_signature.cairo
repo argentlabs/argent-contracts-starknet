@@ -1,8 +1,15 @@
+#[derive(Drop, Copy, Serde, PartialEq)]
+enum SignerType {
+    Starknet,
+    Ethereum,
+    Webauthn,
+}
+
 #[derive(Copy, Drop, Serde)]
 struct SignerSignature {
     signer: felt252,
-    signature_r: felt252,
-    signature_s: felt252,
+    signer_type: SignerType,
+    signature: Span<felt252>,
 }
 
 fn deserialize_array_signer_signature(

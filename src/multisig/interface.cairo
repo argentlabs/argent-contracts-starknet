@@ -1,4 +1,5 @@
 use argent::common::version::Version;
+use argent::multisig::signer_signature::SignerType;
 
 #[starknet::interface]
 trait IArgentMultisig<TContractState> {
@@ -51,8 +52,8 @@ trait IArgentMultisig<TContractState> {
         self: @TContractState,
         hash: felt252,
         signer: felt252,
-        signature_r: felt252,
-        signature_s: felt252
+        signer_type: SignerType,
+        signature: Span<felt252>
     ) -> bool;
 }
 

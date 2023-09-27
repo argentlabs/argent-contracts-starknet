@@ -57,6 +57,13 @@ trait IArgentMultisig<TContractState> {
     ) -> bool;
 }
 
+#[starknet::interface]
+trait IRecoveryAccount<TContractState> {
+    fn trigger_escape_signer(ref self: TContractState, target_signer: felt252, new_signer: felt252);
+    fn escape_signer(ref self: TContractState);
+    fn cancel_escape(ref self: TContractState);
+}
+
 /// Deprecated methods for compatibility reasons
 #[starknet::interface]
 trait IDeprecatedArgentMultisig<TContractState> {

@@ -31,7 +31,7 @@ mod ArgentMultisig {
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
     use argent::multisig::signer_signature::{SignerType, deserialize_array_signer_signature};
-    use argent::multisig::interface::{IDeprecatedArgentMultisig};
+    use argent::multisig::interface::{IDeprecatedArgentMultisig, IRecoveryAccount};
 
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION_MAJOR: u8 = 0;
@@ -40,12 +40,39 @@ mod ArgentMultisig {
     const VERSION_COMPAT: felt252 = '0.1.0';
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
+    /// Time it takes for the escape to become ready after being triggered
+    const ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
+    ///  The escape will be ready and can be completed for this duration
+    const ESCAPE_EXPIRY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
+
+    #[derive(Drop, Copy, Serde, PartialEq)]
+    enum EscapeStatus {
+        /// No escape triggered, or it was canceled
+        None,
+        /// Escape was triggered and it's waiting for the `escapeSecurityPeriod`
+        NotReady,
+        /// The security period has elapsed and the escape is ready to be completed
+        Ready,
+        /// No confirmation happened for `escapeExpiryPeriod` since it became `Ready`. The escape cannot be completed now, only canceled
+        Expired,
+    }
+
+    #[derive(Drop, Copy, Serde, starknet::Store)]
+    struct Escape {
+        // timestamp for activation of escape mode, 0 otherwise
+        ready_at: u64,
+        // target signer address
+        target_signer: felt252,
+        // new signer address
+        new_signer: felt252,
+    }
 
     #[storage]
     struct Storage {
         signer_list: LegacyMap<felt252, felt252>,
         threshold: usize,
         outside_nonces: LegacyMap<felt252, bool>,
+        _escape: Escape,
     }
 
     #[event]
@@ -55,7 +82,9 @@ mod ArgentMultisig {
         TransactionExecuted: TransactionExecuted,
         AccountUpgraded: AccountUpgraded,
         OwnerAdded: OwnerAdded,
-        OwnerRemoved: OwnerRemoved
+        OwnerRemoved: OwnerRemoved,
+        EscapeSignerTriggered: EscapeSignerTriggered,
+        SignerEscaped: SignerEscaped,
     }
 
     /// @notice Emitted when the multisig threshold changes
@@ -98,6 +127,24 @@ mod ArgentMultisig {
         removed_owner_guid: felt252,
     }
 
+    /// @notice Guardian escape was triggered by the owner
+    /// @param ready_at when the escape can be completed
+    /// @param new_guardian address of the new guardian to be set after the security period. O if the guardian will be removed
+    #[derive(Drop, starknet::Event)]
+    struct EscapeSignerTriggered {
+        ready_at: u64,
+        target_signer: felt252,
+        new_signer: felt252
+    }
+
+    /// @notice Owner escape was completed and there is a new account owner
+    /// @param new_owner new owner address
+    #[derive(Drop, starknet::Event)]
+    struct SignerEscaped {
+        target_signer: felt252,
+        new_signer: felt252
+    }
+
     #[constructor]
     fn constructor(ref self: ContractState, new_threshold: usize, signers: Array<felt252>) {
         let new_signers_count = signers.len();
@@ -131,10 +178,7 @@ mod ArgentMultisig {
             // validate calls
             self.assert_valid_calls(calls.span());
             // validate signatures
-            self
-                .assert_valid_signatures(
-                    calls.span(), tx_info.transaction_hash, tx_info.signature
-                );
+            self.assert_valid_signatures(calls.span(), tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
 
@@ -154,7 +198,10 @@ mod ArgentMultisig {
         fn is_valid_signature(
             self: @ContractState, hash: felt252, signature: Array<felt252>
         ) -> felt252 {
-            if self.is_valid_span_signature(hash, signature.span()) {
+            let threshold = self.threshold.read();
+            assert(threshold != 0, 'argent/uninitialized');
+            if self
+                .is_valid_signature_with_conditions(hash, threshold, 0_felt252, signature.span()) {
                 VALIDATED
             } else {
                 0
@@ -185,7 +232,10 @@ mod ArgentMultisig {
 
             let calls = outside_execution.calls;
 
-            self.assert_valid_calls_and_signature(calls, outside_tx_hash, signature.span());
+            // validate calls
+            self.assert_valid_calls(calls);
+            // validate signatures
+            self.assert_valid_signatures(calls, outside_tx_hash, signature.span());
 
             // Effects
             self.outside_nonces.write(nonce, true);
@@ -260,15 +310,16 @@ mod ArgentMultisig {
                 .expect('argent/invalid-signature-length');
             assert(parsed_signatures.len() == 1, 'argent/invalid-signature-length');
 
-            // let signer_sig = *parsed_signatures.at(0);
-            // let valid_signer_signature = self
-            //     .is_valid_signer_signature_inner(
-            //         tx_info.transaction_hash,
-            //         signer_sig.signer,
-            //         signer_sig.signature_r,
-            //         signer_sig.signature_s
-            //     );
-            // assert(valid_signer_signature, 'argent/invalid-signature');
+            let signer_sig = *parsed_signatures.at(0);
+            let is_valid = self
+                .is_valid_signer_signature(
+                    tx_info.transaction_hash,
+                    signer: signer_sig.signer,
+                    signer_type: signer_sig.signer_type,
+                    signature: signer_sig.signature,
+                );
+            assert(is_valid, 'argent/invalid-signature');
+
             VALIDATED
         }
 
@@ -386,6 +437,66 @@ mod ArgentMultisig {
     }
 
     #[external(v0)]
+    impl RecoveryAccountImpl of IRecoveryAccount<ContractState> {
+        fn trigger_escape_signer(
+            ref self: ContractState, target_signer: felt252, new_signer: felt252
+        ) {
+            assert_only_self();
+
+            let current_escape = self._escape.read();
+            let current_escaped_signer = current_escape.target_signer;
+            let current_escape_status = get_escape_status(current_escape.ready_at);
+            if (current_escaped_signer != 0_felt252
+                && current_escape_status == EscapeStatus::Ready) {
+                // no escape if there is an ongoing escape with a higher signer
+                assert(
+                    self.is_signer_before(target_signer, current_escaped_signer),
+                    'argent/cannot-override-escape'
+                );
+            }
+            let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
+            let escape = Escape { ready_at, target_signer, new_signer };
+            self._escape.write(escape);
+            self.emit(EscapeSignerTriggered { ready_at, target_signer, new_signer });
+        }
+
+        fn escape_signer(ref self: ContractState) {
+            assert_only_self();
+
+            let current_escape = self._escape.read();
+            let current_escape_status = get_escape_status(current_escape.ready_at);
+            assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
+
+            // replace signer 
+            let (_, last_signer) = self.load();
+            self
+                .replace_signer_inner(
+                    current_escape.target_signer, current_escape.new_signer, last_signer
+                );
+            self
+                .emit(
+                    SignerEscaped {
+                        target_signer: current_escape.target_signer,
+                        new_signer: current_escape.new_signer
+                    }
+                );
+            self.emit(OwnerRemoved { removed_owner_guid: current_escape.target_signer });
+            self.emit(OwnerAdded { new_owner_guid: current_escape.new_signer });
+
+            // clear escape
+            self._escape.write(Escape { ready_at: 0, target_signer: 0, new_signer: 0 });
+        }
+
+        fn cancel_escape(ref self: ContractState) {
+            assert_only_self();
+            let current_escape = self._escape.read();
+            let current_escape_status = get_escape_status(current_escape.ready_at);
+            assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
+            self._escape.write(Escape { ready_at: 0, target_signer: 0, new_signer: 0 });
+        }
+    }
+
+    #[external(v0)]
     impl Erc165Impl of IErc165<ContractState> {
         fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
             if interface_id == ERC165_IERC165_INTERFACE_ID {
@@ -441,10 +552,7 @@ mod ArgentMultisig {
 
     #[generate_trait]
     impl Private of PrivateTrait {
-        fn assert_valid_calls(
-            self: @ContractState,
-            calls: Span<Call>
-        ) {
+        fn assert_valid_calls(self: @ContractState, calls: Span<Call>) {
             let account_address = get_contract_address();
             if calls.len() == 1 {
                 let call = calls.at(0);
@@ -468,54 +576,66 @@ mod ArgentMultisig {
             execution_hash: felt252,
             signature: Span<felt252>
         ) {
-            let valid = self.is_valid_span_signature(execution_hash, signature);
-            assert(valid, 'argent/invalid-signature');
-        }
-
-        // fn assert_valid_calls_and_signature(
-        //     self: @ContractState,
-        //     calls: Span<Call>,
-        //     execution_hash: felt252,
-        //     signature: Span<felt252>
-        // ) {
-        //     let account_address = get_contract_address();
-        //     let tx_info = get_tx_info().unbox();
-        //     assert_correct_tx_version(tx_info.version);
-
-        //     if calls.len() == 1 {
-        //         let call = calls.at(0);
-        //         if *call.to == account_address {
-        //             // This should only be called after an upgrade, never directly
-        //             assert(
-        //                 *call.selector != selector!("execute_after_upgrade"),
-        //                 'argent/forbidden-call'
-        //             );
-        //         }
-        //     } else {
-        //         // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions
-        //         // and this restriction will reduce the attack surface
-        //         assert_no_self_call(calls, account_address);
-        //     }
-
-        //     let valid = self.is_valid_span_signature(execution_hash, signature);
-        //     assert(valid, 'argent/invalid-signature');
-        // }
-
-        fn is_valid_span_signature(
-            self: @ContractState, hash: felt252, signature: Span<felt252>
-        ) -> bool {
+            // get threshold
             let threshold = self.threshold.read();
             assert(threshold != 0, 'argent/uninitialized');
 
+            let first_call = calls.at(0);
+            if (*first_call.selector == selector!("trigger_escape_signer")) {
+                // check we can do recovery
+                let signers_len = self.get_signers_len();
+                assert(signers_len == threshold, 'argent/recovery-unavailable');
+                // get escaped signer
+                let calldata: Span<felt252> = first_call.calldata.span();
+                let escaped_signer = calldata.at(0);
+                // check it is a valid signer
+                let is_signer = self.is_signer_inner(*escaped_signer);
+                assert(is_signer, 'argent/escaped-not-signer');
+                // check signatures
+                let valid = self
+                    .is_valid_signature_with_conditions(
+                        execution_hash, threshold - 1, *escaped_signer, signature
+                    );
+                assert(valid, 'argent/invalid-signature');
+            } else if (*first_call.selector == selector!("escape_signer")) {
+                // check we can do recovery
+                let signers_len = self.get_signers_len();
+                assert(signers_len == threshold, 'argent/recovery-unavailable');
+                // get escaped signer
+                let calldata: Span<felt252> = first_call.calldata.span();
+                let escaped_signer = calldata.at(0);
+                // check signatures
+                let valid = self
+                    .is_valid_signature_with_conditions(
+                        execution_hash, threshold - 1, *escaped_signer, signature
+                    );
+                assert(valid, 'argent/invalid-signature');
+            } else {
+                let valid = self
+                    .is_valid_signature_with_conditions(
+                        execution_hash, threshold, 0_felt252, signature
+                    );
+                assert(valid, 'argent/invalid-signature');
+            }
+        }
+
+        fn is_valid_signature_with_conditions(
+            self: @ContractState,
+            hash: felt252,
+            expected_length: u32,
+            excluded_signer: felt252,
+            signature: Span<felt252>
+        ) -> bool {
             let mut signer_signatures = deserialize_array_signer_signature(signature)
                 .expect('argent/invalid-signature-length');
-            assert(signer_signatures.len() == threshold, 'argent/invalid-signature-length');
+            assert(signer_signatures.len() == expected_length, 'argent/invalid-signature-length');
 
             let mut last_signer: u256 = 0;
             loop {
                 match signer_signatures.pop_front() {
                     Option::Some(signer_sig_ref) => {
                         let signer_sig = *signer_sig_ref;
+                        assert(signer_sig.signer != excluded_signer, 'argent/unauthorised_signer');
                         let signer_uint: u256 = signer_sig.signer.into();
                         assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
                         let is_valid = self
@@ -623,6 +743,26 @@ mod ArgentMultisig {
                 }
                 current_signer = next_signer;
             }
+        }
+
+        // Returns true if `first_signer` is before `second_signer` in the signer list.
+        fn is_signer_before(
+            self: @ContractState, first_signer: felt252, second_signer: felt252
+        ) -> bool {
+            let mut is_before: bool = false;
+            let mut current_signer = first_signer;
+            loop {
+                let next_signer = self.signer_list.read(current_signer);
+                if (next_signer == 0_felt252) {
+                    break;
+                }
+                if (next_signer == second_signer) {
+                    is_before = true;
+                    break;
+                }
+                current_signer = next_signer;
+            };
+            return is_before;
         }
 
         fn add_signers_inner(
@@ -740,5 +880,21 @@ mod ArgentMultisig {
             };
             signers
         }
+    }
+
+    fn get_escape_status(escape_ready_at: u64) -> EscapeStatus {
+        if escape_ready_at == 0 {
+            return EscapeStatus::None;
+        }
+
+        let block_timestamp = get_block_timestamp();
+        if block_timestamp < escape_ready_at {
+            return EscapeStatus::NotReady;
+        }
+        if escape_ready_at + ESCAPE_EXPIRY_PERIOD <= block_timestamp {
+            return EscapeStatus::Expired;
+        }
+
+        EscapeStatus::Ready
     }
 }

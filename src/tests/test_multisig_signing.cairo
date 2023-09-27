@@ -25,7 +25,9 @@ const signer_type_starknet: felt252 = 0;
 fn test_signature() {
     let multisig = initialize_multisig_with_one_signer();
 
-    let signature = array![signer_pubkey_1, signer_type_starknet, 2, signer_1_signature_r, signer_1_signature_s];
+    let signature = array![
+        signer_pubkey_1, signer_type_starknet, 2, signer_1_signature_r, signer_1_signature_s
+    ];
     assert(multisig.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
 }
 
@@ -39,13 +41,13 @@ fn test_double_signature() {
 
     let signature = array![
         signer_pubkey_1,
-        signer_type_starknet, 
-        2, 
+        signer_type_starknet,
+        2,
         signer_1_signature_r,
         signer_1_signature_s,
         signer_pubkey_2,
-        signer_type_starknet, 
-        2, 
+        signer_type_starknet,
+        2,
         signer_2_signature_r,
         signer_2_signature_s
     ];
@@ -62,12 +64,12 @@ fn test_double_signature_order() {
 
     let signature = array![
         signer_pubkey_2,
-        signer_type_starknet, 
+        signer_type_starknet,
         2,
         signer_2_signature_r,
         signer_2_signature_s,
         signer_pubkey_1,
-        signer_type_starknet, 
+        signer_type_starknet,
         2,
         signer_1_signature_r,
         signer_1_signature_s
@@ -85,12 +87,12 @@ fn test_same_owner_twice() {
 
     let signature = array![
         signer_pubkey_1,
-        signer_type_starknet, 
+        signer_type_starknet,
         2,
         signer_1_signature_r,
         signer_1_signature_s,
         signer_pubkey_1,
-        signer_type_starknet, 
+        signer_type_starknet,
         2,
         signer_1_signature_r,
         signer_1_signature_s
@@ -106,7 +108,9 @@ fn test_missing_owner_signature() {
     let signers_array = array![signer_pubkey_1, signer_pubkey_2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
 
-    let signature = array![signer_pubkey_1, signer_type_starknet, 2, signer_1_signature_r, signer_1_signature_s];
+    let signature = array![
+        signer_pubkey_1, signer_type_starknet, 2, signer_1_signature_r, signer_1_signature_s
+    ];
     multisig.is_valid_signature(message_hash, signature);
 }
 
@@ -118,12 +122,12 @@ fn test_short_signature() {
 
     let signature = array![
         signer_pubkey_1,
-        signer_type_starknet, 
+        signer_type_starknet,
         2,
         signer_1_signature_r,
         signer_1_signature_s,
         signer_pubkey_1,
-        signer_type_starknet, 
+        signer_type_starknet,
         2,
         signer_1_signature_r
     ];

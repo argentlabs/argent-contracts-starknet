@@ -126,8 +126,13 @@ mod ArgentMultisig {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
+            // validate version
+            assert_correct_tx_version(tx_info.version);
+            // validate calls
+            self.assert_valid_calls(calls.span());
+            // validate signatures
             self
-                .assert_valid_calls_and_signature(
+                .assert_valid_signatures(
                     calls.span(), tx_info.transaction_hash, tx_info.signature
                 );
             VALIDATED
@@ -436,16 +441,11 @@ mod ArgentMultisig {
 
     #[generate_trait]
     impl Private of PrivateTrait {
-        fn assert_valid_calls_and_signature(
+        fn assert_valid_calls(
             self: @ContractState,
-            calls: Span<Call>,
-            execution_hash: felt252,
-            signature: Span<felt252>
+            calls: Span<Call>
         ) {
             let account_address = get_contract_address();
-            let tx_info = get_tx_info().unbox();
-            assert_correct_tx_version(tx_info.version);
-
             if calls.len() == 1 {
                 let call = calls.at(0);
                 if *call.to == account_address {
@@ -460,10 +460,46 @@ mod ArgentMultisig {
                 // and this restriction will reduce the attack surface
                 assert_no_self_call(calls, account_address);
             }
+        }
 
+        fn assert_valid_signatures(
+            self: @ContractState,
+            calls: Span<Call>,
+            execution_hash: felt252,
+            signature: Span<felt252>
+        ) {
             let valid = self.is_valid_span_signature(execution_hash, signature);
             assert(valid, 'argent/invalid-signature');
         }
+
+        // fn assert_valid_calls_and_signature(
+        //     self: @ContractState,
+        //     calls: Span<Call>,
+        //     execution_hash: felt252,
+        //     signature: Span<felt252>
+        // ) {
+        //     let account_address = get_contract_address();
+        //     let tx_info = get_tx_info().unbox();
+        //     assert_correct_tx_version(tx_info.version);
+
+        //     if calls.len() == 1 {
+        //         let call = calls.at(0);
+        //         if *call.to == account_address {
+        //             // This should only be called after an upgrade, never directly
+        //             assert(
+        //                 *call.selector != selector!("execute_after_upgrade"),
+        //                 'argent/forbidden-call'
+        //             );
+        //         }
+        //     } else {
+        //         // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions
+        //         // and this restriction will reduce the attack surface
+        //         assert_no_self_call(calls, account_address);
+        //     }
+
+        //     let valid = self.is_valid_span_signature(execution_hash, signature);
+        //     assert(valid, 'argent/invalid-signature');
+        // }
 
         fn is_valid_span_signature(
             self: @ContractState, hash: felt252, signature: Span<felt252>

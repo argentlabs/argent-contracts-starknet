@@ -1,4 +1,5 @@
 use argent::common::version::Version;
+use argent::generic::signer_signature::SignerType;
 
 #[starknet::interface]
 trait IArgentMultisig<TContractState> {
@@ -51,19 +52,14 @@ trait IArgentMultisig<TContractState> {
         self: @TContractState,
         hash: felt252,
         signer: felt252,
-        signature_r: felt252,
-        signature_s: felt252
+        signer_type: SignerType,
+        signature: Span<felt252>
     ) -> bool;
 }
 
-/// Deprecated methods for compatibility reasons
 #[starknet::interface]
-trait IDeprecatedArgentMultisig<TContractState> {
-    fn getVersion(self: @TContractState) -> felt252;
-    fn getName(self: @TContractState) -> felt252;
-    fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
-    /// For compatibility reasons this method returns 1 when the signature is valid, and panics otherwise
-    fn isValidSignature(
-        self: @TContractState, hash: felt252, signatures: Array<felt252>
-    ) -> felt252;
+trait IRecoveryAccount<TContractState> {
+    fn trigger_escape_signer(ref self: TContractState, target_signer: felt252, new_signer: felt252);
+    fn escape_signer(ref self: TContractState);
+    fn cancel_escape(ref self: TContractState);
 }

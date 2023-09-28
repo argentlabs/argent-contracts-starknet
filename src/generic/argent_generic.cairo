@@ -638,8 +638,9 @@ mod ArgentGenericAccount {
                 SignerType::Starknet => {
                     check_ecdsa_signature(hash, signer, *signature.at(0), *signature.at(1))
                 },
-                SignerType::Ethereum => false,
-                SignerType::Webauthn => false
+                SignerType::Webauthn => false,
+                SignerType::Secp256k1 => false,
+                SignerType::Secp256r1 => false,
             }
         }
     }

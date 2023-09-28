@@ -1,8 +1,9 @@
 #[derive(Drop, Copy, Serde, PartialEq)]
 enum SignerType {
     Starknet,
-    Ethereum,
     Webauthn,
+    Secp256k1,
+    Secp256r1,
 }
 
 #[derive(Copy, Drop, Serde)]

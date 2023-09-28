@@ -13,6 +13,11 @@ fn assert_only_self() {
 }
 
 #[inline(always)]
+fn assert_only_protocol() {
+    assert(get_caller_address().is_zero(), 'argent/only-protocol');
+}
+
+#[inline(always)]
 fn assert_caller_is_null() {
     assert(get_caller_address().is_zero(), 'argent/non-null-caller');
 }

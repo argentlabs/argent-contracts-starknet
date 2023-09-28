@@ -16,7 +16,7 @@ mod ArgentGenericAccount {
             ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
         asserts::{
-            assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
+            assert_correct_tx_version, assert_no_self_call, assert_only_protocol, assert_only_self,
             assert_correct_declare_version
         },
         calls::execute_multicall, version::Version,
@@ -129,7 +129,8 @@ mod ArgentGenericAccount {
 
     /// @notice Guardian escape was triggered by the owner
     /// @param ready_at when the escape can be completed
-    /// @param new_guardian address of the new guardian to be set after the security period. O if the guardian will be removed
+    /// @param target_signer the escaped signer address
+    /// @param new_signer the new signer address to be set after the security period
     #[derive(Drop, starknet::Event)]
     struct EscapeSignerTriggered {
         ready_at: u64,
@@ -137,8 +138,9 @@ mod ArgentGenericAccount {
         new_signer: felt252
     }
 
-    /// @notice Owner escape was completed and there is a new account owner
-    /// @param new_owner new owner address
+    /// @notice Signer escape was completed and there is a new signer
+    /// @param target_signer the escaped signer address
+    /// @param new_signer the new signer address
     #[derive(Drop, starknet::Event)]
     struct SignerEscaped {
         target_signer: felt252,
@@ -171,7 +173,7 @@ mod ArgentGenericAccount {
     #[external(v0)]
     impl Account of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
-            assert_caller_is_null();
+            assert_only_protocol();
             let tx_info = get_tx_info().unbox();
             // validate version
             assert_correct_tx_version(tx_info.version);
@@ -183,12 +185,11 @@ mod ArgentGenericAccount {
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
-            assert_caller_is_null();
-            let tx_info = get_tx_info().unbox();
-            assert_correct_tx_version(tx_info.version);
-
+            assert_only_protocol();
+            // execute calls
             let retdata = execute_multicall(calls.span());
-
+            // emit event
+            let tx_info = get_tx_info().unbox();
             let hash = tx_info.transaction_hash;
             let response = retdata.span();
             self.emit(TransactionExecuted { hash, response });

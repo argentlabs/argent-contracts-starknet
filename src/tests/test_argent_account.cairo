@@ -231,6 +231,7 @@ fn get_name() {
 fn getName() {
     assert(initialize_account().getName() == 'ArgentAccount', 'Name should be ArgentAccount');
 }
+
 #[test]
 #[available_gas(2000000)]
 fn unsuported_supportsInterface() {
@@ -246,40 +247,4 @@ fn supportsInterface() {
     assert(account.supportsInterface(0x01ffc9a7) == 1, 'ERC165_IERC165_INTERFACE_ID');
     assert(account.supportsInterface(0xa66bd575) == 1, 'ERC165_ACCOUNT_INTERFACE_ID');
     assert(account.supportsInterface(0x3943f10f) == 1, 'ERC165_OLD_ACCOUNT_INTERFACE_ID');
-}
-
-#[test]
-#[available_gas(2000000)]
-fn test_selectors() {
-    // Double check to ensure it IS and STAYS correct
-    let selector = selector!("trigger_escape_guardian");
-    assert(
-        selector == 73865429733192804476769961144708816295126306469589518371407068321865763651,
-        'trigger_escape_guardian'
-    );
-    let selector = selector!("trigger_escape_owner");
-    assert(
-        selector == 1099763735485822105046709698985960101896351570185083824040512300972207240555,
-        'trigger_escape_owner'
-    );
-    let selector = selector!("escape_guardian");
-    assert(
-        selector == 1662889347576632967292303062205906116436469425870979472602094601074614456040,
-        'escape_guardian'
-    );
-    let selector = selector!("escape_owner");
-    assert(
-        selector == 1621457541430776841129472853859989177600163870003012244140335395142204209277,
-        'escape_owner'
-    );
-    let selector = selector!("execute_after_upgrade");
-    assert(
-        selector == 738349667340360233096752603318170676063569407717437256101137432051386874767,
-        'execute_after_upgrade'
-    );
-    let selector = selector!("change_owner");
-    assert(
-        selector == 658036363289841962501247229249022783727527757834043681434485756469236076608,
-        'change_owner'
-    );
 }

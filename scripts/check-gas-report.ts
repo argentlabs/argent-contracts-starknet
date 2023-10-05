@@ -17,9 +17,9 @@ const all = output
   .split("\n")
   .map((line) => line.match(regexp))
   .filter(Boolean);
-for (const line of output) {
-  const matches = line.match(regexp);
-  console.log(line);
-  console.log(matches?.length, matches?.[0]);
+
+for (const item of all) {
+  const [, testName, gas] = item!;
+  console.log(item);
   console.log("------------------");
 }

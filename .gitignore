@@ -17,5 +17,4 @@ account.json
 dump
 package-lock.json
 test-output.txt
-gas-report.txt
 gas-report-new.txt

@@ -5,14 +5,14 @@ const salt = num.toHex(randomKeyPair().privateKey);
 const owner = randomKeyPair();
 const guardian = randomKeyPair();
 
-describe("ArgentAccount", function () {
+describe("Deploy UDC", function () {
   let argentAccountClassHash: string;
 
   before(async () => {
     argentAccountClassHash = await declareContract("ArgentAccount");
   });
 
-  it("Deploy current version", async function () {
+  it("Calculated contract address should match UDC", async function () {
     const calculatedAddress = await calculateContractAddress(
       argentAccountClassHash,
       salt,

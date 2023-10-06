@@ -44,6 +44,29 @@ export const deployer = (() => {
 
 console.log("Deployer:", deployer.address);
 
+export async function calculateContractAddress(
+  accountClassHash: string,
+  salt: string,
+  ownerPubKey: bigint,
+  guardianPubKey: bigint,
+) {
+  const deployAccountPayload = {
+    classHash: accountClassHash,
+    constructorCalldata: CallData.compile({
+      signer: ownerPubKey,
+      guardian: guardianPubKey,
+    }),
+    addressSalt: salt,
+  };
+
+  return hash.calculateContractAddressFromHash(
+    deployAccountPayload.addressSalt,
+    deployAccountPayload.classHash,
+    deployAccountPayload.constructorCalldata,
+    0,
+  );
+}
+
 export async function deployOldAccount(
   proxyClassHash: string,
   oldArgentAccountClassHash: string,

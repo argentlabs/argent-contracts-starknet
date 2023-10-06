@@ -40,5 +40,5 @@ if (mode === "--write") {
     }
   });
 } else {
-  console.log(`Usage: yarn ts-node scripts/gas-report.ts --[write|check]`);
+  console.log(`Usage: scarb run gas-report --[write|check]`);
 }

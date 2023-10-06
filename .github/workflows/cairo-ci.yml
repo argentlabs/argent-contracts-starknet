@@ -12,6 +12,8 @@ jobs:
         uses: software-mansion/setup-scarb@v1
       - name: Step 3 - Testing
         run: scarb test 2>&1 | tee test-output.txt
+      - name: Install project
+        run: yarn install --frozen-lockfile
       - name: Step 4 - Gas report
         run: scarb run gas-report --check
   

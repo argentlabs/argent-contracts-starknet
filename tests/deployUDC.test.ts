@@ -1,5 +1,5 @@
-import { declareContract, deployContractUDC, calculateContractAddress, randomKeyPair } from "./lib";
-import { num } from "starknet";
+import { declareContract, deployContractUDC, randomKeyPair } from "./lib";
+import { num, hash } from "starknet";
 
 const salt = num.toHex(randomKeyPair().privateKey);
 const owner = randomKeyPair();
@@ -13,12 +13,11 @@ describe("Deploy UDC", function () {
   });
 
   it("Calculated contract address should match UDC", async function () {
-    const calculatedAddress = await calculateContractAddress(
-      argentAccountClassHash,
-      salt,
-      owner.publicKey,
-      guardian.publicKey,
-    );
+    let callData = {
+      signer: owner.publicKey,
+      guardian: guardian.publicKey,
+    };
+    const calculatedAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, callData, 0);
     const udcDeploymentAddress = await deployContractUDC(
       argentAccountClassHash,
       salt,

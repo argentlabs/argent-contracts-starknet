@@ -50,19 +50,13 @@ export async function calculateContractAddress(
   ownerPubKey: bigint,
   guardianPubKey: bigint,
 ) {
-  const deployAccountPayload = {
-    classHash: accountClassHash,
-    constructorCalldata: CallData.compile({
+  return hash.calculateContractAddressFromHash(
+    salt,
+    accountClassHash,
+     CallData.compile({
       signer: ownerPubKey,
       guardian: guardianPubKey,
     }),
-    addressSalt: salt,
-  };
-
-  return hash.calculateContractAddressFromHash(
-    deployAccountPayload.addressSalt,
-    deployAccountPayload.classHash,
-    deployAccountPayload.constructorCalldata,
     0,
   );
 }

@@ -1,7 +1,6 @@
 import { readFileSync } from "fs";
 import { CompiledSierra, Contract, DeclareContractPayload, json } from "starknet";
-import { deployer } from "./accounts";
-import { provider } from "./provider";
+import { deployer, provider } from ".";
 
 const classHashCache: Record<string, string> = {};
 

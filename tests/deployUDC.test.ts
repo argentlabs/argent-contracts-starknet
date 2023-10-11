@@ -13,7 +13,7 @@ describe("Deploy UDC", function () {
   });
 
   it("Calculated contract address should match UDC", async function () {
-    let callData = {
+    const callData = {
       signer: owner.publicKey,
       guardian: guardian.publicKey,
     };

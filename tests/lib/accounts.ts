@@ -53,7 +53,7 @@ export async function calculateContractAddress(
   return hash.calculateContractAddressFromHash(
     salt,
     accountClassHash,
-     CallData.compile({
+    CallData.compile({
       signer: ownerPubKey,
       guardian: guardianPubKey,
     }),

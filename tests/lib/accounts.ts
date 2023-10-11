@@ -9,7 +9,10 @@ import {
   num,
   uint256,
 } from "starknet";
-import { getEthContract, loadContract, mintEth, provider, ArgentSigner, KeyPair, randomKeyPair } from ".";
+import { getEthContract, loadContract } from "./contracts";
+import { mintEth } from "./devnet";
+import { provider } from "./provider";
+import { ArgentSigner, KeyPair, randomKeyPair } from "./signers";
 
 export interface ArgentWallet {
   account: Account;

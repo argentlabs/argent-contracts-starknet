@@ -134,18 +134,17 @@ mod HybridSessionAccount {
 
             assert_no_self_call(calls, account_address);
             let mut serialized = signature.slice(1, signature.len() - 1);
-
-            // assert(
-            //     self.is_valid_owner_signature(session.get_message_hash(), owner_signature),
-            //     'invalid-owner-signature'
-            // );
-            // assert(
-            //     self
-            //         .is_valid_session_signature(
-            //             tx_info.transaction_hash, session.public_key, session_signature
-            //         ),
-            //     'invalid-session-signature'
-            // );
+        // assert(
+        //     self.is_valid_owner_signature(session.get_message_hash(), owner_signature),
+        //     'invalid-owner-signature'
+        // );
+        // assert(
+        //     self
+        //         .is_valid_session_signature(
+        //             tx_info.transaction_hash, session.public_key, session_signature
+        //         ),
+        //     'invalid-session-signature'
+        // );
         }
 
         fn is_valid_owner_signature(
@@ -172,6 +171,5 @@ mod HybridSessionAccount {
             let signature_s = *signature[1];
             check_ecdsa_signature(message_hash, public_key, signature_r, signature_s)
         }
-
-}
+    }
 }

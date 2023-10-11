@@ -26,5 +26,10 @@ describe("Deploy UDC", function () {
     );
 
     calculatedAddress.should.equal(udcDeploymentAddress);
+
+    // note about self deployment: As the address we get from self deployment
+    // is calculated using calculateContractAddressFromHash
+    // there is no need to test that the self deployment address is the
+    // same as the when we deploy using the UDC
   });
 });

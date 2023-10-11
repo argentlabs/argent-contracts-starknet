@@ -7,7 +7,7 @@ venv
 .pytest_cache
 __pycache__
 artifacts
-!/deployments/artifacts
+!deployments/artifacts
 dist
 target
 node_modules

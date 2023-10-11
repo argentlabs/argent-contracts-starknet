@@ -93,6 +93,7 @@ Tool to calculate interface IDs: https://github.com/ericnordelo/src5-rs
 - Verify the contracts if possible
 - Deploy to as many environments as possible: mainnet, goerli-1, goerli-2 or integration
 - Update the contents of the `deployments` folder with the new addresses
+- Copy relevant build artifacts from `target/release` to `deployments/artifacts`
 - Tag the commit used for the release (include the same name as in the `deployments` folder for easy tracking)
 - Create release in GitHub if needed
 - Make this checklist better if you learned something during the process

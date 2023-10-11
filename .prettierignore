@@ -2,4 +2,5 @@ cairo
 contracts
 venv
 tests/fixtures
+deployments/artifacts
 dist

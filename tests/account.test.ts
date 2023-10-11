@@ -13,6 +13,7 @@ import {
   increaseTime,
   provider,
   randomKeyPair,
+  signChangeOwnerMessage,
 } from "./lib";
 
 describe("ArgentAccount", function () {
@@ -105,12 +106,8 @@ describe("ArgentAccount", function () {
     it("Should be possible to change_owner", async function () {
       const { accountContract, owner } = await deployAccount(argentAccountClassHash);
       const newOwner = randomKeyPair();
-      const changeOwnerSelector = hash.getSelectorFromName("change_owner");
-      const chainId = await provider.getChainId();
-      const contractAddress = accountContract.address;
 
-      const messageHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
-      const [r, s] = newOwner.signHash(messageHash);
+      const [r, s] = await signChangeOwnerMessage(accountContract.address, owner.publicKey, newOwner, provider);
       await accountContract.change_owner(newOwner.publicKey, r, s);
 
       await accountContract.get_owner().should.eventually.equal(newOwner.publicKey);
@@ -144,12 +141,8 @@ describe("ArgentAccount", function () {
       await increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
-      const changeOwnerSelector = hash.getSelectorFromName("change_owner");
-      const chainId = await provider.getChainId();
-      const contractAddress = accountContract.address;
+      const [r, s] = await signChangeOwnerMessage(accountContract.address, owner.publicKey, newOwner, provider);
 
-      const messageHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
-      const [r, s] = newOwner.signHash(messageHash);
       await accountContract.change_owner(newOwner.publicKey, r, s);
 
       await accountContract.get_owner().should.eventually.equal(newOwner.publicKey);

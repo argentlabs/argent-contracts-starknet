@@ -137,8 +137,8 @@ export class MultisigSigner extends RawSigner {
 }
 
 export class KeyPair extends Signer {
-  constructor() {
-    super(`0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`);
+  constructor(pk?: string | bigint) {
+    super(pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`);
   }
 
   public get privateKey() {

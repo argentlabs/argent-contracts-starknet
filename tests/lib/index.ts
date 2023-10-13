@@ -17,5 +17,6 @@ export * from "./expectations";
 export * from "./multisig";
 export * from "./outsideExecution";
 export * from "./provider";
+export * from "./recovery";
 export * from "./signers";
 export * from "./upgrade";

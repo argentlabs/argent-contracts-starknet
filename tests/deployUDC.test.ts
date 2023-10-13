@@ -1,3 +1,4 @@
+import { expect } from "chai";
 import { declareContract, deployContractUDC, randomKeyPair } from "./lib";
 import { num, hash } from "starknet";
 
@@ -25,7 +26,7 @@ describe("Deploy UDC", function () {
       guardian.publicKey,
     );
 
-    calculatedAddress.should.equal(udcDeploymentAddress);
+    expect(calculatedAddress).to.equal(udcDeploymentAddress);
 
     // note about self deployment: As the address we get from self deployment
     // is calculated using calculateContractAddressFromHash

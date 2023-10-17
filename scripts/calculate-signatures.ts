@@ -1,4 +1,4 @@
-import { hash, shortString } from "starknet";
+import { hash, shortString, num } from "starknet";
 
 import { KeyPair } from "../tests/lib/signers";
 
@@ -35,28 +35,28 @@ function calculate_sig_account() {
   const [wrong_guardian_r, wrong_guardian_s] = wrong_guardian.signHash(hash);
 
   console.log(`
-    const message_hash: felt252 = 0x${BigInt(hash).toString(16)};
-    const invalid_hash: felt252 = 0x${BigInt(invalid_hash).toString(16)};
+    const message_hash: felt252 = ${num.toHex(hash)};
+    const invalid_hash: felt252 = ${num.toHex(invalid_hash)};
 
-    const owner_pubkey: felt252 = 0x${owner.publicKey.toString(16)};
-    const owner_r: felt252 = 0x${BigInt(owner_r).toString(16)};
-    const owner_s: felt252 = 0x${BigInt(owner_s).toString(16)};
+    const owner_pubkey: felt252 = ${num.toHex(owner.publicKey)};
+    const owner_r: felt252 = ${num.toHex(owner_r)};
+    const owner_s: felt252 = ${num.toHex(owner_s)};
 
-    const guardian_pubkey: felt252 = 0x${guardian.publicKey.toString(16)};
-    const guardian_r: felt252 = 0x${BigInt(guardian_r).toString(16)};
-    const guardian_s: felt252 = 0x${BigInt(guardian_s).toString(16)};
+    const guardian_pubkey: felt252 = ${num.toHex(guardian.publicKey)};
+    const guardian_r: felt252 = ${num.toHex(guardian_r)};
+    const guardian_s: felt252 = ${num.toHex(guardian_s)};
 
-    const guardian_backup_pubkey: felt252 = 0x${guardian_backup.publicKey.toString(16)};
-    const guardian_backup_r: felt252 = 0x${BigInt(guardian_backup_r).toString(16)};
-    const guardian_backup_s: felt252 = 0x${BigInt(guardian_backup_s).toString(16)};
+    const guardian_backup_pubkey: felt252 = ${num.toHex(guardian_backup.publicKey)};
+    const guardian_backup_r: felt252 = ${num.toHex(guardian_backup_r)};
+    const guardian_backup_s: felt252 = ${num.toHex(guardian_backup_s)};
 
-    const wrong_owner_pubkey: felt252 = 0x${wrong_owner.publicKey.toString(16)};
-    const wrong_owner_r: felt252 = 0x${BigInt(wrong_owner_r).toString(16)};
-    const wrong_owner_s: felt252 = 0x${BigInt(wrong_owner_s).toString(16)};
+    const wrong_owner_pubkey: felt252 = ${num.toHex(wrong_owner.publicKey)};
+    const wrong_owner_r: felt252 = ${num.toHex(wrong_owner_r)};
+    const wrong_owner_s: felt252 = ${num.toHex(wrong_owner_s)};
 
-    const wrong_guardian_pubkey: felt252 = 0x${wrong_guardian.publicKey.toString(16)};
-    const wrong_guardian_r: felt252 = 0x${BigInt(wrong_guardian_r).toString(16)};
-    const wrong_guardian_s: felt252 = 0x${BigInt(wrong_guardian_s).toString(16)};
+    const wrong_guardian_pubkey: felt252 = ${num.toHex(wrong_guardian.publicKey)};
+    const wrong_guardian_r: felt252 = ${num.toHex(wrong_guardian_r)};
+    const wrong_guardian_s: felt252 = ${num.toHex(wrong_guardian_s)};
 `);
 }
 
@@ -73,9 +73,9 @@ function calculate_sig_change_owner() {
 
   console.log(`
 
-    const new_owner_pubkey: felt252 = 0x${new_owner.publicKey.toString(16)};
-    const new_owner_r: felt252 = 0x${BigInt(new_owner_r).toString(16)};
-    const new_owner_s: felt252 = 0x${BigInt(new_owner_s).toString(16)}; 
+    const new_owner_pubkey: felt252 = ${num.toHex(new_owner.publicKey)};
+    const new_owner_r: felt252 = ${num.toHex(new_owner_r)};
+    const new_owner_s: felt252 = ${num.toHex(new_owner_s)}; 
     `);
 }
 

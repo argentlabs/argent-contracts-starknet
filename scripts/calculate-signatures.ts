@@ -2,16 +2,16 @@ import { hash, shortString, num } from "starknet";
 
 import { KeyPair } from "../tests/lib/signers";
 
-const owner = new KeyPair("0x1");
-const guardian = new KeyPair("0x2");
-const guardian_backup = new KeyPair("0x3");
+const owner = new KeyPair(1n);
+const guardian = new KeyPair(2n);
+const guardian_backup = new KeyPair(3n);
 
-const new_owner = new KeyPair("0x4");
-const new_guardian = new KeyPair("0x5");
-const new_guardian_backup = new KeyPair("0x6");
+const new_owner = new KeyPair(4n);
+const new_guardian = new KeyPair(5n);
+const new_guardian_backup = new KeyPair(6n);
 
-const wrong_owner = new KeyPair("0x7");
-const wrong_guardian = new KeyPair("0x8");
+const wrong_owner = new KeyPair(7n);
+const wrong_guardian = new KeyPair(8n);
 
 const ESCAPE_SECURITY_PERIOD = 24 * 7 * 60 * 60;
 

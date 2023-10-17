@@ -7,22 +7,9 @@ const guardian = new KeyPair(2n);
 const guardian_backup = new KeyPair(3n);
 
 const new_owner = new KeyPair(4n);
-const new_guardian = new KeyPair(5n);
-const new_guardian_backup = new KeyPair(6n);
 
 const wrong_owner = new KeyPair(7n);
 const wrong_guardian = new KeyPair(8n);
-
-const ESCAPE_SECURITY_PERIOD = 24 * 7 * 60 * 60;
-
-const VERSION = shortString.encodeShortString("0.2.4");
-const NAME = shortString.encodeShortString("ArgentAccount");
-
-const IACCOUNT_ID = 0xa66bd575;
-const IACCOUNT_ID_OLD = 0x3943f10f;
-
-const ESCAPE_TYPE_GUARDIAN = 1;
-const ESCAPE_TYPE_OWNER = 2;
 
 function calculate_sig_account() {
   const hash = "0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";

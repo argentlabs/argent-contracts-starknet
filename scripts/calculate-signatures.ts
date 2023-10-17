@@ -25,8 +25,8 @@ const ESCAPE_TYPE_GUARDIAN = 1;
 const ESCAPE_TYPE_OWNER = 2;
 
 function calculate_sig_account() {
-  const hash = "1283225199545181604979924458180358646374088657288769423115053097913173815464";
-  const invalid_hash = "1283225199545181604979924458180358646374088657288769423115053097913173811111";
+  const hash = "0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";
+  const invalid_hash = "0x02d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a561fa7";
 
   const [owner_r, owner_s] = owner.signHash(hash);
   const [guardian_r, guardian_s] = guardian.signHash(hash);
@@ -79,4 +79,4 @@ function calculate_sig_change_owner() {
     `);
 }
 
-calculate_sig_change_owner();
+calculate_sig_account();

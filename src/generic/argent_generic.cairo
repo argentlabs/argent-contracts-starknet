@@ -3,6 +3,7 @@ use argent::generic::interface::{IArgentMultisig};
 
 #[starknet::contract]
 mod ArgentGenericAccount {
+    use core::array::ArrayTrait;
     use ecdsa::check_ecdsa_signature;
     use starknet::{
         get_contract_address, ContractAddressIntoFelt252, VALIDATED,
@@ -35,8 +36,8 @@ mod ArgentGenericAccount {
 
     const NAME: felt252 = 'ArgentGenericAccount';
     const VERSION_MAJOR: u8 = 0;
-    const VERSION_MINOR: u8 = 1;
-    const VERSION_PATCH: u8 = 0;
+    const VERSION_MINOR: u8 = 0;
+    const VERSION_PATCH: u8 = 1;
     const VERSION_COMPAT: felt252 = '0.0.1';
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
@@ -72,7 +73,7 @@ mod ArgentGenericAccount {
         signer_list: LegacyMap<felt252, felt252>,
         threshold: usize,
         outside_nonces: LegacyMap<felt252, bool>,
-        _escape: Escape,
+        escape: Escape,
     }
 
     #[event]
@@ -393,6 +394,29 @@ mod ArgentGenericAccount {
             };
         }
 
+        fn reorder_signers(ref self: ContractState, new_signer_order: Array<felt252>) {
+            assert_only_self();
+            let (signers_len, last_signer) = self.load();
+            assert(new_signer_order.len() == signers_len, 'argent/too-short');
+            let mut sself = @self;
+            let mut signers_to_check = new_signer_order.span();
+            loop {
+                match signers_to_check.pop_front() {
+                    Option::Some(signer) => {
+                        assert(
+                            sself.is_signer_using_last(*signer, last_signer),
+                            'argent/unknown-signer'
+                        );
+                    },
+                    Option::None => {
+                        break;
+                    }
+                };
+            };
+
+            self.add_signers_inner(new_signer_order.span(), last_signer: 0);
+        }
+
         fn replace_signer(
             ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252
         ) {
@@ -444,11 +468,10 @@ mod ArgentGenericAccount {
         ) {
             assert_only_self();
 
-            let current_escape = self._escape.read();
+            let current_escape = self.escape.read();
             let current_escaped_signer = current_escape.target_signer;
             let current_escape_status = get_escape_status(current_escape.ready_at);
-            if (current_escaped_signer != 0_felt252
-                && current_escape_status == EscapeStatus::Ready) {
+            if (current_escaped_signer != 0 && current_escape_status == EscapeStatus::Ready) {
                 // no escape if there is an ongoing escape with a higher signer
                 assert(
                     self.is_signer_before(target_signer, current_escaped_signer),
@@ -457,14 +480,14 @@ mod ArgentGenericAccount {
             }
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
             let escape = Escape { ready_at, target_signer, new_signer };
-            self._escape.write(escape);
+            self.escape.write(escape);
             self.emit(EscapeSignerTriggered { ready_at, target_signer, new_signer });
         }
 
         fn escape_signer(ref self: ContractState) {
             assert_only_self();
 
-            let current_escape = self._escape.read();
+            let current_escape = self.escape.read();
             let current_escape_status = get_escape_status(current_escape.ready_at);
             assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
@@ -485,15 +508,15 @@ mod ArgentGenericAccount {
             self.emit(OwnerAdded { new_owner_guid: current_escape.new_signer });
 
             // clear escape
-            self._escape.write(Escape { ready_at: 0, target_signer: 0, new_signer: 0 });
+            self.escape.write(Escape { ready_at: 0, target_signer: 0, new_signer: 0 });
         }
 
         fn cancel_escape(ref self: ContractState) {
             assert_only_self();
-            let current_escape = self._escape.read();
+            let current_escape = self.escape.read();
             let current_escape_status = get_escape_status(current_escape.ready_at);
             assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
-            self._escape.write(Escape { ready_at: 0, target_signer: 0, new_signer: 0 });
+            self.escape.write(Escape { ready_at: 0, target_signer: 0, new_signer: 0 });
         }
     }
 
@@ -549,42 +572,50 @@ mod ArgentGenericAccount {
             assert(threshold != 0, 'argent/uninitialized');
 
             let first_call = calls.at(0);
-            if (*first_call.selector == selector!("trigger_escape_signer")) {
-                // check we can do recovery
-                let signers_len = self.get_signers_len();
-                assert(signers_len == threshold, 'argent/recovery-unavailable');
-                // get escaped signer
-                let calldata: Span<felt252> = first_call.calldata.span();
-                let escaped_signer = calldata.at(0);
-                // check it is a valid signer
-                let is_signer = self.is_signer_inner(*escaped_signer);
-                assert(is_signer, 'argent/escaped-not-signer');
-                // check signatures
-                let valid = self
-                    .is_valid_signature_with_conditions(
-                        execution_hash, threshold - 1, *escaped_signer, signature
+            if (*first_call.to == get_contract_address()) {
+                if (*first_call.selector == selector!("trigger_escape_signer")) {
+                    // check we can do recovery
+                    let signers_len = self.get_signers_len();
+                    assert(
+                        threshold > 1 && signers_len == threshold, 'argent/recovery-unavailable'
                     );
-                assert(valid, 'argent/invalid-signature');
-            } else if (*first_call.selector == selector!("escape_signer")) {
-                // check we can do recovery
-                let signers_len = self.get_signers_len();
-                assert(signers_len == threshold, 'argent/recovery-unavailable');
-                // get escaped signer
-                let calldata: Span<felt252> = first_call.calldata.span();
-                let escaped_signer = calldata.at(0);
-                // check signatures
-                let valid = self
-                    .is_valid_signature_with_conditions(
-                        execution_hash, threshold - 1, *escaped_signer, signature
+                    // get escaped signer
+                    let calldata: Span<felt252> = first_call.calldata.span();
+                    let escaped_signer = calldata.at(0);
+                    // check it is a valid signer
+                    let is_signer = self.is_signer_inner(*escaped_signer);
+                    assert(is_signer, 'argent/escaped-not-signer');
+                    // check signatures
+                    let valid = self
+                        .is_valid_signature_with_conditions(
+                            execution_hash, threshold - 1, *escaped_signer, signature
+                        );
+                    assert(valid, 'argent/invalid-signature');
+                    return;
+                } else if (*first_call.selector == selector!("escape_signer")) {
+                    // check we can do recovery
+                    let signers_len = self.get_signers_len();
+                    assert(
+                        threshold > 1 && signers_len == threshold, 'argent/recovery-unavailable'
                     );
-                assert(valid, 'argent/invalid-signature');
-            } else {
-                let valid = self
-                    .is_valid_signature_with_conditions(
-                        execution_hash, threshold, 0_felt252, signature
-                    );
-                assert(valid, 'argent/invalid-signature');
+                    // get escaped signer
+                    let calldata: Span<felt252> = first_call.calldata.span();
+                    let escaped_signer = calldata.at(0);
+                    // check signatures
+                    let valid = self
+                        .is_valid_signature_with_conditions(
+                            execution_hash, threshold - 1, *escaped_signer, signature
+                        );
+                    assert(valid, 'argent/invalid-signature');
+                    return;
+                }
             }
+
+            let valid = self
+                .is_valid_signature_with_conditions(
+                    execution_hash, threshold, 0_felt252, signature
+                );
+            assert(valid, 'argent/invalid-signature');
         }
 
         fn is_valid_signature_with_conditions(

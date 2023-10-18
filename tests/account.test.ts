@@ -107,7 +107,7 @@ describe("ArgentAccount", function () {
       const { accountContract, owner } = await deployAccount(argentAccountClassHash);
       const newOwner = randomKeyPair();
 
-      let chainId = await provider.getChainId();
+      const chainId = await provider.getChainId();
       const [r, s] = await signChangeOwnerMessage(accountContract.address, owner.publicKey, newOwner, chainId);
       await accountContract.change_owner(newOwner.publicKey, r, s);
 
@@ -142,7 +142,7 @@ describe("ArgentAccount", function () {
       await increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
-      let chainId = await provider.getChainId();
+      const chainId = await provider.getChainId();
       const [r, s] = await signChangeOwnerMessage(accountContract.address, owner.publicKey, newOwner, chainId);
 
       await accountContract.change_owner(newOwner.publicKey, r, s);

@@ -1,6 +1,6 @@
 import { hash, shortString, num } from "starknet";
 
-import { KeyPair } from "../tests/lib/signers";
+import { KeyPair, getChangeOwnerMessageHash, signChangeOwnerMessage } from "../tests/lib";
 
 const owner = new KeyPair(1n);
 const guardian = new KeyPair(2n);
@@ -47,23 +47,20 @@ function calculate_sig_account() {
 `);
 }
 
-function calculate_sig_change_owner() {
+async function calculate_sig_change_owner() {
   // message_hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
-  const change_owner_selector = hash.getSelector("change_owner");
-  const chain_id = 0;
-  const contract_address = 1n;
-  const old_owner = "0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca";
+  const chain_id = "0";
+  const contract_address = "0x1";
+  const old_owner = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfcan;
 
-  const message_hash = hash.computeHashOnElements([change_owner_selector, chain_id, contract_address, old_owner]);
-
-  const [new_owner_r, new_owner_s] = new_owner.signHash(message_hash);
+  const [new_owner_r, new_owner_s] = await signChangeOwnerMessage(contract_address, old_owner, new_owner, chain_id);
 
   console.log(`
 
     const new_owner_pubkey: felt252 = ${num.toHex(new_owner.publicKey)};
     const new_owner_r: felt252 = ${num.toHex(new_owner_r)};
-    const new_owner_s: felt252 = ${num.toHex(new_owner_s)}; 
+    const new_owner_s: felt252 = ${num.toHex(new_owner_s)};
     `);
 }
 
-calculate_sig_account();
+calculate_sig_change_owner();

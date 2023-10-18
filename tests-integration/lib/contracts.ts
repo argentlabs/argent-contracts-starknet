@@ -9,7 +9,7 @@ export const ethAddress = "0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562
 let ethContract: Contract;
 
 export const contractsFolder = "./target/release/argent_";
-export const fixturesFolder = "./tests/fixtures/argent_";
+export const fixturesFolder = "./tests-integration/fixtures/argent_";
 
 export async function getEthContract() {
   if (ethContract) {

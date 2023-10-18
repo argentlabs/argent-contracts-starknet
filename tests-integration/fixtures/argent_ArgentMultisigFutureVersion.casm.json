@@ -19429,127 +19429,198 @@
       {
         "selector": "0x233f7eb4ceacfd7c3e238afaf740a3ffcb352f9844a11df665e97c3b0370b6",
         "offset": 794,
-        "builtins": ["pedersen", "range_check"]
+        "builtins": [
+          "pedersen",
+          "range_check"
+        ]
       },
       {
         "selector": "0x7ec457cd7ed1630225a8328f826a29a327b19486f6b2882b4176545ebdbe3d",
         "offset": 549,
-        "builtins": ["pedersen", "range_check", "ec_op"]
+        "builtins": [
+          "pedersen",
+          "range_check",
+          "ec_op"
+        ]
       },
       {
         "selector": "0x7f0b59457c500edc2e7026668ab3268b708941c5b59cca53a44dc4cdac1ef6",
         "offset": 1904,
-        "builtins": ["pedersen", "range_check"]
+        "builtins": [
+          "pedersen",
+          "range_check"
+        ]
       },
       {
         "selector": "0x9278fa5f64a571de10741418f1c4c0c4322aef645dd9d94a429c1f3e99a8a5",
         "offset": 3736,
-        "builtins": ["range_check"]
+        "builtins": [
+          "range_check"
+        ]
       },
       {
         "selector": "0xb1797115ea6aae2ee0c6d60577256721ee23a11f278613c413be3bf16d49aa",
         "offset": 2053,
-        "builtins": ["pedersen", "range_check"]
+        "builtins": [
+          "pedersen",
+          "range_check"
+        ]
       },
       {
         "selector": "0xf2f7c15cbe06c8d94597cd91fd7f3369eae842359235712def5584f8d270cd",
         "offset": 1121,
-        "builtins": ["range_check"]
+        "builtins": [
+          "range_check"
+        ]
       },
       {
         "selector": "0xfe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283",
         "offset": 3492,
-        "builtins": ["range_check"]
+        "builtins": [
+          "range_check"
+        ]
       },
       {
         "selector": "0x15d40a3d6ca2ac30f4031e42be28da9b056fef9bb7357ac5e85627ee876e5ad",
         "offset": 174,
-        "builtins": ["range_check"]
+        "builtins": [
+          "range_check"
+        ]
       },
       {
         "selector": "0x162da33a4585851fe8d3af3c2a9c60b557814e221e0d4f30ff0b2189d9c7775",
         "offset": 0,
-        "builtins": ["pedersen", "range_check", "ec_op"]
+        "builtins": [
+          "pedersen",
+          "range_check",
+          "ec_op"
+        ]
       },
       {
         "selector": "0x1753cadb342b30cb76742fe738135a182b5c30e6e9eed2d3ee796b2accd34fd",
         "offset": 2825,
-        "builtins": ["range_check"]
+        "builtins": [
+          "range_check"
+        ]
       },
       {
         "selector": "0x1a1e41f464a235695e5050a846a26ca22ecc27acac54be5f6666848031efb8f",
         "offset": 1318,
-        "builtins": ["pedersen", "range_check"]
+        "builtins": [
+          "pedersen",
+          "range_check"
+        ]
       },
       {
         "selector": "0x1b266621d7e8d679991575aa72fe52af4e5e336d71013f0de37be2802b34bc6",
         "offset": 2240,
-        "builtins": ["pedersen", "range_check"]
+        "builtins": [
+          "pedersen",
+          "range_check"
+        ]
       },
       {
         "selector": "0x1e57486a1f2c573f63e3b6d48a8866db74030b4666f6099ba5d9ce8013a9aef",
         "offset": 2427,
-        "builtins": ["pedersen", "range_check"]
+        "builtins": [
+          "pedersen",
+          "range_check"
+        ]
       },
       {
         "selector": "0x1e6d35df2b9d989fb4b6bbcebda1314e4254cbe5e589dd94ff4f29ea935e91c",
         "offset": 967,
-        "builtins": ["pedersen", "range_check"]
+        "builtins": [
+          "pedersen",
+          "range_check"
+        ]
       },
       {
         "selector": "0x2001b85920e6d29cce0efc6866eb16f41829f75aaec1e103c6a10e17f171982",
         "offset": 3256,
-        "builtins": ["pedersen", "range_check", "ec_op"]
+        "builtins": [
+          "pedersen",
+          "range_check",
+          "ec_op"
+        ]
       },
       {
         "selector": "0x213dfe25e2ca309c4d615a09cfc95fdb2fc7dc73fbcad12c450fe93b1f2ff9e",
         "offset": 3980,
-        "builtins": ["pedersen", "range_check", "ec_op"]
+        "builtins": [
+          "pedersen",
+          "range_check",
+          "ec_op"
+        ]
       },
       {
         "selector": "0x28420862938116cb3bbdbedee07451ccc54d4e9412dbef71142ad1980a30941",
         "offset": 348,
-        "builtins": ["pedersen", "range_check", "ec_op"]
+        "builtins": [
+          "pedersen",
+          "range_check",
+          "ec_op"
+        ]
       },
       {
         "selector": "0x289da278a8dc833409cabfdad1581e8e7d40e42dcaed693fa4008dcdb4963b3",
         "offset": 1503,
-        "builtins": ["range_check"]
+        "builtins": [
+          "range_check"
+        ]
       },
       {
         "selector": "0x29e211664c0b63c79638fbea474206ca74016b3e9a3dc4f9ac300ffd8bdf2cd",
         "offset": 3847,
-        "builtins": ["range_check"]
+        "builtins": [
+          "range_check"
+        ]
       },
       {
         "selector": "0x2a4bb4205277617b698a9a2950b938d0a236dd4619f82f05bec02bdbd245fab",
         "offset": 2711,
-        "builtins": ["range_check"]
+        "builtins": [
+          "range_check"
+        ]
       },
       {
         "selector": "0x2aa20ff86b29546fd697eb81064769cf566031d56b10b8bba2c70125bd8403a",
         "offset": 3625,
-        "builtins": ["range_check"]
+        "builtins": [
+          "range_check"
+        ]
       },
       {
         "selector": "0x2b8faca80de28f81027b46c4f3cb534c44616e721ae9f1e96539c6b54a1d932",
         "offset": 2950,
-        "builtins": ["pedersen", "range_check"]
+        "builtins": [
+          "pedersen",
+          "range_check"
+        ]
       },
       {
         "selector": "0x31341177714d81ad9ccd0c903211bc056a60e8af988d0fd918cc43874549653",
         "offset": 2600,
-        "builtins": ["range_check"]
+        "builtins": [
+          "range_check"
+        ]
       },
       {
         "selector": "0x36fcbf06cd96843058359e1a75928beacfac10727dab22a3972f0af8aa92895",
         "offset": 1647,
-        "builtins": ["pedersen", "range_check", "ec_op"]
+        "builtins": [
+          "pedersen",
+          "range_check",
+          "ec_op"
+        ]
       },
       {
         "selector": "0x3bbb6060506105db572f8112ca0390fff0397f2991c3c692d05f93a05d111fe",
         "offset": 3100,
-        "builtins": ["pedersen", "range_check"]
+        "builtins": [
+          "pedersen",
+          "range_check"
+        ]
       }
     ],
     "L1_HANDLER": [],
@@ -19557,7 +19628,10 @@
       {
         "selector": "0x28ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194",
         "offset": 4181,
-        "builtins": ["pedersen", "range_check"]
+        "builtins": [
+          "pedersen",
+          "range_check"
+        ]
       }
     ]
   }

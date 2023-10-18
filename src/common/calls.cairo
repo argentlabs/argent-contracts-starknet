@@ -20,9 +20,7 @@ fn execute_multicall(mut calls: Span<Call>) -> Array<Span<felt252>> {
                     },
                 }
             },
-            Option::None => {
-                break;
-            },
+            Option::None => { break; },
         };
     };
     result

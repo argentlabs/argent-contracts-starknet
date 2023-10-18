@@ -15,9 +15,7 @@ fn deserialize_array_signer_signature(
         }
         match Serde::deserialize(ref serialized) {
             Option::Some(signer_signature) => output.append(signer_signature),
-            Option::None => {
-                break Option::None;
-            },
+            Option::None => { break Option::None; },
         };
     }
 }

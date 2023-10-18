@@ -83,12 +83,8 @@ fn initialize_multisig_with(
     let mut calldata = array![threshold.into(), signers.len().into(),];
     loop {
         match signers.pop_front() {
-            Option::Some(signer) => {
-                calldata.append(*signer)
-            },
-            Option::None => {
-                break;
-            },
+            Option::Some(signer) => calldata.append(*signer),
+            Option::None => { break; },
         };
     };
 

@@ -114,9 +114,7 @@ mod ArgentMultisig {
                 Option::Some(added_signer) => {
                     self.emit(OwnerAdded { new_owner_guid: *added_signer });
                 },
-                Option::None => {
-                    break;
-                }
+                Option::None => { break; }
             };
         };
     }
@@ -299,9 +297,7 @@ mod ArgentMultisig {
                     Option::Some(added_signer) => {
                         self.emit(OwnerAdded { new_owner_guid: *added_signer });
                     },
-                    Option::None => {
-                        break;
-                    }
+                    Option::None => { break; }
                 };
             };
         }
@@ -329,9 +325,7 @@ mod ArgentMultisig {
                     Option::Some(removed_signer) => {
                         self.emit(OwnerRemoved { removed_owner_guid: *removed_signer });
                     },
-                    Option::None => {
-                        break;
-                    }
+                    Option::None => { break; }
                 };
             };
         }
@@ -494,9 +488,7 @@ mod ArgentMultisig {
                         }
                         last_signer = signer_uint;
                     },
-                    Option::None => {
-                        break true;
-                    }
+                    Option::None => { break true; }
                 };
             }
         }

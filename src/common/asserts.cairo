@@ -34,12 +34,8 @@ fn assert_correct_declare_version(tx_version: felt252) {
 fn assert_no_self_call(mut calls: Span::<Call>, self: ContractAddress) {
     loop {
         match calls.pop_front() {
-            Option::Some(call) => {
-                assert(*call.to != self, 'argent/no-multicall-to-self');
-            },
-            Option::None => {
-                break;
-            },
+            Option::Some(call) => assert(*call.to != self, 'argent/no-multicall-to-self'),
+            Option::None => { break; },
         };
     }
 }

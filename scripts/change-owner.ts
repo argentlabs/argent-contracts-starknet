@@ -31,7 +31,7 @@ if (owner !== ownerSigner.publicKey) {
 // const [r, s] = await signChangeOwnerMessage(accountContract.address, owner, newOwner, provider);
 
 // remote signing:
-let chainId = await provider.getChainId();
+const chainId = await provider.getChainId();
 console.log("messageHash:", await getChangeOwnerMessageHash(accountContract.address, owner, chainId)); // share to backend
 const [r, s] = [1, 2]; // fill with values from backend
 

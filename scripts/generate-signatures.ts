@@ -1,6 +1,5 @@
-import { hash, shortString, num } from "starknet";
-
-import { KeyPair, getChangeOwnerMessageHash, signChangeOwnerMessage } from "../tests/lib";
+import { num } from "starknet";
+import { KeyPair, signChangeOwnerMessage } from "../tests/lib";
 
 const owner = new KeyPair(1n);
 const guardian = new KeyPair(2n);

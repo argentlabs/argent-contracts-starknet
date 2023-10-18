@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { declareContract, deployAccount, deployer, loadContract, provider } from "../tests/lib";
+import { declareContract, deployAccount, deployer, loadContract, provider } from "../tests-integration/lib";
 
 const argentAccountClassHash = await declareContract("ArgentAccount", true);
 console.log("ArgentAccount class hash:", argentAccountClassHash);

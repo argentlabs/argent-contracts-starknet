@@ -7,8 +7,8 @@ import {
   deployer,
   deployOldAccount,
   loadContract,
-} from "../tests/lib";
-import { profileGasUsage } from "../tests/lib/gas";
+} from "../tests-integration/lib";
+import { profileGasUsage } from "../tests-integration/lib/gas";
 
 const argentAccountClassHash = await declareContract("ArgentAccount");
 const oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");

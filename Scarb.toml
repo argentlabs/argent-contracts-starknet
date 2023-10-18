@@ -19,6 +19,7 @@ test-ts = "scarb --release build && yarn tsc && yarn mocha tests-integration/*.t
 test-multisig = "scarb --release build && yarn tsc && yarn mocha tests-integration/multisig*.test.ts"
 test-list = "scarb --release build && yarn tsc && yarn mocha --dry-run tests-integration/*.test.ts"
 start-devnet = "INSTALLATION_FOLDER_CARGO=./cairo/Cargo.toml ./scripts/start-devnet.sh"
+kill-devnet = "lsof -t -i tcp:5050 | xargs kill"
 profile = "scarb --release build && yarn ts-node scripts/profile-account.ts"
 deploy = "scarb --release build && yarn ts-node scripts/deploy-account.ts"
 gas-report = "yarn ts-node scripts/gas-report.ts"

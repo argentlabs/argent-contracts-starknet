@@ -1,7 +1,7 @@
 use starknet::deploy_syscall;
 
 use argent::multisig::argent_multisig::ArgentMultisig;
-use argent::tests::multisig_test_setup::{
+use argent::testing::multisig_test_setup::{
     initialize_multisig, signer_pubkey_1, signer_pubkey_2, ITestArgentMultisigDispatcherTrait,
     initialize_multisig_with, initialize_multisig_with_one_signer
 };

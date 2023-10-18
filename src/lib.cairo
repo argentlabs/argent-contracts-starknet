@@ -20,7 +20,8 @@ mod multisig {
     mod interface;
     mod signer_signature;
 }
-mod tests {
+#[cfg(test)]
+mod testing {
     mod account_test_setup;
     mod multisig_test_setup;
 }

@@ -10,7 +10,7 @@ casm = true
 allowed-libfuncs-list.name = "audited"
 
 [dependencies]
-starknet = "=2.3.0-rc0"
+starknet = "2.3.0-rc0"
 
 [scripts]
 format = "scarb fmt && yarn prettier --write ."
@@ -18,7 +18,7 @@ lint = "yarn eslint ."
 test-ts = "scarb --release build && yarn tsc && yarn mocha tests-integration/*.test.ts"
 test-multisig = "scarb --release build && yarn tsc && yarn mocha tests-integration/multisig*.test.ts"
 test-list = "scarb --release build && yarn tsc && yarn mocha --dry-run tests-integration/*.test.ts"
-install-devnet = "mkdir -p ./cairo && git clone --branch $(awk '{print $2}' .tool-versions) https://github.com/starkware-libs/cairo.git"
+install-devnet = "mkdir -p ./cairo && git clone --branch $(cat Scarb.toml | grep ^starknet | cut -d\\\" -f2) https://github.com/starkware-libs/cairo.git"
 start-devnet = "./scripts/start-devnet.sh"
 kill-devnet = "lsof -t -i tcp:5050 | xargs kill"
 profile = "scarb --release build && yarn ts-node scripts/profile-account.ts"

@@ -1,6 +1,5 @@
 import { expect } from "chai";
-import { readFileSync } from "fs";
-import { CompiledSierra, json } from "starknet";
+import { CompiledSierra } from "starknet";
 import {
   declareContract,
   deployAccount,
@@ -9,6 +8,7 @@ import {
   fixturesFolder,
   load,
   provider,
+  readContract,
   removeFromCache,
   restart,
 } from "./lib";
@@ -29,9 +29,7 @@ describe("ArgentAccount: declare", function () {
 
   it("Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) ", async function () {
     const { account } = await deployAccount(argentAccountClassHash);
-    const contract: CompiledSierra = json.parse(
-      readFileSync(`${fixturesFolder}Proxy.contract_class.json`).toString("ascii"),
-    );
+    const contract: CompiledSierra = readContract(`${fixturesFolder}Proxy.contract_class.json`);
     expectRevertWithErrorMessage("argent/invalid-contract-version", () => account.declare({ contract }));
   });
 

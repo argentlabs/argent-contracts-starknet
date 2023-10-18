@@ -29,12 +29,10 @@ export async function declareContract(contractName: string, wait = true, folder 
   if (cachedClass) {
     return cachedClass;
   }
-  const contract: CompiledSierra = json.parse(
-    readFileSync(`${folder}${contractName}.contract_class.json`).toString("ascii"),
-  );
+  const contract: CompiledSierra = readContract(`${folder}${contractName}.contract_class.json`);
   const payload: DeclareContractPayload = { contract };
   if ("sierra_program" in contract) {
-    payload.casm = json.parse(readFileSync(`${folder}${contractName}.compiled_contract_class.json`).toString("ascii"));
+    payload.casm = readContract(`${folder}${contractName}.compiled_contract_class.json`);
   }
   const skipSimulation = provider.isDevnet;
   const maxFee = skipSimulation ? 1e18 : undefined;
@@ -60,4 +58,8 @@ export async function loadContract(contract_address: string) {
   // Allows to pull back the function from one level down
   const parsedAbi = abi.flatMap((e) => (e.type == "interface" ? e.items : e));
   return new Contract(parsedAbi, contract_address, provider);
+}
+
+export function readContract(path: string) {
+  return json.parse(readFileSync(path).toString("ascii"));
 }

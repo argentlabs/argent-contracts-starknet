@@ -24,6 +24,7 @@ mod generic {
     mod argent_generic;
     mod interface;
     mod signer_signature;
+    mod recovery;
 }
 #[cfg(test)]
 mod tests {

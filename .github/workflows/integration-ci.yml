@@ -33,7 +33,7 @@ jobs:
           ./scripts/wait-devnet-ready.sh
 
       - name: Run integration tests
-        run: scarb --release build && tsc && yarn mocha tests/*.test.ts --forbid-only --forbid-pending
+        run: scarb --release build && tsc && yarn mocha tests-integration/*.test.ts --forbid-only --forbid-pending
 
   format:
     runs-on: ubuntu-latest

@@ -31,6 +31,7 @@ trait ITestArgentGenericAccount<TContractState> {
     fn remove_signers(
         ref self: TContractState, new_threshold: usize, signers_to_remove: Array<felt252>
     );
+    fn reorder_signers(ref self: TContractState, new_signer_order: Array<felt252>);
     fn replace_signer(ref self: TContractState, signer_to_remove: felt252, signer_to_add: felt252);
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;

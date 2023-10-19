@@ -396,7 +396,20 @@ mod ArgentGenericAccount {
                 };
             };
 
-            self.add_signers_inner(new_signer_order.span(), last_signer: 0);
+            let mut signers_to_reorder = new_signer_order.span();
+            let mut prev_signer = 0;
+            loop {
+                match signers_to_reorder.pop_front() {
+                    Option::Some(signer) => {
+                        self.signer_list.write(prev_signer, *signer);
+                        prev_signer = *signer;
+                    },
+                    Option::None => {
+                        self.signer_list.write(prev_signer, 0);
+                        break;
+                    }
+                };
+            };
         }
 
         fn replace_signer(

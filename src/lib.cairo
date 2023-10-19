@@ -42,4 +42,5 @@ mod tests {
     mod test_multisig_replace_signers;
     mod test_multisig_signing;
     mod test_generic_signing;
+    mod test_generic_reorder_signers;
 }

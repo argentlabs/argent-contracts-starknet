@@ -4,7 +4,6 @@ use argent::generic::interface::{IArgentMultisig};
 #[starknet::contract]
 mod ArgentGenericAccount {
     use core::array::ArrayTrait;
-    use ecdsa::check_ecdsa_signature;
     use starknet::{
         get_contract_address, ContractAddressIntoFelt252, VALIDATED,
         syscalls::replace_class_syscall, ClassHash, class_hash_const, get_block_timestamp,
@@ -31,7 +30,10 @@ mod ArgentGenericAccount {
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
-    use argent::generic::signer_signature::{SignerType, deserialize_array_signer_signature};
+    use argent::generic::signer_signature::{
+        SignerType, deserialize_array_signer_signature, assert_valid_starknet_signature,
+        assert_valid_ethereum_signature
+    };
     use argent::generic::interface::{IRecoveryAccount};
     use argent::generic::recovery::{EscapeStatus, Escape, EscapeEnabled};
 
@@ -443,22 +445,33 @@ mod ArgentGenericAccount {
 
     #[external(v0)]
     impl RecoveryAccountImpl of IRecoveryAccount<ContractState> {
-        fn toggle_escape(ref self: ContractState, is_enabled: bool, security_period: u64, expiry_period: u64) {
+        fn toggle_escape(
+            ref self: ContractState, is_enabled: bool, security_period: u64, expiry_period: u64
+        ) {
             assert_only_self();
             // cannot toggle escape if there is an ongoing escape 
             let current_escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
-            let current_escape_status = get_escape_status(current_escape.ready_at, escape_config.expiry_period);
+            let current_escape_status = get_escape_status(
+                current_escape.ready_at, escape_config.expiry_period
+            );
             let current_escaped_signer = current_escape.target_signer;
-            assert(current_escaped_signer == 0 || current_escape_status == EscapeStatus::Expired, 'argent/ongoing-escape');
+            assert(
+                current_escaped_signer == 0 || current_escape_status == EscapeStatus::Expired,
+                'argent/ongoing-escape'
+            );
 
             if (is_enabled) {
                 assert(security_period != 0 && expiry_period != 0, 'argent/invalid-escape-params');
-                self.escape_enabled.write(EscapeEnabled { is_enabled: true, security_period, expiry_period });
+                self
+                    .escape_enabled
+                    .write(EscapeEnabled { is_enabled: 1, security_period, expiry_period });
             } else {
-                assert(escape_config.is_enabled, 'argent/escape-disabled');
+                assert(escape_config.is_enabled == 1, 'argent/escape-disabled');
                 assert(security_period == 0 && expiry_period == 0, 'argent/invalid-escape-params');
-                self.escape_enabled.write(EscapeEnabled { is_enabled: false, security_period, expiry_period });
+                self
+                    .escape_enabled
+                    .write(EscapeEnabled { is_enabled: 0, security_period, expiry_period });
             }
         }
 
@@ -469,7 +482,9 @@ mod ArgentGenericAccount {
 
             let current_escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
-            let current_escape_status = get_escape_status(current_escape.ready_at, escape_config.expiry_period);
+            let current_escape_status = get_escape_status(
+                current_escape.ready_at, escape_config.expiry_period
+            );
             let current_escaped_signer = current_escape.target_signer;
             if (current_escaped_signer != 0 && current_escape_status == EscapeStatus::Ready) {
                 // no escape if there is an ongoing escape with a higher signer
@@ -489,7 +504,9 @@ mod ArgentGenericAccount {
 
             let current_escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
-            let current_escape_status = get_escape_status(current_escape.ready_at, escape_config.expiry_period);
+            let current_escape_status = get_escape_status(
+                current_escape.ready_at, escape_config.expiry_period
+            );
             assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
             // replace signer 
@@ -516,7 +533,9 @@ mod ArgentGenericAccount {
             assert_only_self();
             let current_escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
-            let current_escape_status = get_escape_status(current_escape.ready_at, escape_config.expiry_period);
+            let current_escape_status = get_escape_status(
+                current_escape.ready_at, escape_config.expiry_period
+            );
             assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
             self.escape.write(Escape { ready_at: 0, target_signer: 0, new_signer: 0 });
         }
@@ -579,7 +598,8 @@ mod ArgentGenericAccount {
                     // check we can do recovery
                     let escape_enabled = self.escape_enabled.read();
                     assert(
-                        escape_enabled.is_enabled && threshold > 1, 'argent/recovery-unavailable'
+                        escape_enabled.is_enabled == 1 && threshold > 1,
+                        'argent/recovery-unavailable'
                     );
                     // get escaped signer
                     let calldata: Span<felt252> = first_call.calldata.span();
@@ -598,7 +618,8 @@ mod ArgentGenericAccount {
                     // check we can do recovery
                     let escape_enabled = self.escape_enabled.read();
                     assert(
-                        escape_enabled.is_enabled && threshold > 1, 'argent/recovery-unavailable'
+                        escape_enabled.is_enabled == 1 && threshold > 1,
+                        'argent/recovery-unavailable'
                     );
                     // get escaped signer
                     let calldata: Span<felt252> = first_call.calldata.span();
@@ -669,10 +690,14 @@ mod ArgentGenericAccount {
             assert(is_signer, 'argent/not-a-signer');
             match signer_type {
                 SignerType::Starknet => {
-                    check_ecdsa_signature(hash, signer, *signature.at(0), *signature.at(1))
+                    assert_valid_starknet_signature(hash, signer, signature);
+                    true
+                },
+                SignerType::Secp256k1 => {
+                    assert_valid_ethereum_signature(hash, signer, signature);
+                    true
                 },
                 SignerType::Webauthn => false,
-                SignerType::Secp256k1 => false,
                 SignerType::Secp256r1 => false,
             }
         }

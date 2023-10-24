@@ -57,7 +57,7 @@ export async function loadContract(contractAddress: string) {
   // TODO WARNING THIS IS A TEMPORARY FIX WHILE WE WAIT FOR SNJS TO BE UPDATED
   // Allows to pull back the function from one level down
   const parsedAbi = abi.flatMap((e) => (e.type == "interface" ? e.items : e));
-  return new Contract(parsedAbi, contract_address, provider);
+  return new Contract(parsedAbi, contractAddress, provider);
 }
 
 export function readContract(path: string) {

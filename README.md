@@ -32,7 +32,7 @@ We advise that you use [nvm](https://github.com/nvm-sh/nvm) to manage your Node 
 Install devnet
 
 ```shell
-make install-devnet-cairo
+scarb run install-devnet
 ```
 
 Install Python dependencies
@@ -81,12 +81,11 @@ scarb run format
 
 ### Contract fixtures
 
-The [fixtures folder](./tests/fixtures/) contains pre-compiled contracts used for tests (both json and casm).  
-To add or update a contract, have a look at the [`fixtures` Makefile target](./Makefile).
+The [fixtures folder](./tests-integrations/fixtures/) contains pre-compiled contracts used for tests (both json and casm).
 
 ### Interface IDs
 
-For compatibility reasons we support legacy interface IDs . But new interface IDs will follow [SNIP-5](https://github.com/ericnordelo/SNIPs/blob/feat/standard-interface-detection/SNIPS/snip-5.md#how-interfaces-are-identified)
+For compatibility reasons we support legacy interface IDs. But new interface IDs will follow [SNIP-5](https://github.com/ericnordelo/SNIPs/blob/feat/standard-interface-detection/SNIPS/snip-5.md#how-interfaces-are-identified)
 Tool to calculate interface IDs: https://github.com/ericnordelo/src5-rs
 
 ## Release checklist

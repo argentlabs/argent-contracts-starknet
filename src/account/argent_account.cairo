@@ -547,8 +547,7 @@ mod ArgentAccount {
 
     #[external(v0)]
     impl DeprecatedArgentAccountImpl<
-        impl ArgentAccount: IArgentAccount<ContractState>,
-        impl Erc165: IErc165<ContractState>,
+        impl ArgentAccount: IArgentAccount<ContractState>, impl Erc165: IErc165<ContractState>,
     > of IDeprecatedArgentAccount<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
             VERSION_COMPAT

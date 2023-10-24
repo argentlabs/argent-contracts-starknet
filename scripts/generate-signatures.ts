@@ -1,5 +1,5 @@
 import { num } from "starknet";
-import { KeyPair, signChangeOwnerMessage } from "../tests/lib";
+import { KeyPair, signChangeOwnerMessage } from "../tests-integration/lib";
 
 const owner = new KeyPair(1n);
 const guardian = new KeyPair(2n);

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Contract, hash, ProviderInterface } from "starknet";
+import { Contract, hash } from "starknet";
 import { KeyPair } from ".";
 
 export enum EscapeStatus {
@@ -13,15 +13,14 @@ export const signChangeOwnerMessage = async (
   accountAddress: string,
   owner: bigint,
   newOwner: KeyPair,
-  provider: ProviderInterface,
+  chainId: string,
 ) => {
-  const messageHash = await getChangeOwnerMessageHash(accountAddress, owner, provider);
+  const messageHash = await getChangeOwnerMessageHash(accountAddress, owner, chainId);
   return newOwner.signHash(messageHash);
 };
 
-export const getChangeOwnerMessageHash = async (accountAddress: string, owner: bigint, provider: ProviderInterface) => {
+export const getChangeOwnerMessageHash = async (accountAddress: string, owner: bigint, chainId: string) => {
   const changeOwnerSelector = hash.getSelectorFromName("change_owner");
-  const chainId = await provider.getChainId();
   return hash.computeHashOnElements([changeOwnerSelector, chainId, accountAddress, owner]);
 };
 

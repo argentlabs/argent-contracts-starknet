@@ -2,6 +2,7 @@ use argent::common::version::Version;
 
 #[starknet::interface]
 trait IArgentMultisig<TContractState> {
+    fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     /// Self deployment meaning that the multisig pays for it's own deployment fee.
     /// In this scenario the multisig only requires the signature from one of the owners.
     /// This allows for better UX. UI must make clear that the funds are not safe from a bad signer until the deployment happens.
@@ -13,10 +14,6 @@ trait IArgentMultisig<TContractState> {
         contract_address_salt: felt252,
         threshold: usize,
         signers: Array<felt252>
-    ) -> felt252;
-
-    fn is_valid_signature(
-        self: @TContractState, hash: felt252, signature: Array<felt252>
     ) -> felt252;
 
     /// @dev Change threshold

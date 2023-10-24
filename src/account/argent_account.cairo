@@ -5,15 +5,14 @@ mod ArgentAccount {
     use pedersen::PedersenTrait;
     use starknet::{
         ClassHash, get_block_timestamp, get_caller_address, get_execution_info,
-        get_contract_address, get_tx_info, VALIDATED, replace_class_syscall,
-        account::{AccountContract, Call}
+        get_contract_address, get_tx_info, VALIDATED, replace_class_syscall, account::Call
     };
 
     use argent::account::escape::{Escape, EscapeStatus};
     use argent::account::interface::{IArgentAccount, IDeprecatedArgentAccount};
     use argent::common::{
         account::{
-            ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
+            IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
             ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
         asserts::{
@@ -199,14 +198,7 @@ mod ArgentAccount {
     }
 
     #[external(v0)]
-    impl AccountContractImpl of AccountContract<ContractState> {
-        fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
-            let tx_info = get_tx_info().unbox();
-            assert_correct_declare_version(tx_info.version);
-            self.assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
-            VALIDATED
-        }
-
+    impl Account of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
@@ -231,6 +223,16 @@ mod ArgentAccount {
             let response = retdata.span();
             self.emit(TransactionExecuted { hash, response });
             retdata
+        }
+
+        fn is_valid_signature(
+            self: @ContractState, hash: felt252, signature: Array<felt252>
+        ) -> felt252 {
+            if self.is_valid_span_signature(hash, signature.span()) {
+                VALIDATED
+            } else {
+                0
+            }
         }
     }
 
@@ -339,6 +341,13 @@ mod ArgentAccount {
 
     #[external(v0)]
     impl ArgentAccountImpl of IArgentAccount<ContractState> {
+        fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
+            let tx_info = get_tx_info().unbox();
+            assert_correct_declare_version(tx_info.version);
+            self.assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
+            VALIDATED
+        }
+
         fn __validate_deploy__(
             self: @ContractState,
             class_hash: felt252,
@@ -352,16 +361,6 @@ mod ArgentAccount {
             VALIDATED
         }
 
-
-        fn is_valid_signature(
-            self: @ContractState, hash: felt252, signature: Array<felt252>
-        ) -> felt252 {
-            if self.is_valid_span_signature(hash, signature.span()) {
-                VALIDATED
-            } else {
-                0
-            }
-        }
         fn change_owner(
             ref self: ContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252
         ) {
@@ -547,7 +546,9 @@ mod ArgentAccount {
 
     #[external(v0)]
     impl DeprecatedArgentAccountImpl<
-        impl ArgentAccount: IArgentAccount<ContractState>, impl Erc165: IErc165<ContractState>,
+        impl ArgentAccount: IArgentAccount<ContractState>,
+        impl Account: IAccount<ContractState>,
+        impl Erc165: IErc165<ContractState>,
     > of IDeprecatedArgentAccount<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
             VERSION_COMPAT
@@ -569,7 +570,7 @@ mod ArgentAccount {
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
             assert(
-                ArgentAccount::is_valid_signature(self, hash, signatures) == VALIDATED,
+                Account::is_valid_signature(self, hash, signatures) == VALIDATED,
                 'argent/invalid-signature'
             );
             1

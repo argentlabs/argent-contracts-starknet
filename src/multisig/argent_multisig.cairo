@@ -7,12 +7,12 @@ mod ArgentMultisig {
     use starknet::{
         get_contract_address, ContractAddressIntoFelt252, VALIDATED,
         syscalls::replace_class_syscall, ClassHash, class_hash_const, get_block_timestamp,
-        get_caller_address, get_tx_info, account::{AccountContract, Call}
+        get_caller_address, get_tx_info, account::Call
     };
 
     use argent::common::{
         account::{
-            ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
+            IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
             ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
         asserts::{
@@ -120,11 +120,7 @@ mod ArgentMultisig {
     }
 
     #[external(v0)]
-    impl AccountContractImpl of AccountContract<ContractState> {
-        fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
-            panic_with_felt252('argent/declare-not-available') // Not implemented yet
-        }
-
+    impl Account of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
@@ -146,6 +142,16 @@ mod ArgentMultisig {
             let response = retdata.span();
             self.emit(TransactionExecuted { hash, response });
             retdata
+        }
+
+        fn is_valid_signature(
+            self: @ContractState, hash: felt252, signature: Array<felt252>
+        ) -> felt252 {
+            if self.is_valid_span_signature(hash, signature.span()) {
+                VALIDATED
+            } else {
+                0
+            }
         }
     }
 
@@ -229,6 +235,10 @@ mod ArgentMultisig {
 
     #[external(v0)]
     impl ArgentMultisigImpl of super::IArgentMultisig<ContractState> {
+        fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
+            panic_with_felt252('argent/declare-not-available') // Not implemented yet
+        }
+
         fn __validate_deploy__(
             self: @ContractState,
             class_hash: felt252,
@@ -253,16 +263,6 @@ mod ArgentMultisig {
                 );
             assert(valid_signer_signature, 'argent/invalid-signature');
             VALIDATED
-        }
-
-        fn is_valid_signature(
-            self: @ContractState, hash: felt252, signature: Array<felt252>
-        ) -> felt252 {
-            if self.is_valid_span_signature(hash, signature.span()) {
-                VALIDATED
-            } else {
-                0
-            }
         }
 
         fn change_threshold(ref self: ContractState, new_threshold: usize) {
@@ -399,6 +399,7 @@ mod ArgentMultisig {
     impl OldArgentMultisigImpl<
         impl ArgentMultisig: super::IArgentMultisig<ContractState>,
         impl Erc165: IErc165<ContractState>,
+        impl Account: IAccount<ContractState>,
     > of IDeprecatedArgentMultisig<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
             VERSION_COMPAT
@@ -420,7 +421,7 @@ mod ArgentMultisig {
             self: @ContractState, hash: felt252, signatures: Array<felt252>
         ) -> felt252 {
             assert(
-                ArgentMultisig::is_valid_signature(self, hash, signatures) == VALIDATED,
+                Account::is_valid_signature(self, hash, signatures) == VALIDATED,
                 'argent/invalid-signature'
             );
             1

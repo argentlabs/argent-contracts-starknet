@@ -3,13 +3,6 @@ use argent::multisig::interface::{IArgentMultisig};
 
 #[starknet::contract]
 mod ArgentMultisig {
-    use ecdsa::check_ecdsa_signature;
-    use starknet::{
-        get_contract_address, ContractAddressIntoFelt252, VALIDATED,
-        syscalls::replace_class_syscall, ClassHash, class_hash_const, get_block_timestamp,
-        get_caller_address, get_tx_info, account::Call
-    };
-
     use argent::common::{
         account::{
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
@@ -30,8 +23,14 @@ mod ArgentMultisig {
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
-    use argent::multisig::signer_signature::{deserialize_array_signer_signature};
     use argent::multisig::interface::{IDeprecatedArgentMultisig};
+    use argent::multisig::signer_signature::{deserialize_array_signer_signature};
+    use ecdsa::check_ecdsa_signature;
+    use starknet::{
+        get_contract_address, ContractAddressIntoFelt252, VALIDATED,
+        syscalls::replace_class_syscall, ClassHash, class_hash_const, get_block_timestamp,
+        get_caller_address, get_tx_info, account::Call
+    };
 
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION_MAJOR: u8 = 0;

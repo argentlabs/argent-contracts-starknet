@@ -1,13 +1,5 @@
 #[starknet::contract]
 mod ArgentAccount {
-    use ecdsa::check_ecdsa_signature;
-    use hash::HashStateTrait;
-    use pedersen::PedersenTrait;
-    use starknet::{
-        ClassHash, get_block_timestamp, get_caller_address, get_execution_info,
-        get_contract_address, get_tx_info, VALIDATED, replace_class_syscall, account::Call
-    };
-
     use argent::account::escape::{Escape, EscapeStatus};
     use argent::account::interface::{IArgentAccount, IDeprecatedArgentAccount};
     use argent::common::{
@@ -29,6 +21,13 @@ mod ArgentAccount {
             ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
+    };
+    use ecdsa::check_ecdsa_signature;
+    use hash::HashStateTrait;
+    use pedersen::PedersenTrait;
+    use starknet::{
+        ClassHash, get_block_timestamp, get_caller_address, get_execution_info,
+        get_contract_address, get_tx_info, VALIDATED, replace_class_syscall, account::Call
     };
 
     const NAME: felt252 = 'ArgentAccount';

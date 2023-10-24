@@ -1,6 +1,5 @@
-use starknet::{contract_address_const, deploy_syscall, account::Call};
-
 use argent::common::{calls::execute_multicall, test_dapp::TestDapp};
+use starknet::{contract_address_const, deploy_syscall, account::Call};
 
 #[test]
 #[available_gas(2000000)]

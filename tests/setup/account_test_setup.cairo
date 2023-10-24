@@ -1,10 +1,10 @@
+use argent::account::argent_account::ArgentAccount;
+
+use argent::account::escape::{Escape, EscapeStatus};
+use argent::common::version::Version;
 use starknet::{
     contract_address_const, deploy_syscall, account::Call, testing::set_contract_address
 };
-
-use argent::account::escape::{Escape, EscapeStatus};
-use argent::account::argent_account::ArgentAccount;
-use argent::common::version::Version;
 
 #[starknet::interface]
 trait ITestArgentAccount<TContractState> {

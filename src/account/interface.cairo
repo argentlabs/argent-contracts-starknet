@@ -3,13 +3,16 @@ use argent::account::escape::{Escape, EscapeStatus};
 
 #[starknet::interface]
 trait IArgentAccount<TContractState> {
-    fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate_deploy__(
         self: @TContractState,
         class_hash: felt252,
         contract_address_salt: felt252,
         owner: felt252,
         guardian: felt252
+    ) -> felt252;
+
+    fn is_valid_signature(
+        self: @TContractState, hash: felt252, signature: Array<felt252>
     ) -> felt252;
     // External
 

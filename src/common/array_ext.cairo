@@ -8,8 +8,8 @@ impl ArrayExtImpl<T, impl TDrop: Drop<T>> of ArrayExtTrait<T> {
             match value.pop_front() {
                 Option::Some(item) => self.append(item),
                 Option::None => { break; },
-            };
-        };
+            }
+        }
     }
 }
 

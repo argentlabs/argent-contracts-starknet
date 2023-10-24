@@ -13,6 +13,7 @@ allowed-libfuncs-list.name = "audited"
 starknet = "2.3.0"
 
 [tool.fmt]
+max-line-length = 120
 sort-module-level-items = true
 
 [scripts]

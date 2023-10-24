@@ -7,9 +7,7 @@ trait IUpgradeable<TContractState> {
     /// @param implementation The class hash of the new implementation
     /// @param calldata Data to be passed to the implementation in `execute_after_upgrade`
     /// @return retdata The data returned by `execute_after_upgrade`
-    fn upgrade(
-        ref self: TContractState, new_implementation: ClassHash, calldata: Array<felt252>
-    ) -> Array<felt252>;
+    fn upgrade(ref self: TContractState, new_implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252>;
 
     /// @dev Logic to execute after an upgrade.
     /// Can only be called by the account after a call to `upgrade`.

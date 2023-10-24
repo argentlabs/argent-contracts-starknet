@@ -1,7 +1,5 @@
 use argent::common::asserts;
-use starknet::{
-    contract_address_const, testing::{set_caller_address, set_contract_address}, account::Call
-};
+use starknet::{contract_address_const, testing::{set_caller_address, set_contract_address}, account::Call};
 
 #[test]
 #[available_gas(2000000)]

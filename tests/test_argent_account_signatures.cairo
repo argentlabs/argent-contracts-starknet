@@ -1,7 +1,7 @@
 use argent::account::argent_account::ArgentAccount;
 use argent_tests::setup::account_test_setup::{
-    ITestArgentAccountDispatcher, ITestArgentAccountDispatcherTrait, owner_pubkey,
-    initialize_account, initialize_account_without_guardian, initialize_account_with
+    ITestArgentAccountDispatcher, ITestArgentAccountDispatcherTrait, owner_pubkey, initialize_account,
+    initialize_account_without_guardian, initialize_account_with
 };
 use starknet::VALIDATED;
 
@@ -13,12 +13,9 @@ const owner_s: felt252 = 0x23a9747ed71abc5cb956c0df44ee8638b65b3e9407deade65de62
 const guardian_r: felt252 = 0x1734f5510c8b862984461d2221411d12a706140bae629feac0aad35f4d91a19;
 const guardian_s: felt252 = 0x75c904c1969e5b2bf2e9fedb32d6180f06288d81a6a2164d876ea4be2ae7520;
 
-const guardian_backup_pubkey: felt252 =
-    0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2f96fec5ba847310b20;
-const guardian_backup_r: felt252 =
-    0x1e03a158a4142532f903caa32697a74fcf5c05b762bb866cec28670d0a53f9a;
-const guardian_backup_s: felt252 =
-    0x74be76fe620a42899bc34afce7b31a058408b23c250805054fca4de4e0121ca;
+const guardian_backup_pubkey: felt252 = 0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2f96fec5ba847310b20;
+const guardian_backup_r: felt252 = 0x1e03a158a4142532f903caa32697a74fcf5c05b762bb866cec28670d0a53f9a;
+const guardian_backup_s: felt252 = 0x74be76fe620a42899bc34afce7b31a058408b23c250805054fca4de4e0121ca;
 
 const wrong_owner_r: felt252 = 0x4be5db0599a2e5943f207da3f9bf2dd091acf055b71a1643e9c35fcd7e2c0df;
 const wrong_owner_s: felt252 = 0x2e44d5bad55a0d692e02529e7060f352fde85fae8d5946f28c34a10a29bc83b;
@@ -39,8 +36,7 @@ fn single_signature(r: felt252, s: felt252) -> Array<felt252> {
 fn valid_no_guardian() {
     let signatures = single_signature(owner_r, owner_s);
     assert(
-        initialize_account_without_guardian()
-            .is_valid_signature(message_hash, signatures) == VALIDATED,
+        initialize_account_without_guardian().is_valid_signature(message_hash, signatures) == VALIDATED,
         'invalid signature'
     );
 }
@@ -49,10 +45,7 @@ fn valid_no_guardian() {
 #[available_gas(2000000)]
 fn valid_with_guardian() {
     let signatures = double_signature(owner_r, owner_s, guardian_r, guardian_s);
-    assert(
-        initialize_account().is_valid_signature(message_hash, signatures) == VALIDATED,
-        'invalid signature'
-    );
+    assert(initialize_account().is_valid_signature(message_hash, signatures) == VALIDATED, 'invalid signature');
 }
 
 #[test]
@@ -132,9 +125,7 @@ fn invalid_owner_with_invalid_guardian() {
     assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 3');
     let signatures = double_signature(0, 0, wrong_guardian_r, wrong_guardian_s);
     assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 4');
-    let signatures = double_signature(
-        wrong_owner_r, wrong_owner_s, wrong_guardian_r, wrong_guardian_s
-    );
+    let signatures = double_signature(wrong_owner_r, wrong_owner_s, wrong_guardian_r, wrong_guardian_s);
     assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 5');
 }
 

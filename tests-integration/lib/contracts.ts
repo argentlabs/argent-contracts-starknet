@@ -49,8 +49,8 @@ export async function declareFixtureContract(contractName: string, wait = true):
   return await declareContract(contractName, wait, fixturesFolder);
 }
 
-export async function loadContract(contract_address: string) {
-  const { abi } = await provider.getClassAt(contract_address);
+export async function loadContract(contractAddress: string) {
+  const { abi } = await provider.getClassAt(contractAddress);
   if (!abi) {
     throw new Error("Error while getting ABI");
   }

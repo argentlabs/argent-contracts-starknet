@@ -1,9 +1,12 @@
 #!/bin/bash
 
 if ! command -v starknet-devnet >/dev/null; then
-  echo "starknet-devnet is not installed. Please install it and try again." >&2
-  echo "Maybe activate your venv using 'source path-to-venv/bin/activate'" >&2
-  exit 1
+  source ./venv/bin/activate
+  if ! command -v starknet-devnet >/dev/null; then
+    echo "starknet-devnet is not installed. Please install it and try again." >&2
+    echo "Maybe activate your venv using 'source path-to-venv/bin/activate'" >&2
+    exit 1
+  fi
 fi
 
 if nc -z 127.0.0.1 5050; then

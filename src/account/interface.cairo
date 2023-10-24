@@ -14,7 +14,6 @@ trait IArgentAccount<TContractState> {
     fn is_valid_signature(
         self: @TContractState, hash: felt252, signature: Array<felt252>
     ) -> felt252;
-    // External
 
     /// @notice Changes the owner
     /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).

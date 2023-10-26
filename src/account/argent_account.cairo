@@ -545,7 +545,7 @@ mod ArgentAccount {
     }
 
     #[external(v0)]
-    impl OldArgentAccountImpl<
+    impl DeprecatedArgentAccountImpl<
         impl ArgentAccount: IArgentAccount<ContractState>,
         impl Account: IAccount<ContractState>,
         impl Erc165: IErc165<ContractState>,

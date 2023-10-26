@@ -9,7 +9,7 @@ export const ethAddress = "0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562
 let ethContract: Contract;
 
 export const contractsFolder = "./target/release/argent_";
-export const fixturesFolder = "./tests/fixtures/argent_";
+export const fixturesFolder = "./tests-integration/fixtures/argent_";
 
 export async function getEthContract() {
   if (ethContract) {
@@ -29,10 +29,10 @@ export async function declareContract(contractName: string, wait = true, folder 
   if (cachedClass) {
     return cachedClass;
   }
-  const contract: CompiledSierra = json.parse(readFileSync(`${folder}${contractName}.sierra.json`).toString("ascii"));
+  const contract: CompiledSierra = readContract(`${folder}${contractName}.contract_class.json`);
   const payload: DeclareContractPayload = { contract };
   if ("sierra_program" in contract) {
-    payload.casm = json.parse(readFileSync(`${folder}${contractName}.casm.json`).toString("ascii"));
+    payload.casm = readContract(`${folder}${contractName}.compiled_contract_class.json`);
   }
   const skipSimulation = provider.isDevnet;
   const maxFee = skipSimulation ? 1e18 : undefined;
@@ -49,13 +49,17 @@ export async function declareFixtureContract(contractName: string, wait = true):
   return await declareContract(contractName, wait, fixturesFolder);
 }
 
-export async function loadContract(contract_address: string) {
-  const { abi } = await provider.getClassAt(contract_address);
+export async function loadContract(contractAddress: string) {
+  const { abi } = await provider.getClassAt(contractAddress);
   if (!abi) {
     throw new Error("Error while getting ABI");
   }
   // TODO WARNING THIS IS A TEMPORARY FIX WHILE WE WAIT FOR SNJS TO BE UPDATED
   // Allows to pull back the function from one level down
   const parsedAbi = abi.flatMap((e) => (e.type == "interface" ? e.items : e));
-  return new Contract(parsedAbi, contract_address, provider);
+  return new Contract(parsedAbi, contractAddress, provider);
+}
+
+export function readContract(path: string) {
+  return json.parse(readFileSync(path).toString("ascii"));
 }

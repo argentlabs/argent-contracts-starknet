@@ -74,13 +74,9 @@ fn hash_outside_call(outside_call: @Call) -> felt252 {
     let calldata_len = outside_call.calldata.len().into();
     let calldata_hash = loop {
         match calldata_span.pop_front() {
-            Option::Some(item) => {
-                state = state.update(*item);
-            },
-            Option::None => {
-                break state.update(calldata_len).finalize();
-            },
-        };
+            Option::Some(item) => state = state.update(*item),
+            Option::None => { break state.update(calldata_len).finalize(); },
+        }
     };
 
     PedersenTrait::new(0)
@@ -99,13 +95,9 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
     let calls_len = (*outside_execution.calls).len().into();
     let calls_hash = loop {
         match calls_span.pop_front() {
-            Option::Some(call) => {
-                state = state.update(hash_outside_call(call));
-            },
-            Option::None => {
-                break state.update(calls_len).finalize();
-            },
-        };
+            Option::Some(call) => state = state.update(hash_outside_call(call)),
+            Option::None => { break state.update(calls_len).finalize(); },
+        }
     };
 
     PedersenTrait::new(0)

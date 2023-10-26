@@ -1,7 +1,7 @@
 mod account {
     mod argent_account;
-    mod interface;
     mod escape;
+    mod interface;
 }
 mod common {
     mod account;
@@ -9,11 +9,11 @@ mod common {
     mod asserts;
     mod calls;
     mod erc165;
+    mod multicall;
     mod outside_execution;
     mod test_dapp;
     mod upgrade;
     mod version;
-    mod multicall;
 }
 mod multisig {
     mod argent_multisig;

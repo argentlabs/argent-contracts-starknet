@@ -1,12 +1,9 @@
-use starknet::{
-    contract_address_const, deploy_syscall, testing::{set_version, set_contract_address}
-};
-
 use argent::account::argent_account::ArgentAccount;
 use argent_tests::setup::account_test_setup::{
-    ITestArgentAccountDispatcherTrait, owner_pubkey, wrong_owner_pubkey, initialize_account_with,
-    initialize_account, initialize_account_without_guardian
+    ITestArgentAccountDispatcherTrait, owner_pubkey, wrong_owner_pubkey, initialize_account_with, initialize_account,
+    initialize_account_without_guardian
 };
+use starknet::{contract_address_const, deploy_syscall, testing::{set_version, set_contract_address}};
 
 const new_owner_pubkey: felt252 = 0xa7da05a4d664859ccd6e567b935cdfbfe3018c7771cb980892ef38878ae9bc;
 const new_owner_r: felt252 = 0x3e242301b001c97a5be2b3a165fae7abf72027cb8b1ca4713580d52d9ff008e;
@@ -73,23 +70,14 @@ fn erc165_unsupported_interfaces() {
 #[available_gas(2000000)]
 fn erc165_supported_interfaces() {
     let account = initialize_account();
-    assert(
-        account
-            .supports_interface(0x3f918d17e5ee77373b56385708f855659a07f75997f365cf87748628532a055),
-        'IERC165'
-    );
+    assert(account.supports_interface(0x3f918d17e5ee77373b56385708f855659a07f75997f365cf87748628532a055), 'IERC165');
     assert(account.supports_interface(0x01ffc9a7), 'IERC165_OLD');
-    assert(
-        account
-            .supports_interface(0x2ceccef7f994940b3962a6c67e0ba4fcd37df7d131417c604f91e03caecc1cd),
-        'IACCOUNT'
-    );
+    assert(account.supports_interface(0x2ceccef7f994940b3962a6c67e0ba4fcd37df7d131417c604f91e03caecc1cd), 'IACCOUNT');
     assert(account.supports_interface(0xa66bd575), 'IACCOUNT_OLD_1');
     assert(account.supports_interface(0x3943f10f), 'IACCOUNT_OLD_2');
 
     assert(
-        account
-            .supports_interface(0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181),
+        account.supports_interface(0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181),
         'OUTSIDE_EXECUTION'
     );
 }

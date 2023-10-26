@@ -12,6 +12,10 @@ allowed-libfuncs-list.name = "audited"
 [dependencies]
 starknet = "2.3.0"
 
+[tool.fmt]
+max-line-length = 120
+sort-module-level-items = true
+
 [scripts]
 format = "scarb fmt && yarn prettier --write ."
 lint = "yarn eslint ."

@@ -3,17 +3,9 @@ use argent::multisig::interface::{IArgentMultisig};
 
 #[starknet::contract]
 mod ArgentMultisig {
-    use ecdsa::check_ecdsa_signature;
-    use starknet::{
-        get_contract_address, ContractAddressIntoFelt252, VALIDATED,
-        syscalls::replace_class_syscall, ClassHash, class_hash_const, get_block_timestamp,
-        get_caller_address, get_tx_info, account::Call
-    };
-
     use argent::common::{
         account::{
-            IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
-            ERC165_ACCOUNT_INTERFACE_ID_OLD_2
+            IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
         asserts::{
             assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
@@ -25,13 +17,17 @@ mod ArgentMultisig {
             ERC165_IERC165_INTERFACE_ID_OLD,
         },
         outside_execution::{
-            OutsideExecution, IOutsideExecution, hash_outside_execution_message,
-            ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
+            OutsideExecution, IOutsideExecution, hash_outside_execution_message, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
-    use argent::multisig::signer_signature::{deserialize_array_signer_signature};
     use argent::multisig::interface::{IDeprecatedArgentMultisig};
+    use argent::multisig::signer_signature::{deserialize_array_signer_signature};
+    use ecdsa::check_ecdsa_signature;
+    use starknet::{
+        get_contract_address, ContractAddressIntoFelt252, VALIDATED, syscalls::replace_class_syscall, ClassHash,
+        class_hash_const, get_block_timestamp, get_caller_address, get_tx_info, account::Call
+    };
 
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION_MAJOR: u8 = 0;
@@ -111,9 +107,7 @@ mod ArgentMultisig {
         let mut signers_added = signers.span();
         loop {
             match signers_added.pop_front() {
-                Option::Some(added_signer) => {
-                    self.emit(OwnerAdded { new_owner_guid: *added_signer });
-                },
+                Option::Some(added_signer) => { self.emit(OwnerAdded { new_owner_guid: *added_signer }); },
                 Option::None => { break; }
             }
         }
@@ -124,10 +118,7 @@ mod ArgentMultisig {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
-            self
-                .assert_valid_calls_and_signature(
-                    calls.span(), tx_info.transaction_hash, tx_info.signature
-                );
+            self.assert_valid_calls_and_signature(calls.span(), tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
 
@@ -144,9 +135,7 @@ mod ArgentMultisig {
             retdata
         }
 
-        fn is_valid_signature(
-            self: @ContractState, hash: felt252, signature: Array<felt252>
-        ) -> felt252 {
+        fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
             if self.is_valid_span_signature(hash, signature.span()) {
                 VALIDATED
             } else {
@@ -167,8 +156,7 @@ mod ArgentMultisig {
 
             let block_timestamp = get_block_timestamp();
             assert(
-                outside_execution.execute_after < block_timestamp
-                    && block_timestamp < outside_execution.execute_before,
+                outside_execution.execute_after < block_timestamp && block_timestamp < outside_execution.execute_before,
                 'argent/invalid-timestamp'
             );
             let nonce = outside_execution.nonce;
@@ -192,9 +180,7 @@ mod ArgentMultisig {
             retdata
         }
 
-        fn get_outside_execution_message_hash(
-            self: @ContractState, outside_execution: OutsideExecution
-        ) -> felt252 {
+        fn get_outside_execution_message_hash(self: @ContractState, outside_execution: OutsideExecution) -> felt252 {
             hash_outside_execution_message(@outside_execution)
         }
 
@@ -206,9 +192,7 @@ mod ArgentMultisig {
     #[external(v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         /// @dev Can be called by the account to upgrade the implementation
-        fn upgrade(
-            ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>
-        ) -> Array<felt252> {
+        fn upgrade(ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
             let supports_interface = IErc165LibraryDispatcher { class_hash: new_implementation }
@@ -218,8 +202,7 @@ mod ArgentMultisig {
             replace_class_syscall(new_implementation).unwrap();
             self.emit(AccountUpgraded { new_implementation });
 
-            IUpgradeableLibraryDispatcher { class_hash: new_implementation }
-                .execute_after_upgrade(calldata)
+            IUpgradeableLibraryDispatcher { class_hash: new_implementation }.execute_after_upgrade(calldata)
         }
 
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
@@ -256,10 +239,7 @@ mod ArgentMultisig {
             let signer_sig = *parsed_signatures.at(0);
             let valid_signer_signature = self
                 .is_valid_signer_signature_inner(
-                    tx_info.transaction_hash,
-                    signer_sig.signer,
-                    signer_sig.signature_r,
-                    signer_sig.signature_s
+                    tx_info.transaction_hash, signer_sig.signer, signer_sig.signature_r, signer_sig.signature_s
                 );
             assert(valid_signer_signature, 'argent/invalid-signature');
             VALIDATED
@@ -275,9 +255,7 @@ mod ArgentMultisig {
             self.emit(ThresholdUpdated { new_threshold });
         }
 
-        fn add_signers(
-            ref self: ContractState, new_threshold: usize, signers_to_add: Array<felt252>
-        ) {
+        fn add_signers(ref self: ContractState, new_threshold: usize, signers_to_add: Array<felt252>) {
             assert_only_self();
             let (signers_len, last_signer) = self.load();
             let previous_threshold = self.threshold.read();
@@ -294,17 +272,13 @@ mod ArgentMultisig {
             let mut signers_added = signers_to_add.span();
             loop {
                 match signers_added.pop_front() {
-                    Option::Some(added_signer) => {
-                        self.emit(OwnerAdded { new_owner_guid: *added_signer });
-                    },
+                    Option::Some(added_signer) => { self.emit(OwnerAdded { new_owner_guid: *added_signer }); },
                     Option::None => { break; }
                 }
             }
         }
 
-        fn remove_signers(
-            ref self: ContractState, new_threshold: usize, signers_to_remove: Array<felt252>
-        ) {
+        fn remove_signers(ref self: ContractState, new_threshold: usize, signers_to_remove: Array<felt252>) {
             assert_only_self();
             let (signers_len, last_signer) = self.load();
             let previous_threshold = self.threshold.read();
@@ -330,9 +304,7 @@ mod ArgentMultisig {
             }
         }
 
-        fn replace_signer(
-            ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252
-        ) {
+        fn replace_signer(ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252) {
             assert_only_self();
             let (new_signers_count, last_signer) = self.load();
 
@@ -364,11 +336,7 @@ mod ArgentMultisig {
         }
 
         fn is_valid_signer_signature(
-            self: @ContractState,
-            hash: felt252,
-            signer: felt252,
-            signature_r: felt252,
-            signature_s: felt252
+            self: @ContractState, hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
         ) -> bool {
             self.is_valid_signer_signature_inner(hash, signer, signature_r, signature_s)
         }
@@ -417,13 +385,8 @@ mod ArgentMultisig {
             }
         }
 
-        fn isValidSignature(
-            self: @ContractState, hash: felt252, signatures: Array<felt252>
-        ) -> felt252 {
-            assert(
-                Account::is_valid_signature(self, hash, signatures) == VALIDATED,
-                'argent/invalid-signature'
-            );
+        fn isValidSignature(self: @ContractState, hash: felt252, signatures: Array<felt252>) -> felt252 {
+            assert(Account::is_valid_signature(self, hash, signatures) == VALIDATED, 'argent/invalid-signature');
             1
         }
     }
@@ -431,10 +394,7 @@ mod ArgentMultisig {
     #[generate_trait]
     impl Private of PrivateTrait {
         fn assert_valid_calls_and_signature(
-            self: @ContractState,
-            calls: Span<Call>,
-            execution_hash: felt252,
-            signature: Span<felt252>
+            self: @ContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
         ) {
             let account_address = get_contract_address();
             let tx_info = get_tx_info().unbox();
@@ -444,10 +404,7 @@ mod ArgentMultisig {
                 let call = calls.at(0);
                 if *call.to == account_address {
                     // This should only be called after an upgrade, never directly
-                    assert(
-                        *call.selector != selector!("execute_after_upgrade"),
-                        'argent/forbidden-call'
-                    );
+                    assert(*call.selector != selector!("execute_after_upgrade"), 'argent/forbidden-call');
                 }
             } else {
                 // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions
@@ -459,9 +416,7 @@ mod ArgentMultisig {
             assert(valid, 'argent/invalid-signature');
         }
 
-        fn is_valid_span_signature(
-            self: @ContractState, hash: felt252, signature: Span<felt252>
-        ) -> bool {
+        fn is_valid_span_signature(self: @ContractState, hash: felt252, signature: Span<felt252>) -> bool {
             let threshold = self.threshold.read();
             assert(threshold != 0, 'argent/uninitialized');
 
@@ -494,11 +449,7 @@ mod ArgentMultisig {
         }
 
         fn is_valid_signer_signature_inner(
-            self: @ContractState,
-            hash: felt252,
-            signer: felt252,
-            signature_r: felt252,
-            signature_s: felt252
+            self: @ContractState, hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
         ) -> bool {
             let is_signer = self.is_signer_inner(signer);
             assert(is_signer, 'argent/not-a-signer');
@@ -532,9 +483,7 @@ mod ArgentMultisig {
         }
 
         // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
-        fn is_signer_using_last(
-            self: @ContractState, signer: felt252, last_signer: felt252
-        ) -> bool {
+        fn is_signer_using_last(self: @ContractState, signer: felt252, last_signer: felt252) -> bool {
             if signer == 0 {
                 return false;
             }
@@ -575,9 +524,7 @@ mod ArgentMultisig {
             }
         }
 
-        fn add_signers_inner(
-            ref self: ContractState, mut signers_to_add: Span<felt252>, last_signer: felt252
-        ) {
+        fn add_signers_inner(ref self: ContractState, mut signers_to_add: Span<felt252>, last_signer: felt252) {
             match signers_to_add.pop_front() {
                 Option::Some(signer_ref) => {
                     let signer = *signer_ref;
@@ -595,9 +542,7 @@ mod ArgentMultisig {
             }
         }
 
-        fn remove_signers_inner(
-            ref self: ContractState, mut signers_to_remove: Span<felt252>, last_signer: felt252
-        ) {
+        fn remove_signers_inner(ref self: ContractState, mut signers_to_remove: Span<felt252>, last_signer: felt252) {
             match signers_to_remove.pop_front() {
                 Option::Some(signer_ref) => {
                     let signer = *signer_ref;
@@ -625,10 +570,7 @@ mod ArgentMultisig {
         }
 
         fn replace_signer_inner(
-            ref self: ContractState,
-            signer_to_remove: felt252,
-            signer_to_add: felt252,
-            last_signer: felt252
+            ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252, last_signer: felt252
         ) {
             assert(signer_to_add != 0, 'argent/invalid-zero-signer');
 

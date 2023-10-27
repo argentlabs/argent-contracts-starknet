@@ -12,18 +12,18 @@ import {
 import { isEqual } from "lodash-es";
 
 import { provider } from "./provider";
-import { AcceptedTransactionReceiptResponse } from "./receipts";
+import { AcceptedTransactionReceiptResponse, ensureAccepted } from "./receipts";
 
 export async function expectRevertWithErrorMessage(
   errorMessage: string,
   execute: () => Promise<DeployContractUDCResponse | InvokeFunctionResponse | GetTransactionReceiptResponse>,
 ) {
   try {
-    const executionResult = (await execute()) as
-      | DeployContractUDCResponse
-      | InvokeFunctionResponse
-      | AcceptedTransactionReceiptResponse;
-    await provider.waitForTransaction(executionResult.transaction_hash);
+    const executionResult = await execute();
+    if ("transaction_hash"! in executionResult) {
+      assert.fail(`No transaction hash found on ${JSON.stringify(executionResult)}`);
+    }
+    await provider.waitForTransaction((executionResult as any)["transaction_hash"]);
   } catch (e: any) {
     expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
     return;
@@ -42,13 +42,10 @@ export async function expectExecutionRevert(errorMessage: string, execute: () =>
   assert.fail("No error detected");
 }
 
-async function expectEventFromReceipt(
-  receipt: InvokeTransactionReceiptResponse | GetTransactionReceiptResponse,
-  event: Event,
-) {
-  const acceptedReceipt = receipt as InvokeTransactionReceiptResponse | AcceptedTransactionReceiptResponse;
+async function expectEventFromReceipt(receipt: GetTransactionReceiptResponse, event: Event) {
+  receipt = ensureAccepted(receipt);
   expect(event.keys.length).to.be.greaterThan(0, "Unsupported: No keys");
-  const events = acceptedReceipt.events ?? [];
+  const events = receipt.events ?? [];
   const normalizedEvent = normalizeEvent(event);
   const matches = events.filter((e) => isEqual(normalizeEvent(e), normalizedEvent)).length;
   if (matches == 0) {

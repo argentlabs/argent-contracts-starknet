@@ -1,11 +1,11 @@
 import { add, maxBy, mergeWith, omit, sortBy, sum } from "lodash-es";
 import { ExecutionResources, InvokeFunctionResponse, Sequencer } from "starknet";
 import { provider } from "./provider";
-import { AcceptedTransactionReceiptResponse } from "./receipts";
+import { AcceptedTransactionReceiptResponse, ensureAccepted } from "./receipts";
 
 export async function profileGasUsage({ transaction_hash: txHash }: InvokeFunctionResponse) {
   const trace: Sequencer.TransactionTraceResponse = await provider.getTransactionTrace(txHash);
-  const receipt = (await provider.waitForTransaction(txHash)) as AcceptedTransactionReceiptResponse;
+  const receipt = ensureAccepted(await provider.waitForTransaction(txHash));
   const actualFee = BigInt(receipt.actual_fee as string);
 
   const executionResourcesByPhase: ExecutionResources[] = [

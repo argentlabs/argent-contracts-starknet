@@ -1,14 +1,5 @@
 import { expect } from "chai";
-import {
-  Account,
-  CallData,
-  Contract,
-  InvokeTransactionReceiptResponse,
-  RawCalldata,
-  hash,
-  num,
-  uint256,
-} from "starknet";
+import { Account, CallData, Contract, GetTransactionReceiptResponse, RawCalldata, hash, num, uint256 } from "starknet";
 import { getEthContract, loadContract } from "./contracts";
 import { mintEth } from "./devnet";
 import { provider } from "./provider";
@@ -138,7 +129,7 @@ export async function upgradeAccount(
   accountToUpgrade: Account,
   argentAccountClassHash: string,
   calldata: RawCalldata = [],
-): Promise<InvokeTransactionReceiptResponse> {
+): Promise<GetTransactionReceiptResponse> {
   const { transaction_hash: transferTxHash } = await accountToUpgrade.execute({
     contractAddress: accountToUpgrade.address,
     entrypoint: "upgrade",

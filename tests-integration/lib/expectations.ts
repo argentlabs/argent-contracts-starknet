@@ -4,6 +4,7 @@ import {
   Event,
   InvokeFunctionResponse,
   InvokeTransactionReceiptResponse,
+  GetTransactionReceiptResponse,
   hash,
   num,
   shortString,
@@ -11,14 +12,18 @@ import {
 import { isEqual } from "lodash-es";
 
 import { provider } from "./provider";
+import { AcceptedTransactionReceiptResponse, ensureAccepted } from "./receipts";
 
 export async function expectRevertWithErrorMessage(
   errorMessage: string,
-  execute: () => Promise<DeployContractUDCResponse | InvokeFunctionResponse>,
+  execute: () => Promise<DeployContractUDCResponse | InvokeFunctionResponse | GetTransactionReceiptResponse>,
 ) {
   try {
-    const { transaction_hash } = await execute();
-    await provider.waitForTransaction(transaction_hash);
+    const executionResult = await execute();
+    if (!("transaction_hash" in executionResult)) {
+      throw Error(`No transaction hash found on ${JSON.stringify(executionResult)}`);
+    }
+    await provider.waitForTransaction(executionResult["transaction_hash"]);
   } catch (e: any) {
     expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
     return;
@@ -37,7 +42,8 @@ export async function expectExecutionRevert(errorMessage: string, execute: () =>
   assert.fail("No error detected");
 }
 
-async function expectEventFromReceipt(receipt: InvokeTransactionReceiptResponse, event: Event) {
+async function expectEventFromReceipt(receipt: GetTransactionReceiptResponse, event: Event) {
+  receipt = ensureAccepted(receipt);
   expect(event.keys.length).to.be.greaterThan(0, "Unsupported: No keys");
   const events = receipt.events ?? [];
   const normalizedEvent = normalizeEvent(event);
@@ -67,7 +73,7 @@ function convertToEvent(eventWithName: EventWithName): Event {
 }
 
 export async function expectEvent(
-  param: string | InvokeTransactionReceiptResponse | (() => Promise<InvokeFunctionResponse>),
+  param: string | GetTransactionReceiptResponse | (() => Promise<InvokeFunctionResponse>),
   event: Event | EventWithName,
 ) {
   if (typeof param === "function") {
@@ -82,7 +88,9 @@ export async function expectEvent(
   await expectEventFromReceipt(param, event);
 }
 
-export async function waitForTransaction({ transaction_hash }: InvokeFunctionResponse) {
+export async function waitForTransaction({
+  transaction_hash,
+}: InvokeFunctionResponse): Promise<GetTransactionReceiptResponse> {
   return await provider.waitForTransaction(transaction_hash);
 }
 

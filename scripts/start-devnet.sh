@@ -15,5 +15,5 @@ if nc -z 127.0.0.1 5050; then
 else
   echo "About to spawn a devnet"
   export STARKNET_DEVNET_CAIRO_VM=rust
-  starknet-devnet --cairo-compiler-manifest ./cairo/Cargo.toml --seed 42 --lite-mode --timeout 320 --compiler-args '--add-pythonic-hints --allowed-libfuncs-list-name all'
+  starknet-devnet --cairo-compiler-manifest ./cairo/Cargo.toml --seed 42 --lite-mode --timeout 320 --gas-price 36000000000  --compiler-args '--add-pythonic-hints --allowed-libfuncs-list-name all'
 fi

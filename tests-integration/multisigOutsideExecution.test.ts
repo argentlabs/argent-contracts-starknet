@@ -131,7 +131,7 @@ describe("ArgentMultisig: outside execution", function () {
     const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, account.signer);
 
     await setTime(initialTime);
-    
+
     // ensure the caller is not used
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
     await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");

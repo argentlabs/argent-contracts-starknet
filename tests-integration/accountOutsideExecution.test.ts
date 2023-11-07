@@ -167,6 +167,8 @@ describe("ArgentAccount: outside execution", function () {
       new ArgentSigner(guardian),
     );
 
+    await setTime(initialTime);
+
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
     const current_escape = await accountContract.get_escape();
     expect(current_escape.new_signer).to.equal(42n, "invalid new value");

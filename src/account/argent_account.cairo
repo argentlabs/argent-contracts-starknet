@@ -1,7 +1,6 @@
 #[starknet::contract]
 mod ArgentAccount {
-    use core::array::SpanTrait;
-use argent::account::escape::{Escape, EscapeStatus};
+    use argent::account::escape::{Escape, EscapeStatus};
     use argent::account::interface::{IArgentAccount, IDeprecatedArgentAccount};
     use argent::common::{
         account::{
@@ -18,10 +17,11 @@ use argent::account::escape::{Escape, EscapeStatus};
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
         transaction_version::{
-            get_execution_info, get_tx_info, assert_no_unsupported_v3_fields, TX_INVOKE_V1, TX_INVOKE_V1_ESTIMATE,
-            TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version
+            get_execution_info, get_tx_info, TX_V1_INVOKE, TX_V1_INVOKE_ESTIMATE, TX_V3, TX_V3_ESTIMATE,
+            assert_correct_invoke_version, assert_correct_declare_version, assert_no_unsupported_v3_fields, DA_MODE_L1
         }
     };
+    use core::array::SpanTrait;
     use ecdsa::check_ecdsa_signature;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
@@ -47,7 +47,6 @@ use argent::account::escape::{Escape, EscapeStatus};
     const MAX_ESCAPE_ATTEMPTS: u32 = 5;
     /// Limits fee in escapes
     const MAX_ESCAPE_MAX_FEE: u128 = 50000000000000000; // 0.05 ETH
-
     /// Limits tip in escapes
     const MAX_ESCAPE_TIP: u128 = 100000000000000; // 0.0001 STRK/gas
 
@@ -204,6 +203,8 @@ use argent::account::escape::{Escape, EscapeStatus};
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
+            assert_correct_invoke_version(tx_info.version);
+            assert_no_unsupported_v3_fields();
             self
                 .assert_valid_calls_and_signature(
                     calls.span(), tx_info.transaction_hash, tx_info.signature, is_from_outside: false
@@ -214,13 +215,11 @@ use argent::account::escape::{Escape, EscapeStatus};
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
-            assert_correct_invoke_version(tx_info.version); // TODO
+            assert_correct_invoke_version(tx_info.version);
 
             let retdata = execute_multicall(calls.span());
 
-            let hash = tx_info.transaction_hash;
-            let response = retdata.span();
-            self.emit(TransactionExecuted { hash, response });
+            self.emit(TransactionExecuted { hash: tx_info.transaction_hash, response: retdata.span() });
             retdata
         }
 
@@ -330,7 +329,8 @@ use argent::account::escape::{Escape, EscapeStatus};
     impl ArgentAccountImpl of IArgentAccount<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             let tx_info = get_tx_info().unbox();
-            assert_correct_declare_version(tx_info.version); // TODO
+            assert_correct_declare_version(tx_info.version);
+            assert_no_unsupported_v3_fields();
             self.assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
@@ -340,6 +340,7 @@ use argent::account::escape::{Escape, EscapeStatus};
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
+            assert_no_unsupported_v3_fields();
             self.assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
@@ -559,11 +560,6 @@ use argent::account::escape::{Escape, EscapeStatus};
             let execution_info = get_execution_info().unbox();
             let account_address = execution_info.contract_address;
 
-            if !is_from_outside {
-                assert_correct_invoke_version(execution_info.tx_info.unbox().version);
-                assert_no_unsupported_v3_fields();
-            }
-
             if calls.len() == 1 {
                 let call = calls.at(0);
                 if *call.to == account_address {
@@ -748,15 +744,16 @@ use argent::account::escape::{Escape, EscapeStatus};
         }
     }
 
-    // TODO
     fn assert_valid_escape_parameters(attempts: u32) {
         let tx_info = get_tx_info().unbox();
-
         if tx_info.version == TX_V3 || tx_info.version == TX_V3_ESTIMATE {
             assert(tx_info.tip <= MAX_ESCAPE_TIP, 'argent/tip-too-high');
-            assert(tx_info.nonce_data_availabilty_mode == 0 && tx_info.fee_data_availabilty_mode == 0, 'argent/invalid-da-mode');
+            assert(
+                tx_info.nonce_data_availabilty_mode == DA_MODE_L1 && tx_info.fee_data_availabilty_mode == DA_MODE_L1,
+                'argent/invalid-da-mode'
+            );
             assert(tx_info.account_deployment_data.is_empty(), 'argent/invalid-deployment-data');
-        } else if tx_info.version == TX_INVOKE_V1 || tx_info.version == TX_INVOKE_V1_ESTIMATE {
+        } else if tx_info.version == TX_V1_INVOKE || tx_info.version == TX_V1_INVOKE_ESTIMATE {
             assert(tx_info.max_fee <= MAX_ESCAPE_MAX_FEE, 'argent/max-fee-too-high');
         } else {
             panic_with_felt252('argent/invalid-tx-version');

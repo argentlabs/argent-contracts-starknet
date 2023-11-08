@@ -17,9 +17,7 @@ mod ArgentMultisig {
             OutsideExecution, IOutsideExecution, hash_outside_execution_message, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
-        transaction_version::{
-            get_tx_info, assert_correct_invoke_version, assert_correct_declare_version, assert_no_unsupported_v3_fields
-        }
+        transaction_version::{get_tx_info, assert_correct_invoke_version, assert_no_unsupported_v3_fields}
     };
     use argent::multisig::interface::{IDeprecatedArgentMultisig};
     use argent::multisig::signer_signature::{deserialize_array_signer_signature};
@@ -128,7 +126,6 @@ mod ArgentMultisig {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
-
             let retdata = execute_multicall(calls.span());
 
             let hash = tx_info.transaction_hash;
@@ -234,7 +231,6 @@ mod ArgentMultisig {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             assert_no_unsupported_v3_fields();
-
             let parsed_signatures = deserialize_array_signer_signature(tx_info.signature)
                 .expect('argent/invalid-signature-length');
             assert(parsed_signatures.len() == 1, 'argent/invalid-signature-length');

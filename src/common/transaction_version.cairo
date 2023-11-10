@@ -50,7 +50,6 @@ fn get_execution_info() -> Box<starknet::info::v2::ExecutionInfo> {
 fn get_tx_info() -> Box<starknet::info::v2::TxInfo> {
     get_execution_info().unbox().tx_info
 }
-
 // TODO: to remove, allows to easily switch between v1 and v3 temporarily
 // #[inline(always)]
 // fn get_execution_info() -> Box<starknet::info::ExecutionInfo> {
@@ -61,3 +60,4 @@ fn get_tx_info() -> Box<starknet::info::v2::TxInfo> {
 // fn get_tx_info() -> Box<starknet::info::TxInfo> {
 //     get_execution_info().unbox().tx_info
 // }
+

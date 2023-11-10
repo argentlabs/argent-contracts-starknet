@@ -1,5 +1,5 @@
 test_argent_account::change_guardian: 671,060 gas
-test_argent_account::change_owner: 953,568 gas
+test_argent_account::change_owner: 951,668 gas
 test_argent_account::initialize: 514,860 gas
 test_argent_account_signatures::valid_no_guardian: 555,874 gas
 test_argent_account_signatures::valid_with_guardian: 579,554 gas

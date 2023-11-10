@@ -748,12 +748,18 @@ mod ArgentAccount {
         let tx_info = get_tx_info().unbox();
         if tx_info.version == TX_V3 || tx_info.version == TX_V3_ESTIMATE {
             assert(tx_info.tip <= MAX_ESCAPE_TIP, 'argent/tip-too-high');
+            // max_fee returns 0 on TX_V3
+            // should che
+            // No need for modes other than L1 while escaping
             assert(
                 tx_info.nonce_data_availabilty_mode == DA_MODE_L1 && tx_info.fee_data_availabilty_mode == DA_MODE_L1,
                 'argent/invalid-da-mode'
             );
+            // No need to allow self deployment and escaping in one transaction
             assert(tx_info.account_deployment_data.is_empty(), 'argent/invalid-deployment-data');
+
         } else if tx_info.version == TX_V1_INVOKE || tx_info.version == TX_V1_INVOKE_ESTIMATE {
+            // other fields not available on V1
             assert(tx_info.max_fee <= MAX_ESCAPE_MAX_FEE, 'argent/max-fee-too-high');
         } else {
             panic_with_felt252('argent/invalid-tx-version');

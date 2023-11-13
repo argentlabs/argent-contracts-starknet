@@ -21,7 +21,6 @@ mod ArgentAccount {
             assert_correct_invoke_version, assert_correct_declare_version, assert_no_unsupported_v3_fields, DA_MODE_L1
         }
     };
-    use core::array::SpanTrait;
     use ecdsa::check_ecdsa_signature;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;

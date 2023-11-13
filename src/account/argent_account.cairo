@@ -48,7 +48,7 @@ mod ArgentAccount {
     /// Limits fee in escapes
     const MAX_ESCAPE_MAX_FEE: u128 = 50000000000000000; // 0.05 ETH
     /// Limits tip in escapes
-    const MAX_ESCAPE_TIP: u128 = 100000000000000; // 0.0001 STRK/gas
+    const MAX_ESCAPE_TIP: u128 = 100_000_000_000_000; // 0.0001 STRK/gas
 
     #[storage]
     struct Storage {

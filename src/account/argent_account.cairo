@@ -748,7 +748,6 @@ mod ArgentAccount {
         if tx_info.version == TX_V3 || tx_info.version == TX_V3_ESTIMATE {
             assert(tx_info.tip <= MAX_ESCAPE_TIP, 'argent/tip-too-high');
             // max_fee returns 0 on TX_V3
-            // should che
             // No need for modes other than L1 while escaping
             assert(
                 tx_info.nonce_data_availabilty_mode == DA_MODE_L1 && tx_info.fee_data_availabilty_mode == DA_MODE_L1,

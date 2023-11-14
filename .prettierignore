@@ -3,4 +3,4 @@ venv
 target
 dist
 .github
-tests/fixtures
+tests-integration/fixtures

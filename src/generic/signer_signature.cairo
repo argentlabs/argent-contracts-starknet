@@ -1,11 +1,9 @@
 use ecdsa::check_ecdsa_signature;
+use starknet::secp256k1::{Secp256k1Point, Secp256k1PointImpl};
 use starknet::{
     EthAddress, Felt252TryIntoEthAddress,
-    secp256_trait::{
-        Signature, signature_from_vrs, verify_eth_signature, Secp256Trait, Secp256PointTrait
-    }
+    secp256_trait::{Signature, signature_from_vrs, verify_eth_signature, Secp256Trait, Secp256PointTrait}
 };
-use starknet::secp256k1::{Secp256k1Point, Secp256k1PointImpl};
 
 #[derive(Drop, Copy, Serde, PartialEq)]
 enum SignerType {
@@ -22,9 +20,7 @@ struct SignerSignature {
     signature: Span<felt252>,
 }
 
-fn deserialize_array_signer_signature(
-    mut serialized: Span<felt252>
-) -> Option<Span<SignerSignature>> {
+fn deserialize_array_signer_signature(mut serialized: Span<felt252>) -> Option<Span<SignerSignature>> {
     let mut output = array![];
     loop {
         if serialized.len() == 0 {
@@ -32,9 +28,7 @@ fn deserialize_array_signer_signature(
         }
         match Serde::deserialize(ref serialized) {
             Option::Some(signer_signature) => output.append(signer_signature),
-            Option::None => {
-                break Option::None;
-            },
+            Option::None => { break Option::None; },
         };
     }
 }

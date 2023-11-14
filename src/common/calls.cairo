@@ -1,6 +1,5 @@
-use starknet::{call_contract_syscall, account::Call};
-
 use argent::common::array_ext::ArrayExtTrait;
+use starknet::{call_contract_syscall, account::Call};
 
 fn execute_multicall(mut calls: Span<Call>) -> Array<Span<felt252>> {
     let mut result: Array<Span<felt252>> = array![];
@@ -20,10 +19,8 @@ fn execute_multicall(mut calls: Span<Call>) -> Array<Span<felt252>> {
                     },
                 }
             },
-            Option::None => {
-                break;
-            },
-        };
+            Option::None => { break; },
+        }
     };
     result
 }

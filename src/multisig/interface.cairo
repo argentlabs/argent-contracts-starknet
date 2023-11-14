@@ -29,9 +29,7 @@ trait IArgentMultisig<TContractState> {
     /// @dev Removes account signers, additionally sets a new threshold
     /// @param new_threshold New threshold
     /// @param signers_to_remove Should contain only current signers, otherwise it will revert
-    fn remove_signers(
-        ref self: TContractState, new_threshold: usize, signers_to_remove: Array<felt252>
-    );
+    fn remove_signers(ref self: TContractState, new_threshold: usize, signers_to_remove: Array<felt252>);
 
     /// @dev Replace one signer with a different one
     /// @param signer_to_remove Signer to remove
@@ -48,11 +46,7 @@ trait IArgentMultisig<TContractState> {
 
     /// Checks if a given signature is a valid signature from one of the multisig owners
     fn is_valid_signer_signature(
-        self: @TContractState,
-        hash: felt252,
-        signer: felt252,
-        signature_r: felt252,
-        signature_s: felt252
+        self: @TContractState, hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
     ) -> bool;
 }
 
@@ -63,7 +57,5 @@ trait IDeprecatedArgentMultisig<TContractState> {
     fn getName(self: @TContractState) -> felt252;
     fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
     /// For compatibility reasons this method returns 1 when the signature is valid, and panics otherwise
-    fn isValidSignature(
-        self: @TContractState, hash: felt252, signatures: Array<felt252>
-    ) -> felt252;
+    fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }

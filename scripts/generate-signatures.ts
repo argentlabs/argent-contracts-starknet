@@ -1,5 +1,7 @@
 import { num } from "starknet";
 import { KeyPair, signChangeOwnerMessage } from "../tests-integration/lib";
+import { Signature, Wallet, ethers, hashMessage, id } from "ethers";
+import { assert } from "console";
 
 const owner = new KeyPair(1n);
 const guardian = new KeyPair(2n);
@@ -46,6 +48,31 @@ function calculate_sig_account() {
 `);
 }
 
+async function calculate_sig_account_with_eth() {
+  const hash = "0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";
+  const eth_signer = new Wallet(id("9n"));
+
+  const [owner_r, owner_s] = owner.signHash(hash);
+  const signature = Signature.from(await eth_signer.signMessage(hash));
+  
+  const signerAddr = await ethers.verifyMessage(hash, signature);
+  assert(signerAddr == eth_signer.address);
+
+  console.log(`
+  const message_hash: felt252 = ${num.toHex(hash)};
+  const message_hash_eth: u256 = ${hashMessage(hash)};
+
+    const owner_pubkey: felt252 = ${num.toHex(owner.publicKey)};
+    const owner_r: felt252 = ${num.toHex(owner_r)};
+    const owner_s: felt252 = ${num.toHex(owner_s)};
+
+    const owner_pubkey_eth: felt252 = ${eth_signer.address};
+    const owner_eth_r: u256 = ${signature.r};
+    const owner_eth_s: u256 = ${signature.s};
+    const owner_eth_v: felt252 = ${signature.v};
+`);
+}
+
 async function calculate_sig_change_owner() {
   // message_hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
   const chain_id = "0";
@@ -55,11 +82,10 @@ async function calculate_sig_change_owner() {
   const [new_owner_r, new_owner_s] = await signChangeOwnerMessage(contract_address, old_owner, new_owner, chain_id);
 
   console.log(`
-
     const new_owner_pubkey: felt252 = ${num.toHex(new_owner.publicKey)};
     const new_owner_r: felt252 = ${num.toHex(new_owner_r)};
     const new_owner_s: felt252 = ${num.toHex(new_owner_s)};
     `);
 }
 
-calculate_sig_change_owner();
+calculate_sig_account_with_eth();

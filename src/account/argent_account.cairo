@@ -47,7 +47,7 @@ mod ArgentAccount {
     /// Limits fee in escapes
     const MAX_ESCAPE_MAX_FEE: u128 = 50000000000000000; // 0.05 ETH
     /// Limits tip in escapes
-    const MAX_ESCAPE_TIP: u128 = 100_000_000_000_000; // 0.0001 STRK/gas
+    const MAX_ESCAPE_TIP: u128 = 1000000000000000000; // 1 STRK
 
     #[storage]
     struct Storage {
@@ -744,9 +744,21 @@ mod ArgentAccount {
     }
 
     fn assert_valid_escape_parameters(attempts: u32) {
-        let tx_info = get_tx_info().unbox();
+        let mut tx_info = get_tx_info().unbox();
         if tx_info.version == TX_V3 || tx_info.version == TX_V3_ESTIMATE {
-            assert(tx_info.tip <= MAX_ESCAPE_TIP, 'argent/tip-too-high');
+            let max_l2_gas: u64 = loop {
+                match tx_info.resource_bounds.pop_front() {
+                    Option::Some(r) => { if *r.resource == 'L2_GAS' {
+                        break *r.max_amount;
+                    } },
+                    Option::None => {
+                        // L2_GAS not found
+                        break 0_u64;
+                    }
+                };
+            };
+            let max_tip = tx_info.tip * max_l2_gas.into();
+            assert(max_tip <= MAX_ESCAPE_TIP, 'argent/tip-too-high');
             // max_fee returns 0 on TX_V3
             // No need for modes other than L1 while escaping
             assert(

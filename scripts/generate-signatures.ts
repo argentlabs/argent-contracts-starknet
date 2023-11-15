@@ -49,18 +49,14 @@ function calculate_sig_account() {
 }
 
 async function calculate_sig_account_with_eth() {
-  const hash = "0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";
+  // Ethers requires hash to be pair length
+  const hash = "0x02d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";
   const eth_signer = new Wallet(id("9n"));
-
   const [owner_r, owner_s] = owner.signHash(hash);
-  const signature = Signature.from(await eth_signer.signMessage(hash));
-  
-  const signerAddr = await ethers.verifyMessage(hash, signature);
-  assert(signerAddr == eth_signer.address);
+  const signature = Signature.from(await eth_signer.signingKey.sign(hash));
 
   console.log(`
-  const message_hash: felt252 = ${num.toHex(hash)};
-  const message_hash_eth: u256 = ${hashMessage(hash)};
+    const message_hash: felt252 = ${num.toHex(hash)};
 
     const owner_pubkey: felt252 = ${num.toHex(owner.publicKey)};
     const owner_r: felt252 = ${num.toHex(owner_r)};

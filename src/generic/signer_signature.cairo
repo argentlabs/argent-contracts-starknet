@@ -39,15 +39,13 @@ fn assert_valid_starknet_signature(hash: felt252, signer: felt252, signature: Sp
 }
 
 fn assert_valid_ethereum_signature(hash: felt252, signer: felt252, mut signature: Span<felt252>) {
-    assert(signature.len() == 6, 'argent/invalid-signature');
+    assert(signature.len() == 5, 'argent/invalid-signature');
     let eth_signer: EthAddress = signer.try_into().unwrap();
-    let high: u128 = Serde::deserialize(ref signature).unwrap();
     let signature_r: u256 = Serde::deserialize(ref signature).unwrap();
     let signature_s: u256 = Serde::deserialize(ref signature).unwrap();
     let signature_v: u32 = Serde::deserialize(ref signature).unwrap();
 
     let eth_signature = signature_from_vrs(signature_v, signature_r, signature_s);
-    let eth_hash: u256 = u256 { low: hash.try_into().unwrap(), high }; //hash.into();
 
-    verify_eth_signature(eth_hash, eth_signature, eth_signer);
+    verify_eth_signature(hash.into(), eth_signature, eth_signer);
 }

@@ -1,3 +1,4 @@
+import { Signature as EthersSignature, Wallet, id } from "ethers";
 import {
   Abi,
   ArraySignatureType,
@@ -14,13 +15,14 @@ import {
   hash,
   transaction,
   typedData,
+  uint256,
 } from "starknet";
 
 /**
  * This class allows to easily implement custom signers by overriding the `signRaw` method.
  * This is based on Starknet.js implementation of Signer, but it delegates the actual signing to an abstract function
  */
-abstract class RawSigner implements SignerInterface {
+export abstract class RawSigner implements SignerInterface {
   abstract signRaw(messageHash: string): Promise<Signature>;
 
   public async getPubKey(): Promise<string> {
@@ -152,6 +154,37 @@ export class KeyPair extends Signer {
   public signHash(messageHash: string) {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
     return [r.toString(), s.toString()];
+  }
+}
+
+export class EthKeyPair extends Signer {
+  constructor(pk?: string | bigint) {
+    super(pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`);
+  }
+
+  public get privateKey() {
+    return BigInt(this.pk as string);
+  }
+
+  public get publicKey() {
+    return BigInt(new Wallet(id(this.privateKey.toString())).address);
+  }
+
+  public signHash(messageHash: string) {
+    const eth_signer = new Wallet(id(this.privateKey.toString()));
+    if (messageHash.length < 66) {
+      messageHash = "0x" + "0".repeat(66 - messageHash.length) + messageHash.slice(2);
+    }
+    const signature = EthersSignature.from(eth_signer.signingKey.sign(messageHash));
+    const rU256 = uint256.bnToUint256(signature.r);
+    const sU256 = uint256.bnToUint256(signature.s);
+    return [
+      rU256.low.toString(),
+      rU256.high.toString(),
+      sU256.low.toString(),
+      sU256.high.toString(),
+      signature.v.toString(),
+    ];
   }
 }
 

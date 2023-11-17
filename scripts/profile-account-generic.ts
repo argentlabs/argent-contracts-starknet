@@ -10,31 +10,14 @@ import {
   provider,
   randomKeyPair,
 } from "../tests-integration/lib";
-import { profileGasUsage } from "../tests-integration/lib/gas";
+import { reportProfile } from "../tests-integration/lib/gas";
 
 const genericAccountClassHash = await declareContract("ArgentGenericAccount");
 const testDappClassHash = await declareContract("TestDapp");
 const { contract_address } = await deployer.deployContract({ classHash: testDappClassHash });
 const testDappContract = await loadContract(contract_address);
 
-const ethUsd = 1800n;
-
 const table: Record<string, any> = {};
-
-async function reportProfile(name: string, response: InvokeFunctionResponse) {
-  const report = await profileGasUsage(response);
-  const { actualFee, gasUsed, computationGas, l1CalldataGas, executionResources } = report;
-  console.dir(report, { depth: null });
-  const feeUsd = Number(actualFee * ethUsd) / Number(10n ** 18n);
-  table[name] = {
-    actualFee: Number(actualFee),
-    feeUsd: Number(feeUsd.toFixed(2)),
-    gasUsed: Number(gasUsed),
-    computationGas: Number(computationGas),
-    l1CalldataGas: Number(l1CalldataGas),
-    ...executionResources,
-  };
-}
 
 class GenericSigner extends RawSigner {
   constructor(
@@ -72,7 +55,7 @@ const EthereumSignatureType = new CairoCustomEnum({
   const owner = randomKeyPair();
   const account = await deployGenericAccount(genericAccountClassHash, owner, StarknetSignatureType);
   testDappContract.connect(account);
-  await reportProfile(name, await testDappContract.set_number(42));
+  await reportProfile(table, name, await testDappContract.set_number(42));
 }
 
 {
@@ -81,7 +64,7 @@ const EthereumSignatureType = new CairoCustomEnum({
   const owner = new EthKeyPair();
   const account = await deployGenericAccount(genericAccountClassHash, owner, EthereumSignatureType);
   testDappContract.connect(account);
-  await reportProfile(name, await testDappContract.set_number(42));
+  await reportProfile(table, name, await testDappContract.set_number(42));
 }
 
 async function deployGenericAccount(accountClassHash: string, owner: KeyPair, signatureType: CairoCustomEnum) {

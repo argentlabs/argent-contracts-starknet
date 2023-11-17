@@ -3,6 +3,8 @@ import { ExecutionResources, InvokeFunctionResponse, Sequencer } from "starknet"
 import { provider } from "./provider";
 import { AcceptedTransactionReceiptResponse, ensureAccepted } from "./receipts";
 
+const ethUsd = 1800n;
+
 export async function profileGasUsage({ transaction_hash: txHash }: InvokeFunctionResponse) {
   const trace: Sequencer.TransactionTraceResponse = await provider.getTransactionTrace(txHash);
   const receipt = ensureAccepted(await provider.waitForTransaction(txHash));
@@ -63,5 +65,20 @@ export async function profileGasUsage({ transaction_hash: txHash }: InvokeFuncti
     n_memory_holes: executionResources.n_memory_holes,
     gasPrice,
     storageDiffs,
+  };
+}
+
+export async function reportProfile(table: Record<string, any>, name: string, response: InvokeFunctionResponse) {
+  const report = await profileGasUsage(response);
+  const { actualFee, gasUsed, computationGas, l1CalldataGas, executionResources } = report;
+  console.dir(report, { depth: null });
+  const feeUsd = Number(actualFee * ethUsd) / Number(10n ** 18n);
+  table[name] = {
+    actualFee: Number(actualFee),
+    feeUsd: Number(feeUsd.toFixed(2)),
+    gasUsed: Number(gasUsed),
+    computationGas: Number(computationGas),
+    l1CalldataGas: Number(l1CalldataGas),
+    ...executionResources,
   };
 }

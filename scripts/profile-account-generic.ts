@@ -1,4 +1,4 @@
-import { Account, ArraySignatureType, CairoCustomEnum, CallData, InvokeFunctionResponse, hash, num } from "starknet";
+import { Account, ArraySignatureType, CairoCustomEnum, CallData, hash, num } from "starknet";
 import {
   EthKeyPair,
   KeyPair,

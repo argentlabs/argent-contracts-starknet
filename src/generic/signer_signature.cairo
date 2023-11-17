@@ -1,5 +1,3 @@
-use core::option::OptionTrait;
-use core::traits::TryInto;
 use ecdsa::check_ecdsa_signature;
 use starknet::{EthAddress, verify_eth_signature, secp256_trait::signature_from_vrs};
 

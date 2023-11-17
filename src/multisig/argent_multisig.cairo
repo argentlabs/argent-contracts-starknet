@@ -420,6 +420,7 @@ mod ArgentMultisig {
             let threshold = self.threshold.read();
             assert(threshold != 0, 'argent/uninitialized');
 
+            // TODO Should prob use Serde::deserialise instead
             let mut signer_signatures = deserialize_array_signer_signature(signature)
                 .expect('argent/invalid-signature-length');
             assert(signer_signatures.len() == threshold, 'argent/invalid-signature-length');

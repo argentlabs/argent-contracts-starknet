@@ -17,19 +17,6 @@ struct SignerSignature {
     signature: Span<felt252>,
 }
 
-fn deserialize_array_signer_signature(mut serialized: Span<felt252>) -> Option<Span<SignerSignature>> {
-    let mut output = array![];
-    loop {
-        if serialized.len() == 0 {
-            break Option::Some(output.span());
-        }
-        match Serde::deserialize(ref serialized) {
-            Option::Some(signer_signature) => output.append(signer_signature),
-            Option::None => { break Option::None; },
-        };
-    }
-}
-
 fn assert_valid_starknet_signature(hash: felt252, signer: felt252, signature: Span<felt252>) {
     assert(signature.len() == 2, 'argent/invalid-signature');
     let is_valid = check_ecdsa_signature(hash, signer, *signature[0], *signature[1]);

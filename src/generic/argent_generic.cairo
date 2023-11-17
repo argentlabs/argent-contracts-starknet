@@ -17,8 +17,7 @@ mod ArgentGenericAccount {
     };
     use argent::generic::{
         signer_signature::{
-            SignerType, deserialize_array_signer_signature, assert_valid_starknet_signature,
-            assert_valid_ethereum_signature
+            SignerSignature, SignerType, assert_valid_starknet_signature, assert_valid_ethereum_signature
         },
         interface::{IRecoveryAccount, IArgentMultisig}, recovery::{EscapeStatus, Escape, EscapeEnabled}
     };
@@ -263,9 +262,11 @@ mod ArgentGenericAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_tx_version(tx_info.version);
 
-            let parsed_signatures = deserialize_array_signer_signature(tx_info.signature)
-                .expect('argent/invalid-signature-length');
-            assert(parsed_signatures.len() == 1, 'argent/invalid-signature-length');
+            let mut signature = tx_info.signature;
+            let mut parsed_signatures: Array<SignerSignature> = Serde::deserialize(ref signature)
+                .expect('argent/deserialize-signer-fail');
+            // TODO AS LONG AS FIRST SIGANTURE IS OK, DEPLOY (this is prob wron, we should loop)
+            assert(parsed_signatures.len() >= 1, 'argent/invalid-signature-length');
 
             let signer_sig = *parsed_signatures.at(0);
             let is_valid = self
@@ -566,17 +567,17 @@ mod ArgentGenericAccount {
             hash: felt252,
             expected_length: u32,
             excluded_signer: felt252,
-            signature: Span<felt252>
+            mut signature: Span<felt252>
         ) -> bool {
-            let mut signer_signatures = deserialize_array_signer_signature(signature)
-                .expect('argent/invalid-signature-length');
+            let mut signer_signatures: Array<SignerSignature> = Serde::deserialize(ref signature)
+                .expect('argent/deserialize-signer-fail');
             assert(signer_signatures.len() == expected_length, 'argent/invalid-signature-length');
 
             let mut last_signer: u256 = 0;
             loop {
                 match signer_signatures.pop_front() {
                     Option::Some(signer_sig_ref) => {
-                        let signer_sig = *signer_sig_ref;
+                        let signer_sig = signer_sig_ref;
                         assert(signer_sig.signer != excluded_signer, 'argent/unauthorised_signer');
                         let signer_uint: u256 = signer_sig.signer.into();
                         assert(signer_uint > last_signer, 'argent/signatures-not-sorted');

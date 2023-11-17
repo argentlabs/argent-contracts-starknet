@@ -34,7 +34,7 @@ fn initialize_account(owner: felt252) -> IAccountDispatcher {
 #[test]
 #[available_gas(2000000)]
 fn test_valid_signature_starknet() {
-    let mut signatures = array![];
+    let mut signatures = array![1];
     let signer_signature = SignerSignature {
         signer: owner_pubkey, signer_type: SignerType::Starknet, signature: array![owner_r, owner_s].span()
     };
@@ -55,7 +55,7 @@ fn test_valid_signature_secp256k1() {
         signer: owner_pubkey_eth, signer_type: SignerType::Secp256k1, signature: signature.span()
     };
 
-    let mut signatures = array![];
+    let mut signatures = array![1];
     signer_signature.serialize(ref signatures);
     assert(
         initialize_account(owner_pubkey_eth).is_valid_signature(message_hash, signatures) == VALIDATED,

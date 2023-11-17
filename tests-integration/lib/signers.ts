@@ -2,6 +2,7 @@ import { Signature as EthersSignature, Wallet, id } from "ethers";
 import {
   Abi,
   ArraySignatureType,
+  CairoCustomEnum,
   Call,
   CallData,
   DeclareSignerDetails,
@@ -157,6 +158,43 @@ export class KeyPair extends Signer {
   }
 }
 
+const StarknetSignatureType = new CairoCustomEnum({
+  Starknet: {},
+  Secp256k1: undefined,
+  Webauthn: undefined,
+  Secp256r1: undefined,
+});
+
+const EthereumSignatureType = new CairoCustomEnum({
+  Starknet: undefined,
+  Secp256k1: {},
+  Webauthn: undefined,
+  Secp256r1: undefined,
+});
+
+export class StarknetKeyPair extends Signer {
+  constructor(pk?: string | bigint) {
+    super(pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`);
+  }
+
+  public get privateKey() {
+    return BigInt(this.pk as string);
+  }
+
+  public get publicKey() {
+    return BigInt(ec.starkCurve.getStarkKey(this.pk));
+  }
+
+  public signHash(messageHash: string) {
+    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
+    return {
+      signer: this.publicKey,
+      signer_type: StarknetSignatureType,
+      signature: [r.toString(), s.toString()],
+    };
+  }
+}
+
 export class EthKeyPair extends Signer {
   constructor(pk?: string | bigint) {
     super(pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`);
@@ -178,13 +216,17 @@ export class EthKeyPair extends Signer {
     const signature = EthersSignature.from(eth_signer.signingKey.sign(messageHash));
     const rU256 = uint256.bnToUint256(signature.r);
     const sU256 = uint256.bnToUint256(signature.s);
-    return [
-      rU256.low.toString(),
-      rU256.high.toString(),
-      sU256.low.toString(),
-      sU256.high.toString(),
-      signature.v.toString(),
-    ];
+    return {
+      signer: this.publicKey,
+      signer_type: EthereumSignatureType,
+      signature: [
+        rU256.low.toString(),
+        rU256.high.toString(),
+        sU256.low.toString(),
+        sU256.high.toString(),
+        signature.v.toString(),
+      ],
+    };
   }
 }
 

@@ -21,7 +21,7 @@ const signer_type_starknet: felt252 = 0;
 fn test_signature() {
     let generic = initialize_generic_with_one_signer();
 
-    let signature = array![signer_pubkey_1, signer_type_starknet, 2, signer_1_signature_r, signer_1_signature_s];
+    let signature = array![1, signer_pubkey_1, signer_type_starknet, 2, signer_1_signature_r, signer_1_signature_s];
     assert(generic.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
 }
 
@@ -34,6 +34,7 @@ fn test_double_signature() {
     let generic = initialize_generic_with(threshold, signers_array.span());
 
     let signature = array![
+        2,
         signer_pubkey_1,
         signer_type_starknet,
         2,
@@ -57,6 +58,7 @@ fn test_double_signature_order() {
     let generic = initialize_generic_with(threshold, signers_array.span());
 
     let signature = array![
+        2,
         signer_pubkey_2,
         signer_type_starknet,
         2,
@@ -80,6 +82,7 @@ fn test_same_owner_twice() {
     let generic = initialize_generic_with(threshold, signers_array.span());
 
     let signature = array![
+        2,
         signer_pubkey_1,
         signer_type_starknet,
         2,
@@ -102,17 +105,18 @@ fn test_missing_owner_signature() {
     let signers_array = array![signer_pubkey_1, signer_pubkey_2];
     let generic = initialize_generic_with(threshold, signers_array.span());
 
-    let signature = array![signer_pubkey_1, signer_type_starknet, 2, signer_1_signature_r, signer_1_signature_s];
+    let signature = array![1, signer_pubkey_1, signer_type_starknet, 2, signer_1_signature_r, signer_1_signature_s];
     generic.is_valid_signature(message_hash, signature);
 }
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/deserialize-signer-fail', 'ENTRYPOINT_FAILED'))]
 fn test_short_signature() {
     let generic = initialize_generic_with_one_signer();
 
     let signature = array![
+        2,
         signer_pubkey_1,
         signer_type_starknet,
         2,
@@ -128,10 +132,10 @@ fn test_short_signature() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/deserialize-signer-fail', 'ENTRYPOINT_FAILED'))]
 fn test_long_signature() {
     let generic = initialize_generic_with_one_signer();
 
-    let signature = array![42];
+    let signature = array![1, 42];
     generic.is_valid_signature(message_hash, signature);
 }

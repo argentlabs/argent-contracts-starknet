@@ -17,7 +17,7 @@ mod ArgentAccount {
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
         transaction_version::{
-            get_execution_info, get_tx_info, TX_V1_INVOKE, TX_V1_INVOKE_ESTIMATE, TX_V3, TX_V3_ESTIMATE,
+            get_execution_info, get_tx_info, TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE,
             assert_correct_invoke_version, assert_correct_declare_version, assert_no_unsupported_v3_fields, DA_MODE_L1
         }
     };
@@ -767,7 +767,7 @@ mod ArgentAccount {
             );
             // No need to allow self deployment and escaping in one transaction
             assert(tx_info.account_deployment_data.is_empty(), 'argent/invalid-deployment-data');
-        } else if tx_info.version == TX_V1_INVOKE || tx_info.version == TX_V1_INVOKE_ESTIMATE {
+        } else if tx_info.version == TX_V1|| tx_info.version == TX_V1_ESTIMATE {
             // other fields not available on V1
             assert(tx_info.max_fee <= MAX_ESCAPE_MAX_FEE, 'argent/max-fee-too-high');
         } else {

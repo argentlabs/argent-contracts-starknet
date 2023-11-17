@@ -48,7 +48,7 @@ mod ArgentAccount {
     const MAX_ESCAPE_MAX_FEE: u128 = 50000000000000000; // 0.05 ETH
     /// Limits tip in escapes
     const MAX_ESCAPE_TIP: u128 = 1000000000000000000; // 1 STRK
-
+    const MAX_ESCAPE_TIP: u128 = 1_000_000_000_000_000_000; // 1 STRK
     #[storage]
     struct Storage {
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only

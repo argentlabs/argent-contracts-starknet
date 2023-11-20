@@ -20,6 +20,7 @@ mod multisig {
     mod interface;
     mod signer_signature;
 }
+
 mod generic {
     mod argent_generic;
     mod interface;

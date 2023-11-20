@@ -139,7 +139,6 @@ class GenericSigner extends RawSigner {
   await reportProfile(table, name, await testDappContract.set_number(42));
 }
 
-// TODO Do a test with 2 signatures, 3 signatures and finally a mix?
 async function deployGenericAccount(owners: StarknetKeyPair[]) {
   const salt = num.toHex(randomKeyPair().privateKey);
   const constructorCalldata = CallData.compile({

@@ -2,8 +2,7 @@ use hash::{HashStateTrait, HashStateExTrait};
 use pedersen::PedersenTrait;
 use starknet::{ContractAddress, get_tx_info, get_contract_address, account::Call};
 
-const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID: felt252 =
-    0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181;
+const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID: felt252 = 0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181;
 
 /// Interface ID: 0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181
 // get_outside_execution_message_hash is not part of the standard interface
@@ -21,9 +20,7 @@ trait IOutsideExecution<TContractState> {
     fn is_valid_outside_execution_nonce(self: @TContractState, nonce: felt252) -> bool;
 
     /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
-    fn get_outside_execution_message_hash(
-        self: @TContractState, outside_execution: OutsideExecution
-    ) -> felt252;
+    fn get_outside_execution_message_hash(self: @TContractState, outside_execution: OutsideExecution) -> felt252;
 }
 
 #[derive(Copy, Drop, Hash)]
@@ -34,8 +31,7 @@ struct StarkNetDomain {
 }
 
 // H('OutsideExecution(caller:felt,nonce:felt,execute_after:felt,execute_before:felt,calls_len:felt,calls:Call*)')
-const OUTSIDE_EXECUTION_TYPE_HASH: felt252 =
-    0x11ff76fe3f640fa6f3d60bbd94a3b9d47141a2c96f87fdcfbeb2af1d03f7050;
+const OUTSIDE_EXECUTION_TYPE_HASH: felt252 = 0x11ff76fe3f640fa6f3d60bbd94a3b9d47141a2c96f87fdcfbeb2af1d03f7050;
 
 #[derive(Copy, Drop, Serde)]
 struct OutsideExecution {
@@ -74,13 +70,9 @@ fn hash_outside_call(outside_call: @Call) -> felt252 {
     let calldata_len = outside_call.calldata.len().into();
     let calldata_hash = loop {
         match calldata_span.pop_front() {
-            Option::Some(item) => {
-                state = state.update(*item);
-            },
-            Option::None => {
-                break state.update(calldata_len).finalize();
-            },
-        };
+            Option::Some(item) => state = state.update(*item),
+            Option::None => { break state.update(calldata_len).finalize(); },
+        }
     };
 
     PedersenTrait::new(0)
@@ -99,13 +91,9 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
     let calls_len = (*outside_execution.calls).len().into();
     let calls_hash = loop {
         match calls_span.pop_front() {
-            Option::Some(call) => {
-                state = state.update(hash_outside_call(call));
-            },
-            Option::None => {
-                break state.update(calls_len).finalize();
-            },
-        };
+            Option::Some(call) => state = state.update(hash_outside_call(call)),
+            Option::None => { break state.update(calls_len).finalize(); },
+        }
     };
 
     PedersenTrait::new(0)

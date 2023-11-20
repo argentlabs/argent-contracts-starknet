@@ -5,9 +5,7 @@ struct SignerSignature {
     signature_s: felt252,
 }
 
-fn deserialize_array_signer_signature(
-    mut serialized: Span<felt252>
-) -> Option<Span<SignerSignature>> {
+fn deserialize_array_signer_signature(mut serialized: Span<felt252>) -> Option<Span<SignerSignature>> {
     let mut output = array![];
     loop {
         if serialized.len() == 0 {
@@ -15,9 +13,7 @@ fn deserialize_array_signer_signature(
         }
         match Serde::deserialize(ref serialized) {
             Option::Some(signer_signature) => output.append(signer_signature),
-            Option::None => {
-                break Option::None;
-            },
-        };
+            Option::None => { break Option::None; },
+        }
     }
 }

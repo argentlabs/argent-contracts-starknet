@@ -3,17 +3,9 @@ use argent::generic::interface::{IArgentMultisig};
 
 #[starknet::contract]
 mod ArgentGenericAccount {
-    use core::array::ArrayTrait;
-    use starknet::{
-        get_contract_address, ContractAddressIntoFelt252, VALIDATED,
-        syscalls::replace_class_syscall, ClassHash, class_hash_const, get_block_timestamp,
-        get_caller_address, get_tx_info, account::Call
-    };
-
     use argent::common::{
         account::{
-            IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
-            ERC165_ACCOUNT_INTERFACE_ID_OLD_2
+            IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
         asserts::{
             assert_correct_tx_version, assert_no_self_call, assert_only_protocol, assert_only_self,
@@ -25,17 +17,20 @@ mod ArgentGenericAccount {
             ERC165_IERC165_INTERFACE_ID_OLD,
         },
         outside_execution::{
-            OutsideExecution, IOutsideExecution, hash_outside_execution_message,
-            ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
+            OutsideExecution, IOutsideExecution, hash_outside_execution_message, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
-    use argent::generic::signer_signature::{
-        SignerType, deserialize_array_signer_signature, assert_valid_starknet_signature,
-        assert_valid_ethereum_signature
-    };
     use argent::generic::interface::{IRecoveryAccount};
     use argent::generic::recovery::{EscapeStatus, Escape, EscapeEnabled};
+    use argent::generic::signer_signature::{
+        SignerType, deserialize_array_signer_signature, assert_valid_starknet_signature, assert_valid_ethereum_signature
+    };
+    use core::array::ArrayTrait;
+    use starknet::{
+        get_contract_address, ContractAddressIntoFelt252, VALIDATED, syscalls::replace_class_syscall, ClassHash,
+        class_hash_const, get_block_timestamp, get_caller_address, get_tx_info, account::Call
+    };
 
     const NAME: felt252 = 'ArgentGenericAccount';
     const VERSION_MAJOR: u8 = 0;
@@ -143,12 +138,8 @@ mod ArgentGenericAccount {
         let mut signers_added = signers.span();
         loop {
             match signers_added.pop_front() {
-                Option::Some(added_signer) => {
-                    self.emit(OwnerAdded { new_owner_guid: *added_signer });
-                },
-                Option::None => {
-                    break;
-                }
+                Option::Some(added_signer) => { self.emit(OwnerAdded { new_owner_guid: *added_signer }); },
+                Option::None => { break; }
             };
         };
     }
@@ -179,13 +170,10 @@ mod ArgentGenericAccount {
             retdata
         }
 
-        fn is_valid_signature(
-            self: @ContractState, hash: felt252, signature: Array<felt252>
-        ) -> felt252 {
+        fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
             let threshold = self.threshold.read();
             assert(threshold != 0, 'argent/uninitialized');
-            if self
-                .is_valid_signature_with_conditions(hash, threshold, 0_felt252, signature.span()) {
+            if self.is_valid_signature_with_conditions(hash, threshold, 0_felt252, signature.span()) {
                 VALIDATED
             } else {
                 0
@@ -205,8 +193,7 @@ mod ArgentGenericAccount {
 
             let block_timestamp = get_block_timestamp();
             assert(
-                outside_execution.execute_after < block_timestamp
-                    && block_timestamp < outside_execution.execute_before,
+                outside_execution.execute_after < block_timestamp && block_timestamp < outside_execution.execute_before,
                 'argent/invalid-timestamp'
             );
             let nonce = outside_execution.nonce;
@@ -233,9 +220,7 @@ mod ArgentGenericAccount {
             retdata
         }
 
-        fn get_outside_execution_message_hash(
-            self: @ContractState, outside_execution: OutsideExecution
-        ) -> felt252 {
+        fn get_outside_execution_message_hash(self: @ContractState, outside_execution: OutsideExecution) -> felt252 {
             hash_outside_execution_message(@outside_execution)
         }
 
@@ -247,9 +232,7 @@ mod ArgentGenericAccount {
     #[external(v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         /// @dev Can be called by the account to upgrade the implementation
-        fn upgrade(
-            ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>
-        ) -> Array<felt252> {
+        fn upgrade(ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
             let supports_interface = IErc165LibraryDispatcher { class_hash: new_implementation }
@@ -259,8 +242,7 @@ mod ArgentGenericAccount {
             replace_class_syscall(new_implementation).unwrap();
             self.emit(AccountUpgraded { new_implementation });
 
-            IUpgradeableLibraryDispatcher { class_hash: new_implementation }
-                .execute_after_upgrade(calldata)
+            IUpgradeableLibraryDispatcher { class_hash: new_implementation }.execute_after_upgrade(calldata)
         }
 
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
@@ -317,9 +299,7 @@ mod ArgentGenericAccount {
             self.emit(ThresholdUpdated { new_threshold });
         }
 
-        fn add_signers(
-            ref self: ContractState, new_threshold: usize, signers_to_add: Array<felt252>
-        ) {
+        fn add_signers(ref self: ContractState, new_threshold: usize, signers_to_add: Array<felt252>) {
             assert_only_self();
             let (signers_len, last_signer) = self.load();
             let previous_threshold = self.threshold.read();
@@ -336,19 +316,13 @@ mod ArgentGenericAccount {
             let mut signers_added = signers_to_add.span();
             loop {
                 match signers_added.pop_front() {
-                    Option::Some(added_signer) => {
-                        self.emit(OwnerAdded { new_owner_guid: *added_signer });
-                    },
-                    Option::None => {
-                        break;
-                    }
+                    Option::Some(added_signer) => { self.emit(OwnerAdded { new_owner_guid: *added_signer }); },
+                    Option::None => { break; }
                 };
             };
         }
 
-        fn remove_signers(
-            ref self: ContractState, new_threshold: usize, signers_to_remove: Array<felt252>
-        ) {
+        fn remove_signers(ref self: ContractState, new_threshold: usize, signers_to_remove: Array<felt252>) {
             assert_only_self();
             let (signers_len, last_signer) = self.load();
             let previous_threshold = self.threshold.read();
@@ -369,9 +343,7 @@ mod ArgentGenericAccount {
                     Option::Some(removed_signer) => {
                         self.emit(OwnerRemoved { removed_owner_guid: *removed_signer });
                     },
-                    Option::None => {
-                        break;
-                    }
+                    Option::None => { break; }
                 };
             };
         }
@@ -385,14 +357,9 @@ mod ArgentGenericAccount {
             loop {
                 match signers_to_check.pop_front() {
                     Option::Some(signer) => {
-                        assert(
-                            sself.is_signer_using_last(*signer, last_signer),
-                            'argent/unknown-signer'
-                        );
+                        assert(sself.is_signer_using_last(*signer, last_signer), 'argent/unknown-signer');
                     },
-                    Option::None => {
-                        break;
-                    }
+                    Option::None => { break; }
                 };
             };
 
@@ -412,9 +379,7 @@ mod ArgentGenericAccount {
             };
         }
 
-        fn replace_signer(
-            ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252
-        ) {
+        fn replace_signer(ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252) {
             assert_only_self();
             let (new_signers_count, last_signer) = self.load();
 
@@ -446,11 +411,7 @@ mod ArgentGenericAccount {
         }
 
         fn is_valid_signer_signature(
-            self: @ContractState,
-            hash: felt252,
-            signer: felt252,
-            signer_type: SignerType,
-            signature: Span<felt252>
+            self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType, signature: Span<felt252>
         ) -> bool {
             self.is_valid_signer_signature_inner(hash, signer, signer_type, signature)
         }
@@ -458,53 +419,37 @@ mod ArgentGenericAccount {
 
     #[external(v0)]
     impl RecoveryAccountImpl of IRecoveryAccount<ContractState> {
-        fn toggle_escape(
-            ref self: ContractState, is_enabled: bool, security_period: u64, expiry_period: u64
-        ) {
+        fn toggle_escape(ref self: ContractState, is_enabled: bool, security_period: u64, expiry_period: u64) {
             assert_only_self();
             // cannot toggle escape if there is an ongoing escape 
             let current_escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
-            let current_escape_status = get_escape_status(
-                current_escape.ready_at, escape_config.expiry_period
-            );
+            let current_escape_status = get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             let current_escaped_signer = current_escape.target_signer;
             assert(
-                current_escaped_signer == 0 || current_escape_status == EscapeStatus::Expired,
-                'argent/ongoing-escape'
+                current_escaped_signer == 0 || current_escape_status == EscapeStatus::Expired, 'argent/ongoing-escape'
             );
 
             if (is_enabled) {
                 assert(security_period != 0 && expiry_period != 0, 'argent/invalid-escape-params');
-                self
-                    .escape_enabled
-                    .write(EscapeEnabled { is_enabled: 1, security_period, expiry_period });
+                self.escape_enabled.write(EscapeEnabled { is_enabled: 1, security_period, expiry_period });
             } else {
                 assert(escape_config.is_enabled == 1, 'argent/escape-disabled');
                 assert(security_period == 0 && expiry_period == 0, 'argent/invalid-escape-params');
-                self
-                    .escape_enabled
-                    .write(EscapeEnabled { is_enabled: 0, security_period, expiry_period });
+                self.escape_enabled.write(EscapeEnabled { is_enabled: 0, security_period, expiry_period });
             }
         }
 
-        fn trigger_escape_signer(
-            ref self: ContractState, target_signer: felt252, new_signer: felt252
-        ) {
+        fn trigger_escape_signer(ref self: ContractState, target_signer: felt252, new_signer: felt252) {
             assert_only_self();
 
             let current_escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
-            let current_escape_status = get_escape_status(
-                current_escape.ready_at, escape_config.expiry_period
-            );
+            let current_escape_status = get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             let current_escaped_signer = current_escape.target_signer;
             if (current_escaped_signer != 0 && current_escape_status == EscapeStatus::Ready) {
                 // no escape if there is an ongoing escape with a higher signer
-                assert(
-                    self.is_signer_before(target_signer, current_escaped_signer),
-                    'argent/cannot-override-escape'
-                );
+                assert(self.is_signer_before(target_signer, current_escaped_signer), 'argent/cannot-override-escape');
             }
             let ready_at = get_block_timestamp() + escape_config.security_period;
             let escape = Escape { ready_at, target_signer, new_signer };
@@ -517,23 +462,15 @@ mod ArgentGenericAccount {
 
             let current_escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
-            let current_escape_status = get_escape_status(
-                current_escape.ready_at, escape_config.expiry_period
-            );
+            let current_escape_status = get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
             // replace signer 
             let (_, last_signer) = self.load();
-            self
-                .replace_signer_inner(
-                    current_escape.target_signer, current_escape.new_signer, last_signer
-                );
+            self.replace_signer_inner(current_escape.target_signer, current_escape.new_signer, last_signer);
             self
                 .emit(
-                    SignerEscaped {
-                        target_signer: current_escape.target_signer,
-                        new_signer: current_escape.new_signer
-                    }
+                    SignerEscaped { target_signer: current_escape.target_signer, new_signer: current_escape.new_signer }
                 );
             self.emit(OwnerRemoved { removed_owner_guid: current_escape.target_signer });
             self.emit(OwnerAdded { new_owner_guid: current_escape.new_signer });
@@ -546,9 +483,7 @@ mod ArgentGenericAccount {
             assert_only_self();
             let current_escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
-            let current_escape_status = get_escape_status(
-                current_escape.ready_at, escape_config.expiry_period
-            );
+            let current_escape_status = get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
             self.escape.write(Escape { ready_at: 0, target_signer: 0, new_signer: 0 });
         }
@@ -583,10 +518,7 @@ mod ArgentGenericAccount {
                 let call = calls.at(0);
                 if *call.to == account_address {
                     // This should only be called after an upgrade, never directly
-                    assert(
-                        *call.selector != selector!("execute_after_upgrade"),
-                        'argent/forbidden-call'
-                    );
+                    assert(*call.selector != selector!("execute_after_upgrade"), 'argent/forbidden-call');
                 }
             } else {
                 // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions
@@ -596,10 +528,7 @@ mod ArgentGenericAccount {
         }
 
         fn assert_valid_signatures(
-            self: @ContractState,
-            calls: Span<Call>,
-            execution_hash: felt252,
-            signature: Span<felt252>
+            self: @ContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
         ) {
             // get threshold
             let threshold = self.threshold.read();
@@ -610,10 +539,7 @@ mod ArgentGenericAccount {
                 if (*first_call.selector == selector!("trigger_escape_signer")) {
                     // check we can do recovery
                     let escape_enabled = self.escape_enabled.read();
-                    assert(
-                        escape_enabled.is_enabled == 1 && threshold > 1,
-                        'argent/recovery-unavailable'
-                    );
+                    assert(escape_enabled.is_enabled == 1 && threshold > 1, 'argent/recovery-unavailable');
                     // get escaped signer
                     let calldata: Span<felt252> = first_call.calldata.span();
                     let escaped_signer = calldata.at(0);
@@ -622,35 +548,25 @@ mod ArgentGenericAccount {
                     assert(is_signer, 'argent/escaped-not-signer');
                     // check signatures
                     let valid = self
-                        .is_valid_signature_with_conditions(
-                            execution_hash, threshold - 1, *escaped_signer, signature
-                        );
+                        .is_valid_signature_with_conditions(execution_hash, threshold - 1, *escaped_signer, signature);
                     assert(valid, 'argent/invalid-signature');
                     return;
                 } else if (*first_call.selector == selector!("escape_signer")) {
                     // check we can do recovery
                     let escape_enabled = self.escape_enabled.read();
-                    assert(
-                        escape_enabled.is_enabled == 1 && threshold > 1,
-                        'argent/recovery-unavailable'
-                    );
+                    assert(escape_enabled.is_enabled == 1 && threshold > 1, 'argent/recovery-unavailable');
                     // get escaped signer
                     let calldata: Span<felt252> = first_call.calldata.span();
                     let escaped_signer = calldata.at(0);
                     // check signatures
                     let valid = self
-                        .is_valid_signature_with_conditions(
-                            execution_hash, threshold - 1, *escaped_signer, signature
-                        );
+                        .is_valid_signature_with_conditions(execution_hash, threshold - 1, *escaped_signer, signature);
                     assert(valid, 'argent/invalid-signature');
                     return;
                 }
             }
 
-            let valid = self
-                .is_valid_signature_with_conditions(
-                    execution_hash, threshold, 0_felt252, signature
-                );
+            let valid = self.is_valid_signature_with_conditions(execution_hash, threshold, 0_felt252, signature);
             assert(valid, 'argent/invalid-signature');
         }
 
@@ -685,19 +601,13 @@ mod ArgentGenericAccount {
                         }
                         last_signer = signer_uint;
                     },
-                    Option::None => {
-                        break true;
-                    }
+                    Option::None => { break true; }
                 };
             }
         }
 
         fn is_valid_signer_signature_inner(
-            self: @ContractState,
-            hash: felt252,
-            signer: felt252,
-            signer_type: SignerType,
-            signature: Span<felt252>
+            self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType, signature: Span<felt252>
         ) -> bool {
             let is_signer = self.is_signer_inner(signer);
             assert(is_signer, 'argent/not-a-signer');
@@ -742,9 +652,7 @@ mod ArgentGenericAccount {
         }
 
         // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
-        fn is_signer_using_last(
-            self: @ContractState, signer: felt252, last_signer: felt252
-        ) -> bool {
+        fn is_signer_using_last(self: @ContractState, signer: felt252, last_signer: felt252) -> bool {
             if signer == 0 {
                 return false;
             }
@@ -786,9 +694,7 @@ mod ArgentGenericAccount {
         }
 
         // Returns true if `first_signer` is before `second_signer` in the signer list.
-        fn is_signer_before(
-            self: @ContractState, first_signer: felt252, second_signer: felt252
-        ) -> bool {
+        fn is_signer_before(self: @ContractState, first_signer: felt252, second_signer: felt252) -> bool {
             let mut is_before: bool = false;
             let mut current_signer = first_signer;
             loop {
@@ -805,9 +711,7 @@ mod ArgentGenericAccount {
             return is_before;
         }
 
-        fn add_signers_inner(
-            ref self: ContractState, mut signers_to_add: Span<felt252>, last_signer: felt252
-        ) {
+        fn add_signers_inner(ref self: ContractState, mut signers_to_add: Span<felt252>, last_signer: felt252) {
             match signers_to_add.pop_front() {
                 Option::Some(signer_ref) => {
                     let signer = *signer_ref;
@@ -825,9 +729,7 @@ mod ArgentGenericAccount {
             }
         }
 
-        fn remove_signers_inner(
-            ref self: ContractState, mut signers_to_remove: Span<felt252>, last_signer: felt252
-        ) {
+        fn remove_signers_inner(ref self: ContractState, mut signers_to_remove: Span<felt252>, last_signer: felt252) {
             match signers_to_remove.pop_front() {
                 Option::Some(signer_ref) => {
                     let signer = *signer_ref;
@@ -855,10 +757,7 @@ mod ArgentGenericAccount {
         }
 
         fn replace_signer_inner(
-            ref self: ContractState,
-            signer_to_remove: felt252,
-            signer_to_add: felt252,
-            last_signer: felt252
+            ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252, last_signer: felt252
         ) {
             assert(signer_to_add != 0, 'argent/invalid-zero-signer');
 

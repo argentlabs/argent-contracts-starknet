@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { declareContract, deployer, deployMultisig, loadContract, provider } from "../tests/lib";
+import { declareContract, deployer, deployMultisig, loadContract, provider } from "../tests-integration/lib";
 
 const multisigClassHash = await declareContract("ArgentMultisig", true);
 console.log("ArgentMultisig class hash:", multisigClassHash);

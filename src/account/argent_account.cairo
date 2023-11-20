@@ -15,9 +15,9 @@ mod ArgentAccount {
             IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
             ERC165_IERC165_INTERFACE_ID_OLD,
         },
-        outside_execution::{
-            OutsideExecution, IOutsideExecution, hash_outside_execution_message, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
-        },
+        execute_from_outside::execute_from_outside_component,
+        execute_from_outside::execute_from_outside_component::OutsideExecuctionTrait,
+        outside_execution::{IOutsideExecutionTrait, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID},
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
     use ecdsa::check_ecdsa_signature;
@@ -46,15 +46,19 @@ mod ArgentAccount {
     /// Limits fee in escapes
     const MAX_ESCAPE_MAX_FEE: u128 = 50000000000000000; // 0.05 ETH
 
+    component!(path: execute_from_outside_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
+    #[abi(embed_v0)]
+    impl List = execute_from_outside_component::OutsideExecutionImpl<ContractState>;
+
     #[storage]
     struct Storage {
+        #[substorage(v0)]
+        execute_from_outside: execute_from_outside_component::Storage,
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         _signer: felt252, /// Current account owner
         _guardian: felt252, /// Current account guardian
         _guardian_backup: felt252, /// Current account backup guardian
         _escape: Escape, /// The ongoing escape, if any
-        /// Keeps track of used nonces for outside transactions (`execute_from_outside`)
-        outside_nonces: LegacyMap<felt252, bool>,
         /// Keeps track of how many escaping tx the guardian has submitted. Used to limit the number of transactions the account will pay for
         /// It resets when an escape is completed or canceled
         guardian_escape_attempts: u32,
@@ -66,6 +70,7 @@ mod ArgentAccount {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        ExecuteFromOutsideEvents: execute_from_outside_component::Event,
         AccountCreated: AccountCreated,
         TransactionExecuted: TransactionExecuted,
         EscapeOwnerTriggered: EscapeOwnerTriggered,
@@ -225,49 +230,6 @@ mod ArgentAccount {
             } else {
                 0
             }
-        }
-    }
-
-    #[external(v0)]
-    impl ExecuteFromOutsideImpl of IOutsideExecution<ContractState> {
-        fn execute_from_outside(
-            ref self: ContractState, outside_execution: OutsideExecution, signature: Array<felt252>
-        ) -> Array<Span<felt252>> {
-            // Checks
-            if outside_execution.caller.into() != 'ANY_CALLER' {
-                assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
-            }
-
-            let block_timestamp = get_block_timestamp();
-            assert(
-                outside_execution.execute_after < block_timestamp && block_timestamp < outside_execution.execute_before,
-                'argent/invalid-timestamp'
-            );
-            let nonce = outside_execution.nonce;
-            assert(!self.outside_nonces.read(nonce), 'argent/duplicated-outside-nonce');
-
-            let outside_tx_hash = hash_outside_execution_message(@outside_execution);
-
-            let calls = outside_execution.calls;
-
-            self.assert_valid_calls_and_signature(calls, outside_tx_hash, signature.span(), is_from_outside: true);
-
-            // Effects
-            self.outside_nonces.write(nonce, true);
-
-            // Interactions
-            let retdata = execute_multicall(calls);
-
-            self.emit(TransactionExecuted { hash: outside_tx_hash, response: retdata.span() });
-            retdata
-        }
-
-        fn get_outside_execution_message_hash(self: @ContractState, outside_execution: OutsideExecution) -> felt252 {
-            hash_outside_execution_message(@outside_execution)
-        }
-
-        fn is_valid_outside_execution_nonce(self: @ContractState, nonce: felt252) -> bool {
-            !self.outside_nonces.read(nonce)
         }
     }
 

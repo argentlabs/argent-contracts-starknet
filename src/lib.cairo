@@ -9,6 +9,7 @@ mod common {
     mod asserts;
     mod calls;
     mod erc165;
+    mod execute_from_outside;
     mod multicall;
     mod outside_execution;
     mod test_dapp;

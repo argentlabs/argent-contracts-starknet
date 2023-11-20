@@ -7,7 +7,7 @@ const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID: felt252 = 0x68cfd18b92d1907b8ba3cc3
 /// Interface ID: 0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181
 // get_outside_execution_message_hash is not part of the standard interface
 #[starknet::interface]
-trait IOutsideExecution<TContractState> {
+trait IOutsideExecutionTrait<TContractState> {
     /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
     /// @param outside_execution The parameters of the transaction to execute
     /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`

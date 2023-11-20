@@ -17,7 +17,8 @@ mod ArgentMultisig {
             ERC165_IERC165_INTERFACE_ID_OLD,
         },
         outside_execution::{
-            OutsideExecution, IOutsideExecution, hash_outside_execution_message, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
+            OutsideExecution, IOutsideExecutionTrait, hash_outside_execution_message,
+            ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
@@ -145,7 +146,7 @@ mod ArgentMultisig {
     }
 
     #[external(v0)]
-    impl ExecuteFromOutsideImpl of IOutsideExecution<ContractState> {
+    impl ExecuteFromOutsideImpl of IOutsideExecutionTrait<ContractState> {
         fn execute_from_outside(
             ref self: ContractState, outside_execution: OutsideExecution, signature: Array<felt252>
         ) -> Array<Span<felt252>> {

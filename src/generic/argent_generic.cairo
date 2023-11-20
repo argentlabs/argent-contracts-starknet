@@ -265,7 +265,7 @@ mod ArgentGenericAccount {
             let mut signature = tx_info.signature;
             let mut parsed_signatures: Array<SignerSignature> = Serde::deserialize(ref signature)
                 .expect('argent/deserialize-signer-fail');
-            // TODO AS LONG AS FIRST SIGANTURE IS OK, DEPLOY (this is prob wron, we should loop)
+            // TODO AS LONG AS FIRST SIGNATURE IS OK, DEPLOY (this is prob wrong, we should loop)
             assert(parsed_signatures.len() >= 1, 'argent/invalid-signature-length');
 
             let signer_sig = *parsed_signatures.at(0);

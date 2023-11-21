@@ -79,6 +79,7 @@ mod ArgentAccount {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
         ExecuteFromOutsideEvents: execute_from_outside_component::Event,
         AccountCreated: AccountCreated,
         EscapeOwnerTriggered: EscapeOwnerTriggered,

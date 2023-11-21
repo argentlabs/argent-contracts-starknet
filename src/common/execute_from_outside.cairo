@@ -15,18 +15,18 @@ mod execute_from_outside_component {
         outside_nonces: LegacyMap<felt252, bool>,
     }
 
-    #[derive(Drop, starknet::Event)]
-    struct TransactionExecuted {
-        #[key]
-        #[flat]
-        hash: felt252,
-        response: Span<Span<felt252>>
-    }
-
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
         TransactionExecuted: TransactionExecuted,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct TransactionExecuted {
+        #[key]
+        hash: felt252,
+        response: Span<Span<felt252>>
     }
 
     #[embeddable_as(OutsideExecutionImpl)]

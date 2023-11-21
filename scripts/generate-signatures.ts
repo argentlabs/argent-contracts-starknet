@@ -1,7 +1,6 @@
 import { num } from "starknet";
 import { KeyPair, signChangeOwnerMessage } from "../tests-integration/lib";
-import { Signature, Wallet, ethers, hashMessage, id } from "ethers";
-import { assert } from "console";
+import { Signature, Wallet, id } from "ethers";
 
 const owner = new KeyPair(1n);
 const guardian = new KeyPair(2n);
@@ -12,7 +11,7 @@ const new_owner = new KeyPair(4n);
 const wrong_owner = new KeyPair(7n);
 const wrong_guardian = new KeyPair(8n);
 
-function calculate_sig_account() {
+function calculate_account_signature() {
   const hash = "0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";
   const invalid_hash = "0x02d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a561fa7";
 
@@ -48,7 +47,7 @@ function calculate_sig_account() {
 `);
 }
 
-async function calculate_sig_account_with_eth() {
+async function calculate_account_signature_with_eth() {
   // Ethers requires hash to be pair length
   const hash = "0x02d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";
   const eth_signer = new Wallet(id("9n"));
@@ -69,7 +68,7 @@ async function calculate_sig_account_with_eth() {
 `);
 }
 
-async function calculate_sig_change_owner() {
+async function calculate_hange_owner_signature() {
   // message_hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
   const chain_id = "0";
   const contract_address = "0x1";
@@ -84,4 +83,6 @@ async function calculate_sig_change_owner() {
     `);
 }
 
-calculate_sig_account_with_eth();
+calculate_account_signature();
+calculate_account_signature_with_eth();
+calculate_hange_owner_signature();

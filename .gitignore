@@ -16,3 +16,5 @@ cairo
 account.json
 dump
 package-lock.json
+test-output.txt
+gas-report-new.txt

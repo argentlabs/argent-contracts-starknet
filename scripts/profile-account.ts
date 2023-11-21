@@ -7,8 +7,8 @@ import {
   deployer,
   deployOldAccount,
   loadContract,
-} from "../tests/lib";
-import { profileGasUsage } from "../tests/lib/gas";
+} from "../tests-integration/lib";
+import { profileGasUsage } from "../tests-integration/lib/gas";
 
 const argentAccountClassHash = await declareContract("ArgentAccount");
 const oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
@@ -17,16 +17,15 @@ const testDappClassHash = await declareContract("TestDapp");
 const { contract_address } = await deployer.deployContract({ classHash: testDappClassHash });
 const testDappContract = await loadContract(contract_address);
 
-const ethusd = 1600n;
+const ethUsd = 1800n;
 
 const table: Record<string, any> = {};
-const gwei = 10n ** 9n;
 
 async function reportProfile(name: string, response: InvokeFunctionResponse) {
   const report = await profileGasUsage(response);
   const { actualFee, gasUsed, computationGas, l1CalldataGas, executionResources } = report;
   console.dir(report, { depth: null });
-  const feeUsd = Number(actualFee) / Number(ethusd * gwei);
+  const feeUsd = Number(actualFee * ethUsd) / Number(10n ** 18n);
   table[name] = {
     actualFee: Number(actualFee),
     feeUsd: Number(feeUsd.toFixed(2)),

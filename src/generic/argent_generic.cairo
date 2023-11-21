@@ -577,16 +577,15 @@ mod ArgentGenericAccount {
             loop {
                 match signer_signatures.pop_front() {
                     Option::Some(signer_sig_ref) => {
-                        let signer_sig = signer_sig_ref;
-                        assert(signer_sig.signer != excluded_signer, 'argent/unauthorised_signer');
-                        let signer_uint: u256 = signer_sig.signer.into();
+                        assert(signer_sig_ref.signer != excluded_signer, 'argent/unauthorised_signer');
+                        let signer_uint: u256 = signer_sig_ref.signer.into();
                         assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
                         let is_valid = self
                             .is_valid_signer_signature(
                                 hash,
-                                signer: signer_sig.signer,
-                                signer_type: signer_sig.signer_type,
-                                signature: signer_sig.signature,
+                                signer: signer_sig_ref.signer,
+                                signer_type: signer_sig_ref.signer_type,
+                                signature: signer_sig_ref.signature,
                             );
                         if !is_valid {
                             break false;

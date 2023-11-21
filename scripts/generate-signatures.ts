@@ -68,7 +68,7 @@ async function calculate_account_signature_with_eth() {
 `);
 }
 
-async function calculate_hange_owner_signature() {
+async function calculate_change_owner_signature() {
   // message_hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
   const chain_id = "0";
   const contract_address = "0x1";
@@ -85,4 +85,4 @@ async function calculate_hange_owner_signature() {
 
 calculate_account_signature();
 calculate_account_signature_with_eth();
-calculate_hange_owner_signature();
+calculate_change_owner_signature();

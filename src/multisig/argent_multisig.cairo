@@ -9,8 +9,9 @@ mod ArgentMultisig {
             IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
             ERC165_IERC165_INTERFACE_ID_OLD,
         },
-        execute_from_outside::execute_from_outside_component, calls::execute_multicall, version::Version,
-        outside_execution::{IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID},
+        execute_from_outside::execute_from_outside_component,
+        execute_from_outside::execute_from_outside_component::TransactionExecuted, calls::execute_multicall,
+        version::Version, outside_execution::{IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID},
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
     use argent::multisig::interface::{IArgentMultisig, IDeprecatedArgentMultisig};
@@ -40,10 +41,6 @@ mod ArgentMultisig {
         ) {
             self.assert_valid_calls_and_signature(calls, execution_hash, signature);
         }
-
-        fn emit_transaction_executed(ref self: ContractState, hash: felt252, response: Span<Span<felt252>>) {
-            self.emit(TransactionExecuted { hash, response });
-        }
     }
 
     #[storage]
@@ -59,7 +56,6 @@ mod ArgentMultisig {
     enum Event {
         ExecuteFromOutsideEvents: execute_from_outside_component::Event,
         ThresholdUpdated: ThresholdUpdated,
-        TransactionExecuted: TransactionExecuted,
         AccountUpgraded: AccountUpgraded,
         OwnerAdded: OwnerAdded,
         OwnerRemoved: OwnerRemoved
@@ -70,16 +66,6 @@ mod ArgentMultisig {
     #[derive(Drop, starknet::Event)]
     struct ThresholdUpdated {
         new_threshold: usize,
-    }
-
-    /// @notice Emitted when the account executes a transaction
-    /// @param hash The transaction hash
-    /// @param response The data returned by the methods called
-    #[derive(Drop, starknet::Event)]
-    struct TransactionExecuted {
-        #[key]
-        hash: felt252,
-        response: Span<Span<felt252>>
     }
 
     /// @notice Emitted when the implementation of the account changes
@@ -142,7 +128,10 @@ mod ArgentMultisig {
 
             let hash = tx_info.transaction_hash;
             let response = retdata.span();
-            self.emit(TransactionExecuted { hash, response });
+            self
+                .emit(
+                    execute_from_outside_component::Event::TransactionExecuted(TransactionExecuted { hash, response })
+                );
             retdata
         }
 

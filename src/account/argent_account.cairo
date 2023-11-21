@@ -16,8 +16,7 @@ mod ArgentAccount {
             ERC165_IERC165_INTERFACE_ID_OLD,
         },
         execute_from_outside::execute_from_outside_component,
-        execute_from_outside::execute_from_outside_component::OutsideExecuctionTrait,
-        outside_execution::{IOutsideExecutionTrait, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID},
+        outside_execution::{IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID},
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
     use ecdsa::check_ecdsa_signature;
@@ -49,6 +48,15 @@ mod ArgentAccount {
     component!(path: execute_from_outside_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
     impl List = execute_from_outside_component::OutsideExecutionImpl<ContractState>;
+
+    impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
+        #[inline(always)]
+        fn assert_valid_calls_and_signature_callback(
+            ref self: ContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>,
+        ) {
+            self.assert_valid_calls_and_signature(calls, execution_hash, signature, is_from_outside: true);
+        }
+    }
 
     #[storage]
     struct Storage {

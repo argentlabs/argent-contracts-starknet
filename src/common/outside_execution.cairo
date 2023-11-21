@@ -23,6 +23,13 @@ trait IOutsideExecutionTrait<TContractState> {
     fn get_outside_execution_message_hash(self: @TContractState, outside_execution: OutsideExecution) -> felt252;
 }
 
+trait IOutsideExecutionCallback<TContractState> {
+    #[inline(always)]
+    fn assert_valid_calls_and_signature_callback(
+        ref self: TContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>,
+    );
+}
+
 #[derive(Copy, Drop, Hash)]
 struct StarkNetDomain {
     name: felt252,

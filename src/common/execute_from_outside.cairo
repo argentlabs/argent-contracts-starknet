@@ -2,7 +2,9 @@
 mod execute_from_outside_component {
     use argent::common::{
         calls::execute_multicall,
-        outside_execution::{IOutsideExecutionTrait, OutsideExecution, hash_outside_execution_message}
+        outside_execution::{
+            IOutsideExecutionTrait, OutsideExecution, hash_outside_execution_message, IOutsideExecutionCallback
+        }
     };
     use starknet::{get_caller_address, get_block_timestamp};
 
@@ -29,7 +31,7 @@ mod execute_from_outside_component {
 
     #[embeddable_as(OutsideExecutionImpl)]
     impl OutsideExecuctionTrait<
-        TContractState, +HasComponent<TContractState>,
+        TContractState, +HasComponent<TContractState>, +IOutsideExecutionCallback<TContractState>, +Drop<TContractState>
     > of IOutsideExecutionTrait<ComponentState<TContractState>> {
         fn execute_from_outside(
             ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Array<felt252>
@@ -49,15 +51,14 @@ mod execute_from_outside_component {
 
             let outside_tx_hash = hash_outside_execution_message(@outside_execution);
 
-            let calls = outside_execution.calls;
-
-            // self.assert_valid_calls_and_signature(calls, outside_tx_hash, signature.span(), is_from_outside: true);
+            let mut state = self.get_contract_mut();
+            state.assert_valid_calls_and_signature_callback(outside_execution.calls, outside_tx_hash, signature.span());
 
             // Effects
             self.outside_nonces.write(nonce, true);
 
             // Interactions
-            let retdata = execute_multicall(calls);
+            let retdata = execute_multicall(outside_execution.calls);
 
             self.emit(TransactionExecuted { hash: outside_tx_hash, response: retdata.span() });
             retdata

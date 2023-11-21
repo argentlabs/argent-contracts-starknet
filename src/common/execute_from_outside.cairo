@@ -4,7 +4,7 @@ mod execute_from_outside_component {
         calls::execute_multicall,
         outside_execution::{
             IOutsideExecutionTrait, OutsideExecution, hash_outside_execution_message, IOutsideExecutionCallback
-        }
+        },
     };
     use starknet::{get_caller_address, get_block_timestamp};
 
@@ -17,17 +17,7 @@ mod execute_from_outside_component {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
-        #[flat]
-        TransactionExecuted: TransactionExecuted,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct TransactionExecuted {
-        #[key]
-        hash: felt252,
-        response: Span<Span<felt252>>
-    }
+    enum Event {}
 
     #[embeddable_as(OutsideExecutionImpl)]
     impl OutsideExecuctionTrait<
@@ -60,7 +50,7 @@ mod execute_from_outside_component {
             // Interactions
             let retdata = execute_multicall(outside_execution.calls);
 
-            self.emit(TransactionExecuted { hash: outside_tx_hash, response: retdata.span() });
+            state.emit_transaction_executed(outside_tx_hash, retdata.span());
             retdata
         }
 

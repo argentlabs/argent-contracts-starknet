@@ -56,6 +56,10 @@ mod ArgentAccount {
         ) {
             self.assert_valid_calls_and_signature(calls, execution_hash, signature, is_from_outside: true);
         }
+
+        fn emit_transaction_executed(ref self: ContractState, hash: felt252, response: Span<Span<felt252>>) {
+            self.emit(TransactionExecuted { hash, response });
+        }
     }
 
     #[storage]
@@ -78,7 +82,6 @@ mod ArgentAccount {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        #[flat]
         ExecuteFromOutsideEvents: execute_from_outside_component::Event,
         AccountCreated: AccountCreated,
         TransactionExecuted: TransactionExecuted,

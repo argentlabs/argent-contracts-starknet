@@ -28,6 +28,9 @@ trait IOutsideExecutionCallback<TContractState> {
     fn assert_valid_calls_and_signature_callback(
         ref self: TContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>,
     );
+
+    #[inline(always)]
+    fn emit_transaction_executed(ref self: TContractState, hash: felt252, response: Span<Span<felt252>>);
 }
 
 #[derive(Copy, Drop, Hash)]

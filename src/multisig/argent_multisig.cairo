@@ -40,6 +40,10 @@ mod ArgentMultisig {
         ) {
             self.assert_valid_calls_and_signature(calls, execution_hash, signature);
         }
+
+        fn emit_transaction_executed(ref self: ContractState, hash: felt252, response: Span<Span<felt252>>) {
+            self.emit(TransactionExecuted { hash, response });
+        }
     }
 
     #[storage]

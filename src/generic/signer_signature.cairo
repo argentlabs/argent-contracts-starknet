@@ -1,5 +1,5 @@
 use ecdsa::check_ecdsa_signature;
-use starknet::{EthAddress, verify_eth_signature, secp256_trait::signature_from_vrs};
+use starknet::{EthAddress, eth_signature::is_eth_signature_valid, secp256_trait::signature_from_vrs};
 
 #[derive(Drop, Copy, Serde, PartialEq)]
 enum SignerType {
@@ -20,17 +20,20 @@ struct SignerSignature {
 fn assert_valid_starknet_signature(hash: felt252, signer: felt252, signature: Span<felt252>) {
     assert(signature.len() == 2, 'argent/invalid-signature');
     let is_valid = check_ecdsa_signature(hash, signer, *signature[0], *signature[1]);
-    assert(is_valid, 'argent/invalid-ecdsa-signature');
+    assert(is_valid, 'argent/invalid-stark-signature');
 }
 
 fn assert_valid_ethereum_signature(hash: felt252, signer: felt252, mut signature: Span<felt252>) {
     assert(signature.len() == 5, 'argent/invalid-signature');
-    let eth_signer: EthAddress = signer.try_into().unwrap();
-    let signature_r: u256 = Serde::deserialize(ref signature).unwrap();
-    let signature_s: u256 = Serde::deserialize(ref signature).unwrap();
-    let signature_v: u32 = Serde::deserialize(ref signature).unwrap();
+    let eth_signer: EthAddress = signer.try_into().expect('argent/invalid-eth-signer');
+    let signature_r: u256 = Serde::deserialize(ref signature).expect('argent/invalid-eth-r');
+    let signature_s: u256 = Serde::deserialize(ref signature).expect('argent/invalid-eth-s');
+    let signature_v: u32 = Serde::deserialize(ref signature).expect('argent/invalid-eth-v');
 
     let eth_signature = signature_from_vrs(signature_v, signature_r, signature_s);
 
-    verify_eth_signature(hash.into(), eth_signature, eth_signer);
+    match is_eth_signature_valid(hash.into(), eth_signature, eth_signer) {
+        Result::Ok(()) => {},
+        Result::Err(err) => panic_with_felt252('argent/invalid-eth-signature'),
+    }
 }

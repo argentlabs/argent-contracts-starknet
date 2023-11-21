@@ -30,9 +30,7 @@ trait IArgentMultisig<TContractState> {
     /// @dev Removes account signers, additionally sets a new threshold
     /// @param new_threshold New threshold
     /// @param signers_to_remove Should contain only current signers, otherwise it will revert
-    fn remove_signers(
-        ref self: TContractState, new_threshold: usize, signers_to_remove: Array<felt252>
-    );
+    fn remove_signers(ref self: TContractState, new_threshold: usize, signers_to_remove: Array<felt252>);
 
     /// @dev Re-oders the account signers
     /// @param new_signer_order Should contain only current signers, otherwise it will revert
@@ -53,19 +51,13 @@ trait IArgentMultisig<TContractState> {
 
     /// Checks if a given signature is a valid signature from one of the multisig owners
     fn is_valid_signer_signature(
-        self: @TContractState,
-        hash: felt252,
-        signer: felt252,
-        signer_type: SignerType,
-        signature: Span<felt252>
+        self: @TContractState, hash: felt252, signer: felt252, signer_type: SignerType, signature: Span<felt252>
     ) -> bool;
 }
 
 #[starknet::interface]
 trait IRecoveryAccount<TContractState> {
-    fn toggle_escape(
-        ref self: TContractState, is_enabled: bool, security_period: u64, expiry_period: u64
-    );
+    fn toggle_escape(ref self: TContractState, is_enabled: bool, security_period: u64, expiry_period: u64);
     fn trigger_escape_signer(ref self: TContractState, target_signer: felt252, new_signer: felt252);
     fn escape_signer(ref self: TContractState);
     fn cancel_escape(ref self: TContractState);

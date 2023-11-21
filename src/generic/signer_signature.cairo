@@ -1,11 +1,9 @@
 use ecdsa::check_ecdsa_signature;
-use starknet::{
-    EthAddress, Felt252TryIntoEthAddress,
-    secp256_trait::{
-        Signature, signature_from_vrs, verify_eth_signature, Secp256Trait, Secp256PointTrait
-    }
-};
 use starknet::secp256k1::{Secp256k1Point, Secp256k1PointImpl};
+use starknet::{
+    EthAddress, Felt252TryIntoEthAddress, verify_eth_signature,
+    secp256_trait::{Signature, signature_from_vrs, Secp256Trait, Secp256PointTrait}
+};
 
 #[derive(Drop, Copy, Serde, PartialEq)]
 enum SignerType {
@@ -22,9 +20,7 @@ struct SignerSignature {
     signature: Span<felt252>,
 }
 
-fn deserialize_array_signer_signature(
-    mut serialized: Span<felt252>
-) -> Option<Span<SignerSignature>> {
+fn deserialize_array_signer_signature(mut serialized: Span<felt252>) -> Option<Span<SignerSignature>> {
     let mut output = array![];
     loop {
         if serialized.len() == 0 {
@@ -32,9 +28,7 @@ fn deserialize_array_signer_signature(
         }
         match Serde::deserialize(ref serialized) {
             Option::Some(signer_signature) => output.append(signer_signature),
-            Option::None => {
-                break Option::None;
-            },
+            Option::None => { break Option::None; },
         };
     }
 }
@@ -53,5 +47,5 @@ fn assert_valid_ethereum_signature(hash: felt252, signer: felt252, signature: Sp
     let signature_v: u32 = (*signature.at(2)).try_into().unwrap();
     let eth_signature = signature_from_vrs(signature_v, signature_r, signature_s);
     let eth_hash: u256 = hash.into();
-    verify_eth_signature::<Secp256k1Point>(eth_hash, eth_signature, eth_signer);
+    verify_eth_signature(eth_hash, eth_signature, eth_signer);
 }

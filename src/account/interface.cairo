@@ -1,15 +1,11 @@
-use argent::common::version::Version;
 use argent::account::escape::{Escape, EscapeStatus};
+use argent::common::version::Version;
 
 #[starknet::interface]
 trait IArgentAccount<TContractState> {
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate_deploy__(
-        self: @TContractState,
-        class_hash: felt252,
-        contract_address_salt: felt252,
-        owner: felt252,
-        guardian: felt252
+        self: @TContractState, class_hash: felt252, contract_address_salt: felt252, owner: felt252, guardian: felt252
     ) -> felt252;
     // External
 
@@ -21,9 +17,7 @@ trait IArgentAccount<TContractState> {
     /// Signature is required to prevent changing to an address which is not in control of the user
     /// Signature is the Signed Message of this hash:
     /// hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
-    fn change_owner(
-        ref self: TContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252
-    );
+    fn change_owner(ref self: TContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252);
 
     /// @notice Changes the guardian
     /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
@@ -90,7 +84,5 @@ trait IDeprecatedArgentAccount<TContractState> {
     fn getName(self: @TContractState) -> felt252;
     fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
     /// For compatibility reasons this method returns 1 when the signature is valid, and panics otherwise
-    fn isValidSignature(
-        self: @TContractState, hash: felt252, signatures: Array<felt252>
-    ) -> felt252;
+    fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }

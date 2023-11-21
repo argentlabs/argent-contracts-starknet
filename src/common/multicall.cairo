@@ -7,9 +7,8 @@ trait IMulticall<TContractState> {
 
 #[starknet::contract]
 mod Multicall {
-    use starknet::{info::get_block_number, account::Call};
-
     use argent::common::calls::execute_multicall;
+    use starknet::{info::get_block_number, account::Call};
 
     #[storage]
     struct Storage {}

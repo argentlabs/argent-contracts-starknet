@@ -64,7 +64,4 @@ mod execute_from_outside_component {
             !self.outside_nonces.read(nonce)
         }
     }
-
-    #[generate_trait]
-    impl PrivateListImpl<TContractState> of PrivateListTrait<TContractState> {}
 }

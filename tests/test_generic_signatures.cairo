@@ -14,15 +14,6 @@ const owner_eth_r: u256 = 0xc259f65857e922d06c40a0c436697125394a9e825d61804630bb
 const owner_eth_s: u256 = 0x098cf1c540ad542653979ae9eef9e0c8f53a68f4868d9057e2a193f69526c061;
 const owner_eth_v: felt252 = 27;
 
-
-fn double_signature(r1: felt252, s1: felt252, r2: felt252, s2: felt252) -> Array<felt252> {
-    array![r1, s1, r2, s2]
-}
-
-fn single_signature(r: felt252, s: felt252) -> Array<felt252> {
-    array![r, s]
-}
-
 fn initialize_account(owner: felt252) -> IAccountDispatcher {
     let calldata = array![1, 1, owner];
     let class_hash = ArgentGenericAccount::TEST_CLASS_HASH.try_into().unwrap();

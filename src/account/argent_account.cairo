@@ -47,7 +47,7 @@ mod ArgentAccount {
 
     component!(path: execute_from_outside_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
-    impl List = execute_from_outside_component::OutsideExecutionImpl<ContractState>;
+    impl ExecuteFromOutside = execute_from_outside_component::OutsideExecutionImpl<ContractState>;
 
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
         #[inline(always)]

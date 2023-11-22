@@ -10,7 +10,6 @@ mod execute_from_outside_component {
 
     #[storage]
     struct Storage {
-        // TODO DO A TEST IF UPGRADE TO THIS, STORAGE STAYS THE SAME
         /// Keeps track of used nonces for outside transactions (`execute_from_outside`)
         outside_nonces: LegacyMap<felt252, bool>,
     }

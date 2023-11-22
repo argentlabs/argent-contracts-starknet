@@ -21,6 +21,7 @@ mod ArgentGenericAccount {
         },
         interface::{IRecoveryAccount, IArgentMultisig}, recovery::{EscapeStatus, Escape, EscapeEnabled}
     };
+    use core::array::SpanTrait;
     use starknet::{
         get_contract_address, VALIDATED, syscalls::replace_class_syscall, ClassHash, get_block_timestamp,
         get_caller_address, get_tx_info, account::Call
@@ -265,6 +266,7 @@ mod ArgentGenericAccount {
             let mut signature = tx_info.signature;
             let mut parsed_signatures: Array<SignerSignature> = Serde::deserialize(ref signature)
                 .expect('argent/deserialize-signer-fail');
+            assert(signature.is_empty(), 'argent/signature-not-empty');
             // TODO AS LONG AS FIRST SIGNATURE IS OK, DEPLOY (this is prob wrong, we should loop)
             assert(parsed_signatures.len() >= 1, 'argent/invalid-signature-length');
 
@@ -576,16 +578,16 @@ mod ArgentGenericAccount {
             let mut last_signer: u256 = 0;
             loop {
                 match signer_signatures.pop_front() {
-                    Option::Some(signer_sig_ref) => {
-                        assert(signer_sig_ref.signer != excluded_signer, 'argent/unauthorised_signer');
-                        let signer_uint: u256 = signer_sig_ref.signer.into();
+                    Option::Some(signer_sig) => {
+                        assert(signer_sig.signer != excluded_signer, 'argent/unauthorised_signer');
+                        let signer_uint: u256 = signer_sig.signer.into();
                         assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
                         let is_valid = self
                             .is_valid_signer_signature(
                                 hash,
-                                signer: signer_sig_ref.signer,
-                                signer_type: signer_sig_ref.signer_type,
-                                signature: signer_sig_ref.signature,
+                                signer: signer_sig.signer,
+                                signer_type: signer_sig.signer_type,
+                                signature: signer_sig.signature,
                             );
                         if !is_valid {
                             break false;

@@ -17,19 +17,7 @@ mod execute_from_outside_component {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
-        TransactionExecuted: TransactionExecuted,
-    }
-
-    /// @notice Emitted when the account executes a transaction
-    /// @param hash The transaction hash
-    /// @param response The data returned by the methods called
-    #[derive(Drop, starknet::Event)]
-    struct TransactionExecuted {
-        #[key]
-        hash: felt252,
-        response: Span<Span<felt252>>
-    }
+    enum Event {}
 
     #[embeddable_as(OutsideExecutionImpl)]
     impl OutsideExecuctionTrait<
@@ -62,7 +50,7 @@ mod execute_from_outside_component {
             // Interactions
             let retdata = execute_multicall(outside_execution.calls);
 
-            self.emit(TransactionExecuted { hash: outside_tx_hash, response: retdata.span() });
+            state.emit_transaction_executed(outside_tx_hash, retdata.span());
             retdata
         }
 

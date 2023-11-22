@@ -16,7 +16,6 @@ mod ArgentAccount {
             ERC165_IERC165_INTERFACE_ID_OLD,
         },
         execute_from_outside::execute_from_outside_component,
-        execute_from_outside::execute_from_outside_component::TransactionExecuted,
         outside_execution::{IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID},
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
@@ -57,6 +56,11 @@ mod ArgentAccount {
         ) {
             self.assert_valid_calls_and_signature(calls, execution_hash, signature, is_from_outside: true);
         }
+
+        #[inline(always)]
+        fn emit_transaction_executed(ref self: ContractState, hash: felt252, response: Span<Span<felt252>>) {
+            self.emit(TransactionExecuted { hash, response });
+        }
     }
 
     #[storage]
@@ -82,6 +86,7 @@ mod ArgentAccount {
         #[flat]
         ExecuteFromOutsideEvents: execute_from_outside_component::Event,
         AccountCreated: AccountCreated,
+        TransactionExecuted: TransactionExecuted,
         EscapeOwnerTriggered: EscapeOwnerTriggered,
         EscapeGuardianTriggered: EscapeGuardianTriggered,
         OwnerEscaped: OwnerEscaped,
@@ -104,6 +109,16 @@ mod ArgentAccount {
         #[key]
         owner: felt252,
         guardian: felt252
+    }
+
+    /// @notice Emitted when the account executes a transaction
+    /// @param hash The transaction hash
+    /// @param response The data returned by the methods called
+    #[derive(Drop, starknet::Event)]
+    struct TransactionExecuted {
+        #[key]
+        hash: felt252,
+        response: Span<Span<felt252>>
     }
 
     /// @notice Owner escape was triggered by the guardian
@@ -219,10 +234,7 @@ mod ArgentAccount {
 
             let hash = tx_info.transaction_hash;
             let response = retdata.span();
-            self
-                .emit(
-                    execute_from_outside_component::Event::TransactionExecuted(TransactionExecuted { hash, response })
-                );
+            self.emit(TransactionExecuted { hash, response });
             retdata
         }
 

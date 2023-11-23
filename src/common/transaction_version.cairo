@@ -14,10 +14,7 @@ const DA_MODE_L2: u32 = 1;
 #[inline(always)]
 fn assert_correct_invoke_version(tx_version: felt252) {
     assert(
-        tx_version == TX_V3
-            || tx_version == TX_V1
-            || tx_version == TX_V3_ESTIMATE
-            || tx_version == TX_V1_ESTIMATE,
+        tx_version == TX_V3 || tx_version == TX_V1 || tx_version == TX_V3_ESTIMATE || tx_version == TX_V1_ESTIMATE,
         'argent/invalid-tx-version'
     )
 }
@@ -25,10 +22,7 @@ fn assert_correct_invoke_version(tx_version: felt252) {
 #[inline(always)]
 fn assert_correct_declare_version(tx_version: felt252) {
     assert(
-        tx_version == TX_V3
-            || tx_version == TX_V2
-            || tx_version == TX_V3_ESTIMATE
-            || tx_version == TX_V2_ESTIMATE,
+        tx_version == TX_V3 || tx_version == TX_V2 || tx_version == TX_V3_ESTIMATE || tx_version == TX_V2_ESTIMATE,
         'argent/invalid-declare-version'
     )
 }

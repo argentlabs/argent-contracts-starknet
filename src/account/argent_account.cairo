@@ -48,7 +48,7 @@ mod ArgentAccount {
     const MAX_ESCAPE_MAX_FEE: u128 = 50000000000000000; // 0.05 ETH
     /// Limits tip in escapes
     const MAX_ESCAPE_TIP: u128 = 1_000000000000000000; // 1 STRK
-    
+
     #[storage]
     struct Storage {
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
@@ -767,7 +767,7 @@ mod ArgentAccount {
             );
             // No need to allow self deployment and escaping in one transaction
             assert(tx_info.account_deployment_data.is_empty(), 'argent/invalid-deployment-data');
-        } else if tx_info.version == TX_V1|| tx_info.version == TX_V1_ESTIMATE {
+        } else if tx_info.version == TX_V1 || tx_info.version == TX_V1_ESTIMATE {
             // other fields not available on V1
             assert(tx_info.max_fee <= MAX_ESCAPE_MAX_FEE, 'argent/max-fee-too-high');
         } else {

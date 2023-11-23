@@ -100,7 +100,7 @@ class GenericSigner extends RawSigner {
 {
   const name = "[GA] 2 Eth + 1 Starknet signature";
   console.log(name);
-  const owners = [new EthKeyPair(),new EthKeyPair(), new StarknetKeyPair()];
+  const owners = [new EthKeyPair(), new EthKeyPair(), new StarknetKeyPair()];
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await reportProfile(table, name, await testDappContract.set_number(42));

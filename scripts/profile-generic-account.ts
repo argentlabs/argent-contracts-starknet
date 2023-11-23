@@ -35,26 +35,29 @@ class GenericSigner extends RawSigner {
   }
 }
 
-const StarknetSignatureType = new CairoCustomEnum({
-  Starknet: {},
-  Secp256k1: undefined,
-  Webauthn: undefined,
-  Secp256r1: undefined,
-});
+function starknetSignatureType(parameters: string[]) {
+  return new CairoCustomEnum({
+    Starknet: { parameters },
+    Secp256k1: undefined,
+    Webauthn: undefined,
+    Secp256r1: undefined,
+  });
+}
 
-const EthereumSignatureType = new CairoCustomEnum({
-  Starknet: undefined,
-  Secp256k1: {},
-  Webauthn: undefined,
-  Secp256r1: undefined,
-});
+function ethereumSignatureType() {
+  return new CairoCustomEnum({
+    Starknet: undefined,
+    Secp256k1: {},
+    Webauthn: undefined,
+    Secp256r1: undefined,
+  });
+}
 
 class StarknetKeyPair extends KeyPair {
   public signHash(messageHash: string) {
     return CallData.compile({
       signer: super.publicKey,
-      signer_type: StarknetSignatureType,
-      signature: super.signHash(messageHash),
+      signer_type: starknetSignatureType(super.signHash(messageHash)),
     });
   }
 }
@@ -72,16 +75,15 @@ class EthKeyPair extends KeyPair {
     const signature = EthersSignature.from(eth_signer.signingKey.sign(messageHash));
     const rU256 = uint256.bnToUint256(signature.r);
     const sU256 = uint256.bnToUint256(signature.s);
+
     return CallData.compile({
       signer: this.publicKey,
-      signer_type: EthereumSignatureType,
-      signature: [
-        rU256.low.toString(),
-        rU256.high.toString(),
-        sU256.low.toString(),
-        sU256.high.toString(),
-        signature.v.toString(),
-      ],
+      signer_type: ethereumSignatureType(),
+      r_low: rU256.low.toString(),
+      r_high: rU256.high.toString(),
+      s_low: sU256.low.toString(),
+      s_high: sU256.high.toString(),
+      y_parity: signature.yParity.toString(),
     });
   }
 }

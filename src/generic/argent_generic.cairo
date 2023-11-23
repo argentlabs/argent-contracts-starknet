@@ -275,7 +275,7 @@ mod ArgentGenericAccount {
                     tx_info.transaction_hash,
                     signer: signer_sig.signer,
                     signer_type: signer_sig.signer_type,
-                    signature: signer_sig.signature,
+                    signature: array![].span(),
                 );
             assert(is_valid, 'argent/invalid-signature');
 
@@ -403,10 +403,11 @@ mod ArgentGenericAccount {
             self.is_signer_inner(signer)
         }
 
+        // TODO Needs to update the interface
         fn is_valid_signer_signature(
             self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType, signature: Span<felt252>
         ) -> bool {
-            self.is_valid_signer_signature_inner(hash, signer, signer_type, signature)
+            self.is_valid_signer_signature_inner(hash, signer, signer_type)
         }
     }
 
@@ -586,7 +587,7 @@ mod ArgentGenericAccount {
                                 hash,
                                 signer: signer_sig.signer,
                                 signer_type: signer_sig.signer_type,
-                                signature: signer_sig.signature,
+                                signature: array![].span(),
                             );
                         if !is_valid {
                             break false;
@@ -599,16 +600,16 @@ mod ArgentGenericAccount {
         }
 
         fn is_valid_signer_signature_inner(
-            self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType, signature: Span<felt252>
+            self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType
         ) -> bool {
             let is_signer = self.is_signer_inner(signer);
             assert(is_signer, 'argent/not-a-signer');
             match signer_type {
-                SignerType::Starknet => {
+                SignerType::Starknet(signature) => {
                     assert_valid_starknet_signature(hash, signer, signature);
                     true
                 },
-                SignerType::Secp256k1 => {
+                SignerType::Secp256k1(signature) => {
                     assert_valid_ethereum_signature(hash, signer, signature);
                     true
                 },

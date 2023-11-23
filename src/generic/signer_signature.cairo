@@ -5,6 +5,7 @@ use starknet::{EthAddress, eth_signature::is_eth_signature_valid, secp256_trait:
 enum SignerType {
     #[default]
     Starknet,
+    // TODO ADD SIGNATURE: Secp256k1(Signature)
     Secp256k1,
     Webauthn,
     Secp256r1,
@@ -33,7 +34,7 @@ fn assert_valid_ethereum_signature(hash: felt252, signer: felt252, mut signature
     let eth_signature = signature_from_vrs(signature_v, signature_r, signature_s);
 
     match is_eth_signature_valid(hash.into(), eth_signature, eth_signer) {
-        Result::Ok(()) => {},
+        Result::Ok(_) => {},
         Result::Err(err) => panic_with_felt252('argent/invalid-eth-signature'),
     }
 }

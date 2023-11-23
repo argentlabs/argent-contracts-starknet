@@ -1,8 +1,8 @@
-import { Account, ArraySignatureType, CallData, hash, num } from "starknet";
+import { Signature as EthersSignature, Wallet, id } from "ethers";
+import { Account, ArraySignatureType, CairoCustomEnum, CallData, hash, num, uint256 } from "starknet";
 import {
-  EthKeyPair,
+  KeyPair,
   RawSigner,
-  StarknetKeyPair,
   declareContract,
   deployer,
   fundAccount,
@@ -25,12 +25,64 @@ class GenericSigner extends RawSigner {
   }
 
   async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    const compiledData = this.keys
+    const response = [this.keys.length.toString()];
+    this.keys
       .sort((key1, key2) => Number(key1.publicKey - key2.publicKey))
       .map((key) => {
-        return key.signHash(messageHash);
+        response.push(...key.signHash(messageHash));
       });
-    return CallData.compile([compiledData]);
+    return response;
+  }
+}
+
+const StarknetSignatureType = new CairoCustomEnum({
+  Starknet: {},
+  Secp256k1: undefined,
+  Webauthn: undefined,
+  Secp256r1: undefined,
+});
+
+const EthereumSignatureType = new CairoCustomEnum({
+  Starknet: undefined,
+  Secp256k1: {},
+  Webauthn: undefined,
+  Secp256r1: undefined,
+});
+
+class StarknetKeyPair extends KeyPair {
+  public signHash(messageHash: string) {
+    return CallData.compile({
+      signer: super.publicKey,
+      signer_type: StarknetSignatureType,
+      signature: super.signHash(messageHash),
+    });
+  }
+}
+
+class EthKeyPair extends KeyPair {
+  public get publicKey() {
+    return BigInt(new Wallet(id(this.privateKey.toString())).address);
+  }
+
+  public signHash(messageHash: string) {
+    const eth_signer = new Wallet(id(this.privateKey.toString()));
+    if (messageHash.length < 66) {
+      messageHash = "0x" + "0".repeat(66 - messageHash.length) + messageHash.slice(2);
+    }
+    const signature = EthersSignature.from(eth_signer.signingKey.sign(messageHash));
+    const rU256 = uint256.bnToUint256(signature.r);
+    const sU256 = uint256.bnToUint256(signature.s);
+    return CallData.compile({
+      signer: this.publicKey,
+      signer_type: EthereumSignatureType,
+      signature: [
+        rU256.low.toString(),
+        rU256.high.toString(),
+        sU256.low.toString(),
+        sU256.high.toString(),
+        signature.v.toString(),
+      ],
+    });
   }
 }
 

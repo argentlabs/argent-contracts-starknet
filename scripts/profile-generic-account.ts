@@ -28,7 +28,6 @@ class GenericSigner extends RawSigner {
     const compiledData = this.keys
       .sort((key1, key2) => Number(key1.publicKey - key2.publicKey))
       .map((key) => {
-        // TODO Move this logic onto the EthKeyPair && KeyPair
         return key.signHash(messageHash);
       });
     return CallData.compile([compiledData]);
@@ -38,8 +37,8 @@ class GenericSigner extends RawSigner {
 {
   const name = "[GA] 1 Starknet signature";
   console.log(name);
-  const owner = new StarknetKeyPair();
-  const account = await deployGenericAccount([owner]);
+  const owners = [new StarknetKeyPair()];
+  const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await reportProfile(table, name, await testDappContract.set_number(42));
 }
@@ -47,8 +46,8 @@ class GenericSigner extends RawSigner {
 {
   const name = "[GA] 1 Ethereum signature";
   console.log(name);
-  const owner = new EthKeyPair();
-  const account = await deployGenericAccount([owner]);
+  const owners = [new EthKeyPair()];
+  const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await reportProfile(table, name, await testDappContract.set_number(42));
 }
@@ -56,9 +55,8 @@ class GenericSigner extends RawSigner {
 {
   const name = "[GA] 2 Starknet signature";
   console.log(name);
-  const owner1 = new StarknetKeyPair();
-  const owner2 = new StarknetKeyPair();
-  const account = await deployGenericAccount([owner1, owner2]);
+  const owners = [new StarknetKeyPair(), new StarknetKeyPair()];
+  const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await reportProfile(table, name, await testDappContract.set_number(42));
 }
@@ -66,9 +64,8 @@ class GenericSigner extends RawSigner {
 {
   const name = "[GA] 2 Ethereum signature";
   console.log(name);
-  const owner1 = new EthKeyPair();
-  const owner2 = new EthKeyPair();
-  const account = await deployGenericAccount([owner1, owner2]);
+  const owners = [new EthKeyPair(), new EthKeyPair()];
+  const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await reportProfile(table, name, await testDappContract.set_number(42));
 }
@@ -76,10 +73,8 @@ class GenericSigner extends RawSigner {
 {
   const name = "[GA] 3 Starknet signature";
   console.log(name);
-  const owner1 = new StarknetKeyPair();
-  const owner2 = new StarknetKeyPair();
-  const owner3 = new StarknetKeyPair();
-  const account = await deployGenericAccount([owner1, owner2, owner3]);
+  const owners = [new StarknetKeyPair(), new StarknetKeyPair(), new StarknetKeyPair()];
+  const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await reportProfile(table, name, await testDappContract.set_number(42));
 }
@@ -87,21 +82,8 @@ class GenericSigner extends RawSigner {
 {
   const name = "[GA] 3 Ethereum signature";
   console.log(name);
-  const owner1 = new EthKeyPair();
-  const owner2 = new EthKeyPair();
-  const owner3 = new EthKeyPair();
-  const account = await deployGenericAccount([owner1, owner2, owner3]);
-  testDappContract.connect(account);
-  await reportProfile(table, name, await testDappContract.set_number(42));
-}
-
-{
-  const name = "[GA] 3 Starknet signature";
-  console.log(name);
-  const owner1 = new StarknetKeyPair();
-  const owner2 = new StarknetKeyPair();
-  const owner3 = new StarknetKeyPair();
-  const account = await deployGenericAccount([owner1, owner2, owner3]);
+  const owners = [new EthKeyPair(), new EthKeyPair(), new EthKeyPair()];
+  const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await reportProfile(table, name, await testDappContract.set_number(42));
 }
@@ -109,9 +91,8 @@ class GenericSigner extends RawSigner {
 {
   const name = "[GA] 1 Eth + 1 Starknet signature";
   console.log(name);
-  const owner1 = new EthKeyPair();
-  const owner2 = new StarknetKeyPair();
-  const account = await deployGenericAccount([owner1, owner2]);
+  const owners = [new EthKeyPair(), new StarknetKeyPair()];
+  const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await reportProfile(table, name, await testDappContract.set_number(42));
 }
@@ -119,10 +100,8 @@ class GenericSigner extends RawSigner {
 {
   const name = "[GA] 2 Eth + 1 Starknet signature";
   console.log(name);
-  const owner1 = new EthKeyPair();
-  const owner2 = new EthKeyPair();
-  const owner3 = new StarknetKeyPair();
-  const account = await deployGenericAccount([owner1, owner2, owner3]);
+  const owners = [new EthKeyPair(),new EthKeyPair(), new StarknetKeyPair()];
+  const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await reportProfile(table, name, await testDappContract.set_number(42));
 }

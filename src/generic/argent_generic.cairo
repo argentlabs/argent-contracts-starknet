@@ -21,7 +21,6 @@ mod ArgentGenericAccount {
         },
         interface::{IRecoveryAccount, IArgentMultisig}, recovery::{EscapeStatus, Escape, EscapeEnabled}
     };
-    use core::array::SpanTrait;
     use starknet::{
         get_contract_address, VALIDATED, syscalls::replace_class_syscall, ClassHash, get_block_timestamp,
         get_caller_address, get_tx_info, account::Call
@@ -265,7 +264,7 @@ mod ArgentGenericAccount {
 
             let mut signature = tx_info.signature;
             let mut parsed_signatures: Array<SignerSignature> = Serde::deserialize(ref signature)
-                .expect('argent/deserialize-signer-fail');
+                .expect('argent/undeserializable-sig');
             assert(signature.is_empty(), 'argent/signature-not-empty');
             // TODO AS LONG AS FIRST SIGNATURE IS OK, DEPLOY (this is prob wrong, we should loop)
             assert(parsed_signatures.len() >= 1, 'argent/invalid-signature-length');
@@ -572,7 +571,7 @@ mod ArgentGenericAccount {
             mut signature: Span<felt252>
         ) -> bool {
             let mut signer_signatures: Array<SignerSignature> = Serde::deserialize(ref signature)
-                .expect('argent/deserialize-signer-fail');
+                .expect('argent/undeserializable-sig');
             assert(signer_signatures.len() == expected_length, 'argent/invalid-signature-length');
 
             let mut last_signer: u256 = 0;

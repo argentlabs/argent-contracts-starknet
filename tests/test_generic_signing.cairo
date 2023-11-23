@@ -111,7 +111,7 @@ fn test_missing_owner_signature() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/deserialize-signer-fail', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/undeserializable-sig', 'ENTRYPOINT_FAILED'))]
 fn test_short_signature() {
     let generic = initialize_generic_with_one_signer();
 
@@ -132,7 +132,7 @@ fn test_short_signature() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/deserialize-signer-fail', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/undeserializable-sig', 'ENTRYPOINT_FAILED'))]
 fn test_long_signature() {
     let generic = initialize_generic_with_one_signer();
 

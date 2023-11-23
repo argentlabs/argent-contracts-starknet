@@ -1,7 +1,7 @@
 /// @dev If you are using this component you have to support it in the `supports_interface` function
 // This is achieved by adding outside_execution::ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
 #[starknet::component]
-mod execute_from_outside_component {
+mod outside_execution_component {
     use argent::common::{
         calls::execute_multicall,
         outside_execution::{

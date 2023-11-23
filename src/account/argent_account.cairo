@@ -15,7 +15,7 @@ mod ArgentAccount {
             IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
             ERC165_IERC165_INTERFACE_ID_OLD,
         },
-        execute_from_outside::execute_from_outside_component,
+        outside_execution_component::outside_execution_component,
         outside_execution::{IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID},
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
@@ -45,9 +45,9 @@ mod ArgentAccount {
     /// Limits fee in escapes
     const MAX_ESCAPE_MAX_FEE: u128 = 50000000000000000; // 0.05 ETH
 
-    component!(path: execute_from_outside_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
+    component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
-    impl ExecuteFromOutside = execute_from_outside_component::OutsideExecutionImpl<ContractState>;
+    impl ExecuteFromOutside = outside_execution_component::OutsideExecutionImpl<ContractState>;
 
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
         #[inline(always)]
@@ -66,7 +66,7 @@ mod ArgentAccount {
     #[storage]
     struct Storage {
         #[substorage(v0)]
-        execute_from_outside: execute_from_outside_component::Storage,
+        execute_from_outside: outside_execution_component::Storage,
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         _signer: felt252, /// Current account owner
         _guardian: felt252, /// Current account guardian
@@ -83,7 +83,7 @@ mod ArgentAccount {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        ExecuteFromOutsideEvents: execute_from_outside_component::Event,
+        ExecuteFromOutsideEvents: outside_execution_component::Event,
         AccountCreated: AccountCreated,
         TransactionExecuted: TransactionExecuted,
         EscapeOwnerTriggered: EscapeOwnerTriggered,

@@ -9,7 +9,7 @@ mod ArgentMultisig {
             IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
             ERC165_IERC165_INTERFACE_ID_OLD,
         },
-        execute_from_outside::execute_from_outside_component, calls::execute_multicall, version::Version,
+        outside_execution_component::outside_execution_component, calls::execute_multicall, version::Version,
         outside_execution::{IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID},
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
@@ -28,9 +28,9 @@ mod ArgentMultisig {
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 
-    component!(path: execute_from_outside_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
+    component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
-    impl ExecuteFromOutside = execute_from_outside_component::OutsideExecutionImpl<ContractState>;
+    impl ExecuteFromOutside = outside_execution_component::OutsideExecutionImpl<ContractState>;
 
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
         #[inline(always)]
@@ -49,7 +49,7 @@ mod ArgentMultisig {
     #[storage]
     struct Storage {
         #[substorage(v0)]
-        execute_from_outside: execute_from_outside_component::Storage,
+        execute_from_outside: outside_execution_component::Storage,
         signer_list: LegacyMap<felt252, felt252>,
         threshold: usize,
     }
@@ -57,7 +57,7 @@ mod ArgentMultisig {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        ExecuteFromOutsideEvents: execute_from_outside_component::Event,
+        ExecuteFromOutsideEvents: outside_execution_component::Event,
         ThresholdUpdated: ThresholdUpdated,
         TransactionExecuted: TransactionExecuted,
         AccountUpgraded: AccountUpgraded,

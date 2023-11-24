@@ -11,7 +11,6 @@ mod common {
     mod erc165;
     mod multicall;
     mod outside_execution;
-    mod outside_execution_component;
     mod test_dapp;
     mod upgrade;
     mod version;

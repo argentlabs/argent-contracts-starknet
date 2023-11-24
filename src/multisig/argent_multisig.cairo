@@ -9,8 +9,10 @@ mod ArgentMultisig {
             IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
             ERC165_IERC165_INTERFACE_ID_OLD,
         },
-        outside_execution_component::outside_execution_component, calls::execute_multicall, version::Version,
-        outside_execution::{IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID},
+        calls::execute_multicall, version::Version,
+        outside_execution::{
+            IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component
+        },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
     use argent::multisig::interface::{IArgentMultisig, IDeprecatedArgentMultisig};

@@ -7,7 +7,7 @@ const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID: felt252 = 0x68cfd18b92d1907b8ba3cc3
 /// Interface ID: 0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181
 // get_outside_execution_message_hash is not part of the standard interface
 #[starknet::interface]
-trait IOutsideExecutionTrait<TContractState> {
+trait IOutsideExecution<TContractState> {
     /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
     /// @param outside_execution The parameters of the transaction to execute
     /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
@@ -55,7 +55,7 @@ struct OutsideExecution {
 mod outside_execution_component {
     use argent::common::calls::execute_multicall;
     use starknet::{get_caller_address, get_block_timestamp};
-    use super::{IOutsideExecutionTrait, OutsideExecution, hash_outside_execution_message, IOutsideExecutionCallback};
+    use super::{IOutsideExecution, OutsideExecution, hash_outside_execution_message, IOutsideExecutionCallback};
 
     #[storage]
     struct Storage {
@@ -68,9 +68,9 @@ mod outside_execution_component {
     enum Event {}
 
     #[embeddable_as(OutsideExecutionImpl)]
-    impl OutsideExecuctionTrait<
+    impl OutsideExecuction<
         TContractState, +HasComponent<TContractState>, +IOutsideExecutionCallback<TContractState>, +Drop<TContractState>
-    > of IOutsideExecutionTrait<ComponentState<TContractState>> {
+    > of IOutsideExecution<ComponentState<TContractState>> {
         fn execute_from_outside(
             ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Array<felt252>
         ) -> Array<Span<felt252>> {

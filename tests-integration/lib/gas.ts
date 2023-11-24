@@ -1,11 +1,17 @@
 import { add, maxBy, mergeWith, omit, sortBy, sum } from "lodash-es";
-import { ExecutionResources, InvokeFunctionResponse, Sequencer } from "starknet";
+import { ExecutionResources } from "starknet";
 import { provider } from "./provider";
-import { AcceptedTransactionReceiptResponse, ensureAccepted } from "./receipts";
+import { ensureAccepted } from "./receipts";
 
-export async function profileGasUsage({ transaction_hash: txHash }: InvokeFunctionResponse) {
-  const trace: Sequencer.TransactionTraceResponse = await provider.getTransactionTrace(txHash);
-  const receipt = ensureAccepted(await provider.waitForTransaction(txHash));
+const ethUsd = 2000n;
+
+interface TransactionCarrying {
+  transaction_hash: string;
+}
+
+async function profileGasUsage(transactionHash: string) {
+  const receipt = ensureAccepted(await provider.waitForTransaction(transactionHash));
+  const trace = await provider.getTransactionTrace(transactionHash);
   const actualFee = BigInt(receipt.actual_fee as string);
 
   const executionResourcesByPhase: ExecutionResources[] = [
@@ -21,7 +27,7 @@ export async function profileGasUsage({ transaction_hash: txHash }: InvokeFuncti
     ...mergeWith({}, ...allBuiltins, add),
   };
 
-  const blockNumber = (receipt as any)["block_number"];
+  const blockNumber = receipt.block_number;
   const blockInfo = await provider.getBlock(blockNumber);
   const stateUpdate = await provider.getStateUpdate(blockNumber);
   const storageDiffs = stateUpdate.state_diff.storage_diffs;
@@ -63,5 +69,33 @@ export async function profileGasUsage({ transaction_hash: txHash }: InvokeFuncti
     n_memory_holes: executionResources.n_memory_holes,
     gasPrice,
     storageDiffs,
+  };
+}
+
+async function reportProfile(table: Record<string, any>, name: string, transactionHash: string) {
+  const report = await profileGasUsage(transactionHash);
+  const { actualFee, gasUsed, computationGas, l1CalldataGas, executionResources } = report;
+  console.dir(report, { depth: null });
+  const feeUsd = Number(actualFee * ethUsd) / Number(10n ** 18n);
+  table[name] = {
+    actualFee: Number(actualFee),
+    feeUsd: Number(feeUsd.toFixed(2)),
+    gasUsed: Number(gasUsed),
+    computationGas: Number(computationGas),
+    l1CalldataGas: Number(l1CalldataGas),
+    ...executionResources,
+  };
+}
+
+export function makeProfiler() {
+  const table: Record<string, any> = {};
+
+  return {
+    async profile(name: string, { transaction_hash }: TransactionCarrying) {
+      return await reportProfile(table, name, transaction_hash);
+    },
+    printReport() {
+      console.table(table);
+    },
   };
 }

@@ -23,12 +23,22 @@ trait IOutsideExecution<TContractState> {
     fn get_outside_execution_message_hash(self: @TContractState, outside_execution: OutsideExecution) -> felt252;
 }
 
+
+/// This trait has to be written when using the component `outside_execution_component` (This is enforced by the compilator)
 trait IOutsideExecutionCallback<TContractState> {
+    /// @notice Ensure that the `OutsideExecution` can be performed
+    /// @param calls The calls to be performed 
+    /// @param execution_hash The hash of the transaction
+    /// @param signature The signature that the user gave for this transaction
     #[inline(always)]
     fn assert_valid_calls_and_signature_callback(
         ref self: TContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>,
     );
 
+    /// @notice Emits the `TransactionExecuted` event
+    /// Will be called whenever a transaction from outside has been correctly executed
+    /// @param hash The hash of the transaction
+    /// @param response An array of array of felt252 containing the responses of each called executed
     #[inline(always)]
     fn emit_transaction_executed(ref self: TContractState, hash: felt252, response: Span<Span<felt252>>);
 }

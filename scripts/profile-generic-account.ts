@@ -1,4 +1,4 @@
-import { Signature as EthersSignature, Wallet, id } from "ethers";
+import { Signature as EthersSignature, Signature, Wallet, id } from "ethers";
 import { Account, ArraySignatureType, CairoCustomEnum, CallData, hash, num, uint256 } from "starknet";
 import {
   KeyPair,
@@ -35,19 +35,23 @@ class GenericSigner extends RawSigner {
   }
 }
 
-function starknetSignatureType(parameters: string[]) {
+function starknetSignatureType(r: string, s: string) {
   return new CairoCustomEnum({
-    Starknet: { parameters },
+    Starknet: { r, s },
     Secp256k1: undefined,
     Webauthn: undefined,
     Secp256r1: undefined,
   });
 }
 
-function ethereumSignatureType() {
+function ethereumSignatureType(signature: Signature) {
   return new CairoCustomEnum({
     Starknet: undefined,
-    Secp256k1: {},
+    Secp256k1: {
+      r: uint256.bnToUint256(signature.r),
+      s: uint256.bnToUint256(signature.s),
+      y_parity: signature.yParity.toString(),
+    },
     Webauthn: undefined,
     Secp256r1: undefined,
   });
@@ -55,9 +59,10 @@ function ethereumSignatureType() {
 
 class StarknetKeyPair extends KeyPair {
   public signHash(messageHash: string) {
+    const [r, s] = super.signHash(messageHash);
     return CallData.compile({
       signer: super.publicKey,
-      signer_type: starknetSignatureType(super.signHash(messageHash)),
+      signer_type: starknetSignatureType(r, s),
     });
   }
 }
@@ -73,17 +78,10 @@ class EthKeyPair extends KeyPair {
       messageHash = "0x" + "0".repeat(66 - messageHash.length) + messageHash.slice(2);
     }
     const signature = EthersSignature.from(eth_signer.signingKey.sign(messageHash));
-    const rU256 = uint256.bnToUint256(signature.r);
-    const sU256 = uint256.bnToUint256(signature.s);
 
     return CallData.compile({
       signer: this.publicKey,
-      signer_type: ethereumSignatureType(),
-      r_low: rU256.low.toString(),
-      r_high: rU256.high.toString(),
-      s_low: sU256.low.toString(),
-      s_high: sU256.high.toString(),
-      y_parity: signature.yParity.toString(),
+      signer_type: ethereumSignatureType(signature),
     });
   }
 }

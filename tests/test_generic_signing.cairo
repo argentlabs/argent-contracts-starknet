@@ -21,7 +21,7 @@ const signer_type_starknet: felt252 = 0;
 fn test_signature() {
     let generic = initialize_generic_with_one_signer();
 
-    let signature = array![1, signer_pubkey_1, signer_type_starknet, 2, signer_1_signature_r, signer_1_signature_s];
+    let signature = array![1, signer_pubkey_1, signer_type_starknet, signer_1_signature_r, signer_1_signature_s];
     assert(generic.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
 }
 
@@ -37,12 +37,10 @@ fn test_double_signature() {
         2,
         signer_pubkey_1,
         signer_type_starknet,
-        2,
         signer_1_signature_r,
         signer_1_signature_s,
         signer_pubkey_2,
         signer_type_starknet,
-        2,
         signer_2_signature_r,
         signer_2_signature_s
     ];
@@ -61,12 +59,10 @@ fn test_double_signature_order() {
         2,
         signer_pubkey_2,
         signer_type_starknet,
-        2,
         signer_2_signature_r,
         signer_2_signature_s,
         signer_pubkey_1,
         signer_type_starknet,
-        2,
         signer_1_signature_r,
         signer_1_signature_s
     ];
@@ -85,12 +81,10 @@ fn test_same_owner_twice() {
         2,
         signer_pubkey_1,
         signer_type_starknet,
-        2,
         signer_1_signature_r,
         signer_1_signature_s,
         signer_pubkey_1,
         signer_type_starknet,
-        2,
         signer_1_signature_r,
         signer_1_signature_s
     ];
@@ -119,12 +113,10 @@ fn test_short_signature() {
         2,
         signer_pubkey_1,
         signer_type_starknet,
-        2,
         signer_1_signature_r,
         signer_1_signature_s,
         signer_pubkey_1,
         signer_type_starknet,
-        2,
         signer_1_signature_r
     ];
     generic.is_valid_signature(message_hash, signature);

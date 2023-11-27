@@ -2,9 +2,15 @@ use ecdsa::check_ecdsa_signature;
 use starknet::{EthAddress, eth_signature::{Signature, is_eth_signature_valid}, secp256_trait::signature_from_vrs};
 
 #[derive(Drop, Copy, Serde, PartialEq)]
+struct StarknetSignature {
+    r: felt252,
+    s: felt252,
+}
+
+#[derive(Drop, Copy, Serde, PartialEq)]
 enum SignerType {
     #[default]
-    Starknet: Span<felt252>, // TODO Should prob also make a struct/tuple here to get r && s 
+    Starknet: StarknetSignature,
     Secp256k1: Signature,
     Webauthn,
     Secp256r1,
@@ -16,9 +22,8 @@ struct SignerSignature {
     signer_type: SignerType,
 }
 
-fn assert_valid_starknet_signature(hash: felt252, signer: felt252, signature: Span<felt252>) {
-    assert(signature.len() == 2, 'argent/invalid-signature');
-    let is_valid = check_ecdsa_signature(hash, signer, *signature[0], *signature[1]);
+fn assert_valid_starknet_signature(hash: felt252, signer: felt252, signature: StarknetSignature) {
+    let is_valid = check_ecdsa_signature(hash, signer, signature.r, signature.s);
     assert(is_valid, 'argent/invalid-stark-signature');
 }
 

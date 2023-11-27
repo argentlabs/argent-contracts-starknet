@@ -1,5 +1,5 @@
 use ecdsa::check_ecdsa_signature;
-use starknet::{EthAddress, eth_signature::{Signature, is_eth_signature_valid}, secp256_trait::signature_from_vrs};
+use starknet::{EthAddress, eth_signature::{Signature, verify_eth_signature}};
 
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct StarknetSignature {
@@ -29,8 +29,5 @@ fn assert_valid_starknet_signature(hash: felt252, signer: felt252, signature: St
 
 fn assert_valid_ethereum_signature(hash: felt252, signer: felt252, signature: Signature) {
     let eth_signer: EthAddress = signer.try_into().expect('argent/invalid-eth-signer');
-    match is_eth_signature_valid(hash.into(), signature, eth_signer) {
-        Result::Ok(_) => {},
-        Result::Err(err) => panic_with_felt252('argent/invalid-eth-signature'),
-    }
+    verify_eth_signature(hash.into(), signature, eth_signer);
 }

@@ -1,5 +1,5 @@
 import { RawArgs } from "starknet";
-import { provider } from "./provider";
+import { provider, rpcProvider } from "./provider";
 
 const DUMP_FOLDER_PATH = "./dump";
 
@@ -16,19 +16,19 @@ export async function setTime(timeInSeconds: number | bigint) {
 }
 
 export async function restart() {
-  await handlePost("restart");
+  // await handlePost("restart");
 }
 
 export async function dump() {
-  await handlePost("dump", { path: DUMP_FOLDER_PATH });
+  // await handlePost("dump", { path: DUMP_FOLDER_PATH });
 }
 
 export async function load() {
-  await handlePost("load", { path: DUMP_FOLDER_PATH });
+  // await handlePost("load", { path: DUMP_FOLDER_PATH });
 }
 
 async function handlePost(path: string, payload?: RawArgs) {
-  const response = await fetch(`${provider.baseUrl}/${path}`, {
+  const response = await fetch(`${rpcProvider.nodeUrl}/${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

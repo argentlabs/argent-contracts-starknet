@@ -16,7 +16,7 @@ export class FastProvider extends SequencerProvider {
   }
 }
 
-export const provider = new FastProvider({ baseUrl: process.env.BASE_URL || devnetBaseUrl });
+export const sequencerProvider = new FastProvider({ baseUrl: process.env.BASE_URL || devnetBaseUrl });
 
 export class FastRpcProvider extends RpcProvider {
   get isDevnet() {
@@ -29,6 +29,8 @@ export class FastRpcProvider extends RpcProvider {
   }
 }
 
-export const rpcProvider = new FastRpcProvider({ nodeUrl: process.env.RPC_URL || `${devnetBaseUrl}/rpc` });
-console.log("Provider sequencer:", provider.baseUrl);
+export const rpcProvider = new FastRpcProvider({ nodeUrl: process.env.RPC_URL || `${devnetBaseUrl}` });
+console.log("Provider sequencer:", sequencerProvider.baseUrl);
 console.log("Provider rpc:", rpcProvider.nodeUrl);
+export const provider = rpcProvider;
+

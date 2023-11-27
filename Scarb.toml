@@ -10,7 +10,7 @@ casm = true
 allowed-libfuncs-list.name = "audited"
 
 [dependencies]
-starknet = "2.4.0-rc3"
+starknet = "2.3.0"
 
 [tool.fmt]
 max-line-length = 120
@@ -29,3 +29,4 @@ profile = "scarb --profile release build && node --loader ts-node/esm scripts/pr
 deploy = "scarb --profile release build && node --loader ts-node/esm scripts/deploy-account.ts"
 generate-signature = "node --loader ts-node/esm  ./scripts/generate-signature.ts"
 gas-report = "node --loader ts-node/esm scripts/gas-report.ts"
+start-devnet-rs= "docker run -p 127.0.0.1:5050:5050 shardlabs/starknet-devnet-rs:latest-seed0"

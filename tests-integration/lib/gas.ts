@@ -1,10 +1,11 @@
 import { add, maxBy, mergeWith, omit, sortBy, sum } from "lodash-es";
 import { ExecutionResources, InvokeFunctionResponse, Sequencer } from "starknet";
-import { provider } from "./provider";
+import { provider, sequencerProvider } from "./provider";
 import { AcceptedTransactionReceiptResponse, ensureAccepted } from "./receipts";
 
 export async function profileGasUsage({ transaction_hash: txHash }: InvokeFunctionResponse) {
-  const trace: Sequencer.TransactionTraceResponse = await provider.getTransactionTrace(txHash);
+  // TODO: devnet and RPC not supported yet
+  const trace: Sequencer.TransactionTraceResponse = await sequencerProvider.getTransactionTrace(txHash);
   const receipt = ensureAccepted(await provider.waitForTransaction(txHash));
   const actualFee = BigInt(receipt.actual_fee as string);
 

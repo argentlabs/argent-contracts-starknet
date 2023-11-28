@@ -11,6 +11,7 @@ allowed-libfuncs-list.name = "audited"
 
 [dependencies]
 starknet = "2.3.0"
+alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
 
 [tool.fmt]
 max-line-length = 120

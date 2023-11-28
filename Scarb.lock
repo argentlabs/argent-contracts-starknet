@@ -2,5 +2,13 @@
 version = 1
 
 [[package]]
+name = "alexandria_merkle_tree"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git#be8a632ef9d88778a8276b40a57085d40a5db070"
+
+[[package]]
 name = "argent"
 version = "0.1.0"
+dependencies = [
+ "alexandria_merkle_tree",
+]

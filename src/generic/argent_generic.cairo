@@ -448,7 +448,7 @@ mod ArgentGenericAccount {
             let current_escaped_signer = current_escape.target_signer;
             if (current_escaped_signer != 0 && current_escape_status == EscapeStatus::Ready) {
                 // can only override an escape with a target signer of lower priority than the current one
-                assert(self.is_signer_before(current_escaped_signer, target_signer),'argent/cannot-override-escape');
+                assert(self.is_signer_before(current_escaped_signer, target_signer), 'argent/cannot-override-escape');
             }
             let ready_at = get_block_timestamp() + escape_config.security_period;
             let escape = Escape { ready_at, target_signer, new_signer };

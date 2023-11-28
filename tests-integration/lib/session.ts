@@ -98,10 +98,8 @@ export function getLeaves(allowedMethods: AllowedMethod[]): string[] {
   );
 }
 
-export function getAllowedMethodRoot(completedSession: OffChainSession): OnChainSession {
-  const allowedMethods = completedSession.allowed_methods ?? [];
-  const leaves = getLeaves(allowedMethods);
-
+export function createOnChainSession(completedSession: OffChainSession): OnChainSession {
+  const leaves = getLeaves(completedSession.allowed_methods);
   return {
     session_key: completedSession.session_key,
     expires_at: completedSession.expires_at,
@@ -115,20 +113,10 @@ export function getAllowedMethodRoot(completedSession: OffChainSession): OnChain
 export function getSessionProofs(
   calls: Call[],
   allowedMethods: AllowedMethod[],
-  allowedTokens: TokenLimit[],
-  allowedNfts: string[],
 ): string[][] {
   const tree = new merkle.MerkleTree(getLeaves(allowedMethods));
 
   return calls.map((call) => {
-    const isTokenAllowed = allowedTokens.find((token) => token.contract_address === call.contractAddress);
-    if (isTokenAllowed) {
-      return [];
-    }
-    const isNftAllowed = allowedNfts.find((nft) => nft === call.contractAddress);
-    if (isNftAllowed) {
-      return [];
-    }
     const allowedIndex = allowedMethods.findIndex((allowedMethod) => {
       return (
         allowedMethod.contract_address == call.contractAddress &&
@@ -137,6 +125,7 @@ export function getSessionProofs(
     });
     return tree.getProof(tree.leaves[allowedIndex]);
   });
+ 
 }
 
 

@@ -23,7 +23,7 @@ import {
   TokenLimit,
   RawSigner,
   getSessionTypedData,
-  getAllowedMethodRoot,
+  createOnChainSession,
   getSessionProofs
 } from ".";
 
@@ -146,7 +146,7 @@ export class DappSigner extends RawSigner {
 
     const proofs = await this.getProofs(transactions);
 
-    const session: OnChainSession = getAllowedMethodRoot(this.completedSession);
+    const session: OnChainSession = createOnChainSession(this.completedSession);
 
     const sessionToken: SessionToken = {
       session,
@@ -181,8 +181,6 @@ export class DappSigner extends RawSigner {
     return getSessionProofs(
       transactions,
       this.completedSession.allowed_methods,
-      this.completedSession.token_limits,
-      this.completedSession.nft_contracts,
     );
   }
 

@@ -44,7 +44,7 @@ describe("Hybrid Session Account: execute calls", function () {
       {
         contract_address: testDappOneContract.address,
         selector: selector.getSelectorFromName("set_number_double"),
-      },
+      }
     ];
 
     const sessionRequest = dappService.createSessionRequest(allowedMethods, tokenLimits);

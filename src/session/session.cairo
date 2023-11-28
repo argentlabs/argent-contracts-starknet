@@ -13,12 +13,14 @@ mod sessionable {
     use argent::common::account::IAccount;
     use argent::common::asserts::{assert_no_self_call, assert_only_self};
     use argent::session::session_account::IGenericArgentAccount;
-    use argent::session::session_structs::{SessionToken, IOffchainMessageHash, IStructHash};
+    use argent::session::session_structs::{SessionToken, IOffchainMessageHash, IStructHash, IMerkleLeafHash};
     use ecdsa::check_ecdsa_signature;
     use hash::LegacyHash;
     use starknet::{account::Call, get_execution_info, VALIDATED};
 
-    use alexandria_merkle_tree::merkle_tree::{MerkleTree, MerkleTreeTrait, Hasher};
+    use alexandria_merkle_tree::merkle_tree::{
+        Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,
+    };
 
 
     #[storage]
@@ -87,6 +89,7 @@ mod sessionable {
                 is_valid_signature_generic(message_hash, state.get_guardian(), token.backend_signature),
                 'invalid-guardian-sig'
             );
+            assert_valid_session_calls(token, calls);
         }
     }
 
@@ -100,26 +103,26 @@ mod sessionable {
     }
 
     
-    // fn assert_valid_session_calls(
-    //         token: SessionToken, mut calls: Span<Call>
-    //     ) {
-    //         assert(token.proofs.len() == calls.len(), 'unaligned-proofs');
-    //         let merkle_root = token.session.allowed_methods_root;
-    //         let mut index = 0;
-    //         loop {
-    //             match calls.pop_front() {
-    //                 Option::Some(call) => {
-    //                         let mut merkle_init: MerkleTree<Hasher> = MerkleTreeTrait::new();
-    //                         let leaf = call.get_merkle_leaf();
-    //                         let proof = *token.proofs[index];
-    //                         let is_valid = merkle_init.verify(merkle_root, leaf, proof);
-    //                         assert(is_valid, 'invalid-session-call');
-    //                     }
-    //                     index += 1;
-    //                 },
-    //                 Option::None => {
-    //                     break;
-    //                 },
-    //             };
-    //         }
+    fn assert_valid_session_calls(
+            token: SessionToken, mut calls: Span<Call>
+        ) {
+            assert(token.proofs.len() == calls.len(), 'unaligned-proofs');
+            let merkle_root = token.session.allowed_methods_root;
+            let mut index = 0;
+            loop {
+                match calls.pop_front() {
+                    Option::Some(call) => {
+                            let mut merkle_init: MerkleTree<Hasher> = MerkleTreeTrait::new();
+                            let leaf = call.get_merkle_leaf();
+                            let proof = *token.proofs[index];
+                            let is_valid = merkle_init.verify(merkle_root, leaf, proof);
+                            assert(is_valid, 'invalid-session-call');
+                            index += 1;
+                        },   
+                    Option::None => {
+                        break;
+                    },
+                };
+            }
+        }
 }

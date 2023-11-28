@@ -43,6 +43,7 @@ const SESSION_TYPE_HASH: felt252 =
     );
 const TOKEN_LIMIT_HASH: felt252 = selector!("TokenLimit(contract_address:felt,amount:u256)u256(low:felt,high:felt)");
 const U256_TYPE_HASH: felt252 = selector!("u256(low:felt,high:felt)");
+const ALLOWED_METHOD_HASH: felt252 = selector!("AllowedMethod(to:felt,selector:felt)");
 
 
 trait IOffchainMessageHash<T> {
@@ -51,6 +52,21 @@ trait IOffchainMessageHash<T> {
 
 trait IStructHash<T> {
     fn get_struct_hash(self: @T) -> felt252;
+}
+
+trait IMerkleLeafHash<T> {
+    fn get_merkle_leaf(self: @T) -> felt252;
+}
+
+impl MerkleLeafHash of IMerkleLeafHash<Call> {
+    fn get_merkle_leaf(self: @Call) -> felt252 {
+        let mut state = PedersenTrait::new(0);
+        state = state.update_with(ALLOWED_METHOD_HASH);
+        state = state.update_with(*self.to);
+        state = state.update_with(*self.selector);
+        state = state.update_with(3);
+        state.finalize()
+    }
 }
 
 

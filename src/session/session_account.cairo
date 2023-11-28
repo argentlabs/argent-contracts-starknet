@@ -2,7 +2,7 @@
 trait ISessionAccount<TContractState> {
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate_deploy__(
-        self: @TContractState, class_hash: felt252, contract_address_salt: felt252, owner: felt252,
+        self: @TContractState, class_hash: felt252, contract_address_salt: felt252, owner: felt252, guardian: felt252,
     ) -> felt252;
     fn revoke_session(ref self: TContractState, public_key: felt252);
     fn get_owner(self: @TContractState) -> felt252;
@@ -31,9 +31,11 @@ mod HybridSessionAccount {
     const SESSION_MAGIC: felt252 = 'session-token';
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: felt252) {
+    fn constructor(ref self: ContractState, owner: felt252, guardian: felt252) {
         assert(owner != 0, 'argent/null-owner');
+        assert(guardian != 0, 'argent/null-guardian');
         self.owner.write(owner);
+        self.guardian.write(guardian);
     }
 
     #[external(v0)]
@@ -74,7 +76,11 @@ mod HybridSessionAccount {
         }
 
         fn __validate_deploy__(
-            self: @ContractState, class_hash: felt252, contract_address_salt: felt252, owner: felt252,
+            self: @ContractState,
+            class_hash: felt252,
+            contract_address_salt: felt252,
+            owner: felt252,
+            guardian: felt252,
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
             let is_valid = self
@@ -139,8 +145,8 @@ mod HybridSessionAccount {
             );
 
             assert(
-                self.is_valid_signature_generic(message_hash, token.session.backend_key, token.backend_signature),
-                'invalid-backend-sig'
+                self.is_valid_signature_generic(message_hash, self.guardian.read(), token.backend_signature),
+                'invalid-guardian-sig'
             );
         }
 

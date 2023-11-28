@@ -54,6 +54,19 @@ export abstract class RawSigner implements SignerInterface {
     return this.signRaw(messageHash);
   }
 
+  public async getTransactionHash(transactions: Call[], transactionsDetail: InvocationsSignerDetails): Promise<string> {
+    const calldata = transaction.getExecuteCalldata(transactions, transactionsDetail.cairoVersion);
+
+    return hash.calculateTransactionHash(
+      transactionsDetail.walletAddress,
+      transactionsDetail.version,
+      calldata,
+      transactionsDetail.maxFee,
+      transactionsDetail.chainId,
+      transactionsDetail.nonce,
+    );
+  }
+
   public async signDeployAccountTransaction({
     classHash,
     contractAddress,

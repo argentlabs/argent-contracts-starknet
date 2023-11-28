@@ -1,4 +1,4 @@
-import { num, typedData, hash, merkle, Account, CallData, Call, uint256, BigNumberish, selector} from "starknet";
+import { num, typedData, hash, merkle, Account, CallData, Call, uint256, BigNumberish, selector } from "starknet";
 import { randomKeyPair, ArgentWalletWithGuardian, fundAccount, provider, loadContract } from ".";
 
 export const sessionTypes = {
@@ -110,10 +110,7 @@ export function createOnChainSession(completedSession: OffChainSession): OnChain
   };
 }
 
-export function getSessionProofs(
-  calls: Call[],
-  allowedMethods: AllowedMethod[],
-): string[][] {
+export function getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[]): string[][] {
   const tree = new merkle.MerkleTree(getLeaves(allowedMethods));
 
   return calls.map((call) => {
@@ -125,9 +122,7 @@ export function getSessionProofs(
     });
     return tree.getProof(tree.leaves[allowedIndex]);
   });
- 
 }
-
 
 export async function deploySessionAccount(
   argentAccountClassHash: string,

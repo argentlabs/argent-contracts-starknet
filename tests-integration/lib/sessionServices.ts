@@ -24,7 +24,7 @@ import {
   RawSigner,
   getSessionTypedData,
   createOnChainSession,
-  getSessionProofs
+  getSessionProofs,
 } from ".";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -61,7 +61,7 @@ export class BackendService {
     // verify session param correct
 
     // extremely simplified version of the backend verification
-    const allowed_methods = sessionTokenToSign.allowed_methods ?? [];
+    const allowed_methods = sessionTokenToSign.allowed_methods;
     calls.forEach((call) => {
       const found = allowed_methods.find(
         (method) =>
@@ -153,7 +153,7 @@ export class DappSigner extends RawSigner {
       session_signature,
       owner_signature: this.ownerSessionSignature,
       backend_signature,
-      proofs
+      proofs,
     };
 
     return [SESSION_MAGIC, ...CallData.compile({ ...sessionToken })];
@@ -176,12 +176,7 @@ export class DappSigner extends RawSigner {
     return this.argentX.sendSessionToBackend(calls, transactionsDetail, this.completedSession);
   }
 
-  
   public async getProofs(transactions: Call[]): Promise<string[][]> {
-    return getSessionProofs(
-      transactions,
-      this.completedSession.allowed_methods,
-    );
+    return getSessionProofs(transactions, this.completedSession.allowed_methods);
   }
-
 }

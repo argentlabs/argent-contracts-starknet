@@ -24,6 +24,7 @@ import {
   RawSigner,
   getSessionTypedData,
   getAllowedMethodRoot,
+  getSessionProofs
 } from ".";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -143,6 +144,8 @@ export class DappSigner extends RawSigner {
     const session_signature = await this.signTxAndSession(txHash, transactionsDetail);
     const backend_signature = await this.getBackendSig(transactions, transactionsDetail);
 
+    const proofs = await this.getProofs(transactions);
+
     const session: OnChainSession = getAllowedMethodRoot(this.completedSession);
 
     const sessionToken: SessionToken = {
@@ -150,6 +153,7 @@ export class DappSigner extends RawSigner {
       session_signature,
       owner_signature: this.ownerSessionSignature,
       backend_signature,
+      proofs
     };
 
     return [SESSION_MAGIC, ...CallData.compile({ ...sessionToken })];
@@ -171,4 +175,15 @@ export class DappSigner extends RawSigner {
   public async getBackendSig(calls: Call[], transactionsDetail: InvocationsSignerDetails): Promise<bigint[]> {
     return this.argentX.sendSessionToBackend(calls, transactionsDetail, this.completedSession);
   }
+
+  
+  public async getProofs(transactions: Call[]): Promise<string[][]> {
+    return getSessionProofs(
+      transactions,
+      this.completedSession.allowed_methods,
+      this.completedSession.token_limits,
+      this.completedSession.nft_contracts,
+    );
+  }
+
 }

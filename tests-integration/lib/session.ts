@@ -1,4 +1,4 @@
-import { num, typedData, hash, merkle, Account, CallData, uint256, BigNumberish } from "starknet";
+import { num, typedData, hash, merkle, Account, CallData, Call, uint256, BigNumberish, selector} from "starknet";
 import { randomKeyPair, ArgentWalletWithGuardian, fundAccount, provider, loadContract } from ".";
 
 export const sessionTypes = {
@@ -64,6 +64,7 @@ export interface SessionToken {
   session_signature: num.BigNumberish[];
   owner_signature: num.BigNumberish[];
   backend_signature: num.BigNumberish[];
+  proofs: string[][];
 }
 
 export async function getSessionDomain(): Promise<typedData.StarkNetDomain> {
@@ -110,6 +111,34 @@ export function getAllowedMethodRoot(completedSession: OffChainSession): OnChain
     nft_contracts: completedSession.nft_contracts,
   };
 }
+
+export function getSessionProofs(
+  calls: Call[],
+  allowedMethods: AllowedMethod[],
+  allowedTokens: TokenLimit[],
+  allowedNfts: string[],
+): string[][] {
+  const tree = new merkle.MerkleTree(getLeaves(allowedMethods));
+
+  return calls.map((call) => {
+    const isTokenAllowed = allowedTokens.find((token) => token.contract_address === call.contractAddress);
+    if (isTokenAllowed) {
+      return [];
+    }
+    const isNftAllowed = allowedNfts.find((nft) => nft === call.contractAddress);
+    if (isNftAllowed) {
+      return [];
+    }
+    const allowedIndex = allowedMethods.findIndex((allowedMethod) => {
+      return (
+        allowedMethod.contract_address == call.contractAddress &&
+        allowedMethod.selector == selector.getSelectorFromName(call.entrypoint)
+      );
+    });
+    return tree.getProof(tree.leaves[allowedIndex]);
+  });
+}
+
 
 export async function deploySessionAccount(
   argentAccountClassHash: string,

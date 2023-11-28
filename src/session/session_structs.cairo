@@ -25,7 +25,8 @@ struct SessionToken {
     session: Session,
     session_signature: Span<felt252>,
     owner_signature: Span<felt252>,
-    backend_signature: Span<felt252>
+    backend_signature: Span<felt252>,
+    proofs: Span<Span<felt252>>,
 }
 
 #[derive(Hash, Drop, Copy)]

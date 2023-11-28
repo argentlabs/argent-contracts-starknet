@@ -24,23 +24,26 @@ trait IOutsideExecution<TContractState> {
 }
 
 
-/// This trait has to be written when using the component `outside_execution_component` (This is enforced by the compilator)
+/// This trait has to be implemented when using the component `outside_execution_component` (This is enforced by the compilator)
 trait IOutsideExecutionCallback<TContractState> {
-    /// @notice Ensure that the `OutsideExecution` can be performed
+    /// @notice Ensure that the `OutsideExecution` can be performed.
+    /// @dev If the signature is invalid, this function should panic
     /// @param calls The calls to be performed 
-    /// @param execution_hash The hash of the transaction
+    /// @param outside_execution_hash The hash of the transaction
     /// @param signature The signature that the user gave for this transaction
     #[inline(always)]
     fn assert_valid_calls_and_signature_callback(
-        ref self: TContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>,
+        ref self: TContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
     );
 
-    /// @notice Emits the `TransactionExecuted` event
+    /// @notice Allows to emit an event.
     /// Will be called whenever a transaction from outside has been correctly executed
-    /// @param hash The hash of the transaction
+    /// @param outside_execution_hash The hash of the transaction
     /// @param response An array of array of felt252 containing the responses of each called executed
     #[inline(always)]
-    fn emit_transaction_executed(ref self: TContractState, hash: felt252, response: Span<Span<felt252>>);
+    fn emit_transaction_executed(
+        ref self: TContractState, outside_execution_hash: felt252, response: Span<Span<felt252>>
+    );
 }
 
 #[derive(Copy, Drop, Serde)]
@@ -96,18 +99,14 @@ mod outside_execution_component {
             );
             let nonce = outside_execution.nonce;
             assert(!self.outside_nonces.read(nonce), 'argent/duplicated-outside-nonce');
+            self.outside_nonces.write(nonce, true);
 
             let outside_tx_hash = hash_outside_execution_message(@outside_execution);
 
             let mut state = self.get_contract_mut();
             state.assert_valid_calls_and_signature_callback(outside_execution.calls, outside_tx_hash, signature.span());
 
-            // Effects
-            self.outside_nonces.write(nonce, true);
-
-            // Interactions
             let retdata = execute_multicall(outside_execution.calls);
-
             state.emit_transaction_executed(outside_tx_hash, retdata.span());
             retdata
         }

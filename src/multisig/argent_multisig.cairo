@@ -37,14 +37,16 @@ mod ArgentMultisig {
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
         #[inline(always)]
         fn assert_valid_calls_and_signature_callback(
-            ref self: ContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>,
+            ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
         ) {
-            self.assert_valid_calls_and_signature(calls, execution_hash, signature);
+            self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature);
         }
 
         #[inline(always)]
-        fn emit_transaction_executed(ref self: ContractState, hash: felt252, response: Span<Span<felt252>>) {
-            self.emit(TransactionExecuted { hash, response });
+        fn emit_transaction_executed(
+            ref self: ContractState, outside_execution_hash: felt252, response: Span<Span<felt252>>
+        ) {
+            self.emit(TransactionExecuted { hash: outside_execution_hash, response });
         }
     }
 

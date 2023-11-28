@@ -1,9 +1,9 @@
-use argent::generic::signer_signature::SignerType;
-
+use argent::generic::signer_signature::{SignerType, StarknetSignature};
 use argent_tests::setup::generic_test_setup::{
     initialize_generic_with, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3,
     ITestArgentGenericAccountDispatcherTrait, initialize_generic_with_one_signer
 };
+use core::serde::Serde;
 use starknet::VALIDATED;
 
 const message_hash: felt252 = 424242;
@@ -33,17 +33,13 @@ fn test_double_signature() {
     let signers_array = array![signer_pubkey_1, signer_pubkey_2];
     let generic = initialize_generic_with(threshold, signers_array.span());
 
-    let signature = array![
-        2,
-        signer_pubkey_1,
-        signer_type_starknet,
-        signer_1_signature_r,
-        signer_1_signature_s,
-        signer_pubkey_2,
-        signer_type_starknet,
-        signer_2_signature_r,
-        signer_2_signature_s
-    ];
+    let sig1 = SignerType::Starknet(StarknetSignature { r: signer_1_signature_r, s: signer_1_signature_s });
+    let sig2 = SignerType::Starknet(StarknetSignature { r: signer_2_signature_r, s: signer_2_signature_s });
+    let mut signature = array![2];
+    signer_pubkey_1.serialize(ref signature);
+    sig1.serialize(ref signature);
+    signer_pubkey_2.serialize(ref signature);
+    sig2.serialize(ref signature);
     assert(generic.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
 }
 
@@ -55,17 +51,13 @@ fn test_double_signature_order() {
     let signers_array = array![signer_pubkey_2, signer_pubkey_1];
     let generic = initialize_generic_with(threshold, signers_array.span());
 
-    let signature = array![
-        2,
-        signer_pubkey_2,
-        signer_type_starknet,
-        signer_2_signature_r,
-        signer_2_signature_s,
-        signer_pubkey_1,
-        signer_type_starknet,
-        signer_1_signature_r,
-        signer_1_signature_s
-    ];
+    let sig1 = SignerType::Starknet(StarknetSignature { r: signer_1_signature_r, s: signer_1_signature_s });
+    let sig2 = SignerType::Starknet(StarknetSignature { r: signer_2_signature_r, s: signer_2_signature_s });
+    let mut signature = array![2];
+    signer_pubkey_2.serialize(ref signature);
+    sig2.serialize(ref signature);
+    signer_pubkey_1.serialize(ref signature);
+    sig1.serialize(ref signature);
     generic.is_valid_signature(message_hash, signature);
 }
 
@@ -77,17 +69,12 @@ fn test_same_owner_twice() {
     let signers_array = array![signer_pubkey_1, signer_pubkey_2];
     let generic = initialize_generic_with(threshold, signers_array.span());
 
-    let signature = array![
-        2,
-        signer_pubkey_1,
-        signer_type_starknet,
-        signer_1_signature_r,
-        signer_1_signature_s,
-        signer_pubkey_1,
-        signer_type_starknet,
-        signer_1_signature_r,
-        signer_1_signature_s
-    ];
+    let sig1 = SignerType::Starknet(StarknetSignature { r: signer_1_signature_r, s: signer_1_signature_s });
+    let mut signature = array![2];
+    signer_pubkey_1.serialize(ref signature);
+    sig1.serialize(ref signature);
+    signer_pubkey_1.serialize(ref signature);
+    sig1.serialize(ref signature);
     generic.is_valid_signature(message_hash, signature);
 }
 

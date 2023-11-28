@@ -22,9 +22,10 @@ struct SignerSignature {
     signer_type: SignerType,
 }
 
-fn assert_valid_starknet_signature(hash: felt252, signer: felt252, signature: StarknetSignature) {
-    let is_valid = check_ecdsa_signature(hash, signer, signature.r, signature.s);
-    assert(is_valid, 'argent/invalid-stark-signature');
+fn assert_valid_starknet_signature(hash: felt252, signer: felt252, signature: Span<felt252>) {
+    assert(signature.len() == 2, 'argent/invalid-signature');
+    let is_valid = check_ecdsa_signature(hash, signer, *signature.at(0), *signature.at(1));
+    assert(is_valid, 'argent/invalid-signature');
 }
 
 fn assert_valid_ethereum_signature(hash: felt252, signer: felt252, signature: Signature) {

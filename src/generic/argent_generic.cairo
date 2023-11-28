@@ -162,7 +162,6 @@ mod ArgentGenericAccount {
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
             let threshold = self.threshold.read();
-            assert(threshold != 0, 'argent/uninitialized');
             if self.is_valid_signature_with_conditions(hash, threshold, 0_felt252, signature.span()) {
                 VALIDATED
             } else {
@@ -442,8 +441,8 @@ mod ArgentGenericAccount {
             let current_escape_status = get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             let current_escaped_signer = current_escape.target_signer;
             if (current_escaped_signer != 0 && current_escape_status == EscapeStatus::Ready) {
-                // no escape if there is an ongoing escape with a higher signer
-                assert(self.is_signer_before(target_signer, current_escaped_signer), 'argent/cannot-override-escape');
+                // can only override an escape with a target signer of lower priority than the current one
+                assert(self.is_signer_before(current_escaped_signer, target_signer), 'argent/cannot-override-escape');
             }
             let ready_at = get_block_timestamp() + escape_config.security_period;
             let escape = Escape { ready_at, target_signer, new_signer };
@@ -526,8 +525,6 @@ mod ArgentGenericAccount {
         ) {
             // get threshold
             let threshold = self.threshold.read();
-            assert(threshold != 0, 'argent/uninitialized');
-
             let first_call = calls.at(0);
             if (*first_call.to == get_contract_address()) {
                 if (*first_call.selector == selector!("trigger_escape_signer")) {

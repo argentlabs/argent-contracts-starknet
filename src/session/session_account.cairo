@@ -24,6 +24,7 @@ mod HybridSessionAccount {
     #[storage]
     struct Storage {
         owner: felt252,
+        guardian: felt252,
         revoked_session: LegacyMap<felt252, bool>,
     }
 
@@ -32,7 +33,6 @@ mod HybridSessionAccount {
     #[constructor]
     fn constructor(ref self: ContractState, owner: felt252) {
         assert(owner != 0, 'argent/null-owner');
-
         self.owner.write(owner);
     }
 

@@ -1,5 +1,5 @@
 import { RawArgs } from "starknet";
-import { provider, rpcProvider } from "./provider";
+import { provider } from "./provider";
 
 const DUMP_FOLDER_PATH = "./dump";
 
@@ -28,7 +28,7 @@ export async function load() {
 }
 
 async function handlePost(path: string, payload?: RawArgs) {
-  const response = await fetch(`${rpcProvider.nodeUrl}/${path}`, {
+  const response = await fetch(`${provider.channel.nodeUrl}/${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

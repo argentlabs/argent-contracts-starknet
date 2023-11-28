@@ -1,17 +1,17 @@
 import { add, maxBy, mergeWith, omit, sortBy, sum } from "lodash-es";
-import { ExecutionResources, InvokeFunctionResponse, Sequencer } from "starknet";
-import { provider, sequencerProvider } from "./provider";
+import { ExecutionResources, InvokeFunctionResponse } from "starknet";
+import { provider } from "./provider";
 import { AcceptedTransactionReceiptResponse, ensureAccepted } from "./receipts";
 
 export async function profileGasUsage({ transaction_hash: txHash }: InvokeFunctionResponse) {
   // TODO: devnet and RPC not supported yet
-  const trace: Sequencer.TransactionTraceResponse = await sequencerProvider.getTransactionTrace(txHash);
+  const trace = (await provider.getTransactionTrace(txHash)).invoke_tx_trace!;
   const receipt = ensureAccepted(await provider.waitForTransaction(txHash));
   const actualFee = BigInt(receipt.actual_fee as string);
 
   const executionResourcesByPhase: ExecutionResources[] = [
     trace.validate_invocation!.execution_resources!,
-    trace.function_invocation!.execution_resources!,
+    (trace.execute_invocation! as any)["execution_resources"]!,
     trace.fee_transfer_invocation!.execution_resources!,
   ];
 

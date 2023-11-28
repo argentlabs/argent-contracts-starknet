@@ -76,7 +76,8 @@ import {
     backend_signature: num.BigNumberish[];
   }
   
-  export function getSessionDomain(chainId: string): typedData.StarkNetDomain {
+  export async function getSessionDomain(): Promise<typedData.StarkNetDomain> {
+    const chainId = await provider.getChainId();
     return {
       name: "SessionAccount.session",
       version: "1",
@@ -84,11 +85,11 @@ import {
     };
   }
   
-  export function getSessionTypedData(sessionRequest: OffChainSession, chainId: string): typedData.TypedData {
+  export async function getSessionTypedData(sessionRequest: OffChainSession): Promise<typedData.TypedData> {
     return {
       types: sessionTypes,
       primaryType: "Session",
-      domain: getSessionDomain(chainId),
+      domain: await getSessionDomain(),
       message: {
         session_key: sessionRequest.session_key,
         expires_at: sessionRequest.expires_at,
@@ -124,7 +125,7 @@ import {
     sessionRequest: OffChainSession,
     account: Account,
   ): Promise<bigint[]> {
-    const sessionTypedData = getSessionTypedData(sessionRequest, await provider.getChainId());
+    const sessionTypedData = await getSessionTypedData(sessionRequest);
     const { r, s } = (await account.signMessage(sessionTypedData)) as WeierstrassSignatureType;
     return [r, s];
   }

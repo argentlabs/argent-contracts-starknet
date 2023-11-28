@@ -20,7 +20,7 @@ import {
  * This class allows to easily implement custom signers by overriding the `signRaw` method.
  * This is based on Starknet.js implementation of Signer, but it delegates the actual signing to an abstract function
  */
-abstract class RawSigner implements SignerInterface {
+export abstract class RawSigner implements SignerInterface {
   abstract signRaw(messageHash: string): Promise<Signature>;
 
   public async getPubKey(): Promise<string> {

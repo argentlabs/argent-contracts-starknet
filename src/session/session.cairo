@@ -13,7 +13,6 @@ struct TokenLimit {
 #[derive(Drop, Serde, Copy)]
 struct Session {
     session_key: felt252,
-    backend_key: felt252,
     expires_at: u64,
     allowed_methods_root: felt252,
     max_fee_usage: u128,
@@ -40,7 +39,7 @@ struct StarkNetDomain {
 const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
 const SESSION_TYPE_HASH: felt252 =
     selector!(
-        "Session(session_key:felt,backend_key:felt,expires_at:felt,allowed_methods_root:merkletree,max_fee_usage:felt,token_limits:TokenLimit*,nft_contracts:felt*)TokenLimit(contract_address:felt,amount:u256)u256(low:felt,high:felt)"
+        "Session(session_key:felt,expires_at:felt,allowed_methods_root:merkletree,max_fee_usage:felt,token_limits:TokenLimit*,nft_contracts:felt*)TokenLimit(contract_address:felt,amount:u256)u256(low:felt,high:felt)"
     );
 const TOKEN_LIMIT_HASH: felt252 = selector!("TokenLimit(contract_address:felt,amount:u256)u256(low:felt,high:felt)");
 const U256_TYPE_HASH: felt252 = selector!("u256(low:felt,high:felt)");
@@ -60,13 +59,12 @@ impl StructHashSession of IStructHash<Session> {
         let mut state = PedersenTrait::new(0);
         state = state.update_with(SESSION_TYPE_HASH);
         state = state.update_with(*self.session_key);
-        state = state.update_with(*self.backend_key);
         state = state.update_with(*self.expires_at);
         state = state.update_with(*self.allowed_methods_root);
         state = state.update_with(*self.max_fee_usage);
         state = state.update_with((*self).token_limits.get_struct_hash());
         state = state.update_with((*self).nft_contracts.get_struct_hash());
-        state = state.update_with(8);
+        state = state.update_with(7);
         state.finalize()
     }
 }

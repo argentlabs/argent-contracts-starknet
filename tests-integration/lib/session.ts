@@ -31,7 +31,6 @@ import {
     ],
     Session: [
       { name: "session_key", type: "felt" },
-      { name: "backend_key", type: "felt" },
       { name: "expires_at", type: "felt" },
       { name: "allowed_methods_root", type: "merkletree", contains: "AllowedMethod" },
       { name: "max_fee_usage", type: "felt" },
@@ -52,7 +51,7 @@ import {
     selector: string;
   }
   
-  export interface IncompleteOffChainSession {
+  export interface OffChainSession {
     session_key: BigNumberish;
     expires_at: BigNumberish;
     max_fee_usage: BigNumberish;
@@ -61,13 +60,8 @@ import {
     allowed_methods: AllowedMethod[];
   }
   
-  export interface CompletedOffChainSession extends IncompleteOffChainSession {
-    backend_key: BigNumberish;
-  }
-  
   export interface OnChainSession {
     session_key: BigNumberish;
-    backend_key: BigNumberish;
     expires_at: BigNumberish;
     max_fee_usage: num.BigNumberish;
     token_limits: TokenLimit[];
@@ -90,14 +84,13 @@ import {
     };
   }
   
-  export function getSessionTypedData(sessionRequest: CompletedOffChainSession, chainId: string): typedData.TypedData {
+  export function getSessionTypedData(sessionRequest: OffChainSession, chainId: string): typedData.TypedData {
     return {
       types: sessionTypes,
       primaryType: "Session",
       domain: getSessionDomain(chainId),
       message: {
         session_key: sessionRequest.session_key,
-        backend_key: sessionRequest.backend_key,
         expires_at: sessionRequest.expires_at,
         max_fee_usage: sessionRequest.max_fee_usage,
         token_limits: sessionRequest.token_limits,
@@ -113,26 +106,22 @@ import {
     );
   }
   
-  export function getAllowedMethodRoot(completedSession: CompletedOffChainSession): OnChainSession {
+  export function getAllowedMethodRoot(completedSession: OffChainSession): OnChainSession {
     const allowedMethods = completedSession.allowed_methods ?? [];
     const leaves = getLeaves(allowedMethods);
   
-    if (!completedSession.backend_key) {
-      throw new Error("Backend key is missing");
-    }
     return {
       session_key: completedSession.session_key,
-      backend_key: completedSession.backend_key,
       expires_at: completedSession.expires_at,
-      allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
       max_fee_usage: completedSession.max_fee_usage,
       token_limits: completedSession.token_limits,
       nft_contracts: completedSession.nft_contracts,
+      allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
     };
   }
   
   export async function getOwnerSessionSignature(
-    sessionRequest: CompletedOffChainSession,
+    sessionRequest: OffChainSession,
     account: Account,
   ): Promise<bigint[]> {
     const sessionTypedData = getSessionTypedData(sessionRequest, await provider.getChainId());

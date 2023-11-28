@@ -272,10 +272,7 @@ mod ArgentGenericAccount {
             let signer_sig = *parsed_signatures.at(0);
             let is_valid = self
                 .is_valid_signer_signature(
-                    tx_info.transaction_hash,
-                    signer: signer_sig.signer,
-                    signer_type: signer_sig.signer_type,
-                    signature: array![].span(),
+                    tx_info.transaction_hash, signer: signer_sig.signer, signer_type: signer_sig.signer_type,
                 );
             assert(is_valid, 'argent/invalid-signature');
 
@@ -403,9 +400,8 @@ mod ArgentGenericAccount {
             self.is_signer_inner(signer)
         }
 
-        // TODO Needs to update the interface
         fn is_valid_signer_signature(
-            self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType, signature: Span<felt252>
+            self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType
         ) -> bool {
             self.is_valid_signer_signature_inner(hash, signer, signer_type)
         }
@@ -583,10 +579,7 @@ mod ArgentGenericAccount {
                         assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
                         let is_valid = self
                             .is_valid_signer_signature(
-                                hash,
-                                signer: signer_sig.signer,
-                                signer_type: signer_sig.signer_type,
-                                signature: array![].span(),
+                                hash, signer: signer_sig.signer, signer_type: signer_sig.signer_type,
                             );
                         if !is_valid {
                             break false;

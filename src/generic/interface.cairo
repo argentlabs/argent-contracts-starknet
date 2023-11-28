@@ -51,7 +51,7 @@ trait IArgentMultisig<TContractState> {
 
     /// Checks if a given signature is a valid signature from one of the multisig owners
     fn is_valid_signer_signature(
-        self: @TContractState, hash: felt252, signer: felt252, signer_type: SignerType, signature: Span<felt252>
+        self: @TContractState, hash: felt252, signer: felt252, signer_type: SignerType
     ) -> bool;
 }
 

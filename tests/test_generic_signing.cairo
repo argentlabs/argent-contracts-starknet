@@ -93,7 +93,7 @@ fn test_same_owner_twice() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/signature-invalid-length', 'ENTRYPOINT_FAILED'))]
 fn test_missing_owner_signature() {
     let threshold = 2;
     let signers_array = array![signer_pubkey_1, signer_pubkey_2];

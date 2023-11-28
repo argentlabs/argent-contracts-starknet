@@ -15,9 +15,6 @@ mod common {
     mod upgrade;
     mod version;
 }
-mod session {
-    mod session_account;
-}
 mod multisig {
     mod argent_multisig;
     mod interface;

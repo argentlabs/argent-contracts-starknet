@@ -1,154 +1,99 @@
-use box::BoxTrait;
-use hash::{HashStateTrait, HashStateExTrait, LegacyHash};
-use pedersen::PedersenTrait;
-use starknet::account::Call;
-use starknet::{get_tx_info, get_contract_address, ContractAddress};
+use starknet::{account::Call};
 
-#[derive(Drop, Serde, Copy)]
-struct TokenLimit {
-    contract_address: ContractAddress,
-    amount: u256,
-}
-
-#[derive(Drop, Serde, Copy)]
-struct Session {
-    session_key: felt252,
-    expires_at: u64,
-    allowed_methods_root: felt252,
-    max_fee_usage: u128,
-    token_limits: Span<TokenLimit>,
-    nft_contracts: Span<ContractAddress>,
-}
-
-#[derive(Drop, Serde, Copy)]
-struct SessionToken {
-    session: Session,
-    session_signature: Span<felt252>,
-    owner_signature: Span<felt252>,
-    backend_signature: Span<felt252>
-}
-
-#[derive(Hash, Drop, Copy)]
-struct StarkNetDomain {
-    name: felt252,
-    version: felt252,
-    chain_id: felt252,
-}
-
-
-const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
-const SESSION_TYPE_HASH: felt252 =
-    selector!(
-        "Session(session_key:felt,expires_at:felt,allowed_methods_root:merkletree,max_fee_usage:felt,token_limits:TokenLimit*,nft_contracts:felt*)TokenLimit(contract_address:felt,amount:u256)u256(low:felt,high:felt)"
+#[starknet::interface]
+trait ISessionable<TContractState> {
+    fn revoke_session(ref self: TContractState, session_key: felt252);
+    fn assert_valid_session(
+        ref self: TContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
     );
-const TOKEN_LIMIT_HASH: felt252 = selector!("TokenLimit(contract_address:felt,amount:u256)u256(low:felt,high:felt)");
-const U256_TYPE_HASH: felt252 = selector!("u256(low:felt,high:felt)");
-
-
-trait IOffchainMessageHash<T> {
-    fn get_message_hash(self: @T) -> felt252;
 }
 
-trait IStructHash<T> {
-    fn get_struct_hash(self: @T) -> felt252;
-}
+#[starknet::component]
+mod sessionable {
+    use argent::common::account::IAccount;
+    use argent::common::asserts::{assert_no_self_call, assert_only_self};
+    use argent::session::session_account::IGenericArgentAccount;
+    use argent::session::session_structs::{SessionToken, IOffchainMessageHash, IStructHash};
+    use ecdsa::check_ecdsa_signature;
+    use hash::LegacyHash;
+    use starknet::{account::Call, get_execution_info, VALIDATED};
 
 
-impl StructHashSession of IStructHash<Session> {
-    fn get_struct_hash(self: @Session) -> felt252 {
-        let mut state = PedersenTrait::new(0);
-        state = state.update_with(SESSION_TYPE_HASH);
-        state = state.update_with(*self.session_key);
-        state = state.update_with(*self.expires_at);
-        state = state.update_with(*self.allowed_methods_root);
-        state = state.update_with(*self.max_fee_usage);
-        state = state.update_with((*self).token_limits.get_struct_hash());
-        state = state.update_with((*self).nft_contracts.get_struct_hash());
-        state = state.update_with(7);
-        state.finalize()
+    #[storage]
+    struct Storage {
+        revoked_session: LegacyMap<felt252, bool>,
     }
-}
 
-
-impl StructHashStarknetDomain of IStructHash<StarkNetDomain> {
-    fn get_struct_hash(self: @StarkNetDomain) -> felt252 {
-        let mut state = PedersenTrait::new(0);
-        state = state.update_with(STARKNET_DOMAIN_TYPE_HASH);
-        state = state.update_with(*self);
-        state = state.update_with(4);
-        state.finalize()
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        SessionRevoked: SessionRevoked
     }
-}
 
-impl OffchainMessageHashSession of IOffchainMessageHash<Session> {
-    fn get_message_hash(self: @Session) -> felt252 {
-        let domain = StarkNetDomain {
-            name: 'SessionAccount.session', version: 1, chain_id: get_tx_info().unbox().chain_id
-        };
-        let mut state = PedersenTrait::new(0);
-        state = state.update_with('StarkNet Message');
-        state = state.update_with(domain.get_struct_hash());
-        state = state.update_with(get_contract_address());
-        state = state.update_with(self.get_struct_hash());
-        state = state.update_with(4);
-        state.finalize()
+    #[derive(Drop, starknet::Event)]
+    struct SessionRevoked {
+        session_key: felt252,
     }
-}
 
-
-impl StructHashU256 of IStructHash<u256> {
-    fn get_struct_hash(self: @u256) -> felt252 {
-        let mut state = PedersenTrait::new(0);
-        state = state.update_with(U256_TYPE_HASH);
-        state = state.update_with(*self);
-        state = state.update_with(3);
-        state.finalize()
-    }
-}
-
-impl StructHashSpanContract of IStructHash<ContractAddress> {
-    fn get_struct_hash(self: @ContractAddress) -> felt252 {
-        let mut state = PedersenTrait::new(0);
-        state.update_with(*self);
-        state.finalize()
-    }
-}
-
-
-impl StructHashTokenLimit of IStructHash<TokenLimit> {
-    fn get_struct_hash(self: @TokenLimit) -> felt252 {
-        let mut state = PedersenTrait::new(0);
-        state = state.update_with(TOKEN_LIMIT_HASH);
-        state = state.update_with(*self.contract_address);
-        state = state.update_with((*self).amount.get_struct_hash());
-        state = state.update_with(3);
-        state.finalize()
-    }
-}
-
-
-impl StructHashSpanGeneric<
-    T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl THash: IStructHash<T>
-> of IStructHash<Span<T>> {
-    fn get_struct_hash(self: @Span<T>) -> felt252 {
-        let mut state = LegacyHash::hash(0, *self);
-        state
-    }
-}
-
-impl HashGenericSpanStruct<
-    T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl THash: IStructHash<T>,
-> of LegacyHash<Span<T>> {
-    fn hash(mut state: felt252, mut value: Span<T>) -> felt252 {
-        let list_len = value.len();
-        loop {
-            match value.pop_front() {
-                Option::Some(item) => { state = LegacyHash::hash(state, (*item).get_struct_hash()); },
-                Option::None(_) => {
-                    state = LegacyHash::hash(state, list_len);
-                    break state;
-                },
-            };
+    #[embeddable_as(SessionableImpl)]
+    impl Sessionable<
+        TContractState,
+        +HasComponent<TContractState>,
+        +IAccount<TContractState>,
+        +IGenericArgentAccount<TContractState>,
+    > of super::ISessionable<ComponentState<TContractState>> {
+        fn revoke_session(ref self: ComponentState<TContractState>, session_key: felt252) {
+            assert_only_self();
+            self.emit(SessionRevoked { session_key });
+            self.revoked_session.write(session_key, true);
         }
+
+        fn assert_valid_session(
+            ref self: ComponentState<TContractState>,
+            calls: Span<Call>,
+            execution_hash: felt252,
+            signature: Span<felt252>,
+        ) {
+            let state = self.get_contract();
+            let execution_info = get_execution_info().unbox();
+            let account_address = execution_info.contract_address;
+            let tx_info = execution_info.tx_info.unbox();
+
+            assert_no_self_call(calls, account_address);
+            let mut serialized = signature.slice(1, signature.len() - 1);
+            let token: SessionToken = Serde::deserialize(ref serialized).expect('argent/invalid-calldata');
+            assert(serialized.is_empty(), 'excess-session-data');
+
+            assert(!self.revoked_session.read(token.session.session_key), 'session-revoked');
+
+            assert(
+                state
+                    .is_valid_signature(
+                        token.session.get_message_hash(), token.owner_signature.snapshot.clone()
+                    ) == VALIDATED,
+                'invalid-owner-sig'
+            );
+
+            let message_hash = LegacyHash::hash(tx_info.transaction_hash, token.session.get_message_hash());
+
+            assert(
+                is_valid_signature_generic(message_hash, token.session.session_key, token.session_signature),
+                'invalid-session-sig'
+            );
+
+            assert(
+                is_valid_signature_generic(message_hash, state.get_guardian(), token.backend_signature),
+                'invalid-guardian-sig'
+            );
+        }
+    }
+
+    fn is_valid_signature_generic(hash: felt252, signer: felt252, signature: Span<felt252>) -> bool {
+        if signature.len() != 2 {
+            return false;
+        }
+        let signature_r = *signature[0];
+        let signature_s = *signature[1];
+        check_ecdsa_signature(hash, signer, signature_r, signature_s)
     }
 }

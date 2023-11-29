@@ -27,6 +27,7 @@ trait IOutsideExecution<TContractState> {
 /// This trait has to be implemented when using the component `outside_execution_component` (This is enforced by the compilator)
 trait IOutsideExecutionCallback<TContractState> {
     /// @notice Callback performed after checking the OutsideExecution is valid
+    /// @dev Make the correct access control checks in this callback
     /// @param calls The calls to be performed 
     /// @param outside_execution_hash The hash of OutsideExecution
     /// @param signature The signature that the user gave for this transaction

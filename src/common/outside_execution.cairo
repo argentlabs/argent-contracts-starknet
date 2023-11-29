@@ -92,7 +92,6 @@ mod outside_execution_component {
             self.outside_nonces.write(nonce, true);
 
             let outside_tx_hash = hash_outside_execution_message(@outside_execution);
-
             let mut state = self.get_contract_mut();
             state.execute_from_outside_callback(outside_execution.calls, outside_tx_hash, signature.span())
         }

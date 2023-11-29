@@ -52,17 +52,14 @@ mod ArgentAccount {
 
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
         #[inline(always)]
-        fn assert_valid_calls_and_signature_callback(
+        fn execute_from_outside_callback(
             ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
-        ) {
+        ) -> Array<Span<felt252>> {
             self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature, is_from_outside: true);
-        }
 
-        #[inline(always)]
-        fn emit_transaction_executed(
-            ref self: ContractState, outside_execution_hash: felt252, response: Span<Span<felt252>>
-        ) {
-            self.emit(TransactionExecuted { hash: outside_execution_hash, response });
+            let retdata = execute_multicall(calls);
+            self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
+            retdata
         }
     }
 

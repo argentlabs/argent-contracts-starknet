@@ -32,18 +32,9 @@ trait IOutsideExecutionCallback<TContractState> {
     /// @param outside_execution_hash The hash of the transaction
     /// @param signature The signature that the user gave for this transaction
     #[inline(always)]
-    fn assert_valid_calls_and_signature_callback(
+    fn execute_from_outside_callback(
         ref self: TContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
-    );
-
-    /// @notice Allows to emit an event.
-    /// Will be called whenever a transaction from outside has been correctly executed
-    /// @param outside_execution_hash The hash of the transaction
-    /// @param response An array of array of felt252 containing the responses of each called executed
-    #[inline(always)]
-    fn emit_transaction_executed(
-        ref self: TContractState, outside_execution_hash: felt252, response: Span<Span<felt252>>
-    );
+    ) -> Array<Span<felt252>>;
 }
 
 #[derive(Copy, Drop, Serde)]
@@ -66,7 +57,6 @@ struct OutsideExecution {
 // This is achieved by adding outside_execution::ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
 #[starknet::component]
 mod outside_execution_component {
-    use argent::common::calls::execute_multicall;
     use starknet::{get_caller_address, get_block_timestamp};
     use super::{IOutsideExecution, OutsideExecution, hash_outside_execution_message, IOutsideExecutionCallback};
 
@@ -104,11 +94,7 @@ mod outside_execution_component {
             let outside_tx_hash = hash_outside_execution_message(@outside_execution);
 
             let mut state = self.get_contract_mut();
-            state.assert_valid_calls_and_signature_callback(outside_execution.calls, outside_tx_hash, signature.span());
-
-            let retdata = execute_multicall(outside_execution.calls);
-            state.emit_transaction_executed(outside_tx_hash, retdata.span());
-            retdata
+            state.execute_from_outside_callback(outside_execution.calls, outside_tx_hash, signature.span())
         }
 
         fn get_outside_execution_message_hash(

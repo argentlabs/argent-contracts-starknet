@@ -6,7 +6,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "starknet" : "git+https://github.com/starknet-io/starknet.js.git#a596748f5522fbc59cc2609166462fee09e71830"
+    "starknet" : "git+https://github.com/starknet-io/starknet.js.git#9b9fe0e4c5d8d54323bb82ab7ceed3a78d6fc1bc"
   },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.0",

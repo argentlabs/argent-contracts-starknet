@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { CompiledSierra, Contract, DeclareContractPayload, json, num } from "starknet";
+import { CompiledSierra, Contract, DeclareContractPayload, json, num, uint256 } from "starknet";
 import { deployer } from "./accounts";
 import { provider } from "./provider";
 
@@ -20,6 +20,11 @@ export async function getEthContract() {
   const ethImplementation = await loadContract(implementationAddress);
   ethContract = new Contract(ethImplementation.abi, ethAddress, ethProxy.providerOrAccount);
   return ethContract;
+}
+
+export async function getEthBalance(accountAddress: string): Promise<bigint> {
+  const ethContract = await getEthContract();
+  return uint256.uint256ToBN((await ethContract.balanceOf(accountAddress)).balance);
 }
 
 export function removeFromCache(contractName: string) {

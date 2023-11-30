@@ -1249,9 +1249,9 @@ slash@^3.0.0:
   resolved "https://registry.npmjs.org/slash/-/slash-3.0.0.tgz"
   integrity sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==
 
-"starknet@git+https://github.com/starknet-io/starknet.js.git#a596748f5522fbc59cc2609166462fee09e71830":
+"starknet@git+https://github.com/starknet-io/starknet.js.git#9b9fe0e4c5d8d54323bb82ab7ceed3a78d6fc1bc":
   version "5.24.3"
-  resolved "git+https://github.com/starknet-io/starknet.js.git#a596748f5522fbc59cc2609166462fee09e71830"
+  resolved "git+https://github.com/starknet-io/starknet.js.git#9b9fe0e4c5d8d54323bb82ab7ceed3a78d6fc1bc"
   dependencies:
     "@noble/curves" "~1.2.0"
     "@scure/base" "^1.1.3"

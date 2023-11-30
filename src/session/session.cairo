@@ -1,10 +1,12 @@
+use argent::session::session_structs::Session;
 use starknet::{account::Call};
+
 
 #[starknet::interface]
 trait ISessionable<TContractState> {
     fn revoke_session(ref self: TContractState, session_key: felt252);
     fn assert_valid_session(
-        ref self: TContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
+        self: @TContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
     );
 }
 
@@ -13,11 +15,12 @@ mod sessionable {
     use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,};
     use argent::common::account::IAccount;
     use argent::common::asserts::{assert_no_self_call, assert_only_self};
+    use argent::session::session::ISessionable;
     use argent::session::session_account::IGenericArgentAccount;
-    use argent::session::session_structs::{SessionToken, IOffchainMessageHash, IStructHash, IMerkleLeafHash};
+    use argent::session::session_structs::{SessionToken, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash};
     use ecdsa::check_ecdsa_signature;
     use hash::LegacyHash;
-    use starknet::{account::Call, get_execution_info, VALIDATED};
+    use starknet::{account::Call, get_execution_info, get_block_timestamp, VALIDATED};
 
 
     #[storage]
@@ -50,10 +53,7 @@ mod sessionable {
         }
 
         fn assert_valid_session(
-            ref self: ComponentState<TContractState>,
-            calls: Span<Call>,
-            execution_hash: felt252,
-            signature: Span<felt252>,
+            self: @ComponentState<TContractState>, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>,
         ) {
             let state = self.get_contract();
             let execution_info = get_execution_info().unbox();

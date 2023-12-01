@@ -101,8 +101,8 @@ export class DappService {
   public createSessionRequest(
     allowed_methods: AllowedMethod[],
     token_limits: TokenLimit[],
-    max_fee_usage = 1_000_000_000_000_000n,
     expires_at = 150,
+    max_fee_usage = 1_000_000_000_000_000n,
     nft_contracts: string[] = [],
   ): OffChainSession {
     token_limits.sort((a, b) => (BigInt(a.contract_address) < BigInt(b.contract_address) ? -1 : 1));

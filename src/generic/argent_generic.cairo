@@ -1,16 +1,10 @@
-// For some reason (fn colliding with same name) I have to import it here and use super
-use argent::generic::interface::{IArgentMultisig};
-
 #[starknet::contract]
 mod ArgentGenericAccount {
     use argent::common::{
         account::{
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
-        asserts::{
-            assert_correct_tx_version, assert_no_self_call, assert_only_protocol, assert_only_self,
-            assert_correct_declare_version
-        },
+        asserts::{assert_correct_tx_version, assert_no_self_call, assert_only_protocol, assert_only_self,},
         calls::execute_multicall, version::Version,
         erc165::{
             IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
@@ -21,28 +15,24 @@ mod ArgentGenericAccount {
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
-    use argent::generic::interface::{IRecoveryAccount};
-    use argent::generic::recovery::{EscapeStatus, Escape, EscapeEnabled};
-    use argent::generic::signer_signature::{
-        SignerType, deserialize_array_signer_signature, assert_valid_starknet_signature, assert_valid_ethereum_signature
+    use argent::generic::{
+        signer_signature::{
+            SignerSignature, SignerType, assert_valid_starknet_signature, assert_valid_ethereum_signature
+        },
+        interface::{IRecoveryAccount, IArgentMultisig}, recovery::{EscapeStatus, Escape, EscapeEnabled}
     };
-    use core::array::ArrayTrait;
     use starknet::{
-        get_contract_address, ContractAddressIntoFelt252, VALIDATED, syscalls::replace_class_syscall, ClassHash,
-        class_hash_const, get_block_timestamp, get_caller_address, get_tx_info, account::Call
+        get_contract_address, VALIDATED, syscalls::replace_class_syscall, ClassHash, get_block_timestamp,
+        get_caller_address, get_tx_info, account::Call
     };
 
     const NAME: felt252 = 'ArgentGenericAccount';
     const VERSION_MAJOR: u8 = 0;
     const VERSION_MINOR: u8 = 0;
     const VERSION_PATCH: u8 = 1;
-    const VERSION_COMPAT: felt252 = '0.0.1';
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
     /// Time it takes for the escape to become ready after being triggered
-    const ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
-    ///  The escape will be ready and can be completed for this duration
-    const ESCAPE_EXPIRY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
 
     #[storage]
     struct Storage {
@@ -256,7 +246,7 @@ mod ArgentGenericAccount {
     }
 
     #[external(v0)]
-    impl ArgentMultisigImpl of super::IArgentMultisig<ContractState> {
+    impl ArgentMultisigImpl of IArgentMultisig<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             panic_with_felt252('argent/declare-not-available') // Not implemented yet
         }
@@ -271,17 +261,17 @@ mod ArgentGenericAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_tx_version(tx_info.version);
 
-            let parsed_signatures = deserialize_array_signer_signature(tx_info.signature)
-                .expect('argent/invalid-signature-length');
-            assert(parsed_signatures.len() == 1, 'argent/invalid-signature-length');
+            let mut signature = tx_info.signature;
+            let mut parsed_signatures: Array<SignerSignature> = Serde::deserialize(ref signature)
+                .expect('argent/undeserializable-sig');
+            assert(signature.is_empty(), 'argent/signature-not-empty');
+            // TODO AS LONG AS FIRST SIGNATURE IS OK, DEPLOY (this is prob wrong, we should loop)
+            assert(parsed_signatures.len() >= 1, 'argent/invalid-signature-length');
 
             let signer_sig = *parsed_signatures.at(0);
             let is_valid = self
                 .is_valid_signer_signature(
-                    tx_info.transaction_hash,
-                    signer: signer_sig.signer,
-                    signer_type: signer_sig.signer_type,
-                    signature: signer_sig.signature,
+                    tx_info.transaction_hash, signer: signer_sig.signer, signer_type: signer_sig.signer_type,
                 );
             assert(is_valid, 'argent/invalid-signature');
 
@@ -410,9 +400,9 @@ mod ArgentGenericAccount {
         }
 
         fn is_valid_signer_signature(
-            self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType, signature: Span<felt252>
+            self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType
         ) -> bool {
-            self.is_valid_signer_signature_inner(hash, signer, signer_type, signature)
+            self.is_valid_signer_signature_inner(hash, signer, signer_type)
         }
     }
 
@@ -572,26 +562,23 @@ mod ArgentGenericAccount {
             hash: felt252,
             expected_length: u32,
             excluded_signer: felt252,
-            signature: Span<felt252>
+            mut signature: Span<felt252>
         ) -> bool {
-            let mut signer_signatures = deserialize_array_signer_signature(signature)
-                .expect('argent/invalid-signature-length');
-            assert(signer_signatures.len() == expected_length, 'argent/invalid-signature-length');
+            let mut signer_signatures: Array<SignerSignature> = Serde::deserialize(ref signature)
+                .expect('argent/undeserializable-sig');
+            assert(signer_signatures.len() == expected_length, 'argent/signature-invalid-length');
+            assert(signature.is_empty(), 'argent/signature-not-empty');
 
             let mut last_signer: u256 = 0;
             loop {
                 match signer_signatures.pop_front() {
-                    Option::Some(signer_sig_ref) => {
-                        let signer_sig = *signer_sig_ref;
+                    Option::Some(signer_sig) => {
                         assert(signer_sig.signer != excluded_signer, 'argent/unauthorised_signer');
                         let signer_uint: u256 = signer_sig.signer.into();
                         assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
                         let is_valid = self
                             .is_valid_signer_signature(
-                                hash,
-                                signer: signer_sig.signer,
-                                signer_type: signer_sig.signer_type,
-                                signature: signer_sig.signature,
+                                hash, signer: signer_sig.signer, signer_type: signer_sig.signer_type,
                             );
                         if !is_valid {
                             break false;
@@ -604,16 +591,16 @@ mod ArgentGenericAccount {
         }
 
         fn is_valid_signer_signature_inner(
-            self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType, signature: Span<felt252>
+            self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType
         ) -> bool {
             let is_signer = self.is_signer_inner(signer);
             assert(is_signer, 'argent/not-a-signer');
             match signer_type {
-                SignerType::Starknet => {
+                SignerType::Starknet(signature) => {
                     assert_valid_starknet_signature(hash, signer, signature);
                     true
                 },
-                SignerType::Secp256k1 => {
+                SignerType::Secp256k1(signature) => {
                     assert_valid_ethereum_signature(hash, signer, signature);
                     true
                 },

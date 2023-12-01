@@ -3,6 +3,7 @@ mod account {
     mod escape;
     mod interface;
 }
+
 mod common {
     mod account;
     mod array_ext;
@@ -15,6 +16,7 @@ mod common {
     mod upgrade;
     mod version;
 }
+
 mod multisig {
     mod argent_multisig;
     mod interface;

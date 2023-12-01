@@ -39,16 +39,19 @@ describe("ArgentAccount: escape mechanism", function () {
 
   async function buildAccount(guardianType: string): Promise<ArgentWalletWithOther> {
     if (guardianType == "guardian (no backup)") {
-      const { account, accountContract, owner, guardian } =
-        await deployAccountWithGuardianBackup(argentAccountClassHash);
+      const { account, accountContract, owner, guardian } = await deployAccountWithGuardianBackup(
+        argentAccountClassHash,
+      );
       return { account, accountContract, owner, other: guardian };
     } else if (guardianType == "backup guardian") {
-      const { account, accountContract, owner, guardianBackup } =
-        await deployAccountWithGuardianBackup(argentAccountClassHash);
+      const { account, accountContract, owner, guardianBackup } = await deployAccountWithGuardianBackup(
+        argentAccountClassHash,
+      );
       return { account, accountContract, owner, other: guardianBackup };
     } else if (guardianType == "guardian (with backup)") {
-      const { account, accountContract, owner, guardian } =
-        await deployAccountWithGuardianBackup(argentAccountClassHash);
+      const { account, accountContract, owner, guardian } = await deployAccountWithGuardianBackup(
+        argentAccountClassHash,
+      );
       return { account, accountContract, owner, other: guardian };
     }
     expect.fail(`Unknown type ${guardianType}`);
@@ -387,8 +390,9 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     it("Expect 'argent/invalid-escape' when escape_type != ESCAPE_TYPE_GUARDIAN", async function () {
-      const { account, accountContract, owner, guardian } =
-        await deployAccountWithGuardianBackup(argentAccountClassHash);
+      const { account, accountContract, owner, guardian } = await deployAccountWithGuardianBackup(
+        argentAccountClassHash,
+      );
       account.signer = guardian;
 
       await setTime(randomTime);

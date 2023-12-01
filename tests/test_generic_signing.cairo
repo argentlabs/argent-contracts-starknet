@@ -3,7 +3,6 @@ use argent_tests::setup::generic_test_setup::{
     initialize_generic_with, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3,
     ITestArgentGenericAccountDispatcherTrait, initialize_generic_with_one_signer
 };
-use core::serde::Serde;
 use starknet::VALIDATED;
 
 const message_hash: felt252 = 424242;

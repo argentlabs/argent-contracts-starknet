@@ -21,7 +21,6 @@ mod ArgentGenericAccount {
         },
         interface::{IRecoveryAccount, IArgentMultisig}, recovery::{EscapeStatus, Escape, EscapeEnabled}
     };
-    use core::array::SpanTrait;
     use starknet::{
         get_contract_address, VALIDATED, syscalls::replace_class_syscall, ClassHash, get_block_timestamp,
         get_caller_address, get_tx_info, account::Call

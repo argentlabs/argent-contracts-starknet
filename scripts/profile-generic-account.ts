@@ -20,7 +20,7 @@ const testDappContract = await loadContract(contract_address);
 const table: Record<string, any> = {};
 
 // To be able to run this script using the devnet, update the start-devnet.sh script to ignore this line:
-// export STARKNET_DEVNET_CAIRO_VM=rust 
+// export STARKNET_DEVNET_CAIRO_VM=rust
 class GenericSigner extends RawSigner {
   constructor(public keys: StarknetKeyPair[]) {
     super();

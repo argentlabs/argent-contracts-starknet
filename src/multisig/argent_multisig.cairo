@@ -65,7 +65,6 @@ mod ArgentMultisig {
     #[derive(Drop, starknet::Event)]
     enum Event {
         ExecuteFromOutsideEvents: outside_execution_component::Event,
-        #[flat]
         SignerListEvents: signer_list_component::Event,
         ThresholdUpdated: ThresholdUpdated,
         TransactionExecuted: TransactionExecuted,

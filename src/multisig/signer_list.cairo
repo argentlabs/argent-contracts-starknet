@@ -8,10 +8,7 @@ mod signer_list_component {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {}
-    // #[embeddable_as(OutsideExecutionImpl)]
-    // impl OutsideExecuction<
-    //     TContractState, +HasComponent<TContractState>, +IOutsideExecutionCallback<TContractState>, +Drop<TContractState>
-    // > of IOutsideExecution<ComponentState<TContractState>> {}
+
     #[generate_trait]
     impl Private<TContractState, +HasComponent<TContractState>> of PrivateTrait<TContractState> {
         // Constant computation cost if `signer` is in fact in the list AND it's not the last one.

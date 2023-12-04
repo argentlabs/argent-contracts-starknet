@@ -58,7 +58,6 @@ mod ArgentMultisig {
         execute_from_outside: outside_execution_component::Storage,
         #[substorage(v0)]
         signer_list: signer_list_component::Storage,
-        // signer_list: LegacyMap<felt252, felt252>,
         threshold: usize,
     }
 
@@ -66,6 +65,7 @@ mod ArgentMultisig {
     #[derive(Drop, starknet::Event)]
     enum Event {
         ExecuteFromOutsideEvents: outside_execution_component::Event,
+        #[flat]
         SignerListEvents: signer_list_component::Event,
         ThresholdUpdated: ThresholdUpdated,
         TransactionExecuted: TransactionExecuted,
@@ -119,7 +119,7 @@ mod ArgentMultisig {
         let new_signers_count = signers.len();
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-        self.signer_list.add_signers_inner(signers.span(), last_signer: 0);
+        self.signer_list.add_signers(signers.span(), last_signer: 0);
         self.threshold.write(new_threshold);
 
         self.emit(ThresholdUpdated { new_threshold });
@@ -234,7 +234,7 @@ mod ArgentMultisig {
 
             let new_signers_count = signers_len + signers_to_add.len();
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
-            self.signer_list.add_signers_inner(signers_to_add.span(), last_signer);
+            self.signer_list.add_signers(signers_to_add.span(), last_signer);
             self.threshold.write(new_threshold);
 
             if previous_threshold != new_threshold {
@@ -258,7 +258,7 @@ mod ArgentMultisig {
             let new_signers_count = signers_len - signers_to_remove.len();
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-            self.signer_list.remove_signers_inner(signers_to_remove.span(), last_signer);
+            self.signer_list.remove_signers(signers_to_remove.span(), last_signer);
             self.threshold.write(new_threshold);
 
             if previous_threshold != new_threshold {
@@ -280,7 +280,7 @@ mod ArgentMultisig {
             assert_only_self();
             let (new_signers_count, last_signer) = self.signer_list.load();
 
-            self.signer_list.replace_signer_inner(signer_to_remove, signer_to_add, last_signer);
+            self.signer_list.replace_signer(signer_to_remove, signer_to_add, last_signer);
 
             self.emit(OwnerRemoved { removed_owner_guid: signer_to_remove });
             self.emit(OwnerAdded { new_owner_guid: signer_to_add });
@@ -300,11 +300,11 @@ mod ArgentMultisig {
         }
 
         fn get_signers(self: @ContractState) -> Array<felt252> {
-            self.signer_list.get_signers_inner()
+            self.signer_list.get_signers()
         }
 
         fn is_signer(self: @ContractState, signer: felt252) -> bool {
-            self.signer_list.is_signer_inner(signer)
+            self.signer_list.is_signer(signer)
         }
 
         fn is_valid_signer_signature(
@@ -423,7 +423,7 @@ mod ArgentMultisig {
         fn is_valid_signer_signature_inner(
             self: @ContractState, hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
         ) -> bool {
-            let is_signer = self.signer_list.is_signer_inner(signer);
+            let is_signer = self.signer_list.is_signer(signer);
             assert(is_signer, 'argent/not-a-signer');
             check_ecdsa_signature(hash, signer, signature_r, signature_s)
         }

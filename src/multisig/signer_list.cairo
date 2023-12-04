@@ -16,7 +16,7 @@ mod signer_list_component {
     impl Private<TContractState, +HasComponent<TContractState>> of PrivateTrait<TContractState> {
         // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
         // Otherwise cost increases with the list size
-        fn is_signer_inner(self: @ComponentState<TContractState>, signer: felt252) -> bool {
+        fn is_signer(self: @ComponentState<TContractState>, signer: felt252) -> bool {
             if signer == 0 {
                 return false;
             }
@@ -72,7 +72,7 @@ mod signer_list_component {
             }
         }
 
-        fn add_signers_inner(
+        fn add_signers(
             ref self: ComponentState<TContractState>, mut signers_to_add: Span<felt252>, last_signer: felt252
         ) {
             match signers_to_add.pop_front() {
@@ -86,13 +86,13 @@ mod signer_list_component {
                     // Signers are added at the end of the list
                     self.signer_list.write(last_signer, signer);
 
-                    self.add_signers_inner(signers_to_add, last_signer: signer);
+                    self.add_signers(signers_to_add, last_signer: signer);
                 },
                 Option::None => (),
             }
         }
 
-        fn remove_signers_inner(
+        fn remove_signers(
             ref self: ComponentState<TContractState>, mut signers_to_remove: Span<felt252>, last_signer: felt252
         ) {
             match signers_to_remove.pop_front() {
@@ -110,18 +110,18 @@ mod signer_list_component {
 
                     if next_signer == 0 {
                         // Removing the last item
-                        self.remove_signers_inner(signers_to_remove, last_signer: previous_signer);
+                        self.remove_signers(signers_to_remove, last_signer: previous_signer);
                     } else {
                         // Removing an item in the middle
                         self.signer_list.write(signer, 0);
-                        self.remove_signers_inner(signers_to_remove, last_signer);
+                        self.remove_signers(signers_to_remove, last_signer);
                     }
                 },
                 Option::None => (),
             }
         }
 
-        fn replace_signer_inner(
+        fn replace_signer(
             ref self: ComponentState<TContractState>,
             signer_to_remove: felt252,
             signer_to_add: felt252,
@@ -174,7 +174,7 @@ mod signer_list_component {
             }
         }
 
-        fn get_signers_inner(self: @ComponentState<TContractState>) -> Array<felt252> {
+        fn get_signers(self: @ComponentState<TContractState>) -> Array<felt252> {
             let mut current_signer = self.signer_list.read(0);
             let mut signers = array![];
             loop {

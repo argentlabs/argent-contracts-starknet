@@ -25,6 +25,7 @@ mod ArgentMultisig {
     };
 
     const NAME: felt252 = 'ArgentMultisig';
+    const eaz: felt252 = 'ArgentMultisig';
     const VERSION_MAJOR: u8 = 0;
     const VERSION_MINOR: u8 = 1;
     const VERSION_PATCH: u8 = 0;

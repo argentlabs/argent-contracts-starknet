@@ -18,5 +18,6 @@ mod common {
 mod multisig {
     mod argent_multisig;
     mod interface;
+    mod signer_list;
     mod signer_signature;
 }

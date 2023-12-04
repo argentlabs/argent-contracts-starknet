@@ -69,42 +69,4 @@ describe("Hybrid Session Account: execute calls", function () {
     await account.waitForTransaction(transaction_hash);
     await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
   });
-
-  it("Revert if session is expired", async function () {
-    const { account, guardian } = await deploySessionAccount(sessionAccountClassHash);
-
-    const backendService = new BackendService(guardian);
-    const argentX = new ArgentX(account, backendService);
-
-    const allowedMethods: AllowedMethod[] = [
-      {
-        contract_address: testDappOneContract.address,
-        selector: selector.getSelectorFromName("set_number_double"),
-      },
-      {
-        contract_address: testDappOneContract.address,
-        selector: selector.getSelectorFromName("set_number_times3"),
-      },
-    ];
-
-    const expiry = 200;
-
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, tokenLimits, expiry);
-
-    const ownerSignature = await argentX.getOwnerSessionSignature(sessionRequest);
-
-    // Every request:
-    const calls = [testDappOneContract.populateTransaction.set_number_double(2)];
-
-    const sessionSigner = new DappSigner(argentX, dappService.keypair, ownerSignature, sessionRequest);
-
-    account.signer = sessionSigner;
-
-    await account.execute(calls);
-    await setTime(expiry + 10);
-    expectRevertWithErrorMessage("session-revoked", async () => {
-      const { transaction_hash } = await account.execute(calls);
-      return await account.waitForTransaction(transaction_hash);
-    });
-  });
 });

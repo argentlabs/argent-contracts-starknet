@@ -18,7 +18,7 @@ mod ArgentAccount {
         outside_execution::{
             OutsideExecution, IOutsideExecution, hash_outside_execution_message, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
         },
-        upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
+        upgrade::{IUpgradeable, do_upgrade}
     };
     use ecdsa::check_ecdsa_signature;
     use hash::HashStateTrait;
@@ -281,10 +281,9 @@ mod ArgentAccount {
                 .supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
             assert(supports_interface, 'argent/invalid-implementation');
 
-            replace_class_syscall(new_implementation).unwrap();
             self.emit(AccountUpgraded { new_implementation });
 
-            IUpgradeableLibraryDispatcher { class_hash: new_implementation }.execute_after_upgrade(calldata)
+            do_upgrade(new_implementation, calldata)
         }
 
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {

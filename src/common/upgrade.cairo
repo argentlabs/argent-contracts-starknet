@@ -1,4 +1,4 @@
-use starknet::ClassHash;
+use starknet::{ClassHash, syscalls::replace_class_syscall};
 
 #[starknet::interface]
 trait IUpgradeable<TContractState> {
@@ -13,4 +13,9 @@ trait IUpgradeable<TContractState> {
     /// Can only be called by the account after a call to `upgrade`.
     /// @param data Generic call data that can be passed to the method for future upgrade logic
     fn execute_after_upgrade(ref self: TContractState, data: Array<felt252>) -> Array<felt252>;
+}
+
+fn do_upgrade(class_hash: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
+    replace_class_syscall(class_hash).unwrap();
+    IUpgradeableLibraryDispatcher { class_hash }.execute_after_upgrade(calldata)
 }

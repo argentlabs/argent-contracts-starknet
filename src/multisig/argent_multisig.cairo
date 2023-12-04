@@ -19,14 +19,14 @@ mod ArgentMultisig {
         outside_execution::{
             OutsideExecution, IOutsideExecution, hash_outside_execution_message, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
         },
-        upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
+        upgrade::{IUpgradeable, IUpgradeableDispatcherTrait, do_upgrade}
     };
     use argent::multisig::interface::{IDeprecatedArgentMultisig};
     use argent::multisig::signer_signature::{deserialize_array_signer_signature};
     use ecdsa::check_ecdsa_signature;
     use starknet::{
-        get_contract_address, ContractAddressIntoFelt252, VALIDATED, syscalls::replace_class_syscall, ClassHash,
-        class_hash_const, get_block_timestamp, get_caller_address, get_tx_info, account::Call
+        get_contract_address, ContractAddressIntoFelt252, VALIDATED, ClassHash, class_hash_const, get_block_timestamp,
+        get_caller_address, get_tx_info, account::Call
     };
 
     const NAME: felt252 = 'ArgentMultisig';
@@ -199,10 +199,8 @@ mod ArgentMultisig {
                 .supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
             assert(supports_interface, 'argent/invalid-implementation');
 
-            replace_class_syscall(new_implementation).unwrap();
             self.emit(AccountUpgraded { new_implementation });
-
-            IUpgradeableLibraryDispatcher { class_hash: new_implementation }.execute_after_upgrade(calldata)
+            do_upgrade(new_implementation, calldata)
         }
 
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {

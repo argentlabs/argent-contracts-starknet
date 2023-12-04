@@ -18,4 +18,3 @@ export class FastRpcProvider extends RpcProvider {
 
 export const provider = new FastRpcProvider({ nodeUrl: process.env.RPC_URL || `${devnetBaseUrl}` });
 console.log("Provider:", provider.channel.nodeUrl);
-

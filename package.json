@@ -6,7 +6,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "starknet" : "git+https://github.com/starknet-io/starknet.js.git#9b9fe0e4c5d8d54323bb82ab7ceed3a78d6fc1bc"
+    "starknet": "git+https://github.com/starknet-io/starknet.js.git#9b9fe0e4c5d8d54323bb82ab7ceed3a78d6fc1bc"
   },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.0",
@@ -29,6 +29,6 @@
     "typescript": "^5.1.6"
   },
   "scripts": {
-    "integration" : "yarn scripts/deploy-integration.ts"
+    "integration": "yarn scripts/deploy-integration.ts"
   }
 }

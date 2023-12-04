@@ -26,7 +26,7 @@ export async function expectRevertWithErrorMessage(
     await provider.waitForTransaction(executionResult["transaction_hash"]);
   } catch (e: any) {
     // expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
-    expect(e.toString()).to.contain(`Failure reason: \\"${errorMessage}\\"`); 
+    expect(e.toString()).to.contain(`Failure reason: \\"${errorMessage}\\"`);
 
     return;
   }
@@ -82,7 +82,7 @@ export async function expectEvent(
     ({ transaction_hash: param } = await param());
   }
   if (typeof param === "string") {
-    param = await provider.waitForTransaction(param) as GetTransactionReceiptResponse;
+    param = (await provider.waitForTransaction(param)) as GetTransactionReceiptResponse;
   }
   if ("eventName" in event) {
     event = convertToEvent(event);

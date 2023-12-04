@@ -11,7 +11,7 @@ const classHashToUse = newClassHash;
 const ethBalance = await getEthBalance(deployer.address);
 console.log(`eth balance: ${ethBalance}`);
 if (ethBalance == 0n) {
-    throw new Error("eth balance is 0");
+  throw new Error("eth balance is 0");
 }
 
 const pubKey = BigInt(await deployer.signer.getPubKey());
@@ -19,12 +19,15 @@ const salt = pubKey;
 const constructorCalldata = CallData.compile({ owner: pubKey, guardian: 0n });
 const contractAddress = hash.calculateContractAddressFromHash(salt, classHashToUse, constructorCalldata, 0);
 if (contractAddress != deployer.address) {
-    throw new Error("calculated address doesn't match deployer address");
+  throw new Error("calculated address doesn't match deployer address");
 }
-const { transaction_hash } = await deployer.deploySelf({
+const { transaction_hash } = await deployer.deploySelf(
+  {
     classHash: newClassHash,
     constructorCalldata,
     addressSalt: salt,
-}, { maxFee: ethBalance });
+  },
+  { maxFee: ethBalance },
+);
 console.log(`transaction_hash: ${transaction_hash}`);
 await provider.waitForTransaction(transaction_hash);

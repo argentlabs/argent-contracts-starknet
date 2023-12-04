@@ -8,7 +8,6 @@ const newClassHash = "0x28463df0e5e765507ae51f9e67d6ae36c7e5af793424eccc9bc22ad7
 const classHashToUse = newClassHash;
 /////////////////////////////////////////////
 
-
 const newKeyPair = new KeyPair();
 const salt = newKeyPair.publicKey;
 const constructorCalldata = CallData.compile({ owner: newKeyPair.publicKey, guardian: 0n });

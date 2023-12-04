@@ -29,4 +29,4 @@ profile = "scarb --profile release build && node --loader ts-node/esm scripts/pr
 deploy = "scarb --profile release build && node --loader ts-node/esm scripts/deploy-account.ts"
 generate-signature = "node --loader ts-node/esm  ./scripts/generate-signature.ts"
 gas-report = "node --loader ts-node/esm scripts/gas-report.ts"
-start-devnet-rs= "docker run -p 127.0.0.1:5050:5050 shardlabs/starknet-devnet-rs:latest-seed0"
+start-devnet-rs2= "docker run -p 127.0.0.1:5050:5050 shardlabs/starknet-devnet-rs:64c425b832b96ba09b49646fe0fbf49862c0fb6d --gas-price 36000000000 --timeout 320 --seed 0"

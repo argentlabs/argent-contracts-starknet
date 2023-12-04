@@ -10,9 +10,10 @@ mod signer_list_component {
     enum Event {}
 
     #[generate_trait]
-    impl Private<TContractState, +HasComponent<TContractState>> of PrivateTrait<TContractState> {
+    impl Internal<TContractState, +HasComponent<TContractState>> of InternalTrait<TContractState> {
         // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
         // Otherwise cost increases with the list size
+        #[inline(always)]
         fn is_signer(self: @ComponentState<TContractState>, signer: felt252) -> bool {
             if signer == 0 {
                 return false;
@@ -25,48 +26,6 @@ mod signer_list_component {
             let last_signer = self.find_last_signer();
 
             last_signer == signer
-        }
-
-        // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
-        fn is_signer_using_last(self: @ComponentState<TContractState>, signer: felt252, last_signer: felt252) -> bool {
-            if signer == 0 {
-                return false;
-            }
-
-            let next_signer = self.signer_list.read(signer);
-            if next_signer != 0 {
-                return true;
-            }
-
-            last_signer == signer
-        }
-
-        // Return the last signer or zero if no signers. Cost increases with the list size
-        fn find_last_signer(self: @ComponentState<TContractState>) -> felt252 {
-            let mut current_signer = self.signer_list.read(0);
-            loop {
-                let next_signer = self.signer_list.read(current_signer);
-                if next_signer == 0 {
-                    break current_signer;
-                }
-                current_signer = next_signer;
-            }
-        }
-
-        // Returns the signer before `signer_after` or 0 if the signer is the first one. 
-        // Reverts if `signer_after` is not found
-        // Cost increases with the list size
-        fn find_signer_before(self: @ComponentState<TContractState>, signer_after: felt252) -> felt252 {
-            let mut current_signer = 0;
-            loop {
-                let next_signer = self.signer_list.read(current_signer);
-                assert(next_signer != 0, 'argent/cant-find-signer-before');
-
-                if next_signer == signer_after {
-                    break current_signer;
-                }
-                current_signer = next_signer;
-            }
         }
 
         fn add_signers(
@@ -118,6 +77,7 @@ mod signer_list_component {
             }
         }
 
+        #[inline(always)]
         fn replace_signer(
             ref self: ComponentState<TContractState>,
             signer_to_remove: felt252,
@@ -183,6 +143,53 @@ mod signer_list_component {
                 current_signer = self.signer_list.read(current_signer);
             };
             signers
+        }
+    }
+
+
+    #[generate_trait]
+    impl Private<TContractState, +HasComponent<TContractState>> of PrivateTrait<TContractState> {
+        // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
+        #[inline(always)]
+        fn is_signer_using_last(self: @ComponentState<TContractState>, signer: felt252, last_signer: felt252) -> bool {
+            if signer == 0 {
+                return false;
+            }
+
+            let next_signer = self.signer_list.read(signer);
+            if next_signer != 0 {
+                return true;
+            }
+
+            last_signer == signer
+        }
+
+        // Return the last signer or zero if no signers. Cost increases with the list size
+        fn find_last_signer(self: @ComponentState<TContractState>) -> felt252 {
+            let mut current_signer = self.signer_list.read(0);
+            loop {
+                let next_signer = self.signer_list.read(current_signer);
+                if next_signer == 0 {
+                    break current_signer;
+                }
+                current_signer = next_signer;
+            }
+        }
+
+        // Returns the signer before `signer_after` or 0 if the signer is the first one. 
+        // Reverts if `signer_after` is not found
+        // Cost increases with the list size
+        fn find_signer_before(self: @ComponentState<TContractState>, signer_after: felt252) -> felt252 {
+            let mut current_signer = 0;
+            loop {
+                let next_signer = self.signer_list.read(current_signer);
+                assert(next_signer != 0, 'argent/cant-find-signer-before');
+
+                if next_signer == signer_after {
+                    break current_signer;
+                }
+                current_signer = next_signer;
+            }
         }
     }
 }

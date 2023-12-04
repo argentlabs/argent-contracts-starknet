@@ -50,7 +50,7 @@ mod ArgentMultisig {
     }
 
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
-    impl SignerList = signer_list_component::Private<ContractState>;
+    impl SignerList = signer_list_component::Internal<ContractState>;
 
     #[storage]
     struct Storage {

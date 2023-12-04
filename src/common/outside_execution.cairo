@@ -23,15 +23,19 @@ trait IOutsideExecution<TContractState> {
     fn get_outside_execution_message_hash(self: @TContractState, outside_execution: OutsideExecution) -> felt252;
 }
 
-#[derive(Copy, Drop, Hash)]
-struct StarkNetDomain {
-    name: felt252,
-    version: felt252,
-    chain_id: felt252,
-}
 
-// H('OutsideExecution(caller:felt,nonce:felt,execute_after:felt,execute_before:felt,calls_len:felt,calls:Call*)')
-const OUTSIDE_EXECUTION_TYPE_HASH: felt252 = 0x11ff76fe3f640fa6f3d60bbd94a3b9d47141a2c96f87fdcfbeb2af1d03f7050;
+/// This trait has to be implemented when using the component `outside_execution_component` (This is enforced by the compilator)
+trait IOutsideExecutionCallback<TContractState> {
+    /// @notice Callback performed after checking the OutsideExecution is valid
+    /// @dev Make the correct access control checks in this callback
+    /// @param calls The calls to be performed 
+    /// @param outside_execution_hash The hash of OutsideExecution
+    /// @param signature The signature that the user gave for this transaction
+    #[inline(always)]
+    fn execute_from_outside_callback(
+        ref self: TContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
+    ) -> Array<Span<felt252>>;
+}
 
 #[derive(Copy, Drop, Serde)]
 struct OutsideExecution {
@@ -46,6 +50,71 @@ struct OutsideExecution {
     execute_before: u64,
     /// The calls that will be executed by the Account
     calls: Span<Call>
+}
+
+
+/// @dev If you are using this component you have to support it in the `supports_interface` function
+// This is achieved by adding outside_execution::ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
+#[starknet::component]
+mod outside_execution_component {
+    use starknet::{get_caller_address, get_block_timestamp};
+    use super::{IOutsideExecution, OutsideExecution, hash_outside_execution_message, IOutsideExecutionCallback};
+
+    #[storage]
+    struct Storage {
+        /// Keeps track of used nonces for outside transactions (`execute_from_outside`)
+        outside_nonces: LegacyMap<felt252, bool>,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {}
+
+    #[embeddable_as(OutsideExecutionImpl)]
+    impl OutsideExecuction<
+        TContractState, +HasComponent<TContractState>, +IOutsideExecutionCallback<TContractState>, +Drop<TContractState>
+    > of IOutsideExecution<ComponentState<TContractState>> {
+        fn execute_from_outside(
+            ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Array<felt252>
+        ) -> Array<Span<felt252>> {
+            // Checks
+            if outside_execution.caller.into() != 'ANY_CALLER' {
+                assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
+            }
+
+            let block_timestamp = get_block_timestamp();
+            assert(
+                outside_execution.execute_after < block_timestamp && block_timestamp < outside_execution.execute_before,
+                'argent/invalid-timestamp'
+            );
+            let nonce = outside_execution.nonce;
+            assert(!self.outside_nonces.read(nonce), 'argent/duplicated-outside-nonce');
+            self.outside_nonces.write(nonce, true);
+
+            let outside_tx_hash = hash_outside_execution_message(@outside_execution);
+            let mut state = self.get_contract_mut();
+            state.execute_from_outside_callback(outside_execution.calls, outside_tx_hash, signature.span())
+        }
+
+        fn get_outside_execution_message_hash(
+            self: @ComponentState<TContractState>, outside_execution: OutsideExecution
+        ) -> felt252 {
+            hash_outside_execution_message(@outside_execution)
+        }
+
+        fn is_valid_outside_execution_nonce(self: @ComponentState<TContractState>, nonce: felt252) -> bool {
+            !self.outside_nonces.read(nonce)
+        }
+    }
+}
+
+// Hashing related functions
+
+#[derive(Copy, Drop, Hash)]
+struct StarkNetDomain {
+    name: felt252,
+    version: felt252,
+    chain_id: felt252,
 }
 
 #[derive(Drop, Serde)]

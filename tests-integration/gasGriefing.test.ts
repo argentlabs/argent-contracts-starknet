@@ -8,7 +8,7 @@ import {
   waitForTransaction,
   restartDevnetIfTooLong,
 } from "./lib";
-import { assert, expect } from "chai";
+import { expect } from "chai";
 
 describe("Gas griefing", function () {
   this.timeout(320000);

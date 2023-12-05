@@ -154,8 +154,8 @@ mod ArgentMultisig {
         fn upgrade(ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
-            do_upgrade(new_implementation, calldata)
             self.emit(AccountUpgraded { new_implementation });
+            do_upgrade(new_implementation, calldata)
         }
 
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {

@@ -29,23 +29,6 @@ scarb test
 
 We advise that you use [nvm](https://github.com/nvm-sh/nvm) to manage your Node versions.
 
-Install devnet
-
-```shell
-scarb run install-devnet
-```
-
-Install Python dependencies
-
-```shell
-python3.9 -m venv ./venv
-source ./venv/bin/activate
-brew install gmp
-pip install -r requirements.txt
-```
-
-For more info check [Devnet instructions](https://0xspaceshard.github.io/starknet-devnet/docs/intro)
-
 Then you should be able to spawn a devnet by running the following make command:
 
 ```shell

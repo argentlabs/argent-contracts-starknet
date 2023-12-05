@@ -1,3 +1,4 @@
+use argent::common::{account::ERC165_ACCOUNT_INTERFACE_ID, erc165::{IErc165LibraryDispatcher, IErc165DispatcherTrait,}};
 use starknet::{ClassHash, syscalls::replace_class_syscall};
 
 #[starknet::interface]
@@ -16,6 +17,9 @@ trait IUpgradeable<TContractState> {
 }
 
 fn do_upgrade(class_hash: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
+    let supports_interface = IErc165LibraryDispatcher { class_hash }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
+    assert(supports_interface, 'argent/invalid-implementation');
+
     replace_class_syscall(class_hash).unwrap();
     IUpgradeableLibraryDispatcher { class_hash }.execute_after_upgrade(calldata)
 }

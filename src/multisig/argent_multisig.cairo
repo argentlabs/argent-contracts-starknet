@@ -13,7 +13,7 @@ mod ArgentMultisig {
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component
         },
-        upgrade::{IUpgradeable, IUpgradeableDispatcherTrait, do_upgrade}
+        upgrade::{IUpgradeable, do_upgrade}
     };
     use argent::multisig::interface::{IArgentMultisig, IDeprecatedArgentMultisig};
     use argent::multisig::signer_signature::{deserialize_array_signer_signature};

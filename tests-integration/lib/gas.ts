@@ -11,12 +11,12 @@ interface TransactionCarrying {
 
 async function profileGasUsage(transactionHash: string) {
   const receipt = ensureAccepted(await provider.waitForTransaction(transactionHash));
-  const trace = await provider.getTransactionTrace(transactionHash);
+  const trace = (await provider.getTransactionTrace(transactionHash)).invoke_tx_trace!;
   const actualFee = BigInt(receipt.actual_fee as string);
 
   const executionResourcesByPhase: ExecutionResources[] = [
     trace.validate_invocation!.execution_resources!,
-    trace.function_invocation!.execution_resources!,
+    (trace.execute_invocation! as any)["execution_resources"]!,
     trace.fee_transfer_invocation!.execution_resources!,
   ];
 

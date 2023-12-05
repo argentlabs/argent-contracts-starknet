@@ -3,9 +3,12 @@ import {
   declareContract,
   deployAccount,
   expectExecutionRevert,
+  fundAccount,
   randomKeyPair,
   waitForTransaction,
+  restartDevnetIfTooLong,
 } from "./lib";
+import { assert, expect } from "chai";
 
 describe("Gas griefing", function () {
   this.timeout(320000);
@@ -13,6 +16,7 @@ describe("Gas griefing", function () {
   let argentAccountClassHash: string;
 
   before(async () => {
+    await restartDevnetIfTooLong();
     argentAccountClassHash = await declareContract("ArgentAccount");
   });
 
@@ -30,11 +34,13 @@ describe("Gas griefing", function () {
 
   it("Block high fee", async function () {
     const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
+    await fundAccount(account.address, 50000000000000001n);
     account.signer = new ArgentSigner(guardian);
-    await expectExecutionRevert("argent/max-fee-too-high", () =>
+    // catching the revert message 'argent/max-fee-too-high' would be better but it's not returned by the RPC
+    expect(
       account.execute(accountContract.populateTransaction.trigger_escape_owner(randomKeyPair().publicKey), undefined, {
-        maxFee: "60000000000000000",
+        maxFee: "50000000000000001",
       }),
-    );
+    ).to.be.rejectedWith("Account validation failed");
   });
 });

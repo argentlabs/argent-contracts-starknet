@@ -10,6 +10,7 @@ import {
   getEthContract,
   loadContract,
   waitForTransaction,
+  restartDevnetIfTooLong,
 } from "./lib";
 
 describe("ArgentAccount: multicall", function () {
@@ -18,6 +19,7 @@ describe("ArgentAccount: multicall", function () {
   let ethContract: Contract;
 
   before(async () => {
+    await restartDevnetIfTooLong();
     argentAccountClassHash = await declareContract("ArgentAccount");
     const testDappClassHash = await declareContract("TestDapp");
     const { contract_address } = await deployer.deployContract({

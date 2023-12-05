@@ -1,12 +1,13 @@
 import { expect } from "chai";
 import { num, shortString } from "starknet";
-import { declareContract, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
+import { declareContract, expectRevertWithErrorMessage, randomKeyPair, restartDevnetIfTooLong } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: signing", function () {
   let multisigAccountClassHash: string;
 
   before(async () => {
+    await restartDevnetIfTooLong();
     multisigAccountClassHash = await declareContract("ArgentMultisig");
   });
   const VALID = BigInt(shortString.encodeShortString("VALID"));

@@ -27,9 +27,7 @@ scarb test
 
 ### Install the devnet (run in project root folder)
 
-We advise that you use [nvm](https://github.com/nvm-sh/nvm) to manage your Node versions.
-
-Then you should be able to spawn a devnet by running the following make command:
+You should have docker installed in your machine then you can start the devnet by running the following command:
 
 ```shell
 scarb run start-devnet

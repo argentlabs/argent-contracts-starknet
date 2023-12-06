@@ -40,11 +40,11 @@ struct StarkNetDomain {
 const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
 const SESSION_TYPE_HASH: felt252 =
     selector!(
-        "Session(Expires At:felt,Allowed Methods:merkletree,Token Amounts:TokenAmount*,NFT Contracts:felt*,Max Fee Usage:felt,Session Key:felt)TokenAmount(token_address:ContractAddress,amount:u256)u256(low:felt,high:felt)"
+        "Session(Expires At:felt,Allowed Methods:merkletree,Token Amounts:TokenAmount*,NFT Contracts:felt*,Max Fee Usage:felt,Session Key:felt)TokenAmount(token_address:ContractAddress,amount:u256)u256(low:u128,high:u128)"
     );
 const TOKEN_LIMIT_HASH: felt252 =
-    selector!("TokenAmount(token_address:ContractAddress,amount:u256)u256(low:felt,high:felt)");
-const U256_TYPE_HASH: felt252 = selector!("u256(low:felt,high:felt)");
+    selector!("TokenAmount(token_address:ContractAddress,amount:u256)u256(low:u128,high:u128)");
+const U256_TYPE_HASH: felt252 = selector!("u256(low:u128,high:u128)");
 const ALLOWED_METHOD_HASH: felt252 = selector!("Allowed Method(contract_address:ContractAddress,selector:selector)");
 
 

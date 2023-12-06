@@ -11,13 +11,13 @@ export const sessionTypes = {
     { name: "contract_address", type: "ContractAddress" },
     { name: "selector", type: "selector" },
   ],
-  "TokenAmount": [
+  TokenAmount: [
     { name: "token_address", type: "ContractAddress" },
     { name: "amount", type: "u256" },
   ],
   u256: [
-    { name: "low", type: "felt" },
-    { name: "high", type: "felt" },
+    { name: "low", type: "u128" },
+    { name: "high", type: "u128" },
   ],
   Session: [
     { name: "Expires At", type: "felt" },
@@ -83,9 +83,9 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
     domain: await getSessionDomain(),
     message: {
       "Expires At": sessionRequest.expires_at,
+      "Allowed Methods": sessionRequest.allowed_methods,
       "Token Amounts": sessionRequest.token_limits,
       "NFT Contracts": sessionRequest.nft_contracts,
-      "Allowed Methods": sessionRequest.allowed_methods,
       "Max Fee Usage": sessionRequest.max_fee_usage,
       "Session Key": sessionRequest.session_key,
     },

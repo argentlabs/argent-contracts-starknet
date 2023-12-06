@@ -20,7 +20,7 @@ export const sessionTypes = {
     { name: "high", type: "u128" },
   ],
   Session: [
-    { name: "Expires At", type: "felt" },
+    { name: "Expires At", type: "u128" },
     { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
     { name: "Token Amounts", type: "TokenAmount*" },
     { name: "NFT Contracts", type: "felt*" },

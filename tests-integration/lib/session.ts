@@ -123,26 +123,3 @@ export function getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[])
     return tree.getProof(tree.leaves[allowedIndex]);
   });
 }
-
-export async function deploySessionAccount(
-  argentAccountClassHash: string,
-  salt = num.toHex(randomKeyPair().privateKey),
-  owner = randomKeyPair(),
-  guardian = randomKeyPair(),
-): Promise<ArgentWalletWithGuardian> {
-  const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian.publicKey });
-
-  const contractAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, constructorCalldata, 0);
-  await fundAccount(contractAddress, 1e15); // 0.001 ETH
-  const account = new Account(provider, contractAddress, owner, "1");
-
-  const { transaction_hash } = await account.deploySelf({
-    classHash: argentAccountClassHash,
-    constructorCalldata,
-    addressSalt: salt,
-  });
-  await provider.waitForTransaction(transaction_hash);
-  const accountContract = await loadContract(account.address);
-  accountContract.connect(account);
-  return { account, accountContract, owner, guardian };
-}

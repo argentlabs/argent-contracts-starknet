@@ -1,5 +1,5 @@
 #[starknet::contract]
-mod SessionAccount {
+mod HybridSessionAccount {
     use argent::account::escape::{Escape, EscapeStatus};
     use argent::account::interface::{IArgentAccount, IDeprecatedArgentAccount};
     use argent::common::{

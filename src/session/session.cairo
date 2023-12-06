@@ -109,10 +109,10 @@ mod sessionable {
         assert(token.proofs.len() == calls.len(), 'unaligned-proofs');
         let merkle_root = token.session.allowed_methods_root;
         let mut index = 0;
+        let mut merkle_init: MerkleTree<Hasher> = MerkleTreeTrait::new();
         loop {
             match calls.pop_front() {
                 Option::Some(call) => {
-                    let mut merkle_init: MerkleTree<Hasher> = MerkleTreeTrait::new();
                     let leaf = call.get_merkle_leaf();
                     let proof = *token.proofs[index];
                     let is_valid = merkle_init.verify(merkle_root, leaf, proof);

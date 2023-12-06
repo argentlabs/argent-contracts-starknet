@@ -22,7 +22,6 @@ mod HybridSessionAccount {
         get_contract_address, get_tx_info, VALIDATED, account::Call
     };
 
-
     component!(path: session_component, storage: sessionable, event: SessionableEvent);
 
     #[abi(embed_v0)]
@@ -70,14 +69,6 @@ mod HybridSessionAccount {
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
             assert_caller_is_null();
-            let tx_info = get_tx_info().unbox();
-            let signature = tx_info.signature;
-            if *signature[0] == SESSION_MAGIC {
-                let mut serialized = signature.slice(1, signature.len() - 1);
-                let token: SessionToken = Serde::deserialize(ref serialized).expect('argent/invalid-calldata');
-                assert(serialized.is_empty(), 'excess-session-data');
-                let expires_at = token.session.expires_at;
-            }
             return execute_multicall(calls.span());
         }
 

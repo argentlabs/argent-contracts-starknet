@@ -20,7 +20,7 @@ import {
   KeyPair,
   randomKeyPair,
   AllowedMethod,
-  TokenLimit,
+  TokenAmount,
   RawSigner,
   getSessionTypedData,
   createOnChainSession,
@@ -100,12 +100,12 @@ export class DappService {
 
   public createSessionRequest(
     allowed_methods: AllowedMethod[],
-    token_limits: TokenLimit[],
+    token_limits: TokenAmount[],
     expires_at = 150,
     max_fee_usage = 1_000_000_000_000_000n,
     nft_contracts: string[] = [],
   ): OffChainSession {
-    token_limits.sort((a, b) => (BigInt(a.contract_address) < BigInt(b.contract_address) ? -1 : 1));
+    token_limits.sort((a, b) => (BigInt(a.token_address) < BigInt(b.token_address) ? -1 : 1));
     nft_contracts.sort((a, b) => (BigInt(a) < BigInt(b) ? -1 : 1));
     return {
       session_key: this.sessionKey.publicKey,

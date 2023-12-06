@@ -6,14 +6,14 @@ import {
   deployer,
   AllowedMethod,
   DappService,
-  TokenLimit,
+  TokenAmount,
   BackendService,
   DappSigner,
   ArgentX,
   deployAccount,
 } from "./lib";
 
-const tokenLimits: TokenLimit[] = [{ contract_address: "0x100", amount: uint256.bnToUint256(10) }];
+const tokenLimits: TokenAmount[] = [{ token_address: "0x100", amount: uint256.bnToUint256(10) }];
 
 const dappService = new DappService();
 

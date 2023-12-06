@@ -11,8 +11,8 @@ export const sessionTypes = {
     { name: "Contract Address", type: "felt" },
     { name: "selector", type: "selector" },
   ],
-  TokenLimit: [
-    { name: "contract_address", type: "felt" },
+  TokenAmount: [
+    { name: "token_address", type: "ContractAddress" },
     { name: "amount", type: "u256" },
   ],
   u256: [
@@ -24,15 +24,15 @@ export const sessionTypes = {
     { name: "Expires At", type: "felt" },
     { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
     { name: "max_fee_usage", type: "felt" },
-    { name: "token_limits", type: "TokenLimit*" },
+    { name: "token_limits", type: "TokenAmount*" },
     { name: "nft_contracts", type: "felt*" },
   ],
 };
 
 export const ALLOWED_METHOD_HASH = typedData.getTypeHash(sessionTypes, "Allowed Method");
 
-export interface TokenLimit {
-  contract_address: string;
+export interface TokenAmount {
+  token_address: string;
   amount: uint256.Uint256;
 }
 
@@ -45,7 +45,7 @@ export interface OffChainSession {
   session_key: BigNumberish;
   expires_at: BigNumberish;
   max_fee_usage: BigNumberish;
-  token_limits: TokenLimit[];
+  token_limits: TokenAmount[];
   nft_contracts: string[];
   allowed_methods: AllowedMethod[];
 }
@@ -54,7 +54,7 @@ export interface OnChainSession {
   session_key: BigNumberish;
   expires_at: BigNumberish;
   max_fee_usage: num.BigNumberish;
-  token_limits: TokenLimit[];
+  token_limits: TokenAmount[];
   nft_contracts: string[];
   allowed_methods_root: string;
 }

@@ -148,5 +148,6 @@ export async function fundAccount(recipient: string, amount: number | bigint) {
   ethContract.connect(deployer);
 
   const bn = uint256.bnToUint256(amount);
-  return ethContract.invoke("transfer", CallData.compile([recipient, bn.low, bn.high]));
+  const response = await ethContract.invoke("transfer", CallData.compile([recipient, bn.low, bn.high]));
+  await provider.waitForTransaction(response.transaction_hash);
 }

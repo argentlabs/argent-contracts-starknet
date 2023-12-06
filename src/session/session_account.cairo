@@ -242,7 +242,6 @@ mod SessionAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_tx_version(tx_info.version);
 
-            
             if *tx_info.signature[0] == SESSION_MAGIC {
                 self.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature);
             }

@@ -2,6 +2,7 @@ import { add, maxBy, mergeWith, omit, sortBy, sum } from "lodash-es";
 import { ExecutionResources, num } from "starknet";
 import { provider } from "./provider";
 import { ensureAccepted } from "./receipts";
+import { expect } from "chai";
 
 const ethUsd = 2000n;
 
@@ -14,6 +15,21 @@ async function profileGasUsage(transactionHash: string) {
   const actualFee = BigInt(receipt.actual_fee as string);
   const rawResources = (receipt as any).execution_resources!;
 
+  expect(Object.keys(rawResources)).to.eql(
+    [
+      "steps",
+      "memory_holes",
+      "range_check_builtin_applications",
+      "pedersen_builtin_applications",
+      "poseidon_builtin_applications",
+      "ec_op_builtin_applications",
+      "ecdsa_builtin_applications",
+      "bitwise_builtin_applications",
+      "keccak_builtin_applications",
+    ],
+    "unexpected execution resources",
+  );
+
   const executionResources: Record<string, number> = {
     n_steps: Number(rawResources.steps),
     n_memory_holes: Number(rawResources.memory_holes),
@@ -25,6 +41,7 @@ async function profileGasUsage(transactionHash: string) {
     ec_op_builtin: Number(rawResources.ec_op_builtin_applications),
     bitwise_builtin: Number(rawResources.bitwise_builtin_applications),
   };
+
   const blockNumber = receipt.block_number;
   const blockInfo = await provider.getBlockWithTxHashes(blockNumber);
   const stateUpdate = await provider.getStateUpdate(blockNumber);

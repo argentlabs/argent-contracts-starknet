@@ -4,6 +4,13 @@ use pedersen::PedersenTrait;
 use starknet::account::Call;
 use starknet::{get_tx_info, get_contract_address, ContractAddress};
 
+
+#[derive(Drop, Serde, Copy)]
+struct BasicSignature {
+    r: felt252,
+    s: felt252,
+}
+
 #[derive(Drop, Serde, Copy)]
 struct TokenLimit {
     contract_address: ContractAddress,
@@ -23,9 +30,9 @@ struct Session {
 #[derive(Drop, Serde, Copy)]
 struct SessionToken {
     session: Session,
-    session_signature: Span<felt252>,
-    owner_signature: Span<felt252>,
-    backend_signature: Span<felt252>,
+    session_signature: BasicSignature,
+    owner_signature: BasicSignature,
+    backend_signature: BasicSignature,
     proofs: Span<Span<felt252>>,
 }
 

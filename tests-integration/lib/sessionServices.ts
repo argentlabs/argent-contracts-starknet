@@ -24,6 +24,7 @@ import {
   getSessionTypedData,
   createOnChainSession,
   getSessionProofs,
+  BasicSignature,
 } from ".";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -34,17 +35,17 @@ export class ArgentX {
     public backendService: BackendService,
   ) {}
 
-  public async getOwnerSessionSignature(sessionRequest: OffChainSession): Promise<bigint[]> {
+  public async getOwnerSessionSignature(sessionRequest: OffChainSession): Promise<BasicSignature> {
     const sessionTypedData = await getSessionTypedData(sessionRequest);
     const a = (await this.account.signMessage(sessionTypedData)) as ArraySignatureType;
-    return [BigInt(a[0]), BigInt(a[1])];
+    return { r: BigInt(a[0]), s: BigInt(a[1]) };
   }
 
   public async sendSessionToBackend(
     calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
     sessionRequest: OffChainSession,
-  ): Promise<bigint[]> {
+  ): Promise<BasicSignature> {
     return this.backendService.signTxAndSession(calls, transactionsDetail, sessionRequest);
   }
 }
@@ -56,7 +57,7 @@ export class BackendService {
     calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
     sessionTokenToSign: OffChainSession,
-  ): Promise<bigint[]> {
+  ): Promise<BasicSignature> {
     // verify session param correct
 
     // extremely simplified version of the backend verification
@@ -90,7 +91,7 @@ export class BackendService {
     );
     const sessionWithTxHash = ec.starkCurve.pedersen(txHash, sessionMessageHash);
     const [r, s] = this.guardian.signHash(sessionWithTxHash);
-    return [BigInt(r), BigInt(s)];
+    return { r: BigInt(r), s: BigInt(s) };
   }
 }
 
@@ -125,7 +126,7 @@ export class DappSigner extends RawSigner {
   constructor(
     public argentX: ArgentX,
     public sessionKeyPair: KeyPair,
-    public ownerSessionSignature: bigint[],
+    public ownerSessionSignature: BasicSignature,
     public completedSession: OffChainSession,
   ) {
     super();
@@ -161,17 +162,20 @@ export class DappSigner extends RawSigner {
   public async signTxAndSession(
     transactionHash: string,
     transactionsDetail: InvocationsSignerDetails,
-  ): Promise<bigint[]> {
+  ): Promise<BasicSignature> {
     const sessionMessageHash = typedData.getMessageHash(
       await getSessionTypedData(this.completedSession),
       transactionsDetail.walletAddress,
     );
     const sessionWithTxHash = ec.starkCurve.pedersen(transactionHash, sessionMessageHash);
     const sessionSig = this.sessionKeyPair.signHash(sessionWithTxHash);
-    return [BigInt(sessionSig[0]), BigInt(sessionSig[1])];
+    return {
+      r: BigInt(sessionSig[0]),
+      s: BigInt(sessionSig[1]),
+    };
   }
 
-  public async getBackendSig(calls: Call[], transactionsDetail: InvocationsSignerDetails): Promise<bigint[]> {
+  public async getBackendSig(calls: Call[], transactionsDetail: InvocationsSignerDetails): Promise<BasicSignature> {
     return this.argentX.sendSessionToBackend(calls, transactionsDetail, this.completedSession);
   }
 

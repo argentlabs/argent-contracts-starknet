@@ -18,7 +18,9 @@ mod sessionable {
     use argent::common::account::IAccount;
     use argent::common::asserts::{assert_no_self_call, assert_only_self};
     use argent::session::session::ISessionable;
-    use argent::session::session_structs::{SessionToken, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash};
+    use argent::session::session_structs::{
+        SessionToken, BasicSignature, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash
+    };
     use ecdsa::check_ecdsa_signature;
     use hash::LegacyHash;
     use starknet::{account::Call, get_execution_info, get_block_timestamp, VALIDATED};
@@ -91,13 +93,8 @@ mod sessionable {
         }
     }
 
-    fn is_valid_signature_generic(hash: felt252, signer: felt252, signature: Span<felt252>) -> bool {
-        if signature.len() != 2 {
-            return false;
-        }
-        let signature_r = *signature[0];
-        let signature_s = *signature[1];
-        check_ecdsa_signature(hash, signer, signature_r, signature_s)
+    fn is_valid_signature_generic(hash: felt252, signer: felt252, signature: BasicSignature) -> bool {
+        check_ecdsa_signature(hash, signer, signature.r, signature.s)
     }
 
 

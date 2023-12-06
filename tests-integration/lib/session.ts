@@ -31,6 +31,11 @@ export const sessionTypes = {
 
 export const ALLOWED_METHOD_HASH = typedData.getTypeHash(sessionTypes, "Allowed Method");
 
+export interface BasicSignature {
+  r: BigNumberish;
+  s: BigNumberish;
+}
+
 export interface TokenAmount {
   token_address: string;
   amount: uint256.Uint256;
@@ -55,15 +60,15 @@ export interface OnChainSession {
   allowed_methods_root: string;
   token_limits: TokenAmount[];
   nft_contracts: string[];
-  max_fee_usage: num.BigNumberish;
+  max_fee_usage: BigNumberish;
   session_key: BigNumberish;
 }
 
 export interface SessionToken {
   session: OnChainSession;
-  session_signature: num.BigNumberish[];
-  owner_signature: num.BigNumberish[];
-  backend_signature: num.BigNumberish[];
+  session_signature: BasicSignature;
+  owner_signature: BasicSignature;
+  backend_signature: BasicSignature;
   proofs: string[][];
 }
 

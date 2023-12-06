@@ -14,10 +14,10 @@ trait ISessionable<TContractState> {
 #[starknet::component]
 mod sessionable {
     use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,};
+    use argent::account::interface::IArgentAccount;
     use argent::common::account::IAccount;
     use argent::common::asserts::{assert_no_self_call, assert_only_self};
     use argent::session::session::ISessionable;
-    use argent::session::session_account::IGenericArgentAccount;
     use argent::session::session_structs::{SessionToken, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash};
     use ecdsa::check_ecdsa_signature;
     use hash::LegacyHash;
@@ -42,10 +42,7 @@ mod sessionable {
 
     #[embeddable_as(SessionableImpl)]
     impl Sessionable<
-        TContractState,
-        +HasComponent<TContractState>,
-        +IAccount<TContractState>,
-        +IGenericArgentAccount<TContractState>,
+        TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentAccount<TContractState>,
     > of super::ISessionable<ComponentState<TContractState>> {
         fn revoke_session(ref self: ComponentState<TContractState>, session_key: felt252) {
             assert_only_self();

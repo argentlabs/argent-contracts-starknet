@@ -4,7 +4,7 @@ version = 1
 [[package]]
 name = "alexandria_merkle_tree"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git#be8a632ef9d88778a8276b40a57085d40a5db070"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?tag=cairo-v2.3.0-rc0#ae1d5149ff601a7ac5b39edc867d33ebd83d7f4f"
 
 [[package]]
 name = "argent"

@@ -11,7 +11,7 @@ allowed-libfuncs-list.name = "audited"
 
 [dependencies]
 starknet = "2.3.0"
-alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
+alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", tag="cairo-v2.3.0-rc0" }
 
 [tool.fmt]
 max-line-length = 120

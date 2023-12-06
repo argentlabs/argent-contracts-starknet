@@ -21,11 +21,11 @@ export const sessionTypes = {
   ],
   Session: [
     { name: "Expires At", type: "felt" },
-    { name: "Session Key", type: "felt" },
     { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
-    { name: "Max Fee Usage", type: "felt" },
     { name: "Token Amounts", type: "TokenAmount*" },
     { name: "NFT Contracts", type: "felt*" },
+    { name: "Max Fee Usage", type: "felt" },
+    { name: "Session Key", type: "felt" },
   ],
 };
 
@@ -42,21 +42,21 @@ export interface AllowedMethod {
 }
 
 export interface OffChainSession {
-  session_key: BigNumberish;
   expires_at: BigNumberish;
-  max_fee_usage: BigNumberish;
+  allowed_methods: AllowedMethod[];
   token_limits: TokenAmount[];
   nft_contracts: string[];
-  allowed_methods: AllowedMethod[];
+  max_fee_usage: BigNumberish;
+  session_key: BigNumberish;
 }
 
 export interface OnChainSession {
-  session_key: BigNumberish;
   expires_at: BigNumberish;
-  max_fee_usage: num.BigNumberish;
+  allowed_methods_root: string;
   token_limits: TokenAmount[];
   nft_contracts: string[];
-  allowed_methods_root: string;
+  max_fee_usage: num.BigNumberish;
+  session_key: BigNumberish;
 }
 
 export interface SessionToken {
@@ -83,11 +83,11 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
     domain: await getSessionDomain(),
     message: {
       "Expires At": sessionRequest.expires_at,
-      "Session Key": sessionRequest.session_key,
-      "Max Fee Usage": sessionRequest.max_fee_usage,
       "Token Amounts": sessionRequest.token_limits,
       "NFT Contracts": sessionRequest.nft_contracts,
       "Allowed Methods": sessionRequest.allowed_methods,
+      "Max Fee Usage": sessionRequest.max_fee_usage,
+      "Session Key": sessionRequest.session_key,
     },
   };
 }
@@ -102,11 +102,11 @@ export function createOnChainSession(completedSession: OffChainSession): OnChain
   const leaves = getLeaves(completedSession.allowed_methods);
   return {
     expires_at: completedSession.expires_at,
-    session_key: completedSession.session_key,
     allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
-    max_fee_usage: completedSession.max_fee_usage,
     token_limits: completedSession.token_limits,
     nft_contracts: completedSession.nft_contracts,
+    max_fee_usage: completedSession.max_fee_usage,
+    session_key: completedSession.session_key,
   };
 }
 

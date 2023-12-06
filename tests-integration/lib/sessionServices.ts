@@ -108,11 +108,11 @@ export class DappService {
     nft_contracts.sort((a, b) => (BigInt(a) < BigInt(b) ? -1 : 1));
     return {
       expires_at,
-      session_key: this.sessionKey.publicKey,
       allowed_methods,
-      max_fee_usage,
       token_limits,
       nft_contracts,
+      max_fee_usage,
+      session_key: this.sessionKey.publicKey,
     };
   }
 

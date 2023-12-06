@@ -230,10 +230,14 @@ mod SessionAccount {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
-            self
-                .assert_valid_calls_and_signature(
-                    calls.span(), tx_info.transaction_hash, tx_info.signature, is_from_outside: false
-                );
+            if *tx_info.signature[0] == SESSION_MAGIC {
+                self.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature);
+            } else {
+                self
+                    .assert_valid_calls_and_signature(
+                        calls.span(), tx_info.transaction_hash, tx_info.signature, is_from_outside: false
+                    );
+            }
             VALIDATED
         }
 
@@ -242,9 +246,6 @@ mod SessionAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_tx_version(tx_info.version);
 
-            if *tx_info.signature[0] == SESSION_MAGIC {
-                self.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature);
-            }
             let retdata = execute_multicall(calls.span());
 
             let hash = tx_info.transaction_hash;

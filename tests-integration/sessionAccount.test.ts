@@ -42,7 +42,7 @@ describe("Hybrid Session Account: execute calls", function () {
     // 1. dapp request session: provides dapp pub key and policies
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": testDappOneContract.address,
+        contract_address: testDappOneContract.address,
         selector: selector.getSelectorFromName("set_number_double"),
       },
     ];

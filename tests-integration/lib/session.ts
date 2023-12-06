@@ -8,10 +8,10 @@ export const sessionTypes = {
     { name: "chainId", type: "felt" },
   ],
   "Allowed Method": [
-    { name: "Contract Address", type: "felt" },
+    { name: "contract_address", type: "felt" },
     { name: "selector", type: "selector" },
   ],
-  TokenAmount: [
+  "TokenAmount": [
     { name: "token_address", type: "ContractAddress" },
     { name: "amount", type: "u256" },
   ],
@@ -23,7 +23,7 @@ export const sessionTypes = {
     { name: "Session Key", type: "felt" },
     { name: "Expires At", type: "felt" },
     { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
-    { name: "max_fee_usage", type: "felt" },
+    { name: "Max Fee Usage", type: "felt" },
     { name: "token_limits", type: "TokenAmount*" },
     { name: "nft_contracts", type: "felt*" },
   ],
@@ -37,7 +37,7 @@ export interface TokenAmount {
 }
 
 export interface AllowedMethod {
-  "Contract Address": string;
+  contract_address: string;
   selector: string;
 }
 
@@ -84,7 +84,7 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
     message: {
       "Session Key": sessionRequest.session_key,
       "Expires At": sessionRequest.expires_at,
-      max_fee_usage: sessionRequest.max_fee_usage,
+      "Max Fee Usage": sessionRequest.max_fee_usage,
       token_limits: sessionRequest.token_limits,
       nft_contracts: sessionRequest.nft_contracts,
       "Allowed Methods": sessionRequest.allowed_methods,
@@ -94,7 +94,7 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
 
 export function getLeaves(allowedMethods: AllowedMethod[]): string[] {
   return allowedMethods.map((method) =>
-    hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
+    hash.computeHashOnElements([ALLOWED_METHOD_HASH, method.contract_address, method.selector]),
   );
 }
 
@@ -116,7 +116,7 @@ export function getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[])
   return calls.map((call) => {
     const allowedIndex = allowedMethods.findIndex((allowedMethod) => {
       return (
-        allowedMethod["Contract Address"] == call.contractAddress &&
+        allowedMethod.contract_address == call.contractAddress &&
         allowedMethod.selector == selector.getSelectorFromName(call.entrypoint)
       );
     });

@@ -11,7 +11,6 @@ import {
   transaction,
   selector,
   Account,
-  WeierstrassSignatureType,
 } from "starknet";
 import {
   OffChainSession,
@@ -65,7 +64,7 @@ export class BackendService {
     calls.forEach((call) => {
       const found = allowed_methods.find(
         (method) =>
-          method["Contract Address"] === call.contractAddress &&
+          method.contract_address === call.contractAddress &&
           method.selector === selector.getSelectorFromName(call.entrypoint),
       );
       if (!found) {

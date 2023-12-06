@@ -7,7 +7,7 @@ trait ISessionable<TContractState> {
     fn revoke_session(ref self: TContractState, session_key: felt252);
     fn is_session_revoked(self: @TContractState, session_key: felt252);
     fn assert_valid_session(
-        self: @TContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
+        self: @TContractState, calls: Span<Call>, transaction_hash: felt252, signature: Span<felt252>
     );
 }
 
@@ -55,12 +55,11 @@ mod sessionable {
         }
 
         fn assert_valid_session(
-            self: @ComponentState<TContractState>, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>,
+            self: @ComponentState<TContractState>, calls: Span<Call>, transaction_hash: felt252, signature: Span<felt252>,
         ) {
             let state = self.get_contract();
             let execution_info = get_execution_info().unbox();
             let account_address = execution_info.contract_address;
-            let tx_info = execution_info.tx_info.unbox();
 
             assert_no_self_call(calls, account_address);
             let mut serialized = signature.slice(1, signature.len() - 1);
@@ -77,7 +76,7 @@ mod sessionable {
                 'invalid-owner-sig'
             );
 
-            let message_hash = LegacyHash::hash(tx_info.transaction_hash, token.session.get_message_hash());
+            let message_hash = LegacyHash::hash(transaction_hash, token.session.get_message_hash());
 
             assert(
                 is_valid_signature_generic(message_hash, token.session.session_key, token.session_signature),

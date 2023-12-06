@@ -16,6 +16,7 @@ trait IUpgradeable<TContractState> {
     fn execute_after_upgrade(ref self: TContractState, data: Array<felt252>) -> Array<felt252>;
 }
 
+#[inline(always)]
 fn do_upgrade(class_hash: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
     let supports_interface = IErc165LibraryDispatcher { class_hash }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
     assert(supports_interface, 'argent/invalid-implementation');

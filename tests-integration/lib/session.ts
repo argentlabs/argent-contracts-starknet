@@ -1,5 +1,5 @@
-import { num, typedData, hash, merkle, Account, CallData, Call, uint256, BigNumberish, selector } from "starknet";
-import { randomKeyPair, ArgentWalletWithGuardian, fundAccount, provider, loadContract } from ".";
+import { num, typedData, hash, merkle, Call, uint256, BigNumberish, selector } from "starknet";
+import { provider } from ".";
 
 export const sessionTypes = {
   StarkNetDomain: [
@@ -7,8 +7,8 @@ export const sessionTypes = {
     { name: "version", type: "felt" },
     { name: "chainId", type: "felt" },
   ],
-  AllowedMethod: [
-    { name: "contract_address", type: "felt" },
+  "Allowed Method": [
+    { name: "Contract Address", type: "felt" },
     { name: "selector", type: "selector" },
   ],
   TokenLimit: [
@@ -20,16 +20,16 @@ export const sessionTypes = {
     { name: "high", type: "felt" },
   ],
   Session: [
-    { name: "session_key", type: "felt" },
-    { name: "expires_at", type: "felt" },
-    { name: "allowed_methods_root", type: "merkletree", contains: "AllowedMethod" },
+    { name: "Session Key", type: "felt" },
+    { name: "Expires At", type: "felt" },
+    { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
     { name: "max_fee_usage", type: "felt" },
     { name: "token_limits", type: "TokenLimit*" },
     { name: "nft_contracts", type: "felt*" },
   ],
 };
 
-export const ALLOWED_METHOD_HASH = typedData.getTypeHash(sessionTypes, "AllowedMethod");
+export const ALLOWED_METHOD_HASH = typedData.getTypeHash(sessionTypes, "Allowed Method");
 
 export interface TokenLimit {
   contract_address: string;
@@ -37,7 +37,7 @@ export interface TokenLimit {
 }
 
 export interface AllowedMethod {
-  contract_address: string;
+  "Contract Address": string;
   selector: string;
 }
 
@@ -82,19 +82,19 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
     primaryType: "Session",
     domain: await getSessionDomain(),
     message: {
-      session_key: sessionRequest.session_key,
-      expires_at: sessionRequest.expires_at,
+      "Session Key": sessionRequest.session_key,
+      "Expires At": sessionRequest.expires_at,
       max_fee_usage: sessionRequest.max_fee_usage,
       token_limits: sessionRequest.token_limits,
       nft_contracts: sessionRequest.nft_contracts,
-      allowed_methods_root: sessionRequest.allowed_methods,
+      "Allowed Methods": sessionRequest.allowed_methods,
     },
   };
 }
 
 export function getLeaves(allowedMethods: AllowedMethod[]): string[] {
   return allowedMethods.map((method) =>
-    hash.computeHashOnElements([ALLOWED_METHOD_HASH, method.contract_address, method.selector]),
+    hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
   );
 }
 
@@ -116,7 +116,7 @@ export function getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[])
   return calls.map((call) => {
     const allowedIndex = allowedMethods.findIndex((allowedMethod) => {
       return (
-        allowedMethod.contract_address == call.contractAddress &&
+        allowedMethod["Contract Address"] == call.contractAddress &&
         allowedMethod.selector == selector.getSelectorFromName(call.entrypoint)
       );
     });

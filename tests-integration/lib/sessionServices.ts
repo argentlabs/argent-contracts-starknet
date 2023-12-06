@@ -65,7 +65,7 @@ export class BackendService {
     calls.forEach((call) => {
       const found = allowed_methods.find(
         (method) =>
-          method.contract_address === call.contractAddress &&
+          method["Contract Address"] === call.contractAddress &&
           method.selector === selector.getSelectorFromName(call.entrypoint),
       );
       if (!found) {

@@ -8,7 +8,7 @@ export const sessionTypes = {
     { name: "chainId", type: "felt" },
   ],
   "Allowed Method": [
-    { name: "contract_address", type: "felt" },
+    { name: "contract_address", type: "ContractAddress" },
     { name: "selector", type: "selector" },
   ],
   "TokenAmount": [
@@ -20,12 +20,12 @@ export const sessionTypes = {
     { name: "high", type: "felt" },
   ],
   Session: [
-    { name: "Session Key", type: "felt" },
     { name: "Expires At", type: "felt" },
+    { name: "Session Key", type: "felt" },
     { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
     { name: "Max Fee Usage", type: "felt" },
-    { name: "token_limits", type: "TokenAmount*" },
-    { name: "nft_contracts", type: "felt*" },
+    { name: "Token Amounts", type: "TokenAmount*" },
+    { name: "NFT Contracts", type: "felt*" },
   ],
 };
 
@@ -82,11 +82,11 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
     primaryType: "Session",
     domain: await getSessionDomain(),
     message: {
-      "Session Key": sessionRequest.session_key,
       "Expires At": sessionRequest.expires_at,
+      "Session Key": sessionRequest.session_key,
       "Max Fee Usage": sessionRequest.max_fee_usage,
-      token_limits: sessionRequest.token_limits,
-      nft_contracts: sessionRequest.nft_contracts,
+      "Token Amounts": sessionRequest.token_limits,
+      "NFT Contracts": sessionRequest.nft_contracts,
       "Allowed Methods": sessionRequest.allowed_methods,
     },
   };
@@ -101,8 +101,8 @@ export function getLeaves(allowedMethods: AllowedMethod[]): string[] {
 export function createOnChainSession(completedSession: OffChainSession): OnChainSession {
   const leaves = getLeaves(completedSession.allowed_methods);
   return {
-    session_key: completedSession.session_key,
     expires_at: completedSession.expires_at,
+    session_key: completedSession.session_key,
     allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
     max_fee_usage: completedSession.max_fee_usage,
     token_limits: completedSession.token_limits,

@@ -12,8 +12,8 @@ struct TokenLimit {
 
 #[derive(Drop, Serde, Copy)]
 struct Session {
-    session_key: felt252,
     expires_at: u64,
+    session_key: felt252,
     allowed_methods_root: felt252,
     max_fee_usage: u128,
     token_limits: Span<TokenLimit>,
@@ -40,12 +40,12 @@ struct StarkNetDomain {
 const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
 const SESSION_TYPE_HASH: felt252 =
     selector!(
-        "Session(Session Key:felt,Expires At:felt,Allowed Methods:merkletree,Max Fee Usage:felt,token_limits:TokenAmount*,nft_contracts:felt*)TokenAmount(token_address:ContractAddress,amount:u256)u256(low:felt,high:felt)"
+        "Session(Expires At:felt,Session Key:felt,Allowed Methods:merkletree,Max Fee Usage:felt,Token Amounts:TokenAmount*,NFT Contracts:felt*)TokenAmount(token_address:ContractAddress,amount:u256)u256(low:felt,high:felt)"
     );
 const TOKEN_LIMIT_HASH: felt252 =
     selector!("TokenAmount(token_address:ContractAddress,amount:u256)u256(low:felt,high:felt)");
 const U256_TYPE_HASH: felt252 = selector!("u256(low:felt,high:felt)");
-const ALLOWED_METHOD_HASH: felt252 = selector!("Allowed Method(contract_address:felt,selector:selector)");
+const ALLOWED_METHOD_HASH: felt252 = selector!("Allowed Method(contract_address:ContractAddress,selector:selector)");
 
 
 trait IOffchainMessageHash<T> {
@@ -76,8 +76,8 @@ impl StructHashSession of IStructHash<Session> {
     fn get_struct_hash(self: @Session) -> felt252 {
         let mut state = PedersenTrait::new(0);
         state = state.update_with(SESSION_TYPE_HASH);
-        state = state.update_with(*self.session_key);
         state = state.update_with(*self.expires_at);
+        state = state.update_with(*self.session_key);
         state = state.update_with(*self.allowed_methods_root);
         state = state.update_with(*self.max_fee_usage);
         state = state.update_with((*self).token_limits.get_struct_hash());

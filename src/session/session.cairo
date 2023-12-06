@@ -72,10 +72,7 @@ mod sessionable {
             assert(!self.revoked_session.read(token.session.session_key), 'session-revoked');
 
             assert(
-                state
-                    .is_valid_signature(
-                        token.session.get_message_hash(), token.owner_signature.snapshot.clone()
-                    ) == VALIDATED,
+                is_valid_signature_generic(token.session.get_message_hash(), state.get_owner(), token.owner_signature),
                 'invalid-owner-sig'
             );
 

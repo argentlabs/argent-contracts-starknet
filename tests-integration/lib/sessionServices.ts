@@ -38,7 +38,8 @@ export class ArgentX {
   public async getOwnerSessionSignature(sessionRequest: OffChainSession): Promise<bigint[]> {
     const sessionTypedData = await getSessionTypedData(sessionRequest);
     const a = (await this.account.signMessage(sessionTypedData)) as ArraySignatureType;
-    return [BigInt(a[1]), BigInt(a[2])];
+    console.log();
+    return [BigInt(a[0]), BigInt(a[1])];
   }
 
   public async sendSessionToBackend(

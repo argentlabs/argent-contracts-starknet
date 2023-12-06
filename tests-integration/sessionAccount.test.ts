@@ -10,11 +10,8 @@ import {
   BackendService,
   DappSigner,
   ArgentX,
-  setTime,
-  expectRevertWithErrorMessage,
   deployAccount,
 } from "./lib";
-import { expect } from "chai";
 
 const tokenLimits: TokenLimit[] = [{ contract_address: "0x100", amount: uint256.bnToUint256(10) }];
 
@@ -36,7 +33,7 @@ describe("Hybrid Session Account: execute calls", function () {
   });
 
   it("Call a contract with backend signer", async function () {
-    const { accountContract, account, guardian } = await deployAccount(sessionAccountClassHash);
+    const { accountContract, account, guardian, owner } = await deployAccount(sessionAccountClassHash);
 
     const backendService = new BackendService(guardian);
     const argentX = new ArgentX(account, backendService);
@@ -66,7 +63,7 @@ describe("Hybrid Session Account: execute calls", function () {
     account.signer = sessionSigner;
 
     const { transaction_hash } = await account.execute(calls);
-    // await account.waitForTransaction(transaction_hash);
-    // await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+    await account.waitForTransaction(transaction_hash);
+    await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
   });
 });

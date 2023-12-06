@@ -55,7 +55,10 @@ mod sessionable {
         }
 
         fn assert_valid_session(
-            self: @ComponentState<TContractState>, calls: Span<Call>, transaction_hash: felt252, signature: Span<felt252>,
+            self: @ComponentState<TContractState>,
+            calls: Span<Call>,
+            transaction_hash: felt252,
+            signature: Span<felt252>,
         ) {
             let state = self.get_contract();
             let execution_info = get_execution_info().unbox();

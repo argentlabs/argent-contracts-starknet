@@ -1,6 +1,6 @@
 #!/bin/bash
 if nc -z 127.0.0.1 5050; then
-  echo "Port is not free, Devnet might be already running"
+  echo "Port is not free, devnet might be already running"
   exit 1
 else
   echo "Starting Devnet"

@@ -1,6 +1,6 @@
+use argent::session::session_structs::{TokenAmount};
 use array::SpanTrait;
 use starknet::{ContractAddress};
-use argent::session::session_structs::{TokenAmount};
 use traits::{Into};
 
 trait Keyable<T, K> {

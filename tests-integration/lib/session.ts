@@ -115,7 +115,12 @@ export function createOnChainSession(completedSession: OffChainSession): OnChain
   };
 }
 
-export function getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[], allowedTokens: TokenAmount[], allowedNfts: string[] ): string[][] {
+export function getSessionProofs(
+  calls: Call[],
+  allowedMethods: AllowedMethod[],
+  allowedTokens: TokenAmount[],
+  allowedNfts: string[],
+): string[][] {
   const tree = new merkle.MerkleTree(getLeaves(allowedMethods));
 
   return calls.map((call) => {

@@ -155,7 +155,7 @@ export class DappSigner extends RawSigner {
       backend_signature,
       proofs,
     };
-    console.log(sessionToken)
+    console.log(sessionToken);
 
     return [SESSION_MAGIC, ...CallData.compile({ ...sessionToken })];
   }
@@ -181,6 +181,11 @@ export class DappSigner extends RawSigner {
   }
 
   public async getProofs(transactions: Call[]): Promise<string[][]> {
-    return getSessionProofs(transactions, this.completedSession.allowed_methods, this.completedSession.token_limits, this.completedSession.nft_contracts);
+    return getSessionProofs(
+      transactions,
+      this.completedSession.allowed_methods,
+      this.completedSession.token_limits,
+      this.completedSession.nft_contracts,
+    );
   }
 }

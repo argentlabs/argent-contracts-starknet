@@ -3,6 +3,7 @@ import {
   DeployContractUDCResponse,
   Event,
   InvokeFunctionResponse,
+  InvokeTransactionReceiptResponse,
   GetTransactionReceiptResponse,
   hash,
   num,
@@ -10,7 +11,7 @@ import {
 } from "starknet";
 import { isEqual } from "lodash-es";
 import { provider } from "./provider";
-import { ensureAccepted } from "./receipts";
+import { AcceptedTransactionReceiptResponse, ensureAccepted } from "./receipts";
 
 export async function expectRevertWithErrorMessage(
   errorMessage: string,

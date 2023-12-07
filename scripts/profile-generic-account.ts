@@ -10,14 +10,13 @@ import {
   provider,
   randomKeyPair,
 } from "../tests-integration/lib";
-import { reportProfile } from "../tests-integration/lib/gas";
+import { makeProfiler } from "../tests-integration/lib/gas";
 
 const genericAccountClassHash = await declareContract("ArgentGenericAccount");
 const testDappClassHash = await declareContract("TestDapp");
 const { contract_address } = await deployer.deployContract({ classHash: testDappClassHash });
 const testDappContract = await loadContract(contract_address);
-
-const table: Record<string, any> = {};
+const profiler = makeProfiler();
 
 // To be able to run this script using the devnet, update the start-devnet.sh script to ignore this line:
 // export STARKNET_DEVNET_CAIRO_VM=rust
@@ -94,7 +93,7 @@ class EthKeyPair extends KeyPair {
   const owners = [new StarknetKeyPair()];
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
-  await reportProfile(table, name, await testDappContract.set_number(42));
+  await profiler.profile(name, await testDappContract.set_number(42));
 }
 
 {
@@ -103,7 +102,7 @@ class EthKeyPair extends KeyPair {
   const owners = [new EthKeyPair()];
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
-  await reportProfile(table, name, await testDappContract.set_number(42));
+  await profiler.profile( name, await testDappContract.set_number(42));
 }
 
 {
@@ -112,7 +111,7 @@ class EthKeyPair extends KeyPair {
   const owners = [new StarknetKeyPair(), new StarknetKeyPair()];
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
-  await reportProfile(table, name, await testDappContract.set_number(42));
+  await profiler.profile( name, await testDappContract.set_number(42));
 }
 
 {
@@ -121,7 +120,7 @@ class EthKeyPair extends KeyPair {
   const owners = [new EthKeyPair(), new EthKeyPair()];
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
-  await reportProfile(table, name, await testDappContract.set_number(42));
+  await profiler.profile( name, await testDappContract.set_number(42));
 }
 
 {
@@ -130,7 +129,7 @@ class EthKeyPair extends KeyPair {
   const owners = [new StarknetKeyPair(), new StarknetKeyPair(), new StarknetKeyPair()];
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
-  await reportProfile(table, name, await testDappContract.set_number(42));
+  await profiler.profile( name, await testDappContract.set_number(42));
 }
 
 {
@@ -139,7 +138,7 @@ class EthKeyPair extends KeyPair {
   const owners = [new EthKeyPair(), new EthKeyPair(), new EthKeyPair()];
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
-  await reportProfile(table, name, await testDappContract.set_number(42));
+  await profiler.profile( name, await testDappContract.set_number(42));
 }
 
 {
@@ -148,7 +147,7 @@ class EthKeyPair extends KeyPair {
   const owners = [new EthKeyPair(), new StarknetKeyPair()];
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
-  await reportProfile(table, name, await testDappContract.set_number(42));
+  await profiler.profile( name, await testDappContract.set_number(42));
 }
 
 {
@@ -157,7 +156,7 @@ class EthKeyPair extends KeyPair {
   const owners = [new EthKeyPair(), new EthKeyPair(), new StarknetKeyPair()];
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
-  await reportProfile(table, name, await testDappContract.set_number(42));
+  await profiler.profile( name, await testDappContract.set_number(42));
 }
 
 {
@@ -169,7 +168,7 @@ class EthKeyPair extends KeyPair {
   }
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
-  await reportProfile(table, name, await testDappContract.set_number(42));
+  await profiler.profile( name, await testDappContract.set_number(42));
 }
 
 async function deployGenericAccount(owners: StarknetKeyPair[]) {
@@ -193,4 +192,4 @@ async function deployGenericAccount(owners: StarknetKeyPair[]) {
   return account;
 }
 
-console.table(table);
+profiler.printReport();

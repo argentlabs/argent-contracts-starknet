@@ -1,13 +1,17 @@
 import { add, maxBy, mergeWith, omit, sortBy, sum } from "lodash-es";
-import { ExecutionResources, InvokeFunctionResponse } from "starknet";
+import { ExecutionResources } from "starknet";
 import { provider } from "./provider";
 import { ensureAccepted } from "./receipts";
 
-const ethUsd = 1800n;
+const ethUsd = 2000n;
 
-export async function profileGasUsage({ transaction_hash: txHash }: InvokeFunctionResponse) {
-  const receipt = ensureAccepted(await provider.waitForTransaction(txHash));
-  const trace = await provider.getTransactionTrace(txHash);
+interface TransactionCarrying {
+  transaction_hash: string;
+}
+
+async function profileGasUsage(transactionHash: string) {
+  const receipt = ensureAccepted(await provider.waitForTransaction(transactionHash));
+  const trace = await provider.getTransactionTrace(transactionHash);
   const actualFee = BigInt(receipt.actual_fee as string);
 
   const executionResourcesByPhase: ExecutionResources[] = [
@@ -68,8 +72,8 @@ export async function profileGasUsage({ transaction_hash: txHash }: InvokeFuncti
   };
 }
 
-export async function reportProfile(table: Record<string, any>, name: string, response: InvokeFunctionResponse) {
-  const report = await profileGasUsage(response);
+async function reportProfile(table: Record<string, any>, name: string, transactionHash: string) {
+  const report = await profileGasUsage(transactionHash);
   const { actualFee, gasUsed, computationGas, l1CalldataGas, executionResources } = report;
   console.dir(report, { depth: null });
   const feeUsd = Number(actualFee * ethUsd) / Number(10n ** 18n);
@@ -80,5 +84,18 @@ export async function reportProfile(table: Record<string, any>, name: string, re
     computationGas: Number(computationGas),
     l1CalldataGas: Number(l1CalldataGas),
     ...executionResources,
+  };
+}
+
+export function makeProfiler() {
+  const table: Record<string, any> = {};
+
+  return {
+    async profile(name: string, { transaction_hash }: TransactionCarrying) {
+      return await reportProfile(table, name, transaction_hash);
+    },
+    printReport() {
+      console.table(table);
+    },
   };
 }

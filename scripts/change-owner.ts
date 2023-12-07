@@ -5,7 +5,6 @@ import {
   KeyPair,
   loadContract,
   provider,
-  signChangeOwnerMessage,
 } from "../tests-integration/lib";
 
 /// To use this script, fill the following three values:

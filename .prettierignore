@@ -1,6 +1,7 @@
 cairo
 venv
 target
+deployments/artifacts
 dist
 .github
 tests-integration/fixtures

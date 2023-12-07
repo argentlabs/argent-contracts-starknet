@@ -1,32 +1,25 @@
-// For some reason (fn colliding with same name) I have to import it here and use super
-use argent::multisig::interface::{IArgentMultisig};
-
 #[starknet::contract]
 mod ArgentMultisig {
     use argent::common::{
         account::{
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
-        asserts::{
-            assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
-            assert_correct_declare_version
-        },
-        calls::execute_multicall, version::Version,
+        asserts::{assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,},
         erc165::{
             IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
             ERC165_IERC165_INTERFACE_ID_OLD,
         },
+        calls::execute_multicall, version::Version,
         outside_execution::{
-            OutsideExecution, IOutsideExecution, hash_outside_execution_message, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
+            IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
-    use argent::multisig::interface::{IDeprecatedArgentMultisig};
+    use argent::multisig::interface::{IArgentMultisig, IDeprecatedArgentMultisig};
     use argent::multisig::signer_signature::{deserialize_array_signer_signature};
     use ecdsa::check_ecdsa_signature;
     use starknet::{
-        get_contract_address, ContractAddressIntoFelt252, VALIDATED, syscalls::replace_class_syscall, ClassHash,
-        class_hash_const, get_block_timestamp, get_caller_address, get_tx_info, account::Call
+        get_contract_address, VALIDATED, syscalls::replace_class_syscall, ClassHash, get_tx_info, account::Call
     };
 
     const NAME: felt252 = 'ArgentMultisig';
@@ -37,16 +30,35 @@ mod ArgentMultisig {
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 
+    component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
+    #[abi(embed_v0)]
+    impl ExecuteFromOutside = outside_execution_component::OutsideExecutionImpl<ContractState>;
+
+    impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
+        #[inline(always)]
+        fn execute_from_outside_callback(
+            ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
+        ) -> Array<Span<felt252>> {
+            self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature);
+
+            let retdata = execute_multicall(calls);
+            self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
+            retdata
+        }
+    }
+
     #[storage]
     struct Storage {
+        #[substorage(v0)]
+        execute_from_outside: outside_execution_component::Storage,
         signer_list: LegacyMap<felt252, felt252>,
         threshold: usize,
-        outside_nonces: LegacyMap<felt252, bool>,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        ExecuteFromOutsideEvents: outside_execution_component::Event,
         ThresholdUpdated: ThresholdUpdated,
         TransactionExecuted: TransactionExecuted,
         AccountUpgraded: AccountUpgraded,
@@ -128,10 +140,7 @@ mod ArgentMultisig {
             assert_correct_tx_version(tx_info.version);
 
             let retdata = execute_multicall(calls.span());
-
-            let hash = tx_info.transaction_hash;
-            let response = retdata.span();
-            self.emit(TransactionExecuted { hash, response });
+            self.emit(TransactionExecuted { hash: tx_info.transaction_hash, response: retdata.span() });
             retdata
         }
 
@@ -141,51 +150,6 @@ mod ArgentMultisig {
             } else {
                 0
             }
-        }
-    }
-
-    #[external(v0)]
-    impl ExecuteFromOutsideImpl of IOutsideExecution<ContractState> {
-        fn execute_from_outside(
-            ref self: ContractState, outside_execution: OutsideExecution, signature: Array<felt252>
-        ) -> Array<Span<felt252>> {
-            // Checks
-            if outside_execution.caller.into() != 'ANY_CALLER' {
-                assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
-            }
-
-            let block_timestamp = get_block_timestamp();
-            assert(
-                outside_execution.execute_after < block_timestamp && block_timestamp < outside_execution.execute_before,
-                'argent/invalid-timestamp'
-            );
-            let nonce = outside_execution.nonce;
-            assert(!self.outside_nonces.read(nonce), 'argent/duplicated-outside-nonce');
-
-            let outside_tx_hash = hash_outside_execution_message(@outside_execution);
-
-            let calls = outside_execution.calls;
-
-            self.assert_valid_calls_and_signature(calls, outside_tx_hash, signature.span());
-
-            // Effects
-            self.outside_nonces.write(nonce, true);
-
-            // Interactions
-            let retdata = execute_multicall(calls);
-
-            let hash = outside_tx_hash;
-            let response = retdata.span();
-            self.emit(TransactionExecuted { hash, response });
-            retdata
-        }
-
-        fn get_outside_execution_message_hash(self: @ContractState, outside_execution: OutsideExecution) -> felt252 {
-            hash_outside_execution_message(@outside_execution)
-        }
-
-        fn is_valid_outside_execution_nonce(self: @ContractState, nonce: felt252) -> bool {
-            !self.outside_nonces.read(nonce)
         }
     }
 
@@ -217,7 +181,7 @@ mod ArgentMultisig {
     }
 
     #[external(v0)]
-    impl ArgentMultisigImpl of super::IArgentMultisig<ContractState> {
+    impl ArgentMultisigImpl of IArgentMultisig<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             panic_with_felt252('argent/declare-not-available') // Not implemented yet
         }
@@ -365,7 +329,7 @@ mod ArgentMultisig {
 
     #[external(v0)]
     impl OldArgentMultisigImpl<
-        impl ArgentMultisig: super::IArgentMultisig<ContractState>,
+        impl ArgentMultisig: IArgentMultisig<ContractState>,
         impl Erc165: IErc165<ContractState>,
         impl Account: IAccount<ContractState>,
     > of IDeprecatedArgentMultisig<ContractState> {

@@ -384,6 +384,8 @@ mod ArgentMultisig {
             let threshold = self.threshold.read();
             assert(threshold != 0, 'argent/uninitialized');
 
+            // TODO Should prob use Serde::deserialise instead 
+            // this will break, as the signer will be within the signerType... webauthn might require 2 felts?
             let mut signer_signatures = deserialize_array_signer_signature(signature)
                 .expect('argent/invalid-signature-length');
             assert(signer_signatures.len() == threshold, 'argent/invalid-signature-length');

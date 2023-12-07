@@ -577,8 +577,8 @@ mod ArgentGenericAccount {
                     assert_valid_ethereum_signature(hash, signer, signature);
                     true
                 },
-                SignerType::Webauthn => false,
                 SignerType::Secp256r1 => false,
+                SignerType::Webauthn => false,
             }
         }
     }

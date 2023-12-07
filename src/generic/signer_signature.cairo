@@ -12,8 +12,8 @@ enum SignerType {
     #[default]
     Starknet: StarknetSignature,
     Secp256k1: Signature,
-    Webauthn,
     Secp256r1,
+    Webauthn,
 }
 
 #[derive(Copy, Drop, Serde)]

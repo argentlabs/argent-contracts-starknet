@@ -1,11 +1,6 @@
 import "dotenv/config";
 import { Account, num } from "starknet";
-import {
-  getChangeOwnerMessageHash,
-  KeyPair,
-  loadContract,
-  provider,
-} from "../tests-integration/lib";
+import { getChangeOwnerMessageHash, KeyPair, loadContract, provider } from "../tests-integration/lib";
 
 /// To use this script, fill the following three values:
 /// - accountAddress: the address of the account to change owner

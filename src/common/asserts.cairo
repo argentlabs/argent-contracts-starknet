@@ -16,11 +16,6 @@ fn assert_only_protocol() {
 }
 
 #[inline(always)]
-fn assert_caller_is_null() {
-    assert(get_caller_address().is_zero(), 'argent/non-null-caller');
-}
-
-#[inline(always)]
 fn assert_correct_tx_version(tx_version: felt252) {
     if tx_version != TRANSACTION_VERSION {
         assert(tx_version == QUERY_VERSION, 'argent/invalid-tx-version');

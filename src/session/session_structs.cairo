@@ -13,7 +13,7 @@ struct BasicSignature {
 
 #[derive(Drop, Serde, Copy)]
 struct TokenAmount {
-    contract_address: ContractAddress,
+    token_address: ContractAddress,
     amount: u256,
 }
 
@@ -144,7 +144,7 @@ impl StructHashTokenLimit of IStructHash<TokenAmount> {
     fn get_struct_hash(self: @TokenAmount) -> felt252 {
         let mut state = PedersenTrait::new(0);
         state = state.update_with(TOKEN_AMOUNT_TYPE_HASH);
-        state = state.update_with(*self.contract_address);
+        state = state.update_with(*self.token_address);
         state = state.update_with((*self).amount.get_struct_hash());
         state = state.update_with(3);
         state.finalize()

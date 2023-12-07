@@ -115,16 +115,24 @@ export function createOnChainSession(completedSession: OffChainSession): OnChain
   };
 }
 
-export function getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[]): string[][] {
+export function getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[], allowedTokens: TokenAmount[], allowedNfts: string[] ): string[][] {
   const tree = new merkle.MerkleTree(getLeaves(allowedMethods));
 
   return calls.map((call) => {
+    const isTokenAllowed = allowedTokens.find((token) => token.token_address === call.contractAddress);
+    if (isTokenAllowed) {
+      return [];
+    }
+    const isNftAllowed = allowedNfts.find((nft) => nft === call.contractAddress);
+    if (isNftAllowed) {
+      return [];
+    }
     const allowedIndex = allowedMethods.findIndex((allowedMethod) => {
       return (
         allowedMethod.contract_address == call.contractAddress &&
         allowedMethod.selector == selector.getSelectorFromName(call.entrypoint)
       );
     });
-    return tree.getProof(tree.leaves[allowedIndex]);
+    return tree.getProof(tree.leaves[allowedIndex], getLeaves(allowedMethods));
   });
 }

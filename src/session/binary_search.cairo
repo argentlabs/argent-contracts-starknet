@@ -9,7 +9,7 @@ trait Keyable<T, K> {
 
 impl TokenLimitKeyable of Keyable<TokenAmount, ContractAddress> {
     fn get_key(self: @TokenAmount) -> ContractAddress {
-        (*self).contract_address
+        (*self).token_address
     }
 }
 

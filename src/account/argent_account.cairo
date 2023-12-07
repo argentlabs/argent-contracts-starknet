@@ -264,7 +264,7 @@ mod ArgentAccount {
 
             let implementation = self._implementation.read();
             if implementation != Zeroable::zero() {
-                replace_class_syscall(implementation).unwrap();
+                replace_class_syscall(implementation).expect('argent/invalid-after-upgrade');
                 self._implementation.write(Zeroable::zero());
                 // Technically the owner is not added here, but we emit the event since it wasn't emitted in previous versions
                 self.emit(OwnerAdded { new_owner_guid: self._signer.read() });

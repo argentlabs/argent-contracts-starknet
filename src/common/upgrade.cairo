@@ -21,6 +21,6 @@ fn do_upgrade(class_hash: ClassHash, calldata: Array<felt252>) -> Array<felt252>
     let supports_interface = IErc165LibraryDispatcher { class_hash }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
     assert(supports_interface, 'argent/invalid-implementation');
 
-    replace_class_syscall(class_hash).unwrap();
+    replace_class_syscall(class_hash).expect('argent/invalid-upgrade');
     IUpgradeableLibraryDispatcher { class_hash }.execute_after_upgrade(calldata)
 }

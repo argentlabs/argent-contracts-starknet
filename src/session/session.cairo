@@ -1,7 +1,6 @@
 use argent::session::session_structs::Session;
 use starknet::{account::Call};
 
-
 #[starknet::interface]
 trait ISessionable<TContractState> {
     fn revoke_session(ref self: TContractState, session_key: felt252);
@@ -13,17 +12,18 @@ trait ISessionable<TContractState> {
 
 #[starknet::component]
 mod sessionable {
-    use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,};
     use argent::account::interface::IArgentAccount;
     use argent::common::account::IAccount;
     use argent::common::asserts::{assert_no_self_call, assert_only_self};
     use argent::session::session::ISessionable;
+    use argent::session::binary_search::{binary_search};
     use argent::session::session_structs::{
         SessionToken, BasicSignature, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash
     };
     use ecdsa::check_ecdsa_signature;
     use hash::LegacyHash;
     use starknet::{account::Call, get_execution_info, get_block_timestamp, VALIDATED};
+    use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,};
 
 
     #[storage]

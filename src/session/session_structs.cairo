@@ -12,7 +12,7 @@ struct BasicSignature {
 }
 
 #[derive(Drop, Serde, Copy)]
-struct TokenLimit {
+struct TokenAmount {
     contract_address: ContractAddress,
     amount: u256,
 }
@@ -21,7 +21,7 @@ struct TokenLimit {
 struct Session {
     expires_at: u64,
     allowed_methods_root: felt252,
-    token_limits: Span<TokenLimit>,
+    token_amounts: Span<TokenAmount>,
     nft_contracts: Span<ContractAddress>,
     max_fee_usage: u128,
     session_key: felt252,
@@ -49,7 +49,7 @@ const SESSION_TYPE_HASH: felt252 =
     selector!(
         "Session(Expires At:u128,Allowed Methods:merkletree,Token Amounts:TokenAmount*,NFT Contracts:felt*,Max Fee Usage:felt,Session Key:felt)TokenAmount(token_address:ContractAddress,amount:u256)u256(low:u128,high:u128)"
     );
-const TOKEN_LIMIT_HASH: felt252 =
+const TOKEN_AMOUNT_TYPE_HASH: felt252 =
     selector!("TokenAmount(token_address:ContractAddress,amount:u256)u256(low:u128,high:u128)");
 const U256_TYPE_HASH: felt252 = selector!("u256(low:u128,high:u128)");
 const ALLOWED_METHOD_HASH: felt252 = selector!("Allowed Method(contract_address:ContractAddress,selector:selector)");
@@ -85,7 +85,7 @@ impl StructHashSession of IStructHash<Session> {
         state = state.update_with(SESSION_TYPE_HASH);
         state = state.update_with(*self.expires_at);
         state = state.update_with(*self.allowed_methods_root);
-        state = state.update_with((*self).token_limits.get_struct_hash());
+        state = state.update_with((*self).token_amounts.get_struct_hash());
         state = state.update_with((*self).nft_contracts.get_struct_hash());
         state = state.update_with(*self.max_fee_usage);
         state = state.update_with(*self.session_key);
@@ -140,10 +140,10 @@ impl StructHashSpanContract of IStructHash<ContractAddress> {
 }
 
 
-impl StructHashTokenLimit of IStructHash<TokenLimit> {
-    fn get_struct_hash(self: @TokenLimit) -> felt252 {
+impl StructHashTokenLimit of IStructHash<TokenAmount> {
+    fn get_struct_hash(self: @TokenAmount) -> felt252 {
         let mut state = PedersenTrait::new(0);
-        state = state.update_with(TOKEN_LIMIT_HASH);
+        state = state.update_with(TOKEN_AMOUNT_TYPE_HASH);
         state = state.update_with(*self.contract_address);
         state = state.update_with((*self).amount.get_struct_hash());
         state = state.update_with(3);

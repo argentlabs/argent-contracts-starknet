@@ -19,6 +19,7 @@ mod session {
     mod session;
     mod session_account;
     mod session_structs;
+    mod binary_search;
 }
 mod multisig {
     mod argent_multisig;

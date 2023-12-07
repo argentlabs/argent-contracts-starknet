@@ -32,7 +32,6 @@ mod ArgentGenericAccount {
     const VERSION_PATCH: u8 = 1;
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
-    /// Time it takes for the escape to become ready after being triggered
 
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]

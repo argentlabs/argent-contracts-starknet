@@ -16,9 +16,7 @@ mod ArgentGenericAccount {
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
     };
     use argent::generic::{
-        signer_signature::{
-            SignerSignature, SignerType, assert_valid_starknet_signature, assert_valid_ethereum_signature
-        },
+        signer_signature::{SignerSignature, SignerType, is_valid_signer_signature_internal},
         interface::{IRecoveryAccount, IArgentMultisig}, recovery::{EscapeStatus, Escape, EscapeEnabled}
     };
     use starknet::{
@@ -375,7 +373,9 @@ mod ArgentGenericAccount {
         fn is_valid_signer_signature(
             self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType
         ) -> bool {
-            self.is_valid_signer_signature_inner(hash, signer, signer_type)
+            let is_signer = self.is_signer_inner(signer);
+            assert(is_signer, 'argent/not-a-signer');
+            is_valid_signer_signature_internal(hash, SignerSignature { signer, signer_type })
         }
     }
 
@@ -546,13 +546,11 @@ mod ArgentGenericAccount {
             loop {
                 match signer_signatures.pop_front() {
                     Option::Some(signer_sig) => {
+                        assert(self.is_signer_inner(signer_sig.signer), 'argent/not-a-signer');
                         assert(signer_sig.signer != excluded_signer, 'argent/unauthorised_signer');
                         let signer_uint: u256 = signer_sig.signer.into();
                         assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
-                        let is_valid = self
-                            .is_valid_signer_signature(
-                                hash, signer: signer_sig.signer, signer_type: signer_sig.signer_type,
-                            );
+                        let is_valid = is_valid_signer_signature_internal(hash, sig: signer_sig);
                         if !is_valid {
                             break false;
                         }
@@ -560,25 +558,6 @@ mod ArgentGenericAccount {
                     },
                     Option::None => { break true; }
                 };
-            }
-        }
-
-        fn is_valid_signer_signature_inner(
-            self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType
-        ) -> bool {
-            let is_signer = self.is_signer_inner(signer);
-            assert(is_signer, 'argent/not-a-signer');
-            match signer_type {
-                SignerType::Starknet(signature) => {
-                    assert_valid_starknet_signature(hash, signer, signature);
-                    true
-                },
-                SignerType::Secp256k1(signature) => {
-                    assert_valid_ethereum_signature(hash, signer, signature);
-                    true
-                },
-                SignerType::Secp256r1 => false,
-                SignerType::Webauthn => false,
             }
         }
     }

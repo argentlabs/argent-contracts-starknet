@@ -66,4 +66,39 @@ describe("Hybrid Session Account: execute calls", function () {
     await account.waitForTransaction(transaction_hash);
     await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
   });
+
+  it("Call a token contract", async function () {
+    const { accountContract, account, guardian, owner } = await deployAccount(sessionAccountClassHash);
+
+    const backendService = new BackendService(guardian);
+    const argentX = new ArgentX(account, backendService);
+
+    // Session creation:
+    // 1. dapp request session: provides dapp pub key and policies
+    const allowedMethods: AllowedMethod[] = [
+      {
+        contract_address: testDappOneContract.address,
+        selector: selector.getSelectorFromName("set_number_double"),
+      },
+    ];
+
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, tokenLimits);
+
+    // 2. Wallet signs session
+    const ownerSignature = await argentX.getOwnerSessionSignature(sessionRequest);
+
+    //  Every request:
+    const calls = [testDappOneContract.populateTransaction.set_number_double(2)];
+
+    // 1. dapp requests backend signature
+    // backend: can verify the parameters and check it was signed by the account then provides signature
+    // 2. dapp signs tx and session, crafts signature and submits transaction
+    const sessionSigner = new DappSigner(argentX, dappService.keypair, ownerSignature, sessionRequest);
+
+    account.signer = sessionSigner;
+
+    const { transaction_hash } = await account.execute(calls);
+    await account.waitForTransaction(transaction_hash);
+    await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+  });
 });

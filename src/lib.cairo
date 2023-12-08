@@ -11,9 +11,13 @@ mod common {
     mod erc165;
     mod multicall;
     mod outside_execution;
-    mod test_dapp;
+
     mod upgrade;
     mod version;
+}
+mod mocks {
+    mod test_dapp;
+    mod erc20;
 }
 mod session {
     mod session;

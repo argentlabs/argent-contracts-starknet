@@ -111,7 +111,6 @@ export class DappService {
       expires_at,
       allowed_methods,
       token_limits,
-      nft_contracts,
       max_fee_usage,
       session_key: this.sessionKey.publicKey,
     };
@@ -155,7 +154,6 @@ export class DappSigner extends RawSigner {
       backend_signature,
       proofs,
     };
-    console.log(sessionToken);
 
     return [SESSION_MAGIC, ...CallData.compile({ ...sessionToken })];
   }
@@ -181,11 +179,6 @@ export class DappSigner extends RawSigner {
   }
 
   public async getProofs(transactions: Call[]): Promise<string[][]> {
-    return getSessionProofs(
-      transactions,
-      this.completedSession.allowed_methods,
-      this.completedSession.token_limits,
-      this.completedSession.nft_contracts,
-    );
+    return getSessionProofs(transactions, this.completedSession.allowed_methods);
   }
 }

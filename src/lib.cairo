@@ -16,7 +16,6 @@ mod common {
     mod version;
 }
 mod session {
-    mod binary_search;
     mod session;
     mod session_account;
     mod session_structs;

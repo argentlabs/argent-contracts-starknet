@@ -23,7 +23,6 @@ export const sessionTypes = {
     { name: "Expires At", type: "u128" },
     { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
     { name: "Token Amounts", type: "TokenAmount*" },
-    { name: "NFT Contracts", type: "felt*" },
     { name: "Max Fee Usage", type: "felt" },
     { name: "Session Key", type: "felt" },
   ],
@@ -50,7 +49,6 @@ export interface OffChainSession {
   expires_at: BigNumberish;
   allowed_methods: AllowedMethod[];
   token_limits: TokenAmount[];
-  nft_contracts: string[];
   max_fee_usage: BigNumberish;
   session_key: BigNumberish;
 }
@@ -59,7 +57,6 @@ export interface OnChainSession {
   expires_at: BigNumberish;
   allowed_methods_root: string;
   token_limits: TokenAmount[];
-  nft_contracts: string[];
   max_fee_usage: BigNumberish;
   session_key: BigNumberish;
 }
@@ -90,7 +87,6 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
       "Expires At": sessionRequest.expires_at,
       "Allowed Methods": sessionRequest.allowed_methods,
       "Token Amounts": sessionRequest.token_limits,
-      "NFT Contracts": sessionRequest.nft_contracts,
       "Max Fee Usage": sessionRequest.max_fee_usage,
       "Session Key": sessionRequest.session_key,
     },
@@ -109,29 +105,15 @@ export function createOnChainSession(completedSession: OffChainSession): OnChain
     expires_at: completedSession.expires_at,
     allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
     token_limits: completedSession.token_limits,
-    nft_contracts: completedSession.nft_contracts,
     max_fee_usage: completedSession.max_fee_usage,
     session_key: completedSession.session_key,
   };
 }
 
-export function getSessionProofs(
-  calls: Call[],
-  allowedMethods: AllowedMethod[],
-  allowedTokens: TokenAmount[],
-  allowedNfts: string[],
-): string[][] {
+export function getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[]): string[][] {
   const tree = new merkle.MerkleTree(getLeaves(allowedMethods));
 
   return calls.map((call) => {
-    const isTokenAllowed = allowedTokens.find((token) => token.token_address === call.contractAddress);
-    if (isTokenAllowed) {
-      return [];
-    }
-    const isNftAllowed = allowedNfts.find((nft) => nft === call.contractAddress);
-    if (isNftAllowed) {
-      return [];
-    }
     const allowedIndex = allowedMethods.findIndex((allowedMethod) => {
       return (
         allowedMethod.contract_address == call.contractAddress &&

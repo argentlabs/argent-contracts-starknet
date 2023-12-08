@@ -16,10 +16,9 @@ mod sessionable {
     use argent::account::interface::IArgentAccount;
     use argent::common::account::IAccount;
     use argent::common::asserts::{assert_no_self_call, assert_only_self};
-    use argent::session::binary_search::{binary_search};
     use argent::session::session::ISessionable;
     use argent::session::session_structs::{
-        SessionToken, BasicSignature, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash
+        SessionToken, StarknetSignature, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash
     };
     use ecdsa::check_ecdsa_signature;
     use hash::LegacyHash;
@@ -93,7 +92,7 @@ mod sessionable {
         }
     }
 
-    fn is_valid_signature_generic(hash: felt252, signer: felt252, signature: BasicSignature) -> bool {
+    fn is_valid_signature_generic(hash: felt252, signer: felt252, signature: StarknetSignature) -> bool {
         check_ecdsa_signature(hash, signer, signature.r, signature.s)
     }
 

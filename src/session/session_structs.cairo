@@ -6,7 +6,7 @@ use starknet::{get_tx_info, get_contract_address, ContractAddress};
 
 
 #[derive(Drop, Serde, Copy)]
-struct BasicSignature {
+struct StarknetSignature {
     r: felt252,
     s: felt252,
 }
@@ -22,7 +22,6 @@ struct Session {
     expires_at: u64,
     allowed_methods_root: felt252,
     token_amounts: Span<TokenAmount>,
-    nft_contracts: Span<ContractAddress>,
     max_fee_usage: u128,
     session_key: felt252,
 }
@@ -30,9 +29,9 @@ struct Session {
 #[derive(Drop, Serde, Copy)]
 struct SessionToken {
     session: Session,
-    session_signature: BasicSignature,
-    owner_signature: BasicSignature,
-    backend_signature: BasicSignature,
+    session_signature: StarknetSignature,
+    owner_signature: StarknetSignature,
+    backend_signature: StarknetSignature,
     proofs: Span<Span<felt252>>,
 }
 
@@ -47,7 +46,7 @@ struct StarkNetDomain {
 const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
 const SESSION_TYPE_HASH: felt252 =
     selector!(
-        "Session(Expires At:u128,Allowed Methods:merkletree,Token Amounts:TokenAmount*,NFT Contracts:felt*,Max Fee Usage:felt,Session Key:felt)TokenAmount(token_address:ContractAddress,amount:u256)u256(low:u128,high:u128)"
+        "Session(Expires At:u128,Allowed Methods:merkletree,Token Amounts:TokenAmount*,Max Fee Usage:felt,Session Key:felt)TokenAmount(token_address:ContractAddress,amount:u256)u256(low:u128,high:u128)"
     );
 const TOKEN_AMOUNT_TYPE_HASH: felt252 =
     selector!("TokenAmount(token_address:ContractAddress,amount:u256)u256(low:u128,high:u128)");
@@ -86,10 +85,9 @@ impl StructHashSession of IStructHash<Session> {
         state = state.update_with(*self.expires_at);
         state = state.update_with(*self.allowed_methods_root);
         state = state.update_with((*self).token_amounts.get_struct_hash());
-        state = state.update_with((*self).nft_contracts.get_struct_hash());
         state = state.update_with(*self.max_fee_usage);
         state = state.update_with(*self.session_key);
-        state = state.update_with(7);
+        state = state.update_with(6);
         state.finalize()
     }
 }

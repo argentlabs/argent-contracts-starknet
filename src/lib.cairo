@@ -16,8 +16,8 @@ mod common {
     mod version;
 }
 mod mocks {
-    mod test_dapp;
     mod erc20;
+    mod test_dapp;
 }
 mod session {
     mod session;

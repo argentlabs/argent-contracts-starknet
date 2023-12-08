@@ -31,19 +31,13 @@ mod Erc20Mock {
         }
 
         fn transfer_from(
-            ref self: ContractState,
-            sender: ContractAddress,
-            recipient: ContractAddress,
-            amount: u256
+            ref self: ContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256
         ) -> bool {
             self.transfer_from_internal(sender, recipient, amount)
         }
 
         fn transferFrom(
-            ref self: ContractState,
-            sender: ContractAddress,
-            recipient: ContractAddress,
-            amount: u256
+            ref self: ContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256
         ) -> bool {
             self.transfer_from_internal(sender, recipient, amount)
         }
@@ -57,19 +51,14 @@ mod Erc20Mock {
             self.balances.read(account)
         }
 
-        fn allowance(
-            self: @ContractState, owner: ContractAddress, spender: ContractAddress
-        ) -> u256 {
+        fn allowance(self: @ContractState, owner: ContractAddress, spender: ContractAddress) -> u256 {
             self.allowances.read((owner, spender))
         }
     }
     #[generate_trait]
     impl Private of PrivateTrait {
         fn transfer_from_internal(
-            ref self: ContractState,
-            sender: ContractAddress,
-            recipient: ContractAddress,
-            amount: u256
+            ref self: ContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256
         ) -> bool {
             let caller = get_caller_address();
             let current_allowance = self.allowances.read((sender, caller));

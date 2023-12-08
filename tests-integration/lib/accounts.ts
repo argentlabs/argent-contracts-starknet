@@ -1,4 +1,3 @@
-import { expect } from "chai";
 import { Account, CallData, Contract, GetTransactionReceiptResponse, RawCalldata, hash, num, uint256 } from "starknet";
 import { getEthContract, loadContract } from "./contracts";
 import { mintEth } from "./devnet";

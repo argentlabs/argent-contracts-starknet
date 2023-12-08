@@ -7,7 +7,7 @@ mod ArgentAccount {
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
         asserts::{
-            assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
+            assert_correct_tx_version, assert_no_self_call, assert_only_protocol, assert_only_self,
             assert_correct_declare_version
         },
         calls::execute_multicall, version::Version,
@@ -212,7 +212,7 @@ mod ArgentAccount {
     #[external(v0)]
     impl Account of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
-            assert_caller_is_null();
+            assert_only_protocol();
             let tx_info = get_tx_info().unbox();
             self
                 .assert_valid_calls_and_signature(
@@ -222,7 +222,7 @@ mod ArgentAccount {
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
-            assert_caller_is_null();
+            assert_only_protocol();
             let tx_info = get_tx_info().unbox();
             assert_correct_tx_version(tx_info.version);
 

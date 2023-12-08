@@ -1,4 +1,5 @@
-use starknet::ClassHash;
+use argent::common::{account::ERC165_ACCOUNT_INTERFACE_ID, erc165::{IErc165LibraryDispatcher, IErc165DispatcherTrait,}};
+use starknet::{ClassHash, syscalls::replace_class_syscall};
 
 #[starknet::interface]
 trait IUpgradeable<TContractState> {
@@ -13,4 +14,13 @@ trait IUpgradeable<TContractState> {
     /// Can only be called by the account after a call to `upgrade`.
     /// @param data Generic call data that can be passed to the method for future upgrade logic
     fn execute_after_upgrade(ref self: TContractState, data: Array<felt252>) -> Array<felt252>;
+}
+
+#[inline(always)]
+fn do_upgrade(class_hash: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
+    let supports_interface = IErc165LibraryDispatcher { class_hash }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
+    assert(supports_interface, 'argent/invalid-implementation');
+
+    replace_class_syscall(class_hash).expect('argent/invalid-upgrade');
+    IUpgradeableLibraryDispatcher { class_hash }.execute_after_upgrade(calldata)
 }

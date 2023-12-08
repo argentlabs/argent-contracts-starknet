@@ -3,6 +3,7 @@ mod account {
     mod escape;
     mod interface;
 }
+
 mod common {
     mod account;
     mod array_ext;
@@ -27,5 +28,13 @@ mod session {
 mod multisig {
     mod argent_multisig;
     mod interface;
+    mod signer_list;
+    mod signer_signature;
+}
+
+mod generic {
+    mod argent_generic;
+    mod interface;
+    mod recovery;
     mod signer_signature;
 }

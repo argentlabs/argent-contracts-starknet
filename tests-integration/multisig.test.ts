@@ -43,7 +43,7 @@ describe("ArgentMultisig", function () {
     await accountContract.is_signer(0).should.eventually.be.false;
     await accountContract.is_signer(randomKeyPair().publicKey).should.eventually.be.false;
 
-    await expectRevertWithErrorMessage("argent/non-null-caller", () => accountContract.__validate__([]));
+    await expectRevertWithErrorMessage("argent/only-protocol", () => accountContract.__validate__([]));
   });
 
   it("Should fail to deploy with invalid signatures", async function () {

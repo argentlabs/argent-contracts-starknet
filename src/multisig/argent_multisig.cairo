@@ -328,21 +328,17 @@ mod ArgentMultisig {
     }
 
     #[external(v0)]
-    impl OldArgentMultisigImpl<
-        impl ArgentMultisig: IArgentMultisig<ContractState>,
-        impl Erc165: IErc165<ContractState>,
-        impl Account: IAccount<ContractState>,
-    > of IDeprecatedArgentMultisig<ContractState> {
+    impl OldArgentMultisigImpl of IDeprecatedArgentMultisig<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
             VERSION_COMPAT
         }
 
         fn getName(self: @ContractState) -> felt252 {
-            ArgentMultisig::get_name(self)
+            self.get_name()
         }
 
         fn supportsInterface(self: @ContractState, interface_id: felt252) -> felt252 {
-            if Erc165::supports_interface(self, interface_id) {
+            if self.supports_interface(interface_id) {
                 1
             } else {
                 0

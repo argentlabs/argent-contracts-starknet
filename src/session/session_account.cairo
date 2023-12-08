@@ -7,18 +7,15 @@ mod HybridSessionAccount {
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
         asserts::{
-            assert_correct_tx_version, assert_no_self_call, assert_caller_is_null, assert_only_self,
+            assert_correct_tx_version, assert_no_self_call, assert_only_protocol, assert_only_self,
             assert_correct_declare_version
         },
         calls::execute_multicall, version::Version,
-        erc165::{
-            IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
-            ERC165_IERC165_INTERFACE_ID_OLD,
-        },
+        erc165::{IErc165, ERC165_IERC165_INTERFACE_ID, ERC165_IERC165_INTERFACE_ID_OLD,},
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
-        upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
+        upgrade::{IUpgradeable, do_upgrade}
     };
     use argent::session::session::sessionable as session_component;
     use ecdsa::check_ecdsa_signature;
@@ -50,15 +47,15 @@ mod HybridSessionAccount {
     /// used for sessions
     const SESSION_MAGIC: felt252 = 'session-token';
 
-    component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
-    #[abi(embed_v0)]
-    impl ExecuteFromOutside = outside_execution_component::OutsideExecutionImpl<ContractState>;
 
     component!(path: session_component, storage: sessionable, event: SessionableEvent);
 
     #[abi(embed_v0)]
     impl Sessionable = session_component::SessionableImpl<ContractState>;
 
+    component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
+    #[abi(embed_v0)]
+    impl ExecuteFromOutside = outside_execution_component::OutsideExecutionImpl<ContractState>;
 
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
         #[inline(always)]
@@ -228,7 +225,7 @@ mod HybridSessionAccount {
     #[external(v0)]
     impl Account of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
-            assert_caller_is_null();
+            assert_only_protocol();
             let tx_info = get_tx_info().unbox();
             if *tx_info.signature[0] == SESSION_MAGIC {
                 self.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature);
@@ -242,7 +239,7 @@ mod HybridSessionAccount {
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
-            assert_caller_is_null();
+            assert_only_protocol();
             let tx_info = get_tx_info().unbox();
             assert_correct_tx_version(tx_info.version);
 
@@ -269,14 +266,8 @@ mod HybridSessionAccount {
         fn upgrade(ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
-            let supports_interface = IErc165LibraryDispatcher { class_hash: new_implementation }
-                .supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
-            assert(supports_interface, 'argent/invalid-implementation');
-
-            replace_class_syscall(new_implementation).unwrap();
             self.emit(AccountUpgraded { new_implementation });
-
-            IUpgradeableLibraryDispatcher { class_hash: new_implementation }.execute_after_upgrade(calldata)
+            do_upgrade(new_implementation, calldata)
         }
 
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
@@ -290,7 +281,7 @@ mod HybridSessionAccount {
 
             let implementation = self._implementation.read();
             if implementation != Zeroable::zero() {
-                replace_class_syscall(implementation).unwrap();
+                replace_class_syscall(implementation).expect('argent/invalid-after-upgrade');
                 self._implementation.write(Zeroable::zero());
                 // Technically the owner is not added here, but we emit the event since it wasn't emitted in previous versions
                 self.emit(OwnerAdded { new_owner_guid: self._signer.read() });

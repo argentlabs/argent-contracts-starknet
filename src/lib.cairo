@@ -10,8 +10,10 @@ mod common {
     mod asserts;
     mod calls;
     mod erc165;
+    mod interface;
     mod multicall;
     mod outside_execution;
+    mod signer_signature;
     mod test_dapp;
     mod upgrade;
     mod version;
@@ -27,5 +29,4 @@ mod generic {
     mod argent_generic;
     mod interface;
     mod recovery;
-    mod signer_signature;
 }

@@ -10,11 +10,13 @@ mod ArgentMultisig {
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component
         },
-        upgrade::{IUpgradeable, do_upgrade}
+        upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
+        signer_signature::{SignerSignature, SignerType, is_valid_signer_signature_internal}, interface::IArgentMultisig
     };
     use argent::multisig::{
-        interface::{IArgentMultisig, IDeprecatedArgentMultisig}, signer_signature::{deserialize_array_signer_signature},
-        signer_list::{signer_list_component}
+        interface::IDeprecatedArgentMultisig,
+        signer_signature::deserialize_array_signer_signature,
+        signer_list::signer_list_component
     };
     use ecdsa::check_ecdsa_signature;
     use starknet::{get_contract_address, VALIDATED, ClassHash, get_tx_info, account::Call};
@@ -264,6 +266,37 @@ mod ArgentMultisig {
             }
         }
 
+        fn reorder_signers(ref self: ContractState, new_signer_order: Array<felt252>) {
+            assert_only_self();
+            let (signers_len, last_signer) = self.load();
+            assert(new_signer_order.len() == signers_len, 'argent/too-short');
+            let mut sself = @self;
+            let mut signers_to_check = new_signer_order.span();
+            loop {
+                match signers_to_check.pop_front() {
+                    Option::Some(signer) => {
+                        assert(sself.is_signer_using_last(*signer, last_signer), 'argent/unknown-signer');
+                    },
+                    Option::None => { break; }
+                };
+            };
+
+            let mut signers_to_reorder = new_signer_order.span();
+            let mut prev_signer = 0;
+            loop {
+                match signers_to_reorder.pop_front() {
+                    Option::Some(signer) => {
+                        self.signer_list.write(prev_signer, *signer);
+                        prev_signer = *signer;
+                    },
+                    Option::None => {
+                        self.signer_list.write(prev_signer, 0);
+                        break;
+                    }
+                };
+            };
+        }
+
         fn replace_signer(ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252) {
             assert_only_self();
             let (new_signers_count, last_signer) = self.signer_list.load();
@@ -296,9 +329,11 @@ mod ArgentMultisig {
         }
 
         fn is_valid_signer_signature(
-            self: @ContractState, hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
+            self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType
         ) -> bool {
-            self.is_valid_signer_signature_inner(hash, signer, signature_r, signature_s)
+            let is_signer = self.is_signer_inner(signer);
+            assert(is_signer, 'argent/not-a-signer');
+            is_valid_signer_signature_internal(hash, SignerSignature { signer, signer_type })
         }
     }
 
@@ -372,30 +407,23 @@ mod ArgentMultisig {
             assert(valid, 'argent/invalid-signature');
         }
 
-        fn is_valid_span_signature(self: @ContractState, hash: felt252, signature: Span<felt252>) -> bool {
+        fn is_valid_span_signature(self: @ContractState, hash: felt252, mut signature: Span<felt252>) -> bool {
             let threshold = self.threshold.read();
             assert(threshold != 0, 'argent/uninitialized');
 
-            // TODO Should prob use Serde::deserialise instead 
-            // this will break, as the signer will be within the signerType... webauthn might require 2 felts?
-            let mut signer_signatures = deserialize_array_signer_signature(signature)
-                .expect('argent/invalid-signature-length');
+            let mut signer_signatures: Array<SignerSignature> = Serde::deserialize(ref signature)
+                .expect('argent/undeserializable-sig');
             assert(signer_signatures.len() == threshold, 'argent/invalid-signature-length');
+            assert(signature.is_empty(), 'argent/signature-not-empty');
 
             let mut last_signer: u256 = 0;
             loop {
                 match signer_signatures.pop_front() {
-                    Option::Some(signer_sig_ref) => {
-                        let signer_sig = *signer_sig_ref;
+                    Option::Some(signer_sig) => {
+                        assert(self.is_signer_inner(signer_sig.signer), 'argent/not-a-signer');
                         let signer_uint: u256 = signer_sig.signer.into();
                         assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
-                        let is_valid = self
-                            .is_valid_signer_signature(
-                                hash,
-                                signer: signer_sig.signer,
-                                signature_r: signer_sig.signature_r,
-                                signature_s: signer_sig.signature_s,
-                            );
+                        let is_valid = is_valid_signer_signature_internal(hash, sig: signer_sig);
                         if !is_valid {
                             break false;
                         }

@@ -13,12 +13,10 @@ mod ArgentGenericAccount {
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
-        upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
+        upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
+        signer_signature::{SignerSignature, SignerType, is_valid_signer_signature_internal}, interface::IArgentMultisig
     };
-    use argent::generic::{
-        signer_signature::{SignerSignature, SignerType, is_valid_signer_signature_internal},
-        interface::{IRecoveryAccount, IArgentMultisig}, recovery::{EscapeStatus, Escape, EscapeEnabled}
-    };
+    use argent::generic::{interface::{IRecoveryAccount}, recovery::{EscapeStatus, Escape, EscapeEnabled}};
     use starknet::{
         get_contract_address, VALIDATED, syscalls::replace_class_syscall, ClassHash, get_block_timestamp,
         get_caller_address, get_tx_info, account::Call

@@ -1,7 +1,8 @@
-use argent::common::account::{IAccount, IAccountDispatcher, IAccountDispatcherTrait};
-use argent::generic::{
-    signer_signature::{SignerSignature, SignerType, StarknetSignature}, {argent_generic::ArgentGenericAccount}
+use argent::common::{
+    account::{IAccount, IAccountDispatcher, IAccountDispatcherTrait},
+    signer_signature::{SignerSignature, SignerType, StarknetSignature}
 };
+use argent::generic::{argent_generic::ArgentGenericAccount};
 use starknet::{deploy_syscall, VALIDATED, eth_signature::Signature};
 
 const message_hash: felt252 = 0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8;

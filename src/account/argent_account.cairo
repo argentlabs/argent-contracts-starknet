@@ -11,14 +11,11 @@ mod ArgentAccount {
             assert_correct_declare_version
         },
         calls::execute_multicall, version::Version,
-        erc165::{
-            IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
-            ERC165_IERC165_INTERFACE_ID_OLD,
-        },
+        erc165::{IErc165, ERC165_IERC165_INTERFACE_ID, ERC165_IERC165_INTERFACE_ID_OLD,},
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
-        upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
+        upgrade::{IUpgradeable, do_upgrade}
     };
     use ecdsa::check_ecdsa_signature;
     use hash::HashStateTrait;
@@ -252,14 +249,8 @@ mod ArgentAccount {
         fn upgrade(ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
-            let supports_interface = IErc165LibraryDispatcher { class_hash: new_implementation }
-                .supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
-            assert(supports_interface, 'argent/invalid-implementation');
-
-            replace_class_syscall(new_implementation).unwrap();
             self.emit(AccountUpgraded { new_implementation });
-
-            IUpgradeableLibraryDispatcher { class_hash: new_implementation }.execute_after_upgrade(calldata)
+            do_upgrade(new_implementation, calldata)
         }
 
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
@@ -273,7 +264,7 @@ mod ArgentAccount {
 
             let implementation = self._implementation.read();
             if implementation != Zeroable::zero() {
-                replace_class_syscall(implementation).unwrap();
+                replace_class_syscall(implementation).expect('argent/invalid-after-upgrade');
                 self._implementation.write(Zeroable::zero());
                 // Technically the owner is not added here, but we emit the event since it wasn't emitted in previous versions
                 self.emit(OwnerAdded { new_owner_guid: self._signer.read() });

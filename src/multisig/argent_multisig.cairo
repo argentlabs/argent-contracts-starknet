@@ -5,24 +5,19 @@ mod ArgentMultisig {
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
         asserts::{assert_correct_tx_version, assert_no_self_call, assert_only_protocol, assert_only_self,},
-        erc165::{
-            IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
-            ERC165_IERC165_INTERFACE_ID_OLD,
-        },
-        calls::execute_multicall, version::Version,
+        erc165::{IErc165, ERC165_IERC165_INTERFACE_ID, ERC165_IERC165_INTERFACE_ID_OLD,}, calls::execute_multicall,
+        version::Version,
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component
         },
-        upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
+        upgrade::{IUpgradeable, do_upgrade}
     };
     use argent::multisig::{
         interface::{IArgentMultisig, IDeprecatedArgentMultisig}, signer_signature::{deserialize_array_signer_signature},
         signer_list::{signer_list_component}
     };
     use ecdsa::check_ecdsa_signature;
-    use starknet::{
-        get_contract_address, VALIDATED, syscalls::replace_class_syscall, ClassHash, get_tx_info, account::Call
-    };
+    use starknet::{get_contract_address, VALIDATED, ClassHash, get_tx_info, account::Call};
 
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION_MAJOR: u8 = 0;
@@ -166,14 +161,8 @@ mod ArgentMultisig {
         fn upgrade(ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
-            let supports_interface = IErc165LibraryDispatcher { class_hash: new_implementation }
-                .supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
-            assert(supports_interface, 'argent/invalid-implementation');
-
-            replace_class_syscall(new_implementation).unwrap();
             self.emit(AccountUpgraded { new_implementation });
-
-            IUpgradeableLibraryDispatcher { class_hash: new_implementation }.execute_after_upgrade(calldata)
+            do_upgrade(new_implementation, calldata)
         }
 
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {

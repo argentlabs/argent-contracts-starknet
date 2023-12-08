@@ -99,7 +99,7 @@ describe("ArgentAccount", function () {
 
   it("Should be impossible to call __validate__ from outside", async function () {
     const { accountContract } = await deployAccount(argentAccountClassHash);
-    await expectRevertWithErrorMessage("argent/non-null-caller", () => accountContract.__validate__([]));
+    await expectRevertWithErrorMessage("argent/only-protocol", () => accountContract.__validate__([]));
   });
 
   describe("change_owner(new_owner, signature_r, signature_s)", function () {

@@ -37,7 +37,7 @@ describe("Gas griefing", function () {
     await fundAccount(account.address, 50000000000000001n);
     account.signer = new ArgentSigner(guardian);
     // catching the revert message 'argent/max-fee-too-high' would be better but it's not returned by the RPC
-    expect(
+    await expect(
       account.execute(accountContract.populateTransaction.trigger_escape_owner(randomKeyPair().publicKey), undefined, {
         maxFee: "50000000000000001",
       }),

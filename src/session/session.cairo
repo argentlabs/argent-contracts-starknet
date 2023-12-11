@@ -12,8 +12,7 @@ trait ISessionable<TContractState> {
 
 #[starknet::component]
 mod sessionable {
-    use core::box::BoxTrait;
-use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,};
+    use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,};
     use argent::account::interface::IArgentAccount;
     use argent::common::account::IAccount;
     use argent::common::asserts::{assert_no_self_call, assert_only_self};
@@ -21,6 +20,7 @@ use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::Pedersen
     use argent::session::session_structs::{
         SessionToken, StarknetSignature, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash
     };
+    use core::box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
     use hash::LegacyHash;
     use starknet::{account::Call, get_contract_address};

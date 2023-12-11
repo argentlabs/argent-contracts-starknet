@@ -1,8 +1,9 @@
 use ecdsa::check_ecdsa_signature;
 use starknet::SyscallResultTrait;
 use starknet::secp256_trait::{Secp256PointTrait, Signature as Secp256r1Signature, recover_public_key};
+use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
-use starknet::{EthAddress, eth_signature::{Signature as Secp256k1Signature, verify_eth_signature}};
+use starknet::{EthAddress, eth_signature::{Signature as Secp256k1Signature, is_eth_signature_valid}};
 
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct StarknetSignature {
@@ -27,37 +28,27 @@ struct SignerSignature {
 
 fn is_valid_signer_signature_internal(hash: felt252, sig: SignerSignature) -> bool {
     match sig.signer_type {
-        SignerType::Starknet(signature) => {
-            assert_valid_starknet_signature(hash, sig.signer, signature);
-            true
-        },
-        SignerType::Secp256k1(signature) => {
-            assert_valid_secp256k1_signature(hash, sig.signer, signature);
-            true
-        },
-        SignerType::Secp256r1(signature) => {
-            assert_valid_secp256r1_signature(hash, sig.signer, signature);
-            true
-        },
+        SignerType::Starknet(signature) => { is_valid_starknet_signature(hash, sig.signer, signature) },
+        SignerType::Secp256k1(signature) => { is_valid_secp256k1_signature(hash, sig.signer, signature) },
+        SignerType::Secp256r1(signature) => { is_valid_secp256r1_signature(hash, sig.signer, signature) },
         SignerType::Webauthn => false,
     }
 }
 
-fn assert_valid_starknet_signature(hash: felt252, signer: felt252, signature: StarknetSignature) {
-    let is_valid = check_ecdsa_signature(hash, signer, signature.r, signature.s);
-    assert(is_valid, 'argent/invalid-sn-signature');
+fn is_valid_starknet_signature(hash: felt252, signer: felt252, signature: StarknetSignature) -> bool {
+    check_ecdsa_signature(hash, signer, signature.r, signature.s)
 }
 
-fn assert_valid_secp256k1_signature(hash: felt252, signer: felt252, signature: Secp256k1Signature) {
+fn is_valid_secp256k1_signature(hash: felt252, signer: felt252, signature: Secp256k1Signature) -> bool {
     let eth_signer: EthAddress = signer.try_into().expect('argent/invalid-eth-signer');
-    verify_eth_signature(hash.into(), signature, eth_signer);
+    is_eth_signature_valid(hash.into(), signature, eth_signer).is_ok()
 }
 
-fn assert_valid_secp256r1_signature(hash: felt252, owner: felt252, signature: Secp256r1Signature) {
+fn is_valid_secp256r1_signature(hash: felt252, owner: felt252, signature: Secp256r1Signature) -> bool {
     let recovered = recover_public_key::<Secp256r1Point>(hash.into(), signature).expect('argent/invalid-sig-format');
     let (recovered_x, _) = recovered.get_coordinates().expect('argent/invalid-sig-format');
     let recovered_owner = truncate_felt252(recovered_x);
-    assert(recovered_owner == owner, 'argent/invalid-r1-signature');
+    recovered_owner == owner
 }
 
 fn truncate_felt252(value: u256) -> felt252 {

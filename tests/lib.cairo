@@ -14,4 +14,5 @@ mod setup {
     mod account_test_setup;
     mod generic_test_setup;
     mod multisig_test_setup;
+    mod utils;
 }

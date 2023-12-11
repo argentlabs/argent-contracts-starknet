@@ -18,9 +18,9 @@ mod ArgentAccount {
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
-        upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
+        upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
+        signer_signature::{SignerSignature, SignerType, is_valid_signer_signature_internal}
     };
-    use ecdsa::check_ecdsa_signature;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
@@ -238,7 +238,11 @@ mod ArgentAccount {
         }
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
-            if self.is_valid_span_signature(hash, signature.span()) {
+            let mut signature_span = signature.span();
+            let mut signer_signatures: Array<SignerSignature> = Serde::deserialize(ref signature_span)
+                .expect('argent/undeserializable-sig');
+            assert(signature_span.is_empty(), 'argent/signature-not-empty');
+            if self.is_valid_span_signature(hash, signer_signatures) {
                 VALIDATED
             } else {
                 0
@@ -301,7 +305,11 @@ mod ArgentAccount {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_declare_version(tx_info.version);
-            self.assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
+            let mut signatures = tx_info.signature;
+            let mut signer_signatures: Array<SignerSignature> = Serde::deserialize(ref signatures)
+                .expect('argent/undeserializable-sig');
+            assert(signatures.is_empty(), 'argent/signature-not-empty');
+            self.assert_valid_span_signature(tx_info.transaction_hash, signer_signatures);
             VALIDATED
         }
 
@@ -310,13 +318,17 @@ mod ArgentAccount {
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_tx_version(tx_info.version);
-            self.assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
+            let mut signatures = tx_info.signature;
+            let mut signer_signatures: Array<SignerSignature> = Serde::deserialize(ref signatures)
+                .expect('argent/undeserializable-sig');
+            assert(signatures.is_empty(), 'argent/signature-not-empty');
+            self.assert_valid_span_signature(tx_info.transaction_hash, signer_signatures);
             VALIDATED
         }
 
-        fn change_owner(ref self: ContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252) {
+        fn change_owner(ref self: ContractState, new_owner: felt252, signature: Span<felt252>) {
             assert_only_self();
-            self.assert_valid_new_owner(new_owner, signature_r, signature_s);
+            self.assert_valid_new_owner(new_owner, signature);
 
             self.reset_escape();
             self.reset_escape_attempts();
@@ -523,13 +535,17 @@ mod ArgentAccount {
             ref self: ContractState,
             calls: Span<Call>,
             execution_hash: felt252,
-            signature: Span<felt252>,
+            mut signatures: Span<felt252>,
             is_from_outside: bool
         ) {
             let execution_info = get_execution_info().unbox();
             let account_address = execution_info.contract_address;
             let tx_info = execution_info.tx_info.unbox();
             assert_correct_tx_version(tx_info.version);
+
+            let mut signer_signatures: Array<SignerSignature> = Serde::deserialize(ref signatures)
+                .expect('argent/undeserializable-sig');
+            assert(signatures.is_empty(), 'argent/signature-not-empty');
 
             if calls.len() == 1 {
                 let call = calls.at(0);
@@ -549,7 +565,8 @@ mod ArgentAccount {
                         assert(new_owner != 0, 'argent/null-owner');
                         self.assert_guardian_set();
 
-                        let is_valid = self.is_valid_guardian_signature(execution_hash, signature);
+                        assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
+                        let is_valid = self.is_valid_guardian_signature(execution_hash, *signer_signatures.at(0));
                         assert(is_valid, 'argent/invalid-guardian-sig');
                         return; // valid
                     }
@@ -568,7 +585,8 @@ mod ArgentAccount {
                         // upgraded half way through,  then tries to finish the escape in new version
                         assert(current_escape.new_signer != 0, 'argent/null-owner');
 
-                        let is_valid = self.is_valid_guardian_signature(execution_hash, signature);
+                        assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
+                        let is_valid = self.is_valid_guardian_signature(execution_hash, *signer_signatures.at(0));
                         assert(is_valid, 'argent/invalid-guardian-sig');
                         return; // valid
                     }
@@ -586,7 +604,9 @@ mod ArgentAccount {
                             assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
                         }
                         self.assert_guardian_set();
-                        let is_valid = self.is_valid_owner_signature(execution_hash, signature);
+
+                        assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
+                        let is_valid = self.is_valid_owner_signature(execution_hash, *signer_signatures.at(0));
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return; // valid
                     }
@@ -607,7 +627,9 @@ mod ArgentAccount {
                         if current_escape.new_signer == 0 {
                             assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
                         }
-                        let is_valid = self.is_valid_owner_signature(execution_hash, signature);
+
+                        assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
+                        let is_valid = self.is_valid_owner_signature(execution_hash, *signer_signatures.at(0));
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return; // valid
                     }
@@ -618,64 +640,49 @@ mod ArgentAccount {
                 assert_no_self_call(calls, account_address);
             }
 
-            self.assert_valid_span_signature(execution_hash, signature);
+            self.assert_valid_span_signature(execution_hash, signer_signatures);
         }
 
-        fn is_valid_span_signature(self: @ContractState, hash: felt252, signatures: Span<felt252>) -> bool {
-            let (owner_signature, guardian_signature) = split_signatures(signatures);
-            let is_valid = self.is_valid_owner_signature(hash, owner_signature);
-            if !is_valid {
-                return false;
-            }
+        fn is_valid_span_signature(
+            self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>
+        ) -> bool {
             if self._guardian.read() == 0 {
-                guardian_signature.is_empty()
+                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
+                self.is_valid_owner_signature(hash, *signer_signatures.at(0))
             } else {
-                self.is_valid_guardian_signature(hash, guardian_signature)
+                assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
+                self.is_valid_owner_signature(hash, *signer_signatures.at(0))
+                    && self.is_valid_guardian_signature(hash, *signer_signatures.at(1))
             }
         }
 
-        fn assert_valid_span_signature(self: @ContractState, hash: felt252, signatures: Span<felt252>) {
-            let (owner_signature, guardian_signature) = split_signatures(signatures);
-            let is_valid = self.is_valid_owner_signature(hash, owner_signature);
-            assert(is_valid, 'argent/invalid-owner-sig');
-
+        fn assert_valid_span_signature(self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>) {
             if self._guardian.read() == 0 {
-                assert(guardian_signature.is_empty(), 'argent/invalid-guardian-sig');
+                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
+                assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
             } else {
-                assert(self.is_valid_guardian_signature(hash, guardian_signature), 'argent/invalid-guardian-sig');
+                assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
+                assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
+                assert(self.is_valid_guardian_signature(hash, *signer_signatures.at(1)), 'argent/invalid-guardian-sig');
             }
         }
 
-        fn is_valid_owner_signature(self: @ContractState, hash: felt252, signature: Span<felt252>) -> bool {
-            if signature.len() != 2 {
-                return false;
-            }
-            let signature_r = *signature[0];
-            let signature_s = *signature[1];
-            check_ecdsa_signature(hash, self._signer.read(), signature_r, signature_s)
+        fn is_valid_owner_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
+            self._signer.read() == signer_signature.signer
+                && is_valid_signer_signature_internal(hash, sig: signer_signature)
         }
 
-        fn is_valid_guardian_signature(self: @ContractState, hash: felt252, signature: Span<felt252>) -> bool {
-            if signature.len() != 2 {
-                return false;
-            }
-            let signature_r = *signature[0];
-            let signature_s = *signature[1];
-            let is_valid = check_ecdsa_signature(hash, self._guardian.read(), signature_r, signature_s);
-            if is_valid {
-                true
-            } else {
-                check_ecdsa_signature(hash, self._guardian_backup.read(), signature_r, signature_s)
-            }
+        fn is_valid_guardian_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
+            (signer_signature.signer == self._guardian.read()
+                || signer_signature.signer == self._guardian_backup.read())
+                && is_valid_signer_signature_internal(hash, sig: signer_signature)
         }
 
         /// The signature is the result of signing the message hash with the new owner private key
         /// The message hash is the result of hashing the array:
         /// [change_owner selector, chainid, contract address, old_owner]
         /// as specified here: https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
-        fn assert_valid_new_owner(
-            self: @ContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252
-        ) {
+        fn assert_valid_new_owner(self: @ContractState, new_owner: felt252, mut signature: Span<felt252>) {
             assert(new_owner != 0, 'argent/null-owner');
             let chain_id = get_tx_info().unbox().chain_id;
             // We now need to hash message_hash with the size of the array: (change_owner selector, chainid, contract address, old_owner)
@@ -687,7 +694,12 @@ mod ArgentAccount {
                 .update(self._signer.read())
                 .update(4)
                 .finalize();
-            let is_valid = check_ecdsa_signature(message_hash, new_owner, signature_r, signature_s);
+
+            let mut signer_type: SignerType = Serde::deserialize(ref signature).expect('argent/undeserializable-sig');
+            assert(signature.is_empty(), 'argent/signature-not-empty');
+            let signer_signature = SignerSignature { signer: new_owner, signer_type: signer_type };
+
+            let is_valid = is_valid_signer_signature_internal(hash: message_hash, sig: signer_signature);
             assert(is_valid, 'argent/invalid-owner-sig');
         }
 
@@ -719,16 +731,6 @@ mod ArgentAccount {
         let tx_info = get_tx_info().unbox();
         assert(tx_info.max_fee <= MAX_ESCAPE_MAX_FEE, 'argent/max-fee-too-high');
         assert(attempts < MAX_ESCAPE_ATTEMPTS, 'argent/max-escape-attempts');
-    }
-
-    fn split_signatures(full_signature: Span<felt252>) -> (Span<felt252>, Span<felt252>) {
-        if full_signature.len() == 2 {
-            return (full_signature, array![].span());
-        }
-        assert(full_signature.len() == 4, 'argent/invalid-signature-length');
-        let owner_signature = full_signature.slice(0, 2);
-        let guardian_signature = full_signature.slice(2, 2);
-        (owner_signature, guardian_signature)
     }
 
     fn get_escape_status(escape_ready_at: u64) -> EscapeStatus {

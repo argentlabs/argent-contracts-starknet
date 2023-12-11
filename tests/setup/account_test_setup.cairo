@@ -17,7 +17,7 @@ trait ITestArgentAccount<TContractState> {
         self: @TContractState, class_hash: felt252, contract_address_salt: felt252, owner: felt252, guardian: felt252
     ) -> felt252;
     // External
-    fn change_owner(ref self: TContractState, new_owner: felt252, signature_r: felt252, signature_s: felt252);
+    fn change_owner(ref self: TContractState, new_owner: felt252, signature: Span<felt252>);
     fn change_guardian(ref self: TContractState, new_guardian: felt252);
     fn change_guardian_backup(ref self: TContractState, new_guardian_backup: felt252);
     fn trigger_escape_owner(ref self: TContractState, new_owner: felt252);

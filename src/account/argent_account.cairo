@@ -481,21 +481,17 @@ mod ArgentAccount {
     }
 
     #[external(v0)]
-    impl DeprecatedArgentAccountImpl<
-        impl ArgentAccount: IArgentAccount<ContractState>,
-        impl Account: IAccount<ContractState>,
-        impl Erc165: IErc165<ContractState>,
-    > of IDeprecatedArgentAccount<ContractState> {
+    impl DeprecatedArgentAccountImpl of IDeprecatedArgentAccount<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
             VERSION_COMPAT
         }
 
         fn getName(self: @ContractState) -> felt252 {
-            ArgentAccount::get_name(self)
+            self.get_name()
         }
 
         fn supportsInterface(self: @ContractState, interface_id: felt252) -> felt252 {
-            if Erc165::supports_interface(self, interface_id) {
+            if self.supports_interface(interface_id) {
                 1
             } else {
                 0

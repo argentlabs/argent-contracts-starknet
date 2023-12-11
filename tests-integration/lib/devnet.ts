@@ -4,15 +4,15 @@ import { provider } from "./provider";
 const DUMP_FOLDER_PATH = "./dump";
 
 export async function mintEth(address: string, amount: number | bigint) {
-  await handlePost("mint", { address, amount: amount.toString() });
+  await handlePost("mint", { address, amount: Number(amount) });
 }
 
 export async function increaseTime(timeInSeconds: number | bigint) {
-  await handlePost("increase_time", { time: timeInSeconds.toString() });
+  await handlePost("increase_time", { time: Number(timeInSeconds) });
 }
 
 export async function setTime(timeInSeconds: number | bigint) {
-  await handlePost("set_time", { time: timeInSeconds.toString() });
+  await handlePost("set_time", { time: Number(timeInSeconds) });
 }
 
 export async function restart() {

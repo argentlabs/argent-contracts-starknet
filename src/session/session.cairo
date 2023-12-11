@@ -91,7 +91,7 @@ mod sessionable {
 
             if state.get_guardian_backup() != 0 {
                 assert(
-                    !is_valid_signature_generic(message_hash, state.get_guardian_backup(), token.backend_signature),
+                    !is_valid_signature_generic(transaction_hash, state.get_guardian_backup(), token.backend_signature),
                     'invalid-sig-from-backup'
                 );
             }

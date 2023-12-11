@@ -12,7 +12,8 @@ trait ISessionable<TContractState> {
 
 #[starknet::component]
 mod sessionable {
-    use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,};
+    use core::box::BoxTrait;
+use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,};
     use argent::account::interface::IArgentAccount;
     use argent::common::account::IAccount;
     use argent::common::asserts::{assert_no_self_call, assert_only_self};
@@ -22,7 +23,7 @@ mod sessionable {
     };
     use ecdsa::check_ecdsa_signature;
     use hash::LegacyHash;
-    use starknet::{account::Call, get_execution_info, get_block_timestamp, VALIDATED};
+    use starknet::{account::Call, get_contract_address};
 
 
     #[storage]
@@ -62,8 +63,7 @@ mod sessionable {
             signature: Span<felt252>,
         ) {
             let state = self.get_contract();
-            let execution_info = get_execution_info().unbox();
-            let account_address = execution_info.contract_address;
+            let account_address = get_contract_address();
 
             assert_no_self_call(calls, account_address);
             let mut serialized = signature.slice(1, signature.len() - 1);

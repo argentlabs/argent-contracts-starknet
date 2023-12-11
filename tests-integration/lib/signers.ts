@@ -20,7 +20,7 @@ import {
   V3DeployAccountSignerDetails,
   V2DeclareSignerDetails,
   V3DeclareSignerDetails,
-  stark
+  stark,
 } from "starknet";
 
 /**
@@ -39,11 +39,7 @@ abstract class RawSigner implements SignerInterface {
     return this.signRaw(messageHash);
   }
 
-  public async signTransaction(
-    transactions: Call[],
-    details: InvocationsSignerDetails
-  ): Promise<Signature> {
-
+  public async signTransaction(transactions: Call[], details: InvocationsSignerDetails): Promise<Signature> {
     const compiledCalldata = transaction.getExecuteCalldata(transactions, details.cairoVersion);
     let msgHash;
 
@@ -67,14 +63,12 @@ abstract class RawSigner implements SignerInterface {
         feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
       });
     } else {
-      throw Error('unsupported signTransaction version');
+      throw Error("unsupported signTransaction version");
     }
     return this.signRaw(msgHash);
   }
 
-  public async signDeployAccountTransaction(
-    details: DeployAccountSignerDetails
-  ): Promise<Signature> {
+  public async signDeployAccountTransaction(details: DeployAccountSignerDetails): Promise<Signature> {
     const compiledConstructorCalldata = CallData.compile(details.constructorCalldata);
     /*     const version = BigInt(details.version).toString(); */
     let msgHash;
@@ -87,8 +81,8 @@ abstract class RawSigner implements SignerInterface {
         constructorCalldata: compiledConstructorCalldata,
         version: det.version,
       });
-    }else if (Object.values(RPC.ETransactionVersion3).includes(details.version as any)) {
-        const det = details as V3DeployAccountSignerDetails;
+    } else if (Object.values(RPC.ETransactionVersion3).includes(details.version as any)) {
+      const det = details as V3DeployAccountSignerDetails;
       msgHash = hash.calculateDeployAccountTransactionHash({
         ...det,
         salt: det.addressSalt,
@@ -106,7 +100,7 @@ abstract class RawSigner implements SignerInterface {
 
   public async signDeclareTransaction(
     // contractClass: ContractClass,  // Should be used once class hash is present in ContractClass
-    details: DeclareSignerDetails
+    details: DeclareSignerDetails,
   ): Promise<Signature> {
     let msgHash;
 
@@ -116,7 +110,7 @@ abstract class RawSigner implements SignerInterface {
         ...det,
         version: det.version,
       });
-    }else if (Object.values(RPC.ETransactionVersion3).includes(details.version as any)) {
+    } else if (Object.values(RPC.ETransactionVersion3).includes(details.version as any)) {
       const det = details as V3DeclareSignerDetails;
       msgHash = hash.calculateDeclareTransactionHash({
         ...det,
@@ -125,7 +119,7 @@ abstract class RawSigner implements SignerInterface {
         feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
       });
     } else {
-      throw Error('unsupported signDeclareTransaction version');
+      throw Error("unsupported signDeclareTransaction version");
     }
 
     return this.signRaw(msgHash);

@@ -1,8 +1,10 @@
 use argent::account::argent_account::ArgentAccount;
+use argent::common::signer_signature::{SignerSignature, SignerType, StarknetSignature};
 use argent_tests::setup::account_test_setup::{
     ITestArgentAccountDispatcherTrait, owner_pubkey, wrong_owner_pubkey, initialize_account_with, initialize_account,
     initialize_account_without_guardian
 };
+use argent_tests::setup::utils::to_starknet_signer_type;
 use starknet::{contract_address_const, deploy_syscall, testing::{set_version, set_contract_address}};
 
 const new_owner_pubkey: felt252 = 0xa7da05a4d664859ccd6e567b935cdfbfe3018c7771cb980892ef38878ae9bc;
@@ -89,7 +91,8 @@ fn change_owner() {
     assert(account.get_owner() == owner_pubkey, 'value should be 1');
 
     set_contract_address(contract_address_const::<1>());
-    account.change_owner(new_owner_pubkey, new_owner_r, new_owner_s);
+    let signature = to_starknet_signer_type(r: new_owner_r, s: new_owner_s);
+    account.change_owner(new_owner_pubkey, signature);
     assert(account.get_owner() == new_owner_pubkey, 'value should be new owner pub');
 }
 
@@ -99,7 +102,8 @@ fn change_owner() {
 fn change_owner_only_self() {
     let account = initialize_account();
     set_contract_address(contract_address_const::<42>());
-    account.change_owner(new_owner_pubkey, new_owner_r, new_owner_s);
+    let signature = to_starknet_signer_type(r: new_owner_r, s: new_owner_s);
+    account.change_owner(new_owner_pubkey, signature);
 }
 
 #[test]
@@ -107,7 +111,8 @@ fn change_owner_only_self() {
 #[should_panic(expected: ('argent/null-owner', 'ENTRYPOINT_FAILED'))]
 fn change_owner_to_zero() {
     let account = initialize_account();
-    account.change_owner(0, new_owner_r, new_owner_s);
+    let signature = to_starknet_signer_type(r: new_owner_r, s: new_owner_s);
+    account.change_owner(0, signature);
 }
 
 #[test]
@@ -115,7 +120,8 @@ fn change_owner_to_zero() {
 #[should_panic(expected: ('argent/invalid-owner-sig', 'ENTRYPOINT_FAILED'))]
 fn change_owner_invalid_message() {
     let account = initialize_account();
-    account.change_owner(new_owner_pubkey, wrong_owner_r, wrong_owner_s);
+    let signature = to_starknet_signer_type(r: wrong_owner_r, s: wrong_owner_s);
+    account.change_owner(new_owner_pubkey, signature);
 }
 
 #[test]
@@ -123,7 +129,8 @@ fn change_owner_invalid_message() {
 #[should_panic(expected: ('argent/invalid-owner-sig', 'ENTRYPOINT_FAILED'))]
 fn change_owner_wrong_pub_key() {
     let account = initialize_account();
-    account.change_owner(wrong_owner_pubkey, new_owner_r, new_owner_s);
+    let signature = to_starknet_signer_type(r: new_owner_r, s: new_owner_s);
+    account.change_owner(wrong_owner_pubkey, signature);
 }
 
 #[test]

@@ -1,11 +1,18 @@
 import { CallData, shortString } from "starknet";
-import { declareContract, expectEvent, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
+import {
+  declareContract,
+  expectEvent,
+  expectRevertWithErrorMessage,
+  randomKeyPair,
+  restartDevnetIfTooLong,
+} from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig", function () {
   let multisigAccountClassHash: string;
 
   before(async () => {
+    await restartDevnetIfTooLong();
     multisigAccountClassHash = await declareContract("ArgentMultisig");
   });
 

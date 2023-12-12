@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { declareContract, provider, upgradeAccount, declareFixtureContract } from "./lib";
+import { declareContract, provider, upgradeAccount, declareFixtureContract, restartDevnetIfTooLong } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: upgrade", function () {
@@ -8,6 +8,7 @@ describe("ArgentMultisig: upgrade", function () {
   let testDappClassHash: string;
 
   before(async () => {
+    await restartDevnetIfTooLong();
     argentMultisig = await declareContract("ArgentMultisig");
     // This is the same as Argent Multisig but with a different version (to have another class hash)
     // Done to be able to test upgradability
@@ -27,9 +28,11 @@ describe("ArgentMultisig: upgrade", function () {
     const threshold = 1;
     const signersLength = 1;
     const { account } = await deployMultisig(argentMultisig, threshold, signersLength);
-    await upgradeAccount(account, "0x01").should.be.rejectedWith("Class with hash 0x1 is not declared");
+    await upgradeAccount(account, "0x01").should.be.rejectedWith(
+      `Class with hash ClassHash(\\n    StarkFelt(\\n        \\"0x0000000000000000000000000000000000000000000000000000000000000001\\",\\n    ),\\n) is not declared`,
+    );
     await upgradeAccount(account, testDappClassHash).should.be.rejectedWith(
-      `Entry point 0xfe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283 not found in contract with class hash ${testDappClassHash}`,
+      `EntryPointSelector(StarkFelt(\\"0x00fe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283\\")) not found in contract`,
     );
   });
 });

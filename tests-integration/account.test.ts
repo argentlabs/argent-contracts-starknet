@@ -14,12 +14,14 @@ import {
   provider,
   randomKeyPair,
   signChangeOwnerMessage,
+  restartDevnetIfTooLong,
 } from "./lib";
 
 describe("ArgentAccount", function () {
   let argentAccountClassHash: string;
 
   before(async () => {
+    await restartDevnetIfTooLong();
     argentAccountClassHash = await declareContract("ArgentAccount");
   });
 
@@ -261,9 +263,8 @@ describe("ArgentAccount", function () {
       });
       await provider.waitForTransaction(transaction_hash);
     } catch (e: any) {
-      const selector = hash.getSelector("constructor");
       expect(e.toString()).to.contain(
-        `Entry point ${selector} not found in contract with class hash ${argentAccountClassHash}`,
+        `Entry point EntryPointSelector(StarkFelt(\\"0x028ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194\\")) not found in contract`,
       );
     }
   });

@@ -1,4 +1,10 @@
-import { declareContract, deployAccount, expectRevertWithErrorMessage, upgradeAccount } from "./lib";
+import {
+  declareContract,
+  deployAccount,
+  expectRevertWithErrorMessage,
+  upgradeAccount,
+  restartDevnetIfTooLong,
+} from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("Upgrades to a different account type", function () {
@@ -6,6 +12,7 @@ describe("Upgrades to a different account type", function () {
   let multisigClassHash: string;
 
   before(async () => {
+    await restartDevnetIfTooLong();
     argentAccountClassHash = await declareContract("ArgentAccount");
     multisigClassHash = await declareContract("ArgentMultisig");
   });

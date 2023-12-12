@@ -6,7 +6,10 @@ import { provider } from "./provider";
 const classHashCache: Record<string, string> = {};
 
 export const ethAddress = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
+export const strkAddress = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
+
 let ethContract: Contract;
+let strkContract: Contract;
 
 export const contractsFolder = "./target/release/argent_";
 export const fixturesFolder = "./tests-integration/fixtures/argent_";
@@ -26,9 +29,22 @@ export async function getEthContract() {
   return ethContract;
 }
 
+export async function getStrkContract() {
+  if (strkContract) {
+    return strkContract;
+  }
+  strkContract = await loadContract(strkAddress);
+  return strkContract;
+}
+
 export async function getEthBalance(accountAddress: string): Promise<bigint> {
   const ethContract = await getEthContract();
   return uint256.uint256ToBN((await ethContract.balanceOf(accountAddress)).balance);
+}
+
+export async function getStrkBalance(accountAddress: string): Promise<bigint> {
+  const strkContract = await getStrkContract();
+  return uint256.uint256ToBN((await strkContract.balanceOf(accountAddress)).balance);
 }
 
 export function removeFromCache(contractName: string) {

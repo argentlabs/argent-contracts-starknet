@@ -14,7 +14,8 @@ mod ArgentGenericAccount {
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
-        signer_signature::{SignerSignature, SignerType, is_valid_signer_signature_internal}, interface::IArgentMultisig
+        signer_signature::{SignerSignature, Felt252Signer, Validator}, interface::IArgentMultisig,
+        serialization::full_deserialize
     };
     use argent::generic::{interface::{IRecoveryAccount}, recovery::{EscapeStatus, Escape, EscapeEnabled}};
     use starknet::{
@@ -231,17 +232,13 @@ mod ArgentGenericAccount {
             assert_correct_tx_version(tx_info.version);
 
             let mut signature = tx_info.signature;
-            let mut parsed_signatures: Array<SignerSignature> = Serde::deserialize(ref signature)
-                .expect('argent/undeserializable-sig');
-            assert(signature.is_empty(), 'argent/signature-not-empty');
+            let mut parsed_signatures: Array<SignerSignature> = full_deserialize(signature)
+                .expect('argent/signature-not-empty');
             // TODO AS LONG AS FIRST SIGNATURE IS OK, DEPLOY (this is prob wrong, we should loop)
             assert(parsed_signatures.len() >= 1, 'argent/invalid-signature-length');
 
             let signer_sig = *parsed_signatures.at(0);
-            let is_valid = self
-                .is_valid_signer_signature(
-                    tx_info.transaction_hash, signer: signer_sig.signer, signer_type: signer_sig.signer_type,
-                );
+            let is_valid = self.is_valid_signer_signature(tx_info.transaction_hash, signer_sig,);
             assert(is_valid, 'argent/invalid-signature');
 
             VALIDATED
@@ -368,12 +365,10 @@ mod ArgentGenericAccount {
             self.is_signer_inner(signer)
         }
 
-        fn is_valid_signer_signature(
-            self: @ContractState, hash: felt252, signer: felt252, signer_type: SignerType
-        ) -> bool {
-            let is_signer = self.is_signer_inner(signer);
+        fn is_valid_signer_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
+            let is_signer = self.is_signer_inner(signer_signature.signer_as_felt252());
             assert(is_signer, 'argent/not-a-signer');
-            is_valid_signer_signature_internal(hash, SignerSignature { signer, signer_type })
+            signer_signature.is_valid_signature(hash)
         }
     }
 
@@ -535,20 +530,20 @@ mod ArgentGenericAccount {
             excluded_signer: felt252,
             mut signature: Span<felt252>
         ) -> bool {
-            let mut signer_signatures: Array<SignerSignature> = Serde::deserialize(ref signature)
-                .expect('argent/undeserializable-sig');
+            let mut signer_signatures: Array<SignerSignature> = full_deserialize(signature)
+                .expect('argent/signature-not-empty');
             assert(signer_signatures.len() == expected_length, 'argent/signature-invalid-length');
-            assert(signature.is_empty(), 'argent/signature-not-empty');
 
             let mut last_signer: u256 = 0;
             loop {
                 match signer_signatures.pop_front() {
                     Option::Some(signer_sig) => {
-                        assert(self.is_signer_inner(signer_sig.signer), 'argent/not-a-signer');
-                        assert(signer_sig.signer != excluded_signer, 'argent/unauthorised_signer');
-                        let signer_uint: u256 = signer_sig.signer.into();
+                        let signer_felt252 = signer_sig.signer_as_felt252();
+                        assert(self.is_signer_inner(signer_felt252), 'argent/not-a-signer');
+                        assert(signer_felt252 != excluded_signer, 'argent/unauthorised_signer');
+                        let signer_uint: u256 = signer_felt252.into();
                         assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
-                        let is_valid = is_valid_signer_signature_internal(hash, sig: signer_sig);
+                        let is_valid = signer_sig.is_valid_signature(hash);
                         if !is_valid {
                             break false;
                         }

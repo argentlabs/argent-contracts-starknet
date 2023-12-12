@@ -1,6 +1,6 @@
 use argent::common::{
     account::{IAccount, IAccountDispatcher, IAccountDispatcherTrait},
-    signer_signature::{SignerSignature, SignerType, StarknetSignature}
+    signer_signature::{SignerSignature, StarknetSignature}
 };
 use argent::generic::{argent_generic::ArgentGenericAccount};
 use starknet::{deploy_syscall, VALIDATED, eth_signature::Signature};
@@ -28,9 +28,7 @@ fn initialize_account(owner: felt252) -> IAccountDispatcher {
 #[available_gas(2000000)]
 fn test_valid_signature_starknet() {
     let mut signatures = array![1];
-    let signer_signature = SignerSignature {
-        signer: owner_pubkey, signer_type: SignerType::Starknet(StarknetSignature { r: owner_r, s: owner_s })
-    };
+    let signer_signature = SignerSignature::Starknet((owner_pubkey, StarknetSignature { r: owner_r, s: owner_s }));
     signer_signature.serialize(ref signatures);
     assert(
         initialize_account(owner_pubkey).is_valid_signature(message_hash, signatures) == VALIDATED, 'invalid signature'
@@ -40,10 +38,7 @@ fn test_valid_signature_starknet() {
 #[test]
 #[available_gas(2000000000)]
 fn test_valid_signature_secp256k1() {
-    let signer_signature = SignerSignature {
-        signer: owner_pubkey_eth,
-        signer_type: SignerType::Secp256k1(Signature { r: owner_eth_r, s: owner_eth_s, y_parity: owner_eth_v % 2 == 0 })
-    };
+    let signer_signature = SignerSignature::Secp256k1((owner_pubkey_eth, Signature { r: owner_eth_r, s: owner_eth_s, y_parity: owner_eth_v % 2 == 0 }));
 
     let mut signatures = array![1];
     signer_signature.serialize(ref signatures);

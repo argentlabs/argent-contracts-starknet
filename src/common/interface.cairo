@@ -1,4 +1,4 @@
-use argent::common::signer_signature::SignerType;
+use argent::common::signer_signature::SignerSignature;
 use argent::common::version::Version;
 
 #[starknet::interface]
@@ -50,7 +50,5 @@ trait IArgentMultisig<TContractState> {
     fn is_signer(self: @TContractState, signer: felt252) -> bool;
 
     /// Checks if a given signature is a valid signature from one of the multisig owners
-    fn is_valid_signer_signature(
-        self: @TContractState, hash: felt252, signer: felt252, signer_type: SignerType
-    ) -> bool;
+    fn is_valid_signer_signature(self: @TContractState, hash: felt252, signer_signature: SignerSignature) -> bool;
 }

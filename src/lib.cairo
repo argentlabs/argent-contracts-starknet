@@ -13,6 +13,7 @@ mod common {
     mod interface;
     mod multicall;
     mod outside_execution;
+    mod serialization;
     mod signer_signature;
     mod test_dapp;
     mod upgrade;

@@ -24,6 +24,7 @@ export const sessionTypes = {
     { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
     { name: "Token Amounts", type: "TokenAmount*" },
     { name: "Max Fee Usage", type: "felt" },
+    { name: "Guardian Key", type: "felt" },
     { name: "Session Key", type: "felt" },
   ],
 };
@@ -50,6 +51,7 @@ export interface OffChainSession {
   allowed_methods: AllowedMethod[];
   token_limits: TokenAmount[];
   max_fee_usage: BigNumberish;
+  guardian_key: BigNumberish;
   session_key: BigNumberish;
 }
 
@@ -58,6 +60,7 @@ export interface OnChainSession {
   allowed_methods_root: string;
   token_limits: TokenAmount[];
   max_fee_usage: BigNumberish;
+  guardian_key: BigNumberish;
   session_key: BigNumberish;
 }
 
@@ -88,6 +91,7 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
       "Allowed Methods": sessionRequest.allowed_methods,
       "Token Amounts": sessionRequest.token_limits,
       "Max Fee Usage": sessionRequest.max_fee_usage,
+      "Guardian Key": sessionRequest.guardian_key,
       "Session Key": sessionRequest.session_key,
     },
   };
@@ -106,6 +110,7 @@ export function createOnChainSession(completedSession: OffChainSession): OnChain
     allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
     token_limits: completedSession.token_limits,
     max_fee_usage: completedSession.max_fee_usage,
+    guardian_key: completedSession.guardian_key,
     session_key: completedSession.session_key,
   };
 }

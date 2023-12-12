@@ -15,8 +15,6 @@ import {
 
 const tokenLimits: TokenAmount[] = [{ token_address: "0x100", amount: uint256.bnToUint256(10) }];
 
-const dappService = new DappService();
-
 describe("Hybrid Session Account: execute calls", function () {
   let sessionAccountClassHash: string;
   let testDappOneContract: Contract;
@@ -40,9 +38,10 @@ describe("Hybrid Session Account: execute calls", function () {
   });
 
   it("Call a contract with backend signer", async function () {
-    const { accountContract, account, guardian, owner } = await deployAccount(sessionAccountClassHash);
+    const { accountContract, account, guardian } = await deployAccount(sessionAccountClassHash);
 
     const backendService = new BackendService(guardian);
+    const dappService = new DappService(backendService);
     const argentX = new ArgentX(account, backendService);
 
     // Session creation:
@@ -78,6 +77,7 @@ describe("Hybrid Session Account: execute calls", function () {
     const { accountContract, account, guardian } = await deployAccount(sessionAccountClassHash);
 
     const backendService = new BackendService(guardian);
+    const dappService = new DappService(backendService);
     const argentX = new ArgentX(account, backendService);
 
     // Session creation:

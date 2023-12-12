@@ -93,10 +93,17 @@ export class BackendService {
     const [r, s] = this.guardian.signHash(sessionWithTxHash);
     return { r: BigInt(r), s: BigInt(s) };
   }
+
+  public get_guardian_key(): bigint {
+    return this.guardian.publicKey;
+  }
 }
 
 export class DappService {
-  constructor(public sessionKey: KeyPair = randomKeyPair()) {}
+  constructor(
+    public argentBackend: BackendService,
+    public sessionKey: KeyPair = randomKeyPair(),
+  ) {}
 
   public createSessionRequest(
     allowed_methods: AllowedMethod[],
@@ -112,6 +119,7 @@ export class DappService {
       allowed_methods,
       token_limits,
       max_fee_usage,
+      guardian_key: this.argentBackend.get_guardian_key(),
       session_key: this.sessionKey.publicKey,
     };
   }

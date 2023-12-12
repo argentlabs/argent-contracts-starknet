@@ -85,7 +85,7 @@ mod sessionable {
             );
 
             assert(
-                is_valid_signature_generic(message_hash, state.get_guardian(), token.backend_signature),
+                is_valid_signature_generic(message_hash, token.session.guardian_key, token.backend_signature),
                 'invalid-guardian-sig'
             );
 

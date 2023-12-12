@@ -762,7 +762,7 @@ mod ArgentAccount {
             // max_fee returns 0 on TX_V3
             // No need for modes other than L1 while escaping
             assert(
-                tx_info.nonce_data_availabilty_mode == DA_MODE_L1 && tx_info.fee_data_availabilty_mode == DA_MODE_L1,
+                tx_info.nonce_data_availability_mode == DA_MODE_L1 && tx_info.fee_data_availability_mode == DA_MODE_L1,
                 'argent/invalid-da-mode'
             );
             // No need to allow self deployment and escaping in one transaction

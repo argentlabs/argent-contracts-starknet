@@ -19,7 +19,7 @@ mod ArgentAccount {
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
-        signer_signature::{SignerSignature, SignerType, is_valid_signer_signature_internal}
+        signer_signature::{SignerSignature, Validator, Felt252Signer}, serialization::full_deserialize
     };
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
@@ -238,10 +238,8 @@ mod ArgentAccount {
         }
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
-            let mut signature_span = signature.span();
-            let mut signer_signatures: Array<SignerSignature> = Serde::deserialize(ref signature_span)
-                .expect('argent/undeserializable-sig');
-            assert(signature_span.is_empty(), 'argent/signature-not-empty');
+            let signer_signatures: Array<SignerSignature> = full_deserialize(signature.span())
+                .expect('argent/signature-not-empty');
             if self.is_valid_span_signature(hash, signer_signatures) {
                 VALIDATED
             } else {
@@ -306,9 +304,8 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_declare_version(tx_info.version);
             let mut signatures = tx_info.signature;
-            let mut signer_signatures: Array<SignerSignature> = Serde::deserialize(ref signatures)
-                .expect('argent/undeserializable-sig');
-            assert(signatures.is_empty(), 'argent/signature-not-empty');
+            let signer_signatures: Array<SignerSignature> = full_deserialize(signatures)
+                .expect('argent/signature-not-empty');
             self.assert_valid_span_signature(tx_info.transaction_hash, signer_signatures);
             VALIDATED
         }
@@ -319,16 +316,15 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_tx_version(tx_info.version);
             let mut signatures = tx_info.signature;
-            let mut signer_signatures: Array<SignerSignature> = Serde::deserialize(ref signatures)
-                .expect('argent/undeserializable-sig');
-            assert(signatures.is_empty(), 'argent/signature-not-empty');
+            let signer_signatures: Array<SignerSignature> = full_deserialize(signatures)
+                .expect('argent/signature-not-empty');
             self.assert_valid_span_signature(tx_info.transaction_hash, signer_signatures);
             VALIDATED
         }
 
-        fn change_owner(ref self: ContractState, new_owner: felt252, signature: Span<felt252>) {
+        fn change_owner(ref self: ContractState, new_owner: felt252, signer_signature: SignerSignature) {
             assert_only_self();
-            self.assert_valid_new_owner(new_owner, signature);
+            self.assert_valid_new_owner(new_owner, signer_signature);
 
             self.reset_escape();
             self.reset_escape_attempts();
@@ -543,9 +539,8 @@ mod ArgentAccount {
             let tx_info = execution_info.tx_info.unbox();
             assert_correct_tx_version(tx_info.version);
 
-            let mut signer_signatures: Array<SignerSignature> = Serde::deserialize(ref signatures)
-                .expect('argent/undeserializable-sig');
-            assert(signatures.is_empty(), 'argent/signature-not-empty');
+            let signer_signatures: Array<SignerSignature> = full_deserialize(signatures)
+                .expect('argent/signature-not-empty');
 
             if calls.len() == 1 {
                 let call = calls.at(0);
@@ -668,21 +663,20 @@ mod ArgentAccount {
         }
 
         fn is_valid_owner_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
-            self._signer.read() == signer_signature.signer
-                && is_valid_signer_signature_internal(hash, sig: signer_signature)
+            signer_signature.is_valid_signer(self._signer.read()) && signer_signature.is_valid_signature(hash)
         }
 
         fn is_valid_guardian_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
-            (signer_signature.signer == self._guardian.read()
-                || signer_signature.signer == self._guardian_backup.read())
-                && is_valid_signer_signature_internal(hash, sig: signer_signature)
+            (signer_signature.is_valid_signer(self._guardian.read())
+                || signer_signature.is_valid_signer(self._guardian_backup.read()))
+                && signer_signature.is_valid_signature(hash)
         }
 
         /// The signature is the result of signing the message hash with the new owner private key
         /// The message hash is the result of hashing the array:
         /// [change_owner selector, chainid, contract address, old_owner]
         /// as specified here: https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
-        fn assert_valid_new_owner(self: @ContractState, new_owner: felt252, mut signature: Span<felt252>) {
+        fn assert_valid_new_owner(self: @ContractState, new_owner: felt252, signer_signature: SignerSignature) {
             assert(new_owner != 0, 'argent/null-owner');
             let chain_id = get_tx_info().unbox().chain_id;
             // We now need to hash message_hash with the size of the array: (change_owner selector, chainid, contract address, old_owner)
@@ -695,11 +689,7 @@ mod ArgentAccount {
                 .update(4)
                 .finalize();
 
-            let mut signer_type: SignerType = Serde::deserialize(ref signature).expect('argent/undeserializable-sig');
-            assert(signature.is_empty(), 'argent/signature-not-empty');
-            let signer_signature = SignerSignature { signer: new_owner, signer_type: signer_type };
-
-            let is_valid = is_valid_signer_signature_internal(hash: message_hash, sig: signer_signature);
+            let is_valid = signer_signature.is_valid_signature(message_hash);
             assert(is_valid, 'argent/invalid-owner-sig');
         }
 

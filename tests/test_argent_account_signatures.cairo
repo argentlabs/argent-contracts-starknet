@@ -140,7 +140,7 @@ fn invalid_owner_with_invalid_guardian() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/undeserializable-sig', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/undeserializable', 'ENTRYPOINT_FAILED'))]
 fn invalid_empty_signature_without_guardian() {
     let account = initialize_account_without_guardian();
     let signatures = array![];
@@ -160,7 +160,7 @@ fn invalid_signature_length_without_guardian() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/undeserializable-sig', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/undeserializable', 'ENTRYPOINT_FAILED'))]
 fn invalid_empty_signature_with_guardian() {
     let account = initialize_account();
     let signatures = array![];

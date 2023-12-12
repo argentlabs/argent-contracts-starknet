@@ -1,7 +1,10 @@
-use argent::common::signer_signature::{SignerType, StarknetSignature};
-use argent_tests::setup::multisig_test_setup::{
-    initialize_multisig_with, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3, ITestArgentMultisigDispatcherTrait,
-    initialize_multisig_with_one_signer
+use argent::common::signer_signature::StarknetSignature;
+use argent_tests::setup::{
+    multisig_test_setup::{
+        initialize_multisig_with, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3, ITestArgentMultisigDispatcherTrait,
+        initialize_multisig_with_one_signer
+    },
+    utils::to_starknet_signer_signatures
 };
 use starknet::VALIDATED;
 
@@ -18,11 +21,7 @@ const signer_2_signature_s: felt252 = 304777868002431101084470180241600305232369
 fn test_signature() {
     let multisig = initialize_multisig_with_one_signer();
 
-    let signature = array![signer_pubkey_1, signer_1_signature_r, signer_1_signature_s];
-    let sig1 = SignerType::Starknet(StarknetSignature { r: signer_1_signature_r, s: signer_1_signature_s });
-    let mut signature = array![1];
-    signer_pubkey_1.serialize(ref signature);
-    sig1.serialize(ref signature);
+    let signature = to_starknet_signer_signatures(array![signer_pubkey_1, signer_1_signature_r, signer_1_signature_s]);
     assert(multisig.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
 }
 
@@ -34,13 +33,16 @@ fn test_double_signature() {
     let signers_array = array![signer_pubkey_1, signer_pubkey_2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
 
-    let sig1 = SignerType::Starknet(StarknetSignature { r: signer_1_signature_r, s: signer_1_signature_s });
-    let sig2 = SignerType::Starknet(StarknetSignature { r: signer_2_signature_r, s: signer_2_signature_s });
-    let mut signature = array![2];
-    signer_pubkey_1.serialize(ref signature);
-    sig1.serialize(ref signature);
-    signer_pubkey_2.serialize(ref signature);
-    sig2.serialize(ref signature);
+    let signature = to_starknet_signer_signatures(
+        array![
+            signer_pubkey_1,
+            signer_1_signature_r,
+            signer_1_signature_s,
+            signer_pubkey_2,
+            signer_2_signature_r,
+            signer_2_signature_s
+        ]
+    );
     assert(multisig.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
 }
 
@@ -52,13 +54,16 @@ fn test_double_signature_order() {
     let signers_array = array![signer_pubkey_2, signer_pubkey_1];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
 
-    let sig1 = SignerType::Starknet(StarknetSignature { r: signer_1_signature_r, s: signer_1_signature_s });
-    let sig2 = SignerType::Starknet(StarknetSignature { r: signer_2_signature_r, s: signer_2_signature_s });
-    let mut signature = array![2];
-    signer_pubkey_2.serialize(ref signature);
-    sig2.serialize(ref signature);
-    signer_pubkey_1.serialize(ref signature);
-    sig1.serialize(ref signature);
+    let signature = to_starknet_signer_signatures(
+        array![
+            signer_pubkey_2,
+            signer_2_signature_r,
+            signer_2_signature_s,
+            signer_pubkey_1,
+            signer_1_signature_r,
+            signer_1_signature_s
+        ]
+    );
     multisig.is_valid_signature(message_hash, signature);
 }
 
@@ -70,12 +75,16 @@ fn test_same_owner_twice() {
     let signers_array = array![signer_pubkey_1, signer_pubkey_2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
 
-    let sig1 = SignerType::Starknet(StarknetSignature { r: signer_1_signature_r, s: signer_1_signature_s });
-    let mut signature = array![2];
-    signer_pubkey_1.serialize(ref signature);
-    sig1.serialize(ref signature);
-    signer_pubkey_1.serialize(ref signature);
-    sig1.serialize(ref signature);
+    let signature = to_starknet_signer_signatures(
+        array![
+            signer_pubkey_1,
+            signer_1_signature_r,
+            signer_1_signature_s,
+            signer_pubkey_1,
+            signer_1_signature_r,
+            signer_1_signature_s
+        ]
+    );
     multisig.is_valid_signature(message_hash, signature);
 }
 
@@ -87,20 +96,16 @@ fn test_missing_owner_signature() {
     let signers_array = array![signer_pubkey_1, signer_pubkey_2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
 
-    let sig1 = SignerType::Starknet(StarknetSignature { r: signer_1_signature_r, s: signer_1_signature_s });
-    let mut signature = array![1];
-    signer_pubkey_1.serialize(ref signature);
-    sig1.serialize(ref signature);
+    let signature = to_starknet_signer_signatures(array![signer_pubkey_1, signer_1_signature_r, signer_1_signature_s]);
     multisig.is_valid_signature(message_hash, signature);
 }
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/undeserializable-sig', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/undeserializable', 'ENTRYPOINT_FAILED'))]
 fn test_short_signature() {
     let multisig = initialize_multisig_with_one_signer();
 
-    let sig1 = SignerType::Starknet(StarknetSignature { r: signer_1_signature_r, s: signer_1_signature_s });
     let mut signature = array![1];
     signer_pubkey_1.serialize(ref signature);
     multisig.is_valid_signature(message_hash, signature);
@@ -112,12 +117,15 @@ fn test_short_signature() {
 fn test_long_signature() {
     let multisig = initialize_multisig_with_one_signer();
 
-    let sig1 = SignerType::Starknet(StarknetSignature { r: signer_1_signature_r, s: signer_1_signature_s });
-    let sig2 = SignerType::Starknet(StarknetSignature { r: signer_2_signature_r, s: signer_2_signature_s });
-    let mut signature = array![2];
-    signer_pubkey_1.serialize(ref signature);
-    sig1.serialize(ref signature);
-    signer_pubkey_2.serialize(ref signature);
-    sig2.serialize(ref signature);
+    let signature = to_starknet_signer_signatures(
+        array![
+            signer_pubkey_1,
+            signer_1_signature_r,
+            signer_1_signature_s,
+            signer_pubkey_2,
+            signer_2_signature_r,
+            signer_2_signature_s
+        ]
+    );
     multisig.is_valid_signature(message_hash, signature);
 }

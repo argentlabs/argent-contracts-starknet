@@ -11,27 +11,64 @@ struct StarknetSignature {
     s: felt252,
 }
 
+// #[derive(Drop, Copy, Serde, PartialEq)]
+// enum Signer {
+//     Starknet: felt252,
+//     Secp256k1: felt252,
+//     Secp256r1: u256,
+//     Webauthn,
+// }
+
 #[derive(Drop, Copy, Serde, PartialEq)]
-enum SignerType {
+enum SignerSignature {
     #[default]
-    Starknet: StarknetSignature,
-    Secp256k1: Secp256k1Signature,
-    Secp256r1: Secp256r1Signature,
+    Starknet: (felt252, StarknetSignature),
+    Secp256k1: (felt252, Secp256k1Signature),
+    Secp256r1: (felt252, Secp256r1Signature),
     Webauthn,
 }
 
-#[derive(Copy, Drop, Serde)]
-struct SignerSignature {
-    signer: felt252,
-    signer_type: SignerType,
+trait Validator {
+    fn is_valid_signer(self: SignerSignature, target: felt252) -> bool;
+    fn is_valid_signature(self: SignerSignature, hash: felt252) -> bool;
 }
 
-fn is_valid_signer_signature_internal(hash: felt252, sig: SignerSignature) -> bool {
-    match sig.signer_type {
-        SignerType::Starknet(signature) => { is_valid_starknet_signature(hash, sig.signer, signature) },
-        SignerType::Secp256k1(signature) => { is_valid_secp256k1_signature(hash, sig.signer, signature) },
-        SignerType::Secp256r1(signature) => { is_valid_secp256r1_signature(hash, sig.signer, signature) },
-        SignerType::Webauthn => false,
+trait Felt252Signer {
+    fn signer_as_felt252(self: SignerSignature) -> felt252;
+}
+
+impl ValidatorImpl of Validator {
+    fn is_valid_signer(self: SignerSignature, target: felt252) -> bool {
+        match self {
+            SignerSignature::Starknet((signer, signature)) => { target == signer },
+            SignerSignature::Secp256k1((signer, signature)) => { target == signer },
+            SignerSignature::Secp256r1((signer, signature)) => { target == signer },
+            SignerSignature::Webauthn => false,
+        }
+    }
+
+    fn is_valid_signature(self: SignerSignature, hash: felt252) -> bool {
+        match self {
+            SignerSignature::Starknet((signer, signature)) => { is_valid_starknet_signature(hash, signer, signature) },
+            SignerSignature::Secp256k1((
+                signer, signature
+            )) => { is_valid_secp256k1_signature(hash, signer, signature) },
+            SignerSignature::Secp256r1((
+                signer, signature
+            )) => { is_valid_secp256r1_signature(hash, signer, signature) },
+            SignerSignature::Webauthn => false,
+        }
+    }
+}
+
+impl Felt252SignerImpl of Felt252Signer {
+    fn signer_as_felt252(self: SignerSignature) -> felt252 {
+        match self {
+            SignerSignature::Starknet((signer, signature)) => { signer },
+            SignerSignature::Secp256k1((signer, signature)) => { signer },
+            SignerSignature::Secp256r1((signer, signature)) => { signer },
+            SignerSignature::Webauthn => 0,
+        }
     }
 }
 

@@ -1,30 +1,18 @@
-use argent::common::signer_signature::{SignerType, StarknetSignature};
+use argent::common::signer_signature::{SignerSignature, StarknetSignature};
+use core::debug::PrintTrait;
+use integer::{u32_safe_divmod, u32_to_felt252};
 
 fn to_starknet_signer_signatures(arr: Array<felt252>) -> Array<felt252> {
-    if (arr.len() == 3) {
-        let mut signature = array![1];
-        let sig = SignerType::Starknet(StarknetSignature { r: *arr.at(1), s: *arr.at(2) });
-        arr.at(0).serialize(ref signature);
-        sig.serialize(ref signature);
-        signature
-    } else if (arr.len() == 6) {
-        let sig1 = SignerType::Starknet(StarknetSignature { r: *arr.at(1), s: *arr.at(2) });
-        let sig2 = SignerType::Starknet(StarknetSignature { r: *arr.at(4), s: *arr.at(5) });
-        let mut signature = array![2];
-        arr.at(0).serialize(ref signature);
-        sig1.serialize(ref signature);
-        arr.at(3).serialize(ref signature);
-        sig2.serialize(ref signature);
-        signature
-    } else {
-        assert(0 == 1, 'wrong length');
-        array![]
-    }
-}
-
-fn to_starknet_signer_type(r: felt252, s: felt252) -> Span<felt252> {
-    let mut signature = array![];
-    let sig = SignerType::Starknet(StarknetSignature { r: r, s: s });
-    sig.serialize(ref signature);
-    signature.span()
+    let size = arr.len() / 3_u32;
+    let mut signatures = array![u32_to_felt252(size)];
+    let mut i: usize = 0;
+    loop {
+        if i == size {
+            break;
+        }
+        let signer_signature = SignerSignature::Starknet((*arr.at(i * 3), StarknetSignature { r: *arr.at(i * 3 + 1), s: *arr.at(i * 3 + 2) }));
+        signer_signature.serialize(ref signatures);
+        i += 1;
+    };
+    signatures
 }

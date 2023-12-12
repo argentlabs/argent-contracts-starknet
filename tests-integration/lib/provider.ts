@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import { restart } from "./devnet";
 import { clearCache } from "./contracts";
 
-dotenv.config();
+dotenv.config({ override: true });
 
 const devnetBaseUrl = "http://127.0.0.1:5050";
 

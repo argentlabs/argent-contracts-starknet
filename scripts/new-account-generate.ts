@@ -2,7 +2,7 @@ import { num, hash, CallData } from "starknet";
 import { KeyPair } from "../tests-integration/lib";
 
 const prodClassHash = "0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003";
-const newClassHash = "0x28463df0e5e765507ae51f9e67d6ae36c7e5af793424eccc9bc22ad705fc09d";
+const newClassHash = "0x2fadbf77a721b94bdcc3032d86a8921661717fa55145bccf88160ee2a5efcd1";
 
 /////////// Select classhash here: //////////
 const classHashToUse = newClassHash;

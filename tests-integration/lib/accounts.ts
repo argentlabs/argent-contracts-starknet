@@ -1,4 +1,3 @@
-import { expect } from "chai";
 import { Account, CallData, Contract, GetTransactionReceiptResponse, RawCalldata, hash, num, uint256 } from "starknet";
 import { getEthContract, loadContract } from "./contracts";
 import { mintEth } from "./devnet";
@@ -21,8 +20,6 @@ export interface ArgentWalletWithGuardianAndBackup extends ArgentWalletWithGuard
 
 export const deployer = (() => {
   if (provider.isDevnet) {
-    // const devnetAddress = "0x347be35996a21f6bf0623e75dbce52baba918ad5ae8d83b6f416045ab22961a";
-    // const devnetPrivateKey = "0xbdd640fb06671ad11c80317fa3b1799d";
     const devnetAddress = "0x64b48806902a367c8598f4f95c305e8c1a1acba5f082d294a43793113115691";
     const devnetPrivateKey = "0x71d7bb07b9a64f6f78ac4c816aff4da9";
 
@@ -57,7 +54,7 @@ export async function deployOldAccount(
   const account = new Account(provider, contractAddress, owner);
   account.signer = new ArgentSigner(owner, guardian);
 
-  await fundAccount(account.address, 1e17); // 0.1 ETH
+  await fundAccount(account.address, 1e16); // 0.01 ETH
 
   const { transaction_hash } = await account.deployAccount({
     classHash: proxyClassHash,
@@ -80,7 +77,7 @@ async function deployAccountInner(
   const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian?.publicKey ?? 0n });
 
   const contractAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, constructorCalldata, 0);
-  await fundAccount(contractAddress, 1e17); // 0.1 ETH
+  await fundAccount(contractAddress, 1e16); // 0.01 ETH
   const account = new Account(provider, contractAddress, owner, "1");
   if (guardian) {
     account.signer = new ArgentSigner(owner, guardian);
@@ -143,13 +140,13 @@ export async function upgradeAccount(
 }
 
 export async function fundAccount(recipient: string, amount: number | bigint) {
-  // if (provider.isDevnet) {
-  //   await mintEth(recipient);
-  //   return;
-  // }
+  if (provider.isDevnet) {
+    await mintEth(recipient, amount);
+    return;
+  }
   const ethContract = await getEthContract();
   ethContract.connect(deployer);
 
-  const bn = uint256.bnToUint256(amount);
-  return ethContract.invoke("transfer", CallData.compile([recipient, bn.low, bn.high]));
+  const response = await ethContract.invoke("transfer", CallData.compile([recipient, uint256.bnToUint256(amount)]));
+  await provider.waitForTransaction(response.transaction_hash);
 }

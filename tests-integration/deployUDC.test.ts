@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { declareContract, deployContractUdc, randomKeyPair } from "./lib";
+import { declareContract, deployContractUdc, randomKeyPair, restartDevnetIfTooLong } from "./lib";
 import { num, hash } from "starknet";
 
 const salt = num.toHex(randomKeyPair().privateKey);
@@ -10,6 +10,7 @@ describe("Deploy UDC", function () {
   let argentAccountClassHash: string;
 
   before(async () => {
+    await restartDevnetIfTooLong();
     argentAccountClassHash = await declareContract("ArgentAccount");
   });
 

@@ -10,27 +10,21 @@ import {
   provider,
   readContract,
   removeFromCache,
-  restart,
+  restartDevnet,
 } from "./lib";
 
 describe("ArgentAccount: declare", function () {
   let argentAccountClassHash: string;
 
   beforeEach(async () => {
-    await dump();
-    await restart();
-    removeFromCache("ArgentAccount");
+    await restartDevnet();
     argentAccountClassHash = await declareContract("ArgentAccount");
-  });
-
-  afterEach(async () => {
-    await load();
   });
 
   it("Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) ", async function () {
     const { account } = await deployAccount(argentAccountClassHash);
     const contract: CompiledSierra = readContract(`${fixturesFolder}Proxy.contract_class.json`);
-    expectRevertWithErrorMessage("argent/invalid-contract-version", () => account.declare({ contract }));
+    expectRevertWithErrorMessage("argent/invalid-tx-version", () => account.declare({ contract }));
   });
 
   it("Expect the account to be able to declare a Cairo contract version2 (SIERRA)", async function () {

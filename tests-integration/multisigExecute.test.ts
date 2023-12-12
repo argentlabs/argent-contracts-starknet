@@ -8,6 +8,7 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   loadContract,
+  restartDevnetIfTooLong,
 } from "./lib";
 
 describe("ArgentMultisig: Execute", function () {
@@ -15,6 +16,7 @@ describe("ArgentMultisig: Execute", function () {
   let testDappContract: Contract;
 
   before(async () => {
+    await restartDevnetIfTooLong();
     multisigAccountClassHash = await declareContract("ArgentMultisig");
     const testDappClassHash = await declareContract("TestDapp");
     const { contract_address } = await deployer.deployContract({

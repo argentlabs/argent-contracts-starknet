@@ -16,9 +16,13 @@ export async function getEthContract() {
     return ethContract;
   }
   const ethProxy = await loadContract(ethAddress);
-  const implementationAddress = num.toHex((await ethProxy.implementation()).address);
-  const ethImplementation = await loadContract(implementationAddress);
-  ethContract = new Contract(ethImplementation.abi, ethAddress, ethProxy.providerOrAccount);
+  if (ethProxy.abi.some((entry) => entry.name == "implementation")) {
+    const implementationAddress = num.toHex((await ethProxy.implementation()).address);
+    const ethImplementation = await loadContract(implementationAddress);
+    ethContract = new Contract(ethImplementation.abi, ethAddress, ethProxy.providerOrAccount);
+  } else {
+    ethContract = ethProxy;
+  }
   return ethContract;
 }
 
@@ -29,6 +33,10 @@ export async function getEthBalance(accountAddress: string): Promise<bigint> {
 
 export function removeFromCache(contractName: string) {
   delete classHashCache[contractName];
+}
+
+export function clearCache() {
+  Object.keys(classHashCache).forEach((key) => delete classHashCache[key]);
 }
 
 // Could extends Account to add our specific fn but that's too early.

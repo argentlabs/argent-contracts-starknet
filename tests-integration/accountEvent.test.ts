@@ -13,12 +13,14 @@ import {
   setTime,
   declareFixtureContract,
   waitForTransaction,
+  restartDevnetIfTooLong,
 } from "./lib";
 
 describe("ArgentAccount: events", function () {
   let argentAccountClassHash: string;
 
   before(async () => {
+    await restartDevnetIfTooLong();
     argentAccountClassHash = await declareContract("ArgentAccount");
   });
 

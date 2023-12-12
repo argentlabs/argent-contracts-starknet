@@ -25,7 +25,7 @@ export async function expectRevertWithErrorMessage(
     }
     await provider.waitForTransaction(executionResult["transaction_hash"]);
   } catch (e: any) {
-    expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
+    expect(e.toString()).to.contain(`Failure reason: ${shortString.encodeShortString(errorMessage)}`);
     return;
   }
   assert.fail("No error detected");
@@ -36,7 +36,7 @@ export async function expectExecutionRevert(errorMessage: string, execute: () =>
     await waitForTransaction(await execute());
     /* eslint-disable  @typescript-eslint/no-explicit-any */
   } catch (e: any) {
-    expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
+    expect(e.toString()).to.contain(`Failure reason: ${shortString.encodeShortString(errorMessage)}`);
     return;
   }
   assert.fail("No error detected");

@@ -22,6 +22,7 @@ import {
   setTime,
   upgradeAccount,
   declareFixtureContract,
+  restartDevnetIfTooLong,
 } from "./lib";
 
 describe("ArgentAccount: escape mechanism", function () {
@@ -57,13 +58,13 @@ describe("ArgentAccount: escape mechanism", function () {
     expect.fail(`Unknown type ${guardianType}`);
   }
 
-  before(async () => {
-    argentAccountClassHash = await declareContract("ArgentAccount");
-    oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
-    proxyClassHash = await declareFixtureContract("Proxy");
-  });
-
   beforeEach(async () => {
+    if ((await restartDevnetIfTooLong()) || !argentAccountClassHash) {
+      argentAccountClassHash = await declareContract("ArgentAccount");
+      oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
+      proxyClassHash = await declareFixtureContract("Proxy");
+    }
+
     randomAddress = randomKeyPair().publicKey;
     randomTime = BigInt(Math.floor(Math.random() * 1000));
   });

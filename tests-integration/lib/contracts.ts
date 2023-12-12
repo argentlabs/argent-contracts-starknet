@@ -1,11 +1,11 @@
 import { readFileSync } from "fs";
-import { CompiledSierra, Contract, DeclareContractPayload, json } from "starknet";
+import { CompiledSierra, Contract, DeclareContractPayload, json, num, uint256 } from "starknet";
 import { deployer } from "./accounts";
 import { provider } from "./provider";
 
 const classHashCache: Record<string, string> = {};
 
-export const ethAddress = "0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7";
+export const ethAddress = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 let ethContract: Contract;
 
 export const contractsFolder = "./target/release/argent_";
@@ -15,12 +15,28 @@ export async function getEthContract() {
   if (ethContract) {
     return ethContract;
   }
-  ethContract = await loadContract(ethAddress);
+  const ethProxy = await loadContract(ethAddress);
+  if (ethProxy.abi.some((entry) => entry.name == "implementation")) {
+    const implementationAddress = num.toHex((await ethProxy.implementation()).address);
+    const ethImplementation = await loadContract(implementationAddress);
+    ethContract = new Contract(ethImplementation.abi, ethAddress, ethProxy.providerOrAccount);
+  } else {
+    ethContract = ethProxy;
+  }
   return ethContract;
+}
+
+export async function getEthBalance(accountAddress: string): Promise<bigint> {
+  const ethContract = await getEthContract();
+  return uint256.uint256ToBN((await ethContract.balanceOf(accountAddress)).balance);
 }
 
 export function removeFromCache(contractName: string) {
   delete classHashCache[contractName];
+}
+
+export function clearCache() {
+  Object.keys(classHashCache).forEach((key) => delete classHashCache[key]);
 }
 
 // Could extends Account to add our specific fn but that's too early.

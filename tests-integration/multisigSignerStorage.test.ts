@@ -7,12 +7,14 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   randomKeyPair,
+  restartDevnetIfTooLong,
 } from "./lib";
 
 describe("ArgentMultisig: signer storage", function () {
   let multisigAccountClassHash: string;
 
   before(async () => {
+    await restartDevnetIfTooLong();
     multisigAccountClassHash = await declareContract("ArgentMultisig");
   });
 

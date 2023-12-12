@@ -13,6 +13,7 @@ import {
   randomKeyPair,
   setTime,
   waitForTransaction,
+  restartDevnetIfTooLong,
 } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
@@ -25,6 +26,7 @@ describe("ArgentMultisig: outside execution", function () {
   let testDapp: Contract;
 
   before(async () => {
+    await restartDevnetIfTooLong();
     multisigClassHash = await declareContract("ArgentMultisig");
     const testDappClassHash = await declareContract("TestDapp");
     const { contract_address } = await deployer.deployContract({

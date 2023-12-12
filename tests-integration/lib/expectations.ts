@@ -80,7 +80,7 @@ export async function expectEvent(
     ({ transaction_hash: param } = await param());
   }
   if (typeof param === "string") {
-    param = (await provider.waitForTransaction(param)) as GetTransactionReceiptResponse;
+    param = await provider.waitForTransaction(param);
   }
   if ("eventName" in event) {
     event = convertToEvent(event);

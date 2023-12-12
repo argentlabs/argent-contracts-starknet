@@ -16,15 +16,15 @@ export async function setTime(timeInSeconds: number | bigint) {
 }
 
 export async function restart() {
-  // await handlePost("restart");
+  await handlePost("restart");
 }
 
 export async function dump() {
-  // await handlePost("dump", { path: DUMP_FOLDER_PATH });
+  await handlePost("dump", { path: DUMP_FOLDER_PATH });
 }
 
 export async function load() {
-  // await handlePost("load", { path: DUMP_FOLDER_PATH });
+  await handlePost("load", { path: DUMP_FOLDER_PATH });
 }
 
 async function handlePost(path: string, payload?: RawArgs) {

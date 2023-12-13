@@ -40,22 +40,18 @@ trait Felt252Signer {
 impl ValidatorImpl of Validator {
     fn is_valid_signer(self: SignerSignature, target: felt252) -> bool {
         match self {
-            SignerSignature::Starknet((signer, signature)) => { target == signer },
-            SignerSignature::Secp256k1((signer, signature)) => { target == signer },
-            SignerSignature::Secp256r1((signer, signature)) => { target == signer },
+            SignerSignature::Starknet((signer, signature)) => target == signer,
+            SignerSignature::Secp256k1((signer, signature)) => target == signer,
+            SignerSignature::Secp256r1((signer, signature)) => target == signer,
             SignerSignature::Webauthn => false,
         }
     }
 
     fn is_valid_signature(self: SignerSignature, hash: felt252) -> bool {
         match self {
-            SignerSignature::Starknet((signer, signature)) => { is_valid_starknet_signature(hash, signer, signature) },
-            SignerSignature::Secp256k1((
-                signer, signature
-            )) => { is_valid_secp256k1_signature(hash, signer, signature) },
-            SignerSignature::Secp256r1((
-                signer, signature
-            )) => { is_valid_secp256r1_signature(hash, signer, signature) },
+            SignerSignature::Starknet((signer, signature)) => is_valid_starknet_signature(hash, signer, signature),
+            SignerSignature::Secp256k1((signer, signature)) => is_valid_secp256k1_signature(hash, signer, signature),
+            SignerSignature::Secp256r1((signer, signature)) => is_valid_secp256r1_signature(hash, signer, signature),
             SignerSignature::Webauthn => false,
         }
     }
@@ -64,9 +60,9 @@ impl ValidatorImpl of Validator {
 impl Felt252SignerImpl of Felt252Signer {
     fn signer_as_felt252(self: SignerSignature) -> felt252 {
         match self {
-            SignerSignature::Starknet((signer, signature)) => { signer },
-            SignerSignature::Secp256k1((signer, signature)) => { signer },
-            SignerSignature::Secp256r1((signer, signature)) => { signer },
+            SignerSignature::Starknet((signer, signature)) => signer,
+            SignerSignature::Secp256k1((signer, signature)) => signer,
+            SignerSignature::Secp256r1((signer, signature)) => signer,
             SignerSignature::Webauthn => 0,
         }
     }

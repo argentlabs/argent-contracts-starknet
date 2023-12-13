@@ -10,7 +10,9 @@ fn to_starknet_signer_signatures(arr: Array<felt252>) -> Array<felt252> {
         if i == size {
             break;
         }
-        let signer_signature = SignerSignature::Starknet((*arr.at(i * 3), StarknetSignature { r: *arr.at(i * 3 + 1), s: *arr.at(i * 3 + 2) }));
+        let signer_signature = SignerSignature::Starknet(
+            (*arr.at(i * 3), StarknetSignature { r: *arr.at(i * 3 + 1), s: *arr.at(i * 3 + 2) })
+        );
         signer_signature.serialize(ref signatures);
         i += 1;
     };

@@ -6,6 +6,7 @@ use argent_tests::setup::{
     },
     utils::to_starknet_signer_signatures
 };
+use debug::PrintTrait;
 use starknet::VALIDATED;
 
 const message_hash: felt252 = 424242;
@@ -24,7 +25,6 @@ fn test_signature() {
     let signature = to_starknet_signer_signatures(array![signer_pubkey_1, signer_1_signature_r, signer_1_signature_s]);
     assert(multisig.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
 }
-
 #[test]
 #[available_gas(20000000)]
 fn test_double_signature() {
@@ -43,7 +43,11 @@ fn test_double_signature() {
             signer_2_signature_s
         ]
     );
+    let a = testing::get_available_gas();
     assert(multisig.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
+    let b = testing::get_available_gas();
+    'RES'.print();
+    (a - b).print();
 }
 
 #[test]

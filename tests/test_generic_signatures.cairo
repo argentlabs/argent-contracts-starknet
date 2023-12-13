@@ -38,7 +38,9 @@ fn test_valid_signature_starknet() {
 #[test]
 #[available_gas(2000000000)]
 fn test_valid_signature_secp256k1() {
-    let signer_signature = SignerSignature::Secp256k1((owner_pubkey_eth, Signature { r: owner_eth_r, s: owner_eth_s, y_parity: owner_eth_v % 2 == 0 }));
+    let signer_signature = SignerSignature::Secp256k1(
+        (owner_pubkey_eth, Signature { r: owner_eth_r, s: owner_eth_s, y_parity: owner_eth_v % 2 == 0 })
+    );
 
     let mut signatures = array![1];
     signer_signature.serialize(ref signatures);

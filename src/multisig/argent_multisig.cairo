@@ -18,7 +18,6 @@ mod ArgentMultisig {
         serialization::full_deserialize
     };
     use argent::multisig::interface::{IDeprecatedArgentMultisig};
-    use argent::multisig::signer_signature::{deserialize_array_signer_signature};
     use ecdsa::check_ecdsa_signature;
     use starknet::{
         get_contract_address, VALIDATED, syscalls::replace_class_syscall, ClassHash, get_tx_info, account::Call

@@ -16,7 +16,6 @@ mod ArgentMultisig {
     };
     use argent::multisig::{
         interface::IDeprecatedArgentMultisig,
-        signer_signature::deserialize_array_signer_signature,
         signer_list::signer_list_component
     };
     use ecdsa::check_ecdsa_signature;

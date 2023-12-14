@@ -11,7 +11,7 @@ mod ArgentMultisig {
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
-        signer_signature::{SignerSignature, Felt252Signer, Validator}, interface::IArgentMultisig,
+        signer_signature::{SignerSignature, Felt252Signer, Validate}, interface::IArgentMultisig,
         serialization::full_deserialize
     };
     use argent::multisig::{
@@ -23,9 +23,9 @@ mod ArgentMultisig {
 
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION_MAJOR: u8 = 0;
-    const VERSION_MINOR: u8 = 1;
+    const VERSION_MINOR: u8 = 2;
     const VERSION_PATCH: u8 = 0;
-    const VERSION_COMPAT: felt252 = '0.1.0';
+    const VERSION_COMPAT: felt252 = '0.2.0';
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 
@@ -38,7 +38,10 @@ mod ArgentMultisig {
         fn execute_from_outside_callback(
             ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
-            self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature);
+            // validate calls
+            self.assert_valid_calls(calls);
+            // validate signatures
+            self.assert_valid_signatures(calls, outside_execution_hash, signature);
 
             let retdata = execute_multicall(calls);
             self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
@@ -134,7 +137,12 @@ mod ArgentMultisig {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_only_protocol();
             let tx_info = get_tx_info().unbox();
-            self.assert_valid_calls_and_signature(calls.span(), tx_info.transaction_hash, tx_info.signature);
+            // validate version
+            assert_correct_tx_version(tx_info.version);
+            // validate calls
+            self.assert_valid_calls(calls.span());
+            // validate signatures
+            self.assert_valid_signatures(calls.span(), tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
 
@@ -197,10 +205,9 @@ mod ArgentMultisig {
             let mut signature = tx_info.signature;
             let mut parsed_signatures: Array<SignerSignature> = full_deserialize(signature)
                 .expect('argent/signature-not-empty');
+            // only 1 valid signature is needed to deploy    
             assert(parsed_signatures.len() == 1, 'argent/invalid-signature-length');
-
-            let signer_sig = *parsed_signatures.at(0);
-            let is_valid = self.is_valid_signer_signature(tx_info.transaction_hash, signer_sig,);
+            let is_valid = self.is_valid_signer_signature(tx_info.transaction_hash, *parsed_signatures.at(0),);
             assert(is_valid, 'argent/invalid-signature');
             VALIDATED
         }
@@ -380,13 +387,8 @@ mod ArgentMultisig {
 
     #[generate_trait]
     impl Private of PrivateTrait {
-        fn assert_valid_calls_and_signature(
-            self: @ContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
-        ) {
+        fn assert_valid_calls(self: @ContractState, calls: Span<Call>) {
             let account_address = get_contract_address();
-            let tx_info = get_tx_info().unbox();
-            assert_correct_tx_version(tx_info.version);
-
             if calls.len() == 1 {
                 let call = calls.at(0);
                 if *call.to == account_address {
@@ -398,7 +400,11 @@ mod ArgentMultisig {
                 // and this restriction will reduce the attack surface
                 assert_no_self_call(calls, account_address);
             }
+        }
 
+        fn assert_valid_signatures(
+            self: @ContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
+        ) {
             let valid = self.is_valid_span_signature(execution_hash, signature);
             assert(valid, 'argent/invalid-signature');
         }
@@ -428,14 +434,6 @@ mod ArgentMultisig {
                     Option::None => { break true; }
                 }
             }
-        }
-
-        fn is_valid_signer_signature_inner(
-            self: @ContractState, hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
-        ) -> bool {
-            let is_signer = self.signer_list.is_signer(signer);
-            assert(is_signer, 'argent/not-a-signer');
-            check_ecdsa_signature(hash, signer, signature_r, signature_s)
         }
     }
 

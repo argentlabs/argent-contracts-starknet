@@ -19,6 +19,8 @@ struct StarknetSignature {
 //     Webauthn,
 // }
 
+/// Enum of the different signature type supported.
+/// For each type the variant contains the signer (or public key) and the signature associated to the signer.
 #[derive(Drop, Copy, Serde, PartialEq)]
 enum SignerSignature {
     #[default]
@@ -28,7 +30,7 @@ enum SignerSignature {
     Webauthn,
 }
 
-trait Validator {
+trait Validate {
     fn is_valid_signer(self: SignerSignature, target: felt252) -> bool;
     fn is_valid_signature(self: SignerSignature, hash: felt252) -> bool;
 }
@@ -37,7 +39,7 @@ trait Felt252Signer {
     fn signer_as_felt252(self: SignerSignature) -> felt252;
 }
 
-impl ValidatorImpl of Validator {
+impl ValidateImpl of Validate {
     fn is_valid_signer(self: SignerSignature, target: felt252) -> bool {
         match self {
             SignerSignature::Starknet((signer, signature)) => target == signer,

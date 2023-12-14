@@ -212,14 +212,14 @@ fn change_invalid_guardian_backup() {
 fn get_version() {
     let version = initialize_account().get_version();
     assert(version.major == 0, 'Version major = 0');
-    assert(version.minor == 3, 'Version minor = 3');
+    assert(version.minor == 4, 'Version minor = 4');
     assert(version.patch == 0, 'Version patch = 0');
 }
 
 #[test]
 #[available_gas(2000000)]
 fn getVersion() {
-    assert(initialize_account().getVersion() == '0.3.0', 'Version should be 0.3.0');
+    assert(initialize_account().getVersion() == '0.4.0', 'Version should be 0.4.0');
 }
 
 #[test]

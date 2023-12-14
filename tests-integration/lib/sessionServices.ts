@@ -112,8 +112,6 @@ export class DappService {
     max_fee_usage = 1_000_000_000_000_000n,
     nft_contracts: string[] = [],
   ): OffChainSession {
-    token_limits.sort((a, b) => (BigInt(a.token_address) < BigInt(b.token_address) ? -1 : 1));
-    nft_contracts.sort((a, b) => (BigInt(a) < BigInt(b) ? -1 : 1));
     return {
       expires_at,
       allowed_methods,

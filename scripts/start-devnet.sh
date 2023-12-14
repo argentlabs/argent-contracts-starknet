@@ -4,5 +4,5 @@ if nc -z 127.0.0.1 5050; then
   exit 1
 else
   echo "Starting Devnet"
-  docker run -p 127.0.0.1:5050:5050 shardlabs/starknet-devnet-rs:85495efb71a37ad3921c8986474b7e78a9a9f5fc --gas-price 36000000000 --timeout 320 --seed 0
+  docker run -p 127.0.0.1:5050:5050 shardlabs/starknet-devnet-rs:ce38cf98163ed040cbd87cd0c87813cbf6b466be --gas-price 36000000000 --timeout 320 --seed 0
 fi

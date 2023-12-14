@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Contract, num, uint256, SuccessfulTransactionReceiptResponse } from "starknet";
+import { Contract, num, uint256 } from "starknet";
 import {
   declareContract,
   deployAccount,

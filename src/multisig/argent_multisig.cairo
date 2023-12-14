@@ -10,14 +10,11 @@ mod ArgentMultisig {
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component
         },
-        upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
+        upgrade::{IUpgradeable, do_upgrade, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
         signer_signature::{SignerSignature, Felt252Signer, Validate}, interface::IArgentMultisig,
         serialization::full_deserialize
     };
-    use argent::multisig::{
-        interface::IDeprecatedArgentMultisig,
-        signer_list::signer_list_component
-    };
+    use argent::multisig::{interface::IDeprecatedArgentMultisig, signer_list::signer_list_component};
     use ecdsa::check_ecdsa_signature;
     use starknet::{get_contract_address, VALIDATED, ClassHash, get_tx_info, account::Call};
 
@@ -272,34 +269,7 @@ mod ArgentMultisig {
         }
 
         fn reorder_signers(ref self: ContractState, new_signer_order: Array<felt252>) {
-            assert_only_self();
-            let (signers_len, last_signer) = self.load();
-            assert(new_signer_order.len() == signers_len, 'argent/too-short');
-            let mut sself = @self;
-            let mut signers_to_check = new_signer_order.span();
-            loop {
-                match signers_to_check.pop_front() {
-                    Option::Some(signer) => {
-                        assert(sself.is_signer_using_last(*signer, last_signer), 'argent/unknown-signer');
-                    },
-                    Option::None => { break; }
-                };
-            };
-
-            let mut signers_to_reorder = new_signer_order.span();
-            let mut prev_signer = 0;
-            loop {
-                match signers_to_reorder.pop_front() {
-                    Option::Some(signer) => {
-                        self.signer_list.write(prev_signer, *signer);
-                        prev_signer = *signer;
-                    },
-                    Option::None => {
-                        self.signer_list.write(prev_signer, 0);
-                        break;
-                    }
-                };
-            };
+            assert(true == false, 'argent/unsuported-method');
         }
 
         fn replace_signer(ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252) {
@@ -334,7 +304,7 @@ mod ArgentMultisig {
         }
 
         fn is_valid_signer_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
-            let is_signer = self.is_signer_inner(signer_signature.signer_as_felt252());
+            let is_signer = self.signer_list.is_signer(signer_signature.signer_as_felt252());
             assert(is_signer, 'argent/not-a-signer');
             signer_signature.is_valid_signature(hash)
         }
@@ -422,7 +392,7 @@ mod ArgentMultisig {
                 match signer_signatures.pop_front() {
                     Option::Some(signer_sig) => {
                         let signer_felt252 = signer_sig.signer_as_felt252();
-                        assert(self.is_signer_inner(signer_felt252), 'argent/not-a-signer');
+                        assert(self.signer_list.is_signer(signer_felt252), 'argent/not-a-signer');
                         let signer_uint: u256 = signer_felt252.into();
                         assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
                         let is_valid = signer_sig.is_valid_signature(hash);

@@ -52,7 +52,7 @@ const SESSION_TYPE_HASH: felt252 =
 const TOKEN_AMOUNT_TYPE_HASH: felt252 =
     selector!("TokenAmount(token_address:ContractAddress,amount:u256)u256(low:u128,high:u128)");
 const U256_TYPE_HASH: felt252 = selector!("u256(low:u128,high:u128)");
-const ALLOWED_METHOD_HASH: felt252 = selector!("Allowed Method(contract_address:ContractAddress,selector:selector)");
+const ALLOWED_METHOD_HASH: felt252 = selector!("Allowed Method(Contract Address:ContractAddress,selector:selector)");
 
 
 trait IOffchainMessageHash<T> {

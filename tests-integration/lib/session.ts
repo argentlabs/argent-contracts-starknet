@@ -8,7 +8,7 @@ export const sessionTypes = {
     { name: "chainId", type: "felt" },
   ],
   "Allowed Method": [
-    { name: "contract_address", type: "ContractAddress" },
+    { name: "Contract Address", type: "ContractAddress" },
     { name: "selector", type: "selector" },
   ],
   TokenAmount: [
@@ -42,7 +42,7 @@ export interface TokenAmount {
 }
 
 export interface AllowedMethod {
-  contract_address: string;
+  "Contract Address": string;
   selector: string;
 }
 
@@ -99,7 +99,7 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
 
 export function getLeaves(allowedMethods: AllowedMethod[]): string[] {
   return allowedMethods.map((method) =>
-    hash.computeHashOnElements([ALLOWED_METHOD_HASH, method.contract_address, method.selector]),
+    hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
   );
 }
 
@@ -121,7 +121,7 @@ export function getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[])
   return calls.map((call) => {
     const allowedIndex = allowedMethods.findIndex((allowedMethod) => {
       return (
-        allowedMethod.contract_address == call.contractAddress &&
+        allowedMethod["Contract Address"] == call.contractAddress &&
         allowedMethod.selector == selector.getSelectorFromName(call.entrypoint)
       );
     });

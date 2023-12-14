@@ -48,7 +48,7 @@ describe("Hybrid Session Account: execute calls", function () {
     // 1. dapp request session: provides dapp pub key and policies
     const allowedMethods: AllowedMethod[] = [
       {
-        contract_address: testDappOneContract.address,
+        "Contract Address": testDappOneContract.address,
         selector: selector.getSelectorFromName("set_number_double"),
       },
     ];
@@ -84,15 +84,15 @@ describe("Hybrid Session Account: execute calls", function () {
     // 1. dapp request session: provides dapp pub key and policies
     const allowedMethods: AllowedMethod[] = [
       {
-        contract_address: mockErc20Contract.address,
+        "Contract Address": mockErc20Contract.address,
         selector: selector.getSelectorFromName("mint"),
       },
       {
-        contract_address: mockErc20Contract.address,
+        "Contract Address": mockErc20Contract.address,
         selector: selector.getSelectorFromName("approve"),
       },
       {
-        contract_address: mockErc20Contract.address,
+        "Contract Address": mockErc20Contract.address,
         selector: selector.getSelectorFromName("transfer_from"),
       },
     ];

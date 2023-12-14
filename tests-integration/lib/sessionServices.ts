@@ -166,7 +166,7 @@ export class DappSigner extends RawSigner {
     return [SESSION_MAGIC, ...CallData.compile({ ...sessionToken })];
   }
 
-  async signTxAndSession(
+  private async signTxAndSession(
     transactionHash: string,
     transactionsDetail: InvocationsSignerDetails,
   ): Promise<BasicSignature> {

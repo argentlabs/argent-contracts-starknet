@@ -3,7 +3,7 @@ import { num, shortString } from "starknet";
 import { declareContract, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
-describe("ArgentMultisig: signing", function () {
+describe.only("ArgentMultisig: signing", function () {
   let multisigAccountClassHash: string;
 
   before(async () => {
@@ -11,7 +11,7 @@ describe("ArgentMultisig: signing", function () {
   });
   const VALID = BigInt(shortString.encodeShortString("VALID"));
 
-  describe.only("is_valid_signature(hash, signatures)", function () {
+  describe("is_valid_signature(hash, signatures)", function () {
     it("Should verify that a multisig owner has signed a message", async function () {
       const threshold = 1;
       const signersLength = 1;

@@ -2,7 +2,7 @@ use starknet::{SyscallResultTrait};
 
 const TX_V1: felt252 = 1; // INVOKE
 const TX_V1_ESTIMATE: felt252 = consteval_int!(0x100000000000000000000000000000000 + 1); // 2**128 + TX_V1
-const TX_V2: felt252 = 2; // DECLARE
+const TX_V2: felt252 = 2; // DECLARE           
 const TX_V2_ESTIMATE: felt252 = consteval_int!(0x100000000000000000000000000000000 + 2); // 2**128 + TX_V2
 const TX_V3: felt252 = 3;
 const TX_V3_ESTIMATE: felt252 = consteval_int!(0x100000000000000000000000000000000 + 3); // 2**128 + TX_V3

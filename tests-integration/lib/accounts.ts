@@ -1,4 +1,14 @@
-import { Account, CallData, Contract, GetTransactionReceiptResponse, RawCalldata, hash, num, uint256 } from "starknet";
+import {
+  Account,
+  CallData,
+  Contract,
+  GetTransactionReceiptResponse,
+  RPC,
+  RawCalldata,
+  hash,
+  num,
+  uint256,
+} from "starknet";
 import { getEthContract, loadContract } from "./contracts";
 import { mintEth } from "./devnet";
 import { provider } from "./provider";
@@ -18,20 +28,28 @@ export interface ArgentWalletWithGuardianAndBackup extends ArgentWalletWithGuard
   guardianBackup: KeyPair;
 }
 
-export const deployer = (() => {
+export const deployerData = (() => {
   if (provider.isDevnet) {
     const devnetAddress = "0x64b48806902a367c8598f4f95c305e8c1a1acba5f082d294a43793113115691";
     const devnetPrivateKey = "0x71d7bb07b9a64f6f78ac4c816aff4da9";
-
-    return new Account(provider, devnetAddress, devnetPrivateKey);
+    return { provider: provider, address: devnetAddress, privateKey: devnetPrivateKey };
   }
   const address = process.env.ADDRESS;
   const privateKey = process.env.PRIVATE_KEY;
   if (address && privateKey) {
-    return new Account(provider, address, privateKey);
+    return { provider: provider, address: address, privateKey: privateKey };
   }
   throw new Error("Missing deployer address or private key, please set ADDRESS and PRIVATE_KEY env variables.");
 })();
+
+export const deployer = new Account(deployerData.provider, deployerData.address, deployerData.privateKey);
+export const deployerV3 = new Account(
+  deployerData.provider,
+  deployerData.address,
+  deployerData.privateKey,
+  undefined,
+  RPC.ETransactionVersion.V3,
+);
 
 console.log("Deployer:", deployer.address);
 

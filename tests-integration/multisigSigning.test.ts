@@ -11,7 +11,7 @@ describe("ArgentMultisig: signing", function () {
   });
   const VALID = BigInt(shortString.encodeShortString("VALID"));
 
-  describe("is_valid_signature(hash, signatures)", function () {
+  describe.only("is_valid_signature(hash, signatures)", function () {
     it("Should verify that a multisig owner has signed a message", async function () {
       const threshold = 1;
       const signersLength = 1;

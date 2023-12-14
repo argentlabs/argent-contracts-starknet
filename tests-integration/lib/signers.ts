@@ -1,6 +1,7 @@
 import {
   Abi,
   ArraySignatureType,
+  CairoCustomEnum,
   Call,
   CallData,
   DeclareSignerDetails,
@@ -122,6 +123,15 @@ export class ConcatSigner extends RawSigner {
   }
 }
 
+function starknetSignatureType(signer: bigint, r: string, s: string) {
+  return new CairoCustomEnum({
+    Starknet: { signer, r, s },
+    Secp256k1: undefined,
+    Secp256r1: undefined,
+    Webauthn: undefined,
+  });
+}
+
 export class MultisigSigner extends RawSigner {
   constructor(public keys: KeyPair[]) {
     super();
@@ -130,9 +140,9 @@ export class MultisigSigner extends RawSigner {
   async signRaw(messageHash: string): Promise<ArraySignatureType> {
     const signerSignatures = this.keys.map((key) => {
       const [signature_r, signature_s] = key.signHash(messageHash);
-      return { signer: key.publicKey, signature_r, signature_s };
+      return starknetSignatureType(key.publicKey, signature_r, signature_s);
     });
-    return CallData.compile(signerSignatures);
+    return CallData.compile([signerSignatures]);
   }
 }
 

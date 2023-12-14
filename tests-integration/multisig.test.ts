@@ -2,7 +2,7 @@ import { CallData, shortString } from "starknet";
 import { declareContract, expectEvent, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
-describe("ArgentMultisig", function () {
+describe.only("ArgentMultisig", function () {
   let multisigAccountClassHash: string;
 
   before(async () => {

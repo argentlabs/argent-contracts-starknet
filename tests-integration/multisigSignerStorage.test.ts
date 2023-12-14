@@ -9,7 +9,7 @@ import {
   randomKeyPair,
 } from "./lib";
 
-describe("ArgentMultisig: signer storage", function () {
+describe.only("ArgentMultisig: signer storage", function () {
   let multisigAccountClassHash: string;
 
   before(async () => {

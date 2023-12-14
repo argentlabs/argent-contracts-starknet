@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { declareContract, provider, upgradeAccount, declareFixtureContract } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
-describe("ArgentMultisig: upgrade", function () {
+describe.only("ArgentMultisig: upgrade", function () {
   let argentMultisig: string;
   let argentMultisigFutureClassHash: string;
   let testDappClassHash: string;

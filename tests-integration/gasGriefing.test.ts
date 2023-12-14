@@ -36,11 +36,10 @@ describe("Gas griefing", function () {
     const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
     await fundAccount(account.address, 50000000000000001n);
     account.signer = new ArgentSigner(guardian);
-    // catching the revert message 'argent/max-fee-too-high' would be better but it's not returned by the RPC
-    await expect(
+    await expectExecutionRevert("argent/max-fee-too-high", () =>
       account.execute(accountContract.populateTransaction.trigger_escape_owner(randomKeyPair().publicKey), undefined, {
         maxFee: "50000000000000001",
       }),
-    ).to.be.rejectedWith("Account validation failed");
+    );
   });
 });

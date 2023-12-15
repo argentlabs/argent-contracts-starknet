@@ -11,15 +11,12 @@ mod ArgentAccount {
             assert_correct_declare_version
         },
         calls::execute_multicall, version::Version,
-        erc165::{
-            IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
-            ERC165_IERC165_INTERFACE_ID_OLD,
-        },
+        erc165::{IErc165, ERC165_IERC165_INTERFACE_ID, ERC165_IERC165_INTERFACE_ID_OLD,},
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
-        upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
-        signer_signature::{SignerSignature, Validator, Felt252Signer}, serialization::full_deserialize
+        upgrade::{IUpgradeable, do_upgrade, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
+        signer_signature::{SignerSignature, Validate, Felt252Signer}, serialization::full_deserialize
     };
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
@@ -30,9 +27,9 @@ mod ArgentAccount {
 
     const NAME: felt252 = 'ArgentAccount';
     const VERSION_MAJOR: u8 = 0;
-    const VERSION_MINOR: u8 = 3;
+    const VERSION_MINOR: u8 = 4;
     const VERSION_PATCH: u8 = 0;
-    const VERSION_COMPAT: felt252 = '0.3.0';
+    const VERSION_COMPAT: felt252 = '0.4.0';
 
     /// Time it takes for the escape to become ready after being triggered
     const ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
@@ -254,14 +251,8 @@ mod ArgentAccount {
         fn upgrade(ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
-            let supports_interface = IErc165LibraryDispatcher { class_hash: new_implementation }
-                .supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
-            assert(supports_interface, 'argent/invalid-implementation');
-
-            replace_class_syscall(new_implementation).unwrap();
             self.emit(AccountUpgraded { new_implementation });
-
-            IUpgradeableLibraryDispatcher { class_hash: new_implementation }.execute_after_upgrade(calldata)
+            do_upgrade(new_implementation, calldata)
         }
 
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
@@ -275,7 +266,7 @@ mod ArgentAccount {
 
             let implementation = self._implementation.read();
             if implementation != Zeroable::zero() {
-                replace_class_syscall(implementation).unwrap();
+                replace_class_syscall(implementation).expect('argent/invalid-after-upgrade');
                 self._implementation.write(Zeroable::zero());
                 // Technically the owner is not added here, but we emit the event since it wasn't emitted in previous versions
                 self.emit(OwnerAdded { new_owner_guid: self._signer.read() });
@@ -498,21 +489,17 @@ mod ArgentAccount {
     }
 
     #[external(v0)]
-    impl DeprecatedArgentAccountImpl<
-        impl ArgentAccount: IArgentAccount<ContractState>,
-        impl Account: IAccount<ContractState>,
-        impl Erc165: IErc165<ContractState>,
-    > of IDeprecatedArgentAccount<ContractState> {
+    impl DeprecatedArgentAccountImpl of IDeprecatedArgentAccount<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
             VERSION_COMPAT
         }
 
         fn getName(self: @ContractState) -> felt252 {
-            ArgentAccount::get_name(self)
+            self.get_name()
         }
 
         fn supportsInterface(self: @ContractState, interface_id: felt252) -> felt252 {
-            if Erc165::supports_interface(self, interface_id) {
+            if self.supports_interface(interface_id) {
                 1
             } else {
                 0

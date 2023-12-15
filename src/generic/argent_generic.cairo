@@ -14,7 +14,7 @@ mod ArgentGenericAccount {
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
-        signer_signature::{SignerSignature, Felt252Signer, Validator}, interface::IArgentMultisig,
+        signer_signature::{SignerSignature, Felt252Signer, Validate}, interface::IArgentMultisig,
         serialization::full_deserialize
     };
     use argent::generic::{interface::{IRecoveryAccount}, recovery::{EscapeStatus, Escape, EscapeEnabled}};
@@ -234,13 +234,10 @@ mod ArgentGenericAccount {
             let mut signature = tx_info.signature;
             let mut parsed_signatures: Array<SignerSignature> = full_deserialize(signature)
                 .expect('argent/signature-not-empty');
-            // TODO AS LONG AS FIRST SIGNATURE IS OK, DEPLOY (this is prob wrong, we should loop)
+            // only 1 valid signature is needed to deploy  
             assert(parsed_signatures.len() >= 1, 'argent/invalid-signature-length');
-
-            let signer_sig = *parsed_signatures.at(0);
-            let is_valid = self.is_valid_signer_signature(tx_info.transaction_hash, signer_sig,);
+            let is_valid = self.is_valid_signer_signature(tx_info.transaction_hash, *parsed_signatures.at(0),);
             assert(is_valid, 'argent/invalid-signature');
-
             VALIDATED
         }
 

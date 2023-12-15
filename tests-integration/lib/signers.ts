@@ -123,7 +123,7 @@ export class ConcatSigner extends RawSigner {
   }
 }
 
-function starknetSignatureType(signer: bigint, r: string, s: string) {
+export function starknetSignatureType(signer: bigint, r: string, s: string) {
   return new CairoCustomEnum({
     Starknet: { signer, r, s },
     Secp256k1: undefined,

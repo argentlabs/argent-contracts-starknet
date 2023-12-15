@@ -1,9 +1,9 @@
 import { expect } from "chai";
-import { num, shortString } from "starknet";
-import { declareContract, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
+import { CallData, num, shortString } from "starknet";
+import { declareContract, expectRevertWithErrorMessage, randomKeyPair, starknetSignatureType } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
-describe.only("ArgentMultisig: signing", function () {
+describe("ArgentMultisig: signing", function () {
   let multisigAccountClassHash: string;
 
   before(async () => {
@@ -24,8 +24,9 @@ describe.only("ArgentMultisig: signing", function () {
       );
 
       const [r, s] = keys[0].signHash(messageHash);
+      const signatures = CallData.compile([[starknetSignatureType(signers[0], r, s)]]);
 
-      const validSignatureResult = await accountContract.is_valid_signature(BigInt(messageHash), [signers[0], r, s]);
+      const validSignatureResult = await accountContract.is_valid_signature(BigInt(messageHash), signatures);
 
       expect(validSignatureResult).to.equal(VALID);
     });
@@ -44,14 +45,11 @@ describe.only("ArgentMultisig: signing", function () {
       const [r1, s1] = keys[0].signHash(messageHash);
       const [r2, s2] = keys[1].signHash(messageHash);
 
-      const validSignatureResult = await accountContract.is_valid_signature(BigInt(messageHash), [
-        signers[0],
-        r1,
-        s1,
-        signers[1],
-        r2,
-        s2,
+      const signatures = CallData.compile([
+        [starknetSignatureType(signers[0], r1, s1), starknetSignatureType(signers[1], r2, s2)],
       ]);
+
+      const validSignatureResult = await accountContract.is_valid_signature(BigInt(messageHash), signatures);
 
       expect(validSignatureResult).to.equal(VALID);
     });
@@ -69,9 +67,12 @@ describe.only("ArgentMultisig: signing", function () {
 
       const [r1, s1] = keys[0].signHash(messageHash);
       const [r2, s2] = keys[1].signHash(messageHash);
+      const signatures = CallData.compile([
+        [starknetSignatureType(signers[1], r2, s2), starknetSignatureType(signers[0], r1, s1)],
+      ]);
 
       await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
-        accountContract.is_valid_signature(BigInt(messageHash), [signers[1], r2, s2, signers[0], r1, s1]),
+        accountContract.is_valid_signature(BigInt(messageHash), signatures),
       );
     });
 
@@ -87,9 +88,12 @@ describe.only("ArgentMultisig: signing", function () {
       );
 
       const [r, s] = keys[0].signHash(messageHash);
+      const signatures = CallData.compile([
+        [starknetSignatureType(signers[0], r, s), starknetSignatureType(signers[0], r, s)],
+      ]);
 
       await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
-        accountContract.is_valid_signature(BigInt(messageHash), [signers[0], r, s, signers[0], r, s]),
+        accountContract.is_valid_signature(BigInt(messageHash), signatures),
       );
     });
 
@@ -105,9 +109,10 @@ describe.only("ArgentMultisig: signing", function () {
       );
 
       const [r, s] = keys[0].signHash(messageHash);
+      const signatures = CallData.compile([[starknetSignatureType(signers[0], r, s)]]);
 
       await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
-        accountContract.is_valid_signature(BigInt(messageHash), [signers[0], r, s]),
+        accountContract.is_valid_signature(BigInt(messageHash), signatures),
       );
     });
 
@@ -119,9 +124,10 @@ describe.only("ArgentMultisig: signing", function () {
       const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
       const invalid = randomKeyPair();
       const [r, s] = invalid.signHash(messageHash);
+      const signatures = CallData.compile([[starknetSignatureType(invalid.publicKey, r, s)]]);
 
       await expectRevertWithErrorMessage("argent/not-a-signer", () =>
-        accountContract.is_valid_signature(BigInt(messageHash), [invalid.publicKey, r, s]),
+        accountContract.is_valid_signature(BigInt(messageHash), signatures),
       );
     });
 
@@ -138,11 +144,11 @@ describe.only("ArgentMultisig: signing", function () {
 
       const [r] = keys[0].signHash(messageHash);
 
-      await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
-        accountContract.is_valid_signature(BigInt(messageHash), [signers[0], r]),
+      await expectRevertWithErrorMessage("argent/undeserializable", () =>
+        accountContract.is_valid_signature(BigInt(messageHash), [1, 0, signers[0], r]),
       );
 
-      await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
+      await expectRevertWithErrorMessage("argent/undeserializable", () =>
         accountContract.is_valid_signature(BigInt(messageHash), []),
       );
     });

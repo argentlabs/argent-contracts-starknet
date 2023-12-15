@@ -17,7 +17,7 @@ import {
 import { deployMultisig } from "./lib/multisig";
 
 const initialTime = 1713139200;
-describe.only("ArgentMultisig: outside execution", function () {
+describe("ArgentMultisig: outside execution", function () {
   // Avoid timeout
   this.timeout(320000);
 

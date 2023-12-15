@@ -10,7 +10,7 @@ import {
   loadContract,
 } from "./lib";
 
-describe.only("ArgentMultisig: Execute", function () {
+describe("ArgentMultisig: Execute", function () {
   let multisigAccountClassHash: string;
   let testDappContract: Contract;
 

@@ -79,6 +79,8 @@ async function deployAccountInner(
   const account = new Account(provider, contractAddress, owner, "1");
   if (guardian) {
     account.signer = new ArgentSigner(owner, guardian);
+  } else {
+    account.signer = new ArgentSigner(owner);
   }
 
   const { transaction_hash } = await account.deploySelf({

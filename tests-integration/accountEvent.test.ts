@@ -13,6 +13,7 @@ import {
   setTime,
   declareFixtureContract,
   waitForTransaction,
+  MultisigSigner,
 } from "./lib";
 
 describe("ArgentAccount: events", function () {
@@ -47,7 +48,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'EscapeOwnerTriggered(ready_at, new_owner)' on trigger_escape_owner", async function () {
     const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
-    account.signer = guardian;
+    account.signer = new MultisigSigner([guardian]);
 
     const newOwner = "42";
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
@@ -62,7 +63,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'OwnerEscaped', 'OwnerRemoved' and 'OwnerAdded' on escape_owner", async function () {
     const { account, accountContract, guardian, owner } = await deployAccount(argentAccountClassHash);
-    account.signer = guardian;
+    account.signer = new MultisigSigner([guardian]);
 
     const newOwner = "42";
     await setTime(42);
@@ -91,7 +92,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'EscapeGuardianTriggered(ready_at, new_owner)' on trigger_escape_guardian", async function () {
     const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
-    account.signer = owner;
+    account.signer = new MultisigSigner([owner]);
 
     const newGuardian = "42";
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
@@ -106,7 +107,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'GuardianEscaped(new_signer)' on escape_guardian", async function () {
     const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
-    account.signer = owner;
+    account.signer = new MultisigSigner([owner]);
     const newGuardian = "42";
     await setTime(42);
 
@@ -191,7 +192,7 @@ describe("ArgentAccount: events", function () {
   describe("Expect 'EscapeCanceled()'", function () {
     it("Expected on cancel_escape", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
-      account.signer = owner;
+      account.signer = new MultisigSigner([owner]);
 
       await accountContract.trigger_escape_guardian(42);
 
@@ -204,7 +205,7 @@ describe("ArgentAccount: events", function () {
 
     it("Expected on trigger_escape_owner", async function () {
       const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
-      account.signer = guardian;
+      account.signer = new MultisigSigner([guardian]);
 
       await accountContract.trigger_escape_owner(42);
 
@@ -216,7 +217,7 @@ describe("ArgentAccount: events", function () {
 
     it("Expected on trigger_escape_guardian", async function () {
       const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
-      account.signer = owner;
+      account.signer = new MultisigSigner([owner]);
 
       await accountContract.trigger_escape_guardian(42);
 

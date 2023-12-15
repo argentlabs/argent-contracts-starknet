@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { CallData, hash } from "starknet";
 import {
   ArgentSigner,
-  ConcatSigner,
+  MultisigSigner,
   declareContract,
   deployAccount,
   deployAccountWithGuardianBackup,
@@ -90,7 +90,7 @@ describe("ArgentAccount", function () {
       argentAccountClassHash,
     );
 
-    account.signer = new ConcatSigner([owner, guardian, guardianBackup]);
+    account.signer = new MultisigSigner([owner, guardian, guardianBackup]);
 
     await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
       accountContract.change_guardian("0x42"),

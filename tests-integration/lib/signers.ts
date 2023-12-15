@@ -106,30 +106,12 @@ export class ArgentSigner extends RawSigner {
   }
 
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
+    const signers = [this.owner];
     if (this.guardian) {
-      return new ConcatSigner([this.owner, this.guardian]).signRaw(messageHash);
+      signers.push(this.guardian);
     }
-    return this.owner.signHash(messageHash);
+    return new MultisigSigner(signers).signRaw(messageHash);
   }
-}
-
-export class ConcatSigner extends RawSigner {
-  constructor(public keys: KeyPair[]) {
-    super();
-  }
-
-  async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    return this.keys.map((key) => key.signHash(messageHash)).flat();
-  }
-}
-
-export function starknetSignatureType(signer: bigint, r: string, s: string) {
-  return new CairoCustomEnum({
-    Starknet: { signer, r, s },
-    Secp256k1: undefined,
-    Secp256r1: undefined,
-    Webauthn: undefined,
-  });
 }
 
 export class MultisigSigner extends RawSigner {
@@ -138,11 +120,8 @@ export class MultisigSigner extends RawSigner {
   }
 
   async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    const signerSignatures = this.keys.map((key) => {
-      const [signature_r, signature_s] = key.signHash(messageHash);
-      return starknetSignatureType(key.publicKey, signature_r, signature_s);
-    });
-    return CallData.compile([signerSignatures]);
+    const keys = this.keys.map((key) => key.signHash(messageHash));
+    return [keys.length.toString(), keys.flat()].flat();
   }
 }
 
@@ -161,8 +140,18 @@ export class KeyPair extends Signer {
 
   public signHash(messageHash: string) {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
-    return [r.toString(), s.toString()];
+    // Todo this should prob be using the fn underneath
+    return ["0", this.publicKey.toString(), r.toString(), s.toString()];
   }
+}
+
+export function starknetSignatureType(signer: bigint, r: string, s: string) {
+  return new CairoCustomEnum({
+    Starknet: { signer, r, s },
+    Secp256k1: undefined,
+    Secp256r1: undefined,
+    Webauthn: undefined,
+  });
 }
 
 export const randomKeyPair = () => new KeyPair();

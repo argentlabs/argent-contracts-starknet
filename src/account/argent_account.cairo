@@ -651,12 +651,12 @@ mod ArgentAccount {
         }
 
         fn is_valid_owner_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
-            signer_signature.is_valid_signer(self._signer.read()) && signer_signature.is_valid_signature(hash)
+            signer_signature.signer_as_felt252() == self._signer.read() && signer_signature.is_valid_signature(hash)
         }
 
         fn is_valid_guardian_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
-            (signer_signature.is_valid_signer(self._guardian.read())
-                || signer_signature.is_valid_signer(self._guardian_backup.read()))
+            (signer_signature.signer_as_felt252() == self._guardian.read()
+                || signer_signature.signer_as_felt252() == self._guardian_backup.read())
                 && signer_signature.is_valid_signature(hash)
         }
 

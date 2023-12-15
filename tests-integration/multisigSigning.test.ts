@@ -1,6 +1,6 @@
 import { expect } from "chai";
-import { CallData, num, shortString } from "starknet";
-import { declareContract, expectRevertWithErrorMessage, randomKeyPair, starknetSignatureType } from "./lib";
+import { num, shortString } from "starknet";
+import { declareContract, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: signing", function () {
@@ -17,14 +17,10 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 1;
       const messageHash = num.toHex(424242);
 
-      const { accountContract, signers, keys } = await deployMultisig(
-        multisigAccountClassHash,
-        threshold,
-        signersLength,
-      );
+      const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      const [r, s] = keys[0].signHash(messageHash);
-      const signatures = CallData.compile([[starknetSignatureType(signers[0], r, s)]]);
+      let signatures = ["1"];
+      signatures = signatures.concat(keys[0].signHash(messageHash));
 
       const validSignatureResult = await accountContract.is_valid_signature(BigInt(messageHash), signatures);
 
@@ -36,18 +32,11 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 2;
       const messageHash = num.toHex(424242);
 
-      const { accountContract, signers, keys } = await deployMultisig(
-        multisigAccountClassHash,
-        threshold,
-        signersLength,
-      );
+      const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      const [r1, s1] = keys[0].signHash(messageHash);
-      const [r2, s2] = keys[1].signHash(messageHash);
-
-      const signatures = CallData.compile([
-        [starknetSignatureType(signers[0], r1, s1), starknetSignatureType(signers[1], r2, s2)],
-      ]);
+      let signatures = ["2"];
+      signatures = signatures.concat(keys[0].signHash(messageHash));
+      signatures = signatures.concat(keys[1].signHash(messageHash));
 
       const validSignatureResult = await accountContract.is_valid_signature(BigInt(messageHash), signatures);
 
@@ -59,17 +48,11 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 2;
       const messageHash = num.toHex(424242);
 
-      const { accountContract, signers, keys } = await deployMultisig(
-        multisigAccountClassHash,
-        threshold,
-        signersLength,
-      );
+      const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      const [r1, s1] = keys[0].signHash(messageHash);
-      const [r2, s2] = keys[1].signHash(messageHash);
-      const signatures = CallData.compile([
-        [starknetSignatureType(signers[1], r2, s2), starknetSignatureType(signers[0], r1, s1)],
-      ]);
+      let signatures = ["2"];
+      signatures = signatures.concat(keys[1].signHash(messageHash));
+      signatures = signatures.concat(keys[0].signHash(messageHash));
 
       await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
         accountContract.is_valid_signature(BigInt(messageHash), signatures),
@@ -81,16 +64,11 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 2;
       const messageHash = num.toHex(424242);
 
-      const { accountContract, signers, keys } = await deployMultisig(
-        multisigAccountClassHash,
-        threshold,
-        signersLength,
-      );
+      const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      const [r, s] = keys[0].signHash(messageHash);
-      const signatures = CallData.compile([
-        [starknetSignatureType(signers[0], r, s), starknetSignatureType(signers[0], r, s)],
-      ]);
+      let signatures = ["2"];
+      signatures = signatures.concat(keys[0].signHash(messageHash));
+      signatures = signatures.concat(keys[0].signHash(messageHash));
 
       await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
         accountContract.is_valid_signature(BigInt(messageHash), signatures),
@@ -102,14 +80,10 @@ describe("ArgentMultisig: signing", function () {
       const signersLength = 2;
       const messageHash = num.toHex(424242);
 
-      const { accountContract, signers, keys } = await deployMultisig(
-        multisigAccountClassHash,
-        threshold,
-        signersLength,
-      );
+      const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      const [r, s] = keys[0].signHash(messageHash);
-      const signatures = CallData.compile([[starknetSignatureType(signers[0], r, s)]]);
+      let signatures = ["1"];
+      signatures = signatures.concat(keys[0].signHash(messageHash));
 
       await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
         accountContract.is_valid_signature(BigInt(messageHash), signatures),
@@ -123,8 +97,8 @@ describe("ArgentMultisig: signing", function () {
 
       const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
       const invalid = randomKeyPair();
-      const [r, s] = invalid.signHash(messageHash);
-      const signatures = CallData.compile([[starknetSignatureType(invalid.publicKey, r, s)]]);
+      let signatures = ["1"];
+      signatures = signatures.concat(invalid.signHash(messageHash));
 
       await expectRevertWithErrorMessage("argent/not-a-signer", () =>
         accountContract.is_valid_signature(BigInt(messageHash), signatures),

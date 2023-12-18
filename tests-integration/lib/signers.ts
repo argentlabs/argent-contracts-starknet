@@ -125,7 +125,7 @@ export class MultisigSigner extends RawSigner {
   }
 }
 
-export class OldMultisigSigner extends RawSigner {
+export class LegacyMultisigSigner extends RawSigner {
   constructor(public keys: KeyPair[]) {
     super();
   }
@@ -156,7 +156,7 @@ export class KeyPair extends Signer {
   }
 }
 
-export class OldKeyPair extends KeyPair {
+export class LegacyKeyPair extends KeyPair {
   public signHash(messageHash: string) {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
     return [r.toString(), s.toString()];

@@ -81,7 +81,7 @@ mod sessionable {
                             token.backend_initialization_sig.s
                         ]
                     ) == VALIDATED,
-                'invalid-guard-sig'
+                'invalid-account-sig'
             );
 
             let message_hash = LegacyHash::hash(transaction_hash, token.session.get_message_hash());

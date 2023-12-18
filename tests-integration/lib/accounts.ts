@@ -2,7 +2,7 @@ import { Account, CallData, Contract, GetTransactionReceiptResponse, RawCalldata
 import { getEthContract, loadContract } from "./contracts";
 import { mintEth } from "./devnet";
 import { provider } from "./provider";
-import { ArgentSigner, KeyPair, randomKeyPair } from "./signers";
+import { ArgentSigner, KeyPair, MultisigSigner, OldKeyPair, OldMultisigSigner, randomKeyPair } from "./signers";
 
 export interface ArgentWallet {
   account: Account;
@@ -38,8 +38,8 @@ export async function deployOldAccount(
   proxyClassHash: string,
   oldArgentAccountClassHash: string,
 ): Promise<ArgentWalletWithGuardian> {
-  const owner = randomKeyPair();
-  const guardian = randomKeyPair();
+  const owner = new OldKeyPair();
+  const guardian = new OldKeyPair();
 
   const constructorCalldata = CallData.compile({
     implementation: oldArgentAccountClassHash,
@@ -51,7 +51,7 @@ export async function deployOldAccount(
   const contractAddress = hash.calculateContractAddressFromHash(salt, proxyClassHash, constructorCalldata, 0);
 
   const account = new Account(provider, contractAddress, owner);
-  account.signer = new ArgentSigner(owner, guardian);
+  account.signer = new OldMultisigSigner([owner, guardian]);
 
   await mintEth(account.address);
   const { transaction_hash } = await account.deployAccount({

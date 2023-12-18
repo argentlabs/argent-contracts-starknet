@@ -14,6 +14,7 @@ import {
   provider,
   randomKeyPair,
   signChangeOwnerMessage,
+  starknetSignatureType,
 } from "./lib";
 
 describe("ArgentAccount", function () {
@@ -108,8 +109,15 @@ describe("ArgentAccount", function () {
       const newOwner = randomKeyPair();
 
       const chainId = await provider.getChainId();
-      const [r, s] = await signChangeOwnerMessage(accountContract.address, owner.publicKey, newOwner, chainId);
-      await accountContract.change_owner(newOwner.publicKey, r, s);
+      const starknetSignature = await signChangeOwnerMessage(
+        accountContract.address,
+        owner.publicKey,
+        newOwner,
+        chainId,
+      );
+      await accountContract.change_owner(
+        CallData.compile([starknetSignatureType(newOwner.publicKey, starknetSignature[2], starknetSignature[3])]),
+      );
 
       await accountContract.get_owner().should.eventually.equal(newOwner.publicKey);
     });
@@ -118,17 +126,23 @@ describe("ArgentAccount", function () {
       const { account } = await deployAccount(argentAccountClassHash);
       const { accountContract } = await deployAccount(argentAccountClassHash);
       accountContract.connect(account);
-      await expectRevertWithErrorMessage("argent/only-self", () => accountContract.change_owner(12, 13, 14));
+      await expectRevertWithErrorMessage("argent/only-self", () =>
+        accountContract.change_owner(CallData.compile([starknetSignatureType(12n, "13", "14")])),
+      );
     });
 
     it("Expect 'argent/null-owner' when new_owner is zero", async function () {
       const { accountContract } = await deployAccount(argentAccountClassHash);
-      await expectRevertWithErrorMessage("argent/null-owner", () => accountContract.change_owner(0, 13, 14));
+      await expectRevertWithErrorMessage("argent/null-owner", () =>
+        accountContract.change_owner(CallData.compile([starknetSignatureType(0n, "13", "14")])),
+      );
     });
 
     it("Expect 'argent/invalid-owner-sig' when the signature to change owner is invalid", async function () {
       const { accountContract } = await deployAccount(argentAccountClassHash);
-      await expectRevertWithErrorMessage("argent/invalid-owner-sig", () => accountContract.change_owner(11, 12, 42));
+      await expectRevertWithErrorMessage("argent/invalid-owner-sig", () =>
+        accountContract.change_owner(CallData.compile([starknetSignatureType(12n, "13", "14")])),
+      );
     });
 
     it("Expect the escape to be reset", async function () {
@@ -143,9 +157,16 @@ describe("ArgentAccount", function () {
 
       account.signer = new ArgentSigner(owner, guardian);
       const chainId = await provider.getChainId();
-      const [r, s] = await signChangeOwnerMessage(accountContract.address, owner.publicKey, newOwner, chainId);
+      const starknetSignature = await signChangeOwnerMessage(
+        accountContract.address,
+        owner.publicKey,
+        newOwner,
+        chainId,
+      );
 
-      await accountContract.change_owner(newOwner.publicKey, r, s);
+      await accountContract.change_owner(
+        CallData.compile([starknetSignatureType(newOwner.publicKey, starknetSignature[2], starknetSignature[3])]),
+      );
 
       await accountContract.get_owner().should.eventually.equal(newOwner.publicKey);
       await hasOngoingEscape(accountContract).should.eventually.be.false;

@@ -125,6 +125,17 @@ export class MultisigSigner extends RawSigner {
   }
 }
 
+export class OldMultisigSigner extends RawSigner {
+  constructor(public keys: KeyPair[]) {
+    super();
+  }
+
+  async signRaw(messageHash: string): Promise<ArraySignatureType> {
+    const keys = this.keys.map((key) => key.signHash(messageHash));
+    return keys.flat();
+  }
+}
+
 export class KeyPair extends Signer {
   constructor(pk?: string | bigint) {
     super(pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`);
@@ -142,6 +153,13 @@ export class KeyPair extends Signer {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
     // Todo this should prob be using the fn underneath
     return ["0", this.publicKey.toString(), r.toString(), s.toString()];
+  }
+}
+
+export class OldKeyPair extends KeyPair {
+  public signHash(messageHash: string) {
+    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
+    return [r.toString(), s.toString()];
   }
 }
 

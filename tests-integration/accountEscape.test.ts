@@ -23,6 +23,7 @@ import {
   upgradeAccount,
   declareFixtureContract,
   MultisigSigner,
+  OldMultisigSigner,
 } from "./lib";
 
 describe("ArgentAccount: escape mechanism", function () {
@@ -152,7 +153,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
     it("Expect 'argent/null-owner' new_owner is zero", async function () {
       const { account, owner, guardian } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
-      account.signer = new MultisigSigner([guardian]);
+      account.signer = new OldMultisigSigner([guardian]);
 
       await setTime(randomTime);
       const { transaction_hash } = await account.execute({
@@ -161,13 +162,13 @@ describe("ArgentAccount: escape mechanism", function () {
       });
       await provider.waitForTransaction(transaction_hash);
 
-      account.signer = new ArgentSigner(owner, guardian);
+      account.signer = new OldMultisigSigner([owner, guardian]);
       await upgradeAccount(account, argentAccountClassHash, ["0"]);
 
       const accountContract = await loadContract(account.address);
       await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
       account.cairoVersion = "1";
-      account.signer = new MultisigSigner([guardian]);
+      account.signer = new MultisigSigner([new KeyPair(guardian.privateKey)]);
       accountContract.connect(account);
       await expectRevertWithErrorMessage("argent/null-owner", () => accountContract.escape_owner());
     });

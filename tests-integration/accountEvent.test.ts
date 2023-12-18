@@ -14,6 +14,7 @@ import {
   declareFixtureContract,
   waitForTransaction,
   MultisigSigner,
+  starknetSignatureType,
 } from "./lib";
 
 describe("ArgentAccount: events", function () {
@@ -130,8 +131,12 @@ describe("ArgentAccount: events", function () {
     const contractAddress = accountContract.address;
 
     const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
-    const [r, s] = newOwner.signHash(msgHash);
-    const receipt = await waitForTransaction(await accountContract.change_owner(newOwner.publicKey, r, s));
+    const starknetSignature = newOwner.signHash(msgHash);
+    const receipt = await waitForTransaction(
+      await accountContract.change_owner(
+        CallData.compile([starknetSignatureType(newOwner.publicKey, starknetSignature[2], starknetSignature[3])]),
+      ),
+    );
     await expectEvent(receipt, {
       from_address: accountContract.address,
       eventName: "OwnerChanged",

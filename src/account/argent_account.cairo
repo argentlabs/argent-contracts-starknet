@@ -313,15 +313,16 @@ mod ArgentAccount {
             VALIDATED
         }
 
-        fn change_owner(ref self: ContractState, new_owner: felt252, signer_signature: SignerSignature) {
+        fn change_owner(ref self: ContractState, signer_signature: SignerSignature) {
             assert_only_self();
-            self.assert_valid_new_owner(new_owner, signer_signature);
+            self.assert_valid_new_owner(signer_signature);
 
             self.reset_escape();
             self.reset_escape_attempts();
 
             let old_owner = self._signer.read();
 
+            let new_owner = signer_signature.signer_as_felt252();
             self._signer.write(new_owner);
             self.emit(OwnerChanged { new_owner });
             self.emit(OwnerRemoved { removed_owner_guid: old_owner });
@@ -663,8 +664,8 @@ mod ArgentAccount {
         /// The message hash is the result of hashing the array:
         /// [change_owner selector, chainid, contract address, old_owner]
         /// as specified here: https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
-        fn assert_valid_new_owner(self: @ContractState, new_owner: felt252, signer_signature: SignerSignature) {
-            assert(new_owner != 0, 'argent/null-owner');
+        fn assert_valid_new_owner(self: @ContractState, signer_signature: SignerSignature) {
+            assert(signer_signature.signer_as_felt252() != 0, 'argent/null-owner');
             let chain_id = get_tx_info().unbox().chain_id;
             // We now need to hash message_hash with the size of the array: (change_owner selector, chainid, contract address, old_owner)
             // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6

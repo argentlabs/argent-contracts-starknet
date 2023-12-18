@@ -36,6 +36,7 @@ struct SessionToken {
     session_signature: StarknetSignature,
     owner_signature: StarknetSignature,
     backend_signature: StarknetSignature,
+    backend_initialization_sig: StarknetSignature,
     proofs: Span<Span<felt252>>,
 }
 

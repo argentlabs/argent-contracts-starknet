@@ -13,6 +13,7 @@ import {
   Account,
   uint256,
   merkle,
+  WeierstrassSignatureType,
 } from "starknet";
 import {
   OffChainSession,
@@ -24,7 +25,7 @@ import {
   RawSigner,
   getSessionTypedData,
   ALLOWED_METHOD_HASH,
-  BasicSignature,
+  StarknetSig,
 } from ".";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -35,17 +36,21 @@ export class ArgentX {
     public backendService: BackendService,
   ) {}
 
-  public async getOwnerSessionSignature(sessionRequest: OffChainSession): Promise<BasicSignature> {
+  public async getOwnerSessionSignature(sessionRequest: OffChainSession): Promise<StarknetSig> {
     const sessionTypedData = await getSessionTypedData(sessionRequest);
-    const a = (await this.account.signMessage(sessionTypedData)) as ArraySignatureType;
-    return { r: BigInt(a[0]), s: BigInt(a[1]) };
+    const signature = (await this.account.signMessage(sessionTypedData)) as ArraySignatureType;
+    return { r: BigInt(signature[0]), s: BigInt(signature[1]) };
+  }
+
+  public async getBackendSessionSignature(sessionRequest: OffChainSession): Promise<StarknetSig> {
+    return this.backendService.signOffChainSession(sessionRequest, this.account);
   }
 
   public async sendSessionToBackend(
     calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
     sessionRequest: OffChainSession,
-  ): Promise<BasicSignature> {
+  ): Promise<StarknetSig> {
     return this.backendService.signTxAndSession(calls, transactionsDetail, sessionRequest);
   }
 }
@@ -57,7 +62,7 @@ export class BackendService {
     calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
     sessionTokenToSign: OffChainSession,
-  ): Promise<BasicSignature> {
+  ): Promise<StarknetSig> {
     // verify session param correct
 
     // extremely simplified version of the backend verification
@@ -94,7 +99,13 @@ export class BackendService {
     return { r: BigInt(r), s: BigInt(s) };
   }
 
-  public get_guardian_key(): bigint {
+  public async signOffChainSession(sessionRequest: OffChainSession, account: Account): Promise<StarknetSig> {
+    const sessionTypedData = await getSessionTypedData(sessionRequest);
+    const signature = (await this.guardian.signMessage(sessionTypedData, account.address)) as WeierstrassSignatureType;
+    return { r: signature.r, s: signature.s };
+  }
+
+  public getGuardianKey(): bigint {
     return this.guardian.publicKey;
   }
 }
@@ -118,7 +129,7 @@ export class DappService {
       token_amounts,
       nft_contracts,
       max_fee_usage,
-      guardian_key: this.argentBackend.get_guardian_key(),
+      guardian_key: this.argentBackend.getGuardianKey(),
       session_key: this.sessionKey.publicKey,
     };
   }
@@ -132,7 +143,8 @@ export class DappSigner extends RawSigner {
   constructor(
     public argentX: ArgentX,
     public sessionKeyPair: KeyPair,
-    public ownerSessionSignature: BasicSignature,
+    public ownerSessionSignature: StarknetSig,
+    public backendSessionSignature: StarknetSig,
     public completedSession: OffChainSession,
   ) {
     super();
@@ -163,7 +175,7 @@ export class DappSigner extends RawSigner {
   private async signTxAndSession(
     transactionHash: string,
     transactionsDetail: InvocationsSignerDetails,
-  ): Promise<BasicSignature> {
+  ): Promise<StarknetSig> {
     const sessionMessageHash = typedData.getMessageHash(
       await getSessionTypedData(this.completedSession),
       transactionsDetail.walletAddress,
@@ -179,8 +191,8 @@ export class DappSigner extends RawSigner {
   private buildSessiontoken(
     completedSession: OffChainSession,
     transactions: Call[],
-    session_signature: BasicSignature,
-    backend_signature: BasicSignature,
+    session_signature: StarknetSig,
+    backend_signature: StarknetSig,
   ): SessionToken {
     const leaves = this.getLeaves(completedSession.allowed_methods);
     const proofs = this.getSessionProofs(transactions, completedSession.allowed_methods);
@@ -198,6 +210,7 @@ export class DappSigner extends RawSigner {
       session_signature,
       owner_signature: this.ownerSessionSignature,
       backend_signature,
+      backend_initialization_sig: this.backendSessionSignature,
       proofs,
     };
   }
@@ -222,7 +235,7 @@ export class DappSigner extends RawSigner {
     });
   }
 
-  private async getBackendSig(calls: Call[], transactionsDetail: InvocationsSignerDetails): Promise<BasicSignature> {
+  private async getBackendSig(calls: Call[], transactionsDetail: InvocationsSignerDetails): Promise<StarknetSig> {
     return this.argentX.sendSessionToBackend(calls, transactionsDetail, this.completedSession);
   }
 }

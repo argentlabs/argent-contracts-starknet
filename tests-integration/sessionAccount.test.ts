@@ -55,8 +55,9 @@ describe("Hybrid Session Account: execute calls", function () {
 
     const sessionRequest = dappService.createSessionRequest(allowedMethods, tokenLimits);
 
-    // 2. Wallet signs session
+    // 2. Owner and Guardian signs session
     const ownerSignature = await argentX.getOwnerSessionSignature(sessionRequest);
+    const guardianSignature = await argentX.getBackendSessionSignature(sessionRequest);
 
     //  Every request:
     const calls = [testDappOneContract.populateTransaction.set_number_double(2)];
@@ -64,7 +65,13 @@ describe("Hybrid Session Account: execute calls", function () {
     // 1. dapp requests backend signature
     // backend: can verify the parameters and check it was signed by the account then provides signature
     // 2. dapp signs tx and session, crafts signature and submits transaction
-    const sessionSigner = new DappSigner(argentX, dappService.keypair, ownerSignature, sessionRequest);
+    const sessionSigner = new DappSigner(
+      argentX,
+      dappService.keypair,
+      ownerSignature,
+      guardianSignature,
+      sessionRequest,
+    );
 
     account.signer = sessionSigner;
 
@@ -103,6 +110,7 @@ describe("Hybrid Session Account: execute calls", function () {
 
     // 2. Wallet signs session
     const ownerSignature = await argentX.getOwnerSessionSignature(sessionRequest);
+    const guardianSignature = await argentX.getBackendSessionSignature(sessionRequest);
 
     //  Every request:
     const calls = [
@@ -114,7 +122,13 @@ describe("Hybrid Session Account: execute calls", function () {
     // 1. dapp requests backend signature
     // backend: can verify the parameters and check it was signed by the account then provides signature
     // 2. dapp signs tx and session, crafts signature and submits transaction
-    const sessionSigner = new DappSigner(argentX, dappService.keypair, ownerSignature, sessionRequest);
+    const sessionSigner = new DappSigner(
+      argentX,
+      dappService.keypair,
+      ownerSignature,
+      guardianSignature,
+      sessionRequest,
+    );
 
     account.signer = sessionSigner;
     const { transaction_hash } = await account.execute(calls);

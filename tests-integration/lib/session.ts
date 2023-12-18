@@ -32,7 +32,7 @@ export const sessionTypes = {
 
 export const ALLOWED_METHOD_HASH = typedData.getTypeHash(sessionTypes, "Allowed Method");
 
-export interface BasicSignature {
+export interface StarknetSig {
   r: BigNumberish;
   s: BigNumberish;
 }
@@ -69,9 +69,10 @@ interface OnChainSession {
 
 export interface SessionToken {
   session: OnChainSession;
-  session_signature: BasicSignature;
-  owner_signature: BasicSignature;
-  backend_signature: BasicSignature;
+  session_signature: StarknetSig;
+  owner_signature: StarknetSig;
+  backend_signature: StarknetSig;
+  backend_initialization_sig: StarknetSig;
   proofs: string[][];
 }
 

@@ -1,6 +1,3 @@
-use argent::session::session_structs::Session;
-use starknet::{account::Call};
-
 #[starknet::interface]
 trait ISessionable<TContractState> {
     fn revoke_session(ref self: TContractState, session_key: felt252);
@@ -17,10 +14,9 @@ mod sessionable {
     use argent::session::session_structs::{
         SessionToken, StarknetSignature, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash
     };
-    use core::box::BoxTrait;
     use ecdsa::check_ecdsa_signature;
     use hash::LegacyHash;
-    use starknet::{account::Call, get_contract_address};
+    use starknet::{account::Call, get_contract_address, VALIDATED};
 
 
     #[storage]
@@ -75,8 +71,17 @@ mod sessionable {
             assert(!self.revoked_session.read(token.session.session_key), 'session-revoked');
 
             assert(
-                is_valid_signature_generic(token.session.get_message_hash(), state.get_owner(), token.owner_signature),
-                'invalid-owner-sig'
+                state
+                    .is_valid_signature(
+                        token.session.get_message_hash(),
+                        array![
+                            token.owner_signature.r,
+                            token.owner_signature.s,
+                            token.backend_initialization_sig.r,
+                            token.backend_initialization_sig.s
+                        ]
+                    ) == VALIDATED,
+                'invalid-guard-sig'
             );
 
             let message_hash = LegacyHash::hash(transaction_hash, token.session.get_message_hash());

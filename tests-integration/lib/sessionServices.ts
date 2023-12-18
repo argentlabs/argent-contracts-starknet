@@ -12,19 +12,18 @@ import {
   selector,
   Account,
   uint256,
+  merkle,
 } from "starknet";
 import {
   OffChainSession,
   SessionToken,
-  OnChainSession,
   KeyPair,
   randomKeyPair,
   AllowedMethod,
   TokenAmount,
   RawSigner,
   getSessionTypedData,
-  createOnChainSession,
-  getSessionProofs,
+  ALLOWED_METHOD_HASH,
   BasicSignature,
 } from ".";
 
@@ -151,17 +150,12 @@ export class DappSigner extends RawSigner {
     const session_signature = await this.signTxAndSession(txHash, transactionsDetail);
     const backend_signature = await this.getBackendSig(transactions, transactionsDetail);
 
-    const proofs = await this.getProofs(transactions);
-
-    const session: OnChainSession = createOnChainSession(this.completedSession);
-
-    const sessionToken: SessionToken = {
-      session,
+    const sessionToken = this.buildSessiontoken(
+      this.completedSession,
+      transactions,
       session_signature,
-      owner_signature: this.ownerSessionSignature,
       backend_signature,
-      proofs,
-    };
+    );
 
     return [SESSION_MAGIC, ...CallData.compile({ ...sessionToken })];
   }
@@ -182,11 +176,53 @@ export class DappSigner extends RawSigner {
     };
   }
 
-  public async getBackendSig(calls: Call[], transactionsDetail: InvocationsSignerDetails): Promise<BasicSignature> {
-    return this.argentX.sendSessionToBackend(calls, transactionsDetail, this.completedSession);
+  private buildSessiontoken(
+    completedSession: OffChainSession,
+    transactions: Call[],
+    session_signature: BasicSignature,
+    backend_signature: BasicSignature,
+  ): SessionToken {
+    const leaves = this.getLeaves(completedSession.allowed_methods);
+    const proofs = this.getSessionProofs(transactions, completedSession.allowed_methods);
+    const session = {
+      expires_at: completedSession.expires_at,
+      allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
+      token_amounts: completedSession.token_amounts,
+      nft_contracts: completedSession.nft_contracts,
+      max_fee_usage: completedSession.max_fee_usage,
+      guardian_key: completedSession.guardian_key,
+      session_key: completedSession.session_key,
+    };
+    return {
+      session,
+      session_signature,
+      owner_signature: this.ownerSessionSignature,
+      backend_signature,
+      proofs,
+    };
   }
 
-  public async getProofs(transactions: Call[]): Promise<string[][]> {
-    return getSessionProofs(transactions, this.completedSession.allowed_methods);
+  private getLeaves(allowedMethods: AllowedMethod[]): string[] {
+    return allowedMethods.map((method) =>
+      hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
+    );
+  }
+
+  private getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[]): string[][] {
+    const tree = new merkle.MerkleTree(this.getLeaves(allowedMethods));
+
+    return calls.map((call) => {
+      const allowedIndex = allowedMethods.findIndex((allowedMethod) => {
+        return (
+          allowedMethod["Contract Address"] == call.contractAddress &&
+          allowedMethod.selector == selector.getSelectorFromName(call.entrypoint)
+        );
+      });
+      return tree.getProof(tree.leaves[allowedIndex], this.getLeaves(allowedMethods));
+    });
+  }
+
+  private async getBackendSig(calls: Call[], transactionsDetail: InvocationsSignerDetails): Promise<BasicSignature> {
+    return this.argentX.sendSessionToBackend(calls, transactionsDetail, this.completedSession);
   }
 }

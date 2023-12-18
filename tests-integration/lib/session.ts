@@ -57,7 +57,7 @@ export interface OffChainSession {
   session_key: BigNumberish;
 }
 
-export interface OnChainSession {
+interface OnChainSession {
   expires_at: BigNumberish;
   allowed_methods_root: string;
   token_amounts: TokenAmount[];
@@ -99,37 +99,4 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
       "Session Key": sessionRequest.session_key,
     },
   };
-}
-
-export function getLeaves(allowedMethods: AllowedMethod[]): string[] {
-  return allowedMethods.map((method) =>
-    hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
-  );
-}
-
-export function createOnChainSession(completedSession: OffChainSession): OnChainSession {
-  const leaves = getLeaves(completedSession.allowed_methods);
-  return {
-    expires_at: completedSession.expires_at,
-    allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
-    token_amounts: completedSession.token_amounts,
-    nft_contracts: completedSession.nft_contracts,
-    max_fee_usage: completedSession.max_fee_usage,
-    guardian_key: completedSession.guardian_key,
-    session_key: completedSession.session_key,
-  };
-}
-
-export function getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[]): string[][] {
-  const tree = new merkle.MerkleTree(getLeaves(allowedMethods));
-
-  return calls.map((call) => {
-    const allowedIndex = allowedMethods.findIndex((allowedMethod) => {
-      return (
-        allowedMethod["Contract Address"] == call.contractAddress &&
-        allowedMethod.selector == selector.getSelectorFromName(call.entrypoint)
-      );
-    });
-    return tree.getProof(tree.leaves[allowedIndex], getLeaves(allowedMethods));
-  });
 }

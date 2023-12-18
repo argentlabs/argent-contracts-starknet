@@ -5,9 +5,6 @@ use starknet::{account::Call};
 trait ISessionable<TContractState> {
     fn revoke_session(ref self: TContractState, session_key: felt252);
     fn is_session_revoked(self: @TContractState, session_key: felt252);
-    fn assert_valid_session(
-        self: @TContractState, calls: Span<Call>, transaction_hash: felt252, signature: Span<felt252>
-    );
 }
 
 #[starknet::component]
@@ -55,7 +52,12 @@ mod sessionable {
         fn is_session_revoked(self: @ComponentState<TContractState>, session_key: felt252) {
             self.revoked_session.read(session_key);
         }
+    }
 
+    #[generate_trait]
+    impl InternalImpl<
+        TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentAccount<TContractState>,
+    > of InternalTrait<TContractState> {
         fn assert_valid_session(
             self: @ComponentState<TContractState>,
             calls: Span<Call>,

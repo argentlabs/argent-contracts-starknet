@@ -53,6 +53,8 @@ mod HybridSessionAccount {
     #[abi(embed_v0)]
     impl Sessionable = session_component::SessionableImpl<ContractState>;
 
+    impl SessionableInternalImpl = session_component::InternalImpl<ContractState>;
+
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
     impl ExecuteFromOutside = outside_execution_component::OutsideExecutionImpl<ContractState>;
@@ -228,7 +230,7 @@ mod HybridSessionAccount {
             assert_only_protocol();
             let tx_info = get_tx_info().unbox();
             if *tx_info.signature[0] == SESSION_MAGIC {
-                self.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature);
+                self.sessionable.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature);
             } else {
                 self
                     .assert_valid_calls_and_signature(

@@ -2,7 +2,7 @@ import { Account, CallData, Contract, GetTransactionReceiptResponse, RawCalldata
 import { getEthContract, loadContract } from "./contracts";
 import { mintEth } from "./devnet";
 import { provider } from "./provider";
-import { ArgentSigner, KeyPair, MultisigSigner, LegacyKeyPair, LegacyMultisigSigner, randomKeyPair } from "./signers";
+import { ArgentSigner, KeyPair, LegacyKeyPair, LegacyMultisigSigner, randomKeyPair } from "./signers";
 
 export interface ArgentWallet {
   account: Account;

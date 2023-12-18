@@ -1,4 +1,4 @@
-import { num, typedData, hash, merkle, Call, uint256, BigNumberish, selector } from "starknet";
+import { typedData, uint256, BigNumberish } from "starknet";
 import { provider } from ".";
 
 export const sessionTypes = {

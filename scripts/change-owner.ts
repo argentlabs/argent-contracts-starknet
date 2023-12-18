@@ -41,6 +41,7 @@ console.log("s:", s);
 console.log("Owner before", num.toHex(await accountContract.get_owner()));
 console.log("Changing to ", num.toHex(newOwnerPublicKey));
 
+// TODO Broken now
 const response = await accountContract.change_owner(newOwnerPublicKey, r, s);
 await provider.waitForTransaction(response.transaction_hash);
 

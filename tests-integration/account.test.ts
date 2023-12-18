@@ -135,7 +135,7 @@ describe("ArgentAccount", function () {
       const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
 
       const newOwner = randomKeyPair();
-      account.signer = guardian;
+      account.signer = new MultisigSigner([guardian]);
 
       await accountContract.trigger_escape_owner(newOwner.publicKey);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
@@ -184,7 +184,7 @@ describe("ArgentAccount", function () {
 
     it("Expect the escape to be reset", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
-      account.signer = guardian;
+      account.signer = new MultisigSigner([guardian]);
 
       const newOwner = randomKeyPair();
       const newGuardian = 12n;
@@ -236,7 +236,7 @@ describe("ArgentAccount", function () {
       );
 
       const newOwner = randomKeyPair();
-      account.signer = guardian;
+      account.signer = new MultisigSigner([guardian]);
       const newGuardian = 12n;
 
       await accountContract.trigger_escape_owner(newOwner.publicKey);

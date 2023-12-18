@@ -116,7 +116,7 @@ describe("ArgentAccount", function () {
         chainId,
       );
       await accountContract.change_owner(
-        CallData.compile([starknetSignatureType(newOwner.publicKey, starknetSignature[2], starknetSignature[3])]),
+        starknetSignatureType(newOwner.publicKey, starknetSignature[2], starknetSignature[3]),
       );
 
       await accountContract.get_owner().should.eventually.equal(newOwner.publicKey);
@@ -127,21 +127,21 @@ describe("ArgentAccount", function () {
       const { accountContract } = await deployAccount(argentAccountClassHash);
       accountContract.connect(account);
       await expectRevertWithErrorMessage("argent/only-self", () =>
-        accountContract.change_owner(CallData.compile([starknetSignatureType(12n, "13", "14")])),
+        accountContract.change_owner(starknetSignatureType(12, 13, 14)),
       );
     });
 
     it("Expect 'argent/null-owner' when new_owner is zero", async function () {
       const { accountContract } = await deployAccount(argentAccountClassHash);
       await expectRevertWithErrorMessage("argent/null-owner", () =>
-        accountContract.change_owner(CallData.compile([starknetSignatureType(0n, "13", "14")])),
+        accountContract.change_owner(starknetSignatureType(0, 13, 14)),
       );
     });
 
     it("Expect 'argent/invalid-owner-sig' when the signature to change owner is invalid", async function () {
       const { accountContract } = await deployAccount(argentAccountClassHash);
       await expectRevertWithErrorMessage("argent/invalid-owner-sig", () =>
-        accountContract.change_owner(CallData.compile([starknetSignatureType(12n, "13", "14")])),
+        accountContract.change_owner(starknetSignatureType(12, 13, 14)),
       );
     });
 
@@ -165,7 +165,7 @@ describe("ArgentAccount", function () {
       );
 
       await accountContract.change_owner(
-        CallData.compile([starknetSignatureType(newOwner.publicKey, starknetSignature[2], starknetSignature[3])]),
+        starknetSignatureType(newOwner.publicKey, starknetSignature[2], starknetSignature[3]),
       );
 
       await accountContract.get_owner().should.eventually.equal(newOwner.publicKey);

@@ -136,6 +136,7 @@ export class LegacyMultisigSigner extends RawSigner {
   }
 }
 
+// TODO Re-do this whole architecture?
 export class KeyPair extends Signer {
   constructor(pk?: string | bigint) {
     super(pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`);
@@ -151,8 +152,7 @@ export class KeyPair extends Signer {
 
   public signHash(messageHash: string) {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
-    // Todo this should prob be using the fn underneath
-    return ["0", this.publicKey.toString(), r.toString(), s.toString()];
+    return starknetSignatureType(this.publicKey, r, s);
   }
 }
 
@@ -163,13 +163,19 @@ export class LegacyKeyPair extends KeyPair {
   }
 }
 
-export function starknetSignatureType(signer: bigint, r: string, s: string) {
-  return new CairoCustomEnum({
-    Starknet: { signer, r, s },
-    Secp256k1: undefined,
-    Secp256r1: undefined,
-    Webauthn: undefined,
-  });
+export function starknetSignatureType(
+  signer: bigint | number,
+  r: bigint | number | string,
+  s: bigint | number | string,
+) {
+  return CallData.compile([
+    new CairoCustomEnum({
+      Starknet: { signer, r, s },
+      Secp256k1: undefined,
+      Secp256r1: undefined,
+      Webauthn: undefined,
+    }),
+  ]);
 }
 
 export const randomKeyPair = () => new KeyPair();

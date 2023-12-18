@@ -134,7 +134,7 @@ describe("ArgentAccount: events", function () {
     const starknetSignature = newOwner.signHash(msgHash);
     const receipt = await waitForTransaction(
       await accountContract.change_owner(
-        CallData.compile([starknetSignatureType(newOwner.publicKey, starknetSignature[2], starknetSignature[3])]),
+        starknetSignatureType(newOwner.publicKey, starknetSignature[2], starknetSignature[3]),
       ),
     );
     await expectEvent(receipt, {

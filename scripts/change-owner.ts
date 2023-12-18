@@ -1,6 +1,12 @@
 import "dotenv/config";
 import { Account, num } from "starknet";
-import { getChangeOwnerMessageHash, KeyPair, loadContract, provider } from "../tests-integration/lib";
+import {
+  getChangeOwnerMessageHash,
+  KeyPair,
+  loadContract,
+  provider,
+  starknetSignatureType,
+} from "../tests-integration/lib";
 
 /// To use this script, fill the following three values:
 /// - accountAddress: the address of the account to change owner
@@ -41,8 +47,7 @@ console.log("s:", s);
 console.log("Owner before", num.toHex(await accountContract.get_owner()));
 console.log("Changing to ", num.toHex(newOwnerPublicKey));
 
-// TODO Broken now
-const response = await accountContract.change_owner(newOwnerPublicKey, r, s);
+const response = await accountContract.change_owner(starknetSignatureType(BigInt(newOwnerPublicKey), r, s));
 await provider.waitForTransaction(response.transaction_hash);
 
 console.log("Owner after ", num.toHex(await accountContract.get_owner()));

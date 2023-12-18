@@ -1,5 +1,5 @@
 use argent::common::bytes::ByteArrayExt;
-use argent::common::webauthn::{Assertion};
+use argent::common::webauthn::{WebauthnAssertion};
 use starknet::secp256_trait::Signature;
 
 const signer_1: u256 = 0x90fa3f868e09db8d7103e1302d8a7aea214a31064b50bbd2545107799d513b25;
@@ -53,8 +53,8 @@ fn get_authenticator_data() -> Span<u8> {
         .span()
 }
 
-fn assertion_1() -> (felt252, Assertion) {
-    let assertion = Assertion {
+fn assertion_1() -> (felt252, WebauthnAssertion) {
+    let assertion = WebauthnAssertion {
         authenticator_data: get_authenticator_data(),
         // challenge = 0xdeadbeef (4 bytes)
         client_data_json: "{\"type\":\"webauthn.get\",\"challenge\":\"3q2-7w\",\"origin\":\"http://localhost:5173\",\"crossOrigin\":false}"
@@ -76,8 +76,8 @@ fn assertion_1() -> (felt252, Assertion) {
     (challenge, assertion)
 }
 
-fn assertion_2() -> (felt252, Assertion) {
-    let assertion = Assertion {
+fn assertion_2() -> (felt252, WebauthnAssertion) {
+    let assertion = WebauthnAssertion {
         authenticator_data: get_authenticator_data(),
         // challenge = 0xdeadbeefff (5 bytes)
         client_data_json: "{\"type\":\"webauthn.get\",\"challenge\":\"3q2-7_8\",\"origin\":\"http://localhost:5173\",\"crossOrigin\":false}"
@@ -99,8 +99,8 @@ fn assertion_2() -> (felt252, Assertion) {
     (challenge, assertion)
 }
 
-fn assertion_3() -> (felt252, Assertion) {
-    let assertion = Assertion {
+fn assertion_3() -> (felt252, WebauthnAssertion) {
+    let assertion = WebauthnAssertion {
         authenticator_data: get_authenticator_data(),
         client_data_json: "{\"type\":\"webauthn.get\",\"challenge\":\"3q2-7_-q\",\"origin\":\"http://localhost:5173\",\"crossOrigin\":false,\"other_keys_can_be_added_here\":\"do not compare clientDataJSON against a template. See https://goo.gl/yabPex\"}"
             .into_bytes()
@@ -122,8 +122,8 @@ fn assertion_3() -> (felt252, Assertion) {
     (challenge, assertion)
 }
 
-fn assertion_4() -> (felt252, Assertion) {
-    let assertion = Assertion {
+fn assertion_4() -> (felt252, WebauthnAssertion) {
+    let assertion = WebauthnAssertion {
         authenticator_data: get_authenticator_data(),
         client_data_json: "{\"type\":\"webauthn.get\",\"challenge\":\"3q2-777vuw\",\"origin\":\"http://localhost:5173\",\"crossOrigin\":false}"
             .into_bytes()

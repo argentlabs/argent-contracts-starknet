@@ -1,5 +1,6 @@
-use argent::common::webauthn::{Assertion, Parse, get_webauthn_hash, verify_client_data_json, verify_authenticator_data};
-use array::ArrayTrait;
+use argent::common::webauthn::{
+    WebauthnAssertion, Parse, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
+};
 use core::hash::HashStateExTrait;
 use ecdsa::check_ecdsa_signature;
 use hash::{HashStateTrait, Hash};
@@ -24,7 +25,7 @@ enum SignerSignature {
     Starknet: (felt252, StarknetSignature),
     Secp256k1: (felt252, Secp256k1Signature),
     Secp256r1: (u256, Secp256r1Signature),
-    Webauthn: (u256, Assertion),
+    Webauthn: (u256, WebauthnAssertion),
 }
 
 trait Validate {
@@ -56,23 +57,16 @@ impl Felt252SignerImpl of Felt252Signer {
             SignerSignature::Starknet((signer, signature)) => signer,
             SignerSignature::Secp256k1((
                 signer, signature
-            )) => {
-                let hash_state = PoseidonTrait::new();
-                hash_state.update_with(('Secp256k1', signer)).finalize()
-            },
+            )) => { PoseidonTrait::new().update_with(('Secp256k1', signer)).finalize() },
             SignerSignature::Secp256r1((
                 signer, signature
-            )) => {
-                let hash_state = PoseidonTrait::new();
-                hash_state.update_with(('Secp256r1', signer)).finalize()
-            },
+            )) => { PoseidonTrait::new().update_with(('Secp256r1', signer)).finalize() },
             SignerSignature::Webauthn((
                 signer, signature
             )) => {
                 let origin = signature.origin();
                 let rp_id_hash = signature.rp_id_hash();
-                let hash_state = PoseidonTrait::new();
-                hash_state.update_with(('Webauthn', origin, rp_id_hash, signer)).finalize()
+                PoseidonTrait::new().update_with(('Webauthn', origin, rp_id_hash, signer)).finalize()
             },
         }
     }
@@ -93,7 +87,7 @@ fn is_valid_secp256r1_signature(hash: u256, signer: u256, signature: Secp256r1Si
     recovered_signer == signer
 }
 
-fn is_valid_webauthn_signature(hash: felt252, signer: u256, assertion: Assertion) -> bool {
+fn is_valid_webauthn_signature(hash: felt252, signer: u256, assertion: WebauthnAssertion) -> bool {
     verify_client_data_json(@assertion, hash);
     verify_authenticator_data(assertion.authenticator_data);
 

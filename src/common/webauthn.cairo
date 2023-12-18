@@ -4,7 +4,7 @@ use argent::common::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, extend};
 use starknet::secp256_trait::Signature;
 
 #[derive(Drop, Copy, Serde, PartialEq)]
-struct Assertion {
+struct WebauthnAssertion {
     authenticator_data: Span<u8>,
     client_data_json: Span<u8>,
     signature: Signature,
@@ -16,13 +16,13 @@ struct Assertion {
 }
 
 trait Parse {
-    fn origin(self: @Assertion) -> felt252;
-    fn rp_id_hash(self: @Assertion) -> u256;
+    fn origin(self: @WebauthnAssertion) -> felt252;
+    fn rp_id_hash(self: @WebauthnAssertion) -> u256;
 }
 
 impl ParseImpl of Parse {
-    fn origin(self: @Assertion) -> felt252 {
-        let Assertion{client_data_json, origin_offset, origin_length, .. } = self;
+    fn origin(self: @WebauthnAssertion) -> felt252 {
+        let WebauthnAssertion{client_data_json, origin_offset, origin_length, .. } = self;
         let origin: felt252 = (*client_data_json)
             .slice(*origin_offset, *origin_length)
             .try_into()
@@ -30,8 +30,8 @@ impl ParseImpl of Parse {
         origin
     }
 
-    fn rp_id_hash(self: @Assertion) -> u256 {
-        let Assertion{authenticator_data, .. } = self;
+    fn rp_id_hash(self: @WebauthnAssertion) -> u256 {
+        let WebauthnAssertion{authenticator_data, .. } = self;
         let rp_id_hash: u256 = (*authenticator_data).slice(0, 32).try_into().expect('invalid-rp-id-hash');
         rp_id_hash
     }
@@ -43,9 +43,9 @@ impl ParseImpl of Parse {
 /// TODO: benchmark both for (12.):
 /// - cartridge impl: base64url_encode(expected_challenge) and compare byte by byte to C.challenge 
 /// - this impl: base64url_decode(C.challenge) and compare one felt to expected_challenge
-fn verify_client_data_json(assertion: @Assertion, expected_challenge: felt252) {
+fn verify_client_data_json(assertion: @WebauthnAssertion, expected_challenge: felt252) {
     // 11. Verify that the value of C.type is the string webauthn.get.
-    let Assertion{client_data_json, type_offset, .. } = assertion;
+    let WebauthnAssertion{client_data_json, type_offset, .. } = assertion;
     let key = array!['"', 't', 'y', 'p', 'e', '"', ':', '"'];
     let actual_key = (*client_data_json).slice(*type_offset - key.len(), key.len());
     assert(actual_key == key.span(), 'invalid-type-key');
@@ -55,7 +55,7 @@ fn verify_client_data_json(assertion: @Assertion, expected_challenge: felt252) {
     assert(type_ == expected.span(), 'invalid-type');
 
     // 12. Verify that the value of C.challenge equals the base64url encoding of options.challenge.
-    let Assertion{challenge_offset, challenge_length, .. } = assertion;
+    let WebauthnAssertion{challenge_offset, challenge_length, .. } = assertion;
     let key = array!['"', 'c', 'h', 'a', 'l', 'l', 'e', 'n', 'g', 'e', '"', ':', '"'];
     let actual_key = (*client_data_json).slice(*challenge_offset - key.len(), key.len());
     assert(actual_key == key.span(), 'invalid-challenge-key');
@@ -66,13 +66,14 @@ fn verify_client_data_json(assertion: @Assertion, expected_challenge: felt252) {
     assert(challenge == expected_challenge, 'invalid-challenge');
 
     // 13. Verify that the value of C.origin matches the Relying Party's origin.
-    let Assertion{origin_offset, origin_length, .. } = assertion;
+    // NOTE: origin is checked by comparing the value in storage
+    let WebauthnAssertion{origin_offset, origin_length, .. } = assertion;
     let key = array!['"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'];
     let actual_key = (*client_data_json).slice(*origin_offset - key.len(), key.len());
     assert(actual_key == key.span(), 'invalid-origin-key');
-// NOTE: origin is checked by comapring the value in storage
 
-// 14. Skipping tokenBindings
+    // 14. Skipping tokenBindings
+    ()
 }
 
 /// Example data:
@@ -91,14 +92,14 @@ fn verify_authenticator_data(authenticator_data: Span<u8>) {
 
     // 17. If user verification is required for this assertion, verify that the User Verified bit of the flags in authData is set.
     assert((flags & 4) == 4, 'unverified-user');
-// 18. Skipping extensions
-
+    // 18. Skipping extensions
+    ()
 }
 
-fn get_webauthn_hash(assertion: @Assertion) -> u256 {
-    let Assertion{authenticator_data, client_data_json, .. } = assertion;
-    let client_data_hash = sha256(span_to_array(*client_data_json));
-    let mut message: Array<u8> = span_to_array(*authenticator_data);
+fn get_webauthn_hash(assertion: @WebauthnAssertion) -> u256 {
+    let WebauthnAssertion{authenticator_data, client_data_json, .. } = assertion;
+    let client_data_hash = sha256((*client_data_json).snapshot.clone());
+    let mut message: Array<u8> = (*authenticator_data).snapshot.clone();
     extend(ref message, @client_data_hash);
     let message_hash: u256 = sha256(message).span().try_into().expect('invalid-message-hash');
     message_hash
@@ -115,15 +116,4 @@ fn decode_base64(mut encoded: Array<u8>) -> Array<u8> {
     }
     let decoded = Base64UrlDecoder::decode(encoded);
     decoded
-}
-
-fn span_to_array<T, +Drop<T>, +Copy<T>>(mut span: Span<T>) -> Array<T> {
-    let mut arr: Array<T> = array![];
-    loop {
-        match span.pop_front() {
-            Option::Some(current) => { arr.append(*current); },
-            Option::None => { break; }
-        };
-    };
-    arr
 }

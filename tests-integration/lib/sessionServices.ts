@@ -11,6 +11,7 @@ import {
   transaction,
   selector,
   Account,
+  uint256,
 } from "starknet";
 import {
   OffChainSession,
@@ -107,15 +108,16 @@ export class DappService {
 
   public createSessionRequest(
     allowed_methods: AllowedMethod[],
-    token_limits: TokenAmount[],
+    token_amounts: TokenAmount[],
     expires_at = 150,
-    max_fee_usage = 1_000_000_000_000_000n,
+    max_fee_usage = { token_address: "0x0000", amount: uint256.bnToUint256(1000000n) },
     nft_contracts: string[] = [],
   ): OffChainSession {
     return {
       expires_at,
       allowed_methods,
-      token_limits,
+      token_amounts,
+      nft_contracts,
       max_fee_usage,
       guardian_key: this.argentBackend.get_guardian_key(),
       session_key: this.sessionKey.publicKey,

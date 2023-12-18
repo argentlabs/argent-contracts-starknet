@@ -1,5 +1,7 @@
 use box::BoxTrait;
-use hash::{HashStateTrait, HashStateExTrait, LegacyHash};
+use core::option::OptionTrait;
+use core::traits::Into;
+use hash::{HashStateTrait, HashStateExTrait, LegacyHash, Hash};
 use pedersen::PedersenTrait;
 use starknet::account::Call;
 use starknet::{get_tx_info, get_contract_address, ContractAddress};
@@ -11,7 +13,7 @@ struct StarknetSignature {
     s: felt252,
 }
 
-#[derive(Drop, Serde, Copy)]
+#[derive(Hash, Drop, Serde, Copy)]
 struct TokenAmount {
     token_address: ContractAddress,
     amount: u256,
@@ -22,7 +24,8 @@ struct Session {
     expires_at: u64,
     allowed_methods_root: felt252,
     token_amounts: Span<TokenAmount>,
-    max_fee_usage: u128,
+    nft_contracts: Span<ContractAddress>,
+    max_fee_usage: TokenAmount,
     guardian_key: felt252,
     session_key: felt252,
 }
@@ -47,7 +50,7 @@ struct StarkNetDomain {
 const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
 const SESSION_TYPE_HASH: felt252 =
     selector!(
-        "Session(Expires At:u128,Allowed Methods:merkletree,Token Amounts:TokenAmount*,Max Fee Usage:felt,Guardian Key:felt,Session Key:felt)TokenAmount(token_address:ContractAddress,amount:u256)u256(low:u128,high:u128)"
+        "Session(Expires At:u128,Allowed Methods:merkletree,Token Amounts:TokenAmount*,NFT Contracts:felt*,Max Fee Usage:TokenAmount,Guardian Key:felt,Session Key:felt)TokenAmount(token_address:ContractAddress,amount:u256)u256(low:u128,high:u128)"
     );
 const TOKEN_AMOUNT_TYPE_HASH: felt252 =
     selector!("TokenAmount(token_address:ContractAddress,amount:u256)u256(low:u128,high:u128)");
@@ -86,10 +89,11 @@ impl StructHashSession of IStructHash<Session> {
         state = state.update_with(*self.expires_at);
         state = state.update_with(*self.allowed_methods_root);
         state = state.update_with((*self).token_amounts.get_struct_hash());
-        state = state.update_with(*self.max_fee_usage);
+        state = state.update_with((*self).nft_contracts.get_struct_hash());
+        state = state.update_with((*self).max_fee_usage.get_struct_hash());
         state = state.update_with(*self.guardian_key);
         state = state.update_with(*self.session_key);
-        state = state.update_with(7);
+        state = state.update_with(8);
         state.finalize()
     }
 }

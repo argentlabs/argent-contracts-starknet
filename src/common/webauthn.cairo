@@ -95,10 +95,10 @@ fn verify_authenticator_data(authenticator_data: Span<u8>) {
 
 }
 
-fn get_webauthn_hash(assertion: Assertion) -> u256 {
+fn get_webauthn_hash(assertion: @Assertion) -> u256 {
     let Assertion{authenticator_data, client_data_json, .. } = assertion;
-    let client_data_hash = sha256(span_to_array(client_data_json));
-    let mut message = span_to_array(authenticator_data);
+    let client_data_hash = sha256(span_to_array(*client_data_json));
+    let mut message: Array<u8> = span_to_array(*authenticator_data);
     extend(ref message, @client_data_hash);
     let message_hash: u256 = sha256(message).span().try_into().expect('invalid-message-hash');
     message_hash
@@ -119,9 +119,11 @@ fn decode_base64(mut encoded: Array<u8>) -> Array<u8> {
 
 fn span_to_array<T, +Drop<T>, +Copy<T>>(mut span: Span<T>) -> Array<T> {
     let mut arr: Array<T> = array![];
-    match span.pop_front() {
-        Option::Some(current) => { arr.append(*current); },
-        Option::None => {}
+    loop {
+        match span.pop_front() {
+            Option::Some(current) => { arr.append(*current); },
+            Option::None => { break; }
+        };
     };
     arr
 }

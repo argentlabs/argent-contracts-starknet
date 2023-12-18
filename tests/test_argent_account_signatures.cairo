@@ -35,7 +35,7 @@ fn valid_no_guardian() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(20000000)]
 fn valid_with_guardian() {
     let signatures = to_starknet_signer_signatures(
         array![owner_pubkey, owner_r, owner_s, guardian_pubkey, guardian_r, guardian_s]
@@ -44,7 +44,7 @@ fn valid_with_guardian() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(20000000)]
 fn valid_with_guardian_backup() {
     let account = initialize_account_with(owner_pubkey, 1);
     account.change_guardian_backup(guardian_backup_pubkey);
@@ -148,7 +148,7 @@ fn invalid_empty_signature_without_guardian() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(20000000)]
 #[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
 fn invalid_signature_length_without_guardian() {
     let account = initialize_account_without_guardian();

@@ -54,12 +54,17 @@ impl Felt252SignerImpl of Felt252Signer {
     fn signer_as_felt252(self: SignerSignature) -> felt252 {
         match self {
             SignerSignature::Starknet((signer, signature)) => signer,
-            SignerSignature::Secp256k1((signer, signature)) => signer,
+            SignerSignature::Secp256k1((
+                signer, signature
+            )) => {
+                let hash_state = PoseidonTrait::new();
+                hash_state.update_with(('Secp256k1', signer)).finalize()
+            },
             SignerSignature::Secp256r1((
                 signer, signature
             )) => {
                 let hash_state = PoseidonTrait::new();
-                hash_state.update_with(signer).finalize()
+                hash_state.update_with(('Secp256r1', signer)).finalize()
             },
             SignerSignature::Webauthn((
                 signer, signature
@@ -67,7 +72,7 @@ impl Felt252SignerImpl of Felt252Signer {
                 let origin = signature.origin();
                 let rp_id_hash = signature.rp_id_hash();
                 let hash_state = PoseidonTrait::new();
-                hash_state.update_with((origin, rp_id_hash, signer)).finalize()
+                hash_state.update_with(('Webauthn', origin, rp_id_hash, signer)).finalize()
             },
         }
     }
@@ -92,6 +97,6 @@ fn is_valid_webauthn_signature(hash: felt252, signer: u256, assertion: Assertion
     verify_client_data_json(@assertion, hash);
     verify_authenticator_data(assertion.authenticator_data);
 
-    let signed_hash = get_webauthn_hash(assertion);
+    let signed_hash = get_webauthn_hash(@assertion);
     is_valid_secp256r1_signature(signed_hash, signer, assertion.signature)
 }

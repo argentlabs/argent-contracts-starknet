@@ -120,10 +120,10 @@ export async function deployOldAccount(): Promise<ArgentWalletWithGuardian> {
 
 async function deployAccountInner(
   params: DeployAccountParams,
-): Promise<DeployAccountParams & { account: Account; accountClassHash: string; owner: KeyPair; salt: string }> {
+): Promise<DeployAccountParams & { account: Account; classHash: string; owner: KeyPair; salt: string }> {
   const finalParams = {
     ...params,
-    accountClassHash: params.accountClassHash ?? (await declareContract("ArgentAccount")),
+    classHash: params.classHash ?? (await declareContract("ArgentAccount")),
     salt: params.salt ?? num.toHex(randomKeyPair().privateKey),
     owner: params.owner ?? randomKeyPair(),
     useTxV3: params.useTxV3 ?? false,
@@ -137,7 +137,7 @@ async function deployAccountInner(
 
   const contractAddress = hash.calculateContractAddressFromHash(
     finalParams.salt,
-    finalParams.accountClassHash,
+    finalParams.classHash,
     constructorCalldata,
     0,
   );
@@ -155,14 +155,14 @@ async function deployAccountInner(
   let transactionHash;
   if (finalParams.selfDeploy) {
     const { transaction_hash } = await account.deploySelf({
-      classHash: finalParams.accountClassHash,
+      classHash: finalParams.classHash,
       constructorCalldata,
       addressSalt: finalParams.salt,
     });
     transactionHash = transaction_hash;
   } else {
     const { transaction_hash } = await deployer.deployContract({
-      classHash: finalParams.accountClassHash,
+      classHash: finalParams.classHash,
       salt: finalParams.salt,
       unique: false,
       constructorCalldata,
@@ -176,7 +176,7 @@ async function deployAccountInner(
 
 export type DeployAccountParams = {
   useTxV3?: boolean;
-  accountClassHash?: string;
+  classHash?: string;
   owner?: KeyPair;
   guardian?: KeyPair;
   salt?: string;

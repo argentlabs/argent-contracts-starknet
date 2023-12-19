@@ -23,7 +23,7 @@ export type DeployMultisigParams = {
   threshold: number;
   signersLength: number;
   useTxV3?: boolean;
-  accountClassHash?: string;
+  classHash?: string;
   salt?: string;
   fundingAmount?: number | bigint;
   selfDeploy?: boolean;
@@ -33,7 +33,7 @@ export type DeployMultisigParams = {
 export async function deployMultisig(params: DeployMultisigParams): Promise<MultisigWallet> {
   const finalParams = {
     ...params,
-    accountClassHash: params.accountClassHash ?? (await declareContract("ArgentMultisig")),
+    classHash: params.classHash ?? (await declareContract("ArgentMultisig")),
     salt: params.salt ?? num.toHex(randomKeyPair().privateKey),
     useTxV3: params.useTxV3 ?? false,
     selfDeploy: params.selfDeploy ?? true,
@@ -46,7 +46,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
 
   const contractAddress = hash.calculateContractAddressFromHash(
     finalParams.salt,
-    finalParams.accountClassHash,
+    finalParams.classHash,
     constructorCalldata,
     0,
   );
@@ -63,14 +63,14 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   let transactionHash;
   if (finalParams.selfDeploy) {
     const { transaction_hash } = await account.deploySelf({
-      classHash: finalParams.accountClassHash,
+      classHash: finalParams.classHash,
       constructorCalldata,
       addressSalt: finalParams.salt,
     });
     transactionHash = transaction_hash;
   } else {
     const { transaction_hash } = await deployer.deployContract({
-      classHash: finalParams.accountClassHash,
+      classHash: finalParams.classHash,
       salt: finalParams.salt,
       unique: false,
       constructorCalldata,

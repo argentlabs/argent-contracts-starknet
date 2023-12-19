@@ -1,8 +1,6 @@
 import { maxBy, omit, sortBy } from "lodash-es";
 import { provider } from "./provider";
-import { ensureAccepted, ensureIncluded } from "./receipts";
-import { isEqual } from "lodash-es";
-import { RPC } from "starknet";
+import { ensureIncluded } from "./receipts";
 const ethUsd = 2000n;
 
 interface TransactionCarrying {

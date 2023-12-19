@@ -3,7 +3,6 @@ import { uint256 } from "starknet";
 import { deployAccount, getEthContract, getEthBalance, expectRevertWithErrorMessage, fundAccount } from "./lib";
 
 describe.only("ArgentAccount: TxV3", function () {
-  before(async () => {});
 
   it("Should be possible to send eth", async function () {
     const { account } = await deployAccount({ useTxV3: true });

@@ -1,8 +1,7 @@
 import { expect } from "chai";
 import { CallData } from "starknet";
 import {
-  declareContract,
-  deployMultisig,
+  deployMultisig1_1,
   deployMultisig1_3,
   expectEvent,
   expectRevertWithErrorMessage,
@@ -16,7 +15,7 @@ describe("ArgentMultisig: signer storage", function () {
       const newSigner2 = randomKeyPair().publicKey;
       const newSigner3 = randomKeyPair().publicKey;
 
-      const { accountContract, signers } = await deployMultisig({ threshold: 1, signersLength: 1 });
+      const { accountContract, signers } = await deployMultisig1_1();
 
       await accountContract.is_signer(signers[0]).should.eventually.be.true;
       await accountContract.is_signer(newSigner1).should.eventually.be.false;
@@ -192,7 +191,7 @@ describe("ArgentMultisig: signer storage", function () {
     it("Should replace one signer", async function () {
       const newSigner = randomKeyPair().publicKey;
 
-      const { accountContract, signers } = await deployMultisig({ threshold: 1, signersLength: 1 });
+      const { accountContract, signers } = await deployMultisig1_1();
 
       const { transaction_hash } = await accountContract.replace_signer(signers[0], newSigner);
 

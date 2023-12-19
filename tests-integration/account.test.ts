@@ -115,9 +115,7 @@ describe("ArgentAccount", function () {
         newOwner,
         chainId,
       );
-      await accountContract.change_owner(
-        starknetSignatureType(newOwner.publicKey, starknetSignature[2], starknetSignature[3]),
-      );
+      await accountContract.change_owner(starknetSignature);
 
       await accountContract.get_owner().should.eventually.equal(newOwner.publicKey);
     });
@@ -149,7 +147,7 @@ describe("ArgentAccount", function () {
       const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
 
       const newOwner = randomKeyPair();
-      account.signer = new MultisigSigner([guardian]);
+      account.signer = new ArgentSigner(guardian);
 
       await accountContract.trigger_escape_owner(newOwner.publicKey);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
@@ -164,9 +162,7 @@ describe("ArgentAccount", function () {
         chainId,
       );
 
-      await accountContract.change_owner(
-        starknetSignatureType(newOwner.publicKey, starknetSignature[2], starknetSignature[3]),
-      );
+      await accountContract.change_owner(starknetSignature);
 
       await accountContract.get_owner().should.eventually.equal(newOwner.publicKey);
       await hasOngoingEscape(accountContract).should.eventually.be.false;
@@ -205,7 +201,7 @@ describe("ArgentAccount", function () {
 
     it("Expect the escape to be reset", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
-      account.signer = new MultisigSigner([guardian]);
+      account.signer = new ArgentSigner(guardian);
 
       const newOwner = randomKeyPair();
       const newGuardian = 12n;
@@ -257,7 +253,7 @@ describe("ArgentAccount", function () {
       );
 
       const newOwner = randomKeyPair();
-      account.signer = new MultisigSigner([guardian]);
+      account.signer = new ArgentSigner(guardian);
       const newGuardian = 12n;
 
       await accountContract.trigger_escape_owner(newOwner.publicKey);

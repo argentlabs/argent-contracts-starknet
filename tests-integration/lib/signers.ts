@@ -97,23 +97,6 @@ export abstract class RawSigner implements SignerInterface {
   }
 }
 
-export class ArgentSigner extends RawSigner {
-  constructor(
-    public owner: KeyPair = randomKeyPair(),
-    public guardian?: KeyPair,
-  ) {
-    super();
-  }
-
-  public async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    const signers = [this.owner];
-    if (this.guardian) {
-      signers.push(this.guardian);
-    }
-    return new MultisigSigner(signers).signRaw(messageHash);
-  }
-}
-
 export class MultisigSigner extends RawSigner {
   constructor(public keys: KeyPair[]) {
     super();
@@ -122,6 +105,19 @@ export class MultisigSigner extends RawSigner {
   async signRaw(messageHash: string): Promise<ArraySignatureType> {
     const keys = this.keys.map((key) => key.signHash(messageHash));
     return [keys.length.toString(), keys.flat()].flat();
+  }
+}
+
+export class ArgentSigner extends MultisigSigner {
+  constructor(
+    public owner: KeyPair = randomKeyPair(),
+    public guardian?: KeyPair,
+  ) {
+    const signers = [owner];
+    if (guardian) {
+      signers.push(guardian);
+    }
+    super(signers);
   }
 }
 
@@ -136,7 +132,6 @@ export class LegacyMultisigSigner extends RawSigner {
   }
 }
 
-// TODO Re-do this whole architecture?
 export class KeyPair extends Signer {
   constructor(pk?: string | bigint) {
     super(pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`);

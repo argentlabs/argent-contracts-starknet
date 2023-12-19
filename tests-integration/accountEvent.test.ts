@@ -13,7 +13,6 @@ import {
   setTime,
   declareFixtureContract,
   waitForTransaction,
-  MultisigSigner,
   starknetSignatureType,
 } from "./lib";
 
@@ -49,7 +48,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'EscapeOwnerTriggered(ready_at, new_owner)' on trigger_escape_owner", async function () {
     const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
-    account.signer = new MultisigSigner([guardian]);
+    account.signer = new ArgentSigner(guardian);
 
     const newOwner = "42";
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
@@ -64,7 +63,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'OwnerEscaped', 'OwnerRemoved' and 'OwnerAdded' on escape_owner", async function () {
     const { account, accountContract, guardian, owner } = await deployAccount(argentAccountClassHash);
-    account.signer = new MultisigSigner([guardian]);
+    account.signer = new ArgentSigner(guardian);
 
     const newOwner = "42";
     await setTime(42);
@@ -93,7 +92,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'EscapeGuardianTriggered(ready_at, new_owner)' on trigger_escape_guardian", async function () {
     const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
-    account.signer = new MultisigSigner([owner]);
+    account.signer = new ArgentSigner(owner);
 
     const newGuardian = "42";
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
@@ -108,7 +107,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'GuardianEscaped(new_signer)' on escape_guardian", async function () {
     const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
-    account.signer = new MultisigSigner([owner]);
+    account.signer = new ArgentSigner(owner);
     const newGuardian = "42";
     await setTime(42);
 
@@ -132,11 +131,7 @@ describe("ArgentAccount: events", function () {
 
     const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
     const starknetSignature = newOwner.signHash(msgHash);
-    const receipt = await waitForTransaction(
-      await accountContract.change_owner(
-        starknetSignatureType(newOwner.publicKey, starknetSignature[2], starknetSignature[3]),
-      ),
-    );
+    const receipt = await waitForTransaction(await accountContract.change_owner(starknetSignature));
     await expectEvent(receipt, {
       from_address: accountContract.address,
       eventName: "OwnerChanged",
@@ -197,7 +192,7 @@ describe("ArgentAccount: events", function () {
   describe("Expect 'EscapeCanceled()'", function () {
     it("Expected on cancel_escape", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
-      account.signer = new MultisigSigner([owner]);
+      account.signer = new ArgentSigner(owner);
 
       await accountContract.trigger_escape_guardian(42);
 
@@ -210,7 +205,7 @@ describe("ArgentAccount: events", function () {
 
     it("Expected on trigger_escape_owner", async function () {
       const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
-      account.signer = new MultisigSigner([guardian]);
+      account.signer = new ArgentSigner(guardian);
 
       await accountContract.trigger_escape_owner(42);
 
@@ -222,7 +217,7 @@ describe("ArgentAccount: events", function () {
 
     it("Expected on trigger_escape_guardian", async function () {
       const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
-      account.signer = new MultisigSigner([owner]);
+      account.signer = new ArgentSigner(owner);
 
       await accountContract.trigger_escape_guardian(42);
 

@@ -34,7 +34,7 @@ if (owner !== ownerSigner.publicKey) {
 // if (BigInt(newOwnerPublicKey) !== newOwner.publicKey) {
 //   throw new Error(`new owner public key ${newOwnerPublicKey} != derived ${newOwner.publicKey}`);
 // }
-// const [r, s] = await signChangeOwnerMessage(accountContract.address, owner, newOwner, provider);
+// const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner, newOwner, provider);
 
 // remote signing:
 const chainId = await provider.getChainId();

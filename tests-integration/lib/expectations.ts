@@ -23,7 +23,6 @@ export async function expectRevertWithErrorMessage(
     }
     await provider.waitForTransaction(executionResult["transaction_hash"]);
   } catch (e: any) {
-    // console.log(e);
     expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
     return;
   }

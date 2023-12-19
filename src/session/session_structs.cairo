@@ -1,6 +1,3 @@
-use box::BoxTrait;
-use core::option::OptionTrait;
-use core::traits::Into;
 use hash::{HashStateTrait, HashStateExTrait, LegacyHash, Hash};
 use pedersen::PedersenTrait;
 use starknet::account::Call;

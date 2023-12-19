@@ -17,14 +17,14 @@ mod HybridSessionAccount {
         },
         upgrade::{IUpgradeable, do_upgrade}
     };
-    use argent::session::session::session_component;
     use argent::session::session::session_component::InternalImpl;
+    use argent::session::session::session_component;
     use ecdsa::check_ecdsa_signature;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
-        ClassHash, get_block_timestamp, get_execution_info, get_contract_address, get_tx_info,
-        VALIDATED, replace_class_syscall, account::Call
+        ClassHash, get_block_timestamp, get_execution_info, get_contract_address, get_tx_info, VALIDATED,
+        replace_class_syscall, account::Call
     };
 
     const NAME: felt252 = 'SessionAccount';

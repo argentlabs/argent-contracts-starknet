@@ -1,5 +1,5 @@
 use argent::account::argent_account::ArgentAccount;
-use argent::common::signer_signature::{SignerSignature, StarknetSignature};
+use argent::common::signer_signature::{SignerSignature, StarknetSignature, StarknetSigner};
 use argent_tests::setup::account_test_setup::{
     ITestArgentAccountDispatcherTrait, owner_pubkey, wrong_owner_pubkey, initialize_account_with, initialize_account,
     initialize_account_without_guardian
@@ -91,7 +91,7 @@ fn change_owner() {
 
     set_contract_address(contract_address_const::<1>());
     let signer_signature = SignerSignature::Starknet(
-        (new_owner_pubkey, StarknetSignature { r: new_owner_r, s: new_owner_s })
+        (StarknetSigner { pubkey: new_owner_pubkey }, StarknetSignature { r: new_owner_r, s: new_owner_s })
     );
     account.change_owner(signer_signature);
     assert(account.get_owner() == new_owner_pubkey, 'value should be new owner pub');
@@ -104,7 +104,7 @@ fn change_owner_only_self() {
     let account = initialize_account();
     set_contract_address(contract_address_const::<42>());
     let signer_signature = SignerSignature::Starknet(
-        (new_owner_pubkey, StarknetSignature { r: new_owner_r, s: new_owner_s })
+        (StarknetSigner { pubkey: new_owner_pubkey }, StarknetSignature { r: new_owner_r, s: new_owner_s })
     );
     account.change_owner(signer_signature);
 }
@@ -114,7 +114,9 @@ fn change_owner_only_self() {
 #[should_panic(expected: ('argent/null-owner', 'ENTRYPOINT_FAILED'))]
 fn change_owner_to_zero() {
     let account = initialize_account();
-    let signer_signature = SignerSignature::Starknet((0, StarknetSignature { r: new_owner_r, s: new_owner_s }));
+    let signer_signature = SignerSignature::Starknet(
+        (StarknetSigner { pubkey: 0 }, StarknetSignature { r: new_owner_r, s: new_owner_s })
+    );
     account.change_owner(signer_signature);
 }
 
@@ -124,7 +126,7 @@ fn change_owner_to_zero() {
 fn change_owner_invalid_message() {
     let account = initialize_account();
     let signer_signature = SignerSignature::Starknet(
-        (new_owner_pubkey, StarknetSignature { r: wrong_owner_r, s: wrong_owner_s })
+        (StarknetSigner { pubkey: new_owner_pubkey }, StarknetSignature { r: wrong_owner_r, s: wrong_owner_s })
     );
     account.change_owner(signer_signature);
 }
@@ -135,7 +137,7 @@ fn change_owner_invalid_message() {
 fn change_owner_wrong_pub_key() {
     let account = initialize_account();
     let signer_signature = SignerSignature::Starknet(
-        (wrong_owner_pubkey, StarknetSignature { r: new_owner_r, s: new_owner_s })
+        (StarknetSigner { pubkey: wrong_owner_pubkey }, StarknetSignature { r: new_owner_r, s: new_owner_s })
     );
     account.change_owner(signer_signature);
 }

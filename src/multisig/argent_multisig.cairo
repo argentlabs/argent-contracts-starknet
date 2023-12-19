@@ -11,7 +11,7 @@ mod ArgentMultisig {
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component
         },
         upgrade::{IUpgradeable, do_upgrade, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
-        signer_signature::{SignerSignature, Felt252Signer, Validate}, interface::IArgentMultisig,
+        signer_signature::{SignerSignature, SignerSignatureTrait}, interface::IArgentMultisig,
         serialization::full_deserialize
     };
     use argent::multisig::{interface::IDeprecatedArgentMultisig, signer_list::signer_list_component};

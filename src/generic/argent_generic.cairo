@@ -14,7 +14,7 @@ mod ArgentGenericAccount {
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
-        signer_signature::{SignerSignature, Felt252Signer, Validate}, interface::IArgentMultisig,
+        signer_signature::{SignerSignature, SignerSignatureTrait}, interface::IArgentMultisig,
         serialization::full_deserialize
     };
     use argent::generic::{interface::{IRecoveryAccount}, recovery::{EscapeStatus, Escape, EscapeEnabled}};

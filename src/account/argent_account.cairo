@@ -16,7 +16,7 @@ mod ArgentAccount {
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
         upgrade::{IUpgradeable, do_upgrade, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
-        signer_signature::{SignerSignature, Validate, Felt252Signer}, serialization::full_deserialize
+        signer_signature::{SignerSignature, SignerSignatureTrait}, serialization::full_deserialize
     };
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;

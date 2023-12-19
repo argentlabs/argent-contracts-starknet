@@ -13,14 +13,9 @@ import {
   setTime,
   declareFixtureContract,
   waitForTransaction,
-  restartDevnetIfTooLong,
 } from "./lib";
 
 describe("ArgentAccount: events", function () {
-  before(async () => {
-    await restartDevnetIfTooLong();
-  });
-
   it("Expect 'AccountCreated' and 'OwnerAddded' when deploying an account", async function () {
     const owner = "21";
     const guardian = "42";

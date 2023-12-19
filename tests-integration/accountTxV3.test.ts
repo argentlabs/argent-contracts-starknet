@@ -4,12 +4,8 @@ import {
   declareContract,
   deployAccount,
   deployer,
-  ensureAccepted,
-  expectEvent,
-  expectRevertWithErrorMessage,
   getEthContract,
   loadContract,
-  restartDevnetIfTooLong,
   getEthBalance,
   fundAccount,
 } from "./lib";
@@ -19,7 +15,6 @@ describe("ArgentAccount: TxV3", function () {
   let ethContract: Contract;
 
   before(async () => {
-    await restartDevnetIfTooLong();
     const testDappClassHash = await declareContract("TestDapp");
     const { contract_address } = await deployer.deployContract({ classHash: testDappClassHash });
     testDappContract = await loadContract(contract_address);

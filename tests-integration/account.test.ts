@@ -14,14 +14,12 @@ import {
   provider,
   randomKeyPair,
   signChangeOwnerMessage,
-  restartDevnetIfTooLong,
 } from "./lib";
 
 describe("ArgentAccount", function () {
   let argentAccountClassHash: string;
 
   before(async () => {
-    await restartDevnetIfTooLong();
     argentAccountClassHash = await declareContract("ArgentAccount");
   });
 

@@ -7,14 +7,9 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   randomKeyPair,
-  restartDevnetIfTooLong,
 } from "./lib";
 
 describe("ArgentMultisig: signer storage", function () {
-  before(async () => {
-    await restartDevnetIfTooLong();
-  });
-
   describe("add_signers(new_threshold, signers_to_add)", function () {
     it("Should add one new signer", async function () {
       const newSigner1 = randomKeyPair().publicKey;

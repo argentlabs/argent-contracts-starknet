@@ -1,13 +1,9 @@
 import { expect } from "chai";
 import { num, shortString } from "starknet";
-import { expectRevertWithErrorMessage, randomKeyPair, restartDevnetIfTooLong } from "./lib";
+import { expectRevertWithErrorMessage, randomKeyPair } from "./lib";
 import { deployMultisig, deployMultisig1_1 } from "./lib/multisig";
 
 describe("ArgentMultisig: signing", function () {
-  before(async () => {
-    await restartDevnetIfTooLong();
-  });
-
   const VALID = BigInt(shortString.encodeShortString("VALID"));
 
   describe("is_valid_signature(hash, signatures)", function () {

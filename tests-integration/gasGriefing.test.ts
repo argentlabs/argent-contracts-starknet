@@ -1,20 +1,7 @@
-import {
-  ArgentSigner,
-  declareContract,
-  deployAccount,
-  expectExecutionRevert,
-  fundAccount,
-  randomKeyPair,
-  waitForTransaction,
-  restartDevnetIfTooLong,
-} from "./lib";
+import { ArgentSigner, deployAccount, expectExecutionRevert, randomKeyPair, waitForTransaction } from "./lib";
 import { num } from "starknet";
 describe("Gas griefing", function () {
   this.timeout(320000);
-
-  before(async () => {
-    await restartDevnetIfTooLong();
-  });
 
   // run test with both TxV1 and TxV3
   for (const useTxV3 of [false, true]) {
@@ -66,7 +53,7 @@ describe("Gas griefing", function () {
       },
     };
     const targetTip = maxEscapeTip + 1n;
-    const tipInStrkPerL2Gas = (targetTip / maxL2GasAmount) + 1n;
+    const tipInStrkPerL2Gas = targetTip / maxL2GasAmount + 1n;
     await expectExecutionRevert("argent/tip-too-high", () =>
       account.execute(accountContract.populateTransaction.trigger_escape_owner(newOwnerPubKey), undefined, {
         resourceBounds: newResourceBounds,

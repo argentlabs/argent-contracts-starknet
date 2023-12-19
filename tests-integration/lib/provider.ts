@@ -31,15 +31,3 @@ export const restartDevnet = async () => {
     clearCache();
   }
 };
-
-// Unfortunate hack to restart devnet once in a while since otherwise the memory keeps increasing until it crashes
-export const restartDevnetIfTooLong = async () => {
-  if (!provider.isDevnet) return false;
-  const restartInterval = 1000 * 60; // 1 minute
-  if (Date.now() - lastRestartTime > restartInterval) {
-    console.log("Restarting devnet...");
-    await restartDevnet();
-    return true;
-  }
-  return false;
-};

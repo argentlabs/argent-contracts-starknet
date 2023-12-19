@@ -22,7 +22,6 @@ import {
   setTime,
   upgradeAccount,
   declareFixtureContract,
-  restartDevnetIfTooLong,
 } from "./lib";
 
 describe("ArgentAccount: escape mechanism", function () {
@@ -53,7 +52,7 @@ describe("ArgentAccount: escape mechanism", function () {
   }
 
   beforeEach(async () => {
-    if ((await restartDevnetIfTooLong()) || !argentAccountClassHash) {
+    if (!argentAccountClassHash) {
       argentAccountClassHash = await declareContract("ArgentAccount");
       oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
       proxyClassHash = await declareFixtureContract("Proxy");

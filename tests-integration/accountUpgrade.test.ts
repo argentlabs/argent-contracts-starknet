@@ -11,7 +11,6 @@ import {
   upgradeAccount,
   declareFixtureContract,
   expectEvent,
-  restartDevnetIfTooLong,
 } from "./lib";
 
 describe("ArgentAccount: upgrade", function () {
@@ -23,8 +22,6 @@ describe("ArgentAccount: upgrade", function () {
   let testDapp: Contract;
 
   before(async () => {
-    await restartDevnetIfTooLong();
-
     argentAccountClassHash = await declareContract("ArgentAccount");
     // This is the same as ArgentAccount but with a different version (to have another class hash)
     // Done to be able to test upgradability

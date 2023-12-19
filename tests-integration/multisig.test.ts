@@ -1,12 +1,8 @@
 import { CallData, shortString } from "starknet";
-import { expectEvent, expectRevertWithErrorMessage, randomKeyPair, restartDevnetIfTooLong } from "./lib";
+import { expectEvent, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig", function () {
-  before(async () => {
-    await restartDevnetIfTooLong();
-  });
-
   it("Should deploy multisig contract", async function () {
     const { accountContract, signers, receipt, threshold } = await deployMultisig({ threshold: 1, signersLength: 2 });
 

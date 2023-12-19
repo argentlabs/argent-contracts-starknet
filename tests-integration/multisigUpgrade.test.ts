@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { declareContract, provider, upgradeAccount, declareFixtureContract, restartDevnetIfTooLong } from "./lib";
+import { declareContract, provider, upgradeAccount, declareFixtureContract } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: upgrade", function () {
@@ -7,7 +7,6 @@ describe("ArgentMultisig: upgrade", function () {
   let testDappClassHash: string;
 
   before(async () => {
-    await restartDevnetIfTooLong();
     // This is the same as Argent Multisig but with a different version (to have another class hash)
     // Done to be able to test upgradability
     argentMultisigFutureClassHash = await declareFixtureContract("ArgentMultisigFutureVersion");

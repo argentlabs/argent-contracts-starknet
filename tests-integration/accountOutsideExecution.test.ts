@@ -15,7 +15,6 @@ import {
   randomKeyPair,
   setTime,
   waitForTransaction,
-  restartDevnetIfTooLong,
 } from "./lib";
 
 const initialTime = 1713139200;
@@ -26,7 +25,6 @@ describe("ArgentAccount: outside execution", function () {
   let testDapp: Contract;
 
   before(async () => {
-    await restartDevnetIfTooLong();
     const testDappClassHash = await declareContract("TestDapp");
     const { contract_address } = await deployer.deployContract({
       classHash: testDappClassHash,

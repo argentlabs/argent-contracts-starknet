@@ -1,4 +1,4 @@
-import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num } from "starknet";
+import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num, RPC } from "starknet";
 import {
   KeyPair,
   MultisigSigner,
@@ -48,7 +48,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     finalParams.salt,
     finalParams.classHash,
     constructorCalldata,
-    0,
+    0 /* deployerAddress */,
   );
 
   if (finalParams.useTxV3) {
@@ -56,9 +56,10 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   } else {
     await fundAccount(contractAddress, finalParams.fundingAmount ?? 1e15, "ETH"); // 0.001 ETH
   }
+  const defaultTxVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
 
   const deploymentSigner = new MultisigSigner(keys.filter((_, i) => finalParams.deploymentIndexes.includes(i)));
-  const account = new Account(provider, contractAddress, deploymentSigner, "1");
+  const account = new Account(provider, contractAddress, deploymentSigner, "1", defaultTxVersion);
 
   let transactionHash;
   if (finalParams.selfDeploy) {

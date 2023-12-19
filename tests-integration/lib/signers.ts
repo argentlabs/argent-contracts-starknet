@@ -164,7 +164,7 @@ export class LegacyKeyPair extends KeyPair {
 }
 
 export function starknetSignatureType(
-  signer: bigint | number,
+  signer: bigint | number | string,
   r: bigint | number | string,
   s: bigint | number | string,
 ) {

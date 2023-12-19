@@ -8,6 +8,9 @@ import {
   uint256,
   UniversalDeployerContractPayload,
   UniversalDetails,
+  Abi,
+  ProviderInterface,
+  AccountInterface,
 } from "starknet";
 import { deployer } from "./accounts";
 import { provider } from "./provider";
@@ -22,6 +25,17 @@ let strkContract: Contract;
 
 export const contractsFolder = "./target/release/argent_";
 export const fixturesFolder = "./tests-integration/fixtures/argent_";
+
+export class ContractWithClassHash extends Contract {
+  constructor(
+    abi: Abi,
+    address: string,
+    providerOrAccount: ProviderInterface | AccountInterface,
+    public readonly classHash: string,
+  ) {
+    super(abi, address, providerOrAccount);
+  }
+}
 
 export async function getEthContract() {
   if (ethContract) {
@@ -90,7 +104,7 @@ export async function declareFixtureContract(contractName: string, wait = true):
   return await declareContract(contractName, wait, fixturesFolder);
 }
 
-export async function loadContract(contractAddress: string): Promise<Contract> {
+export async function loadContract(contractAddress: string, classHash?: string): Promise<ContractWithClassHash> {
   const { abi } = await provider.getClassAt(contractAddress);
   if (!abi) {
     throw new Error("Error while getting ABI");
@@ -98,7 +112,12 @@ export async function loadContract(contractAddress: string): Promise<Contract> {
   // TODO WARNING THIS IS A TEMPORARY FIX WHILE WE WAIT FOR SNJS TO BE UPDATED
   // Allows to pull back the function from one level down
   const parsedAbi = abi.flatMap((e) => (e.type == "interface" ? e.items : e));
-  return new Contract(parsedAbi, contractAddress, provider);
+  return new ContractWithClassHash(
+    parsedAbi,
+    contractAddress,
+    provider,
+    classHash ?? (await provider.getClassHashAt(contractAddress)),
+  );
 }
 
 export function readContract(path: string) {
@@ -110,8 +129,8 @@ export async function deployContract(
   payload: Omit<UniversalDeployerContractPayload, "classHash"> | UniversalDeployerContractPayload[] = {},
   details?: UniversalDetails,
   folder = contractsFolder,
-): Promise<Contract> {
+): Promise<ContractWithClassHash> {
   const declaredClassHash = await declareContract(contractName, true, folder);
   const { contract_address } = await deployer.deployContract({ ...payload, classHash: declaredClassHash }, details);
-  return await loadContract(contract_address);
+  return await loadContract(contract_address, declaredClassHash);
 }

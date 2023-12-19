@@ -10,13 +10,13 @@ import {
   upgradeAccount,
   declareFixtureContract,
   expectEvent,
+  ContractWithClassHash,
 } from "./lib";
 
 describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let argentAccountFutureClassHash: string;
-  let testDappClassHash: string;
-  let testDapp: Contract;
+  let testDapp: ContractWithClassHash;
 
   before(async () => {
     argentAccountClassHash = await declareContract("ArgentAccount");
@@ -65,7 +65,7 @@ describe("ArgentAccount: upgrade", function () {
     await upgradeAccount(account, "0x01").should.be.rejectedWith(
       `Class with hash ClassHash(\\n    StarkFelt(\\n        \\"0x0000000000000000000000000000000000000000000000000000000000000001\\",\\n    ),\\n) is not declared`,
     );
-    await upgradeAccount(account, testDappClassHash).should.be.rejectedWith(
+    await upgradeAccount(account, testDapp.classHash).should.be.rejectedWith(
       `EntryPointSelector(StarkFelt(\\"0x00fe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283\\")) not found in contract`,
     );
   });

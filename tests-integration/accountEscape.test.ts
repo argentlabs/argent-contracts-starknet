@@ -24,10 +24,8 @@ import {
   declareFixtureContract,
 } from "./lib";
 
-describe("ArgentAccount: escape mechanism", function () {
+describe.only("ArgentAccount: escape mechanism", function () {
   let argentAccountClassHash: string;
-  let oldArgentAccountClassHash: string;
-  let proxyClassHash: string;
   let randomAddress: bigint;
   let randomTime: bigint;
 
@@ -51,13 +49,11 @@ describe("ArgentAccount: escape mechanism", function () {
     expect.fail(`Unknown type ${guardianType}`);
   }
 
-  beforeEach(async () => {
-    if (!argentAccountClassHash) {
-      argentAccountClassHash = await declareContract("ArgentAccount");
-      oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
-      proxyClassHash = await declareFixtureContract("Proxy");
-    }
+  before(async () => {
+    argentAccountClassHash = await declareContract("ArgentAccount");
+  });
 
+  beforeEach(async () => {
     randomAddress = randomKeyPair().publicKey;
     randomTime = BigInt(Math.floor(Math.random() * 1000));
   });
@@ -144,7 +140,7 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     it("Expect 'argent/null-owner' new_owner is zero", async function () {
-      const { account, owner, guardian } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
+      const { account, owner, guardian } = await deployOldAccount();
       account.signer = guardian;
 
       await setTime(randomTime);

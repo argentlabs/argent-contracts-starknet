@@ -14,8 +14,7 @@ import {
   AllowArray,
   Call,
 } from "starknet";
-import { getEthContract, getStrkContract, loadContract, declareContract } from "./contracts";
-import { mintEth } from "./devnet";
+import { getEthContract, getStrkContract, loadContract, declareContract, declareFixtureContract } from "./contracts";
 import { provider } from "./provider";
 import { ArgentSigner, KeyPair, randomKeyPair } from "./signers";
 
@@ -88,13 +87,11 @@ export function setDefaultTransactionVersionV3(account: ArgentAccount): ArgentAc
 
 console.log("Deployer:", deployer.address);
 
-export async function deployOldAccount(
-  proxyClassHash: string,
-  oldArgentAccountClassHash: string,
-): Promise<ArgentWalletWithGuardian> {
+export async function deployOldAccount(): Promise<ArgentWalletWithGuardian> {
+  const proxyClassHash = await declareFixtureContract("OldArgentAccount");
+  const oldArgentAccountClassHash = await declareFixtureContract("Proxy");
   const owner = randomKeyPair();
   const guardian = randomKeyPair();
-
   const constructorCalldata = CallData.compile({
     implementation: oldArgentAccountClassHash,
     selector: hash.getSelectorFromName("initialize"),

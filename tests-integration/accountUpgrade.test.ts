@@ -16,8 +16,6 @@ import {
 describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let argentAccountFutureClassHash: string;
-  let oldArgentAccountClassHash: string;
-  let proxyClassHash: string;
   let testDappClassHash: string;
   let testDapp: Contract;
 
@@ -26,8 +24,6 @@ describe("ArgentAccount: upgrade", function () {
     // This is the same as ArgentAccount but with a different version (to have another class hash)
     // Done to be able to test upgradability
     argentAccountFutureClassHash = await declareFixtureContract("ArgentAccountFutureVersion");
-    oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
-    proxyClassHash = await declareFixtureContract("Proxy");
     testDappClassHash = await declareContract("TestDapp");
     const { contract_address } = await deployer.deployContract({
       classHash: testDappClassHash,
@@ -36,7 +32,7 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Upgrade cairo 0 to current version", async function () {
-    const { account, owner } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
+    const { account, owner } = await deployOldAccount();
     const receipt = await upgradeAccount(account, argentAccountClassHash, ["0"]);
     const newClashHash = await provider.getClassHashAt(account.address);
     expect(BigInt(newClashHash)).to.equal(BigInt(argentAccountClassHash));
@@ -48,7 +44,7 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Upgrade cairo 0 to cairo 1 with multicall", async function () {
-    const { account, owner } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
+    const { account, owner } = await deployOldAccount();
     const receipt = await upgradeAccount(
       account,
       argentAccountClassHash,

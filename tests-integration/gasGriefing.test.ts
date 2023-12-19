@@ -52,7 +52,7 @@ describe("Gas griefing", function () {
       },
     };
     const targetTip = maxEscapeTip + 1n;
-    const tipInStrkPerL2Gas = targetTip / maxL2GasAmount + 1n;
+    const tipInStrkPerL2Gas = targetTip / maxL2GasAmount + 1n; // Add one to make sure it's rounded up
     await expectExecutionRevert("argent/tip-too-high", () =>
       account.execute(accountContract.populateTransaction.trigger_escape_owner(newOwnerPubKey), undefined, {
         resourceBounds: newResourceBounds,

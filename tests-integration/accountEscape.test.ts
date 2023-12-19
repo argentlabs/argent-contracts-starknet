@@ -21,10 +21,9 @@ import {
   randomKeyPair,
   setTime,
   upgradeAccount,
-  declareFixtureContract,
 } from "./lib";
 
-describe.only("ArgentAccount: escape mechanism", function () {
+describe("ArgentAccount: escape mechanism", function () {
   let argentAccountClassHash: string;
   let randomAddress: bigint;
   let randomTime: bigint;

@@ -88,8 +88,8 @@ export function setDefaultTransactionVersionV3(account: ArgentAccount): ArgentAc
 console.log("Deployer:", deployer.address);
 
 export async function deployOldAccount(): Promise<ArgentWalletWithGuardian> {
-  const proxyClassHash = await declareFixtureContract("OldArgentAccount");
-  const oldArgentAccountClassHash = await declareFixtureContract("Proxy");
+  const proxyClassHash = await declareFixtureContract("Proxy");
+  const oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
   const owner = randomKeyPair();
   const guardian = randomKeyPair();
   const constructorCalldata = CallData.compile({

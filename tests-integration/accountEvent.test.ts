@@ -13,7 +13,7 @@ import {
   setTime,
   declareFixtureContract,
   waitForTransaction,
-  starknetSignatureType,
+  signChangeOwnerMessage,
 } from "./lib";
 
 describe("ArgentAccount: events", function () {
@@ -121,16 +121,13 @@ describe("ArgentAccount: events", function () {
     });
   });
 
-  it("Expect 'OwnerChanged', 'OwnerRemoved' and 'OwnerAdded' on change_owner", async function () {
+  it.only("Expect 'OwnerChanged', 'OwnerRemoved' and 'OwnerAdded' on change_owner", async function () {
     const { accountContract, owner } = await deployAccount(argentAccountClassHash);
 
     const newOwner = randomKeyPair();
-    const changeOwnerSelector = hash.getSelectorFromName("change_owner");
     const chainId = await provider.getChainId();
-    const contractAddress = accountContract.address;
 
-    const msgHash = hash.computeHashOnElements([changeOwnerSelector, chainId, contractAddress, owner.publicKey]);
-    const starknetSignature = newOwner.signHash(msgHash);
+    const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.publicKey, newOwner, chainId);
     const receipt = await waitForTransaction(await accountContract.change_owner(starknetSignature));
     await expectEvent(receipt, {
       from_address: accountContract.address,

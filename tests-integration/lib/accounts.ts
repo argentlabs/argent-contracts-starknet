@@ -238,15 +238,10 @@ export async function fundAccount(recipient: string, amount: number | bigint, to
     return;
   }
   if (token === "ETH") {
-    if (provider.isDevnet) {
-      await mintEth(recipient, amount);
-    } else {
-      const ethContract = await getEthContract();
-      ethContract.connect(deployer);
-
-      const response = await ethContract.invoke("transfer", CallData.compile([recipient, uint256.bnToUint256(amount)]));
-      await provider.waitForTransaction(response.transaction_hash);
-    }
+    const ethContract = await getEthContract();
+    ethContract.connect(deployer);
+    const response = await ethContract.invoke("transfer", CallData.compile([recipient, uint256.bnToUint256(amount)]));
+    await provider.waitForTransaction(response.transaction_hash);
   } else if (token === "STRK") {
     const strkContract = await getStrkContract();
     strkContract.connect(deployer);

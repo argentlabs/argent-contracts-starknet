@@ -106,10 +106,10 @@ mod session_component {
         }
     }
 
+    #[inline(always)]
     fn is_valid_signature_generic(hash: felt252, signer: felt252, signature: StarknetSignature) -> bool {
         check_ecdsa_signature(hash, signer, signature.r, signature.s)
     }
-
 
     fn assert_valid_session_calls(token: SessionToken, mut calls: Span<Call>) {
         assert(token.proofs.len() == calls.len(), 'unaligned-proofs');

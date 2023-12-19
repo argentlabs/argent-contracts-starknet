@@ -21,7 +21,7 @@ describe("ArgentAccount: events", function () {
     await restartDevnetIfTooLong();
   });
 
-  it.("Expect 'AccountCreated' and 'OwnerAddded' when deploying an account", async function () {
+  it("Expect 'AccountCreated' and 'OwnerAddded' when deploying an account", async function () {
     const owner = "21";
     const guardian = "42";
     const constructorCalldata = CallData.compile({ owner, guardian });

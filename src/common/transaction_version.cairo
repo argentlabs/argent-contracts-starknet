@@ -29,7 +29,6 @@ fn assert_correct_declare_version(tx_version: felt252) {
 
 #[inline(always)]
 fn assert_no_unsupported_v3_fields() {
-    // TODO needs to be commented out to work
     let tx_info = get_tx_info().unbox();
     assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
 }
@@ -44,15 +43,3 @@ fn get_execution_info() -> Box<starknet::info::v2::ExecutionInfo> {
 fn get_tx_info() -> Box<starknet::info::v2::TxInfo> {
     get_execution_info().unbox().tx_info
 }
-// TODO: to remove, allows to easily switch between v1 and v3 temporarily
-// #[inline(always)]
-// fn get_execution_info() -> Box<starknet::info::ExecutionInfo> {
-//     starknet::syscalls::get_execution_info_syscall().unwrap_syscall()
-// }
-
-// #[inline(always)]
-// fn get_tx_info() -> Box<starknet::info::TxInfo> {
-//     get_execution_info().unbox().tx_info
-// }
-
-

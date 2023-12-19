@@ -4,9 +4,8 @@ import {
   declareContract,
   deployAccount,
   deployOldAccount,
-  deployer,
+  deployContract,
   getUpgradeDataLegacy,
-  loadContract,
   provider,
   upgradeAccount,
   declareFixtureContract,
@@ -24,11 +23,7 @@ describe("ArgentAccount: upgrade", function () {
     // This is the same as ArgentAccount but with a different version (to have another class hash)
     // Done to be able to test upgradability
     argentAccountFutureClassHash = await declareFixtureContract("ArgentAccountFutureVersion");
-    testDappClassHash = await declareContract("TestDapp");
-    const { contract_address } = await deployer.deployContract({
-      classHash: testDappClassHash,
-    });
-    testDapp = await loadContract(contract_address);
+    testDapp = await deployContract("TestDapp");
   });
 
   it("Upgrade cairo 0 to current version", async function () {

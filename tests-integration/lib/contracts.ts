@@ -1,5 +1,14 @@
 import { readFileSync } from "fs";
-import { CompiledSierra, Contract, DeclareContractPayload, json, num, uint256 } from "starknet";
+import {
+  CompiledSierra,
+  Contract,
+  DeclareContractPayload,
+  json,
+  num,
+  uint256,
+  UniversalDeployerContractPayload,
+  UniversalDetails,
+} from "starknet";
 import { deployer } from "./accounts";
 import { provider } from "./provider";
 
@@ -81,7 +90,7 @@ export async function declareFixtureContract(contractName: string, wait = true):
   return await declareContract(contractName, wait, fixturesFolder);
 }
 
-export async function loadContract(contractAddress: string) {
+export async function loadContract(contractAddress: string): Promise<Contract> {
   const { abi } = await provider.getClassAt(contractAddress);
   if (!abi) {
     throw new Error("Error while getting ABI");
@@ -94,4 +103,15 @@ export async function loadContract(contractAddress: string) {
 
 export function readContract(path: string) {
   return json.parse(readFileSync(path).toString("ascii"));
+}
+
+export async function deployContract(
+  contractName: string,
+  payload: Omit<UniversalDeployerContractPayload, "classHash"> | UniversalDeployerContractPayload[] = {},
+  details?: UniversalDetails,
+  folder = contractsFolder,
+): Promise<Contract> {
+  const declaredClassHash = await declareContract(contractName, true, folder);
+  const { contract_address } = await deployer.deployContract({ ...payload, classHash: declaredClassHash }, details);
+  return await loadContract(contract_address);
 }

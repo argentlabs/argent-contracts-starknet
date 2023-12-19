@@ -86,11 +86,15 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   return { account, accountContract, keys, signers, receipt, threshold: BigInt(finalParams.threshold) };
 }
 
-export async function deployMultisig1_3(): Promise<MultisigWallet> {
-  return deployMultisig({ threshold: 1, signersLength: 3 });
+export async function deployMultisig1_3(
+  params: Omit<DeployMultisigParams, "threshold" | "signersLength"> = {},
+): Promise<MultisigWallet> {
+  return deployMultisig({ ...params, threshold: 1, signersLength: 3 });
 }
-export async function deployMultisig1_1(): Promise<MultisigWallet> {
-  return deployMultisig({ threshold: 1, signersLength: 1 });
+export async function deployMultisig1_1(
+  params: Omit<DeployMultisigParams, "threshold" | "signersLength"> = {},
+): Promise<MultisigWallet> {
+  return deployMultisig({ ...params, threshold: 1, signersLength: 1 });
 }
 
 const sortedKeyPairs = (length: number) => randomKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));

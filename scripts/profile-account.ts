@@ -1,16 +1,12 @@
 import {
-  declareContract,
   deployAccount,
   deployAccountWithoutGuardian,
-  deployer,
   deployOldAccount,
-  loadContract,
+  deployContract,
 } from "../tests-integration/lib";
 import { makeProfiler } from "../tests-integration/lib/gas";
 
-const testDappClassHash = await declareContract("TestDapp");
-const { contract_address } = await deployer.deployContract({ classHash: testDappClassHash });
-const testDappContract = await loadContract(contract_address);
+const testDappContract = await deployContract("TestDapp");
 
 const profiler = makeProfiler();
 

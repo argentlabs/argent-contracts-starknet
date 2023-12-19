@@ -31,13 +31,15 @@ describe("ArgentAccount", function () {
     await accountContract.get_guardian_backup().should.eventually.equal(0n);
   });
 
-  it("Self deployment", async function () {
-    const { accountContract, owner } = await deployAccountWithoutGuardian({ selfDeploy: true });
+  for (const useTxV3 of [false, true]) {
+    it(`Self deployment (TxV3:${useTxV3})`, async function () {
+      const { accountContract, owner } = await deployAccountWithoutGuardian({ useTxV3, selfDeploy: true });
 
-    await accountContract.get_owner().should.eventually.equal(owner.publicKey);
-    await accountContract.get_guardian().should.eventually.equal(0n);
-    await accountContract.get_guardian_backup().should.eventually.equal(0n);
-  });
+      await accountContract.get_owner().should.eventually.equal(owner.publicKey);
+      await accountContract.get_guardian().should.eventually.equal(0n);
+      await accountContract.get_guardian_backup().should.eventually.equal(0n);
+    });
+  }
 
   it("Deploy two accounts with the same owner", async function () {
     const owner = randomKeyPair();
@@ -138,7 +140,7 @@ describe("ArgentAccount", function () {
     });
 
     it("Expect the escape to be reset", async function () {
-      const { account, accountContract, owner, guardian } = await deployAccount({ useTxV3: true });
+      const { account, accountContract, owner, guardian } = await deployAccount();
 
       const newOwner = randomKeyPair();
       account.signer = guardian;

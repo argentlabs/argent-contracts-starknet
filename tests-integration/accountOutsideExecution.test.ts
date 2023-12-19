@@ -3,14 +3,13 @@ import { Contract, num, shortString } from "starknet";
 import {
   ArgentSigner,
   OutsideExecution,
-  declareContract,
   deployAccount,
   deployer,
   expectExecutionRevert,
   getOutsideCall,
   getOutsideExecutionCall,
   getTypedDataHash,
-  loadContract,
+  deployContract,
   provider,
   randomKeyPair,
   setTime,
@@ -25,11 +24,7 @@ describe("ArgentAccount: outside execution", function () {
   let testDapp: Contract;
 
   before(async () => {
-    const testDappClassHash = await declareContract("TestDapp");
-    const { contract_address } = await deployer.deployContract({
-      classHash: testDappClassHash,
-    });
-    testDapp = await loadContract(contract_address);
+    testDapp = await deployContract("TestDapp");
   });
 
   it("Correct message hash", async function () {

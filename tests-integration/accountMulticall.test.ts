@@ -8,9 +8,9 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   getEthContract,
-  loadContract,
   waitForTransaction,
   getEthBalance,
+  deployContract,
 } from "./lib";
 
 describe("ArgentAccount: multicall", function () {
@@ -18,11 +18,7 @@ describe("ArgentAccount: multicall", function () {
   let ethContract: Contract;
 
   before(async () => {
-    const testDappClassHash = await declareContract("TestDapp");
-    const { contract_address } = await deployer.deployContract({
-      classHash: testDappClassHash,
-    });
-    testDappContract = await loadContract(contract_address);
+    testDappContract = await deployContract("TestDapp");
     ethContract = await getEthContract();
   });
 

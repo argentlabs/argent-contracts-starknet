@@ -26,7 +26,7 @@ mod HybridSessionAccount {
         VALIDATED, replace_class_syscall, account::Call
     };
 
-    const NAME: felt252 = 'ArgentAccount';
+    const NAME: felt252 = 'SessionAccount';
     const VERSION_MAJOR: u8 = 0;
     const VERSION_MINOR: u8 = 3;
     const VERSION_PATCH: u8 = 0;

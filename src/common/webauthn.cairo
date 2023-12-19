@@ -84,7 +84,7 @@ fn verify_client_data_json(assertion: @WebauthnAssertion, expected_challenge: fe
 /// Memory layout: https://www.w3.org/TR/webauthn/#sctn-authenticator-data
 fn verify_authenticator_data(authenticator_data: Span<u8>) {
     // 15. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party. 
-    // NOTE: rpIdHash is checked by comapring the value in storage
+    // NOTE: rpIdHash is checked by comparing the value in storage
 
     // 16. Verify that the User Present bit of the flags in authData is set.
     let flags: u128 = (*authenticator_data.at(32)).into();

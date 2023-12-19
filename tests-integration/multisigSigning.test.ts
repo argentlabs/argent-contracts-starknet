@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { num, shortString } from "starknet";
-import { declareContract, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
+import { MultisigSigner, declareContract, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig: signing", function () {
@@ -19,8 +19,7 @@ describe("ArgentMultisig: signing", function () {
 
       const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      let signatures = ["1"];
-      signatures = signatures.concat(keys[0].signHash(messageHash));
+      const signatures = await new MultisigSigner(keys).signRaw(messageHash);
 
       const validSignatureResult = await accountContract.is_valid_signature(BigInt(messageHash), signatures);
 
@@ -34,9 +33,7 @@ describe("ArgentMultisig: signing", function () {
 
       const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      let signatures = ["2"];
-      signatures = signatures.concat(keys[0].signHash(messageHash));
-      signatures = signatures.concat(keys[1].signHash(messageHash));
+      const signatures = await new MultisigSigner(keys).signRaw(messageHash);
 
       const validSignatureResult = await accountContract.is_valid_signature(BigInt(messageHash), signatures);
 
@@ -50,9 +47,7 @@ describe("ArgentMultisig: signing", function () {
 
       const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      let signatures = ["2"];
-      signatures = signatures.concat(keys[1].signHash(messageHash));
-      signatures = signatures.concat(keys[0].signHash(messageHash));
+      const signatures = await new MultisigSigner(keys.reverse()).signRaw(messageHash);
 
       await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
         accountContract.is_valid_signature(BigInt(messageHash), signatures),
@@ -66,9 +61,7 @@ describe("ArgentMultisig: signing", function () {
 
       const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      let signatures = ["2"];
-      signatures = signatures.concat(keys[0].signHash(messageHash));
-      signatures = signatures.concat(keys[0].signHash(messageHash));
+      const signatures = await new MultisigSigner([keys[0], keys[0]]).signRaw(messageHash);
 
       await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
         accountContract.is_valid_signature(BigInt(messageHash), signatures),
@@ -82,8 +75,7 @@ describe("ArgentMultisig: signing", function () {
 
       const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
 
-      let signatures = ["1"];
-      signatures = signatures.concat(keys[0].signHash(messageHash));
+      const signatures = await new MultisigSigner([keys[0]]).signRaw(messageHash);
 
       await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
         accountContract.is_valid_signature(BigInt(messageHash), signatures),
@@ -97,8 +89,7 @@ describe("ArgentMultisig: signing", function () {
 
       const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
       const invalid = randomKeyPair();
-      let signatures = ["1"];
-      signatures = signatures.concat(invalid.signHash(messageHash));
+      const signatures = await new MultisigSigner([invalid]).signRaw(messageHash);
 
       await expectRevertWithErrorMessage("argent/not-a-signer", () =>
         accountContract.is_valid_signature(BigInt(messageHash), signatures),
@@ -119,9 +110,11 @@ describe("ArgentMultisig: signing", function () {
       const [r] = keys[0].signHash(messageHash);
 
       await expectRevertWithErrorMessage("argent/undeserializable", () =>
+        // Missing S argument
         accountContract.is_valid_signature(BigInt(messageHash), [1, 0, signers[0], r]),
       );
 
+      // No SignerSignature
       await expectRevertWithErrorMessage("argent/undeserializable", () =>
         accountContract.is_valid_signature(BigInt(messageHash), []),
       );

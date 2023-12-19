@@ -8,20 +8,16 @@ import {
   waitForTransaction,
   restartDevnetIfTooLong,
 } from "./lib";
-import { expect } from "chai";
 
 describe("Gas griefing", function () {
   this.timeout(320000);
 
-  let argentAccountClassHash: string;
-
   before(async () => {
     await restartDevnetIfTooLong();
-    argentAccountClassHash = await declareContract("ArgentAccount");
   });
 
   it("Block guardian attempts", async function () {
-    const { account, guardian, accountContract } = await deployAccount(argentAccountClassHash);
+    const { account, guardian, accountContract } = await deployAccount();
     account.signer = new ArgentSigner(guardian);
 
     for (let attempt = 1; attempt <= 5; attempt++) {
@@ -33,8 +29,8 @@ describe("Gas griefing", function () {
   });
 
   it("Block high fee", async function () {
-    const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
-    await fundAccount(account.address, 50000000000000001n);
+    const { account, accountContract, guardian } = await deployAccount();
+    await fundAccount(account.address, 50000000000000001n, "ETH");
     account.signer = new ArgentSigner(guardian);
     await expectExecutionRevert("argent/max-fee-too-high", () =>
       account.execute(accountContract.populateTransaction.trigger_escape_owner(randomKeyPair().publicKey), undefined, {

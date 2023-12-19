@@ -17,19 +17,16 @@ import {
 } from "./lib";
 
 describe("ArgentAccount: events", function () {
-  let argentAccountClassHash: string;
-
   before(async () => {
     await restartDevnetIfTooLong();
-    argentAccountClassHash = await declareContract("ArgentAccount");
   });
 
-  it("Expect 'AccountCreated' and 'OwnerAddded' when deploying an account", async function () {
+  it.("Expect 'AccountCreated' and 'OwnerAddded' when deploying an account", async function () {
     const owner = "21";
     const guardian = "42";
     const constructorCalldata = CallData.compile({ owner, guardian });
     const { transaction_hash, contract_address } = await deployer.deployContract({
-      classHash: argentAccountClassHash,
+      classHash: await declareContract("ArgentAccount"),
       constructorCalldata,
     });
 
@@ -48,7 +45,7 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'EscapeOwnerTriggered(ready_at, new_owner)' on trigger_escape_owner", async function () {
-    const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, guardian } = await deployAccount();
     account.signer = guardian;
 
     const newOwner = "42";
@@ -63,7 +60,7 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'OwnerEscaped', 'OwnerRemoved' and 'OwnerAdded' on escape_owner", async function () {
-    const { account, accountContract, guardian, owner } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, guardian, owner } = await deployAccount();
     account.signer = guardian;
 
     const newOwner = "42";
@@ -92,7 +89,7 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'EscapeGuardianTriggered(ready_at, new_owner)' on trigger_escape_guardian", async function () {
-    const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, owner } = await deployAccount();
     account.signer = owner;
 
     const newGuardian = "42";
@@ -107,7 +104,7 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'GuardianEscaped(new_signer)' on escape_guardian", async function () {
-    const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, owner } = await deployAccount();
     account.signer = owner;
     const newGuardian = "42";
     await setTime(42);
@@ -123,7 +120,7 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'OwnerChanged', 'OwnerRemoved' and 'OwnerAdded' on change_owner", async function () {
-    const { accountContract, owner } = await deployAccount(argentAccountClassHash);
+    const { accountContract, owner } = await deployAccount();
 
     const newOwner = randomKeyPair();
     const changeOwnerSelector = hash.getSelectorFromName("change_owner");
@@ -153,7 +150,7 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'GuardianChanged(new_guardian)' on change_guardian", async function () {
-    const { accountContract } = await deployAccount(argentAccountClassHash);
+    const { accountContract } = await deployAccount();
 
     const newGuardian = "42";
 
@@ -165,7 +162,7 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'GuardianBackupChanged(new_guardian_backup)' on change_guardian_backup", async function () {
-    const { accountContract } = await deployAccount(argentAccountClassHash);
+    const { accountContract } = await deployAccount();
 
     const newGuardianBackup = "42";
 
@@ -177,7 +174,7 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'AccountUpgraded(new_implementation)' on upgrade", async function () {
-    const { account, accountContract } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract } = await deployAccount();
     const argentAccountFutureClassHash = await declareFixtureContract("ArgentAccountFutureVersion");
 
     await expectEvent(
@@ -192,7 +189,7 @@ describe("ArgentAccount: events", function () {
 
   describe("Expect 'EscapeCanceled()'", function () {
     it("Expected on cancel_escape", async function () {
-      const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
+      const { account, accountContract, owner, guardian } = await deployAccount();
       account.signer = owner;
 
       await accountContract.trigger_escape_guardian(42);
@@ -205,7 +202,7 @@ describe("ArgentAccount: events", function () {
     });
 
     it("Expected on trigger_escape_owner", async function () {
-      const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
+      const { account, accountContract, guardian } = await deployAccount();
       account.signer = guardian;
 
       await accountContract.trigger_escape_owner(42);
@@ -217,7 +214,7 @@ describe("ArgentAccount: events", function () {
     });
 
     it("Expected on trigger_escape_guardian", async function () {
-      const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
+      const { account, accountContract, owner } = await deployAccount();
       account.signer = owner;
 
       await accountContract.trigger_escape_guardian(42);
@@ -231,7 +228,7 @@ describe("ArgentAccount: events", function () {
 
   describe("Expect 'TransactionExecuted(transaction_hash, retdata)' on multicall", function () {
     it("Expect ret data to contain one array with one element when making a simple transaction", async function () {
-      const { account } = await deployAccount(argentAccountClassHash);
+      const { account } = await deployAccount();
       const ethContract = await getEthContract();
       ethContract.connect(account);
 
@@ -248,7 +245,7 @@ describe("ArgentAccount: events", function () {
     });
 
     it("Expect retdata to contain multiple data when making a multicall transaction", async function () {
-      const { account } = await deployAccount(argentAccountClassHash);
+      const { account } = await deployAccount();
       const ethContract = await getEthContract();
       ethContract.connect(account);
 

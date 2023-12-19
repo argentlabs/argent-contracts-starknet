@@ -9,15 +9,14 @@ import {
   expectRevertWithErrorMessage,
   loadContract,
   restartDevnetIfTooLong,
+  deployMultisig1_1,
 } from "./lib";
 
 describe("ArgentMultisig: Execute", function () {
-  let multisigAccountClassHash: string;
   let testDappContract: Contract;
 
   before(async () => {
     await restartDevnetIfTooLong();
-    multisigAccountClassHash = await declareContract("ArgentMultisig");
     const testDappClassHash = await declareContract("TestDapp");
     const { contract_address } = await deployer.deployContract({
       classHash: testDappClassHash,
@@ -26,10 +25,7 @@ describe("ArgentMultisig: Execute", function () {
   });
 
   it("Should be able to execute a transaction using one owner when (signer_list = 1, threshold = 1)", async function () {
-    const threshold = 1;
-    const signersLength = 1;
-
-    const { account } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+    const { account } = await deployMultisig1_1();
 
     await testDappContract.get_number(account.address).should.eventually.equal(0n);
 
@@ -48,10 +44,7 @@ describe("ArgentMultisig: Execute", function () {
   });
 
   it("Should be able to execute a transaction using one owner when (signer_list > 1, threshold = 1) ", async function () {
-    const threshold = 1;
-    const signersLength = 3;
-
-    const { account, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+    const { account, keys } = await deployMultisig({ threshold: 1, signersLength: 3 });
 
     account.signer = new MultisigSigner(keys.slice(0, 1));
 
@@ -62,10 +55,7 @@ describe("ArgentMultisig: Execute", function () {
   });
 
   it("Should be able to execute a transaction using multiple owners when (signer_list > 1, threshold > 1)", async function () {
-    const threshold = 3;
-    const signersLength = 5;
-
-    const { account, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+    const { account, keys } = await deployMultisig({ threshold: 3, signersLength: 5 });
 
     account.signer = new MultisigSigner(keys.slice(0, 3));
 
@@ -76,10 +66,7 @@ describe("ArgentMultisig: Execute", function () {
   });
 
   it("Should be able to execute multiple transactions using multiple owners when (signer_list > 1, threshold > 1)", async function () {
-    const threshold = 3;
-    const signersLength = 5;
-
-    const { account, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+    const { account, keys } = await deployMultisig({ threshold: 3, signersLength: 5 });
 
     account.signer = new MultisigSigner(keys.slice(0, 3));
     const calls = await account.execute([
@@ -93,10 +80,7 @@ describe("ArgentMultisig: Execute", function () {
   });
 
   it("Expect 'argent/signatures-not-sorted' when signed tx is given in the wrong order (signer_list > 1, threshold > 1)", async function () {
-    const threshold = 3;
-    const signersLength = 5;
-
-    const { account, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+    const { account, keys } = await deployMultisig({ threshold: 3, signersLength: 5 });
 
     testDappContract.connect(account);
 
@@ -111,10 +95,7 @@ describe("ArgentMultisig: Execute", function () {
   });
 
   it("Expect 'argent/signatures-not-sorted' when tx is signed by one owner twice (signer_list > 1, threshold > 1)", async function () {
-    const threshold = 3;
-    const signersLength = 5;
-
-    const { account, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+    const { account, keys } = await deployMultisig({ threshold: 3, signersLength: 5 });
 
     testDappContract.connect(account);
 

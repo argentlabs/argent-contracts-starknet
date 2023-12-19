@@ -1,30 +1,14 @@
 import { CallData, shortString } from "starknet";
-import {
-  declareContract,
-  expectEvent,
-  expectRevertWithErrorMessage,
-  randomKeyPair,
-  restartDevnetIfTooLong,
-} from "./lib";
+import { expectEvent, expectRevertWithErrorMessage, randomKeyPair, restartDevnetIfTooLong } from "./lib";
 import { deployMultisig } from "./lib/multisig";
 
 describe("ArgentMultisig", function () {
-  let multisigAccountClassHash: string;
-
   before(async () => {
     await restartDevnetIfTooLong();
-    multisigAccountClassHash = await declareContract("ArgentMultisig");
   });
 
   it("Should deploy multisig contract", async function () {
-    const threshold = 1;
-    const signersLength = 2;
-
-    const { accountContract, signers, receipt } = await deployMultisig(
-      multisigAccountClassHash,
-      threshold,
-      signersLength,
-    );
+    const { accountContract, signers, receipt, threshold } = await deployMultisig({ threshold: 1, signersLength: 2 });
 
     await expectEvent(receipt, {
       from_address: accountContract.address,
@@ -54,16 +38,13 @@ describe("ArgentMultisig", function () {
   });
 
   it("Should fail to deploy with invalid signatures", async function () {
-    const threshold = 1;
-    const signersLength = 2;
-
     await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {
-      const { receipt } = await deployMultisig(multisigAccountClassHash, threshold, signersLength, []);
+      const { receipt } = await deployMultisig({ threshold: 1, signersLength: 2, deploymentIndexes: [] });
       return receipt;
     });
 
     await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {
-      const { receipt } = await deployMultisig(multisigAccountClassHash, threshold, signersLength, [0, 1]);
+      const { receipt } = await deployMultisig({ threshold: 1, signersLength: 2, deploymentIndexes: [0, 1] });
       return receipt;
     });
   });

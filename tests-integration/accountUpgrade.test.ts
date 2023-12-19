@@ -67,13 +67,13 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Upgrade from current version FutureVersion", async function () {
-    const { account } = await deployAccount(argentAccountClassHash);
+    const { account } = await deployAccount();
     await upgradeAccount(account, argentAccountFutureClassHash);
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountFutureClassHash));
   });
 
   it("Reject invalid upgrade targets", async function () {
-    const { account } = await deployAccount(argentAccountClassHash);
+    const { account } = await deployAccount();
     await upgradeAccount(account, "0x01").should.be.rejectedWith(
       `Class with hash ClassHash(\\n    StarkFelt(\\n        \\"0x0000000000000000000000000000000000000000000000000000000000000001\\",\\n    ),\\n) is not declared`,
     );

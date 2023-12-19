@@ -23,12 +23,10 @@ describe("ArgentAccount: outside execution", function () {
   // Avoid timeout
   this.timeout(320000);
 
-  let argentAccountClassHash: string;
   let testDapp: Contract;
 
   before(async () => {
     await restartDevnetIfTooLong();
-    argentAccountClassHash = await declareContract("ArgentAccount");
     const testDappClassHash = await declareContract("TestDapp");
     const { contract_address } = await deployer.deployContract({
       classHash: testDappClassHash,
@@ -37,7 +35,7 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Correct message hash", async function () {
-    const { account, accountContract } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract } = await deployAccount();
 
     const chainId = await provider.getChainId();
 
@@ -63,7 +61,7 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Basics", async function () {
-    const { account, accountContract } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract } = await deployAccount();
 
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
@@ -117,7 +115,7 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Avoid caller check if it caller is ANY_CALLER", async function () {
-    const { account } = await deployAccount(argentAccountClassHash);
+    const { account } = await deployAccount();
 
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
@@ -136,7 +134,7 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Owner only account", async function () {
-    const { account } = await deployAccount(argentAccountClassHash);
+    const { account } = await deployAccount();
 
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,
@@ -154,7 +152,7 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Escape method", async function () {
-    const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, guardian } = await deployAccount();
 
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,

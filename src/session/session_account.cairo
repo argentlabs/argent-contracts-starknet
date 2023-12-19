@@ -29,7 +29,7 @@ mod HybridSessionAccount {
 
     const NAME: felt252 = 'SessionAccount';
     const VERSION_MAJOR: u8 = 0;
-    const VERSION_MINOR: u8 = 3;
+    const VERSION_MINOR: u8 = 1;
     const VERSION_PATCH: u8 = 0;
     const VERSION_COMPAT: felt252 = '0.3.0';
 

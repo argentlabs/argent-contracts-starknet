@@ -5,7 +5,7 @@ trait ISessionable<TContractState> {
 }
 
 #[starknet::component]
-mod sessionable {
+mod session_component {
     use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,};
     use argent::account::interface::IArgentAccount;
     use argent::common::account::IAccount;

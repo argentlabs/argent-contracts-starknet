@@ -17,7 +17,8 @@ mod HybridSessionAccount {
         },
         upgrade::{IUpgradeable, do_upgrade}
     };
-    use argent::session::session::sessionable as session_component;
+    use argent::session::session::session_component;
+    use argent::session::session::session_component::InternalImpl;
     use ecdsa::check_ecdsa_signature;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
@@ -48,12 +49,10 @@ mod HybridSessionAccount {
     const SESSION_MAGIC: felt252 = 'session-token';
 
 
-    component!(path: session_component, storage: sessionable, event: SessionableEvent);
+    component!(path: session_component, storage: session_component, event: SessionableEvent);
 
     #[abi(embed_v0)]
     impl Sessionable = session_component::SessionableImpl<ContractState>;
-
-    impl SessionableInternalImpl = session_component::InternalImpl<ContractState>;
 
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
@@ -77,7 +76,7 @@ mod HybridSessionAccount {
         #[substorage(v0)]
         execute_from_outside: outside_execution_component::Storage,
         #[substorage(v0)]
-        sessionable: session_component::Storage,
+        session_component: session_component::Storage,
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         _signer: felt252, /// Current account owner
         _guardian: felt252, /// Current account guardian
@@ -230,7 +229,7 @@ mod HybridSessionAccount {
             assert_only_protocol();
             let tx_info = get_tx_info().unbox();
             if *tx_info.signature[0] == SESSION_MAGIC {
-                self.sessionable.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature);
+                self.session_component.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature);
             } else {
                 self
                     .assert_valid_calls_and_signature(

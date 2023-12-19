@@ -159,8 +159,7 @@ impl StructHashTokenLimit of IStructHash<TokenAmount> {
 
 impl StructHashSpanGeneric<T, +Copy<T>, +Drop<T>, +IStructHash<T>> of IStructHash<Span<T>> {
     fn get_struct_hash(self: @Span<T>) -> felt252 {
-        let mut state = LegacyHash::hash(0, *self);
-        state
+        LegacyHash::hash(0, *self)
     }
 }
 

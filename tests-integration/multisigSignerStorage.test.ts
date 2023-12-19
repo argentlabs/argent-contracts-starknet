@@ -1,12 +1,6 @@
 import { expect } from "chai";
 import { CallData } from "starknet";
-import {
-  deployMultisig1_1,
-  deployMultisig1_3,
-  expectEvent,
-  expectRevertWithErrorMessage,
-  randomKeyPair,
-} from "./lib";
+import { deployMultisig1_1, deployMultisig1_3, expectEvent, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
 
 describe("ArgentMultisig: signer storage", function () {
   describe("add_signers(new_threshold, signers_to_add)", function () {

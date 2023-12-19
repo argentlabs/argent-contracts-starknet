@@ -12,12 +12,11 @@ trait IArgentAccount<TContractState> {
 
     /// @notice Changes the owner
     /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
-    /// @param new_owner New owner address
     /// @param signature Signature from the new owner 
     /// Signature is required to prevent changing to an address which is not in control of the user
     /// Signature is the Signed Message of this hash:
     /// hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
-    fn change_owner(ref self: TContractState, new_owner: felt252, signer_signature: SignerSignature);
+    fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
 
     /// @notice Changes the guardian
     /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).

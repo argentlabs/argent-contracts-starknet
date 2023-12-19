@@ -11,7 +11,7 @@ console.log("Deploying new multisig");
 const { account, keys, signers } = await deployMultisig({
   threshold: 1,
   signersLength: 2,
-  accountClassHash: multisigClassHash,
+  classHash: multisigClassHash,
 });
 
 console.log("Account address:", account.address);

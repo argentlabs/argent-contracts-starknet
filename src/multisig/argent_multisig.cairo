@@ -29,9 +29,9 @@ mod ArgentMultisig {
 
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION_MAJOR: u8 = 0;
-    const VERSION_MINOR: u8 = 1;
+    const VERSION_MINOR: u8 = 3;
     const VERSION_PATCH: u8 = 0;
-    const VERSION_COMPAT: felt252 = '0.1.0';
+    const VERSION_COMPAT: felt252 = '0.3.0';
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 
@@ -118,6 +118,7 @@ mod ArgentMultisig {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             assert_no_unsupported_v3_fields();
+            assert(tx_info.account_deployment_data.is_empty(), 'argent/invalid-deployment-data');
             self.assert_valid_calls_and_signature(calls.span(), tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
@@ -231,6 +232,7 @@ mod ArgentMultisig {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             assert_no_unsupported_v3_fields();
+
             let parsed_signatures = deserialize_array_signer_signature(tx_info.signature)
                 .expect('argent/invalid-signature-length');
             assert(parsed_signatures.len() == 1, 'argent/invalid-signature-length');

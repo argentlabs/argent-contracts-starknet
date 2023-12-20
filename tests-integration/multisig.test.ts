@@ -1,6 +1,6 @@
 import { CallData, shortString } from "starknet";
-import { expectEvent, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
-import { deployMultisig } from "./lib/multisig";
+import { expectEvent, expectRevertWithErrorMessage, randomKeyPair, expectExecutionRevert } from "./lib";
+import { deployMultisig, deployMultisig1_1 } from "./lib/multisig";
 
 describe("ArgentMultisig", function () {
   for (const useTxV3 of [false, true]) {
@@ -60,5 +60,14 @@ describe("ArgentMultisig", function () {
       });
       return receipt;
     });
+  });
+
+  it("Block deployment data", async function () {
+    const { account } = await deployMultisig1_1({ useTxV3: true });
+    await expectExecutionRevert("argent/invalid-deployment-data", () =>
+      account.execute([], undefined, {
+        accountDeploymentData: ["0x1"],
+      }),
+    );
   });
 });

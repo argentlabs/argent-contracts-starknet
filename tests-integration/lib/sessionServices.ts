@@ -13,7 +13,6 @@ import {
   Account,
   uint256,
   merkle,
-  WeierstrassSignatureType,
 } from "starknet";
 import {
   OffChainSession,
@@ -36,14 +35,9 @@ export class ArgentX {
     public backendService: BackendService,
   ) {}
 
-  public async getOwnerSessionSignature(sessionRequest: OffChainSession): Promise<StarknetSig> {
+  public async getAccountSessionSignature(sessionRequest: OffChainSession): Promise<ArraySignatureType> {
     const sessionTypedData = await getSessionTypedData(sessionRequest);
-    const signature = (await this.account.signMessage(sessionTypedData)) as ArraySignatureType;
-    return { r: BigInt(signature[0]), s: BigInt(signature[1]) };
-  }
-
-  public async getBackendSessionSignature(sessionRequest: OffChainSession): Promise<StarknetSig> {
-    return this.backendService.signOffChainSession(sessionRequest, this.account);
+    return (await this.account.signMessage(sessionTypedData)) as ArraySignatureType;
   }
 
   public async sendSessionToBackend(
@@ -78,7 +72,6 @@ export class BackendService {
       }
     });
 
-    // now use abi to display decoded data somewhere, but as this signer is headless, we can't do that
     const calldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
 
     const txHash = hash.calculateTransactionHash(
@@ -97,12 +90,6 @@ export class BackendService {
     const sessionWithTxHash = ec.starkCurve.pedersen(txHash, sessionMessageHash);
     const [r, s] = this.guardian.signHash(sessionWithTxHash);
     return { r: BigInt(r), s: BigInt(s) };
-  }
-
-  public async signOffChainSession(sessionRequest: OffChainSession, account: Account): Promise<StarknetSig> {
-    const sessionTypedData = await getSessionTypedData(sessionRequest);
-    const signature = (await this.guardian.signMessage(sessionTypedData, account.address)) as WeierstrassSignatureType;
-    return { r: signature.r, s: signature.s };
   }
 
   public getGuardianKey(): bigint {
@@ -143,8 +130,7 @@ export class DappSigner extends RawSigner {
   constructor(
     public argentX: ArgentX,
     public sessionKeyPair: KeyPair,
-    public ownerSessionSignature: StarknetSig,
-    public backendSessionSignature: StarknetSig,
+    public accountSessionSignature: ArraySignatureType,
     public completedSession: OffChainSession,
   ) {
     super();
@@ -158,16 +144,7 @@ export class DappSigner extends RawSigner {
     transactions: Call[],
     transactionsDetail: InvocationsSignerDetails,
   ): Promise<ArraySignatureType> {
-    const txHash = await this.getTransactionHash(transactions, transactionsDetail);
-    const session_signature = await this.signTxAndSession(txHash, transactionsDetail);
-    const backend_signature = await this.getBackendSig(transactions, transactionsDetail);
-
-    const sessionToken = this.buildSessiontoken(
-      this.completedSession,
-      transactions,
-      session_signature,
-      backend_signature,
-    );
+    const sessionToken = await this.buildSessiontoken(this.completedSession, transactions, transactionsDetail);
 
     return [SESSION_MAGIC, ...CallData.compile({ ...sessionToken })];
   }
@@ -188,12 +165,15 @@ export class DappSigner extends RawSigner {
     };
   }
 
-  private buildSessiontoken(
+  private async buildSessiontoken(
     completedSession: OffChainSession,
     transactions: Call[],
-    session_signature: StarknetSig,
-    backend_signature: StarknetSig,
-  ): SessionToken {
+    transactionsDetail: InvocationsSignerDetails,
+  ): Promise<SessionToken> {
+    const txHash = await this.getTransactionHash(transactions, transactionsDetail);
+    const session_signature = await this.signTxAndSession(txHash, transactionsDetail);
+    const backend_signature = await this.getBackendSig(transactions, transactionsDetail);
+
     const leaves = this.getLeaves(completedSession.allowed_methods);
     const proofs = this.getSessionProofs(transactions, completedSession.allowed_methods);
     const session = {
@@ -207,10 +187,9 @@ export class DappSigner extends RawSigner {
     };
     return {
       session,
+      account_signature: this.accountSessionSignature,
       session_signature,
-      owner_signature: this.ownerSessionSignature,
       backend_signature,
-      backend_initialization_sig: this.backendSessionSignature,
       proofs,
     };
   }

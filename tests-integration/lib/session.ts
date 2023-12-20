@@ -69,10 +69,9 @@ interface OnChainSession {
 
 export interface SessionToken {
   session: OnChainSession;
+  account_signature: string[];
   session_signature: StarknetSig;
-  owner_signature: StarknetSig;
   backend_signature: StarknetSig;
-  backend_initialization_sig: StarknetSig;
   proofs: string[][];
 }
 

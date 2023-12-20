@@ -14,6 +14,7 @@ mod session_component {
     use argent::session::session_structs::{
         SessionToken, StarknetSignature, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash
     };
+    use core::clone::Clone;
     use ecdsa::check_ecdsa_signature;
     use hash::LegacyHash;
     use starknet::{account::Call, get_contract_address, VALIDATED};
@@ -73,13 +74,7 @@ mod session_component {
             assert(
                 state
                     .is_valid_signature(
-                        token.session.get_message_hash(),
-                        array![
-                            token.owner_signature.r,
-                            token.owner_signature.s,
-                            token.backend_initialization_sig.r,
-                            token.backend_initialization_sig.s
-                        ]
+                        token.session.get_message_hash(), token.account_signature.snapshot.clone()
                     ) == VALIDATED,
                 'invalid-account-sig'
             );

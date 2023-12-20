@@ -30,10 +30,9 @@ struct Session {
 #[derive(Drop, Serde, Copy)]
 struct SessionToken {
     session: Session,
+    account_signature: Span<felt252>,
     session_signature: StarknetSignature,
-    owner_signature: StarknetSignature,
     backend_signature: StarknetSignature,
-    backend_initialization_sig: StarknetSignature,
     proofs: Span<Span<felt252>>,
 }
 

@@ -32,8 +32,8 @@ mod ArgentAccount {
     const NAME: felt252 = 'ArgentAccount';
     const VERSION_MAJOR: u8 = 0;
     const VERSION_MINOR: u8 = 3;
-    const VERSION_PATCH: u8 = 0;
-    const VERSION_COMPAT: felt252 = '0.3.0';
+    const VERSION_PATCH: u8 = 1;
+    const VERSION_COMPAT: felt252 = '0.3.1';
 
     /// Time it takes for the escape to become ready after being triggered
     const ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days

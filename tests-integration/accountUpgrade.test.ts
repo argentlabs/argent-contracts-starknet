@@ -15,14 +15,10 @@ import {
 
 describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
-  let argentAccountFutureClassHash: string;
   let testDapp: ContractWithClassHash;
 
   before(async () => {
     argentAccountClassHash = await declareContract("ArgentAccount");
-    // This is the same as ArgentAccount but with a different version (to have another class hash)
-    // Done to be able to test upgradability
-    argentAccountFutureClassHash = await declareFixtureContract("ArgentAccountFutureVersion");
     testDapp = await deployContract("TestDapp");
   });
 
@@ -54,8 +50,17 @@ describe("ArgentAccount: upgrade", function () {
     });
   });
 
+  it("Upgrade from 0.3.0 to Current Version", async function () {
+    const { account } = await deployAccount({ classHash: await declareFixtureContract("ArgentAccount-0.3.0") });
+    await upgradeAccount(account, argentAccountClassHash);
+    expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+  });
+
   it("Upgrade from current version FutureVersion", async function () {
+    // This is the same as ArgentAccount but with a different version (to have another class hash)
+    const argentAccountFutureClassHash = await declareFixtureContract("ArgentAccountFutureVersion");
     const { account } = await deployAccount();
+
     await upgradeAccount(account, argentAccountFutureClassHash);
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountFutureClassHash));
   });

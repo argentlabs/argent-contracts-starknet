@@ -15,35 +15,13 @@ struct WebauthnAssertion {
     origin_length: usize,
 }
 
-trait Parse {
-    fn origin(self: @WebauthnAssertion) -> felt252;
-    fn rp_id_hash(self: @WebauthnAssertion) -> u256;
-}
-
-impl ParseImpl of Parse {
-    fn origin(self: @WebauthnAssertion) -> felt252 {
-        let WebauthnAssertion{client_data_json, origin_offset, origin_length, .. } = self;
-        let origin: felt252 = (*client_data_json)
-            .slice(*origin_offset, *origin_length)
-            .try_into()
-            .expect('invalid-origin');
-        origin
-    }
-
-    fn rp_id_hash(self: @WebauthnAssertion) -> u256 {
-        let WebauthnAssertion{authenticator_data, .. } = self;
-        let rp_id_hash: u256 = (*authenticator_data).slice(0, 32).try_into().expect('invalid-rp-id-hash');
-        rp_id_hash
-    }
-}
-
 /// Example JSON:
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
 /// TODO: benchmark both for (12.):
 /// - cartridge impl: base64url_encode(expected_challenge) and compare byte by byte to C.challenge 
 /// - this impl: base64url_decode(C.challenge) and compare one felt to expected_challenge
-fn verify_client_data_json(assertion: @WebauthnAssertion, expected_challenge: felt252) {
+fn verify_client_data_json(assertion: @WebauthnAssertion, expected_challenge: felt252, expected_origin: felt252) {
     // 11. Verify that the value of C.type is the string webauthn.get.
     let WebauthnAssertion{client_data_json, type_offset, .. } = assertion;
     let key = array!['"', 't', 'y', 'p', 'e', '"', ':', '"'];
@@ -66,11 +44,13 @@ fn verify_client_data_json(assertion: @WebauthnAssertion, expected_challenge: fe
     assert(challenge == expected_challenge, 'invalid-challenge');
 
     // 13. Verify that the value of C.origin matches the Relying Party's origin.
-    // NOTE: origin is checked by comparing the value in storage
     let WebauthnAssertion{origin_offset, origin_length, .. } = assertion;
     let key = array!['"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'];
     let actual_key = (*client_data_json).slice(*origin_offset - key.len(), key.len());
     assert(actual_key == key.span(), 'invalid-origin-key');
+
+    let origin = (*client_data_json).slice(*origin_offset, *origin_length).try_into().expect('invalid-origin');
+    assert(origin == expected_origin, 'invalid-origin');
 
     // 14. Skipping tokenBindings
     ()
@@ -82,9 +62,10 @@ fn verify_client_data_json(assertion: @WebauthnAssertion, expected_challenge: fe
 ///                         rpIdHash (32 bytes)                       ^   sign count (4 bytes)
 ///                                                    flags (1 byte) | 
 /// Memory layout: https://www.w3.org/TR/webauthn/#sctn-authenticator-data
-fn verify_authenticator_data(authenticator_data: Span<u8>) {
+fn verify_authenticator_data(authenticator_data: Span<u8>, expected_rp_id_hash: u256) {
     // 15. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party. 
-    // NOTE: rpIdHash is checked by comparing the value in storage
+    let actual_rp_id_hash = authenticator_data.slice(0, 32).try_into().expect('invalid-rp-id-hash');
+    assert(actual_rp_id_hash == expected_rp_id_hash, 'invalid-rp-id');
 
     // 16. Verify that the User Present bit of the flags in authData is set.
     let flags: u128 = (*authenticator_data.at(32)).into();

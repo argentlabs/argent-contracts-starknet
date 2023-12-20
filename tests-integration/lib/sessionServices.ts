@@ -39,14 +39,6 @@ export class ArgentX {
     const sessionTypedData = await getSessionTypedData(sessionRequest);
     return (await this.account.signMessage(sessionTypedData)) as ArraySignatureType;
   }
-
-  public async sendSessionToBackend(
-    calls: Call[],
-    transactionsDetail: InvocationsSignerDetails,
-    sessionRequest: OffChainSession,
-  ): Promise<StarknetSig> {
-    return this.backendService.signTxAndSession(calls, transactionsDetail, sessionRequest);
-  }
 }
 
 export class BackendService {
@@ -129,6 +121,7 @@ export class DappService {
 export class DappSigner extends RawSigner {
   constructor(
     public argentX: ArgentX,
+    public argentBackend: BackendService,
     public sessionKeyPair: KeyPair,
     public accountSessionSignature: ArraySignatureType,
     public completedSession: OffChainSession,
@@ -144,7 +137,7 @@ export class DappSigner extends RawSigner {
     transactions: Call[],
     transactionsDetail: InvocationsSignerDetails,
   ): Promise<ArraySignatureType> {
-    const sessionToken = await this.buildSessiontoken(this.completedSession, transactions, transactionsDetail);
+    const sessionToken = await this.buildSessiontoken(transactions, transactionsDetail);
 
     return [SESSION_MAGIC, ...CallData.compile({ ...sessionToken })];
   }
@@ -166,29 +159,32 @@ export class DappSigner extends RawSigner {
   }
 
   private async buildSessiontoken(
-    completedSession: OffChainSession,
     transactions: Call[],
     transactionsDetail: InvocationsSignerDetails,
   ): Promise<SessionToken> {
     const txHash = await this.getTransactionHash(transactions, transactionsDetail);
-    const leaves = this.getLeaves(completedSession.allowed_methods);
+    const leaves = this.getLeaves(this.completedSession.allowed_methods);
 
     const session = {
-      expires_at: completedSession.expires_at,
+      expires_at: this.completedSession.expires_at,
       allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
-      token_amounts: completedSession.token_amounts,
-      nft_contracts: completedSession.nft_contracts,
-      max_fee_usage: completedSession.max_fee_usage,
-      guardian_key: completedSession.guardian_key,
-      session_key: completedSession.session_key,
+      token_amounts: this.completedSession.token_amounts,
+      nft_contracts: this.completedSession.nft_contracts,
+      max_fee_usage: this.completedSession.max_fee_usage,
+      guardian_key: this.completedSession.guardian_key,
+      session_key: this.completedSession.session_key,
     };
 
     return {
       session,
       account_signature: this.accountSessionSignature,
       session_signature: await this.signTxAndSession(txHash, transactionsDetail),
-      backend_signature: await this.getBackendSig(transactions, transactionsDetail),
-      proofs: this.getSessionProofs(transactions, completedSession.allowed_methods),
+      backend_signature: await this.argentBackend.signTxAndSession(
+        transactions,
+        transactionsDetail,
+        this.completedSession,
+      ),
+      proofs: this.getSessionProofs(transactions, this.completedSession.allowed_methods),
     };
   }
 
@@ -210,9 +206,5 @@ export class DappSigner extends RawSigner {
       });
       return tree.getProof(tree.leaves[allowedIndex], this.getLeaves(allowedMethods));
     });
-  }
-
-  private async getBackendSig(calls: Call[], transactionsDetail: InvocationsSignerDetails): Promise<StarknetSig> {
-    return this.argentX.sendSessionToBackend(calls, transactionsDetail, this.completedSession);
   }
 }

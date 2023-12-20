@@ -1,4 +1,4 @@
-import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num, RPC } from "starknet";
+import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num, RPC, Call } from "starknet";
 import {
   KeyPair,
   MultisigSigner,
@@ -6,7 +6,7 @@ import {
   provider,
   randomKeyPair,
   randomKeyPairs,
-  fundAccount,
+  fundAccountCall,
   declareContract,
   deployer,
 } from ".";
@@ -36,7 +36,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     classHash: params.classHash ?? (await declareContract("ArgentMultisig")),
     salt: params.salt ?? num.toHex(randomKeyPair().privateKey),
     useTxV3: params.useTxV3 ?? false,
-    selfDeploy: params.selfDeploy ?? true,
+    selfDeploy: params.selfDeploy ?? false,
     deploymentIndexes: params.deploymentIndexes ?? [0],
   };
 
@@ -51,11 +51,17 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     0 /* deployerAddress */,
   );
 
+  const pendingCalls: Call[] = [];
+  let fundingCall: Call | null = null;
   if (finalParams.useTxV3) {
-    await fundAccount(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK"); // 0.01 STRK
+    fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK"); // 0.01 STRK
   } else {
-    await fundAccount(contractAddress, finalParams.fundingAmount ?? 1e15, "ETH"); // 0.001 ETH
+    fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e15, "ETH"); // 0.001 ETH
   }
+  if (fundingCall) {
+    pendingCalls.push(fundingCall);
+  }
+
   const defaultTxVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
 
   const deploymentSigner = new MultisigSigner(keys.filter((_, i) => finalParams.deploymentIndexes.includes(i)));
@@ -63,6 +69,9 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
 
   let transactionHash;
   if (finalParams.selfDeploy) {
+    const response = await deployer.execute(pendingCalls);
+    await provider.waitForTransaction(response.transaction_hash);
+
     const { transaction_hash } = await account.deploySelf({
       classHash: finalParams.classHash,
       constructorCalldata,
@@ -70,12 +79,15 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     });
     transactionHash = transaction_hash;
   } else {
-    const { transaction_hash } = await deployer.deployContract({
-      classHash: finalParams.classHash,
-      salt: finalParams.salt,
-      unique: false,
-      constructorCalldata,
-    });
+    pendingCalls.push(
+      ...deployer.buildUDCContractPayload({
+        classHash: finalParams.classHash,
+        salt: finalParams.salt,
+        constructorCalldata,
+        unique: false,
+      }),
+    );
+    const { transaction_hash } = await deployer.execute(pendingCalls);
     transactionHash = transaction_hash;
   }
 

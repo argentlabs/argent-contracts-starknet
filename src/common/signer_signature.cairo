@@ -82,6 +82,25 @@ impl WebauthnSignerIntoFelt252 of Into<WebauthnSigner, felt252> {
     }
 }
 
+impl SignerZero of Zeroable<Signer> {
+    fn zero() -> Signer {
+        Signer::Starknet(StarknetSigner { pubkey: 0 })
+    }
+    #[inline(always)]
+    fn is_zero(self: Signer) -> bool {
+        match self {
+            Signer::Starknet(signer) => signer.pubkey.is_zero(),
+            Signer::Secp256k1(signer) => signer.pubkey.is_zero(),
+            Signer::Secp256r1(signer) => signer.pubkey.is_zero(),
+            Signer::Webauthn(signer) => signer.pubkey.is_zero(),
+        }
+    }
+    #[inline(always)]
+    fn is_non_zero(self: Signer) -> bool {
+        !self.is_zero()
+    }
+}
+
 /// Enum of the different signature type supported.
 /// For each type the variant contains a signer and an associated signature.
 #[derive(Drop, Copy, Serde, PartialEq)]

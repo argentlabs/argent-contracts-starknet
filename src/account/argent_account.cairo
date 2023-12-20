@@ -16,7 +16,7 @@ mod ArgentAccount {
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
         upgrade::{IUpgradeable, do_upgrade, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
-        signer_signature::{SignerSignature, SignerSignatureTrait}, serialization::full_deserialize
+        signer_signature::{Signer, SignerZero, SignerSignature, SignerSignatureTrait}, serialization::full_deserialize
     };
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
@@ -199,14 +199,17 @@ mod ArgentAccount {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: felt252, guardian: felt252) {
-        assert(owner != 0, 'argent/null-owner');
+    fn constructor(ref self: ContractState, owner: Signer, guardian: Signer) {
+        assert(owner.is_non_zero(), 'argent/null-owner');
 
-        self._signer.write(owner);
-        self._guardian.write(guardian);
+        let stored_owner: felt252 = owner.into();
+        let stored_guardian: felt252 = guardian.into();
+
+        self._signer.write(stored_owner);
+        self._guardian.write(stored_guardian);
         self._guardian_backup.write(0);
-        self.emit(AccountCreated { owner, guardian });
-        self.emit(OwnerAdded { new_owner_guid: owner });
+        self.emit(AccountCreated { owner: stored_owner, guardian: stored_guardian });
+        self.emit(OwnerAdded { new_owner_guid: stored_owner });
     }
 
     #[external(v0)]
@@ -302,7 +305,7 @@ mod ArgentAccount {
         }
 
         fn __validate_deploy__(
-            self: @ContractState, class_hash: felt252, contract_address_salt: felt252, owner: felt252, guardian: felt252
+            self: @ContractState, class_hash: felt252, contract_address_salt: felt252, owner: Signer, guardian: Signer
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_tx_version(tx_info.version);
@@ -329,32 +332,32 @@ mod ArgentAccount {
             self.emit(OwnerAdded { new_owner_guid: new_owner });
         }
 
-        fn change_guardian(ref self: ContractState, new_guardian: felt252) {
+        fn change_guardian(ref self: ContractState, new_guardian: Signer) {
             assert_only_self();
             // There cannot be a guardian_backup when there is no guardian
-            if new_guardian == 0 {
+            if new_guardian.is_zero() {
                 assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
             }
 
             self.reset_escape();
             self.reset_escape_attempts();
 
-            self._guardian.write(new_guardian);
-            self.emit(GuardianChanged { new_guardian });
+            self._guardian.write(new_guardian.into());
+            self.emit(GuardianChanged { new_guardian: new_guardian.into() });
         }
 
-        fn change_guardian_backup(ref self: ContractState, new_guardian_backup: felt252) {
+        fn change_guardian_backup(ref self: ContractState, new_guardian_backup: Signer) {
             assert_only_self();
             self.assert_guardian_set();
 
             self.reset_escape();
             self.reset_escape_attempts();
 
-            self._guardian_backup.write(new_guardian_backup);
-            self.emit(GuardianBackupChanged { new_guardian_backup });
+            self._guardian_backup.write(new_guardian_backup.into());
+            self.emit(GuardianBackupChanged { new_guardian_backup: new_guardian_backup.into() });
         }
 
-        fn trigger_escape_owner(ref self: ContractState, new_owner: felt252) {
+        fn trigger_escape_owner(ref self: ContractState, new_owner: Signer) {
             assert_only_self();
 
             // no escape if there is a guardian escape triggered by the owner in progress
@@ -366,21 +369,23 @@ mod ArgentAccount {
             }
 
             self.reset_escape();
+            let stored_new_owner = new_owner.into();
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
-            let escape = Escape { ready_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: new_owner };
+            let escape = Escape { ready_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: stored_new_owner };
             self._escape.write(escape);
-            self.emit(EscapeOwnerTriggered { ready_at, new_owner });
+            self.emit(EscapeOwnerTriggered { ready_at, new_owner: stored_new_owner });
         }
 
-        fn trigger_escape_guardian(ref self: ContractState, new_guardian: felt252) {
+        fn trigger_escape_guardian(ref self: ContractState, new_guardian: Signer) {
             assert_only_self();
 
             self.reset_escape();
 
+            let stored_new_guardian = new_guardian.into();
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
-            let escape = Escape { ready_at, escape_type: ESCAPE_TYPE_GUARDIAN, new_signer: new_guardian };
+            let escape = Escape { ready_at, escape_type: ESCAPE_TYPE_GUARDIAN, new_signer: stored_new_guardian };
             self._escape.write(escape);
-            self.emit(EscapeGuardianTriggered { ready_at, new_guardian });
+            self.emit(EscapeGuardianTriggered { ready_at, new_guardian: stored_new_guardian });
         }
 
         fn escape_owner(ref self: ContractState) {

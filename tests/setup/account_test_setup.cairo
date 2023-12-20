@@ -1,6 +1,6 @@
 use argent::account::argent_account::ArgentAccount;
 use argent::account::escape::{Escape, EscapeStatus};
-use argent::common::signer_signature::SignerSignature;
+use argent::common::signer_signature::{Signer, SignerSignature};
 use argent::common::version::Version;
 use starknet::{contract_address_const, deploy_syscall, account::Call, testing::set_contract_address};
 
@@ -14,14 +14,14 @@ trait ITestArgentAccount<TContractState> {
 
     // IArgentAccount
     fn __validate_deploy__(
-        self: @TContractState, class_hash: felt252, contract_address_salt: felt252, owner: felt252, guardian: felt252
+        self: @TContractState, class_hash: felt252, contract_address_salt: felt252, owner: Signer, guardian: Signer
     ) -> felt252;
     // External
     fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
-    fn change_guardian(ref self: TContractState, new_guardian: felt252);
-    fn change_guardian_backup(ref self: TContractState, new_guardian_backup: felt252);
-    fn trigger_escape_owner(ref self: TContractState, new_owner: felt252);
-    fn trigger_escape_guardian(ref self: TContractState, new_guardian: felt252);
+    fn change_guardian(ref self: TContractState, new_guardian: Signer);
+    fn change_guardian_backup(ref self: TContractState, new_guardian_backup: Signer);
+    fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);
+    fn trigger_escape_guardian(ref self: TContractState, new_guardian: Signer);
     fn escape_owner(ref self: TContractState);
     fn escape_guardian(ref self: TContractState);
     fn cancel_escape(ref self: TContractState);

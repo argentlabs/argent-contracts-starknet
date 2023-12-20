@@ -141,19 +141,27 @@ async function deployAccountInner(
     constructorCalldata,
     0,
   );
+  const pendingCalls: Call[] = [];
+  let fundingCall: Call | null = null;
   if (finalParams.useTxV3) {
-    await fundAccount(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK"); // 0.01 STRK
+    fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK"); // 0.01 STRK
   } else {
-    await fundAccount(contractAddress, finalParams.fundingAmount ?? 1e16, "ETH"); // 0.01 ETH
+    fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "ETH"); // 0.01 ETH
   }
-  const defaultTxVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
+  if (fundingCall) {
+    pendingCalls.push(fundingCall);
+  }
 
+  const defaultTxVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
   const account = new ArgentAccount(provider, contractAddress, finalParams.owner, "1", defaultTxVersion);
   if (finalParams.guardian) {
     account.signer = new ArgentSigner(finalParams.owner, finalParams.guardian);
   }
   let transactionHash;
   if (finalParams.selfDeploy) {
+    const response = await deployer.execute(pendingCalls);
+    await provider.waitForTransaction(response.transaction_hash);
+
     const { transaction_hash } = await account.deploySelf({
       classHash: finalParams.classHash,
       constructorCalldata,
@@ -161,12 +169,15 @@ async function deployAccountInner(
     });
     transactionHash = transaction_hash;
   } else {
-    const { transaction_hash } = await deployer.deployContract({
-      classHash: finalParams.classHash,
-      salt: finalParams.salt,
-      unique: false,
-      constructorCalldata,
-    });
+    pendingCalls.push(
+      ...deployer.buildUDCContractPayload({
+        classHash: finalParams.classHash,
+        salt: finalParams.salt,
+        constructorCalldata,
+        unique: false,
+      }),
+    );
+    const { transaction_hash } = await deployer.execute(pendingCalls);
     transactionHash = transaction_hash;
   }
 
@@ -231,20 +242,32 @@ export async function upgradeAccount(
 }
 
 export async function fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {
-  if (amount <= 0n) {
-    return;
+  const call = await fundAccountCall(recipient, amount, token);
+  if (call) {
+    const response = await deployer.execute([call]);
+    await provider.waitForTransaction(response.transaction_hash);
   }
+}
+
+export async function fundAccountCall(
+  recipient: string,
+  amount: number | bigint,
+  token: "ETH" | "STRK",
+): Promise<Call | null> {
+  if (amount <= 0n) {
+    return null;
+  }
+  let contractAddress;
   if (token === "ETH") {
-    const ethContract = await getEthContract();
-    ethContract.connect(deployer);
-    const response = await ethContract.invoke("transfer", CallData.compile([recipient, uint256.bnToUint256(amount)]));
-    await provider.waitForTransaction(response.transaction_hash);
+    contractAddress = (await getEthContract()).address;
   } else if (token === "STRK") {
-    const strkContract = await getStrkContract();
-    strkContract.connect(deployer);
-    const response = await strkContract.invoke("transfer", CallData.compile([recipient, uint256.bnToUint256(amount)]));
-    await provider.waitForTransaction(response.transaction_hash);
+    contractAddress = (await getStrkContract()).address;
   } else {
     throw new Error(`Unsupported token ${token}`);
   }
+  return {
+    contractAddress,
+    calldata: CallData.compile([recipient, uint256.bnToUint256(amount)]),
+    entrypoint: "transfer",
+  };
 }

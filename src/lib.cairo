@@ -20,6 +20,7 @@ mod mocks {
     mod test_dapp;
 }
 mod session {
+    mod outside_session_execution;
     mod session;
     mod session_account;
     mod session_structs;

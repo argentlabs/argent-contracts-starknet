@@ -95,3 +95,19 @@ export async function getOutsideExecutionCall(
     calldata: CallData.compile({ ...outsideExecution, signature }),
   };
 }
+
+export async function getOutsideExecutionCallWithSession(
+  outsideExecution: OutsideExecution,
+  accountAddress: string,
+  signer: SignerInterface,
+  chainId?: string,
+): Promise<Call> {
+  chainId = chainId ?? (await provider.getChainId());
+  const currentTypedData = getTypedData(outsideExecution, chainId);
+  const signature = await signer.signMessage(currentTypedData, accountAddress);
+  return {
+    contractAddress: accountAddress,
+    entrypoint: "execute_from_outside",
+    calldata: CallData.compile([outsideExecution, signature, true]),
+  };
+}

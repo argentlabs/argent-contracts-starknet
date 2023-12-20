@@ -171,11 +171,8 @@ export class DappSigner extends RawSigner {
     transactionsDetail: InvocationsSignerDetails,
   ): Promise<SessionToken> {
     const txHash = await this.getTransactionHash(transactions, transactionsDetail);
-    const session_signature = await this.signTxAndSession(txHash, transactionsDetail);
-    const backend_signature = await this.getBackendSig(transactions, transactionsDetail);
-
     const leaves = this.getLeaves(completedSession.allowed_methods);
-    const proofs = this.getSessionProofs(transactions, completedSession.allowed_methods);
+
     const session = {
       expires_at: completedSession.expires_at,
       allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
@@ -185,12 +182,13 @@ export class DappSigner extends RawSigner {
       guardian_key: completedSession.guardian_key,
       session_key: completedSession.session_key,
     };
+
     return {
       session,
       account_signature: this.accountSessionSignature,
-      session_signature,
-      backend_signature,
-      proofs,
+      session_signature: await this.signTxAndSession(txHash, transactionsDetail),
+      backend_signature: await this.getBackendSig(transactions, transactionsDetail),
+      proofs: this.getSessionProofs(transactions, completedSession.allowed_methods),
     };
   }
 

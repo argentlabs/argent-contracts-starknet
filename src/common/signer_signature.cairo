@@ -114,6 +114,7 @@ enum SignerSignature {
 
 trait SignerSignatureTrait {
     fn is_valid_signature(self: SignerSignature, hash: felt252) -> bool;
+    fn signer(self: SignerSignature) -> Signer;
     fn signer_as_felt252(self: SignerSignature) -> felt252;
 }
 
@@ -128,6 +129,15 @@ impl SignerSignatureImpl of SignerSignatureTrait {
                 signer, signature
             )) => is_valid_secp256r1_signature(hash.into(), signer, signature),
             SignerSignature::Webauthn((signer, signature)) => is_valid_webauthn_signature(hash, signer, signature),
+        }
+    }
+
+    fn signer(self: SignerSignature) -> Signer {
+        match self {
+            SignerSignature::Starknet((signer, signature)) => Signer::Starknet(signer),
+            SignerSignature::Secp256k1((signer, signature)) => Signer::Secp256k1(signer),
+            SignerSignature::Secp256r1((signer, signature)) => Signer::Secp256r1(signer),
+            SignerSignature::Webauthn((signer, signature)) => Signer::Webauthn(signer)
         }
     }
 

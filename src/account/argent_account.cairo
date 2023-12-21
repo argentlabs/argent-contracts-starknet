@@ -16,7 +16,8 @@ mod ArgentAccount {
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
         upgrade::{IUpgradeable, do_upgrade, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
-        signer_signature::{Signer, SignerZero, SignerSignature, SignerSignatureTrait}, serialization::full_deserialize
+        signer_signature::{Signer, StarknetSigner, SignerZero, SignerSignature, SignerSignatureTrait},
+        serialization::full_deserialize
     };
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
@@ -188,6 +189,7 @@ mod ArgentAccount {
     struct OwnerAdded {
         #[key]
         new_owner_guid: felt252,
+        new_owner_signer: Signer
     }
 
     /// This event is part of an account discoverability standard, SNIP not yet created
@@ -209,7 +211,7 @@ mod ArgentAccount {
         self._guardian.write(stored_guardian);
         self._guardian_backup.write(0);
         self.emit(AccountCreated { owner: stored_owner, guardian: stored_guardian });
-        self.emit(OwnerAdded { new_owner_guid: stored_owner });
+        self.emit(OwnerAdded { new_owner_guid: stored_owner, new_owner_signer: owner });
     }
 
     #[external(v0)]
@@ -272,7 +274,13 @@ mod ArgentAccount {
                 replace_class_syscall(implementation).expect('argent/invalid-after-upgrade');
                 self._implementation.write(Zeroable::zero());
                 // Technically the owner is not added here, but we emit the event since it wasn't emitted in previous versions
-                self.emit(OwnerAdded { new_owner_guid: self._signer.read() });
+                let owner = self._signer.read();
+                self
+                    .emit(
+                        OwnerAdded {
+                            new_owner_guid: owner, new_owner_signer: Signer::Starknet(StarknetSigner { pubkey: owner })
+                        }
+                    );
             }
 
             if data.is_empty() {
@@ -329,7 +337,7 @@ mod ArgentAccount {
             self._signer.write(new_owner);
             self.emit(OwnerChanged { new_owner });
             self.emit(OwnerRemoved { removed_owner_guid: old_owner });
-            self.emit(OwnerAdded { new_owner_guid: new_owner });
+            self.emit(OwnerAdded { new_owner_guid: new_owner, new_owner_signer: signer_signature.signer() });
         }
 
         fn change_guardian(ref self: ContractState, new_guardian: Signer) {
@@ -403,7 +411,7 @@ mod ArgentAccount {
             self._signer.write(current_escape.new_signer);
             self.emit(OwnerEscaped { new_owner: current_escape.new_signer });
             self.emit(OwnerRemoved { removed_owner_guid: old_owner });
-            self.emit(OwnerAdded { new_owner_guid: current_escape.new_signer });
+            // need to decide what to do self.emit(OwnerAdded { new_owner_guid: current_escape.new_signer });
 
             // clear escape
             self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });

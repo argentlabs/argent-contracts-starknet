@@ -26,7 +26,7 @@ const wrong_guardian_r: felt252 = 0x5e5375b33d31fea164fb58c97ae0f9354863af5274f4
 const wrong_guardian_s: felt252 = 0x649c2cc2696a1f257534f03d913f869daae675467ed2f994b94059341e68929;
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(3000000)]
 fn valid_no_guardian() {
     let signatures = to_starknet_signer_signatures(array![owner_pubkey, owner_r, owner_s]);
     assert(
@@ -57,7 +57,7 @@ fn valid_with_guardian_backup() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(3000000)]
 fn invalid_hash_1() {
     let account = initialize_account_without_guardian();
     let signatures = to_starknet_signer_signatures(array![owner_pubkey, owner_r, owner_s]);
@@ -65,7 +65,7 @@ fn invalid_hash_1() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(3000000)]
 fn invalid_hash_2() {
     let account = initialize_account_without_guardian();
     let signatures = to_starknet_signer_signatures(array![owner_pubkey, owner_r, owner_s]);

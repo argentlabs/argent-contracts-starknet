@@ -35,14 +35,14 @@ export class ArgentX {
     public backendService: BackendService,
   ) {}
 
-  public async getAccountSessionSignature(sessionRequest: OffChainSession): Promise<ArraySignatureType> {
+  public async getOffchainSignature(sessionRequest: OffChainSession): Promise<ArraySignatureType> {
     const sessionTypedData = await getSessionTypedData(sessionRequest);
     return (await this.account.signMessage(sessionTypedData)) as ArraySignatureType;
   }
 }
 
 export class BackendService {
-  constructor(public guardian: KeyPair) {}
+  constructor(private guardian: KeyPair) {}
 
   public async signTxAndSession(
     calls: Call[],
@@ -120,7 +120,6 @@ export class DappService {
 
 export class DappSigner extends RawSigner {
   constructor(
-    public argentX: ArgentX,
     public argentBackend: BackendService,
     public sessionKeyPair: KeyPair,
     public accountSessionSignature: ArraySignatureType,
@@ -137,7 +136,31 @@ export class DappSigner extends RawSigner {
     transactions: Call[],
     transactionsDetail: InvocationsSignerDetails,
   ): Promise<ArraySignatureType> {
-    const sessionToken = await this.buildSessiontoken(transactions, transactionsDetail);
+    const txHash = await this.getTransactionHash(transactions, transactionsDetail);
+    const leaves = this.completedSession.allowed_methods.map((method) =>
+      hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
+    );
+    const session = {
+      expires_at: this.completedSession.expires_at,
+      allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
+      token_amounts: this.completedSession.token_amounts,
+      nft_contracts: this.completedSession.nft_contracts,
+      max_fee_usage: this.completedSession.max_fee_usage,
+      guardian_key: this.completedSession.guardian_key,
+      session_key: this.completedSession.session_key,
+    };
+
+    const sessionToken = {
+      session,
+      account_signature: this.accountSessionSignature,
+      session_signature: await this.signTxAndSession(txHash, transactionsDetail),
+      backend_signature: await this.argentBackend.signTxAndSession(
+        transactions,
+        transactionsDetail,
+        this.completedSession,
+      ),
+      proofs: this.getSessionProofs(transactions, this.completedSession.allowed_methods, leaves),
+    };
 
     return [SESSION_MAGIC, ...CallData.compile({ ...sessionToken })];
   }
@@ -158,44 +181,8 @@ export class DappSigner extends RawSigner {
     };
   }
 
-  private async buildSessiontoken(
-    transactions: Call[],
-    transactionsDetail: InvocationsSignerDetails,
-  ): Promise<SessionToken> {
-    const txHash = await this.getTransactionHash(transactions, transactionsDetail);
-    const leaves = this.getLeaves(this.completedSession.allowed_methods);
-
-    const session = {
-      expires_at: this.completedSession.expires_at,
-      allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
-      token_amounts: this.completedSession.token_amounts,
-      nft_contracts: this.completedSession.nft_contracts,
-      max_fee_usage: this.completedSession.max_fee_usage,
-      guardian_key: this.completedSession.guardian_key,
-      session_key: this.completedSession.session_key,
-    };
-
-    return {
-      session,
-      account_signature: this.accountSessionSignature,
-      session_signature: await this.signTxAndSession(txHash, transactionsDetail),
-      backend_signature: await this.argentBackend.signTxAndSession(
-        transactions,
-        transactionsDetail,
-        this.completedSession,
-      ),
-      proofs: this.getSessionProofs(transactions, this.completedSession.allowed_methods),
-    };
-  }
-
-  private getLeaves(allowedMethods: AllowedMethod[]): string[] {
-    return allowedMethods.map((method) =>
-      hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
-    );
-  }
-
-  private getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[]): string[][] {
-    const tree = new merkle.MerkleTree(this.getLeaves(allowedMethods));
+  private getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[], leaves: string[]): string[][] {
+    const tree = new merkle.MerkleTree(leaves);
 
     return calls.map((call) => {
       const allowedIndex = allowedMethods.findIndex((allowedMethod) => {
@@ -204,7 +191,7 @@ export class DappSigner extends RawSigner {
           allowedMethod.selector == selector.getSelectorFromName(call.entrypoint)
         );
       });
-      return tree.getProof(tree.leaves[allowedIndex], this.getLeaves(allowedMethods));
+      return tree.getProof(tree.leaves[allowedIndex], leaves);
     });
   }
 }

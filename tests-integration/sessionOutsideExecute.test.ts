@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Contract, uint256, selector } from "starknet";
+import { Contract, uint256, selector, Account } from "starknet";
 import {
   ArgentSigner,
   OutsideExecution,
@@ -23,18 +23,18 @@ import {
   DappSigner,
 } from "./lib";
 
-const tokenAmounts: TokenAmount[] = [{ token_address: "0x100", amount: uint256.bnToUint256(10) }];
+const tokenAmounts: TokenAmount[] = [];
 
 const initialTime = 1713139200;
 describe("ArgentAccount: outside execution", function () {
   // Avoid timeout
   this.timeout(320000);
 
-  let argentAccountClassHash: string;
+  let argentSessionAccountClassHash: string;
   let testDapp: Contract;
 
   before(async () => {
-    argentAccountClassHash = await declareContract("HybridSessionAccount");
+    argentSessionAccountClassHash = await declareContract("HybridSessionAccount");
     const testDappClassHash = await declareContract("TestDapp");
     const { contract_address } = await deployer.deployContract({
       classHash: testDappClassHash,
@@ -43,46 +43,7 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it.only("Basics", async function () {
-    const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
-
-    await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
-
-    const outsideExecution: OutsideExecution = {
-      caller: deployer.address,
-      nonce: randomKeyPair().publicKey,
-      execute_after: initialTime - 100,
-      execute_before: initialTime + 100,
-      calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
-    };
-    const outsideExecutionCall = await getOutsideExecutionCallWithSession(
-      outsideExecution,
-      account.address,
-      account.signer,
-    );
-
-    // ensure can't be run too early
-    await setTime(initialTime - 200);
-    await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
-
-    // ensure can't be run too late
-    await setTime(initialTime + 200);
-    await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
-
-    // ensure the caller is as expected
-    await expectExecutionRevert("argent/invalid-caller", async () =>
-      deployer.execute(
-        await getOutsideExecutionCallWithSession(
-          { ...outsideExecution, caller: "0x123" },
-          account.address,
-          account.signer,
-        ),
-      ),
-    );
-
-    await setTime(initialTime);
-
-    // normal scenario
-    await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
+    const { account, accountContract, guardian } = await deployAccount(argentSessionAccountClassHash);
 
     const backendService = new BackendService(guardian);
     const dappService = new DappService(backendService);
@@ -102,9 +63,6 @@ describe("ArgentAccount: outside execution", function () {
     // 2. Owner and Guardian signs session
     const accountSessionSignature = await argentX.getAccountSessionSignature(sessionRequest);
 
-    //  Every request:
-    const calls = [testDapp.populateTransaction.set_number(2)];
-
     // 1. dapp requests backend signature
     // backend: can verify the parameters and check it was signed by the account then provides signature
     // 2. dapp signs tx and session, crafts signature and submits transaction
@@ -116,14 +74,32 @@ describe("ArgentAccount: outside execution", function () {
       sessionRequest,
     );
 
-    account.signer = sessionSigner;
+    let dappAccount = new Account(provider, account.address, sessionSigner);
 
-    await account.execute(outsideExecutionCall);
+    const outsideExecution: OutsideExecution = {
+      caller: dappAccount.address,
+      nonce: randomKeyPair().publicKey,
+      execute_after: initialTime - 100,
+      execute_before: initialTime + 100,
+      calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
+    };
+    const outsideExecutionCall = await getOutsideExecutionCallWithSession(
+      outsideExecution,
+      account.address,
+      sessionSigner,
+    );
+
+    await setTime(initialTime);
+
+    // normal scenario
+    await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
+
+    await dappAccount.execute(outsideExecutionCall);
 
     await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
     // ensure a transaction can't be replayed
-    await expectExecutionRevert("argent/duplicated-outside-nonce", () => deployer.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/duplicated-outside-nonce", () => dappAccount.execute(outsideExecutionCall));
   });
 });

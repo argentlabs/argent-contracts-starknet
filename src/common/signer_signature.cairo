@@ -47,37 +47,41 @@ enum Signer {
     Webauthn: WebauthnSigner
 }
 
-impl SignerIntoFelt252 of Into<Signer, felt252> {
-    fn into(self: Signer) -> felt252 {
+trait IntoFelt252<T> {
+    fn into_felt252(self: T) -> felt252;
+}
+
+impl SignerIntoFelt252 of IntoFelt252<Signer> {
+    fn into_felt252(self: Signer) -> felt252 {
         match self {
-            Signer::Starknet(signer) => signer.into(),
-            Signer::Secp256k1(signer) => signer.into(),
-            Signer::Secp256r1(signer) => signer.into(),
-            Signer::Webauthn(signer) => signer.into(),
+            Signer::Starknet(signer) => signer.into_felt252(),
+            Signer::Secp256k1(signer) => signer.into_felt252(),
+            Signer::Secp256r1(signer) => signer.into_felt252(),
+            Signer::Webauthn(signer) => signer.into_felt252(),
         }
     }
 }
 
-impl StarknetSignerIntoFelt252 of Into<StarknetSigner, felt252> {
-    fn into(self: StarknetSigner) -> felt252 {
+impl StarknetSignerIntoFelt252 of IntoFelt252<StarknetSigner> {
+    fn into_felt252(self: StarknetSigner) -> felt252 {
         self.pubkey
     }
 }
 
-impl Secp256k1SignerIntoFelt252 of Into<Secp256k1Signer, felt252> {
-    fn into(self: Secp256k1Signer) -> felt252 {
+impl Secp256k1SignerIntoFelt252 of IntoFelt252<Secp256k1Signer> {
+    fn into_felt252(self: Secp256k1Signer) -> felt252 {
         PoseidonTrait::new().update_with(('Secp256k1', self.pubkey)).finalize()
     }
 }
 
-impl Secp256r1SignerIntoFelt252 of Into<Secp256r1Signer, felt252> {
-    fn into(self: Secp256r1Signer) -> felt252 {
+impl Secp256r1SignerIntoFelt252 of IntoFelt252<Secp256r1Signer> {
+    fn into_felt252(self: Secp256r1Signer) -> felt252 {
         PoseidonTrait::new().update_with(('Secp256r1', self.pubkey)).finalize()
     }
 }
 
-impl WebauthnSignerIntoFelt252 of Into<WebauthnSigner, felt252> {
-    fn into(self: WebauthnSigner) -> felt252 {
+impl WebauthnSignerIntoFelt252 of IntoFelt252<WebauthnSigner> {
+    fn into_felt252(self: WebauthnSigner) -> felt252 {
         PoseidonTrait::new().update_with(('Webauthn', self.origin, self.rp_id_hash, self.pubkey)).finalize()
     }
 }
@@ -134,19 +138,19 @@ impl SignerSignatureImpl of SignerSignatureTrait {
 
     fn signer(self: SignerSignature) -> Signer {
         match self {
-            SignerSignature::Starknet((signer, signature)) => Signer::Starknet(signer),
-            SignerSignature::Secp256k1((signer, signature)) => Signer::Secp256k1(signer),
-            SignerSignature::Secp256r1((signer, signature)) => Signer::Secp256r1(signer),
-            SignerSignature::Webauthn((signer, signature)) => Signer::Webauthn(signer)
+            SignerSignature::Starknet((signer, _)) => Signer::Starknet(signer),
+            SignerSignature::Secp256k1((signer, _)) => Signer::Secp256k1(signer),
+            SignerSignature::Secp256r1((signer, _)) => Signer::Secp256r1(signer),
+            SignerSignature::Webauthn((signer, _)) => Signer::Webauthn(signer)
         }
     }
 
     fn signer_as_felt252(self: SignerSignature) -> felt252 {
         match self {
-            SignerSignature::Starknet((signer, signature)) => signer.into(),
-            SignerSignature::Secp256k1((signer, signature)) => signer.into(),
-            SignerSignature::Secp256r1((signer, signature)) => signer.into(),
-            SignerSignature::Webauthn((signer, signature)) => signer.into()
+            SignerSignature::Starknet((signer, _)) => signer.into_felt252(),
+            SignerSignature::Secp256k1((signer, _)) => signer.into_felt252(),
+            SignerSignature::Secp256r1((signer, _)) => signer.into_felt252(),
+            SignerSignature::Webauthn((signer, _)) => signer.into_felt252()
         }
     }
 }

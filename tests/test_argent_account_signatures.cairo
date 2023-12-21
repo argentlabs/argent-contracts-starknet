@@ -170,7 +170,7 @@ fn invalid_empty_signature_with_guardian() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(3000000)]
 #[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
 fn invalid_signature_length_with_guardian() {
     let account = initialize_account();

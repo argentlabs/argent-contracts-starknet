@@ -16,7 +16,7 @@ mod ArgentAccount {
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
         upgrade::{IUpgradeable, do_upgrade, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
-        signer_signature::{Signer, StarknetSigner, SignerZero, SignerSignature, SignerSignatureTrait},
+        signer_signature::{Signer, StarknetSigner, SignerZero, SignerSignature, SignerSignatureTrait, IntoFelt252},
         serialization::full_deserialize
     };
     use hash::HashStateTrait;
@@ -95,6 +95,7 @@ mod ArgentAccount {
         AccountUpgraded: AccountUpgraded,
         OwnerAdded: OwnerAdded,
         OwnerRemoved: OwnerRemoved,
+        SignerLinked: SignerLinked,
     }
 
     /// @notice Emitted exactly once when the account is initialized
@@ -188,8 +189,7 @@ mod ArgentAccount {
     #[derive(Drop, starknet::Event)]
     struct OwnerAdded {
         #[key]
-        new_owner_guid: felt252,
-        new_owner_signer: Signer
+        new_owner_guid: felt252
     }
 
     /// This event is part of an account discoverability standard, SNIP not yet created
@@ -200,18 +200,26 @@ mod ArgentAccount {
         removed_owner_guid: felt252,
     }
 
+    #[derive(Drop, starknet::Event)]
+    struct SignerLinked {
+        #[key]
+        owner_guid: felt252,
+        owner_signer: Signer,
+    }
+
     #[constructor]
     fn constructor(ref self: ContractState, owner: Signer, guardian: Signer) {
         assert(owner.is_non_zero(), 'argent/null-owner');
 
-        let stored_owner: felt252 = owner.into();
-        let stored_guardian: felt252 = guardian.into();
+        let stored_owner: felt252 = owner.into_felt252();
+        let stored_guardian: felt252 = guardian.into_felt252();
 
         self._signer.write(stored_owner);
         self._guardian.write(stored_guardian);
         self._guardian_backup.write(0);
         self.emit(AccountCreated { owner: stored_owner, guardian: stored_guardian });
-        self.emit(OwnerAdded { new_owner_guid: stored_owner, new_owner_signer: owner });
+        self.emit(OwnerAdded { new_owner_guid: stored_owner });
+        self.emit(SignerLinked { owner_guid: stored_owner, owner_signer: owner })
     }
 
     #[external(v0)]
@@ -275,10 +283,11 @@ mod ArgentAccount {
                 self._implementation.write(Zeroable::zero());
                 // Technically the owner is not added here, but we emit the event since it wasn't emitted in previous versions
                 let owner = self._signer.read();
+                self.emit(OwnerAdded { new_owner_guid: owner });
                 self
                     .emit(
-                        OwnerAdded {
-                            new_owner_guid: owner, new_owner_signer: Signer::Starknet(StarknetSigner { pubkey: owner })
+                        SignerLinked {
+                            owner_guid: owner, owner_signer: Signer::Starknet(StarknetSigner { pubkey: owner })
                         }
                     );
             }
@@ -337,7 +346,8 @@ mod ArgentAccount {
             self._signer.write(new_owner);
             self.emit(OwnerChanged { new_owner });
             self.emit(OwnerRemoved { removed_owner_guid: old_owner });
-            self.emit(OwnerAdded { new_owner_guid: new_owner, new_owner_signer: signer_signature.signer() });
+            self.emit(OwnerAdded { new_owner_guid: new_owner });
+            self.emit(SignerLinked { owner_guid: new_owner, owner_signer: signer_signature.signer() });
         }
 
         fn change_guardian(ref self: ContractState, new_guardian: Signer) {
@@ -350,8 +360,8 @@ mod ArgentAccount {
             self.reset_escape();
             self.reset_escape_attempts();
 
-            self._guardian.write(new_guardian.into());
-            self.emit(GuardianChanged { new_guardian: new_guardian.into() });
+            self._guardian.write(new_guardian.into_felt252());
+            self.emit(GuardianChanged { new_guardian: new_guardian.into_felt252() });
         }
 
         fn change_guardian_backup(ref self: ContractState, new_guardian_backup: Signer) {
@@ -361,8 +371,8 @@ mod ArgentAccount {
             self.reset_escape();
             self.reset_escape_attempts();
 
-            self._guardian_backup.write(new_guardian_backup.into());
-            self.emit(GuardianBackupChanged { new_guardian_backup: new_guardian_backup.into() });
+            self._guardian_backup.write(new_guardian_backup.into_felt252());
+            self.emit(GuardianBackupChanged { new_guardian_backup: new_guardian_backup.into_felt252() });
         }
 
         fn trigger_escape_owner(ref self: ContractState, new_owner: Signer) {
@@ -377,11 +387,12 @@ mod ArgentAccount {
             }
 
             self.reset_escape();
-            let stored_new_owner = new_owner.into();
+            let stored_new_owner = new_owner.into_felt252();
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
             let escape = Escape { ready_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: stored_new_owner };
             self._escape.write(escape);
             self.emit(EscapeOwnerTriggered { ready_at, new_owner: stored_new_owner });
+            self.emit(SignerLinked { owner_guid: stored_new_owner, owner_signer: new_owner });
         }
 
         fn trigger_escape_guardian(ref self: ContractState, new_guardian: Signer) {
@@ -389,7 +400,7 @@ mod ArgentAccount {
 
             self.reset_escape();
 
-            let stored_new_guardian = new_guardian.into();
+            let stored_new_guardian = new_guardian.into_felt252();
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
             let escape = Escape { ready_at, escape_type: ESCAPE_TYPE_GUARDIAN, new_signer: stored_new_guardian };
             self._escape.write(escape);
@@ -411,7 +422,7 @@ mod ArgentAccount {
             self._signer.write(current_escape.new_signer);
             self.emit(OwnerEscaped { new_owner: current_escape.new_signer });
             self.emit(OwnerRemoved { removed_owner_guid: old_owner });
-            // need to decide what to do self.emit(OwnerAdded { new_owner_guid: current_escape.new_signer });
+            self.emit(OwnerAdded { new_owner_guid: current_escape.new_signer });
 
             // clear escape
             self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });

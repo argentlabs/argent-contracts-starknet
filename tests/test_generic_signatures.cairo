@@ -2,7 +2,7 @@ use argent::common::{
     account::{IAccount, IAccountDispatcher, IAccountDispatcherTrait},
     signer_signature::{
         SignerSignatureTrait, SignerSignature, StarknetSignature, StarknetSigner, Secp256k1Signer, Secp256r1Signer,
-        WebauthnSigner
+        WebauthnSigner, IntoFelt252
     }
 };
 use argent::generic::{argent_generic::ArgentGenericAccount};
@@ -68,7 +68,7 @@ fn test_valid_signature_webauthn_1() {
     let mut signatures = array![1];
     signer_signature.serialize(ref signatures);
     assert(
-        initialize_account(signer.into()).is_valid_signature(challenge, signatures) == VALIDATED, 'invalid signature'
+        initialize_account(signer.into_felt252()).is_valid_signature(challenge, signatures) == VALIDATED, 'invalid signature'
     );
 }
 
@@ -81,7 +81,7 @@ fn test_valid_signature_webauthn_2() {
     let mut signatures = array![1];
     signer_signature.serialize(ref signatures);
     assert(
-        initialize_account(signer.into()).is_valid_signature(challenge, signatures) == VALIDATED, 'invalid signature'
+        initialize_account(signer.into_felt252()).is_valid_signature(challenge, signatures) == VALIDATED, 'invalid signature'
     );
 }
 
@@ -94,7 +94,7 @@ fn test_valid_signature_webauthn_3() {
     let mut signatures = array![1];
     signer_signature.serialize(ref signatures);
     assert(
-        initialize_account(signer.into()).is_valid_signature(challenge, signatures) == VALIDATED, 'invalid signature'
+        initialize_account(signer.into_felt252()).is_valid_signature(challenge, signatures) == VALIDATED, 'invalid signature'
     );
 }
 
@@ -107,6 +107,6 @@ fn test_valid_signature_webauthn_4() {
     let mut signatures = array![1];
     signer_signature.serialize(ref signatures);
     assert(
-        initialize_account(signer.into()).is_valid_signature(challenge, signatures) == VALIDATED, 'invalid signature'
+        initialize_account(signer.into_felt252()).is_valid_signature(challenge, signatures) == VALIDATED, 'invalid signature'
     );
 }

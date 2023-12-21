@@ -24,7 +24,7 @@ struct StarknetSigner {
 
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct Secp256k1Signer {
-    pubkey: felt252
+    pubkey_hash: EthAddress
 }
 
 #[derive(Drop, Copy, Serde, PartialEq)]
@@ -70,7 +70,7 @@ impl StarknetSignerIntoFelt252 of IntoFelt252<StarknetSigner> {
 
 impl Secp256k1SignerIntoFelt252 of IntoFelt252<Secp256k1Signer> {
     fn into_felt252(self: Secp256k1Signer) -> felt252 {
-        PoseidonTrait::new().update_with(('Secp256k1', self.pubkey)).finalize()
+        PoseidonTrait::new().update_with(('Secp256k1', self.pubkey_hash)).finalize()
     }
 }
 
@@ -94,7 +94,7 @@ impl SignerZero of Zeroable<Signer> {
     fn is_zero(self: Signer) -> bool {
         match self {
             Signer::Starknet(signer) => signer.pubkey.is_zero(),
-            Signer::Secp256k1(signer) => signer.pubkey.is_zero(),
+            Signer::Secp256k1(signer) => signer.pubkey_hash.is_zero(),
             Signer::Secp256r1(signer) => signer.pubkey.is_zero(),
             Signer::Webauthn(signer) => signer.pubkey.is_zero(),
         }
@@ -145,13 +145,9 @@ impl SignerSignatureImpl of SignerSignatureTrait {
         }
     }
 
+    #[inline(always)]
     fn signer_as_felt252(self: SignerSignature) -> felt252 {
-        match self {
-            SignerSignature::Starknet((signer, _)) => signer.into_felt252(),
-            SignerSignature::Secp256k1((signer, _)) => signer.into_felt252(),
-            SignerSignature::Secp256r1((signer, _)) => signer.into_felt252(),
-            SignerSignature::Webauthn((signer, _)) => signer.into_felt252()
-        }
+        self.signer().into_felt252()
     }
 }
 
@@ -160,8 +156,7 @@ fn is_valid_starknet_signature(hash: felt252, signer: StarknetSigner, signature:
 }
 
 fn is_valid_secp256k1_signature(hash: u256, signer: Secp256k1Signer, signature: Secp256k1Signature) -> bool {
-    let eth_signer: EthAddress = signer.pubkey.try_into().expect('argent/invalid-eth-signer');
-    is_eth_signature_valid(hash, signature, eth_signer).is_ok()
+    is_eth_signature_valid(hash, signature, signer.pubkey_hash).is_ok()
 }
 
 fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: Secp256r1Signature) -> bool {

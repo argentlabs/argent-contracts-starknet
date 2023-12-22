@@ -48,62 +48,68 @@ enum Signer {
     Webauthn: WebauthnSigner
 }
 
-trait IntoFelt252<T> {
-    fn into_felt252(self: T) -> felt252;
+trait IntoGuid<T> {
+    fn into_guid(self: T) -> Result<felt252, felt252>;
 }
 
-impl SignerIntoFelt252 of IntoFelt252<Signer> {
-    fn into_felt252(self: Signer) -> felt252 {
+impl SignerIntoGuid of IntoGuid<Signer> {
+    fn into_guid(self: Signer) -> Result<felt252, felt252> {
         match self {
-            Signer::Starknet(signer) => signer.into_felt252(),
-            Signer::Secp256k1(signer) => signer.into_felt252(),
-            Signer::Secp256r1(signer) => signer.into_felt252(),
-            Signer::Webauthn(signer) => signer.into_felt252(),
+            Signer::Starknet(signer) => signer.into_guid(),
+            Signer::Secp256k1(signer) => signer.into_guid(),
+            Signer::Secp256r1(signer) => signer.into_guid(),
+            Signer::Webauthn(signer) => signer.into_guid(),
         }
     }
 }
 
-impl StarknetSignerIntoFelt252 of IntoFelt252<StarknetSigner> {
-    fn into_felt252(self: StarknetSigner) -> felt252 {
-        self.pubkey
-    }
-}
-
-impl Secp256k1SignerIntoFelt252 of IntoFelt252<Secp256k1Signer> {
-    fn into_felt252(self: Secp256k1Signer) -> felt252 {
-        if (self.pubkey_hash.is_zero()) {
-            0
-        } else {
-            PoseidonTrait::new().update_with(('Secp256k1', self.pubkey_hash)).finalize()
-        }
-    }
-}
-
-impl Secp256r1SignerIntoFelt252 of IntoFelt252<Secp256r1Signer> {
-    fn into_felt252(self: Secp256r1Signer) -> felt252 {
+impl StarknetSignerIntoGuid of IntoGuid<StarknetSigner> {
+    fn into_guid(self: StarknetSigner) -> Result<felt252, felt252> {
         if (self.pubkey == 0) {
-            0
+            Result::Err('argent/invalid-signer-guid')
         } else {
-            PoseidonTrait::new().update_with(('Secp256r1', self.pubkey)).finalize()
+            Result::Ok(self.pubkey)
         }
     }
 }
 
-impl WebauthnSignerIntoFelt252 of IntoFelt252<WebauthnSigner> {
-    fn into_felt252(self: WebauthnSigner) -> felt252 {
+impl Secp256k1SignerIntoGuid of IntoGuid<Secp256k1Signer> {
+    fn into_guid(self: Secp256k1Signer) -> Result<felt252, felt252> {
+        if (self.pubkey_hash.is_zero()) {
+            Result::Err('argent/invalid-signer-guid')
+        } else {
+            Result::Ok(PoseidonTrait::new().update_with(('Secp256k1', self.pubkey_hash)).finalize())
+        }
+    }
+}
+
+impl Secp256r1SignerIntoGuid of IntoGuid<Secp256r1Signer> {
+    fn into_guid(self: Secp256r1Signer) -> Result<felt252, felt252> {
+        if (self.pubkey == 0) {
+            Result::Err('argent/invalid-signer-guid')
+        } else {
+            Result::Ok(PoseidonTrait::new().update_with(('Secp256r1', self.pubkey)).finalize())
+        }
+    }
+}
+
+impl WebauthnSignerIntoGuid of IntoGuid<WebauthnSigner> {
+    fn into_guid(self: WebauthnSigner) -> Result<felt252, felt252> {
         if (self.origin == 0 && self.rp_id_hash.is_zero() && self.pubkey.is_zero()) {
-            0
+            Result::Err('argent/invalid-signer-guid')
         } else {
-            PoseidonTrait::new().update_with(('Webauthn', self.origin, self.rp_id_hash, self.pubkey)).finalize()
+            Result::Ok(
+                PoseidonTrait::new().update_with(('Webauthn', self.origin, self.rp_id_hash, self.pubkey)).finalize()
+            )
         }
     }
 }
 
-impl OptionSignerIntoFelt252 of IntoFelt252<Option<Signer>> {
-    fn into_felt252(self: Option<Signer>) -> felt252 {
+impl OptionSignerIntoGuid of IntoGuid<Option<Signer>> {
+    fn into_guid(self: Option<Signer>) -> Result<felt252, felt252> {
         match self {
-            Option::Some(signer) => { signer.into_felt252() },
-            Option::None => { 0_felt252 },
+            Option::Some(signer) => { signer.into_guid() },
+            Option::None => { Result::Err('argent/invalid-signer-guid') },
         }
     }
 }
@@ -122,7 +128,7 @@ enum SignerSignature {
 trait SignerSignatureTrait {
     fn is_valid_signature(self: SignerSignature, hash: felt252) -> bool;
     fn signer(self: SignerSignature) -> Signer;
-    fn signer_as_felt252(self: SignerSignature) -> felt252;
+    fn signer_into_guid(self: SignerSignature) -> Result<felt252, felt252>;
 }
 
 impl SignerSignatureImpl of SignerSignatureTrait {
@@ -149,8 +155,8 @@ impl SignerSignatureImpl of SignerSignatureTrait {
     }
 
     #[inline(always)]
-    fn signer_as_felt252(self: SignerSignature) -> felt252 {
-        self.signer().into_felt252()
+    fn signer_into_guid(self: SignerSignature) -> Result<felt252, felt252> {
+        self.signer().into_guid()
     }
 }
 

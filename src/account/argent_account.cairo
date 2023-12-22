@@ -219,10 +219,10 @@ mod ArgentAccount {
 
         let stored_guardian: felt252 = match guardian {
             Option::Some(guardian) => {
-                let stored: felt252 = guardian.into_felt252();
-                self._guardian.write(stored);
-                self.emit(SignerLinked { signer_guid: stored, signer: guardian });
-                stored
+                let stored_guardian: felt252 = guardian.into_felt252();
+                self._guardian.write(stored_guardian);
+                self.emit(SignerLinked { signer_guid: stored_guardian, signer: guardian });
+                stored_guardian
             },
             Option::None => { 0 },
         };
@@ -362,9 +362,9 @@ mod ArgentAccount {
 
             let stored_guardian: felt252 = match new_guardian {
                 Option::Some(guardian) => {
-                    let sg = guardian.into_felt252();
-                    self.emit(SignerLinked { signer_guid: sg, signer: guardian });
-                    sg
+                    let stored_guardian = guardian.into_felt252();
+                    self.emit(SignerLinked { signer_guid: stored_guardian, signer: guardian });
+                    stored_guardian
                 },
                 Option::None => { 0_felt252 },
             };
@@ -387,9 +387,9 @@ mod ArgentAccount {
 
             let stored_guardian_backup: felt252 = match new_guardian_backup {
                 Option::Some(guardian) => {
-                    let sg = guardian.into_felt252();
-                    self.emit(SignerLinked { signer_guid: sg, signer: guardian });
-                    sg
+                    let stored_guardian = guardian.into_felt252();
+                    self.emit(SignerLinked { signer_guid: stored_guardian, signer: guardian });
+                    stored_guardian
                 },
                 Option::None => { 0_felt252 },
             };

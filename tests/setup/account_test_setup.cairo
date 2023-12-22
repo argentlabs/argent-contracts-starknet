@@ -1,7 +1,8 @@
 use argent::account::argent_account::ArgentAccount;
 use argent::account::escape::{Escape, EscapeStatus};
-use argent::common::signer_signature::SignerSignature;
+use argent::common::signer_signature::{Signer, StarknetSigner, SignerSignature};
 use argent::common::version::Version;
+use core::serde::Serde;
 use starknet::{contract_address_const, deploy_syscall, account::Call, testing::set_contract_address};
 
 #[starknet::interface]
@@ -14,14 +15,18 @@ trait ITestArgentAccount<TContractState> {
 
     // IArgentAccount
     fn __validate_deploy__(
-        self: @TContractState, class_hash: felt252, contract_address_salt: felt252, owner: felt252, guardian: felt252
+        self: @TContractState,
+        class_hash: felt252,
+        contract_address_salt: felt252,
+        owner: Signer,
+        guardian: Option<Signer>
     ) -> felt252;
     // External
     fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
-    fn change_guardian(ref self: TContractState, new_guardian: felt252);
-    fn change_guardian_backup(ref self: TContractState, new_guardian_backup: felt252);
-    fn trigger_escape_owner(ref self: TContractState, new_owner: felt252);
-    fn trigger_escape_guardian(ref self: TContractState, new_guardian: felt252);
+    fn change_guardian(ref self: TContractState, new_guardian: Option<Signer>);
+    fn change_guardian_backup(ref self: TContractState, new_guardian_backup: Option<Signer>);
+    fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);
+    fn trigger_escape_guardian(ref self: TContractState, new_guardian: Option<Signer>);
     fn escape_owner(ref self: TContractState);
     fn escape_guardian(ref self: TContractState);
     fn cancel_escape(ref self: TContractState);
@@ -60,11 +65,18 @@ fn initialize_account_without_guardian() -> ITestArgentAccountDispatcher {
 }
 
 fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAccountDispatcher {
-    let calldata = array![owner, guardian];
+    let mut calldata = array![];
+    Signer::Starknet(StarknetSigner { pubkey: owner }).serialize(ref calldata);
+    let guardian_signer: Option<Signer> = match guardian {
+        0 => { Option::None },
+        _ => { Option::Some(Signer::Starknet(StarknetSigner { pubkey: guardian })) },
+    };
+    guardian_signer.serialize(ref calldata);
+
     let class_hash = ArgentAccount::TEST_CLASS_HASH.try_into().unwrap();
     let (contract_address, _) = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap();
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')
     set_contract_address(contract_address_const::<1>());
-    ITestArgentAccountDispatcher { contract_address }
+    ITestArgentAccountDispatcher { contract_address: contract_address_const::<1>() }
 }

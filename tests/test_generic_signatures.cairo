@@ -1,8 +1,14 @@
 use argent::common::{
     account::{IAccount, IAccountDispatcher, IAccountDispatcherTrait},
-    signer_signature::{SignerSignature, StarknetSignature}
+    signer_signature::{
+        SignerSignatureTrait, SignerSignature, StarknetSignature, StarknetSigner, Secp256k1Signer, Secp256r1Signer,
+        WebauthnSigner, IntoGuid
+    },
+    serialization::serialize,
 };
 use argent::generic::{argent_generic::ArgentGenericAccount};
+use argent_tests::setup::webauthn_test_setup::{setup_1, setup_2, setup_3, setup_4,};
+use starknet::EthAddress;
 use starknet::{deploy_syscall, VALIDATED, eth_signature::Signature};
 
 const message_hash: felt252 = 0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8;
@@ -25,27 +31,83 @@ fn initialize_account(owner: felt252) -> IAccountDispatcher {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(2000000000)]
 fn test_valid_signature_starknet() {
-    let mut signatures = array![1];
-    let signer_signature = SignerSignature::Starknet((owner_pubkey, StarknetSignature { r: owner_r, s: owner_s }));
-    signer_signature.serialize(ref signatures);
+    let signer_signature = SignerSignature::Starknet(
+        (StarknetSigner { pubkey: owner_pubkey }, StarknetSignature { r: owner_r, s: owner_s })
+    );
+    let signatures = array![signer_signature];
     assert(
-        initialize_account(owner_pubkey).is_valid_signature(message_hash, signatures) == VALIDATED, 'invalid signature'
+        initialize_account(owner_pubkey).is_valid_signature(message_hash, serialize(@signatures)) == VALIDATED,
+        'invalid signature'
+    );
+}
+
+#[test]
+#[available_gas(3000000000)]
+fn test_valid_signature_secp256k1() {
+    let signer_signature = SignerSignature::Secp256k1(
+        (
+            Secp256k1Signer { pubkey_hash: EthAddress { address: owner_pubkey_eth } },
+            Signature { r: owner_eth_r, s: owner_eth_s, y_parity: owner_eth_v % 2 == 0 }
+        )
+    );
+    let signer_guid = signer_signature.signer_into_guid().unwrap();
+    let signatures = array![signer_signature];
+    assert(
+        initialize_account(signer_guid).is_valid_signature(message_hash, serialize(@signatures)) == VALIDATED,
+        'invalid signature'
     );
 }
 
 #[test]
 #[available_gas(2000000000)]
-fn test_valid_signature_secp256k1() {
-    let signer_signature = SignerSignature::Secp256k1(
-        (owner_pubkey_eth, Signature { r: owner_eth_r, s: owner_eth_s, y_parity: owner_eth_v % 2 == 0 })
-    );
+fn test_valid_signature_webauthn_1() {
+    let (challenge, signer, assertion) = setup_1();
+    let signatures = array![SignerSignature::Webauthn((signer, assertion))];
 
-    let mut signatures = array![1];
-    signer_signature.serialize(ref signatures);
     assert(
-        initialize_account(owner_pubkey_eth).is_valid_signature(message_hash, signatures) == VALIDATED,
+        initialize_account(signer.into_guid().unwrap())
+            .is_valid_signature(challenge, serialize(@signatures)) == VALIDATED,
+        'invalid signature'
+    );
+}
+
+#[test]
+#[available_gas(2000000000)]
+fn test_valid_signature_webauthn_2() {
+    let (challenge, signer, assertion) = setup_2();
+    let signatures = array![SignerSignature::Webauthn((signer, assertion))];
+
+    assert(
+        initialize_account(signer.into_guid().unwrap())
+            .is_valid_signature(challenge, serialize(@signatures)) == VALIDATED,
+        'invalid signature'
+    );
+}
+
+#[test]
+#[available_gas(2000000000)]
+fn test_valid_signature_webauthn_3() {
+    let (challenge, signer, assertion) = setup_3();
+    let signatures = array![SignerSignature::Webauthn((signer, assertion))];
+
+    assert(
+        initialize_account(signer.into_guid().unwrap())
+            .is_valid_signature(challenge, serialize(@signatures)) == VALIDATED,
+        'invalid signature'
+    );
+}
+
+#[test]
+#[available_gas(2000000000)]
+fn test_valid_signature_webauthn_4() {
+    let (challenge, signer, assertion) = setup_4();
+    let signatures = array![SignerSignature::Webauthn((signer, assertion))];
+
+    assert(
+        initialize_account(signer.into_guid().unwrap())
+            .is_valid_signature(challenge, serialize(@signatures)) == VALIDATED,
         'invalid signature'
     );
 }

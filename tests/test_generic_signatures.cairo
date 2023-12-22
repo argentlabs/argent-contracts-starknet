@@ -3,7 +3,8 @@ use argent::common::{
     signer_signature::{
         SignerSignatureTrait, SignerSignature, StarknetSignature, StarknetSigner, Secp256k1Signer, Secp256r1Signer,
         WebauthnSigner, IntoFelt252
-    }
+    },
+    serialization::serialize,
 };
 use argent::generic::{argent_generic::ArgentGenericAccount};
 use argent_tests::setup::webauthn_test_setup::{setup_1, setup_2, setup_3, setup_4,};
@@ -32,13 +33,13 @@ fn initialize_account(owner: felt252) -> IAccountDispatcher {
 #[test]
 #[available_gas(2000000000)]
 fn test_valid_signature_starknet() {
-    let mut signatures = array![1];
     let signer_signature = SignerSignature::Starknet(
         (StarknetSigner { pubkey: owner_pubkey }, StarknetSignature { r: owner_r, s: owner_s })
     );
-    signer_signature.serialize(ref signatures);
+    let signatures = array![signer_signature];
     assert(
-        initialize_account(owner_pubkey).is_valid_signature(message_hash, signatures) == VALIDATED, 'invalid signature'
+        initialize_account(owner_pubkey).is_valid_signature(message_hash, serialize(@signatures)) == VALIDATED,
+        'invalid signature'
     );
 }
 
@@ -52,11 +53,10 @@ fn test_valid_signature_secp256k1() {
         )
     );
     let stored_signer = signer_signature.signer_as_felt252();
-
-    let mut signatures = array![1];
-    signer_signature.serialize(ref signatures);
+    let signatures = array![signer_signature];
     assert(
-        initialize_account(stored_signer).is_valid_signature(message_hash, signatures) == VALIDATED, 'invalid signature'
+        initialize_account(stored_signer).is_valid_signature(message_hash, serialize(@signatures)) == VALIDATED,
+        'invalid signature'
     );
 }
 
@@ -64,12 +64,10 @@ fn test_valid_signature_secp256k1() {
 #[available_gas(2000000000)]
 fn test_valid_signature_webauthn_1() {
     let (challenge, signer, assertion) = setup_1();
-    let signer_signature = SignerSignature::Webauthn((signer, assertion));
+    let signatures = array![SignerSignature::Webauthn((signer, assertion))];
 
-    let mut signatures = array![1];
-    signer_signature.serialize(ref signatures);
     assert(
-        initialize_account(signer.into_felt252()).is_valid_signature(challenge, signatures) == VALIDATED,
+        initialize_account(signer.into_felt252()).is_valid_signature(challenge, serialize(@signatures)) == VALIDATED,
         'invalid signature'
     );
 }
@@ -78,12 +76,10 @@ fn test_valid_signature_webauthn_1() {
 #[available_gas(2000000000)]
 fn test_valid_signature_webauthn_2() {
     let (challenge, signer, assertion) = setup_2();
-    let signer_signature = SignerSignature::Webauthn((signer, assertion));
+    let signatures = array![SignerSignature::Webauthn((signer, assertion))];
 
-    let mut signatures = array![1];
-    signer_signature.serialize(ref signatures);
     assert(
-        initialize_account(signer.into_felt252()).is_valid_signature(challenge, signatures) == VALIDATED,
+        initialize_account(signer.into_felt252()).is_valid_signature(challenge, serialize(@signatures)) == VALIDATED,
         'invalid signature'
     );
 }
@@ -92,12 +88,10 @@ fn test_valid_signature_webauthn_2() {
 #[available_gas(2000000000)]
 fn test_valid_signature_webauthn_3() {
     let (challenge, signer, assertion) = setup_3();
-    let signer_signature = SignerSignature::Webauthn((signer, assertion));
+    let signatures = array![SignerSignature::Webauthn((signer, assertion))];
 
-    let mut signatures = array![1];
-    signer_signature.serialize(ref signatures);
     assert(
-        initialize_account(signer.into_felt252()).is_valid_signature(challenge, signatures) == VALIDATED,
+        initialize_account(signer.into_felt252()).is_valid_signature(challenge, serialize(@signatures)) == VALIDATED,
         'invalid signature'
     );
 }
@@ -106,12 +100,10 @@ fn test_valid_signature_webauthn_3() {
 #[available_gas(2000000000)]
 fn test_valid_signature_webauthn_4() {
     let (challenge, signer, assertion) = setup_4();
-    let signer_signature = SignerSignature::Webauthn((signer, assertion));
+    let signatures = array![SignerSignature::Webauthn((signer, assertion))];
 
-    let mut signatures = array![1];
-    signer_signature.serialize(ref signatures);
     assert(
-        initialize_account(signer.into_felt252()).is_valid_signature(challenge, signatures) == VALIDATED,
+        initialize_account(signer.into_felt252()).is_valid_signature(challenge, serialize(@signatures)) == VALIDATED,
         'invalid signature'
     );
 }

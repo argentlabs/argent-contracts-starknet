@@ -48,7 +48,7 @@ fn valid_with_guardian() {
 #[available_gas(20000000)]
 fn valid_with_guardian_backup() {
     let account = initialize_account_with(owner_pubkey, 1);
-    let guardian_backup = Signer::Starknet(StarknetSigner { pubkey: guardian_backup_pubkey });
+    let guardian_backup = Option::Some(Signer::Starknet(StarknetSigner { pubkey: guardian_backup_pubkey }));
     account.change_guardian_backup(guardian_backup);
     let signatures = to_starknet_signer_signatures(
         array![owner_pubkey, owner_r, owner_s, guardian_backup_pubkey, guardian_backup_r, guardian_backup_s]

@@ -28,6 +28,7 @@ impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
 
 impl SpanU8TryIntoFelt252 of TryInto<Span<u8>, felt252> {
     fn try_into(mut self: Span<u8>) -> Option<felt252> {
+        // TODO: check if it shouldn't be 31
         if self.len() > 32 {
             return Option::None;
         }

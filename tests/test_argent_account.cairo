@@ -151,7 +151,7 @@ fn change_owner_wrong_pub_key() {
 #[available_gas(2000000)]
 fn change_guardian() {
     let account = initialize_account();
-    let guardian = Signer::Starknet(StarknetSigner { pubkey: 22 });
+    let guardian = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 22 }));
     account.change_guardian(guardian);
     assert(account.get_guardian() == guardian.into_felt252(), 'value should be 22');
 }
@@ -161,7 +161,7 @@ fn change_guardian() {
 #[should_panic(expected: ('argent/only-self', 'ENTRYPOINT_FAILED'))]
 fn change_guardian_only_self() {
     let account = initialize_account();
-    let guardian = Signer::Starknet(StarknetSigner { pubkey: 22 });
+    let guardian = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 22 }));
     set_contract_address(contract_address_const::<42>());
     account.change_guardian(guardian);
 }
@@ -171,8 +171,8 @@ fn change_guardian_only_self() {
 #[should_panic(expected: ('argent/backup-should-be-null', 'ENTRYPOINT_FAILED'))]
 fn change_guardian_to_zero() {
     let account = initialize_account();
-    let guardian_backup = Signer::Starknet(StarknetSigner { pubkey: 42 });
-    let guardian = Signer::Starknet(StarknetSigner { pubkey: 0 });
+    let guardian_backup = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 42 }));
+    let guardian: Option<Signer> = Option::None;
     account.change_guardian_backup(guardian_backup);
     account.change_guardian(guardian);
 }
@@ -181,7 +181,7 @@ fn change_guardian_to_zero() {
 #[available_gas(2000000)]
 fn change_guardian_to_zero_without_guardian_backup() {
     let account = initialize_account();
-    let guardian = Signer::Starknet(StarknetSigner { pubkey: 0 });
+    let guardian: Option<Signer> = Option::None;
     account.change_guardian(guardian);
     assert(account.get_guardian().is_zero(), 'value should be 0');
 }
@@ -190,7 +190,7 @@ fn change_guardian_to_zero_without_guardian_backup() {
 #[available_gas(2000000)]
 fn change_guardian_backup() {
     let account = initialize_account();
-    let guardian_backup = Signer::Starknet(StarknetSigner { pubkey: 33 });
+    let guardian_backup = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 33 }));
     account.change_guardian_backup(guardian_backup);
     assert(account.get_guardian_backup() == guardian_backup.into_felt252(), 'value should be 33');
 }
@@ -200,7 +200,7 @@ fn change_guardian_backup() {
 #[should_panic(expected: ('argent/only-self', 'ENTRYPOINT_FAILED'))]
 fn change_guardian_backup_only_self() {
     let account = initialize_account();
-    let guardian_backup = Signer::Starknet(StarknetSigner { pubkey: 42 });
+    let guardian_backup = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 42 }));
     set_contract_address(contract_address_const::<42>());
     account.change_guardian_backup(guardian_backup);
 }
@@ -209,7 +209,7 @@ fn change_guardian_backup_only_self() {
 #[available_gas(2000000)]
 fn change_guardian_backup_to_zero() {
     let account = initialize_account();
-    let guardian_backup = Signer::Starknet(StarknetSigner { pubkey: 0 });
+    let guardian_backup: Option<Signer> = Option::None;
     account.change_guardian_backup(guardian_backup);
     assert(account.get_guardian_backup().is_zero(), 'value should be 0');
 }
@@ -219,7 +219,7 @@ fn change_guardian_backup_to_zero() {
 #[should_panic(expected: ('argent/guardian-required', 'ENTRYPOINT_FAILED'))]
 fn change_invalid_guardian_backup() {
     let account = initialize_account_without_guardian();
-    let guardian_backup = Signer::Starknet(StarknetSigner { pubkey: 0 });
+    let guardian_backup = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 2 }));
     account.change_guardian_backup(guardian_backup);
 }
 

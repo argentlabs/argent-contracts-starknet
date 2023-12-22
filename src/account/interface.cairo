@@ -6,13 +6,17 @@ use argent::common::version::Version;
 trait IArgentAccount<TContractState> {
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate_deploy__(
-        self: @TContractState, class_hash: felt252, contract_address_salt: felt252, owner: Signer, guardian: Signer
+        self: @TContractState,
+        class_hash: felt252,
+        contract_address_salt: felt252,
+        owner: Signer,
+        guardian: Option<Signer>
     ) -> felt252;
     // External
 
     /// @notice Changes the owner
     /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
-    /// @param signer_signature SignerSignature offrom the new owner 
+    /// @param signer_signature SignerSignature of the new owner 
     /// Signature is required to prevent changing to an address which is not in control of the user
     /// Signature is the Signed Message of this hash:
     /// hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
@@ -22,12 +26,12 @@ trait IArgentAccount<TContractState> {
     /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
     /// @param new_guardian The address of the new guardian, or 0 to disable the guardian
     /// @dev can only be set to 0 if there is no guardian backup set
-    fn change_guardian(ref self: TContractState, new_guardian: Signer);
+    fn change_guardian(ref self: TContractState, new_guardian: Option<Signer>);
 
     /// @notice Changes the backup guardian
     /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
     /// @param new_guardian_backup The address of the new backup guardian, or 0 to disable the backup guardian
-    fn change_guardian_backup(ref self: TContractState, new_guardian_backup: Signer);
+    fn change_guardian_backup(ref self: TContractState, new_guardian_backup: Option<Signer>);
 
     /// @notice Triggers the escape of the owner when it is lost or compromised.
     /// Must be called by the account and authorised by just a guardian.
@@ -44,7 +48,7 @@ trait IArgentAccount<TContractState> {
     /// @dev This method assumes that there is a guardian, and that `new_guardian` can only be 0
     /// if there is no guardian backup.
     /// This must be guaranteed before calling this method, usually when validating the transaction
-    fn trigger_escape_guardian(ref self: TContractState, new_guardian: Signer);
+    fn trigger_escape_guardian(ref self: TContractState, new_guardian: Option<Signer>);
 
     /// @notice Completes the escape and changes the owner after the security period
     /// Must be called by the account and authorised by just a guardian

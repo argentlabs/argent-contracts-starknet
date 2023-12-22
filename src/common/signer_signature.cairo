@@ -2,6 +2,7 @@ use argent::common::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };
 use core::hash::HashStateExTrait;
+use core::zeroable::Zeroable;
 use ecdsa::check_ecdsa_signature;
 use hash::{HashStateTrait, Hash};
 use poseidon::{PoseidonTrait, HashState};
@@ -70,38 +71,40 @@ impl StarknetSignerIntoFelt252 of IntoFelt252<StarknetSigner> {
 
 impl Secp256k1SignerIntoFelt252 of IntoFelt252<Secp256k1Signer> {
     fn into_felt252(self: Secp256k1Signer) -> felt252 {
-        PoseidonTrait::new().update_with(('Secp256k1', self.pubkey_hash)).finalize()
+        if (self.pubkey_hash.is_zero()) {
+            0
+        } else {
+            PoseidonTrait::new().update_with(('Secp256k1', self.pubkey_hash)).finalize()
+        }
     }
 }
 
 impl Secp256r1SignerIntoFelt252 of IntoFelt252<Secp256r1Signer> {
     fn into_felt252(self: Secp256r1Signer) -> felt252 {
-        PoseidonTrait::new().update_with(('Secp256r1', self.pubkey)).finalize()
+        if (self.pubkey == 0) {
+            0
+        } else {
+            PoseidonTrait::new().update_with(('Secp256r1', self.pubkey)).finalize()
+        }
     }
 }
 
 impl WebauthnSignerIntoFelt252 of IntoFelt252<WebauthnSigner> {
     fn into_felt252(self: WebauthnSigner) -> felt252 {
-        PoseidonTrait::new().update_with(('Webauthn', self.origin, self.rp_id_hash, self.pubkey)).finalize()
+        if (self.origin == 0 && self.rp_id_hash.is_zero() && self.pubkey.is_zero()) {
+            0
+        } else {
+            PoseidonTrait::new().update_with(('Webauthn', self.origin, self.rp_id_hash, self.pubkey)).finalize()
+        }
     }
 }
 
-impl SignerZero of Zeroable<Signer> {
-    fn zero() -> Signer {
-        Signer::Starknet(StarknetSigner { pubkey: 0 })
-    }
-    #[inline(always)]
-    fn is_zero(self: Signer) -> bool {
+impl OptionSignerIntoFelt252 of IntoFelt252<Option<Signer>> {
+    fn into_felt252(self: Option<Signer>) -> felt252 {
         match self {
-            Signer::Starknet(signer) => signer.pubkey.is_zero(),
-            Signer::Secp256k1(signer) => signer.pubkey_hash.is_zero(),
-            Signer::Secp256r1(signer) => signer.pubkey.is_zero(),
-            Signer::Webauthn(signer) => signer.pubkey.is_zero(),
+            Option::Some(signer) => { signer.into_felt252() },
+            Option::None => { 0_felt252 },
         }
-    }
-    #[inline(always)]
-    fn is_non_zero(self: Signer) -> bool {
-        !self.is_zero()
     }
 }
 

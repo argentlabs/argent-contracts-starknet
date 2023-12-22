@@ -278,13 +278,30 @@ mod ArgentAccount {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
-            // Check basic invariants
-            assert(self._signer.read() != 0, 'argent/null-owner');
-            if self._guardian.read() == 0 {
-                assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
-            }
-
+            // Check basic invariants and emit missing events
             let owner = self._signer.read();
+            let guardian = self._guardian.read();
+            let guardian_backup = self._guardian_backup.read();
+            assert(owner != 0, 'argent/null-owner');
+            if guardian == 0 {
+                assert(guardian_backup == 0, 'argent/backup-should-be-null');
+            } else {
+                self
+                    .emit(
+                        SignerLinked {
+                            signer_guid: guardian, signer: Signer::Starknet(StarknetSigner { pubkey: guardian })
+                        }
+                    );
+                if (guardian_backup != 0) {
+                    self
+                        .emit(
+                            SignerLinked {
+                                signer_guid: guardian_backup,
+                                signer: Signer::Starknet(StarknetSigner { pubkey: guardian_backup })
+                            }
+                        );
+                }
+            }
             self.emit(SignerLinked { signer_guid: owner, signer: Signer::Starknet(StarknetSigner { pubkey: owner }) });
 
             let implementation = self._implementation.read();

@@ -753,7 +753,7 @@ mod ArgentAccount {
                     } },
                     Option::None => {
                         // L2_GAS not found
-                        break 0_u64;
+                        break 0;
                     }
                 };
             };

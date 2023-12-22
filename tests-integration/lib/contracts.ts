@@ -109,11 +109,9 @@ export async function loadContract(contractAddress: string, classHash?: string):
   if (!abi) {
     throw new Error("Error while getting ABI");
   }
-  // TODO WARNING THIS IS A TEMPORARY FIX WHILE WE WAIT FOR SNJS TO BE UPDATED
-  // Allows to pull back the function from one level down
-  const parsedAbi = abi.flatMap((e) => (e.type == "interface" ? e.items : e));
+
   return new ContractWithClassHash(
-    parsedAbi,
+    abi,
     contractAddress,
     provider,
     classHash ?? (await provider.getClassHashAt(contractAddress)),
@@ -132,5 +130,7 @@ export async function deployContract(
 ): Promise<ContractWithClassHash> {
   const declaredClassHash = await declareContract(contractName, true, folder);
   const { contract_address } = await deployer.deployContract({ ...payload, classHash: declaredClassHash }, details);
+
+  // TODO could avoid network request and just create the contract using the ABI
   return await loadContract(contract_address, declaredClassHash);
 }

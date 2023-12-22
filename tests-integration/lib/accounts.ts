@@ -14,12 +14,12 @@ import {
   AllowArray,
   Call,
 } from "starknet";
-import { getEthContract, getStrkContract, loadContract, declareContract, declareFixtureContract } from "./contracts";
+import { ethAddress, loadContract, declareContract, declareFixtureContract, strkAddress } from "./contracts";
 import { provider } from "./provider";
 import { ArgentSigner, KeyPair, randomKeyPair } from "./signers";
 
 export class ArgentAccount extends Account {
-  // Increase the gas limit by 30% to avoid failures due to gas estimation being too low
+  // Increase the gas limit by 30% to avoid failures due to gas estimation being too low with tx v3 and transactions the use escaping
   override async execute(
     calls: AllowArray<Call>,
     abis: Abi[] | undefined = undefined,
@@ -141,7 +141,7 @@ async function deployAccountInner(
     constructorCalldata,
     0,
   );
-  const pendingCalls: Call[] = [];
+  const calls: Call[] = [];
   let fundingCall: Call | null = null;
   if (finalParams.useTxV3) {
     fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK"); // 0.01 STRK
@@ -149,7 +149,7 @@ async function deployAccountInner(
     fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "ETH"); // 0.01 ETH
   }
   if (fundingCall) {
-    pendingCalls.push(fundingCall);
+    calls.push(fundingCall);
   }
 
   const defaultTxVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
@@ -159,7 +159,7 @@ async function deployAccountInner(
   }
   let transactionHash;
   if (finalParams.selfDeploy) {
-    const response = await deployer.execute(pendingCalls);
+    const response = await deployer.execute(calls);
     await provider.waitForTransaction(response.transaction_hash);
 
     const { transaction_hash } = await account.deploySelf({
@@ -169,7 +169,7 @@ async function deployAccountInner(
     });
     transactionHash = transaction_hash;
   } else {
-    pendingCalls.push(
+    calls.push(
       ...deployer.buildUDCContractPayload({
         classHash: finalParams.classHash,
         salt: finalParams.salt,
@@ -177,7 +177,7 @@ async function deployAccountInner(
         unique: false,
       }),
     );
-    const { transaction_hash } = await deployer.execute(pendingCalls);
+    const { transaction_hash } = await deployer.execute(calls);
     transactionHash = transaction_hash;
   }
 
@@ -259,9 +259,9 @@ export async function fundAccountCall(
   }
   let contractAddress;
   if (token === "ETH") {
-    contractAddress = (await getEthContract()).address;
+    contractAddress = ethAddress;
   } else if (token === "STRK") {
-    contractAddress = (await getStrkContract()).address;
+    contractAddress = strkAddress;
   } else {
     throw new Error(`Unsupported token ${token}`);
   }

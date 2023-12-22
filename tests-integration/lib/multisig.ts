@@ -55,7 +55,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     0 /* deployerAddress */,
   );
 
-  const pendingCalls: Call[] = [];
+  const calls: Call[] = [];
   let fundingCall: Call | null = null;
   if (finalParams.useTxV3) {
     fundingCall = await fundAccountCall(accountAddress, finalParams.fundingAmount ?? 1e16, "STRK"); // 0.01 STRK
@@ -63,14 +63,14 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     fundingCall = await fundAccountCall(accountAddress, finalParams.fundingAmount ?? 1e15, "ETH"); // 0.001 ETH
   }
   if (fundingCall) {
-    pendingCalls.push(fundingCall);
+    calls.push(fundingCall);
   }
 
   const defaultTxVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
 
   let transactionHash;
   if (finalParams.selfDeploy) {
-    const response = await deployer.execute(pendingCalls);
+    const response = await deployer.execute(calls);
     await provider.waitForTransaction(response.transaction_hash);
 
     const selfDeploymentSigner = new MultisigSigner(
@@ -85,7 +85,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     });
     transactionHash = transaction_hash;
   } else {
-    pendingCalls.push(
+    calls.push(
       ...deployer.buildUDCContractPayload({
         classHash: finalParams.classHash,
         salt: finalParams.salt,
@@ -93,7 +93,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
         unique: false,
       }),
     );
-    const { transaction_hash } = await deployer.execute(pendingCalls);
+    const { transaction_hash } = await deployer.execute(calls);
     transactionHash = transaction_hash;
   }
 

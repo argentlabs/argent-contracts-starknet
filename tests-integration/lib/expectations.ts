@@ -28,7 +28,7 @@ export async function expectRevertWithErrorMessage(
       if (match && match.length > 1) {
         assert.fail(`"${errorMessage}" not detected, instead got: "${shortString.decodeShortString(match[1])}"`);
       } else {
-        assert.fail(`No match detected`);
+        assert.fail(`No error detected in: ${e.toString()}`);
       }
     }
     return;

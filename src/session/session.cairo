@@ -1,7 +1,7 @@
 #[starknet::interface]
 trait ISessionable<TContractState> {
     fn revoke_session(ref self: TContractState, session_key: felt252);
-    fn is_session_revoked(self: @TContractState, session_key: felt252);
+    fn is_session_revoked(self: @TContractState, session_key: felt252) -> bool;
 }
 
 #[starknet::component]
@@ -46,8 +46,8 @@ mod session_component {
             self.revoked_session.write(session_key, true);
         }
 
-        fn is_session_revoked(self: @ComponentState<TContractState>, session_key: felt252) {
-            self.revoked_session.read(session_key);
+        fn is_session_revoked(self: @ComponentState<TContractState>, session_key: felt252) -> bool {
+            self.revoked_session.read(session_key)
         }
     }
 

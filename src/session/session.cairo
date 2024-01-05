@@ -42,6 +42,7 @@ mod session_component {
     > of super::ISessionable<ComponentState<TContractState>> {
         fn revoke_session(ref self: ComponentState<TContractState>, session_key: felt252) {
             assert_only_self();
+            assert(!self.revoked_session.read(session_key), 'session-already-revoked');
             self.emit(SessionRevoked { session_key });
             self.revoked_session.write(session_key, true);
         }

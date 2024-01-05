@@ -53,7 +53,7 @@ mod session_component {
     }
 
     #[generate_trait]
-    impl InternalImpl<
+    impl Internal<
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentAccount<TContractState>,
     > of InternalTrait<TContractState> {
         fn assert_valid_session(

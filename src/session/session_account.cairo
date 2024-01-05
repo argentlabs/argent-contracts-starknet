@@ -17,7 +17,7 @@ mod HybridSessionAccount {
         },
         upgrade::{IUpgradeable, do_upgrade}
     };
-    use argent::session::session::session_component::InternalImpl;
+    use argent::session::session::session_component::Internal;
     use argent::session::session::session_component;
     use ecdsa::check_ecdsa_signature;
     use hash::HashStateTrait;

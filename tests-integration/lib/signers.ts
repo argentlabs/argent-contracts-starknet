@@ -41,17 +41,8 @@ export abstract class RawSigner implements SignerInterface {
       throw new Error("ABI must be provided for each transaction or no transaction");
     }
     // now use abi to display decoded data somewhere, but as this signer is headless, we can't do that
-    const calldata = transaction.getExecuteCalldata(transactions, transactionsDetail.cairoVersion);
-
-    const messageHash = hash.calculateTransactionHash(
-      transactionsDetail.walletAddress,
-      transactionsDetail.version,
-      calldata,
-      transactionsDetail.maxFee,
-      transactionsDetail.chainId,
-      transactionsDetail.nonce,
-    );
-    return this.signRaw(messageHash);
+    const transactionHash = await this.getTransactionHash(transactions, transactionsDetail);
+    return this.signRaw(transactionHash);
   }
 
   public async getTransactionHash(transactions: Call[], transactionsDetail: InvocationsSignerDetails): Promise<string> {

@@ -17,6 +17,7 @@ mod HybridSessionAccount {
         },
         upgrade::{IUpgradeable, do_upgrade}
     };
+    use argent::session::session::SESSION_MAGIC;
     use argent::session::session::session_component::Internal;
     use argent::session::session::session_component;
     use ecdsa::check_ecdsa_signature;
@@ -46,8 +47,6 @@ mod HybridSessionAccount {
     const MAX_ESCAPE_MAX_FEE: u128 = 50000000000000000; // 0.05 ETH
 
     /// used for sessions
-    const SESSION_MAGIC: felt252 = 'session-token';
-
 
     component!(path: session_component, storage: session_component, event: SessionableEvent);
 

@@ -1,3 +1,6 @@
+const SESSION_MAGIC: felt252 = 'session-token';
+
+
 #[starknet::interface]
 trait ISessionable<TContractState> {
     fn revoke_session(ref self: TContractState, session_key: felt252);
@@ -66,6 +69,7 @@ mod session_component {
             let account_address = get_contract_address();
 
             assert_no_self_call(calls, account_address);
+            assert(*signature[0] == super::SESSION_MAGIC, 'invalid-signature-prefix');
             let mut serialized = signature.slice(1, signature.len() - 1);
             let token: SessionToken = Serde::deserialize(ref serialized).expect('argent/invalid-calldata');
             assert(serialized.is_empty(), 'excess-session-data');

@@ -136,9 +136,6 @@ export class DappSigner extends RawSigner {
     transactions: Call[],
     transactionsDetail: InvocationsSignerDetails,
   ): Promise<ArraySignatureType> {
-<<<<<<< HEAD
-    const sessionToken = await this.buildSessiontoken(transactions, transactionsDetail);
-=======
     const txHash = await this.getTransactionHash(transactions, transactionsDetail);
     const leaves = this.completedSession.allowed_methods.map((method) =>
       hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
@@ -165,7 +162,6 @@ export class DappSigner extends RawSigner {
       proofs: this.getSessionProofs(transactions, this.completedSession.allowed_methods, leaves),
     };
 
->>>>>>> feat/hybrid-onchain
     return [SESSION_MAGIC, ...CallData.compile({ ...sessionToken })];
   }
 
@@ -251,36 +247,6 @@ export class MasterCardSigner extends RawSigner {
     return {
       r: BigInt(sessionSig[0]),
       s: BigInt(sessionSig[1]),
-    };
-  }
-
-  private async buildSessiontoken(
-    transactions: Call[],
-    transactionsDetail: InvocationsSignerDetails,
-  ): Promise<SessionToken> {
-    const txHash = await this.getTransactionHash(transactions, transactionsDetail);
-    const leaves = this.getLeaves(this.completedSession.allowed_methods);
-
-    const session = {
-      expires_at: this.completedSession.expires_at,
-      allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
-      token_amounts: this.completedSession.token_amounts,
-      nft_contracts: this.completedSession.nft_contracts,
-      max_fee_usage: this.completedSession.max_fee_usage,
-      guardian_key: this.completedSession.guardian_key,
-      session_key: this.completedSession.session_key,
-    };
-
-    return {
-      session,
-      account_signature: this.accountSessionSignature,
-      session_signature: await this.signTxAndSession(txHash, transactionsDetail),
-      backend_signature: await this.argentBackend.signTxAndSession(
-        transactions,
-        transactionsDetail,
-        this.completedSession,
-      ),
-      proofs: this.getSessionProofs(transactions, this.completedSession.allowed_methods),
     };
   }
 

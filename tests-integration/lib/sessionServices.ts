@@ -162,7 +162,7 @@ export class DappSigner extends RawSigner {
       proofs: this.getSessionProofs(transactions, this.completedSession.allowed_methods, leaves),
     };
 
-    return [SESSION_MAGIC, ...CallData.compile({ ...sessionToken })];
+    return [SESSION_MAGIC, ...CallData.compile(sessionToken)];
   }
 
   private async signTxAndSession(

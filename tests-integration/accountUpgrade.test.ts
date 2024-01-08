@@ -1,5 +1,4 @@
 import { expect } from "chai";
-import { Contract } from "starknet";
 import {
   declareContract,
   deployAccount,

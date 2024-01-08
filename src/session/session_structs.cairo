@@ -43,7 +43,7 @@ struct StarkNetDomain {
     chain_id: felt252,
 }
 
-
+// update these once SNIP-12 is merged (i.e. use StarknetDomain)
 const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
 const SESSION_TYPE_HASH: felt252 =
     selector!(

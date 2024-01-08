@@ -16,7 +16,6 @@ import {
 } from "starknet";
 import {
   OffChainSession,
-  SessionToken,
   KeyPair,
   randomKeyPair,
   AllowedMethod,

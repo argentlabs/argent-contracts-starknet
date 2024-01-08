@@ -164,7 +164,7 @@ impl HashGenericSpanStruct<T, +Copy<T>, +Drop<T>, +IStructHash<T>,> of LegacyHas
         let list_len = value.len();
         loop {
             match value.pop_front() {
-                Option::Some(item) => { state = LegacyHash::hash(state, (*item).get_struct_hash()); },
+                Option::Some(item) => { state = LegacyHash::hash(state, item.get_struct_hash()); },
                 Option::None => { break LegacyHash::hash(state, list_len); },
             };
         }

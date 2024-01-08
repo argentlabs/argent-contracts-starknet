@@ -15,7 +15,7 @@ describe("ArgentAccount: declare", function () {
     await restartDevnet();
   });
   for (const useTxV3 of [false, true]) {
-    it(`Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) (TxV3:${useTxV3})`, async function () {
+    it(`Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) (TxV3: ${useTxV3})`, async function () {
       const { account } = await deployAccount();
       const contract: CompiledSierra = readContract(`${fixturesFolder}Proxy.contract_class.json`);
       expectRevertWithErrorMessage("argent/invalid-tx-version", () => account.declare({ contract }));

@@ -52,14 +52,17 @@ export class BackendService {
 
     // extremely simplified version of the backend verification
     const allowed_methods = sessionTokenToSign.allowed_methods;
-if (!calls.every(call => {
-  return allowed_methods.some(method =>
-    method["Contract Address"] === call.contractAddress &&
-    method.selector === selector.getSelectorFromName(call.entrypoint)
-  );
-})) {
-  throw new Error("Call not allowed");
-}
+    if (
+      !calls.every((call) => {
+        return allowed_methods.some(
+          (method) =>
+            method["Contract Address"] === call.contractAddress &&
+            method.selector === selector.getSelectorFromName(call.entrypoint),
+        );
+      })
+    ) {
+      throw new Error("Call not allowed");
+    }
 
     const calldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
 

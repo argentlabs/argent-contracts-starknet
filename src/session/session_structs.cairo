@@ -134,9 +134,7 @@ impl StructHashU256 of IStructHash<u256> {
 
 impl StructHashSpanContract of IStructHash<ContractAddress> {
     fn get_struct_hash(self: @ContractAddress) -> felt252 {
-        let mut state = PedersenTrait::new(0);
-        state.update_with(*self);
-        state.finalize()
+        PedersenTrait::new(0).update_with(*self).finalize()
     }
 }
 

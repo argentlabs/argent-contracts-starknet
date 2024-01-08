@@ -174,10 +174,10 @@ export class DappSigner extends RawSigner {
       transactionsDetail.walletAddress,
     );
     const sessionWithTxHash = ec.starkCurve.pedersen(transactionHash, sessionMessageHash);
-    const sessionSig = this.sessionKeyPair.signHash(sessionWithTxHash);
+    const [r, s] = this.sessionKeyPair.signHash(sessionWithTxHash);
     return {
-      r: BigInt(sessionSig[0]),
-      s: BigInt(sessionSig[1]),
+      r: BigInt(r),
+      s: BigInt(s),
     };
   }
 

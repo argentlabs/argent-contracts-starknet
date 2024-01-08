@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import { Contract, num, uint256 } from "starknet";
 import {
-  declareContract,
   deployAccount,
   deployer,
   ensureAccepted,

@@ -43,7 +43,7 @@ struct StarkNetDomain {
     chain_id: felt252,
 }
 
-
+// update these once SNIP-12 is merged (i.e. use StarknetDomain)
 const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
 const SESSION_TYPE_HASH: felt252 =
     selector!(
@@ -134,9 +134,7 @@ impl StructHashU256 of IStructHash<u256> {
 
 impl StructHashSpanContract of IStructHash<ContractAddress> {
     fn get_struct_hash(self: @ContractAddress) -> felt252 {
-        let mut state = PedersenTrait::new(0);
-        state.update_with(*self);
-        state.finalize()
+        PedersenTrait::new(0).update_with(*self).finalize()
     }
 }
 
@@ -164,7 +162,7 @@ impl HashGenericSpanStruct<T, +Copy<T>, +Drop<T>, +IStructHash<T>,> of LegacyHas
         let list_len = value.len();
         loop {
             match value.pop_front() {
-                Option::Some(item) => { state = LegacyHash::hash(state, (*item).get_struct_hash()); },
+                Option::Some(item) => { state = LegacyHash::hash(state, item.get_struct_hash()); },
                 Option::None => { break LegacyHash::hash(state, list_len); },
             };
         }

@@ -17,7 +17,8 @@ mod HybridSessionAccount {
     use argent::session::outside_session_execution::{
         IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_session_execution_component
     };
-    use argent::session::session::session_component::InternalImpl;
+    use argent::session::session::SESSION_MAGIC;
+    use argent::session::session::session_component::Internal;
     use argent::session::session::session_component;
     use ecdsa::check_ecdsa_signature;
     use hash::HashStateTrait;
@@ -31,7 +32,7 @@ mod HybridSessionAccount {
     const VERSION_MAJOR: u8 = 0;
     const VERSION_MINOR: u8 = 1;
     const VERSION_PATCH: u8 = 0;
-    const VERSION_COMPAT: felt252 = '0.3.0';
+    const VERSION_COMPAT: felt252 = '0.1.0';
 
     /// Time it takes for the escape to become ready after being triggered
     const ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
@@ -46,8 +47,6 @@ mod HybridSessionAccount {
     const MAX_ESCAPE_MAX_FEE: u128 = 50000000000000000; // 0.05 ETH
 
     /// used for sessions
-    const SESSION_MAGIC: felt252 = 'session-token';
-
 
     component!(path: session_component, storage: session_component, event: SessionableEvent);
 

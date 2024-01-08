@@ -1,7 +1,10 @@
+const SESSION_MAGIC: felt252 = 'session-token';
+
+
 #[starknet::interface]
 trait ISessionable<TContractState> {
     fn revoke_session(ref self: TContractState, session_key: felt252);
-    fn is_session_revoked(self: @TContractState, session_key: felt252);
+    fn is_session_revoked(self: @TContractState, session_key: felt252) -> bool;
 }
 
 #[starknet::component]
@@ -42,17 +45,18 @@ mod session_component {
     > of super::ISessionable<ComponentState<TContractState>> {
         fn revoke_session(ref self: ComponentState<TContractState>, session_key: felt252) {
             assert_only_self();
+            assert(!self.revoked_session.read(session_key), 'session/already-revoked');
             self.emit(SessionRevoked { session_key });
             self.revoked_session.write(session_key, true);
         }
 
-        fn is_session_revoked(self: @ComponentState<TContractState>, session_key: felt252) {
-            self.revoked_session.read(session_key);
+        fn is_session_revoked(self: @ComponentState<TContractState>, session_key: felt252) -> bool {
+            self.revoked_session.read(session_key)
         }
     }
 
     #[generate_trait]
-    impl InternalImpl<
+    impl Internal<
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentAccount<TContractState>,
     > of InternalTrait<TContractState> {
         fn assert_valid_session(
@@ -65,36 +69,37 @@ mod session_component {
             let account_address = get_contract_address();
 
             assert_no_self_call(calls, account_address);
+            assert(*signature[0] == super::SESSION_MAGIC, 'session/invalid-sig-prefix');
             let mut serialized = signature.slice(1, signature.len() - 1);
-            let token: SessionToken = Serde::deserialize(ref serialized).expect('argent/invalid-calldata');
-            assert(serialized.is_empty(), 'excess-session-data');
+            let token: SessionToken = Serde::deserialize(ref serialized).expect('session/invalid-calldata');
+            assert(serialized.is_empty(), 'session/excess-data');
 
-            assert(!self.revoked_session.read(token.session.session_key), 'session-revoked');
+            assert(!self.revoked_session.read(token.session.session_key), 'session/revoked');
 
             assert(
                 state
                     .is_valid_signature(
                         token.session.get_message_hash(), token.account_signature.snapshot.clone()
                     ) == VALIDATED,
-                'invalid-account-sig'
+                'session/invalid-account-sig'
             );
 
             let message_hash = LegacyHash::hash(transaction_hash, token.session.get_message_hash());
 
             assert(
                 is_valid_signature_generic(message_hash, token.session.session_key, token.session_signature),
-                'invalid-session-sig'
+                'session/invalid-session-sig'
             );
 
             assert(
                 is_valid_signature_generic(message_hash, token.session.guardian_key, token.backend_signature),
-                'invalid-guardian-sig'
+                'session/invalid-guardian-sig'
             );
 
             if state.get_guardian_backup() != 0 {
                 assert(
                     !is_valid_signature_generic(transaction_hash, state.get_guardian_backup(), token.backend_signature),
-                    'invalid-sig-from-backup'
+                    'session/backup-sig-found'
                 );
             }
             assert_valid_session_calls(token, calls);
@@ -117,7 +122,7 @@ mod session_component {
                     let leaf = call.get_merkle_leaf();
                     let proof = *token.proofs[index];
                     let is_valid = merkle_init.verify(merkle_root, leaf, proof);
-                    assert(is_valid, 'invalid-session-call');
+                    assert(is_valid, 'session/invalid-call');
                     index += 1;
                 },
                 Option::None => { break; },

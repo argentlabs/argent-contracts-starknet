@@ -100,3 +100,9 @@ fn get_version() {
     assert(version.minor == 1, 'Version minor');
     assert(version.patch == 1, 'Version patch');
 }
+
+#[test]
+#[available_gas(2000000)]
+fn getVersion() {
+    assert(initialize_multisig().getVersion() == '0.1.1', 'Version should be 0.1.1');
+}

@@ -1,8 +1,6 @@
 import { maxBy, omit, sortBy } from "lodash-es";
 import { provider } from "./provider";
-import { ensureAccepted } from "./receipts";
-import { isEqual } from "lodash-es";
-
+import { ensureIncluded } from "./receipts";
 const ethUsd = 2000n;
 
 interface TransactionCarrying {
@@ -10,8 +8,11 @@ interface TransactionCarrying {
 }
 
 async function profileGasUsage(transactionHash: string) {
-  const receipt = ensureAccepted(await provider.waitForTransaction(transactionHash));
-  const actualFee = BigInt(receipt.actual_fee as string);
+  const receipt = ensureIncluded(await provider.waitForTransaction(transactionHash));
+  if (receipt.actual_fee.unit !== "WEI") {
+    throw new Error(`unexpected fee unit: ${receipt.actual_fee.unit}`);
+  }
+  const actualFee = BigInt(receipt.actual_fee.amount);
   const rawResources = (receipt as any).execution_resources!;
 
   const expectedResources = [
@@ -25,21 +26,21 @@ async function profileGasUsage(transactionHash: string) {
     "bitwise_builtin_applications",
     "keccak_builtin_applications",
   ];
-
-  if (!isEqual(Object.keys(rawResources), expectedResources)) {
-    throw new Error(`unexpected execution resources: ${Object.keys(rawResources).join(", ")}`);
+  // all keys in rawResources must be in expectedResources
+  if (!Object.keys(rawResources).every((key) => expectedResources.includes(key))) {
+    throw new Error(`unexpected execution resources: ${Object.keys(rawResources).join()}`);
   }
 
   const executionResources: Record<string, number> = {
-    n_steps: Number(rawResources.steps),
-    n_memory_holes: Number(rawResources.memory_holes),
-    pedersen_builtin: Number(rawResources.pedersen_builtin_applications),
-    poseidon_builtin: Number(rawResources.poseidon_builtin_applications),
-    range_check_builtin: Number(rawResources.range_check_builtin_applications),
-    ecdsa_builtin: Number(rawResources.ecdsa_builtin_applications),
-    keccak_builtin: Number(rawResources.keccak_builtin_applications),
-    ec_op_builtin: Number(rawResources.ec_op_builtin_applications),
-    bitwise_builtin: Number(rawResources.bitwise_builtin_applications),
+    n_steps: Number(rawResources.steps ?? 0),
+    n_memory_holes: Number(rawResources.memory_holes ?? 0),
+    pedersen_builtin: Number(rawResources.pedersen_builtin_applications ?? 0),
+    poseidon_builtin: Number(rawResources.poseidon_builtin_applications ?? 0),
+    range_check_builtin: Number(rawResources.range_check_builtin_applications ?? 0),
+    ecdsa_builtin: Number(rawResources.ecdsa_builtin_applications ?? 0),
+    keccak_builtin: Number(rawResources.keccak_builtin_applications ?? 0),
+    ec_op_builtin: Number(rawResources.ec_op_builtin_applications ?? 0),
+    bitwise_builtin: Number(rawResources.bitwise_builtin_applications ?? 0),
   };
 
   const blockNumber = receipt.block_number;

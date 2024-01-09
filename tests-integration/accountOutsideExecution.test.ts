@@ -3,19 +3,17 @@ import { Contract, num, shortString } from "starknet";
 import {
   ArgentSigner,
   OutsideExecution,
-  declareContract,
   deployAccount,
   deployer,
   expectExecutionRevert,
   getOutsideCall,
   getOutsideExecutionCall,
   getTypedDataHash,
-  loadContract,
+  deployContract,
   provider,
   randomKeyPair,
   setTime,
   waitForTransaction,
-  restartDevnetIfTooLong,
 } from "./lib";
 
 const initialTime = 1713139200;
@@ -23,21 +21,14 @@ describe("ArgentAccount: outside execution", function () {
   // Avoid timeout
   this.timeout(320000);
 
-  let argentAccountClassHash: string;
   let testDapp: Contract;
 
   before(async () => {
-    await restartDevnetIfTooLong();
-    argentAccountClassHash = await declareContract("ArgentAccount");
-    const testDappClassHash = await declareContract("TestDapp");
-    const { contract_address } = await deployer.deployContract({
-      classHash: testDappClassHash,
-    });
-    testDapp = await loadContract(contract_address);
+    testDapp = await deployContract("TestDapp");
   });
 
   it("Correct message hash", async function () {
-    const { account, accountContract } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract } = await deployAccount();
 
     const chainId = await provider.getChainId();
 
@@ -63,7 +54,7 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Basics", async function () {
-    const { account, accountContract } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract } = await deployAccount();
 
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
@@ -117,7 +108,7 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Avoid caller check if it caller is ANY_CALLER", async function () {
-    const { account } = await deployAccount(argentAccountClassHash);
+    const { account } = await deployAccount();
 
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
@@ -136,7 +127,7 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Owner only account", async function () {
-    const { account } = await deployAccount(argentAccountClassHash);
+    const { account } = await deployAccount();
 
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,
@@ -154,7 +145,7 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Escape method", async function () {
-    const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, guardian } = await deployAccount();
 
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,

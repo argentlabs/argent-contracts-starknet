@@ -28,12 +28,13 @@ export async function load() {
 }
 
 async function handlePost(path: string, payload?: RawArgs) {
-  const response = await fetch(`${provider.channel.nodeUrl}/${path}`, {
+  const url = `${provider.channel.nodeUrl}/${path}`;
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
-    throw new Error(`HTTP error! Status: ${response.status} Message: ${await response.text()}`);
+    throw new Error(`HTTP error! calling ${url} Status: ${response.status} Message: ${await response.text()}`);
   }
 }

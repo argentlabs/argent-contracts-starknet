@@ -1,9 +1,9 @@
-test_argent_account::change_guardian: 671,060 gas
-test_argent_account::change_owner: 953,568 gas
+test_argent_account::change_guardian: 668,960 gas
+test_argent_account::change_owner: 949,568 gas
 test_argent_account::initialize: 514,860 gas
 test_argent_account_signatures::valid_no_guardian: 555,874 gas
 test_argent_account_signatures::valid_with_guardian: 579,554 gas
-test_multisig_account::valid_initialize: 819,720 gas
-test_multisig_account::valid_initialize_two_signers: 1,016,830 gas
-test_multisig_signing::test_double_signature: 1,055,584 gas
-test_multisig_signing::test_signature: 786,016 gas
+test_multisig_account::valid_initialize: 817,120 gas
+test_multisig_account::valid_initialize_two_signers: 1,014,630 gas
+test_multisig_signing::test_double_signature: 1,051,984 gas
+test_multisig_signing::test_signature: 783,216 gas

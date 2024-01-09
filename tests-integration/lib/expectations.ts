@@ -1,18 +1,17 @@
 import { assert, expect } from "chai";
 import {
   DeployContractUDCResponse,
-  Event,
   InvokeFunctionResponse,
-  InvokeTransactionReceiptResponse,
   GetTransactionReceiptResponse,
   hash,
   num,
   shortString,
+  RPC,
 } from "starknet";
 import { isEqual } from "lodash-es";
 
 import { provider } from "./provider";
-import { AcceptedTransactionReceiptResponse, ensureAccepted } from "./receipts";
+import { ensureAccepted } from "./receipts";
 
 export async function expectRevertWithErrorMessage(
   errorMessage: string,
@@ -42,7 +41,7 @@ export async function expectExecutionRevert(errorMessage: string, execute: () =>
   assert.fail("No error detected");
 }
 
-async function expectEventFromReceipt(receipt: GetTransactionReceiptResponse, event: Event) {
+async function expectEventFromReceipt(receipt: GetTransactionReceiptResponse, event: RPC.Event) {
   receipt = ensureAccepted(receipt);
   expect(event.keys.length).to.be.greaterThan(0, "Unsupported: No keys");
   const events = receipt.events ?? [];
@@ -55,7 +54,7 @@ async function expectEventFromReceipt(receipt: GetTransactionReceiptResponse, ev
   }
 }
 
-function normalizeEvent(event: Event): Event {
+function normalizeEvent(event: RPC.Event): RPC.Event {
   return {
     from_address: event.from_address.toLowerCase(),
     keys: event.keys.map(num.toBigInt).map((key) => key.toString()),
@@ -63,7 +62,7 @@ function normalizeEvent(event: Event): Event {
   };
 }
 
-function convertToEvent(eventWithName: EventWithName): Event {
+function convertToEvent(eventWithName: EventWithName): RPC.Event {
   const selector = hash.getSelectorFromName(eventWithName.eventName);
   return {
     from_address: eventWithName.from_address,
@@ -74,7 +73,7 @@ function convertToEvent(eventWithName: EventWithName): Event {
 
 export async function expectEvent(
   param: string | GetTransactionReceiptResponse | (() => Promise<InvokeFunctionResponse>),
-  event: Event | EventWithName,
+  event: RPC.Event | EventWithName,
 ) {
   if (typeof param === "function") {
     ({ transaction_hash: param } = await param());

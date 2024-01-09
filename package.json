@@ -6,7 +6,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "starknet": "v6.0.0-beta.5"
+    "starknet": "v6.0.0-beta.7"
   },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.0",

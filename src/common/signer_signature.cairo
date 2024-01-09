@@ -48,6 +48,7 @@ enum Signer {
     Webauthn: WebauthnSigner
 }
 
+// TODO Would rename into try_into_guid() as it returns a result '-'
 trait IntoGuid<T> {
     fn into_guid(self: T) -> Result<felt252, felt252>;
 }
@@ -65,7 +66,7 @@ impl SignerIntoGuid of IntoGuid<Signer> {
 
 impl StarknetSignerIntoGuid of IntoGuid<StarknetSigner> {
     fn into_guid(self: StarknetSigner) -> Result<felt252, felt252> {
-        if (self.pubkey == 0) {
+        if (self.pubkey.is_zero()) {
             Result::Err('argent/invalid-signer-guid')
         } else {
             Result::Ok(self.pubkey)
@@ -85,7 +86,7 @@ impl Secp256k1SignerIntoGuid of IntoGuid<Secp256k1Signer> {
 
 impl Secp256r1SignerIntoGuid of IntoGuid<Secp256r1Signer> {
     fn into_guid(self: Secp256r1Signer) -> Result<felt252, felt252> {
-        if (self.pubkey == 0) {
+        if (self.pubkey.is_zero()) {
             Result::Err('argent/invalid-signer-guid')
         } else {
             Result::Ok(PoseidonTrait::new().update_with(('Secp256r1', self.pubkey)).finalize())
@@ -95,7 +96,7 @@ impl Secp256r1SignerIntoGuid of IntoGuid<Secp256r1Signer> {
 
 impl WebauthnSignerIntoGuid of IntoGuid<WebauthnSigner> {
     fn into_guid(self: WebauthnSigner) -> Result<felt252, felt252> {
-        if (self.origin == 0 && self.rp_id_hash.is_zero() && self.pubkey.is_zero()) {
+        if (self.origin.is_zero() && self.rp_id_hash.is_zero() && self.pubkey.is_zero()) {
             Result::Err('argent/invalid-signer-guid')
         } else {
             Result::Ok(
@@ -154,6 +155,7 @@ impl SignerSignatureImpl of SignerSignatureTrait {
         }
     }
 
+    // TODO Why not re-use into_guid trait and impl it?
     #[inline(always)]
     fn signer_into_guid(self: SignerSignature) -> Result<felt252, felt252> {
         self.signer().into_guid()

@@ -1,8 +1,27 @@
-import { Account, CallData, Contract, GetTransactionReceiptResponse, RawCalldata, hash, num, uint256 } from "starknet";
+import {
+  Account,
+  CairoOption,
+  CairoOptionVariant,
+  CallData,
+  Contract,
+  GetTransactionReceiptResponse,
+  RawCalldata,
+  hash,
+  num,
+  uint256,
+} from "starknet";
 import { getEthContract, loadContract } from "./contracts";
 import { mintEth } from "./devnet";
 import { provider } from "./provider";
-import { ArgentSigner, KeyPair, LegacyKeyPair, LegacyMultisigSigner, randomKeyPair } from "./signers";
+import {
+  AgSigner,
+  ArgentSigner,
+  KeyPair,
+  LegacyKeyPair,
+  LegacyMultisigSigner,
+  randomKeyPair,
+  starknetSigner,
+} from "./signers";
 
 export interface ArgentWallet {
   account: Account;
@@ -66,14 +85,28 @@ export async function deployOldAccount(
   return { account, accountContract, owner, guardian };
 }
 
+export function signerOption(signer: bigint | undefined) {
+  if (signer) {
+    return CallData.compile([new CairoOption<AgSigner>(CairoOptionVariant.Some, { signer: starknetSigner(signer) })]);
+  }
+  return CallData.compile([new CairoOption<AgSigner>(CairoOptionVariant.None)]);
+}
+
 async function deployAccountInner(
   argentAccountClassHash: string,
   owner: KeyPair,
   guardian?: KeyPair,
   salt: string = num.toHex(randomKeyPair().privateKey),
 ): Promise<Account> {
-  const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian?.publicKey ?? 0n });
+  // TODO Use above?
+  let some_guardian;
+  if (guardian) {
+    some_guardian = new CairoOption<AgSigner>(CairoOptionVariant.Some, { signer: starknetSigner(guardian.publicKey) });
+  } else {
+    some_guardian = new CairoOption<AgSigner>(CairoOptionVariant.None);
+  }
 
+  const constructorCalldata = CallData.compile({ owner: starknetSigner(owner.publicKey), guardian: some_guardian });
   const contractAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, constructorCalldata, 0);
   await fundAccount(contractAddress, 1e15); // 0.001 ETH
   const account = new Account(provider, contractAddress, owner, "1");
@@ -118,7 +151,7 @@ export async function deployAccountWithGuardianBackup(
   const guardianBackup = randomKeyPair();
 
   const wallet = (await deployAccount(argentAccountClassHash)) as ArgentWalletWithGuardianAndBackup;
-  await wallet.accountContract.change_guardian_backup(guardianBackup.publicKey);
+  await wallet.accountContract.change_guardian_backup(signerOption(guardianBackup.publicKey));
 
   wallet.account.signer = new ArgentSigner(wallet.owner, guardianBackup);
   wallet.guardianBackup = guardianBackup;

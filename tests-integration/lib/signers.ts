@@ -173,6 +173,22 @@ export function starknetSignatureType(
   ]);
 }
 
+export function compiledStarknetSigner(signer: bigint | number | string) {
+  return CallData.compile([starknetSigner(signer)]);
+}
+export function starknetSigner(signer: bigint | number | string) {
+  return new CairoCustomEnum({
+    Starknet: { signer },
+    Secp256k1: undefined,
+    Secp256r1: undefined,
+    Webauthn: undefined,
+  });
+}
+
+export type AgSigner = {
+  signer: CairoCustomEnum;
+};
+
 export const randomKeyPair = () => new KeyPair();
 
 export const randomKeyPairs = (length: number) => Array.from({ length }, randomKeyPair);

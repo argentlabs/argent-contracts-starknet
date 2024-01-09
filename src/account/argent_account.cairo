@@ -751,6 +751,7 @@ mod ArgentAccount {
                 .update(self._signer.read())
                 .update(4)
                 .finalize();
+
             let is_valid = signer_signature.is_valid_signature(message_hash);
             assert(is_valid, 'argent/invalid-owner-sig');
         }

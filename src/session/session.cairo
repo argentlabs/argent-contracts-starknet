@@ -114,16 +114,15 @@ mod session_component {
     fn assert_valid_session_calls(token: SessionToken, mut calls: Span<Call>) {
         assert(token.proofs.len() == calls.len(), 'unaligned-proofs');
         let merkle_root = token.session.allowed_methods_root;
-        let mut index = 0;
         let mut merkle_init: MerkleTree<Hasher> = MerkleTreeTrait::new();
+        let mut proofs = token.proofs;
         loop {
             match calls.pop_front() {
                 Option::Some(call) => {
                     let leaf = call.get_merkle_leaf();
-                    let proof = *token.proofs[index];
-                    let is_valid = merkle_init.verify(merkle_root, leaf, proof);
+                    let proof = proofs.pop_front().expect('session/proof-empty');
+                    let is_valid = merkle_init.verify(merkle_root, leaf, *proof);
                     assert(is_valid, 'session/invalid-call');
-                    index += 1;
                 },
                 Option::None => { break; },
             };

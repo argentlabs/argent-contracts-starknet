@@ -15,4 +15,11 @@ mod setup {
     mod generic_test_setup;
     mod multisig_test_setup;
     mod utils;
+    mod webauthn_test_setup;
+}
+
+mod webauthn {
+    mod test_webauthn_base64;
+    mod test_webauthn_bytes;
+    mod test_webauthn_sha256;
 }

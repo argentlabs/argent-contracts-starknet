@@ -8,6 +8,7 @@ mod common {
     mod account;
     mod array_ext;
     mod asserts;
+    mod bytes;
     mod calls;
     mod erc165;
     mod interface;
@@ -18,6 +19,7 @@ mod common {
     mod test_dapp;
     mod upgrade;
     mod version;
+    mod webauthn;
 }
 
 mod multisig {

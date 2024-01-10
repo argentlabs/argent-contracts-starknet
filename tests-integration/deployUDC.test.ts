@@ -1,6 +1,6 @@
 import { expect } from "chai";
-import { AgSigner, declareContract, deployContractUDC, randomKeyPair, starknetSigner } from "./lib";
-import { num, hash, CairoOption, CairoOptionVariant, CallData } from "starknet";
+import { declareContract, deployContractUDC, randomKeyPair, signerOption, starknetSigner } from "./lib";
+import { num, hash, CallData } from "starknet";
 
 const salt = num.toHex(randomKeyPair().privateKey);
 const owner = randomKeyPair();
@@ -16,7 +16,7 @@ describe("Deploy UDC", function () {
   it("Calculated contract address should match UDC", async function () {
     const callData = CallData.compile({
       owner: starknetSigner(owner.publicKey),
-      guardian: new CairoOption<AgSigner>(CairoOptionVariant.Some, { signer: starknetSigner(guardian.publicKey) }),
+      guardian: signerOption(guardian.publicKey),
     });
 
     const calculatedAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, callData, 0);

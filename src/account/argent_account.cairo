@@ -659,7 +659,7 @@ mod ArgentAccount {
                             .expect('argent/invalid-calldata');
                         assert(calldata.is_empty(), 'argent/invalid-calldata');
 
-                        if new_guardian.is_none() {
+                        if new_guardian.is_none() || new_guardian.unwrap().into_guid().is_err() {
                             assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
                         }
                         self.assert_guardian_set();

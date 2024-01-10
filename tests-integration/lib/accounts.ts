@@ -1,7 +1,5 @@
 import {
   Account,
-  CairoOption,
-  CairoOptionVariant,
   CallData,
   Contract,
   GetTransactionReceiptResponse,
@@ -14,12 +12,13 @@ import { getEthContract, loadContract } from "./contracts";
 import { mintEth } from "./devnet";
 import { provider } from "./provider";
 import {
-  AgSigner,
   ArgentSigner,
   KeyPair,
   LegacyKeyPair,
   LegacyMultisigSigner,
+  compiledSignerOption,
   randomKeyPair,
+  signerOption,
   starknetSigner,
 } from "./signers";
 
@@ -85,27 +84,13 @@ export async function deployOldAccount(
   return { account, accountContract, owner, guardian };
 }
 
-export function signerOption(signer: bigint | undefined) {
-  if (signer) {
-    return CallData.compile([new CairoOption<AgSigner>(CairoOptionVariant.Some, { signer: starknetSigner(signer) })]);
-  }
-  return CallData.compile([new CairoOption<AgSigner>(CairoOptionVariant.None)]);
-}
-
 async function deployAccountInner(
   argentAccountClassHash: string,
   owner: KeyPair,
   guardian?: KeyPair,
   salt: string = num.toHex(randomKeyPair().privateKey),
 ): Promise<Account> {
-  // TODO Use above?
-  let some_guardian;
-  if (guardian) {
-    some_guardian = new CairoOption<AgSigner>(CairoOptionVariant.Some, { signer: starknetSigner(guardian.publicKey) });
-  } else {
-    some_guardian = new CairoOption<AgSigner>(CairoOptionVariant.None);
-  }
-
+  const some_guardian = signerOption(guardian?.publicKey);
   const constructorCalldata = CallData.compile({ owner: starknetSigner(owner.publicKey), guardian: some_guardian });
   const contractAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, constructorCalldata, 0);
   await fundAccount(contractAddress, 1e15); // 0.001 ETH
@@ -151,7 +136,7 @@ export async function deployAccountWithGuardianBackup(
   const guardianBackup = randomKeyPair();
 
   const wallet = (await deployAccount(argentAccountClassHash)) as ArgentWalletWithGuardianAndBackup;
-  await wallet.accountContract.change_guardian_backup(signerOption(guardianBackup.publicKey));
+  await wallet.accountContract.change_guardian_backup(compiledSignerOption(guardianBackup.publicKey));
 
   wallet.account.signer = new ArgentSigner(wallet.owner, guardianBackup);
   wallet.guardianBackup = guardianBackup;

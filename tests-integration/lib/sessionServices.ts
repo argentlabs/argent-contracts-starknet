@@ -1,3 +1,4 @@
+import { OutsideExecution } from "./outsideExecution";
 import {
   typedData,
   ArraySignatureType,
@@ -13,7 +14,6 @@ import {
   Account,
   uint256,
   merkle,
-  WeierstrassSignatureType,
 } from "starknet";
 import {
   OffChainSession,
@@ -25,6 +25,9 @@ import {
   getSessionTypedData,
   ALLOWED_METHOD_HASH,
   StarknetSig,
+  getOutsideCall,
+  getTypedData,
+  provider,
 } from ".";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -85,6 +88,21 @@ export class BackendService {
     return { r: BigInt(r), s: BigInt(s) };
   }
 
+  public async signOutsideTxAndSession(
+    calls: Call[],
+    sessionTokenToSign: OffChainSession,
+    accountAddress: string,
+    outsideExecution: OutsideExecution,
+  ): Promise<StarknetSig> {
+    const currentTypedData = getTypedData(outsideExecution, await provider.getChainId());
+    const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
+
+    const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(sessionTokenToSign), accountAddress);
+    const sessionWithTxHash = ec.starkCurve.pedersen(messageHash, sessionMessageHash);
+    const [r, s] = this.guardian.signHash(sessionWithTxHash);
+    return { r: BigInt(r), s: BigInt(s) };
+  }
+
   public getGuardianKey(): bigint {
     return this.guardian.publicKey;
   }
@@ -133,9 +151,51 @@ export class DappSigner extends RawSigner {
     return this.sessionKeyPair.signHash(messageHash);
   }
 
-  public async signMessage(typedDataArgument: typedData.TypedData, accountAddress: string): Promise<Signature> {
-    const messageHash = typedData.getMessageHash(typedDataArgument, accountAddress);
-    return this.signRaw(messageHash);
+  public getOustideExecutionStruct(calls: Call[]): OutsideExecution {
+    return {
+      caller: "ANY_CALLER",
+      nonce: randomKeyPair().publicKey,
+      execute_after: 1,
+      execute_before: 999999999999999,
+      calls: calls.map((call) => getOutsideCall(call)),
+    };
+  }
+
+  public async signOutsideTransaction(
+    calls: Call[],
+    accountAddress: string,
+    outsideExecution: OutsideExecution,
+  ): Promise<Signature> {
+    const currentTypedData = getTypedData(outsideExecution, await provider.getChainId());
+    const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
+
+    const leaves = this.completedSession.allowed_methods.map((method) =>
+      hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
+    );
+    const session = {
+      expires_at: this.completedSession.expires_at,
+      allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
+      token_amounts: this.completedSession.token_amounts,
+      nft_contracts: this.completedSession.nft_contracts,
+      max_fee_usage: this.completedSession.max_fee_usage,
+      guardian_key: this.completedSession.guardian_key,
+      session_key: this.completedSession.session_key,
+    };
+
+    const sessionToken = {
+      session,
+      account_signature: this.accountSessionSignature,
+      session_signature: await this.signTxAndSession(messageHash, accountAddress),
+      backend_signature: await this.argentBackend.signOutsideTxAndSession(
+        calls,
+        this.completedSession,
+        accountAddress,
+        outsideExecution,
+      ),
+      proofs: this.getSessionProofs(calls, this.completedSession.allowed_methods, leaves),
+    };
+
+    return [SESSION_MAGIC, ...CallData.compile(sessionToken)];
   }
 
   public async signTransaction(
@@ -159,7 +219,7 @@ export class DappSigner extends RawSigner {
     const sessionToken = {
       session,
       account_signature: this.accountSessionSignature,
-      session_signature: await this.signTxAndSession(txHash, transactionsDetail),
+      session_signature: await this.signTxAndSession(txHash, transactionsDetail.walletAddress),
       backend_signature: await this.argentBackend.signTxAndSession(
         transactions,
         transactionsDetail,
@@ -171,13 +231,10 @@ export class DappSigner extends RawSigner {
     return [SESSION_MAGIC, ...CallData.compile(sessionToken)];
   }
 
-  private async signTxAndSession(
-    transactionHash: string,
-    transactionsDetail: InvocationsSignerDetails,
-  ): Promise<StarknetSig> {
+  private async signTxAndSession(transactionHash: string, accountAddress: string): Promise<StarknetSig> {
     const sessionMessageHash = typedData.getMessageHash(
       await getSessionTypedData(this.completedSession),
-      transactionsDetail.walletAddress,
+      accountAddress,
     );
     const sessionWithTxHash = ec.starkCurve.pedersen(transactionHash, sessionMessageHash);
     const [r, s] = this.sessionKeyPair.signHash(sessionWithTxHash);

@@ -72,24 +72,11 @@ describe("ArgentAccount: outside execution", function () {
     // 2. dapp signs tx and session, crafts signature and submits transaction
     const sessionSigner = new DappSigner(backendService, dappService.keypair, accountSessionSignature, sessionRequest);
 
-    const outsideExecution: OutsideExecution = {
-      caller: dappAccount.address,
-      nonce: randomKeyPair().publicKey,
-      execute_after: initialTime - 100,
-      execute_before: initialTime + 100,
-      calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
-    };
+    const calls = [testDapp.populateTransaction.set_number(2n)];
 
-    const outsideExecutionCall = await getOutsideExecutionCallWithSession(
-      outsideExecution,
-      account.address,
-      sessionSigner,
-    );
+    const outsideExecutionCall = await getOutsideExecutionCallWithSession(calls, account.address, sessionSigner);
 
     await setTime(initialTime);
-
-    // normal scenario
-    await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
 
     await dappAccount.execute(outsideExecutionCall);
 

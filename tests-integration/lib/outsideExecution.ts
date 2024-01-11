@@ -98,14 +98,14 @@ export async function getOutsideExecutionCall(
 }
 
 export async function getOutsideExecutionCallWithSession(
-  outsideExecution: OutsideExecution,
+  calls: Call[],
   accountAddress: string,
   signer: DappSigner,
-  chainId?: string,
 ): Promise<Call> {
-  chainId = chainId ?? (await provider.getChainId());
-  const currentTypedData = getTypedData(outsideExecution, chainId);
-  const signature = await signer.signMessage(currentTypedData, accountAddress);
+  // dapp + guardian
+  const outsideExecution = signer.getOustideExecutionStruct(calls);
+  const signature = await signer.signOutsideTransaction(calls, accountAddress, outsideExecution);
+
   return {
     contractAddress: accountAddress,
     entrypoint: "execute_from_outside",

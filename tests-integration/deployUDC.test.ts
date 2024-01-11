@@ -1,6 +1,6 @@
 import { expect } from "chai";
-import { declareContract, deployContractUDC, randomKeyPair } from "./lib";
-import { num, hash } from "starknet";
+import { declareContract, deployContractUDC, randomKeyPair, signerOption, starknetSigner } from "./lib";
+import { num, hash, CallData } from "starknet";
 
 const salt = num.toHex(randomKeyPair().privateKey);
 const owner = randomKeyPair();
@@ -14,17 +14,13 @@ describe("Deploy UDC", function () {
   });
 
   it("Calculated contract address should match UDC", async function () {
-    const callData = {
-      signer: owner.publicKey,
-      guardian: guardian.publicKey,
-    };
+    const callData = CallData.compile({
+      owner: starknetSigner(owner.publicKey),
+      guardian: signerOption(guardian.publicKey),
+    });
+
     const calculatedAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, callData, 0);
-    const udcDeploymentAddress = await deployContractUDC(
-      argentAccountClassHash,
-      salt,
-      owner.publicKey,
-      guardian.publicKey,
-    );
+    const udcDeploymentAddress = await deployContractUDC(argentAccountClassHash, salt, callData);
 
     expect(calculatedAddress).to.equal(udcDeploymentAddress);
 

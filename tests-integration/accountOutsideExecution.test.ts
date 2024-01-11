@@ -14,6 +14,7 @@ import {
   provider,
   randomKeyPair,
   setTime,
+  compiledStarknetSigner,
   waitForTransaction,
 } from "./lib";
 
@@ -159,7 +160,7 @@ describe("ArgentAccount: outside execution", function () {
       nonce: randomKeyPair().publicKey,
       execute_after: 0,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(accountContract.populateTransaction.trigger_escape_owner(42))],
+      calls: [getOutsideCall(accountContract.populateTransaction.trigger_escape_owner(compiledStarknetSigner(42)))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(
       outsideExecution,

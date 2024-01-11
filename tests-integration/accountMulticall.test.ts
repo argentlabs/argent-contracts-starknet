@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Contract, num, uint256, SuccessfulTransactionReceiptResponse } from "starknet";
+import { Contract, num, uint256 } from "starknet";
 import {
   declareContract,
   deployAccount,
@@ -9,6 +9,7 @@ import {
   expectRevertWithErrorMessage,
   getEthContract,
   loadContract,
+  compiledStarknetSigner,
   waitForTransaction,
 } from "./lib";
 
@@ -122,7 +123,7 @@ describe("ArgentAccount: multicall", function () {
     await expectRevertWithErrorMessage("argent/no-multicall-to-self", () =>
       account.execute([
         ethContract.populateTransaction.transfer(recipient, amount),
-        accountContract.populateTransaction.trigger_escape_owner(newOwner),
+        accountContract.populateTransaction.trigger_escape_owner(compiledStarknetSigner(newOwner)),
       ]),
     );
   });

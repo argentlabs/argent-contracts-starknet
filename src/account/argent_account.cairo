@@ -383,7 +383,7 @@ mod ArgentAccount {
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                     guardian_guid
                 },
-                Option::None => { 0_felt252 },
+                Option::None => { 0 },
             };
 
             // There cannot be a guardian_backup when there is no guardian
@@ -449,7 +449,7 @@ mod ArgentAccount {
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                     guardian_guid
                 },
-                Option::None => { 0_felt252 },
+                Option::None => { 0 },
             };
 
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
@@ -618,9 +618,9 @@ mod ArgentAccount {
                         }
 
                         let mut calldata: Span<felt252> = call.calldata.span();
-                        let new_owner: felt252 = Serde::deserialize(ref calldata).expect('argent/invalid-calldata');
+                        let new_owner: Signer = Serde::deserialize(ref calldata).expect('argent/invalid-calldata');
                         assert(calldata.is_empty(), 'argent/invalid-calldata');
-                        assert(new_owner != 0, 'argent/null-owner');
+                        assert(new_owner.into_guid().is_ok(), 'argent/null-owner');
                         self.assert_guardian_set();
 
                         assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
@@ -655,10 +655,11 @@ mod ArgentAccount {
                             self.owner_escape_attempts.write(current_attempts + 1);
                         }
                         let mut calldata: Span<felt252> = call.calldata.span();
-                        let new_guardian: felt252 = Serde::deserialize(ref calldata).expect('argent/invalid-calldata');
+                        let new_guardian: Option<Signer> = Serde::deserialize(ref calldata)
+                            .expect('argent/invalid-calldata');
                         assert(calldata.is_empty(), 'argent/invalid-calldata');
 
-                        if new_guardian == 0 {
+                        if new_guardian.is_none() || new_guardian.unwrap().into_guid().is_err() {
                             assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
                         }
                         self.assert_guardian_set();

@@ -69,7 +69,7 @@ mod session_component {
             let account_address = get_contract_address();
 
             assert_no_self_call(calls, account_address);
-            assert(*signature[0] == super::SESSION_MAGIC, 'session/invalid-sig-prefix');
+            assert(*signature[0] == super::SESSION_MAGIC, 'session/invalid-magic-value');
             let mut serialized = signature.slice(1, signature.len() - 1);
             let token: SessionToken = Serde::deserialize(ref serialized).expect('session/invalid-calldata');
             assert(serialized.is_empty(), 'session/excess-data');

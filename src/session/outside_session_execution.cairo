@@ -13,7 +13,7 @@ trait IOutsideExecution<TContractState> {
     /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
     /// @notice This method allows reentrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
     fn execute_from_outside(
-        ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>, is_session: bool,
+        ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>,
     ) -> Array<Span<felt252>>;
 
     /// Get the status of a given nonce, true if the nonce is available to use
@@ -33,11 +33,7 @@ trait IOutsideExecutionCallback<TContractState> {
     /// @param signature The signature that the user gave for this transaction
     #[inline(always)]
     fn execute_from_outside_callback(
-        ref self: TContractState,
-        calls: Span<Call>,
-        outside_execution_hash: felt252,
-        signature: Span<felt252>,
-        is_session: bool,
+        ref self: TContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
     ) -> Array<Span<felt252>>;
 }
 
@@ -81,10 +77,7 @@ mod outside_session_execution_component {
         TContractState, +HasComponent<TContractState>, +IOutsideExecutionCallback<TContractState>, +Drop<TContractState>
     > of IOutsideExecution<ComponentState<TContractState>> {
         fn execute_from_outside(
-            ref self: ComponentState<TContractState>,
-            outside_execution: OutsideExecution,
-            signature: Array<felt252>,
-            is_session: bool
+            ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Array<felt252>,
         ) -> Array<Span<felt252>> {
             // Checks
             if outside_execution.caller.into() != 'ANY_CALLER' {
@@ -102,7 +95,7 @@ mod outside_session_execution_component {
 
             let outside_tx_hash = hash_outside_execution_message(@outside_execution);
             let mut state = self.get_contract_mut();
-            state.execute_from_outside_callback(outside_execution.calls, outside_tx_hash, signature.span(), is_session)
+            state.execute_from_outside_callback(outside_execution.calls, outside_tx_hash, signature.span())
         }
 
         fn get_outside_execution_message_hash(

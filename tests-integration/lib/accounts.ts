@@ -90,8 +90,10 @@ async function deployAccountInner(
   return account;
 }
 
-export async function deployAccount(argentAccountClassHash: string): Promise<ArgentWalletWithGuardian> {
-  const owner = randomKeyPair();
+export async function deployAccount(
+  argentAccountClassHash: string,
+  owner = randomKeyPair(),
+): Promise<ArgentWalletWithGuardian> {
   const guardian = randomKeyPair();
   const account = await deployAccountInner(argentAccountClassHash, owner, guardian);
   const accountContract = await loadContract(account.address);

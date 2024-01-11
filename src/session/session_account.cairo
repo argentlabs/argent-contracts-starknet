@@ -63,18 +63,14 @@ mod HybridSessionAccount {
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
         #[inline(always)]
         fn execute_from_outside_callback(
-            ref self: ContractState,
-            calls: Span<Call>,
-            outside_execution_hash: felt252,
-            signature: Span<felt252>,
-            is_session: bool,
+            ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
-            if is_session {
-                self.session_component.assert_valid_session(calls, outside_execution_hash, signature);
+            let tx_info = get_tx_info().unbox();
+            if *tx_info.signature[0] == SESSION_MAGIC {
+                self.session_component.assert_valid_session(calls, outside_execution_hash, tx_info.signature);
             } else {
                 self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature, is_from_outside: true);
             }
-
             let retdata = execute_multicall(calls);
             self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
             retdata

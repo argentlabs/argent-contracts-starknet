@@ -1,5 +1,6 @@
 import { Call, CallData, hash, num, RawArgs, SignerInterface, typedData } from "starknet";
 import { provider } from "./provider";
+import { DappSigner } from "./sessionServices";
 
 const types = {
   StarkNetDomain: [
@@ -99,7 +100,7 @@ export async function getOutsideExecutionCall(
 export async function getOutsideExecutionCallWithSession(
   outsideExecution: OutsideExecution,
   accountAddress: string,
-  signer: SignerInterface,
+  signer: DappSigner,
   chainId?: string,
 ): Promise<Call> {
   chainId = chainId ?? (await provider.getChainId());
@@ -108,6 +109,6 @@ export async function getOutsideExecutionCallWithSession(
   return {
     contractAddress: accountAddress,
     entrypoint: "execute_from_outside",
-    calldata: CallData.compile([outsideExecution, signature, true]),
+    calldata: CallData.compile({ ...outsideExecution, signature }),
   };
 }

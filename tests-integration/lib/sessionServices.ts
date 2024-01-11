@@ -13,6 +13,7 @@ import {
   Account,
   uint256,
   merkle,
+  WeierstrassSignatureType,
 } from "starknet";
 import {
   OffChainSession,
@@ -129,7 +130,12 @@ export class DappSigner extends RawSigner {
   }
 
   public async signRaw(messageHash: string): Promise<Signature> {
-    throw new Error("Dapp cannot sign raw message");
+    return this.sessionKeyPair.signHash(messageHash);
+  }
+
+  public async signMessage(typedDataArgument: typedData.TypedData, accountAddress: string): Promise<Signature> {
+    const messageHash = typedData.getMessageHash(typedDataArgument, accountAddress);
+    return this.signRaw(messageHash);
   }
 
   public async signTransaction(
@@ -192,81 +198,6 @@ export class DappSigner extends RawSigner {
         );
       });
       return tree.getProof(tree.leaves[allowedIndex], leaves);
-    });
-  }
-}
-
-export class MasterCardSigner extends RawSigner {
-  constructor(
-    public argentX: ArgentX,
-    public argentBackend: BackendService,
-    public sessionKeyPair: KeyPair,
-    public accountSessionSignature: ArraySignatureType,
-    public completedSession: OffChainSession,
-  ) {
-    super();
-  }
-
-  public async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    return this.sessionKeyPair.signHash(messageHash) as ArraySignatureType;
-  }
-
-  // public async signMessage(typedDataArgument: typedData.TypedData, accountAddress: string): Promise<Signature> {
-  //   const sessionToken = await this.buildSessiontoken(transactions, transactionsDetail);
-  //   return [SESSION_MAGIC, ...CallData.compile({ ...sessionToken })];
-  // }
-
-  public async signTransaction(
-    transactions: Call[],
-    transactionsDetail: InvocationsSignerDetails,
-  ): Promise<ArraySignatureType> {
-    // now use abi to display decoded data somewhere, but as this signer is headless, we can't do that
-    const calldata = transaction.getExecuteCalldata(transactions, transactionsDetail.cairoVersion);
-
-    const messageHash = hash.calculateTransactionHash(
-      transactionsDetail.walletAddress,
-      transactionsDetail.version,
-      calldata,
-      transactionsDetail.maxFee,
-      transactionsDetail.chainId,
-      transactionsDetail.nonce,
-    );
-    return this.signRaw(messageHash);
-  }
-
-  private async signTxAndSession(
-    transactionHash: string,
-    transactionsDetail: InvocationsSignerDetails,
-  ): Promise<StarknetSig> {
-    const sessionMessageHash = typedData.getMessageHash(
-      await getSessionTypedData(this.completedSession),
-      transactionsDetail.walletAddress,
-    );
-    const sessionWithTxHash = ec.starkCurve.pedersen(transactionHash, sessionMessageHash);
-    const sessionSig = this.sessionKeyPair.signHash(sessionWithTxHash);
-    return {
-      r: BigInt(sessionSig[0]),
-      s: BigInt(sessionSig[1]),
-    };
-  }
-
-  private getLeaves(allowedMethods: AllowedMethod[]): string[] {
-    return allowedMethods.map((method) =>
-      hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
-    );
-  }
-
-  private getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[]): string[][] {
-    const tree = new merkle.MerkleTree(this.getLeaves(allowedMethods));
-
-    return calls.map((call) => {
-      const allowedIndex = allowedMethods.findIndex((allowedMethod) => {
-        return (
-          allowedMethod["Contract Address"] == call.contractAddress &&
-          allowedMethod.selector == selector.getSelectorFromName(call.entrypoint)
-        );
-      });
-      return tree.getProof(tree.leaves[allowedIndex], this.getLeaves(allowedMethods));
     });
   }
 }

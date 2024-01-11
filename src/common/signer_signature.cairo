@@ -18,6 +18,7 @@ struct StarknetSignature {
     s: felt252,
 }
 
+// TODO This should be `pubkey: NonZero<felt252>` where relevant
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct StarknetSigner {
     pubkey: felt252

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import {CallData, hash } from "starknet";
+import { CallData, hash } from "starknet";
 import {
   ArgentSigner,
   MultisigSigner,
@@ -196,7 +196,9 @@ describe("ArgentAccount", function () {
       const { account } = await deployAccount(argentAccountClassHash);
       const { accountContract } = await deployAccount(argentAccountClassHash);
       accountContract.connect(account);
-      await expectRevertWithErrorMessage("argent/only-self", () => accountContract.change_guardian(compiledSignerOption(12n)));
+      await expectRevertWithErrorMessage("argent/only-self", () =>
+        accountContract.change_guardian(compiledSignerOption(12n)),
+      );
     });
 
     it("Expect 'argent/backup-should-be-null' when setting the guardian to 0 if there is a backup", async function () {

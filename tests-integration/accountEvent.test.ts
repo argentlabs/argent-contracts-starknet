@@ -1,4 +1,4 @@
-import {  CallData, num, uint256 } from "starknet";
+import { CallData, num, uint256 } from "starknet";
 import {
   ArgentSigner,
   ESCAPE_SECURITY_PERIOD,
@@ -29,7 +29,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'AccountCreated' and 'OwnerAddded' when deploying an account", async function () {
     const owner = starknetSigner(21n);
-    const guardian =  signerOption(42n);
+    const guardian = signerOption(42n);
     const constructorCalldata = CallData.compile({ owner, guardian });
     const { transaction_hash, contract_address } = await deployer.deployContract({
       classHash: argentAccountClassHash,

@@ -1,13 +1,4 @@
-import {
-  Account,
-  CallData,
-  Contract,
-  GetTransactionReceiptResponse,
-  RawCalldata,
-  hash,
-  num,
-  uint256,
-} from "starknet";
+import { Account, CallData, Contract, GetTransactionReceiptResponse, RawCalldata, hash, num, uint256 } from "starknet";
 import { getEthContract, loadContract } from "./contracts";
 import { mintEth } from "./devnet";
 import { provider } from "./provider";

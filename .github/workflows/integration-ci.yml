@@ -23,6 +23,9 @@ jobs:
       - name: Run integration tests
         run: scarb --release build && tsc && yarn mocha tests-integration/*.test.ts --forbid-only --forbid-pending
 
+      - name: Gas report
+        run: scarb run profile --check
+
   format:
     runs-on: ubuntu-latest
     steps:

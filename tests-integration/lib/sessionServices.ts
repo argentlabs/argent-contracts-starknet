@@ -168,41 +168,25 @@ export class DappSigner extends RawSigner {
   ): Promise<Signature> {
     const currentTypedData = getTypedData(outsideExecution, await provider.getChainId());
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
-
-    const leaves = this.completedSession.allowed_methods.map((method) =>
-      hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
-    );
-    const session = {
-      expires_at: this.completedSession.expires_at,
-      allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
-      token_amounts: this.completedSession.token_amounts,
-      nft_contracts: this.completedSession.nft_contracts,
-      max_fee_usage: this.completedSession.max_fee_usage,
-      guardian_key: this.completedSession.guardian_key,
-      session_key: this.completedSession.session_key,
-    };
-
-    const sessionToken = {
-      session,
-      account_signature: this.accountSessionSignature,
-      session_signature: await this.signTxAndSession(messageHash, accountAddress),
-      backend_signature: await this.argentBackend.signOutsideTxAndSession(
-        calls,
-        this.completedSession,
-        accountAddress,
-        outsideExecution,
-      ),
-      proofs: this.getSessionProofs(calls, this.completedSession.allowed_methods, leaves),
-    };
-
-    return [SESSION_MAGIC, ...CallData.compile(sessionToken)];
+    return this.compileSessionSignature(messageHash, calls, accountAddress, true, undefined, outsideExecution);
   }
 
   public async signTransaction(
-    transactions: Call[],
+    calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
   ): Promise<ArraySignatureType> {
-    const txHash = await this.getTransactionHash(transactions, transactionsDetail);
+    const txHash = await this.getTransactionHash(calls, transactionsDetail);
+    return this.compileSessionSignature(txHash, calls, transactionsDetail.walletAddress, false, transactionsDetail);
+  }
+
+  private async compileSessionSignature(
+    transactionHash: string,
+    calls: Call[],
+    accountAddress: string,
+    isOutside: boolean,
+    transactionsDetail?: InvocationsSignerDetails,
+    outsideExecution?: OutsideExecution,
+  ): Promise<ArraySignatureType> {
     const leaves = this.completedSession.allowed_methods.map((method) =>
       hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
     );
@@ -216,16 +200,29 @@ export class DappSigner extends RawSigner {
       session_key: this.completedSession.session_key,
     };
 
+    let backend_signature;
+
+    if (isOutside) {
+      backend_signature = await this.argentBackend.signOutsideTxAndSession(
+        calls,
+        this.completedSession,
+        accountAddress,
+        outsideExecution as OutsideExecution,
+      );
+    } else {
+      backend_signature = await this.argentBackend.signTxAndSession(
+        calls,
+        transactionsDetail as InvocationsSignerDetails,
+        this.completedSession,
+      );
+    }
+
     const sessionToken = {
       session,
       account_signature: this.accountSessionSignature,
-      session_signature: await this.signTxAndSession(txHash, transactionsDetail.walletAddress),
-      backend_signature: await this.argentBackend.signTxAndSession(
-        transactions,
-        transactionsDetail,
-        this.completedSession,
-      ),
-      proofs: this.getSessionProofs(transactions, this.completedSession.allowed_methods, leaves),
+      session_signature: await this.signTxAndSession(transactionHash, accountAddress),
+      backend_signature,
+      proofs: this.getSessionProofs(calls, this.completedSession.allowed_methods, leaves),
     };
 
     return [SESSION_MAGIC, ...CallData.compile(sessionToken)];

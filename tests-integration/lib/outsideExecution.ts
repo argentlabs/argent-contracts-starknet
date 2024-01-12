@@ -105,7 +105,6 @@ export async function getOutsideExecutionCallWithSession(
   // dapp + guardian
   const outsideExecution = signer.getOustideExecutionStruct(calls);
   const signature = await signer.signOutsideTransaction(calls, accountAddress, outsideExecution);
-
   return {
     contractAddress: accountAddress,
     entrypoint: "execute_from_outside",

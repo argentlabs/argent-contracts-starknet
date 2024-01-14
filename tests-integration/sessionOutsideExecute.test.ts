@@ -10,7 +10,7 @@ import {
   ArgentX,
   AllowedMethod,
   TokenAmount,
-  DappSigner,
+  SessionSigner,
 } from "./lib";
 
 const tokenAmounts: TokenAmount[] = [];
@@ -37,11 +37,11 @@ describe("ArgentAccount: outside execution", function () {
   it.only("Basics", async function () {
     const { account, guardian } = await deployAccount(argentSessionAccountClassHash);
 
+    const { account: testDappAccount } = await deployAccount(argentAccountClassHash);
+
     const backendService = new BackendService(guardian);
     const dappService = new DappService(backendService);
     const argentX = new ArgentX(account, backendService);
-
-    const { account: dappAccount } = await deployAccount(argentAccountClassHash, dappService.keypair);
 
     // Session creation:
     // 1. dapp request session: provides dapp pub key and policies
@@ -60,7 +60,12 @@ describe("ArgentAccount: outside execution", function () {
     // 1. dapp requests backend signature
     // backend: can verify the parameters and check it was signed by the account then provides signature
     // 2. dapp signs tx and session, crafts signature and submits transaction
-    const sessionSigner = new DappSigner(backendService, dappService.keypair, accountSessionSignature, sessionRequest);
+    const sessionSigner = new SessionSigner(
+      backendService,
+      dappService.keypair,
+      accountSessionSignature,
+      sessionRequest,
+    );
 
     const calls = [testDapp.populateTransaction.set_number(42n)];
 
@@ -68,7 +73,7 @@ describe("ArgentAccount: outside execution", function () {
 
     await setTime(initialTime);
 
-    await dappAccount.execute(outsideExecutionCall);
+    await testDappAccount.execute(outsideExecutionCall);
 
     await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });

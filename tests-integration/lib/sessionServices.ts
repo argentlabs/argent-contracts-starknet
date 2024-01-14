@@ -60,7 +60,7 @@ export class DappService {
   }
 }
 
-export class DappSigner extends RawSigner {
+export class SessionSigner extends RawSigner {
   constructor(
     public argentBackend: BackendService,
     public sessionKeyPair: KeyPair,
@@ -74,8 +74,20 @@ export class DappSigner extends RawSigner {
     return this.sessionKeyPair.signHash(messageHash);
   }
 
-  public async getOutisdeExecutionCall(calls: Call[], accountAddress: string): Promise<Call> {
-    const outsideExecution = this.getOustideExecutionStruct(calls);
+  public async getOutisdeExecutionCall(
+    calls: Call[],
+    accountAddress: string,
+    caller = "ANY_CALLER",
+    execute_after = 1,
+    execute_before = 999999999999999,
+  ): Promise<Call> {
+    const outsideExecution = {
+      caller: caller,
+      nonce: randomKeyPair().publicKey,
+      execute_after,
+      execute_before,
+      calls: calls.map((call) => getOutsideCall(call)),
+    };
     const signature = await this.signOutsideTransaction(calls, accountAddress, outsideExecution);
     return {
       contractAddress: accountAddress,
@@ -176,15 +188,5 @@ export class DappSigner extends RawSigner {
       });
       return tree.getProof(tree.leaves[allowedIndex], leaves);
     });
-  }
-
-  private getOustideExecutionStruct(calls: Call[]): OutsideExecution {
-    return {
-      caller: "ANY_CALLER",
-      nonce: randomKeyPair().publicKey,
-      execute_after: 1,
-      execute_before: 999999999999999,
-      calls: calls.map((call) => getOutsideCall(call)),
-    };
   }
 }

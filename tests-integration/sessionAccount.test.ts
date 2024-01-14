@@ -8,7 +8,7 @@ import {
   DappService,
   TokenAmount,
   BackendService,
-  DappSigner,
+  SessionSigner,
   ArgentX,
   deployAccount,
 } from "./lib";
@@ -64,7 +64,12 @@ describe("Hybrid Session Account: execute calls", function () {
     // 1. dapp requests backend signature
     // backend: can verify the parameters and check it was signed by the account then provides signature
     // 2. dapp signs tx and session, crafts signature and submits transaction
-    const sessionSigner = new DappSigner(backendService, dappService.keypair, accountSessionSignature, sessionRequest);
+    const sessionSigner = new SessionSigner(
+      backendService,
+      dappService.keypair,
+      accountSessionSignature,
+      sessionRequest,
+    );
 
     account.signer = sessionSigner;
 
@@ -114,7 +119,12 @@ describe("Hybrid Session Account: execute calls", function () {
     // 1. dapp requests backend signature
     // backend: can verify the parameters and check it was signed by the account then provides signature
     // 2. dapp signs tx and session, crafts signature and submits transaction
-    const sessionSigner = new DappSigner(backendService, dappService.keypair, accountSessionSignature, sessionRequest);
+    const sessionSigner = new SessionSigner(
+      backendService,
+      dappService.keypair,
+      accountSessionSignature,
+      sessionRequest,
+    );
 
     account.signer = sessionSigner;
     const { transaction_hash } = await account.execute(calls);

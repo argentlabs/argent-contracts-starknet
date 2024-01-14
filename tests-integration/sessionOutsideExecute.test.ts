@@ -1,20 +1,10 @@
-import { expect } from "chai";
-import { Contract, uint256, selector, Account, CallData } from "starknet";
+import { Contract, selector } from "starknet";
 import {
-  ArgentSigner,
-  OutsideExecution,
   declareContract,
   deployAccount,
   deployer,
-  expectExecutionRevert,
-  getOutsideCall,
-  getOutsideExecutionCallWithSession,
-  getTypedDataHash,
   loadContract,
-  provider,
-  randomKeyPair,
   setTime,
-  waitForTransaction,
   BackendService,
   DappService,
   ArgentX,
@@ -45,7 +35,7 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it.only("Basics", async function () {
-    const { account, accountContract, guardian } = await deployAccount(argentSessionAccountClassHash);
+    const { account, guardian } = await deployAccount(argentSessionAccountClassHash);
 
     const backendService = new BackendService(guardian);
     const dappService = new DappService(backendService);
@@ -74,16 +64,12 @@ describe("ArgentAccount: outside execution", function () {
 
     const calls = [testDapp.populateTransaction.set_number(42n)];
 
-    const outsideExecutionCall = await getOutsideExecutionCallWithSession(calls, account.address, sessionSigner);
+    const outsideExecutionCall = await sessionSigner.getOutisdeExecutionCall(calls, account.address);
 
     await setTime(initialTime);
 
     await dappAccount.execute(outsideExecutionCall);
 
-    // await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
-    // await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
-
-    // // ensure a transaction can't be replayed
-    // await expectExecutionRevert("argent/duplicated-outside-nonce", () => dappAccount.execute(outsideExecutionCall));
+    await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 });

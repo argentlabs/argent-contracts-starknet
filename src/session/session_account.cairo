@@ -2,6 +2,9 @@
 mod HybridSessionAccount {
     use argent::account::escape::{Escape, EscapeStatus};
     use argent::account::interface::{IArgentAccount, IDeprecatedArgentAccount};
+    use argent::common::outside_execution::{
+        IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component
+    };
     use argent::common::{
         account::{
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
@@ -13,9 +16,6 @@ mod HybridSessionAccount {
         calls::execute_multicall, version::Version,
         erc165::{IErc165, ERC165_IERC165_INTERFACE_ID, ERC165_IERC165_INTERFACE_ID_OLD,},
         upgrade::{IUpgradeable, do_upgrade}
-    };
-    use argent::session::outside_session_execution::{
-        IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_session_execution_component
     };
     use argent::session::session::SESSION_MAGIC;
     use argent::session::session::session_component::Internal;
@@ -53,12 +53,11 @@ mod HybridSessionAccount {
     #[abi(embed_v0)]
     impl Sessionable = session_component::SessionableImpl<ContractState>;
 
-    component!(
-        path: outside_session_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents
-    );
+    /// outside execution
+
+    component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
-    impl ExecuteSessionFromOutside =
-        outside_session_execution_component::OutsideExecutionImpl<ContractState>;
+    impl ExecuteSessionFromOutside = outside_execution_component::OutsideExecutionImpl<ContractState>;
 
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
         #[inline(always)]
@@ -79,7 +78,7 @@ mod HybridSessionAccount {
     #[storage]
     struct Storage {
         #[substorage(v0)]
-        execute_from_outside: outside_session_execution_component::Storage,
+        execute_from_outside: outside_execution_component::Storage,
         #[substorage(v0)]
         session_component: session_component::Storage,
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
@@ -98,7 +97,7 @@ mod HybridSessionAccount {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        ExecuteFromOutsideEvents: outside_session_execution_component::Event,
+        ExecuteFromOutsideEvents: outside_execution_component::Event,
         SessionableEvent: session_component::Event,
         AccountCreated: AccountCreated,
         TransactionExecuted: TransactionExecuted,

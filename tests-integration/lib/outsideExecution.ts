@@ -96,18 +96,3 @@ export async function getOutsideExecutionCall(
     calldata: CallData.compile({ ...outsideExecution, signature }),
   };
 }
-
-export async function getOutsideExecutionCallWithSession(
-  calls: Call[],
-  accountAddress: string,
-  signer: DappSigner,
-): Promise<Call> {
-  // dapp + guardian
-  const outsideExecution = signer.getOustideExecutionStruct(calls);
-  const signature = await signer.signOutsideTransaction(calls, accountAddress, outsideExecution);
-  return {
-    contractAddress: accountAddress,
-    entrypoint: "execute_from_outside",
-    calldata: CallData.compile({ ...outsideExecution, signature }),
-  };
-}

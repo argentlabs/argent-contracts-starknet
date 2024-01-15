@@ -23,18 +23,28 @@ describe("ArgentAccount", function () {
     argentAccountClassHash = await declareContract("ArgentAccount");
   });
 
-  it("Deploy current version", async function () {
-    const { accountContract, owner } = await deployAccountWithoutGuardian(argentAccountClassHash);
+  it("Deploy externally", async function () {
+    const { accountContract, owner } = await deployAccountWithoutGuardian({ fundingAmount: 0, selfDeploy: false });
 
     await accountContract.get_owner().should.eventually.equal(owner.publicKey);
     await accountContract.get_guardian().should.eventually.equal(0n);
     await accountContract.get_guardian_backup().should.eventually.equal(0n);
   });
 
+  for (const useTxV3 of [false, true]) {
+    it(`Self deployment (TxV3: ${useTxV3})`, async function () {
+      const { accountContract, owner } = await deployAccountWithoutGuardian({ useTxV3, selfDeploy: true });
+
+      await accountContract.get_owner().should.eventually.equal(owner.publicKey);
+      await accountContract.get_guardian().should.eventually.equal(0n);
+      await accountContract.get_guardian_backup().should.eventually.equal(0n);
+    });
+  }
+
   it("Deploy two accounts with the same owner", async function () {
     const owner = randomKeyPair();
-    const { accountContract: accountContract1 } = await deployAccountWithoutGuardian(argentAccountClassHash, owner);
-    const { accountContract: accountContract2 } = await deployAccountWithoutGuardian(argentAccountClassHash, owner);
+    const { accountContract: accountContract1 } = await deployAccountWithoutGuardian({ owner });
+    const { accountContract: accountContract2 } = await deployAccountWithoutGuardian({ owner });
     const owner1 = await accountContract1.get_owner();
     const owner2 = await accountContract1.get_owner();
     expect(owner1).to.equal(owner2);
@@ -42,7 +52,7 @@ describe("ArgentAccount", function () {
   });
 
   it("Expect guardian backup to be 0 when deployed with an owner and a guardian", async function () {
-    const { accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
+    const { accountContract, owner, guardian } = await deployAccount();
 
     await accountContract.get_owner().should.eventually.equal(owner.publicKey);
     await accountContract.get_guardian().should.eventually.equal(guardian.publicKey);
@@ -59,7 +69,7 @@ describe("ArgentAccount", function () {
   });
 
   it("Should use signature from BOTH OWNER and GUARDIAN when there is a GUARDIAN", async function () {
-    const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, owner, guardian } = await deployAccount();
 
     await accountContract.get_guardian_backup().should.eventually.equal(0n);
     account.signer = new ArgentSigner(owner, guardian);
@@ -70,7 +80,7 @@ describe("ArgentAccount", function () {
 
   it("Should sign messages from OWNER and BACKUP_GUARDIAN when there is a GUARDIAN and a BACKUP", async function () {
     const guardianBackup = randomKeyPair();
-    const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, owner, guardian } = await deployAccount();
 
     await accountContract.get_guardian_backup().should.eventually.equal(0n);
 
@@ -86,8 +96,7 @@ describe("ArgentAccount", function () {
   });
 
   it("Expect 'argent/invalid-signature-length' when signing a transaction with OWNER, GUARDIAN and BACKUP", async function () {
-    const { account, accountContract, owner, guardian, guardianBackup } =
-      await deployAccountWithGuardianBackup(argentAccountClassHash);
+    const { account, accountContract, owner, guardian, guardianBackup } = await deployAccountWithGuardianBackup();
 
     account.signer = new ConcatSigner([owner, guardian, guardianBackup]);
 
@@ -97,13 +106,13 @@ describe("ArgentAccount", function () {
   });
 
   it("Should be impossible to call __validate__ from outside", async function () {
-    const { accountContract } = await deployAccount(argentAccountClassHash);
-    await expectRevertWithErrorMessage("argent/only-protocol", () => accountContract.__validate__([]));
+    const { accountContract } = await deployAccount();
+    await expectRevertWithErrorMessage("argent/non-null-caller", () => accountContract.__validate__([]));
   });
 
   describe("change_owner(new_owner, signature_r, signature_s)", function () {
     it("Should be possible to change_owner", async function () {
-      const { accountContract, owner } = await deployAccount(argentAccountClassHash);
+      const { accountContract, owner } = await deployAccount();
       const newOwner = randomKeyPair();
 
       const chainId = await provider.getChainId();
@@ -114,24 +123,24 @@ describe("ArgentAccount", function () {
     });
 
     it("Expect 'argent/only-self' when called from another account", async function () {
-      const { account } = await deployAccount(argentAccountClassHash);
-      const { accountContract } = await deployAccount(argentAccountClassHash);
+      const { account } = await deployAccount();
+      const { accountContract } = await deployAccount();
       accountContract.connect(account);
       await expectRevertWithErrorMessage("argent/only-self", () => accountContract.change_owner(12, 13, 14));
     });
 
     it("Expect 'argent/null-owner' when new_owner is zero", async function () {
-      const { accountContract } = await deployAccount(argentAccountClassHash);
+      const { accountContract } = await deployAccount();
       await expectRevertWithErrorMessage("argent/null-owner", () => accountContract.change_owner(0, 13, 14));
     });
 
     it("Expect 'argent/invalid-owner-sig' when the signature to change owner is invalid", async function () {
-      const { accountContract } = await deployAccount(argentAccountClassHash);
+      const { accountContract } = await deployAccount();
       await expectRevertWithErrorMessage("argent/invalid-owner-sig", () => accountContract.change_owner(11, 12, 42));
     });
 
     it("Expect the escape to be reset", async function () {
-      const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
+      const { account, accountContract, owner, guardian } = await deployAccount();
 
       const newOwner = randomKeyPair();
       account.signer = guardian;
@@ -153,7 +162,7 @@ describe("ArgentAccount", function () {
 
   describe("change_guardian(new_guardian)", function () {
     it("Should be possible to change_guardian", async function () {
-      const { accountContract } = await deployAccount(argentAccountClassHash);
+      const { accountContract } = await deployAccount();
       const newGuardian = 12n;
       await accountContract.change_guardian(newGuardian);
 
@@ -161,7 +170,7 @@ describe("ArgentAccount", function () {
     });
 
     it("Should be possible to change_guardian to zero when there is no backup", async function () {
-      const { accountContract } = await deployAccount(argentAccountClassHash);
+      const { accountContract } = await deployAccount();
       await accountContract.change_guardian(0);
 
       await accountContract.get_guardian_backup().should.eventually.equal(0n);
@@ -169,20 +178,20 @@ describe("ArgentAccount", function () {
     });
 
     it("Expect 'argent/only-self' when called from another account", async function () {
-      const { account } = await deployAccount(argentAccountClassHash);
-      const { accountContract } = await deployAccount(argentAccountClassHash);
+      const { account } = await deployAccount();
+      const { accountContract } = await deployAccount();
       accountContract.connect(account);
       await expectRevertWithErrorMessage("argent/only-self", () => accountContract.change_guardian(12));
     });
 
     it("Expect 'argent/backup-should-be-null' when setting the guardian to 0 if there is a backup", async function () {
-      const { accountContract } = await deployAccountWithGuardianBackup(argentAccountClassHash);
+      const { accountContract } = await deployAccountWithGuardianBackup();
       await accountContract.get_guardian_backup().should.eventually.not.equal(0n);
       await expectRevertWithErrorMessage("argent/backup-should-be-null", () => accountContract.change_guardian(0));
     });
 
     it("Expect the escape to be reset", async function () {
-      const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
+      const { account, accountContract, owner, guardian } = await deployAccount();
       account.signer = guardian;
 
       const newOwner = randomKeyPair();
@@ -202,7 +211,7 @@ describe("ArgentAccount", function () {
 
   describe("change_guardian_backup(new_guardian)", function () {
     it("Should be possible to change_guardian_backup", async function () {
-      const { accountContract } = await deployAccountWithGuardianBackup(argentAccountClassHash);
+      const { accountContract } = await deployAccountWithGuardianBackup();
       const newGuardianBackup = 12n;
       await accountContract.change_guardian_backup(newGuardianBackup);
 
@@ -210,28 +219,27 @@ describe("ArgentAccount", function () {
     });
 
     it("Should be possible to change_guardian_backup to zero", async function () {
-      const { accountContract } = await deployAccountWithGuardianBackup(argentAccountClassHash);
+      const { accountContract } = await deployAccountWithGuardianBackup();
       await accountContract.change_guardian_backup(0);
 
       await accountContract.get_guardian_backup().should.eventually.equal(0n);
     });
 
     it("Expect 'argent/only-self' when called from another account", async function () {
-      const { account } = await deployAccount(argentAccountClassHash);
-      const { accountContract } = await deployAccount(argentAccountClassHash);
+      const { account } = await deployAccount();
+      const { accountContract } = await deployAccount();
       accountContract.connect(account);
       await expectRevertWithErrorMessage("argent/only-self", () => accountContract.change_guardian_backup(12));
     });
 
     it("Expect 'argent/guardian-required' when guardian == 0 and setting a guardian backup ", async function () {
-      const { accountContract } = await deployAccountWithoutGuardian(argentAccountClassHash);
+      const { accountContract } = await deployAccountWithoutGuardian();
       await accountContract.get_guardian().should.eventually.equal(0n);
       await expectRevertWithErrorMessage("argent/guardian-required", () => accountContract.change_guardian_backup(12));
     });
 
     it("Expect the escape to be reset", async function () {
-      const { account, accountContract, owner, guardian } =
-        await deployAccountWithGuardianBackup(argentAccountClassHash);
+      const { account, accountContract, owner, guardian } = await deployAccountWithGuardianBackup();
 
       const newOwner = randomKeyPair();
       account.signer = guardian;
@@ -250,7 +258,7 @@ describe("ArgentAccount", function () {
   });
 
   it("Expect 'Entry point X not found' when calling the constructor", async function () {
-    const { account } = await deployAccount(argentAccountClassHash);
+    const { account } = await deployAccount();
     try {
       const { transaction_hash } = await account.execute({
         contractAddress: account.address,
@@ -259,9 +267,8 @@ describe("ArgentAccount", function () {
       });
       await provider.waitForTransaction(transaction_hash);
     } catch (e: any) {
-      const selector = hash.getSelector("constructor");
       expect(e.toString()).to.contain(
-        `Entry point ${selector} not found in contract with class hash ${argentAccountClassHash}`,
+        `Entry point EntryPointSelector(StarkFelt(\\"0x028ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194\\")) not found in contract`,
       );
     }
   });

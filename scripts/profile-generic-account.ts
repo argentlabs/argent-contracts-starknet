@@ -179,7 +179,7 @@ async function deployGenericAccount(owners: StarknetKeyPair[]) {
   });
 
   const contractAddress = hash.calculateContractAddressFromHash(salt, genericAccountClassHash, constructorCalldata, 0);
-  await fundAccount(contractAddress, 1e15); // 0.001 ETH
+  await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
 
   const account = new Account(provider, contractAddress, new GenericSigner(owners), "1");
 

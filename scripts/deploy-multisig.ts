@@ -8,9 +8,11 @@ console.log("TestDapp class hash:", testDappClassHash);
 
 console.log("Deploying new multisig");
 
-const threshold = 1;
-const signersLength = 2;
-const { account, keys, signers } = await deployMultisig(multisigClassHash, threshold, signersLength);
+const { account, keys, signers } = await deployMultisig({
+  threshold: 1,
+  signersLength: 2,
+  classHash: multisigClassHash,
+});
 
 console.log("Account address:", account.address);
 console.log("Account signers:", signers);

@@ -11,18 +11,9 @@ mod common {
     mod erc165;
     mod multicall;
     mod outside_execution;
-
+    mod transaction_version;
     mod upgrade;
     mod version;
-}
-mod mocks {
-    mod erc20;
-    mod test_dapp;
-}
-mod session {
-    mod session;
-    mod session_account;
-    mod session_structs;
 }
 mod multisig {
     mod argent_multisig;
@@ -35,4 +26,13 @@ mod generic {
     mod interface;
     mod recovery;
     mod signer_signature;
+}
+mod mocks {
+    mod erc20;
+    mod test_dapp;
+}
+mod session {
+    mod session;
+    mod session_account;
+    mod session_structs;
 }

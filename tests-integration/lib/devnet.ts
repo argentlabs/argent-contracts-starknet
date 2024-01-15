@@ -3,8 +3,8 @@ import { provider } from "./provider";
 
 const DUMP_FOLDER_PATH = "./dump";
 
-export async function mintEth(address: string) {
-  await handlePost("mint", { address, amount: 1e18, lite: true });
+export async function mintEth(address: string, amount: number | bigint) {
+  await handlePost("mint", { address, amount: Number(amount) });
 }
 
 export async function increaseTime(timeInSeconds: number | bigint) {
@@ -28,12 +28,13 @@ export async function load() {
 }
 
 async function handlePost(path: string, payload?: RawArgs) {
-  const response = await fetch(`${provider.baseUrl}/${path}`, {
+  const url = `${provider.channel.nodeUrl}/${path}`;
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
-    throw new Error(`HTTP error! Status: ${response.status} Message: ${await response.text()}`);
+    throw new Error(`HTTP error! calling ${url} Status: ${response.status} Message: ${await response.text()}`);
   }
 }

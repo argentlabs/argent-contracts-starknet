@@ -65,6 +65,8 @@ mod session_component {
             transaction_hash: felt252,
             signature: Span<felt252>,
         ) {
+            // TODO: add check to make sure v3 tx are only possible if the fee token in the session is STRK and same for ETH
+
             let state = self.get_contract();
             let account_address = get_contract_address();
 
@@ -76,15 +78,16 @@ mod session_component {
 
             assert(!self.revoked_session.read(token.session.session_key), 'session/revoked');
 
+            let token_session_hash = token.session.get_message_hash();
+
+            // TODO: maybe use poseidon hash
+
             assert(
-                state
-                    .is_valid_signature(
-                        token.session.get_message_hash(), token.account_signature.snapshot.clone()
-                    ) == VALIDATED,
+                state.is_valid_signature(token_session_hash, token.account_signature.snapshot.clone()) == VALIDATED,
                 'session/invalid-account-sig'
             );
 
-            let message_hash = LegacyHash::hash(transaction_hash, token.session.get_message_hash());
+            let message_hash = LegacyHash::hash(transaction_hash, token_session_hash);
 
             assert(
                 is_valid_signature_generic(message_hash, token.session.session_key, token.session_signature),
@@ -96,12 +99,8 @@ mod session_component {
                 'session/invalid-guardian-sig'
             );
 
-            if state.get_guardian_backup() != 0 {
-                assert(
-                    !is_valid_signature_generic(transaction_hash, state.get_guardian_backup(), token.backend_signature),
-                    'session/backup-sig-found'
-                );
-            }
+            // TODO: possibly add guardian backup check
+
             assert_valid_session_calls(token, calls);
         }
     }

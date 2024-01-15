@@ -38,7 +38,7 @@ describe("Hybrid Session Account: execute calls", function () {
   });
 
   it("Call a contract with backend signer", async function () {
-    const { accountContract, account, guardian } = await deployAccount(sessionAccountClassHash);
+    const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const backendService = new BackendService(guardian);
     const dappService = new DappService(backendService);
@@ -66,7 +66,7 @@ describe("Hybrid Session Account: execute calls", function () {
     // 2. dapp signs tx and session, crafts signature and submits transaction
     const sessionSigner = new SessionSigner(
       backendService,
-      dappService.keypair,
+      dappService.sessionKey,
       accountSessionSignature,
       sessionRequest,
     );
@@ -79,7 +79,7 @@ describe("Hybrid Session Account: execute calls", function () {
   });
 
   it("Call a token contract", async function () {
-    const { accountContract, account, guardian } = await deployAccount(sessionAccountClassHash);
+    const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const backendService = new BackendService(guardian);
     const dappService = new DappService(backendService);
@@ -121,7 +121,7 @@ describe("Hybrid Session Account: execute calls", function () {
     // 2. dapp signs tx and session, crafts signature and submits transaction
     const sessionSigner = new SessionSigner(
       backendService,
-      dappService.keypair,
+      dappService.sessionKey,
       accountSessionSignature,
       sessionRequest,
     );

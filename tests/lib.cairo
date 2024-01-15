@@ -9,7 +9,7 @@ mod test_multisig_account;
 mod test_multisig_remove_signers;
 mod test_multisig_replace_signers;
 mod test_multisig_signing;
-
+mod test_transaction_version;
 mod setup {
     mod account_test_setup;
     mod generic_test_setup;

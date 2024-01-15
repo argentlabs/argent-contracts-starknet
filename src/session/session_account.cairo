@@ -2,30 +2,27 @@
 mod HybridSessionAccount {
     use argent::account::escape::{Escape, EscapeStatus};
     use argent::account::interface::{IArgentAccount, IDeprecatedArgentAccount};
-    use argent::common::outside_execution::{
-        IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component
-    };
     use argent::common::{
         account::{
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
-        asserts::{
-            assert_correct_tx_version, assert_no_self_call, assert_only_protocol, assert_only_self,
-            assert_correct_declare_version
+        asserts::{assert_no_self_call, assert_only_protocol, assert_only_self}, calls::execute_multicall,
+        version::Version, erc165::{IErc165, ERC165_IERC165_INTERFACE_ID, ERC165_IERC165_INTERFACE_ID_OLD,},
+        outside_execution::{
+            IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
-        calls::execute_multicall, version::Version,
-        erc165::{IErc165, ERC165_IERC165_INTERFACE_ID, ERC165_IERC165_INTERFACE_ID_OLD,},
-        upgrade::{IUpgradeable, do_upgrade}
+        upgrade::{IUpgradeable, do_upgrade},
+        transaction_version::{
+            get_execution_info, get_tx_info, TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE,
+            assert_correct_invoke_version, assert_correct_declare_version, assert_no_unsupported_v3_fields, DA_MODE_L1
+        }
     };
-    use argent::session::session::SESSION_MAGIC;
-    use argent::session::session::session_component::Internal;
-    use argent::session::session::session_component;
+    use argent::session::session::{SESSION_MAGIC, session_component::Internal, session_component,};
     use ecdsa::check_ecdsa_signature;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
-        ClassHash, get_block_timestamp, get_execution_info, get_contract_address, get_tx_info, VALIDATED,
-        replace_class_syscall, account::Call
+        ClassHash, get_block_timestamp, get_contract_address, VALIDATED, replace_class_syscall, account::Call
     };
 
     const NAME: felt252 = 'SessionAccount';
@@ -246,7 +243,7 @@ mod HybridSessionAccount {
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
             assert_only_protocol();
             let tx_info = get_tx_info().unbox();
-            assert_correct_tx_version(tx_info.version);
+            assert_correct_invoke_version(tx_info.version);
 
             let retdata = execute_multicall(calls.span());
 
@@ -322,7 +319,7 @@ mod HybridSessionAccount {
             self: @ContractState, class_hash: felt252, contract_address_salt: felt252, owner: felt252, guardian: felt252
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
-            assert_correct_tx_version(tx_info.version);
+            assert_correct_declare_version(tx_info.version);
             self.assert_valid_span_signature(tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
@@ -542,7 +539,7 @@ mod HybridSessionAccount {
             let execution_info = get_execution_info().unbox();
             let account_address = execution_info.contract_address;
             let tx_info = execution_info.tx_info.unbox();
-            assert_correct_tx_version(tx_info.version);
+            assert_correct_declare_version(tx_info.version);
 
             if calls.len() == 1 {
                 let call = calls.at(0);

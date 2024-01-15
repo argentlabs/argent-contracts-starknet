@@ -4,8 +4,8 @@ mod ArgentGenericAccount {
         account::{
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
-        asserts::{assert_correct_tx_version, assert_no_self_call, assert_only_protocol, assert_only_self,},
-        calls::execute_multicall, version::Version,
+        asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
+        version::Version,
         erc165::{
             IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
             ERC165_IERC165_INTERFACE_ID_OLD,
@@ -13,7 +13,8 @@ mod ArgentGenericAccount {
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
-        upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait}
+        upgrade::{IUpgradeable, do_upgrade},
+        transaction_version::{get_tx_info, assert_correct_invoke_version, assert_no_unsupported_v3_fields}
     };
     use argent::generic::{
         signer_signature::{
@@ -23,7 +24,7 @@ mod ArgentGenericAccount {
     };
     use starknet::{
         get_contract_address, VALIDATED, syscalls::replace_class_syscall, ClassHash, get_block_timestamp,
-        get_caller_address, get_tx_info, account::Call
+        get_caller_address, account::Call
     };
 
     const NAME: felt252 = 'ArgentGenericAccount';
@@ -160,21 +161,22 @@ mod ArgentGenericAccount {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_only_protocol();
             let tx_info = get_tx_info().unbox();
-            // validate version
-            assert_correct_tx_version(tx_info.version);
-            // validate calls
+            assert_correct_invoke_version(tx_info.version);
+            assert_no_unsupported_v3_fields();
+
             self.assert_valid_calls(calls.span());
-            // validate signatures
             self.assert_valid_signatures(calls.span(), tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
             assert_only_protocol();
+            let tx_info = get_tx_info().unbox();
+            assert_correct_invoke_version(tx_info.version);
+
             // execute calls
             let retdata = execute_multicall(calls.span());
             // emit event
-            let tx_info = get_tx_info().unbox();
             let hash = tx_info.transaction_hash;
             let response = retdata.span();
             self.emit(TransactionExecuted { hash, response });
@@ -196,17 +198,9 @@ mod ArgentGenericAccount {
         /// @dev Can be called by the account to upgrade the implementation
         fn upgrade(ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
             assert_only_self();
-
-            let supports_interface = IErc165LibraryDispatcher { class_hash: new_implementation }
-                .supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
-            assert(supports_interface, 'argent/invalid-implementation');
-
-            replace_class_syscall(new_implementation).unwrap();
             self.emit(AccountUpgraded { new_implementation });
-
-            IUpgradeableLibraryDispatcher { class_hash: new_implementation }.execute_after_upgrade(calldata)
+            do_upgrade(new_implementation, calldata)
         }
-
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
@@ -232,7 +226,8 @@ mod ArgentGenericAccount {
             signers: Array<felt252>
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
-            assert_correct_tx_version(tx_info.version);
+            assert_correct_invoke_version(tx_info.version);
+            assert_no_unsupported_v3_fields();
 
             let mut signature = tx_info.signature;
             let mut parsed_signatures: Array<SignerSignature> = Serde::deserialize(ref signature)

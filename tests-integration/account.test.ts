@@ -86,9 +86,8 @@ describe("ArgentAccount", function () {
   });
 
   it("Expect 'argent/invalid-signature-length' when signing a transaction with OWNER, GUARDIAN and BACKUP", async function () {
-    const { account, accountContract, owner, guardian, guardianBackup } = await deployAccountWithGuardianBackup(
-      argentAccountClassHash,
-    );
+    const { account, accountContract, owner, guardian, guardianBackup } =
+      await deployAccountWithGuardianBackup(argentAccountClassHash);
 
     account.signer = new ConcatSigner([owner, guardian, guardianBackup]);
 
@@ -231,9 +230,8 @@ describe("ArgentAccount", function () {
     });
 
     it("Expect the escape to be reset", async function () {
-      const { account, accountContract, owner, guardian } = await deployAccountWithGuardianBackup(
-        argentAccountClassHash,
-      );
+      const { account, accountContract, owner, guardian } =
+        await deployAccountWithGuardianBackup(argentAccountClassHash);
 
       const newOwner = randomKeyPair();
       account.signer = guardian;

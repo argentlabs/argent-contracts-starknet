@@ -93,7 +93,6 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
     n_memory_holes: executionResources.n_memory_holes,
     gasPrice,
     storageDiffs,
-    storageDiffsCount: sum(storageDiffs.map(({ storage_entries }) => storage_entries.length)),
   };
 }
 
@@ -112,13 +111,15 @@ export function newProfiler(provider: RpcProvider, gasRoundingDecimals?: number)
       profiles[name] = profile;
     },
     summarizeCost(profile: Profile) {
+      // using gas price from devnet node:
       const feeUsd = Number((10000n * profile.actualFee * ethUsd) / 10n ** 18n) / 10000;
+      // using custom gas price from top of this file:
       const feeUsdAdjusted = (feeUsd * Number(gasPrice)) / Number(profile.gasPrice);
       return {
         actualFee: Number(profile.actualFee),
         feeUsd: Number(feeUsdAdjusted.toFixed(2)),
         gasUsed: Number(profile.gasUsed),
-        storageDiffs: profile.storageDiffsCount,
+        storageDiffs: sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         computationGas: Number(profile.computationGas),
         l1CalldataGas: Number(profile.l1CalldataGas),
       };

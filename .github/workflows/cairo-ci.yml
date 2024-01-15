@@ -21,7 +21,7 @@ jobs:
       - name: Step 2 - Getting scarb
         uses: software-mansion/setup-scarb@v1
       - name: Step 3 - Checking format
-        run: scarb fmt --check
+        run: scarb fmt --check 
 
   gas-report:
     runs-on: ubuntu-latest

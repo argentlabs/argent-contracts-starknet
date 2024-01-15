@@ -33,75 +33,6 @@ import {
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
 
-<<<<<<< HEAD
-=======
-export class ArgentX {
-  constructor(
-    public account: Account,
-    public backendService: BackendService,
-  ) {}
-
-  public async getOffchainSignature(sessionRequest: OffChainSession): Promise<ArraySignatureType> {
-    const sessionTypedData = await getSessionTypedData(sessionRequest);
-    return (await this.account.signMessage(sessionTypedData)) as ArraySignatureType;
-  }
-}
-
-export class BackendService {
-  constructor(private guardian: KeyPair) {}
-
-  public async signTxAndSession(
-    calls: Call[],
-    transactionsDetail: InvocationsSignerDetails,
-    sessionTokenToSign: OffChainSession,
-  ): Promise<StarknetSig> {
-    // verify session param correct
-
-    // extremely simplified version of the backend verification
-    const allowed_methods = sessionTokenToSign.allowed_methods;
-    if (
-      !calls.every((call) => {
-        return allowed_methods.some(
-          (method) =>
-            method["Contract Address"] === call.contractAddress &&
-            method.selector === selector.getSelectorFromName(call.entrypoint),
-        );
-      })
-    ) {
-      throw new Error("Call not allowed");
-    }
-
-    const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
-    let msgHash;
-    if (Object.values(RPC.ETransactionVersion2).includes(transactionsDetail.version as any)) {
-      const det = transactionsDetail as V2InvocationsSignerDetails;
-      msgHash = hash.calculateInvokeTransactionHash({
-        ...det,
-        senderAddress: det.walletAddress,
-        compiledCalldata,
-        version: det.version,
-      });
-    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionsDetail.version as any)) {
-      throw Error("not implemented");
-    } else {
-      throw Error("unsupported signTransaction version");
-    }
-
-    const sessionMessageHash = typedData.getMessageHash(
-      await getSessionTypedData(sessionTokenToSign),
-      transactionsDetail.walletAddress,
-    );
-    const sessionWithTxHash = ec.starkCurve.pedersen(msgHash, sessionMessageHash);
-    const [r, s] = this.guardian.signHash(sessionWithTxHash);
-    return { r: BigInt(r), s: BigInt(s) };
-  }
-
-  public getGuardianKey(): bigint {
-    return this.guardian.publicKey;
-  }
-}
-
->>>>>>> feat/hybrid-onchain
 export class DappService {
   constructor(
     public argentBackend: BackendService,
@@ -177,7 +108,6 @@ export class SessionSigner extends RawSigner {
     calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
   ): Promise<ArraySignatureType> {
-<<<<<<< HEAD
     const txHash = await this.getTransactionHash(calls, transactionsDetail);
     return this.compileSessionSignature(txHash, calls, transactionsDetail.walletAddress, false, transactionsDetail);
   }
@@ -190,8 +120,7 @@ export class SessionSigner extends RawSigner {
     transactionsDetail?: InvocationsSignerDetails,
     outsideExecution?: OutsideExecution,
   ): Promise<ArraySignatureType> {
-=======
-    const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
+    const compiledCalldata = calls.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
     let msgHash;
     if (Object.values(RPC.ETransactionVersion2).includes(transactionsDetail.version as any)) {
       const det = transactionsDetail as V2InvocationsSignerDetails;
@@ -207,7 +136,6 @@ export class SessionSigner extends RawSigner {
       throw Error("unsupported signTransaction version");
     }
 
->>>>>>> feat/hybrid-onchain
     const leaves = this.completedSession.allowed_methods.map((method) =>
       hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
     );
@@ -241,13 +169,8 @@ export class SessionSigner extends RawSigner {
     const sessionToken = {
       session,
       account_signature: this.accountSessionSignature,
-<<<<<<< HEAD
       session_signature: await this.signTxAndSession(transactionHash, accountAddress),
       backend_signature,
-=======
-      session_signature: await this.signTxAndSession(msgHash, transactionsDetail),
-      backend_signature: await this.argentBackend.signTxAndSession(calls, transactionsDetail, this.completedSession),
->>>>>>> feat/hybrid-onchain
       proofs: this.getSessionProofs(calls, this.completedSession.allowed_methods, leaves),
     };
 

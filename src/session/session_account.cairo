@@ -57,7 +57,7 @@ mod HybridSessionAccount {
 
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
-    impl ExecuteSessionFromOutside = outside_execution_component::OutsideExecutionImpl<ContractState>;
+    impl ExecuteFromOutside = outside_execution_component::OutsideExecutionImpl<ContractState>;
 
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
         #[inline(always)]

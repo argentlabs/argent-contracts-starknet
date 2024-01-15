@@ -1,6 +1,6 @@
 import { exec } from "child_process";
 import fs from "fs";
-import { isUndefined, maxBy, omit, sortBy, sum } from "lodash-es";
+import { isUndefined, mapValues, maxBy, omit, sortBy, sum } from "lodash-es";
 import { RpcProvider } from "starknet";
 import { ensureIncluded } from ".";
 
@@ -97,10 +97,10 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
   };
 }
 
+type Profile = Awaited<ReturnType<typeof profileGasUsage>>;
+
 export function newProfiler(provider: RpcProvider, roundedGasDecimals?: number) {
-  const profiles: Record<string, any> = {};
-  const costs: Record<string, any> = {};
-  const resources: Record<string, any> = {};
+  const profiles: Record<string, Profile> = {};
 
   return {
     async profile(name: string, { transaction_hash }: TransactionCarrying, print = false) {
@@ -109,9 +109,12 @@ export function newProfiler(provider: RpcProvider, roundedGasDecimals?: number) 
       if (print) {
         console.dir(profile, { depth: null });
       }
+      profiles[name] = profile;
+    },
+    summarizeCost(profile: Profile) {
       const feeUsd = Number((10000n * profile.actualFee * ethUsd) / 10n ** 18n) / 10000;
       const feeUsdAdjusted = (feeUsd * Number(gasPrice)) / Number(profile.gasPrice);
-      costs[name] = {
+      return {
         actualFee: Number(profile.actualFee),
         feeUsd: Number(feeUsdAdjusted.toFixed(2)),
         gasUsed: Number(profile.gasUsed),
@@ -119,17 +122,15 @@ export function newProfiler(provider: RpcProvider, roundedGasDecimals?: number) 
         computationGas: Number(profile.computationGas),
         l1CalldataGas: Number(profile.l1CalldataGas),
       };
-      resources[name] = profile.executionResources;
-      profiles[name] = profile;
     },
     print() {
       console.log("Resources:");
-      console.table(resources);
+      console.table(mapValues(profiles, "executionResources"));
       console.log("Costs:");
-      console.table(costs);
+      console.table(mapValues(profiles, this.summarizeCost));
     },
     formatReport() {
-      return Object.entries(costs)
+      return Object.entries(profiles)
         .map(([name, { gasUsed }]) => {
           const gas = Number(gasUsed);
           const gasRounded = roundedGasDecimals

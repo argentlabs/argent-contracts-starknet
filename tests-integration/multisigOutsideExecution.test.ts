@@ -2,13 +2,12 @@ import { expect } from "chai";
 import { Contract, num, shortString } from "starknet";
 import {
   OutsideExecution,
-  declareContract,
   deployer,
   expectExecutionRevert,
   getOutsideCall,
   getOutsideExecutionCall,
   getTypedDataHash,
-  loadContract,
+  deployContract,
   provider,
   randomKeyPair,
   setTime,
@@ -21,20 +20,14 @@ describe("ArgentMultisig: outside execution", function () {
   // Avoid timeout
   this.timeout(320000);
 
-  let multisigClassHash: string;
   let testDapp: Contract;
 
   before(async () => {
-    multisigClassHash = await declareContract("ArgentMultisig");
-    const testDappClassHash = await declareContract("TestDapp");
-    const { contract_address } = await deployer.deployContract({
-      classHash: testDappClassHash,
-    });
-    testDapp = await loadContract(contract_address);
+    testDapp = await deployContract("TestDapp");
   });
 
   it("Correct message hash", async function () {
-    const { accountContract } = await deployMultisig(multisigClassHash, 1 /* threshold */, 2 /* signers count */);
+    const { accountContract } = await deployMultisig({ threshold: 1, signersLength: 2 });
 
     const chainId = await provider.getChainId();
 
@@ -60,11 +53,7 @@ describe("ArgentMultisig: outside execution", function () {
   });
 
   it("Basics", async function () {
-    const { account, accountContract } = await deployMultisig(
-      multisigClassHash,
-      1 /* threshold */,
-      2 /* signers count */,
-    );
+    const { account, accountContract } = await deployMultisig({ threshold: 1, signersLength: 2 });
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
     const outsideExecution: OutsideExecution = {
@@ -117,7 +106,7 @@ describe("ArgentMultisig: outside execution", function () {
   });
 
   it("Avoid caller check if it caller is ANY_CALLER", async function () {
-    const { account } = await deployMultisig(multisigClassHash, 1 /* threshold */, 2 /* signers count */);
+    const { account } = await deployMultisig({ threshold: 1, signersLength: 2 });
 
     await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 

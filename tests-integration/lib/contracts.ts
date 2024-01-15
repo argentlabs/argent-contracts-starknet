@@ -1,26 +1,81 @@
 import { readFileSync } from "fs";
-import { CompiledSierra, Contract, DeclareContractPayload, json } from "starknet";
+import {
+  CompiledSierra,
+  Contract,
+  DeclareContractPayload,
+  json,
+  num,
+  uint256,
+  UniversalDeployerContractPayload,
+  UniversalDetails,
+  Abi,
+  ProviderInterface,
+  AccountInterface,
+} from "starknet";
 import { deployer } from "./accounts";
 import { provider } from "./provider";
 
 const classHashCache: Record<string, string> = {};
 
-export const ethAddress = "0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7";
+export const ethAddress = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
+export const strkAddress = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
+
 let ethContract: Contract;
+let strkContract: Contract;
 
 export const contractsFolder = "./target/release/argent_";
 export const fixturesFolder = "./tests-integration/fixtures/argent_";
+
+export class ContractWithClassHash extends Contract {
+  constructor(
+    abi: Abi,
+    address: string,
+    providerOrAccount: ProviderInterface | AccountInterface,
+    public readonly classHash: string,
+  ) {
+    super(abi, address, providerOrAccount);
+  }
+}
 
 export async function getEthContract() {
   if (ethContract) {
     return ethContract;
   }
-  ethContract = await loadContract(ethAddress);
+  const ethProxy = await loadContract(ethAddress);
+  if (ethProxy.abi.some((entry) => entry.name == "implementation")) {
+    const implementationAddress = num.toHex((await ethProxy.implementation()).address);
+    const ethImplementation = await loadContract(implementationAddress);
+    ethContract = new Contract(ethImplementation.abi, ethAddress, ethProxy.providerOrAccount);
+  } else {
+    ethContract = ethProxy;
+  }
   return ethContract;
+}
+
+export async function getStrkContract() {
+  if (strkContract) {
+    return strkContract;
+  }
+  strkContract = await loadContract(strkAddress);
+  return strkContract;
+}
+
+export async function getEthBalance(accountAddress: string): Promise<bigint> {
+  const ethContract = await getEthContract();
+  return uint256.uint256ToBN((await ethContract.balanceOf(accountAddress)).balance);
+}
+
+export async function getStrkBalance(accountAddress: string): Promise<bigint> {
+  const strkContract = await getStrkContract();
+  return uint256.uint256ToBN((await strkContract.balanceOf(accountAddress)).balance);
 }
 
 export function removeFromCache(contractName: string) {
   delete classHashCache[contractName];
+}
+
+export function clearCache() {
+  Object.keys(classHashCache).forEach((key) => delete classHashCache[key]);
 }
 
 // Could extends Account to add our specific fn but that's too early.
@@ -49,17 +104,33 @@ export async function declareFixtureContract(contractName: string, wait = true):
   return await declareContract(contractName, wait, fixturesFolder);
 }
 
-export async function loadContract(contractAddress: string) {
+export async function loadContract(contractAddress: string, classHash?: string): Promise<ContractWithClassHash> {
   const { abi } = await provider.getClassAt(contractAddress);
   if (!abi) {
     throw new Error("Error while getting ABI");
   }
-  // TODO WARNING THIS IS A TEMPORARY FIX WHILE WE WAIT FOR SNJS TO BE UPDATED
-  // Allows to pull back the function from one level down
-  const parsedAbi = abi.flatMap((e) => (e.type == "interface" ? e.items : e));
-  return new Contract(parsedAbi, contractAddress, provider);
+
+  return new ContractWithClassHash(
+    abi,
+    contractAddress,
+    provider,
+    classHash ?? (await provider.getClassHashAt(contractAddress)),
+  );
 }
 
 export function readContract(path: string) {
   return json.parse(readFileSync(path).toString("ascii"));
+}
+
+export async function deployContract(
+  contractName: string,
+  payload: Omit<UniversalDeployerContractPayload, "classHash"> | UniversalDeployerContractPayload[] = {},
+  details?: UniversalDetails,
+  folder = contractsFolder,
+): Promise<ContractWithClassHash> {
+  const declaredClassHash = await declareContract(contractName, true, folder);
+  const { contract_address } = await deployer.deployContract({ ...payload, classHash: declaredClassHash }, details);
+
+  // TODO could avoid network request and just create the contract using the ABI
+  return await loadContract(contract_address, declaredClassHash);
 }

@@ -199,13 +199,13 @@ fn get_version() {
     let version = initialize_account().get_version();
     assert(version.major == 0, 'Version major = 0');
     assert(version.minor == 3, 'Version minor = 3');
-    assert(version.patch == 0, 'Version patch = 0');
+    assert(version.patch == 1, 'Version patch = 1');
 }
 
 #[test]
 #[available_gas(2000000)]
 fn getVersion() {
-    assert(initialize_account().getVersion() == '0.3.0', 'Version should be 0.3.0');
+    assert(initialize_account().getVersion() == '0.3.1', 'Version should be 0.3.1');
 }
 
 #[test]

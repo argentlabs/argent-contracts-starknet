@@ -13,6 +13,8 @@ import {
   Account,
   uint256,
   merkle,
+  RPC,
+  V2InvocationsSignerDetails,
 } from "starknet";
 import {
   OffChainSession,
@@ -64,22 +66,27 @@ export class BackendService {
       throw new Error("Call not allowed");
     }
 
-    const calldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
-
-    const txHash = hash.calculateTransactionHash(
-      transactionsDetail.walletAddress,
-      transactionsDetail.version,
-      calldata,
-      transactionsDetail.maxFee,
-      transactionsDetail.chainId,
-      transactionsDetail.nonce,
-    );
+    const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
+    let msgHash;
+    if (Object.values(RPC.ETransactionVersion2).includes(transactionsDetail.version as any)) {
+      const det = transactionsDetail as V2InvocationsSignerDetails;
+      msgHash = hash.calculateInvokeTransactionHash({
+        ...det,
+        senderAddress: det.walletAddress,
+        compiledCalldata,
+        version: det.version,
+      });
+    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionsDetail.version as any)) {
+      throw Error("not implemented");
+    } else {
+      throw Error("unsupported signTransaction version");
+    }
 
     const sessionMessageHash = typedData.getMessageHash(
       await getSessionTypedData(sessionTokenToSign),
       transactionsDetail.walletAddress,
     );
-    const sessionWithTxHash = ec.starkCurve.pedersen(txHash, sessionMessageHash);
+    const sessionWithTxHash = ec.starkCurve.pedersen(msgHash, sessionMessageHash);
     const [r, s] = this.guardian.signHash(sessionWithTxHash);
     return { r: BigInt(r), s: BigInt(s) };
   }
@@ -112,10 +119,6 @@ export class DappService {
       session_key: this.sessionKey.publicKey,
     };
   }
-
-  public get keypair(): KeyPair {
-    return this.sessionKey;
-  }
 }
 
 export class DappSigner extends RawSigner {
@@ -133,10 +136,25 @@ export class DappSigner extends RawSigner {
   }
 
   public async signTransaction(
-    transactions: Call[],
+    calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
   ): Promise<ArraySignatureType> {
-    const txHash = await this.getTransactionHash(transactions, transactionsDetail);
+    const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
+    let msgHash;
+    if (Object.values(RPC.ETransactionVersion2).includes(transactionsDetail.version as any)) {
+      const det = transactionsDetail as V2InvocationsSignerDetails;
+      msgHash = hash.calculateInvokeTransactionHash({
+        ...det,
+        senderAddress: det.walletAddress,
+        compiledCalldata,
+        version: det.version,
+      });
+    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionsDetail.version as any)) {
+      throw Error("not implemented");
+    } else {
+      throw Error("unsupported signTransaction version");
+    }
+
     const leaves = this.completedSession.allowed_methods.map((method) =>
       hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
     );
@@ -153,13 +171,9 @@ export class DappSigner extends RawSigner {
     const sessionToken = {
       session,
       account_signature: this.accountSessionSignature,
-      session_signature: await this.signTxAndSession(txHash, transactionsDetail),
-      backend_signature: await this.argentBackend.signTxAndSession(
-        transactions,
-        transactionsDetail,
-        this.completedSession,
-      ),
-      proofs: this.getSessionProofs(transactions, this.completedSession.allowed_methods, leaves),
+      session_signature: await this.signTxAndSession(msgHash, transactionsDetail),
+      backend_signature: await this.argentBackend.signTxAndSession(calls, transactionsDetail, this.completedSession),
+      proofs: this.getSessionProofs(calls, this.completedSession.allowed_methods, leaves),
     };
 
     return [SESSION_MAGIC, ...CallData.compile(sessionToken)];

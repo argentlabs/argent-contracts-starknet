@@ -38,7 +38,7 @@ describe("Hybrid Session Account: execute calls", function () {
   });
 
   it("Call a contract with backend signer", async function () {
-    const { accountContract, account, guardian } = await deployAccount(sessionAccountClassHash);
+    const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const backendService = new BackendService(guardian);
     const dappService = new DappService(backendService);
@@ -64,7 +64,12 @@ describe("Hybrid Session Account: execute calls", function () {
     // 1. dapp requests backend signature
     // backend: can verify the parameters and check it was signed by the account then provides signature
     // 2. dapp signs tx and session, crafts signature and submits transaction
-    const sessionSigner = new DappSigner(backendService, dappService.keypair, accountSessionSignature, sessionRequest);
+    const sessionSigner = new DappSigner(
+      backendService,
+      dappService.sessionKey,
+      accountSessionSignature,
+      sessionRequest,
+    );
 
     account.signer = sessionSigner;
 
@@ -74,7 +79,7 @@ describe("Hybrid Session Account: execute calls", function () {
   });
 
   it("Call a token contract", async function () {
-    const { accountContract, account, guardian } = await deployAccount(sessionAccountClassHash);
+    const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const backendService = new BackendService(guardian);
     const dappService = new DappService(backendService);
@@ -114,7 +119,12 @@ describe("Hybrid Session Account: execute calls", function () {
     // 1. dapp requests backend signature
     // backend: can verify the parameters and check it was signed by the account then provides signature
     // 2. dapp signs tx and session, crafts signature and submits transaction
-    const sessionSigner = new DappSigner(backendService, dappService.keypair, accountSessionSignature, sessionRequest);
+    const sessionSigner = new DappSigner(
+      backendService,
+      dappService.sessionKey,
+      accountSessionSignature,
+      sessionRequest,
+    );
 
     account.signer = sessionSigner;
     const { transaction_hash } = await account.execute(calls);

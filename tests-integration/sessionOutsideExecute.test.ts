@@ -34,7 +34,7 @@ describe("ArgentAccount: outside execution", function () {
     testDapp = await loadContract(contract_address);
   });
 
-  it.only("Basics", async function () {
+  it("Basics", async function () {
     const { account, guardian } = await deployAccount(argentSessionAccountClassHash);
 
     const { account: testDappAccount } = await deployAccount(argentAccountClassHash);
@@ -43,8 +43,6 @@ describe("ArgentAccount: outside execution", function () {
     const dappService = new DappService(backendService);
     const argentX = new ArgentX(account, backendService);
 
-    // Session creation:
-    // 1. dapp request session: provides dapp pub key and policies
     const allowedMethods: AllowedMethod[] = [
       {
         "Contract Address": testDapp.address,
@@ -54,12 +52,8 @@ describe("ArgentAccount: outside execution", function () {
 
     const sessionRequest = dappService.createSessionRequest(allowedMethods, tokenAmounts);
 
-    // 2. Owner and Guardian signs session
     const accountSessionSignature = await argentX.getOffchainSignature(sessionRequest);
 
-    // 1. dapp requests backend signature
-    // backend: can verify the parameters and check it was signed by the account then provides signature
-    // 2. dapp signs tx and session, crafts signature and submits transaction
     const sessionSigner = new SessionSigner(
       backendService,
       dappService.keypair,

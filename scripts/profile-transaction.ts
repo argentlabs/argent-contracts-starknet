@@ -12,4 +12,4 @@ for (const [name, transaction_hash] of Object.entries(transactions)) {
   await profiler.profile(name, { transaction_hash });
 }
 
-profiler.print();
+profiler.printProfiles();

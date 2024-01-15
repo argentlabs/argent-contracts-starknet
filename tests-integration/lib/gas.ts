@@ -4,9 +4,9 @@ import { isUndefined, mapValues, maxBy, omit, sortBy, sum } from "lodash-es";
 import { RpcProvider } from "starknet";
 import { ensureIncluded } from ".";
 
-const ethUsd = 2000n;
+const ethUsd = 2500n;
 const gwei = 10n ** 9n;
-const gasPrice = 23n * gwei;
+const gasPrice = 30n * gwei;
 
 export interface TransactionCarrying {
   transaction_hash: string;
@@ -99,7 +99,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
 
 type Profile = Awaited<ReturnType<typeof profileGasUsage>>;
 
-export function newProfiler(provider: RpcProvider, roundedGasDecimals?: number) {
+export function newProfiler(provider: RpcProvider, gasRoundingDecimals?: number) {
   const profiles: Record<string, Profile> = {};
 
   return {
@@ -123,7 +123,7 @@ export function newProfiler(provider: RpcProvider, roundedGasDecimals?: number) 
         l1CalldataGas: Number(profile.l1CalldataGas),
       };
     },
-    print() {
+    printProfiles() {
       console.log("Resources:");
       console.table(mapValues(profiles, "executionResources"));
       console.log("Costs:");
@@ -132,10 +132,8 @@ export function newProfiler(provider: RpcProvider, roundedGasDecimals?: number) 
     formatReport() {
       return Object.entries(profiles)
         .map(([name, { gasUsed }]) => {
-          const gas = Number(gasUsed);
-          const gasRounded = roundedGasDecimals
-            ? Math.round(gas / 10 ** roundedGasDecimals) * 10 ** roundedGasDecimals
-            : gas;
+          const roundingScale = 10 ** (gasRoundingDecimals ?? 1);
+          const gasRounded = Math.round(Number(gasUsed) / roundingScale) * roundingScale;
           return `${name}: ${gasRounded.toLocaleString("en")} gas`;
         })
         .join("\n");

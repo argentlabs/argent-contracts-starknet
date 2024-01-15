@@ -82,7 +82,7 @@ export class SessionSigner extends RawSigner {
     execute_before = 999999999999999,
   ): Promise<Call> {
     const outsideExecution = {
-      caller: caller,
+      caller,
       nonce: randomKeyPair().publicKey,
       execute_after,
       execute_before,

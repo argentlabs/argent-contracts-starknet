@@ -108,7 +108,21 @@ export class SessionSigner extends RawSigner {
     calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
   ): Promise<ArraySignatureType> {
-    const txHash = await this.getTransactionHash(calls, transactionsDetail);
+    const compiledCalldata = transactionsDetail.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
+    let txHash;
+    if (Object.values(RPC.ETransactionVersion2).includes(transactionsDetail.version as any)) {
+      const det = transactionsDetail as V2InvocationsSignerDetails;
+      txHash = hash.calculateInvokeTransactionHash({
+        ...det,
+        senderAddress: det.walletAddress,
+        compiledCalldata,
+        version: det.version,
+      });
+    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionsDetail.version as any)) {
+      throw Error("not implemented");
+    } else {
+      throw Error("unsupported signTransaction version");
+    }
     return this.compileSessionSignature(txHash, calls, transactionsDetail.walletAddress, false, transactionsDetail);
   }
 
@@ -120,22 +134,6 @@ export class SessionSigner extends RawSigner {
     transactionsDetail?: InvocationsSignerDetails,
     outsideExecution?: OutsideExecution,
   ): Promise<ArraySignatureType> {
-    const compiledCalldata = calls.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
-    let msgHash;
-    if (Object.values(RPC.ETransactionVersion2).includes(transactionsDetail.version as any)) {
-      const det = transactionsDetail as V2InvocationsSignerDetails;
-      msgHash = hash.calculateInvokeTransactionHash({
-        ...det,
-        senderAddress: det.walletAddress,
-        compiledCalldata,
-        version: det.version,
-      });
-    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionsDetail.version as any)) {
-      throw Error("not implemented");
-    } else {
-      throw Error("unsupported signTransaction version");
-    }
-
     const leaves = this.completedSession.allowed_methods.map((method) =>
       hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
     );

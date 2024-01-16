@@ -4,9 +4,21 @@ import { isUndefined, mapValues, maxBy, omit, sortBy, sum } from "lodash-es";
 import { RpcProvider } from "starknet";
 import { ensureIncluded } from ".";
 
-const ethUsd = 2500n;
+const ethUsd = 2000n;
 const gwei = 10n ** 9n;
 const gasPrice = 30n * gwei;
+
+// from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
+const gasWeights: Record<string, number> = {
+  n_steps: 0.01,
+  pedersen: 0.32,
+  poseidon: 0.32,
+  range_check: 0.16,
+  ecdsa: 20.48,
+  keccak: 20.48,
+  ec_op: 10.24,
+  bitwise: 0.64,
+};
 
 export interface TransactionCarrying {
   transaction_hash: string;
@@ -18,7 +30,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
   if (receipt.actual_fee?.unit === "WEI") {
     actualFee = BigInt(receipt.actual_fee.amount);
   } else if (receipt.actual_fee && isUndefined(receipt.actual_fee.unit)) {
-    actualFee = BigInt(receipt.actual_fee as any);
+    actualFee = BigInt(`${receipt.actual_fee}`);
   } else {
     throw new Error(`unexpected fee: ${receipt.actual_fee}`);
   }
@@ -41,8 +53,8 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
   }
 
   const executionResources: Record<string, number> = {
-    n_steps: Number(rawResources.steps ?? 0),
-    n_memory_holes: Number(rawResources.memory_holes ?? 0),
+    steps: Number(rawResources.steps ?? 0),
+    memory_holes: Number(rawResources.memory_holes ?? 0),
     pedersen: Number(rawResources.pedersen_builtin_applications ?? 0),
     poseidon: Number(rawResources.poseidon_builtin_applications ?? 0),
     range_check: Number(rawResources.range_check_builtin_applications ?? 0),
@@ -58,18 +70,6 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
   const storageDiffs = stateUpdate.state_diff.storage_diffs;
   const gasPrice = BigInt(blockInfo.l1_gas_price.price_in_wei);
   const gasUsed = actualFee / gasPrice;
-
-  // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
-  const gasWeights: Record<string, number> = {
-    n_steps: 0.01,
-    pedersen: 0.32,
-    poseidon: 0.32,
-    range_check: 0.16,
-    ecdsa: 20.48,
-    keccak: 20.48,
-    ec_op: 10.24,
-    bitwise: 0.64,
-  };
 
   const gasPerComputationCategory = Object.fromEntries(
     Object.entries(executionResources)
@@ -89,8 +89,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
     computationGas,
     maxComputationCategory,
     gasPerComputationCategory,
-    executionResources: omit(sortedResources, "n_memory_holes"),
-    n_memory_holes: executionResources.n_memory_holes,
+    executionResources: sortedResources,
     gasPrice,
     storageDiffs,
   };
@@ -122,12 +121,13 @@ export function newProfiler(provider: RpcProvider, gasRoundingDecimals?: number)
         storageDiffs: sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         computationGas: Number(profile.computationGas),
         l1CalldataGas: Number(profile.l1CalldataGas),
+        maxComputationCategory: profile.maxComputationCategory,
       };
     },
     printProfiles() {
       console.log("Resources:");
       console.table(mapValues(profiles, "executionResources"));
-      console.log("Costs:");
+      console.log("Summary:");
       console.table(mapValues(profiles, this.summarizeCost));
     },
     formatReport() {

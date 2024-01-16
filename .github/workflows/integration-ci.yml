@@ -23,6 +23,23 @@ jobs:
       - name: Run integration tests
         run: scarb --release build && tsc && yarn mocha tests-integration/*.test.ts --forbid-only --forbid-pending
 
+  gas-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main branch
+        uses: actions/checkout@v3
+
+      - name: Setup Scarb
+        uses: software-mansion/setup-scarb@v1.3.2
+          
+      - name: Install project
+        run: yarn install --frozen-lockfile
+
+      - name: Start devnet in background
+        run: |
+          scarb run start-devnet &
+          ./scripts/wait-devnet-ready.sh
+
       - name: Gas report
         run: scarb run profile --check
 

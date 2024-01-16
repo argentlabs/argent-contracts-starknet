@@ -4,26 +4,34 @@ mod ArgentMultisig {
         account::{
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
-        asserts::{assert_correct_tx_version, assert_no_self_call, assert_only_protocol, assert_only_self,},
-        erc165::{IErc165, ERC165_IERC165_INTERFACE_ID, ERC165_IERC165_INTERFACE_ID_OLD,}, calls::execute_multicall,
+        asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
         version::Version,
+        erc165::{
+            IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
+            ERC165_IERC165_INTERFACE_ID_OLD,
+        },
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component
         },
-        upgrade::{IUpgradeable, do_upgrade}
+        upgrade::{IUpgradeable, do_upgrade},
+        transaction_version::{get_tx_info, assert_correct_invoke_version, assert_no_unsupported_v3_fields}
     };
     use argent::multisig::{
         interface::{IArgentMultisig, IDeprecatedArgentMultisig}, signer_signature::{deserialize_array_signer_signature},
         signer_list::{signer_list_component}
     };
     use ecdsa::check_ecdsa_signature;
-    use starknet::{get_contract_address, VALIDATED, ClassHash, get_tx_info, account::Call};
+
+    use starknet::{
+        get_contract_address, ContractAddressIntoFelt252, VALIDATED, syscalls::replace_class_syscall, ClassHash,
+        class_hash_const, get_block_timestamp, get_caller_address, account::Call
+    };
 
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION_MAJOR: u8 = 0;
     const VERSION_MINOR: u8 = 1;
-    const VERSION_PATCH: u8 = 0;
-    const VERSION_COMPAT: felt252 = '0.1.0';
+    const VERSION_PATCH: u8 = 1;
+    const VERSION_COMPAT: felt252 = '0.1.1';
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 
@@ -132,6 +140,9 @@ mod ArgentMultisig {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_only_protocol();
             let tx_info = get_tx_info().unbox();
+            assert_correct_invoke_version(tx_info.version);
+            assert_no_unsupported_v3_fields();
+            assert(tx_info.account_deployment_data.is_empty(), 'argent/invalid-deployment-data');
             self.assert_valid_calls_and_signature(calls.span(), tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
@@ -139,8 +150,7 @@ mod ArgentMultisig {
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
             assert_only_protocol();
             let tx_info = get_tx_info().unbox();
-            assert_correct_tx_version(tx_info.version);
-
+            assert_correct_invoke_version(tx_info.version);
             let retdata = execute_multicall(calls.span());
             self.emit(TransactionExecuted { hash: tx_info.transaction_hash, response: retdata.span() });
             retdata
@@ -190,7 +200,8 @@ mod ArgentMultisig {
             signers: Array<felt252>
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
-            assert_correct_tx_version(tx_info.version);
+            assert_correct_invoke_version(tx_info.version);
+            assert_no_unsupported_v3_fields();
 
             let parsed_signatures = deserialize_array_signer_signature(tx_info.signature)
                 .expect('argent/invalid-signature-length');
@@ -353,8 +364,6 @@ mod ArgentMultisig {
             self: @ContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
         ) {
             let account_address = get_contract_address();
-            let tx_info = get_tx_info().unbox();
-            assert_correct_tx_version(tx_info.version);
 
             if calls.len() == 1 {
                 let call = calls.at(0);

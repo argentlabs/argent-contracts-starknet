@@ -19,22 +19,6 @@ fn test_assert_only_self_panic() {
 }
 
 #[test]
-fn assert_correct_tx_version() {
-    asserts::assert_correct_tx_version(1);
-}
-
-#[test]
-fn assert_correct_tx_version_query_version() {
-    asserts::assert_correct_tx_version(340282366920938463463374607431768211457);
-}
-
-#[test]
-#[should_panic(expected: ('argent/invalid-tx-version',))]
-fn assert_correct_tx_version_invalid_tx() {
-    asserts::assert_correct_tx_version(4);
-}
-
-#[test]
 #[available_gas(2000000)]
 fn test_no_self_call_empty() {
     let self = contract_address_const::<42>();

@@ -13,6 +13,7 @@ mod common {
     mod multicall;
     mod outside_execution;
     mod test_dapp;
+    mod transaction_version;
     mod upgrade;
     mod version;
 }

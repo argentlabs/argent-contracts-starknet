@@ -3,6 +3,8 @@ import {
   ArraySignatureType,
   Call,
   InvocationsSignerDetails,
+  RPC,
+  V2InvocationsSignerDetails,
   ec,
   hash,
   selector,
@@ -55,22 +57,27 @@ export class BackendService {
       throw new Error("Call not allowed");
     }
 
-    const calldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
-
-    const txHash = hash.calculateTransactionHash(
-      transactionsDetail.walletAddress,
-      transactionsDetail.version,
-      calldata,
-      transactionsDetail.maxFee,
-      transactionsDetail.chainId,
-      transactionsDetail.nonce,
-    );
+    const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
+    let msgHash;
+    if (Object.values(RPC.ETransactionVersion2).includes(transactionsDetail.version as any)) {
+      const det = transactionsDetail as V2InvocationsSignerDetails;
+      msgHash = hash.calculateInvokeTransactionHash({
+        ...det,
+        senderAddress: det.walletAddress,
+        compiledCalldata,
+        version: det.version,
+      });
+    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionsDetail.version as any)) {
+      throw Error("not implemented");
+    } else {
+      throw Error("unsupported signTransaction version");
+    }
 
     const sessionMessageHash = typedData.getMessageHash(
       await getSessionTypedData(sessionTokenToSign),
       transactionsDetail.walletAddress,
     );
-    const sessionWithTxHash = ec.starkCurve.pedersen(txHash, sessionMessageHash);
+    const sessionWithTxHash = ec.starkCurve.pedersen(msgHash, sessionMessageHash);
     const [r, s] = this.guardian.signHash(sessionWithTxHash);
     return { r: BigInt(r), s: BigInt(s) };
   }

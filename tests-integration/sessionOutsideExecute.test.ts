@@ -22,10 +22,8 @@ describe("ArgentAccount: outside execution", function () {
 
   let argentSessionAccountClassHash: string;
   let testDapp: Contract;
-  let argentAccountClassHash: string;
 
   before(async () => {
-    argentAccountClassHash = await declareContract("ArgentAccount");
     argentSessionAccountClassHash = await declareContract("HybridSessionAccount");
     const testDappClassHash = await declareContract("TestDapp");
     const { contract_address } = await deployer.deployContract({
@@ -35,9 +33,9 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Basics", async function () {
-    const { account, guardian } = await deployAccount(argentSessionAccountClassHash);
+    const { account, guardian } = await deployAccount({ classHash: argentSessionAccountClassHash });
 
-    const { account: testDappAccount } = await deployAccount(argentAccountClassHash);
+    const { account: testDappAccount } = await deployAccount();
 
     const backendService = new BackendService(guardian);
     const dappService = new DappService(backendService);
@@ -56,7 +54,7 @@ describe("ArgentAccount: outside execution", function () {
 
     const sessionSigner = new SessionSigner(
       backendService,
-      dappService.keypair,
+      dappService.sessionKey,
       accountSessionSignature,
       sessionRequest,
     );

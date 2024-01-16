@@ -14,6 +14,7 @@ import {
   merkle,
   RPC,
   V2InvocationsSignerDetails,
+  transaction,
 } from "starknet";
 import {
   OffChainSession,
@@ -108,7 +109,7 @@ export class SessionSigner extends RawSigner {
     calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
   ): Promise<ArraySignatureType> {
-    const compiledCalldata = transactionsDetail.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
+    const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
     let txHash;
     if (Object.values(RPC.ETransactionVersion2).includes(transactionsDetail.version as any)) {
       const det = transactionsDetail as V2InvocationsSignerDetails;

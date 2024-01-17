@@ -23,7 +23,6 @@ mod multisig {
     mod signer_list;
     mod signer_signature;
 }
-
 mod generic {
     mod argent_generic;
     mod interface;

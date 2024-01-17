@@ -91,7 +91,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
 
 type Profile = Awaited<ReturnType<typeof profileGasUsage>>;
 
-export function newProfiler(provider: RpcProvider, gasRoundingDecimals?: number) {
+export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
   const profiles: Record<string, Profile> = {};
 
   return {
@@ -124,7 +124,7 @@ export function newProfiler(provider: RpcProvider, gasRoundingDecimals?: number)
     formatReport() {
       return Object.entries(profiles)
         .map(([name, { gasUsed }]) => {
-          const roundingScale = 10 ** (gasRoundingDecimals ?? 1);
+          const roundingScale = 10 ** (roundingMagnitude ?? 1);
           const gasRounded = Math.round(Number(gasUsed) / roundingScale) * roundingScale;
           return `${name}: ${gasRounded.toLocaleString("en")} gas`;
         })

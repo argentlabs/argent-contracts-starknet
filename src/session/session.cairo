@@ -3,8 +3,8 @@ const SESSION_MAGIC: felt252 = 'session-token';
 
 #[starknet::interface]
 trait ISessionable<TContractState> {
-    fn revoke_session(ref self: TContractState, session_key: felt252);
-    fn is_session_revoked(self: @TContractState, session_key: felt252) -> bool;
+    fn revoke_session(ref self: TContractState, session_hash: felt252);
+    fn is_session_revoked(self: @TContractState, session_hash: felt252) -> bool;
 }
 
 #[starknet::component]
@@ -36,22 +36,22 @@ mod session_component {
 
     #[derive(Drop, starknet::Event)]
     struct SessionRevoked {
-        session_key: felt252,
+        session_hash: felt252,
     }
 
     #[embeddable_as(SessionableImpl)]
     impl Sessionable<
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentAccount<TContractState>,
     > of super::ISessionable<ComponentState<TContractState>> {
-        fn revoke_session(ref self: ComponentState<TContractState>, session_key: felt252) {
+        fn revoke_session(ref self: ComponentState<TContractState>, session_hash: felt252) {
             assert_only_self();
-            assert(!self.revoked_session.read(session_key), 'session/already-revoked');
-            self.emit(SessionRevoked { session_key });
-            self.revoked_session.write(session_key, true);
+            assert(!self.revoked_session.read(session_hash), 'session/already-revoked');
+            self.emit(SessionRevoked { session_hash });
+            self.revoked_session.write(session_hash, true);
         }
 
-        fn is_session_revoked(self: @ComponentState<TContractState>, session_key: felt252) -> bool {
-            self.revoked_session.read(session_key)
+        fn is_session_revoked(self: @ComponentState<TContractState>, session_hash: felt252) -> bool {
+            self.revoked_session.read(session_hash)
         }
     }
 
@@ -76,9 +76,9 @@ mod session_component {
             let token: SessionToken = Serde::deserialize(ref serialized).expect('session/invalid-calldata');
             assert(serialized.is_empty(), 'session/excess-data');
 
-            assert(!self.revoked_session.read(token.session.session_key), 'session/revoked');
-
             let token_session_hash = token.session.get_message_hash();
+
+            assert(!self.revoked_session.read(token_session_hash), 'session/revoked');
 
             // TODO: maybe use poseidon hash
 

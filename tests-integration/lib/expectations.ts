@@ -23,7 +23,14 @@ export async function expectRevertWithErrorMessage(
     }
     await provider.waitForTransaction(executionResult["transaction_hash"]);
   } catch (e: any) {
-    expect(e.toString()).to.contain(`Failure reason: ${shortString.encodeShortString(errorMessage)}`);
+    if (!e.toString().includes(shortString.encodeShortString(errorMessage))) {
+      const match = e.toString().match(/\[([^\]]+)]/);
+      if (match && match.length > 1) {
+        assert.fail(`"${errorMessage}" not detected, instead got: "${shortString.decodeShortString(match[1])}"`);
+      } else {
+        assert.fail(`No error detected in: ${e.toString()}`);
+      }
+    }
     return;
   }
   assert.fail("No error detected");

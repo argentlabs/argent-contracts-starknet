@@ -17,12 +17,14 @@ mod common {
     mod upgrade;
     mod version;
 }
+
 mod multisig {
     mod argent_multisig;
     mod interface;
     mod signer_list;
     mod signer_signature;
 }
+
 mod generic {
     mod argent_generic;
     mod interface;

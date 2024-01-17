@@ -1,7 +1,7 @@
 import { exec } from "child_process";
 import fs from "fs";
-import { isUndefined, mapValues, maxBy, omit, sortBy, sum } from "lodash-es";
-import { RpcProvider } from "starknet";
+import { isUndefined, mapValues, maxBy, sortBy, sum } from "lodash-es";
+import { InvokeFunctionResponse, RpcProvider } from "starknet";
 import { ensureIncluded } from ".";
 
 const ethUsd = 2000n;
@@ -19,10 +19,6 @@ const gasWeights: Record<string, number> = {
   ec_op: 10.24,
   bitwise: 0.64,
 };
-
-export interface TransactionCarrying {
-  transaction_hash: string;
-}
 
 async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
   const receipt = ensureIncluded(await provider.waitForTransaction(transactionHash));
@@ -101,7 +97,7 @@ export function newProfiler(provider: RpcProvider, gasRoundingDecimals?: number)
   const profiles: Record<string, Profile> = {};
 
   return {
-    async profile(name: string, { transaction_hash }: TransactionCarrying, print = false) {
+    async profile(name: string, { transaction_hash }: InvokeFunctionResponse, print = false) {
       console.log("Profiling:", name);
       const profile = await profileGasUsage(transaction_hash, provider);
       if (print) {

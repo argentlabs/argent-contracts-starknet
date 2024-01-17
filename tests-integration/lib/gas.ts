@@ -5,8 +5,6 @@ import { InvokeFunctionResponse, RpcProvider } from "starknet";
 import { ensureIncluded } from ".";
 
 const ethUsd = 2000n;
-const gwei = 10n ** 9n;
-const gasPrice = 30n * gwei;
 
 // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
 const gasWeights: Record<string, number> = {
@@ -106,13 +104,10 @@ export function newProfiler(provider: RpcProvider, gasRoundingDecimals?: number)
       profiles[name] = profile;
     },
     summarizeCost(profile: Profile) {
-      // using gas price from devnet node:
       const feeUsd = Number((10000n * profile.actualFee * ethUsd) / 10n ** 18n) / 10000;
-      // using custom gas price from top of this file:
-      const feeUsdAdjusted = (feeUsd * Number(gasPrice)) / Number(profile.gasPrice);
       return {
         actualFee: Number(profile.actualFee),
-        feeUsd: Number(feeUsdAdjusted.toFixed(2)),
+        feeUsd: Number(feeUsd.toFixed(2)),
         gasUsed: Number(profile.gasUsed),
         storageDiffs: sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         computationGas: Number(profile.computationGas),

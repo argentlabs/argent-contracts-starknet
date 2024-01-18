@@ -77,6 +77,14 @@ export function removeFromCache(contractName: string) {
 export function clearCache() {
   Object.keys(classHashCache).forEach((key) => delete classHashCache[key]);
 }
+export function getDeclareContractPayload(contractName: string, folder = contractsFolder): DeclareContractPayload {
+  const contract: CompiledSierra = readContract(`${folder}${contractName}.contract_class.json`);
+  const payload: DeclareContractPayload = { contract };
+  if ("sierra_program" in contract) {
+    payload.casm = readContract(`${folder}${contractName}.compiled_contract_class.json`);
+  }
+  return payload;
+}
 
 // Could extends Account to add our specific fn but that's too early.
 export async function declareContract(contractName: string, wait = true, folder = contractsFolder): Promise<string> {
@@ -84,14 +92,13 @@ export async function declareContract(contractName: string, wait = true, folder 
   if (cachedClass) {
     return cachedClass;
   }
-  const contract: CompiledSierra = readContract(`${folder}${contractName}.contract_class.json`);
-  const payload: DeclareContractPayload = { contract };
-  if ("sierra_program" in contract) {
-    payload.casm = readContract(`${folder}${contractName}.compiled_contract_class.json`);
-  }
+  const payload = getDeclareContractPayload(contractName, folder);
   const skipSimulation = provider.isDevnet;
+  // max fee avoids slow estimate
   const maxFee = skipSimulation ? 1e18 : undefined;
-  const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee }); // max fee avoids slow estimate
+
+  const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee });
+
   if (wait && transaction_hash) {
     await provider.waitForTransaction(transaction_hash);
     console.log(`\t${contractName} declared`);

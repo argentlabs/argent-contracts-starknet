@@ -26,6 +26,7 @@ import {
   LegacyMultisigSigner,
   compiledStarknetSigner,
   compiledSignerOption,
+  MAX_U64,
 } from "./lib";
 
 describe("ArgentAccount: escape mechanism", function () {
@@ -169,14 +170,9 @@ describe("ArgentAccount: escape mechanism", function () {
       await provider.waitForTransaction(transaction_hash);
 
       account.signer = new LegacyMultisigSigner([owner, guardian]);
-      await upgradeAccount(account, argentAccountClassHash, ["0"]);
-
-      const accountContract = await loadContract(account.address);
-      await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
-      account.cairoVersion = "1";
-      account.signer = new MultisigSigner([new KeyPair(guardian.privateKey)]);
-      accountContract.connect(account);
-      await expectRevertWithErrorMessage("argent/null-owner", () => accountContract.escape_owner());
+      await expectRevertWithErrorMessage("argent/ready-at-shoud-be-null", () =>
+        upgradeAccount(account, argentAccountClassHash, ["0"]),
+      );
     });
 
     describe("Testing with all guardian signer combination", function () {
@@ -189,6 +185,28 @@ describe("ArgentAccount: escape mechanism", function () {
             await setTime(randomTime);
             await accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress));
             await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
+            await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.Ready);
+
+            await accountContract.escape_owner();
+
+            const escape = await accountContract.get_escape();
+            expect(escape.escape_type).to.equal(0n);
+            expect(escape.ready_at).to.equal(0n);
+            expect(escape.new_signer).to.equal(0n);
+            await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.None);
+
+            const guardian = await accountContract.get_owner();
+            expect(guardian).to.equal(randomAddress);
+          });
+
+          it("Should be possible to escape at max U64", async function () {
+            const { account, accountContract, other } = await buildAccount(type);
+            account.signer = new ArgentSigner(other);
+
+            const endOfTime = MAX_U64 - ESCAPE_EXPIRY_PERIOD;
+            await setTime(endOfTime);
+            await accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress));
+            await setTime(endOfTime + ESCAPE_SECURITY_PERIOD);
             await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.Ready);
 
             await accountContract.escape_owner();

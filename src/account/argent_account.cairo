@@ -15,18 +15,16 @@ mod ArgentAccount {
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
-        upgrade::{IUpgradeable, do_upgrade, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
+        upgrade::{IUpgradeable, do_upgrade},
         signer_signature::{Signer, StarknetSigner, SignerSignature, SignerSignatureTrait, IntoGuid},
         serialization::full_deserialize
     };
-    use core::option::OptionTrait;
-    use core::result::ResultTrait;
-    use core::starknet::event::EventEmitter;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
-        ClassHash, get_block_timestamp, get_caller_address, get_execution_info, get_contract_address, get_tx_info,
-        VALIDATED, replace_class_syscall, account::Call
+        ClassHash, get_block_timestamp, get_execution_info, get_contract_address, get_tx_info, VALIDATED,
+        replace_class_syscall, account::Call, SyscallResultTrait, syscalls::storage_read_syscall,
+        storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252}
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -277,6 +275,16 @@ mod ArgentAccount {
 
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
+
+            // As the storage layout for the escape is changing, if there is an ongoing escape it should revert
+            // We have to use raw syscall, as using the read fn would make use of the new way of reading
+            let base = storage_base_address_from_felt252(selector!("_escape"));
+            let ready_at = storage_read_syscall(0, storage_address_from_base_and_offset(base, 0)).unwrap_syscall();
+            assert(ready_at.is_zero(), 'argent/ready-at-shoud-be-null');
+            let escape_type = storage_read_syscall(0, storage_address_from_base_and_offset(base, 1)).unwrap_syscall();
+            assert(escape_type.is_zero(), 'argent/esc-type-shoud-be-null');
+            let new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(base, 2)).unwrap_syscall();
+            assert(new_signer.is_zero(), 'argent/new-signer-shoud-be-null');
 
             // Check basic invariants and emit missing events
             let owner = self._signer.read();

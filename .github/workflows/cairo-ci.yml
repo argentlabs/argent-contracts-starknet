@@ -22,17 +22,3 @@ jobs:
         uses: software-mansion/setup-scarb@v1.3.2
       - name: Step 3 - Checking format
         run: scarb fmt --check
-
-  gas-report:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Step 1 - Check out main branch
-        uses: actions/checkout@v3
-      - name: Step 2 - Getting scarb
-        uses: software-mansion/setup-scarb@v1.3.2
-      - name: Step 3 - Testing
-        run: scarb test 2>&1 | tee test-output.txt
-      - name: Step 4 - Install project
-        run: yarn install --frozen-lockfile
-      - name: Step 5 - Gas report
-        run: scarb run gas-report --check

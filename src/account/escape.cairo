@@ -10,12 +10,20 @@ enum EscapeStatus {
     Expired,
 }
 
-#[derive(Drop, Copy, Serde)]
+#[derive(Drop, Copy, Serde, PartialEq, Default)]
+enum EscapeType {
+    #[default]
+    None,
+    Guardian,
+    Owner
+}
+
+#[derive(Drop, Copy, Serde, Default)]
 struct Escape {
     // timestamp for activation of escape mode, 0 otherwise
     ready_at: u64,
     // None, Guardian, Owner
-    escape_type: felt252,
+    escape_type: EscapeType,
     // new owner or new guardian address
     new_signer: felt252,
 }
@@ -38,5 +46,31 @@ impl EscapeStorePacking of starknet::StorePacking<Escape, (felt252, felt252)> {
         let shift_64: NonZero<u256> = shift_64.try_into().unwrap();
         let (escape_type, ready_at) = integer::u256_safe_div_rem(packed, shift_64);
         Escape { escape_type: escape_type.try_into().unwrap(), ready_at: ready_at.try_into().unwrap(), new_signer }
+    }
+}
+
+impl EscapeTypeIntoFelt252 of Into<EscapeType, felt252> {
+    #[inline(always)]
+    fn into(self: EscapeType) -> felt252 implicits() nopanic {
+        match self {
+            EscapeType::None => 0,
+            EscapeType::Guardian => 1,
+            EscapeType::Owner => 2
+        }
+    }
+}
+
+impl U256TryIntoEscapeType of TryInto<u256, EscapeType> {
+    #[inline(always)]
+    fn try_into(self: u256) -> Option<EscapeType> {
+        if self == 0 {
+            Option::Some(EscapeType::None)
+        } else if self == 1 {
+            Option::Some(EscapeType::Guardian)
+        } else if self == 2 {
+            Option::Some(EscapeType::Owner)
+        } else {
+            Option::None
+        }
     }
 }

@@ -4,11 +4,11 @@ import { KeyPair } from ".";
 
 export const ESCAPE_SECURITY_PERIOD = 7n * 24n * 60n * 60n; // 7 days
 export const ESCAPE_EXPIRY_PERIOD = 2n * 7n * 24n * 60n * 60n; // 14 days
+export const MAX_U64 = 2n ** 64n - 1n;
 
 export const ESCAPE_TYPE_GUARDIAN = 1n;
 export const ESCAPE_TYPE_OWNER = 2n;
 
-export const MAX_U64 = 0x10000000000000000n - 1n;
 
 export enum EscapeStatus {
   None,

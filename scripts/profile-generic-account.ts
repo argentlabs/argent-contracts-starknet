@@ -145,7 +145,7 @@ async function deployGenericAccount(owners: KeyPair[]) {
   });
 
   const contractAddress = hash.calculateContractAddressFromHash(salt, genericAccountClassHash, constructorCalldata, 0);
-  await fundAccount(contractAddress, 1e15); // 0.001 ETH
+  await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
 
   const sorted_owners = owners.sort((key1, key2) => Number(key1.publicKey - key2.publicKey));
   const account = new Account(provider, contractAddress, new MultisigSigner(sorted_owners), "1");

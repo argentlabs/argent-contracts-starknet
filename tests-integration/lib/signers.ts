@@ -132,7 +132,7 @@ export class LegacyArgentSigner extends RawSigner {
   }
 
   async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    const signature = this.owner.signHash(messageHash); 
+    const signature = this.owner.signHash(messageHash);
     if (this.guardian) {
       const [guardianR, guardianS] = this.guardian.signHash(messageHash);
       signature[2] = guardianR;

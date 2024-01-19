@@ -18,7 +18,9 @@ describe("Gas griefing", function () {
       account.signer = new ArgentSigner(guardian);
 
       for (let attempt = 1; attempt <= 5; attempt++) {
-        await waitForTransaction(await accountContract.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)));
+        await waitForTransaction(
+          await accountContract.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)),
+        );
       }
       await expectExecutionRevert("argent/max-escape-attempts", () =>
         accountContract.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)),

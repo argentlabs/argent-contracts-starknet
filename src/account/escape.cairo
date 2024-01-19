@@ -32,8 +32,8 @@ const SHIFT_64: felt252 = 0x10000000000000000;
 
 // Packing ready_at and escape_type within same felt:
 // felt1 bits [0; 63] => ready_at
-// felt1 bits [64; 253[ => escape_type
-// felt2 bits [0; 253[ => new_signer
+// felt1 bits [64; 251] => escape_type
+// felt2 bits [0; 251] => new_signer
 impl EscapeStorePacking of starknet::StorePacking<Escape, (felt252, felt252)> {
     fn pack(value: Escape) -> (felt252, felt252) {
         let packed = value.ready_at.into() + (value.escape_type.into() * SHIFT_64);

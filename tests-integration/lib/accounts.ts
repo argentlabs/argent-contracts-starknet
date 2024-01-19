@@ -139,11 +139,8 @@ async function deployAccountInner(
     useTxV3: params.useTxV3 ?? false,
     selfDeploy: params.selfDeploy ?? false,
   };
-
-  const constructorCalldata = CallData.compile({
-    owner: starknetSigner(finalParams.owner.publicKey),
-    guardian: starknetSigner(finalParams.guardian?.publicKey ?? 0n),
-  });
+  const some_guardian = signerOption(finalParams.guardian?.publicKey);
+  const constructorCalldata = CallData.compile({ owner: starknetSigner(finalParams.owner.publicKey), guardian: some_guardian });
 
   const contractAddress = hash.calculateContractAddressFromHash(
     finalParams.salt,
@@ -187,6 +184,7 @@ async function deployAccountInner(
         unique: false,
       }),
     );
+
     const { transaction_hash } = await deployer.execute(calls);
     transactionHash = transaction_hash;
   }

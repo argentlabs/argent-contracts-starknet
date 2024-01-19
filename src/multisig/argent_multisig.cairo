@@ -17,14 +17,16 @@ mod ArgentMultisig {
             OutsideExecution, IOutsideExecution, hash_outside_execution_message, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
         },
         upgrade::{IUpgradeable, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
-        transaction_version::{get_tx_info, assert_correct_invoke_version, assert_no_unsupported_v3_fields}
+        transaction_version::{
+            assert_correct_invoke_version, assert_correct_deploy_account_version, assert_no_unsupported_v3_fields
+        }
     };
     use argent::multisig::interface::{IDeprecatedArgentMultisig};
     use argent::multisig::signer_signature::{deserialize_array_signer_signature};
     use ecdsa::check_ecdsa_signature;
     use starknet::{
         get_contract_address, ContractAddressIntoFelt252, VALIDATED, syscalls::replace_class_syscall, ClassHash,
-        class_hash_const, get_block_timestamp, get_caller_address, account::Call
+        class_hash_const, get_block_timestamp, get_caller_address, account::Call, get_tx_info
     };
 
     const NAME: felt252 = 'ArgentMultisig';
@@ -230,7 +232,7 @@ mod ArgentMultisig {
             signers: Array<felt252>
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
-            assert_correct_invoke_version(tx_info.version);
+            assert_correct_deploy_account_version(tx_info.version);
             assert_no_unsupported_v3_fields();
 
             let parsed_signatures = deserialize_array_signer_signature(tx_info.signature)

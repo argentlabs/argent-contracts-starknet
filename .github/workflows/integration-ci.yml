@@ -4,7 +4,17 @@ on: push
 
 jobs:
   integration-tests:
-    runs-on: ubuntu-latest
+        strategy:
+
+      fail-fast: true # In case one of the jobs fails, the other jobs will be cancelled
+
+      matrix:
+
+        runs-on: [ buildjet-2vcpu-ubuntu-2204, buildjet-4vcpu-ubuntu-2204, buildjet-8vcpu-ubuntu-2204, buildjet-16vcpu-ubuntu-2204, buildjet-32vcpu-ubuntu-2204 ]
+
+    name: Test - ${{matrix.runs-on}}
+
+    runs-on: ${{matrix.runs-on}}
     steps:
       - name: Check out main branch
         uses: actions/checkout@v3
@@ -24,7 +34,17 @@ jobs:
         run: scarb --release build && tsc && yarn mocha tests-integration/*.test.ts --forbid-only --forbid-pending
 
   gas-report:
-    runs-on: ubuntu-latest
+        strategy:
+
+      fail-fast: true # In case one of the jobs fails, the other jobs will be cancelled
+
+      matrix:
+
+        runs-on: [ buildjet-2vcpu-ubuntu-2204, buildjet-4vcpu-ubuntu-2204, buildjet-8vcpu-ubuntu-2204, buildjet-16vcpu-ubuntu-2204,  buildjet-32vcpu-ubuntu-2204]
+
+    name: Test - ${{matrix.runs-on}}
+
+    runs-on: ${{matrix.runs-on}}
     steps:
       - name: Check out main branch
         uses: actions/checkout@v3
@@ -44,7 +64,17 @@ jobs:
         run: scarb run profile --check
 
   format:
-    runs-on: ubuntu-latest
+        strategy:
+
+      fail-fast: true # In case one of the jobs fails, the other jobs will be cancelled
+
+      matrix:
+
+        runs-on: [ buildjet-2vcpu-ubuntu-2204, buildjet-4vcpu-ubuntu-2204, buildjet-8vcpu-ubuntu-2204, buildjet-16vcpu-ubuntu-2204,  buildjet-32vcpu-ubuntu-2204]
+
+    name: Test - ${{matrix.runs-on}}
+
+    runs-on: ${{matrix.runs-on}}
     steps:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3
@@ -56,7 +86,17 @@ jobs:
         run: yarn prettier --check .
 
   lint:
-    runs-on: ubuntu-latest
+        strategy:
+
+      fail-fast: true # In case one of the jobs fails, the other jobs will be cancelled
+
+      matrix:
+
+        runs-on: [ buildjet-2vcpu-ubuntu-2204, buildjet-4vcpu-ubuntu-2204, buildjet-8vcpu-ubuntu-2204, buildjet-16vcpu-ubuntu-2204, buildjet-32vcpu-ubuntu-2204]
+
+    name: Test - ${{matrix.runs-on}}
+
+    runs-on: ${{matrix.runs-on}}
     steps:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3

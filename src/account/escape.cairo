@@ -42,7 +42,7 @@ impl EscapeStorePacking of starknet::StorePacking<Escape, (felt252, felt252)> {
 
     fn unpack(value: (felt252, felt252)) -> Escape {
         let (packed, new_signer) = value;
-        let shift_64: NonZero<u256> = integer::u256_as_non_zero(SHIFT_64.into());
+        let shift_64 = integer::u256_as_non_zero(SHIFT_64.into());
         let (escape_type, ready_at) = integer::u256_safe_div_rem(packed.into(), shift_64);
         Escape { escape_type: escape_type.try_into().unwrap(), ready_at: ready_at.try_into().unwrap(), new_signer }
     }

@@ -4,7 +4,7 @@ on: push
 
 jobs:
   integration-tests:
-    runs-on: buildjet-8vcpu-ubuntu-2204
+    runs-on: buildjet-16vcpu-ubuntu-2204
     steps:
       - name: Check out main branch
         uses: actions/checkout@v3
@@ -24,7 +24,7 @@ jobs:
         run: scarb --release build && tsc && yarn mocha tests-integration/*.test.ts --forbid-only --forbid-pending
 
   gas-report:
-    runs-on: buildjet-8vcpu-ubuntu-2204
+    runs-on: buildjet-16vcpu-ubuntu-2204
     steps:
       - name: Check out main branch
         uses: actions/checkout@v3
@@ -44,7 +44,7 @@ jobs:
         run: scarb run profile --check
 
   format:
-    runs-on: buildjet-8vcpu-ubuntu-2204
+    runs-on: buildjet-16vcpu-ubuntu-2204
     steps:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3
@@ -56,7 +56,7 @@ jobs:
         run: yarn prettier --check .
 
   lint:
-    runs-on: buildjet-8vcpu-ubuntu-2204
+    runs-on: buildjet-16vcpu-ubuntu-2204
     steps:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3

@@ -9,7 +9,7 @@ const guardian = randomKeyPair();
 describe("Deploy UDC", function () {
   it("Calculated contract address should match UDC", async function () {
     const argentAccountClassHash = await declareContract("ArgentAccount");
-    
+
     const callData = CallData.compile({
       owner: starknetSigner(owner.publicKey),
       guardian: signerOption(guardian.publicKey),

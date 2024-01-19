@@ -130,7 +130,9 @@ export async function deployOldAccount(): Promise<ArgentWalletWithGuardian> {
 
 async function deployAccountInner(
   params: DeployAccountParams,
-): Promise<DeployAccountParams & { account: Account; classHash: string; owner: KeyPair; guardian?: KeyPair; salt: string }> {
+): Promise<
+  DeployAccountParams & { account: Account; classHash: string; owner: KeyPair; guardian?: KeyPair; salt: string }
+> {
   const finalParams = {
     ...params,
     classHash: params.classHash ?? (await declareContract("ArgentAccount")),
@@ -140,7 +142,10 @@ async function deployAccountInner(
     selfDeploy: params.selfDeploy ?? false,
   };
   const some_guardian = signerOption(finalParams.guardian?.publicKey);
-  const constructorCalldata = CallData.compile({ owner: starknetSigner(finalParams.owner.publicKey), guardian: some_guardian });
+  const constructorCalldata = CallData.compile({
+    owner: starknetSigner(finalParams.owner.publicKey),
+    guardian: some_guardian,
+  });
 
   const contractAddress = hash.calculateContractAddressFromHash(
     finalParams.salt,

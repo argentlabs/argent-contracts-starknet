@@ -1,6 +1,5 @@
 import {
   ArgentSigner,
-  declareContract,
   deployAccount,
   expectExecutionRevert,
   randomKeyPair,
@@ -19,10 +18,10 @@ describe("Gas griefing", function () {
       account.signer = new ArgentSigner(guardian);
 
       for (let attempt = 1; attempt <= 5; attempt++) {
-        await waitForTransaction(await accountContract.trigger_escape_owner(randomKeyPair().publicKey));
+        await waitForTransaction(await accountContract.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)));
       }
       await expectExecutionRevert("argent/max-escape-attempts", () =>
-        accountContract.trigger_escape_owner(randomKeyPair().publicKey),
+        accountContract.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)),
       );
     });
   }
@@ -35,9 +34,13 @@ describe("Gas griefing", function () {
     });
     account.signer = new ArgentSigner(guardian);
     await expectExecutionRevert("argent/max-fee-too-high", () =>
-      account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)), undefined, {
-        maxFee: "50000000000000001",
-      }),
+      account.execute(
+        accountContract.populateTransaction.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)),
+        undefined,
+        {
+          maxFee: "50000000000000001",
+        },
+      ),
     );
   });
 
@@ -74,14 +77,22 @@ describe("Gas griefing", function () {
     const { account, accountContract, guardian } = await deployAccount({ useTxV3: true });
     account.signer = new ArgentSigner(guardian);
     await expectExecutionRevert("argent/invalid-da-mode", () =>
-      account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)), undefined, {
-        nonceDataAvailabilityMode: RPC.EDataAvailabilityMode.L2,
-      }),
+      account.execute(
+        accountContract.populateTransaction.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)),
+        undefined,
+        {
+          nonceDataAvailabilityMode: RPC.EDataAvailabilityMode.L2,
+        },
+      ),
     );
     await expectExecutionRevert("argent/invalid-da-mode", () =>
-      account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)), undefined, {
-        feeDataAvailabilityMode: RPC.EDataAvailabilityMode.L2,
-      }),
+      account.execute(
+        accountContract.populateTransaction.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)),
+        undefined,
+        {
+          feeDataAvailabilityMode: RPC.EDataAvailabilityMode.L2,
+        },
+      ),
     );
   });
 
@@ -89,9 +100,13 @@ describe("Gas griefing", function () {
     const { account, accountContract, guardian } = await deployAccount({ useTxV3: true });
     account.signer = new ArgentSigner(guardian);
     await expectExecutionRevert("argent/invalid-deployment-data", () =>
-      account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)), undefined, {
-        accountDeploymentData: ["0x1"],
-      }),
+      account.execute(
+        accountContract.populateTransaction.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)),
+        undefined,
+        {
+          accountDeploymentData: ["0x1"],
+        },
+      ),
     );
   });
 });

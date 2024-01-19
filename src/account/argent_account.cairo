@@ -1,6 +1,6 @@
 #[starknet::contract]
 mod ArgentAccount {
-    use argent::account::escape::{Escape, EscapeStatus};
+    use argent::account::escape::{Escape, EscapeType, EscapeStatus};
     use argent::account::interface::{IArgentAccount, IDeprecatedArgentAccount};
     use argent::common::{
         account::{
@@ -15,18 +15,16 @@ mod ArgentAccount {
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
-        upgrade::{IUpgradeable, do_upgrade, IUpgradeableLibraryDispatcher, IUpgradeableDispatcherTrait},
+        upgrade::{IUpgradeable, do_upgrade},
         signer_signature::{Signer, StarknetSigner, SignerSignature, SignerSignatureTrait, IntoGuid},
         serialization::full_deserialize
     };
-    use core::option::OptionTrait;
-    use core::result::ResultTrait;
-    use core::starknet::event::EventEmitter;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
-        ClassHash, get_block_timestamp, get_caller_address, get_execution_info, get_contract_address, get_tx_info,
-        VALIDATED, replace_class_syscall, account::Call
+        ClassHash, get_block_timestamp, get_execution_info, get_contract_address, get_tx_info, VALIDATED,
+        replace_class_syscall, account::Call, SyscallResultTrait, syscalls::storage_read_syscall,
+        storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252}
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -39,8 +37,6 @@ mod ArgentAccount {
     const ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
     ///  The escape will be ready and can be completed for this duration
     const ESCAPE_EXPIRY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
-    const ESCAPE_TYPE_GUARDIAN: felt252 = 1;
-    const ESCAPE_TYPE_OWNER: felt252 = 2;
 
     /// Limit escape attempts by only one party
     const MAX_ESCAPE_ATTEMPTS: u32 = 5;
@@ -278,6 +274,16 @@ mod ArgentAccount {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
+            // As the storage layout for the escape is changing, if there is an ongoing escape it should revert
+            // We have to use raw syscall, as using the read fn would make use of the new way of reading
+            let base = storage_base_address_from_felt252(selector!("_escape"));
+            let ready_at = storage_read_syscall(0, storage_address_from_base_and_offset(base, 0)).unwrap_syscall();
+            assert(ready_at.is_zero(), 'argent/ready-at-shoud-be-null');
+            let escape_type = storage_read_syscall(0, storage_address_from_base_and_offset(base, 1)).unwrap_syscall();
+            assert(escape_type.is_zero(), 'argent/esc-type-shoud-be-null');
+            let new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(base, 2)).unwrap_syscall();
+            assert(new_signer.is_zero(), 'argent/new-signer-shoud-be-null');
+
             // Check basic invariants and emit missing events
             let owner = self._signer.read();
             let guardian = self._guardian.read();
@@ -423,7 +429,7 @@ mod ArgentAccount {
 
             // no escape if there is a guardian escape triggered by the owner in progress
             let current_escape = self._escape.read();
-            if current_escape.escape_type == ESCAPE_TYPE_GUARDIAN {
+            if current_escape.escape_type == EscapeType::Guardian {
                 assert(
                     get_escape_status(current_escape.ready_at) == EscapeStatus::Expired, 'argent/cannot-override-escape'
                 );
@@ -432,7 +438,7 @@ mod ArgentAccount {
             self.reset_escape();
             let new_owner_guid = new_owner.into_guid().expect('argent/null-owner');
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
-            let escape = Escape { ready_at, escape_type: ESCAPE_TYPE_OWNER, new_signer: new_owner_guid };
+            let escape = Escape { ready_at, escape_type: EscapeType::Owner, new_signer: new_owner_guid };
             self._escape.write(escape);
             self.emit(EscapeOwnerTriggered { ready_at, new_owner: new_owner_guid });
             self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
@@ -453,7 +459,7 @@ mod ArgentAccount {
             };
 
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
-            let escape = Escape { ready_at, escape_type: ESCAPE_TYPE_GUARDIAN, new_signer: new_guardian_guid };
+            let escape = Escape { ready_at, escape_type: EscapeType::Guardian, new_signer: new_guardian_guid };
             self._escape.write(escape);
             self.emit(EscapeGuardianTriggered { ready_at, new_guardian: new_guardian_guid });
         }
@@ -476,7 +482,7 @@ mod ArgentAccount {
             self.emit(OwnerAdded { new_owner_guid: current_escape.new_signer });
 
             // clear escape
-            self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
+            self._escape.write(Default::default());
         }
 
         fn escape_guardian(ref self: ContractState) {
@@ -491,7 +497,7 @@ mod ArgentAccount {
             self._guardian.write(current_escape.new_signer);
             self.emit(GuardianEscaped { new_guardian: current_escape.new_signer });
             // clear escape
-            self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
+            self._escape.write(Default::default());
         }
 
         fn cancel_escape(ref self: ContractState) {
@@ -638,7 +644,7 @@ mod ArgentAccount {
                         assert(call.calldata.is_empty(), 'argent/invalid-calldata');
                         self.assert_guardian_set();
                         let current_escape = self._escape.read();
-                        assert(current_escape.escape_type == ESCAPE_TYPE_OWNER, 'argent/invalid-escape');
+                        assert(current_escape.escape_type == EscapeType::Owner, 'argent/invalid-escape');
                         // needed if user started escape in old cairo version and
                         // upgraded half way through,  then tries to finish the escape in new version
                         assert(current_escape.new_signer != 0, 'argent/null-owner');
@@ -679,7 +685,7 @@ mod ArgentAccount {
                         self.assert_guardian_set();
                         let current_escape = self._escape.read();
 
-                        assert(current_escape.escape_type == ESCAPE_TYPE_GUARDIAN, 'argent/invalid-escape');
+                        assert(current_escape.escape_type == EscapeType::Guardian, 'argent/invalid-escape');
 
                         // needed if user started escape in old cairo version and
                         // upgraded half way through, then tries to finish the escape in new version
@@ -763,7 +769,7 @@ mod ArgentAccount {
             if current_escape_status == EscapeStatus::None {
                 return;
             }
-            self._escape.write(Escape { ready_at: 0, escape_type: 0, new_signer: 0 });
+            self._escape.write(Default::default());
             if current_escape_status != EscapeStatus::Expired {
                 self.emit(EscapeCanceled {});
             }

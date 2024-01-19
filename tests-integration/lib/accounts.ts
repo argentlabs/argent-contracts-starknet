@@ -168,6 +168,8 @@ async function deployAccountInner(
   const account = new ArgentAccount(provider, contractAddress, finalParams.owner, "1", defaultTxVersion);
   if (finalParams.guardian) {
     account.signer = new ArgentSigner(finalParams.owner, finalParams.guardian);
+  } else {
+    account.signer = new ArgentSigner(finalParams.owner);
   }
   let transactionHash;
   if (finalParams.selfDeploy) {

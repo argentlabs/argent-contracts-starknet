@@ -45,13 +45,8 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'EscapeOwnerTriggered(ready_at, new_owner)' on trigger_escape_owner", async function () {
-<<<<<<< HEAD
-    const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
-    account.signer = new ArgentSigner(guardian);
-=======
     const { account, accountContract, guardian } = await deployAccount();
-    account.signer = guardian;
->>>>>>> develop-0.4
+    account.signer = new ArgentSigner(guardian);
 
     const newOwner = "42";
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
@@ -65,13 +60,8 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'OwnerEscaped', 'OwnerRemoved' and 'OwnerAdded' on escape_owner", async function () {
-<<<<<<< HEAD
-    const { account, accountContract, guardian, owner } = await deployAccount(argentAccountClassHash);
-    account.signer = new ArgentSigner(guardian);
-=======
     const { account, accountContract, guardian, owner } = await deployAccount();
-    account.signer = guardian;
->>>>>>> develop-0.4
+    account.signer = new ArgentSigner(guardian);
 
     const newOwner = "42";
     await setTime(42);
@@ -99,13 +89,8 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'EscapeGuardianTriggered(ready_at, new_owner)' on trigger_escape_guardian", async function () {
-<<<<<<< HEAD
-    const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
-    account.signer = new ArgentSigner(owner);
-=======
     const { account, accountContract, owner } = await deployAccount();
-    account.signer = owner;
->>>>>>> develop-0.4
+    account.signer = new ArgentSigner(owner);
 
     const newGuardian = 42n;
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
@@ -119,15 +104,9 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'GuardianEscaped(new_signer)' on escape_guardian", async function () {
-<<<<<<< HEAD
-    const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
+    const { account, accountContract, owner } = await deployAccount();
     account.signer = new ArgentSigner(owner);
     const newGuardian = 42n;
-=======
-    const { account, accountContract, owner } = await deployAccount();
-    account.signer = owner;
-    const newGuardian = "42";
->>>>>>> develop-0.4
     await setTime(42);
 
     await accountContract.trigger_escape_guardian(compiledSignerOption(newGuardian));
@@ -207,13 +186,8 @@ describe("ArgentAccount: events", function () {
 
   describe("Expect 'EscapeCanceled()'", function () {
     it("Expected on cancel_escape", async function () {
-<<<<<<< HEAD
-      const { account, accountContract, owner, guardian } = await deployAccount(argentAccountClassHash);
-      account.signer = new ArgentSigner(owner);
-=======
       const { account, accountContract, owner, guardian } = await deployAccount();
-      account.signer = owner;
->>>>>>> develop-0.4
+      account.signer = new ArgentSigner(owner);
 
       await accountContract.trigger_escape_guardian(compiledSignerOption(42n));
 
@@ -225,13 +199,8 @@ describe("ArgentAccount: events", function () {
     });
 
     it("Expected on trigger_escape_owner", async function () {
-<<<<<<< HEAD
-      const { account, accountContract, guardian } = await deployAccount(argentAccountClassHash);
-      account.signer = new ArgentSigner(guardian);
-=======
       const { account, accountContract, guardian } = await deployAccount();
-      account.signer = guardian;
->>>>>>> develop-0.4
+      account.signer = new ArgentSigner(guardian);
 
       await accountContract.trigger_escape_owner(compiledStarknetSigner(42));
 
@@ -242,13 +211,8 @@ describe("ArgentAccount: events", function () {
     });
 
     it("Expected on trigger_escape_guardian", async function () {
-<<<<<<< HEAD
-      const { account, accountContract, owner } = await deployAccount(argentAccountClassHash);
-      account.signer = new ArgentSigner(owner);
-=======
       const { account, accountContract, owner } = await deployAccount();
-      account.signer = owner;
->>>>>>> develop-0.4
+      account.signer = new ArgentSigner(owner);
 
       await accountContract.trigger_escape_guardian(compiledSignerOption(42n));
 

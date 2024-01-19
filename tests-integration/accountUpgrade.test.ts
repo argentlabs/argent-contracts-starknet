@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Contract } from "starknet";
+import { Account, CallData, Contract, hash, num } from "starknet";
 import {
   declareContract,
   deployAccount,
@@ -13,6 +13,11 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   ArgentSigner,
+  randomKeyPair,
+  fundAccount,
+  LegacyMultisigSigner,
+  LegacyKeyPair,
+  LegacyArgentSigner,
 } from "./lib";
 
 describe("ArgentAccount: upgrade", function () {
@@ -72,28 +77,70 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Shouldn't be possible to upgrade if an owner escape is ongoing", async function () {
-    const { account, accountContract, owner, guardian } = await deployAccount(
-      await declareFixtureContract("ArgentAccount-0.3.0"),
+    const classHash = await declareFixtureContract("ArgentAccount-0.3.0");
+    const owner = new LegacyKeyPair();
+    const guardian = new LegacyKeyPair();
+    const salt = num.toHex(randomKeyPair().privateKey);
+    const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian.publicKey });
+    const contractAddress = hash.calculateContractAddressFromHash(
+      salt,
+      classHash,
+      constructorCalldata,
+      0,
     );
+    await fundAccount(contractAddress, 1e15); // 0.001 ETH
+    const account = new Account(provider, contractAddress, owner, "1");
+    account.signer = new LegacyArgentSigner(owner, guardian);
+
+    const { transaction_hash } = await account.deploySelf({
+      classHash,
+      constructorCalldata,
+      addressSalt: salt,
+    });
+    await provider.waitForTransaction(transaction_hash);
+
+    const accountContract = await loadContract(account.address);
+    accountContract.connect(account);
 
     account.signer = guardian;
     await accountContract.trigger_escape_owner(12);
 
-    account.signer = new ArgentSigner(owner, guardian);
+    account.signer = new LegacyArgentSigner(owner, guardian);
     await expectRevertWithErrorMessage("argent/ready-at-shoud-be-null", () =>
       upgradeAccount(account, argentAccountClassHash),
     );
   });
 
   it("Shouldn't be possible to upgrade if a guardian escape is ongoing", async function () {
-    const { account, accountContract, owner, guardian } = await deployAccount(
-      await declareFixtureContract("ArgentAccount-0.3.0"),
+    const classHash = await declareFixtureContract("ArgentAccount-0.3.0");
+    const owner = new LegacyKeyPair();
+    const guardian = new LegacyKeyPair();
+    const salt = num.toHex(randomKeyPair().privateKey);
+    const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian.publicKey });
+    const contractAddress = hash.calculateContractAddressFromHash(
+      salt,
+      classHash,
+      constructorCalldata,
+      0,
     );
+    await fundAccount(contractAddress, 1e15); // 0.001 ETH
+    const account = new Account(provider, contractAddress, owner, "1");
+    account.signer = new LegacyArgentSigner(owner, guardian);
+
+    const { transaction_hash } = await account.deploySelf({
+      classHash,
+      constructorCalldata,
+      addressSalt: salt,
+    });
+    await provider.waitForTransaction(transaction_hash);
+
+    const accountContract = await loadContract(account.address);
+    accountContract.connect(account);
 
     account.signer = owner;
     await accountContract.trigger_escape_guardian(12);
 
-    account.signer = new ArgentSigner(owner, guardian);
+    account.signer = new LegacyArgentSigner(owner, guardian);
     await expectRevertWithErrorMessage("argent/ready-at-shoud-be-null", () =>
       upgradeAccount(account, argentAccountClassHash),
     );

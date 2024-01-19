@@ -30,7 +30,8 @@ struct StarkNetDomain {
     chain_id: felt252,
 }
 
-// H('OutsideExecution(caller:felt,nonce:felt,execute_after:felt,execute_before:felt,calls_len:felt,calls:Call*)')
+
+// starknet_keccak('OutsideExecution(caller:felt,nonce:felt,execute_after:felt,execute_before:felt,calls_len:felt,calls:OutsideCall*)OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)')
 const OUTSIDE_EXECUTION_TYPE_HASH: felt252 = 0x11ff76fe3f640fa6f3d60bbd94a3b9d47141a2c96f87fdcfbeb2af1d03f7050;
 
 #[derive(Copy, Drop, Serde)]
@@ -45,14 +46,8 @@ struct OutsideExecution {
     /// `execute_from_outside` only succeeds if executing before this time
     execute_before: u64,
     /// The calls that will be executed by the Account
+    /// Using `Call` here instead of redeclaring `OutsideCall` to avoid the conversion
     calls: Span<Call>
-}
-
-#[derive(Drop, Serde)]
-struct OutsideCall {
-    to: ContractAddress,
-    selector: felt252,
-    calldata: Array<felt252>,
 }
 
 #[inline(always)]

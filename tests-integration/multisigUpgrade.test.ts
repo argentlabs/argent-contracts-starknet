@@ -1,5 +1,12 @@
 import { expect } from "chai";
-import { declareContract, provider, upgradeAccount, declareFixtureContract } from "./lib";
+import {
+  declareContract,
+  provider,
+  upgradeAccount,
+  declareFixtureContract,
+  LegacyMultisigKeyPair,
+  LegacyMultisigSigner,
+} from "./lib";
 import { deployMultisig1_1 } from "./lib/multisig";
 
 describe("ArgentMultisig: upgrade", function () {
@@ -12,10 +19,14 @@ describe("ArgentMultisig: upgrade", function () {
   });
 
   it("Upgrade from 0.1.0 to Current Version", async function () {
-    const { account } = await deployMultisig1_1({ classHash: await declareFixtureContract("ArgentMultisig-0.1.0") });
+    const keys = [new LegacyMultisigKeyPair()];
+    const { account } = await deployMultisig1_1({
+      keys,
+      classHash: await declareFixtureContract("ArgentMultisig-0.1.0"),
+    });
     const currentImpl = await declareContract("ArgentMultisig");
-    // TODO Can use what I did in escape packing
-    
+
+    account.signer = new LegacyMultisigSigner(keys);
     await upgradeAccount(account, currentImpl);
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(currentImpl));
   });
@@ -25,6 +36,7 @@ describe("ArgentMultisig: upgrade", function () {
     await upgradeAccount(account, "0x01").should.be.rejectedWith(
       `Class with hash ClassHash(\\n    StarkFelt(\\n        \\"0x0000000000000000000000000000000000000000000000000000000000000001\\",\\n    ),\\n) is not declared`,
     );
+
     const testDappClassHash = await declareContract("TestDapp");
     await upgradeAccount(account, testDappClassHash).should.be.rejectedWith(
       `EntryPointSelector(StarkFelt(\\"0x00fe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283\\")) not found in contract`,

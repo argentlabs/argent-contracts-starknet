@@ -51,7 +51,7 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Upgrade from 0.3.0 to Current Version", async function () {
-    const { account } = await deployLegacyAccount( await declareFixtureContract("ArgentAccount-0.3.0"));
+    const { account } = await deployLegacyAccount(await declareFixtureContract("ArgentAccount-0.3.0"));
     await upgradeAccount(account, argentAccountClassHash);
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
   });

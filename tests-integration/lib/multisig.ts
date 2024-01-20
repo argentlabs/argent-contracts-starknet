@@ -22,6 +22,7 @@ export interface MultisigWallet {
 export type DeployMultisigParams = {
   threshold: number;
   signersLength: number;
+  keys?: KeyPair[];
   useTxV3?: boolean;
   classHash?: string;
   salt?: string;
@@ -44,8 +45,9 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     throw new Error("selfDeploymentIndexes can only be used with selfDeploy");
   }
 
-  const keys = sortedKeyPairs(finalParams.signersLength);
+  const keys = params.keys ?? sortedKeyPairs(finalParams.signersLength);
   const signers = keysToSigners(keys);
+  console.log(signers);
   const constructorCalldata = CallData.compile({ threshold: finalParams.threshold, signers });
 
   const accountAddress = hash.calculateContractAddressFromHash(

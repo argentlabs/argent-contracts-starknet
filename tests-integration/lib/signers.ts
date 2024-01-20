@@ -190,6 +190,13 @@ export class LegacyKeyPair extends KeyPair {
   }
 }
 
+export class LegacyMultisigKeyPair extends KeyPair {
+  public signHash(messageHash: string) {
+    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
+    return [this.publicKey.toString(), r.toString(), s.toString()];
+  }
+}
+
 export class LegacyArgentSigner extends RawSigner {
   constructor(
     public owner: LegacyKeyPair = new LegacyKeyPair(),

@@ -299,7 +299,7 @@ describe("ArgentAccount: escape mechanism", function () {
       const guardian = await accountContract.get_guardian();
       expect(guardian).to.equal(0n);
 
-      await expectRevertWithErrorMessage("argent/guardian-required", async () =>
+      await expectRevertWithErrorMessage("argent/guardian-required", () =>
         accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress)),
       );
     });
@@ -343,15 +343,13 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     it("Expect 'argent/guardian-required' when guardian is zero", async function () {
-      const { account, accountContract, owner } = await deployAccount();
+      const { account, accountContract } = await deployAccountWithoutGuardian();
 
-      await accountContract.change_guardian(compiledSignerOption(undefined));
+      await accountContract.get_guardian().should.eventually.equal(0n);
 
-      const guardian = await accountContract.get_guardian();
-      expect(guardian).to.equal(0n);
-
-      account.signer = new ArgentSigner(owner);
-      await expectRevertWithErrorMessage("argent/guardian-required", () => accountContract.escape_guardian());
+      await expectRevertWithErrorMessage("argent/guardian-required", () =>
+        account.execute([accountContract.populateTransaction.escape_guardian()], undefined, { skipValidate: false }),
+      );
     });
 
     it("Expect 'argent/invalid-escape' when escape status == NotReady", async function () {

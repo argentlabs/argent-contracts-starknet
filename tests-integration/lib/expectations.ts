@@ -26,6 +26,7 @@ export async function expectRevertWithErrorMessage(
     if (!e.toString().includes(shortString.encodeShortString(errorMessage))) {
       const match = e.toString().match(/\[([^\]]+)]/);
       if (match && match.length > 1) {
+        console.log(e);
         assert.fail(`"${errorMessage}" not detected, instead got: "${shortString.decodeShortString(match[1])}"`);
       } else {
         assert.fail(`No error detected in: ${e.toString()}`);

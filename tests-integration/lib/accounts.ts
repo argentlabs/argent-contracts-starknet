@@ -19,6 +19,7 @@ import { provider } from "./provider";
 import {
   ArgentSigner,
   KeyPair,
+  LegacyArgentSigner,
   LegacyKeyPair,
   LegacyMultisigSigner,
   compiledSignerOption,
@@ -241,6 +242,28 @@ export async function deployAccountWithGuardianBackup(
   wallet.guardianBackup = guardianBackup;
   wallet.accountContract.connect(wallet.account);
   return wallet;
+}
+
+export async function deployLegacyAccount(classHash: string) {
+  const owner = new LegacyKeyPair();
+  const guardian = new LegacyKeyPair();
+  const salt = num.toHex(randomKeyPair().privateKey);
+  const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian.publicKey });
+  const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
+  await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
+  const account = new Account(provider, contractAddress, owner, "1");
+  account.signer = new LegacyArgentSigner(owner, guardian);
+
+  const { transaction_hash } = await account.deploySelf({
+    classHash,
+    constructorCalldata,
+    addressSalt: salt,
+  });
+  await provider.waitForTransaction(transaction_hash);
+
+  const accountContract = await loadContract(account.address);
+  accountContract.connect(account);
+  return { account, accountContract, owner, guardian };
 }
 
 export async function upgradeAccount(

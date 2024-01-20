@@ -491,6 +491,7 @@ mod ArgentAccount {
             assert_only_self();
 
             let current_escape = self._escape.read();
+            // TODO This could be done during validation?
             assert(get_escape_status(current_escape.ready_at) == EscapeStatus::Ready, 'argent/invalid-escape');
 
             self.reset_escape_attempts();

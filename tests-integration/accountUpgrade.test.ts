@@ -10,6 +10,7 @@ import {
   declareFixtureContract,
   expectEvent,
   ContractWithClassHash,
+  deployLegacyAccount,
 } from "./lib";
 
 describe("ArgentAccount: upgrade", function () {
@@ -50,8 +51,7 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Upgrade from 0.3.0 to Current Version", async function () {
-    const { account } = await deployAccount({ classHash: await declareFixtureContract("ArgentAccount-0.3.0") });
-    // TODO Can use what I did in escape packing
+    const { account } = await deployLegacyAccount( await declareFixtureContract("ArgentAccount-0.3.0"));
     await upgradeAccount(account, argentAccountClassHash);
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
   });

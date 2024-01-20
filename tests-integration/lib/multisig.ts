@@ -47,7 +47,6 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
 
   const keys = params.keys ?? sortedKeyPairs(finalParams.signersLength);
   const signers = keysToSigners(keys);
-  console.log(signers);
   const constructorCalldata = CallData.compile({ threshold: finalParams.threshold, signers });
 
   const accountAddress = hash.calculateContractAddressFromHash(

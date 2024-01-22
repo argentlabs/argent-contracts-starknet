@@ -1,2 +1,2 @@
-ClassHash: 0x4dfb8f93072359a27cbcf11733e91d89ac3539262dc860697d376da1730b85c (sepolia)
-Contract Address: 0xd7ff189f6e71852a7f03e55a897f7940f329ea10bd7d57b6965d35fc43daf6 (sepolia)
+ClassHash: 0x0381f14e5e0db5889c981bf050fb034c0fbe0c4f070ee79346a05dbe2bf2af90 (sepolia)
+Contract Address: 0x05754af3760f3356da99aea5c3ec39ccac7783d925a19666ebbeca58ff0087f4 (sepolia)

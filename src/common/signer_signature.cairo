@@ -1,10 +1,8 @@
 use argent::common::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };
-use core::hash::HashStateExTrait;
-use core::zeroable::Zeroable;
 use ecdsa::check_ecdsa_signature;
-use hash::{HashStateTrait, Hash};
+use hash::{HashStateTrait, HashStateExTrait, Hash};
 use poseidon::{PoseidonTrait, HashState};
 use starknet::SyscallResultTrait;
 use starknet::secp256_trait::{Secp256PointTrait, Signature as Secp256r1Signature, recover_public_key};

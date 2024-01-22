@@ -7,7 +7,7 @@ test_multisig_account::valid_initialize: 819,720 gas
 test_multisig_account::valid_initialize_two_signers: 1,016,430 gas
 test_multisig_signing::test_double_signature: 3,102,430 gas
 test_multisig_signing::test_signature: 2,155,450 gas
-Set number: 4,970 gas
+Set number: 4,980 gas
 Set number without guardian: 4,970 gas
 Set number using old account: 4,970 gas
-Change owner: 3,770 gas
+Change owner: 3,780 gas

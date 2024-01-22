@@ -40,5 +40,5 @@ const profiler = newProfiler(provider);
   await profiler.profile("Change owner", await accountContract.change_owner(newOwner.publicKey, r, s));
 }
 
-profiler.printProfiles();
+profiler.printSummary();
 profiler.updateOrCheckReport();

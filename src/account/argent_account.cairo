@@ -19,8 +19,8 @@ mod ArgentAccount {
         signer_signature::{Signer, StarknetSigner, SignerSignature, SignerSignatureTrait, IntoGuid},
         serialization::full_deserialize,
         transaction_version::{
-            get_execution_info, get_tx_info, TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE,
-            assert_correct_invoke_version, assert_correct_declare_version, assert_no_unsupported_v3_fields, DA_MODE_L1
+            TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
+            assert_no_unsupported_v3_fields, DA_MODE_L1
         }
     };
     use core::starknet::event::EventEmitter;

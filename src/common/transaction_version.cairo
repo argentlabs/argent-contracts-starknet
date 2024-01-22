@@ -1,4 +1,4 @@
-use starknet::{SyscallResultTrait};
+use starknet::{SyscallResultTrait, get_execution_info, get_tx_info};
 
 const TX_V1: felt252 = 1; // INVOKE
 const TX_V1_ESTIMATE: felt252 = consteval_int!(0x100000000000000000000000000000000 + 1); // 2**128 + TX_V1
@@ -31,15 +31,4 @@ fn assert_correct_declare_version(tx_version: felt252) {
 fn assert_no_unsupported_v3_fields() {
     let tx_info = get_tx_info().unbox();
     assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
-}
-
-
-#[inline(always)]
-fn get_execution_info() -> Box<starknet::info::v2::ExecutionInfo> {
-    starknet::syscalls::get_execution_info_v2_syscall().unwrap_syscall()
-}
-
-#[inline(always)]
-fn get_tx_info() -> Box<starknet::info::v2::TxInfo> {
-    get_execution_info().unbox().tx_info
 }

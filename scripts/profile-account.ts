@@ -38,7 +38,10 @@ const profiler = newProfiler(provider);
   const newOwner = new LegacyKeyPair();
   const chainId = await provider.getChainId();
   const [r, s] = await signChangeOwnerMessage(account.address, owner, newOwner, chainId);
-  await profiler.profile("Change owner", await accountContract.change_owner(starknetSignatureType(newOwner.publicKey, r, s)),);
+  await profiler.profile(
+    "Change owner",
+    await accountContract.change_owner(starknetSignatureType(newOwner.publicKey, r, s)),
+  );
 }
 
 profiler.printProfiles();

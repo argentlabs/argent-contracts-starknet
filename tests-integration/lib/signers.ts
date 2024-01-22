@@ -153,6 +153,25 @@ export class ArgentSigner extends MultisigSigner {
   }
 }
 
+export class LegacyArgentSigner extends RawSigner {
+  constructor(
+    public owner: LegacyKeyPair = new LegacyKeyPair(),
+    public guardian?: LegacyKeyPair,
+  ) {
+    super();
+  }
+
+  async signRaw(messageHash: string): Promise<ArraySignatureType> {
+    const signature = this.owner.signHash(messageHash);
+    if (this.guardian) {
+      const [guardianR, guardianS] = this.guardian.signHash(messageHash);
+      signature[2] = guardianR;
+      signature[3] = guardianS;
+    }
+    return signature;
+  }
+}
+
 export class LegacyMultisigSigner extends RawSigner {
   constructor(public keys: KeyPair[]) {
     super();

@@ -74,7 +74,7 @@ Tool to calculate interface IDs: https://github.com/ericnordelo/src5-rs
 - Bump version if needed (new deployment in mainnet)
 - Set up your .env file with the deployer info and run `yarn deploy` to declare the accounts
 - Verify the contracts if possible
-- Deploy to as many environments as possible: mainnet, goerli-1, goerli-2 or integration
+- Deploy to as many environments as possible: mainnet, goerli, sepolia and integration
 - Update the contents of the `deployments` folder with the new addresses
 - Copy relevant build artifacts from `target/release` to `deployments/artifacts`
 - Tag the commit used for the release (include the same name as in the `deployments` folder for easy tracking)

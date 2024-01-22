@@ -1,23 +1,16 @@
 import { expect } from "chai";
 import { num, shortString } from "starknet";
 import { MultisigSigner, declareContract, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
-import { deployMultisig } from "./lib/multisig";
+import { deployMultisig, deployMultisig1_1 } from "./lib/multisig";
 
 describe("ArgentMultisig: signing", function () {
-  let multisigAccountClassHash: string;
-
-  before(async () => {
-    multisigAccountClassHash = await declareContract("ArgentMultisig");
-  });
   const VALID = BigInt(shortString.encodeShortString("VALID"));
 
   describe("is_valid_signature(hash, signatures)", function () {
     it("Should verify that a multisig owner has signed a message", async function () {
-      const threshold = 1;
-      const signersLength = 1;
       const messageHash = num.toHex(424242);
 
-      const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers, keys } = await deployMultisig1_1();
 
       const signatures = await new MultisigSigner(keys).signRaw(messageHash);
 
@@ -27,11 +20,9 @@ describe("ArgentMultisig: signing", function () {
     });
 
     it("Should verify numerous multisig owners have signed a message", async function () {
-      const threshold = 2;
-      const signersLength = 2;
       const messageHash = num.toHex(424242);
 
-      const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers, keys } = await deployMultisig({ threshold: 2, signersLength: 2 });
 
       const signatures = await new MultisigSigner(keys).signRaw(messageHash);
 
@@ -41,11 +32,9 @@ describe("ArgentMultisig: signing", function () {
     });
 
     it("Should verify that signatures are in the correct order", async function () {
-      const threshold = 2;
-      const signersLength = 2;
       const messageHash = num.toHex(424242);
 
-      const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers, keys } = await deployMultisig({ threshold: 2, signersLength: 2 });
 
       const signatures = await new MultisigSigner(keys.reverse()).signRaw(messageHash);
 
@@ -55,11 +44,9 @@ describe("ArgentMultisig: signing", function () {
     });
 
     it("Should verify that signatures are in the not repeated", async function () {
-      const threshold = 2;
-      const signersLength = 2;
       const messageHash = num.toHex(424242);
 
-      const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers, keys } = await deployMultisig({ threshold: 2, signersLength: 2 });
 
       const signatures = await new MultisigSigner([keys[0], keys[0]]).signRaw(messageHash);
 
@@ -69,11 +56,8 @@ describe("ArgentMultisig: signing", function () {
     });
 
     it("Expect 'argent/invalid-signature-length' when an owner's signature is missing", async function () {
-      const threshold = 2;
-      const signersLength = 2;
       const messageHash = num.toHex(424242);
-
-      const { accountContract, keys } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract, signers, keys } = await deployMultisig({ threshold: 2, signersLength: 2 });
 
       const signatures = await new MultisigSigner([keys[0]]).signRaw(messageHash);
 
@@ -83,11 +67,9 @@ describe("ArgentMultisig: signing", function () {
     });
 
     it("Expect 'argent/not-a-signer' when a non-owner signs a message", async function () {
-      const threshold = 1;
-      const signersLength = 1;
       const messageHash = num.toHex(424242);
 
-      const { accountContract } = await deployMultisig(multisigAccountClassHash, threshold, signersLength);
+      const { accountContract } = await deployMultisig1_1();
       const invalid = randomKeyPair();
       const signatures = await new MultisigSigner([invalid]).signRaw(messageHash);
 
@@ -97,15 +79,9 @@ describe("ArgentMultisig: signing", function () {
     });
 
     it("Expect 'argent/invalid-signature-length' when the signature is improperly formatted/empty", async function () {
-      const threshold = 1;
-      const signersLength = 1;
       const messageHash = num.toHex(424242);
 
-      const { accountContract, keys, signers } = await deployMultisig(
-        multisigAccountClassHash,
-        threshold,
-        signersLength,
-      );
+      const { accountContract, keys, signers } = await deployMultisig1_1();
 
       const [r] = keys[0].signHash(messageHash);
 

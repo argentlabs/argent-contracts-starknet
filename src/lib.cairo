@@ -17,6 +17,7 @@ mod common {
     mod serialization;
     mod signer_signature;
     mod test_dapp;
+    mod transaction_version;
     mod upgrade;
     mod version;
     mod webauthn;

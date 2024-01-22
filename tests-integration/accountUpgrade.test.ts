@@ -1,16 +1,15 @@
 import { expect } from "chai";
-import { Contract } from "starknet";
 import {
   declareContract,
   deployAccount,
   deployOldAccount,
-  deployer,
+  deployContract,
   getUpgradeDataLegacy,
-  loadContract,
   provider,
   upgradeAccount,
   declareFixtureContract,
   expectEvent,
+  ContractWithClassHash,
   expectRevertWithErrorMessage,
   LegacyArgentSigner,
   deployLegacyAccount,
@@ -18,28 +17,15 @@ import {
 
 describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
-  let argentAccountFutureClassHash: string;
-  let oldArgentAccountClassHash: string;
-  let proxyClassHash: string;
-  let testDappClassHash: string;
-  let testDapp: Contract;
+  let testDapp: ContractWithClassHash;
 
   before(async () => {
     argentAccountClassHash = await declareContract("ArgentAccount");
-    // This is the same as ArgentAccount but with a different version (to have another class hash)
-    // Done to be able to test upgradability
-    argentAccountFutureClassHash = await declareFixtureContract("ArgentAccountFutureVersion");
-    oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
-    proxyClassHash = await declareFixtureContract("Proxy");
-    testDappClassHash = await declareContract("TestDapp");
-    const { contract_address } = await deployer.deployContract({
-      classHash: testDappClassHash,
-    });
-    testDapp = await loadContract(contract_address);
+    testDapp = await deployContract("TestDapp");
   });
 
   it("Upgrade cairo 0 to current version", async function () {
-    const { account, owner } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
+    const { account, owner } = await deployOldAccount();
     const receipt = await upgradeAccount(account, argentAccountClassHash, ["0"]);
     const newClashHash = await provider.getClassHashAt(account.address);
     expect(BigInt(newClashHash)).to.equal(BigInt(argentAccountClassHash));
@@ -51,7 +37,7 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Upgrade cairo 0 to cairo 1 with multicall", async function () {
-    const { account, owner } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
+    const { account, owner } = await deployOldAccount();
     const receipt = await upgradeAccount(
       account,
       argentAccountClassHash,
@@ -66,8 +52,17 @@ describe("ArgentAccount: upgrade", function () {
     });
   });
 
+  it("Upgrade from 0.3.0 to Current Version", async function () {
+    const { account } = await deployLegacyAccount(await declareFixtureContract("ArgentAccount-0.3.0"));
+    await upgradeAccount(account, argentAccountClassHash);
+    expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+  });
+
   it("Upgrade from current version FutureVersion", async function () {
-    const { account } = await deployAccount(argentAccountClassHash);
+    // This is the same as ArgentAccount but with a different version (to have another class hash)
+    const argentAccountFutureClassHash = await declareFixtureContract("ArgentAccountFutureVersion");
+    const { account } = await deployAccount();
+
     await upgradeAccount(account, argentAccountFutureClassHash);
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountFutureClassHash));
   });
@@ -99,10 +94,12 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Reject invalid upgrade targets", async function () {
-    const { account } = await deployAccount(argentAccountClassHash);
-    await upgradeAccount(account, "0x01").should.be.rejectedWith("Class with hash 0x1 is not declared");
-    await upgradeAccount(account, testDappClassHash).should.be.rejectedWith(
-      `Entry point 0xfe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283 not found in contract with class hash ${testDappClassHash}`,
+    const { account } = await deployAccount();
+    await upgradeAccount(account, "0x01").should.be.rejectedWith(
+      `Class with hash ClassHash(\\n    StarkFelt(\\n        \\"0x0000000000000000000000000000000000000000000000000000000000000001\\",\\n    ),\\n) is not declared`,
+    );
+    await upgradeAccount(account, testDapp.classHash).should.be.rejectedWith(
+      `EntryPointSelector(StarkFelt(\\"0x00fe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283\\")) not found in contract`,
     );
   });
 });

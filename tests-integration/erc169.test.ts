@@ -1,5 +1,5 @@
 import { declareContract, deployAccountWithoutGuardian } from "./lib";
-import { deployMultisig } from "./lib/multisig";
+import { deployMultisig1_1 } from "./lib/multisig";
 
 const ERC165_IERC165_INTERFACE_ID = BigInt("0x3f918d17e5ee77373b56385708f855659a07f75997f365cf87748628532a055");
 const ERC165_IERC165_INTERFACE_ID_OLD = BigInt("0x01ffc9a7");
@@ -10,7 +10,7 @@ const ERC165_OUTSIDE_EXECUTION_INTERFACE = BigInt("0x68cfd18b92d1907b8ba3cc32490
 
 describe("ERC169", function () {
   it("ArgentAccount", async function () {
-    const { accountContract } = await deployAccountWithoutGuardian(await declareContract("ArgentAccount"));
+    const { accountContract } = await deployAccountWithoutGuardian();
     await accountContract.supports_interface(0).should.eventually.be.false;
     await accountContract.supports_interface(ERC165_IERC165_INTERFACE_ID).should.eventually.be.true;
     await accountContract.supports_interface(ERC165_IERC165_INTERFACE_ID_OLD).should.eventually.be.true;
@@ -21,7 +21,7 @@ describe("ERC169", function () {
   });
 
   it("ArgentMultisig", async function () {
-    const { accountContract } = await deployMultisig(await declareContract("ArgentMultisig"), 1, 1);
+    const { accountContract } = await deployMultisig1_1();
     await accountContract.supports_interface(0).should.eventually.be.false;
     await accountContract.supports_interface(ERC165_IERC165_INTERFACE_ID).should.eventually.be.true;
     await accountContract.supports_interface(ERC165_IERC165_INTERFACE_ID_OLD).should.eventually.be.true;

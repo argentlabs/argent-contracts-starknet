@@ -6,19 +6,24 @@ mod ArgentAccount {
         account::{
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
-        asserts::{
-            assert_correct_tx_version, assert_no_self_call, assert_only_protocol, assert_only_self,
-            assert_correct_declare_version
+        asserts::{assert_no_self_call, assert_only_protocol, assert_only_self}, calls::execute_multicall,
+        version::Version,
+        erc165::{
+            IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
+            ERC165_IERC165_INTERFACE_ID_OLD,
         },
-        calls::execute_multicall, version::Version,
-        erc165::{IErc165, ERC165_IERC165_INTERFACE_ID, ERC165_IERC165_INTERFACE_ID_OLD,},
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
         upgrade::{IUpgradeable, do_upgrade},
         signer_signature::{Signer, StarknetSigner, SignerSignature, SignerSignatureTrait, IntoGuid},
-        serialization::full_deserialize
+        serialization::full_deserialize,
+        transaction_version::{
+            TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
+            assert_no_unsupported_v3_fields, DA_MODE_L1
+        }
     };
+    use core::starknet::event::EventEmitter;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
@@ -42,6 +47,8 @@ mod ArgentAccount {
     const MAX_ESCAPE_ATTEMPTS: u32 = 5;
     /// Limits fee in escapes
     const MAX_ESCAPE_MAX_FEE: u128 = 50000000000000000; // 0.05 ETH
+    /// Limits tip in escapes
+    const MAX_ESCAPE_TIP: u128 = 1_000000000000000000; // 1 STRK
 
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
@@ -230,6 +237,8 @@ mod ArgentAccount {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_only_protocol();
             let tx_info = get_tx_info().unbox();
+            assert_correct_invoke_version(tx_info.version);
+            assert_no_unsupported_v3_fields();
             self
                 .assert_valid_calls_and_signature(
                     calls.span(), tx_info.transaction_hash, tx_info.signature, is_from_outside: false
@@ -240,13 +249,11 @@ mod ArgentAccount {
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
             assert_only_protocol();
             let tx_info = get_tx_info().unbox();
-            assert_correct_tx_version(tx_info.version);
+            assert_correct_invoke_version(tx_info.version);
 
             let retdata = execute_multicall(calls.span());
 
-            let hash = tx_info.transaction_hash;
-            let response = retdata.span();
-            self.emit(TransactionExecuted { hash, response });
+            self.emit(TransactionExecuted { hash: tx_info.transaction_hash, response: retdata.span() });
             retdata
         }
 
@@ -340,6 +347,7 @@ mod ArgentAccount {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_declare_version(tx_info.version);
+            assert_no_unsupported_v3_fields();
             let mut signatures = tx_info.signature;
             let signer_signatures: Array<SignerSignature> = full_deserialize(signatures)
                 .expect('argent/signature-not-empty');
@@ -355,7 +363,8 @@ mod ArgentAccount {
             guardian: Option<Signer>
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
-            assert_correct_tx_version(tx_info.version);
+            assert_correct_invoke_version(tx_info.version);
+            assert_no_unsupported_v3_fields();
             let mut signatures = tx_info.signature;
             let signer_signatures: Array<SignerSignature> = full_deserialize(signatures)
                 .expect('argent/signature-not-empty');
@@ -489,6 +498,7 @@ mod ArgentAccount {
             assert_only_self();
 
             let current_escape = self._escape.read();
+            // TODO This could be done during validation?
             assert(get_escape_status(current_escape.ready_at) == EscapeStatus::Ready, 'argent/invalid-escape');
 
             self.reset_escape_attempts();
@@ -605,8 +615,6 @@ mod ArgentAccount {
         ) {
             let execution_info = get_execution_info().unbox();
             let account_address = execution_info.contract_address;
-            let tx_info = execution_info.tx_info.unbox();
-            assert_correct_tx_version(tx_info.version);
 
             let signer_signatures: Array<SignerSignature> = full_deserialize(signatures)
                 .expect('argent/signature-not-empty');
@@ -788,8 +796,37 @@ mod ArgentAccount {
     }
 
     fn assert_valid_escape_parameters(attempts: u32) {
-        let tx_info = get_tx_info().unbox();
-        assert(tx_info.max_fee <= MAX_ESCAPE_MAX_FEE, 'argent/max-fee-too-high');
+        let mut tx_info = get_tx_info().unbox();
+        if tx_info.version == TX_V3 || tx_info.version == TX_V3_ESTIMATE {
+            // No need for modes other than L1 while escaping
+            assert(
+                tx_info.nonce_data_availability_mode == DA_MODE_L1 && tx_info.fee_data_availability_mode == DA_MODE_L1,
+                'argent/invalid-da-mode'
+            );
+
+            // No need to allow self deployment and escaping in one transaction
+            assert(tx_info.account_deployment_data.is_empty(), 'argent/invalid-deployment-data');
+
+            // Limit the maximum tip while escaping (max_fee returns 0 on TX_V3)
+            let max_l2_gas: u64 = loop {
+                match tx_info.resource_bounds.pop_front() {
+                    Option::Some(r) => { if *r.resource == 'L2_GAS' {
+                        break *r.max_amount;
+                    } },
+                    Option::None => {
+                        // L2_GAS not found
+                        break 0;
+                    }
+                };
+            };
+            let max_tip = tx_info.tip * max_l2_gas.into();
+            assert(max_tip <= MAX_ESCAPE_TIP, 'argent/tip-too-high');
+        } else if tx_info.version == TX_V1 || tx_info.version == TX_V1_ESTIMATE {
+            // other fields not available on V1
+            assert(tx_info.max_fee <= MAX_ESCAPE_MAX_FEE, 'argent/max-fee-too-high');
+        } else {
+            panic_with_felt252('argent/invalid-tx-version');
+        }
         assert(attempts < MAX_ESCAPE_ATTEMPTS, 'argent/max-escape-attempts');
     }
 
@@ -809,3 +846,4 @@ mod ArgentAccount {
         EscapeStatus::Ready
     }
 }
+

@@ -13,9 +13,7 @@ export async function deployContractUDC(classHash: string, salt: string, calldat
   const deployCall = udcContract.populate("deployContract", CallData.compile([classHash, salt, unique, calldata]));
   const { transaction_hash } = await udcContract.deployContract(deployCall.calldata);
 
-  const transaction_response = (await provider.waitForTransaction(
-    transaction_hash,
-  )) as InvokeTransactionReceiptResponse;
+  const transaction_response = await provider.waitForTransaction(transaction_hash);
 
   return transaction_response.events?.[0].from_address;
 }

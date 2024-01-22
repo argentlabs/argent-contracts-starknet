@@ -1,5 +1,4 @@
 import {
-  Abi,
   ArraySignatureType,
   CairoCustomEnum,
   CairoOption,
@@ -17,6 +16,14 @@ import {
   hash,
   transaction,
   typedData,
+  RPC,
+  V2InvocationsSignerDetails,
+  V3InvocationsSignerDetails,
+  V2DeployAccountSignerDetails,
+  V3DeployAccountSignerDetails,
+  V2DeclareSignerDetails,
+  V3DeclareSignerDetails,
+  stark,
 } from "starknet";
 
 /**
@@ -35,67 +42,90 @@ export abstract class RawSigner implements SignerInterface {
     return this.signRaw(messageHash);
   }
 
-  public async signTransaction(
-    transactions: Call[],
-    transactionsDetail: InvocationsSignerDetails,
-    abis?: Abi[],
-  ): Promise<Signature> {
-    if (abis && abis.length !== transactions.length) {
-      throw new Error("ABI must be provided for each transaction or no transaction");
-    }
-    // now use abi to display decoded data somewhere, but as this signer is headless, we can't do that
-    const calldata = transaction.getExecuteCalldata(transactions, transactionsDetail.cairoVersion);
+  public async signTransaction(transactions: Call[], details: InvocationsSignerDetails): Promise<Signature> {
+    const compiledCalldata = transaction.getExecuteCalldata(transactions, details.cairoVersion);
+    let msgHash;
 
-    const messageHash = hash.calculateTransactionHash(
-      transactionsDetail.walletAddress,
-      transactionsDetail.version,
-      calldata,
-      transactionsDetail.maxFee,
-      transactionsDetail.chainId,
-      transactionsDetail.nonce,
-    );
-    return this.signRaw(messageHash);
+    // TODO: How to do generic union discriminator for all like this
+    if (Object.values(RPC.ETransactionVersion2).includes(details.version as any)) {
+      const det = details as V2InvocationsSignerDetails;
+      msgHash = hash.calculateInvokeTransactionHash({
+        ...det,
+        senderAddress: det.walletAddress,
+        compiledCalldata,
+        version: det.version,
+      });
+    } else if (Object.values(RPC.ETransactionVersion3).includes(details.version as any)) {
+      const det = details as V3InvocationsSignerDetails;
+      msgHash = hash.calculateInvokeTransactionHash({
+        ...det,
+        senderAddress: det.walletAddress,
+        compiledCalldata,
+        version: det.version,
+        nonceDataAvailabilityMode: stark.intDAM(det.nonceDataAvailabilityMode),
+        feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
+      });
+    } else {
+      throw Error("unsupported signTransaction version");
+    }
+    return this.signRaw(msgHash);
   }
 
-  public async signDeployAccountTransaction({
-    classHash,
-    contractAddress,
-    constructorCalldata,
-    addressSalt,
-    maxFee,
-    version,
-    chainId,
-    nonce,
-  }: DeployAccountSignerDetails) {
-    const messageHash = hash.calculateDeployAccountTransactionHash(
-      contractAddress,
-      classHash,
-      CallData.compile(constructorCalldata),
-      addressSalt,
-      version,
-      maxFee,
-      chainId,
-      nonce,
-    );
+  public async signDeployAccountTransaction(details: DeployAccountSignerDetails): Promise<Signature> {
+    const compiledConstructorCalldata = CallData.compile(details.constructorCalldata);
+    /*     const version = BigInt(details.version).toString(); */
+    let msgHash;
 
-    return this.signRaw(messageHash);
+    if (Object.values(RPC.ETransactionVersion2).includes(details.version as any)) {
+      const det = details as V2DeployAccountSignerDetails;
+      msgHash = hash.calculateDeployAccountTransactionHash({
+        ...det,
+        salt: det.addressSalt,
+        constructorCalldata: compiledConstructorCalldata,
+        version: det.version,
+      });
+    } else if (Object.values(RPC.ETransactionVersion3).includes(details.version as any)) {
+      const det = details as V3DeployAccountSignerDetails;
+      msgHash = hash.calculateDeployAccountTransactionHash({
+        ...det,
+        salt: det.addressSalt,
+        compiledConstructorCalldata,
+        version: det.version,
+        nonceDataAvailabilityMode: stark.intDAM(det.nonceDataAvailabilityMode),
+        feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
+      });
+    } else {
+      throw Error(`unsupported signDeployAccountTransaction version: ${details.version}}`);
+    }
+
+    return this.signRaw(msgHash);
   }
 
   public async signDeclareTransaction(
     // contractClass: ContractClass,  // Should be used once class hash is present in ContractClass
-    { classHash, senderAddress, chainId, maxFee, version, nonce, compiledClassHash }: DeclareSignerDetails,
-  ) {
-    const messageHash = hash.calculateDeclareTransactionHash(
-      classHash,
-      senderAddress,
-      version,
-      maxFee,
-      chainId,
-      nonce,
-      compiledClassHash,
-    );
+    details: DeclareSignerDetails,
+  ): Promise<Signature> {
+    let msgHash;
 
-    return this.signRaw(messageHash);
+    if (Object.values(RPC.ETransactionVersion2).includes(details.version as any)) {
+      const det = details as V2DeclareSignerDetails;
+      msgHash = hash.calculateDeclareTransactionHash({
+        ...det,
+        version: det.version,
+      });
+    } else if (Object.values(RPC.ETransactionVersion3).includes(details.version as any)) {
+      const det = details as V3DeclareSignerDetails;
+      msgHash = hash.calculateDeclareTransactionHash({
+        ...det,
+        version: det.version,
+        nonceDataAvailabilityMode: stark.intDAM(det.nonceDataAvailabilityMode),
+        feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
+      });
+    } else {
+      throw Error("unsupported signDeclareTransaction version");
+    }
+
+    return this.signRaw(msgHash);
   }
 }
 
@@ -176,6 +206,13 @@ export class LegacyKeyPair extends KeyPair {
   public signHash(messageHash: string) {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
     return [r.toString(), s.toString()];
+  }
+}
+
+export class LegacyMultisigKeyPair extends KeyPair {
+  public signHash(messageHash: string) {
+    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
+    return [this.publicKey.toString(), r.toString(), s.toString()];
   }
 }
 

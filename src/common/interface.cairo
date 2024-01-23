@@ -1,4 +1,4 @@
-use argent::common::signer_signature::SignerSignature;
+use argent::common::signer_signature::{Signer, SignerSignature};
 use argent::common::version::Version;
 
 #[starknet::interface]
@@ -25,29 +25,30 @@ trait IArgentMultisig<TContractState> {
     /// @param new_threshold New threshold
     /// @param signers_to_add An array with all the signers to add
     /// @dev will revert when trying to add a user already in the list
-    fn add_signers(ref self: TContractState, new_threshold: usize, signers_to_add: Array<felt252>);
+    fn add_signers(ref self: TContractState, new_threshold: usize, signers_to_add: Array<Signer>);
 
     /// @dev Removes account signers, additionally sets a new threshold
     /// @param new_threshold New threshold
     /// @param signers_to_remove Should contain only current signers, otherwise it will revert
-    fn remove_signers(ref self: TContractState, new_threshold: usize, signers_to_remove: Array<felt252>);
+    fn remove_signers(ref self: TContractState, new_threshold: usize, signers_to_remove: Array<Signer>);
 
     /// @dev Re-oders the account signers
     /// @param new_signer_order Should contain only current signers, otherwise it will revert
-    fn reorder_signers(ref self: TContractState, new_signer_order: Array<felt252>);
+    fn reorder_signers(ref self: TContractState, new_signer_order: Array<Signer>);
 
     /// @dev Replace one signer with a different one
     /// @param signer_to_remove Signer to remove
     /// @param signer_to_add Signer to add
-    fn replace_signer(ref self: TContractState, signer_to_remove: felt252, signer_to_add: felt252);
+    fn replace_signer(ref self: TContractState, signer_to_remove: Signer, signer_to_add: Signer);
 
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
 
     /// @dev Returns the threshold, the number of signers required to control this account
     fn get_threshold(self: @TContractState) -> usize;
-    fn get_signers(self: @TContractState) -> Array<felt252>;
-    fn is_signer(self: @TContractState, signer: felt252) -> bool;
+    fn get_signers_guid(self: @TContractState) -> Array<felt252>;
+    fn is_signer(self: @TContractState, signer: Signer) -> bool;
+    fn is_signer_guid(self: @TContractState, signer_guid: felt252) -> bool;
 
     /// Checks if a given signature is a valid signature from one of the multisig owners
     fn is_valid_signer_signature(self: @TContractState, hash: felt252, signer_signature: SignerSignature) -> bool;

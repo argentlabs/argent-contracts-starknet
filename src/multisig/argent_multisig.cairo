@@ -1,6 +1,7 @@
 #[starknet::contract]
 mod ArgentMultisig {
-    use argent::common::{
+    use core::result::ResultTrait;
+use argent::common::{
         account::{
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
@@ -13,11 +14,12 @@ mod ArgentMultisig {
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component
         },
-        upgrade::{IUpgradeable, do_upgrade}, signer_signature::{SignerSignature, SignerSignatureTrait},
+        upgrade::{IUpgradeable, do_upgrade}, signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait},
         interface::IArgentMultisig, serialization::full_deserialize,
-        transaction_version::{get_tx_info, assert_correct_invoke_version, assert_no_unsupported_v3_fields}
+        transaction_version::{get_tx_info, assert_correct_invoke_version, assert_no_unsupported_v3_fields},
+        signer_list::signer_list_component
     };
-    use argent::multisig::{interface::IDeprecatedArgentMultisig, signer_list::signer_list_component};
+    use argent::multisig::{interface::IDeprecatedArgentMultisig};
     use ecdsa::check_ecdsa_signature;
 
     use starknet::{
@@ -118,22 +120,26 @@ mod ArgentMultisig {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, new_threshold: usize, signers: Array<felt252>) {
+    fn constructor(ref self: ContractState, new_threshold: usize, signers: Array<Signer>) {
         let new_signers_count = signers.len();
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
-
-        self.signer_list.add_signers(signers.span(), last_signer: 0);
-        self.threshold.write(new_threshold);
-
-        self.emit(ThresholdUpdated { new_threshold });
-
-        let mut signers_added = signers.span();
+        
+        let mut signers_span = signers.span();
+        let mut last_signer = 0;
         loop {
-            match signers_added.pop_front() {
-                Option::Some(added_signer) => { self.emit(OwnerAdded { new_owner_guid: *added_signer }); },
+            match signers_span.pop_front() {
+                Option::Some(signer) => { 
+                    let signer_guid = (*signer).into_guid().unwrap();
+                    self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
+                    self.emit(OwnerAdded { new_owner_guid: signer_guid });
+                    last_signer = signer_guid;
+                },
                 Option::None => { break; }
             }
-        }
+        };
+
+        self.threshold.write(new_threshold);
+        self.emit(ThresholdUpdated { new_threshold });
     }
 
     #[external(v0)]
@@ -228,67 +234,75 @@ mod ArgentMultisig {
             self.emit(ThresholdUpdated { new_threshold });
         }
 
-        fn add_signers(ref self: ContractState, new_threshold: usize, signers_to_add: Array<felt252>) {
+        fn add_signers(ref self: ContractState, new_threshold: usize, signers_to_add: Array<Signer>) {
             assert_only_self();
-            let (signers_len, last_signer) = self.signer_list.load();
+            let (signers_len, last_signer_guid) = self.signer_list.load();
             let previous_threshold = self.threshold.read();
 
             let new_signers_count = signers_len + signers_to_add.len();
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
-            self.signer_list.add_signers(signers_to_add.span(), last_signer);
-            self.threshold.write(new_threshold);
 
+            let mut signers_span = signers_to_add.span();
+            let mut last_signer = last_signer_guid;
+            loop {
+                match signers_span.pop_front() {
+                    Option::Some(signer) => { 
+                        let signer_guid = (*signer).into_guid().unwrap();
+                        self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
+                        self.emit(OwnerAdded { new_owner_guid: signer_guid });
+                        last_signer = signer_guid;
+                    },
+                    Option::None => { break; }
+                }
+            };
+
+            self.threshold.write(new_threshold);
             if previous_threshold != new_threshold {
                 self.emit(ThresholdUpdated { new_threshold });
             }
-
-            let mut signers_added = signers_to_add.span();
-            loop {
-                match signers_added.pop_front() {
-                    Option::Some(added_signer) => { self.emit(OwnerAdded { new_owner_guid: *added_signer }); },
-                    Option::None => { break; }
-                }
-            }
         }
 
-        fn remove_signers(ref self: ContractState, new_threshold: usize, signers_to_remove: Array<felt252>) {
+        fn remove_signers(ref self: ContractState, new_threshold: usize, signers_to_remove: Array<Signer>) {
             assert_only_self();
-            let (signers_len, last_signer) = self.signer_list.load();
+            let (signers_len, last_signer_guid) = self.signer_list.load();
             let previous_threshold = self.threshold.read();
 
             let new_signers_count = signers_len - signers_to_remove.len();
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-            self.signer_list.remove_signers(signers_to_remove.span(), last_signer);
-            self.threshold.write(new_threshold);
-
-            if previous_threshold != new_threshold {
-                self.emit(ThresholdUpdated { new_threshold });
-            }
-
-            let mut signers_removed = signers_to_remove.span();
+            let mut signers_span = signers_to_remove.span();
+            let mut last_signer = last_signer_guid;
             loop {
-                match signers_removed.pop_front() {
-                    Option::Some(removed_signer) => {
-                        self.emit(OwnerRemoved { removed_owner_guid: *removed_signer });
+                match signers_span.pop_front() {
+                    Option::Some(signer_ref) => {
+                        let signer_guid = (*signer_ref).into_guid().unwrap();
+                        last_signer = self.signer_list.remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
+                        self.emit(OwnerRemoved { removed_owner_guid: signer_guid });
                     },
                     Option::None => { break; }
                 }
+            };
+
+            self.threshold.write(new_threshold);
+            if previous_threshold != new_threshold {
+                self.emit(ThresholdUpdated { new_threshold });
             }
         }
 
-        fn reorder_signers(ref self: ContractState, new_signer_order: Array<felt252>) {
+        fn reorder_signers(ref self: ContractState, new_signer_order: Array<Signer>) {
             assert(true == false, 'argent/unsuported-method');
         }
 
-        fn replace_signer(ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252) {
+        fn replace_signer(ref self: ContractState, signer_to_remove: Signer, signer_to_add: Signer) {
             assert_only_self();
             let (new_signers_count, last_signer) = self.signer_list.load();
+            
+            let signer_to_remove_guid = signer_to_remove.into_guid().unwrap();
+            let signer_to_add_guid = signer_to_add.into_guid().unwrap();
+            self.signer_list.replace_signer(signer_to_remove: signer_to_remove_guid, signer_to_add: signer_to_add_guid, last_signer: last_signer);
 
-            self.signer_list.replace_signer(signer_to_remove, signer_to_add, last_signer);
-
-            self.emit(OwnerRemoved { removed_owner_guid: signer_to_remove });
-            self.emit(OwnerAdded { new_owner_guid: signer_to_add });
+            self.emit(OwnerRemoved { removed_owner_guid: signer_to_remove_guid });
+            self.emit(OwnerAdded { new_owner_guid: signer_to_add_guid });
         }
 
         fn get_name(self: @ContractState) -> felt252 {
@@ -304,12 +318,16 @@ mod ArgentMultisig {
             self.threshold.read()
         }
 
-        fn get_signers(self: @ContractState) -> Array<felt252> {
+        fn get_signers_guid(self: @ContractState) -> Array<felt252> {
             self.signer_list.get_signers()
         }
 
-        fn is_signer(self: @ContractState, signer: felt252) -> bool {
-            self.signer_list.is_signer(signer)
+        fn is_signer(self: @ContractState, signer: Signer) -> bool {
+            self.signer_list.is_signer(signer.into_guid().unwrap())
+        }
+
+        fn is_signer_guid(self: @ContractState, signer_guid: felt252) -> bool {
+            self.signer_list.is_signer(signer_guid)
         }
 
         fn is_valid_signer_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {

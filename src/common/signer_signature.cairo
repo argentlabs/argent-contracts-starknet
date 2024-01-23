@@ -1,3 +1,4 @@
+use core::array::ArrayTrait;
 use argent::common::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };

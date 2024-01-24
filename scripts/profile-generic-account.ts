@@ -10,13 +10,13 @@ import {
   provider,
   randomKeyPair,
 } from "../tests-integration/lib";
-import { makeProfiler } from "../tests-integration/lib/gas";
+import { newProfiler } from "../tests-integration/lib/gas";
 
 const genericAccountClassHash = await declareContract("ArgentGenericAccount");
 const testDappClassHash = await declareContract("TestDapp");
 const { contract_address } = await deployer.deployContract({ classHash: testDappClassHash });
 const testDappContract = await loadContract(contract_address);
-const profiler = makeProfiler();
+const profiler = newProfiler(provider);
 
 // To be able to run this script using the devnet, update the start-devnet.sh script to ignore this line:
 // export STARKNET_DEVNET_CAIRO_VM=rust
@@ -192,4 +192,4 @@ async function deployGenericAccount(owners: StarknetKeyPair[]) {
   return account;
 }
 
-profiler.printReport();
+profiler.printSummary();

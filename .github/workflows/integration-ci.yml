@@ -4,7 +4,7 @@ on: push
 
 jobs:
   integration-tests:
-    runs-on: ubuntu-latest
+    runs-on: buildjet-16vcpu-ubuntu-2204
     steps:
       - name: Check out main branch
         uses: actions/checkout@v3
@@ -23,8 +23,28 @@ jobs:
       - name: Run integration tests
         run: scarb --release build && tsc && yarn mocha tests-integration/*.test.ts --forbid-only --forbid-pending
 
+  gas-report:
+    runs-on: buildjet-16vcpu-ubuntu-2204
+    steps:
+      - name: Check out main branch
+        uses: actions/checkout@v3
+
+      - name: Setup Scarb
+        uses: software-mansion/setup-scarb@v1.3.2
+          
+      - name: Install project
+        run: yarn install --frozen-lockfile
+
+      - name: Start devnet in background
+        run: |
+          scarb run start-devnet &
+          ./scripts/wait-devnet-ready.sh
+
+      - name: Gas report
+        run: scarb run profile --check
+
   format:
-    runs-on: ubuntu-latest
+    runs-on: buildjet-16vcpu-ubuntu-2204
     steps:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3
@@ -36,7 +56,7 @@ jobs:
         run: yarn prettier --check .
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: buildjet-16vcpu-ubuntu-2204
     steps:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3

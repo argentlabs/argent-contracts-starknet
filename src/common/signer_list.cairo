@@ -1,7 +1,5 @@
 #[starknet::component]
 mod signer_list_component {
-    use argent::common::signer_signature::{Signer, IntoGuid};
-
     #[storage]
     struct Storage {
         signer_list: LegacyMap<felt252, felt252>,

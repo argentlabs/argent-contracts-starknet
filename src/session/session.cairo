@@ -64,6 +64,7 @@ mod session_component {
             calls: Span<Call>,
             transaction_hash: felt252,
             signature: Span<felt252>,
+            is_from_outside: bool,
         ) {
             // TODO: add check to make sure v3 tx are only possible if the fee token in the session is STRK and same for ETH
 

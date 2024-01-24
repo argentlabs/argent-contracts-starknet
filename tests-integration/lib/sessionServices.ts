@@ -100,10 +100,11 @@ export class DappService {
     caller = "ANY_CALLER",
     execute_after = 1,
     execute_before = 999999999999999,
+    nonce = randomKeyPair().publicKey,
   ): Promise<Call> {
     const outsideExecution = {
       caller,
-      nonce: randomKeyPair().publicKey,
+      nonce,
       execute_after,
       execute_before,
       calls: calls.map((call) => getOutsideCall(call)),

@@ -59,6 +59,7 @@ describe("ArgentAccount: outside execution", function () {
       accountSessionSignature,
       calls,
       account.address,
+      testDappAccount.address,
     );
 
     await setTime(initialTime);

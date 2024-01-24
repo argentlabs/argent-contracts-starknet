@@ -1,3 +1,4 @@
+use argent::common::signer_signature::{Signer, StarknetSigner, SignerSignature};
 use argent::common::version::Version;
 use argent::generic::argent_generic::ArgentGenericAccount;
 use starknet::{contract_address_const, syscalls::deploy_syscall, account::Call, testing::set_contract_address};
@@ -23,51 +24,48 @@ trait ITestArgentGenericAccount<TContractState> {
         signers: Array<felt252>
     ) -> felt252;
     fn change_threshold(ref self: TContractState, new_threshold: usize);
-    fn add_signers(ref self: TContractState, new_threshold: usize, signers_to_add: Array<felt252>);
-    fn remove_signers(ref self: TContractState, new_threshold: usize, signers_to_remove: Array<felt252>);
-    fn reorder_signers(ref self: TContractState, new_signer_order: Array<felt252>);
-    fn replace_signer(ref self: TContractState, signer_to_remove: felt252, signer_to_add: felt252);
+    fn add_signers(ref self: TContractState, new_threshold: usize, signers_to_add: Array<Signer>);
+    fn remove_signers(ref self: TContractState, new_threshold: usize, signers_to_remove: Array<Signer>);
+    fn reorder_signers(ref self: TContractState, new_signer_order: Array<Signer>);
+    fn replace_signer(ref self: TContractState, signer_to_remove: Signer, signer_to_add: Signer);
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
     fn get_threshold(self: @TContractState) -> usize;
-    fn get_signers(self: @TContractState) -> Array<felt252>;
-    fn is_signer(self: @TContractState, signer: felt252) -> bool;
-    fn assert_valid_signer_signature(
-        self: @TContractState, hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
-    );
-    fn is_valid_signer_signature(
-        self: @TContractState, hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
-    ) -> bool;
+    fn get_signers_guid(self: @TContractState) -> Array<felt252>;
+    fn is_signer_guid(self: @TContractState, signer: felt252) -> bool;
+    fn is_signer(self: @TContractState, signer: Signer) -> bool;
+    fn assert_valid_signer_signature(self: @TContractState, hash: felt252, signer_signature: SignerSignature);
+    fn is_valid_signer_signature(self: @TContractState, hash: felt252, signer_signature: SignerSignature) -> bool;
 
     // IErc165
     fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
 
     // IRecoveryAccount
-    fn trigger_escape_signer(ref self: TContractState, target_signer: felt252, new_signer: felt252);
+    fn trigger_escape_signer(ref self: TContractState, target_signer: Signer, new_signer: Signer);
     fn escape_signer(ref self: TContractState);
     fn cancel_escape(ref self: TContractState);
 }
 
 fn initialize_generic() -> ITestArgentGenericAccountDispatcher {
     let threshold = 1;
-    let signers_array = array![signer_pubkey_1, signer_pubkey_2, signer_pubkey_3];
+    let signers_array = array![
+        Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 }),
+        Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 }),
+        Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_3 }),
+    ];
     initialize_generic_with(threshold, signers_array.span())
 }
 
 fn initialize_generic_with_one_signer() -> ITestArgentGenericAccountDispatcher {
     let threshold = 1;
-    let signers_array = array![signer_pubkey_1];
+    let signers_array = array![Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 })];
     initialize_generic_with(threshold, signers_array.span())
 }
 
-fn initialize_generic_with(threshold: usize, mut signers: Span<felt252>) -> ITestArgentGenericAccountDispatcher {
-    let mut calldata = array![threshold.into(), signers.len().into(),];
-    loop {
-        match signers.pop_front() {
-            Option::Some(signer) => { calldata.append(*signer) },
-            Option::None => { break; },
-        };
-    };
+fn initialize_generic_with(threshold: usize, mut signers: Span<Signer>) -> ITestArgentGenericAccountDispatcher {
+    let mut calldata = array![];
+    threshold.serialize(ref calldata);
+    signers.serialize(ref calldata);
 
     let class_hash = ArgentGenericAccount::TEST_CLASS_HASH.try_into().unwrap();
     let (contract_address, _) = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap();

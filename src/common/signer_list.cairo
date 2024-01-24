@@ -13,7 +13,6 @@ mod signer_list_component {
 
     #[generate_trait]
     impl Internal<TContractState, +HasComponent<TContractState>> of InternalTrait<TContractState> {
-    
         #[inline(always)]
         fn is_signer(self: @ComponentState<TContractState>, signer: felt252) -> bool {
             let next_signer = self.signer_list.read(signer);
@@ -21,7 +20,22 @@ mod signer_list_component {
                 return true;
             }
             // check if its the latest
-            let last_signer = self.find_last_signer_guid();
+            let last_signer = self.find_last_signer();
+
+            last_signer == signer
+        }
+
+        // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
+        #[inline(always)]
+        fn is_signer_using_last(self: @ComponentState<TContractState>, signer: felt252, last_signer: felt252) -> bool {
+            if signer == 0 {
+                return false;
+            }
+
+            let next_signer = self.signer_list.read(signer);
+            if next_signer != 0 {
+                return true;
+            }
 
             last_signer == signer
         }
@@ -46,10 +60,12 @@ mod signer_list_component {
             }
         }
 
-        fn remove_signer(ref self: ComponentState<TContractState>, signer_to_remove: felt252, last_signer: felt252) -> felt252 {
+        fn remove_signer(
+            ref self: ComponentState<TContractState>, signer_to_remove: felt252, last_signer: felt252
+        ) -> felt252 {
             let is_signer = self.is_signer_using_last(signer_to_remove, last_signer);
             assert(is_signer, 'argent/not-a-signer');
-            
+
             // Signer pointer set to 0, Previous pointer set to the next in the list
             let previous_signer = self.find_signer_before(signer_to_remove);
             let next_signer = self.signer_list.read(signer_to_remove);
@@ -146,28 +162,33 @@ mod signer_list_component {
             };
             signers
         }
+
+        // Returns true if `first_signer` is before `second_signer` in the signer list.
+        fn is_signer_before(
+            self: @ComponentState<TContractState>, first_signer: felt252, second_signer: felt252
+        ) -> bool {
+            let mut is_before: bool = false;
+            let mut current_signer = first_signer;
+            loop {
+                let next_signer = self.signer_list.read(current_signer);
+                if (next_signer == 0) {
+                    break;
+                }
+                if (next_signer == second_signer) {
+                    is_before = true;
+                    break;
+                }
+                current_signer = next_signer;
+            };
+            return is_before;
+        }
     }
 
 
     #[generate_trait]
     impl Private<TContractState, +HasComponent<TContractState>> of PrivateTrait<TContractState> {
-        // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
-        #[inline(always)]
-        fn is_signer_using_last(self: @ComponentState<TContractState>, signer: felt252, last_signer: felt252) -> bool {
-            if signer == 0 {
-                return false;
-            }
-
-            let next_signer = self.signer_list.read(signer);
-            if next_signer != 0 {
-                return true;
-            }
-
-            last_signer == signer
-        }
-
         // Return the last signer or zero if no signers. Cost increases with the list size
-        fn find_last_signer_guid(self: @ComponentState<TContractState>) -> felt252 {
+        fn find_last_signer(self: @ComponentState<TContractState>) -> felt252 {
             let mut current_signer = self.signer_list.read(0);
             loop {
                 let next_signer = self.signer_list.read(current_signer);

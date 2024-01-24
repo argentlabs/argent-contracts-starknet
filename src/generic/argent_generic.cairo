@@ -1,5 +1,6 @@
 #[starknet::contract]
 mod ArgentGenericAccount {
+    use argent::common::signer_list::signer_list_component::InternalTrait;
     use argent::common::{
         account::{
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
@@ -13,11 +14,15 @@ mod ArgentGenericAccount {
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
-        upgrade::{IUpgradeable, do_upgrade}, signer_signature::{SignerSignature, SignerSignatureTrait},
-        interface::IArgentMultisig, serialization::full_deserialize,
-        transaction_version::{get_tx_info, assert_correct_invoke_version, assert_no_unsupported_v3_fields}
+        upgrade::{IUpgradeable, do_upgrade},
+        signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait}, interface::IArgentMultisig,
+        serialization::full_deserialize,
+        transaction_version::{get_tx_info, assert_correct_invoke_version, assert_no_unsupported_v3_fields},
+        signer_list::signer_list_component
     };
     use argent::generic::{interface::{IRecoveryAccount}, recovery::{EscapeStatus, Escape, EscapeEnabled}};
+    use core::array::ArrayTrait;
+    use core::result::ResultTrait;
     use starknet::{
         get_contract_address, VALIDATED, syscalls::replace_class_syscall, ClassHash, get_block_timestamp,
         get_caller_address, account::Call
@@ -50,11 +55,15 @@ mod ArgentGenericAccount {
         }
     }
 
+    component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
+    impl SignerList = signer_list_component::Internal<ContractState>;
+
     #[storage]
     struct Storage {
         #[substorage(v0)]
         execute_from_outside: outside_execution_component::Storage,
-        signer_list: LegacyMap<felt252, felt252>,
+        #[substorage(v0)]
+        signer_list: signer_list_component::Storage,
         threshold: usize,
         escape_enabled: EscapeEnabled,
         escape: Escape,
@@ -64,6 +73,7 @@ mod ArgentGenericAccount {
     #[derive(Drop, starknet::Event)]
     enum Event {
         ExecuteFromOutsideEvents: outside_execution_component::Event,
+        SignerListEvents: signer_list_component::Event,
         ThresholdUpdated: ThresholdUpdated,
         TransactionExecuted: TransactionExecuted,
         AccountUpgraded: AccountUpgraded,
@@ -71,6 +81,7 @@ mod ArgentGenericAccount {
         OwnerRemoved: OwnerRemoved,
         EscapeSignerTriggered: EscapeSignerTriggered,
         SignerEscaped: SignerEscaped,
+        SignerLinked: SignerLinked
     }
 
     /// @notice Emitted when the multisig threshold changes
@@ -133,23 +144,34 @@ mod ArgentGenericAccount {
         new_signer: felt252
     }
 
+    #[derive(Drop, starknet::Event)]
+    struct SignerLinked {
+        #[key]
+        signer_guid: felt252,
+        signer: Signer,
+    }
+
     #[constructor]
-    fn constructor(ref self: ContractState, new_threshold: usize, signers: Array<felt252>) {
+    fn constructor(ref self: ContractState, new_threshold: usize, signers: Array<Signer>) {
         let new_signers_count = signers.len();
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-        self.add_signers_inner(signers.span(), last_signer: 0);
-        self.threshold.write(new_threshold);
-
-        self.emit(ThresholdUpdated { new_threshold });
-
-        let mut signers_added = signers.span();
+        let mut signers_span = signers.span();
+        let mut last_signer = 0;
         loop {
-            match signers_added.pop_front() {
-                Option::Some(added_signer) => { self.emit(OwnerAdded { new_owner_guid: *added_signer }); },
+            match signers_span.pop_front() {
+                Option::Some(signer) => {
+                    let signer_guid = (*signer).into_guid().unwrap();
+                    self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
+                    self.emit(OwnerAdded { new_owner_guid: signer_guid });
+                    last_signer = signer_guid;
+                },
                 Option::None => { break; }
-            };
+            }
         };
+
+        self.threshold.write(new_threshold);
+        self.emit(ThresholdUpdated { new_threshold });
     }
 
     #[external(v0)]
@@ -201,7 +223,7 @@ mod ArgentGenericAccount {
             assert_only_self();
 
             // Check basic invariants
-            assert_valid_threshold_and_signers_count(self.threshold.read(), self.get_signers_len());
+            assert_valid_threshold_and_signers_count(self.threshold.read(), self.signer_list.get_signers_len());
 
             assert(data.len() == 0, 'argent/unexpected-data');
             array![]
@@ -238,101 +260,107 @@ mod ArgentGenericAccount {
         fn change_threshold(ref self: ContractState, new_threshold: usize) {
             assert_only_self();
             assert(new_threshold != self.threshold.read(), 'argent/same-threshold');
-            let new_signers_count = self.get_signers_len();
+            let new_signers_count = self.signer_list.get_signers_len();
 
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
             self.threshold.write(new_threshold);
             self.emit(ThresholdUpdated { new_threshold });
         }
 
-        fn add_signers(ref self: ContractState, new_threshold: usize, signers_to_add: Array<felt252>) {
+        fn add_signers(ref self: ContractState, new_threshold: usize, signers_to_add: Array<Signer>) {
             assert_only_self();
-            let (signers_len, last_signer) = self.load();
+            let (signers_len, last_signer_guid) = self.signer_list.load();
             let previous_threshold = self.threshold.read();
 
             let new_signers_count = signers_len + signers_to_add.len();
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
-            self.add_signers_inner(signers_to_add.span(), last_signer);
-            self.threshold.write(new_threshold);
 
+            let mut signers_span = signers_to_add.span();
+            let mut last_signer = last_signer_guid;
+            loop {
+                match signers_span.pop_front() {
+                    Option::Some(signer) => {
+                        let signer_guid = (*signer).into_guid().unwrap();
+                        self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
+                        self.emit(OwnerAdded { new_owner_guid: signer_guid });
+                        last_signer = signer_guid;
+                    },
+                    Option::None => { break; }
+                }
+            };
+
+            self.threshold.write(new_threshold);
             if previous_threshold != new_threshold {
                 self.emit(ThresholdUpdated { new_threshold });
             }
-
-            let mut signers_added = signers_to_add.span();
-            loop {
-                match signers_added.pop_front() {
-                    Option::Some(added_signer) => { self.emit(OwnerAdded { new_owner_guid: *added_signer }); },
-                    Option::None => { break; }
-                };
-            };
         }
 
-        fn remove_signers(ref self: ContractState, new_threshold: usize, signers_to_remove: Array<felt252>) {
+        fn remove_signers(ref self: ContractState, new_threshold: usize, signers_to_remove: Array<Signer>) {
             assert_only_self();
-            let (signers_len, last_signer) = self.load();
+            let (signers_len, last_signer_guid) = self.signer_list.load();
             let previous_threshold = self.threshold.read();
 
             let new_signers_count = signers_len - signers_to_remove.len();
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-            self.remove_signers_inner(signers_to_remove.span(), last_signer);
-            self.threshold.write(new_threshold);
+            let mut signers_span = signers_to_remove.span();
+            let mut last_signer = last_signer_guid;
+            loop {
+                match signers_span.pop_front() {
+                    Option::Some(signer_ref) => {
+                        let signer_guid = (*signer_ref).into_guid().unwrap();
+                        last_signer = self
+                            .signer_list
+                            .remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
+                        self.emit(OwnerRemoved { removed_owner_guid: signer_guid });
+                    },
+                    Option::None => { break; }
+                }
+            };
 
+            self.threshold.write(new_threshold);
             if previous_threshold != new_threshold {
                 self.emit(ThresholdUpdated { new_threshold });
             }
-
-            let mut signers_removed = signers_to_remove.span();
-            loop {
-                match signers_removed.pop_front() {
-                    Option::Some(removed_signer) => {
-                        self.emit(OwnerRemoved { removed_owner_guid: *removed_signer });
-                    },
-                    Option::None => { break; }
-                };
-            };
         }
 
-        fn reorder_signers(ref self: ContractState, new_signer_order: Array<felt252>) {
+        fn reorder_signers(ref self: ContractState, new_signer_order: Array<Signer>) {
             assert_only_self();
-            let (signers_len, last_signer) = self.load();
+            let (signers_len, mut last_signer) = self.signer_list.load();
             assert(new_signer_order.len() == signers_len, 'argent/too-short');
-            let mut sself = @self;
-            let mut signers_to_check = new_signer_order.span();
+            //remove all the signers of the list
+            let mut new_signer_order_span = new_signer_order.span();
+            let mut new_signer_order_guid = array![];
             loop {
-                match signers_to_check.pop_front() {
+                match new_signer_order_span.pop_front() {
                     Option::Some(signer) => {
-                        assert(sself.is_signer_using_last(*signer, last_signer), 'argent/unknown-signer');
+                        let signer_guid = (*signer).into_guid().unwrap();
+                        new_signer_order_guid.append(signer_guid);
+                        last_signer = self
+                            .signer_list
+                            .remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
                     },
                     Option::None => { break; }
                 };
             };
-
-            let mut signers_to_reorder = new_signer_order.span();
-            let mut prev_signer = 0;
-            loop {
-                match signers_to_reorder.pop_front() {
-                    Option::Some(signer) => {
-                        self.signer_list.write(prev_signer, *signer);
-                        prev_signer = *signer;
-                    },
-                    Option::None => {
-                        self.signer_list.write(prev_signer, 0);
-                        break;
-                    }
-                };
-            };
+            // add all the signers of the list
+            self.signer_list.add_signers(signers_to_add: new_signer_order_guid.span(), last_signer: 0);
         }
 
-        fn replace_signer(ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252) {
+        fn replace_signer(ref self: ContractState, signer_to_remove: Signer, signer_to_add: Signer) {
             assert_only_self();
-            let (new_signers_count, last_signer) = self.load();
+            let (new_signers_count, last_signer) = self.signer_list.load();
 
-            self.replace_signer_inner(signer_to_remove, signer_to_add, last_signer);
+            let signer_to_remove_guid = signer_to_remove.into_guid().unwrap();
+            let signer_to_add_guid = signer_to_add.into_guid().unwrap();
+            self
+                .signer_list
+                .replace_signer(
+                    signer_to_remove: signer_to_remove_guid, signer_to_add: signer_to_add_guid, last_signer: last_signer
+                );
 
-            self.emit(OwnerRemoved { removed_owner_guid: signer_to_remove });
-            self.emit(OwnerAdded { new_owner_guid: signer_to_add });
+            self.emit(OwnerRemoved { removed_owner_guid: signer_to_remove_guid });
+            self.emit(OwnerAdded { new_owner_guid: signer_to_add_guid });
         }
 
         fn get_name(self: @ContractState) -> felt252 {
@@ -348,16 +376,20 @@ mod ArgentGenericAccount {
             self.threshold.read()
         }
 
-        fn get_signers(self: @ContractState) -> Array<felt252> {
-            self.get_signers_inner()
+        fn get_signers_guid(self: @ContractState) -> Array<felt252> {
+            self.signer_list.get_signers()
         }
 
-        fn is_signer(self: @ContractState, signer: felt252) -> bool {
-            self.is_signer_inner(signer)
+        fn is_signer(self: @ContractState, signer: Signer) -> bool {
+            self.signer_list.is_signer(signer.into_guid().unwrap())
+        }
+
+        fn is_signer_guid(self: @ContractState, signer_guid: felt252) -> bool {
+            self.signer_list.is_signer(signer_guid)
         }
 
         fn is_valid_signer_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
-            let is_signer = self.is_signer_inner(signer_signature.signer_into_guid().unwrap());
+            let is_signer = self.signer_list.is_signer(signer_signature.signer_into_guid().unwrap());
             assert(is_signer, 'argent/not-a-signer');
             signer_signature.is_valid_signature(hash)
         }
@@ -386,8 +418,12 @@ mod ArgentGenericAccount {
             }
         }
 
-        fn trigger_escape_signer(ref self: ContractState, target_signer: felt252, new_signer: felt252) {
+        fn trigger_escape_signer(ref self: ContractState, target_signer: Signer, new_signer: Signer) {
             assert_only_self();
+
+            let target_signer_guid = target_signer.into_guid().unwrap();
+            let new_signer_guid = new_signer.into_guid().unwrap();
+            self.emit(SignerLinked { signer_guid: new_signer_guid, signer: new_signer });
 
             let current_escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
@@ -395,12 +431,18 @@ mod ArgentGenericAccount {
             let current_escaped_signer = current_escape.target_signer;
             if (current_escaped_signer != 0 && current_escape_status == EscapeStatus::Ready) {
                 // can only override an escape with a target signer of lower priority than the current one
-                assert(self.is_signer_before(current_escaped_signer, target_signer), 'argent/cannot-override-escape');
+                assert(
+                    self.signer_list.is_signer_before(current_escaped_signer, target_signer_guid),
+                    'argent/cannot-override-escape'
+                );
             }
             let ready_at = get_block_timestamp() + escape_config.security_period;
-            let escape = Escape { ready_at, target_signer, new_signer };
+            let escape = Escape { ready_at, target_signer: target_signer_guid, new_signer: new_signer_guid };
             self.escape.write(escape);
-            self.emit(EscapeSignerTriggered { ready_at, target_signer, new_signer });
+            self
+                .emit(
+                    EscapeSignerTriggered { ready_at, target_signer: target_signer_guid, new_signer: new_signer_guid }
+                );
         }
 
         fn escape_signer(ref self: ContractState) {
@@ -412,8 +454,8 @@ mod ArgentGenericAccount {
             assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
             // replace signer 
-            let (_, last_signer) = self.load();
-            self.replace_signer_inner(current_escape.target_signer, current_escape.new_signer, last_signer);
+            let (_, last_signer) = self.signer_list.load();
+            self.signer_list.replace_signer(current_escape.target_signer, current_escape.new_signer, last_signer);
             self
                 .emit(
                     SignerEscaped { target_signer: current_escape.target_signer, new_signer: current_escape.new_signer }
@@ -485,26 +527,30 @@ mod ArgentGenericAccount {
                     let escape_enabled = self.escape_enabled.read();
                     assert(escape_enabled.is_enabled == 1 && threshold > 1, 'argent/recovery-unavailable');
                     // get escaped signer
-                    let calldata: Span<felt252> = first_call.calldata.span();
-                    let escaped_signer = calldata.at(0);
+                    let mut calldata: Span<felt252> = first_call.calldata.span();
+                    let escaped_signer: Signer = Serde::deserialize(ref calldata).expect('argent/invalid-calldata');
+                    let escaped_signer_guid = escaped_signer.into_guid().unwrap();
                     // check it is a valid signer
-                    let is_signer = self.is_signer_inner(*escaped_signer);
+                    let is_signer = self.signer_list.is_signer(escaped_signer_guid);
                     assert(is_signer, 'argent/escaped-not-signer');
                     // check signatures
                     let valid = self
-                        .is_valid_signature_with_conditions(execution_hash, threshold - 1, *escaped_signer, signature);
+                        .is_valid_signature_with_conditions(
+                            execution_hash, threshold - 1, escaped_signer_guid, signature
+                        );
                     assert(valid, 'argent/invalid-signature');
                     return;
                 } else if (*first_call.selector == selector!("escape_signer")) {
                     // check we can do recovery
-                    let escape_enabled = self.escape_enabled.read();
-                    assert(escape_enabled.is_enabled == 1 && threshold > 1, 'argent/recovery-unavailable');
+                    let escape_config = self.escape_enabled.read();
+                    assert(escape_config.is_enabled == 1 && threshold > 1, 'argent/recovery-unavailable');
                     // get escaped signer
-                    let calldata: Span<felt252> = first_call.calldata.span();
-                    let escaped_signer = calldata.at(0);
+                    let escaped_signer_guid = (self.escape.read()).target_signer;
                     // check signatures
                     let valid = self
-                        .is_valid_signature_with_conditions(execution_hash, threshold - 1, *escaped_signer, signature);
+                        .is_valid_signature_with_conditions(
+                            execution_hash, threshold - 1, escaped_signer_guid, signature
+                        );
                     assert(valid, 'argent/invalid-signature');
                     return;
                 }
@@ -530,7 +576,7 @@ mod ArgentGenericAccount {
                 match signer_signatures.pop_front() {
                     Option::Some(signer_sig) => {
                         let signer_guid = signer_sig.signer_into_guid().unwrap();
-                        assert(self.is_signer_inner(signer_guid), 'argent/not-a-signer');
+                        assert(self.signer_list.is_signer(signer_guid), 'argent/not-a-signer');
                         assert(signer_guid != excluded_signer, 'argent/unauthorised_signer');
                         let signer_uint: u256 = signer_guid.into();
                         assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
@@ -551,194 +597,6 @@ mod ArgentGenericAccount {
         assert(signers_len != 0, 'argent/invalid-signers-len');
         assert(signers_len <= MAX_SIGNERS_COUNT, 'argent/invalid-signers-len');
         assert(threshold <= signers_len, 'argent/bad-threshold');
-    }
-
-    #[generate_trait]
-    impl MultisigStorageImpl of MultisigStorage {
-        // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
-        // Otherwise cost increases with the list size
-        fn is_signer_inner(self: @ContractState, signer: felt252) -> bool {
-            if signer == 0 {
-                return false;
-            }
-            let next_signer = self.signer_list.read(signer);
-            if next_signer != 0 {
-                return true;
-            }
-            // check if its the latest
-            let last_signer = self.find_last_signer();
-
-            last_signer == signer
-        }
-
-        // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
-        fn is_signer_using_last(self: @ContractState, signer: felt252, last_signer: felt252) -> bool {
-            if signer == 0 {
-                return false;
-            }
-
-            let next_signer = self.signer_list.read(signer);
-            if next_signer != 0 {
-                return true;
-            }
-
-            last_signer == signer
-        }
-
-        // Return the last signer or zero if no signers. Cost increases with the list size
-        fn find_last_signer(self: @ContractState) -> felt252 {
-            let mut current_signer = self.signer_list.read(0);
-            loop {
-                let next_signer = self.signer_list.read(current_signer);
-                if next_signer == 0 {
-                    break current_signer;
-                }
-                current_signer = next_signer;
-            }
-        }
-
-        // Returns the signer before `signer_after` or 0 if the signer is the first one. 
-        // Reverts if `signer_after` is not found
-        // Cost increases with the list size
-        fn find_signer_before(self: @ContractState, signer_after: felt252) -> felt252 {
-            let mut current_signer = 0;
-            loop {
-                let next_signer = self.signer_list.read(current_signer);
-                assert(next_signer != 0, 'argent/cant-find-signer-before');
-
-                if next_signer == signer_after {
-                    break current_signer;
-                }
-                current_signer = next_signer;
-            }
-        }
-
-        // Returns true if `first_signer` is before `second_signer` in the signer list.
-        fn is_signer_before(self: @ContractState, first_signer: felt252, second_signer: felt252) -> bool {
-            let mut is_before: bool = false;
-            let mut current_signer = first_signer;
-            loop {
-                let next_signer = self.signer_list.read(current_signer);
-                if (next_signer == 0_felt252) {
-                    break;
-                }
-                if (next_signer == second_signer) {
-                    is_before = true;
-                    break;
-                }
-                current_signer = next_signer;
-            };
-            return is_before;
-        }
-
-        fn add_signers_inner(ref self: ContractState, mut signers_to_add: Span<felt252>, last_signer: felt252) {
-            match signers_to_add.pop_front() {
-                Option::Some(signer_ref) => {
-                    let signer = *signer_ref;
-                    assert(signer != 0, 'argent/invalid-zero-signer');
-
-                    let current_signer_status = self.is_signer_using_last(signer, last_signer);
-                    assert(!current_signer_status, 'argent/already-a-signer');
-
-                    // Signers are added at the end of the list
-                    self.signer_list.write(last_signer, signer);
-
-                    self.add_signers_inner(signers_to_add, last_signer: signer);
-                },
-                Option::None => (),
-            }
-        }
-
-        fn remove_signers_inner(ref self: ContractState, mut signers_to_remove: Span<felt252>, last_signer: felt252) {
-            match signers_to_remove.pop_front() {
-                Option::Some(signer_ref) => {
-                    let signer = *signer_ref;
-                    let current_signer_status = self.is_signer_using_last(signer, last_signer);
-                    assert(current_signer_status, 'argent/not-a-signer');
-
-                    // Signer pointer set to 0, Previous pointer set to the next in the list
-
-                    let previous_signer = self.find_signer_before(signer);
-                    let next_signer = self.signer_list.read(signer);
-
-                    self.signer_list.write(previous_signer, next_signer);
-
-                    if next_signer == 0 {
-                        // Removing the last item
-                        self.remove_signers_inner(signers_to_remove, last_signer: previous_signer);
-                    } else {
-                        // Removing an item in the middle
-                        self.signer_list.write(signer, 0);
-                        self.remove_signers_inner(signers_to_remove, last_signer);
-                    }
-                },
-                Option::None => (),
-            }
-        }
-
-        fn replace_signer_inner(
-            ref self: ContractState, signer_to_remove: felt252, signer_to_add: felt252, last_signer: felt252
-        ) {
-            assert(signer_to_add != 0, 'argent/invalid-zero-signer');
-
-            let signer_to_add_status = self.is_signer_using_last(signer_to_add, last_signer);
-            assert(!signer_to_add_status, 'argent/already-a-signer');
-
-            let signer_to_remove_status = self.is_signer_using_last(signer_to_remove, last_signer);
-            assert(signer_to_remove_status, 'argent/not-a-signer');
-
-            // removed signer will point to 0
-            // previous signer will point to the new one
-            // new signer will point to the next one
-            let previous_signer = self.find_signer_before(signer_to_remove);
-            let next_signer = self.signer_list.read(signer_to_remove);
-
-            self.signer_list.write(signer_to_remove, 0);
-            self.signer_list.write(previous_signer, signer_to_add);
-            self.signer_list.write(signer_to_add, next_signer);
-        }
-
-        // Returns the number of signers and the last signer (or zero if the list is empty). Cost increases with the list size
-        // returns (signers_len, last_signer)
-        fn load(self: @ContractState) -> (usize, felt252) {
-            let mut current_signer = 0;
-            let mut size = 0;
-            loop {
-                let next_signer = self.signer_list.read(current_signer);
-                if next_signer == 0 {
-                    break (size, current_signer);
-                }
-                current_signer = next_signer;
-                size += 1;
-            }
-        }
-
-        // Returns the number of signers. Cost increases with the list size
-        fn get_signers_len(self: @ContractState) -> usize {
-            let mut current_signer = self.signer_list.read(0);
-            let mut size = 0;
-            loop {
-                if current_signer == 0 {
-                    break size;
-                }
-                current_signer = self.signer_list.read(current_signer);
-                size += 1;
-            }
-        }
-
-        fn get_signers_inner(self: @ContractState) -> Array<felt252> {
-            let mut current_signer = self.signer_list.read(0);
-            let mut signers = array![];
-            loop {
-                if current_signer == 0 {
-                    // Can't break signers atm because "variable was previously moved"
-                    break;
-                }
-                signers.append(current_signer);
-                current_signer = self.signer_list.read(current_signer);
-            };
-            signers
-        }
     }
 
     fn get_escape_status(escape_ready_at: u64, expiry_period: u64) -> EscapeStatus {

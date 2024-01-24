@@ -1,11 +1,11 @@
-use core::serde::Serde;
 use argent::common::signer_signature::IntoGuid;
+use argent::common::signer_signature::{Signer, StarknetSigner, SignerSignature};
 use argent::multisig::argent_multisig::ArgentMultisig;
 use argent_tests::setup::multisig_test_setup::{
     initialize_multisig, signer_pubkey_1, signer_pubkey_2, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
     initialize_multisig_with_one_signer
 };
-use argent::common::signer_signature::{Signer, StarknetSigner, SignerSignature};
+use core::serde::Serde;
 use starknet::deploy_syscall;
 
 #[test]

@@ -1,7 +1,6 @@
 #[starknet::contract]
 mod ArgentMultisig {
-    use core::result::ResultTrait;
-use argent::common::{
+    use argent::common::{
         account::{
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
         },
@@ -14,12 +13,14 @@ use argent::common::{
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component
         },
-        upgrade::{IUpgradeable, do_upgrade}, signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait},
-        interface::IArgentMultisig, serialization::full_deserialize,
+        upgrade::{IUpgradeable, do_upgrade},
+        signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait}, interface::IArgentMultisig,
+        serialization::full_deserialize,
         transaction_version::{get_tx_info, assert_correct_invoke_version, assert_no_unsupported_v3_fields},
         signer_list::signer_list_component
     };
     use argent::multisig::{interface::IDeprecatedArgentMultisig};
+    use core::result::ResultTrait;
     use ecdsa::check_ecdsa_signature;
 
     use starknet::{
@@ -123,12 +124,12 @@ use argent::common::{
     fn constructor(ref self: ContractState, new_threshold: usize, signers: Array<Signer>) {
         let new_signers_count = signers.len();
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
-        
+
         let mut signers_span = signers.span();
         let mut last_signer = 0;
         loop {
             match signers_span.pop_front() {
-                Option::Some(signer) => { 
+                Option::Some(signer) => {
                     let signer_guid = (*signer).into_guid().unwrap();
                     self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
                     self.emit(OwnerAdded { new_owner_guid: signer_guid });
@@ -246,7 +247,7 @@ use argent::common::{
             let mut last_signer = last_signer_guid;
             loop {
                 match signers_span.pop_front() {
-                    Option::Some(signer) => { 
+                    Option::Some(signer) => {
                         let signer_guid = (*signer).into_guid().unwrap();
                         self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
                         self.emit(OwnerAdded { new_owner_guid: signer_guid });
@@ -276,7 +277,9 @@ use argent::common::{
                 match signers_span.pop_front() {
                     Option::Some(signer_ref) => {
                         let signer_guid = (*signer_ref).into_guid().unwrap();
-                        last_signer = self.signer_list.remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
+                        last_signer = self
+                            .signer_list
+                            .remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
                         self.emit(OwnerRemoved { removed_owner_guid: signer_guid });
                     },
                     Option::None => { break; }
@@ -296,10 +299,14 @@ use argent::common::{
         fn replace_signer(ref self: ContractState, signer_to_remove: Signer, signer_to_add: Signer) {
             assert_only_self();
             let (new_signers_count, last_signer) = self.signer_list.load();
-            
+
             let signer_to_remove_guid = signer_to_remove.into_guid().unwrap();
             let signer_to_add_guid = signer_to_add.into_guid().unwrap();
-            self.signer_list.replace_signer(signer_to_remove: signer_to_remove_guid, signer_to_add: signer_to_add_guid, last_signer: last_signer);
+            self
+                .signer_list
+                .replace_signer(
+                    signer_to_remove: signer_to_remove_guid, signer_to_add: signer_to_add_guid, last_signer: last_signer
+                );
 
             self.emit(OwnerRemoved { removed_owner_guid: signer_to_remove_guid });
             self.emit(OwnerAdded { new_owner_guid: signer_to_add_guid });

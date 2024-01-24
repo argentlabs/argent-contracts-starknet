@@ -10,7 +10,7 @@ import {
   ArgentX,
   AllowedMethod,
   TokenAmount,
-  SessionSigner,
+  getSessionTypedData,
 } from "./lib";
 
 const tokenAmounts: TokenAmount[] = [];
@@ -44,24 +44,22 @@ describe("ArgentAccount: outside execution", function () {
     const allowedMethods: AllowedMethod[] = [
       {
         "Contract Address": testDapp.address,
-        selector: selector.getSelectorFromName("set_number"),
+        selector: "set_number",
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, tokenAmounts);
+    const sessionRequest = dappService.createSessionRequest(account.address, allowedMethods, tokenAmounts);
 
-    const accountSessionSignature = await argentX.getOffchainSignature(sessionRequest);
-
-    const sessionSigner = new SessionSigner(
-      backendService,
-      dappService.sessionKey,
-      accountSessionSignature,
-      sessionRequest,
-    );
+    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
 
     const calls = [testDapp.populateTransaction.set_number(42n)];
 
-    const outsideExecutionCall = await sessionSigner.getOutisdeExecutionCall(calls, account.address);
+    const outsideExecutionCall = await dappService.getOutsideExecutionCall(
+      sessionRequest,
+      accountSessionSignature,
+      calls,
+      account.address,
+    );
 
     await setTime(initialTime);
 

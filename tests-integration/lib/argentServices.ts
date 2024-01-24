@@ -7,7 +7,6 @@ import {
   V2InvocationsSignerDetails,
   ec,
   hash,
-  selector,
   transaction,
   typedData,
 } from "starknet";
@@ -27,9 +26,8 @@ export class ArgentX {
     public backendService: BackendService,
   ) {}
 
-  public async getOffchainSignature(sessionRequest: OffChainSession): Promise<ArraySignatureType> {
-    const sessionTypedData = await getSessionTypedData(sessionRequest);
-    return (await this.account.signMessage(sessionTypedData)) as ArraySignatureType;
+  public async getOffchainSignature(typedData: typedData.TypedData): Promise<ArraySignatureType> {
+    return (await this.account.signMessage(typedData)) as ArraySignatureType;
   }
 }
 
@@ -42,19 +40,17 @@ export class BackendService {
     sessionTokenToSign: OffChainSession,
   ): Promise<StarknetSig> {
     // verify session param correct
-
     // extremely simplified version of the backend verification
+    // backend must check, timestamps fees, used tokens nfts...
     const allowed_methods = sessionTokenToSign.allowed_methods;
     if (
       !calls.every((call) => {
         return allowed_methods.some(
-          (method) =>
-            method["Contract Address"] === call.contractAddress &&
-            method.selector === selector.getSelectorFromName(call.entrypoint),
+          (method) => method["Contract Address"] === call.contractAddress && method.selector === call.entrypoint,
         );
       })
     ) {
-      throw new Error("Call not allowed");
+      throw new Error("Call not allowed by guardian");
     }
 
     const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
@@ -88,6 +84,7 @@ export class BackendService {
     accountAddress: string,
     outsideExecution: OutsideExecution,
   ): Promise<StarknetSig> {
+    // TODO backend must verify, timestamps fees, used tokens nfts...
     const currentTypedData = getTypedData(outsideExecution, await provider.getChainId());
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
 
@@ -97,7 +94,7 @@ export class BackendService {
     return { r: BigInt(r), s: BigInt(s) };
   }
 
-  public getGuardianKey(): bigint {
+  public getGuardianKey(accountAddress: string): bigint {
     return this.guardian.publicKey;
   }
 }

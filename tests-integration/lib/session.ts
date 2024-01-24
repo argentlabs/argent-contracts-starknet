@@ -8,19 +8,19 @@ export const sessionTypes = {
     { name: "chainId", type: "felt" },
   ],
   "Allowed Method": [
-    { name: "Contract Address", type: "ContractAddress" },
+    { name: "Contract Address", type: "felt" },
     { name: "selector", type: "selector" },
   ],
   TokenAmount: [
-    { name: "token_address", type: "ContractAddress" },
+    { name: "token_address", type: "felt" },
     { name: "amount", type: "u256" },
   ],
   u256: [
-    { name: "low", type: "u128" },
-    { name: "high", type: "u128" },
+    { name: "low", type: "felt" },
+    { name: "high", type: "felt" },
   ],
   Session: [
-    { name: "Expires At", type: "u128" },
+    { name: "Expires At", type: "felt" },
     { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
     { name: "Token Amounts", type: "TokenAmount*" },
     { name: "NFT Contracts", type: "felt*" },

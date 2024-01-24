@@ -1,4 +1,6 @@
-use argent::common::transaction_version::{assert_correct_invoke_version, assert_correct_declare_version};
+use argent::common::transaction_version::{
+    assert_correct_invoke_version, assert_correct_deploy_account_version, assert_correct_declare_version
+};
 use starknet::{contract_address_const, testing::{set_caller_address, set_contract_address}, account::Call};
 
 
@@ -10,11 +12,24 @@ fn test_assert_correct_invoke_version() {
     assert_correct_invoke_version(0x100000000000000000000000000000000 + 3);
 }
 
-
 #[test]
 #[should_panic(expected: ('argent/invalid-tx-version',))]
 fn assert_invoke_version_invalid() {
     assert_correct_invoke_version(2);
+}
+
+#[test]
+fn test_assert_correct_deploy_account_version() {
+    assert_correct_deploy_account_version(1);
+    assert_correct_deploy_account_version(0x100000000000000000000000000000000 + 1);
+    assert_correct_deploy_account_version(3);
+    assert_correct_deploy_account_version(0x100000000000000000000000000000000 + 3);
+}
+
+#[test]
+#[should_panic(expected: ('argent/invalid-deploy-account-v',))]
+fn assert_deploy_account_invalid() {
+    assert_correct_deploy_account_version(2);
 }
 
 #[test]

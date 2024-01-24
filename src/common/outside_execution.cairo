@@ -49,9 +49,14 @@ struct OutsideExecution {
     /// `execute_from_outside` only succeeds if executing before this time
     execute_before: u64,
     /// The calls that will be executed by the Account
+    /// Using `Call` here instead of redeclaring `OutsideCall` to avoid the conversion
     calls: Span<Call>
 }
 
+const OUTSIDE_EXECUTION_TYPE_HASH: felt252 =
+    selector!(
+        "OutsideExecution(caller:felt,nonce:felt,execute_after:felt,execute_before:felt,calls_len:felt,calls:OutsideCall*)OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)"
+    );
 
 /// @dev If you are using this component you have to support it in the `supports_interface` function
 // This is achieved by adding outside_execution::ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
@@ -117,12 +122,6 @@ struct StarkNetDomain {
     chain_id: felt252,
 }
 
-#[derive(Drop, Serde)]
-struct OutsideCall {
-    to: ContractAddress,
-    selector: felt252,
-    calldata: Array<felt252>,
-}
 
 #[inline(always)]
 fn hash_domain(domain: @StarkNetDomain) -> felt252 {
@@ -166,11 +165,7 @@ fn hash_outside_execution(outside_execution: @OutsideExecution) -> felt252 {
     };
 
     PedersenTrait::new(0)
-        .update(
-            selector!(
-                "OutsideExecution(caller:felt,nonce:felt,execute_after:felt,execute_before:felt,calls_len:felt,calls:OutsideCall*)OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)"
-            )
-        )
+        .update(OUTSIDE_EXECUTION_TYPE_HASH)
         .update((*outside_execution.caller).into())
         .update(*outside_execution.nonce)
         .update((*outside_execution.execute_after).into())

@@ -15,7 +15,7 @@ import {
 
 const tokenLimits: TokenAmount[] = [{ token_address: "0x100", amount: uint256.bnToUint256(10) }];
 
-describe.only("Hybrid Session Account: execute calls", function () {
+describe("Hybrid Session Account: execute calls", function () {
   let sessionAccountClassHash: string;
   let testDappOneContract: Contract;
   let mockErc20Contract: Contract;

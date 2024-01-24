@@ -15,6 +15,7 @@ import {
   merkle,
   RPC,
   V2InvocationsSignerDetails,
+  TypedData,
 } from "starknet";
 import {
   OffChainSession,
@@ -26,6 +27,7 @@ import {
   getSessionTypedData,
   ALLOWED_METHOD_HASH,
   StarknetSig,
+  ArgentAccount,
 } from ".";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -36,9 +38,9 @@ export class ArgentX {
     public backendService: BackendService,
   ) {}
 
-  public async getOffchainSignature(sessionRequest: OffChainSession): Promise<ArraySignatureType> {
-    const sessionTypedData = await getSessionTypedData(sessionRequest);
-    return (await this.account.signMessage(sessionTypedData)) as ArraySignatureType;
+  public async getOffchainSignature(typedData: TypedData): Promise<ArraySignatureType> {
+    // autosigning for PoC, in real live there would be some checks by the extension and by the backend
+    return (await this.account.signMessage(typedData)) as ArraySignatureType;
   }
 }
 
@@ -51,19 +53,17 @@ export class BackendService {
     sessionTokenToSign: OffChainSession,
   ): Promise<StarknetSig> {
     // verify session param correct
-
     // extremely simplified version of the backend verification
+    // backend must check, timestamps fees, used tokens nfts...
     const allowed_methods = sessionTokenToSign.allowed_methods;
     if (
       !calls.every((call) => {
         return allowed_methods.some(
-          (method) =>
-            method["Contract Address"] === call.contractAddress &&
-            method.selector === selector.getSelectorFromName(call.entrypoint),
+          (method) => method["Contract Address"] === call.contractAddress && method.selector === call.entrypoint,
         );
       })
     ) {
-      throw new Error("Call not allowed");
+      throw new Error("Call not allowed by guardian");
     }
 
     const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
@@ -91,22 +91,23 @@ export class BackendService {
     return { r: BigInt(r), s: BigInt(s) };
   }
 
-  public getGuardianKey(): bigint {
+  public getGuardianKey(accountAddress: string): bigint {
     return this.guardian.publicKey;
   }
 }
 
 export class DappService {
   constructor(
-    public argentBackend: BackendService,
+    private argentBackend: BackendService,
     public sessionKey: KeyPair = randomKeyPair(),
   ) {}
 
   public createSessionRequest(
+    accountAddress: string,
     allowed_methods: AllowedMethod[],
     token_amounts: TokenAmount[],
     expires_at = 150,
-    max_fee_usage = { token_address: "0x0000", amount: uint256.bnToUint256(1000000n) },
+    max_fee_usage = { token_address: "0x0", amount: uint256.bnToUint256(1000000n) },
     nft_contracts: string[] = [],
   ): OffChainSession {
     return {
@@ -115,13 +116,27 @@ export class DappService {
       token_amounts,
       nft_contracts,
       max_fee_usage,
-      guardian_key: this.argentBackend.getGuardianKey(),
+      guardian_key: this.argentBackend.getGuardianKey(accountAddress),
       session_key: this.sessionKey.publicKey,
     };
   }
+
+  public getAccountWithSessionSigner(
+    account: ArgentAccount,
+    completedSession: OffChainSession,
+    accountSessionSignature: ArraySignatureType,
+  ) {
+    return new Account(
+      account,
+      account.address,
+      new DappSigner(this.argentBackend, this.sessionKey, accountSessionSignature, completedSession),
+      account.cairoVersion,
+      account.transactionVersion,
+    );
+  }
 }
 
-export class DappSigner extends RawSigner {
+class DappSigner extends RawSigner {
   constructor(
     public argentBackend: BackendService,
     public sessionKeyPair: KeyPair,
@@ -150,17 +165,14 @@ export class DappSigner extends RawSigner {
         version: det.version,
       });
     } else if (Object.values(RPC.ETransactionVersion3).includes(transactionsDetail.version as any)) {
-      throw Error("not implemented");
+      throw Error("tx v3 not implemented yet"); // TODO
     } else {
       throw Error("unsupported signTransaction version");
     }
 
-    const leaves = this.completedSession.allowed_methods.map((method) =>
-      hash.computeHashOnElements([ALLOWED_METHOD_HASH, method["Contract Address"], method.selector]),
-    );
     const session = {
       expires_at: this.completedSession.expires_at,
-      allowed_methods_root: new merkle.MerkleTree(leaves).root.toString(),
+      allowed_methods_root: this.buildMerkleTree().root.toString(),
       token_amounts: this.completedSession.token_amounts,
       nft_contracts: this.completedSession.nft_contracts,
       max_fee_usage: this.completedSession.max_fee_usage,
@@ -173,7 +185,7 @@ export class DappSigner extends RawSigner {
       account_signature: this.accountSessionSignature,
       session_signature: await this.signTxAndSession(msgHash, transactionsDetail),
       backend_signature: await this.argentBackend.signTxAndSession(calls, transactionsDetail, this.completedSession),
-      proofs: this.getSessionProofs(calls, this.completedSession.allowed_methods, leaves),
+      proofs: this.getSessionProofs(calls),
     };
 
     return [SESSION_MAGIC, ...CallData.compile(sessionToken)];
@@ -195,17 +207,25 @@ export class DappSigner extends RawSigner {
     };
   }
 
-  private getSessionProofs(calls: Call[], allowedMethods: AllowedMethod[], leaves: string[]): string[][] {
-    const tree = new merkle.MerkleTree(leaves);
+  private buildMerkleTree(): merkle.MerkleTree {
+    const leaves = this.completedSession.allowed_methods.map((method) =>
+      hash.computeHashOnElements([
+        ALLOWED_METHOD_HASH,
+        method["Contract Address"],
+        selector.getSelectorFromName(method.selector),
+      ]),
+    );
+    return new merkle.MerkleTree(leaves);
+  }
+
+  private getSessionProofs(calls: Call[]): string[][] {
+    const tree = this.buildMerkleTree();
 
     return calls.map((call) => {
-      const allowedIndex = allowedMethods.findIndex((allowedMethod) => {
-        return (
-          allowedMethod["Contract Address"] == call.contractAddress &&
-          allowedMethod.selector == selector.getSelectorFromName(call.entrypoint)
-        );
+      const allowedIndex = this.completedSession.allowed_methods.findIndex((allowedMethod) => {
+        return allowedMethod["Contract Address"] == call.contractAddress && allowedMethod.selector == call.entrypoint;
       });
-      return tree.getProof(tree.leaves[allowedIndex], leaves);
+      return tree.getProof(tree.leaves[allowedIndex], tree.leaves);
     });
   }
 }

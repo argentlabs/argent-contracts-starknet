@@ -47,12 +47,12 @@ struct StarkNetDomain {
 const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
 const SESSION_TYPE_HASH: felt252 =
     selector!(
-        "Session(Expires At:u128,Allowed Methods:merkletree,Token Amounts:TokenAmount*,NFT Contracts:felt*,Max Fee Usage:TokenAmount,Guardian Key:felt,Session Key:felt)TokenAmount(token_address:ContractAddress,amount:u256)u256(low:u128,high:u128)"
+        "Session(Expires At:felt,Allowed Methods:merkletree,Token Amounts:TokenAmount*,NFT Contracts:felt*,Max Fee Usage:TokenAmount,Guardian Key:felt,Session Key:felt)TokenAmount(token_address:felt,amount:u256)u256(low:felt,high:felt)"
     );
 const TOKEN_AMOUNT_TYPE_HASH: felt252 =
-    selector!("TokenAmount(token_address:ContractAddress,amount:u256)u256(low:u128,high:u128)");
-const U256_TYPE_HASH: felt252 = selector!("u256(low:u128,high:u128)");
-const ALLOWED_METHOD_HASH: felt252 = selector!("Allowed Method(Contract Address:ContractAddress,selector:selector)");
+    selector!("TokenAmount(token_address:felt,amount:u256)u256(low:felt,high:felt)");
+const U256_TYPE_HASH: felt252 = selector!("u256(low:felt,high:felt)");
+const ALLOWED_METHOD_HASH: felt252 = selector!("Allowed Method(Contract Address:felt,selector:selector)");
 
 
 trait IOffchainMessageHash<T> {

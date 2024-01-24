@@ -74,28 +74,28 @@ mod session_component {
             assert(*signature[0] == super::SESSION_MAGIC, 'session/invalid-sig-prefix');
             let mut serialized = signature.slice(1, signature.len() - 1);
             let token: SessionToken = Serde::deserialize(ref serialized).expect('session/invalid-calldata');
-            assert(serialized.is_empty(), 'session/excess-data');
+            assert(serialized.is_empty(), 'session/invalid-calldata');
 
             let token_session_hash = token.session.get_message_hash();
 
             assert(!self.revoked_session.read(token_session_hash), 'session/revoked');
-
-            // TODO: maybe use poseidon hash
+            // TODO assert timestamp
 
             assert(
                 state.is_valid_signature(token_session_hash, token.account_signature.snapshot.clone()) == VALIDATED,
                 'session/invalid-account-sig'
             );
 
+            // TODO: use poseidon hash
             let message_hash = LegacyHash::hash(transaction_hash, token_session_hash);
 
             assert(
-                is_valid_signature_generic(message_hash, token.session.session_key, token.session_signature),
+                is_valid_stark_signature(message_hash, token.session.session_key, token.session_signature),
                 'session/invalid-session-sig'
             );
 
             assert(
-                is_valid_signature_generic(message_hash, token.session.guardian_key, token.backend_signature),
+                is_valid_stark_signature(message_hash, token.session.guardian_key, token.backend_signature),
                 'session/invalid-guardian-sig'
             );
 
@@ -106,12 +106,13 @@ mod session_component {
     }
 
     #[inline(always)]
-    fn is_valid_signature_generic(hash: felt252, signer: felt252, signature: StarknetSignature) -> bool {
-        check_ecdsa_signature(hash, signer, signature.r, signature.s)
+    fn is_valid_stark_signature(hash: felt252, signer_pub_key: felt252, signature: StarknetSignature) -> bool {
+        check_ecdsa_signature(hash, signer_pub_key, signature.r, signature.s)
     }
 
     fn assert_valid_session_calls(token: SessionToken, mut calls: Span<Call>) {
         assert(token.proofs.len() == calls.len(), 'unaligned-proofs');
+        // TODO: use poseidon hash when using SNIP-12 rev 1
         let merkle_root = token.session.allowed_methods_root;
         let mut merkle_init: MerkleTree<Hasher> = MerkleTreeTrait::new();
         let mut proofs = token.proofs;

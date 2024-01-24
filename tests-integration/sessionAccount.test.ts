@@ -1,4 +1,4 @@
-import { num, Contract, selector, uint256 } from "starknet";
+import { num, Contract, selector, uint256, Account } from "starknet";
 import {
   declareContract,
   loadContract,
@@ -8,9 +8,9 @@ import {
   DappService,
   TokenAmount,
   BackendService,
-  DappSigner,
   ArgentX,
   deployAccount,
+  getSessionTypedData,
 } from "./lib";
 
 const tokenLimits: TokenAmount[] = [{ token_address: "0x100", amount: uint256.bnToUint256(10) }];
@@ -49,14 +49,14 @@ describe("Hybrid Session Account: execute calls", function () {
     const allowedMethods: AllowedMethod[] = [
       {
         "Contract Address": testDappOneContract.address,
-        selector: selector.getSelectorFromName("set_number_double"),
+        selector: "set_number_double",
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, tokenLimits);
+    const sessionRequest = dappService.createSessionRequest(account.address, allowedMethods, tokenLimits);
 
     // 2. Owner and Guardian signs session
-    const accountSessionSignature = await argentX.getOffchainSignature(sessionRequest);
+    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
 
     //  Every request:
     const calls = [testDappOneContract.populateTransaction.set_number_double(2)];
@@ -64,16 +64,13 @@ describe("Hybrid Session Account: execute calls", function () {
     // 1. dapp requests backend signature
     // backend: can verify the parameters and check it was signed by the account then provides signature
     // 2. dapp signs tx and session, crafts signature and submits transaction
-    const sessionSigner = new DappSigner(
-      backendService,
-      dappService.sessionKey,
-      accountSessionSignature,
+    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+      account,
       sessionRequest,
+      accountSessionSignature,
     );
+    const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
-    account.signer = sessionSigner;
-
-    const { transaction_hash } = await account.execute(calls);
     await account.waitForTransaction(transaction_hash);
     await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
   });
@@ -90,24 +87,24 @@ describe("Hybrid Session Account: execute calls", function () {
     const allowedMethods: AllowedMethod[] = [
       {
         "Contract Address": mockErc20Contract.address,
-        selector: selector.getSelectorFromName("mint"),
+        selector: "mint",
       },
       {
         "Contract Address": mockErc20Contract.address,
-        selector: selector.getSelectorFromName("approve"),
+        selector: "approve",
       },
       {
         "Contract Address": mockErc20Contract.address,
-        selector: selector.getSelectorFromName("transfer_from"),
+        selector: "transfer_from",
       },
     ];
 
     const tokenLimits: TokenAmount[] = [{ token_address: mockErc20Contract.address, amount: uint256.bnToUint256(10) }];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, tokenLimits);
+    const sessionRequest = dappService.createSessionRequest(account.address, allowedMethods, tokenLimits);
 
     // 2. Wallet signs session
-    const accountSessionSignature = await argentX.getOffchainSignature(sessionRequest);
+    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
 
     //  Every request:
     const calls = [
@@ -119,15 +116,13 @@ describe("Hybrid Session Account: execute calls", function () {
     // 1. dapp requests backend signature
     // backend: can verify the parameters and check it was signed by the account then provides signature
     // 2. dapp signs tx and session, crafts signature and submits transaction
-    const sessionSigner = new DappSigner(
-      backendService,
-      dappService.sessionKey,
-      accountSessionSignature,
+    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+      account,
       sessionRequest,
+      accountSessionSignature,
     );
 
-    account.signer = sessionSigner;
-    const { transaction_hash } = await account.execute(calls);
+    const { transaction_hash } = await accountWithDappSigner.execute(calls);
     await account.waitForTransaction(transaction_hash);
     await mockErc20Contract.balance_of(accountContract.address).should.eventually.equal(0n);
     await mockErc20Contract.balance_of("0x999").should.eventually.equal(10n);

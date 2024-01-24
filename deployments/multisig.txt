@@ -1,1 +1,2 @@
-0x737ee2f87ce571a58c6c8da558ec18a07ceb64a6172d5ec46171fbc80077a48: 0.1.0 (mainnet, goerli-1, goerli-2)
+0x6e150953b26271a740bf2b6e9bca17cc52c68d765f761295de51ceb8526ee72: 0.1.1 (mainnet, goerli, sepolia, integration)
+0x737ee2f87ce571a58c6c8da558ec18a07ceb64a6172d5ec46171fbc80077a48: 0.1.0 (mainnet, goerli-1, sepolia, goerli-2)

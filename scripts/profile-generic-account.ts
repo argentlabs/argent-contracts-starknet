@@ -192,4 +192,4 @@ async function deployGenericAccount(owners: StarknetKeyPair[]) {
   return account;
 }
 
-profiler.printProfiles();
+profiler.printSummary();

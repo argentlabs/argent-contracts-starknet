@@ -1,4 +1,4 @@
-import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num, RPC, Call } from "starknet";
+import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num, RPC, Call, CairoCustomEnum } from "starknet";
 import {
   KeyPair,
   MultisigSigner,
@@ -9,13 +9,14 @@ import {
   fundAccountCall,
   declareContract,
   deployer,
+  starknetSigner,
 } from ".";
 
 export interface MultisigWallet {
   account: Account;
   accountContract: Contract;
   keys: KeyPair[];
-  signers: bigint[]; // public keys
+  signers: CairoCustomEnum[]; // public keys
   threshold: bigint;
   receipt: GetTransactionReceiptResponse;
 }
@@ -41,7 +42,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     selfDeploymentIndexes: params.selfDeploymentIndexes ?? [0],
   };
 
-  if (params.selfDeploymentIndexes && !finalParams.selfDeploy) {
+  if (params.selfDeploymentIndexes && !finalParams.selfDeploy) {  
     throw new Error("selfDeploymentIndexes can only be used with selfDeploy");
   }
 
@@ -78,7 +79,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
       keys.filter((_, i) => finalParams.selfDeploymentIndexes.includes(i)),
     );
     const account = new Account(provider, accountAddress, selfDeploymentSigner, "1", defaultTxVersion);
-
+    
     const { transaction_hash } = await account.deploySelf({
       classHash: finalParams.classHash,
       constructorCalldata,
@@ -124,4 +125,4 @@ export async function deployMultisig1_1(
 
 const sortedKeyPairs = (length: number) => randomKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));
 
-export const keysToSigners = (keys: KeyPair[]) => keys.map(({ publicKey }) => publicKey).map(BigInt);
+export const keysToSigners = (keys: KeyPair[]) => keys.map(({ publicKey }) => starknetSigner(publicKey));

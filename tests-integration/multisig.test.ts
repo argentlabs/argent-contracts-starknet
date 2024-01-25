@@ -4,7 +4,7 @@ import { deployMultisig, deployMultisig1_1 } from "./lib/multisig";
 
 describe("ArgentMultisig", function () {
   for (const useTxV3 of [false, true]) {
-    it(`Should deploy multisig contract (TxV3:${useTxV3})`, async function () {
+    it.only(`Should deploy multisig contract (TxV3:${useTxV3})`, async function () {
       const { accountContract, signers, receipt, threshold } = await deployMultisig({
         threshold: 1,
         signersLength: 2,

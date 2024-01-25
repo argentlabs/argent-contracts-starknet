@@ -64,6 +64,7 @@ mod session_component {
             calls: Span<Call>,
             transaction_hash: felt252,
             signature: Span<felt252>,
+            is_from_outside: bool,
         ) {
             // TODO: add check to make sure v3 tx are only possible if the fee token in the session is STRK and same for ETH
 
@@ -71,7 +72,7 @@ mod session_component {
             let account_address = get_contract_address();
 
             assert_no_self_call(calls, account_address);
-            assert(*signature[0] == super::SESSION_MAGIC, 'session/invalid-sig-prefix');
+            assert(*signature[0] == super::SESSION_MAGIC, 'session/invalid-magic-value');
             let mut serialized = signature.slice(1, signature.len() - 1);
             let token: SessionToken = Serde::deserialize(ref serialized).expect('session/invalid-calldata');
             assert(serialized.is_empty(), 'session/invalid-calldata');

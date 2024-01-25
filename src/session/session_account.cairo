@@ -50,6 +50,8 @@ mod HybridSessionAccount {
     #[abi(embed_v0)]
     impl Sessionable = session_component::SessionableImpl<ContractState>;
 
+    /// outside execution
+
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
     impl ExecuteFromOutside = outside_execution_component::OutsideExecutionImpl<ContractState>;
@@ -59,8 +61,14 @@ mod HybridSessionAccount {
         fn execute_from_outside_callback(
             ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
-            self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature, is_from_outside: true);
-
+            // TODO share logic with __validate__
+            if *signature[0] == SESSION_MAGIC {
+                self
+                    .session_component
+                    .assert_valid_session(calls, outside_execution_hash, signature, is_from_outside: true);
+            } else {
+                self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature, is_from_outside: true);
+            }
             let retdata = execute_multicall(calls);
             self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
             retdata
@@ -211,7 +219,6 @@ mod HybridSessionAccount {
     #[constructor]
     fn constructor(ref self: ContractState, owner: felt252, guardian: felt252) {
         assert(owner != 0, 'argent/null-owner');
-
         self._signer.write(owner);
         self._guardian.write(guardian);
         self._guardian_backup.write(0);
@@ -225,7 +232,11 @@ mod HybridSessionAccount {
             assert_only_protocol();
             let tx_info = get_tx_info().unbox();
             if *tx_info.signature[0] == SESSION_MAGIC {
-                self.session_component.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature);
+                self
+                    .session_component
+                    .assert_valid_session(
+                        calls.span(), tx_info.transaction_hash, tx_info.signature, is_from_outside: false
+                    );
             } else {
                 self
                     .assert_valid_calls_and_signature(

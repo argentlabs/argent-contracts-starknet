@@ -87,7 +87,7 @@ describe("ArgentMultisig: signing", function () {
 
       await expectRevertWithErrorMessage("argent/undeserializable", () =>
         // Missing S argument
-        accountContract.is_valid_signature(BigInt(messageHash), [1, 0, signers[0], r]),
+        accountContract.is_valid_signature(BigInt(messageHash), [1, 0, keys[0].publicKey, r]),
       );
 
       // No SignerSignature

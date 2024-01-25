@@ -1,12 +1,25 @@
-import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num, RPC, Call, CairoCustomEnum } from "starknet";
+import {
+  Account,
+  CallData,
+  Contract,
+  GetTransactionReceiptResponse,
+  hash,
+  num,
+  RPC,
+  Call,
+  CairoCustomEnum,
+} from "starknet";
 import {
   KeyPair,
   MultisigSigner,
+  LegacyMultisigKeyPair,
+  LegacyMultisigSigner,
   loadContract,
   provider,
   randomKeyPair,
   randomKeyPairs,
   fundAccountCall,
+  fundAccount,
   declareContract,
   deployer,
   starknetSigner,
@@ -42,7 +55,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     selfDeploymentIndexes: params.selfDeploymentIndexes ?? [0],
   };
 
-  if (params.selfDeploymentIndexes && !finalParams.selfDeploy) {  
+  if (params.selfDeploymentIndexes && !finalParams.selfDeploy) {
     throw new Error("selfDeploymentIndexes can only be used with selfDeploy");
   }
 
@@ -79,7 +92,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
       keys.filter((_, i) => finalParams.selfDeploymentIndexes.includes(i)),
     );
     const account = new Account(provider, accountAddress, selfDeploymentSigner, "1", defaultTxVersion);
-    
+
     const { transaction_hash } = await account.deploySelf({
       classHash: finalParams.classHash,
       constructorCalldata,
@@ -126,3 +139,24 @@ export async function deployMultisig1_1(
 const sortedKeyPairs = (length: number) => randomKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));
 
 export const keysToSigners = (keys: KeyPair[]) => keys.map(({ publicKey }) => starknetSigner(publicKey));
+
+export async function deployLegacyMultisig(classHash: string) {
+  const keys = [new LegacyMultisigKeyPair()];
+  const salt = num.toHex(randomKeyPair().privateKey);
+  const constructorCalldata = CallData.compile({ threshold: 1, signers: [keys[0].publicKey] });
+  const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
+  await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
+  const signer = new LegacyMultisigSigner(keys);
+  const account = new Account(provider, contractAddress, signer, "1");
+
+  const { transaction_hash } = await account.deploySelf({
+    classHash,
+    constructorCalldata,
+    addressSalt: salt,
+  });
+  await provider.waitForTransaction(transaction_hash);
+
+  const accountContract = await loadContract(account.address);
+  accountContract.connect(account);
+  return { account, accountContract, signer };
+}

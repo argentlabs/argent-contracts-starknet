@@ -209,7 +209,7 @@ mod ArgentMultisig {
             class_hash: felt252,
             contract_address_salt: felt252,
             threshold: usize,
-            signers: Array<felt252>
+            signers: Array<Signer>
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
@@ -248,7 +248,7 @@ mod ArgentMultisig {
             loop {
                 match signers_span.pop_front() {
                     Option::Some(signer) => {
-                        let signer_guid = (*signer).into_guid().unwrap();
+                        let signer_guid = (*signer).into_guid().expect('argent/invalid-signer-guid');
                         self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
                         self.emit(OwnerAdded { new_owner_guid: signer_guid });
                         last_signer = signer_guid;
@@ -276,7 +276,7 @@ mod ArgentMultisig {
             loop {
                 match signers_span.pop_front() {
                     Option::Some(signer_ref) => {
-                        let signer_guid = (*signer_ref).into_guid().unwrap();
+                        let signer_guid = (*signer_ref).into_guid().expect('argent/invalid-signer-guid');
                         last_signer = self
                             .signer_list
                             .remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
@@ -300,8 +300,8 @@ mod ArgentMultisig {
             assert_only_self();
             let (new_signers_count, last_signer) = self.signer_list.load();
 
-            let signer_to_remove_guid = signer_to_remove.into_guid().unwrap();
-            let signer_to_add_guid = signer_to_add.into_guid().unwrap();
+            let signer_to_remove_guid = signer_to_remove.into_guid().expect('argent/invalid-signer-guid');
+            let signer_to_add_guid = signer_to_add.into_guid().expect('argent/invalid-signer-guid');
             self
                 .signer_list
                 .replace_signer(

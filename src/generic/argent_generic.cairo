@@ -241,7 +241,7 @@ mod ArgentGenericAccount {
             class_hash: felt252,
             contract_address_salt: felt252,
             threshold: usize,
-            signers: Array<felt252>
+            signers: Array<Signer>
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);

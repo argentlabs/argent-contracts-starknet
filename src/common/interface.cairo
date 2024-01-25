@@ -14,7 +14,7 @@ trait IArgentMultisig<TContractState> {
         class_hash: felt252,
         contract_address_salt: felt252,
         threshold: usize,
-        signers: Array<felt252>
+        signers: Array<Signer>
     ) -> felt252;
 
     /// @dev Change threshold

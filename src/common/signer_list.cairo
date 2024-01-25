@@ -13,6 +13,9 @@ mod signer_list_component {
     impl Internal<TContractState, +HasComponent<TContractState>> of InternalTrait<TContractState> {
         #[inline(always)]
         fn is_signer(self: @ComponentState<TContractState>, signer: felt252) -> bool {
+            if signer == 0 {
+                return false;
+            }
             let next_signer = self.signer_list.read(signer);
             if next_signer != 0 {
                 return true;

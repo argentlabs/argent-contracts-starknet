@@ -1,7 +1,7 @@
 import { exec } from "child_process";
 import fs from "fs";
 import { isUndefined, mapValues, maxBy, sortBy, sum } from "lodash-es";
-import { InvokeFunctionResponse, RpcProvider } from "starknet";
+import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
 import { ensureIncluded } from ".";
 
 const ethUsd = 2000n;
@@ -95,11 +95,18 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
   const profiles: Record<string, Profile> = {};
 
   return {
-    async profile(name: string, { transaction_hash }: InvokeFunctionResponse, print = false) {
+    async profile(
+      name: string,
+      { transaction_hash }: InvokeFunctionResponse,
+      { printProfile = false, printStorage = false } = {},
+    ) {
       console.log("Profiling:", name);
       const profile = await profileGasUsage(transaction_hash, provider);
-      if (print) {
+      if (printProfile) {
         console.dir(profile, { depth: null });
+      }
+      if (printStorage) {
+        this.printStorageDiffs(profile);
       }
       profiles[name] = profile;
     },
@@ -115,7 +122,19 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
         maxComputationCategory: profile.maxComputationCategory,
       };
     },
-    printProfiles() {
+    printStorageDiffs({ storageDiffs }: Profile) {
+      const diffs = storageDiffs.map(({ address, storage_entries }) =>
+        storage_entries.map(({ key, value }) => ({
+          address: shortenHex(address),
+          key: shortenHex(key),
+          hex: value,
+          dec: BigInt(value),
+          str: shortString.decodeShortString(value),
+        })),
+      );
+      console.table(diffs.flat());
+    },
+    printSummary() {
       console.log("Resources:");
       console.table(mapValues(profiles, "executionResources"));
       console.log("Summary:");
@@ -158,4 +177,8 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
       });
     },
   };
+}
+
+function shortenHex(hex: string) {
+  return `${hex.slice(0, 6)}...${hex.slice(-4)}`;
 }

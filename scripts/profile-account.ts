@@ -44,5 +44,5 @@ const profiler = newProfiler(provider);
   );
 }
 
-profiler.printProfiles();
+profiler.printSummary();
 profiler.updateOrCheckReport();

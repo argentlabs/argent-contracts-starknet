@@ -20,15 +20,15 @@ mod ArgentAccount {
         serialization::full_deserialize,
         transaction_version::{
             TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
-            assert_no_unsupported_v3_fields, DA_MODE_L1
+            assert_correct_deploy_account_version, assert_no_unsupported_v3_fields, DA_MODE_L1
         }
     };
     use core::starknet::event::EventEmitter;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
-        ClassHash, get_block_timestamp, get_execution_info, get_contract_address, get_tx_info, VALIDATED,
-        replace_class_syscall, account::Call, SyscallResultTrait, syscalls::storage_read_syscall,
+        ClassHash, get_block_timestamp, get_caller_address, get_contract_address, VALIDATED, replace_class_syscall,
+        account::Call, SyscallResultTrait, get_tx_info, get_execution_info, syscalls::storage_read_syscall,
         storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252}
     };
 
@@ -46,9 +46,9 @@ mod ArgentAccount {
     /// Limit escape attempts by only one party
     const MAX_ESCAPE_ATTEMPTS: u32 = 5;
     /// Limits fee in escapes
-    const MAX_ESCAPE_MAX_FEE: u128 = 50000000000000000; // 0.05 ETH
-    /// Limits tip in escapes
-    const MAX_ESCAPE_TIP: u128 = 1_000000000000000000; // 1 STRK
+    const MAX_ESCAPE_MAX_FEE_ETH: u128 = 50000000000000000; // 0.05 ETH
+    const MAX_ESCAPE_MAX_FEE_STRK: u128 = 50_000000000000000000; // 50 STRK
+    const MAX_ESCAPE_TIP_STRK: u128 = 1_000000000000000000; // 1 STRK
 
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
@@ -363,7 +363,7 @@ mod ArgentAccount {
             guardian: Option<Signer>
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
-            assert_correct_invoke_version(tx_info.version);
+            assert_correct_deploy_account_version(tx_info.version);
             assert_no_unsupported_v3_fields();
             let mut signatures = tx_info.signature;
             let signer_signatures: Array<SignerSignature> = full_deserialize(signatures)
@@ -807,23 +807,27 @@ mod ArgentAccount {
             // No need to allow self deployment and escaping in one transaction
             assert(tx_info.account_deployment_data.is_empty(), 'argent/invalid-deployment-data');
 
-            // Limit the maximum tip while escaping (max_fee returns 0 on TX_V3)
-            let max_l2_gas: u64 = loop {
+            // Limit the maximum tip and maximum total fee while escaping
+            let mut max_fee: u128 = 0;
+            let mut max_tip: u128 = 0;
+            loop {
                 match tx_info.resource_bounds.pop_front() {
-                    Option::Some(r) => { if *r.resource == 'L2_GAS' {
-                        break *r.max_amount;
-                    } },
-                    Option::None => {
-                        // L2_GAS not found
-                        break 0;
-                    }
+                    Option::Some(r) => {
+                        let max_resource_amount: u128 = (*r.max_amount).into();
+                        max_fee += *r.max_price_per_unit * max_resource_amount;
+                        if *r.resource == 'L2_GAS' {
+                            max_tip += tx_info.tip * max_resource_amount;
+                        }
+                    },
+                    Option::None => { break; }
                 };
             };
-            let max_tip = tx_info.tip * max_l2_gas.into();
-            assert(max_tip <= MAX_ESCAPE_TIP, 'argent/tip-too-high');
+            max_fee += max_tip;
+            assert(max_tip <= MAX_ESCAPE_TIP_STRK, 'argent/tip-too-high');
+            assert(max_fee <= MAX_ESCAPE_MAX_FEE_STRK, 'argent/max-fee-too-high');
         } else if tx_info.version == TX_V1 || tx_info.version == TX_V1_ESTIMATE {
             // other fields not available on V1
-            assert(tx_info.max_fee <= MAX_ESCAPE_MAX_FEE, 'argent/max-fee-too-high');
+            assert(tx_info.max_fee <= MAX_ESCAPE_MAX_FEE_ETH, 'argent/max-fee-too-high');
         } else {
             panic_with_felt252('argent/invalid-tx-version');
         }

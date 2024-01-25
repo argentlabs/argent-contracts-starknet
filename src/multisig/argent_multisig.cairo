@@ -10,19 +10,22 @@ mod ArgentMultisig {
             IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
             ERC165_IERC165_INTERFACE_ID_OLD,
         },
+        signer_signature::{Signer, StarknetSigner, SignerSignature, SignerSignatureTrait, IntoGuid},
+        upgrade::{IUpgradeable, do_upgrade},
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component
         },
-        upgrade::{IUpgradeable, do_upgrade}, signer_signature::{SignerSignature, SignerSignatureTrait},
         interface::IArgentMultisig, serialization::full_deserialize,
-        transaction_version::{get_tx_info, assert_correct_invoke_version, assert_no_unsupported_v3_fields}
+        transaction_version::{
+            assert_correct_invoke_version, assert_correct_deploy_account_version, assert_no_unsupported_v3_fields
+        }
     };
     use argent::multisig::{interface::IDeprecatedArgentMultisig, signer_list::signer_list_component};
     use ecdsa::check_ecdsa_signature;
 
     use starknet::{
         get_contract_address, ContractAddressIntoFelt252, VALIDATED, syscalls::replace_class_syscall, ClassHash,
-        class_hash_const, get_block_timestamp, get_caller_address, account::Call
+        class_hash_const, get_block_timestamp, get_caller_address, account::Call, get_tx_info
     };
 
     const NAME: felt252 = 'ArgentMultisig';
@@ -205,7 +208,7 @@ mod ArgentMultisig {
             signers: Array<felt252>
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
-            assert_correct_invoke_version(tx_info.version);
+            assert_correct_deploy_account_version(tx_info.version);
             assert_no_unsupported_v3_fields();
 
             let mut signature = tx_info.signature;

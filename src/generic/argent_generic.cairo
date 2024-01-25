@@ -15,7 +15,10 @@ mod ArgentGenericAccount {
         },
         upgrade::{IUpgradeable, do_upgrade}, signer_signature::{SignerSignature, SignerSignatureTrait},
         interface::IArgentMultisig, serialization::full_deserialize,
-        transaction_version::{get_tx_info, assert_correct_invoke_version, assert_no_unsupported_v3_fields}
+        transaction_version::{
+            get_tx_info, assert_correct_invoke_version, assert_correct_deploy_account_version,
+            assert_no_unsupported_v3_fields
+        }
     };
     use argent::generic::{interface::{IRecoveryAccount}, recovery::{EscapeStatus, Escape, EscapeEnabled}};
     use starknet::{
@@ -222,7 +225,7 @@ mod ArgentGenericAccount {
             signers: Array<felt252>
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
-            assert_correct_invoke_version(tx_info.version);
+            assert_correct_deploy_account_version(tx_info.version);
             assert_no_unsupported_v3_fields();
 
             let mut signature = tx_info.signature;

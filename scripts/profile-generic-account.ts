@@ -159,4 +159,4 @@ async function deployGenericAccount(owners: KeyPair[]) {
   return account;
 }
 
-profiler.printProfiles();
+profiler.printSummary();

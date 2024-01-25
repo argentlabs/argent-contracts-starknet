@@ -130,7 +130,7 @@ mod ArgentMultisig {
         loop {
             match signers_span.pop_front() {
                 Option::Some(signer) => {
-                    let signer_guid = (*signer).into_guid().unwrap();
+                    let signer_guid = (*signer).into_guid().expect('argent/invalid-signer-guid');
                     self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
                     self.emit(OwnerAdded { new_owner_guid: signer_guid });
                     last_signer = signer_guid;
@@ -425,7 +425,7 @@ mod ArgentMultisig {
             loop {
                 match signer_signatures.pop_front() {
                     Option::Some(signer_sig) => {
-                        let signer_guid = signer_sig.signer_into_guid().unwrap();
+                        let signer_guid = signer_sig.signer_into_guid().expect('argent/invalid-signer-guid');
                         assert(self.signer_list.is_signer(signer_guid), 'argent/not-a-signer');
                         let signer_uint: u256 = signer_guid.into();
                         assert(signer_uint > last_signer, 'argent/signatures-not-sorted');

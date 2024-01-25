@@ -161,7 +161,7 @@ mod ArgentGenericAccount {
         loop {
             match signers_span.pop_front() {
                 Option::Some(signer) => {
-                    let signer_guid = (*signer).into_guid().unwrap();
+                    let signer_guid = (*signer).into_guid().expect('argent/invalid-signer-guid');
                     self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
                     self.emit(OwnerAdded { new_owner_guid: signer_guid });
                     last_signer = signer_guid;
@@ -280,7 +280,7 @@ mod ArgentGenericAccount {
             loop {
                 match signers_span.pop_front() {
                     Option::Some(signer) => {
-                        let signer_guid = (*signer).into_guid().unwrap();
+                        let signer_guid = (*signer).into_guid().expect('argent/invalid-signer-guid');
                         self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
                         self.emit(OwnerAdded { new_owner_guid: signer_guid });
                         last_signer = signer_guid;
@@ -308,7 +308,7 @@ mod ArgentGenericAccount {
             loop {
                 match signers_span.pop_front() {
                     Option::Some(signer_ref) => {
-                        let signer_guid = (*signer_ref).into_guid().unwrap();
+                        let signer_guid = (*signer_ref).into_guid().expect('argent/invalid-signer-guid');
                         last_signer = self
                             .signer_list
                             .remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
@@ -334,7 +334,7 @@ mod ArgentGenericAccount {
             loop {
                 match new_signer_order_span.pop_front() {
                     Option::Some(signer) => {
-                        let signer_guid = (*signer).into_guid().unwrap();
+                        let signer_guid = (*signer).into_guid().expect('argent/invalid-signer-guid');
                         new_signer_order_guid.append(signer_guid);
                         last_signer = self
                             .signer_list
@@ -351,8 +351,8 @@ mod ArgentGenericAccount {
             assert_only_self();
             let (new_signers_count, last_signer) = self.signer_list.load();
 
-            let signer_to_remove_guid = signer_to_remove.into_guid().unwrap();
-            let signer_to_add_guid = signer_to_add.into_guid().unwrap();
+            let signer_to_remove_guid = signer_to_remove.into_guid().expect('argent/invalid-signer-guid');
+            let signer_to_add_guid = signer_to_add.into_guid().expect('argent/invalid-signer-guid');
             self
                 .signer_list
                 .replace_signer(
@@ -421,8 +421,8 @@ mod ArgentGenericAccount {
         fn trigger_escape_signer(ref self: ContractState, target_signer: Signer, new_signer: Signer) {
             assert_only_self();
 
-            let target_signer_guid = target_signer.into_guid().unwrap();
-            let new_signer_guid = new_signer.into_guid().unwrap();
+            let target_signer_guid = target_signer.into_guid().expect('argent/invalid-signer-guid');
+            let new_signer_guid = new_signer.into_guid().expect('argent/invalid-signer-guid');
             self.emit(SignerLinked { signer_guid: new_signer_guid, signer: new_signer });
 
             let current_escape = self.escape.read();
@@ -529,7 +529,7 @@ mod ArgentGenericAccount {
                     // get escaped signer
                     let mut calldata: Span<felt252> = first_call.calldata.span();
                     let escaped_signer: Signer = Serde::deserialize(ref calldata).expect('argent/invalid-calldata');
-                    let escaped_signer_guid = escaped_signer.into_guid().unwrap();
+                    let escaped_signer_guid = escaped_signer.into_guid().expect('argent/invalid-signer-guid');
                     // check it is a valid signer
                     let is_signer = self.signer_list.is_signer(escaped_signer_guid);
                     assert(is_signer, 'argent/escaped-not-signer');
@@ -575,7 +575,7 @@ mod ArgentGenericAccount {
             loop {
                 match signer_signatures.pop_front() {
                     Option::Some(signer_sig) => {
-                        let signer_guid = signer_sig.signer_into_guid().unwrap();
+                        let signer_guid = signer_sig.signer_into_guid().expect('argent/invalid-signer-guid');
                         assert(self.signer_list.is_signer(signer_guid), 'argent/not-a-signer');
                         assert(signer_guid != excluded_signer, 'argent/unauthorised_signer');
                         let signer_uint: u256 = signer_guid.into();

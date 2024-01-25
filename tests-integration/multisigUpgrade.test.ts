@@ -19,7 +19,7 @@ describe("ArgentMultisig: upgrade", function () {
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentMultisigFutureClassHash));
   });
 
-  it.only("Upgrade from 0.1.0 to Current Version", async function () {
+  it("Upgrade from 0.1.0 to Current Version", async function () {
     const keys = [new LegacyMultisigKeyPair()];
     const { account } = await deployLegacyMultisig(await declareFixtureContract("ArgentMultisig-0.1.0"));
     const currentImpl = await declareContract("ArgentMultisig");

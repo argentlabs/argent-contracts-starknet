@@ -41,6 +41,7 @@ mod signer_list_component {
             last_signer == signer
         }
 
+        #[inline(always)]
         fn add_signer(ref self: ComponentState<TContractState>, signer_to_add: felt252, last_signer: felt252) {
             let is_signer = self.is_signer_using_last(signer_to_add, last_signer);
             assert(!is_signer, 'argent/already-a-signer');
@@ -61,6 +62,8 @@ mod signer_list_component {
             }
         }
 
+        // Returns the last signer of the list after the removal. This is needed to efficiently remove multiple signers.
+        #[inline(always)]
         fn remove_signer(
             ref self: ComponentState<TContractState>, signer_to_remove: felt252, last_signer: felt252
         ) -> felt252 {

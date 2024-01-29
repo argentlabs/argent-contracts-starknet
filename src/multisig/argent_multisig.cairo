@@ -79,7 +79,8 @@ mod ArgentMultisig {
         TransactionExecuted: TransactionExecuted,
         AccountUpgraded: AccountUpgraded,
         OwnerAdded: OwnerAdded,
-        OwnerRemoved: OwnerRemoved
+        OwnerRemoved: OwnerRemoved,
+        SignerLinked: SignerLinked
     }
 
     /// @notice Emitted when the multisig threshold changes
@@ -122,6 +123,16 @@ mod ArgentMultisig {
         removed_owner_guid: felt252,
     }
 
+    /// @notice Emitted when a signer is added to link its details with its GUID
+    /// @param signer_guid The signer GUID 
+    /// @param signer The signer object
+    #[derive(Drop, starknet::Event)]
+    struct SignerLinked {
+        #[key]
+        signer_guid: felt252,
+        signer: Signer,
+    }
+
     #[constructor]
     fn constructor(ref self: ContractState, new_threshold: usize, signers: Array<Signer>) {
         let new_signers_count = signers.len();
@@ -130,12 +141,14 @@ mod ArgentMultisig {
         let mut signers_span = signers.span();
         let mut last_signer = 0;
         loop {
-            let signer_guid = match signers_span.pop_front() {
-                Option::Some(signer) => (*signer).into_guid().expect('argent/invalid-signer-guid'),
+            let signer = match signers_span.pop_front() {
+                Option::Some(signer) => (*signer),
                 Option::None => { break; }
             };
+            let signer_guid = signer.into_guid().expect('argent/invalid-signer-guid');
             self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
             self.emit(OwnerAdded { new_owner_guid: signer_guid });
+            self.emit(SignerLinked { signer_guid: signer_guid, signer: signer });
             last_signer = signer_guid;
         };
 
@@ -246,12 +259,14 @@ mod ArgentMultisig {
             let mut signers_span = signers_to_add.span();
             let mut last_signer = last_signer_guid;
             loop {
-                let signer_guid = match signers_span.pop_front() {
-                    Option::Some(signer) => (*signer).into_guid().expect('argent/invalid-signer-guid'),
+                let signer = match signers_span.pop_front() {
+                    Option::Some(signer) => (*signer),
                     Option::None => { break; }
                 };
+                let signer_guid = signer.into_guid().expect('argent/invalid-signer-guid');
                 self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
                 self.emit(OwnerAdded { new_owner_guid: signer_guid });
+                self.emit(SignerLinked { signer_guid: signer_guid, signer: signer });
                 last_signer = signer_guid;
             };
 
@@ -304,6 +319,7 @@ mod ArgentMultisig {
 
             self.emit(OwnerRemoved { removed_owner_guid: signer_to_remove_guid });
             self.emit(OwnerAdded { new_owner_guid: signer_to_add_guid });
+            self.emit(SignerLinked { signer_guid: signer_to_add_guid, signer: signer_to_add });
         }
 
         fn get_name(self: @ContractState) -> felt252 {

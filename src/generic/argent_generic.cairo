@@ -160,16 +160,15 @@ mod ArgentGenericAccount {
 
         let mut signers_span = signers.span();
         let mut last_signer = 0;
+
         loop {
-            match signers_span.pop_front() {
-                Option::Some(signer) => {
-                    let signer_guid = (*signer).into_guid().expect('argent/invalid-signer-guid');
-                    self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
-                    self.emit(OwnerAdded { new_owner_guid: signer_guid });
-                    last_signer = signer_guid;
-                },
+            let signer_guid = match signers_span.pop_front() {
+                Option::Some(signer) => (*signer).into_guid().expect('argent/invalid-signer-guid'),
                 Option::None => { break; }
-            }
+            };
+            self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
+            self.emit(OwnerAdded { new_owner_guid: signer_guid });
+            last_signer = signer_guid;
         };
 
         self.threshold.write(new_threshold);
@@ -280,15 +279,13 @@ mod ArgentGenericAccount {
             let mut signers_span = signers_to_add.span();
             let mut last_signer = last_signer_guid;
             loop {
-                match signers_span.pop_front() {
-                    Option::Some(signer) => {
-                        let signer_guid = (*signer).into_guid().expect('argent/invalid-signer-guid');
-                        self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
-                        self.emit(OwnerAdded { new_owner_guid: signer_guid });
-                        last_signer = signer_guid;
-                    },
+                let signer_guid = match signers_span.pop_front() {
+                    Option::Some(signer) => (*signer).into_guid().expect('argent/invalid-signer-guid'),
                     Option::None => { break; }
-                }
+                };
+                self.signer_list.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
+                self.emit(OwnerAdded { new_owner_guid: signer_guid });
+                last_signer = signer_guid;
             };
 
             self.threshold.write(new_threshold);
@@ -308,16 +305,12 @@ mod ArgentGenericAccount {
             let mut signers_span = signers_to_remove.span();
             let mut last_signer = last_signer_guid;
             loop {
-                match signers_span.pop_front() {
-                    Option::Some(signer_ref) => {
-                        let signer_guid = (*signer_ref).into_guid().expect('argent/invalid-signer-guid');
-                        last_signer = self
-                            .signer_list
-                            .remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
-                        self.emit(OwnerRemoved { removed_owner_guid: signer_guid });
-                    },
+                let signer_guid = match signers_span.pop_front() {
+                    Option::Some(signer) => (*signer).into_guid().expect('argent/invalid-signer-guid'),
                     Option::None => { break; }
-                }
+                };
+                last_signer = self.signer_list.remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
+                self.emit(OwnerRemoved { removed_owner_guid: signer_guid });
             };
 
             self.threshold.write(new_threshold);
@@ -334,16 +327,12 @@ mod ArgentGenericAccount {
             let mut new_signer_order_span = new_signer_order.span();
             let mut new_signer_order_guid = array![];
             loop {
-                match new_signer_order_span.pop_front() {
-                    Option::Some(signer) => {
-                        let signer_guid = (*signer).into_guid().expect('argent/invalid-signer-guid');
-                        new_signer_order_guid.append(signer_guid);
-                        last_signer = self
-                            .signer_list
-                            .remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
-                    },
+                let signer_guid = match new_signer_order_span.pop_front() {
+                    Option::Some(signer) => (*signer).into_guid().expect('argent/invalid-signer-guid'),
                     Option::None => { break; }
                 };
+                new_signer_order_guid.append(signer_guid);
+                last_signer = self.signer_list.remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
             };
             // add all the signers of the list
             self.signer_list.add_signers(signers_to_add: new_signer_order_guid.span(), last_signer: 0);
@@ -575,21 +564,20 @@ mod ArgentGenericAccount {
 
             let mut last_signer: u256 = 0;
             loop {
-                match signer_signatures.pop_front() {
-                    Option::Some(signer_sig) => {
-                        let signer_guid = signer_sig.signer_into_guid().expect('argent/invalid-signer-guid');
-                        assert(self.signer_list.is_signer(signer_guid), 'argent/not-a-signer');
-                        assert(signer_guid != excluded_signer, 'argent/unauthorised_signer');
-                        let signer_uint: u256 = signer_guid.into();
-                        assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
-                        let is_valid = signer_sig.is_valid_signature(hash);
-                        if !is_valid {
-                            break false;
-                        }
-                        last_signer = signer_uint;
-                    },
+                let signer_sig = match signer_signatures.pop_front() {
+                    Option::Some(signer_sig) => signer_sig,
                     Option::None => { break true; }
                 };
+                let signer_guid = signer_sig.signer_into_guid().expect('argent/invalid-signer-guid');
+                assert(self.signer_list.is_signer(signer_guid), 'argent/not-a-signer');
+                assert(signer_guid != excluded_signer, 'argent/unauthorised_signer');
+                let signer_uint: u256 = signer_guid.into();
+                assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
+                let is_valid = signer_sig.is_valid_signature(hash);
+                if !is_valid {
+                    break false;
+                }
+                last_signer = signer_uint;
             }
         }
     }

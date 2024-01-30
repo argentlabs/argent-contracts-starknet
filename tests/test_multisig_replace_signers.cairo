@@ -3,7 +3,6 @@ use argent_tests::setup::multisig_test_setup::{
     initialize_multisig, initialize_multisig_with, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3,
     ITestArgentMultisigDispatcherTrait, initialize_multisig_with_one_signer
 };
-use core::debug::PrintTrait;
 
 #[test]
 #[available_gas(20000000)]

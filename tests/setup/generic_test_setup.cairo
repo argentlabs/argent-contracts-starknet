@@ -62,7 +62,7 @@ fn initialize_generic_with_one_signer() -> ITestArgentGenericAccountDispatcher {
     initialize_generic_with(threshold, signers_array.span())
 }
 
-fn initialize_generic_with(threshold: usize, mut signers: Span<Signer>) -> ITestArgentGenericAccountDispatcher {
+fn initialize_generic_with(threshold: usize, signers: Span<Signer>) -> ITestArgentGenericAccountDispatcher {
     let mut calldata = array![];
     threshold.serialize(ref calldata);
     signers.serialize(ref calldata);

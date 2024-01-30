@@ -127,8 +127,8 @@ mod ArgentGenericAccount {
     }
 
     /// @notice Emitted when a signer is added to link its details with its GUID
-    /// @param signer_guid The signer GUID 
-    /// @param signer The signer object
+    /// @param signer_guid The signer's GUID 
+    /// @param signer The signer struct
     #[derive(Drop, starknet::Event)]
     struct SignerLinked {
         #[key]
@@ -330,7 +330,7 @@ mod ArgentGenericAccount {
             assert_only_self();
             let (signers_len, mut last_signer) = self.signer_list.load();
             assert(new_signer_order.len() == signers_len, 'argent/too-short');
-            //remove all the signers of the list
+            // remove all the signers of the list
             let mut new_signer_order_span = new_signer_order.span();
             let mut new_signer_order_guid = array![];
             loop {
@@ -349,13 +349,9 @@ mod ArgentGenericAccount {
             assert_only_self();
             let (new_signers_count, last_signer) = self.signer_list.load();
 
-            let signer_to_remove_guid = signer_to_remove.into_guid().expect('argent/invalid-signer-guid');
-            let signer_to_add_guid = signer_to_add.into_guid().expect('argent/invalid-signer-guid');
-            self
-                .signer_list
-                .replace_signer(
-                    signer_to_remove: signer_to_remove_guid, signer_to_add: signer_to_add_guid, last_signer: last_signer
-                );
+            let signer_to_remove_guid = signer_to_remove.into_guid().expect('argent/invalid-target-guid');
+            let signer_to_add_guid = signer_to_add.into_guid().expect('argent/invalid-new-signer-guid');
+            self.signer_list.replace_signer(signer_to_remove_guid, signer_to_add_guid, last_signer);
 
             self.emit(OwnerRemoved { removed_owner_guid: signer_to_remove_guid });
             self.emit(OwnerAdded { new_owner_guid: signer_to_add_guid });
@@ -380,7 +376,7 @@ mod ArgentGenericAccount {
         }
 
         fn is_signer(self: @ContractState, signer: Signer) -> bool {
-            self.signer_list.is_signer(signer.into_guid().unwrap())
+            self.signer_list.is_signer(signer.into_guid().expect('argent/invalid-signer-guid'))
         }
 
         fn is_signer_guid(self: @ContractState, signer_guid: felt252) -> bool {
@@ -388,7 +384,9 @@ mod ArgentGenericAccount {
         }
 
         fn is_valid_signer_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
-            let is_signer = self.signer_list.is_signer(signer_signature.signer_into_guid().unwrap());
+            let is_signer = self
+                .signer_list
+                .is_signer(signer_signature.signer_into_guid().expect('argent/invalid-signer-guid'));
             assert(is_signer, 'argent/not-a-signer');
             signer_signature.is_valid_signature(hash)
         }
@@ -420,8 +418,8 @@ mod ArgentGenericAccount {
         fn trigger_escape_signer(ref self: ContractState, target_signer: Signer, new_signer: Signer) {
             assert_only_self();
 
-            let target_signer_guid = target_signer.into_guid().expect('argent/invalid-signer-guid');
-            let new_signer_guid = new_signer.into_guid().expect('argent/invalid-signer-guid');
+            let target_signer_guid = target_signer.into_guid().expect('argent/invalid-target-guid');
+            let new_signer_guid = new_signer.into_guid().expect('argent/invalid-new-signer-guid');
             self.emit(SignerLinked { signer_guid: new_signer_guid, signer: new_signer });
 
             let current_escape = self.escape.read();

@@ -266,10 +266,10 @@ describe("ArgentMultisig: signer storage", function () {
         accountContract.replace_signer(CallData.compile([signers[0], signers[0]])),
       );
     });
-    it("Expect 'argent/invalid-signer-guid' when replacing an owner with a zero signer", async function () {
+    it("Expect 'argent/invalid-new-signer-guid' when replacing an owner with a zero signer", async function () {
       const { accountContract, signers } = await deployMultisig1_3();
 
-      await expectRevertWithErrorMessage("argent/invalid-signer-guid", () =>
+      await expectRevertWithErrorMessage("argent/invalid-new-signer-guid", () =>
         accountContract.replace_signer(CallData.compile([signers[0], starknetSigner(0n)])),
       );
     });

@@ -26,21 +26,6 @@ mod signer_list_component {
             last_signer == signer
         }
 
-        // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
-        #[inline(always)]
-        fn is_signer_using_last(self: @ComponentState<TContractState>, signer: felt252, last_signer: felt252) -> bool {
-            if signer == 0 {
-                return false;
-            }
-
-            let next_signer = self.signer_list.read(signer);
-            if next_signer != 0 {
-                return true;
-            }
-
-            last_signer == signer
-        }
-
         #[inline(always)]
         fn add_signer(ref self: ComponentState<TContractState>, signer_to_add: felt252, last_signer: felt252) {
             let is_signer = self.is_signer_using_last(signer_to_add, last_signer);
@@ -191,6 +176,21 @@ mod signer_list_component {
 
     #[generate_trait]
     impl Private<TContractState, +HasComponent<TContractState>> of PrivateTrait<TContractState> {
+        // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer
+        #[inline(always)]
+        fn is_signer_using_last(self: @ComponentState<TContractState>, signer: felt252, last_signer: felt252) -> bool {
+            if signer == 0 {
+                return false;
+            }
+
+            let next_signer = self.signer_list.read(signer);
+            if next_signer != 0 {
+                return true;
+            }
+
+            last_signer == signer
+        }
+
         // Return the last signer or zero if no signers. Cost increases with the list size
         fn find_last_signer(self: @ComponentState<TContractState>) -> felt252 {
             let mut current_signer = self.signer_list.read(0);

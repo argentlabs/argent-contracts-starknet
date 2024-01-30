@@ -46,7 +46,7 @@ trait IArgentMultisig<TContractState> {
 
     /// @dev Returns the threshold, the number of signers required to control this account
     fn get_threshold(self: @TContractState) -> usize;
-    fn get_signers_guid(self: @TContractState) -> Array<felt252>;
+    fn get_signer_guids(self: @TContractState) -> Array<felt252>;
     fn is_signer(self: @TContractState, signer: Signer) -> bool;
     fn is_signer_guid(self: @TContractState, signer_guid: felt252) -> bool;
 

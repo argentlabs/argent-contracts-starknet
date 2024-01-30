@@ -215,7 +215,7 @@ describe("ArgentMultisig: signer storage", function () {
 
       await accountContract.replace_signer(CallData.compile([signers[0], newSigner]));
 
-      const signersList = await accountContract.get_signers_guid();
+      const signersList = await accountContract.get_signer_guids();
       expect(signersList).to.have.ordered.members([intoGuid(newSigner), intoGuid(signers[1]), intoGuid(signers[2])]);
     });
 
@@ -226,7 +226,7 @@ describe("ArgentMultisig: signer storage", function () {
 
       await accountContract.replace_signer(CallData.compile([signers[1], newSigner]));
 
-      const signersList = await accountContract.get_signers_guid();
+      const signersList = await accountContract.get_signer_guids();
       expect(signersList).to.have.ordered.members([intoGuid(signers[0]), intoGuid(newSigner), intoGuid(signers[2])]);
     });
 
@@ -237,7 +237,7 @@ describe("ArgentMultisig: signer storage", function () {
 
       await accountContract.replace_signer(CallData.compile([signers[2], newSigner]));
 
-      const signersList = await accountContract.get_signers_guid();
+      const signersList = await accountContract.get_signer_guids();
       expect(signersList).to.have.ordered.members([intoGuid(signers[0]), intoGuid(signers[1]), intoGuid(newSigner)]);
     });
   });

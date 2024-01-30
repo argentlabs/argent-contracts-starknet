@@ -17,7 +17,7 @@ fn reorder_2_signers() {
     let multisig = initialize_generic_with(threshold, init_order.span());
 
     // check 
-    let signers = multisig.get_signers_guid();
+    let signers = multisig.get_signer_guids();
     assert(signers.len() == 3, 'invalid init signers length');
     assert(*signers.at(0) == signer_1.into_guid().unwrap(), 'signer 1 wrong init');
     assert(*signers.at(1) == signer_2.into_guid().unwrap(), 'signer 2 wrong init');
@@ -28,7 +28,7 @@ fn reorder_2_signers() {
     multisig.reorder_signers(new_order);
 
     // check 
-    let signers = multisig.get_signers_guid();
+    let signers = multisig.get_signer_guids();
     assert(signers.len() == 3, 'invalid signers length');
     assert(*signers.at(0) == signer_1.into_guid().unwrap(), 'signer 1 was moved');
     assert(*signers.at(1) == signer_3.into_guid().unwrap(), 'signer 2 was not moved');
@@ -47,7 +47,7 @@ fn reorder_3_signers() {
     let multisig = initialize_generic_with(threshold, init_order.span());
 
     // check 
-    let signers = multisig.get_signers_guid();
+    let signers = multisig.get_signer_guids();
     assert(signers.len() == 3, 'invalid init signers length');
     assert(*signers.at(0) == signer_1.into_guid().unwrap(), 'signer 1 wrong init');
     assert(*signers.at(1) == signer_2.into_guid().unwrap(), 'signer 2 wrong init');
@@ -58,7 +58,7 @@ fn reorder_3_signers() {
     multisig.reorder_signers(new_order);
 
     // check 
-    let signers = multisig.get_signers_guid();
+    let signers = multisig.get_signer_guids();
     assert(signers.len() == 3, 'invalid signers length');
     assert(*signers.at(0) == signer_3.into_guid().unwrap(), 'signer 1 was not moved');
     assert(*signers.at(1) == signer_2.into_guid().unwrap(), 'signer 2 was not moved');
@@ -78,7 +78,7 @@ fn reorder_signers_wrong_length() {
     let multisig = initialize_generic_with(threshold, init_order.span());
 
     // check 
-    let signers = multisig.get_signers_guid();
+    let signers = multisig.get_signer_guids();
     assert(signers.len() == 3, 'invalid init signers length');
     assert(*signers.at(0) == signer_1.into_guid().unwrap(), 'signer 1 wrong init');
     assert(*signers.at(1) == signer_2.into_guid().unwrap(), 'signer 2 wrong init');
@@ -102,7 +102,7 @@ fn reorder_signers_wrong_signer() {
     let multisig = initialize_generic_with(threshold, init_order.span());
 
     // check 
-    let signers = multisig.get_signers_guid();
+    let signers = multisig.get_signer_guids();
     assert(signers.len() == 2, 'invalid init signers length');
     assert(*signers.at(0) == signer_1.into_guid().unwrap(), 'signer 1 wrong init');
     assert(*signers.at(1) == signer_2.into_guid().unwrap(), 'signer 2 wrong init');

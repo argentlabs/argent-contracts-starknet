@@ -16,7 +16,7 @@ fn replace_signer_1() {
     multisig.replace_signer(signer_1, signer_to_add);
 
     // check 
-    let signers = multisig.get_signers_guid();
+    let signers = multisig.get_signer_guids();
     assert(signers.len() == 1, 'signer list changed size');
     assert(multisig.get_threshold() == 1, 'threshold changed');
     assert(!multisig.is_signer(signer_1), 'signer 1 was not removed');
@@ -37,7 +37,7 @@ fn replace_signer_start() {
     multisig.replace_signer(signer_1, signer_to_add);
 
     // check 
-    let signers = multisig.get_signers_guid();
+    let signers = multisig.get_signer_guids();
     assert(signers.len() == 3, 'signer list changed size');
     assert(multisig.get_threshold() == 1, 'threshold changed');
     assert(!multisig.is_signer(signer_1), 'signer 1 was not removed');
@@ -60,7 +60,7 @@ fn replace_signer_middle() {
     multisig.replace_signer(signer_2, signer_to_add);
 
     // check 
-    let signers = multisig.get_signers_guid();
+    let signers = multisig.get_signer_guids();
     assert(signers.len() == 3, 'signer list changed size');
     assert(multisig.get_threshold() == 1, 'threshold changed');
     assert(!multisig.is_signer(signer_2), 'signer 2 was not removed');
@@ -83,7 +83,7 @@ fn replace_signer_end() {
     multisig.replace_signer(signer_3, signer_to_add);
 
     // check 
-    let signers = multisig.get_signers_guid();
+    let signers = multisig.get_signer_guids();
     assert(signers.len() == 3, 'signer list changed size');
     assert(multisig.get_threshold() == 1, 'threshold changed');
     assert(!multisig.is_signer(signer_3), 'signer 3 was not removed');

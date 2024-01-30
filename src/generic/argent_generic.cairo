@@ -371,7 +371,7 @@ mod ArgentGenericAccount {
             self.threshold.read()
         }
 
-        fn get_signers_guid(self: @ContractState) -> Array<felt252> {
+        fn get_signer_guids(self: @ContractState) -> Array<felt252> {
             self.signer_list.get_signers()
         }
 

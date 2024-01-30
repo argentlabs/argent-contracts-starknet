@@ -31,7 +31,7 @@ trait ITestArgentGenericAccount<TContractState> {
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
     fn get_threshold(self: @TContractState) -> usize;
-    fn get_signers_guid(self: @TContractState) -> Array<felt252>;
+    fn get_signer_guids(self: @TContractState) -> Array<felt252>;
     fn is_signer_guid(self: @TContractState, signer: felt252) -> bool;
     fn is_signer(self: @TContractState, signer: Signer) -> bool;
     fn assert_valid_signer_signature(self: @TContractState, hash: felt252, signer_signature: SignerSignature);

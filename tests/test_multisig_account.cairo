@@ -19,7 +19,7 @@ fn valid_initialize() {
     assert(multisig.is_signer(signer_1), 'is signer cant find signer');
 
     // test signers list
-    let signers_guid = multisig.get_signers_guid();
+    let signers_guid = multisig.get_signer_guids();
     assert(signers_guid.len() == 1, 'invalid signers length');
     assert(*signers_guid[0] == signer_1.into_guid().unwrap(), 'invalid signers result');
 }
@@ -37,7 +37,7 @@ fn valid_initialize_two_signers() {
     assert(multisig.is_signer(signer_2), 'is signer cant find signer 2');
 
     // test signers list
-    let signers = multisig.get_signers_guid();
+    let signers = multisig.get_signer_guids();
     assert(signers.len() == 2, 'invalid signers length');
     assert(*signers[0] == signer_1.into_guid().unwrap(), 'invalid signers result');
     assert(*signers[1] == signer_2.into_guid().unwrap(), 'invalid signers result');
@@ -81,7 +81,7 @@ fn add_signers() {
     multisig.add_signers(2, new_signers);
 
     // check 
-    let signers = multisig.get_signers_guid();
+    let signers = multisig.get_signer_guids();
     assert(signers.len() == 2, 'invalid signers length');
     assert(multisig.get_threshold() == 2, 'new threshold not set');
 }

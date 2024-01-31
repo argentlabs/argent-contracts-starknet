@@ -1,5 +1,5 @@
 import { CallData, shortString } from "starknet";
-import { expectEvent, expectRevertWithErrorMessage, randomKeyPair, expectExecutionRevert } from "./lib";
+import { expectEvent, expectRevertWithErrorMessage, randomKeyPair, expectExecutionRevert, intoGuid } from "./lib";
 import { deployMultisig, deployMultisig1_1 } from "./lib/multisig";
 
 describe("ArgentMultisig", function () {
@@ -18,27 +18,21 @@ describe("ArgentMultisig", function () {
         data: CallData.compile([threshold]),
       });
 
-      await accountContract.get_threshold().should.eventually.equal(1n);
-      await accountContract.get_signers().should.eventually.deep.equal(signers);
-      await accountContract.get_name().should.eventually.equal(BigInt(shortString.encodeShortString("ArgentMultisig")));
-      await accountContract.get_version().should.eventually.deep.equal({ major: 0n, minor: 2n, patch: 0n });
       for (const signer of signers) {
         await expectEvent(receipt, {
           from_address: accountContract.address,
           eventName: "OwnerAdded",
-          additionalKeys: [signer.toString()],
+          additionalKeys: [signer.unwrap().signer],
         });
       }
 
       await accountContract.get_threshold().should.eventually.equal(1n);
-      await accountContract.get_signers().should.eventually.deep.equal(signers);
       await accountContract.get_name().should.eventually.equal(BigInt(shortString.encodeShortString("ArgentMultisig")));
       await accountContract.get_version().should.eventually.deep.equal({ major: 0n, minor: 2n, patch: 0n });
-
-      await accountContract.is_signer(signers[0]).should.eventually.be.true;
-      await accountContract.is_signer(signers[1]).should.eventually.be.true;
-      await accountContract.is_signer(0).should.eventually.be.false;
-      await accountContract.is_signer(randomKeyPair().publicKey).should.eventually.be.false;
+      await accountContract.is_signer_guid(intoGuid(signers[0])).should.eventually.be.true;
+      await accountContract.is_signer_guid(intoGuid(signers[1])).should.eventually.be.true;
+      await accountContract.is_signer_guid(0).should.eventually.be.false;
+      await accountContract.is_signer_guid(randomKeyPair().publicKey).should.eventually.be.false;
 
       await expectRevertWithErrorMessage("argent/non-null-caller", () => accountContract.__validate__([]));
     });

@@ -15,6 +15,7 @@ mod common {
     mod multicall;
     mod outside_execution;
     mod serialization;
+    mod signer_list;
     mod signer_signature;
     mod test_dapp;
     mod transaction_version;
@@ -26,7 +27,6 @@ mod common {
 mod multisig {
     mod argent_multisig;
     mod interface;
-    mod signer_list;
 }
 
 mod generic {

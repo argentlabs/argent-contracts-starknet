@@ -11,8 +11,6 @@ mod signer_list_component {
 
     #[generate_trait]
     impl Internal<TContractState, +HasComponent<TContractState>> of InternalTrait<TContractState> {
-        // Constant computation cost if `signer` is in fact in the list AND it's not the last one.
-        // Otherwise cost increases with the list size
         #[inline(always)]
         fn is_signer(self: @ComponentState<TContractState>, signer: felt252) -> bool {
             if signer == 0 {
@@ -28,52 +26,59 @@ mod signer_list_component {
             last_signer == signer
         }
 
+        #[inline(always)]
+        fn add_signer(ref self: ComponentState<TContractState>, signer_to_add: felt252, last_signer: felt252) {
+            let is_signer = self.is_signer_using_last(signer_to_add, last_signer);
+            assert(!is_signer, 'argent/already-a-signer');
+            // Signers are added at the end of the list
+            self.signer_list.write(last_signer, signer_to_add);
+        }
+
         fn add_signers(
             ref self: ComponentState<TContractState>, mut signers_to_add: Span<felt252>, last_signer: felt252
         ) {
             match signers_to_add.pop_front() {
                 Option::Some(signer_ref) => {
                     let signer = *signer_ref;
-                    assert(signer != 0, 'argent/invalid-zero-signer');
-
-                    let current_signer_status = self.is_signer_using_last(signer, last_signer);
-                    assert(!current_signer_status, 'argent/already-a-signer');
-
-                    // Signers are added at the end of the list
-                    self.signer_list.write(last_signer, signer);
-
+                    self.add_signer(signer_to_add: signer, last_signer: last_signer);
                     self.add_signers(signers_to_add, last_signer: signer);
                 },
                 Option::None => (),
             }
         }
 
+        // Returns the last signer of the list after the removal. This is needed to efficiently remove multiple signers.
+        #[inline(always)]
+        fn remove_signer(
+            ref self: ComponentState<TContractState>, signer_to_remove: felt252, last_signer: felt252
+        ) -> felt252 {
+            let is_signer = self.is_signer_using_last(signer_to_remove, last_signer);
+            assert(is_signer, 'argent/not-a-signer');
+
+            // Signer pointer set to 0, Previous pointer set to the next in the list
+            let previous_signer = self.find_signer_before(signer_to_remove);
+            let next_signer = self.signer_list.read(signer_to_remove);
+
+            self.signer_list.write(previous_signer, next_signer);
+            if next_signer == 0 {
+                // Removing the last item
+                previous_signer
+            } else {
+                // Removing an item in the middle
+                self.signer_list.write(signer_to_remove, 0);
+                last_signer
+            }
+        }
+
         fn remove_signers(
-            ref self: ComponentState<TContractState>, mut signers_to_remove: Span<felt252>, last_signer: felt252
+            ref self: ComponentState<TContractState>, mut signers_to_remove: Span<felt252>, mut last_signer: felt252
         ) {
-            match signers_to_remove.pop_front() {
-                Option::Some(signer_ref) => {
-                    let signer = *signer_ref;
-                    let current_signer_status = self.is_signer_using_last(signer, last_signer);
-                    assert(current_signer_status, 'argent/not-a-signer');
-
-                    // Signer pointer set to 0, Previous pointer set to the next in the list
-
-                    let previous_signer = self.find_signer_before(signer);
-                    let next_signer = self.signer_list.read(signer);
-
-                    self.signer_list.write(previous_signer, next_signer);
-
-                    if next_signer == 0 {
-                        // Removing the last item
-                        self.remove_signers(signers_to_remove, last_signer: previous_signer);
-                    } else {
-                        // Removing an item in the middle
-                        self.signer_list.write(signer, 0);
-                        self.remove_signers(signers_to_remove, last_signer);
-                    }
-                },
-                Option::None => (),
+            loop {
+                let signer = match signers_to_remove.pop_front() {
+                    Option::Some(signer) => *signer,
+                    Option::None => { break; }
+                };
+                last_signer = self.remove_signer(signer_to_remove: signer, last_signer: last_signer);
             }
         }
 
@@ -143,6 +148,26 @@ mod signer_list_component {
                 current_signer = self.signer_list.read(current_signer);
             };
             signers
+        }
+
+        // Returns true if `first_signer` is before `second_signer` in the signer list.
+        fn is_signer_before(
+            self: @ComponentState<TContractState>, first_signer: felt252, second_signer: felt252
+        ) -> bool {
+            let mut is_before: bool = false;
+            let mut current_signer = first_signer;
+            loop {
+                let next_signer = self.signer_list.read(current_signer);
+                if (next_signer == 0) {
+                    break;
+                }
+                if (next_signer == second_signer) {
+                    is_before = true;
+                    break;
+                }
+                current_signer = next_signer;
+            };
+            return is_before;
         }
     }
 

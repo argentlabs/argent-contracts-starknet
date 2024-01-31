@@ -243,6 +243,10 @@ export function starknetSigner(signer: bigint | number | string) {
   });
 }
 
+export function intoGuid(signer: CairoCustomEnum) {
+  return signer.unwrap().signer;
+}
+
 export function compiledSignerOption(signer: bigint | undefined) {
   return CallData.compile([signerOption(signer)]);
 }

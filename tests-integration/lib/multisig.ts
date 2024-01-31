@@ -1,21 +1,35 @@
-import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num, RPC, Call } from "starknet";
+import {
+  Account,
+  CallData,
+  Contract,
+  GetTransactionReceiptResponse,
+  hash,
+  num,
+  RPC,
+  Call,
+  CairoCustomEnum,
+} from "starknet";
 import {
   KeyPair,
   MultisigSigner,
+  LegacyMultisigKeyPair,
+  LegacyMultisigSigner,
   loadContract,
   provider,
   randomKeyPair,
   randomKeyPairs,
   fundAccountCall,
+  fundAccount,
   declareContract,
   deployer,
+  starknetSigner,
 } from ".";
 
 export interface MultisigWallet {
   account: Account;
   accountContract: Contract;
   keys: KeyPair[];
-  signers: bigint[]; // public keys
+  signers: CairoCustomEnum[]; // public keys
   threshold: bigint;
   receipt: GetTransactionReceiptResponse;
 }
@@ -124,4 +138,25 @@ export async function deployMultisig1_1(
 
 const sortedKeyPairs = (length: number) => randomKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));
 
-export const keysToSigners = (keys: KeyPair[]) => keys.map(({ publicKey }) => publicKey).map(BigInt);
+export const keysToSigners = (keys: KeyPair[]) => keys.map(({ publicKey }) => starknetSigner(publicKey));
+
+export async function deployLegacyMultisig(classHash: string) {
+  const keys = [new LegacyMultisigKeyPair()];
+  const salt = num.toHex(randomKeyPair().privateKey);
+  const constructorCalldata = CallData.compile({ threshold: 1, signers: [keys[0].publicKey] });
+  const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
+  await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
+  const signer = new LegacyMultisigSigner(keys);
+  const account = new Account(provider, contractAddress, signer, "1");
+
+  const { transaction_hash } = await account.deploySelf({
+    classHash,
+    constructorCalldata,
+    addressSalt: salt,
+  });
+  await provider.waitForTransaction(transaction_hash);
+
+  const accountContract = await loadContract(account.address);
+  accountContract.connect(account);
+  return { account, accountContract, signer };
+}

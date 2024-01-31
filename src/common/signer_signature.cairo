@@ -1,6 +1,7 @@
 use argent::common::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };
+use core::array::ArrayTrait;
 use ecdsa::check_ecdsa_signature;
 use hash::{HashStateTrait, HashStateExTrait, Hash};
 use poseidon::{PoseidonTrait, HashState};

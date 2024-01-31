@@ -6,6 +6,7 @@ import {
   declareFixtureContract,
   LegacyMultisigKeyPair,
   LegacyMultisigSigner,
+  deployLegacyMultisig,
 } from "./lib";
 import { deployMultisig1_1 } from "./lib/multisig";
 
@@ -19,14 +20,9 @@ describe("ArgentMultisig: upgrade", function () {
   });
 
   it("Upgrade from 0.1.0 to Current Version", async function () {
-    const keys = [new LegacyMultisigKeyPair()];
-    const { account } = await deployMultisig1_1({
-      keys,
-      classHash: await declareFixtureContract("ArgentMultisig-0.1.0"),
-    });
+    const { account } = await deployLegacyMultisig(await declareFixtureContract("ArgentMultisig-0.1.0"));
     const currentImpl = await declareContract("ArgentMultisig");
 
-    account.signer = new LegacyMultisigSigner(keys);
     await upgradeAccount(account, currentImpl);
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(currentImpl));
   });

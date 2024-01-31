@@ -74,13 +74,11 @@ mod signer_list_component {
             ref self: ComponentState<TContractState>, mut signers_to_remove: Span<felt252>, mut last_signer: felt252
         ) {
             loop {
-                match signers_to_remove.pop_front() {
-                    Option::Some(signer_ref) => {
-                        let signer = *signer_ref;
-                        last_signer = self.remove_signer(signer_to_remove: signer, last_signer: last_signer);
-                    },
+                let signer = match signers_to_remove.pop_front() {
+                    Option::Some(signer) => *signer,
                     Option::None => { break; }
-                }
+                };
+                last_signer = self.remove_signer(signer_to_remove: signer, last_signer: last_signer);
             }
         }
 

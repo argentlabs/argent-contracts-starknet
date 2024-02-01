@@ -8,14 +8,14 @@ const ethUsd = 2000n;
 
 // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
 const gasWeights: Record<string, number> = {
-  steps: 0.01,
-  pedersen: 0.32,
-  poseidon: 0.32,
-  range_check: 0.16,
-  ecdsa: 20.48,
-  keccak: 20.48,
-  ec_op: 10.24,
-  bitwise: 0.64,
+  steps: 0.005,
+  pedersen: 0.16,
+  poseidon: 0.16,
+  range_check: 0.08,
+  ecdsa: 10.24,
+  keccak: 10.24,
+  bitwise: 0.32,
+  ec_op: 5.12,
 };
 
 async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
@@ -47,15 +47,15 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
   }
 
   const executionResources: Record<string, number> = {
-    steps: Number(rawResources.steps ?? 0),
-    memory_holes: Number(rawResources.memory_holes ?? 0),
-    pedersen: Number(rawResources.pedersen_builtin_applications ?? 0),
-    poseidon: Number(rawResources.poseidon_builtin_applications ?? 0),
-    range_check: Number(rawResources.range_check_builtin_applications ?? 0),
-    ecdsa: Number(rawResources.ecdsa_builtin_applications ?? 0),
-    keccak: Number(rawResources.keccak_builtin_applications ?? 0),
-    ec_op: Number(rawResources.ec_op_builtin_applications ?? 0),
-    bitwise: Number(rawResources.bitwise_builtin_applications ?? 0),
+    steps: rawResources.steps ?? 0,
+    memory_holes: rawResources.memory_holes ?? 0,
+    pedersen: rawResources.pedersen_builtin_applications ?? 0,
+    poseidon: rawResources.poseidon_builtin_applications ?? 0,
+    range_check: rawResources.range_check_builtin_applications ?? 0,
+    ecdsa: rawResources.ecdsa_builtin_applications ?? 0,
+    keccak: rawResources.keccak_builtin_applications ?? 0,
+    bitwise: rawResources.bitwise_builtin_applications ?? 0,
+    ec_op: rawResources.ec_op_builtin_applications ?? 0,
   };
 
   const blockNumber = receipt.block_number;

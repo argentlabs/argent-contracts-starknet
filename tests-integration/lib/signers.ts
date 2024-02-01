@@ -1,3 +1,4 @@
+import { Signature as EthersSignature, Wallet, id } from "ethers";
 import {
   ArraySignatureType,
   CairoCustomEnum,
@@ -24,6 +25,7 @@ import {
   V2DeclareSignerDetails,
   V3DeclareSignerDetails,
   stark,
+  uint256,
 } from "starknet";
 
 /**
@@ -202,6 +204,22 @@ export class KeyPair extends Signer {
   }
 }
 
+export class EthKeyPair extends KeyPair {
+  public get publicKey() {
+    return BigInt(new Wallet(id(this.privateKey.toString())).address);
+  }
+
+  public signHash(messageHash: string) {
+    const eth_signer = new Wallet(id(this.privateKey.toString()));
+    if (messageHash.length < 66) {
+      messageHash = "0x" + "0".repeat(66 - messageHash.length) + messageHash.slice(2);
+    }
+    const signature = EthersSignature.from(eth_signer.signingKey.sign(messageHash));
+
+    return ethereumSignatureType(this.publicKey, signature);
+  }
+}
+
 export class LegacyKeyPair extends KeyPair {
   public signHash(messageHash: string) {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
@@ -231,6 +249,22 @@ export function starknetSignatureType(
   ]);
 }
 
+export function ethereumSignatureType(signer: bigint, signature: EthersSignature) {
+  return CallData.compile([
+    new CairoCustomEnum({
+      Starknet: undefined,
+      Secp256k1: {
+        signer,
+        r: uint256.bnToUint256(signature.r),
+        s: uint256.bnToUint256(signature.s),
+        y_parity: signature.yParity.toString(),
+      },
+      Webauthn: undefined,
+      Secp256r1: undefined,
+    }),
+  ]);
+}
+
 export function compiledStarknetSigner(signer: bigint | number | string) {
   return CallData.compile([starknetSigner(signer)]);
 }
@@ -238,6 +272,15 @@ export function starknetSigner(signer: bigint | number | string) {
   return new CairoCustomEnum({
     Starknet: { signer },
     Secp256k1: undefined,
+    Secp256r1: undefined,
+    Webauthn: undefined,
+  });
+}
+
+export function ethSigner(signer: bigint | number | string) {
+  return new CairoCustomEnum({
+    Starknet: undefined,
+    Secp256k1: { signer },
     Secp256r1: undefined,
     Webauthn: undefined,
   });
@@ -259,5 +302,6 @@ export function signerOption(signer: bigint | undefined) {
 }
 
 export const randomKeyPair = () => new KeyPair();
+export const randomEthKeyPair = () => new EthKeyPair();
 
 export const randomKeyPairs = (length: number) => Array.from({ length }, randomKeyPair);

@@ -23,6 +23,7 @@ import {
   LegacyKeyPair,
   LegacyMultisigSigner,
   compiledSignerOption,
+  ethSigner,
   randomKeyPair,
   signerOption,
   starknetSigner,
@@ -144,7 +145,7 @@ async function deployAccountInner(
   };
   const some_guardian = signerOption(finalParams.guardian?.publicKey);
   const constructorCalldata = CallData.compile({
-    owner: starknetSigner(finalParams.owner.publicKey),
+    owner: ethSigner(finalParams.owner.publicKey),
     guardian: some_guardian,
   });
 

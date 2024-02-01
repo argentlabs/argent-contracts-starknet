@@ -24,7 +24,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
   if (receipt.actual_fee?.unit === "WEI") {
     actualFee = BigInt(receipt.actual_fee.amount);
   } else if (receipt.actual_fee && isUndefined(receipt.actual_fee.unit)) {
-    actualFee = BigInt(`${receipt.actual_fee}`);
+    actualFee = BigInt(+receipt.actual_fee);
   } else {
     throw new Error(`unexpected fee: ${receipt.actual_fee}`);
   }
@@ -47,17 +47,17 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
   }
 
   const executionResources: Record<string, number> = {
-    steps: rawResources.steps ?? 0,
+    steps: rawResources.steps,
     memory_holes: rawResources.memory_holes ?? 0,
     pedersen: rawResources.pedersen_builtin_applications ?? 0,
-    poseidon: rawResources.poseidon_builtin_applications ?? 0,
     range_check: rawResources.range_check_builtin_applications ?? 0,
+    poseidon: rawResources.poseidon_builtin_applications ?? 0,
     ecdsa: rawResources.ecdsa_builtin_applications ?? 0,
     keccak: rawResources.keccak_builtin_applications ?? 0,
     bitwise: rawResources.bitwise_builtin_applications ?? 0,
     ec_op: rawResources.ec_op_builtin_applications ?? 0,
   };
-
+ 
   const blockNumber = receipt.block_number;
   const blockInfo = await provider.getBlockWithTxHashes(blockNumber);
   const stateUpdate = await provider.getStateUpdate(blockNumber);
@@ -135,10 +135,10 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
       console.table(diffs.flat());
     },
     printSummary() {
-      console.log("Resources:");
-      console.table(mapValues(profiles, "executionResources"));
       console.log("Summary:");
       console.table(mapValues(profiles, this.summarizeCost));
+      console.log("Resources:");
+      console.table(mapValues(profiles, "executionResources"));
     },
     formatReport() {
       return Object.entries(profiles)

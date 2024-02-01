@@ -57,7 +57,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
     bitwise: rawResources.bitwise_builtin_applications ?? 0,
     ec_op: rawResources.ec_op_builtin_applications ?? 0,
   };
- 
+
   const blockNumber = receipt.block_number;
   const blockInfo = await provider.getBlockWithTxHashes(blockNumber);
   const stateUpdate = await provider.getStateUpdate(blockNumber);

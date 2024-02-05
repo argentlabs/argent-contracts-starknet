@@ -1,4 +1,6 @@
 .env
+.env.*
+!.env.example
 .idea
 .vscode
 .DS_Store
@@ -7,6 +9,7 @@ venv
 .pytest_cache
 __pycache__
 artifacts
+!deployments/artifacts
 dist
 target
 node_modules
@@ -14,11 +17,5 @@ node.json
 
 cairo
 account.json
-tests/fixtures/ArgentAccount.json
-tests/fixtures/ArgentAccount.casm
-tests/fixtures/ArgentMultisig.json
-tests/fixtures/ArgentMultisig.casm
-tests/fixtures/TestDapp.json
-tests/fixtures/TestDapp.casm
 dump
 package-lock.json

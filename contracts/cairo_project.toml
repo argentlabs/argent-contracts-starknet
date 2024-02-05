@@ -1,5 +1,0 @@
-[crate_roots]
-account = "account/src"
-lib = "lib/src"
-multicall = "multicall/src"
-multisig = "multisig/src"

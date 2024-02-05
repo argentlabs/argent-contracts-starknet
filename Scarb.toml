@@ -1,0 +1,29 @@
+[package]
+name = "argent"
+version = "0.1.0"
+
+# See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest
+
+[[target.starknet-contract]]
+sierra = true
+casm = true
+allowed-libfuncs-list.name = "audited"
+
+[dependencies]
+starknet = "2.4.3"
+
+[tool.fmt]
+max-line-length = 120
+sort-module-level-items = true
+
+[scripts]
+format = "scarb fmt && yarn prettier --write ."
+lint = "yarn eslint ."
+test-ts = "scarb --profile release build && yarn tsc && yarn mocha tests-integration/*.test.ts"
+test-multisig = "scarb --profile release build && yarn tsc && yarn mocha tests-integration/multisig*.test.ts"
+test-list = "scarb --profile release build && yarn tsc && yarn mocha --dry-run tests-integration/*.test.ts"
+start-devnet = "./scripts/start-devnet.sh"
+kill-devnet = "lsof -t -i tcp:5050 | xargs kill"
+profile = "scarb --profile release build && node --loader ts-node/esm scripts/profile-account.ts"
+deploy = "scarb --profile release build && node --loader ts-node/esm scripts/deploy-account.ts"
+generate-signature = "node --loader ts-node/esm ./scripts/generate-signature.ts"

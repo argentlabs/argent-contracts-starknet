@@ -1,40 +1,44 @@
 import {
-  declareContract,
   deployAccount,
   deployAccountWithoutGuardian,
-  deployer,
   deployOldAccount,
-  loadContract,
-} from "../tests/lib";
-import { profileGasUsage } from "../tests/lib/gas";
+  deployContract,
+  provider,
+  KeyPair,
+  signChangeOwnerMessage,
+} from "../tests-integration/lib";
+import { newProfiler } from "../tests-integration/lib/gas";
 
-const argentAccountClassHash = await declareContract("ArgentAccount");
-const oldArgentAccountClassHash = await declareContract("OldArgentAccount");
-const proxyClassHash = await declareContract("Proxy");
-const testDappClassHash = await declareContract("TestDapp");
-const { contract_address } = await deployer.deployContract({ classHash: testDappClassHash });
-const testDappContract = await loadContract(contract_address);
+const testDappContract = await deployContract("TestDapp");
+
+const profiler = newProfiler(provider);
 
 {
-  console.log("Old Account");
-  const { account } = await deployOldAccount(proxyClassHash, oldArgentAccountClassHash);
+  const { account } = await deployAccount();
   testDappContract.connect(account);
-  const receipt = await testDappContract.set_number(42);
-  await profileGasUsage(receipt);
+  await profiler.profile("Set number", await testDappContract.set_number(42));
 }
 
 {
-  console.log("New Account");
-  const { account } = await deployAccount(argentAccountClassHash);
+  const { account } = await deployAccountWithoutGuardian();
   testDappContract.connect(account);
-  const receipt = await testDappContract.set_number(42);
-  await profileGasUsage(receipt);
+  await profiler.profile("Set number without guardian", await testDappContract.set_number(42));
 }
 
 {
-  console.log("New Account without guardian");
-  const { account } = await deployAccountWithoutGuardian(argentAccountClassHash);
+  const { account } = await deployOldAccount();
   testDappContract.connect(account);
-  const receipt = await testDappContract.set_number(42);
-  await profileGasUsage(receipt);
+  await profiler.profile("Set number using old account", await testDappContract.set_number(42));
 }
+
+{
+  const { account, accountContract } = await deployAccount();
+  const owner = await accountContract.get_owner();
+  const newOwner = new KeyPair();
+  const chainId = await provider.getChainId();
+  const [r, s] = await signChangeOwnerMessage(account.address, owner, newOwner, chainId);
+  await profiler.profile("Change owner", await accountContract.change_owner(newOwner.publicKey, r, s));
+}
+
+profiler.printSummary();
+profiler.updateOrCheckReport();

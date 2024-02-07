@@ -1,5 +1,8 @@
 cairo
-contracts
 venv
-tests/fixtures
+target
+deployments/artifacts
 dist
+.github
+tests-integration/fixtures
+starknet-devnet-rs

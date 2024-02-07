@@ -1,3 +1,4 @@
+0x29927c8af6bccf3f6fda035981e765a7bdbf18a2dc0d630494f8758aa908e2b: 0.3.1 (mainnet, goerli, sepolia, integration)
 0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003: 0.3.0 (mainnet, goerli-1, goerli-2, integration)
 0x45bb3b296122454fb31d45c48da6143df12bcf58311dcd75193df42d79f8dd2: 0.3.0-rc2 (goerli-1, goerli-2)
 0x5ff858f178257126353d03db2e50410c7cb399d9fc68b67ffe127d9b8b2a33c: 0.3.0-rc2 tweaked with version 0.3.99 (goerli-1, goerli-2)

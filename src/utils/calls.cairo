@@ -1,4 +1,4 @@
-use argent::common::array_ext::ArrayExtTrait;
+use argent::utils::array_ext::ArrayExtTrait;
 use starknet::{call_contract_syscall, account::Call};
 
 fn execute_multicall(mut calls: Span<Call>) -> Array<Span<felt252>> {

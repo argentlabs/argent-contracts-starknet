@@ -9,5 +9,5 @@ trait ISRC5<TContractState> {
 
 #[starknet::interface]
 trait ISRC5Legacy<TContractState> {
-    fn supportsInterface(self: @TContractState, interfaceId: felt252) -> bool;
+    fn supportsInterface(self: @TContractState, interfaceId: felt252) -> felt252;
 }

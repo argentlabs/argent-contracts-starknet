@@ -1,10 +1,16 @@
-use argent::common::version::Version;
 use argent::signer::signer_signature::{Signer, SignerSignature};
 use starknet::account::Call;
 
 const SRC5_ACCOUNT_INTERFACE_ID: felt252 = 0x2ceccef7f994940b3962a6c67e0ba4fcd37df7d131417c604f91e03caecc1cd;
 const SRC5_ACCOUNT_INTERFACE_ID_OLD_1: felt252 = 0xa66bd575;
 const SRC5_ACCOUNT_INTERFACE_ID_OLD_2: felt252 = 0x3943f10f;
+
+#[derive(Serde, Drop)]
+struct Version {
+    major: u8,
+    minor: u8,
+    patch: u8,
+}
 
 #[starknet::interface]
 trait IArgentAccount<TContractState> {

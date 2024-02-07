@@ -1,6 +1,6 @@
 use alexandria_encoding::base64::Base64UrlDecoder;
 use alexandria_math::sha256::sha256;
-use argent::common::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, extend};
+use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, extend};
 use starknet::secp256_trait::Signature;
 
 #[derive(Drop, Copy, Serde, PartialEq)]

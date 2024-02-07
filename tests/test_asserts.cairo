@@ -1,4 +1,4 @@
-use argent::common::asserts;
+use argent::utils::asserts;
 use starknet::{contract_address_const, testing::{set_caller_address, set_contract_address}, account::Call};
 
 #[test]

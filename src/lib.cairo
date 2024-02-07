@@ -4,20 +4,8 @@ mod account_legacy {
     mod interface;
 }
 
-mod common {
-    mod account;
-    mod array_ext;
-    mod asserts;
-    mod bytes;
-    mod calls;
-    mod erc165;
-    mod multicall;
-    mod outside_execution;
-    mod serialization;
-    mod test_dapp;
-    mod transaction_version;
+mod upgrade {
     mod upgrade;
-    mod version;
 }
 
 mod account {
@@ -54,4 +42,15 @@ mod recovery {
 mod presets {
     mod multisig_account;
     mod user_account;
+}
+
+mod utils {
+    mod array_ext;
+    mod asserts;
+    mod bytes;
+    mod calls;
+    mod multicall;
+    mod serialization;
+    mod test_dapp;
+    mod transaction_version;
 }

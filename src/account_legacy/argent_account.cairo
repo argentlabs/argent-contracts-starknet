@@ -1,27 +1,22 @@
 #[starknet::contract]
 mod ArgentAccount {
+    use argent::account::interface::Version;
     use argent::account_legacy::escape::{Escape, EscapeType, EscapeStatus};
-    use argent::account_legacy::interface::{IArgentAccount, IDeprecatedArgentAccount};
-    use argent::common::{
-        account::{
-            IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
-        },
+    use argent::account_legacy::interface::{IAccount, IArgentAccount, IDeprecatedArgentAccount};
+    use argent::introspection::src5::src5_component;
+    use argent::outside_execution::{
+        outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
+    };
+    use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid, SignerSignature, SignerSignatureTrait}};
+    use argent::upgrade::{upgrade::{IUpgradeable, do_upgrade}};
+    use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self}, calls::execute_multicall,
-        version::Version,
-        erc165::{
-            IErc165, IErc165LibraryDispatcher, IErc165DispatcherTrait, ERC165_IERC165_INTERFACE_ID,
-            ERC165_IERC165_INTERFACE_ID_OLD,
-        },
-        outside_execution::{
-            IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
-        },
-        upgrade::{IUpgradeable, do_upgrade}, serialization::full_deserialize,
+        serialization::full_deserialize,
         transaction_version::{
             TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
             assert_correct_deploy_account_version, assert_no_unsupported_v3_fields, DA_MODE_L1
         }
     };
-    use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid, SignerSignature, SignerSignatureTrait}};
     use core::starknet::event::EventEmitter;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
@@ -53,6 +48,10 @@ mod ArgentAccount {
     #[abi(embed_v0)]
     impl ExecuteFromOutside = outside_execution_component::OutsideExecutionImpl<ContractState>;
 
+    component!(path: src5_component, storage: src5, event: SRC5Events);
+    #[abi(embed_v0)]
+    impl SRC5 = src5_component::SRC5Impl<ContractState>;
+
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
         #[inline(always)]
         fn execute_from_outside_callback(
@@ -70,6 +69,8 @@ mod ArgentAccount {
     struct Storage {
         #[substorage(v0)]
         execute_from_outside: outside_execution_component::Storage,
+        #[substorage(v0)]
+        src5: src5_component::Storage,
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         _signer: felt252, /// Current account owner
         _guardian: felt252, /// Current account guardian
@@ -87,6 +88,7 @@ mod ArgentAccount {
     #[derive(Drop, starknet::Event)]
     enum Event {
         ExecuteFromOutsideEvents: outside_execution_component::Event,
+        SRC5Events: src5_component::Event,
         AccountCreated: AccountCreated,
         TransactionExecuted: TransactionExecuted,
         EscapeOwnerTriggered: EscapeOwnerTriggered,
@@ -555,27 +557,6 @@ mod ArgentAccount {
         fn get_escape_and_status(self: @ContractState) -> (Escape, EscapeStatus) {
             let current_escape = self._escape.read();
             (current_escape, get_escape_status(current_escape.ready_at))
-        }
-    }
-
-    #[external(v0)]
-    impl Erc165Impl of IErc165<ContractState> {
-        fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
-            if interface_id == ERC165_IERC165_INTERFACE_ID {
-                true
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID {
-                true
-            } else if interface_id == ERC165_OUTSIDE_EXECUTION_INTERFACE_ID {
-                true
-            } else if interface_id == ERC165_IERC165_INTERFACE_ID_OLD {
-                true
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_1 {
-                true
-            } else if interface_id == ERC165_ACCOUNT_INTERFACE_ID_OLD_2 {
-                true
-            } else {
-                false
-            }
         }
     }
 

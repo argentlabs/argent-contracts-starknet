@@ -1,10 +1,11 @@
 #[starknet::component]
 mod threshold_recovery_component {
-    use argent::common::asserts::assert_only_self;
     use argent::recovery::interface::{Escape, EscapeEnabled, EscapeStatus, IRecovery, IRecoveryInternal};
     use argent::signer::interface::ISignerList;
     use argent::signer::signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl};
     use argent::signer::signer_signature::{Signer, IntoGuid};
+    use argent::utils::asserts::assert_only_self;
+    use core::array::ArrayTrait;
     use starknet::{get_block_timestamp, get_contract_address, ContractAddress, account::Call};
 
     #[storage]
@@ -16,8 +17,8 @@ mod threshold_recovery_component {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        EscapeSignerTriggered: EscapeSignerTriggered,
-        SignerEscaped: SignerEscaped,
+        EscapeTriggered: EscapeTriggered,
+        EscapeExecuted: EscapeExecuted,
     }
 
     /// @notice Guardian escape was triggered by the owner
@@ -25,19 +26,19 @@ mod threshold_recovery_component {
     /// @param target_signer the escaped signer address
     /// @param new_signer the new signer address to be set after the security period
     #[derive(Drop, starknet::Event)]
-    struct EscapeSignerTriggered {
+    struct EscapeTriggered {
         ready_at: u64,
-        target_signer: felt252,
-        new_signer: felt252
+        target_signers: Array<felt252>,
+        new_signers: Array<felt252>
     }
 
     /// @notice Signer escape was completed and there is a new signer
     /// @param target_signer the escaped signer address
     /// @param new_signer the new signer address
     #[derive(Drop, starknet::Event)]
-    struct SignerEscaped {
-        target_signer: felt252,
-        new_signer: felt252
+    struct EscapeExecuted {
+        target_signers: Array<felt252>,
+        new_signers: Array<felt252>
     }
 
     #[embeddable_as(ThresholdRecoveryImpl)]
@@ -48,16 +49,17 @@ mod threshold_recovery_component {
             ref self: ComponentState<TContractState>, is_enabled: bool, security_period: u64, expiry_period: u64
         ) {
             assert_only_self();
-            // cannot toggle escape if there is an ongoing escape 
-            let current_escape = self.escape.read();
+            // cannot toggle escape if there is an ongoing escape
             let escape_config = self.escape_enabled.read();
+            let current_escape = self.escape.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
-            let current_escaped_signer = current_escape.target_signer;
+            let current_escaped_signer = current_escape.target_signers.at(0);
             assert(
-                current_escaped_signer == 0 || current_escape_status == EscapeStatus::Expired, 'argent/ongoing-escape'
+                *current_escaped_signer == 0 || current_escape_status == EscapeStatus::Expired, 'argent/ongoing-escape'
             );
 
             if (is_enabled) {
+                assert(escape_config.is_enabled == 0, 'argent/escape-enabled');
                 assert(security_period != 0 && expiry_period != 0, 'argent/invalid-escape-params');
                 self.escape_enabled.write(EscapeEnabled { is_enabled: 1, security_period, expiry_period });
             } else {
@@ -67,34 +69,41 @@ mod threshold_recovery_component {
             }
         }
 
-        fn trigger_escape_signer(ref self: ComponentState<TContractState>, target_signer: Signer, new_signer: Signer) {
+        fn trigger_escape(
+            ref self: ComponentState<TContractState>, target_signers: Array<Signer>, new_signers: Array<Signer>
+        ) {
             assert_only_self();
+            assert(target_signers.len() == 1 && new_signers.len() == 1, 'argent/invalid-escape-length');
 
-            let target_signer_guid = target_signer.into_guid().expect('argent/invalid-target-guid');
-            let new_signer_guid = new_signer.into_guid().expect('argent/invalid-new-signer-guid');
+            let target_signer_guid = (*target_signers.at(0)).into_guid().expect('argent/invalid-target-guid');
+            let new_signer_guid = (*new_signers.at(0)).into_guid().expect('argent/invalid-new-signer-guid');
             //TODO self.emit(SignerLinked { signer_guid: new_signer_guid, signer: new_signer });
 
             let current_escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
-            let current_escaped_signer = current_escape.target_signer;
-            if (current_escaped_signer != 0 && current_escape_status == EscapeStatus::Ready) {
+            let current_escaped_signer = current_escape.target_signers.at(0);
+            if (*current_escaped_signer != 0 && current_escape_status == EscapeStatus::Ready) {
                 // can only override an escape with a target signer of lower priority than the current one
                 assert(
-                    self.get_contract().is_signer_before(current_escaped_signer, target_signer_guid),
+                    self.get_contract().is_signer_before(*current_escaped_signer, target_signer_guid),
                     'argent/cannot-override-escape'
                 );
             }
             let ready_at = get_block_timestamp() + escape_config.security_period;
-            let escape = Escape { ready_at, target_signer: target_signer_guid, new_signer: new_signer_guid };
+            let escape = Escape {
+                ready_at, target_signers: array![target_signer_guid], new_signers: array![new_signer_guid]
+            };
             self.escape.write(escape);
             self
                 .emit(
-                    EscapeSignerTriggered { ready_at, target_signer: target_signer_guid, new_signer: new_signer_guid }
+                    EscapeTriggered {
+                        ready_at, target_signers: array![target_signer_guid], new_signers: array![new_signer_guid]
+                    }
                 );
         }
 
-        fn escape_signer(ref self: ComponentState<TContractState>) {
+        fn execute_escape(ref self: ComponentState<TContractState>) {
             assert_only_self();
 
             let current_escape = self.escape.read();
@@ -103,18 +112,20 @@ mod threshold_recovery_component {
             assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
             // replace signer
+            let target_signer_guid = *current_escape.target_signers.at(0);
+            let new_signer_guid = *current_escape.new_signers.at(0);
             let mut state = self.get_contract_mut();
             let (_, last_signer) = state.load();
-            state.replace_signer(current_escape.target_signer, current_escape.new_signer, last_signer);
+            state.replace_signer(target_signer_guid, new_signer_guid, last_signer);
             self
                 .emit(
-                    SignerEscaped { target_signer: current_escape.target_signer, new_signer: current_escape.new_signer }
+                    EscapeExecuted { target_signers: array![target_signer_guid], new_signers: array![new_signer_guid] }
                 );
             // TODO self.emit(OwnerRemoved { removed_owner_guid: current_escape.target_signer });
             // TODO self.emit(OwnerAdded { new_owner_guid: current_escape.new_signer });
 
             // clear escape
-            self.escape.write(Escape { ready_at: 0, target_signer: 0, new_signer: 0 });
+            self.escape.write(Escape { ready_at: 0, target_signers: array![], new_signers: array![] });
         }
 
         fn cancel_escape(ref self: ComponentState<TContractState>) {
@@ -123,7 +134,7 @@ mod threshold_recovery_component {
             let escape_config = self.escape_enabled.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
-            self.escape.write(Escape { ready_at: 0, target_signer: 0, new_signer: 0 });
+            self.escape.write(Escape { ready_at: 0, target_signers: array![], new_signers: array![] });
         // TODO self.emit(EscapeCanceled { target_signer: current_escape.target_signer, new_signer: current_escape.new_signer });
         }
     }
@@ -159,7 +170,7 @@ mod threshold_recovery_component {
                     assert(escape_config.is_enabled == 1 && threshold > 1, 'argent/recovery-unavailable');
                     // get escaped signer
                     let current_escape: Escape = self.escape.read();
-                    let escaped_signer_guid = current_escape.target_signer;
+                    let escaped_signer_guid = *current_escape.target_signers.at(0);
                     // return
                     return (true, threshold - 1, escaped_signer_guid);
                 }
@@ -167,7 +178,6 @@ mod threshold_recovery_component {
             return (false, 0, 0);
         }
     }
-
 
     #[generate_trait]
     impl Private<TContractState, +HasComponent<TContractState>> of PrivateTrait<TContractState> {

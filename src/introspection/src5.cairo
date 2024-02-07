@@ -33,8 +33,12 @@ mod src5_component {
 
     #[embeddable_as(SRC5LegacyImpl)]
     impl SRC5Legacy<TContractState, +HasComponent<TContractState>> of ISRC5Legacy<ComponentState<TContractState>> {
-        fn supportsInterface(self: @ComponentState<TContractState>, interfaceId: felt252) -> bool {
-            self.supports_interface(interfaceId)
+        fn supportsInterface(self: @ComponentState<TContractState>, interfaceId: felt252) -> felt252 {
+            if self.supports_interface(interfaceId) {
+                1
+            } else {
+                0
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-use argent::common::{account::ERC165_ACCOUNT_INTERFACE_ID, erc165::{IErc165LibraryDispatcher, IErc165DispatcherTrait,}};
+use argent::account::interface::SRC5_ACCOUNT_INTERFACE_ID;
+use argent::introspection::interface::{ISRC5LibraryDispatcher, ISRC5DispatcherTrait};
 use starknet::{ClassHash, syscalls::replace_class_syscall};
 
 #[starknet::interface]
@@ -18,7 +19,7 @@ trait IUpgradeable<TContractState> {
 
 #[inline(always)]
 fn do_upgrade(class_hash: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
-    let supports_interface = IErc165LibraryDispatcher { class_hash }.supports_interface(ERC165_ACCOUNT_INTERFACE_ID);
+    let supports_interface = ISRC5LibraryDispatcher { class_hash }.supports_interface(SRC5_ACCOUNT_INTERFACE_ID);
     assert(supports_interface, 'argent/invalid-implementation');
 
     replace_class_syscall(class_hash).expect('argent/invalid-upgrade');

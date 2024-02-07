@@ -1,13 +1,6 @@
 #[starknet::contract]
 mod ArgentMultisigAccount {
-    use argent::account::interface::IArgentAccount;
-    use argent::common::{
-        asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
-        version::Version, upgrade::{IUpgradeable, do_upgrade}, serialization::full_deserialize,
-        transaction_version::{
-            assert_correct_invoke_version, assert_no_unsupported_v3_fields, assert_correct_deploy_account_version
-        },
-    };
+    use argent::account::interface::{IArgentAccount, Version};
     use argent::introspection::src5::src5_component;
     use argent::multisig::{multisig::multisig_component};
     use argent::outside_execution::{
@@ -16,6 +9,14 @@ mod ArgentMultisigAccount {
     use argent::signer::{
         interface::ISignerList, signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait},
         signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
+    };
+    use argent::upgrade::upgrade::{IUpgradeable, do_upgrade};
+    use argent::utils::{
+        asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
+        serialization::full_deserialize,
+        transaction_version::{
+            assert_correct_invoke_version, assert_no_unsupported_v3_fields, assert_correct_deploy_account_version
+        },
     };
     use core::array::ArrayTrait;
     use core::result::ResultTrait;
@@ -43,22 +44,6 @@ mod ArgentMultisigAccount {
     impl SRC5 = src5_component::SRC5Impl<ContractState>;
     #[abi(embed_v0)]
     impl SRC5Legacy = src5_component::SRC5LegacyImpl<ContractState>;
-
-    impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
-        #[inline(always)]
-        fn execute_from_outside_callback(
-            ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
-        ) -> Array<Span<felt252>> {
-            // validate calls
-            self.assert_valid_calls(calls);
-            // validate signatures
-            self.assert_valid_signatures(calls, outside_execution_hash, signature);
-
-            let retdata = execute_multicall(calls);
-            self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
-            retdata
-        }
-    }
 
     #[storage]
     struct Storage {
@@ -155,13 +140,9 @@ mod ArgentMultisigAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_deploy_account_version(tx_info.version);
             assert_no_unsupported_v3_fields();
-
+            // only 1 signer needed to deploy
             let mut signature = tx_info.signature;
-            let mut parsed_signatures: Array<SignerSignature> = full_deserialize(signature)
-                .expect('argent/signature-not-empty');
-            // only 1 valid signature is needed to deploy  
-            assert(parsed_signatures.len() >= 1, 'argent/invalid-signature-length');
-            let is_valid = self.is_valid_signer_signature(tx_info.transaction_hash, *parsed_signatures.at(0),);
+            let is_valid = self.is_valid_signature_with_conditions(tx_info.transaction_hash, 1, 0, tx_info.signature);
             assert(is_valid, 'argent/invalid-signature');
             VALIDATED
         }
@@ -173,6 +154,22 @@ mod ArgentMultisigAccount {
         /// Semantic version of this contract
         fn get_version(self: @ContractState) -> Version {
             Version { major: VERSION_MAJOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
+        }
+    }
+
+    impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
+        #[inline(always)]
+        fn execute_from_outside_callback(
+            ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
+        ) -> Array<Span<felt252>> {
+            // validate calls
+            self.assert_valid_calls(calls);
+            // validate signatures
+            self.assert_valid_signatures(calls, outside_execution_hash, signature);
+
+            let retdata = execute_multicall(calls);
+            self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
+            retdata
         }
     }
 

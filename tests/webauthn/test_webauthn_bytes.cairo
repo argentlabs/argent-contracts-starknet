@@ -1,4 +1,4 @@
-use argent::common::bytes::{SpanU8TryIntoFelt252, SpanU8TryIntoU256};
+use argent::utils::bytes::{SpanU8TryIntoFelt252, SpanU8TryIntoU256};
 
 #[test]
 #[available_gas(1_000_000_000)]

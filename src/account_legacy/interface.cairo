@@ -1,6 +1,15 @@
+use argent::account::interface::Version;
 use argent::account_legacy::escape::{Escape, EscapeStatus};
-use argent::common::version::Version;
 use argent::signer::signer_signature::{SignerSignature, Signer};
+use starknet::account::Call;
+
+// InterfaceID: 0x2ceccef7f994940b3962a6c67e0ba4fcd37df7d131417c604f91e03caecc1cd
+#[starknet::interface]
+trait IAccount<TContractState> {
+    fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
+    fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
+    fn is_valid_signature(self: @TContractState, hash: felt252, signature: Array<felt252>) -> felt252;
+}
 
 #[starknet::interface]
 trait IArgentAccount<TContractState> {

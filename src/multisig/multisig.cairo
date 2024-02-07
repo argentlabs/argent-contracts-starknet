@@ -1,16 +1,16 @@
 #[starknet::component]
 mod multisig_component {
-    use argent::common::{
+    use argent::multisig::interface::{IArgentMultisig, IArgentMultisigInternal};
+    use argent::signer::{
+        interface::ISignerList, signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait},
+        signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
+    };
+    use argent::utils::{
         asserts::{assert_only_self},
         transaction_version::{
             assert_correct_invoke_version, assert_no_unsupported_v3_fields, assert_correct_deploy_account_version
         },
         serialization::full_deserialize,
-    };
-    use argent::multisig::interface::{IArgentMultisig, IArgentMultisigInternal};
-    use argent::signer::{
-        interface::ISignerList, signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait},
-        signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
     };
     use core::array::ArrayTrait;
     use core::result::ResultTrait;

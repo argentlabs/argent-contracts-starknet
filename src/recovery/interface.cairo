@@ -1,11 +1,12 @@
 use argent::signer::signer_signature::{Signer, SignerSignature};
-use starknet::{ContractAddress};
+use argent::utils::array_ext::StoreFelt252Array;
+use starknet::ContractAddress;
 
 #[starknet::interface]
 trait IRecovery<TContractState> {
     fn toggle_escape(ref self: TContractState, is_enabled: bool, security_period: u64, expiry_period: u64);
-    fn trigger_escape_signer(ref self: TContractState, target_signer: Signer, new_signer: Signer);
-    fn escape_signer(ref self: TContractState);
+    fn trigger_escape(ref self: TContractState, target_signers: Array<Signer>, new_signers: Array<Signer>);
+    fn execute_escape(ref self: TContractState);
     fn cancel_escape(ref self: TContractState);
 }
 
@@ -28,14 +29,15 @@ enum EscapeStatus {
     Expired,
 }
 
-#[derive(Drop, Copy, Serde, starknet::Store)]
+// TODO can be optimised by only storing the len of the arrays once since it must be equal
+#[derive(Drop, Serde, starknet::Store)]
 struct Escape {
     // timestamp for activation of escape mode, 0 otherwise
     ready_at: u64,
     // target signer address
-    target_signer: felt252,
+    target_signers: Array<felt252>,
     // new signer address
-    new_signer: felt252,
+    new_signers: Array<felt252>,
 }
 
 #[derive(Drop, Copy, Serde, starknet::StorePacking)]

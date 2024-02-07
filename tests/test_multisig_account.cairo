@@ -1,6 +1,6 @@
+use argent::presets::multisig_account::ArgentMultisigAccount;
 use argent::signer::signer_signature::IntoGuid;
 use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
-use argent::presets::multisig_account::ArgentMultisigAccount;
 use argent_tests::setup::multisig_test_setup::{
     initialize_multisig, signer_pubkey_1, signer_pubkey_2, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
     initialize_multisig_with_one_signer

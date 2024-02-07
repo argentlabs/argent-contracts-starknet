@@ -1,7 +1,7 @@
+use argent::account::interface::Version;
 use argent::account_legacy::argent_account::ArgentAccount;
 use argent::account_legacy::escape::{Escape, EscapeStatus};
 use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
-use argent::common::version::Version;
 use core::serde::Serde;
 use starknet::{contract_address_const, deploy_syscall, account::Call, testing::set_contract_address};
 

@@ -1,6 +1,6 @@
-use argent::common::signer_signature::IntoGuid;
-use argent::common::signer_signature::{Signer, StarknetSigner, SignerSignature};
-use argent::multisig::argent_multisig::ArgentMultisig;
+use argent::signer::signer_signature::IntoGuid;
+use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
+use argent::presets::multisig_account::ArgentMultisigAccount;
 use argent_tests::setup::multisig_test_setup::{
     initialize_multisig, signer_pubkey_1, signer_pubkey_2, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
     initialize_multisig_with_one_signer
@@ -52,7 +52,7 @@ fn invalid_threshold() {
     threshold.serialize(ref calldata);
     array![signer_1].serialize(ref calldata);
 
-    let class_hash = ArgentMultisig::TEST_CLASS_HASH.try_into().unwrap();
+    let class_hash = ArgentMultisigAccount::TEST_CLASS_HASH.try_into().unwrap();
     let mut err = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap_err();
     assert(@err.pop_front().unwrap() == @'argent/bad-threshold', 'Should be argent/bad-threshold');
 }

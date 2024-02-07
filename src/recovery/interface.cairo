@@ -1,3 +1,21 @@
+use argent::signer::signer_signature::{Signer, SignerSignature};
+use starknet::{ContractAddress};
+
+#[starknet::interface]
+trait IRecovery<TContractState> {
+    fn toggle_escape(ref self: TContractState, is_enabled: bool, security_period: u64, expiry_period: u64);
+    fn trigger_escape_signer(ref self: TContractState, target_signer: Signer, new_signer: Signer);
+    fn escape_signer(ref self: TContractState);
+    fn cancel_escape(ref self: TContractState);
+}
+
+#[starknet::interface]
+trait IRecoveryInternal<TContractState> {
+    fn parse_escape_call(
+        self: @TContractState, to: ContractAddress, selector: felt252, calldata: Span<felt252>, threshold: u32
+    ) -> (bool, u32, felt252);
+}
+
 #[derive(Drop, Copy, Serde, PartialEq)]
 enum EscapeStatus {
     /// No escape triggered, or it was canceled

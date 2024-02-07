@@ -1,5 +1,7 @@
 #[starknet::component]
 mod signer_list_component {
+    use argent::signer::interface::ISignerList;
+
     #[storage]
     struct Storage {
         signer_list: LegacyMap<felt252, felt252>,
@@ -9,10 +11,10 @@ mod signer_list_component {
     #[derive(Drop, starknet::Event)]
     enum Event {}
 
-    #[generate_trait]
-    impl Internal<TContractState, +HasComponent<TContractState>> of InternalTrait<TContractState> {
+    #[embeddable_as(SignerListInternalImpl)]
+    impl InternalImpl<TContractState, +HasComponent<TContractState>> of ISignerList<ComponentState<TContractState>> {
         #[inline(always)]
-        fn is_signer(self: @ComponentState<TContractState>, signer: felt252) -> bool {
+        fn is_signer_in_list(self: @ComponentState<TContractState>, signer: felt252) -> bool {
             if signer == 0 {
                 return false;
             }

@@ -1,4 +1,4 @@
-mod account {
+mod account_legacy {
     mod argent_account;
     mod escape;
     mod interface;
@@ -11,26 +11,47 @@ mod common {
     mod bytes;
     mod calls;
     mod erc165;
-    mod interface;
     mod multicall;
     mod outside_execution;
     mod serialization;
-    mod signer_list;
-    mod signer_signature;
     mod test_dapp;
     mod transaction_version;
     mod upgrade;
     mod version;
-    mod webauthn;
+}
+
+mod account {
+    mod interface;
+}
+
+mod introspection {
+    mod interface;
+    mod src5;
 }
 
 mod multisig {
-    mod argent_multisig;
     mod interface;
+    mod multisig;
 }
 
-mod generic {
-    mod argent_generic;
+mod signer {
     mod interface;
-    mod recovery;
+    mod signer_list;
+    mod signer_signature;
+    mod webauthn;
+}
+
+mod outside_execution {
+    mod interface;
+    mod outside_execution;
+}
+
+mod recovery {
+    mod interface;
+    mod threshold_recovery;
+}
+
+mod presets {
+    mod multisig_account;
+    mod user_account;
 }

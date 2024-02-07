@@ -1,4 +1,4 @@
-use argent::common::signer_signature::{Signer, StarknetSigner, SignerSignature};
+use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
 use argent_tests::setup::multisig_test_setup::{
     initialize_multisig, initialize_multisig_with, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3,
     ITestArgentMultisigDispatcherTrait

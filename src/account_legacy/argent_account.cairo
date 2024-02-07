@@ -1,7 +1,7 @@
 #[starknet::contract]
 mod ArgentAccount {
-    use argent::account::escape::{Escape, EscapeType, EscapeStatus};
-    use argent::account::interface::{IArgentAccount, IDeprecatedArgentAccount};
+    use argent::account_legacy::escape::{Escape, EscapeType, EscapeStatus};
+    use argent::account_legacy::interface::{IArgentAccount, IDeprecatedArgentAccount};
     use argent::common::{
         account::{
             IAccount, ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1, ERC165_ACCOUNT_INTERFACE_ID_OLD_2
@@ -15,14 +15,13 @@ mod ArgentAccount {
         outside_execution::{
             IOutsideExecutionCallback, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID, outside_execution_component,
         },
-        upgrade::{IUpgradeable, do_upgrade},
-        signer_signature::{Signer, StarknetSigner, SignerSignature, SignerSignatureTrait, IntoGuid},
-        serialization::full_deserialize,
+        upgrade::{IUpgradeable, do_upgrade}, serialization::full_deserialize,
         transaction_version::{
             TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
             assert_correct_deploy_account_version, assert_no_unsupported_v3_fields, DA_MODE_L1
         }
     };
+    use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid, SignerSignature, SignerSignatureTrait}};
     use core::starknet::event::EventEmitter;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;

@@ -4,17 +4,38 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 trait IRecovery<TContractState> {
-    fn toggle_escape(ref self: TContractState, is_enabled: bool, security_period: u64, expiry_period: u64);
     fn trigger_escape(ref self: TContractState, target_signers: Array<Signer>, new_signers: Array<Signer>);
     fn execute_escape(ref self: TContractState);
     fn cancel_escape(ref self: TContractState);
 }
 
-#[starknet::interface]
-trait IRecoveryInternal<TContractState> {
-    fn parse_escape_call(
-        self: @TContractState, to: ContractAddress, selector: felt252, calldata: Span<felt252>, threshold: u32
-    ) -> (bool, u32, felt252);
+/// @notice Guardian escape was triggered by the owner
+/// @param ready_at when the escape can be completed
+/// @param target_signer the escaped signer address
+/// @param new_signer the new signer address to be set after the security period
+#[derive(Drop, starknet::Event)]
+struct EscapeTriggered {
+    ready_at: u64,
+    target_signers: Span<felt252>,
+    new_signers: Span<felt252>
+}
+
+/// @notice Signer escape was completed and there is a new signer
+/// @param target_signer the escaped signer address
+/// @param new_signer the new signer address
+#[derive(Drop, starknet::Event)]
+struct EscapeExecuted {
+    target_signers: Span<felt252>,
+    new_signers: Span<felt252>
+}
+
+/// @notice Signer escape was completed and there is a new signer
+/// @param target_signer the escaped signer address
+/// @param new_signer the new signer address
+#[derive(Drop, starknet::Event)]
+struct EscapeCanceled {
+    target_signers: Span<felt252>,
+    new_signers: Span<felt252>
 }
 
 #[derive(Drop, Copy, Serde, PartialEq)]

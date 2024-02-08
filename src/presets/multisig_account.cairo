@@ -6,6 +6,7 @@ mod ArgentMultisigAccount {
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
+    use argent::recovery::{external_recovery::external_recovery_component};
     use argent::signer::{
         interface::ISignerList, signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait},
         signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
@@ -27,23 +28,31 @@ mod ArgentMultisigAccount {
     const VERSION_MINOR: u8 = 2;
     const VERSION_PATCH: u8 = 0;
 
+    // Signer storage
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
     impl SignerListInternal = signer_list_component::SignerListInternalImpl<ContractState>;
-
+    // Multisig management
     component!(path: multisig_component, storage: multisig, event: MultisigEvents);
     #[abi(embed_v0)]
     impl Multisig = multisig_component::MultisigImpl<ContractState>;
     impl MultisigInternal = multisig_component::MultisigInternalImpl<ContractState>;
-
+    // Execute from outside
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
     impl ExecuteFromOutside = outside_execution_component::OutsideExecutionImpl<ContractState>;
-
+    // Introspection
     component!(path: src5_component, storage: src5, event: SRC5Events);
     #[abi(embed_v0)]
     impl SRC5 = src5_component::SRC5Impl<ContractState>;
     #[abi(embed_v0)]
     impl SRC5Legacy = src5_component::SRC5LegacyImpl<ContractState>;
+    // External Recovery
+    component!(path: external_recovery_component, storage: escape, event: EscapeEvents);
+    #[abi(embed_v0)]
+    impl ExternalRecovery = external_recovery_component::ExternalRecoveryImpl<ContractState>;
+    #[abi(embed_v0)]
+    impl ToggleExternalRecovery =
+        external_recovery_component::ToggleExternalRecoveryImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -55,6 +64,8 @@ mod ArgentMultisigAccount {
         execute_from_outside: outside_execution_component::Storage,
         #[substorage(v0)]
         src5: src5_component::Storage,
+        #[substorage(v0)]
+        escape: external_recovery_component::Storage,
     }
 
     #[event]
@@ -64,6 +75,7 @@ mod ArgentMultisigAccount {
         MultisigEvents: multisig_component::Event,
         ExecuteFromOutsideEvents: outside_execution_component::Event,
         SRC5Events: src5_component::Event,
+        EscapeEvents: external_recovery_component::Event,
         TransactionExecuted: TransactionExecuted,
         AccountUpgraded: AccountUpgraded,
     }

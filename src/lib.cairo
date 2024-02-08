@@ -35,6 +35,7 @@ mod outside_execution {
 }
 
 mod recovery {
+    mod external_recovery;
     mod interface;
     mod threshold_recovery;
 }

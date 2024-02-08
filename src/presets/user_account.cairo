@@ -28,27 +28,31 @@ mod ArgentGenericAccount {
     const VERSION_MINOR: u8 = 4;
     const VERSION_PATCH: u8 = 0;
 
+    // Signer storage
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
     impl SignerListInternal = signer_list_component::SignerListInternalImpl<ContractState>;
-
+    // Multisig management
     component!(path: multisig_component, storage: multisig, event: MultisigEvents);
     #[abi(embed_v0)]
     impl Multisig = multisig_component::MultisigImpl<ContractState>;
     impl MultisigInternal = multisig_component::MultisigInternalImpl<ContractState>;
-
+    // Execute from outside
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
     impl ExecuteFromOutside = outside_execution_component::OutsideExecutionImpl<ContractState>;
-
+    // Introspection
     component!(path: src5_component, storage: src5, event: SRC5Events);
     #[abi(embed_v0)]
     impl SRC5 = src5_component::SRC5Impl<ContractState>;
     #[abi(embed_v0)]
     impl SRC5Legacy = src5_component::SRC5LegacyImpl<ContractState>;
-
+    // Threshold Recovery
     component!(path: threshold_recovery_component, storage: escape, event: EscapeEvents);
     #[abi(embed_v0)]
     impl ThresholdRecovery = threshold_recovery_component::ThresholdRecoveryImpl<ContractState>;
+    #[abi(embed_v0)]
+    impl ToggleThresholdRecovery =
+        threshold_recovery_component::ToggleThresholdRecoveryImpl<ContractState>;
     impl ThresholdRecoveryInternal = threshold_recovery_component::ThresholdRecoveryInternalImpl<ContractState>;
 
     #[storage]

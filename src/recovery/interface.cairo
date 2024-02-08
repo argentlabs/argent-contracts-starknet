@@ -9,10 +9,10 @@ trait IRecovery<TContractState> {
     fn cancel_escape(ref self: TContractState);
 }
 
-/// @notice Guardian escape was triggered by the owner
+/// @notice Escape was triggered
 /// @param ready_at when the escape can be completed
-/// @param target_signer the escaped signer address
-/// @param new_signer the new signer address to be set after the security period
+/// @param target_signers the signers to escape
+/// @param new_signers the new signers to be set after the security period
 #[derive(Drop, starknet::Event)]
 struct EscapeTriggered {
     ready_at: u64,
@@ -21,8 +21,8 @@ struct EscapeTriggered {
 }
 
 /// @notice Signer escape was completed and there is a new signer
-/// @param target_signer the escaped signer address
-/// @param new_signer the new signer address
+/// @param target_signers the signers to escape
+/// @param new_signers the new signers to be set after the security period
 #[derive(Drop, starknet::Event)]
 struct EscapeExecuted {
     target_signers: Span<felt252>,
@@ -30,8 +30,8 @@ struct EscapeExecuted {
 }
 
 /// @notice Signer escape was completed and there is a new signer
-/// @param target_signer the escaped signer address
-/// @param new_signer the new signer address
+/// @param target_signers the signers to escape
+/// @param new_signers the new signers to be set after the security period
 #[derive(Drop, starknet::Event)]
 struct EscapeCanceled {
     target_signers: Span<felt252>,

@@ -12,13 +12,16 @@ trait IThresholdRecoveryInternal<TContractState> {
     ) -> (bool, u32, felt252);
 }
 
+/// @notice Implements a recovery that can be triggered by threshold - 1 signers.
+/// The recovery can be executed by threshold - 1 signers after the security period.
+/// The recovery can be canceled by threshold signers. 
 #[starknet::component]
 mod threshold_recovery_component {
     use argent::recovery::interface::{
         Escape, EscapeEnabled, EscapeStatus, IRecovery, EscapeExecuted, EscapeTriggered, EscapeCanceled
     };
     use argent::signer::interface::ISignerList;
-    use argent::signer::signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl};
+    use argent::signer::signer_list::{signer_list_component, signer_list_component::{SignerListInternalImpl, OwnerAdded, OwnerRemoved, SignerLinked}};
     use argent::signer::signer_signature::{Signer, IntoGuid};
     use argent::utils::asserts::assert_only_self;
     use core::array::ArrayTrait;
@@ -41,8 +44,10 @@ mod threshold_recovery_component {
 
     #[embeddable_as(ThresholdRecoveryImpl)]
     impl ThresholdRecovery<
-        TContractState, +HasComponent<TContractState>, +ISignerList<TContractState>, +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, impl SignerList: signer_list_component::HasComponent<TContractState>, +Drop<TContractState>
     > of IRecovery<ComponentState<TContractState>> {
+        /// @notice Triggers the escape. The method must be called through the __validate__ method
+        /// and authorised by threshold-1 signers.
         fn trigger_escape(
             ref self: ComponentState<TContractState>, target_signers: Array<Signer>, new_signers: Array<Signer>
         ) {
@@ -54,7 +59,8 @@ mod threshold_recovery_component {
 
             let target_signer_guid = (*target_signers.at(0)).into_guid().expect('argent/invalid-target-guid');
             let new_signer_guid = (*new_signers.at(0)).into_guid().expect('argent/invalid-new-signer-guid');
-            //TODO self.emit(SignerLinked { signer_guid: new_signer_guid, signer: new_signer });
+            let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
+            signer_list_comp.emit(SignerLinked { signer_guid: new_signer_guid, signer: *new_signers.at(0) });
 
             let current_escape = self.escape.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
@@ -81,6 +87,8 @@ mod threshold_recovery_component {
                 );
         }
 
+        /// @notice Executes the escape. The method must be called through the __validate__ method
+        /// and authorised by threshold-1 signers.
         fn execute_escape(ref self: ComponentState<TContractState>) {
             assert_only_self();
 
@@ -92,9 +100,9 @@ mod threshold_recovery_component {
             // replace signer
             let target_signer_guid = *current_escape.target_signers.at(0);
             let new_signer_guid = *current_escape.new_signers.at(0);
-            let mut state = self.get_contract_mut();
-            let (_, last_signer) = state.load();
-            state.replace_signer(target_signer_guid, new_signer_guid, last_signer);
+            let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
+            let (_, last_signer) = signer_list_comp.load();
+            signer_list_comp.replace_signer(target_signer_guid, new_signer_guid, last_signer);
             self
                 .emit(
                     EscapeExecuted {
@@ -102,13 +110,14 @@ mod threshold_recovery_component {
                         new_signers: current_escape.new_signers.span()
                     }
                 );
-            // TODO self.emit(OwnerRemoved { removed_owner_guid: current_escape.target_signer });
-            // TODO self.emit(OwnerAdded { new_owner_guid: current_escape.new_signer });
+            signer_list_comp.emit(OwnerRemoved { removed_owner_guid: target_signer_guid });
+            signer_list_comp.emit(OwnerAdded { new_owner_guid: new_signer_guid });
 
             // clear escape
             self.escape.write(Escape { ready_at: 0, target_signers: array![], new_signers: array![] });
         }
 
+        /// @notice Cancels the ongoing escape.
         fn cancel_escape(ref self: ComponentState<TContractState>) {
             assert_only_self();
             let current_escape = self.escape.read();

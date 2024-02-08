@@ -7,13 +7,17 @@ trait IToggleExternaldRecovery<TContractState> {
     );
 }
 
+/// @notice Implements the recovery by defining a guardian (and external contract/account) 
+/// that can trigger the recovery and replace a set of signers. 
+/// The recovery can be executed by anyone after the security period.
+/// The recovery can be canceled by the authorised signers through the validation logic of the account. 
 #[starknet::component]
 mod external_recovery_component {
     use argent::recovery::interface::{
         Escape, EscapeEnabled, EscapeStatus, IRecovery, EscapeExecuted, EscapeTriggered, EscapeCanceled
     };
     use argent::signer::interface::ISignerList;
-    use argent::signer::signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl};
+    use argent::signer::signer_list::{signer_list_component, signer_list_component::{SignerListInternalImpl, OwnerAdded, OwnerRemoved, SignerLinked}};
     use argent::signer::signer_signature::{Signer, IntoGuid};
     use argent::utils::asserts::assert_only_self;
     use core::array::ArrayTrait;
@@ -43,8 +47,11 @@ mod external_recovery_component {
 
     #[embeddable_as(ExternalRecoveryImpl)]
     impl ExternalRecovery<
-        TContractState, +HasComponent<TContractState>, +ISignerList<TContractState>, +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, impl SignerList: signer_list_component::HasComponent<TContractState>, +Drop<TContractState>
     > of IRecovery<ComponentState<TContractState>> {
+        /// @notice Triggers the escape. The method must be called by the guardian.
+        /// @param target_signers the signers to escape ordered by increasing GUID
+        /// @param new_signers the new signers to be set after the security period ordered by increasing GUID
         fn trigger_escape(
             ref self: ComponentState<TContractState>, target_signers: Array<Signer>, new_signers: Array<Signer>
         ) {
@@ -60,13 +67,13 @@ mod external_recovery_component {
             let mut new_signers_span = new_signers.span();
             let mut last_target: u256 = 0;
             let mut last_new: u256 = 0;
+            let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
             loop {
                 match target_signers_span.pop_front() {
-                    Option::Some(signer) => {
-                        let target_guid = (*signer).into_guid().expect('argent/invalid-guid');
-                        let new_guid = (*new_signers_span.pop_front().expect('argent/wrong-length'))
-                            .into_guid()
-                            .expect('argent/invalid-guid');
+                    Option::Some(target_signer) => {
+                        let new_signer = new_signers_span.pop_front().expect('argent/wrong-length');
+                        let target_guid = (*target_signer).into_guid().expect('argent/invalid-guid');
+                        let new_guid = (*new_signer).into_guid().expect('argent/invalid-guid');
                         // target signers are different
                         assert(target_guid.into() > last_target, 'argent/invalid-target-order');
                         // new signers are different
@@ -77,7 +84,7 @@ mod external_recovery_component {
                         new_signer_guids.append(new_guid);
                         last_target = target_guid.into();
                         last_new = new_guid.into();
-                    // TODO emit SignerLinked event
+                        signer_list_comp.emit(SignerLinked { signer_guid: new_guid, signer: *new_signer });
                     },
                     Option::None => { break; }
                 };
@@ -93,6 +100,7 @@ mod external_recovery_component {
             self.escape.write(escape);
         }
 
+        /// @notice Executes the escape. The method can be called by any external contract/account.
         fn execute_escape(ref self: ComponentState<TContractState>) {
             let current_escape: Escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
@@ -101,16 +109,16 @@ mod external_recovery_component {
 
             let mut target_signer_guids = current_escape.target_signers.span();
             let mut new_signer_guids = current_escape.new_signers.span();
-            let (_, mut last_signer) = self.get_contract().load();
-            let mut state = self.get_contract_mut();
+            let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
+            let (_, mut last_signer) = signer_list_comp.load();
             loop {
                 match target_signer_guids.pop_front() {
                     Option::Some(signer) => {
                         let target_signer_guid = *signer;
                         let new_signer_guid = *new_signer_guids.pop_front().expect('argent/invalid-length');
-                        state.replace_signer(target_signer_guid, new_signer_guid, last_signer);
-                        // TODO self.emit(OwnerRemoved { removed_owner_guid: *target_signer_guid });
-                        // TODO self.emit(OwnerAdded { new_owner_guid: new_signer_guid });
+                        signer_list_comp.replace_signer(target_signer_guid, new_signer_guid, last_signer);
+                        signer_list_comp.emit(OwnerRemoved { removed_owner_guid: target_signer_guid });
+                        signer_list_comp.emit(OwnerAdded { new_owner_guid: new_signer_guid });
                         if (target_signer_guid == last_signer) {
                             last_signer = new_signer_guid;
                         }
@@ -120,6 +128,7 @@ mod external_recovery_component {
             }
         }
 
+        /// @notice Cancels the ongoing escape.
         fn cancel_escape(ref self: ComponentState<TContractState>) {
             assert_only_self();
             let current_escape = self.escape.read();

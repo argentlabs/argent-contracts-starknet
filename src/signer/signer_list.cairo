@@ -1,6 +1,7 @@
 #[starknet::component]
 mod signer_list_component {
     use argent::signer::interface::ISignerList;
+    use argent::signer::signer_signature::Signer;
 
     #[storage]
     struct Storage {
@@ -9,7 +10,37 @@ mod signer_list_component {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {}
+    enum Event {
+        OwnerAdded: OwnerAdded,
+        OwnerRemoved: OwnerRemoved,
+        SignerLinked: SignerLinked,
+    }
+
+    /// This event is part of an account discoverability standard, SNIP not yet created
+    /// Emitted when an account owner is added, including when the account is created.
+    #[derive(Drop, starknet::Event)]
+    struct OwnerAdded {
+        #[key]
+        new_owner_guid: felt252,
+    }
+
+    /// This event is part of an account discoverability standard, SNIP not yet created
+    /// Emitted when an an account owner is removed
+    #[derive(Drop, starknet::Event)]
+    struct OwnerRemoved {
+        #[key]
+        removed_owner_guid: felt252,
+    }
+
+    /// @notice Emitted when a signer is added to link its details with its GUID
+    /// @param signer_guid The signer's GUID 
+    /// @param signer The signer struct
+    #[derive(Drop, starknet::Event)]
+    struct SignerLinked {
+        #[key]
+        signer_guid: felt252,
+        signer: Signer,
+    }
 
     #[embeddable_as(SignerListInternalImpl)]
     impl InternalImpl<TContractState, +HasComponent<TContractState>> of ISignerList<ComponentState<TContractState>> {

@@ -1,3 +1,5 @@
+/// @notice Implements the methods of a multisig such as 
+/// adding or removing signers, changing the threshold, etc
 #[starknet::component]
 mod multisig_component {
     use argent::multisig::interface::{IArgentMultisig, IArgentMultisigInternal};
@@ -15,6 +17,7 @@ mod multisig_component {
     use core::array::ArrayTrait;
     use core::result::ResultTrait;
     use starknet::{get_tx_info, get_contract_address, VALIDATED, ClassHash, account::Call};
+    use argent::signer::signer_list::signer_list_component::{OwnerAdded, OwnerRemoved, SignerLinked};
 
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
@@ -27,10 +30,7 @@ mod multisig_component {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        ThresholdUpdated: ThresholdUpdated,
-        OwnerAdded: OwnerAdded,
-        OwnerRemoved: OwnerRemoved,
-        SignerLinked: SignerLinked
+        ThresholdUpdated: ThresholdUpdated
     }
 
     /// @notice Emitted when the multisig threshold changes
@@ -38,32 +38,6 @@ mod multisig_component {
     #[derive(Drop, starknet::Event)]
     struct ThresholdUpdated {
         new_threshold: usize,
-    }
-
-    /// This event is part of an account discoverability standard, SNIP not yet created
-    /// Emitted when an account owner is added, including when the account is created.
-    #[derive(Drop, starknet::Event)]
-    struct OwnerAdded {
-        #[key]
-        new_owner_guid: felt252,
-    }
-
-    /// This event is part of an account discoverability standard, SNIP not yet created
-    /// Emitted when an an account owner is removed
-    #[derive(Drop, starknet::Event)]
-    struct OwnerRemoved {
-        #[key]
-        removed_owner_guid: felt252,
-    }
-
-    /// @notice Emitted when a signer is added to link its details with its GUID
-    /// @param signer_guid The signer's GUID 
-    /// @param signer The signer struct
-    #[derive(Drop, starknet::Event)]
-    struct SignerLinked {
-        #[key]
-        signer_guid: felt252,
-        signer: Signer,
     }
 
     #[embeddable_as(MultisigImpl)]
@@ -86,6 +60,7 @@ mod multisig_component {
         fn add_signers(ref self: ComponentState<TContractState>, new_threshold: usize, signers_to_add: Array<Signer>) {
             assert_only_self();
             let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
+
             let (signers_len, last_signer_guid) = signer_list_comp.load();
             let previous_threshold = self.threshold.read();
 
@@ -101,8 +76,8 @@ mod multisig_component {
                 };
                 let signer_guid = signer.into_guid().expect('argent/invalid-signer-guid');
                 signer_list_comp.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
-                self.emit(OwnerAdded { new_owner_guid: signer_guid });
-                self.emit(SignerLinked { signer_guid: signer_guid, signer: signer });
+                signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
+                signer_list_comp.emit(SignerLinked { signer_guid: signer_guid, signer: signer });
                 last_signer = signer_guid;
             };
 
@@ -131,7 +106,7 @@ mod multisig_component {
                     Option::None => { break; }
                 };
                 last_signer = signer_list_comp.remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
-                self.emit(OwnerRemoved { removed_owner_guid: signer_guid });
+                signer_list_comp.emit(OwnerRemoved { removed_owner_guid: signer_guid });
             };
 
             self.threshold.write(new_threshold);
@@ -169,9 +144,9 @@ mod multisig_component {
             let signer_to_add_guid = signer_to_add.into_guid().expect('argent/invalid-new-signer-guid');
             signer_list_comp.replace_signer(signer_to_remove_guid, signer_to_add_guid, last_signer);
 
-            self.emit(OwnerRemoved { removed_owner_guid: signer_to_remove_guid });
-            self.emit(OwnerAdded { new_owner_guid: signer_to_add_guid });
-            self.emit(SignerLinked { signer_guid: signer_to_add_guid, signer: signer_to_add });
+            signer_list_comp.emit(OwnerRemoved { removed_owner_guid: signer_to_remove_guid });
+            signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_to_add_guid });
+            signer_list_comp.emit(SignerLinked { signer_guid: signer_to_add_guid, signer: signer_to_add });
         }
 
         fn get_threshold(self: @ComponentState<TContractState>) -> usize {
@@ -222,8 +197,8 @@ mod multisig_component {
                 };
                 let signer_guid = signer.into_guid().expect('argent/invalid-signer-guid');
                 signer_list_comp.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
-                self.emit(OwnerAdded { new_owner_guid: signer_guid });
-                self.emit(SignerLinked { signer_guid: signer_guid, signer: signer });
+                signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
+                signer_list_comp.emit(SignerLinked { signer_guid: signer_guid, signer: signer });
                 last_signer = signer_guid;
             };
 

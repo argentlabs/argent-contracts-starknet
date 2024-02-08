@@ -3,6 +3,7 @@
 #[starknet::component]
 mod multisig_component {
     use argent::multisig::interface::{IArgentMultisig, IArgentMultisigInternal};
+    use argent::signer::signer_list::signer_list_component::{OwnerAdded, OwnerRemoved, SignerLinked};
     use argent::signer::{
         interface::ISignerList, signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait},
         signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
@@ -17,7 +18,6 @@ mod multisig_component {
     use core::array::ArrayTrait;
     use core::result::ResultTrait;
     use starknet::{get_tx_info, get_contract_address, VALIDATED, ClassHash, account::Call};
-    use argent::signer::signer_list::signer_list_component::{OwnerAdded, OwnerRemoved, SignerLinked};
 
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;

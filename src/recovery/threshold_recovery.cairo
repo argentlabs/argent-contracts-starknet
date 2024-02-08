@@ -21,7 +21,9 @@ mod threshold_recovery_component {
         Escape, EscapeEnabled, EscapeStatus, IRecovery, EscapeExecuted, EscapeTriggered, EscapeCanceled
     };
     use argent::signer::interface::ISignerList;
-    use argent::signer::signer_list::{signer_list_component, signer_list_component::{SignerListInternalImpl, OwnerAdded, OwnerRemoved, SignerLinked}};
+    use argent::signer::signer_list::{
+        signer_list_component, signer_list_component::{SignerListInternalImpl, OwnerAdded, OwnerRemoved, SignerLinked}
+    };
     use argent::signer::signer_signature::{Signer, IntoGuid};
     use argent::utils::asserts::assert_only_self;
     use core::array::ArrayTrait;
@@ -44,7 +46,10 @@ mod threshold_recovery_component {
 
     #[embeddable_as(ThresholdRecoveryImpl)]
     impl ThresholdRecovery<
-        TContractState, +HasComponent<TContractState>, impl SignerList: signer_list_component::HasComponent<TContractState>, +Drop<TContractState>
+        TContractState,
+        +HasComponent<TContractState>,
+        impl SignerList: signer_list_component::HasComponent<TContractState>,
+        +Drop<TContractState>
     > of IRecovery<ComponentState<TContractState>> {
         /// @notice Triggers the escape. The method must be called through the __validate__ method
         /// and authorised by threshold-1 signers.

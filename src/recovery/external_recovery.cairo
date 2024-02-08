@@ -17,7 +17,9 @@ mod external_recovery_component {
         Escape, EscapeEnabled, EscapeStatus, IRecovery, EscapeExecuted, EscapeTriggered, EscapeCanceled
     };
     use argent::signer::interface::ISignerList;
-    use argent::signer::signer_list::{signer_list_component, signer_list_component::{SignerListInternalImpl, OwnerAdded, OwnerRemoved, SignerLinked}};
+    use argent::signer::signer_list::{
+        signer_list_component, signer_list_component::{SignerListInternalImpl, OwnerAdded, OwnerRemoved, SignerLinked}
+    };
     use argent::signer::signer_signature::{Signer, IntoGuid};
     use argent::utils::asserts::assert_only_self;
     use core::array::ArrayTrait;
@@ -47,7 +49,10 @@ mod external_recovery_component {
 
     #[embeddable_as(ExternalRecoveryImpl)]
     impl ExternalRecovery<
-        TContractState, +HasComponent<TContractState>, impl SignerList: signer_list_component::HasComponent<TContractState>, +Drop<TContractState>
+        TContractState,
+        +HasComponent<TContractState>,
+        impl SignerList: signer_list_component::HasComponent<TContractState>,
+        +Drop<TContractState>
     > of IRecovery<ComponentState<TContractState>> {
         /// @notice Triggers the escape. The method must be called by the guardian.
         /// @param target_signers the signers to escape ordered by increasing GUID

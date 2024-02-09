@@ -8,7 +8,7 @@ mod ArgentAccount {
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
     use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid, SignerSignature, SignerSignatureTrait}};
-    use argent::upgrade::{upgrade::{IUpgradeable, do_upgrade}};
+    use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self}, calls::execute_multicall,
         serialization::full_deserialize,
@@ -44,26 +44,18 @@ mod ArgentAccount {
     const MAX_ESCAPE_MAX_FEE_STRK: u128 = 50_000000000000000000; // 50 STRK
     const MAX_ESCAPE_TIP_STRK: u128 = 1_000000000000000000; // 1 STRK
 
+    // Execute from outside
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
     impl ExecuteFromOutside = outside_execution_component::OutsideExecutionImpl<ContractState>;
-
+    // Introspection
     component!(path: src5_component, storage: src5, event: SRC5Events);
     #[abi(embed_v0)]
     impl SRC5 = src5_component::SRC5Impl<ContractState>;
-
-    impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
-        #[inline(always)]
-        fn execute_from_outside_callback(
-            ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
-        ) -> Array<Span<felt252>> {
-            self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature, is_from_outside: true);
-
-            let retdata = execute_multicall(calls);
-            self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
-            retdata
-        }
-    }
+    // Upgrade
+    component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
+    #[abi(embed_v0)]
+    impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -71,6 +63,8 @@ mod ArgentAccount {
         execute_from_outside: outside_execution_component::Storage,
         #[substorage(v0)]
         src5: src5_component::Storage,
+        #[substorage(v0)]
+        upgrade: upgrade_component::Storage,
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         _signer: felt252, /// Current account owner
         _guardian: felt252, /// Current account guardian
@@ -89,6 +83,7 @@ mod ArgentAccount {
     enum Event {
         ExecuteFromOutsideEvents: outside_execution_component::Event,
         SRC5Events: src5_component::Event,
+        UpgradeEvents: upgrade_component::Event,
         AccountCreated: AccountCreated,
         TransactionExecuted: TransactionExecuted,
         EscapeOwnerTriggered: EscapeOwnerTriggered,
@@ -99,7 +94,6 @@ mod ArgentAccount {
         OwnerChanged: OwnerChanged,
         GuardianChanged: GuardianChanged,
         GuardianBackupChanged: GuardianBackupChanged,
-        AccountUpgraded: AccountUpgraded,
         OwnerAdded: OwnerAdded,
         OwnerRemoved: OwnerRemoved,
         SignerLinked: SignerLinked,
@@ -183,13 +177,6 @@ mod ArgentAccount {
         new_guardian_backup: felt252
     }
 
-    /// @notice Emitted when the implementation of the account changes
-    /// @param new_implementation The new implementation
-    #[derive(Drop, starknet::Event)]
-    struct AccountUpgraded {
-        new_implementation: ClassHash
-    }
-
     /// This event is part of an account discoverability standard, SNIP not yet created
     /// Emitted when an account owner is added, including when the account is created.
     /// Should also be emitted with the current owners when upgrading an account from Cairo 0
@@ -269,16 +256,10 @@ mod ArgentAccount {
         }
     }
 
+    // Required Callbacks
+
     #[external(v0)]
-    impl UpgradeableImpl of IUpgradeable<ContractState> {
-        /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
-        fn upgrade(ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
-            assert_only_self();
-
-            self.emit(AccountUpgraded { new_implementation });
-            do_upgrade(new_implementation, calldata)
-        }
-
+    impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
@@ -340,6 +321,19 @@ mod ArgentAccount {
             let mut output = array![];
             multicall_return.serialize(ref output);
             output
+        }
+    }
+
+    impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
+        #[inline(always)]
+        fn execute_from_outside_callback(
+            ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
+        ) -> Array<Span<felt252>> {
+            self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature, is_from_outside: true);
+
+            let retdata = execute_multicall(calls);
+            self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
+            retdata
         }
     }
 

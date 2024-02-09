@@ -5,6 +5,7 @@ mod account_legacy {
 }
 
 mod upgrade {
+    mod interface;
     mod upgrade;
 }
 

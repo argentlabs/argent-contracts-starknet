@@ -1,5 +1,5 @@
 #[starknet::contract]
-mod ArgentGenericAccount {
+mod ArgentUserAccount {
     use argent::account::interface::{IArgentAccount, Version};
     use argent::introspection::src5::src5_component;
     use argent::multisig::{multisig::multisig_component};
@@ -11,7 +11,7 @@ mod ArgentGenericAccount {
         interface::ISignerList, signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait},
         signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
     };
-    use argent::upgrade::upgrade::{IUpgradeable, do_upgrade};
+    use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
         serialization::full_deserialize,
@@ -46,6 +46,10 @@ mod ArgentGenericAccount {
     impl SRC5 = src5_component::SRC5Impl<ContractState>;
     #[abi(embed_v0)]
     impl SRC5Legacy = src5_component::SRC5LegacyImpl<ContractState>;
+    // Upgrade
+    component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
+    #[abi(embed_v0)]
+    impl Upgradable = upgrade_component::UpgradableImpl<ContractState>; 
     // Threshold Recovery
     component!(path: threshold_recovery_component, storage: escape, event: EscapeEvents);
     #[abi(embed_v0)]
@@ -66,6 +70,8 @@ mod ArgentGenericAccount {
         #[substorage(v0)]
         src5: src5_component::Storage,
         #[substorage(v0)]
+        upgrade: upgrade_component::Storage,
+        #[substorage(v0)]
         escape: threshold_recovery_component::Storage,
     }
 
@@ -76,6 +82,7 @@ mod ArgentGenericAccount {
         MultisigEvents: multisig_component::Event,
         ExecuteFromOutsideEvents: outside_execution_component::Event,
         SRC5Events: src5_component::Event,
+        UpgradeEvents: upgrade_component::Event,
         EscapeEvents: threshold_recovery_component::Event,
         TransactionExecuted: TransactionExecuted,
         AccountUpgraded: AccountUpgraded,
@@ -171,13 +178,7 @@ mod ArgentGenericAccount {
     }
 
     #[external(v0)]
-    impl UpgradeableImpl of IUpgradeable<ContractState> {
-        /// @dev Can be called by the account to upgrade the implementation
-        fn upgrade(ref self: ContractState, new_implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
-            assert_only_self();
-            self.emit(AccountUpgraded { new_implementation });
-            do_upgrade(new_implementation, calldata)
-        }
+    impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 

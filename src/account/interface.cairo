@@ -13,9 +13,14 @@ struct Version {
 }
 
 #[starknet::interface]
-trait IArgentAccount<TContractState> {
+trait IAccount<TContractState> {
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
+    fn is_valid_signature(self: @TContractState, hash: felt252, signature: Array<felt252>) -> felt252;
+}
+
+#[starknet::interface]
+trait IArgentAccount<TContractState> {
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate_deploy__(
         self: @TContractState,
@@ -24,7 +29,6 @@ trait IArgentAccount<TContractState> {
         threshold: usize,
         signers: Array<Signer>
     ) -> felt252;
-    fn is_valid_signature(self: @TContractState, hash: felt252, signature: Array<felt252>) -> felt252;
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
 }

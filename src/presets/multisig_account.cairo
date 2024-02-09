@@ -1,6 +1,6 @@
 #[starknet::contract]
 mod ArgentMultisigAccount {
-    use argent::account::interface::{IArgentAccount, Version};
+    use argent::account::interface::{IAccount, IArgentAccount, Version};
     use argent::introspection::src5::src5_component;
     use argent::multisig::{multisig::multisig_component};
     use argent::outside_execution::{
@@ -102,7 +102,7 @@ mod ArgentMultisigAccount {
     }
 
     #[external(v0)]
-    impl Account of IArgentAccount<ContractState> {
+    impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_only_protocol();
             let tx_info = get_tx_info().unbox();
@@ -136,7 +136,10 @@ mod ArgentMultisigAccount {
                 0
             }
         }
+    }
 
+    #[external(v0)]
+    impl ArgentAccountImpl of IArgentAccount<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             panic_with_felt252('argent/declare-not-available') // Not implemented yet
         }

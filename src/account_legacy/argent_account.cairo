@@ -1,8 +1,8 @@
 #[starknet::contract]
 mod ArgentAccount {
-    use argent::account::interface::Version;
+    use argent::account::interface::{IAccount, Version};
     use argent::account_legacy::escape::{Escape, EscapeType, EscapeStatus};
-    use argent::account_legacy::interface::{IAccount, IArgentAccount, IDeprecatedArgentAccount};
+    use argent::account_legacy::interface::{IArgentUserAccount, IDeprecatedArgentAccount};
     use argent::introspection::src5::src5_component;
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
@@ -52,6 +52,8 @@ mod ArgentAccount {
     component!(path: src5_component, storage: src5, event: SRC5Events);
     #[abi(embed_v0)]
     impl SRC5 = src5_component::SRC5Impl<ContractState>;
+    #[abi(embed_v0)]
+    impl SRC5Legacy = src5_component::SRC5LegacyImpl<ContractState>;
     // Upgrade
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
@@ -221,7 +223,7 @@ mod ArgentAccount {
     }
 
     #[external(v0)]
-    impl Account of IAccount<ContractState> {
+    impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_only_protocol();
             let tx_info = get_tx_info().unbox();
@@ -338,7 +340,7 @@ mod ArgentAccount {
     }
 
     #[external(v0)]
-    impl ArgentAccountImpl of IArgentAccount<ContractState> {
+    impl ArgentAccountImpl of IArgentUserAccount<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_declare_version(tx_info.version);
@@ -554,6 +556,7 @@ mod ArgentAccount {
         }
     }
 
+    // TODO is this still needed?
     #[external(v0)]
     impl DeprecatedArgentAccountImpl of IDeprecatedArgentAccount<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
@@ -564,16 +567,8 @@ mod ArgentAccount {
             self.get_name()
         }
 
-        fn supportsInterface(self: @ContractState, interface_id: felt252) -> felt252 {
-            if self.supports_interface(interface_id) {
-                1
-            } else {
-                0
-            }
-        }
-
         fn isValidSignature(self: @ContractState, hash: felt252, signatures: Array<felt252>) -> felt252 {
-            assert(Account::is_valid_signature(self, hash, signatures) == VALIDATED, 'argent/invalid-signature');
+            assert(self.is_valid_signature(hash, signatures) == VALIDATED, 'argent/invalid-signature');
             1
         }
     }

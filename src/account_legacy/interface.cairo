@@ -3,16 +3,8 @@ use argent::account_legacy::escape::{Escape, EscapeStatus};
 use argent::signer::signer_signature::{SignerSignature, Signer};
 use starknet::account::Call;
 
-// InterfaceID: 0x2ceccef7f994940b3962a6c67e0ba4fcd37df7d131417c604f91e03caecc1cd
 #[starknet::interface]
-trait IAccount<TContractState> {
-    fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
-    fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
-    fn is_valid_signature(self: @TContractState, hash: felt252, signature: Array<felt252>) -> felt252;
-}
-
-#[starknet::interface]
-trait IArgentAccount<TContractState> {
+trait IArgentUserAccount<TContractState> {
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate_deploy__(
         self: @TContractState,
@@ -94,7 +86,6 @@ trait IArgentAccount<TContractState> {
 trait IDeprecatedArgentAccount<TContractState> {
     fn getVersion(self: @TContractState) -> felt252;
     fn getName(self: @TContractState) -> felt252;
-    fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
     /// For compatibility reasons this method returns 1 when the signature is valid, and panics otherwise
     fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }

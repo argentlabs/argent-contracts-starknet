@@ -8,7 +8,7 @@ See [Argent Account](src/account/README.md) and [Argent Multisig](src/multisig/R
 
 ### Setup Rust
 
-Please refer to [these instructions](https://docs.cairo-lang.org/getting_started/prerequisits.html).  
+Please refer to [these instructions](https://docs.cairo-lang.org/getting_started/prerequisites.html).  
 You can skip cloning the Cairo repository, as this will be done automatically through the Makefile.  
 If you are a developer, we recommend that you install the Cairo extension. You can find it in the vscode Extensions Marketplace by looking for "Cairo 1.0".
 
@@ -66,7 +66,7 @@ The [fixtures folder](./tests-integrations/fixtures/) contains pre-compiled cont
 
 ### Interface IDs
 
-For compatibility reasons we support legacy interface IDs. But new interface IDs will follow [SNIP-5](https://github.com/ericnordelo/SNIPs/blob/feat/standard-interface-detection/SNIPS/snip-5.md#how-interfaces-are-identified)
+For compatibility reasons we support legacy interface IDs. But new interface IDs will follow [SNIP-5](https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-5.md#how-interfaces-are-identified)
 Tool to calculate interface IDs: https://github.com/ericnordelo/src5-rs
 
 ## Release checklist

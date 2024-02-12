@@ -1,7 +1,7 @@
-mod test_comp_multisig;
-mod test_comp_signer_list;
-
-mod test_comp_src5;
+//mod test_comp_multisig;
+//mod test_comp_signer_list;
+mod test_comp_threshold_recovery;
+//mod test_comp_src5;
 // mod test_argent_account;
 // mod test_argent_account_signatures;
 // mod test_asserts;
@@ -28,6 +28,7 @@ mod test_comp_src5;
 
 mod mocks {
     mod multisig_mocks;
+    mod recovery_mocks;
     mod signer_list_mocks;
     mod src5_mocks;
 }

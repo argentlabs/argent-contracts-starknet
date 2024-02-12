@@ -41,7 +41,7 @@ mod signer_list_component {
         signer_guid: felt252,
         signer: Signer,
     }
-
+    
     #[embeddable_as(SignerListInternalImpl)]
     impl InternalImpl<TContractState, +HasComponent<TContractState>> of ISignerList<ComponentState<TContractState>> {
         // TODO rename to is_signer when upgrading the Cairo version

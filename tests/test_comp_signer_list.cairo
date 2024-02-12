@@ -161,3 +161,15 @@ fn test_load() {
     assert(len == 3, 'len shoudl be 3');
     assert(last_signer == signer_pubkey_3, 'signer 3 should be last');
 }
+
+#[test]
+fn test_is_signer_before() {
+    let mut component = COMPONENT_STATE();
+    component.add_signers(array![signer_pubkey_1, signer_pubkey_2, signer_pubkey_3].span(), 0);
+    assert(component.is_signer_before(signer_pubkey_1, signer_pubkey_2), 'signer 1 is before signer 2');
+    assert(component.is_signer_before(signer_pubkey_1, signer_pubkey_3), 'signer 1 is before signer 3');
+    assert(component.is_signer_before(signer_pubkey_2, signer_pubkey_3), 'signer 2 is before signer 3');
+    assert(!component.is_signer_before(signer_pubkey_2, signer_pubkey_1), 'signer 2 is not before signer 1');
+    assert(!component.is_signer_before(signer_pubkey_3, signer_pubkey_1), 'signer 3 is not before signer 1');
+    assert(!component.is_signer_before(signer_pubkey_3, signer_pubkey_2), 'signer 3 is not before signer 2');
+}

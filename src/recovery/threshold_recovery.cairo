@@ -69,11 +69,11 @@ mod threshold_recovery_component {
 
             let current_escape = self.escape.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
-            let current_escaped_signer = current_escape.target_signers.at(0);
-            if (*current_escaped_signer != 0 && current_escape_status == EscapeStatus::Ready) {
+            if (current_escape_status == EscapeStatus::NotReady || current_escape_status == EscapeStatus::Ready) {
                 // can only override an escape with a target signer of lower priority than the current one
+                let current_escaped_signer = *current_escape.target_signers.at(0);
                 assert(
-                    self.get_contract().is_signer_before(*current_escaped_signer, target_signer_guid),
+                    self.get_contract().is_signer_before(current_escaped_signer, target_signer_guid),
                     'argent/cannot-override-escape'
                 );
             }
@@ -137,6 +137,19 @@ mod threshold_recovery_component {
                         new_signers: current_escape.new_signers.span()
                     }
                 );
+        }
+
+        /// @notice Gets the escape configuration.
+        fn get_escape_enabled(self: @ComponentState<TContractState>) -> EscapeEnabled {
+            self.escape_enabled.read()
+        }
+
+        /// @notice Gets the ongoing escape if any, and its status.
+        fn get_escape(self: @ComponentState<TContractState>) -> (Escape, EscapeStatus) {
+            let escape = self.escape.read();
+            let escape_config = self.escape_enabled.read();
+            let escape_status = self.get_escape_status(escape.ready_at, escape_config.expiry_period);
+            (escape, escape_status)
         }
     }
 

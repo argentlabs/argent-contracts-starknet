@@ -1,5 +1,9 @@
 use argent::signer::signer_signature::{Signer, SignerSignature};
 use argent::utils::array_ext::StoreFelt252Array;
+use core::array::ArrayTrait;
+use core::array::SpanTrait;
+use core::option::OptionTrait;
+use core::traits::TryInto;
 use starknet::ContractAddress;
 
 #[starknet::interface]
@@ -7,6 +11,8 @@ trait IRecovery<TContractState> {
     fn trigger_escape(ref self: TContractState, target_signers: Array<Signer>, new_signers: Array<Signer>);
     fn execute_escape(ref self: TContractState);
     fn cancel_escape(ref self: TContractState);
+    fn get_escape_enabled(self: @TContractState) -> EscapeEnabled;
+    fn get_escape(self: @TContractState) -> (Escape, EscapeStatus);
 }
 
 /// @notice Escape was triggered
@@ -50,8 +56,7 @@ enum EscapeStatus {
     Expired,
 }
 
-// TODO can be optimised by only storing the len of the arrays once since it must be equal
-#[derive(Drop, Serde, starknet::Store)]
+#[derive(Drop, Serde, starknet::StorePacking)]
 struct Escape {
     // timestamp for activation of escape mode, 0 otherwise
     ready_at: u64,
@@ -92,6 +97,48 @@ impl PackEscapeEnabled of starknet::StorePacking<EscapeEnabled, felt252> {
             is_enabled: is_enabled.try_into().unwrap(),
             security_period: security_period.try_into().unwrap(),
             expiry_period: expiry_period.try_into().unwrap(),
+        }
+    }
+}
+
+impl PackEscape of starknet::StorePacking<Escape, Array<felt252>> {
+    fn pack(value: Escape) -> Array<felt252> {
+        let mut arr: Array<felt252> = array![];
+        arr.append(value.ready_at.into());
+        let mut target_signers_span = value.target_signers.span();
+        let mut new_signers_span = value.new_signers.span();
+        assert(target_signers_span.len() == new_signers_span.len(), 'argent/invalid-len');
+        loop {
+            let target_signer = match target_signers_span.pop_front() {
+                Option::Some(target_signer) => (*target_signer),
+                Option::None => { break; }
+            };
+            arr.append(target_signer);
+            arr.append(*new_signers_span.pop_front().expect('argent/invalid-array-len'));
+        };
+        arr
+    }
+
+    fn unpack(value: Array<felt252>) -> Escape {
+        if value.is_empty() {
+            Escape { ready_at: 0, target_signers: array![], new_signers: array![] }
+        } else {
+            let len = (value.len() - 1) / 2;
+            let mut target_signers = array![];
+            let mut new_signers = array![];
+
+            let mut value_span = value.span();
+            let ready_at = *value_span.pop_front().unwrap();
+            loop {
+                let target_signer = value_span.pop_front();
+                let new_signer = match value_span.pop_front() {
+                    Option::Some(item) => *item,
+                    Option::None => { break; }
+                };
+                target_signers.append(*target_signer.unwrap());
+                new_signers.append(new_signer);
+            };
+            Escape { ready_at: ready_at.try_into().unwrap(), target_signers: target_signers, new_signers: new_signers }
         }
     }
 }

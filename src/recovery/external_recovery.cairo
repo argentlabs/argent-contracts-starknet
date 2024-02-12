@@ -149,6 +149,19 @@ mod external_recovery_component {
                     }
                 );
         }
+
+        /// @notice Gets the escape configuration.
+        fn get_escape_enabled(self: @ComponentState<TContractState>) -> EscapeEnabled {
+            self.escape_enabled.read()
+        }
+
+        /// @notice Gets the ongoing escape if any, and its status.
+        fn get_escape(self: @ComponentState<TContractState>) -> (Escape, EscapeStatus) {
+            let escape = self.escape.read();
+            let escape_config = self.escape_enabled.read();
+            let escape_status = self.get_escape_status(escape.ready_at, escape_config.expiry_period);
+            (escape, escape_status)
+        }
     }
 
     #[embeddable_as(ToggleExternalRecoveryImpl)]

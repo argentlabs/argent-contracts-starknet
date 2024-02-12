@@ -39,7 +39,6 @@ To enable that model to evolve the account can be upgraded. Upgrading the wallet
 | Cancel Escape           | X     | X        |                                          |
 | Upgrade                 | X     | X        |                                          |
 
-
 # Argent Multisig
 
 ## High-Level Specification

@@ -49,7 +49,7 @@ mod ArgentUserAccount {
     // Upgrade
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
-    impl Upgradable = upgrade_component::UpgradableImpl<ContractState>; 
+    impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
     // Threshold Recovery
     component!(path: threshold_recovery_component, storage: escape, event: EscapeEvents);
     #[abi(embed_v0)]

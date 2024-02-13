@@ -33,10 +33,19 @@ const profiler = newProfiler(provider);
 //   await profiler.profile("Account (Using txV3) - transfer", await strkContract.transfer(recipient, 1));
 // }
 
+// {
+//   const { account } = await deployAccount({ owner: randomEthKeyPair(), guardian: randomKeyPair() });
+//   ethContract.connect(account);
+//   await profiler.profile("Account w g (owner ETH signature) - transfer", await ethContract.transfer(recipient, 1));
+// }
+
 {
   const { account } = await deployAccount({ owner: randomEthKeyPair(), guardian: randomKeyPair() });
   ethContract.connect(account);
-  await profiler.profile("Account (owner ETH signature) - transfer", await ethContract.transfer(recipient, 1));
+  await profiler.profile(
+    "Account w g (owner Secp256R1 signature) - transfer",
+    await ethContract.transfer(recipient, 1),
+  );
 }
 
 profiler.printSummary();

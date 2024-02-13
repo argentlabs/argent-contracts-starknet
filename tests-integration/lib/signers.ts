@@ -26,7 +26,10 @@ import {
   V3DeclareSignerDetails,
   stark,
   uint256,
+  Uint256,
 } from "starknet";
+import { p256 as secp256r1 } from "@noble/curves/p256";
+import * as utils from "@noble/curves/abstract/utils";
 
 /**
  * This class allows to easily implement custom signers by overriding the `signRaw` method.
@@ -194,7 +197,7 @@ export class KeyPair extends Signer {
     return BigInt(this.pk as string);
   }
 
-  public get publicKey() {
+  public get publicKey(): any {
     return BigInt(ec.starkCurve.getStarkKey(this.pk));
   }
 
@@ -217,6 +220,18 @@ export class EthKeyPair extends KeyPair {
     const signature = EthersSignature.from(eth_signer.signingKey.sign(messageHash));
 
     return ethereumSignatureType(this.publicKey, signature);
+  }
+}
+
+export class Secp256r1KeyPair extends KeyPair {
+  public get publicKey() {
+    const publicKey = secp256r1.getPublicKey(this.privateKey);
+    return uint256.bnToUint256(utils.bytesToHex(publicKey));
+  }
+
+  public signHash(messageHash: string) {
+    const { r, s, recovery } = secp256r1.sign(messageHash, this.privateKey);
+    return secp256r1SignatureType(this.publicKey, r, s, recovery == 0 ? 0 : 1);
   }
 }
 
@@ -265,6 +280,22 @@ export function ethereumSignatureType(signer: bigint, signature: EthersSignature
   ]);
 }
 
+export function secp256r1SignatureType(signer: Uint256, r: bigint, s: bigint, y_parity: 0 | 1) {
+  return CallData.compile([
+    new CairoCustomEnum({
+      Starknet: undefined,
+      Secp256k1: undefined,
+      Secp256r1: {
+        signer,
+        r: uint256.bnToUint256(r),
+        s: uint256.bnToUint256(s),
+        y_parity,
+      },
+      Webauthn: undefined,
+    }),
+  ]);
+}
+
 export function compiledStarknetSigner(signer: bigint | number | string) {
   return CallData.compile([starknetSigner(signer)]);
 }
@@ -303,5 +334,6 @@ export function signerOption(signer: bigint | undefined) {
 
 export const randomKeyPair = () => new KeyPair();
 export const randomEthKeyPair = () => new EthKeyPair();
+export const randomSecp256r1KeyPair = () => new Secp256r1KeyPair();
 
 export const randomKeyPairs = (length: number) => Array.from({ length }, randomKeyPair);

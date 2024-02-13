@@ -25,6 +25,7 @@ import {
   compiledSignerOption,
   ethSigner,
   randomKeyPair,
+  secp256r1Signer,
   signerOption,
   starknetSigner,
 } from "./signers";
@@ -145,7 +146,7 @@ async function deployAccountInner(
   };
   const some_guardian = signerOption(finalParams.guardian?.publicKey);
   const constructorCalldata = CallData.compile({
-    owner: ethSigner(finalParams.owner.publicKey),
+    owner: secp256r1Signer(finalParams.owner.publicKey),
     guardian: some_guardian,
   });
 

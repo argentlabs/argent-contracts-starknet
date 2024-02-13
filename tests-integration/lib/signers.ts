@@ -29,6 +29,7 @@ import {
   Uint256,
 } from "starknet";
 import { p256 as secp256r1 } from "@noble/curves/p256";
+import { secp256k1 } from "@noble/curves/secp256k1";
 import * as utils from "@noble/curves/abstract/utils";
 
 /**
@@ -209,27 +210,29 @@ export class KeyPair extends Signer {
 
 export class EthKeyPair extends KeyPair {
   public get publicKey() {
-    return BigInt(new Wallet(id(this.privateKey.toString())).address);
+    const publicKey = secp256k1.getPublicKey(this.privateKey).slice(2);
+    return BigInt("0x" + utils.bytesToHex(publicKey));
   }
 
   public signHash(messageHash: string) {
-    const eth_signer = new Wallet(id(this.privateKey.toString()));
-    if (messageHash.length < 66) {
-      messageHash = "0x" + "0".repeat(66 - messageHash.length) + messageHash.slice(2);
-    }
-    const signature = EthersSignature.from(eth_signer.signingKey.sign(messageHash));
-
-    return ethereumSignatureType(this.publicKey, signature);
+    // if (messageHash.length < 66) {
+    //   messageHash = "0".repeat(66 - messageHash.length) + messageHash.slice(2);
+    // }
+    const { r, s, recovery } = secp256r1.sign(messageHash, this.privateKey);
+    return ethereumSignatureType(this.publicKey, r, s, recovery == 0 ? 0 : 1);
   }
 }
 
 export class Secp256r1KeyPair extends KeyPair {
   public get publicKey() {
-    const publicKey = secp256r1.getPublicKey(this.privateKey);
-    return uint256.bnToUint256(utils.bytesToHex(publicKey));
+    const publicKey = secp256r1.getPublicKey(this.privateKey).slice(1);
+    return uint256.bnToUint256("0x" + utils.bytesToHex(publicKey));
   }
 
   public signHash(messageHash: string) {
+    if (messageHash.length < 66) {
+      messageHash = "0".repeat(66 - messageHash.length) + messageHash.slice(2);
+    }
     const { r, s, recovery } = secp256r1.sign(messageHash, this.privateKey);
     return secp256r1SignatureType(this.publicKey, r, s, recovery == 0 ? 0 : 1);
   }
@@ -264,15 +267,15 @@ export function starknetSignatureType(
   ]);
 }
 
-export function ethereumSignatureType(signer: bigint, signature: EthersSignature) {
+export function ethereumSignatureType(signer: bigint, r: bigint, s: bigint, y_parity: 0 | 1) {
   return CallData.compile([
     new CairoCustomEnum({
       Starknet: undefined,
       Secp256k1: {
         signer,
-        r: uint256.bnToUint256(signature.r),
-        s: uint256.bnToUint256(signature.s),
-        y_parity: signature.yParity.toString(),
+        r: uint256.bnToUint256(r),
+        s: uint256.bnToUint256(s),
+        y_parity
       },
       Webauthn: undefined,
       Secp256r1: undefined,
@@ -313,6 +316,15 @@ export function ethSigner(signer: bigint | number | string) {
     Starknet: undefined,
     Secp256k1: { signer },
     Secp256r1: undefined,
+    Webauthn: undefined,
+  });
+}
+
+export function secp256r1Signer(signer: bigint | number | string) {
+  return new CairoCustomEnum({
+    Starknet: undefined,
+    Secp256k1: undefined,
+    Secp256r1: { signer },
     Webauthn: undefined,
   });
 }

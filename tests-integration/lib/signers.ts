@@ -198,8 +198,8 @@ export class KeyPair extends Signer {
     return BigInt(this.pk as string);
   }
 
-  public get getSignerType(){
-    return starknetSigner(this.publicKey)
+  public get getSignerType() {
+    return starknetSigner(this.publicKey);
   }
 
   public get publicKey(): any {
@@ -217,9 +217,8 @@ export class EthKeyPair extends KeyPair {
     return BigInt(new Wallet(id(this.privateKey.toString())).address);
   }
 
-
-  public get getSignerType(){
-    return ethSigner(this.publicKey)
+  public get getSignerType() {
+    return ethSigner(this.publicKey);
   }
 
   public signHash(messageHash: string) {
@@ -231,14 +230,15 @@ export class EthKeyPair extends KeyPair {
     return ethereumSignatureType(this.publicKey, signature);
   }
 }
+
 export class Secp256r1KeyPair extends KeyPair {
   public get publicKey() {
     const publicKey = secp256r1.getPublicKey(this.privateKey).slice(1);
     return uint256.bnToUint256("0x" + utils.bytesToHex(publicKey));
   }
 
-  public get getSignerType(){
-    return secp256r1Signer(this.publicKey)
+  public get getSignerType() {
+    return secp256r1Signer(this.publicKey);
   }
 
   public signHash(messageHash: string) {
@@ -247,6 +247,22 @@ export class Secp256r1KeyPair extends KeyPair {
     }
     const sig = secp256r1.sign(messageHash, this.privateKey);
     return secp256r1SignatureType(this.publicKey, sig);
+  }
+}
+
+export class WebauthnKeyPair extends KeyPair {
+  public get publicKey() {
+    throw new Error("Function not implemented.");
+  }
+
+  public get getSignerType() {
+    throw new Error("Function not implemented.");
+    return webauthnSigner(0n, 0n, 0n);
+  }
+
+  public signHash(messageHash: string) {
+    throw new Error("Function not implemented.");
+    return webauthnSignatureType();
   }
 }
 
@@ -311,6 +327,30 @@ export function secp256r1SignatureType(signer: Uint256, signature: RecoveredSign
   ]);
 }
 
+export function webauthnSignatureType() {
+  return CallData.compile([
+    new CairoCustomEnum({
+      Starknet: undefined,
+      Secp256k1: undefined,
+      Secp256r1: undefined,
+      Webauthn: {
+        authenticator_data: [], //Span<u8>,
+        client_data_json: [], //Span<u8>,
+        signature: {
+          r: uint256.bnToUint256(0n),
+          s: uint256.bnToUint256(0n),
+          y_parity: 0,
+        },
+        type_offset: 0, // usize,
+        challenge_offset: 0, // usize,
+        challenge_length: 0, //usize,
+        origin_offset: 0, //usize,
+        origin_length: 0, //usize,
+      },
+    }),
+  ]);
+}
+
 export function compiledStarknetSigner(signer: bigint | number | string) {
   return CallData.compile([starknetSigner(signer)]);
 }
@@ -341,6 +381,15 @@ export function secp256r1Signer(signer: Uint256) {
   });
 }
 
+export function webauthnSigner(origin: bigint, rp_id_hash: bigint, pubkey: bigint) {
+  return new CairoCustomEnum({
+    Starknet: undefined,
+    Secp256k1: undefined,
+    Secp256r1: undefined,
+    Webauthn: { origin, rp_id_hash: uint256.bnToUint256(rp_id_hash), pubkey: uint256.bnToUint256(pubkey) },
+  });
+}
+
 export function intoGuid(signer: CairoCustomEnum) {
   return signer.unwrap().signer;
 }
@@ -359,5 +408,6 @@ export function signerOption(signer: bigint | undefined) {
 export const randomKeyPair = () => new KeyPair();
 export const randomEthKeyPair = () => new EthKeyPair();
 export const randomSecp256r1KeyPair = () => new Secp256r1KeyPair();
+export const randomWebauthnKeyPair = () => new WebauthnKeyPair();
 
 export const randomKeyPairs = (length: number) => Array.from({ length }, randomKeyPair);

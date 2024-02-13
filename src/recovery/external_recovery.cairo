@@ -1,10 +1,11 @@
 use starknet::ContractAddress;
 
 #[starknet::interface]
-trait IToggleExternaldRecovery<TContractState> {
+trait IToggleExternalRecovery<TContractState> {
     fn toggle_escape(
         ref self: TContractState, is_enabled: bool, security_period: u64, expiry_period: u64, guardian: ContractAddress
     );
+    fn get_guardian(self: @TContractState) -> ContractAddress;
 }
 
 /// @notice Implements the recovery by defining a guardian (and external contract/account) 
@@ -24,13 +25,15 @@ mod external_recovery_component {
     use argent::utils::asserts::assert_only_self;
     use core::array::ArrayTrait;
     use core::array::SpanTrait;
+    use core::debug::PrintTrait;
     use core::option::OptionTrait;
     use core::result::ResultTrait;
+    use core::traits::TryInto;
     use starknet::{
         get_block_timestamp, get_contract_address, get_caller_address, ContractAddress, account::Call,
         contract_address::contract_address_const
     };
-    use super::IToggleExternaldRecovery;
+    use super::IToggleExternalRecovery;
 
     #[storage]
     struct Storage {
@@ -46,7 +49,6 @@ mod external_recovery_component {
         EscapeExecuted: EscapeExecuted,
         EscapeCanceled: EscapeCanceled,
     }
-
     #[embeddable_as(ExternalRecoveryImpl)]
     impl ExternalRecovery<
         TContractState,
@@ -65,6 +67,18 @@ mod external_recovery_component {
 
             let escape_config: EscapeEnabled = self.escape_enabled.read();
             assert(escape_config.is_enabled == 1, 'argent/recovery-disabled');
+
+            let current_escape: Escape = self.escape.read();
+            let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
+            if (current_escape_status == EscapeStatus::NotReady || current_escape_status == EscapeStatus::Ready) {
+                self
+                    .emit(
+                        EscapeCanceled {
+                            target_signers: current_escape.target_signers.span(),
+                            new_signers: current_escape.new_signers.span()
+                        }
+                    );
+            }
 
             let mut target_signer_guids = array![];
             let mut new_signer_guids = array![];
@@ -130,7 +144,10 @@ mod external_recovery_component {
                     },
                     Option::None => { break; }
                 }
-            }
+            };
+
+            // clear escape
+            self.escape.write(Escape { ready_at: 0, target_signers: array![], new_signers: array![] });
         }
 
         /// @notice Cancels the ongoing escape.
@@ -167,7 +184,7 @@ mod external_recovery_component {
     #[embeddable_as(ToggleExternalRecoveryImpl)]
     impl ToggleExternalRecovery<
         TContractState, +HasComponent<TContractState>
-    > of IToggleExternaldRecovery<ComponentState<TContractState>> {
+    > of IToggleExternalRecovery<ComponentState<TContractState>> {
         fn toggle_escape(
             ref self: ComponentState<TContractState>,
             is_enabled: bool,
@@ -194,10 +211,17 @@ mod external_recovery_component {
                 self.guardian.write(guardian);
             } else {
                 assert(escape_config.is_enabled == 1, 'argent/escape-disabled');
-                assert(security_period == 0 && expiry_period == 0, 'argent/invalid-escape-params');
+                assert(
+                    security_period == 0 && expiry_period == 0 && guardian == contract_address_const::<0>(),
+                    'argent/invalid-escape-params'
+                );
                 self.escape_enabled.write(EscapeEnabled { is_enabled: 0, security_period, expiry_period });
                 self.guardian.write(contract_address_const::<0>());
             }
+        }
+
+        fn get_guardian(self: @ComponentState<TContractState>) -> ContractAddress {
+            self.guardian.read()
         }
     }
 

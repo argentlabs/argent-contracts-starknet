@@ -184,6 +184,8 @@ mod multisig_component {
         +Drop<TContractState>
     > of IArgentMultisigInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, threshold: usize, signers: Array<Signer>) {
+            assert(self.threshold.read() == 0, 'argent/already-initialized');
+
             let new_signers_count = signers.len();
             self.assert_valid_threshold_and_signers_count(threshold, new_signers_count);
 

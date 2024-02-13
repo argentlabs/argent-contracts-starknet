@@ -6,6 +6,7 @@ mod ArgentUserAccount {
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
+    use argent::recovery::threshold_recovery::IThresholdRecoveryInternal;
     use argent::recovery::{threshold_recovery::threshold_recovery_component};
     use argent::signer::{
         interface::ISignerList, signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait},
@@ -236,20 +237,26 @@ mod ArgentUserAccount {
             // get threshold
             let threshold = self.multisig.threshold.read();
             let first_call = calls.at(0);
-            let (is_escape_call, required_signatures, excluded_signer_guid): (bool, u32, felt252) = self
-                .escape
-                .parse_escape_call(*first_call.to, *first_call.selector, first_call.calldata.span(), threshold);
-            if (is_escape_call) {
-                let valid = self
-                    .is_valid_signature_with_conditions(
-                        execution_hash, required_signatures, excluded_signer_guid, signature
-                    );
-                assert(valid, 'argent/invalid-signature');
-                return;
-            }
 
-            let valid = self.is_valid_signature_with_conditions(execution_hash, threshold, 0_felt252, signature);
-            assert(valid, 'argent/invalid-signature');
+            match self.parse_escape_call(*first_call.to, *first_call.selector, first_call.calldata.span(), threshold) {
+                Option::Some((
+                    required_signatures, excluded_signer_guid
+                )) => {
+                    assert(
+                        self
+                            .is_valid_signature_with_conditions(
+                                execution_hash, required_signatures, excluded_signer_guid, signature
+                            ),
+                        'argent/invalid-signature'
+                    );
+                },
+                Option::None => {
+                    assert(
+                        self.is_valid_signature_with_conditions(execution_hash, threshold, 0_felt252, signature),
+                        'argent/invalid-signature'
+                    );
+                }
+            }
         }
 
         fn is_valid_signature_with_conditions(

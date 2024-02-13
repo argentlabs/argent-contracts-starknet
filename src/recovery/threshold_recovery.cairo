@@ -9,7 +9,7 @@ trait IToggleThresholdRecovery<TContractState> {
 trait IThresholdRecoveryInternal<TContractState> {
     fn parse_escape_call(
         self: @TContractState, to: ContractAddress, selector: felt252, calldata: Span<felt252>, threshold: u32
-    ) -> (bool, u32, felt252);
+    ) -> Option<(u32, felt252)>;
 }
 
 /// @notice Implements a recovery that can be triggered by threshold - 1 signers.
@@ -192,7 +192,7 @@ mod threshold_recovery_component {
             selector: felt252,
             mut calldata: Span<felt252>,
             threshold: u32
-        ) -> (bool, u32, felt252) {
+        ) -> Option<(u32, felt252)> {
             if (to == get_contract_address()) {
                 if (selector == selector!("trigger_escape_signer")) {
                     // check we can do recovery
@@ -205,7 +205,7 @@ mod threshold_recovery_component {
                     let is_signer = self.get_contract().is_signer_in_list(escaped_signer_guid);
                     assert(is_signer, 'argent/escaped-not-signer');
                     // return
-                    return (true, threshold - 1, escaped_signer_guid);
+                    return Option::Some((threshold - 1, escaped_signer_guid));
                 } else if (selector == selector!("escape_signer")) {
                     // check we can do recovery
                     let escape_config: EscapeEnabled = self.escape_enabled.read();
@@ -214,10 +214,10 @@ mod threshold_recovery_component {
                     let current_escape: Escape = self.escape.read();
                     let escaped_signer_guid = *current_escape.target_signers.at(0);
                     // return
-                    return (true, threshold - 1, escaped_signer_guid);
+                    return Option::Some((threshold - 1, escaped_signer_guid));
                 }
             }
-            return (false, 0, 0);
+            return Option::None;
         }
     }
 

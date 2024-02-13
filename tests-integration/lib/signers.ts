@@ -1,4 +1,3 @@
-import { Signature as EthersSignature, Wallet, id } from "ethers";
 import {
   ArraySignatureType,
   CairoCustomEnum,
@@ -29,8 +28,9 @@ import {
   Uint256,
 } from "starknet";
 import { p256 as secp256r1 } from "@noble/curves/p256";
-import { secp256k1 } from "@noble/curves/secp256k1";
 import * as utils from "@noble/curves/abstract/utils";
+import { RecoveredSignatureType } from "@noble/curves/abstract/weierstrass";
+import { Wallet, id, Signature as EthersSignature } from "ethers";
 
 /**
  * This class allows to easily implement custom signers by overriding the `signRaw` method.
@@ -210,19 +210,17 @@ export class KeyPair extends Signer {
 
 export class EthKeyPair extends KeyPair {
   public get publicKey() {
-    const publicKey = secp256k1.getPublicKey(this.privateKey).slice(2);
-    return BigInt("0x" + utils.bytesToHex(publicKey));
+    return BigInt(new Wallet(id(this.privateKey.toString())).address);
   }
-
   public signHash(messageHash: string) {
-    // if (messageHash.length < 66) {
-    //   messageHash = "0".repeat(66 - messageHash.length) + messageHash.slice(2);
-    // }
-    const { r, s, recovery } = secp256r1.sign(messageHash, this.privateKey);
-    return ethereumSignatureType(this.publicKey, r, s, recovery == 0 ? 0 : 1);
+    const eth_signer = new Wallet(id(this.privateKey.toString()));
+    if (messageHash.length < 66) {
+      messageHash = "0x" + "0".repeat(66 - messageHash.length) + messageHash.slice(2);
+    }
+    const signature = EthersSignature.from(eth_signer.signingKey.sign(messageHash));
+    return ethereumSignatureType(this.publicKey, signature);
   }
 }
-
 export class Secp256r1KeyPair extends KeyPair {
   public get publicKey() {
     const publicKey = secp256r1.getPublicKey(this.privateKey).slice(1);
@@ -233,8 +231,8 @@ export class Secp256r1KeyPair extends KeyPair {
     if (messageHash.length < 66) {
       messageHash = "0".repeat(66 - messageHash.length) + messageHash.slice(2);
     }
-    const { r, s, recovery } = secp256r1.sign(messageHash, this.privateKey);
-    return secp256r1SignatureType(this.publicKey, r, s, recovery == 0 ? 0 : 1);
+    const sig = secp256r1.sign(messageHash, this.privateKey);
+    return secp256r1SignatureType(this.publicKey, sig);
   }
 }
 
@@ -267,32 +265,32 @@ export function starknetSignatureType(
   ]);
 }
 
-export function ethereumSignatureType(signer: bigint, r: bigint, s: bigint, y_parity: 0 | 1) {
+export function ethereumSignatureType(signer: bigint, signature: EthersSignature) {
   return CallData.compile([
     new CairoCustomEnum({
       Starknet: undefined,
       Secp256k1: {
         signer,
-        r: uint256.bnToUint256(r),
-        s: uint256.bnToUint256(s),
-        y_parity
+        r: uint256.bnToUint256(signature.r),
+        s: uint256.bnToUint256(signature.s),
+        y_parity: signature.yParity.toString(),
       },
-      Webauthn: undefined,
       Secp256r1: undefined,
+      Webauthn: undefined,
     }),
   ]);
 }
 
-export function secp256r1SignatureType(signer: Uint256, r: bigint, s: bigint, y_parity: 0 | 1) {
+export function secp256r1SignatureType(signer: Uint256, signature: RecoveredSignatureType) {
   return CallData.compile([
     new CairoCustomEnum({
       Starknet: undefined,
       Secp256k1: undefined,
       Secp256r1: {
         signer,
-        r: uint256.bnToUint256(r),
-        s: uint256.bnToUint256(s),
-        y_parity,
+        r: uint256.bnToUint256(signature.r),
+        s: uint256.bnToUint256(signature.s),
+        y_parity: signature.recovery,
       },
       Webauthn: undefined,
     }),
@@ -311,7 +309,7 @@ export function starknetSigner(signer: bigint | number | string) {
   });
 }
 
-export function ethSigner(signer: bigint | number | string) {
+export function ethSigner(signer: bigint) {
   return new CairoCustomEnum({
     Starknet: undefined,
     Secp256k1: { signer },
@@ -320,7 +318,7 @@ export function ethSigner(signer: bigint | number | string) {
   });
 }
 
-export function secp256r1Signer(signer: bigint | number | string) {
+export function secp256r1Signer(signer: Uint256) {
   return new CairoCustomEnum({
     Starknet: undefined,
     Secp256k1: undefined,

@@ -198,6 +198,10 @@ export class KeyPair extends Signer {
     return BigInt(this.pk as string);
   }
 
+  public get getSignerType(){
+    return starknetSigner(this.publicKey)
+  }
+
   public get publicKey(): any {
     return BigInt(ec.starkCurve.getStarkKey(this.pk));
   }
@@ -212,6 +216,12 @@ export class EthKeyPair extends KeyPair {
   public get publicKey() {
     return BigInt(new Wallet(id(this.privateKey.toString())).address);
   }
+
+
+  public get getSignerType(){
+    return ethSigner(this.publicKey)
+  }
+
   public signHash(messageHash: string) {
     const eth_signer = new Wallet(id(this.privateKey.toString()));
     if (messageHash.length < 66) {
@@ -225,6 +235,10 @@ export class Secp256r1KeyPair extends KeyPair {
   public get publicKey() {
     const publicKey = secp256r1.getPublicKey(this.privateKey).slice(1);
     return uint256.bnToUint256("0x" + utils.bytesToHex(publicKey));
+  }
+
+  public get getSignerType(){
+    return secp256r1Signer(this.publicKey)
   }
 
   public signHash(messageHash: string) {

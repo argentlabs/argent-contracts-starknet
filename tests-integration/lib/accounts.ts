@@ -146,7 +146,7 @@ async function deployAccountInner(
   };
   const some_guardian = signerOption(finalParams.guardian?.publicKey);
   const constructorCalldata = CallData.compile({
-    owner: secp256r1Signer(finalParams.owner.publicKey),
+    owner: finalParams.owner.getSignerType,
     guardian: some_guardian,
   });
 

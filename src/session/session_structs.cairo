@@ -10,19 +10,10 @@ struct StarknetSignature {
     s: felt252,
 }
 
-#[derive(Hash, Drop, Serde, Copy)]
-struct TokenAmount {
-    token_address: ContractAddress,
-    amount: u256,
-}
-
 #[derive(Drop, Serde, Copy)]
 struct Session {
     expires_at: u64,
     allowed_methods_root: felt252,
-    token_amounts: Span<TokenAmount>,
-    nft_contracts: Span<ContractAddress>,
-    max_fee_usage: TokenAmount,
     guardian_key: felt252,
     session_key: felt252,
 }
@@ -46,12 +37,7 @@ struct StarkNetDomain {
 // update these once SNIP-12 is merged (i.e. use StarknetDomain)
 const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
 const SESSION_TYPE_HASH: felt252 =
-    selector!(
-        "Session(Expires At:felt,Allowed Methods:merkletree,Token Amounts:TokenAmount*,NFT Contracts:felt*,Max Fee Usage:TokenAmount,Guardian Key:felt,Session Key:felt)TokenAmount(token_address:felt,amount:u256)u256(low:felt,high:felt)"
-    );
-const TOKEN_AMOUNT_TYPE_HASH: felt252 =
-    selector!("TokenAmount(token_address:felt,amount:u256)u256(low:felt,high:felt)");
-const U256_TYPE_HASH: felt252 = selector!("u256(low:felt,high:felt)");
+    selector!("Session(Expires At:felt,Allowed Methods:merkletree,Guardian Key:felt,Session Key:felt)");
 const ALLOWED_METHOD_HASH: felt252 = selector!("Allowed Method(Contract Address:felt,selector:selector)");
 
 
@@ -85,12 +71,9 @@ impl StructHashSession of IStructHash<Session> {
         state = state.update_with(SESSION_TYPE_HASH);
         state = state.update_with(*self.expires_at);
         state = state.update_with(*self.allowed_methods_root);
-        state = state.update_with((*self).token_amounts.get_struct_hash());
-        state = state.update_with((*self).nft_contracts.get_struct_hash());
-        state = state.update_with((*self).max_fee_usage.get_struct_hash());
         state = state.update_with(*self.guardian_key);
         state = state.update_with(*self.session_key);
-        state = state.update_with(8);
+        state = state.update_with(5);
         state.finalize()
     }
 }
@@ -121,32 +104,9 @@ impl OffchainMessageHashSession of IOffchainMessageHash<Session> {
     }
 }
 
-
-impl StructHashU256 of IStructHash<u256> {
-    fn get_struct_hash(self: @u256) -> felt252 {
-        let mut state = PedersenTrait::new(0);
-        state = state.update_with(U256_TYPE_HASH);
-        state = state.update_with(*self);
-        state = state.update_with(3);
-        state.finalize()
-    }
-}
-
 impl StructHashSpanContract of IStructHash<ContractAddress> {
     fn get_struct_hash(self: @ContractAddress) -> felt252 {
         PedersenTrait::new(0).update_with(*self).finalize()
-    }
-}
-
-
-impl StructHashTokenLimit of IStructHash<TokenAmount> {
-    fn get_struct_hash(self: @TokenAmount) -> felt252 {
-        let mut state = PedersenTrait::new(0);
-        state = state.update_with(TOKEN_AMOUNT_TYPE_HASH);
-        state = state.update_with(*self.token_address);
-        state = state.update_with((*self).amount.get_struct_hash());
-        state = state.update_with(3);
-        state.finalize()
     }
 }
 

@@ -48,7 +48,7 @@ describe("ArgentAccount: outside execution", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(account.address, allowedMethods, tokenAmounts);
+    const sessionRequest = dappService.createSessionRequest(account.address, allowedMethods);
 
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
 

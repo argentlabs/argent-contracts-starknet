@@ -1,4 +1,4 @@
-import { typedData, uint256, BigNumberish } from "starknet";
+import { typedData, Uint256, BigNumberish } from "starknet";
 import { provider } from ".";
 
 export const sessionTypes = {
@@ -11,20 +11,9 @@ export const sessionTypes = {
     { name: "Contract Address", type: "felt" },
     { name: "selector", type: "selector" },
   ],
-  TokenAmount: [
-    { name: "token_address", type: "felt" },
-    { name: "amount", type: "u256" },
-  ],
-  u256: [
-    { name: "low", type: "felt" },
-    { name: "high", type: "felt" },
-  ],
   Session: [
     { name: "Expires At", type: "felt" },
     { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
-    { name: "Token Amounts", type: "TokenAmount*" },
-    { name: "NFT Contracts", type: "felt*" },
-    { name: "Max Fee Usage", type: "TokenAmount" },
     { name: "Guardian Key", type: "felt" },
     { name: "Session Key", type: "felt" },
   ],
@@ -39,7 +28,7 @@ export interface StarknetSig {
 
 export interface TokenAmount {
   token_address: string;
-  amount: uint256.Uint256;
+  amount: Uint256;
 }
 
 export interface AllowedMethod {
@@ -50,9 +39,6 @@ export interface AllowedMethod {
 export interface OffChainSession {
   expires_at: BigNumberish;
   allowed_methods: AllowedMethod[];
-  token_amounts: TokenAmount[];
-  nft_contracts: string[];
-  max_fee_usage: TokenAmount;
   guardian_key: BigNumberish;
   session_key: BigNumberish;
 }
@@ -92,9 +78,6 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
     message: {
       "Expires At": sessionRequest.expires_at,
       "Allowed Methods": sessionRequest.allowed_methods,
-      "Token Amounts": sessionRequest.token_amounts,
-      "NFT Contracts": sessionRequest.nft_contracts,
-      "Max Fee Usage": sessionRequest.max_fee_usage,
       "Guardian Key": sessionRequest.guardian_key,
       "Session Key": sessionRequest.session_key,
     },

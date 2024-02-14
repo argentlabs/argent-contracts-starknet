@@ -45,17 +45,11 @@ export class DappService {
   public createSessionRequest(
     accountAddress: string,
     allowed_methods: AllowedMethod[],
-    token_amounts: TokenAmount[],
     expires_at = 150,
-    max_fee_usage = { token_address: "0x0", amount: uint256.bnToUint256(1000000n) },
-    nft_contracts: string[] = [],
   ): OffChainSession {
     return {
       expires_at,
       allowed_methods,
-      token_amounts,
-      nft_contracts,
-      max_fee_usage,
       guardian_key: this.argentBackend.getGuardianKey(accountAddress),
       session_key: this.sessionKey.publicKey,
     };
@@ -175,9 +169,6 @@ export class DappService {
     const session = {
       expires_at: completedSession.expires_at,
       allowed_methods_root: this.buildMerkleTree(completedSession).root.toString(),
-      token_amounts: completedSession.token_amounts,
-      nft_contracts: completedSession.nft_contracts,
-      max_fee_usage: completedSession.max_fee_usage,
       guardian_key: completedSession.guardian_key,
       session_key: completedSession.session_key,
     };

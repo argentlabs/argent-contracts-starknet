@@ -92,7 +92,6 @@ mod ArgentUserAccount {
         #[flat]
         EscapeEvents: threshold_recovery_component::Event,
         TransactionExecuted: TransactionExecuted,
-        AccountUpgraded: AccountUpgraded,
     }
 
     /// @notice Emitted when the account executes a transaction
@@ -103,13 +102,6 @@ mod ArgentUserAccount {
         #[key]
         hash: felt252,
         response: Span<Span<felt252>>
-    }
-
-    /// @notice Emitted when the implementation of the account changes
-    /// @param new_implementation The new implementation
-    #[derive(Drop, starknet::Event)]
-    struct AccountUpgraded {
-        new_implementation: ClassHash
     }
 
     #[constructor]

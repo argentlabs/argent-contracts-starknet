@@ -26,11 +26,6 @@ export interface StarknetSig {
   s: BigNumberish;
 }
 
-export interface TokenAmount {
-  token_address: string;
-  amount: Uint256;
-}
-
 export interface AllowedMethod {
   "Contract Address": string;
   selector: string;
@@ -46,9 +41,6 @@ export interface OffChainSession {
 interface OnChainSession {
   expires_at: BigNumberish;
   allowed_methods_root: string;
-  token_amounts: TokenAmount[];
-  nft_contracts: string[];
-  max_fee_usage: TokenAmount;
   guardian_key: BigNumberish;
   session_key: BigNumberish;
 }

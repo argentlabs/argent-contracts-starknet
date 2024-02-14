@@ -9,11 +9,8 @@ import {
   DappService,
   ArgentX,
   AllowedMethod,
-  TokenAmount,
   getSessionTypedData,
 } from "./lib";
-
-const tokenAmounts: TokenAmount[] = [];
 
 const initialTime = 1713139200;
 describe("ArgentAccount: outside execution", function () {

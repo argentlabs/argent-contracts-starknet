@@ -20,11 +20,11 @@ mod threshold_recovery_component {
     use argent::recovery::interface::{
         Escape, EscapeEnabled, EscapeStatus, IRecovery, EscapeExecuted, EscapeTriggered, EscapeCanceled
     };
-    use argent::signer::interface::ISignerList;
-    use argent::signer::signer_list::{
+    use argent::signer::signer_signature::{Signer, IntoGuid};
+    use argent::signer_storage::interface::ISignerList;
+    use argent::signer_storage::signer_list::{
         signer_list_component, signer_list_component::{SignerListInternalImpl, OwnerAdded, OwnerRemoved, SignerLinked}
     };
-    use argent::signer::signer_signature::{Signer, IntoGuid};
     use argent::utils::asserts::assert_only_self;
     use core::array::ArrayTrait;
     use starknet::{get_block_timestamp, get_contract_address, ContractAddress, account::Call};

@@ -7,7 +7,9 @@ mod ArgentAccount {
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
-    use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid, SignerSignature, SignerSignatureTrait}};
+    use argent::signer::{
+        signer_signature::{Signer, StarknetSigner, StarknetSignature, IntoGuid, SignerSignature, SignerSignatureTrait}
+    };
     use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self}, calls::execute_multicall,
@@ -17,7 +19,11 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, assert_no_unsupported_v3_fields, DA_MODE_L1
         }
     };
+    use core::array::ArrayTrait;
+    use core::array::SpanTrait;
+    use core::option::OptionTrait;
     use core::starknet::event::EventEmitter;
+    use core::traits::TryInto;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
@@ -585,8 +591,7 @@ mod ArgentAccount {
             let execution_info = get_execution_info().unbox();
             let account_address = execution_info.contract_address;
 
-            let signer_signatures: Array<SignerSignature> = full_deserialize(signatures)
-                .expect('argent/signature-not-empty');
+            let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
 
             if calls.len() == 1 {
                 let call = calls.at(0);
@@ -683,6 +688,43 @@ mod ArgentAccount {
             }
 
             self.assert_valid_span_signature(execution_hash, signer_signatures);
+        }
+
+        fn parse_signature_array(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
+            let first_slot: u256 = (*signatures.at(0)).into();
+            // check if legacy signature array
+            // Note that it will not work if the guardian_backup was used
+            if (first_slot > 3 && (signatures.len() == 2 || signatures.len() == 4)) {
+                let mut signer_signatures = array![];
+                let owner = self._signer.read();
+                let sig_owner_r = signatures.pop_front().unwrap();
+                let sig_owner_s = signatures.pop_front().unwrap();
+                signer_signatures
+                    .append(
+                        SignerSignature::Starknet(
+                            (StarknetSigner { pubkey: owner }, StarknetSignature { r: *sig_owner_r, s: *sig_owner_s })
+                        )
+                    );
+                match signatures.pop_front() {
+                    Option::Some(sig_guardian_r) => {
+                        let guardian = self._guardian.read();
+                        let sig_guardian_s = signatures.pop_front().unwrap();
+                        signer_signatures
+                            .append(
+                                SignerSignature::Starknet(
+                                    (
+                                        StarknetSigner { pubkey: guardian },
+                                        StarknetSignature { r: *sig_guardian_r, s: *sig_guardian_s }
+                                    )
+                                )
+                            );
+                    },
+                    Option::None => {}
+                };
+                signer_signatures
+            } else {
+                full_deserialize(signatures).expect('argent/signature-not-empty')
+            }
         }
 
         fn is_valid_span_signature(

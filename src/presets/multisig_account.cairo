@@ -7,9 +7,9 @@ mod ArgentMultisigAccount {
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
     use argent::recovery::{external_recovery::external_recovery_component};
-    use argent::signer::{
-        interface::ISignerList, signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait},
-        signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
+    use argent::signer::{signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait}};
+    use argent::signer_storage::{
+        interface::ISignerList, signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
     };
     use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
     use argent::utils::{
@@ -193,11 +193,7 @@ mod ArgentMultisigAccount {
             assert_only_self();
 
             // Check basic invariants
-            self
-                .multisig
-                .assert_valid_threshold_and_signers_count(
-                    self.multisig.threshold.read(), self.signer_list.get_signers_len()
-                );
+            self.multisig.assert_valid_storage();
 
             assert(data.len() == 0, 'argent/unexpected-data');
             array![]
@@ -247,7 +243,7 @@ mod ArgentMultisigAccount {
                     Option::None => { break true; }
                 };
                 let signer_guid = signer_sig.signer_into_guid().expect('argent/invalid-signer-guid');
-                assert(self.signer_list.is_signer_in_list(signer_guid), 'argent/not-a-signer');
+                assert(self.multisig.is_signer_guid(signer_guid), 'argent/not-a-signer');
                 assert(signer_guid != excluded_signer, 'argent/unauthorised_signer');
                 let signer_uint: u256 = signer_guid.into();
                 assert(signer_uint > last_signer, 'argent/signatures-not-sorted');

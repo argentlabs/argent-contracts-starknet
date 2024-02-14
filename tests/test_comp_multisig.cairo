@@ -1,7 +1,8 @@
 use argent::multisig::interface::IArgentMultisig;
 use argent::multisig::interface::IArgentMultisigInternal;
 use argent::multisig::{multisig::multisig_component};
-use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid}, signer_list::signer_list_component,};
+use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid}};
+use argent::signer_storage::signer_list::signer_list_component;
 use argent_tests::mocks::multisig_mocks::MultisigMock;
 use core::array::ArrayTrait;
 

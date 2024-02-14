@@ -1,7 +1,7 @@
 #[starknet::contract]
 mod MultisigMock {
     use argent::multisig::multisig::multisig_component;
-    use argent::signer::signer_list::signer_list_component;
+    use argent::signer_storage::signer_list::signer_list_component;
 
     component!(path: multisig_component, storage: multisig, event: MultisigEvents);
     #[abi(embed_v0)]

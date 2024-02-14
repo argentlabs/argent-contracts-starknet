@@ -3,10 +3,13 @@
 #[starknet::component]
 mod multisig_component {
     use argent::multisig::interface::{IArgentMultisig, IArgentMultisigInternal};
-    use argent::signer::signer_list::signer_list_component::{OwnerAdded, OwnerRemoved, SignerLinked};
-    use argent::signer::{
-        interface::ISignerList, signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait},
-        signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
+    use argent::signer::{signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait},};
+    use argent::signer_storage::{
+        interface::ISignerList,
+        signer_list::{
+            signer_list_component,
+            signer_list_component::{OwnerAdded, OwnerRemoved, SignerLinked, SignerListInternalImpl}
+        }
     };
     use argent::utils::{
         asserts::{assert_only_self},
@@ -215,6 +218,10 @@ mod multisig_component {
             assert(signers_len != 0, 'argent/invalid-signers-len');
             assert(signers_len <= MAX_SIGNERS_COUNT, 'argent/invalid-signers-len');
             assert(threshold <= signers_len, 'argent/bad-threshold');
+        }
+
+        fn assert_valid_storage(self: @ComponentState<TContractState>) {
+            self.assert_valid_threshold_and_signers_count(self.threshold.read(), self.get_contract().get_signers_len());
         }
     }
 }

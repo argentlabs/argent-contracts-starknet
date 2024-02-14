@@ -1,6 +1,6 @@
 #[starknet::contract]
 mod SignerListMock {
-    use argent::signer::signer_list::signer_list_component;
+    use argent::signer_storage::signer_list::signer_list_component;
 
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
     #[abi(embed_v0)]

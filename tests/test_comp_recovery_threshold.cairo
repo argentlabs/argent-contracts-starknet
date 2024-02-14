@@ -5,7 +5,8 @@ use argent::recovery::threshold_recovery::{
     IToggleThresholdRecovery, IToggleThresholdRecoveryDispatcher, IToggleThresholdRecoveryDispatcherTrait
 };
 use argent::recovery::{threshold_recovery::threshold_recovery_component};
-use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid}, signer_list::signer_list_component,};
+use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid}};
+use argent::signer_storage::signer_list::signer_list_component;
 use argent_tests::mocks::recovery_mocks::ThresholdRecoveryMock;
 use core::array::ArrayTrait;
 use core::debug::PrintTrait;

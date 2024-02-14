@@ -24,10 +24,13 @@ mod multisig {
 }
 
 mod signer {
-    mod interface;
-    mod signer_list;
     mod signer_signature;
     mod webauthn;
+}
+
+mod signer_storage {
+    mod interface;
+    mod signer_list;
 }
 
 mod outside_execution {

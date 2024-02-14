@@ -41,4 +41,5 @@ trait IArgentMultisig<TContractState> {
 trait IArgentMultisigInternal<TContractState> {
     fn initialize(ref self: TContractState, threshold: usize, signers: Array<Signer>);
     fn assert_valid_threshold_and_signers_count(self: @TContractState, threshold: usize, signers_len: usize);
+    fn assert_valid_storage(self: @TContractState);
 }

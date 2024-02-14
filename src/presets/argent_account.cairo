@@ -1,12 +1,11 @@
 #[starknet::contract]
 mod ArgentAccount {
-    use argent::account::interface::{IAccount, Version};
-    use argent::account_legacy::escape::{Escape, EscapeType, EscapeStatus};
-    use argent::account_legacy::interface::{IArgentUserAccount, IDeprecatedArgentAccount};
+    use argent::account::interface::{IAccount, IArgentAccount, IArgentUserAccount, IDeprecatedArgentAccount, Version};
     use argent::introspection::src5::src5_component;
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
+    use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
     use argent::signer::{
         signer_signature::{Signer, StarknetSigner, StarknetSignature, IntoGuid, SignerSignature, SignerSignatureTrait}
     };
@@ -77,7 +76,7 @@ mod ArgentAccount {
         _signer: felt252, /// Current account owner
         _guardian: felt252, /// Current account guardian
         _guardian_backup: felt252, /// Current account backup guardian
-        _escape: Escape, /// The ongoing escape, if any
+        _escape: LegacyEscape, /// The ongoing escape, if any
         /// Keeps track of how many escaping tx the guardian has submitted. Used to limit the number of transactions the account will pay for
         /// It resets when an escape is completed or canceled
         guardian_escape_attempts: u32,
@@ -346,7 +345,7 @@ mod ArgentAccount {
     }
 
     #[external(v0)]
-    impl ArgentAccountImpl of IArgentUserAccount<ContractState> {
+    impl ArgentUserAccountImpl of IArgentUserAccount<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_declare_version(tx_info.version);
@@ -441,7 +440,7 @@ mod ArgentAccount {
 
             // no escape if there is a guardian escape triggered by the owner in progress
             let current_escape = self._escape.read();
-            if current_escape.escape_type == EscapeType::Guardian {
+            if current_escape.escape_type == LegacyEscapeType::Guardian {
                 assert(
                     get_escape_status(current_escape.ready_at) == EscapeStatus::Expired, 'argent/cannot-override-escape'
                 );
@@ -450,7 +449,7 @@ mod ArgentAccount {
             self.reset_escape();
             let new_owner_guid = new_owner.into_guid().expect('argent/null-owner');
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
-            let escape = Escape { ready_at, escape_type: EscapeType::Owner, new_signer: new_owner_guid };
+            let escape = LegacyEscape { ready_at, escape_type: LegacyEscapeType::Owner, new_signer: new_owner_guid };
             self._escape.write(escape);
             self.emit(EscapeOwnerTriggered { ready_at, new_owner: new_owner_guid });
             self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
@@ -471,7 +470,9 @@ mod ArgentAccount {
             };
 
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
-            let escape = Escape { ready_at, escape_type: EscapeType::Guardian, new_signer: new_guardian_guid };
+            let escape = LegacyEscape {
+                ready_at, escape_type: LegacyEscapeType::Guardian, new_signer: new_guardian_guid
+            };
             self._escape.write(escape);
             self.emit(EscapeGuardianTriggered { ready_at, new_guardian: new_guardian_guid });
         }
@@ -534,7 +535,7 @@ mod ArgentAccount {
             self._guardian_backup.read()
         }
 
-        fn get_escape(self: @ContractState) -> Escape {
+        fn get_escape(self: @ContractState) -> LegacyEscape {
             self._escape.read()
         }
 
@@ -556,7 +557,7 @@ mod ArgentAccount {
         }
 
         /// Current escape if any, and its status
-        fn get_escape_and_status(self: @ContractState) -> (Escape, EscapeStatus) {
+        fn get_escape_and_status(self: @ContractState) -> (LegacyEscape, EscapeStatus) {
             let current_escape = self._escape.read();
             (current_escape, get_escape_status(current_escape.ready_at))
         }
@@ -626,7 +627,7 @@ mod ArgentAccount {
                         assert(call.calldata.is_empty(), 'argent/invalid-calldata');
                         self.assert_guardian_set();
                         let current_escape = self._escape.read();
-                        assert(current_escape.escape_type == EscapeType::Owner, 'argent/invalid-escape');
+                        assert(current_escape.escape_type == LegacyEscapeType::Owner, 'argent/invalid-escape');
                         // needed if user started escape in old cairo version and
                         // upgraded half way through,  then tries to finish the escape in new version
                         assert(current_escape.new_signer != 0, 'argent/null-owner');
@@ -667,7 +668,7 @@ mod ArgentAccount {
                         self.assert_guardian_set();
                         let current_escape = self._escape.read();
 
-                        assert(current_escape.escape_type == EscapeType::Guardian, 'argent/invalid-escape');
+                        assert(current_escape.escape_type == LegacyEscapeType::Guardian, 'argent/invalid-escape');
 
                         // needed if user started escape in old cairo version and
                         // upgraded half way through, then tries to finish the escape in new version

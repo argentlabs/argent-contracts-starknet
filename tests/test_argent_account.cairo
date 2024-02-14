@@ -1,4 +1,4 @@
-use argent::account_legacy::argent_account::ArgentAccount;
+use argent::presets::argent_account::ArgentAccount;
 use argent::signer::signer_signature::{Signer, SignerSignature, StarknetSignature, StarknetSigner, IntoGuid};
 use argent_tests::setup::account_test_setup::{
     ITestArgentAccountDispatcherTrait, owner_pubkey, wrong_owner_pubkey, initialize_account_with, initialize_account,

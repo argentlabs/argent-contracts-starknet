@@ -1,9 +1,3 @@
-mod account_legacy {
-    mod argent_account;
-    mod escape;
-    mod interface;
-}
-
 mod upgrade {
     mod interface;
     mod upgrade;
@@ -45,6 +39,7 @@ mod recovery {
 }
 
 mod presets {
+    mod argent_account;
     mod multisig_account;
     mod user_account;
 }

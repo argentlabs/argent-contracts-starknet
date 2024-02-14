@@ -23,12 +23,9 @@ import {
   LegacyKeyPair,
   LegacyMultisigSigner,
   compiledSignerOption,
-  ethSigner,
   randomKeyPair,
-  secp256r1Signer,
   signerOption,
-  starknetSigner,
-} from "./signers";
+} from ".";
 
 export class ArgentAccount extends Account {
   // Increase the gas limit by 30% to avoid failures due to gas estimation being too low with tx v3 and transactions the use escaping

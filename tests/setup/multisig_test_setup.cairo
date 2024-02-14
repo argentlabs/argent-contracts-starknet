@@ -1,6 +1,6 @@
-use argent::common::signer_signature::{Signer, StarknetSigner, SignerSignature};
-use argent::common::version::Version;
-use argent::multisig::argent_multisig::ArgentMultisig;
+use argent::account::interface::Version;
+use argent::presets::multisig_account::ArgentMultisigAccount;
+use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
 use starknet::{contract_address_const, syscalls::deploy_syscall, account::Call, testing::set_contract_address};
 
 const signer_pubkey_1: felt252 = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;
@@ -26,6 +26,7 @@ trait ITestArgentMultisig<TContractState> {
     fn change_threshold(ref self: TContractState, new_threshold: usize);
     fn add_signers(ref self: TContractState, new_threshold: usize, signers_to_add: Array<Signer>);
     fn remove_signers(ref self: TContractState, new_threshold: usize, signers_to_remove: Array<Signer>);
+    fn reorder_signers(ref self: TContractState, new_signer_order: Array<Signer>);
     fn replace_signer(ref self: TContractState, signer_to_remove: Signer, signer_to_add: Signer);
     // Views
     fn get_name(self: @TContractState) -> felt252;
@@ -68,7 +69,7 @@ fn initialize_multisig_with(threshold: usize, mut signers: Span<Signer>) -> ITes
     threshold.serialize(ref calldata);
     signers.serialize(ref calldata);
 
-    let class_hash = ArgentMultisig::TEST_CLASS_HASH.try_into().unwrap();
+    let class_hash = ArgentMultisigAccount::TEST_CLASS_HASH.try_into().unwrap();
     let (contract_address, _) = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap();
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')

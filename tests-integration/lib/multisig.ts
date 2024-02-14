@@ -48,7 +48,7 @@ export type DeployMultisigParams = {
 export async function deployMultisig(params: DeployMultisigParams): Promise<MultisigWallet> {
   const finalParams = {
     ...params,
-    classHash: params.classHash ?? (await declareContract("ArgentMultisig")),
+    classHash: params.classHash ?? (await declareContract("ArgentMultisigAccount")),
     salt: params.salt ?? num.toHex(randomKeyPair().privateKey),
     useTxV3: params.useTxV3 ?? false,
     selfDeploy: params.selfDeploy ?? false,

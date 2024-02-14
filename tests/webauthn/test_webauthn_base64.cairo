@@ -1,6 +1,6 @@
 use alexandria_encoding::base64::Base64UrlDecoder;
-use argent::common::bytes::ByteArrayExt;
-use argent::common::webauthn::decode_base64;
+use argent::signer::webauthn::decode_base64;
+use argent::utils::bytes::ByteArrayExt;
 
 #[test]
 #[available_gas(1_000_000_000)]

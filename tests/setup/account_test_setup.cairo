@@ -1,7 +1,7 @@
-use argent::account::argent_account::ArgentAccount;
-use argent::account::escape::{Escape, EscapeStatus};
-use argent::common::signer_signature::{Signer, StarknetSigner, SignerSignature};
-use argent::common::version::Version;
+use argent::account::interface::Version;
+use argent::presets::argent_account::ArgentAccount;
+use argent::recovery::interface::{LegacyEscape, EscapeStatus};
+use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
 use core::serde::Serde;
 use starknet::{contract_address_const, deploy_syscall, account::Call, testing::set_contract_address};
 
@@ -34,12 +34,12 @@ trait ITestArgentAccount<TContractState> {
     fn get_owner(self: @TContractState) -> felt252;
     fn get_guardian(self: @TContractState) -> felt252;
     fn get_guardian_backup(self: @TContractState) -> felt252;
-    fn get_escape(self: @TContractState) -> Escape;
+    fn get_escape(self: @TContractState) -> LegacyEscape;
     fn get_version(self: @TContractState) -> Version;
     fn get_name(self: @TContractState) -> felt252;
     fn get_guardian_escape_attempts(self: @TContractState) -> u32;
     fn get_owner_escape_attempts(self: @TContractState) -> u32;
-    fn get_escape_and_status(self: @TContractState) -> (Escape, EscapeStatus);
+    fn get_escape_and_status(self: @TContractState) -> (LegacyEscape, EscapeStatus);
 
     // IErc165
     fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;

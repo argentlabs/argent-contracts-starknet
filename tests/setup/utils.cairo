@@ -1,4 +1,4 @@
-use argent::common::signer_signature::{SignerSignature, StarknetSignature, StarknetSigner};
+use argent::signer::signer_signature::{SignerSignature, StarknetSignature, StarknetSigner};
 use integer::{u32_safe_divmod, u32_to_felt252};
 
 fn to_starknet_signer_signatures(arr: Array<felt252>) -> Array<felt252> {

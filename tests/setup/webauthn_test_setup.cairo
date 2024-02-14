@@ -1,6 +1,6 @@
-use argent::common::bytes::ByteArrayExt;
-use argent::common::signer_signature::WebauthnSigner;
-use argent::common::webauthn::{WebauthnAssertion};
+use argent::signer::signer_signature::WebauthnSigner;
+use argent::signer::webauthn::{WebauthnAssertion};
+use argent::utils::bytes::ByteArrayExt;
 use starknet::secp256_trait::Signature;
 
 fn get_authenticator_data() -> Span<u8> {

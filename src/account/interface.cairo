@@ -1,6 +1,24 @@
-use argent::account::escape::{Escape, EscapeStatus};
-use argent::common::signer_signature::{SignerSignature, Signer};
-use argent::common::version::Version;
+use argent::recovery::interface::{LegacyEscape, EscapeStatus};
+use argent::signer::signer_signature::{Signer, SignerSignature};
+use starknet::account::Call;
+
+const SRC5_ACCOUNT_INTERFACE_ID: felt252 = 0x2ceccef7f994940b3962a6c67e0ba4fcd37df7d131417c604f91e03caecc1cd;
+const SRC5_ACCOUNT_INTERFACE_ID_OLD_1: felt252 = 0xa66bd575;
+const SRC5_ACCOUNT_INTERFACE_ID_OLD_2: felt252 = 0x3943f10f;
+
+#[derive(Serde, Drop)]
+struct Version {
+    major: u8,
+    minor: u8,
+    patch: u8,
+}
+
+#[starknet::interface]
+trait IAccount<TContractState> {
+    fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
+    fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
+    fn is_valid_signature(self: @TContractState, hash: felt252, signature: Array<felt252>) -> felt252;
+}
 
 #[starknet::interface]
 trait IArgentAccount<TContractState> {
@@ -9,10 +27,23 @@ trait IArgentAccount<TContractState> {
         self: @TContractState,
         class_hash: felt252,
         contract_address_salt: felt252,
+        threshold: usize,
+        signers: Array<Signer>
+    ) -> felt252;
+    fn get_name(self: @TContractState) -> felt252;
+    fn get_version(self: @TContractState) -> Version;
+}
+
+#[starknet::interface]
+trait IArgentUserAccount<TContractState> {
+    fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
+    fn __validate_deploy__(
+        self: @TContractState,
+        class_hash: felt252,
+        contract_address_salt: felt252,
         owner: Signer,
         guardian: Option<Signer>
     ) -> felt252;
-    // External
 
     /// @notice Changes the owner
     /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
@@ -70,14 +101,14 @@ trait IArgentAccount<TContractState> {
     fn get_owner(self: @TContractState) -> felt252;
     fn get_guardian(self: @TContractState) -> felt252;
     fn get_guardian_backup(self: @TContractState) -> felt252;
-    fn get_escape(self: @TContractState) -> Escape;
-    fn get_version(self: @TContractState) -> Version;
+    fn get_escape(self: @TContractState) -> LegacyEscape;
     fn get_name(self: @TContractState) -> felt252;
+    fn get_version(self: @TContractState) -> Version;
     fn get_guardian_escape_attempts(self: @TContractState) -> u32;
     fn get_owner_escape_attempts(self: @TContractState) -> u32;
 
     /// Current escape if any, and its status
-    fn get_escape_and_status(self: @TContractState) -> (Escape, EscapeStatus);
+    fn get_escape_and_status(self: @TContractState) -> (LegacyEscape, EscapeStatus);
 }
 
 /// Deprecated methods for compatibility reasons
@@ -85,7 +116,6 @@ trait IArgentAccount<TContractState> {
 trait IDeprecatedArgentAccount<TContractState> {
     fn getVersion(self: @TContractState) -> felt252;
     fn getName(self: @TContractState) -> felt252;
-    fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
     /// For compatibility reasons this method returns 1 when the signature is valid, and panics otherwise
     fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }

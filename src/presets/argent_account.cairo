@@ -88,8 +88,11 @@ mod ArgentAccount {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
         ExecuteFromOutsideEvents: outside_execution_component::Event,
+        #[flat]
         SRC5Events: src5_component::Event,
+        #[flat]
         UpgradeEvents: upgrade_component::Event,
         AccountCreated: AccountCreated,
         TransactionExecuted: TransactionExecuted,

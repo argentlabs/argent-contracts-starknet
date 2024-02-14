@@ -114,7 +114,7 @@ mod ArgentMultisigAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             assert_no_unsupported_v3_fields();
-
+            assert(tx_info.account_deployment_data.is_empty(), 'argent/invalid-deployment-data');
             self.assert_valid_calls(calls.span());
             self.assert_valid_signatures(calls.span(), tx_info.transaction_hash, tx_info.signature);
             VALIDATED

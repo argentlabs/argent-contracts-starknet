@@ -10,7 +10,7 @@ export class EthKeyPair extends KeyPair {
     return BigInt(new Wallet(id(this.privateKey.toString())).address);
   }
 
-  public get getSignerType() {
+  public get signerType() {
     return ethSigner(this.publicKey);
   }
 
@@ -30,7 +30,7 @@ export class Secp256r1KeyPair extends KeyPair {
     return uint256.bnToUint256("0x" + utils.bytesToHex(publicKey));
   }
 
-  public get getSignerType() {
+  public get signerType() {
     return secp256r1Signer(this.publicKey);
   }
 

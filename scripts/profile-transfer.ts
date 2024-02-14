@@ -7,7 +7,6 @@ import {
   randomEthKeyPair,
   randomKeyPair,
   randomSecp256r1KeyPair,
-  randomWebauthnKeyPair,
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
 

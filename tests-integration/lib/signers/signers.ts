@@ -193,7 +193,7 @@ export class KeyPair extends Signer {
     return BigInt(this.pk as string);
   }
 
-  public get getSignerType() {
+  public get signerType() {
     return starknetSigner(this.publicKey);
   }
 

@@ -16,11 +16,16 @@ import {
   expectRevertWithErrorMessage,
   getEscapeStatus,
   hasOngoingEscape,
-  loadContract,
   provider,
   randomKeyPair,
   setTime,
   upgradeAccount,
+  declareFixtureContract,
+  LegacyMultisigSigner,
+  compiledStarknetSigner,
+  compiledSignerOption,
+  MAX_U64,
+  ESCAPE_TYPE_NONE,
 } from "./lib";
 
 describe("ArgentAccount: escape mechanism", function () {
@@ -62,14 +67,18 @@ describe("ArgentAccount: escape mechanism", function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
       accountContract.connect(account);
-      await expectRevertWithErrorMessage("argent/only-self", () => accountContract.trigger_escape_owner(randomAddress));
+      await expectRevertWithErrorMessage("argent/only-self", () =>
+        accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress)),
+      );
     });
 
     it("Expect 'argent/null-owner' when setting the new_owner to zero", async function () {
       const { account, accountContract, guardian } = await deployAccount();
-      account.signer = guardian;
+      account.signer = new ArgentSigner(guardian);
 
-      await expectRevertWithErrorMessage("argent/null-owner", () => accountContract.trigger_escape_owner(0));
+      await expectRevertWithErrorMessage("argent/null-owner", () =>
+        accountContract.trigger_escape_owner(compiledStarknetSigner(0)),
+      );
     });
 
     describe("Testing with all guardian signer combination", function () {
@@ -77,12 +86,12 @@ describe("ArgentAccount: escape mechanism", function () {
         describe(`Triggered by ${type}`, function () {
           it(`Expect to be able to trigger it alone`, async function () {
             const { account, accountContract, other } = await buildAccount(type);
-            account.signer = other;
+            account.signer = new ArgentSigner(other);
 
             await setTime(randomTime);
-            await accountContract.trigger_escape_owner(randomAddress);
+            await accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress));
             const escape = await accountContract.get_escape();
-            expect(escape.escape_type).to.equal(ESCAPE_TYPE_OWNER);
+            expect(escape.escape_type).to.deep.equal(ESCAPE_TYPE_OWNER);
             expect(escape.ready_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
             expect(escape.new_signer).to.equal(randomAddress);
             await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.NotReady);
@@ -90,38 +99,38 @@ describe("ArgentAccount: escape mechanism", function () {
 
           it(`Triggered by ${type}. Expect 'argent/cannot-override-escape' when the owner is already being escaped`, async function () {
             const { account, accountContract, owner, other } = await buildAccount(type);
-            account.signer = owner;
+            account.signer = new ArgentSigner(owner);
 
-            await accountContract.trigger_escape_guardian(randomAddress);
+            await accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress));
             const { escape_type } = await accountContract.get_escape();
-            expect(escape_type).to.equal(ESCAPE_TYPE_GUARDIAN);
+            expect(escape_type).to.deep.equal(ESCAPE_TYPE_GUARDIAN);
 
-            account.signer = other;
+            account.signer = new ArgentSigner(other);
             await expectRevertWithErrorMessage("argent/cannot-override-escape", () =>
-              accountContract.trigger_escape_owner(randomAddress),
+              accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress)),
             );
           });
 
           it("Expect to be able to trigger it alone when the previous escape expired", async function () {
             const { account, accountContract, owner, other } = await buildAccount(type);
-            account.signer = other;
+            account.signer = new ArgentSigner(other);
 
             await setTime(randomTime);
-            account.signer = owner;
-            await accountContract.trigger_escape_guardian(randomAddress);
+            account.signer = new ArgentSigner(owner);
+            await accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress));
             const escape = await accountContract.get_escape();
-            expect(escape.escape_type).to.equal(ESCAPE_TYPE_GUARDIAN);
+            expect(escape.escape_type).to.deep.equal(ESCAPE_TYPE_GUARDIAN);
             expect(escape.ready_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
             expect(escape.new_signer).to.equal(randomAddress);
             await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.NotReady);
 
             randomAddress += 1n;
-            account.signer = other;
+            account.signer = new ArgentSigner(other);
             await setTime(randomTime + ESCAPE_EXPIRY_PERIOD);
             await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.Expired);
-            await accountContract.trigger_escape_owner(randomAddress);
+            await accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress));
             const newEscape = await accountContract.get_escape();
-            expect(newEscape.escape_type).to.equal(ESCAPE_TYPE_OWNER);
+            expect(newEscape.escape_type).to.deep.equal(ESCAPE_TYPE_OWNER);
             expect(newEscape.ready_at >= randomTime + ESCAPE_SECURITY_PERIOD + ESCAPE_EXPIRY_PERIOD).to.be.true;
             expect(newEscape.new_signer).to.equal(randomAddress);
           });
@@ -140,7 +149,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
     it("Expect 'argent/null-owner' new_owner is zero", async function () {
       const { account, owner, guardian } = await deployOldAccount();
-      account.signer = guardian;
+      account.signer = new LegacyMultisigSigner([guardian]);
 
       await setTime(randomTime);
       const { transaction_hash } = await account.execute({
@@ -149,15 +158,10 @@ describe("ArgentAccount: escape mechanism", function () {
       });
       await provider.waitForTransaction(transaction_hash);
 
-      account.signer = new ArgentSigner(owner, guardian);
-      await upgradeAccount(account, argentAccountClassHash, ["0"]);
-
-      const accountContract = await loadContract(account.address);
-      await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
-      account.cairoVersion = "1";
-      account.signer = guardian;
-      accountContract.connect(account);
-      await expectRevertWithErrorMessage("argent/null-owner", () => accountContract.escape_owner());
+      account.signer = new LegacyMultisigSigner([owner, guardian]);
+      await expectRevertWithErrorMessage("argent/ready-at-shoud-be-null", () =>
+        upgradeAccount(account, argentAccountClassHash, ["0"]),
+      );
     });
 
     describe("Testing with all guardian signer combination", function () {
@@ -165,17 +169,39 @@ describe("ArgentAccount: escape mechanism", function () {
         describe(`Escaping by ${type}`, function () {
           it("Expect to be able to escape the owner alone", async function () {
             const { account, accountContract, other } = await buildAccount(type);
-            account.signer = other;
+            account.signer = new ArgentSigner(other);
 
             await setTime(randomTime);
-            await accountContract.trigger_escape_owner(randomAddress);
+            await accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress));
             await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
             await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.Ready);
 
             await accountContract.escape_owner();
 
             const escape = await accountContract.get_escape();
-            expect(escape.escape_type).to.equal(0n);
+            expect(escape.escape_type).to.deep.equal(ESCAPE_TYPE_NONE);
+            expect(escape.ready_at).to.equal(0n);
+            expect(escape.new_signer).to.equal(0n);
+            await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.None);
+
+            const guardian = await accountContract.get_owner();
+            expect(guardian).to.equal(randomAddress);
+          });
+
+          it("Should be possible to escape at max U64", async function () {
+            const { account, accountContract, other } = await buildAccount(type);
+            account.signer = new ArgentSigner(other);
+
+            const endOfTime = MAX_U64 - ESCAPE_EXPIRY_PERIOD;
+            await setTime(endOfTime);
+            await accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress));
+            await setTime(endOfTime + ESCAPE_SECURITY_PERIOD);
+            await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.Ready);
+
+            await accountContract.escape_owner();
+
+            const escape = await accountContract.get_escape();
+            expect(escape.escape_type).to.deep.equal(ESCAPE_TYPE_NONE);
             expect(escape.ready_at).to.equal(0n);
             expect(escape.new_signer).to.equal(0n);
             await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.None);
@@ -186,10 +212,10 @@ describe("ArgentAccount: escape mechanism", function () {
 
           it("Expect 'argent/invalid-escape' when escape status == NotReady", async function () {
             const { account, accountContract, other } = await buildAccount(type);
-            account.signer = other;
+            account.signer = new ArgentSigner(other);
 
             await setTime(randomTime);
-            await accountContract.trigger_escape_owner(randomAddress);
+            await accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress));
             const { ready_at } = await accountContract.get_escape();
             expect(ready_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
 
@@ -199,17 +225,17 @@ describe("ArgentAccount: escape mechanism", function () {
 
           it("Expect 'argent/invalid-escape' when escape status == None", async function () {
             const { account, accountContract, other } = await buildAccount(type);
-            account.signer = other;
+            account.signer = new ArgentSigner(other);
 
             await expectRevertWithErrorMessage("argent/invalid-escape", () => accountContract.escape_owner());
           });
 
           it("Expect 'argent/invalid-escape' when escape status == Expired", async function () {
             const { account, accountContract, other } = await buildAccount(type);
-            account.signer = other;
+            account.signer = new ArgentSigner(other);
 
             await setTime(randomTime);
-            await accountContract.trigger_escape_owner(randomAddress);
+            await accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress));
             const { ready_at } = await accountContract.get_escape();
             expect(ready_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
 
@@ -219,17 +245,17 @@ describe("ArgentAccount: escape mechanism", function () {
 
           it("Expect 'argent/invalid-escape' when escape_type != ESCAPE_TYPE_OWNER", async function () {
             const { account, accountContract, owner, other } = await buildAccount(type);
-            account.signer = owner;
+            account.signer = new ArgentSigner(owner);
 
             await setTime(randomTime);
-            await accountContract.trigger_escape_guardian(randomAddress);
+            await accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress));
             const escape = await accountContract.get_escape();
-            expect(escape.escape_type).to.equal(ESCAPE_TYPE_GUARDIAN);
+            expect(escape.escape_type).to.deep.equal(ESCAPE_TYPE_GUARDIAN);
             expect(escape.ready_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
             expect(escape.new_signer).to.equal(randomAddress);
 
             await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
-            account.signer = other;
+            account.signer = new ArgentSigner(other);
             await expectRevertWithErrorMessage("argent/invalid-escape", () => accountContract.escape_owner());
           });
         });
@@ -240,37 +266,37 @@ describe("ArgentAccount: escape mechanism", function () {
   describe("trigger_escape_guardian(new_guardian)", function () {
     it("Expect the owner to be able to trigger it alone", async function () {
       const { account, accountContract, owner } = await deployAccount();
-      account.signer = owner;
+      account.signer = new ArgentSigner(owner);
 
       await setTime(randomTime);
-      await accountContract.trigger_escape_guardian(randomAddress);
+      await accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress));
 
       const escape = await accountContract.get_escape();
-      expect(escape.escape_type).to.equal(ESCAPE_TYPE_GUARDIAN);
+      expect(escape.escape_type).to.deep.equal(ESCAPE_TYPE_GUARDIAN);
       expect(escape.ready_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
       expect(escape.new_signer).to.equal(randomAddress);
     });
 
     it("Expect the owner to be able to trigger_escape_guardian when trigger_escape_owner was performed", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount();
-      account.signer = guardian;
+      account.signer = new ArgentSigner(guardian);
 
       await setTime(randomTime);
-      await accountContract.trigger_escape_owner(randomAddress);
+      await accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress));
 
       const escapeOwner = await accountContract.get_escape();
-      expect(escapeOwner.escape_type).to.equal(ESCAPE_TYPE_OWNER);
+      expect(escapeOwner.escape_type).to.deep.equal(ESCAPE_TYPE_OWNER);
       expect(escapeOwner.ready_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
       expect(escapeOwner.new_signer).to.equal(randomAddress);
 
       // Let some block pass
       await setTime(randomTime + 10n);
       randomAddress += 1n;
-      account.signer = owner;
-      await accountContract.trigger_escape_guardian(randomAddress);
+      account.signer = new ArgentSigner(owner);
+      await accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress));
 
       const escapeGuardian = await accountContract.get_escape();
-      expect(escapeGuardian.escape_type).to.equal(ESCAPE_TYPE_GUARDIAN);
+      expect(escapeGuardian.escape_type).to.deep.equal(ESCAPE_TYPE_GUARDIAN);
       expect(escapeGuardian.ready_at).to.be.equal(randomTime + ESCAPE_SECURITY_PERIOD + 10n);
       expect(escapeGuardian.new_signer).to.equal(randomAddress);
     });
@@ -280,7 +306,7 @@ describe("ArgentAccount: escape mechanism", function () {
       const { accountContract } = await deployAccount();
       accountContract.connect(account);
       await expectRevertWithErrorMessage("argent/only-self", () =>
-        accountContract.trigger_escape_guardian(randomAddress),
+        accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress)),
       );
     });
 
@@ -290,17 +316,17 @@ describe("ArgentAccount: escape mechanism", function () {
       const guardian = await accountContract.get_guardian();
       expect(guardian).to.equal(0n);
 
-      await expectRevertWithErrorMessage("argent/guardian-required", async () =>
-        accountContract.trigger_escape_guardian(randomAddress),
+      await expectRevertWithErrorMessage("argent/guardian-required", () =>
+        accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress)),
       );
     });
 
     it("Expect 'argent/backup-should-be-null' escaping guardian to zero with guardian_backup being != 0", async function () {
       const { account, accountContract, owner } = await deployAccountWithGuardianBackup();
-      account.signer = owner;
+      account.signer = new ArgentSigner(owner);
 
       await expectRevertWithErrorMessage("argent/backup-should-be-null", () =>
-        accountContract.trigger_escape_guardian(0),
+        accountContract.trigger_escape_guardian(compiledSignerOption(undefined)),
       );
     });
   });
@@ -308,18 +334,18 @@ describe("ArgentAccount: escape mechanism", function () {
   describe("escape_guardian()", function () {
     it("Expect the owner to be able to escape the guardian alone", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount();
-      account.signer = owner;
+      account.signer = new ArgentSigner(owner);
 
       await setTime(randomTime);
       const oldGuardian = await accountContract.get_guardian();
       expect(oldGuardian).to.equal(guardian.publicKey);
-      await accountContract.trigger_escape_guardian(randomAddress);
+      await accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress));
       await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
 
       await accountContract.escape_guardian();
 
       const escape = await accountContract.get_escape();
-      expect(escape.escape_type).to.equal(0n);
+      expect(escape.escape_type).to.deep.equal(ESCAPE_TYPE_NONE);
       expect(escape.ready_at).to.equal(0n);
       expect(escape.new_signer).to.equal(0n);
       const newGuardian = await accountContract.get_guardian();
@@ -333,12 +359,22 @@ describe("ArgentAccount: escape mechanism", function () {
       await expectRevertWithErrorMessage("argent/only-self", () => accountContract.escape_guardian());
     });
 
+    it("Expect 'argent/guardian-required' when guardian is zero", async function () {
+      const { account, accountContract } = await deployAccountWithoutGuardian();
+
+      await accountContract.get_guardian().should.eventually.equal(0n);
+
+      await expectRevertWithErrorMessage("argent/guardian-required", () =>
+        account.execute([accountContract.populateTransaction.escape_guardian()], undefined, { skipValidate: false }),
+      );
+    });
+
     it("Expect 'argent/invalid-escape' when escape status == NotReady", async function () {
       const { account, accountContract, owner } = await deployAccount();
-      account.signer = owner;
+      account.signer = new ArgentSigner(owner);
 
       await setTime(randomTime);
-      await accountContract.trigger_escape_guardian(randomAddress);
+      await accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress));
       const { ready_at } = await accountContract.get_escape();
       expect(ready_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
 
@@ -348,17 +384,17 @@ describe("ArgentAccount: escape mechanism", function () {
 
     it("Expect 'argent/invalid-escape' when escape status == None", async function () {
       const { account, accountContract, owner } = await deployAccount();
-      account.signer = owner;
+      account.signer = new ArgentSigner(owner);
 
       await expectRevertWithErrorMessage("argent/invalid-escape", () => accountContract.escape_guardian());
     });
 
     it("Expect 'argent/invalid-escape' when escape status == Expired", async function () {
       const { account, accountContract, owner } = await deployAccount();
-      account.signer = owner;
+      account.signer = new ArgentSigner(owner);
 
       await setTime(randomTime);
-      await accountContract.trigger_escape_guardian(randomAddress);
+      await accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress));
       const { ready_at } = await accountContract.get_escape();
       expect(ready_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
 
@@ -368,17 +404,17 @@ describe("ArgentAccount: escape mechanism", function () {
 
     it("Expect 'argent/invalid-escape' when escape_type != ESCAPE_TYPE_GUARDIAN", async function () {
       const { account, accountContract, owner, guardian } = await deployAccountWithGuardianBackup();
-      account.signer = guardian;
+      account.signer = new ArgentSigner(guardian);
 
       await setTime(randomTime);
-      await accountContract.trigger_escape_owner(randomAddress);
+      await accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress));
       const escape = await accountContract.get_escape();
-      expect(escape.escape_type).to.equal(ESCAPE_TYPE_OWNER);
+      expect(escape.escape_type).to.deep.equal(ESCAPE_TYPE_OWNER);
       expect(escape.ready_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
       expect(escape.new_signer).to.equal(randomAddress);
 
       await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
-      account.signer = owner;
+      account.signer = new ArgentSigner(owner);
       await expectRevertWithErrorMessage("argent/invalid-escape", () => accountContract.escape_guardian());
     });
   });
@@ -386,8 +422,8 @@ describe("ArgentAccount: escape mechanism", function () {
   describe("cancel_escape()", function () {
     it("Expect the escape to be canceled when trigger_escape_owner", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount();
-      account.signer = guardian;
-      await accountContract.trigger_escape_owner(randomAddress);
+      account.signer = new ArgentSigner(guardian);
+      await accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress));
       await hasOngoingEscape(accountContract).should.eventually.be.true;
 
       account.signer = new ArgentSigner(owner, guardian);
@@ -397,8 +433,8 @@ describe("ArgentAccount: escape mechanism", function () {
 
     it("Expect the escape to be canceled when trigger_escape_guardian", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount();
-      account.signer = owner;
-      await accountContract.trigger_escape_guardian(randomAddress);
+      account.signer = new ArgentSigner(owner);
+      await accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress));
       await hasOngoingEscape(accountContract).should.eventually.be.true;
 
       account.signer = new ArgentSigner(owner, guardian);
@@ -408,10 +444,10 @@ describe("ArgentAccount: escape mechanism", function () {
 
     it("Expect the escape to be canceled even if expired", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount();
-      account.signer = owner;
+      account.signer = new ArgentSigner(owner);
 
       await setTime(randomTime);
-      await accountContract.trigger_escape_guardian(randomAddress);
+      await accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress));
       await hasOngoingEscape(accountContract).should.eventually.be.true;
 
       await setTime(randomTime + ESCAPE_EXPIRY_PERIOD + 1n);

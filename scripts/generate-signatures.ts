@@ -74,12 +74,12 @@ async function calculate_change_owner_signature() {
   const contract_address = "0x1";
   const old_owner = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfcan;
 
-  const [new_owner_r, new_owner_s] = await signChangeOwnerMessage(contract_address, old_owner, new_owner, chain_id);
+  const starknetSignature = await signChangeOwnerMessage(contract_address, old_owner, new_owner, chain_id);
 
   console.log(`
     const new_owner_pubkey: felt252 = ${num.toHex(new_owner.publicKey)};
-    const new_owner_r: felt252 = ${num.toHex(new_owner_r)};
-    const new_owner_s: felt252 = ${num.toHex(new_owner_s)};
+    const new_owner_r: felt252 = ${num.toHex(starknetSignature[2])};
+    const new_owner_s: felt252 = ${num.toHex(starknetSignature[3])};
     `);
 }
 

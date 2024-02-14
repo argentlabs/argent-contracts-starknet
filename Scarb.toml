@@ -11,6 +11,8 @@ allowed-libfuncs-list.name = "audited"
 
 [dependencies]
 starknet = "2.4.3"
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.2.0" }
+alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.2.0" }
 
 [tool.fmt]
 max-line-length = 120

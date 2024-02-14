@@ -5,7 +5,7 @@ describe("Upgrades to a different account type", function () {
   it("Upgrade Account to Multisig should fail", async function () {
     const { account } = await deployAccount();
     await expectRevertWithErrorMessage("argent/invalid-threshold", async () =>
-      upgradeAccount(account, await declareContract("ArgentMultisig")),
+      upgradeAccount(account, await declareContract("ArgentMultisigAccount")),
     );
   });
 

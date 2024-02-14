@@ -91,7 +91,6 @@ mod ArgentUserAccount {
         UpgradeEvents: upgrade_component::Event,
         #[flat]
         EscapeEvents: threshold_recovery_component::Event,
-        #[flat]
         TransactionExecuted: TransactionExecuted,
         AccountUpgraded: AccountUpgraded,
     }

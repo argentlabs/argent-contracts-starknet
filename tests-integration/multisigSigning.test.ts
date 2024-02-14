@@ -55,13 +55,13 @@ describe("ArgentMultisig: signing", function () {
       );
     });
 
-    it("Expect 'argent/invalid-signature-length' when an owner's signature is missing", async function () {
+    it("Expect 'argent/signature-invalid-length' when an owner's signature is missing", async function () {
       const messageHash = num.toHex(424242);
       const { accountContract, signers, keys } = await deployMultisig({ threshold: 2, signersLength: 2 });
 
       const signatures = await new MultisigSigner([keys[0]]).signRaw(messageHash);
 
-      await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
+      await expectRevertWithErrorMessage("argent/signature-invalid-length", () =>
         accountContract.is_valid_signature(BigInt(messageHash), signatures),
       );
     });
@@ -78,7 +78,7 @@ describe("ArgentMultisig: signing", function () {
       );
     });
 
-    it("Expect 'argent/invalid-signature-length' when the signature is improperly formatted/empty", async function () {
+    it("Expect 'argent/undeserializable' when the signature is improperly formatted/empty", async function () {
       const messageHash = num.toHex(424242);
 
       const { accountContract, keys, signers } = await deployMultisig1_1();

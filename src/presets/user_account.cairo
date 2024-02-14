@@ -79,12 +79,19 @@ mod ArgentUserAccount {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
         SignerListEvents: signer_list_component::Event,
+        #[flat]
         MultisigEvents: multisig_component::Event,
+        #[flat]
         ExecuteFromOutsideEvents: outside_execution_component::Event,
+        #[flat]
         SRC5Events: src5_component::Event,
+        #[flat]
         UpgradeEvents: upgrade_component::Event,
+        #[flat]
         EscapeEvents: threshold_recovery_component::Event,
+        #[flat]
         TransactionExecuted: TransactionExecuted,
         AccountUpgraded: AccountUpgraded,
     }

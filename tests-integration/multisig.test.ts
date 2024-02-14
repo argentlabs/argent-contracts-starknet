@@ -39,7 +39,7 @@ describe("ArgentMultisig", function () {
   }
 
   it("Should fail to deploy with invalid signatures", async function () {
-    await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {
+    await expectRevertWithErrorMessage("argent/signature-invalid-length", async () => {
       const { receipt } = await deployMultisig({
         threshold: 1,
         signersLength: 2,
@@ -49,7 +49,7 @@ describe("ArgentMultisig", function () {
       return receipt;
     });
 
-    await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {
+    await expectRevertWithErrorMessage("argent/signature-invalid-length", async () => {
       const { receipt } = await deployMultisig({
         threshold: 1,
         signersLength: 2,

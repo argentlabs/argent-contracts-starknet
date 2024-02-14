@@ -8,11 +8,11 @@ export const sessionTypes = {
     { name: "chainId", type: "felt" },
   ],
   "Allowed Method": [
-    { name: "Contract Address", type: "felt" },
+    { name: "Contract Address", type: "ContractAddress" },
     { name: "selector", type: "selector" },
   ],
   Session: [
-    { name: "Expires At", type: "felt" },
+    { name: "Expires At", type: "timestamp" },
     { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
     { name: "Guardian Key", type: "felt" },
     { name: "Session Key", type: "felt" },

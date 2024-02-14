@@ -37,8 +37,8 @@ struct StarkNetDomain {
 // update these once SNIP-12 is merged (i.e. use StarknetDomain)
 const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
 const SESSION_TYPE_HASH: felt252 =
-    selector!("Session(Expires At:felt,Allowed Methods:merkletree,Guardian Key:felt,Session Key:felt)");
-const ALLOWED_METHOD_HASH: felt252 = selector!("Allowed Method(Contract Address:felt,selector:selector)");
+    selector!("Session(Expires At:timestamp,Allowed Methods:merkletree,Guardian Key:felt,Session Key:felt)");
+const ALLOWED_METHOD_HASH: felt252 = selector!("Allowed Method(Contract Address:ContractAddress,selector:selector)");
 
 
 trait IOffchainMessageHash<T> {

@@ -225,13 +225,13 @@ export class DappService {
 
   private buildMerkleTree(completedSession: OffChainSession): merkle.MerkleTree {
     const leaves = completedSession.allowed_methods.map((method) =>
-      hash.computeHashOnElements([
+      hash.computePoseidonHashOnElements([
         ALLOWED_METHOD_HASH,
         method["Contract Address"],
         selector.getSelectorFromName(method.selector),
       ]),
     );
-    return new merkle.MerkleTree(leaves);
+    return new merkle.MerkleTree(leaves, hash.computePoseidonHash);
   }
 
   private getSessionProofs(completedSession: OffChainSession, calls: Call[]): string[][] {

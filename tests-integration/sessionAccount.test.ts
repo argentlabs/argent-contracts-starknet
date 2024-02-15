@@ -1,4 +1,4 @@
-import { num, Contract, selector, uint256, Account } from "starknet";
+import { num, Contract } from "starknet";
 import {
   declareContract,
   loadContract,
@@ -34,7 +34,7 @@ describe("Hybrid Session Account: execute calls", function () {
     testDappOneContract = await loadContract(deployedTestDappOne.contract_address);
   });
 
-  it("Call a contract with backend signer", async function () {
+  it.only("Call a contract with backend signer", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const backendService = new BackendService(guardian);

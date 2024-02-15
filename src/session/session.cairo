@@ -9,7 +9,7 @@ trait ISessionable<TContractState> {
 
 #[starknet::component]
 mod session_component {
-    use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,};
+    use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,};
     use argent::account::interface::{IAccount, IArgentUserAccount};
     use argent::session::session::ISessionable;
     use argent::session::session_structs::{
@@ -21,7 +21,6 @@ mod session_component {
     use core::option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
     use hash::{HashStateTrait};
-    // use pedersen::PedersenTrait;
     use poseidon::{PoseidonTrait, poseidon_hash_span};
     use starknet::{account::Call, get_contract_address, VALIDATED};
 
@@ -117,14 +116,14 @@ mod session_component {
         assert(token.proofs.len() == calls.len(), 'unaligned-proofs');
         // TODO: use poseidon hash when using SNIP-12 rev 1
         let merkle_root = token.session.allowed_methods_root;
-        let mut merkle_init: MerkleTree<Hasher> = MerkleTreeTrait::new();
+        let mut merkle_tree: MerkleTree<Hasher> = MerkleTreeImpl::<_, PoseidonHasherImpl>::new();
         let mut proofs = token.proofs;
         loop {
             match calls.pop_front() {
                 Option::Some(call) => {
                     let leaf = call.get_merkle_leaf();
                     let proof = proofs.pop_front().expect('session/proof-empty');
-                    let is_valid = merkle_init.verify(merkle_root, leaf, *proof);
+                    let is_valid = merkle_tree.verify(merkle_root, leaf, *proof);
                     assert(is_valid, 'session/invalid-call');
                 },
                 Option::None => { break; },

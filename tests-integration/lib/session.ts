@@ -2,11 +2,10 @@ import { typedData, BigNumberish } from "starknet";
 import { provider } from ".";
 
 export const sessionTypes = {
-  StarknetDomain: [
-    { name: "name", type: "shortstring" },
-    { name: "version", type: "shortstring" },
-    { name: "chainId", type: "shortstring" },
-    { name: "revision", type: "shortstring" },
+  StarkNetDomain: [
+    { name: "name", type: "felt" },
+    { name: "version", type: "felt" },
+    { name: "chainId", type: "felt" },
   ],
   "Allowed Method": [
     { name: "Contract Address", type: "ContractAddress" },
@@ -60,7 +59,6 @@ export async function getSessionDomain(): Promise<typedData.StarkNetDomain> {
     name: "SessionAccount.session",
     version: "1",
     chainId: chainId,
-    revision: "0",
   };
 }
 

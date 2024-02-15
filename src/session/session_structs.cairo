@@ -32,11 +32,10 @@ struct StarkNetDomain {
     name: felt252,
     version: felt252,
     chain_id: felt252,
-    revision: felt252,
 }
 
 // update these once SNIP-12 is merged (i.e. use StarknetDomain)
-const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarknetDomain(name:shortstring,version:shortstring,chainId:shortstring,revision:shortstring)");
+const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
 const SESSION_TYPE_HASH: felt252 =
     selector!("Session(Expires At:timestamp,Allowed Methods:merkletree,Guardian Key:felt,Session Key:felt)");
 const ALLOWED_METHOD_HASH: felt252 = selector!("Allowed Method(Contract Address:ContractAddress,selector:selector)");
@@ -85,7 +84,7 @@ impl StructHashStarknetDomain of IStructHash<StarkNetDomain> {
         let mut state = PedersenTrait::new(0);
         state = state.update_with(STARKNET_DOMAIN_TYPE_HASH);
         state = state.update_with(*self);
-        state = state.update_with(5);
+        state = state.update_with(4);
         state.finalize()
     }
 }
@@ -93,7 +92,7 @@ impl StructHashStarknetDomain of IStructHash<StarkNetDomain> {
 impl OffchainMessageHashSession of IOffchainMessageHash<Session> {
     fn get_message_hash(self: @Session) -> felt252 {
         let domain = StarkNetDomain {
-            name: 'SessionAccount.session', version: 1, chain_id: get_tx_info().unbox().chain_id, revision: 0,
+            name: 'SessionAccount.session', version: 1, chain_id: get_tx_info().unbox().chain_id,
         };
         let mut state = PedersenTrait::new(0);
         state = state.update_with('StarkNet Message');

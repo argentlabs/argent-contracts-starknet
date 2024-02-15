@@ -48,11 +48,11 @@ mod utils {
     mod asserts;
     mod bytes;
     mod calls;
+    mod mock_erc20;
     mod multicall;
     mod serialization;
     mod test_dapp;
     mod transaction_version;
-    mod mock_erc20;
 }
 
 mod session {

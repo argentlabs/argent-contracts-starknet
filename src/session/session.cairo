@@ -9,13 +9,16 @@ trait ISessionable<TContractState> {
 
 #[starknet::component]
 mod session_component {
-use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,};
+    use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,};
     use argent::account::interface::{IAccount, IArgentUserAccount};
     use argent::session::session::ISessionable;
     use argent::session::session_structs::{
         SessionToken, StarknetSignature, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash
     };
     use argent::utils::asserts::{assert_no_self_call, assert_only_self};
+
+    use argent::utils::serialization::full_deserialize;
+    use core::option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
     use hash::{HashStateTrait, HashStateExTrait, LegacyHash};
     use pedersen::PedersenTrait;
@@ -87,7 +90,7 @@ use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::Pedersen
             );
 
             // TODO: use poseidon hash
-            let message_hash = PedersenTrait::new(transaction_hash).update_with(token_session_hash).finalize();
+            let message_hash = LegacyHash::hash(transaction_hash, token_session_hash);
 
             assert(
                 is_valid_stark_signature(message_hash, token.session.session_key, token.session_signature),

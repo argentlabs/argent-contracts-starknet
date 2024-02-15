@@ -52,11 +52,9 @@ mod utils {
     mod serialization;
     mod test_dapp;
     mod transaction_version;
+    mod mock_erc20;
 }
-mod mocks {
-    mod erc20;
-    mod test_dapp;
-}
+
 mod session {
     mod session;
     mod session_account;

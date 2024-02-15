@@ -79,6 +79,7 @@ export class DappService {
       public async signRaw(messageHash: string): Promise<Signature> {
         throw new Error("Method not implemented.");
       }
+
       public async signTransaction(
         calls: Call[],
         transactionsDetail: InvocationsSignerDetails,
@@ -88,7 +89,6 @@ export class DappService {
     })((calls: Call[], transactionsDetail: InvocationsSignerDetails) => {
       return this.signRegularTransaction(accountSessionSignature, completedSession, calls, transactionsDetail);
     });
-
     return new Account(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
   }
 

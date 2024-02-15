@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-use argent::common::{calls::execute_multicall};
-use argent::mocks::test_dapp::TestDapp;
-=======
 use argent::utils::{calls::execute_multicall, test_dapp::TestDapp};
->>>>>>> develop-0.4
 use starknet::{contract_address_const, deploy_syscall, account::Call};
 
 #[test]

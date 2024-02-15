@@ -1,5 +1,8 @@
 import {
   ArraySignatureType,
+  CairoCustomEnum,
+  CairoOption,
+  CairoOptionVariant,
   Call,
   CallData,
   DeclareSignerDetails,
@@ -126,43 +129,57 @@ export abstract class RawSigner implements SignerInterface {
   }
 }
 
-export class ArgentSigner extends RawSigner {
-  constructor(
-    public owner: KeyPair = randomKeyPair(),
-    public guardian?: KeyPair,
-  ) {
-    super();
-  }
-
-  public async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    if (this.guardian) {
-      return new ConcatSigner([this.owner, this.guardian]).signRaw(messageHash);
-    }
-    return this.owner.signHash(messageHash);
-  }
-}
-
-export class ConcatSigner extends RawSigner {
-  constructor(public keys: KeyPair[]) {
-    super();
-  }
-
-  async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    return this.keys.map((key) => key.signHash(messageHash)).flat();
-  }
-}
-
 export class MultisigSigner extends RawSigner {
   constructor(public keys: KeyPair[]) {
     super();
   }
 
   async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    const signerSignatures = this.keys.map((key) => {
-      const [signature_r, signature_s] = key.signHash(messageHash);
-      return { signer: key.publicKey, signature_r, signature_s };
-    });
-    return CallData.compile(signerSignatures);
+    const keys = this.keys.map((key) => key.signHash(messageHash));
+    return [keys.length.toString(), keys.flat()].flat();
+  }
+}
+
+export class ArgentSigner extends MultisigSigner {
+  constructor(
+    public owner: KeyPair = randomKeyPair(),
+    public guardian?: KeyPair,
+  ) {
+    const signers = [owner];
+    if (guardian) {
+      signers.push(guardian);
+    }
+    super(signers);
+  }
+}
+
+export class LegacyArgentSigner extends RawSigner {
+  constructor(
+    public owner: LegacyKeyPair = new LegacyKeyPair(),
+    public guardian?: LegacyKeyPair,
+  ) {
+    super();
+  }
+
+  async signRaw(messageHash: string): Promise<ArraySignatureType> {
+    const signature = this.owner.signHash(messageHash);
+    if (this.guardian) {
+      const [guardianR, guardianS] = this.guardian.signHash(messageHash);
+      signature[2] = guardianR;
+      signature[3] = guardianS;
+    }
+    return signature;
+  }
+}
+
+export class LegacyMultisigSigner extends RawSigner {
+  constructor(public keys: KeyPair[]) {
+    super();
+  }
+
+  async signRaw(messageHash: string): Promise<ArraySignatureType> {
+    const keys = this.keys.map((key) => key.signHash(messageHash));
+    return keys.flat();
   }
 }
 
@@ -181,8 +198,64 @@ export class KeyPair extends Signer {
 
   public signHash(messageHash: string) {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
+    return starknetSignatureType(this.publicKey, r, s);
+  }
+}
+
+export class LegacyKeyPair extends KeyPair {
+  public signHash(messageHash: string) {
+    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
     return [r.toString(), s.toString()];
   }
+}
+
+export class LegacyMultisigKeyPair extends KeyPair {
+  public signHash(messageHash: string) {
+    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
+    return [this.publicKey.toString(), r.toString(), s.toString()];
+  }
+}
+
+export function starknetSignatureType(
+  signer: bigint | number | string,
+  r: bigint | number | string,
+  s: bigint | number | string,
+) {
+  return CallData.compile([
+    new CairoCustomEnum({
+      Starknet: { signer, r, s },
+      Secp256k1: undefined,
+      Secp256r1: undefined,
+      Webauthn: undefined,
+    }),
+  ]);
+}
+
+export function compiledStarknetSigner(signer: bigint | number | string) {
+  return CallData.compile([starknetSigner(signer)]);
+}
+export function starknetSigner(signer: bigint | number | string) {
+  return new CairoCustomEnum({
+    Starknet: { signer },
+    Secp256k1: undefined,
+    Secp256r1: undefined,
+    Webauthn: undefined,
+  });
+}
+
+export function intoGuid(signer: CairoCustomEnum) {
+  return signer.unwrap().signer;
+}
+
+export function compiledSignerOption(signer: bigint | undefined) {
+  return CallData.compile([signerOption(signer)]);
+}
+
+export function signerOption(signer: bigint | undefined) {
+  if (signer) {
+    return new CairoOption<any>(CairoOptionVariant.Some, { signer: starknetSigner(signer) });
+  }
+  return new CairoOption<any>(CairoOptionVariant.None);
 }
 
 export const randomKeyPair = () => new KeyPair();

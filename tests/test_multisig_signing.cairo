@@ -1,6 +1,10 @@
-use argent_tests::setup::multisig_test_setup::{
-    initialize_multisig_with, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3, ITestArgentMultisigDispatcherTrait,
-    initialize_multisig_with_one_signer
+use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
+use argent_tests::setup::{
+    multisig_test_setup::{
+        initialize_multisig_with, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3, ITestArgentMultisigDispatcherTrait,
+        initialize_multisig_with_one_signer
+    },
+    utils::to_starknet_signer_signatures
 };
 use starknet::VALIDATED;
 
@@ -17,26 +21,28 @@ const signer_2_signature_s: felt252 = 304777868002431101084470180241600305232369
 fn test_signature() {
     let multisig = initialize_multisig_with_one_signer();
 
-    let signature = array![signer_pubkey_1, signer_1_signature_r, signer_1_signature_s];
+    let signature = to_starknet_signer_signatures(array![signer_pubkey_1, signer_1_signature_r, signer_1_signature_s]);
     assert(multisig.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
 }
-
 #[test]
 #[available_gas(20000000)]
 fn test_double_signature() {
     // init
     let threshold = 2;
-    let signers_array = array![signer_pubkey_1, signer_pubkey_2];
-    let multisig = initialize_multisig_with(threshold, signers_array.span());
+    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
+    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
+    let multisig = initialize_multisig_with(threshold, array![signer_1, signer_2].span());
 
-    let signature = array![
-        signer_pubkey_1,
-        signer_1_signature_r,
-        signer_1_signature_s,
-        signer_pubkey_2,
-        signer_2_signature_r,
-        signer_2_signature_s
-    ];
+    let signature = to_starknet_signer_signatures(
+        array![
+            signer_pubkey_1,
+            signer_1_signature_r,
+            signer_1_signature_s,
+            signer_pubkey_2,
+            signer_2_signature_r,
+            signer_2_signature_s
+        ]
+    );
     assert(multisig.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
 }
 
@@ -45,17 +51,20 @@ fn test_double_signature() {
 #[should_panic(expected: ('argent/signatures-not-sorted', 'ENTRYPOINT_FAILED'))]
 fn test_double_signature_order() {
     let threshold = 2;
-    let signers_array = array![signer_pubkey_2, signer_pubkey_1];
-    let multisig = initialize_multisig_with(threshold, signers_array.span());
+    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
+    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
+    let multisig = initialize_multisig_with(threshold, array![signer_1, signer_2].span());
 
-    let signature = array![
-        signer_pubkey_2,
-        signer_2_signature_r,
-        signer_2_signature_s,
-        signer_pubkey_1,
-        signer_1_signature_r,
-        signer_1_signature_s
-    ];
+    let signature = to_starknet_signer_signatures(
+        array![
+            signer_pubkey_2,
+            signer_2_signature_r,
+            signer_2_signature_s,
+            signer_pubkey_1,
+            signer_1_signature_r,
+            signer_1_signature_s
+        ]
+    );
     multisig.is_valid_signature(message_hash, signature);
 }
 
@@ -64,50 +73,62 @@ fn test_double_signature_order() {
 #[should_panic(expected: ('argent/signatures-not-sorted', 'ENTRYPOINT_FAILED'))]
 fn test_same_owner_twice() {
     let threshold = 2;
-    let signers_array = array![signer_pubkey_1, signer_pubkey_2];
-    let multisig = initialize_multisig_with(threshold, signers_array.span());
+    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
+    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
+    let multisig = initialize_multisig_with(threshold, array![signer_1, signer_2].span());
 
-    let signature = array![
-        signer_pubkey_1,
-        signer_1_signature_r,
-        signer_1_signature_s,
-        signer_pubkey_1,
-        signer_1_signature_r,
-        signer_1_signature_s
-    ];
+    let signature = to_starknet_signer_signatures(
+        array![
+            signer_pubkey_1,
+            signer_1_signature_r,
+            signer_1_signature_s,
+            signer_pubkey_1,
+            signer_1_signature_r,
+            signer_1_signature_s
+        ]
+    );
     multisig.is_valid_signature(message_hash, signature);
 }
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/signature-invalid-length', 'ENTRYPOINT_FAILED'))]
 fn test_missing_owner_signature() {
     let threshold = 2;
-    let signers_array = array![signer_pubkey_1, signer_pubkey_2];
-    let multisig = initialize_multisig_with(threshold, signers_array.span());
+    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
+    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
+    let multisig = initialize_multisig_with(threshold, array![signer_1, signer_2].span());
 
-    let signature = array![signer_pubkey_1, signer_1_signature_r, signer_1_signature_s];
+    let signature = to_starknet_signer_signatures(array![signer_pubkey_1, signer_1_signature_r, signer_1_signature_s]);
     multisig.is_valid_signature(message_hash, signature);
 }
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/undeserializable', 'ENTRYPOINT_FAILED'))]
 fn test_short_signature() {
     let multisig = initialize_multisig_with_one_signer();
 
-    let signature = array![
-        signer_pubkey_1, signer_1_signature_r, signer_1_signature_s, signer_pubkey_1, signer_1_signature_r
-    ];
+    let mut signature = array![1];
+    signer_pubkey_1.serialize(ref signature);
     multisig.is_valid_signature(message_hash, signature);
 }
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/signature-invalid-length', 'ENTRYPOINT_FAILED'))]
 fn test_long_signature() {
     let multisig = initialize_multisig_with_one_signer();
 
-    let signature = array![42];
+    let signature = to_starknet_signer_signatures(
+        array![
+            signer_pubkey_1,
+            signer_1_signature_r,
+            signer_1_signature_s,
+            signer_pubkey_2,
+            signer_2_signature_r,
+            signer_2_signature_s
+        ]
+    );
     multisig.is_valid_signature(message_hash, signature);
 }

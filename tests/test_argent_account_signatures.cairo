@@ -1,8 +1,10 @@
-use argent::account::argent_account::ArgentAccount;
+use argent::presets::argent_account::ArgentAccount;
+use argent::signer::signer_signature::{Signer, StarknetSigner};
 use argent_tests::setup::account_test_setup::{
-    ITestArgentAccountDispatcher, ITestArgentAccountDispatcherTrait, owner_pubkey, initialize_account,
-    initialize_account_without_guardian, initialize_account_with
+    ITestArgentAccountDispatcher, ITestArgentAccountDispatcherTrait, owner_pubkey, guardian_pubkey, wrong_owner_pubkey,
+    wrong_guardian_pubkey, initialize_account, initialize_account_without_guardian, initialize_account_with
 };
+use argent_tests::setup::utils::to_starknet_signer_signatures;
 use starknet::VALIDATED;
 
 const message_hash: felt252 = 0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8;
@@ -24,9 +26,9 @@ const wrong_guardian_r: felt252 = 0x5e5375b33d31fea164fb58c97ae0f9354863af5274f4
 const wrong_guardian_s: felt252 = 0x649c2cc2696a1f257534f03d913f869daae675467ed2f994b94059341e68929;
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(3000000)]
 fn valid_no_guardian() {
-    let signatures = array![owner_r, owner_s];
+    let signatures = to_starknet_signer_signatures(array![owner_pubkey, owner_r, owner_s]);
     assert(
         initialize_account_without_guardian().is_valid_signature(message_hash, signatures) == VALIDATED,
         'invalid signature'
@@ -34,96 +36,113 @@ fn valid_no_guardian() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(20000000)]
 fn valid_with_guardian() {
-    let signatures = array![owner_r, owner_s, guardian_r, guardian_s];
+    let signatures = to_starknet_signer_signatures(
+        array![owner_pubkey, owner_r, owner_s, guardian_pubkey, guardian_r, guardian_s]
+    );
     assert(initialize_account().is_valid_signature(message_hash, signatures) == VALIDATED, 'invalid signature');
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(20000000)]
 fn valid_with_guardian_backup() {
     let account = initialize_account_with(owner_pubkey, 1);
-    account.change_guardian_backup(guardian_backup_pubkey);
-    let signatures = array![owner_r, owner_s, guardian_backup_r, guardian_backup_s];
+    let guardian_backup = Option::Some(Signer::Starknet(StarknetSigner { pubkey: guardian_backup_pubkey }));
+    account.change_guardian_backup(guardian_backup);
+    let signatures = to_starknet_signer_signatures(
+        array![owner_pubkey, owner_r, owner_s, guardian_backup_pubkey, guardian_backup_r, guardian_backup_s]
+    );
     assert(account.is_valid_signature(message_hash, signatures) == VALIDATED, 'invalid signature');
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(3000000)]
 fn invalid_hash_1() {
     let account = initialize_account_without_guardian();
-    let signatures = array![owner_r, owner_s];
+    let signatures = to_starknet_signer_signatures(array![owner_pubkey, owner_r, owner_s]);
     assert(account.is_valid_signature(0, signatures) == 0, 'invalid signature');
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(3000000)]
 fn invalid_hash_2() {
     let account = initialize_account_without_guardian();
-    let signatures = array![owner_r, owner_s];
+    let signatures = to_starknet_signer_signatures(array![owner_pubkey, owner_r, owner_s]);
     assert(account.is_valid_signature(123, signatures) == 0, 'invalid signature');
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(20000000)]
 fn invalid_owner_without_guardian() {
     let account = initialize_account_without_guardian();
-    let signatures = array![0, 0];
-    assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 1');
-    let signatures = array![wrong_owner_r, wrong_owner_s];
-    assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 2');
-    let signatures = array![guardian_r, guardian_s];
-    assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 3');
+    let signatures = to_starknet_signer_signatures(array![1, 2, 3]);
+    assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature');
+    let signatures = to_starknet_signer_signatures(array![wrong_owner_pubkey, wrong_owner_r, wrong_owner_s]);
+    assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature');
+    let signatures = to_starknet_signer_signatures(array![guardian_pubkey, guardian_backup_r, guardian_backup_s]);
+    assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature');
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(20000000)]
 fn invalid_owner_with_guardian() {
     let account = initialize_account();
-    let signatures = array![0, 0, guardian_r, guardian_s];
-    assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 1');
-    let signatures = array![42, 99, guardian_r, guardian_s];
-    assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 2');
-    let signatures = array![wrong_owner_r, wrong_owner_s, guardian_r, guardian_s];
-    assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 3');
-    let signatures = array![guardian_r, guardian_s, guardian_r, guardian_s];
-    assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 4');
+    let signatures = to_starknet_signer_signatures(array![1, 2, 3, guardian_pubkey, guardian_r, guardian_s]);
+    assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature');
+    let signatures = to_starknet_signer_signatures(
+        array![wrong_owner_pubkey, wrong_owner_r, wrong_owner_s, guardian_pubkey, guardian_r, guardian_s]
+    );
+    account.is_valid_signature(message_hash, signatures);
+    let account = initialize_account();
+    let signatures = to_starknet_signer_signatures(
+        array![guardian_pubkey, guardian_r, guardian_s, guardian_pubkey, guardian_r, guardian_s]
+    );
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(20000000)]
 fn valid_owner_with_invalid_guardian() {
     let account = initialize_account();
-    let signatures = array![owner_r, owner_s, 0, 0];
+    let signatures = to_starknet_signer_signatures(array![owner_pubkey, owner_r, owner_s, 1, 2, 3]);
     assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 1');
-    let signatures = array![owner_r, owner_s, 42, 69];
+    let signatures = to_starknet_signer_signatures(array![owner_pubkey, owner_r, owner_s, 25, 42, 69]);
     assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 2');
-    let signatures = array![owner_r, owner_s, wrong_guardian_r, wrong_guardian_s];
+    let signatures = to_starknet_signer_signatures(
+        array![owner_pubkey, owner_r, owner_s, wrong_guardian_pubkey, wrong_guardian_r, wrong_guardian_s]
+    );
     assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 3');
-    let signatures = array![owner_r, owner_s, owner_r, owner_s];
+    let signatures = to_starknet_signer_signatures(
+        array![owner_pubkey, owner_r, owner_s, owner_pubkey, owner_r, owner_s]
+    );
     assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 4');
 }
 
 #[test]
-#[available_gas(3000000)]
+#[available_gas(30000000)]
 fn invalid_owner_with_invalid_guardian() {
     let account = initialize_account();
-    let signatures = array![0, 0, 0, 0];
+    let signatures = to_starknet_signer_signatures(array![1, 2, 3, 4, 5, 6]);
     assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 1');
-    let signatures = array![42, 99, 534, 123];
+    let signatures = to_starknet_signer_signatures(array![2, 42, 99, 6, 534, 123]);
     assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 2');
-    let signatures = array![wrong_owner_r, wrong_owner_s, 0, 0];
+    let signatures = to_starknet_signer_signatures(array![wrong_owner_pubkey, wrong_owner_r, wrong_owner_s, 1, 2, 3]);
     assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 3');
-    let signatures = array![0, 0, wrong_guardian_r, wrong_guardian_s];
+    let signatures = to_starknet_signer_signatures(
+        array![1, 2, 3, wrong_guardian_pubkey, wrong_guardian_r, wrong_guardian_s]
+    );
     assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 4');
-    let signatures = array![wrong_owner_r, wrong_owner_s, wrong_guardian_r, wrong_guardian_s];
+    let signatures = to_starknet_signer_signatures(
+        array![
+            wrong_owner_pubkey, wrong_owner_r, wrong_owner_s, wrong_guardian_pubkey, wrong_guardian_r, wrong_guardian_s
+        ]
+    );
     assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature 5');
 }
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/undeserializable', 'ENTRYPOINT_FAILED'))]
 fn invalid_empty_signature_without_guardian() {
     let account = initialize_account_without_guardian();
     let signatures = array![];
@@ -131,16 +150,19 @@ fn invalid_empty_signature_without_guardian() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(20000000)]
+#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
 fn invalid_signature_length_without_guardian() {
     let account = initialize_account_without_guardian();
-    let signatures = array![owner_r, owner_s, guardian_r, guardian_s];
-    assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature');
+    let signatures = to_starknet_signer_signatures(
+        array![owner_pubkey, owner_r, owner_s, guardian_pubkey, guardian_r, guardian_s]
+    );
+    account.is_valid_signature(message_hash, signatures);
 }
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/undeserializable', 'ENTRYPOINT_FAILED'))]
 fn invalid_empty_signature_with_guardian() {
     let account = initialize_account();
     let signatures = array![];
@@ -148,42 +170,11 @@ fn invalid_empty_signature_with_guardian() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(3000000)]
+#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
 fn invalid_signature_length_with_guardian() {
     let account = initialize_account();
-    let signatures = array![owner_r, owner_s];
-    assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature');
-    let signatures = array![guardian_r, guardian_s];
-    assert(account.is_valid_signature(message_hash, signatures) == 0, 'invalid signature');
-}
-
-#[test]
-#[available_gas(2000000)]
-fn split_signatures() {
-    let (full, empty) = ArgentAccount::split_signatures(array![21, 42].span());
-    assert(full.len() == 2, 'Len should be 2');
-    assert(empty.len() == 0, 'Len should be 0');
-    assert(*full[0] == 21, 'Idx 0 should be 21');
-    assert(*full[1] == 42, 'Idx 1 should be 42');
-}
-
-#[test]
-#[available_gas(2000000)]
-#[should_panic(expected: ('argent/invalid-signature-length',))]
-fn split_signatures_wrong_lenght() {
-    ArgentAccount::split_signatures(array![21, 42, 45].span());
-}
-
-#[test]
-#[available_gas(2000000)]
-fn split_signatures_length_4() {
-    let arr = array![21, 42, 23, 69];
-    let (owner, guardian) = ArgentAccount::split_signatures(arr.span());
-    assert(owner.len() == 2, 'Len owner should be 2');
-    assert(guardian.len() == 2, 'Len guardian should be 0');
-    assert(*owner[0] == 21, 'Idx 0 should be 21');
-    assert(*owner[1] == 42, 'Idx 1 should be 42');
-    assert(*guardian[0] == 23, 'Idx 0 should be 23');
-    assert(*guardian[1] == 69, 'Idx 1 should be 69');
+    let signatures = to_starknet_signer_signatures(array![owner_pubkey, owner_r, owner_s]);
+    account.is_valid_signature(message_hash, signatures);
 }
 

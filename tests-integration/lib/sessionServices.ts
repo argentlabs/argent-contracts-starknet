@@ -15,6 +15,9 @@ import {
   V2InvocationsSignerDetails,
   transaction,
   Account,
+  V3InvocationsSignerDetails,
+  stark,
+  num,
 } from "starknet";
 import {
   OffChainSession,
@@ -71,6 +74,7 @@ export class DappService {
       public async signRaw(messageHash: string): Promise<Signature> {
         throw new Error("Method not implemented.");
       }
+
       public async signTransaction(
         calls: Call[],
         transactionsDetail: InvocationsSignerDetails,
@@ -80,7 +84,6 @@ export class DappService {
     })((calls: Call[], transactionsDetail: InvocationsSignerDetails) => {
       return this.signRegularTransaction(accountSessionSignature, completedSession, calls, transactionsDetail);
     });
-
     return new Account(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
   }
 
@@ -139,7 +142,15 @@ export class DappService {
         version: det.version,
       });
     } else if (Object.values(RPC.ETransactionVersion3).includes(transactionsDetail.version as any)) {
-      throw Error("tx v3 not implemented yet"); // TODO
+      const det = transactionsDetail as V3InvocationsSignerDetails;
+      txHash = hash.calculateInvokeTransactionHash({
+        ...det,
+        senderAddress: det.walletAddress,
+        compiledCalldata,
+        version: det.version,
+        nonceDataAvailabilityMode: stark.intDAM(det.nonceDataAvailabilityMode),
+        feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
+      });
     } else {
       throw Error("unsupported signTransaction version");
     }
@@ -195,7 +206,6 @@ export class DappService {
       backend_signature,
       proofs: this.getSessionProofs(completedSession, calls),
     };
-
     return [SESSION_MAGIC, ...CallData.compile(sessionToken)];
   }
 
@@ -206,10 +216,10 @@ export class DappService {
   ): Promise<StarknetSig> {
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
     const sessionWithTxHash = ec.starkCurve.pedersen(transactionHash, sessionMessageHash);
-    const [r, s] = this.sessionKey.signHash(sessionWithTxHash);
+    const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));
     return {
-      r: BigInt(r),
-      s: BigInt(s),
+      r: BigInt(signature.r),
+      s: BigInt(signature.s),
     };
   }
 

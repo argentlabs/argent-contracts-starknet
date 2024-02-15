@@ -18,7 +18,7 @@ describe("Hybrid Session Account: execute calls", function () {
   let mockErc20Contract: Contract;
 
   before(async () => {
-    sessionAccountClassHash = await declareContract("HybridSessionAccount");
+    sessionAccountClassHash = await declareContract("SessionAccount");
 
     const testDappClassHash = await declareContract("TestDapp");
     const deployedTestDappOne = await deployer.deployContract({

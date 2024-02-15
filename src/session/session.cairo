@@ -10,16 +10,18 @@ trait ISessionable<TContractState> {
 #[starknet::component]
 mod session_component {
     use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,};
-    use argent::account::interface::IArgentAccount;
-    use argent::common::account::IAccount;
-    use argent::common::asserts::{assert_no_self_call, assert_only_self};
+    use argent::account::interface::{IAccount, IArgentUserAccount};
     use argent::session::session::ISessionable;
     use argent::session::session_structs::{
         SessionToken, StarknetSignature, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash
     };
-    use core::clone::Clone;
+    use argent::utils::asserts::{assert_no_self_call, assert_only_self};
+
+    use argent::utils::serialization::full_deserialize;
+    use core::option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
-    use hash::LegacyHash;
+    use hash::{HashStateTrait, HashStateExTrait, LegacyHash};
+    use pedersen::PedersenTrait;
     use starknet::{account::Call, get_contract_address, VALIDATED};
 
 
@@ -41,7 +43,7 @@ mod session_component {
 
     #[embeddable_as(SessionableImpl)]
     impl Sessionable<
-        TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentAccount<TContractState>,
+        TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentUserAccount<TContractState>,
     > of super::ISessionable<ComponentState<TContractState>> {
         fn revoke_session(ref self: ComponentState<TContractState>, session_hash: felt252) {
             assert_only_self();
@@ -57,7 +59,7 @@ mod session_component {
 
     #[generate_trait]
     impl Internal<
-        TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentAccount<TContractState>,
+        TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentUserAccount<TContractState>,
     > of InternalTrait<TContractState> {
         fn assert_valid_session(
             self: @ComponentState<TContractState>,

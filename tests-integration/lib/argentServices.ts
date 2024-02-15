@@ -7,6 +7,7 @@ import {
   V2InvocationsSignerDetails,
   ec,
   hash,
+  num,
   transaction,
   typedData,
 } from "starknet";
@@ -74,8 +75,8 @@ export class BackendService {
       transactionsDetail.walletAddress,
     );
     const sessionWithTxHash = ec.starkCurve.pedersen(msgHash, sessionMessageHash);
-    const [r, s] = this.guardian.signHash(sessionWithTxHash);
-    return { r: BigInt(r), s: BigInt(s) };
+    const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.guardian.privateKey));
+    return { r: BigInt(signature.r), s: BigInt(signature.s) };
   }
 
   public async signOutsideTxAndSession(
@@ -90,8 +91,8 @@ export class BackendService {
 
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(sessionTokenToSign), accountAddress);
     const sessionWithTxHash = ec.starkCurve.pedersen(messageHash, sessionMessageHash);
-    const [r, s] = this.guardian.signHash(sessionWithTxHash);
-    return { r: BigInt(r), s: BigInt(s) };
+    const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.guardian.privateKey));
+    return { r: BigInt(signature.r), s: BigInt(signature.s) };
   }
 
   public getGuardianKey(accountAddress: string): bigint {

@@ -1,8 +1,8 @@
 import { Signature as EthersSignature, Signature, Wallet, id } from "ethers";
-import { Account, ArraySignatureType, CairoCustomEnum, CallData, hash, num, uint256 } from "starknet";
+import { Account, CairoCustomEnum, CallData, hash, num, uint256 } from "starknet";
 import {
   KeyPair,
-  RawSigner,
+  MultisigSigner,
   declareContract,
   deployer,
   fundAccount,
@@ -20,52 +20,21 @@ const profiler = newProfiler(provider);
 
 // To be able to run this script using the devnet, update the start-devnet.sh script to ignore this line:
 // export STARKNET_DEVNET_CAIRO_VM=rust
-class GenericSigner extends RawSigner {
-  constructor(public keys: StarknetKeyPair[]) {
-    super();
-  }
 
-  async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    const response = [this.keys.length.toString()];
-    this.keys
-      .sort((key1, key2) => Number(key1.publicKey - key2.publicKey))
-      .map((key) => {
-        response.push(...key.signHash(messageHash));
-      });
-    return response;
-  }
-}
-
-function starknetSignatureType(r: string, s: string) {
-  return new CairoCustomEnum({
-    Starknet: { r, s },
-    Secp256k1: undefined,
-    Webauthn: undefined,
-    Secp256r1: undefined,
-  });
-}
-
-function ethereumSignatureType(signature: Signature) {
-  return new CairoCustomEnum({
-    Starknet: undefined,
-    Secp256k1: {
-      r: uint256.bnToUint256(signature.r),
-      s: uint256.bnToUint256(signature.s),
-      y_parity: signature.yParity.toString(),
-    },
-    Webauthn: undefined,
-    Secp256r1: undefined,
-  });
-}
-
-class StarknetKeyPair extends KeyPair {
-  public signHash(messageHash: string) {
-    const [r, s] = super.signHash(messageHash);
-    return CallData.compile({
-      signer: super.publicKey,
-      signer_type: starknetSignatureType(r, s),
-    });
-  }
+function ethereumSignatureType(signer: bigint, signature: Signature) {
+  return CallData.compile([
+    new CairoCustomEnum({
+      Starknet: undefined,
+      Secp256k1: {
+        signer,
+        r: uint256.bnToUint256(signature.r),
+        s: uint256.bnToUint256(signature.s),
+        y_parity: signature.yParity.toString(),
+      },
+      Webauthn: undefined,
+      Secp256r1: undefined,
+    }),
+  ]);
 }
 
 class EthKeyPair extends KeyPair {
@@ -80,17 +49,14 @@ class EthKeyPair extends KeyPair {
     }
     const signature = EthersSignature.from(eth_signer.signingKey.sign(messageHash));
 
-    return CallData.compile({
-      signer: this.publicKey,
-      signer_type: ethereumSignatureType(signature),
-    });
+    return ethereumSignatureType(this.publicKey, signature);
   }
 }
 
 {
   const name = "[GA] 1 Starknet signature";
   console.log(name);
-  const owners = [new StarknetKeyPair()];
+  const owners = [new KeyPair()];
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await profiler.profile(name, await testDappContract.set_number(42));
@@ -108,7 +74,7 @@ class EthKeyPair extends KeyPair {
 {
   const name = "[GA] 2 Starknet signature";
   console.log(name);
-  const owners = [new StarknetKeyPair(), new StarknetKeyPair()];
+  const owners = [new KeyPair(), new KeyPair()];
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await profiler.profile(name, await testDappContract.set_number(42));
@@ -126,7 +92,7 @@ class EthKeyPair extends KeyPair {
 {
   const name = "[GA] 3 Starknet signature";
   console.log(name);
-  const owners = [new StarknetKeyPair(), new StarknetKeyPair(), new StarknetKeyPair()];
+  const owners = [new KeyPair(), new KeyPair(), new KeyPair()];
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await profiler.profile(name, await testDappContract.set_number(42));
@@ -144,7 +110,7 @@ class EthKeyPair extends KeyPair {
 {
   const name = "[GA] 1 Eth + 1 Starknet signature";
   console.log(name);
-  const owners = [new EthKeyPair(), new StarknetKeyPair()];
+  const owners = [new EthKeyPair(), new KeyPair()];
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await profiler.profile(name, await testDappContract.set_number(42));
@@ -153,7 +119,7 @@ class EthKeyPair extends KeyPair {
 {
   const name = "[GA] 2 Eth + 1 Starknet signature";
   console.log(name);
-  const owners = [new EthKeyPair(), new EthKeyPair(), new StarknetKeyPair()];
+  const owners = [new EthKeyPair(), new EthKeyPair(), new KeyPair()];
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await profiler.profile(name, await testDappContract.set_number(42));
@@ -164,14 +130,14 @@ class EthKeyPair extends KeyPair {
   console.log(name);
   const owners = [new EthKeyPair()];
   for (let i = 0; i < 20; i++) {
-    owners.push(new StarknetKeyPair());
+    owners.push(new KeyPair());
   }
   const account = await deployGenericAccount(owners);
   testDappContract.connect(account);
   await profiler.profile(name, await testDappContract.set_number(42));
 }
 
-async function deployGenericAccount(owners: StarknetKeyPair[]) {
+async function deployGenericAccount(owners: KeyPair[]) {
   const salt = num.toHex(randomKeyPair().privateKey);
   const constructorCalldata = CallData.compile({
     new_threshold: owners.length,
@@ -181,7 +147,8 @@ async function deployGenericAccount(owners: StarknetKeyPair[]) {
   const contractAddress = hash.calculateContractAddressFromHash(salt, genericAccountClassHash, constructorCalldata, 0);
   await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
 
-  const account = new Account(provider, contractAddress, new GenericSigner(owners), "1");
+  const sorted_owners = owners.sort((key1, key2) => Number(key1.publicKey - key2.publicKey));
+  const account = new Account(provider, contractAddress, new MultisigSigner(sorted_owners), "1");
 
   const { transaction_hash } = await account.deploySelf({
     classHash: genericAccountClassHash,

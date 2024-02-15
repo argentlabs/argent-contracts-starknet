@@ -7,6 +7,8 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   getEthContract,
+  loadContract,
+  compiledStarknetSigner,
   waitForTransaction,
   getEthBalance,
   deployContract,
@@ -116,7 +118,7 @@ describe("ArgentAccount: multicall", function () {
     await expectRevertWithErrorMessage("argent/no-multicall-to-self", () =>
       account.execute([
         ethContract.populateTransaction.transfer(recipient, amount),
-        accountContract.populateTransaction.trigger_escape_owner(newOwner),
+        accountContract.populateTransaction.trigger_escape_owner(compiledStarknetSigner(newOwner)),
       ]),
     );
   });

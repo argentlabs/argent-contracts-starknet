@@ -1,6 +1,12 @@
 import "dotenv/config";
 import { Account, num } from "starknet";
-import { getChangeOwnerMessageHash, KeyPair, loadContract, provider } from "../tests-integration/lib";
+import {
+  getChangeOwnerMessageHash,
+  KeyPair,
+  loadContract,
+  provider,
+  starknetSignatureType,
+} from "../tests-integration/lib";
 
 /// To use this script, fill the following three values:
 /// - accountAddress: the address of the account to change owner
@@ -29,7 +35,7 @@ if (owner !== ownerSigner.publicKey) {
 // if (BigInt(newOwnerPublicKey) !== newOwner.publicKey) {
 //   throw new Error(`new owner public key ${newOwnerPublicKey} != derived ${newOwner.publicKey}`);
 // }
-// const [r, s] = await signChangeOwnerMessage(accountContract.address, owner, newOwner, chainId);
+// const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner, newOwner, provider);
 
 // remote signing:
 console.log("messageHash:", await getChangeOwnerMessageHash(accountContract.address, owner, chainId)); // share to backend
@@ -41,7 +47,7 @@ console.log("s:", s);
 console.log("Owner before", num.toHex(await accountContract.get_owner()));
 console.log("Changing to ", num.toHex(newOwnerPublicKey));
 
-const response = await accountContract.change_owner(newOwnerPublicKey, r, s);
+const response = await accountContract.change_owner(starknetSignatureType(newOwnerPublicKey, r, s));
 await provider.waitForTransaction(response.transaction_hash);
 
 console.log("Owner after ", num.toHex(await accountContract.get_owner()));

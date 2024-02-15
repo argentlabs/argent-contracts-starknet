@@ -21,7 +21,7 @@ describe("ArgentAccount: outside execution", function () {
   let testDapp: Contract;
 
   before(async () => {
-    argentSessionAccountClassHash = await declareContract("HybridSessionAccount");
+    argentSessionAccountClassHash = await declareContract("SessionAccount");
     const testDappClassHash = await declareContract("TestDapp");
     const { contract_address } = await deployer.deployContract({
       classHash: testDappClassHash,

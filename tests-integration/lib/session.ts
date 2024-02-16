@@ -20,7 +20,11 @@ export const sessionTypes = {
   ],
 };
 
-export const ALLOWED_METHOD_HASH = typedData.getTypeHash(sessionTypes, "Allowed Method");
+export const ALLOWED_METHOD_HASH = typedData.getTypeHash(
+  sessionTypes,
+  "Allowed Method",
+  typedData.TypedDataRevision.Active,
+);
 
 export interface StarknetSig {
   r: BigNumberish;

@@ -1,6 +1,5 @@
 use core::traits::Into;
-use hash::{HashStateExTrait, HashStateTrait};
-use poseidon::{PoseidonTrait};
+use poseidon::{poseidon_hash_span};
 use starknet::account::Call;
 use starknet::{get_tx_info, get_contract_address, ContractAddress};
 
@@ -36,11 +35,17 @@ struct StarknetDomain {
     revision: felt252,
 }
 
-//.update_with these once SNIP-12 is merged (i.e. use StarknetDomain)
-const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarknetDomain(name:shortstring,version:shortstring,chainId:shortstring,revision:shortstring)");
+
+const STARKNET_DOMAIN_TYPE_HASH: felt252 =
+    selector!(
+        "\"StarknetDomain\"(\"name\":\"shortstring\",\"version\":\"shortstring\",\"chainId\":\"shortstring\",\"revision\":\"shortstring\")"
+    );
 const SESSION_TYPE_HASH: felt252 =
-    selector!("Session(Expires At:timestamp,Allowed Methods:merkletree,Guardian Key:felt,Session Key:felt)");
-const ALLOWED_METHOD_HASH: felt252 = selector!("Allowed Method(Contract Address:ContractAddress,selector:selector)");
+    selector!(
+        "\"Session\"(\"Expires At\":\"timestamp\",\"Allowed Methods\":\"merkletree\",\"Guardian Key\":\"felt\",\"Session Key\":\"felt\")"
+    );
+const ALLOWED_METHOD_HASH: felt252 =
+    selector!("\"Allowed Method\"(\"Contract Address\":\"ContractAddress\",\"selector\":\"selector\")");
 
 
 trait IOffchainMessageHash<T> {
@@ -57,34 +62,32 @@ trait IMerkleLeafHash<T> {
 
 impl MerkleLeafHash of IMerkleLeafHash<Call> {
     fn get_merkle_leaf(self: @Call) -> felt252 {
-        let mut state = PoseidonTrait::new();
-        state = state.update_with(ALLOWED_METHOD_HASH);
-        state = state.update_with(*self.to);
-        state = state.update_with(*self.selector);
-        state = state.update_with(3);
-        state.finalize()
+        poseidon_hash_span(array![ALLOWED_METHOD_HASH, (*self.to).into(), *self.selector].span())
     }
 }
 
 
 impl StructHashSession of IStructHash<Session> {
     fn get_struct_hash(self: @Session) -> felt252 {
-        let mut state = PoseidonTrait::new();
-        state = state.update_with(SESSION_TYPE_HASH);
-        state = state.update_with(*self);
-        state = state.update_with(5);
-        state.finalize()
+        poseidon_hash_span(
+            array![
+                SESSION_TYPE_HASH,
+                (*self.expires_at).into(),
+                *self.allowed_methods_root,
+                *self.guardian_key,
+                *self.session_key
+            ]
+                .span()
+        )
     }
 }
 
 
 impl StructHashStarknetDomain of IStructHash<StarknetDomain> {
     fn get_struct_hash(self: @StarknetDomain) -> felt252 {
-        let mut state = PoseidonTrait::new();
-        state = state.update_with(STARKNET_DOMAIN_TYPE_HASH);
-        state = state.update_with(*self);
-        state = state.update_with(5);
-        state.finalize()
+        poseidon_hash_span(
+            array![STARKNET_DOMAIN_TYPE_HASH, *self.name, *self.version, *self.chain_id, *self.revision].span()
+        )
     }
 }
 
@@ -93,12 +96,9 @@ impl OffchainMessageHashSession of IOffchainMessageHash<Session> {
         let domain = StarknetDomain {
             name: 'SessionAccount.session', version: 1, chain_id: get_tx_info().unbox().chain_id, revision: 1,
         };
-        let mut state = PoseidonTrait::new();
-        state = state.update_with('StarkNet Message');
-        state = state.update_with(domain.get_struct_hash());
-        state = state.update_with(get_contract_address());
-        state = state.update_with(self.get_struct_hash());
-        state = state.update_with(4);
-        state.finalize()
+        poseidon_hash_span(
+            array!['StarkNet Message', domain.get_struct_hash(), get_contract_address().into(), self.get_struct_hash()]
+                .span()
+        )
     }
 }

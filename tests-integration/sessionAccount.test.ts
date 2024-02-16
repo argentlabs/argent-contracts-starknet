@@ -34,7 +34,7 @@ describe("Hybrid Session Account: execute calls", function () {
     testDappOneContract = await loadContract(deployedTestDappOne.contract_address);
   });
 
-  it.only("Call a contract with backend signer", async function () {
+  it("Call a contract with backend signer", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const backendService = new BackendService(guardian);

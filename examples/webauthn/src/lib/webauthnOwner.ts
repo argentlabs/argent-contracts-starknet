@@ -1,9 +1,10 @@
-import { CallData, uint256, type ArraySignatureType } from "starknet";
+import { CallData, uint256, type ArraySignatureType, CairoCustomEnum } from "starknet";
 
 import { buf2hex } from "./bytes";
 import { RawSigner } from "./starknet";
 import { estimateAssertion, signTransaction, type WebauthnAssertion } from "./webauthnAssertion";
 import type { WebauthnAttestation } from "./webauthnAttestation";
+import { rpIdHash } from "./argent";
 
 export class WebauthnOwner extends RawSigner {
   constructor(public attestation: WebauthnAttestation) {
@@ -27,8 +28,14 @@ export class WebauthnOwner extends RawSigner {
     console.log("client data", clientData);
 
     const cairoAssertion = {
-      authenticator_data: Array.from(authenticatorData),
-      client_data_json: Array.from(clientDataJSON),
+      origin: location.origin,
+      rp_id_hash: uint256.bnToUint256(BigInt(buf2hex(rpIdHash))),
+      pubkey: uint256.bnToUint256(BigInt(buf2hex(this.attestation.x))),
+      // TODO use calldata.compile() instead of manual length
+      len1: authenticatorData.length,
+      authenticator_data: authenticatorData,
+      len2: clientDataJSON.length,
+      client_data_json: clientDataJSON,
       signature: {
         r: uint256.bnToUint256(buf2hex(r)),
         s: uint256.bnToUint256(buf2hex(s)),
@@ -42,6 +49,28 @@ export class WebauthnOwner extends RawSigner {
     };
 
     console.log("serialized assertion:", cairoAssertion);
-    return CallData.compile(cairoAssertion);
+    return CallData.compile([
+      [
+        new CairoCustomEnum({
+          Starknet: undefined,
+          Secp256k1: undefined,
+          Secp256r1: undefined,
+          Webauthn: cairoAssertion,
+        }),
+      ],
+    ]);
   }
+}
+
+export function webauthnSigner(origin: string, rp_id_hash: string, pubkey: string) {
+  return new CairoCustomEnum({
+    Starknet: undefined,
+    Secp256k1: undefined,
+    Secp256r1: undefined,
+    Webauthn: {
+      origin,
+      rp_id_hash: uint256.bnToUint256(BigInt(rp_id_hash)),
+      pubkey: uint256.bnToUint256(BigInt(pubkey)),
+    },
+  });
 }

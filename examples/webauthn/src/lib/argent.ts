@@ -1,4 +1,15 @@
-import { Account, CallData, Contract, hash, num, shortString, uint256, type DeclareContractPayload } from "starknet";
+import {
+  Account,
+  CallData,
+  Contract,
+  hash,
+  num,
+  shortString,
+  uint256,
+  type DeclareContractPayload,
+  CairoOption,
+  CairoOptionVariant,
+} from "starknet";
 import { createWebauthnAttestation } from "./webauthnAttestation";
 import {
   fundAccount,
@@ -11,10 +22,11 @@ import {
 } from "./starknet";
 import { buf2hex } from "./bytes";
 import { sha256 } from "./webauthnAssertion";
-import { WebauthnOwner } from "./webauthnOwner";
-import casm from "./argent_ArgentWebAuthn.compiled_contract_class.json";
-import sierra from "./argent_ArgentWebAuthn.contract_class.json";
+import { WebauthnOwner, webauthnSigner } from "./webauthnOwner";
+import casm from "./argent_ArgentAccount.compiled_contract_class.json";
+import sierra from "./argent_ArgentAccount.contract_class.json";
 
+export let rpIdHash: Uint8Array;
 export interface ArgentOwners {
   starkOwner: KeyPair;
   webauthnOwner: WebauthnOwner;
@@ -54,12 +66,11 @@ export async function deployAccount(
   if (location.origin.length > 30) {
     throw new Error("origin must be less than 30 characters");
   }
-  const rpIdHash = await sha256(new TextEncoder().encode(rpId));
+  rpIdHash = await sha256(new TextEncoder().encode(rpId));
+
   const constructorCalldata = CallData.compile({
-    owner: starkOwner.publicKey,
-    webauthn_owner: uint256.bnToUint256(buf2hex(webauthnOwner.attestation.x)),
-    origin: shortString.encodeShortString(location.origin),
-    rp_id_hash: uint256.bnToUint256(buf2hex(rpIdHash)),
+    owner: webauthnSigner(location.origin, buf2hex(rpIdHash), buf2hex(webauthnOwner.attestation.x)),
+    guardian: new CairoOption<any>(CairoOptionVariant.None),
   });
   const addressSalt = num.toHex(randomKeyPair().privateKey);
   const accountAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);

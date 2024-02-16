@@ -24,7 +24,6 @@ import {
   V2DeclareSignerDetails,
   V3DeclareSignerDetails,
   stark,
-  uint256,
 } from "starknet";
 
 /**

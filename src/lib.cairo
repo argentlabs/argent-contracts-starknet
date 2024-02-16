@@ -56,6 +56,7 @@ mod utils {
 }
 
 mod session {
+    mod my_merkle;
     mod session;
     mod session_account;
     mod session_structs;

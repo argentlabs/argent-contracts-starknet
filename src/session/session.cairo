@@ -9,10 +9,11 @@ trait ISessionable<TContractState> {
 
 #[starknet::component]
 mod session_component {
-    use alexandria_merkle_tree::merkle_tree::{
+    // use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,};
+    use argent::account::interface::{IAccount, IArgentUserAccount};
+    use argent::session::my_merkle::{
         Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,
     };
-    use argent::account::interface::{IAccount, IArgentUserAccount};
     use argent::session::session::ISessionable;
     use argent::session::session_structs::{
         SessionToken, StarknetSignature, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash

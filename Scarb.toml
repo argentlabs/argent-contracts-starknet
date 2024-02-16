@@ -29,3 +29,5 @@ kill-devnet = "lsof -t -i tcp:5050 | xargs kill"
 profile = "scarb --profile release build && node --loader ts-node/esm scripts/profile-account.ts"
 deploy = "scarb --profile release build && node --loader ts-node/esm scripts/deploy-account.ts"
 generate-signature = "node --loader ts-node/esm ./scripts/generate-signature.ts"
+update-webauthn-dapp = "scarb --profile release build && cp target/release/*ArgentWebauthn* examples/webauthn/src/lib"
+

@@ -49,14 +49,5 @@ const profiler = newProfiler(provider);
   await profiler.profile("Secp256r1 w guardian - transfer", await ethContract.transfer(recipient, 1));
 }
 
-// {
-//   const { account } = await deployAccount({
-//     owner: randomWebauthnKeyPair(),
-//     guardian: randomKeyPair(),
-//   });
-//   ethContract.connect(account);
-//   await profiler.profile("Webauthn w guardian - transfer", await ethContract.transfer(recipient, 1));
-// }
-
 profiler.printSummary();
 profiler.updateOrCheckReport();

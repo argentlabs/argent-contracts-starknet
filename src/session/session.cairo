@@ -22,8 +22,7 @@ mod session_component {
     use argent::utils::serialization::full_deserialize;
     use core::option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
-    use hash::{HashStateTrait};
-    use poseidon::{PoseidonTrait, poseidon_hash_span};
+    use poseidon::{hades_permutation};
     use starknet::{account::Call, get_contract_address, VALIDATED};
 
 
@@ -91,7 +90,7 @@ mod session_component {
                 'session/invalid-account-sig'
             );
 
-            let message_hash = PoseidonTrait::new().update(transaction_hash).update(token_session_hash).finalize();
+            let (message_hash, _, _) = hades_permutation(transaction_hash, token_session_hash, 2);
 
             assert(
                 is_valid_stark_signature(message_hash, token.session.session_key, token.session_signature),

@@ -215,7 +215,7 @@ export class DappService {
     accountAddress: string,
   ): Promise<StarknetSig> {
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([transactionHash, sessionMessageHash]);
+    const sessionWithTxHash = hash.computePoseidonHash(transactionHash, sessionMessageHash);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));
     return {
       r: BigInt(signature.r),

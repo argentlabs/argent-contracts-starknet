@@ -74,7 +74,7 @@ export class BackendService {
       await getSessionTypedData(sessionTokenToSign),
       transactionsDetail.walletAddress,
     );
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([msgHash, sessionMessageHash]);
+    const sessionWithTxHash = hash.computePoseidonHash(msgHash, sessionMessageHash);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.guardian.privateKey));
     return { r: BigInt(signature.r), s: BigInt(signature.s) };
   }
@@ -90,7 +90,7 @@ export class BackendService {
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
 
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(sessionTokenToSign), accountAddress);
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([messageHash, sessionMessageHash]);
+    const sessionWithTxHash = hash.computePoseidonHash(messageHash, sessionMessageHash);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.guardian.privateKey));
     return { r: BigInt(signature.r), s: BigInt(signature.s) };
   }

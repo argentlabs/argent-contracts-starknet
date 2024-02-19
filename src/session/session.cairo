@@ -20,7 +20,6 @@ mod session_component {
     use argent::utils::asserts::{assert_no_self_call, assert_only_self};
 
     use argent::utils::serialization::full_deserialize;
-    use core::option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
     use poseidon::{hades_permutation};
     use starknet::{account::Call, get_contract_address, VALIDATED};
@@ -115,7 +114,6 @@ mod session_component {
 
     fn assert_valid_session_calls(token: SessionToken, mut calls: Span<Call>) {
         assert(token.proofs.len() == calls.len(), 'unaligned-proofs');
-        // TODO: use poseidon hash when using SNIP-12 rev 1
         let merkle_root = token.session.allowed_methods_root;
         let mut merkle_tree: MerkleTree<Hasher> = MerkleTreeImpl::<_, PoseidonHasherImpl>::new();
         let mut proofs = token.proofs;
@@ -124,9 +122,7 @@ mod session_component {
                 Option::Some(call) => {
                     let leaf = call.get_merkle_leaf();
                     let proof = proofs.pop_front().expect('session/proof-empty');
-                    let is_valid = MerkleTreeImpl::<
-                        _, PoseidonHasherImpl
-                    >::verify(ref merkle_tree, merkle_root, leaf, *proof);
+                    let is_valid = merkle_tree.verify(merkle_root, leaf, *proof);
                     assert(is_valid, 'session/invalid-call');
                 },
                 Option::None => { break; },

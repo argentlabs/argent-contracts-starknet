@@ -1,4 +1,3 @@
-use core::traits::Into;
 use poseidon::{poseidon_hash_span};
 use starknet::account::Call;
 use starknet::{get_tx_info, get_contract_address, ContractAddress};

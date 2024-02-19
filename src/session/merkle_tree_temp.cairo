@@ -37,28 +37,10 @@ trait HasherTrait<T> {
 #[derive(Drop, Copy)]
 struct Hasher {}
 
-/// Hasher impls.
-
-mod pedersen {
-    use pedersen::PedersenTrait;
-    use hash::HashStateTrait;
-    use super::{Hasher, HasherTrait};
-
-    impl PedersenHasherImpl of HasherTrait<Hasher> {
-        fn new() -> Hasher {
-            Hasher {}
-        }
-        fn hash(ref self: Hasher, data1: felt252, data2: felt252) -> felt252 {
-            let mut state = PedersenTrait::new(data1);
-            state = state.update(data2);
-            state.finalize()
-        }
-    }
-}
 
 mod poseidon {
-    use poseidon::{PoseidonTrait, poseidon_hash_span};
     use hash::HashStateTrait;
+    use poseidon::{PoseidonTrait, hades_permutation};
     use super::{Hasher, HasherTrait};
 
     impl PoseidonHasherImpl of HasherTrait<Hasher> {
@@ -66,10 +48,8 @@ mod poseidon {
             Hasher {}
         }
         fn hash(ref self: Hasher, data1: felt252, data2: felt252) -> felt252 {
-            let mut state = PoseidonTrait::new();
-            state = state.update(data1);
-            state = state.update(data2);
-            state.finalize()
+            let (hash, _, _) = hades_permutation(data1, data2, 2);
+            hash
         }
     }
 }
@@ -86,9 +66,7 @@ trait MerkleTreeTrait<T> {
     /// Create a new merkle tree instance.
     fn new() -> MerkleTree<T>;
     /// Compute the merkle root of a given proof.
-    fn compute_root(
-        ref self: MerkleTree<T>, current_node: felt252, proof: Span<felt252>
-    ) -> felt252;
+    fn compute_root(ref self: MerkleTree<T>, current_node: felt252, proof: Span<felt252>) -> felt252;
     /// Verify a merkle proof.
     fn verify(ref self: MerkleTree<T>, root: felt252, leaf: felt252, proof: Span<felt252>) -> bool;
     /// Compute a merkle proof of given leaves and at a given index.
@@ -108,9 +86,7 @@ impl MerkleTreeImpl<T, +HasherTrait<T>, +Copy<T>, +Drop<T>> of MerkleTreeTrait<T
     /// * `proof` - The proof.
     /// # Returns
     /// The merkle root.
-    fn compute_root(
-        ref self: MerkleTree<T>, mut current_node: felt252, mut proof: Span<felt252>
-    ) -> felt252 {
+    fn compute_root(ref self: MerkleTree<T>, mut current_node: felt252, mut proof: Span<felt252>) -> felt252 {
         loop {
             match proof.pop_front() {
                 Option::Some(proof_element) => {
@@ -136,9 +112,7 @@ impl MerkleTreeImpl<T, +HasherTrait<T>, +Copy<T>, +Drop<T>> of MerkleTreeTrait<T
     /// * `proof` - The proof.
     /// # Returns
     /// True if the proof is valid, false otherwise.
-    fn verify(
-        ref self: MerkleTree<T>, root: felt252, mut leaf: felt252, mut proof: Span<felt252>
-    ) -> bool {
+    fn verify(ref self: MerkleTree<T>, root: felt252, mut leaf: felt252, mut proof: Span<felt252>) -> bool {
         let computed_root = loop {
             match proof.pop_front() {
                 Option::Some(proof_element) => {
@@ -164,9 +138,7 @@ impl MerkleTreeImpl<T, +HasherTrait<T>, +Copy<T>, +Drop<T>> of MerkleTreeTrait<T
     /// * `index` - The index of the given.
     /// # Returns
     /// The merkle proof.
-    fn compute_proof(
-        ref self: MerkleTree<T>, mut leaves: Array<felt252>, index: u32
-    ) -> Span<felt252> {
+    fn compute_proof(ref self: MerkleTree<T>, mut leaves: Array<felt252>, index: u32) -> Span<felt252> {
         let mut proof: Array<felt252> = array![];
         compute_proof(leaves, self.hasher, index, ref proof);
         proof.span()
@@ -220,9 +192,7 @@ fn compute_proof<T, +HasherTrait<T>, +Drop<T>>(
 /// * `hasher` - The hasher to use.
 /// # Returns
 /// The next layer of nodes.
-fn get_next_level<T, +HasherTrait<T>, +Drop<T>>(
-    mut nodes: Span<felt252>, ref hasher: T
-) -> Array<felt252> {
+fn get_next_level<T, +HasherTrait<T>, +Drop<T>>(mut nodes: Span<felt252>, ref hasher: T) -> Array<felt252> {
     let mut next_level: Array<felt252> = array![];
     loop {
         if nodes.is_empty() {

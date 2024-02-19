@@ -9,9 +9,8 @@ trait ISessionable<TContractState> {
 
 #[starknet::component]
 mod session_component {
-    // use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,};
     use argent::account::interface::{IAccount, IArgentUserAccount};
-    use argent::session::my_merkle::{
+    use argent::session::merkle_tree_temp::{
         Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,
     };
     use argent::session::session::ISessionable;
@@ -126,7 +125,9 @@ mod session_component {
                 Option::Some(call) => {
                     let leaf = call.get_merkle_leaf();
                     let proof = proofs.pop_front().expect('session/proof-empty');
-                    let is_valid = merkle_tree.verify(merkle_root, leaf, *proof);
+                    let is_valid = MerkleTreeImpl::<
+                        _, PoseidonHasherImpl
+                    >::verify(ref merkle_tree, merkle_root, leaf, *proof);
                     assert(is_valid, 'session/invalid-call');
                 },
                 Option::None => { break; },

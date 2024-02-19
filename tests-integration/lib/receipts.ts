@@ -10,7 +10,7 @@ export function isAcceptedTransactionReceiptResponse(
 }
 
 export function isIncludedTransactionReceiptResponse(receipt: GetTransactionReceiptResponse): receipt is RPC.Receipt {
-  return "block_number" in receipt;
+  return receipt.finality_status == 'ACCEPTED_ON_L2';
 }
 
 export function ensureAccepted(receipt: GetTransactionReceiptResponse): AcceptedTransactionReceiptResponse {

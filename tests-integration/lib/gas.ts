@@ -100,7 +100,7 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
       { transaction_hash }: InvokeFunctionResponse,
       { printProfile = false, printStorage = false } = {},
     ) {
-      console.log("Profiling:", name);
+      console.log(`Profiling: ${name} (${transaction_hash})`);
       const profile = await profileGasUsage(transaction_hash, provider);
       if (printProfile) {
         console.dir(profile, { depth: null });

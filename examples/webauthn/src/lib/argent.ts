@@ -4,7 +4,6 @@ import {
   Contract,
   hash,
   num,
-  shortString,
   uint256,
   type DeclareContractPayload,
   CairoOption,
@@ -75,13 +74,13 @@ export async function deployAccount(
   const addressSalt = num.toHex(randomKeyPair().privateKey);
   const accountAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
 
-  await fundAccount(accountAddress, 1e16, provider);
+  await fundAccount(accountAddress, 1e15, provider);
 
   // can use either starkOwner or webauthnOwner as signer
   const account = new Account(provider, accountAddress, webauthnOwner, "1");
 
   console.log("deploying account to address", accountAddress);
-  const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt }, { maxFee: 1e15 });
+  const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt }, { maxFee: 5e14 });
   console.log("waiting for deployment tx", response.transaction_hash);
   await provider.waitForTransaction(response.transaction_hash);
 
@@ -96,7 +95,7 @@ export async function transferDust(account: Account, provider: ProviderType): Pr
   const ethContract = await getEthContract(provider);
   ethContract.connect(account);
   const recipient = 69;
-  const amount = uint256.bnToUint256(42);
-  const response = await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 });
+  const amount = uint256.bnToUint256(1);
+  const response = await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 5e14 });
   return response.transaction_hash;
 }

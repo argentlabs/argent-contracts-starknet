@@ -17,10 +17,10 @@ import {
   RpcProvider,
   Account,
   uint256,
-  type CairoVersion,
   type V2InvocationsSignerDetails,
   type V2DeployAccountSignerDetails,
   type V2DeclareSignerDetails,
+  RPC,
 } from "starknet";
 
 export type ProviderType = RpcProvider;
@@ -53,7 +53,8 @@ export async function loadDeployer(provider: ProviderType) {
     provider,
     env.PUBLIC_DEPLOYER_ADDRESS,
     env.PUBLIC_DEPLOYER_PRIVATE_KEY,
-    env.PUBLIC_DEPLOYER_CAIRO_VERSION as CairoVersion,
+    undefined,
+    RPC.ETransactionVersion.V2,
   );
 }
 

@@ -184,7 +184,7 @@ export class DappService {
     const session = {
       expires_at: completedSession.expires_at,
       allowed_methods_root: this.buildMerkleTree(completedSession).root.toString(),
-      metadata: metadataHash,
+      metadata_hash: metadataHash,
       guardian_key: completedSession.guardian_key,
       session_key: completedSession.session_key,
     };

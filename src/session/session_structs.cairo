@@ -13,7 +13,7 @@ struct StarknetSignature {
 struct Session {
     expires_at: u64,
     allowed_methods_root: felt252,
-    metadata: felt252,
+    metadata_hash: felt252,
     guardian_key: felt252,
     session_key: felt252,
 }
@@ -74,7 +74,7 @@ impl StructHashSession of IStructHash<Session> {
                 SESSION_TYPE_HASH,
                 (*self.expires_at).into(),
                 *self.allowed_methods_root,
-                *self.metadata,
+                *self.metadata_hash,
                 *self.guardian_key,
                 *self.session_key
             ]

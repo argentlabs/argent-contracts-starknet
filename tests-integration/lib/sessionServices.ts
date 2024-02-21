@@ -48,9 +48,11 @@ export class DappService {
     allowed_methods: AllowedMethod[],
     expires_at = 150,
   ): OffChainSession {
+    const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
     return {
       expires_at,
       allowed_methods,
+      metadata,
       guardian_key: this.argentBackend.getGuardianKey(accountAddress),
       session_key: this.sessionKey.publicKey,
     };
@@ -175,9 +177,14 @@ export class DappService {
     transactionsDetail?: InvocationsSignerDetails,
     outsideExecution?: OutsideExecution,
   ): Promise<ArraySignatureType> {
+    const byteArray = typedData.byteArrayFromString(completedSession.metadata as string);
+    const elements = [byteArray.data.length, ...byteArray.data, byteArray.pending_word, byteArray.pending_word_len];
+    const metadataHash = hash.computePoseidonHashOnElements(elements);
+
     const session = {
       expires_at: completedSession.expires_at,
       allowed_methods_root: this.buildMerkleTree(completedSession).root.toString(),
+      metadata: metadataHash,
       guardian_key: completedSession.guardian_key,
       session_key: completedSession.session_key,
     };

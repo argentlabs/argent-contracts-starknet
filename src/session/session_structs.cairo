@@ -13,6 +13,7 @@ struct StarknetSignature {
 struct Session {
     expires_at: u64,
     allowed_methods_root: felt252,
+    metadata: felt252,
     guardian_key: felt252,
     session_key: felt252,
 }
@@ -41,7 +42,7 @@ const STARKNET_DOMAIN_TYPE_HASH: felt252 =
     );
 const SESSION_TYPE_HASH: felt252 =
     selector!(
-        "\"Session\"(\"Expires At\":\"timestamp\",\"Allowed Methods\":\"merkletree\",\"Guardian Key\":\"felt\",\"Session Key\":\"felt\")"
+        "\"Session\"(\"Expires At\":\"timestamp\",\"Allowed Methods\":\"merkletree\",\"Metadata\":\"string\",\"Guardian Key\":\"felt\",\"Session Key\":\"felt\")"
     );
 const ALLOWED_METHOD_HASH: felt252 =
     selector!("\"Allowed Method\"(\"Contract Address\":\"ContractAddress\",\"selector\":\"selector\")");
@@ -73,6 +74,7 @@ impl StructHashSession of IStructHash<Session> {
                 SESSION_TYPE_HASH,
                 (*self.expires_at).into(),
                 *self.allowed_methods_root,
+                *self.metadata,
                 *self.guardian_key,
                 *self.session_key
             ]

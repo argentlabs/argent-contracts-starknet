@@ -18,7 +18,7 @@ import {
   typedData,
   uint256,
 } from "starknet";
-import { fundAccount, loadContract, provider } from "..";
+import { fundAccount, provider } from "..";
 
 const rpIdHash: Uint8Array = new Uint8Array([
   73, 150, 13, 229, 136, 14, 140, 104, 116, 52, 23, 15, 100, 118, 96, 91, 143, 228, 174, 185, 162, 134, 50, 199, 153,
@@ -28,20 +28,6 @@ const rpIdHash: Uint8Array = new Uint8Array([
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
   `${prefix ? "0x" : ""}${[...new Uint8Array(buffer)].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 
-const hex2buf = (hex: string) =>
-  Uint8Array.from(
-    hex
-      .replace(/^0x/, "")
-      .match(/.{1,2}/g)!
-      .map((byte) => parseInt(byte, 16)),
-  );
-
-const buf2base64 = (buffer: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buffer)));
-
-const buf2base64url = (buffer: ArrayBuffer) =>
-  buf2base64(buffer).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-
-// END OF BYTES
 
 interface WebauthnAttestation {
   email: string;
@@ -103,7 +89,7 @@ export async function deployFixedWebauthnAccount(classHash: string): Promise<Acc
  * This is based on Starknet.js implementation of Signer, but it delegates the actual signing to an abstract function
  */
 abstract class RawSigner implements SignerInterface {
-  abstract signRaw(messageHash: string, isEstimation: boolean): Promise<Signature>;
+  abstract signRaw(messageHash: string): Promise<Signature>;
 
   public async getPubKey(): Promise<string> {
     throw Error("This signer allows multiple public keys");
@@ -111,7 +97,7 @@ abstract class RawSigner implements SignerInterface {
 
   public async signMessage(typedDataArgument: typedData.TypedData, accountAddress: string): Promise<Signature> {
     const messageHash = typedData.getMessageHash(typedDataArgument, accountAddress);
-    return this.signRaw(messageHash, false);
+    return this.signRaw(messageHash);
   }
 
   public async signTransaction(
@@ -123,15 +109,14 @@ abstract class RawSigner implements SignerInterface {
       throw new Error("ABI must be provided for each transaction or no transaction");
     }
     // now use abi to display decoded data somewhere, but as this signer is headless, we can't do that
-    const calldata = transaction.getExecuteCalldata(transactions, transactionsDetail.cairoVersion);
+    const compiledCalldata = transaction.getExecuteCalldata(transactions, transactionsDetail.cairoVersion);
     const messageHash = hash.calculateInvokeTransactionHash({
       senderAddress: transactionsDetail.walletAddress,
-      compiledCalldata: calldata,
+      compiledCalldata,
       ...transactionsDetail,
     });
 
-    const isEstimation = BigInt(transactionsDetail.maxFee) === 0n;
-    return this.signRaw(messageHash, isEstimation);
+    return this.signRaw(messageHash);
   }
 
   public async signDeployAccountTransaction({
@@ -155,8 +140,7 @@ abstract class RawSigner implements SignerInterface {
       nonce,
     });
 
-    const isEstimation = BigInt(maxFee) === 0n;
-    return this.signRaw(messageHash, isEstimation);
+    return this.signRaw(messageHash);
   }
 
   public async signDeclareTransaction(
@@ -173,8 +157,7 @@ abstract class RawSigner implements SignerInterface {
       compiledClassHash,
     });
 
-    const isEstimation = BigInt(maxFee) === 0n;
-    return this.signRaw(messageHash, isEstimation);
+    return this.signRaw(messageHash);
   }
 }
 
@@ -183,13 +166,8 @@ class WebauthnOwner extends RawSigner {
     super();
   }
 
-  public async signRaw(messageHash: string, isEstimation: boolean): Promise<ArraySignatureType> {
-    const assertion = isEstimation ? await estimateAssertion(messageHash) : await signTransaction();
-    const signature = this.compileAssertion(assertion);
-    return signature;
-  }
-
-  public compileAssertion({ authenticatorData, clientDataJSON, r, s, yParity }: WebauthnAssertion): ArraySignatureType {
+  public async signRaw(): Promise<ArraySignatureType> {
+    const { authenticatorData, clientDataJSON, r, s, yParity } =  await signTransaction();
     const clientDataText = new TextDecoder().decode(clientDataJSON.buffer);
     const clientData = JSON.parse(clientDataText);
     const clientDataOffset = (substring: string) => clientDataText.indexOf(substring) + substring.length;
@@ -240,27 +218,6 @@ function webauthnSigner(origin: string, rp_id_hash: string, pubkey: string) {
     },
   });
 }
-
-const estimateAssertion = async (transactionHash: string): Promise<WebauthnAssertion> => {
-  const flags = new Uint8Array([0b0001 | 0b0100]); // present and verified
-  const signCount = new Uint8Array(4);
-  const authenticatorData = concatBytes(rpIdHash, flags, signCount);
-  const clientData = {
-    type: "webauthn.get",
-    challenge: buf2base64url(hex2buf(normalizeTransactionHash(transactionHash))),
-    origin,
-    crossOrigin: false,
-  };
-  const clientDataJSON = new TextEncoder().encode(JSON.stringify(clientData));
-  return {
-    authenticatorData,
-    clientDataJSON,
-    r: new Uint8Array(32).fill(42),
-    s: new Uint8Array(32).fill(69),
-    yParity: false,
-  };
-};
-
 const webauthnOwner = new WebauthnOwner(attestation);
 
 async function signTransaction(): Promise<WebauthnAssertion> {
@@ -320,5 +277,3 @@ async function signTransaction(): Promise<WebauthnAssertion> {
     };
   }
 }
-
-const normalizeTransactionHash = (transactionHash: string) => transactionHash.replace(/^0x/, "").padStart(64, "0");

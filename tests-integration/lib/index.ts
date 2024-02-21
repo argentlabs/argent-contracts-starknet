@@ -14,6 +14,7 @@ export * from "./provider";
 export * from "./recovery";
 export * from "./signers/signers";
 export * from "./signers/secp256";
+export * from "./signers/webauthn";
 export * from "./upgrade";
 export * from "./udc";
 export * from "./receipts";

@@ -28,7 +28,7 @@ export async function load() {
 }
 
 async function handlePost(path: string, payload?: RawArgs) {
-  const url = `${provider.channel.nodeUrl}/${path}`;
+  const url = `${provider.channel.nodeUrl}${path}`;
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

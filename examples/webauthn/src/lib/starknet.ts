@@ -132,11 +132,8 @@ export abstract class RawSigner implements SignerInterface {
     const calldata = transaction.getExecuteCalldata(transactions, transactionsDetail.cairoVersion);
     const messageHash = hash.calculateInvokeTransactionHash({
       senderAddress: transactionsDetail.walletAddress,
-      version: transactionsDetail.version,
       compiledCalldata: calldata,
-      maxFee: transactionsDetail.maxFee,
-      chainId: transactionsDetail.chainId,
-      nonce: transactionsDetail.nonce,
+      ...transactionsDetail,
     });
 
     const isEstimation = BigInt(transactionsDetail.maxFee) === 0n;

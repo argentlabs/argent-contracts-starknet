@@ -71,7 +71,7 @@ export async function deployAccount(
     owner: webauthnSigner(location.origin, buf2hex(rpIdHash), buf2hex(webauthnOwner.attestation.x)),
     guardian: new CairoOption<any>(CairoOptionVariant.None),
   });
-  const addressSalt = num.toHex(randomKeyPair().privateKey);
+  const addressSalt = 12n;
   const accountAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
 
   await fundAccount(accountAddress, 1e15, provider);
@@ -80,7 +80,7 @@ export async function deployAccount(
   const account = new Account(provider, accountAddress, webauthnOwner, "1");
 
   console.log("deploying account to address", accountAddress);
-  const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt }, { maxFee: 5e14 });
+  const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt }, { maxFee: 1e15 });
   console.log("waiting for deployment tx", response.transaction_hash);
   await provider.waitForTransaction(response.transaction_hash);
 
@@ -96,6 +96,6 @@ export async function transferDust(account: Account, provider: ProviderType): Pr
   ethContract.connect(account);
   const recipient = 69;
   const amount = uint256.bnToUint256(1);
-  const response = await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 5e14 });
+  const response = await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 });
   return response.transaction_hash;
 }

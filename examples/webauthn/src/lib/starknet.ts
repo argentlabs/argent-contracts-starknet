@@ -132,7 +132,7 @@ export abstract class RawSigner implements SignerInterface {
     const calldata = transaction.getExecuteCalldata(transactions, transactionsDetail.cairoVersion);
     const messageHash = hash.calculateInvokeTransactionHash({
       senderAddress: transactionsDetail.walletAddress,
-      version: getVersion(transactionsDetail.version),
+      version: transactionsDetail.version,
       compiledCalldata: calldata,
       maxFee: transactionsDetail.maxFee,
       chainId: transactionsDetail.chainId,
@@ -158,7 +158,7 @@ export abstract class RawSigner implements SignerInterface {
       classHash,
       constructorCalldata: CallData.compile(constructorCalldata),
       salt: BigInt(addressSalt),
-      version: getVersion(version),
+      version: version,
       maxFee,
       chainId,
       nonce,
@@ -175,7 +175,7 @@ export abstract class RawSigner implements SignerInterface {
     const messageHash = hash.calculateDeclareTransactionHash({
       classHash,
       senderAddress,
-      version: getVersion(version),
+      version,
       maxFee,
       chainId,
       nonce,
@@ -222,24 +222,6 @@ async function handlePost(provider: ProviderInterface, path: string, payload?: R
   });
   if (!response.ok) {
     throw new Error(`HTTP error! Status: ${response.status} Message: ${await response.text()}`);
-  }
-}
-
-function getVersion(version: string) {
-  if (version == "0x0") {
-    return "0x0";
-  } else if (version == "0x1") {
-    return "0x1";
-  } else if (version == "0x2") {
-    return "0x2";
-  } else if (version == "0x2") {
-    return "0x2";
-  } else if (version == "0x100000000000000000000000000000000") {
-    return "0x100000000000000000000000000000000";
-  } else if (version == "0x100000000000000000000000000000001") {
-    return "0x100000000000000000000000000000001";
-  } else {
-    return "0x100000000000000000000000000000002";
   }
 }
 

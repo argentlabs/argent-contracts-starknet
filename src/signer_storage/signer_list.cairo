@@ -62,6 +62,7 @@ mod signer_list_component {
 
         #[inline(always)]
         fn add_signer(ref self: ComponentState<TContractState>, signer_to_add: felt252, last_signer: felt252) {
+            assert(signer_to_add != 0, 'argent/invalid-zero-signer');
             let is_signer = self.is_signer_using_last(signer_to_add, last_signer);
             assert(!is_signer, 'argent/already-a-signer');
             // Signers are added at the end of the list

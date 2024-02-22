@@ -1,5 +1,5 @@
 use argent::presets::multisig_account::ArgentMultisigAccount;
-use argent::signer::signer_signature::IntoGuid;
+use argent::signer::signer_signature::SignerTrait;
 use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
 use argent_tests::setup::multisig_test_setup::{
     initialize_multisig, signer_pubkey_1, signer_pubkey_2, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
@@ -21,7 +21,7 @@ fn valid_initialize() {
     // test signers list
     let signers_guid = multisig.get_signer_guids();
     assert(signers_guid.len() == 1, 'invalid signers length');
-    assert(*signers_guid[0] == signer_1.into_guid().unwrap(), 'invalid signers result');
+    assert(*signers_guid[0] == signer_1.into_guid(), 'invalid signers result');
 }
 
 #[test]
@@ -39,8 +39,8 @@ fn valid_initialize_two_signers() {
     // test signers list
     let signers = multisig.get_signer_guids();
     assert(signers.len() == 2, 'invalid signers length');
-    assert(*signers[0] == signer_1.into_guid().unwrap(), 'invalid signers result');
-    assert(*signers[1] == signer_2.into_guid().unwrap(), 'invalid signers result');
+    assert(*signers[0] == signer_1.into_guid(), 'invalid signers result');
+    assert(*signers[1] == signer_2.into_guid(), 'invalid signers result');
 }
 
 #[test]

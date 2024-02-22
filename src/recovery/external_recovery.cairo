@@ -17,7 +17,7 @@ mod external_recovery_component {
     use argent::recovery::interface::{
         Escape, EscapeEnabled, EscapeStatus, IRecovery, EscapeExecuted, EscapeTriggered, EscapeCanceled
     };
-    use argent::signer::signer_signature::{Signer, IntoGuid};
+    use argent::signer::signer_signature::{Signer, SignerTrait};
     use argent::signer_storage::interface::ISignerList;
     use argent::signer_storage::signer_list::{
         signer_list_component, signer_list_component::{SignerListInternalImpl, OwnerAdded, OwnerRemoved, SignerLinked}
@@ -91,8 +91,9 @@ mod external_recovery_component {
                 match target_signers_span.pop_front() {
                     Option::Some(target_signer) => {
                         let new_signer = new_signers_span.pop_front().expect('argent/wrong-length');
-                        let target_guid = (*target_signer).into_guid().expect('argent/invalid-guid');
-                        let new_guid = (*new_signer).into_guid().expect('argent/invalid-guid');
+                        let target_guid = (*target_signer).into_guid();
+                        assert((*new_signer).is_reasonable(), 'argent/invalid-signer');
+                        let new_guid = (*new_signer).into_guid();
                         // target signers are different
                         assert(target_guid.into() > last_target, 'argent/invalid-target-order');
                         // new signers are different

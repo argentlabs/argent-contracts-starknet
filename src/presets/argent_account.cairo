@@ -7,7 +7,9 @@ mod ArgentAccount {
     };
     use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
     use argent::signer::{
-        signer_signature::{Signer, StarknetSigner, StarknetSignature, IntoGuid, SignerSignature, SignerSignatureTrait}
+        signer_signature::{
+            Signer, StarknetSigner, StarknetSignature, SignerTrait, SignerSignature, SignerSignatureTrait
+        }
     };
     use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
     use argent::utils::{
@@ -213,14 +215,16 @@ mod ArgentAccount {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: Signer, guardian: Option<Signer>) {
-        let owner_guid: felt252 = owner.into_guid().expect('argent/null-owner');
+        assert(owner.is_reasonable(), 'argent/unreasonable-owner');
+        let owner_guid: felt252 = owner.into_guid();
         self._signer.write(owner_guid);
         self.emit(OwnerAdded { new_owner_guid: owner_guid });
         self.emit(SignerLinked { signer_guid: owner_guid, signer: owner });
 
         let guardian_guid: felt252 = match guardian {
             Option::Some(guardian) => {
-                let guardian_guid: felt252 = guardian.into_guid().unwrap();
+                assert(guardian.is_reasonable(), 'argent/unreasonable-guardian');
+                let guardian_guid: felt252 = guardian.into_guid();
                 self._guardian.write(guardian_guid);
                 self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                 guardian_guid
@@ -383,7 +387,8 @@ mod ArgentAccount {
             self.reset_escape();
             self.reset_escape_attempts();
 
-            let new_owner_guid = signer_signature.signer_into_guid().expect('argent/null-owner');
+            assert(signer_signature.signer().is_reasonable(), 'argent/unreasonable-owner');
+            let new_owner_guid = signer_signature.signer_into_guid();
             let old_owner = self._signer.read();
             self.assert_valid_new_owner_signature(signer_signature);
 
@@ -399,7 +404,8 @@ mod ArgentAccount {
 
             let new_guardian_guid: felt252 = match new_guardian {
                 Option::Some(guardian) => {
-                    let guardian_guid = guardian.into_guid().unwrap();
+                    assert(guardian.is_reasonable(), 'argent/unreasonable-guardian');
+                    let guardian_guid = guardian.into_guid();
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                     guardian_guid
                 },
@@ -424,7 +430,8 @@ mod ArgentAccount {
 
             let new_guardian_backup_guid: felt252 = match new_guardian_backup {
                 Option::Some(guardian) => {
-                    let guardian_guid = guardian.into_guid().unwrap();
+                    assert(guardian.is_reasonable(), 'argent/unreasonable-guardian-b');
+                    let guardian_guid = guardian.into_guid();
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                     guardian_guid
                 },
@@ -450,7 +457,8 @@ mod ArgentAccount {
             }
 
             self.reset_escape();
-            let new_owner_guid = new_owner.into_guid().expect('argent/null-owner');
+            assert(new_owner.is_reasonable(), 'argent/unreasonable-owner');
+            let new_owner_guid = new_owner.into_guid();
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
             let escape = LegacyEscape { ready_at, escape_type: LegacyEscapeType::Owner, new_signer: new_owner_guid };
             self._escape.write(escape);
@@ -465,7 +473,8 @@ mod ArgentAccount {
 
             let new_guardian_guid: felt252 = match new_guardian {
                 Option::Some(guardian) => {
-                    let guardian_guid = guardian.into_guid().unwrap();
+                    assert(guardian.is_reasonable(), 'argent/unreasonable-guardian');
+                    let guardian_guid = guardian.into_guid();
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                     guardian_guid
                 },
@@ -612,7 +621,7 @@ mod ArgentAccount {
                         let mut calldata: Span<felt252> = call.calldata.span();
                         let new_owner: Signer = Serde::deserialize(ref calldata).expect('argent/invalid-calldata');
                         assert(calldata.is_empty(), 'argent/invalid-calldata');
-                        assert(new_owner.into_guid().is_ok(), 'argent/null-owner');
+                        assert(new_owner.is_reasonable(), 'argent/unreasonable-owner');
                         self.assert_guardian_set();
 
                         assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
@@ -651,9 +660,15 @@ mod ArgentAccount {
                             .expect('argent/invalid-calldata');
                         assert(calldata.is_empty(), 'argent/invalid-calldata');
 
-                        if new_guardian.is_none() || new_guardian.unwrap().into_guid().is_err() {
-                            assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
+                        match new_guardian {
+                            Option::Some(guardian) => {
+                                assert(guardian.is_reasonable(), 'argent/unreasonable-guardian');
+                            },
+                            Option::None => {
+                                assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
+                            }
                         }
+
                         self.assert_guardian_set();
 
                         assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
@@ -756,12 +771,11 @@ mod ArgentAccount {
         }
 
         fn is_valid_owner_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
-            signer_signature.signer_into_guid().unwrap() == self._signer.read()
-                && signer_signature.is_valid_signature(hash)
+            signer_signature.signer_into_guid() == self._signer.read() && signer_signature.is_valid_signature(hash)
         }
 
         fn is_valid_guardian_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
-            let signer_into_guid = signer_signature.signer_into_guid().unwrap();
+            let signer_into_guid = signer_signature.signer_into_guid();
             (signer_into_guid == self._guardian.read() || signer_into_guid == self._guardian_backup.read())
                 && signer_signature.is_valid_signature(hash)
         }

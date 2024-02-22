@@ -1,9 +1,10 @@
 use argent::presets::argent_account::ArgentAccount;
-use argent::signer::signer_signature::{Signer, SignerSignature, StarknetSignature, StarknetSigner, IntoGuid};
+use argent::signer::signer_signature::{Signer, SignerSignature, StarknetSignature, StarknetSigner, SignerTrait};
 use argent_tests::setup::account_test_setup::{
     ITestArgentAccountDispatcherTrait, owner_pubkey, wrong_owner_pubkey, initialize_account_with, initialize_account,
     initialize_account_without_guardian
 };
+use core::option::OptionTrait;
 use core::result::ResultTrait;
 use core::serde::Serde;
 use starknet::{contract_address_const, deploy_syscall, testing::{set_version, set_contract_address}};
@@ -116,7 +117,7 @@ fn change_owner_only_self() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('argent/null-owner', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/unreasonable-owner', 'ENTRYPOINT_FAILED'))]
 fn change_owner_to_zero() {
     let account = initialize_account();
     let signer_signature = SignerSignature::Starknet(
@@ -151,9 +152,9 @@ fn change_owner_wrong_pub_key() {
 #[available_gas(2000000)]
 fn change_guardian() {
     let account = initialize_account();
-    let guardian = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 22 }));
-    account.change_guardian(guardian);
-    assert(account.get_guardian() == guardian.into_guid().unwrap(), 'value should be 22');
+    let guardian = Signer::Starknet(StarknetSigner { pubkey: 22 });
+    account.change_guardian(Option::Some(guardian));
+    assert(account.get_guardian() == guardian.into_guid(), 'value should be 22');
 }
 
 #[test]
@@ -190,9 +191,9 @@ fn change_guardian_to_zero_without_guardian_backup() {
 #[available_gas(2000000)]
 fn change_guardian_backup() {
     let account = initialize_account();
-    let guardian_backup = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 33 }));
-    account.change_guardian_backup(guardian_backup);
-    assert(account.get_guardian_backup() == guardian_backup.into_guid().unwrap(), 'value should be 33');
+    let guardian_backup = Signer::Starknet(StarknetSigner { pubkey: 33 });
+    account.change_guardian_backup(Option::Some(guardian_backup));
+    assert(account.get_guardian_backup() == guardian_backup.into_guid(), 'value should be 33');
 }
 
 #[test]

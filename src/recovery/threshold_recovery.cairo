@@ -20,7 +20,7 @@ mod threshold_recovery_component {
     use argent::recovery::interface::{
         Escape, EscapeEnabled, EscapeStatus, IRecovery, EscapeExecuted, EscapeTriggered, EscapeCanceled
     };
-    use argent::signer::signer_signature::{Signer, IntoGuid};
+    use argent::signer::signer_signature::{Signer, SignerTrait};
     use argent::signer_storage::interface::ISignerList;
     use argent::signer_storage::signer_list::{
         signer_list_component, signer_list_component::{SignerListInternalImpl, OwnerAdded, OwnerRemoved, SignerLinked}
@@ -62,8 +62,9 @@ mod threshold_recovery_component {
             let escape_config: EscapeEnabled = self.escape_enabled.read();
             assert(escape_config.is_enabled == 1, 'argent/escape-disabled');
 
-            let target_signer_guid = (*target_signers.at(0)).into_guid().expect('argent/invalid-target-guid');
-            let new_signer_guid = (*new_signers.at(0)).into_guid().expect('argent/invalid-new-signer-guid');
+            let target_signer_guid = (*target_signers.at(0)).into_guid();
+            assert((*new_signers.at(0)).is_reasonable(), 'argent/invalid-new-signer');
+            let new_signer_guid = (*new_signers.at(0)).into_guid();
             let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
             signer_list_comp.emit(SignerLinked { signer_guid: new_signer_guid, signer: *new_signers.at(0) });
 
@@ -200,7 +201,7 @@ mod threshold_recovery_component {
                     assert(escape_config.is_enabled == 1 && threshold > 1, 'argent/recovery-unavailable');
                     // get escaped signer
                     let escaped_signer: Signer = Serde::deserialize(ref calldata).expect('argent/invalid-calldata');
-                    let escaped_signer_guid = escaped_signer.into_guid().expect('argent/invalid-signer-guid');
+                    let escaped_signer_guid = escaped_signer.into_guid();
                     // check it is a valid signer
                     let is_signer = self.get_contract().is_signer_in_list(escaped_signer_guid);
                     assert(is_signer, 'argent/escaped-not-signer');

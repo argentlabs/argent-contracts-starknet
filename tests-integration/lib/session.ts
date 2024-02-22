@@ -27,6 +27,11 @@ export const ALLOWED_METHOD_HASH = typedData.getTypeHash(
   typedData.TypedDataRevision.Active,
 );
 
+export interface StarknetSig {
+  r: bigint;
+  s: bigint;
+}
+
 export interface AllowedMethod {
   "Contract Address": string;
   selector: string;

@@ -11,7 +11,15 @@ import {
   transaction,
   typedData,
 } from "starknet";
-import { KeyPair, OffChainSession, OutsideExecution, getSessionTypedData, getTypedData, provider } from "./";
+import {
+  KeyPair,
+  OffChainSession,
+  OutsideExecution,
+  StarknetSig,
+  getSessionTypedData,
+  getTypedData,
+  provider,
+} from "./";
 
 export class ArgentX {
   constructor(
@@ -31,7 +39,7 @@ export class BackendService {
     calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
     sessionTokenToSign: OffChainSession,
-  ) {
+  ): Promise<StarknetSig> {
     // verify session param correct
     // extremely simplified version of the backend verification
     // backend must check, timestamps fees, used tokens nfts...
@@ -76,7 +84,7 @@ export class BackendService {
     sessionTokenToSign: OffChainSession,
     accountAddress: string,
     outsideExecution: OutsideExecution,
-  ) {
+  ): Promise<StarknetSig> {
     // TODO backend must verify, timestamps fees, used tokens nfts...
     const currentTypedData = getTypedData(outsideExecution, await provider.getChainId());
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);

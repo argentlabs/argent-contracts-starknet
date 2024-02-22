@@ -1,4 +1,3 @@
-import { OutsideExecution } from "./outsideExecution";
 import {
   typedData,
   ArraySignatureType,
@@ -35,6 +34,8 @@ import {
   BackendService,
   ArgentAccount,
   starknetSigner,
+  StarknetSig,
+  OutsideExecution,
 } from ".";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -228,7 +229,11 @@ export class DappService {
     return [SESSION_MAGIC, ...CallData.compile(sessionToken)];
   }
 
-  private async signTxAndSession(completedSession: OffChainSession, transactionHash: string, accountAddress: string) {
+  private async signTxAndSession(
+    completedSession: OffChainSession,
+    transactionHash: string,
+    accountAddress: string,
+  ): Promise<StarknetSig> {
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
     const sessionWithTxHash = hash.computePoseidonHash(transactionHash, sessionMessageHash);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));

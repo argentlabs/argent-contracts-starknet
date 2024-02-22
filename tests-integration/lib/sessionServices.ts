@@ -265,6 +265,7 @@ export class DappService {
     });
   }
 
+  // method needed as starknetSignatureType in signer.ts is already compiled
   private getStarknetSignatureType(signer: BigNumberish, r: bigint, s: bigint) {
     return new CairoCustomEnum({
       Starknet: { signer, r, s },

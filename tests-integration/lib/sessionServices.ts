@@ -18,6 +18,8 @@ import {
   V3InvocationsSignerDetails,
   stark,
   num,
+  CairoCustomEnum,
+  BigNumberish,
 } from "starknet";
 import {
   OffChainSession,
@@ -27,12 +29,12 @@ import {
   RawSigner,
   getSessionTypedData,
   ALLOWED_METHOD_HASH,
-  StarknetSig,
   getOutsideCall,
   getTypedData,
   provider,
   BackendService,
   ArgentAccount,
+  starknetSigner,
 } from ".";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -185,8 +187,8 @@ export class DappService {
       expires_at: completedSession.expires_at,
       allowed_methods_root: this.buildMerkleTree(completedSession).root.toString(),
       metadata_hash: metadataHash,
-      guardian_key: completedSession.guardian_key,
-      session_key: completedSession.session_key,
+      guardian_key: starknetSigner(completedSession.guardian_key),
+      session_key: starknetSigner(completedSession.session_key),
     };
 
     let backend_signature;
@@ -206,21 +208,27 @@ export class DappService {
       );
     }
 
+    const session_signature = await this.signTxAndSession(completedSession, transactionHash, accountAddress);
+
     const sessionToken = {
       session,
       account_signature: accountSessionSignature,
-      session_signature: await this.signTxAndSession(completedSession, transactionHash, accountAddress),
-      backend_signature,
+      session_signature: this.getStarknetSignatureType(
+        completedSession.session_key,
+        session_signature.r,
+        session_signature.s,
+      ),
+      backend_signature: this.getStarknetSignatureType(
+        completedSession.guardian_key,
+        backend_signature.r,
+        backend_signature.s,
+      ),
       proofs: this.getSessionProofs(completedSession, calls),
     };
     return [SESSION_MAGIC, ...CallData.compile(sessionToken)];
   }
 
-  private async signTxAndSession(
-    completedSession: OffChainSession,
-    transactionHash: string,
-    accountAddress: string,
-  ): Promise<StarknetSig> {
+  private async signTxAndSession(completedSession: OffChainSession, transactionHash: string, accountAddress: string) {
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
     const sessionWithTxHash = hash.computePoseidonHash(transactionHash, sessionMessageHash);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));
@@ -249,6 +257,15 @@ export class DappService {
         return allowedMethod["Contract Address"] == call.contractAddress && allowedMethod.selector == call.entrypoint;
       });
       return tree.getProof(tree.leaves[allowedIndex], tree.leaves);
+    });
+  }
+
+  private getStarknetSignatureType(signer: BigNumberish, r: bigint, s: bigint) {
+    return new CairoCustomEnum({
+      Starknet: { signer, r, s },
+      Secp256k1: undefined,
+      Secp256r1: undefined,
+      Webauthn: undefined,
     });
   }
 }

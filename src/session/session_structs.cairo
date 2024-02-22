@@ -1,29 +1,24 @@
+use argent::signer::signer_signature::{Signer, StarknetSignature, IntoGuid, SignerIntoGuid, SignerSignature};
 use poseidon::{poseidon_hash_span};
 use starknet::account::Call;
 use starknet::{get_tx_info, get_contract_address, ContractAddress};
 
 
 #[derive(Drop, Serde, Copy)]
-struct StarknetSignature {
-    r: felt252,
-    s: felt252,
-}
-
-#[derive(Hash, Drop, Serde, Copy)]
 struct Session {
     expires_at: u64,
     allowed_methods_root: felt252,
     metadata_hash: felt252,
-    guardian_key: felt252,
-    session_key: felt252,
+    guardian_key: Signer,
+    session_key: Signer,
 }
 
 #[derive(Drop, Serde, Copy)]
 struct SessionToken {
     session: Session,
     account_signature: Span<felt252>,
-    session_signature: StarknetSignature,
-    backend_signature: StarknetSignature,
+    session_signature: SignerSignature,
+    backend_signature: SignerSignature,
     proofs: Span<Span<felt252>>,
 }
 
@@ -75,8 +70,8 @@ impl StructHashSession of IStructHash<Session> {
                 (*self.expires_at).into(),
                 *self.allowed_methods_root,
                 *self.metadata_hash,
-                *self.guardian_key,
-                *self.session_key
+                (*self.guardian_key).into_guid().expect('Guardian key is not set'),
+                (*self.session_key).into_guid().expect('Session key is not set')
             ]
                 .span()
         )

@@ -1,4 +1,4 @@
-import { typedData, BigNumberish } from "starknet";
+import { typedData, BigNumberish, CairoCustomEnum, hash } from "starknet";
 import { provider } from ".";
 
 export const sessionTypes = {
@@ -27,11 +27,6 @@ export const ALLOWED_METHOD_HASH = typedData.getTypeHash(
   typedData.TypedDataRevision.Active,
 );
 
-export interface StarknetSig {
-  r: BigNumberish;
-  s: BigNumberish;
-}
-
 export interface AllowedMethod {
   "Contract Address": string;
   selector: string;
@@ -49,15 +44,15 @@ interface OnChainSession {
   expires_at: BigNumberish;
   allowed_methods_root: string;
   metadata_hash: string;
-  guardian_key: BigNumberish;
-  session_key: BigNumberish;
+  guardian_key: CairoCustomEnum;
+  session_key: CairoCustomEnum;
 }
 
 export interface SessionToken {
   session: OnChainSession;
   account_signature: string[];
-  session_signature: StarknetSig;
-  backend_signature: StarknetSig;
+  session_signature: CairoCustomEnum;
+  backend_signature: CairoCustomEnum;
   proofs: string[][];
 }
 

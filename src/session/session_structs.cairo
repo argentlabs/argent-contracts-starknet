@@ -9,14 +9,14 @@ struct Session {
     expires_at: u64,
     allowed_methods_root: felt252,
     metadata_hash: felt252,
-    backend_key: Signer,
-    session_key: Signer,
+    backend_key_guid: felt252,
+    session_key_guid: felt252,
 }
 
 #[derive(Drop, Serde, Copy)]
 struct SessionToken {
     session: Session,
-    account_signature: Span<felt252>,
+    session_authorisation: Span<felt252>,
     session_signature: SignerSignature,
     backend_signature: SignerSignature,
     proofs: Span<Span<felt252>>,
@@ -70,8 +70,8 @@ impl StructHashSession of IStructHash<Session> {
                 (*self.expires_at).into(),
                 *self.allowed_methods_root,
                 *self.metadata_hash,
-                (*self.backend_key).into_guid().expect('session/backend-key-empty'),
-                (*self.session_key).into_guid().expect('session/session-key-empty')
+                *self.backend_key_guid,
+                *self.session_key_guid
             ]
                 .span()
         )

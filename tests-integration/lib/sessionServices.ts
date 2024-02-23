@@ -36,6 +36,7 @@ import {
   starknetSigner,
   StarknetSig,
   OutsideExecution,
+  SignerTypeEnum,
 } from ".";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -56,8 +57,8 @@ export class DappService {
       expires_at,
       allowed_methods,
       metadata,
-      backend_key: this.argentBackend.getBackendKey(accountAddress),
-      session_key: this.sessionKey.publicKey,
+      backend_key_guid: this.intoGuid(this.argentBackend.getBackendKey(accountAddress), SignerTypeEnum.Starknet),
+      session_key_guid: this.intoGuid(this.sessionKey.publicKey, SignerTypeEnum.Starknet),
     };
   }
 
@@ -188,8 +189,8 @@ export class DappService {
       expires_at: completedSession.expires_at,
       allowed_methods_root: this.buildMerkleTree(completedSession).root.toString(),
       metadata_hash: metadataHash,
-      guardian_key: starknetSigner(completedSession.backend_key),
-      session_key: starknetSigner(completedSession.session_key),
+      guardian_key_guid: completedSession.backend_key_guid,
+      session_key_guid: completedSession.session_key_guid,
     };
 
     let backend_signature;
@@ -213,14 +214,14 @@ export class DappService {
 
     const sessionToken = {
       session,
-      account_signature: accountSessionSignature,
+      session_authorisation: accountSessionSignature,
       session_signature: this.getStarknetSignatureType(
-        completedSession.session_key,
+        this.sessionKey.publicKey,
         session_signature.r,
         session_signature.s,
       ),
       backend_signature: this.getStarknetSignatureType(
-        completedSession.backend_key,
+        this.argentBackend.getBackendKey(accountAddress),
         backend_signature.r,
         backend_signature.s,
       ),
@@ -273,5 +274,15 @@ export class DappService {
       Secp256r1: undefined,
       Webauthn: undefined,
     });
+  }
+
+  // method to turn key into guid for now sessions only work with a stark signer
+  // but this method should reflect calculating the guid for the signer in signer_signature.cairo
+  private intoGuid(signer: BigNumberish, signerType: SignerTypeEnum) {
+    if (signerType == SignerTypeEnum.Starknet) {
+      return signer;
+    } else {
+      throw new Error("Not implemented");
+    }
   }
 }

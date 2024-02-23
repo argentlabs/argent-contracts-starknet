@@ -41,21 +41,21 @@ export interface OffChainSession {
   expires_at: BigNumberish;
   allowed_methods: AllowedMethod[];
   metadata: string;
-  backend_key: BigNumberish;
-  session_key: BigNumberish;
+  backend_key_guid: BigNumberish;
+  session_key_guid: BigNumberish;
 }
 
 interface OnChainSession {
   expires_at: BigNumberish;
   allowed_methods_root: string;
   metadata_hash: string;
-  backend_key: CairoCustomEnum;
-  session_key: CairoCustomEnum;
+  backend_key_guid: BigNumberish;
+  session_key_guid: BigNumberish;
 }
 
 export interface SessionToken {
   session: OnChainSession;
-  account_signature: string[];
+  session_authorisation: string[];
   session_signature: CairoCustomEnum;
   backend_signature: CairoCustomEnum;
   proofs: string[][];
@@ -80,8 +80,8 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
       "Expires At": sessionRequest.expires_at,
       "Allowed Methods": sessionRequest.allowed_methods,
       Metadata: sessionRequest.metadata,
-      "Backend Key": sessionRequest.backend_key,
-      "Session Key": sessionRequest.session_key,
+      "Backend Key": sessionRequest.backend_key_guid,
+      "Session Key": sessionRequest.session_key_guid,
     },
   };
 }

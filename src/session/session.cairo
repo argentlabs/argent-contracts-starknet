@@ -17,6 +17,7 @@ mod session_component {
     };
     use argent::signer::signer_signature::{SignerSignatureTrait};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
+    use core::result::ResultTrait;
 
 
     use ecdsa::check_ecdsa_signature;
@@ -84,14 +85,35 @@ mod session_component {
             // TODO assert timestamp
 
             assert(
-                state.is_valid_signature(token_session_hash, token.account_signature.snapshot.clone()) == VALIDATED,
+                state.is_valid_signature(token_session_hash, token.session_authorisation.snapshot.clone()) == VALIDATED,
                 'session/invalid-account-sig'
             );
 
             let (message_hash, _, _) = hades_permutation(transaction_hash, token_session_hash, 2);
 
+            // checks that the session key the user signed is the same key that signed the session
+            assert(
+                token
+                    .session
+                    .session_key_guid == token
+                    .session_signature
+                    .signer_into_guid()
+                    .expect('session/empty-session-key'),
+                'session/incorrect-session-key'
+            );
             assert(token.session_signature.is_valid_signature(message_hash), 'session/invalid-session-sig');
 
+            let guardian_guid = state.get_guardian();
+            let backend_guid_from_sig = token.backend_signature.signer_into_guid().expect('session/empty-backend-key');
+
+            // extra check that if the user has a guardian, it was indeed that guardian that signed the session
+            // !!!! this assumes the guardian key is same as the backend key used for sessions !!!
+            if guardian_guid.is_non_zero() {
+                assert!(backend_guid_from_sig == guardian_guid, "session/backend-key-not-guardian")
+            }
+
+            // checks that the backend key the user signed is the same key that signed the session
+            assert(token.session.backend_key_guid == backend_guid_from_sig, 'session/incorrect-backend-key');
             assert(token.backend_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');
 
             // TODO: possibly add guardian backup check

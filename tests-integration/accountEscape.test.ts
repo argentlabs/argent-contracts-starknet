@@ -326,7 +326,7 @@ describe("ArgentAccount: escape mechanism", function () {
       account.signer = new ArgentSigner(owner);
 
       await expectRevertWithErrorMessage("argent/backup-should-be-null", () =>
-        accountContract.trigger_escape_guardian(compiledSignerOption(undefined)),
+        accountContract.trigger_escape_guardian(compiledSignerOption()),
       );
     });
   });

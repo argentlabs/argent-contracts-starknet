@@ -251,15 +251,15 @@ export function intoGuid(signer: CairoCustomEnum) {
   return signer.unwrap().signer;
 }
 
-export function compiledSignerOption(signer: bigint | undefined) {
+export function compiledSignerOption(signer: bigint | undefined = undefined) {
   return CallData.compile([signerOption(signer)]);
 }
 
-export function signerOption(signer: bigint | undefined) {
+export function signerOption(signer: bigint | undefined = undefined) {
   if (signer) {
-    return new CairoOption<any>(CairoOptionVariant.Some, { signer: starknetSigner(signer) });
+    return new CairoOption(CairoOptionVariant.Some, { signer: starknetSigner(signer) });
   }
-  return new CairoOption<any>(CairoOptionVariant.None);
+  return new CairoOption(CairoOptionVariant.None);
 }
 
 export const randomKeyPair = () => new KeyPair();

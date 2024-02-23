@@ -66,7 +66,7 @@ describe("ArgentAccount", function () {
 
   it("Expect an error when owner is zero", async function () {
     const owner = starknetSigner(0);
-    const guardian = signerOption(undefined);
+    const guardian = signerOption();
     await expectRevertWithErrorMessage("argent/null-owner", () =>
       deployer.deployContract({
         classHash: argentAccountClassHash,
@@ -194,7 +194,7 @@ describe("ArgentAccount", function () {
 
     it("Should be possible to change_guardian to zero when there is no backup", async function () {
       const { accountContract } = await deployAccount();
-      await accountContract.change_guardian(compiledSignerOption(undefined));
+      await accountContract.change_guardian(compiledSignerOption());
 
       await accountContract.get_guardian_backup().should.eventually.equal(0n);
       await accountContract.get_guardian().should.eventually.equal(0n);
@@ -213,7 +213,7 @@ describe("ArgentAccount", function () {
       const { accountContract } = await deployAccountWithGuardianBackup();
       await accountContract.get_guardian_backup().should.eventually.not.equal(0n);
       await expectRevertWithErrorMessage("argent/backup-should-be-null", () =>
-        accountContract.change_guardian(compiledSignerOption(undefined)),
+        accountContract.change_guardian(compiledSignerOption()),
       );
     });
 
@@ -247,7 +247,7 @@ describe("ArgentAccount", function () {
 
     it("Should be possible to change_guardian_backup to zero", async function () {
       const { accountContract } = await deployAccountWithGuardianBackup();
-      await accountContract.change_guardian_backup(compiledSignerOption(undefined));
+      await accountContract.change_guardian_backup(compiledSignerOption());
 
       await accountContract.get_guardian_backup().should.eventually.equal(0n);
     });

@@ -31,11 +31,8 @@ export class WebauthnOwner extends RawSigner {
       origin: location.origin,
       rp_id_hash: uint256.bnToUint256(BigInt(buf2hex(rpIdHash))),
       pubkey: uint256.bnToUint256(BigInt(buf2hex(this.attestation.x))),
-      // TODO use calldata.compile() instead of manual length
-      len1: authenticatorData.length,
-      authenticator_data: authenticatorData,
-      len2: clientDataJSON.length,
-      client_data_json: clientDataJSON,
+      authenticator_data: CallData.compile(Array.from(authenticatorData)),
+      client_data_json: CallData.compile(Array.from(clientDataJSON)),
       signature: {
         r: uint256.bnToUint256(buf2hex(r)),
         s: uint256.bnToUint256(buf2hex(s)),

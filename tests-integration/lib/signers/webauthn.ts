@@ -163,8 +163,8 @@ class WebauthnOwner extends RawSigner {
 
     const cairoAssertion = {
       origin,
-      rp_id_hash: uint256.bnToUint256(BigInt(buf2hex(rpIdHash))),
-      pubkey: uint256.bnToUint256(BigInt(buf2hex(this.attestation.x))),
+      rp_id_hash: uint256.bnToUint256(buf2hex(rpIdHash)),
+      pubkey: uint256.bnToUint256(buf2hex(this.attestation.x)),
       authenticator_data: CallData.compile(Array.from(authenticatorData)),
       client_data_json: CallData.compile(Array.from(clientDataJSON)),
       signature: {

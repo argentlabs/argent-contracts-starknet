@@ -1,4 +1,3 @@
-import { concatBytes } from "@noble/curves/abstract/utils";
 import {
   Abi,
   Account,
@@ -144,19 +143,9 @@ abstract class RawSigner implements SignerInterface {
   }
 
   public async signDeclareTransaction(
-    // contractClass: ContractClass,  // Should be used once class hash is present in ContractClass
-    { classHash, maxFee, senderAddress, chainId, version, nonce, compiledClassHash }: V2DeclareSignerDetails,
+    transaction: V2DeclareSignerDetails,
   ) {
-    const messageHash = hash.calculateDeclareTransactionHash({
-      classHash,
-      senderAddress,
-      version,
-      maxFee,
-      chainId,
-      nonce,
-      compiledClassHash,
-    });
-
+    const messageHash = hash.calculateDeclareTransactionHash(transaction);
     return this.signRaw(messageHash);
   }
 }
@@ -176,11 +165,8 @@ class WebauthnOwner extends RawSigner {
       origin,
       rp_id_hash: uint256.bnToUint256(BigInt(buf2hex(rpIdHash))),
       pubkey: uint256.bnToUint256(BigInt(buf2hex(this.attestation.x))),
-      // TODO use calldata.compile() instead of manual length
-      len1: authenticatorData.length,
-      authenticator_data: authenticatorData,
-      len2: clientDataJSON.length,
-      client_data_json: clientDataJSON,
+      authenticator_data: CallData.compile(Array.from(authenticatorData)),
+      client_data_json: CallData.compile(Array.from(clientDataJSON)),
       signature: {
         r: uint256.bnToUint256(buf2hex(r)),
         s: uint256.bnToUint256(buf2hex(s)),

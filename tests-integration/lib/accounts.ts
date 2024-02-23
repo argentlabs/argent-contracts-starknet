@@ -14,9 +14,13 @@ import {
   AllowArray,
   Call,
 } from "starknet";
-import { ethAddress, loadContract, declareContract, declareFixtureContract, strkAddress } from "./contracts";
-import { provider } from "./provider";
 import {
+  ethAddress,
+  loadContract,
+  declareContract,
+  declareFixtureContract,
+  strkAddress,
+  provider,
   ArgentSigner,
   KeyPair,
   LegacyArgentSigner,

@@ -2,12 +2,10 @@ import { expect } from "chai";
 import { Contract, num, uint256 } from "starknet";
 import {
   deployAccount,
-  deployer,
   ensureAccepted,
   expectEvent,
   expectRevertWithErrorMessage,
   getEthContract,
-  loadContract,
   compiledStarknetSigner,
   waitForTransaction,
   getEthBalance,

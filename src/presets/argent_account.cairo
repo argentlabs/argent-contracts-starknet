@@ -609,9 +609,7 @@ mod ArgentAccount {
                             self.guardian_escape_attempts.write(current_attempts + 1);
                         }
 
-                        let mut calldata = *call.calldata;
-                        let new_owner: Signer = Serde::deserialize(ref calldata).expect('argent/invalid-calldata');
-                        assert(calldata.is_empty(), 'argent/invalid-calldata');
+                        let new_owner: Signer = full_deserialize(*call.calldata).expect('argent/invalid-calldata');
                         assert(new_owner.into_guid().is_ok(), 'argent/null-owner');
                         self.assert_guardian_set();
 
@@ -646,10 +644,9 @@ mod ArgentAccount {
                             assert_valid_escape_parameters(current_attempts);
                             self.owner_escape_attempts.write(current_attempts + 1);
                         }
-                        let mut calldata = *call.calldata;
-                        let new_guardian: Option<Signer> = Serde::deserialize(ref calldata)
+
+                        let new_guardian: Option<Signer> = full_deserialize(*call.calldata)
                             .expect('argent/invalid-calldata');
-                        assert(calldata.is_empty(), 'argent/invalid-calldata');
 
                         if new_guardian.is_none() || new_guardian.unwrap().into_guid().is_err() {
                             assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');

@@ -27,7 +27,6 @@ const rpIdHash: Uint8Array = new Uint8Array([
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
   `${prefix ? "0x" : ""}${[...new Uint8Array(buffer)].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 
-
 interface WebauthnAttestation {
   email: string;
   rpId: string;
@@ -142,9 +141,7 @@ abstract class RawSigner implements SignerInterface {
     return this.signRaw(messageHash);
   }
 
-  public async signDeclareTransaction(
-    transaction: V2DeclareSignerDetails,
-  ) {
+  public async signDeclareTransaction(transaction: V2DeclareSignerDetails) {
     const messageHash = hash.calculateDeclareTransactionHash(transaction);
     return this.signRaw(messageHash);
   }
@@ -156,7 +153,7 @@ class WebauthnOwner extends RawSigner {
   }
 
   public async signRaw(): Promise<ArraySignatureType> {
-    const { authenticatorData, clientDataJSON, r, s, yParity } =  await signTransaction();
+    const { authenticatorData, clientDataJSON, r, s, yParity } = await signTransaction();
     const clientDataText = new TextDecoder().decode(clientDataJSON.buffer);
     const clientData = JSON.parse(clientDataText);
     const clientDataOffset = (substring: string) => clientDataText.indexOf(substring) + substring.length;

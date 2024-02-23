@@ -5,6 +5,7 @@ import { RecoveredSignatureType } from "@noble/curves/abstract/weierstrass";
 import { Wallet, id, Signature as EthersSignature } from "ethers";
 import { KeyPair } from "./signers";
 
+// TODO Use @noble/curves/secp256K1 and get rid of ethers lib?
 export class EthKeyPair extends KeyPair {
   public get publicKey() {
     return BigInt(new Wallet(id(this.privateKey.toString())).address);

@@ -19,13 +19,13 @@ import {
 } from "starknet";
 import { fundAccount, provider } from "..";
 
-const rpIdHash: Uint8Array = new Uint8Array([
-  73, 150, 13, 229, 136, 14, 140, 104, 116, 52, 23, 15, 100, 118, 96, 91, 143, 228, 174, 185, 162, 134, 50, 199, 153,
-  92, 243, 186, 131, 29, 151, 99,
-]);
-
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
   `${prefix ? "0x" : ""}${[...new Uint8Array(buffer)].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+
+const rpIdHash: string = buf2hex(new Uint8Array([
+  73, 150, 13, 229, 136, 14, 140, 104, 116, 52, 23, 15, 100, 118, 96, 91, 143, 228, 174, 185, 162, 134, 50, 199, 153,
+  92, 243, 186, 131, 29, 151, 99,
+]));
 
 interface WebauthnAttestation {
   email: string;
@@ -66,7 +66,7 @@ const attestation = {
 
 export async function deployFixedWebauthnAccount(classHash: string): Promise<Account> {
   const constructorCalldata = CallData.compile({
-    owner: webauthnSigner(origin, buf2hex(rpIdHash), buf2hex(attestation.x)),
+    owner: webauthnSigner(origin, rpIdHash, buf2hex(attestation.x)),
     guardian: new CairoOption(CairoOptionVariant.None),
   });
   const addressSalt = 12n;
@@ -155,7 +155,7 @@ class WebauthnOwner extends RawSigner {
 
     const cairoAssertion = {
       origin,
-      rp_id_hash: uint256.bnToUint256(buf2hex(rpIdHash)),
+      rp_id_hash: uint256.bnToUint256(rpIdHash),
       pubkey: uint256.bnToUint256(buf2hex(this.attestation.x)),
       authenticator_data: CallData.compile(Array.from(authenticatorData)),
       client_data_json: CallData.compile(Array.from(clientDataJSON)),

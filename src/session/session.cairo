@@ -99,7 +99,7 @@ mod session_component {
                     .session_signature
                     .signer_into_guid()
                     .expect('session/empty-session-key'),
-                'session/incorrect-session-key'
+                'session/session-key-mismatch'
             );
             assert(token.session_signature.is_valid_signature(message_hash), 'session/invalid-session-sig');
 
@@ -113,7 +113,7 @@ mod session_component {
             }
 
             // checks that the backend key the user signed is the same key that signed the session
-            assert(token.session.backend_key_guid == backend_guid_from_sig, 'session/incorrect-backend-key');
+            assert(token.session.backend_key_guid == backend_guid_from_sig, 'session/backend-key-mismatch');
             assert(token.backend_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');
 
             // TODO: possibly add guardian backup check

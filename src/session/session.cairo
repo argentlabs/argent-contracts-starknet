@@ -92,15 +92,8 @@ mod session_component {
             let (message_hash, _, _) = hades_permutation(transaction_hash, token_session_hash, 2);
 
             // checks that the session key the user signed is the same key that signed the session
-            assert(
-                token
-                    .session
-                    .session_key_guid == token
-                    .session_signature
-                    .signer_into_guid()
-                    .expect('session/empty-session-key'),
-                'session/session-key-mismatch'
-            );
+            let session_guid_from_sig = token.session_signature.signer_into_guid().expect('session/empty-session-key');
+            assert(token.session.session_key_guid == session_guid_from_sig, 'session/session-key-mismatch');
             assert(token.session_signature.is_valid_signature(message_hash), 'session/invalid-session-sig');
 
             let guardian_guid = state.get_guardian();

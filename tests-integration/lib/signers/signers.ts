@@ -240,7 +240,7 @@ export function compiledStarknetSigner(signer: bigint | number | string) {
   return CallData.compile([starknetSigner(signer)]);
 }
 
-// TODO MOVE THIS AS PART OF THE OBJECT ? 
+// TODO MOVE THIS AS PART OF THE OBJECT ?
 export function starknetSigner(signer: bigint | number | string) {
   return new CairoCustomEnum({
     Starknet: { signer },

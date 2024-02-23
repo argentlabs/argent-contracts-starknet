@@ -68,7 +68,7 @@ const attestation = {
 export async function deployFixedWebauthnAccount(classHash: string): Promise<Account> {
   const constructorCalldata = CallData.compile({
     owner: webauthnSigner(origin, buf2hex(rpIdHash), buf2hex(attestation.x)),
-    guardian: new CairoOption<any>(CairoOptionVariant.None),
+    guardian: new CairoOption(CairoOptionVariant.None),
   });
   const addressSalt = 12n;
   const accountAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
@@ -192,6 +192,8 @@ class WebauthnOwner extends RawSigner {
   }
 }
 
+const webauthnOwner = new WebauthnOwner(attestation);
+
 function webauthnSigner(origin: string, rp_id_hash: string, pubkey: string) {
   return new CairoCustomEnum({
     Starknet: undefined,
@@ -204,7 +206,6 @@ function webauthnSigner(origin: string, rp_id_hash: string, pubkey: string) {
     },
   });
 }
-const webauthnOwner = new WebauthnOwner(attestation);
 
 async function signTransaction(): Promise<WebauthnAssertion> {
   if (firstPass) {

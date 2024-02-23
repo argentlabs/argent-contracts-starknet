@@ -75,8 +75,9 @@ fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAcco
 
     let class_hash = ArgentAccount::TEST_CLASS_HASH.try_into().unwrap();
     let (contract_address, _) = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap();
+    // println!("Contract address: {}", core::starknet::contract_address::contract_address_to_felt252(contract_address));
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')
-    set_contract_address(contract_address_const::<1>());
-    ITestArgentAccountDispatcher { contract_address: contract_address_const::<1>() }
+    set_contract_address(contract_address);
+    ITestArgentAccountDispatcher { contract_address }
 }

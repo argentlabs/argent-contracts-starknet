@@ -3,6 +3,7 @@
 #[starknet::component]
 mod outside_execution_component {
     use argent::outside_execution::interface::{IOutsideExecution, OutsideExecution, IOutsideExecutionCallback};
+    use core::array::ArrayTrait;
     use hash::{HashStateTrait, HashStateExTrait};
     use pedersen::PedersenTrait;
     use starknet::{get_caller_address, get_contract_address, get_block_timestamp, get_tx_info, account::Call};
@@ -79,8 +80,8 @@ mod outside_execution_component {
 
         fn hash_outside_call(self: @ComponentState<TContractState>, outside_call: @Call) -> felt252 {
             let mut state = PedersenTrait::new(0);
-            let mut calldata_span = outside_call.calldata.span();
-            let calldata_len = outside_call.calldata.len().into();
+            let mut calldata_span = *(outside_call.calldata);
+            let calldata_len = calldata_span.len().into();
             let calldata_hash = loop {
                 match calldata_span.pop_front() {
                     Option::Some(item) => state = state.update(*item),

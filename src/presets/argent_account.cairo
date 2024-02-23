@@ -230,7 +230,7 @@ mod ArgentAccount {
         self.emit(AccountCreated { owner: owner_guid, guardian: guardian_guid });
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_only_protocol();
@@ -268,7 +268,7 @@ mod ArgentAccount {
 
     // Required Callbacks
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
@@ -347,7 +347,7 @@ mod ArgentAccount {
         }
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl ArgentUserAccountImpl of IArgentUserAccount<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             let tx_info = get_tx_info().unbox();
@@ -567,7 +567,7 @@ mod ArgentAccount {
     }
 
     // TODO is this still needed?
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl DeprecatedArgentAccountImpl of IDeprecatedArgentAccount<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {
             VERSION_COMPAT
@@ -609,7 +609,7 @@ mod ArgentAccount {
                             self.guardian_escape_attempts.write(current_attempts + 1);
                         }
 
-                        let mut calldata: Span<felt252> = call.calldata.span();
+                        let mut calldata = *call.calldata;
                         let new_owner: Signer = Serde::deserialize(ref calldata).expect('argent/invalid-calldata');
                         assert(calldata.is_empty(), 'argent/invalid-calldata');
                         assert(new_owner.into_guid().is_ok(), 'argent/null-owner');
@@ -627,7 +627,7 @@ mod ArgentAccount {
                             self.guardian_escape_attempts.write(current_attempts + 1);
                         }
 
-                        assert(call.calldata.is_empty(), 'argent/invalid-calldata');
+                        assert((*call.calldata).is_empty(), 'argent/invalid-calldata');
                         self.assert_guardian_set();
                         let current_escape = self._escape.read();
                         assert(current_escape.escape_type == LegacyEscapeType::Owner, 'argent/invalid-escape');
@@ -646,7 +646,7 @@ mod ArgentAccount {
                             assert_valid_escape_parameters(current_attempts);
                             self.owner_escape_attempts.write(current_attempts + 1);
                         }
-                        let mut calldata: Span<felt252> = call.calldata.span();
+                        let mut calldata = *call.calldata;
                         let new_guardian: Option<Signer> = Serde::deserialize(ref calldata)
                             .expect('argent/invalid-calldata');
                         assert(calldata.is_empty(), 'argent/invalid-calldata');
@@ -667,7 +667,7 @@ mod ArgentAccount {
                             assert_valid_escape_parameters(current_attempts);
                             self.owner_escape_attempts.write(current_attempts + 1);
                         }
-                        assert(call.calldata.is_empty(), 'argent/invalid-calldata');
+                        assert((*call.calldata).is_empty(), 'argent/invalid-calldata');
                         self.assert_guardian_set();
                         let current_escape = self._escape.read();
 

@@ -17,3 +17,5 @@ node.json
 
 cairo
 account.json
+dump
+package-lock.json

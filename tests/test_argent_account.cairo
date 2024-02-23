@@ -9,8 +9,8 @@ use core::serde::Serde;
 use starknet::{contract_address_const, deploy_syscall, testing::{set_version, set_contract_address}};
 
 const new_owner_pubkey: felt252 = 0xa7da05a4d664859ccd6e567b935cdfbfe3018c7771cb980892ef38878ae9bc;
-const new_owner_r: felt252 = 0x6cca5abf127594a9104887c889c304d34741e64ad16e0df3e775a648e7d787c;
-const new_owner_s: felt252 = 0x18e14a88a1eac64a3fda7e83c571a26622aac4879baad2926508feaed852fbf;
+const new_owner_r: felt252 = 0x5e95357268146476b6115ef1a58c4bad722ee421293a6a36da66d81f9340150;
+const new_owner_s: felt252 = 0x3a4d9ca9d968eec385d6131c761677b563c277e124cae16ec17ffddfa6424df;
 
 const wrong_owner_r: felt252 = 0x4be5db0599a2e5943f207da3f9bf2dd091acf055b71a1643e9c35fcd7e2c0df;
 const wrong_owner_s: felt252 = 0x2e44d5bad55a0d692e02529e7060f352fde85fae8d5946f28c34a10a29bc83b;
@@ -88,18 +88,20 @@ fn erc165_supported_interfaces() {
     );
 }
 
-#[test]
-#[available_gas(20000000)]
-fn change_owner() {
-    let account = initialize_account();
-    assert(account.get_owner() == owner_pubkey, 'value should be 1');
+// Test commented out becasue the account address is different each time and we can't signe in the cairo tests yet
+// There is an equivalent test in the js tests
+// #[test]
+// #[available_gas(2000000000)]
+// fn change_owner() {
+//     let account = initialize_account();
+//     assert(account.get_owner() == owner_pubkey, 'value should be 1');
 
-    let signer_signature = SignerSignature::Starknet(
-        (StarknetSigner { pubkey: new_owner_pubkey }, StarknetSignature { r: new_owner_r, s: new_owner_s })
-    );
-    account.change_owner(signer_signature);
-    assert(account.get_owner() == new_owner_pubkey, 'value should be new owner pub');
-}
+//     let signer_signature = SignerSignature::Starknet(
+//         (StarknetSigner { pubkey: new_owner_pubkey }, StarknetSignature { r: new_owner_r, s: new_owner_s })
+//     );
+//     account.change_owner(signer_signature);
+//     assert(account.get_owner() == new_owner_pubkey, 'value should be new owner pub');
+// }
 
 #[test]
 #[available_gas(2000000)]

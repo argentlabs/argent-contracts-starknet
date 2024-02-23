@@ -74,7 +74,6 @@ export async function deployFixedWebauthnAccount(classHash: string): Promise<Acc
 
   await fundAccount(accountAddress, 1e16, "ETH");
 
-  // can use either starkOwner or webauthnOwner as signer
   const account = new Account(provider, accountAddress, webauthnOwner, "1");
   const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt }, { maxFee: 1e15 });
   await provider.waitForTransaction(response.transaction_hash);
@@ -82,10 +81,6 @@ export async function deployFixedWebauthnAccount(classHash: string): Promise<Acc
   return account;
 }
 
-/**
- * This class allows to easily implement custom signers by overriding the `signRaw` method.
- * This is based on Starknet.js implementation of Signer, but it delegates the actual signing to an abstract function
- */
 abstract class RawSigner implements SignerInterface {
   abstract signRaw(messageHash: string): Promise<Signature>;
 

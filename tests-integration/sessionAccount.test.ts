@@ -1,4 +1,4 @@
-import { num, Contract, selector, uint256, Account } from "starknet";
+import { num, Contract } from "starknet";
 import {
   declareContract,
   loadContract,
@@ -6,14 +6,11 @@ import {
   deployer,
   AllowedMethod,
   DappService,
-  TokenAmount,
   BackendService,
   ArgentX,
   deployAccount,
   getSessionTypedData,
 } from "./lib";
-
-const tokenLimits: TokenAmount[] = [{ token_address: "0x100", amount: uint256.bnToUint256(10) }];
 
 describe("Hybrid Session Account: execute calls", function () {
   let sessionAccountClassHash: string;
@@ -53,7 +50,7 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(account.address, allowedMethods, tokenLimits);
+    const sessionRequest = dappService.createSessionRequest(account.address, allowedMethods);
 
     // 2. Owner and Guardian signs session
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
@@ -99,9 +96,7 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const tokenLimits: TokenAmount[] = [{ token_address: mockErc20Contract.address, amount: uint256.bnToUint256(10) }];
-
-    const sessionRequest = dappService.createSessionRequest(account.address, allowedMethods, tokenLimits);
+    const sessionRequest = dappService.createSessionRequest(account.address, allowedMethods);
 
     // 2. Wallet signs session
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));

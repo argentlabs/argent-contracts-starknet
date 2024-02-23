@@ -9,8 +9,10 @@ trait ISessionable<TContractState> {
 
 #[starknet::component]
 mod session_component {
-    use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, pedersen::PedersenHasherImpl, MerkleTreeTrait,};
     use argent::account::interface::{IAccount, IArgentUserAccount};
+    use argent::session::merkle_tree_temp::{
+        Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,
+    };
     use argent::session::session::ISessionable;
     use argent::session::session_structs::{
         SessionToken, StarknetSignature, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash
@@ -18,10 +20,8 @@ mod session_component {
     use argent::utils::asserts::{assert_no_self_call, assert_only_self};
 
     use argent::utils::serialization::full_deserialize;
-    use core::option::OptionTrait;
     use ecdsa::check_ecdsa_signature;
-    use hash::{HashStateTrait, HashStateExTrait, LegacyHash};
-    use pedersen::PedersenTrait;
+    use poseidon::{hades_permutation};
     use starknet::{account::Call, get_contract_address, VALIDATED};
 
 
@@ -89,8 +89,7 @@ mod session_component {
                 'session/invalid-account-sig'
             );
 
-            // TODO: use poseidon hash
-            let message_hash = LegacyHash::hash(transaction_hash, token_session_hash);
+            let (message_hash, _, _) = hades_permutation(transaction_hash, token_session_hash, 2);
 
             assert(
                 is_valid_stark_signature(message_hash, token.session.session_key, token.session_signature),
@@ -115,16 +114,15 @@ mod session_component {
 
     fn assert_valid_session_calls(token: SessionToken, mut calls: Span<Call>) {
         assert(token.proofs.len() == calls.len(), 'unaligned-proofs');
-        // TODO: use poseidon hash when using SNIP-12 rev 1
         let merkle_root = token.session.allowed_methods_root;
-        let mut merkle_init: MerkleTree<Hasher> = MerkleTreeTrait::new();
+        let mut merkle_tree: MerkleTree<Hasher> = MerkleTreeImpl::<_, PoseidonHasherImpl>::new();
         let mut proofs = token.proofs;
         loop {
             match calls.pop_front() {
                 Option::Some(call) => {
                     let leaf = call.get_merkle_leaf();
                     let proof = proofs.pop_front().expect('session/proof-empty');
-                    let is_valid = merkle_init.verify(merkle_root, leaf, *proof);
+                    let is_valid = merkle_tree.verify(merkle_root, leaf, *proof);
                     assert(is_valid, 'session/invalid-call');
                 },
                 Option::None => { break; },

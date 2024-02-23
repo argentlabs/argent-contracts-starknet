@@ -9,11 +9,8 @@ import {
   DappService,
   ArgentX,
   AllowedMethod,
-  TokenAmount,
   getSessionTypedData,
 } from "./lib";
-
-const tokenAmounts: TokenAmount[] = [];
 
 const initialTime = 1713139200;
 describe("ArgentAccount: outside execution", function () {
@@ -48,7 +45,7 @@ describe("ArgentAccount: outside execution", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(account.address, allowedMethods, tokenAmounts);
+    const sessionRequest = dappService.createSessionRequest(account.address, allowedMethods);
 
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
 

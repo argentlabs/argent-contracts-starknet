@@ -10,7 +10,6 @@ import {
   shortString,
   hash,
   selector,
-  uint256,
   merkle,
   RPC,
   V2InvocationsSignerDetails,
@@ -25,7 +24,6 @@ import {
   KeyPair,
   randomKeyPair,
   AllowedMethod,
-  TokenAmount,
   RawSigner,
   getSessionTypedData,
   ALLOWED_METHOD_HASH,
@@ -48,17 +46,13 @@ export class DappService {
   public createSessionRequest(
     accountAddress: string,
     allowed_methods: AllowedMethod[],
-    token_amounts: TokenAmount[],
     expires_at = 150,
-    max_fee_usage = { token_address: "0x0", amount: uint256.bnToUint256(1000000n) },
-    nft_contracts: string[] = [],
   ): OffChainSession {
+    const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
     return {
       expires_at,
       allowed_methods,
-      token_amounts,
-      nft_contracts,
-      max_fee_usage,
+      metadata,
       guardian_key: this.argentBackend.getGuardianKey(accountAddress),
       session_key: this.sessionKey.publicKey,
     };
@@ -183,12 +177,14 @@ export class DappService {
     transactionsDetail?: InvocationsSignerDetails,
     outsideExecution?: OutsideExecution,
   ): Promise<ArraySignatureType> {
+    const byteArray = typedData.byteArrayFromString(completedSession.metadata as string);
+    const elements = [byteArray.data.length, ...byteArray.data, byteArray.pending_word, byteArray.pending_word_len];
+    const metadataHash = hash.computePoseidonHashOnElements(elements);
+
     const session = {
       expires_at: completedSession.expires_at,
       allowed_methods_root: this.buildMerkleTree(completedSession).root.toString(),
-      token_amounts: completedSession.token_amounts,
-      nft_contracts: completedSession.nft_contracts,
-      max_fee_usage: completedSession.max_fee_usage,
+      metadata_hash: metadataHash,
       guardian_key: completedSession.guardian_key,
       session_key: completedSession.session_key,
     };
@@ -226,7 +222,7 @@ export class DappService {
     accountAddress: string,
   ): Promise<StarknetSig> {
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
-    const sessionWithTxHash = ec.starkCurve.pedersen(transactionHash, sessionMessageHash);
+    const sessionWithTxHash = hash.computePoseidonHash(transactionHash, sessionMessageHash);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));
     return {
       r: BigInt(signature.r),
@@ -236,13 +232,13 @@ export class DappService {
 
   private buildMerkleTree(completedSession: OffChainSession): merkle.MerkleTree {
     const leaves = completedSession.allowed_methods.map((method) =>
-      hash.computeHashOnElements([
+      hash.computePoseidonHashOnElements([
         ALLOWED_METHOD_HASH,
         method["Contract Address"],
         selector.getSelectorFromName(method.selector),
       ]),
     );
-    return new merkle.MerkleTree(leaves);
+    return new merkle.MerkleTree(leaves, hash.computePoseidonHash);
   }
 
   private getSessionProofs(completedSession: OffChainSession, calls: Call[]): string[][] {

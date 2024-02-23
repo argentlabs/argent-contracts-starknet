@@ -1,45 +1,35 @@
-import { typedData, uint256, BigNumberish } from "starknet";
+import { typedData, BigNumberish } from "starknet";
 import { provider } from ".";
 
 export const sessionTypes = {
-  StarkNetDomain: [
-    { name: "name", type: "felt" },
-    { name: "version", type: "felt" },
-    { name: "chainId", type: "felt" },
+  StarknetDomain: [
+    { name: "name", type: "shortstring" },
+    { name: "version", type: "shortstring" },
+    { name: "chainId", type: "shortstring" },
+    { name: "revision", type: "shortstring" },
   ],
   "Allowed Method": [
-    { name: "Contract Address", type: "felt" },
+    { name: "Contract Address", type: "ContractAddress" },
     { name: "selector", type: "selector" },
   ],
-  TokenAmount: [
-    { name: "token_address", type: "felt" },
-    { name: "amount", type: "u256" },
-  ],
-  u256: [
-    { name: "low", type: "felt" },
-    { name: "high", type: "felt" },
-  ],
   Session: [
-    { name: "Expires At", type: "felt" },
+    { name: "Expires At", type: "timestamp" },
     { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
-    { name: "Token Amounts", type: "TokenAmount*" },
-    { name: "NFT Contracts", type: "felt*" },
-    { name: "Max Fee Usage", type: "TokenAmount" },
+    { name: "Metadata", type: "string" },
     { name: "Guardian Key", type: "felt" },
     { name: "Session Key", type: "felt" },
   ],
 };
 
-export const ALLOWED_METHOD_HASH = typedData.getTypeHash(sessionTypes, "Allowed Method");
+export const ALLOWED_METHOD_HASH = typedData.getTypeHash(
+  sessionTypes,
+  "Allowed Method",
+  typedData.TypedDataRevision.Active,
+);
 
 export interface StarknetSig {
   r: BigNumberish;
   s: BigNumberish;
-}
-
-export interface TokenAmount {
-  token_address: string;
-  amount: uint256.Uint256;
 }
 
 export interface AllowedMethod {
@@ -50,9 +40,7 @@ export interface AllowedMethod {
 export interface OffChainSession {
   expires_at: BigNumberish;
   allowed_methods: AllowedMethod[];
-  token_amounts: TokenAmount[];
-  nft_contracts: string[];
-  max_fee_usage: TokenAmount;
+  metadata: string;
   guardian_key: BigNumberish;
   session_key: BigNumberish;
 }
@@ -60,9 +48,7 @@ export interface OffChainSession {
 interface OnChainSession {
   expires_at: BigNumberish;
   allowed_methods_root: string;
-  token_amounts: TokenAmount[];
-  nft_contracts: string[];
-  max_fee_usage: TokenAmount;
+  metadata_hash: string;
   guardian_key: BigNumberish;
   session_key: BigNumberish;
 }
@@ -81,6 +67,7 @@ export async function getSessionDomain(): Promise<typedData.StarkNetDomain> {
     name: "SessionAccount.session",
     version: "1",
     chainId: chainId,
+    revision: "1",
   };
 }
 
@@ -92,9 +79,7 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
     message: {
       "Expires At": sessionRequest.expires_at,
       "Allowed Methods": sessionRequest.allowed_methods,
-      "Token Amounts": sessionRequest.token_amounts,
-      "NFT Contracts": sessionRequest.nft_contracts,
-      "Max Fee Usage": sessionRequest.max_fee_usage,
+      Metadata: sessionRequest.metadata,
       "Guardian Key": sessionRequest.guardian_key,
       "Session Key": sessionRequest.session_key,
     },

@@ -6,8 +6,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@peculiar/asn1-ecc": "^2.3.8",
-    "@peculiar/asn1-schema": "^2.3.8",
     "ethers": "6.8.1",
     "starknet": "v6.0.0-beta.13"
   },

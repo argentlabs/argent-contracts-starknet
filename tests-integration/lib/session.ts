@@ -16,7 +16,7 @@ export const sessionTypes = {
     { name: "Expires At", type: "timestamp" },
     { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
     { name: "Metadata", type: "string" },
-    { name: "Guardian Key", type: "felt" },
+    { name: "Backend Key", type: "felt" },
     { name: "Session Key", type: "felt" },
   ],
 };
@@ -41,7 +41,7 @@ export interface OffChainSession {
   expires_at: BigNumberish;
   allowed_methods: AllowedMethod[];
   metadata: string;
-  guardian_key: BigNumberish;
+  backend_key: BigNumberish;
   session_key: BigNumberish;
 }
 
@@ -49,7 +49,7 @@ interface OnChainSession {
   expires_at: BigNumberish;
   allowed_methods_root: string;
   metadata_hash: string;
-  guardian_key: CairoCustomEnum;
+  backend_key: CairoCustomEnum;
   session_key: CairoCustomEnum;
 }
 
@@ -80,7 +80,7 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
       "Expires At": sessionRequest.expires_at,
       "Allowed Methods": sessionRequest.allowed_methods,
       Metadata: sessionRequest.metadata,
-      "Guardian Key": sessionRequest.guardian_key,
+      "Backend Key": sessionRequest.backend_key,
       "Session Key": sessionRequest.session_key,
     },
   };

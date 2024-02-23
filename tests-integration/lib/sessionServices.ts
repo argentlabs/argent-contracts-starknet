@@ -56,7 +56,7 @@ export class DappService {
       expires_at,
       allowed_methods,
       metadata,
-      guardian_key: this.argentBackend.getGuardianKey(accountAddress),
+      backend_key: this.argentBackend.getBackendKey(accountAddress),
       session_key: this.sessionKey.publicKey,
     };
   }
@@ -188,7 +188,7 @@ export class DappService {
       expires_at: completedSession.expires_at,
       allowed_methods_root: this.buildMerkleTree(completedSession).root.toString(),
       metadata_hash: metadataHash,
-      guardian_key: starknetSigner(completedSession.guardian_key),
+      guardian_key: starknetSigner(completedSession.backend_key),
       session_key: starknetSigner(completedSession.session_key),
     };
 
@@ -220,7 +220,7 @@ export class DappService {
         session_signature.s,
       ),
       backend_signature: this.getStarknetSignatureType(
-        completedSession.guardian_key,
+        completedSession.backend_key,
         backend_signature.r,
         backend_signature.s,
       ),

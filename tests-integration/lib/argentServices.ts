@@ -33,7 +33,7 @@ export class ArgentX {
 }
 
 export class BackendService {
-  constructor(private guardian: KeyPair) {}
+  constructor(private backendKey: KeyPair) {}
 
   public async signTxAndSession(
     calls: Call[],
@@ -51,7 +51,7 @@ export class BackendService {
         );
       })
     ) {
-      throw new Error("Call not allowed by guardian");
+      throw new Error("Call not allowed by backend");
     }
 
     const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
@@ -75,7 +75,7 @@ export class BackendService {
       transactionsDetail.walletAddress,
     );
     const sessionWithTxHash = hash.computePoseidonHash(msgHash, sessionMessageHash);
-    const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.guardian.privateKey));
+    const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
     return { r: BigInt(signature.r), s: BigInt(signature.s) };
   }
 
@@ -91,11 +91,11 @@ export class BackendService {
 
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(sessionTokenToSign), accountAddress);
     const sessionWithTxHash = hash.computePoseidonHash(messageHash, sessionMessageHash);
-    const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.guardian.privateKey));
+    const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
     return { r: BigInt(signature.r), s: BigInt(signature.s) };
   }
 
-  public getGuardianKey(accountAddress: string): bigint {
-    return this.guardian.publicKey;
+  public getBackendKey(accountAddress: string): bigint {
+    return this.backendKey.publicKey;
   }
 }

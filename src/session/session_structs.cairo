@@ -9,7 +9,7 @@ struct Session {
     expires_at: u64,
     allowed_methods_root: felt252,
     metadata_hash: felt252,
-    guardian_key: Signer,
+    backend_key: Signer,
     session_key: Signer,
 }
 
@@ -37,7 +37,7 @@ const STARKNET_DOMAIN_TYPE_HASH: felt252 =
     );
 const SESSION_TYPE_HASH: felt252 =
     selector!(
-        "\"Session\"(\"Expires At\":\"timestamp\",\"Allowed Methods\":\"merkletree\",\"Metadata\":\"string\",\"Guardian Key\":\"felt\",\"Session Key\":\"felt\")"
+        "\"Session\"(\"Expires At\":\"timestamp\",\"Allowed Methods\":\"merkletree\",\"Metadata\":\"string\",\"Backend Key\":\"felt\",\"Session Key\":\"felt\")"
     );
 const ALLOWED_METHOD_HASH: felt252 =
     selector!("\"Allowed Method\"(\"Contract Address\":\"ContractAddress\",\"selector\":\"selector\")");
@@ -70,8 +70,8 @@ impl StructHashSession of IStructHash<Session> {
                 (*self.expires_at).into(),
                 *self.allowed_methods_root,
                 *self.metadata_hash,
-                (*self.guardian_key).into_guid().expect('Guardian key is not set'),
-                (*self.session_key).into_guid().expect('Session key is not set')
+                (*self.backend_key).into_guid().expect('session/backend-key-empty'),
+                (*self.session_key).into_guid().expect('session/session-key-empty')
             ]
                 .span()
         )

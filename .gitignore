@@ -19,8 +19,3 @@ cairo
 account.json
 dump
 package-lock.json
-
-/.svelte-kit
-vite.config.js.timestamp-*
-vite.config.ts.timestamp-*
-yarn-error.log

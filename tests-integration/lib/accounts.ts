@@ -158,7 +158,7 @@ async function deployAccountInner(
   if (finalParams.useTxV3) {
     fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK"); // 0.01 STRK
   } else {
-    fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 5e14, "ETH"); // 0.001 ETH
+    fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "ETH"); // 0.01 ETH
   }
   if (fundingCall) {
     calls.push(fundingCall);

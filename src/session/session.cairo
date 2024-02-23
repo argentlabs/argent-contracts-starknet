@@ -92,7 +92,7 @@ mod session_component {
 
             assert(token.session_signature.is_valid_signature(message_hash), 'session/invalid-session-sig');
 
-            assert(token.session_signature.is_valid_signature(message_hash), 'session/invalid-guardian-sig');
+            assert(token.backend_signature.is_valid_signature(message_hash), 'session/invalid-guardian-sig');
 
             // TODO: possibly add guardian backup check
 

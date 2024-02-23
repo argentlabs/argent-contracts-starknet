@@ -11,15 +11,7 @@ import {
   transaction,
   typedData,
 } from "starknet";
-import {
-  KeyPair,
-  OffChainSession,
-  OutsideExecution,
-  StarknetSig,
-  getSessionTypedData,
-  getTypedData,
-  provider,
-} from "./";
+import { KeyPair, OffChainSession, OutsideExecution, getSessionTypedData, getTypedData, provider } from "./";
 
 export class ArgentX {
   constructor(
@@ -39,7 +31,7 @@ export class BackendService {
     calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
     sessionTokenToSign: OffChainSession,
-  ): Promise<StarknetSig> {
+  ): Promise<bigint[]> {
     // verify session param correct
     // extremely simplified version of the backend verification
     // backend must check, timestamps fees, used tokens nfts...
@@ -76,7 +68,7 @@ export class BackendService {
     );
     const sessionWithTxHash = hash.computePoseidonHash(msgHash, sessionMessageHash);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
-    return { r: BigInt(signature.r), s: BigInt(signature.s) };
+    return [signature.r, signature.s];
   }
 
   public async signOutsideTxAndSession(
@@ -84,7 +76,7 @@ export class BackendService {
     sessionTokenToSign: OffChainSession,
     accountAddress: string,
     outsideExecution: OutsideExecution,
-  ): Promise<StarknetSig> {
+  ): Promise<bigint[]> {
     // TODO backend must verify, timestamps fees, used tokens nfts...
     const currentTypedData = getTypedData(outsideExecution, await provider.getChainId());
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
@@ -92,7 +84,7 @@ export class BackendService {
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(sessionTokenToSign), accountAddress);
     const sessionWithTxHash = hash.computePoseidonHash(messageHash, sessionMessageHash);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
-    return { r: BigInt(signature.r), s: BigInt(signature.s) };
+    return [signature.r, signature.s];
   }
 
   public getBackendKey(accountAddress: string): bigint {

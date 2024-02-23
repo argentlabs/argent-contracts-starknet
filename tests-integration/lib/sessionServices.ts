@@ -19,6 +19,7 @@ import {
   num,
   CairoCustomEnum,
   BigNumberish,
+  WeierstrassSignatureType,
 } from "starknet";
 import {
   OffChainSession,
@@ -33,8 +34,6 @@ import {
   provider,
   BackendService,
   ArgentAccount,
-  starknetSigner,
-  StarknetSig,
   OutsideExecution,
   SignerTypeEnum,
 } from ".";
@@ -215,15 +214,10 @@ export class DappService {
     const sessionToken = {
       session,
       session_authorisation: accountSessionSignature,
-      session_signature: this.getStarknetSignatureType(
-        this.sessionKey.publicKey,
-        session_signature.r,
-        session_signature.s,
-      ),
+      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, session_signature),
       backend_signature: this.getStarknetSignatureType(
         this.argentBackend.getBackendKey(accountAddress),
-        backend_signature.r,
-        backend_signature.s,
+        backend_signature,
       ),
       proofs: this.getSessionProofs(completedSession, calls),
     };
@@ -234,14 +228,12 @@ export class DappService {
     completedSession: OffChainSession,
     transactionHash: string,
     accountAddress: string,
-  ): Promise<StarknetSig> {
+  ): Promise<bigint[]> {
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
     const sessionWithTxHash = hash.computePoseidonHash(transactionHash, sessionMessageHash);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));
-    return {
-      r: BigInt(signature.r),
-      s: BigInt(signature.s),
-    };
+    console.log("session signature", signature);
+    return [signature.r, signature.s];
   }
 
   private buildMerkleTree(completedSession: OffChainSession): merkle.MerkleTree {
@@ -267,9 +259,9 @@ export class DappService {
   }
 
   // method needed as starknetSignatureType in signer.ts is already compiled
-  private getStarknetSignatureType(signer: BigNumberish, r: bigint, s: bigint) {
+  private getStarknetSignatureType(signer: BigNumberish, signature: bigint[]) {
     return new CairoCustomEnum({
-      Starknet: { signer, r, s },
+      Starknet: { signer, r: signature[0], s: signature[1] },
       Secp256k1: undefined,
       Secp256r1: undefined,
       Webauthn: undefined,

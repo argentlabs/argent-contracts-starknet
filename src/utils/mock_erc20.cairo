@@ -24,7 +24,7 @@ mod Erc20Mock {
         allowances: LegacyMap<(ContractAddress, ContractAddress), u256>,
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl Erc20MockImpl of super::IErc20Mock<ContractState> {
         fn mint(ref self: ContractState, to: ContractAddress, amount: u256) {
             self.balances.write(to, self.balances.read(to) + amount);

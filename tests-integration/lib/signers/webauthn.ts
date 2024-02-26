@@ -29,14 +29,6 @@ const rpIdHash: string = buf2hex(
   ]),
 );
 
-interface WebauthnAttestation {
-  email: string;
-  rpId: string;
-  credentialId: Uint8Array;
-  x: Uint8Array;
-  y: Uint8Array;
-}
-
 interface WebauthnAssertion {
   authenticatorData: Uint8Array;
   clientDataJSON: Uint8Array;
@@ -46,29 +38,17 @@ interface WebauthnAssertion {
 }
 
 let firstPass = true;
-
 const origin = "http://localhost:5173";
-
-const attestation = {
-  email: "axel@argent.xyz",
-  rpId: "localhost",
-  credentialId: new Uint8Array([
-    192, 249, 188, 136, 177, 247, 200, 17, 50, 91, 146, 20, 183, 251, 82, 196, 18, 98, 13, 24, 51, 16, 14, 114, 178,
-    211, 111, 67, 103, 51, 8, 248,
-  ]),
-  x: new Uint8Array([
+const pubkey = buf2hex(
+  new Uint8Array([
     46, 159, 209, 182, 176, 149, 169, 127, 113, 209, 4, 16, 168, 36, 95, 120, 80, 91, 75, 116, 255, 147, 226, 134, 140,
     165, 174, 224, 46, 166, 106, 155,
   ]),
-  y: new Uint8Array([
-    119, 151, 21, 18, 129, 196, 15, 139, 136, 127, 133, 106, 135, 185, 122, 183, 196, 5, 55, 132, 101, 85, 114, 130,
-    152, 255, 19, 103, 155, 236, 95, 103,
-  ]),
-};
+);
 
 export async function deployFixedWebauthnAccount(classHash: string): Promise<Account> {
   const constructorCalldata = CallData.compile({
-    owner: webauthnSigner(origin, rpIdHash, buf2hex(attestation.x)),
+    owner: webauthnSigner(origin, rpIdHash, pubkey),
     guardian: new CairoOption(CairoOptionVariant.None),
   });
   const addressSalt = 12n;
@@ -145,10 +125,6 @@ abstract class RawSigner implements SignerInterface {
 }
 
 class WebauthnOwner extends RawSigner {
-  constructor(public attestation: WebauthnAttestation) {
-    super();
-  }
-
   public async signRaw(): Promise<ArraySignatureType> {
     const { authenticatorData, clientDataJSON, r, s, yParity } = await signTransaction();
     const clientDataText = new TextDecoder().decode(clientDataJSON.buffer);
@@ -158,7 +134,7 @@ class WebauthnOwner extends RawSigner {
     const cairoAssertion = {
       origin,
       rp_id_hash: uint256.bnToUint256(rpIdHash),
-      pubkey: uint256.bnToUint256(buf2hex(this.attestation.x)),
+      pubkey: uint256.bnToUint256(pubkey),
       authenticator_data: CallData.compile(Array.from(authenticatorData)),
       client_data_json: CallData.compile(Array.from(clientDataJSON)),
       signature: {
@@ -173,20 +149,11 @@ class WebauthnOwner extends RawSigner {
       origin_length: clientData.origin.length,
     };
 
-    return CallData.compile([
-      [
-        new CairoCustomEnum({
-          Starknet: undefined,
-          Secp256k1: undefined,
-          Secp256r1: undefined,
-          Webauthn: cairoAssertion,
-        }),
-      ],
-    ]);
+    return webauthnSignatureType(cairoAssertion);
   }
 }
 
-const webauthnOwner = new WebauthnOwner(attestation);
+const webauthnOwner = new WebauthnOwner();
 
 function webauthnSigner(origin: string, rp_id_hash: string, pubkey: string) {
   return new CairoCustomEnum({
@@ -199,6 +166,19 @@ function webauthnSigner(origin: string, rp_id_hash: string, pubkey: string) {
       pubkey: uint256.bnToUint256(BigInt(pubkey)),
     },
   });
+}
+
+function webauthnSignatureType(cairoAssertion: any) {
+  return CallData.compile([
+    [
+      new CairoCustomEnum({
+        Starknet: undefined,
+        Secp256k1: undefined,
+        Secp256r1: undefined,
+        Webauthn: cairoAssertion,
+      }),
+    ],
+  ]);
 }
 
 async function signTransaction(): Promise<WebauthnAssertion> {

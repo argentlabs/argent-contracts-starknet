@@ -10,6 +10,7 @@ import {
   ArgentX,
   deployAccount,
   getSessionTypedData,
+  setTime,
 } from "./lib";
 
 describe("Hybrid Session Account: execute calls", function () {
@@ -69,6 +70,51 @@ describe("Hybrid Session Account: execute calls", function () {
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
     await account.waitForTransaction(transaction_hash);
+    await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+  });
+
+  it("Only execute tx if session not expired", async function () {
+    const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
+
+    const backendService = new BackendService(guardian);
+    const dappService = new DappService(backendService);
+    const argentX = new ArgentX(account, backendService);
+
+    // Session creation:
+    // 1. dapp request session: provides dapp pub key and policies
+    const allowedMethods: AllowedMethod[] = [
+      {
+        "Contract Address": testDappOneContract.address,
+        selector: "set_number_double",
+      },
+    ];
+
+    const sessionRequest = dappService.createSessionRequest(account.address, allowedMethods);
+
+    // 2. Owner and Guardian signs session
+    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
+
+    //  Every request:
+    const calls = [testDappOneContract.populateTransaction.set_number_double(2)];
+
+    // 1. dapp requests backend signature
+    // backend: can verify the parameters and check it was signed by the account then provides signature
+    // 2. dapp signs tx and session, crafts signature and submits transaction
+    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+      account,
+      sessionRequest,
+      accountSessionSignature,
+    );
+    const { transaction_hash } = await accountWithDappSigner.execute(calls);
+
+    await account.waitForTransaction(transaction_hash);
+    await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+
+    // Expired session
+    setTime;
+    const { transaction_hash: expired_tx } = await accountWithDappSigner.execute(calls);
+
+    await account.waitForTransaction(expired_tx);
     await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
   });
 

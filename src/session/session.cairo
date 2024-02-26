@@ -22,7 +22,7 @@ mod session_component {
 
     use ecdsa::check_ecdsa_signature;
     use poseidon::{hades_permutation};
-    use starknet::{account::Call, get_contract_address, VALIDATED};
+    use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp};
 
 
     #[storage]
@@ -68,8 +68,6 @@ mod session_component {
             signature: Span<felt252>,
             is_from_outside: bool,
         ) {
-            // TODO: add check to make sure v3 tx are only possible if the fee token in the session is STRK and same for ETH
-
             let state = self.get_contract();
             let account_address = get_contract_address();
 
@@ -82,7 +80,9 @@ mod session_component {
             let token_session_hash = token.session.get_message_hash();
 
             assert(!self.revoked_session.read(token_session_hash), 'session/revoked');
-            // TODO assert timestamp
+
+            // timestamp check
+            assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
 
             assert(
                 state.is_valid_signature(token_session_hash, token.session_authorisation.snapshot.clone()) == VALIDATED,

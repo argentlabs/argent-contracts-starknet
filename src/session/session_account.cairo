@@ -6,7 +6,9 @@ mod SessionAccount {
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
     use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
-    use argent::session::session::{SESSION_MAGIC, session_component::Internal, session_component,};
+    use argent::session::{
+        session_structs::SessionToken, session::{SESSION_MAGIC, session_component::Internal, session_component,}
+    };
     use argent::signer::{
         signer_signature::{Signer, StarknetSigner, StarknetSignature, IntoGuid, SignerSignature, SignerSignatureTrait}
     };
@@ -262,6 +264,13 @@ mod SessionAccount {
             assert_only_protocol();
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
+            let signature = tx_info.signature;
+            if *signature[0] == SESSION_MAGIC {
+                let mut serialized = signature.slice(1, signature.len() - 1);
+                let token: SessionToken = Serde::deserialize(ref serialized).expect('session/invalid-calldata');
+                assert(serialized.is_empty(), 'session/invalid-calldata');
+                assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
+            }
 
             let retdata = execute_multicall(calls.span());
 

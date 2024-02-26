@@ -1,4 +1,5 @@
 use array::ArrayTrait;
+use core::result::ResultTrait;
 
 use starknet::{SyscallResult, storage_access::{Store, StorageBaseAddress}};
 trait ArrayExtTrait<T> {
@@ -54,14 +55,14 @@ impl StoreFelt252Array of Store<Array<felt252>> {
     ) -> SyscallResult<()> {
         // // Store the length of the array in the first storage slot.
         let len: u8 = value.len().try_into().expect('argent/array-too-large');
-        Store::<u8>::write_at_offset(address_domain, base, offset, len);
+        Store::<u8>::write_at_offset(address_domain, base, offset, len).expect('argent/unable-to-write');
         offset += 1;
 
         // Store the array elements sequentially
         loop {
             match value.pop_front() {
                 Option::Some(element) => {
-                    Store::<felt252>::write_at_offset(address_domain, base, offset, element);
+                    Store::<felt252>::write_at_offset(address_domain, base, offset, element).unwrap();
                     offset += Store::<felt252>::size();
                 },
                 Option::None(_) => { break Result::Ok(()); }

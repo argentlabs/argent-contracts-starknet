@@ -109,7 +109,7 @@ mod ArgentUserAccount {
         self.multisig.initialize(new_threshold, signers);
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_only_protocol();
@@ -146,7 +146,7 @@ mod ArgentUserAccount {
         }
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl ArgentAccountImpl of IArgentAccount<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             panic_with_felt252('argent/declare-not-available') // Not implemented yet
@@ -163,7 +163,6 @@ mod ArgentUserAccount {
             assert_correct_deploy_account_version(tx_info.version);
             assert_no_unsupported_v3_fields();
             // only 1 signer needed to deploy
-            let mut signature = tx_info.signature;
             let is_valid = self.is_valid_signature_with_conditions(tx_info.transaction_hash, 1, 0, tx_info.signature);
             assert(is_valid, 'argent/invalid-signature');
             VALIDATED
@@ -179,7 +178,7 @@ mod ArgentUserAccount {
         }
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
@@ -232,7 +231,7 @@ mod ArgentUserAccount {
             let threshold = self.multisig.threshold.read();
             let first_call = calls.at(0);
 
-            match self.parse_escape_call(*first_call.to, *first_call.selector, first_call.calldata.span(), threshold) {
+            match self.parse_escape_call(*first_call.to, *first_call.selector, *first_call.calldata, threshold) {
                 Option::Some((
                     required_signatures, excluded_signer_guid
                 )) => {

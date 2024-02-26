@@ -10,6 +10,8 @@ import {
   ArgentX,
   deployAccount,
   getSessionTypedData,
+  setTime,
+  expectRevertWithErrorMessage,
 } from "./lib";
 
 describe("Hybrid Session Account: execute calls", function () {
@@ -32,6 +34,10 @@ describe("Hybrid Session Account: execute calls", function () {
     });
     mockErc20Contract = await loadContract(delpoyedErc20.contract_address);
     testDappOneContract = await loadContract(deployedTestDappOne.contract_address);
+  });
+
+  beforeEach(async function () {
+    await setTime(100n);
   });
 
   it("Call a contract with backend signer", async function () {
@@ -66,9 +72,49 @@ describe("Hybrid Session Account: execute calls", function () {
       sessionRequest,
       accountSessionSignature,
     );
+
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
     await account.waitForTransaction(transaction_hash);
+    await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+  });
+
+  it("Only execute tx if session not expired", async function () {
+    const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
+
+    const backendService = new BackendService(guardian);
+    const dappService = new DappService(backendService);
+    const argentX = new ArgentX(account, backendService);
+
+    const expiresAt = 200n;
+
+    const allowedMethods: AllowedMethod[] = [
+      {
+        "Contract Address": testDappOneContract.address,
+        selector: "set_number_double",
+      },
+    ];
+
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, expiresAt);
+    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
+    const calls = [testDappOneContract.populateTransaction.set_number_double(2)];
+    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+      account,
+      sessionRequest,
+      accountSessionSignature,
+    );
+    const { transaction_hash } = await accountWithDappSigner.execute(calls);
+
+    // non expired session
+    await setTime(expiresAt - 1n);
+    await account.waitForTransaction(transaction_hash);
+    await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+
+    // Expired session
+    await setTime(expiresAt + 1n);
+    await expectRevertWithErrorMessage("session/expired", () =>
+      accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
+    );
     await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
   });
 

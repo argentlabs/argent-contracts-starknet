@@ -17,12 +17,10 @@ mod session_component {
     };
     use argent::signer::signer_signature::{SignerSignatureTrait};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
-    use core::result::ResultTrait;
-
 
     use ecdsa::check_ecdsa_signature;
     use poseidon::{hades_permutation};
-    use starknet::{account::Call, get_contract_address, VALIDATED};
+    use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp};
 
 
     #[storage]
@@ -68,21 +66,21 @@ mod session_component {
             signature: Span<felt252>,
             is_from_outside: bool,
         ) {
-            // TODO: add check to make sure v3 tx are only possible if the fee token in the session is STRK and same for ETH
-
             let state = self.get_contract();
             let account_address = get_contract_address();
 
             assert_no_self_call(calls, account_address);
             assert(*signature[0] == super::SESSION_MAGIC, 'session/invalid-magic-value');
-            let mut serialized = signature.slice(1, signature.len() - 1);
-            let token: SessionToken = Serde::deserialize(ref serialized).expect('session/invalid-calldata');
-            assert(serialized.is_empty(), 'session/invalid-calldata');
+
+            let token: SessionToken = full_deserialize(signature.slice(1, signature.len() - 1))
+                .expect('session/invalid-calldata');
 
             let token_session_hash = token.session.get_message_hash();
 
             assert(!self.revoked_session.read(token_session_hash), 'session/revoked');
-            // TODO assert timestamp
+
+            // timestamp check
+            assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
 
             assert(
                 state.is_valid_signature(token_session_hash, token.session_authorisation.snapshot.clone()) == VALIDATED,

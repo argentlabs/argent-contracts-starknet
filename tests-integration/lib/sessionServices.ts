@@ -19,7 +19,6 @@ import {
   num,
   CairoCustomEnum,
   BigNumberish,
-  WeierstrassSignatureType,
 } from "starknet";
 import {
   OffChainSession,
@@ -46,7 +45,7 @@ export class DappService {
     public sessionKey: KeyPair = randomKeyPair(),
   ) {}
 
-  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at = 150): OffChainSession {
+  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at = 150n): OffChainSession {
     const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
     return {
       expires_at,

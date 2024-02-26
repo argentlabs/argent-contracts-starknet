@@ -2,7 +2,6 @@ use argent::utils::{calls::execute_multicall, test_dapp::TestDapp};
 use starknet::{contract_address_const, deploy_syscall, account::Call};
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('argent/multicall-failed', 0, 'CONTRACT_NOT_DEPLOYED'))]
 fn execute_multicall_simple() {
     let call = Call { to: contract_address_const::<42>(), selector: 43, calldata: array![].span() };
@@ -11,7 +10,6 @@ fn execute_multicall_simple() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('argent/multicall-failed', 2, 'test dapp reverted', 'ENTRYPOINT_FAILED'))]
 fn execute_multicall_at_one() {
     let class_hash = TestDapp::TEST_CLASS_HASH.try_into().unwrap();

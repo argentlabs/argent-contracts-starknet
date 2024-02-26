@@ -9,7 +9,6 @@ use core::serde::Serde;
 use starknet::deploy_syscall;
 
 #[test]
-#[available_gas(20000000)]
 fn valid_initialize() {
     let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
     let signers_array = array![signer_1];
@@ -25,7 +24,6 @@ fn valid_initialize() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn valid_initialize_two_signers() {
     let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
     let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
@@ -44,7 +42,6 @@ fn valid_initialize_two_signers() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn invalid_threshold() {
     let threshold = 3;
     let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
@@ -58,7 +55,6 @@ fn invalid_threshold() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn change_threshold() {
     let threshold = 1;
     let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
@@ -71,7 +67,6 @@ fn change_threshold() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn add_signers() {
     // init
     let multisig = initialize_multisig_with_one_signer();
@@ -87,7 +82,6 @@ fn add_signers() {
 }
 
 #[test]
-#[available_gas(20000000)]
 #[should_panic(expected: ('argent/already-a-signer', 'ENTRYPOINT_FAILED'))]
 fn add_signer_already_in_list() {
     // init
@@ -99,13 +93,11 @@ fn add_signer_already_in_list() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn get_name() {
     assert(initialize_multisig().get_name() == 'ArgentMultisig', 'Name should be ArgentMultisig');
 }
 
 #[test]
-#[available_gas(20000000)]
 fn get_version() {
     let version = initialize_multisig().get_version();
     assert(version.major == 0, 'Version major');

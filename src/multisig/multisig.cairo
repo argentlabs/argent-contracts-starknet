@@ -141,7 +141,7 @@ mod multisig_component {
         fn replace_signer(ref self: ComponentState<TContractState>, signer_to_remove: Signer, signer_to_add: Signer) {
             assert_only_self();
             let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
-            let (new_signers_count, last_signer) = signer_list_comp.load();
+            let (_, last_signer) = signer_list_comp.load();
 
             let signer_to_remove_guid = signer_to_remove.into_guid().expect('argent/invalid-target-guid');
             let signer_to_add_guid = signer_to_add.into_guid().expect('argent/invalid-new-signer-guid');

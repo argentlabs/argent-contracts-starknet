@@ -3,7 +3,6 @@ use argent::signer::webauthn::decode_base64;
 use argent::utils::bytes::ByteArrayExt;
 
 #[test]
-#[available_gas(1_000_000_000)]
 fn base64_decoding() {
     // 0xdeadbeef
     // 3q2-7w==
@@ -13,7 +12,6 @@ fn base64_decoding() {
 }
 
 #[test]
-#[available_gas(1_000_000_000)]
 fn base64_unpadded_decoding() {
     // 0xdeadbeef
     // 3q2-7w
@@ -23,7 +21,6 @@ fn base64_unpadded_decoding() {
 }
 
 #[test]
-#[available_gas(1_000_000_000)]
 fn base64_max_felt_decoding() {
     // CAAAAAAAABEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
     let encoded: Array<u8> = "CAAAAAAAABEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=".into_bytes();

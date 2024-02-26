@@ -71,7 +71,7 @@ async function calculate_account_signature_with_eth() {
 async function calculate_change_owner_signature() {
   // message_hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
   const chain_id = "0";
-  const contract_address = "0x1";
+  const contract_address = "0x161ECB417F1E71ACC57AB04B9125EC43584469F09E501803A4707A8F3E6C1EC";
   const old_owner = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfcan;
 
   const starknetSignature = await signChangeOwnerMessage(contract_address, old_owner, new_owner, chain_id);

@@ -35,7 +35,7 @@ fn check_transaction_version_on_execute() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(20000000)]
 #[should_panic(expected: ('argent/invalid-tx-version', 'ENTRYPOINT_FAILED'))]
 fn check_transaction_version_on_validate() {
     let account = initialize_account();

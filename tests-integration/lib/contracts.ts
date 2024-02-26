@@ -62,12 +62,12 @@ export async function getStrkContract() {
 
 export async function getEthBalance(accountAddress: string): Promise<bigint> {
   const ethContract = await getEthContract();
-  return uint256.uint256ToBN((await ethContract.balanceOf(accountAddress)).balance);
+  return await ethContract.balanceOf(accountAddress);
 }
 
 export async function getStrkBalance(accountAddress: string): Promise<bigint> {
   const strkContract = await getStrkContract();
-  return uint256.uint256ToBN((await strkContract.balanceOf(accountAddress)).balance);
+  return await strkContract.balanceOf(accountAddress);
 }
 
 export function removeFromCache(contractName: string) {

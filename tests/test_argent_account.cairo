@@ -20,7 +20,6 @@ const wrong_owner_r: felt252 = 0x4be5db0599a2e5943f207da3f9bf2dd091acf055b71a164
 const wrong_owner_s: felt252 = 0x2e44d5bad55a0d692e02529e7060f352fde85fae8d5946f28c34a10a29bc83b;
 
 #[test]
-#[available_gas(2000000)]
 fn initialize() {
     let account = initialize_account_with(1, 2);
     assert(account.get_owner() == 1, 'value should be 1');
@@ -29,7 +28,6 @@ fn initialize() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('argent/invalid-tx-version', 'ENTRYPOINT_FAILED'))]
 fn check_transaction_version_on_execute() {
     let account = initialize_account();
@@ -39,7 +37,6 @@ fn check_transaction_version_on_execute() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('argent/invalid-tx-version', 'ENTRYPOINT_FAILED'))]
 fn check_transaction_version_on_validate() {
     let account = initialize_account();
@@ -49,7 +46,6 @@ fn check_transaction_version_on_validate() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn initialize_with_null_owner() {
     let mut calldata = array![];
     let null_signer = starknetSignerFromPubKey(0);
@@ -60,7 +56,6 @@ fn initialize_with_null_owner() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn initialized_no_guardian_no_backup() {
     let account = initialize_account_with(1, 0);
     assert(account.get_owner() == 1, 'value should be 1');
@@ -69,7 +64,6 @@ fn initialized_no_guardian_no_backup() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn erc165_unsupported_interfaces() {
     let account = initialize_account();
     assert(!account.supports_interface(0), 'Should not support 0');
@@ -77,7 +71,6 @@ fn erc165_unsupported_interfaces() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn erc165_supported_interfaces() {
     let account = initialize_account();
     assert(account.supports_interface(0x3f918d17e5ee77373b56385708f855659a07f75997f365cf87748628532a055), 'IERC165');
@@ -92,24 +85,21 @@ fn erc165_supported_interfaces() {
     );
 }
 
-#[test]
-#[available_gas(2000000000)]
-fn change_owner() {
-    let account = initialize_account();
-    assert(account.get_owner() == owner_pubkey, 'value should be 1');
-
-    let signer_signature = SignerSignature::Starknet(
-        (
-            StarknetSigner { pubkey: new_owner_pubkey.try_into().expect('argent/zero-pubkey') },
-            StarknetSignature { r: new_owner_r, s: new_owner_s }
-        )
-    );
-    account.change_owner(signer_signature);
-    assert(account.get_owner() == new_owner_pubkey.try_into().unwrap(), 'value should be new owner pub');
-}
+// Test commented until we use forge, because the account address keeps changing.
+// There is an equivalent test on the integration tests
+// #[test]
+// fn change_owner() {
+//     let signer_signature = SignerSignature::Starknet(
+//         (
+//             StarknetSigner { pubkey: new_owner_pubkey.try_into().expect('argent/zero-pubkey') },
+//             StarknetSignature { r: new_owner_r, s: new_owner_s }
+//         )
+//     );
+//     account.change_owner(signer_signature);
+//     assert(account.get_owner() == new_owner_pubkey.try_into().unwrap(), 'value should be new owner pub');
+// }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('argent/only-self', 'ENTRYPOINT_FAILED'))]
 fn change_owner_only_self() {
     let account = initialize_account();
@@ -124,8 +114,12 @@ fn change_owner_only_self() {
 }
 
 #[test]
+<<<<<<< HEAD
 #[available_gas(2000000)]
 #[should_panic(expected: ('argent/unreasonable-owner', 'ENTRYPOINT_FAILED'))]
+=======
+#[should_panic(expected: ('argent/null-owner', 'ENTRYPOINT_FAILED'))]
+>>>>>>> update-cairo
 fn change_owner_to_zero() {
     let account = initialize_account();
     let signer_signature = SignerSignature::Starknet(
@@ -138,7 +132,6 @@ fn change_owner_to_zero() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('argent/invalid-owner-sig', 'ENTRYPOINT_FAILED'))]
 fn change_owner_invalid_message() {
     let account = initialize_account();
@@ -152,7 +145,6 @@ fn change_owner_invalid_message() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('argent/invalid-owner-sig', 'ENTRYPOINT_FAILED'))]
 fn change_owner_wrong_pub_key() {
     let account = initialize_account();
@@ -166,7 +158,6 @@ fn change_owner_wrong_pub_key() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn change_guardian() {
     let account = initialize_account();
     let guardian = starknetSignerFromPubKey(22);
@@ -175,7 +166,6 @@ fn change_guardian() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('argent/only-self', 'ENTRYPOINT_FAILED'))]
 fn change_guardian_only_self() {
     let account = initialize_account();
@@ -185,7 +175,6 @@ fn change_guardian_only_self() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('argent/backup-should-be-null', 'ENTRYPOINT_FAILED'))]
 fn change_guardian_to_zero() {
     let account = initialize_account();
@@ -196,7 +185,6 @@ fn change_guardian_to_zero() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn change_guardian_to_zero_without_guardian_backup() {
     let account = initialize_account();
     let guardian: Option<Signer> = Option::None;
@@ -205,7 +193,6 @@ fn change_guardian_to_zero_without_guardian_backup() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn change_guardian_backup() {
     let account = initialize_account();
     let guardian_backup = starknetSignerFromPubKey(33);
@@ -214,7 +201,6 @@ fn change_guardian_backup() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('argent/only-self', 'ENTRYPOINT_FAILED'))]
 fn change_guardian_backup_only_self() {
     let account = initialize_account();
@@ -224,7 +210,6 @@ fn change_guardian_backup_only_self() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn change_guardian_backup_to_zero() {
     let account = initialize_account();
     let guardian_backup: Option<Signer> = Option::None;
@@ -233,7 +218,6 @@ fn change_guardian_backup_to_zero() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('argent/guardian-required', 'ENTRYPOINT_FAILED'))]
 fn change_invalid_guardian_backup() {
     let account = initialize_account_without_guardian();
@@ -242,7 +226,6 @@ fn change_invalid_guardian_backup() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn get_version() {
     let version = initialize_account().get_version();
     assert(version.major == 0, 'Version major = 0');
@@ -251,25 +234,21 @@ fn get_version() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn getVersion() {
     assert(initialize_account().getVersion() == '0.4.0', 'Version should be 0.4.0');
 }
 
 #[test]
-#[available_gas(2000000)]
 fn get_name() {
     assert(initialize_account().get_name() == 'ArgentAccount', 'Name should be ArgentAccount');
 }
 
 #[test]
-#[available_gas(2000000)]
 fn getName() {
     assert(initialize_account().getName() == 'ArgentAccount', 'Name should be ArgentAccount');
 }
 
 #[test]
-#[available_gas(2000000)]
 fn unsuported_supportsInterface() {
     let account = initialize_account();
     assert(account.supportsInterface(0) == 0, 'value should be false');
@@ -277,7 +256,6 @@ fn unsuported_supportsInterface() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn supportsInterface() {
     let account = initialize_account();
     assert(account.supportsInterface(0x01ffc9a7) == 1, 'ERC165_IERC165_INTERFACE_ID');

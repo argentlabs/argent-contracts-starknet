@@ -6,7 +6,6 @@ use argent_tests::setup::multisig_test_setup::{
 };
 
 #[test]
-#[available_gas(20000000)]
 fn reorder_2_signers() {
     // init
     let threshold = 2;
@@ -36,7 +35,6 @@ fn reorder_2_signers() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn reorder_3_signers() {
     // init
     let threshold = 2;
@@ -66,7 +64,6 @@ fn reorder_3_signers() {
 }
 
 #[test]
-#[available_gas(20000000)]
 #[should_panic(expected: ('argent/too-short', 'ENTRYPOINT_FAILED'))]
 fn reorder_signers_wrong_length() {
     // init
@@ -90,7 +87,6 @@ fn reorder_signers_wrong_length() {
 }
 
 #[test]
-#[available_gas(20000000)]
 #[should_panic(expected: ('argent/not-a-signer', 'ENTRYPOINT_FAILED'))]
 fn reorder_signers_wrong_signer() {
     // init

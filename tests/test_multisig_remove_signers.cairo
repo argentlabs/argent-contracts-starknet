@@ -5,7 +5,6 @@ use argent_tests::setup::multisig_test_setup::{
 };
 
 #[test]
-#[available_gas(20000000)]
 fn remove_signers_first() {
     // init
     let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
@@ -26,7 +25,6 @@ fn remove_signers_first() {
     assert(multisig.is_signer(signer_3), 'signer 3 was removed');
 }
 #[test]
-#[available_gas(20000000)]
 fn remove_signers_center() {
     // init
     let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
@@ -48,7 +46,6 @@ fn remove_signers_center() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn remove_signers_last() {
     // init
     let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
@@ -70,7 +67,6 @@ fn remove_signers_last() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn remove_1_and_2() {
     // init
     let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
@@ -92,7 +88,6 @@ fn remove_1_and_2() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn remove_1_and_3() {
     // init
     let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
@@ -114,7 +109,6 @@ fn remove_1_and_3() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn remove_2_and_3() {
     // init
     let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
@@ -136,7 +130,6 @@ fn remove_2_and_3() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn remove_2_and_1() {
     // init
     let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
@@ -158,7 +151,6 @@ fn remove_2_and_1() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn remove_3_and_1() {
     // init
     let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
@@ -180,7 +172,6 @@ fn remove_3_and_1() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn remove_3_and_2() {
     // init
     let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
@@ -202,7 +193,6 @@ fn remove_3_and_2() {
 }
 
 #[test]
-#[available_gas(20000000)]
 #[should_panic(expected: ('argent/not-a-signer', 'ENTRYPOINT_FAILED'))]
 fn remove_invalid_signers() {
     // init
@@ -214,7 +204,6 @@ fn remove_invalid_signers() {
 }
 
 #[test]
-#[available_gas(20000000)]
 #[should_panic(expected: ('argent/bad-threshold', 'ENTRYPOINT_FAILED'))]
 fn remove_signers_invalid_threshold() {
     // init

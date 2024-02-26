@@ -100,9 +100,6 @@ mod session_component {
             let guardian_guid = state.get_guardian();
             let backend_guid_from_sig = token.backend_signature.signer_into_guid().expect('session/empty-backend-key');
             assert!(backend_guid_from_sig == guardian_guid, "session/backend-key-not-guardian");
-
-            // checks that the backend key the user signed is the same key that signed the session
-            assert(token.session.backend_key_guid == backend_guid_from_sig, 'session/backend-key-mismatch');
             assert(token.backend_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');
 
             // TODO: possibly add guardian backup check

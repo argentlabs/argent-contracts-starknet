@@ -9,7 +9,6 @@ struct Session {
     expires_at: u64,
     allowed_methods_root: felt252,
     metadata_hash: felt252,
-    backend_key_guid: felt252,
     session_key_guid: felt252,
 }
 
@@ -37,7 +36,7 @@ const STARKNET_DOMAIN_TYPE_HASH: felt252 =
     );
 const SESSION_TYPE_HASH: felt252 =
     selector!(
-        "\"Session\"(\"Expires At\":\"timestamp\",\"Allowed Methods\":\"merkletree\",\"Metadata\":\"string\",\"Backend Key\":\"felt\",\"Session Key\":\"felt\")"
+        "\"Session\"(\"Expires At\":\"timestamp\",\"Allowed Methods\":\"merkletree\",\"Metadata\":\"string\",\"Session Key\":\"felt\")"
     );
 const ALLOWED_METHOD_HASH: felt252 =
     selector!("\"Allowed Method\"(\"Contract Address\":\"ContractAddress\",\"selector\":\"selector\")");
@@ -70,7 +69,6 @@ impl StructHashSession of IStructHash<Session> {
                 (*self.expires_at).into(),
                 *self.allowed_methods_root,
                 *self.metadata_hash,
-                *self.backend_key_guid,
                 *self.session_key_guid
             ]
                 .span()

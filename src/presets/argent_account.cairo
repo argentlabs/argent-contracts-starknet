@@ -29,7 +29,7 @@ mod ArgentAccount {
         storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252}
     };
 
-    const NAME: felt252 = 'SessionAccount';
+    const NAME: felt252 = 'ArgentAccount';
     const VERSION_MAJOR: u8 = 0;
     const VERSION_MINOR: u8 = 4;
     const VERSION_PATCH: u8 = 0;

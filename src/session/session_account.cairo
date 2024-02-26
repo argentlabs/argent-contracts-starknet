@@ -266,9 +266,8 @@ mod SessionAccount {
             assert_correct_invoke_version(tx_info.version);
             let signature = tx_info.signature;
             if *signature[0] == SESSION_MAGIC {
-                let mut serialized = signature.slice(1, signature.len() - 1);
-                let token: SessionToken = Serde::deserialize(ref serialized).expect('session/invalid-calldata');
-                assert(serialized.is_empty(), 'session/invalid-calldata');
+                let token: SessionToken = full_deserialize(signature.slice(1, signature.len() - 1))
+                    .expect('session/invalid-calldata');
                 assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
             }
 

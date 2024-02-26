@@ -17,8 +17,6 @@ mod session_component {
     };
     use argent::signer::signer_signature::{SignerSignatureTrait};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
-    use core::result::ResultTrait;
-
 
     use ecdsa::check_ecdsa_signature;
     use poseidon::{hades_permutation};
@@ -73,9 +71,9 @@ mod session_component {
 
             assert_no_self_call(calls, account_address);
             assert(*signature[0] == super::SESSION_MAGIC, 'session/invalid-magic-value');
-            let mut serialized = signature.slice(1, signature.len() - 1);
-            let token: SessionToken = Serde::deserialize(ref serialized).expect('session/invalid-calldata');
-            assert(serialized.is_empty(), 'session/invalid-calldata');
+
+            let token: SessionToken = full_deserialize(signature.slice(1, signature.len() - 1))
+                .expect('session/invalid-calldata');
 
             let token_session_hash = token.session.get_message_hash();
 

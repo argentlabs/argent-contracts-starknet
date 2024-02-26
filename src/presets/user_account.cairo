@@ -1,4 +1,4 @@
-#[starknet::contract]
+#[starknet::contract(account)]
 mod ArgentUserAccount {
     use argent::account::interface::{IAccount, IArgentAccount, Version};
     use argent::introspection::src5::src5_component;

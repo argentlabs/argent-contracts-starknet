@@ -54,7 +54,7 @@ export class Secp256r1KeyPair extends KeyPair {
   }
 }
 
-export function ethereumSignatureType(signer: bigint, signature: EthersSignature) {
+function ethereumSignatureType(signer: bigint, signature: EthersSignature) {
   return CallData.compile([
     new CairoCustomEnum({
       Starknet: undefined,
@@ -70,7 +70,7 @@ export function ethereumSignatureType(signer: bigint, signature: EthersSignature
   ]);
 }
 
-export function secp256r1SignatureType(signer: Uint256, signature: RecoveredSignatureType) {
+function secp256r1SignatureType(signer: Uint256, signature: RecoveredSignatureType) {
   return CallData.compile([
     new CairoCustomEnum({
       Starknet: undefined,

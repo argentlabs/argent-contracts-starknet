@@ -11,7 +11,6 @@ trait ISessionable<TContractState> {
 mod session_component {
     use argent::account::interface::{IAccount, IArgentUserAccount};
     use argent::session::{
-        merkle_tree_temp::{Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,},
         session::ISessionable,
         session_structs::{SessionToken, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash},
     };
@@ -21,6 +20,7 @@ mod session_component {
     use ecdsa::check_ecdsa_signature;
     use poseidon::{hades_permutation};
     use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp};
+    use alexandria_merkle_tree::merkle_tree::{Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,};
 
 
     #[storage]

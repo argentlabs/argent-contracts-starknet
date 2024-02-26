@@ -56,7 +56,6 @@ mod utils {
 }
 
 mod session {
-    mod merkle_tree_temp;
     mod session;
     mod session_structs;
 }

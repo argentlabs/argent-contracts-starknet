@@ -3,7 +3,7 @@ import { CallData, hash } from "starknet";
 import {
   ArgentSigner,
   MultisigSigner,
-  compiledStarknetSigner,
+  compiledSigner,
   declareContract,
   deployAccount,
   deployAccountWithGuardianBackup,
@@ -163,7 +163,7 @@ describe("ArgentAccount", function () {
       const newOwner = randomKeyPair();
       account.signer = new ArgentSigner(guardian);
 
-      await accountContract.trigger_escape_owner(compiledStarknetSigner(newOwner.publicKey));
+      await accountContract.trigger_escape_owner(compiledSigner(starknetSigner(newOwner.publicKey)));
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 
@@ -224,7 +224,7 @@ describe("ArgentAccount", function () {
       const newOwner = randomKeyPair();
       const newGuardian = 12n;
 
-      await accountContract.trigger_escape_owner(compiledStarknetSigner(newOwner.publicKey));
+      await accountContract.trigger_escape_owner(compiledSigner(starknetSigner(newOwner.publicKey)));
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 
@@ -276,7 +276,7 @@ describe("ArgentAccount", function () {
       account.signer = new ArgentSigner(guardian);
       const newGuardian = 12n;
 
-      await accountContract.trigger_escape_owner(compiledStarknetSigner(newOwner.publicKey));
+      await accountContract.trigger_escape_owner(compiledSigner(starknetSigner(newOwner.publicKey)));
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 

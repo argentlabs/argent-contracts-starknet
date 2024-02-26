@@ -235,9 +235,8 @@ export function starknetSignatureType(
   ]);
 }
 
-// TODO This could take an enum directly instead
-export function compiledStarknetSigner(signer: bigint | number | string) {
-  return CallData.compile([starknetSigner(signer)]);
+export function compiledSigner(signer: CairoCustomEnum) {
+  return CallData.compile([signer]);
 }
 
 // TODO MOVE THIS AS PART OF THE OBJECT ?

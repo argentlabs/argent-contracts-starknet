@@ -14,7 +14,7 @@ import {
   declareFixtureContract,
   waitForTransaction,
   signChangeOwnerMessage,
-  compiledStarknetSigner,
+  compiledSigner,
   compiledSignerOption,
   starknetSigner,
   signerOption,
@@ -52,7 +52,7 @@ describe("ArgentAccount: events", function () {
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
     await setTime(42);
 
-    await expectEvent(() => accountContract.trigger_escape_owner(compiledStarknetSigner(newOwner)), {
+    await expectEvent(() => accountContract.trigger_escape_owner(compiledSigner(starknetSigner(newOwner))), {
       from_address: account.address,
       eventName: "EscapeOwnerTriggered",
       data: [activeAt, newOwner],
@@ -66,7 +66,7 @@ describe("ArgentAccount: events", function () {
     const newOwner = "42";
     await setTime(42);
 
-    await accountContract.trigger_escape_owner(compiledStarknetSigner(newOwner));
+    await accountContract.trigger_escape_owner(compiledSigner(starknetSigner(newOwner)));
     await increaseTime(ESCAPE_SECURITY_PERIOD);
     const receipt = await waitForTransaction(await accountContract.escape_owner());
     await expectEvent(receipt, {
@@ -202,9 +202,9 @@ describe("ArgentAccount: events", function () {
       const { account, accountContract, guardian } = await deployAccount();
       account.signer = new ArgentSigner(guardian);
 
-      await accountContract.trigger_escape_owner(compiledStarknetSigner(42));
+      await accountContract.trigger_escape_owner(compiledSigner(starknetSigner(42)));
 
-      await expectEvent(() => accountContract.trigger_escape_owner(compiledStarknetSigner(42)), {
+      await expectEvent(() => accountContract.trigger_escape_owner(compiledSigner(starknetSigner(42))), {
         from_address: account.address,
         eventName: "EscapeCanceled",
       });

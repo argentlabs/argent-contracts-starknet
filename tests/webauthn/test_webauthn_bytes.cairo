@@ -1,7 +1,6 @@
 use argent::utils::bytes::{SpanU8TryIntoFelt252, SpanU8TryIntoU256};
 
 #[test]
-#[available_gas(1_000_000_000)]
 fn convert_bytes_to_u256_fit_128() {
     let bytes = array![84, 153, 96, 222, 88, 128, 232, 198, 135, 67, 65, 112];
     let value = bytes.span().try_into().unwrap();
@@ -9,7 +8,6 @@ fn convert_bytes_to_u256_fit_128() {
 }
 
 #[test]
-#[available_gas(1_000_000_000)]
 fn convert_bytes_to_u256_fit_256() {
     let bytes = array![
         73,
@@ -50,7 +48,6 @@ fn convert_bytes_to_u256_fit_256() {
 }
 
 #[test]
-#[available_gas(1_000_000_000)]
 fn convert_bytes_to_felt252() {
     let bytes = array![222, 173, 190, 239,];
     let value: felt252 = bytes.span().try_into().unwrap();
@@ -91,7 +88,6 @@ fn convert_bytes_to_felt252() {
 }
 
 #[test]
-#[available_gas(1_000_000_000)]
 fn convert_bytes_to_max_felt252() {
     // 0x08000000000000110000000000000000000000000000000000000000000000000
     let bytes = array![

@@ -13,7 +13,7 @@ mod Multicall {
     #[storage]
     struct Storage {}
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl MulticallImpl of super::IMulticall<ContractState> {
         fn aggregate(self: @ContractState, calls: Array<Call>) -> (u64, Array<Span<felt252>>) {
             (get_block_number(), execute_multicall(calls.span()))

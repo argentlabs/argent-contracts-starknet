@@ -141,7 +141,6 @@ impl PackEscape of starknet::StorePacking<Escape, Array<felt252>> {
         if value.is_empty() {
             Escape { ready_at: 0, target_signers: array![], new_signers: array![] }
         } else {
-            let len = (value.len() - 1) / 2;
             let mut target_signers = array![];
             let mut new_signers = array![];
 

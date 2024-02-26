@@ -20,7 +20,7 @@ mod TestDapp {
         stored_number: LegacyMap<ContractAddress, felt252>,
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl TestDappImpl of super::ITestDapp<ContractState> {
         fn set_number(ref self: ContractState, number: felt252) {
             self.stored_number.write(get_caller_address(), number);

@@ -5,7 +5,6 @@ use argent_tests::setup::multisig_test_setup::{
 };
 
 #[test]
-#[available_gas(20000000)]
 fn replace_signer_1() {
     // init
     let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
@@ -24,7 +23,6 @@ fn replace_signer_1() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn replace_signer_start() {
     // init
     let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
@@ -47,7 +45,6 @@ fn replace_signer_start() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn replace_signer_middle() {
     // init
     let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
@@ -70,7 +67,6 @@ fn replace_signer_middle() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn replace_signer_end() {
     // init
     let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
@@ -93,7 +89,6 @@ fn replace_signer_end() {
 }
 
 #[test]
-#[available_gas(20000000)]
 #[should_panic(expected: ('argent/not-a-signer', 'ENTRYPOINT_FAILED'))]
 fn replace_invalid_signer() {
     // init
@@ -109,7 +104,6 @@ fn replace_invalid_signer() {
 }
 
 #[test]
-#[available_gas(20000000)]
 #[should_panic(expected: ('argent/already-a-signer', 'ENTRYPOINT_FAILED'))]
 fn replace_already_signer() {
     // init

@@ -3,9 +3,7 @@ import {
   CallData,
   Contract,
   hash,
-  num,
   uint256,
-  type DeclareContractPayload,
   CairoOption,
   CairoOptionVariant,
 } from "starknet";
@@ -48,8 +46,7 @@ export async function createOwners(email: string, rpId: string): Promise<ArgentO
 export async function declareAccount(provider: ProviderType): Promise<string> {
   const deployer = await loadDeployer(provider);
   console.log("deployer is", deployer.address);
-  const payload: DeclareContractPayload = { casm: casm as any, contract: sierra };
-  const { class_hash, transaction_hash } = await deployer.declareIfNot(payload);
+  const { class_hash, transaction_hash } = await deployer.declareIfNot({ casm, contract: sierra });
   if (transaction_hash) {
     await provider.waitForTransaction(transaction_hash);
   }
@@ -69,7 +66,7 @@ export async function deployAccount(
 
   const constructorCalldata = CallData.compile({
     owner: webauthnSigner(location.origin, buf2hex(rpIdHash), buf2hex(webauthnOwner.attestation.x)),
-    guardian: new CairoOption<any>(CairoOptionVariant.None),
+    guardian: new CairoOption(CairoOptionVariant.None),
   });
   const addressSalt = 12n;
   const accountAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);

@@ -1,10 +1,4 @@
-import {
-  ArgentSigner,
-  deployAccount,
-  expectExecutionRevert,
-  randomKeyPair,
-  waitForTransaction,
-} from "./lib";
+import { ArgentSigner, deployAccount, expectExecutionRevert, randomKeyPair, waitForTransaction } from "./lib";
 import { num, RPC } from "starknet";
 
 describe("Gas griefing", function () {

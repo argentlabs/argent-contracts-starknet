@@ -1,4 +1,3 @@
-import { OutsideExecution } from "./outsideExecution";
 import {
   typedData,
   ArraySignatureType,
@@ -18,6 +17,9 @@ import {
   V3InvocationsSignerDetails,
   stark,
   num,
+  CairoCustomEnum,
+  BigNumberish,
+  WeierstrassSignatureType,
 } from "starknet";
 import {
   OffChainSession,
@@ -27,12 +29,13 @@ import {
   RawSigner,
   getSessionTypedData,
   ALLOWED_METHOD_HASH,
-  StarknetSig,
   getOutsideCall,
   getTypedData,
   provider,
   BackendService,
   ArgentAccount,
+  OutsideExecution,
+  SignerTypeEnum,
 } from ".";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -43,18 +46,13 @@ export class DappService {
     public sessionKey: KeyPair = randomKeyPair(),
   ) {}
 
-  public createSessionRequest(
-    accountAddress: string,
-    allowed_methods: AllowedMethod[],
-    expires_at = 150,
-  ): OffChainSession {
+  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at = 150): OffChainSession {
     const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
     return {
       expires_at,
       allowed_methods,
       metadata,
-      guardian_key: this.argentBackend.getGuardianKey(accountAddress),
-      session_key: this.sessionKey.publicKey,
+      session_key_guid: this.intoGuid(this.sessionKey.publicKey, SignerTypeEnum.Starknet),
     };
   }
 
@@ -185,8 +183,7 @@ export class DappService {
       expires_at: completedSession.expires_at,
       allowed_methods_root: this.buildMerkleTree(completedSession).root.toString(),
       metadata_hash: metadataHash,
-      guardian_key: completedSession.guardian_key,
-      session_key: completedSession.session_key,
+      session_key_guid: completedSession.session_key_guid,
     };
 
     let backend_signature;
@@ -206,11 +203,16 @@ export class DappService {
       );
     }
 
+    const session_signature = await this.signTxAndSession(completedSession, transactionHash, accountAddress);
+
     const sessionToken = {
       session,
-      account_signature: accountSessionSignature,
-      session_signature: await this.signTxAndSession(completedSession, transactionHash, accountAddress),
-      backend_signature,
+      session_authorisation: accountSessionSignature,
+      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, session_signature),
+      backend_signature: this.getStarknetSignatureType(
+        this.argentBackend.getBackendKey(accountAddress),
+        backend_signature,
+      ),
       proofs: this.getSessionProofs(completedSession, calls),
     };
     return [SESSION_MAGIC, ...CallData.compile(sessionToken)];
@@ -220,14 +222,11 @@ export class DappService {
     completedSession: OffChainSession,
     transactionHash: string,
     accountAddress: string,
-  ): Promise<StarknetSig> {
+  ): Promise<bigint[]> {
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
     const sessionWithTxHash = hash.computePoseidonHash(transactionHash, sessionMessageHash);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));
-    return {
-      r: BigInt(signature.r),
-      s: BigInt(signature.s),
-    };
+    return [signature.r, signature.s];
   }
 
   private buildMerkleTree(completedSession: OffChainSession): merkle.MerkleTree {
@@ -250,5 +249,25 @@ export class DappService {
       });
       return tree.getProof(tree.leaves[allowedIndex], tree.leaves);
     });
+  }
+
+  // method needed as starknetSignatureType in signer.ts is already compiled
+  private getStarknetSignatureType(signer: BigNumberish, signature: bigint[]) {
+    return new CairoCustomEnum({
+      Starknet: { signer, r: signature[0], s: signature[1] },
+      Secp256k1: undefined,
+      Secp256r1: undefined,
+      Webauthn: undefined,
+    });
+  }
+
+  // method to turn key into guid for now sessions only work with a stark signer
+  // but this method should reflect calculating the guid for the signer in signer_signature.cairo
+  private intoGuid(signer: BigNumberish, signerType: SignerTypeEnum) {
+    if (signerType == SignerTypeEnum.Starknet) {
+      return signer;
+    } else {
+      throw new Error("Not implemented");
+    }
   }
 }

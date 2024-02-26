@@ -1,4 +1,4 @@
-import { typedData, BigNumberish } from "starknet";
+import { typedData, BigNumberish, CairoCustomEnum, hash } from "starknet";
 import { provider } from ".";
 
 export const sessionTypes = {
@@ -16,7 +16,6 @@ export const sessionTypes = {
     { name: "Expires At", type: "timestamp" },
     { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
     { name: "Metadata", type: "string" },
-    { name: "Guardian Key", type: "felt" },
     { name: "Session Key", type: "felt" },
   ],
 };
@@ -27,11 +26,6 @@ export const ALLOWED_METHOD_HASH = typedData.getTypeHash(
   typedData.TypedDataRevision.Active,
 );
 
-export interface StarknetSig {
-  r: BigNumberish;
-  s: BigNumberish;
-}
-
 export interface AllowedMethod {
   "Contract Address": string;
   selector: string;
@@ -41,23 +35,21 @@ export interface OffChainSession {
   expires_at: BigNumberish;
   allowed_methods: AllowedMethod[];
   metadata: string;
-  guardian_key: BigNumberish;
-  session_key: BigNumberish;
+  session_key_guid: BigNumberish;
 }
 
 interface OnChainSession {
   expires_at: BigNumberish;
   allowed_methods_root: string;
   metadata_hash: string;
-  guardian_key: BigNumberish;
-  session_key: BigNumberish;
+  session_key_guid: BigNumberish;
 }
 
 export interface SessionToken {
   session: OnChainSession;
-  account_signature: string[];
-  session_signature: StarknetSig;
-  backend_signature: StarknetSig;
+  session_authorisation: string[];
+  session_signature: CairoCustomEnum;
+  backend_signature: CairoCustomEnum;
   proofs: string[][];
 }
 
@@ -80,8 +72,7 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
       "Expires At": sessionRequest.expires_at,
       "Allowed Methods": sessionRequest.allowed_methods,
       Metadata: sessionRequest.metadata,
-      "Guardian Key": sessionRequest.guardian_key,
-      "Session Key": sessionRequest.session_key,
+      "Session Key": sessionRequest.session_key_guid,
     },
   };
 }

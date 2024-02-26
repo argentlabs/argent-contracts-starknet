@@ -10,16 +10,16 @@ trait ISessionable<TContractState> {
 #[starknet::component]
 mod session_component {
     use argent::account::interface::{IAccount, IArgentUserAccount};
-    use argent::session::merkle_tree_temp::{
-        Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,
+    use argent::session::{
+        merkle_tree_temp::{Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,},
+        session::ISessionable,
+        session_structs::{SessionToken, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash},
     };
-    use argent::session::session::ISessionable;
-    use argent::session::session_structs::{
-        SessionToken, StarknetSignature, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash
-    };
-    use argent::utils::asserts::{assert_no_self_call, assert_only_self};
+    use argent::signer::signer_signature::{SignerSignatureTrait};
+    use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
+    use core::result::ResultTrait;
 
-    use argent::utils::serialization::full_deserialize;
+
     use ecdsa::check_ecdsa_signature;
     use poseidon::{hades_permutation};
     use starknet::{account::Call, get_contract_address, VALIDATED};
@@ -85,31 +85,27 @@ mod session_component {
             // TODO assert timestamp
 
             assert(
-                state.is_valid_signature(token_session_hash, token.account_signature.snapshot.clone()) == VALIDATED,
+                state.is_valid_signature(token_session_hash, token.session_authorisation.snapshot.clone()) == VALIDATED,
                 'session/invalid-account-sig'
             );
 
             let (message_hash, _, _) = hades_permutation(transaction_hash, token_session_hash, 2);
 
-            assert(
-                is_valid_stark_signature(message_hash, token.session.session_key, token.session_signature),
-                'session/invalid-session-sig'
-            );
+            // checks that the session key the user signed is the same key that signed the session
+            let session_guid_from_sig = token.session_signature.signer_into_guid().expect('session/empty-session-key');
+            assert(token.session.session_key_guid == session_guid_from_sig, 'session/session-key-mismatch');
+            assert(token.session_signature.is_valid_signature(message_hash), 'session/invalid-session-sig');
 
-            assert(
-                is_valid_stark_signature(message_hash, token.session.guardian_key, token.backend_signature),
-                'session/invalid-guardian-sig'
-            );
+            // checks that its the account guardian that signed the session
+            let guardian_guid = state.get_guardian();
+            let backend_guid_from_sig = token.backend_signature.signer_into_guid().expect('session/empty-backend-key');
+            assert(backend_guid_from_sig == guardian_guid, 'session/guardian-key-mismatch');
+            assert(token.backend_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');
 
             // TODO: possibly add guardian backup check
 
             assert_valid_session_calls(token, calls);
         }
-    }
-
-    #[inline(always)]
-    fn is_valid_stark_signature(hash: felt252, signer_pub_key: felt252, signature: StarknetSignature) -> bool {
-        check_ecdsa_signature(hash, signer_pub_key, signature.r, signature.s)
     }
 
     fn assert_valid_session_calls(token: SessionToken, mut calls: Span<Call>) {

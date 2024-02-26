@@ -98,6 +98,7 @@ mod SessionAccount {
         SRC5Events: src5_component::Event,
         #[flat]
         UpgradeEvents: upgrade_component::Event,
+        #[flat]
         SessionableEvent: session_component::Event,
         AccountCreated: AccountCreated,
         TransactionExecuted: TransactionExecuted,

@@ -50,7 +50,7 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(account.address, allowedMethods);
+    const sessionRequest = dappService.createSessionRequest(allowedMethods);
 
     // 2. Owner and Guardian signs session
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
@@ -96,7 +96,7 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(account.address, allowedMethods);
+    const sessionRequest = dappService.createSessionRequest(allowedMethods);
 
     // 2. Wallet signs session
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));

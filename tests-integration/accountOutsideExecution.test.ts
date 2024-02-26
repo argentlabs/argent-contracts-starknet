@@ -15,7 +15,7 @@ import {
   setTime,
   compiledSigner,
   waitForTransaction,
-  starknetSigner,
+  KeyPair,
 } from "./lib";
 
 const initialTime = 1713139200;
@@ -148,15 +148,15 @@ describe("ArgentAccount: outside execution", function () {
 
   it("Escape method", async function () {
     const { account, accountContract, guardian } = await deployAccount();
+    const keyPair = randomKeyPair();
+    const compiledSignerType = compiledSigner(keyPair.signerType);
 
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,
       nonce: randomKeyPair().publicKey,
       execute_after: 0,
       execute_before: initialTime + 100,
-      calls: [
-        getOutsideCall(accountContract.populateTransaction.trigger_escape_owner(compiledSigner(starknetSigner(42)))),
-      ],
+      calls: [getOutsideCall(accountContract.populateTransaction.trigger_escape_owner(compiledSignerType))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(
       outsideExecution,
@@ -168,6 +168,6 @@ describe("ArgentAccount: outside execution", function () {
 
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
     const current_escape = await accountContract.get_escape();
-    expect(current_escape.new_signer).to.equal(42n, "invalid new value");
+    expect(current_escape.new_signer).to.equal(keyPair.publicKey, "invalid new value");
   });
 });

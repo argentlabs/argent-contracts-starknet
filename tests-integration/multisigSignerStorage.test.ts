@@ -6,28 +6,28 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   randomKeyPair,
-  starknetSigner,
   intoGuid,
+  zeroStarknetSignatureType,
 } from "./lib";
 
 describe("ArgentMultisig: signer storage", function () {
   describe("add_signers(new_threshold, signers_to_add)", function () {
     it("Should add one new signer", async function () {
-      const newSigner1 = randomKeyPair().publicKey;
-      const newSigner2 = randomKeyPair().publicKey;
-      const newSigner3 = randomKeyPair().publicKey;
+      const newSigner1 = randomKeyPair();
+      const newSigner2 = randomKeyPair();
+      const newSigner3 = randomKeyPair();
 
       const { accountContract, signers } = await deployMultisig1_1();
       await accountContract.is_signer_guid(intoGuid(signers[0])).should.eventually.be.true;
-      await accountContract.is_signer_guid(newSigner1).should.eventually.be.false;
+      await accountContract.is_signer_guid(newSigner1.publicKey).should.eventually.be.false;
 
-      await accountContract.add_signers(CallData.compile([1, [starknetSigner(newSigner1)]]));
-      await accountContract.is_signer_guid(newSigner1).should.eventually.be.true;
+      await accountContract.add_signers(CallData.compile([1, [newSigner1.signerType]]));
+      await accountContract.is_signer_guid(newSigner1.publicKey).should.eventually.be.true;
 
       const new_threshold = 2;
 
       const { transaction_hash } = await accountContract.add_signers(
-        CallData.compile([new_threshold, [starknetSigner(newSigner2), starknetSigner(newSigner3)]]),
+        CallData.compile([new_threshold, [newSigner2.signerType, newSigner3.signerType]]),
       );
 
       await expectEvent(transaction_hash, {
@@ -39,17 +39,18 @@ describe("ArgentMultisig: signer storage", function () {
       await expectEvent(transaction_hash, {
         from_address: accountContract.address,
         eventName: "OwnerAdded",
-        additionalKeys: [newSigner2.toString()],
+        additionalKeys: [newSigner2.publicKey],
       });
       await expectEvent(transaction_hash, {
         from_address: accountContract.address,
         eventName: "OwnerAdded",
-        additionalKeys: [newSigner3.toString()],
+        additionalKeys: [newSigner3.publicKey],
       });
-      await accountContract.is_signer_guid(newSigner2).should.eventually.be.true;
-      await accountContract.is_signer_guid(newSigner3).should.eventually.be.true;
+      await accountContract.is_signer_guid(newSigner2.publicKey).should.eventually.be.true;
+      await accountContract.is_signer_guid(newSigner3.publicKey).should.eventually.be.true;
       await accountContract.get_threshold().should.eventually.equal(BigInt(new_threshold));
     });
+
     describe("Test all possible revert errors when adding signers", function () {
       it("Expect 'argent/already-a-signer' if adding an owner already in the list", async function () {
         const { accountContract, signers, threshold } = await deployMultisig1_3();
@@ -62,7 +63,7 @@ describe("ArgentMultisig: signer storage", function () {
       it("Expect 'argent/already-a-signer' if adding the same owner twice", async function () {
         const { accountContract, threshold } = await deployMultisig1_3();
 
-        const newSigner1 = starknetSigner(randomKeyPair().publicKey);
+        const newSigner1 = randomKeyPair().signerType;
 
         await expectRevertWithErrorMessage("argent/already-a-signer", () =>
           accountContract.add_signers(CallData.compile([threshold, [newSigner1, newSigner1]])),
@@ -73,14 +74,14 @@ describe("ArgentMultisig: signer storage", function () {
         const { accountContract, threshold } = await deployMultisig1_3();
 
         await expectRevertWithErrorMessage("argent/invalid-signer-guid", () =>
-          accountContract.add_signers(CallData.compile([threshold, [starknetSigner(0n)]])),
+          accountContract.add_signers(CallData.compile([threshold, [zeroStarknetSignatureType()]])),
         );
       });
 
       it("Expect 'bad/invalid-threshold' if changing to a zero threshold", async function () {
         const { accountContract } = await deployMultisig1_3();
 
-        const newSigner1 = starknetSigner(randomKeyPair().publicKey);
+        const newSigner1 = randomKeyPair().signerType;
         await expectRevertWithErrorMessage("argent/invalid-threshold", () =>
           accountContract.add_signers(CallData.compile([0, [newSigner1]])),
         );
@@ -89,7 +90,7 @@ describe("ArgentMultisig: signer storage", function () {
       it("Expect 'bad/invalid-threshold' if threshold > no. owners", async function () {
         const { accountContract, signers } = await deployMultisig1_3();
 
-        const newSigner1 = starknetSigner(randomKeyPair().publicKey);
+        const newSigner1 = randomKeyPair().signerType;
 
         await expectRevertWithErrorMessage("argent/bad-threshold", () =>
           accountContract.add_signers(CallData.compile([signers.length + 2, [newSigner1]])),
@@ -145,7 +146,7 @@ describe("ArgentMultisig: signer storage", function () {
 
     describe("Test all possible revert errors when removing signers", function () {
       it("Expect 'argent/not-a-signer' when replacing an owner not in the list", async function () {
-        const nonSigner = starknetSigner(randomKeyPair().publicKey);
+        const nonSigner = randomKeyPair().signerType;
 
         const { accountContract, threshold } = await deployMultisig1_3();
 
@@ -158,7 +159,7 @@ describe("ArgentMultisig: signer storage", function () {
         const { accountContract, threshold } = await deployMultisig1_3();
 
         await expectRevertWithErrorMessage("argent/invalid-signer-guid", () =>
-          accountContract.remove_signers(CallData.compile([threshold, [starknetSigner(0n)]])),
+          accountContract.remove_signers(CallData.compile([threshold, [zeroStarknetSignatureType()]])),
         );
       });
 
@@ -189,7 +190,7 @@ describe("ArgentMultisig: signer storage", function () {
   });
   describe("replace_signers(signer_to_remove, signer_to_add)", function () {
     it("Should replace one signer", async function () {
-      const newSigner = starknetSigner(randomKeyPair().publicKey);
+      const newSigner = randomKeyPair().signerType;
 
       const { accountContract, signers } = await deployMultisig1_1();
 
@@ -209,7 +210,7 @@ describe("ArgentMultisig: signer storage", function () {
     });
 
     it("Should replace first signer", async function () {
-      const newSigner = starknetSigner(randomKeyPair().publicKey);
+      const newSigner = randomKeyPair().signerType;
 
       const { accountContract, signers } = await deployMultisig1_3();
 
@@ -220,7 +221,7 @@ describe("ArgentMultisig: signer storage", function () {
     });
 
     it("Should replace middle signer", async function () {
-      const newSigner = starknetSigner(randomKeyPair().publicKey);
+      const newSigner = randomKeyPair().signerType;
 
       const { accountContract, signers } = await deployMultisig1_3();
 
@@ -231,7 +232,7 @@ describe("ArgentMultisig: signer storage", function () {
     });
 
     it("Should replace last signer", async function () {
-      const newSigner = starknetSigner(randomKeyPair().publicKey);
+      const newSigner = randomKeyPair().signerType;
 
       const { accountContract, signers } = await deployMultisig1_3();
 
@@ -243,8 +244,8 @@ describe("ArgentMultisig: signer storage", function () {
   });
   describe("Expect revert messages under different conditions when trying to replace an owner", function () {
     it("Expect 'argent/not-a-signer' when trying to replace a signer that isn't in the list", async function () {
-      const nonSigner = starknetSigner(randomKeyPair().publicKey);
-      const newSigner = starknetSigner(randomKeyPair().publicKey);
+      const nonSigner = randomKeyPair().signerType;
+      const newSigner = randomKeyPair().signerType;
 
       const { accountContract } = await deployMultisig1_3();
 
@@ -270,7 +271,7 @@ describe("ArgentMultisig: signer storage", function () {
       const { accountContract, signers } = await deployMultisig1_3();
 
       await expectRevertWithErrorMessage("argent/invalid-new-signer-guid", () =>
-        accountContract.replace_signer(CallData.compile([signers[0], starknetSigner(0n)])),
+        accountContract.replace_signer(CallData.compile([signers[0], zeroStarknetSignatureType()])),
       );
     });
   });

@@ -193,7 +193,12 @@ export class KeyPair extends Signer {
   }
 
   public get signerType() {
-    return starknetSigner(this.publicKey);
+    return new CairoCustomEnum({
+      Starknet: { signer: this.publicKey },
+      Secp256k1: undefined,
+      Secp256r1: undefined,
+      Webauthn: undefined,
+    });
   }
 
   public get publicKey(): any {
@@ -239,16 +244,6 @@ export function compiledSigner(signer: CairoCustomEnum) {
   return CallData.compile([signer]);
 }
 
-// TODO MOVE THIS AS PART OF THE OBJECT ?
-export function starknetSigner(signer: bigint | number | string) {
-  return new CairoCustomEnum({
-    Starknet: { signer },
-    Secp256k1: undefined,
-    Secp256r1: undefined,
-    Webauthn: undefined,
-  });
-}
-
 export function intoGuid(signer: CairoCustomEnum) {
   return signer.unwrap().signer;
 }
@@ -259,9 +254,25 @@ export function compiledSignerOption(signer: bigint | undefined = undefined) {
 
 export function signerOption(signer: bigint | undefined = undefined) {
   if (signer) {
-    return new CairoOption(CairoOptionVariant.Some, { signer: starknetSigner(signer) });
+    return new CairoOption(CairoOptionVariant.Some, {
+      signer: new CairoCustomEnum({
+        Starknet: { signer },
+        Secp256k1: undefined,
+        Secp256r1: undefined,
+        Webauthn: undefined,
+      }),
+    });
   }
   return new CairoOption(CairoOptionVariant.None);
+}
+
+export function zeroStarknetSignatureType() {
+  return new CairoCustomEnum({
+    Starknet: { signer: 0 },
+    Secp256k1: undefined,
+    Secp256r1: undefined,
+    Webauthn: undefined,
+  });
 }
 
 export const randomKeyPair = () => new KeyPair();

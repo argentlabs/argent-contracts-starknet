@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, hash } from "starknet";
+import { CallData } from "starknet";
 import {
   ArgentSigner,
   MultisigSigner,
@@ -17,8 +17,8 @@ import {
   signChangeOwnerMessage,
   compiledSignerOption,
   starknetSignatureType,
-  starknetSigner,
   signerOption,
+  zeroStarknetSignatureType,
 } from "./lib";
 
 describe("ArgentAccount", function () {
@@ -65,12 +65,11 @@ describe("ArgentAccount", function () {
   });
 
   it("Expect an error when owner is zero", async function () {
-    const owner = starknetSigner(0);
     const guardian = signerOption();
     await expectRevertWithErrorMessage("argent/null-owner", () =>
       deployer.deployContract({
         classHash: argentAccountClassHash,
-        constructorCalldata: CallData.compile({ owner, guardian }),
+        constructorCalldata: CallData.compile({ owner: zeroStarknetSignatureType(), guardian }),
       }),
     );
   });
@@ -163,7 +162,7 @@ describe("ArgentAccount", function () {
       const newOwner = randomKeyPair();
       account.signer = new ArgentSigner(guardian);
 
-      await accountContract.trigger_escape_owner(compiledSigner(starknetSigner(newOwner.publicKey)));
+      await accountContract.trigger_escape_owner(compiledSigner(newOwner.signerType));
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 
@@ -224,7 +223,7 @@ describe("ArgentAccount", function () {
       const newOwner = randomKeyPair();
       const newGuardian = 12n;
 
-      await accountContract.trigger_escape_owner(compiledSigner(starknetSigner(newOwner.publicKey)));
+      await accountContract.trigger_escape_owner(compiledSigner(newOwner.signerType));
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 
@@ -276,7 +275,7 @@ describe("ArgentAccount", function () {
       account.signer = new ArgentSigner(guardian);
       const newGuardian = 12n;
 
-      await accountContract.trigger_escape_owner(compiledSigner(starknetSigner(newOwner.publicKey)));
+      await accountContract.trigger_escape_owner(compiledSigner(newOwner.signerType));
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 

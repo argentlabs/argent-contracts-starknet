@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { declareContract, deployContractUDC, randomKeyPair, signerOption, starknetSigner } from "./lib";
+import { declareContract, deployContractUDC, randomKeyPair, signerOption } from "./lib";
 import { num, hash, CallData } from "starknet";
 
 const salt = num.toHex(randomKeyPair().privateKey);
@@ -11,7 +11,7 @@ describe("Deploy UDC", function () {
     const argentAccountClassHash = await declareContract("ArgentAccount");
 
     const callData = CallData.compile({
-      owner: starknetSigner(owner.publicKey),
+      owner: owner.signerType,
       guardian: signerOption(guardian.publicKey),
     });
 

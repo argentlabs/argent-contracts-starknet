@@ -149,7 +149,16 @@ class WebauthnOwner extends RawSigner {
       origin_length: clientData.origin.length,
     };
 
-    return webauthnSignatureType(cairoAssertion);
+    return CallData.compile([
+      [
+        new CairoCustomEnum({
+          Starknet: undefined,
+          Secp256k1: undefined,
+          Secp256r1: undefined,
+          Webauthn: cairoAssertion,
+        }),
+      ],
+    ]);
   }
 }
 
@@ -166,19 +175,6 @@ function webauthnSigner(origin: string, rp_id_hash: string, pubkey: string) {
       pubkey: uint256.bnToUint256(BigInt(pubkey)),
     },
   });
-}
-
-function webauthnSignatureType(cairoAssertion: any) {
-  return CallData.compile([
-    [
-      new CairoCustomEnum({
-        Starknet: undefined,
-        Secp256k1: undefined,
-        Secp256r1: undefined,
-        Webauthn: cairoAssertion,
-      }),
-    ],
-  ]);
 }
 
 async function signTransaction(): Promise<WebauthnAssertion> {

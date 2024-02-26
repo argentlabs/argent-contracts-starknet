@@ -16,15 +16,15 @@ import {
   signChangeOwnerMessage,
   compiledSigner,
   compiledSignerOption,
-  starknetSigner,
   signerOption,
+  KeyPair,
 } from "./lib";
 
 describe("ArgentAccount: events", function () {
   it("Expect 'AccountCreated' and 'OwnerAddded' when deploying an account", async function () {
-    const owner = starknetSigner(21n);
+    const owner = randomKeyPair();
     const guardian = signerOption(42n);
-    const constructorCalldata = CallData.compile({ owner, guardian });
+    const constructorCalldata = CallData.compile({ owner: owner.signerType, guardian });
     const { transaction_hash, contract_address } = await deployer.deployContract({
       classHash: await declareContract("ArgentAccount"),
       constructorCalldata,
@@ -33,14 +33,14 @@ describe("ArgentAccount: events", function () {
     await expectEvent(transaction_hash, {
       from_address: contract_address,
       eventName: "AccountCreated",
-      additionalKeys: ["21"],
+      additionalKeys: [owner.publicKey],
       data: ["42"],
     });
 
     await expectEvent(transaction_hash, {
       from_address: contract_address,
       eventName: "OwnerAdded",
-      additionalKeys: ["21"],
+      additionalKeys: [owner.publicKey],
     });
   });
 
@@ -48,14 +48,14 @@ describe("ArgentAccount: events", function () {
     const { account, accountContract, guardian } = await deployAccount();
     account.signer = new ArgentSigner(guardian);
 
-    const newOwner = "42";
+    const newOwner = randomKeyPair();
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
     await setTime(42);
 
-    await expectEvent(() => accountContract.trigger_escape_owner(compiledSigner(starknetSigner(newOwner))), {
+    await expectEvent(() => accountContract.trigger_escape_owner(compiledSigner(newOwner.signerType)), {
       from_address: account.address,
       eventName: "EscapeOwnerTriggered",
-      data: [activeAt, newOwner],
+      data: [activeAt, newOwner.publicKey],
     });
   });
 
@@ -63,16 +63,16 @@ describe("ArgentAccount: events", function () {
     const { account, accountContract, guardian, owner } = await deployAccount();
     account.signer = new ArgentSigner(guardian);
 
-    const newOwner = "42";
+    const newOwner = randomKeyPair();
     await setTime(42);
 
-    await accountContract.trigger_escape_owner(compiledSigner(starknetSigner(newOwner)));
+    await accountContract.trigger_escape_owner(compiledSigner(newOwner.signerType));
     await increaseTime(ESCAPE_SECURITY_PERIOD);
     const receipt = await waitForTransaction(await accountContract.escape_owner());
     await expectEvent(receipt, {
       from_address: account.address,
       eventName: "OwnerEscaped",
-      data: [newOwner],
+      data: [newOwner.publicKey],
     });
 
     await expectEvent(receipt, {
@@ -84,7 +84,7 @@ describe("ArgentAccount: events", function () {
     await expectEvent(receipt, {
       from_address: account.address,
       eventName: "OwnerAdded",
-      additionalKeys: [newOwner],
+      additionalKeys: [newOwner.publicKey],
     });
   });
 
@@ -201,10 +201,11 @@ describe("ArgentAccount: events", function () {
     it("Expected on trigger_escape_owner", async function () {
       const { account, accountContract, guardian } = await deployAccount();
       account.signer = new ArgentSigner(guardian);
+      const compiledSignerType = compiledSigner(new KeyPair(42n).signerType);
 
-      await accountContract.trigger_escape_owner(compiledSigner(starknetSigner(42)));
+      await accountContract.trigger_escape_owner(compiledSignerType);
 
-      await expectEvent(() => accountContract.trigger_escape_owner(compiledSigner(starknetSigner(42))), {
+      await expectEvent(() => accountContract.trigger_escape_owner(compiledSignerType), {
         from_address: account.address,
         eventName: "EscapeCanceled",
       });

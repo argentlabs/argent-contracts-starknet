@@ -10,7 +10,7 @@ import {
   waitForTransaction,
   getEthBalance,
   deployContract,
-  starknetSigner,
+  randomKeyPair,
 } from "./lib";
 
 describe("ArgentAccount: multicall", function () {
@@ -112,12 +112,12 @@ describe("ArgentAccount: multicall", function () {
     const { account, accountContract } = await deployAccount();
     const recipient = "42";
     const amount = uint256.bnToUint256(1000);
-    const newOwner = "69";
+    const newOwner = randomKeyPair();
 
     await expectRevertWithErrorMessage("argent/no-multicall-to-self", () =>
       account.execute([
         ethContract.populateTransaction.transfer(recipient, amount),
-        accountContract.populateTransaction.trigger_escape_owner(compiledSigner(starknetSigner(newOwner))),
+        accountContract.populateTransaction.trigger_escape_owner(compiledSigner(newOwner.signerType)),
       ]),
     );
   });

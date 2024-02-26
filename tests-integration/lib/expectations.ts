@@ -54,6 +54,10 @@ async function expectEventFromReceipt(receipt: GetTransactionReceiptResponse, ev
   const events = receipt.events ?? [];
   const normalizedEvent = normalizeEvent(event);
   const matches = events.filter((e) => isEqual(normalizeEvent(e), normalizedEvent)).length;
+  console.log("events");
+  console.log(events);
+  console.log("event");
+  console.log(event);
   if (matches == 0) {
     assert(false, "No matches detected in this transaction`");
   } else if (matches > 1) {

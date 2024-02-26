@@ -12,7 +12,12 @@ export class EthKeyPair extends KeyPair {
   }
 
   public get signerType() {
-    return ethSigner(this.publicKey);
+    return new CairoCustomEnum({
+      Starknet: undefined,
+      Secp256k1: { signer: this.publicKey },
+      Secp256r1: undefined,
+      Webauthn: undefined,
+    });
   }
 
   public signHash(messageHash: string) {
@@ -32,7 +37,12 @@ export class Secp256r1KeyPair extends KeyPair {
   }
 
   public get signerType() {
-    return secp256r1Signer(this.publicKey);
+    return new CairoCustomEnum({
+      Starknet: undefined,
+      Secp256k1: undefined,
+      Secp256r1: { signer: this.publicKey },
+      Webauthn: undefined,
+    });
   }
 
   public signHash(messageHash: string) {
@@ -74,24 +84,6 @@ export function secp256r1SignatureType(signer: Uint256, signature: RecoveredSign
       Webauthn: undefined,
     }),
   ]);
-}
-
-export function ethSigner(signer: bigint) {
-  return new CairoCustomEnum({
-    Starknet: undefined,
-    Secp256k1: { signer },
-    Secp256r1: undefined,
-    Webauthn: undefined,
-  });
-}
-
-export function secp256r1Signer(signer: Uint256) {
-  return new CairoCustomEnum({
-    Starknet: undefined,
-    Secp256k1: undefined,
-    Secp256r1: { signer },
-    Webauthn: undefined,
-  });
 }
 
 export const randomEthKeyPair = () => new EthKeyPair();

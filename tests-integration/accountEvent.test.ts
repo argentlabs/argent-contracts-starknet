@@ -16,6 +16,7 @@ import {
   signChangeOwnerMessage,
   compiledSignerOption,
   signerOption,
+  getEthBalance,
 } from "./lib";
 
 describe("ArgentAccount: events", function () {
@@ -248,7 +249,7 @@ describe("ArgentAccount: events", function () {
       const recipient = "0x33";
       const amount = 10n;
 
-      const balance = await ethContract.balanceOf(recipient);
+      const balance = await getEthBalance(recipient);
 
       const finalBalance = uint256.bnToUint256(balance + amount);
       const firstReturn = [1];

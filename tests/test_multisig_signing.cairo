@@ -1,4 +1,4 @@
-use argent::common::signer_signature::{Signer, StarknetSigner, SignerSignature};
+use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
 use argent_tests::setup::{
     multisig_test_setup::{
         initialize_multisig_with, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3, ITestArgentMultisigDispatcherTrait,
@@ -92,7 +92,7 @@ fn test_same_owner_twice() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/signature-invalid-length', 'ENTRYPOINT_FAILED'))]
 fn test_missing_owner_signature() {
     let threshold = 2;
     let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
@@ -116,7 +116,7 @@ fn test_short_signature() {
 
 #[test]
 #[available_gas(20000000)]
-#[should_panic(expected: ('argent/invalid-signature-length', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/signature-invalid-length', 'ENTRYPOINT_FAILED'))]
 fn test_long_signature() {
     let multisig = initialize_multisig_with_one_signer();
 

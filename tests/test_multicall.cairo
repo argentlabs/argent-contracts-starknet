@@ -15,25 +15,22 @@ fn execute_multicall_at_one() {
     let class_hash = TestDapp::TEST_CLASS_HASH.try_into().unwrap();
     let (address0, _) = deploy_syscall(class_hash, 0, array![].span(), false).unwrap();
 
-    let calldata1 = array![12];
     let call1 = Call {
         to: address0,
         selector: 1257997212343903061729138261393903607425919870525153789348007715635666768741, // set_number(number)
-        calldata: calldata1.span()
+        calldata: array![12].span()
     };
 
-    let calldata2 = array![12];
     let call2 = Call {
         to: address0,
         selector: 966438596990474552217413352546537164754794065595593730315125915414067970214, // increase_number(number)
-        calldata: calldata2.span()
+        calldata: array![12].span()
     };
 
-    let calldata3 = array![12];
     let call3 = Call {
         to: address0,
         selector: 1378405772398747753825744346429351463310669626437442629621279049660910933566, // throw_error(number)
-        calldata: calldata3.span()
+        calldata: array![12].span()
     };
 
     let arr = array![call1, call2, call3];

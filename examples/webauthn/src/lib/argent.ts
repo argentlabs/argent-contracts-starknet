@@ -1,12 +1,4 @@
-import {
-  Account,
-  CallData,
-  Contract,
-  hash,
-  uint256,
-  CairoOption,
-  CairoOptionVariant,
-} from "starknet";
+import { Account, CallData, Contract, hash, uint256, CairoOption, CairoOptionVariant } from "starknet";
 import { createWebauthnAttestation } from "./webauthnAttestation";
 import {
   fundAccount,

@@ -20,7 +20,7 @@ struct StarknetSignature {
 // TODO This should be `pubkey: NonZero<felt252>` where relevant
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct StarknetSigner {
-    pubkey: felt252
+    pubkey: NonZero<felt252>
 }
 
 #[derive(Drop, Copy, Serde, PartialEq)]
@@ -48,6 +48,13 @@ enum Signer {
     Webauthn: WebauthnSigner
 }
 
+
+#[inline(always)]
+fn starknetSignerFromPubKey(pubkey: felt252) -> Signer {
+    Signer::Starknet(StarknetSigner { pubkey: pubkey.try_into().expect('argent/zero-pubkey') })
+}
+
+
 trait SignerTrait<T> {
     fn is_reasonable(self: T) -> bool;
     fn into_guid(self: T) -> felt252;
@@ -56,7 +63,7 @@ trait SignerTrait<T> {
 impl SignerTraitImpl of SignerTrait<Signer> {
     fn is_reasonable(self: Signer) -> bool {
         match self {
-            Signer::Starknet(signer) => !signer.pubkey.is_zero(),
+            Signer::Starknet(signer) => true,
             Signer::Secp256k1(signer) => !signer.pubkey_hash.is_zero(),
             Signer::Secp256r1(signer) => !signer.pubkey.is_zero(),
             Signer::Webauthn(signer) => !signer.origin.is_zero()
@@ -67,7 +74,9 @@ impl SignerTraitImpl of SignerTrait<Signer> {
 
     fn into_guid(self: Signer) -> felt252 {
         match self {
-            Signer::Starknet(signer) => PoseidonTrait::new().update_with(('Stark', signer.pubkey)).finalize(),
+            Signer::Starknet(signer) => signer
+                .pubkey
+                .into(), //PoseidonTrait::new().update_with(('Stark', signer.pubkey)).finalize(),
             Signer::Secp256k1(signer) => PoseidonTrait::new().update_with(('Secp256k1', signer.pubkey_hash)).finalize(),
             Signer::Secp256r1(signer) => PoseidonTrait::new().update_with(('Secp256r1', signer.pubkey)).finalize(),
             Signer::Webauthn(signer) => PoseidonTrait::new()
@@ -81,7 +90,6 @@ impl SignerTraitImpl of SignerTrait<Signer> {
 /// For each type the variant contains a signer and an associated signature.
 #[derive(Drop, Copy, Serde, PartialEq)]
 enum SignerSignature {
-    #[default]
     Starknet: (StarknetSigner, StarknetSignature),
     Secp256k1: (Secp256k1Signer, Secp256k1Signature),
     Secp256r1: (Secp256r1Signer, Secp256r1Signature),
@@ -125,7 +133,7 @@ impl SignerSignatureImpl of SignerSignatureTrait {
 }
 
 fn is_valid_starknet_signature(hash: felt252, signer: StarknetSigner, signature: StarknetSignature) -> bool {
-    check_ecdsa_signature(hash, signer.pubkey, signature.r, signature.s)
+    check_ecdsa_signature(hash, signer.pubkey.into(), signature.r, signature.s)
 }
 
 fn is_valid_secp256k1_signature(hash: u256, signer: Secp256k1Signer, signature: Secp256k1Signature) -> bool {

@@ -1,5 +1,5 @@
 use argent::signer::signer_signature::SignerTrait;
-use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
+use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknetSignerFromPubKey};
 use argent_tests::setup::multisig_test_setup::{
     initialize_multisig, initialize_multisig_with, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3,
     ITestArgentMultisigDispatcherTrait
@@ -10,9 +10,9 @@ use argent_tests::setup::multisig_test_setup::{
 fn reorder_2_signers() {
     // init
     let threshold = 2;
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
-    let signer_3 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_3 });
+    let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
+    let signer_2 = starknetSignerFromPubKey(signer_pubkey_2);
+    let signer_3 = starknetSignerFromPubKey(signer_pubkey_3);
     let init_order = array![signer_1, signer_2, signer_3];
     let multisig = initialize_multisig_with(threshold, init_order.span());
 
@@ -40,9 +40,9 @@ fn reorder_2_signers() {
 fn reorder_3_signers() {
     // init
     let threshold = 2;
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
-    let signer_3 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_3 });
+    let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
+    let signer_2 = starknetSignerFromPubKey(signer_pubkey_2);
+    let signer_3 = starknetSignerFromPubKey(signer_pubkey_3);
     let init_order = array![signer_1, signer_2, signer_3];
     let multisig = initialize_multisig_with(threshold, init_order.span());
 
@@ -71,9 +71,9 @@ fn reorder_3_signers() {
 fn reorder_signers_wrong_length() {
     // init
     let threshold = 2;
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
-    let signer_3 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_3 });
+    let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
+    let signer_2 = starknetSignerFromPubKey(signer_pubkey_2);
+    let signer_3 = starknetSignerFromPubKey(signer_pubkey_3);
     let init_order = array![signer_1, signer_2, signer_3];
     let multisig = initialize_multisig_with(threshold, init_order.span());
 
@@ -95,9 +95,9 @@ fn reorder_signers_wrong_length() {
 fn reorder_signers_wrong_signer() {
     // init
     let threshold = 2;
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
-    let signer_3 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_3 });
+    let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
+    let signer_2 = starknetSignerFromPubKey(signer_pubkey_2);
+    let signer_3 = starknetSignerFromPubKey(signer_pubkey_3);
     let init_order = array![signer_1, signer_2];
     let multisig = initialize_multisig_with(threshold, init_order.span());
 

@@ -8,7 +8,8 @@ mod ArgentAccount {
     use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
     use argent::signer::{
         signer_signature::{
-            Signer, StarknetSigner, StarknetSignature, SignerTrait, SignerSignature, SignerSignatureTrait
+            Signer, StarknetSigner, StarknetSignature, SignerTrait, SignerSignature, SignerSignatureTrait,
+            starknetSignerFromPubKey
         }
     };
     use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
@@ -295,23 +296,17 @@ mod ArgentAccount {
             if guardian == 0 {
                 assert(guardian_backup == 0, 'argent/backup-should-be-null');
             } else {
-                self
-                    .emit(
-                        SignerLinked {
-                            signer_guid: guardian, signer: Signer::Starknet(StarknetSigner { pubkey: guardian.try_into().unwrap() })
-                        }
-                    );
+                self.emit(SignerLinked { signer_guid: guardian, signer: starknetSignerFromPubKey(guardian) });
                 if (guardian_backup != 0) {
                     self
                         .emit(
                             SignerLinked {
-                                signer_guid: guardian_backup,
-                                signer: Signer::Starknet(StarknetSigner { pubkey: guardian_backup.try_into().unwrap() })
+                                signer_guid: guardian_backup, signer: starknetSignerFromPubKey(guardian_backup)
                             }
                         );
                 }
             }
-            self.emit(SignerLinked { signer_guid: owner, signer: Signer::Starknet(StarknetSigner { pubkey: owner.try_into().unwrap() }) });
+            self.emit(SignerLinked { signer_guid: owner, signer: starknetSignerFromPubKey(owner) });
 
             let implementation = self._implementation.read();
             if implementation != Zeroable::zero() {
@@ -618,7 +613,6 @@ mod ArgentAccount {
                             self.guardian_escape_attempts.write(current_attempts + 1);
                         }
 
-
                         let new_owner: Signer = full_deserialize(*call.calldata).expect('argent/invalid-calldata');
                         assert(new_owner.is_reasonable(), 'argent/unreasonable-owner');
 
@@ -718,7 +712,10 @@ mod ArgentAccount {
                 signer_signatures
                     .append(
                         SignerSignature::Starknet(
-                            (StarknetSigner { pubkey: owner.try_into().unwrap() }, StarknetSignature { r: *sig_owner_r, s: *sig_owner_s })
+                            (
+                                StarknetSigner { pubkey: owner.try_into().expect('argent/zero-pubkey') },
+                                StarknetSignature { r: *sig_owner_r, s: *sig_owner_s }
+                            )
                         )
                     );
                 match signatures.pop_front() {
@@ -729,7 +726,7 @@ mod ArgentAccount {
                             .append(
                                 SignerSignature::Starknet(
                                     (
-                                        StarknetSigner { pubkey: guardian.try_into().unwrap() },
+                                        StarknetSigner { pubkey: guardian.try_into().expect('argent/zero-pubkey') },
                                         StarknetSignature { r: *sig_guardian_r, s: *sig_guardian_s }
                                     )
                                 )

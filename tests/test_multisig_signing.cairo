@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
+use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknetSignerFromPubKey};
 use argent_tests::setup::{
     multisig_test_setup::{
         initialize_multisig_with, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3, ITestArgentMultisigDispatcherTrait,
@@ -29,8 +29,8 @@ fn test_signature() {
 fn test_double_signature() {
     // init
     let threshold = 2;
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
+    let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
+    let signer_2 = starknetSignerFromPubKey(signer_pubkey_2);
     let multisig = initialize_multisig_with(threshold, array![signer_1, signer_2].span());
 
     let signature = to_starknet_signer_signatures(
@@ -51,8 +51,8 @@ fn test_double_signature() {
 #[should_panic(expected: ('argent/signatures-not-sorted', 'ENTRYPOINT_FAILED'))]
 fn test_double_signature_order() {
     let threshold = 2;
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
+    let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
+    let signer_2 = starknetSignerFromPubKey(signer_pubkey_2);
     let multisig = initialize_multisig_with(threshold, array![signer_1, signer_2].span());
 
     let signature = to_starknet_signer_signatures(
@@ -73,8 +73,8 @@ fn test_double_signature_order() {
 #[should_panic(expected: ('argent/signatures-not-sorted', 'ENTRYPOINT_FAILED'))]
 fn test_same_owner_twice() {
     let threshold = 2;
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
+    let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
+    let signer_2 = starknetSignerFromPubKey(signer_pubkey_2);
     let multisig = initialize_multisig_with(threshold, array![signer_1, signer_2].span());
 
     let signature = to_starknet_signer_signatures(
@@ -95,8 +95,8 @@ fn test_same_owner_twice() {
 #[should_panic(expected: ('argent/signature-invalid-length', 'ENTRYPOINT_FAILED'))]
 fn test_missing_owner_signature() {
     let threshold = 2;
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
+    let signer_1 = starknetSignerFromPubKey(signer_pubkey_1);
+    let signer_2 = starknetSignerFromPubKey(signer_pubkey_2);
     let multisig = initialize_multisig_with(threshold, array![signer_1, signer_2].span());
 
     let signature = to_starknet_signer_signatures(array![signer_pubkey_1, signer_1_signature_r, signer_1_signature_s]);

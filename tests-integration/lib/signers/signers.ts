@@ -201,6 +201,10 @@ export class KeyPair extends Signer {
     });
   }
 
+  public get compiledSignerType() {
+    return CallData.compile([this.signerType]);
+  }
+
   public get publicKey(): any {
     return BigInt(ec.starkCurve.getStarkKey(this.pk));
   }
@@ -238,10 +242,6 @@ export function starknetSignatureType(
       Webauthn: undefined,
     }),
   ]);
-}
-
-export function compiledSigner(signer: CairoCustomEnum) {
-  return CallData.compile([signer]);
 }
 
 export function intoGuid(signer: CairoCustomEnum) {

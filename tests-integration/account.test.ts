@@ -3,7 +3,6 @@ import { CallData } from "starknet";
 import {
   ArgentSigner,
   MultisigSigner,
-  compiledSigner,
   declareContract,
   deployAccount,
   deployAccountWithGuardianBackup,
@@ -162,7 +161,7 @@ describe("ArgentAccount", function () {
       const newOwner = randomKeyPair();
       account.signer = new ArgentSigner(guardian);
 
-      await accountContract.trigger_escape_owner(compiledSigner(newOwner.signerType));
+      await accountContract.trigger_escape_owner(newOwner.compiledSignerType);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 
@@ -223,7 +222,7 @@ describe("ArgentAccount", function () {
       const newOwner = randomKeyPair();
       const newGuardian = 12n;
 
-      await accountContract.trigger_escape_owner(compiledSigner(newOwner.signerType));
+      await accountContract.trigger_escape_owner(newOwner.compiledSignerType);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 
@@ -275,7 +274,7 @@ describe("ArgentAccount", function () {
       account.signer = new ArgentSigner(guardian);
       const newGuardian = 12n;
 
-      await accountContract.trigger_escape_owner(compiledSigner(newOwner.signerType));
+      await accountContract.trigger_escape_owner(newOwner.compiledSignerType);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 

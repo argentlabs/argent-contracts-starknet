@@ -6,7 +6,6 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   getEthContract,
-  compiledSigner,
   waitForTransaction,
   getEthBalance,
   deployContract,
@@ -117,7 +116,7 @@ describe("ArgentAccount: multicall", function () {
     await expectRevertWithErrorMessage("argent/no-multicall-to-self", () =>
       account.execute([
         ethContract.populateTransaction.transfer(recipient, amount),
-        accountContract.populateTransaction.trigger_escape_owner(compiledSigner(newOwner.signerType)),
+        accountContract.populateTransaction.trigger_escape_owner(newOwner.compiledSignerType),
       ]),
     );
   });

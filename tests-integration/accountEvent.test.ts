@@ -14,10 +14,8 @@ import {
   declareFixtureContract,
   waitForTransaction,
   signChangeOwnerMessage,
-  compiledSigner,
   compiledSignerOption,
   signerOption,
-  KeyPair,
 } from "./lib";
 
 describe("ArgentAccount: events", function () {
@@ -52,7 +50,7 @@ describe("ArgentAccount: events", function () {
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
     await setTime(42);
 
-    await expectEvent(() => accountContract.trigger_escape_owner(compiledSigner(newOwner.signerType)), {
+    await expectEvent(() => accountContract.trigger_escape_owner(newOwner.compiledSignerType), {
       from_address: account.address,
       eventName: "EscapeOwnerTriggered",
       data: [activeAt, newOwner.publicKey],
@@ -66,7 +64,7 @@ describe("ArgentAccount: events", function () {
     const newOwner = randomKeyPair();
     await setTime(42);
 
-    await accountContract.trigger_escape_owner(compiledSigner(newOwner.signerType));
+    await accountContract.trigger_escape_owner(newOwner.compiledSignerType);
     await increaseTime(ESCAPE_SECURITY_PERIOD);
     const receipt = await waitForTransaction(await accountContract.escape_owner());
     await expectEvent(receipt, {
@@ -201,7 +199,7 @@ describe("ArgentAccount: events", function () {
     it("Expected on trigger_escape_owner", async function () {
       const { account, accountContract, guardian } = await deployAccount();
       account.signer = new ArgentSigner(guardian);
-      const compiledSignerType = compiledSigner(new KeyPair(42n).signerType);
+      const compiledSignerType = randomKeyPair().compiledSignerType;
 
       await accountContract.trigger_escape_owner(compiledSignerType);
 

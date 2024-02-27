@@ -1,6 +1,3 @@
-const SESSION_MAGIC: felt252 = 'session-token';
-
-
 #[starknet::interface]
 trait ISessionable<TContractState> {
     fn revoke_session(ref self: TContractState, session_hash: felt252);
@@ -29,6 +26,8 @@ mod session_component {
     struct Storage {
         revoked_session: LegacyMap<felt252, bool>,
     }
+
+    const SESSION_MAGIC: felt252 = 'session-token';
 
     #[event]
     #[derive(Drop, starknet::Event)]
@@ -61,6 +60,10 @@ mod session_component {
     impl Internal<
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentUserAccount<TContractState>,
     > of InternalTrait<TContractState> {
+        fn is_session(self: @ComponentState<TContractState>, session_signature0: felt252) -> bool {
+            session_signature0 == SESSION_MAGIC
+        }
+
         fn assert_valid_session(
             self: @ComponentState<TContractState>,
             calls: Span<Call>,
@@ -72,7 +75,7 @@ mod session_component {
             let account_address = get_contract_address();
 
             assert_no_self_call(calls, account_address);
-            assert(*signature[0] == super::SESSION_MAGIC, 'session/invalid-magic-value');
+            assert(self.is_session(*signature[0]), 'session/invalid-magic-value');
 
             let token: SessionToken = full_deserialize(signature.slice(1, signature.len() - 1))
                 .expect('session/invalid-calldata');
@@ -107,6 +110,7 @@ mod session_component {
             assert_valid_session_calls(token, calls);
         }
     }
+
 
     fn assert_valid_session_calls(token: SessionToken, mut calls: Span<Call>) {
         assert(token.proofs.len() == calls.len(), 'unaligned-proofs');

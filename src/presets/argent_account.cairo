@@ -7,7 +7,7 @@ mod ArgentAccount {
     };
     use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
     use argent::session::{
-        session_structs::SessionToken, session::{SESSION_MAGIC, session_component::Internal, session_component,}
+        session_structs::SessionToken, session::{session_component::{Internal, InternalTrait}, session_component,}
     };
     use argent::signer::{
         signer_signature::{Signer, StarknetSigner, StarknetSignature, IntoGuid, SignerSignature, SignerSignatureTrait}
@@ -245,7 +245,7 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             assert_no_unsupported_v3_fields();
-            if *tx_info.signature[0] == SESSION_MAGIC {
+            if self.session_component.is_session(*tx_info.signature[0]) {
                 self
                     .session_component
                     .assert_valid_session(
@@ -265,7 +265,7 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             let signature = tx_info.signature;
-            if *signature[0] == SESSION_MAGIC {
+            if self.session_component.is_session(*signature[0]) {
                 let token: SessionToken = full_deserialize(signature.slice(1, signature.len() - 1))
                     .expect('session/invalid-calldata');
                 assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
@@ -361,7 +361,7 @@ mod ArgentAccount {
         fn execute_from_outside_callback(
             ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
-            if *signature[0] == SESSION_MAGIC {
+            if self.session_component.is_session(*signature[0]) {
                 self
                     .session_component
                     .assert_valid_session(calls, outside_execution_hash, signature, is_from_outside: true);

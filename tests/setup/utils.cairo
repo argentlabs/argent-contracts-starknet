@@ -1,5 +1,7 @@
 use argent::signer::signer_signature::{SignerSignature, StarknetSignature, StarknetSigner};
 use integer::{u32_safe_divmod, u32_to_felt252};
+use snforge_std::{start_prank, start_spoof, CheatTarget, TxInfoMockTrait};
+use starknet::ContractAddress;
 
 fn to_starknet_signer_signatures(arr: Array<felt252>) -> Array<felt252> {
     let size = arr.len() / 3_u32;
@@ -19,4 +21,10 @@ fn to_starknet_signer_signatures(arr: Array<felt252>) -> Array<felt252> {
         i += 1;
     };
     signatures
+}
+
+fn set_tx_foundry(version: felt252, address: ContractAddress) {
+    let mut tx_info = TxInfoMockTrait::default();
+    tx_info.version = Option::Some(version);
+    start_spoof(CheatTarget::One(address), tx_info);
 }

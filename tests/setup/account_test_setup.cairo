@@ -2,8 +2,9 @@ use argent::account::interface::Version;
 use argent::presets::argent_account::ArgentAccount;
 use argent::recovery::interface::{LegacyEscape, EscapeStatus};
 use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
-use core::serde::Serde;
+use snforge_std::{declare, ContractClassTrait, ContractClass, RevertedTransaction, start_prank, CheatTarget};
 use starknet::{contract_address_const, deploy_syscall, account::Call, testing::set_contract_address};
+use super::constants::{OWNER_KEY, GUARDIAN_KEY};
 
 #[starknet::interface]
 trait ITestArgentAccount<TContractState> {
@@ -51,17 +52,16 @@ trait ITestArgentAccount<TContractState> {
     fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }
 
-const owner_pubkey: felt252 = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;
-const guardian_pubkey: felt252 = 0x759ca09377679ecd535a81e83039658bf40959283187c654c5416f439403cf5;
-const wrong_owner_pubkey: felt252 = 0x743829e0a179f8afe223fc8112dfc8d024ab6b235fd42283c4f5970259ce7b7;
-const wrong_guardian_pubkey: felt252 = 0x6eeee2b0c71d681692559735e08a2c3ba04e7347c0c18d4d49b83bb89771591;
+fn declare_argent_account() -> ContractClass {
+    declare('ArgentAccount')
+}
 
 fn initialize_account() -> ITestArgentAccountDispatcher {
-    initialize_account_with(owner_pubkey, guardian_pubkey)
+    initialize_account_with(OWNER_KEY(), GUARDIAN_KEY())
 }
 
 fn initialize_account_without_guardian() -> ITestArgentAccountDispatcher {
-    initialize_account_with(owner_pubkey, 0)
+    initialize_account_with(OWNER_KEY(), 0)
 }
 
 fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAccountDispatcher {
@@ -73,10 +73,12 @@ fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAcco
     };
     guardian_signer.serialize(ref calldata);
 
-    let class_hash = ArgentAccount::TEST_CLASS_HASH.try_into().unwrap();
-    let (contract_address, _) = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap();
+    let contract = declare_argent_account();
+    let contract_address = contract
+        .deploy_at(@calldata, 100.try_into().unwrap())
+        .expect('Failed to deploy ArgentAccount');
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')
-    set_contract_address(contract_address);
+    start_prank(CheatTarget::One(contract_address), contract_address);
     ITestArgentAccountDispatcher { contract_address }
 }

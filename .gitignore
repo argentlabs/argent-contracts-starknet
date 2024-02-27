@@ -19,3 +19,4 @@ cairo
 account.json
 dump
 package-lock.json
+.snfoundry_cache

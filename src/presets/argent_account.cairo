@@ -246,11 +246,7 @@ mod ArgentAccount {
             assert_correct_invoke_version(tx_info.version);
             assert_no_unsupported_v3_fields();
             if self.session_component.is_session(*tx_info.signature[0]) {
-                self
-                    .session_component
-                    .assert_valid_session(
-                        calls.span(), tx_info.transaction_hash, tx_info.signature,
-                    );
+                self.session_component.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature,);
             } else {
                 self
                     .assert_valid_calls_and_signature(
@@ -362,9 +358,7 @@ mod ArgentAccount {
             ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
             if self.session_component.is_session(*signature[0]) {
-                self
-                    .session_component
-                    .assert_valid_session(calls, outside_execution_hash, signature);
+                self.session_component.assert_valid_session(calls, outside_execution_hash, signature);
             } else {
                 self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature, is_from_outside: true);
             }

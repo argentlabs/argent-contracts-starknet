@@ -51,6 +51,7 @@ mod session_component {
             self.revoked_session.write(session_hash, true);
         }
 
+        #[inline(always)]
         fn is_session_revoked(self: @ComponentState<TContractState>, session_hash: felt252) -> bool {
             self.revoked_session.read(session_hash)
         }
@@ -60,6 +61,7 @@ mod session_component {
     impl Internal<
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentUserAccount<TContractState>,
     > of InternalTrait<TContractState> {
+        #[inline(always)]
         fn is_session(self: @ComponentState<TContractState>, session_signature0: felt252) -> bool {
             session_signature0 == SESSION_MAGIC
         }

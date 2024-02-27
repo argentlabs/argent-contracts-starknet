@@ -69,7 +69,6 @@ mod session_component {
             calls: Span<Call>,
             transaction_hash: felt252,
             signature: Span<felt252>,
-            is_from_outside: bool,
         ) {
             let state = self.get_contract();
             let account_address = get_contract_address();

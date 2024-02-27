@@ -249,7 +249,7 @@ mod ArgentAccount {
                 self
                     .session_component
                     .assert_valid_session(
-                        calls.span(), tx_info.transaction_hash, tx_info.signature, is_from_outside: false
+                        calls.span(), tx_info.transaction_hash, tx_info.signature,
                     );
             } else {
                 self
@@ -364,7 +364,7 @@ mod ArgentAccount {
             if self.session_component.is_session(*signature[0]) {
                 self
                     .session_component
-                    .assert_valid_session(calls, outside_execution_hash, signature, is_from_outside: true);
+                    .assert_valid_session(calls, outside_execution_hash, signature);
             } else {
                 self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature, is_from_outside: true);
             }

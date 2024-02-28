@@ -1,8 +1,8 @@
 mod test_argent_account;
 mod test_argent_account_signatures;
 mod test_asserts;
-// mod test_comp_multisig;
-// mod test_comp_recovery_external;
+mod test_comp_multisig;
+mod test_comp_recovery_external;
 // mod test_comp_recovery_threshold;
 // mod test_comp_signer_list;
 // mod test_comp_src5;
@@ -21,16 +21,10 @@ mod setup {
     mod utils;
     mod webauthn_test_setup;
 }
-
 // mod webauthn {
 //     mod test_webauthn_base64;
 //     mod test_webauthn_bytes;
 //     mod test_webauthn_sha256;
 // }
 
-mod mocks {
-    mod multisig_mocks;
-    mod recovery_mocks;
-    mod signer_list_mocks;
-    mod src5_mocks;
-}
+

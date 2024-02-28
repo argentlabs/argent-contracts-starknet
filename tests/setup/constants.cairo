@@ -24,6 +24,10 @@ fn new_owner_message_hash(old_signer: felt252) -> felt252 {
         .finalize()
 }
 
+fn MULTISIG_OWNER(key: felt252) -> felt252 {
+    KeyPairTrait::from_secret_key(key).public_key
+}
+
 fn OWNER_KEY() -> felt252 {
     KeyPairTrait::from_secret_key('OWNER').public_key
 }

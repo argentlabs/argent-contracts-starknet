@@ -54,3 +54,10 @@ mod utils {
     mod test_dapp;
     mod transaction_version;
 }
+
+mod mocks {
+    mod multisig_mocks;
+    mod recovery_mocks;
+    mod signer_list_mocks;
+    mod src5_mocks;
+}

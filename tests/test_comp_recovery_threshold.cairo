@@ -1,3 +1,4 @@
+// use core::traits::TryInto;
 // use argent::multisig::interface::IArgentMultisigInternal;
 // use argent::multisig::interface::{IArgentMultisig, IArgentMultisigDispatcher, IArgentMultisigDispatcherTrait};
 // use argent::recovery::interface::{IRecovery, IRecoveryDispatcher, IRecoveryDispatcherTrait, EscapeStatus};
@@ -7,13 +8,10 @@
 // use argent::recovery::{threshold_recovery::threshold_recovery_component};
 // use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid}};
 // use argent::signer_storage::signer_list::signer_list_component;
-// use argent_tests::mocks::recovery_mocks::ThresholdRecoveryMock;
-// use core::array::ArrayTrait;
-// use core::debug::PrintTrait;
-// use core::traits::Into;
+// use super::mocks::recovery_mocks::ThresholdRecoveryMock;
 // use starknet::SyscallResultTrait;
 // use starknet::{
-//     deploy_syscall, contract_address_const, testing::{set_contract_address, set_caller_address, set_block_timestamp}
+//     deploy_syscall, ContractAddress, contract_address_const, testing::{set_contract_address, set_caller_address, set_block_timestamp}
 // };
 
 // const signer_pubkey_1: felt252 = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;
@@ -38,6 +36,8 @@
 //     )
 //         .unwrap_syscall();
 //     set_contract_address(address);
+//       let a  = array![0x123, 0x123, 0x123].span();
+//       let b: ContractAddress = (*a.at(0)).try_into().unwrap();
 //     IArgentMultisigDispatcher { contract_address: address }.add_signers(2, array![SIGNER_1(), SIGNER_2()]);
 //     IToggleThresholdRecoveryDispatcher { contract_address: address }.toggle_escape(true, 10, 10);
 //     (
@@ -45,6 +45,7 @@
 //         IToggleThresholdRecoveryDispatcher { contract_address: address },
 //         IArgentMultisigDispatcher { contract_address: address }
 //     )
+
 // }
 
 // // Toggle 
@@ -102,7 +103,7 @@
 //     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
 //     let (escape, status) = component.get_escape();
 //     assert(*escape.target_signers.at(0) == signer_pubkey_2, 'should be signer 2');
-//     assert(*escape.new_signears.at(0) == signer_pubkey_3, 'should be signer 3');
+//     assert(*escape.new_signers.at(0) == signer_pubkey_3, 'should be signer 3');
 // }
 
 // #[test]

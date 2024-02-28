@@ -1,6 +1,3 @@
-const SESSION_MAGIC: felt252 = 'session-token';
-
-
 #[starknet::interface]
 trait ISessionable<TContractState> {
     fn revoke_session(ref self: TContractState, session_hash: felt252);
@@ -9,9 +6,11 @@ trait ISessionable<TContractState> {
 
 #[starknet::component]
 mod session_component {
+    use alexandria_merkle_tree::merkle_tree::{
+        Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,
+    };
     use argent::account::interface::{IAccount, IArgentUserAccount};
     use argent::session::{
-        merkle_tree_temp::{Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,},
         session::ISessionable,
         session_structs::{SessionToken, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash},
     };
@@ -28,6 +27,8 @@ mod session_component {
         revoked_session: LegacyMap<felt252, bool>,
     }
 
+    const SESSION_MAGIC: felt252 = 'session-token';
+
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
@@ -39,8 +40,8 @@ mod session_component {
         session_hash: felt252,
     }
 
-    #[embeddable_as(SessionableImpl)]
-    impl Sessionable<
+    #[embeddable_as(session)]
+    impl SessionableImpl<
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentUserAccount<TContractState>,
     > of super::ISessionable<ComponentState<TContractState>> {
         fn revoke_session(ref self: ComponentState<TContractState>, session_hash: felt252) {
@@ -50,6 +51,7 @@ mod session_component {
             self.revoked_session.write(session_hash, true);
         }
 
+        #[inline(always)]
         fn is_session_revoked(self: @ComponentState<TContractState>, session_hash: felt252) -> bool {
             self.revoked_session.read(session_hash)
         }
@@ -59,18 +61,22 @@ mod session_component {
     impl Internal<
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentUserAccount<TContractState>,
     > of InternalTrait<TContractState> {
+        #[inline(always)]
+        fn is_session(self: @ComponentState<TContractState>, session_signature0: felt252) -> bool {
+            session_signature0 == SESSION_MAGIC
+        }
+
         fn assert_valid_session(
             self: @ComponentState<TContractState>,
             calls: Span<Call>,
             transaction_hash: felt252,
             signature: Span<felt252>,
-            is_from_outside: bool,
         ) {
             let state = self.get_contract();
             let account_address = get_contract_address();
 
             assert_no_self_call(calls, account_address);
-            assert(*signature[0] == super::SESSION_MAGIC, 'session/invalid-magic-value');
+            assert(self.is_session(*signature[0]), 'session/invalid-magic-value');
 
             let token: SessionToken = full_deserialize(signature.slice(1, signature.len() - 1))
                 .expect('session/invalid-calldata');
@@ -105,6 +111,7 @@ mod session_component {
             assert_valid_session_calls(token, calls);
         }
     }
+
 
     fn assert_valid_session_calls(token: SessionToken, mut calls: Span<Call>) {
         assert(token.proofs.len() == calls.len(), 'unaligned-proofs');

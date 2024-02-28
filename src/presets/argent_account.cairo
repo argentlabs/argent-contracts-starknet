@@ -6,6 +6,9 @@ mod ArgentAccount {
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
     use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
+    use argent::session::{
+        session_structs::SessionToken, session::{session_component::{Internal, InternalTrait}, session_component,}
+    };
     use argent::signer::{
         signer_signature::{Signer, StarknetSigner, StarknetSignature, IntoGuid, SignerSignature, SignerSignatureTrait}
     };
@@ -18,11 +21,6 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, assert_no_unsupported_v3_fields, DA_MODE_L1
         }
     };
-    use core::array::ArrayTrait;
-    use core::array::SpanTrait;
-    use core::option::OptionTrait;
-    use core::starknet::event::EventEmitter;
-    use core::traits::TryInto;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
@@ -49,6 +47,12 @@ mod ArgentAccount {
     const MAX_ESCAPE_MAX_FEE_STRK: u128 = 50_000000000000000000; // 50 STRK
     const MAX_ESCAPE_TIP_STRK: u128 = 1_000000000000000000; // 1 STRK
 
+    // session 
+    component!(path: session_component, storage: session, event: SessionableEvent);
+
+    #[abi(embed_v0)]
+    impl Sessionable = session_component::session<ContractState>;
+
     // Execute from outside
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
@@ -72,6 +76,8 @@ mod ArgentAccount {
         src5: src5_component::Storage,
         #[substorage(v0)]
         upgrade: upgrade_component::Storage,
+        #[substorage(v0)]
+        session: session_component::Storage,
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         _signer: felt252, /// Current account owner
         _guardian: felt252, /// Current account guardian
@@ -94,6 +100,8 @@ mod ArgentAccount {
         SRC5Events: src5_component::Event,
         #[flat]
         UpgradeEvents: upgrade_component::Event,
+        #[flat]
+        SessionableEvent: session_component::Event,
         AccountCreated: AccountCreated,
         TransactionExecuted: TransactionExecuted,
         EscapeOwnerTriggered: EscapeOwnerTriggered,
@@ -237,10 +245,14 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             assert_no_unsupported_v3_fields();
-            self
-                .assert_valid_calls_and_signature(
-                    calls.span(), tx_info.transaction_hash, tx_info.signature, is_from_outside: false
-                );
+            if self.session.is_session(*tx_info.signature[0]) {
+                self.session.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature,);
+            } else {
+                self
+                    .assert_valid_calls_and_signature(
+                        calls.span(), tx_info.transaction_hash, tx_info.signature, is_from_outside: false
+                    );
+            }
             VALIDATED
         }
 
@@ -248,6 +260,12 @@ mod ArgentAccount {
             assert_only_protocol();
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
+            let signature = tx_info.signature;
+            if self.session.is_session(*signature[0]) {
+                let token: SessionToken = full_deserialize(signature.slice(1, signature.len() - 1))
+                    .expect('session/invalid-calldata');
+                assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
+            }
 
             let retdata = execute_multicall(calls.span());
 
@@ -339,8 +357,11 @@ mod ArgentAccount {
         fn execute_from_outside_callback(
             ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
-            self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature, is_from_outside: true);
-
+            if self.session.is_session(*signature[0]) {
+                self.session.assert_valid_session(calls, outside_execution_hash, signature);
+            } else {
+                self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature, is_from_outside: true);
+            }
             let retdata = execute_multicall(calls);
             self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
             retdata
@@ -862,4 +883,3 @@ mod ArgentAccount {
         EscapeStatus::Ready
     }
 }
-

@@ -14,7 +14,7 @@ allowed-libfuncs-list.name = "audited"
 starknet = "2.5.4"
 alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.5.4" }
 alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.5.4" }
-alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", tag="cairo-v2.3.0-rc0" }
+alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", tag="cairo-v2.5.4" }
 
 
 [tool.fmt]

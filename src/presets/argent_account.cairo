@@ -7,7 +7,7 @@ mod ArgentAccount {
     };
     use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
     use argent::session::{
-        session_structs::SessionToken, session::{session_component::{Internal, InternalTrait}, session_component,}
+        interface::SessionToken, session::{session_component::{Internal, InternalTrait}, session_component,}
     };
     use argent::signer::{
         signer_signature::{Signer, StarknetSigner, StarknetSignature, IntoGuid, SignerSignature, SignerSignatureTrait}

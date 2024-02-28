@@ -3,6 +3,15 @@ use poseidon::{poseidon_hash_span};
 use starknet::account::Call;
 use starknet::{get_tx_info, get_contract_address, ContractAddress};
 
+#[starknet::interface]
+trait ISessionable<TContractState> {
+    /// @notice This method allows user to revoke a session based on its hash
+    /// @param session_hash Hash of the session token
+    fn revoke_session(ref self: TContractState, session_hash: felt252);
+
+    /// @notice View method to see if a session is revoked, returns a boolean 
+    fn is_session_revoked(self: @TContractState, session_hash: felt252) -> bool;
+}
 
 #[derive(Drop, Serde, Copy)]
 struct Session {

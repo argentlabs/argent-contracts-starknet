@@ -57,5 +57,5 @@ mod utils {
 
 mod session {
     mod session;
-    mod session_structs;
+    mod interface;
 }

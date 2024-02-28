@@ -1,9 +1,3 @@
-#[starknet::interface]
-trait ISessionable<TContractState> {
-    fn revoke_session(ref self: TContractState, session_hash: felt252);
-    fn is_session_revoked(self: @TContractState, session_hash: felt252) -> bool;
-}
-
 #[starknet::component]
 mod session_component {
     use alexandria_merkle_tree::merkle_tree::{
@@ -11,8 +5,7 @@ mod session_component {
     };
     use argent::account::interface::{IAccount, IArgentUserAccount};
     use argent::session::{
-        session::ISessionable,
-        session_structs::{SessionToken, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash},
+        interface::{ISessionable, SessionToken, Session, IOffchainMessageHash, IStructHash, IMerkleLeafHash},
     };
     use argent::signer::signer_signature::{SignerSignatureTrait};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
@@ -43,7 +36,7 @@ mod session_component {
     #[embeddable_as(session)]
     impl SessionableImpl<
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentUserAccount<TContractState>,
-    > of super::ISessionable<ComponentState<TContractState>> {
+    > of ISessionable<ComponentState<TContractState>> {
         fn revoke_session(ref self: ComponentState<TContractState>, session_hash: felt252) {
             assert_only_self();
             assert(!self.revoked_session.read(session_hash), 'session/already-revoked');

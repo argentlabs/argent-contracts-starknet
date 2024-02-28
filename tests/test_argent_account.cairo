@@ -46,16 +46,6 @@ fn check_transaction_version_on_validate() {
 }
 
 #[test]
-fn initialize_with_null_owner() {
-    let mut calldata = array![];
-    let null_signer = starknetSignerFromPubKey(0);
-    null_signer.serialize(ref calldata);
-    null_signer.serialize(ref calldata);
-    let class_hash = ArgentAccount::TEST_CLASS_HASH.try_into().unwrap();
-    deploy_syscall(class_hash, 0, calldata.span(), true).expect_err('argent/null-owner');
-}
-
-#[test]
 fn initialized_no_guardian_no_backup() {
     let account = initialize_account_with(1, 0);
     assert(account.get_owner() == 1, 'value should be 1');
@@ -107,24 +97,6 @@ fn change_owner_only_self() {
     let signer_signature = SignerSignature::Starknet(
         (
             StarknetSigner { pubkey: new_owner_pubkey.try_into().expect('argent/zero-pubkey') },
-            StarknetSignature { r: new_owner_r, s: new_owner_s }
-        )
-    );
-    account.change_owner(signer_signature);
-}
-
-#[test]
-<<<<<<< HEAD
-#[available_gas(2000000)]
-#[should_panic(expected: ('argent/unreasonable-owner', 'ENTRYPOINT_FAILED'))]
-=======
-#[should_panic(expected: ('argent/null-owner', 'ENTRYPOINT_FAILED'))]
->>>>>>> update-cairo
-fn change_owner_to_zero() {
-    let account = initialize_account();
-    let signer_signature = SignerSignature::Starknet(
-        (
-            StarknetSigner { pubkey: 0.try_into().expect('argent/zero-pubkey') },
             StarknetSignature { r: new_owner_r, s: new_owner_s }
         )
     );

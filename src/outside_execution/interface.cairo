@@ -35,13 +35,6 @@ trait IOutsideExecutionCallback<TContractState> {
     ) -> Array<Span<felt252>>;
 }
 
-#[derive(Copy, Drop, Hash)]
-struct StarkNetDomain {
-        name: felt252,
-        version: felt252,
-        chain_id: felt252,
- }
-
  #[derive(Copy, Drop, Serde)]
 struct OutsideExecution {
     /// @notice Only the address specified here will be allowed to call `execute_from_outside`
@@ -56,6 +49,22 @@ struct OutsideExecution {
     /// The calls that will be executed by the Account
     /// Using `Call` here instead of redeclaring `OutsideCall` to avoid the conversion
     calls: Span<Call>
+}
+
+#[derive(Copy, Drop, Hash)]
+struct StarkNetDomain {
+        name: felt252,
+        version: felt252,
+        chain_id: felt252,
+ }
+
+
+trait IOffchainMessageHash<T> {
+    fn get_message_hash(self: @T) -> felt252;
+}
+
+trait IStructHash<T> {
+    fn get_struct_hash(self: @T) -> felt252;
 }
 
 const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");

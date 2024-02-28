@@ -10,9 +10,7 @@ use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid}};
 use argent::signer_storage::signer_list::signer_list_component;
 use snforge_std::{start_prank, start_warp, CheatTarget, test_address, declare, ContractClassTrait, ContractClass};
 use starknet::SyscallResultTrait;
-use starknet::{
-    deploy_syscall, contract_address_const, ContractAddress,
-};
+use starknet::{deploy_syscall, contract_address_const, ContractAddress,};
 use super::setup::constants::{MULTISIG_OWNER};
 
 fn SIGNER_1() -> Signer {
@@ -43,7 +41,7 @@ fn setup() -> (IRecoveryDispatcher, IToggleExternalRecoveryDispatcher, IArgentMu
     start_prank(CheatTarget::One(contract_address), contract_address);
     IArgentMultisigDispatcher { contract_address }.add_signers(2, array![SIGNER_1(), SIGNER_2()]);
     IToggleExternalRecoveryDispatcher { contract_address }.toggle_escape(true, 10, 10, GUARDIAN());
-     start_prank(CheatTarget::One(contract_address), contract_address);
+    start_prank(CheatTarget::One(contract_address), contract_address);
     (
         IRecoveryDispatcher { contract_address },
         IToggleExternalRecoveryDispatcher { contract_address },
@@ -160,7 +158,7 @@ fn test_execute_escape() {
     let (component, _, multisig_component) = setup();
     start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-     start_warp(CheatTarget::All, 11);
+    start_warp(CheatTarget::All, 11);
     component.execute_escape();
     let (escape, status) = component.get_escape();
     assert(status == EscapeStatus::None, 'status should be None');
@@ -176,7 +174,7 @@ fn test_execute_escape_NotReady() {
     let (component, _, _) = setup();
     start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-     start_warp(CheatTarget::All, 8);
+    start_warp(CheatTarget::All, 8);
     component.execute_escape();
 }
 
@@ -186,7 +184,7 @@ fn test_execute_escape_Expired() {
     let (component, _, _) = setup();
     start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-     start_warp(CheatTarget::All, 28);
+    start_warp(CheatTarget::All, 28);
     component.execute_escape();
 }
 

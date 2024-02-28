@@ -40,8 +40,8 @@ mod session_component {
         session_hash: felt252,
     }
 
-    #[embeddable_as(SessionableImpl)]
-    impl Sessionable<
+    #[embeddable_as(session)]
+    impl SessionableImpl<
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentUserAccount<TContractState>,
     > of super::ISessionable<ComponentState<TContractState>> {
         fn revoke_session(ref self: ComponentState<TContractState>, session_hash: felt252) {

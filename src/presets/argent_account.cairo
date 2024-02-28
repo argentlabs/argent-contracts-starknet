@@ -48,10 +48,10 @@ mod ArgentAccount {
     const MAX_ESCAPE_TIP_STRK: u128 = 1_000000000000000000; // 1 STRK
 
     // session 
-    component!(path: session_component, storage: session_component, event: SessionableEvent);
+    component!(path: session_component, storage: session, event: SessionableEvent);
 
     #[abi(embed_v0)]
-    impl Sessionable = session_component::SessionableImpl<ContractState>;
+    impl Sessionable = session_component::session<ContractState>;
 
     // Execute from outside
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
@@ -77,7 +77,7 @@ mod ArgentAccount {
         #[substorage(v0)]
         upgrade: upgrade_component::Storage,
         #[substorage(v0)]
-        session_component: session_component::Storage,
+        session: session_component::Storage,
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         _signer: felt252, /// Current account owner
         _guardian: felt252, /// Current account guardian
@@ -245,8 +245,8 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             assert_no_unsupported_v3_fields();
-            if self.session_component.is_session(*tx_info.signature[0]) {
-                self.session_component.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature,);
+            if self.session.is_session(*tx_info.signature[0]) {
+                self.session.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature,);
             } else {
                 self
                     .assert_valid_calls_and_signature(
@@ -261,7 +261,7 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             let signature = tx_info.signature;
-            if self.session_component.is_session(*signature[0]) {
+            if self.session.is_session(*signature[0]) {
                 let token: SessionToken = full_deserialize(signature.slice(1, signature.len() - 1))
                     .expect('session/invalid-calldata');
                 assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
@@ -357,8 +357,8 @@ mod ArgentAccount {
         fn execute_from_outside_callback(
             ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
-            if self.session_component.is_session(*signature[0]) {
-                self.session_component.assert_valid_session(calls, outside_execution_hash, signature);
+            if self.session.is_session(*signature[0]) {
+                self.session.assert_valid_session(calls, outside_execution_hash, signature);
             } else {
                 self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature, is_from_outside: true);
             }

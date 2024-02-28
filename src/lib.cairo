@@ -56,6 +56,6 @@ mod utils {
 }
 
 mod session {
-    mod session;
     mod interface;
+    mod session;
 }

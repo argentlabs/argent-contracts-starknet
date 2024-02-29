@@ -77,7 +77,6 @@ mod multisig_component {
                     Option::Some(signer) => (*signer),
                     Option::None => { break; }
                 };
-                assert(signer.is_reasonable(), 'argent/invalid-signer');
                 let signer_guid = signer.into_guid();
                 signer_list_comp.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
                 signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
@@ -145,7 +144,6 @@ mod multisig_component {
             let (_, last_signer) = signer_list_comp.load();
 
             let signer_to_remove_guid = signer_to_remove.into_guid();
-            assert(signer_to_add.is_reasonable(), 'argent/invalid-new-signer');
             let signer_to_add_guid = signer_to_add.into_guid();
             signer_list_comp.replace_signer(signer_to_remove_guid, signer_to_add_guid, last_signer);
 
@@ -173,7 +171,7 @@ mod multisig_component {
         fn is_valid_signer_signature(
             self: @ComponentState<TContractState>, hash: felt252, signer_signature: SignerSignature
         ) -> bool {
-            let is_signer = self.get_contract().is_signer_in_list(signer_signature.signer_into_guid());
+            let is_signer = self.get_contract().is_signer_in_list(signer_signature.signer().into_guid());
             assert(is_signer, 'argent/not-a-signer');
             signer_signature.is_valid_signature(hash)
         }
@@ -200,7 +198,6 @@ mod multisig_component {
                     Option::Some(signer) => (*signer),
                     Option::None => { break; }
                 };
-                assert(signer.is_reasonable(), 'argent/invalid-signer');
                 let signer_guid = signer.into_guid();
                 signer_list_comp.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
                 signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });

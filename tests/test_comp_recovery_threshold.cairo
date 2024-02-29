@@ -155,7 +155,7 @@ fn test_execute_escape() {
 #[test]
 #[should_panic(expected: ('argent/invalid-escape', 'ENTRYPOINT_FAILED'))]
 fn test_execute_escape_NotReady() {
-    let (component, _, multisig_component) = setup();
+    let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     set_block_timestamp(8);
     component.execute_escape();
@@ -164,7 +164,7 @@ fn test_execute_escape_NotReady() {
 #[test]
 #[should_panic(expected: ('argent/invalid-escape', 'ENTRYPOINT_FAILED'))]
 fn test_execute_escape_Expired() {
-    let (component, _, multisig_component) = setup();
+    let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     set_block_timestamp(28);
     component.execute_escape();

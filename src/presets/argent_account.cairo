@@ -216,7 +216,6 @@ mod ArgentAccount {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: Signer, guardian: Option<Signer>) {
-        assert(owner.is_reasonable(), 'argent/unreasonable-owner');
         let owner_guid: felt252 = owner.into_guid();
         self._signer.write(owner_guid);
         self.emit(OwnerAdded { new_owner_guid: owner_guid });
@@ -224,7 +223,6 @@ mod ArgentAccount {
 
         let guardian_guid: felt252 = match guardian {
             Option::Some(guardian) => {
-                assert(guardian.is_reasonable(), 'argent/unreasonable-guardian');
                 let guardian_guid: felt252 = guardian.into_guid();
                 self._guardian.write(guardian_guid);
                 self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
@@ -382,8 +380,7 @@ mod ArgentAccount {
             self.reset_escape();
             self.reset_escape_attempts();
 
-            assert(signer_signature.signer().is_reasonable(), 'argent/unreasonable-owner');
-            let new_owner_guid = signer_signature.signer_into_guid();
+            let new_owner_guid = signer_signature.signer().into_guid();
             let old_owner = self._signer.read();
             self.assert_valid_new_owner_signature(signer_signature);
 
@@ -399,7 +396,6 @@ mod ArgentAccount {
 
             let new_guardian_guid: felt252 = match new_guardian {
                 Option::Some(guardian) => {
-                    assert(guardian.is_reasonable(), 'argent/unreasonable-guardian');
                     let guardian_guid = guardian.into_guid();
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                     guardian_guid
@@ -425,7 +421,6 @@ mod ArgentAccount {
 
             let new_guardian_backup_guid: felt252 = match new_guardian_backup {
                 Option::Some(guardian) => {
-                    assert(guardian.is_reasonable(), 'argent/unreasonable-guardian-b');
                     let guardian_guid = guardian.into_guid();
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                     guardian_guid
@@ -452,7 +447,6 @@ mod ArgentAccount {
             }
 
             self.reset_escape();
-            assert(new_owner.is_reasonable(), 'argent/unreasonable-owner');
             let new_owner_guid = new_owner.into_guid();
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
             let escape = LegacyEscape { ready_at, escape_type: LegacyEscapeType::Owner, new_signer: new_owner_guid };
@@ -468,7 +462,6 @@ mod ArgentAccount {
 
             let new_guardian_guid: felt252 = match new_guardian {
                 Option::Some(guardian) => {
-                    assert(guardian.is_reasonable(), 'argent/unreasonable-guardian');
                     let guardian_guid = guardian.into_guid();
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                     guardian_guid
@@ -613,8 +606,7 @@ mod ArgentAccount {
                             self.guardian_escape_attempts.write(current_attempts + 1);
                         }
 
-                        let new_owner: Signer = full_deserialize(*call.calldata).expect('argent/invalid-calldata');
-                        assert(new_owner.is_reasonable(), 'argent/unreasonable-owner');
+                        let _: Signer = full_deserialize(*call.calldata).expect('argent/invalid-calldata');
 
                         assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
                         let is_valid = self.is_valid_guardian_signature(execution_hash, *signer_signatures.at(0));
@@ -650,14 +642,8 @@ mod ArgentAccount {
 
                         let new_guardian: Option<Signer> = full_deserialize(*call.calldata)
                             .expect('argent/invalid-calldata');
-
-                        match new_guardian {
-                            Option::Some(guardian) => {
-                                assert(guardian.is_reasonable(), 'argent/unreasonable-guardian');
-                            },
-                            Option::None => {
-                                assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
-                            }
+                        if new_guardian.is_none() {
+                            assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
                         }
 
                         self.assert_guardian_set();
@@ -765,12 +751,12 @@ mod ArgentAccount {
         }
 
         fn is_valid_owner_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
-            signer_signature.signer_into_guid() == self._signer.read() && signer_signature.is_valid_signature(hash)
+            signer_signature.signer().into_guid() == self._signer.read() && signer_signature.is_valid_signature(hash)
         }
 
         fn is_valid_guardian_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
-            let signer_into_guid = signer_signature.signer_into_guid();
-            (signer_into_guid == self._guardian.read() || signer_into_guid == self._guardian_backup.read())
+            let signer_guid = signer_signature.signer().into_guid();
+            (signer_guid == self._guardian.read() || signer_guid == self._guardian_backup.read())
                 && signer_signature.is_valid_signature(hash)
         }
 

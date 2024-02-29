@@ -92,7 +92,6 @@ mod external_recovery_component {
                     Option::Some(target_signer) => {
                         let new_signer = new_signers_span.pop_front().expect('argent/wrong-length');
                         let target_guid = (*target_signer).into_guid();
-                        assert((*new_signer).is_reasonable(), 'argent/invalid-signer');
                         let new_guid = (*new_signer).into_guid();
                         // target signers are different
                         assert(target_guid.into() > last_target, 'argent/invalid-target-order');

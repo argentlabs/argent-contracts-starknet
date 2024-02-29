@@ -63,7 +63,6 @@ mod threshold_recovery_component {
             assert(escape_config.is_enabled == 1, 'argent/escape-disabled');
 
             let target_signer_guid = (*target_signers.at(0)).into_guid();
-            assert((*new_signers.at(0)).is_reasonable(), 'argent/invalid-new-signer');
             let new_signer_guid = (*new_signers.at(0)).into_guid();
             let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
             signer_list_comp.emit(SignerLinked { signer_guid: new_signer_guid, signer: *new_signers.at(0) });

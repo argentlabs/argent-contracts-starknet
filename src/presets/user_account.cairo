@@ -269,7 +269,7 @@ mod ArgentUserAccount {
                     Option::Some(signer_sig) => signer_sig,
                     Option::None => { break true; }
                 };
-                let signer_guid = signer_sig.signer_into_guid();
+                let signer_guid = signer_sig.signer().into_guid();
                 assert(self.multisig.is_signer_guid(signer_guid), 'argent/not-a-signer');
                 assert(signer_guid != excluded_signer, 'argent/unauthorised_signer');
                 let signer_uint: u256 = signer_guid.into();

@@ -17,7 +17,7 @@ import {
   typedData,
   uint256,
 } from "starknet";
-import { fundAccount, provider } from "..";
+import { RawSigner, fundAccount, provider } from "..";
 
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
   `${prefix ? "0x" : ""}${[...new Uint8Array(buffer)].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
@@ -61,67 +61,6 @@ export async function deployFixedWebauthnAccount(classHash: string): Promise<Acc
   await provider.waitForTransaction(response.transaction_hash);
 
   return account;
-}
-
-abstract class RawSigner implements SignerInterface {
-  abstract signRaw(messageHash: string): Promise<Signature>;
-
-  public async getPubKey(): Promise<string> {
-    throw Error("This signer allows multiple public keys");
-  }
-
-  public async signMessage(typedDataArgument: typedData.TypedData, accountAddress: string): Promise<Signature> {
-    const messageHash = typedData.getMessageHash(typedDataArgument, accountAddress);
-    return this.signRaw(messageHash);
-  }
-
-  public async signTransaction(
-    transactions: Call[],
-    transactionsDetail: V2InvocationsSignerDetails,
-    abis?: Abi[],
-  ): Promise<Signature> {
-    if (abis && abis.length !== transactions.length) {
-      throw new Error("ABI must be provided for each transaction or no transaction");
-    }
-    // now use abi to display decoded data somewhere, but as this signer is headless, we can't do that
-    const compiledCalldata = transaction.getExecuteCalldata(transactions, transactionsDetail.cairoVersion);
-    const messageHash = hash.calculateInvokeTransactionHash({
-      senderAddress: transactionsDetail.walletAddress,
-      compiledCalldata,
-      ...transactionsDetail,
-    });
-
-    return this.signRaw(messageHash);
-  }
-
-  public async signDeployAccountTransaction({
-    classHash,
-    contractAddress,
-    constructorCalldata,
-    addressSalt,
-    maxFee,
-    version,
-    chainId,
-    nonce,
-  }: V2DeployAccountSignerDetails) {
-    const messageHash = hash.calculateDeployAccountTransactionHash({
-      contractAddress,
-      classHash,
-      constructorCalldata: CallData.compile(constructorCalldata),
-      salt: BigInt(addressSalt),
-      version: version,
-      maxFee,
-      chainId,
-      nonce,
-    });
-
-    return this.signRaw(messageHash);
-  }
-
-  public async signDeclareTransaction(transaction: V2DeclareSignerDetails) {
-    const messageHash = hash.calculateDeclareTransactionHash(transaction);
-    return this.signRaw(messageHash);
-  }
 }
 
 class WebauthnOwner extends RawSigner {

@@ -1,11 +1,6 @@
 use argent::signer::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };
-use core::array::ArrayTrait;
-use core::num::traits::zero::Zero;
-use core::option::OptionTrait;
-use core::traits::Into;
-use core::traits::TryInto;
 use ecdsa::check_ecdsa_signature;
 use hash::{HashStateTrait, HashStateExTrait, Hash};
 use poseidon::{PoseidonTrait, HashState};

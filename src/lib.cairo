@@ -59,3 +59,9 @@ mod session {
     mod interface;
     mod session;
 }
+
+mod offchain_sig {
+    mod interface;
+    mod outside_execution_hash;
+    mod session_hash;
+}

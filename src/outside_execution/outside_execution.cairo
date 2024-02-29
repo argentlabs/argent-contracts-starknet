@@ -2,9 +2,8 @@
 // This is achieved by adding outside_execution::ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
 #[starknet::component]
 mod outside_execution_component {
-    use argent::outside_execution::interface::{
-        IOutsideExecution, IOffchainMessageHash, OutsideExecution, IOutsideExecutionCallback
-    };
+    use argent::offchain_sig::outside_execution_hash::OffChainMessageOutsideExecution;
+    use argent::outside_execution::interface::{OutsideExecution, IOutsideExecutionCallback, IOutsideExecution};
     use hash::{HashStateTrait, HashStateExTrait};
     use pedersen::PedersenTrait;
     use starknet::{get_caller_address, get_contract_address, get_block_timestamp, get_tx_info, account::Call};

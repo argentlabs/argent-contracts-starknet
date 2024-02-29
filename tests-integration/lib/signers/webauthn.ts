@@ -1,20 +1,11 @@
 import {
-  Abi,
   Account,
   ArraySignatureType,
   CairoCustomEnum,
   CairoOption,
   CairoOptionVariant,
-  Call,
   CallData,
-  Signature,
-  SignerInterface,
-  V2DeclareSignerDetails,
-  V2DeployAccountSignerDetails,
-  V2InvocationsSignerDetails,
   hash,
-  transaction,
-  typedData,
   uint256,
 } from "starknet";
 import { RawSigner, fundAccount, provider } from "..";
@@ -31,7 +22,7 @@ const rpIdHash: string = buf2hex(
 
 interface WebauthnAssertion {
   authenticatorData: Uint8Array;
-  clientDataJSON: Uint8Array;
+  clientDataJson: Uint8Array;
   r: Uint8Array;
   s: Uint8Array;
   yParity: boolean;
@@ -65,8 +56,8 @@ export async function deployFixedWebauthnAccount(classHash: string): Promise<Acc
 
 class WebauthnOwner extends RawSigner {
   public async signRaw(): Promise<ArraySignatureType> {
-    const { authenticatorData, clientDataJSON, r, s, yParity } = await signTransaction();
-    const clientDataText = new TextDecoder().decode(clientDataJSON.buffer);
+    const { authenticatorData, clientDataJson, r, s, yParity } = await signTransaction();
+    const clientDataText = new TextDecoder().decode(clientDataJson.buffer);
     const clientData = JSON.parse(clientDataText);
     const clientDataOffset = (substring: string) => clientDataText.indexOf(substring) + substring.length;
 
@@ -75,7 +66,7 @@ class WebauthnOwner extends RawSigner {
       rp_id_hash: uint256.bnToUint256(rpIdHash),
       pubkey: uint256.bnToUint256(pubkey),
       authenticator_data: CallData.compile(Array.from(authenticatorData)),
-      client_data_json: CallData.compile(Array.from(clientDataJSON)),
+      client_data_json: CallData.compile(Array.from(clientDataJson)),
       signature: {
         r: uint256.bnToUint256(buf2hex(r)),
         s: uint256.bnToUint256(buf2hex(s)),
@@ -125,7 +116,7 @@ async function signTransaction(): Promise<WebauthnAssertion> {
         73, 150, 13, 229, 136, 14, 140, 104, 116, 52, 23, 15, 100, 118, 96, 91, 143, 228, 174, 185, 162, 134, 50, 199,
         153, 92, 243, 186, 131, 29, 151, 99, 5, 0, 0, 0, 0,
       ]),
-      clientDataJSON: new Uint8Array([
+      clientDataJson: new Uint8Array([
         123, 34, 116, 121, 112, 101, 34, 58, 34, 119, 101, 98, 97, 117, 116, 104, 110, 46, 103, 101, 116, 34, 44, 34,
         99, 104, 97, 108, 108, 101, 110, 103, 101, 34, 58, 34, 66, 80, 65, 73, 52, 51, 65, 52, 116, 51, 85, 86, 121, 88,
         76, 108, 106, 117, 95, 111, 121, 52, 78, 81, 77, 88, 51, 122, 48, 52, 120, 75, 111, 69, 85, 122, 71, 70, 45,
@@ -149,7 +140,7 @@ async function signTransaction(): Promise<WebauthnAssertion> {
         73, 150, 13, 229, 136, 14, 140, 104, 116, 52, 23, 15, 100, 118, 96, 91, 143, 228, 174, 185, 162, 134, 50, 199,
         153, 92, 243, 186, 131, 29, 151, 99, 5, 0, 0, 0, 0,
       ]),
-      clientDataJSON: new Uint8Array([
+      clientDataJson: new Uint8Array([
         123, 34, 116, 121, 112, 101, 34, 58, 34, 119, 101, 98, 97, 117, 116, 104, 110, 46, 103, 101, 116, 34, 44, 34,
         99, 104, 97, 108, 108, 101, 110, 103, 101, 34, 58, 34, 65, 86, 85, 48, 72, 119, 67, 70, 71, 86, 70, 49, 120,
         108, 109, 90, 115, 73, 104, 90, 109, 78, 104, 72, 56, 104, 69, 110, 66, 50, 77, 104, 50, 77, 88, 73, 84, 121,

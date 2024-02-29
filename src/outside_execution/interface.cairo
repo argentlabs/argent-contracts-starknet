@@ -99,14 +99,14 @@ impl StructHashOutsideExecution of IStructHash<OutsideExecution> {
         };
 
         PedersenTrait::new(0)
-            .update(OUTSIDE_EXECUTION_TYPE_HASH)
-            .update((*self.caller).into())
-            .update(*self.nonce)
-            .update((*self.execute_after).into())
-            .update((*self.execute_before).into())
-            .update(calls_len)
-            .update(calls_hash)
-            .update(7)
+            .update_with(OUTSIDE_EXECUTION_TYPE_HASH)
+            .update_with(*self.caller)
+            .update_with(*self.nonce)
+            .update_with(*self.execute_after)
+            .update_with(*self.execute_before)
+            .update_with(calls_len)
+            .update_with(calls_hash)
+            .update_with(7)
             .finalize()
     }
 }

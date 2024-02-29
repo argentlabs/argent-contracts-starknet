@@ -38,7 +38,6 @@ export class Secp256r1KeyPair extends KeyPair {
     super(pk ? `${pk}` : Wallet.createRandom().privateKey);
   }
 
-
   public get publicKey() {
     const publicKey = secp256r1.getPublicKey(this.privateKey).slice(1);
     return uint256.bnToUint256("0x" + utils.bytesToHex(publicKey));

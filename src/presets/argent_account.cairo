@@ -606,7 +606,7 @@ mod ArgentAccount {
                             self.guardian_escape_attempts.write(current_attempts + 1);
                         }
 
-                        let _: Signer = full_deserialize(*call.calldata).expect('argent/invalid-calldata');
+full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
 
                         assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
                         let is_valid = self.is_valid_guardian_signature(execution_hash, *signer_signatures.at(0));

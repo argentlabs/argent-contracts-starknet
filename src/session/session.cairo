@@ -4,8 +4,9 @@ mod session_component {
         Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,
     };
     use argent::account::interface::{IAccount, IArgentUserAccount};
-    use argent::offchain_sig::session_hash::{OffChainMessageHashSession, MerkleLeafHash};
-    use argent::session::{interface::{ISessionable, SessionToken, Session},};
+    use argent::session::{
+        session_hash::{OffChainMessageHashSession, MerkleLeafHash}, interface::{ISessionable, SessionToken, Session},
+    };
     use argent::signer::signer_signature::{SignerSignatureTrait};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
 

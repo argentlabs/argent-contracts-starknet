@@ -1,4 +1,6 @@
-use argent::offchain_sig::interface::{StarknetDomain, IMerkleLeafHash, IStructHash, IOffChainMessageHash};
+use argent::offchain_message::interface::{
+    StarknetDomain, StructHashStarknetDomain, IMerkleLeafHash, IStructHash, IOffChainMessageHash
+};
 use argent::session::interface::Session;
 use poseidon::poseidon_hash_span;
 use starknet::{get_contract_address, get_tx_info, account::Call};
@@ -38,7 +40,12 @@ impl OffChainMessageHashSession of IOffChainMessageHash<Session> {
             name: 'SessionAccount.session', version: 1, chain_id: get_tx_info().unbox().chain_id, revision: 1,
         };
         poseidon_hash_span(
-            array!['StarkNet Message', domain.get_struct_hash(), get_contract_address().into(), self.get_struct_hash()]
+            array![
+                'StarkNet Message',
+                domain.get_starknet_domain_hash(),
+                get_contract_address().into(),
+                self.get_struct_hash()
+            ]
                 .span()
         )
     }

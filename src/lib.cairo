@@ -29,6 +29,7 @@ mod signer_storage {
 mod outside_execution {
     mod interface;
     mod outside_execution;
+    mod outside_execution_hash;
 }
 
 mod recovery {
@@ -58,10 +59,9 @@ mod utils {
 mod session {
     mod interface;
     mod session;
+    mod session_hash;
 }
 
-mod offchain_sig {
+mod offchain_message {
     mod interface;
-    mod outside_execution_hash;
-    mod session_hash;
 }

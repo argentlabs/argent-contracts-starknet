@@ -1,4 +1,4 @@
-use argent::offchain_sig::interface::{StarkNetDomain, IOffChainMessageHash, IStructHash};
+use argent::offchain_message::interface::{StarkNetDomain, StructHashStarkNetDomain, IOffChainMessageHash, IStructHash};
 use argent::outside_execution::interface::{OutsideExecution};
 use hash::{HashStateTrait, HashStateExTrait};
 use pedersen::PedersenTrait;
@@ -70,7 +70,7 @@ impl OffChainMessageOutsideExecution of IOffChainMessageHash<OutsideExecution> {
 
         PedersenTrait::new(0)
             .update_with('StarkNet Message')
-            .update_with(domain.get_struct_hash())
+            .update_with(domain.get_starknet_domain_hash())
             .update_with(get_contract_address())
             .update_with((*self).get_struct_hash())
             .update(4)

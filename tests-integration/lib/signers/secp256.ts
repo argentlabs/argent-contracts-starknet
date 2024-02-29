@@ -5,8 +5,11 @@ import { RecoveredSignatureType } from "@noble/curves/abstract/weierstrass";
 import { Wallet, id, Signature as EthersSignature } from "ethers";
 import { KeyPair } from "./signers";
 
-// TODO Use @noble/curves/secp256K1 and get rid of ethers lib?
 export class EthKeyPair extends KeyPair {
+  constructor(pk?: string | bigint) {
+    super(pk ? `${pk}` : Wallet.createRandom().privateKey);
+  }
+
   public get publicKey() {
     return BigInt(new Wallet(id(this.privateKey.toString())).address);
   }
@@ -31,6 +34,11 @@ export class EthKeyPair extends KeyPair {
 }
 
 export class Secp256r1KeyPair extends KeyPair {
+  constructor(pk?: string | bigint) {
+    super(pk ? `${pk}` : Wallet.createRandom().privateKey);
+  }
+
+
   public get publicKey() {
     const publicKey = secp256r1.getPublicKey(this.privateKey).slice(1);
     return uint256.bnToUint256("0x" + utils.bytesToHex(publicKey));

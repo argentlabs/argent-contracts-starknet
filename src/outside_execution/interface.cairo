@@ -124,12 +124,12 @@ impl StructHashCall of IStructHash<Call> {
         };
 
         PedersenTrait::new(0)
-            .update(OUTSIDE_CALL_TYPE_HASH)
-            .update((*self.to).into())
-            .update(*self.selector)
-            .update(calldata_len)
-            .update(calldata_hash)
-            .update(5)
+            .update_with(OUTSIDE_CALL_TYPE_HASH)
+            .update_with(*self.to)
+            .update_with(*self.selector)
+            .update_with(calldata_len)
+            .update_with(calldata_hash)
+            .update_with(5)
             .finalize()
     }
 }
@@ -141,10 +141,10 @@ impl OffchainMessageHashSession of IOffchainMessageHash<OutsideExecution> {
         };
 
         PedersenTrait::new(0)
-            .update('StarkNet Message')
-            .update(domain.get_struct_hash())
-            .update(get_contract_address().into())
-            .update((*self).get_struct_hash())
+            .update_with('StarkNet Message')
+            .update_with(domain.get_struct_hash())
+            .update_with(get_contract_address())
+            .update_with((*self).get_struct_hash())
             .update(4)
             .finalize()
     }

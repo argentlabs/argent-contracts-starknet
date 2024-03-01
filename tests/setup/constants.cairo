@@ -6,6 +6,8 @@ use snforge_std::signature::{
     stark_curve::{StarkCurveKeyPairImpl, StarkCurveSignerImpl, StarkCurveVerifierImpl}
 };
 
+const ARGENT_ACCOUNT_ADDRESS: felt252 = 0x222222222;
+
 #[derive(Clone, Copy, Drop)]
 struct StarkSignature {
     r: felt252,
@@ -18,11 +20,12 @@ fn new_owner_message_hash(old_signer: felt252) -> felt252 {
     PedersenTrait::new(0)
         .update(selector!("change_owner"))
         .update(1536727068981429685321)
-        .update(100)
+        .update(ARGENT_ACCOUNT_ADDRESS)
         .update(OWNER_KEY())
         .update(4)
         .finalize()
 }
+
 
 fn MULTISIG_OWNER(key: felt252) -> felt252 {
     KeyPairTrait::from_secret_key(key).public_key
@@ -50,6 +53,12 @@ fn NEW_OWNER_KEY() -> felt252 {
 
 fn WRONG_GUARDIAN_KEY() -> felt252 {
     KeyPairTrait::from_secret_key('WRONG_GUARDIAN').public_key
+}
+
+fn MULTISIG_OWNER_SIG(owner: felt252) -> StarkSignature {
+    let owner = KeyPairTrait::from_secret_key(owner);
+    let (r, s): (felt252, felt252) = owner.sign(message_hash);
+    StarkSignature { r, s }
 }
 
 fn OWNER_SIG() -> StarkSignature {

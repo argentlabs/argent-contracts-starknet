@@ -3,8 +3,8 @@ use argent::presets::argent_account::ArgentAccount;
 use argent::recovery::interface::{LegacyEscape, EscapeStatus};
 use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
 use snforge_std::{declare, ContractClassTrait, ContractClass, RevertedTransaction, start_prank, CheatTarget};
-use starknet::{contract_address_const, deploy_syscall, account::Call, testing::set_contract_address};
-use super::constants::{OWNER_KEY, GUARDIAN_KEY};
+use starknet::{contract_address_const, account::Call};
+use super::constants::{OWNER_KEY, GUARDIAN_KEY, ARGENT_ACCOUNT_ADDRESS};
 
 #[starknet::interface]
 trait ITestArgentAccount<TContractState> {
@@ -52,10 +52,6 @@ trait ITestArgentAccount<TContractState> {
     fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }
 
-fn declare_argent_account() -> ContractClass {
-    declare('ArgentAccount')
-}
-
 fn initialize_account() -> ITestArgentAccountDispatcher {
     initialize_account_with(OWNER_KEY(), GUARDIAN_KEY())
 }
@@ -73,9 +69,9 @@ fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAcco
     };
     guardian_signer.serialize(ref calldata);
 
-    let contract = declare_argent_account();
+    let contract = declare('ArgentAccount');
     let contract_address = contract
-        .deploy_at(@calldata, 100.try_into().unwrap())
+        .deploy_at(@calldata, ARGENT_ACCOUNT_ADDRESS.try_into().unwrap())
         .expect('Failed to deploy ArgentAccount');
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')

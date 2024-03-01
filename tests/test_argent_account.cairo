@@ -1,15 +1,17 @@
 use argent::presets::argent_account::ArgentAccount;
 use argent::signer::signer_signature::{Signer, SignerSignature, StarknetSignature, StarknetSigner, IntoGuid};
 use snforge_std::cheatcodes::contract_class::ContractClassTrait;
-use snforge_std::{start_prank, start_spoof, CheatTarget, TxInfoMockTrait};
+use snforge_std::{start_prank, declare, start_spoof, get_class_hash, ContractClass, CheatTarget, TxInfoMockTrait};
 use starknet::{contract_address_const, get_tx_info};
 use super::setup::{
     account_test_setup::{
         ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
-        initialize_account_without_guardian, declare_argent_account
+        initialize_account_without_guardian
     },
     utils::set_tx_foundry,
-    constants::{OWNER_KEY, GUARDIAN_KEY, NEW_OWNER_KEY, NEW_OWNER_SIG, WRONG_OWNER_KEY, WRONG_OWNER_SIG}
+    constants::{
+        OWNER_KEY, GUARDIAN_KEY, NEW_OWNER_KEY, NEW_OWNER_SIG, WRONG_OWNER_KEY, WRONG_OWNER_SIG, ARGENT_ACCOUNT_ADDRESS
+    }
 };
 
 #[test]
@@ -40,11 +42,11 @@ fn check_transaction_version_on_validate() {
 
 #[test]
 fn initialize_with_null_owner() {
-    let argent_class = declare_argent_account();
+    let class_hash = declare('ArgentAccount');
     let mut calldata = array![];
     Signer::Starknet(StarknetSigner { pubkey: 0 }).serialize(ref calldata);
     Option::Some(Signer::Starknet(StarknetSigner { pubkey: 0 })).serialize(ref calldata);
-    argent_class.deploy(@calldata).expect_err('argent/null-owner');
+    class_hash.deploy_at(@calldata, 42.try_into().unwrap()).expect_err('argent/null-owner');
 }
 
 #[test]

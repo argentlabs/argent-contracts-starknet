@@ -51,7 +51,6 @@ mod utils {
     mod calls;
     mod multicall;
     mod serialization;
-    mod test_dapp;
     mod transaction_version;
 }
 
@@ -60,4 +59,5 @@ mod mocks {
     mod recovery_mocks;
     mod signer_list_mocks;
     mod src5_mocks;
+    mod test_dapp;
 }

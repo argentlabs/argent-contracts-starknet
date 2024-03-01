@@ -101,16 +101,16 @@ mod session_component {
             assert(guardian_guid_from_sig == guardian_guid, 'session/guardian-key-mismatch');
             assert(token.guardian_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');
 
-            assert_valid_session_calls(token, calls);
+            assert_valid_session_calls(@token, calls);
         }
     }
 
 
-    fn assert_valid_session_calls(token: SessionToken, mut calls: Span<Call>) {
-        assert(token.proofs.len() == calls.len(), 'session/unaligned-proofs');
-        let merkle_root = token.session.allowed_methods_root;
+    fn assert_valid_session_calls(token: @SessionToken, mut calls: Span<Call>) {
+        assert((*token.proofs).len() == calls.len(), 'session/unaligned-proofs');
+        let merkle_root = *token.session.allowed_methods_root;
         let mut merkle_tree: MerkleTree<Hasher> = MerkleTreeImpl::new();
-        let mut proofs = token.proofs;
+        let mut proofs = *token.proofs;
         loop {
             match calls.pop_front() {
                 Option::Some(call) => {

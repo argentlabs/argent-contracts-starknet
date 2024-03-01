@@ -47,12 +47,11 @@ mod ArgentAccount {
     const MAX_ESCAPE_MAX_FEE_STRK: u128 = 50_000000000000000000; // 50 STRK
     const MAX_ESCAPE_TIP_STRK: u128 = 1_000000000000000000; // 1 STRK
 
-    // session 
-    component!(path: session_component, storage: session, event: SessionableEvent);
 
     #[abi(embed_v0)]
-    impl Sessionable = session_component::session<ContractState>;
-
+    impl Sessionable = session_component::SessionImpl<ContractState>;
+    // session 
+    component!(path: session_component, storage: session, event: SessionableEvents);
     // Execute from outside
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
@@ -101,7 +100,7 @@ mod ArgentAccount {
         #[flat]
         UpgradeEvents: upgrade_component::Event,
         #[flat]
-        SessionableEvent: session_component::Event,
+        SessionableEvents: session_component::Event,
         AccountCreated: AccountCreated,
         TransactionExecuted: TransactionExecuted,
         EscapeOwnerTriggered: EscapeOwnerTriggered,

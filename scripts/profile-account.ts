@@ -20,6 +20,8 @@ import { newProfiler } from "../tests-integration/lib/gas";
 
 const ethContract = await getEthContract();
 const recipient = "0xadbe1";
+const starknetOwner = new StarknetKeyPair(42n);
+const guardian = new StarknetKeyPair(43n);
 
 const profiler = newProfiler(provider);
 
@@ -30,7 +32,11 @@ const profiler = newProfiler(provider);
 }
 
 {
-  const { account, accountContract } = await deployAccount();
+  const { account, accountContract } = await deployAccount({
+    owner: starknetOwner,
+    guardian,
+    salt: "0x1",
+  });
   const owner = await accountContract.get_owner();
   const newOwner = new LegacyKeyPair();
   const chainId = await provider.getChainId();
@@ -43,22 +49,26 @@ const profiler = newProfiler(provider);
 
 {
   const { account } = await deployAccount({
-    owner: new StarknetKeyPair(42n),
-    guardian: new StarknetKeyPair(43n),
-    salt: "0x69",
+    owner: starknetOwner,
+    guardian,
+    salt: "0x2",
   });
   ethContract.connect(account);
   await profiler.profile("Account", await ethContract.transfer(recipient, 1));
 }
 
 {
-  const { account } = await deployAccountWithoutGuardian({ owner: new StarknetKeyPair(44n), salt: "0x69" });
+  const { account } = await deployAccountWithoutGuardian({ owner: starknetOwner, salt: "0x3" });
   ethContract.connect(account);
   await profiler.profile("Account w/o guardian", await ethContract.transfer(recipient, 1));
 }
 
 {
-  const { account } = await deployAccount({ owner: new EthKeyPair(45n), guardian: new StarknetKeyPair(46n) });
+  const { account } = await deployAccount({
+    owner: new EthKeyPair(45n),
+    guardian,
+    salt: "0x4",
+  });
   ethContract.connect(account);
   await profiler.profile("Eth sig w guardian", await ethContract.transfer(recipient, 1));
 }
@@ -66,7 +76,8 @@ const profiler = newProfiler(provider);
 {
   const { account } = await deployAccount({
     owner: new Secp256r1KeyPair(48n),
-    guardian: new StarknetKeyPair(47n),
+    guardian,
+    salt: "0x5",
   });
   ethContract.connect(account);
   await profiler.profile("Secp256r1 w guardian", await ethContract.transfer(recipient, 1));

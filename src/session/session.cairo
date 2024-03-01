@@ -9,8 +9,6 @@ mod session_component {
     };
     use argent::signer::signer_signature::{SignerSignatureTrait};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
-
-    use ecdsa::check_ecdsa_signature;
     use poseidon::{hades_permutation};
     use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp};
 
@@ -95,11 +93,12 @@ mod session_component {
 
             // checks that its the account guardian that signed the session
             let guardian_guid = state.get_guardian();
-            let backend_guid_from_sig = token.guardian_signature.signer_into_guid().expect('session/empty-backend-key');
-            assert(backend_guid_from_sig == guardian_guid, 'session/guardian-key-mismatch');
+            let guardian_guid_from_sig = token
+                .guardian_signature
+                .signer_into_guid()
+                .expect('session/empty-backend-key');
+            assert(guardian_guid_from_sig == guardian_guid, 'session/guardian-key-mismatch');
             assert(token.guardian_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');
-
-            // TODO: possibly add guardian backup check
 
             assert_valid_session_calls(token, calls);
         }
@@ -109,7 +108,7 @@ mod session_component {
     fn assert_valid_session_calls(token: SessionToken, mut calls: Span<Call>) {
         assert(token.proofs.len() == calls.len(), 'unaligned-proofs');
         let merkle_root = token.session.allowed_methods_root;
-        let mut merkle_tree: MerkleTree<Hasher> = MerkleTreeImpl::<_, PoseidonHasherImpl>::new();
+        let mut merkle_tree: MerkleTree<Hasher> = MerkleTreeImpl::new();
         let mut proofs = token.proofs;
         loop {
             match calls.pop_front() {

@@ -28,11 +28,11 @@ describe("Hybrid Session Account: execute calls", function () {
       salt: num.toHex(randomKeyPair().privateKey),
     });
     const erc20ClassHash = await declareContract("Erc20Mock");
-    const delpoyedErc20 = await deployer.deployContract({
+    const deployedErc20 = await deployer.deployContract({
       classHash: erc20ClassHash,
       salt: num.toHex(randomKeyPair().privateKey),
     });
-    mockErc20Contract = await loadContract(delpoyedErc20.contract_address);
+    mockErc20Contract = await loadContract(deployedErc20.contract_address);
     testDappOneContract = await loadContract(deployedTestDappOne.contract_address);
   });
 

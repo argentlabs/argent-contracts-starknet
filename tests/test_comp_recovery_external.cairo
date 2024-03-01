@@ -8,7 +8,9 @@ use argent::recovery::interface::{IRecovery, IRecoveryDispatcher, IRecoveryDispa
 use argent::recovery::{external_recovery::external_recovery_component};
 use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid}};
 use argent::signer_storage::signer_list::signer_list_component;
-use snforge_std::{start_prank, start_warp, CheatTarget, test_address, declare, ContractClassTrait, ContractClass};
+use snforge_std::{
+    start_prank, stop_prank, start_warp, CheatTarget, test_address, declare, ContractClassTrait, ContractClass
+};
 use starknet::SyscallResultTrait;
 use starknet::{deploy_syscall, contract_address_const, ContractAddress,};
 use super::setup::constants::{MULTISIG_OWNER};
@@ -41,7 +43,6 @@ fn setup() -> (IRecoveryDispatcher, IToggleExternalRecoveryDispatcher, IArgentMu
     start_prank(CheatTarget::One(contract_address), contract_address);
     IArgentMultisigDispatcher { contract_address }.add_signers(2, array![SIGNER_1(), SIGNER_2()]);
     IToggleExternalRecoveryDispatcher { contract_address }.toggle_escape(true, 10, 10, GUARDIAN());
-    start_prank(CheatTarget::One(contract_address), contract_address);
     (
         IRecoveryDispatcher { contract_address },
         IToggleExternalRecoveryDispatcher { contract_address },

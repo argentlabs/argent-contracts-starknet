@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{Signer, StarknetSignature, IntoGuid, SignerIntoGuid, SignerSignature};
+use argent::signer::signer_signature::{SignerSignature};
 use poseidon::{poseidon_hash_span};
 use starknet::account::Call;
 use starknet::{get_tx_info, get_contract_address, ContractAddress};

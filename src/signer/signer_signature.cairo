@@ -10,7 +10,7 @@ use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
 use starknet::{EthAddress, eth_signature::{Signature as Secp256k1Signature, is_eth_signature_valid}};
 
-#[derive(Drop, Copy, Serde, PartialEq)]
+#[derive(Drop, Copy, Serde)]
 enum Signer {
     Starknet: StarknetSigner,
     Secp256k1: Secp256k1Signer,
@@ -20,12 +20,6 @@ enum Signer {
 
 trait SignerTrait<T> {
     fn into_guid(self: T) -> felt252;
-}
-
-#[derive(Drop, Copy, Serde, PartialEq)]
-struct StarknetSignature {
-    r: felt252,
-    s: felt252,
 }
 
 #[derive(Drop, Copy, Serde, PartialEq)]
@@ -79,7 +73,6 @@ fn newWebAuthnSigner(origin: felt252, rp_id_hash: u256, pubkey: u256) -> Webauth
     }
 }
 
-
 impl SignerTraitImpl of SignerTrait<Signer> {
     #[inline(always)]
     fn into_guid(self: Signer) -> felt252 {
@@ -107,7 +100,7 @@ impl SignerTraitImpl of SignerTrait<Signer> {
 
 /// Enum of the different signature type supported.
 /// For each type the variant contains a signer and an associated signature.
-#[derive(Drop, Copy, Serde, PartialEq)]
+#[derive(Drop, Copy, Serde)]
 enum SignerSignature {
     Starknet: (StarknetSigner, StarknetSignature),
     Secp256k1: (Secp256k1Signer, Secp256k1Signature),
@@ -118,6 +111,12 @@ enum SignerSignature {
 trait SignerSignatureTrait {
     fn is_valid_signature(self: SignerSignature, hash: felt252) -> bool;
     fn signer(self: SignerSignature) -> Signer;
+}
+
+#[derive(Drop, Copy, Serde, PartialEq)]
+struct StarknetSignature {
+    r: felt252,
+    s: felt252,
 }
 
 impl SignerSignatureImpl of SignerSignatureTrait {

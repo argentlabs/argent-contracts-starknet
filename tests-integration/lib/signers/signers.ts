@@ -188,7 +188,7 @@ export abstract class KeyPair extends Signer {
   public get privateKey(): bigint {
     return BigInt(this.pk as string);
   }
-  
+
   public get signerType(): CairoCustomEnum {
     throw Error("Unsupported operation");
   }
@@ -207,8 +207,6 @@ export class StarknetKeyPair extends KeyPair {
   constructor(pk?: string | bigint) {
     super(pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`);
   }
-
-
 
   public get signerType() {
     return new CairoCustomEnum({

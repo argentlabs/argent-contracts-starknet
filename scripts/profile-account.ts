@@ -4,9 +4,6 @@ import {
   deployAccountWithoutGuardian,
   provider,
   getEthContract,
-  randomEthKeyPair,
-  randomKeyPair,
-  randomSecp256r1KeyPair,
   deployFixedWebauthnAccount,
   restart,
   declareContract,
@@ -15,6 +12,9 @@ import {
   LegacyKeyPair,
   signChangeOwnerMessage,
   starknetSignatureType,
+  StarknetKeyPair,
+  EthKeyPair,
+  Secp256r1KeyPair,
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
 
@@ -42,27 +42,31 @@ const profiler = newProfiler(provider);
 }
 
 {
-  const { account } = await deployAccount();
+  const { account } = await deployAccount({
+    owner: new StarknetKeyPair(42n),
+    guardian: new StarknetKeyPair(43n),
+    salt: "0x69",
+  });
   ethContract.connect(account);
   await profiler.profile("Account", await ethContract.transfer(recipient, 1));
 }
 
 {
-  const { account } = await deployAccountWithoutGuardian();
+  const { account } = await deployAccountWithoutGuardian({ owner: new StarknetKeyPair(44n), salt: "0x69" });
   ethContract.connect(account);
   await profiler.profile("Account w/o guardian", await ethContract.transfer(recipient, 1));
 }
 
 {
-  const { account } = await deployAccount({ owner: randomEthKeyPair(), guardian: randomKeyPair() });
+  const { account } = await deployAccount({ owner: new EthKeyPair(45n), guardian: new StarknetKeyPair(46n) });
   ethContract.connect(account);
   await profiler.profile("Eth sig w guardian", await ethContract.transfer(recipient, 1));
 }
 
 {
   const { account } = await deployAccount({
-    owner: randomSecp256r1KeyPair(),
-    guardian: randomKeyPair(),
+    owner: new Secp256r1KeyPair(48n),
+    guardian:  new StarknetKeyPair(47n) ,
   });
   ethContract.connect(account);
   await profiler.profile("Secp256r1 w guardian", await ethContract.transfer(recipient, 1));

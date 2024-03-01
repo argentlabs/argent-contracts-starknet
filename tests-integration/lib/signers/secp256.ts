@@ -92,6 +92,3 @@ function secp256r1SignatureType(signer: Uint256, signature: RecoveredSignatureTy
     }),
   ]);
 }
-
-export const randomEthKeyPair = () => new EthKeyPair();
-export const randomSecp256r1KeyPair = () => new Secp256r1KeyPair();

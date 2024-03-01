@@ -1,4 +1,6 @@
-use argent::offchain_message::interface::{StarkNetDomain, StructHashStarkNetDomain, IOffChainMessageHash, IStructHash};
+use argent::offchain_message::interface::{
+    StarkNetDomain, StructHashStarkNetDomain, IOffChainMessageHash, IStructHashRev0
+};
 use argent::outside_execution::interface::{OutsideExecution};
 use hash::{HashStateTrait, HashStateExTrait};
 use pedersen::PedersenTrait;
@@ -14,7 +16,7 @@ const OUTSIDE_EXECUTION_TYPE_HASH: felt252 =
     );
 
 
-impl StructHashOutsideExecution of IStructHash<OutsideExecution> {
+impl StructHashOutsideExecution of IStructHashRev0<OutsideExecution> {
     fn get_struct_hash(self: @OutsideExecution) -> felt252 {
         let mut state = PedersenTrait::new(0);
         let mut calls_span = *self.calls;
@@ -39,7 +41,7 @@ impl StructHashOutsideExecution of IStructHash<OutsideExecution> {
     }
 }
 
-impl StructHashCall of IStructHash<Call> {
+impl StructHashCall of IStructHashRev0<Call> {
     fn get_struct_hash(self: @Call) -> felt252 {
         let mut state = PedersenTrait::new(0);
         let mut calldata_span = *self.calldata;
@@ -70,7 +72,7 @@ impl OffChainMessageOutsideExecution of IOffChainMessageHash<OutsideExecution> {
 
         PedersenTrait::new(0)
             .update_with('StarkNet Message')
-            .update_with(domain.get_starknet_domain_hash())
+            .update_with(domain.get_struct_hash())
             .update_with(get_contract_address())
             .update_with((*self).get_struct_hash())
             .update(4)

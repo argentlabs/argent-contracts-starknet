@@ -6,17 +6,17 @@ trait IOffChainMessageHash<T> {
     fn get_message_hash(self: @T) -> felt252;
 }
 
-trait IStructHash<T> {
+trait IStructHashRev0<T> {
+    fn get_struct_hash(self: @T) -> felt252;
+}
+
+trait IStructHashRev1<T> {
     fn get_struct_hash(self: @T) -> felt252;
 }
 
 // needed for session
 trait IMerkleLeafHash<T> {
     fn get_merkle_leaf(self: @T) -> felt252;
-}
-
-trait IStarknetDomainHash<T> {
-    fn get_starknet_domain_hash(self: @T) -> felt252;
 }
 
 
@@ -32,8 +32,8 @@ const STARKNET_DOMAIN_TYPE_HASH_REV_0: felt252 = selector!("StarkNetDomain(name:
 
 // TODO: perhaps add negative impl of IStructHash? 
 // impl StructHashStarknetDomain<-IStructHash<StarkNetDomain>> of IStarknetDomainHash<StarkNetDomain>
-impl StructHashStarkNetDomain of IStarknetDomainHash<StarkNetDomain> {
-    fn get_starknet_domain_hash(self: @StarkNetDomain) -> felt252 {
+impl StructHashStarkNetDomain of IStructHashRev0<StarkNetDomain> {
+    fn get_struct_hash(self: @StarkNetDomain) -> felt252 {
         PedersenTrait::new(0).update_with(STARKNET_DOMAIN_TYPE_HASH_REV_0).update_with(*self).update_with(4).finalize()
     }
 }
@@ -53,8 +53,8 @@ const STARKNET_DOMAIN_TYPE_HASH_REV_1: felt252 =
         "\"StarknetDomain\"(\"name\":\"shortstring\",\"version\":\"shortstring\",\"chainId\":\"shortstring\",\"revision\":\"shortstring\")"
     );
 
-impl StructHashStarknetDomain of IStarknetDomainHash<StarknetDomain> {
-    fn get_starknet_domain_hash(self: @StarknetDomain) -> felt252 {
+impl StructHashStarknetDomain of IStructHashRev1<StarknetDomain> {
+    fn get_struct_hash(self: @StarknetDomain) -> felt252 {
         poseidon_hash_span(
             array![STARKNET_DOMAIN_TYPE_HASH_REV_1, *self.name, *self.version, *self.chain_id, *self.revision].span()
         )

@@ -1,5 +1,5 @@
 use argent::offchain_message::interface::{
-    StarknetDomain, StructHashStarknetDomain, IMerkleLeafHash, IStructHash, IOffChainMessageHash
+    StarknetDomain, StructHashStarknetDomain, IMerkleLeafHash, IStructHashRev1, IOffChainMessageHash
 };
 use argent::session::interface::Session;
 use poseidon::poseidon_hash_span;
@@ -19,7 +19,7 @@ impl MerkleLeafHash of IMerkleLeafHash<Call> {
     }
 }
 
-impl StructHashSession of IStructHash<Session> {
+impl StructHashSession of IStructHashRev1<Session> {
     fn get_struct_hash(self: @Session) -> felt252 {
         poseidon_hash_span(
             array![
@@ -40,12 +40,7 @@ impl OffChainMessageHashSession of IOffChainMessageHash<Session> {
             name: 'SessionAccount.session', version: 1, chain_id: get_tx_info().unbox().chain_id, revision: 1,
         };
         poseidon_hash_span(
-            array![
-                'StarkNet Message',
-                domain.get_starknet_domain_hash(),
-                get_contract_address().into(),
-                self.get_struct_hash()
-            ]
+            array!['StarkNet Message', domain.get_struct_hash(), get_contract_address().into(), self.get_struct_hash()]
                 .span()
         )
     }

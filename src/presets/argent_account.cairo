@@ -21,6 +21,7 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, assert_no_unsupported_v3_fields, DA_MODE_L1
         }
     };
+    use core::traits::TryInto;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
@@ -261,9 +262,10 @@ mod ArgentAccount {
             assert_correct_invoke_version(tx_info.version);
             let signature = tx_info.signature;
             if self.session.is_session(*signature[0]) {
-                let token: SessionToken = full_deserialize(signature.slice(1, signature.len() - 1))
-                    .expect('session/invalid-calldata');
-                assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
+                let session_timestamp = *signature[1];
+                // can call unwrap safely as the session has already been deserialized 
+                let session_timestamp_u64 = session_timestamp.try_into().unwrap();
+                assert(session_timestamp_u64 >= get_block_timestamp(), 'session/expired');
             }
 
             let retdata = execute_multicall(calls.span());

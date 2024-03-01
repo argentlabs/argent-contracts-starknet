@@ -9,7 +9,7 @@ mod ArgentAccount {
     use argent::signer::{
         signer_signature::{
             Signer, StarknetSigner, StarknetSignature, SignerTrait, SignerSignature, SignerSignatureTrait,
-            starknetSignerFromPubKey
+            starknet_signer_from_pubkey
         }
     };
     use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
@@ -294,17 +294,17 @@ mod ArgentAccount {
             if guardian == 0 {
                 assert(guardian_backup == 0, 'argent/backup-should-be-null');
             } else {
-                self.emit(SignerLinked { signer_guid: guardian, signer: starknetSignerFromPubKey(guardian) });
+                self.emit(SignerLinked { signer_guid: guardian, signer: starknet_signer_from_pubkey(guardian) });
                 if (guardian_backup != 0) {
                     self
                         .emit(
                             SignerLinked {
-                                signer_guid: guardian_backup, signer: starknetSignerFromPubKey(guardian_backup)
+                                signer_guid: guardian_backup, signer: starknet_signer_from_pubkey(guardian_backup)
                             }
                         );
                 }
             }
-            self.emit(SignerLinked { signer_guid: owner, signer: starknetSignerFromPubKey(owner) });
+            self.emit(SignerLinked { signer_guid: owner, signer: starknet_signer_from_pubkey(owner) });
 
             let implementation = self._implementation.read();
             if implementation != Zeroable::zero() {

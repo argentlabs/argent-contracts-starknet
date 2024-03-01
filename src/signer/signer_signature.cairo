@@ -60,12 +60,12 @@ impl Secp256k1SignerSerde of Serde<Secp256k1Signer> {
 }
 
 #[inline(always)]
-fn starknetSignerFromPubKey(pubkey: felt252) -> Signer {
+fn starknet_signer_from_pubkey(pubkey: felt252) -> Signer {
     Signer::Starknet(StarknetSigner { pubkey: pubkey.try_into().expect('argent/zero-pubkey') })
 }
 
 #[inline(always)]
-fn newWebAuthnSigner(origin: felt252, rp_id_hash: u256, pubkey: u256) -> WebauthnSigner {
+fn new_web_authn_signer(origin: felt252, rp_id_hash: u256, pubkey: u256) -> WebauthnSigner {
     WebauthnSigner {
         origin: origin.try_into().expect('argent/zero-origin'),
         rp_id_hash: rp_id_hash.try_into().expect('argent/zero-rp-id-hash'),

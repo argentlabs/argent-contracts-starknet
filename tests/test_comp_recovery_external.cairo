@@ -5,7 +5,7 @@ use argent::recovery::external_recovery::{
 };
 use argent::recovery::interface::{IRecovery, IRecoveryDispatcher, IRecoveryDispatcherTrait, EscapeStatus};
 use argent::recovery::{external_recovery::external_recovery_component};
-use argent::signer::{signer_signature::{Signer, StarknetSigner, starknetSignerFromPubKey, SignerTrait}};
+use argent::signer::{signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey, SignerTrait}};
 use argent::signer_storage::signer_list::signer_list_component;
 use argent_tests::mocks::recovery_mocks::ExternalRecoveryMock;
 use core::array::ArrayTrait;
@@ -23,19 +23,19 @@ const signer_pubkey_3: felt252 = 0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2
 const signer_pubkey_4: felt252 = 0x05ffbcfeb50d200a0677c48a129a11245a3fc519d1d98d76882d1c9a1b19c6ed;
 
 fn SIGNER_1() -> Signer {
-    starknetSignerFromPubKey(signer_pubkey_1)
+    starknet_signer_from_pubkey(signer_pubkey_1)
 }
 
 fn SIGNER_2() -> Signer {
-    starknetSignerFromPubKey(signer_pubkey_2)
+    starknet_signer_from_pubkey(signer_pubkey_2)
 }
 
 fn SIGNER_3() -> Signer {
-    starknetSignerFromPubKey(signer_pubkey_3)
+    starknet_signer_from_pubkey(signer_pubkey_3)
 }
 
 fn SIGNER_4() -> Signer {
-    starknetSignerFromPubKey(signer_pubkey_4)
+    starknet_signer_from_pubkey(signer_pubkey_4)
 }
 
 fn GUARDIAN() -> ContractAddress {

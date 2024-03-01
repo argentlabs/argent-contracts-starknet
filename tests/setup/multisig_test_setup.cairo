@@ -1,6 +1,6 @@
 use argent::account::interface::Version;
 use argent::presets::multisig_account::ArgentMultisigAccount;
-use argent::signer::signer_signature::{Signer, StarknetSigner, starknetSignerFromPubKey, SignerSignature};
+use argent::signer::signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey, SignerSignature};
 use starknet::{contract_address_const, syscalls::deploy_syscall, account::Call, testing::set_contract_address};
 
 const signer_pubkey_1: felt252 = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;
@@ -51,16 +51,16 @@ trait ITestArgentMultisig<TContractState> {
 fn initialize_multisig() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
     let signers_array = array![
-        starknetSignerFromPubKey(signer_pubkey_1),
-        starknetSignerFromPubKey(signer_pubkey_2),
-        starknetSignerFromPubKey(signer_pubkey_3),
+        starknet_signer_from_pubkey(signer_pubkey_1),
+        starknet_signer_from_pubkey(signer_pubkey_2),
+        starknet_signer_from_pubkey(signer_pubkey_3),
     ];
     initialize_multisig_with(threshold, signers_array.span())
 }
 
 fn initialize_multisig_with_one_signer() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
-    let signers_array = array![starknetSignerFromPubKey(signer_pubkey_1)];
+    let signers_array = array![starknet_signer_from_pubkey(signer_pubkey_1)];
     initialize_multisig_with(threshold, signers_array.span())
 }
 

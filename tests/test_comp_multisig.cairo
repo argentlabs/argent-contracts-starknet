@@ -1,7 +1,7 @@
 use argent::multisig::interface::IArgentMultisig;
 use argent::multisig::interface::IArgentMultisigInternal;
 use argent::multisig::{multisig::multisig_component};
-use argent::signer::{signer_signature::{Signer, StarknetSigner, starknetSignerFromPubKey, SignerTrait}};
+use argent::signer::{signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey, SignerTrait}};
 use argent::signer_storage::signer_list::signer_list_component;
 use argent_tests::mocks::multisig_mocks::MultisigMock;
 use core::array::ArrayTrait;
@@ -17,15 +17,15 @@ fn COMPONENT_STATE() -> ComponentState {
 }
 
 fn SIGNER_1() -> Signer {
-    starknetSignerFromPubKey(signer_pubkey_1)
+    starknet_signer_from_pubkey(signer_pubkey_1)
 }
 
 fn SIGNER_2() -> Signer {
-    starknetSignerFromPubKey(signer_pubkey_2)
+    starknet_signer_from_pubkey(signer_pubkey_2)
 }
 
 fn SIGNER_3() -> Signer {
-    starknetSignerFromPubKey(signer_pubkey_3)
+    starknet_signer_from_pubkey(signer_pubkey_3)
 }
 
 // Initialize

@@ -1,7 +1,7 @@
 use argent::account::interface::Version;
 use argent::presets::argent_account::ArgentAccount;
 use argent::recovery::interface::{LegacyEscape, EscapeStatus};
-use argent::signer::signer_signature::{Signer, StarknetSigner, starknetSignerFromPubKey, SignerSignature};
+use argent::signer::signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey, SignerSignature};
 use core::serde::Serde;
 use starknet::{contract_address_const, deploy_syscall, account::Call, testing::set_contract_address};
 
@@ -66,10 +66,10 @@ fn initialize_account_without_guardian() -> ITestArgentAccountDispatcher {
 
 fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAccountDispatcher {
     let mut calldata = array![];
-    starknetSignerFromPubKey(owner).serialize(ref calldata);
+    starknet_signer_from_pubkey(owner).serialize(ref calldata);
     let guardian_signer: Option<Signer> = match guardian {
         0 => { Option::None },
-        _ => { Option::Some(starknetSignerFromPubKey(guardian)) },
+        _ => { Option::Some(starknet_signer_from_pubkey(guardian)) },
     };
     guardian_signer.serialize(ref calldata);
 

@@ -3,7 +3,7 @@ import { p256 as secp256r1 } from "@noble/curves/p256";
 import * as utils from "@noble/curves/abstract/utils";
 import { RecoveredSignatureType } from "@noble/curves/abstract/weierstrass";
 import { Wallet, id, Signature as EthersSignature } from "ethers";
-import { KeyPair } from "./signers";
+import { KeyPair } from "../signers/signers";
 
 export class EthKeyPair extends KeyPair {
   constructor(pk?: string | bigint) {

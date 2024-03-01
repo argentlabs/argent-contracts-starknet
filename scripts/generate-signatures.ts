@@ -1,15 +1,15 @@
 import { num } from "starknet";
-import { KeyPair, signChangeOwnerMessage } from "../tests-integration/lib";
+import { StarknetKeyPair, signChangeOwnerMessage } from "../tests-integration/lib";
 import { Signature, Wallet, id } from "ethers";
 
-const owner = new KeyPair(1n);
-const guardian = new KeyPair(2n);
-const guardian_backup = new KeyPair(3n);
+const owner = new StarknetKeyPair(1n);
+const guardian = new StarknetKeyPair(2n);
+const guardian_backup = new StarknetKeyPair(3n);
 
-const new_owner = new KeyPair(4n);
+const new_owner = new StarknetKeyPair(4n);
 
-const wrong_owner = new KeyPair(7n);
-const wrong_guardian = new KeyPair(8n);
+const wrong_owner = new StarknetKeyPair(7n);
+const wrong_guardian = new StarknetKeyPair(8n);
 
 function calculate_account_signature() {
   const hash = "0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";

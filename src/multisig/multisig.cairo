@@ -80,7 +80,7 @@ mod multisig_component {
                 let signer_guid = signer.into_guid();
                 signer_list_comp.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
                 signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
-                signer_list_comp.emit(SignerLinked { signer_guid: signer_guid, signer: signer });
+                signer_list_comp.emit(SignerLinked { signer_guid, signer });
                 last_signer = signer_guid;
             };
 

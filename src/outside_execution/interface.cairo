@@ -1,4 +1,6 @@
-use starknet::{ContractAddress, account::Call};
+use hash::{HashStateExTrait, HashStateTrait};
+use pedersen::PedersenTrait;
+use starknet::{ContractAddress, get_contract_address, get_tx_info, account::Call};
 
 const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID: felt252 = 0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181;
 
@@ -49,4 +51,101 @@ struct OutsideExecution {
     /// The calls that will be executed by the Account
     /// Using `Call` here instead of redeclaring `OutsideCall` to avoid the conversion
     calls: Span<Call>
+}
+
+#[derive(Copy, Drop, Hash)]
+struct StarkNetDomain {
+    name: felt252,
+    version: felt252,
+    chain_id: felt252,
+}
+
+const STARKNET_DOMAIN_TYPE_HASH: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
+
+
+const OUTSIDE_CALL_TYPE_HASH: felt252 =
+    selector!("OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)");
+
+
+const OUTSIDE_EXECUTION_TYPE_HASH: felt252 =
+    selector!(
+        "OutsideExecution(caller:felt,nonce:felt,execute_after:felt,execute_before:felt,calls_len:felt,calls:OutsideCall*)OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)"
+    );
+
+trait IOffchainMessageHash<T> {
+    fn get_message_hash(self: @T) -> felt252;
+}
+
+trait IStructHash<T> {
+    fn get_struct_hash(self: @T) -> felt252;
+}
+
+impl StructHashStarknetDomain of IStructHash<StarkNetDomain> {
+    fn get_struct_hash(self: @StarkNetDomain) -> felt252 {
+        PedersenTrait::new(0).update_with(STARKNET_DOMAIN_TYPE_HASH).update_with(*self).update_with(4).finalize()
+    }
+}
+
+impl StructHashOutsideExecution of IStructHash<OutsideExecution> {
+    fn get_struct_hash(self: @OutsideExecution) -> felt252 {
+        let mut state = PedersenTrait::new(0);
+        let mut calls_span = *self.calls;
+        let calls_len = (*self.calls).len().into();
+        let calls_hash = loop {
+            match calls_span.pop_front() {
+                Option::Some(call) => state = state.update((call.get_struct_hash())),
+                Option::None => { break state.update(calls_len).finalize(); },
+            }
+        };
+
+        PedersenTrait::new(0)
+            .update_with(OUTSIDE_EXECUTION_TYPE_HASH)
+            .update_with(*self.caller)
+            .update_with(*self.nonce)
+            .update_with(*self.execute_after)
+            .update_with(*self.execute_before)
+            .update_with(calls_len)
+            .update_with(calls_hash)
+            .update_with(7)
+            .finalize()
+    }
+}
+
+impl StructHashCall of IStructHash<Call> {
+    fn get_struct_hash(self: @Call) -> felt252 {
+        let mut state = PedersenTrait::new(0);
+        let mut calldata_span = *self.calldata;
+        let calldata_len = calldata_span.len().into();
+        let calldata_hash = loop {
+            match calldata_span.pop_front() {
+                Option::Some(item) => state = state.update(*item),
+                Option::None => { break state.update(calldata_len).finalize(); },
+            }
+        };
+
+        PedersenTrait::new(0)
+            .update_with(OUTSIDE_CALL_TYPE_HASH)
+            .update_with(*self.to)
+            .update_with(*self.selector)
+            .update_with(calldata_len)
+            .update_with(calldata_hash)
+            .update_with(5)
+            .finalize()
+    }
+}
+
+impl OffchainMessageHashSession of IOffchainMessageHash<OutsideExecution> {
+    fn get_message_hash(self: @OutsideExecution) -> felt252 {
+        let domain = StarkNetDomain {
+            name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id,
+        };
+
+        PedersenTrait::new(0)
+            .update_with('StarkNet Message')
+            .update_with(domain.get_struct_hash())
+            .update_with(get_contract_address())
+            .update_with((*self).get_struct_hash())
+            .update(4)
+            .finalize()
+    }
 }

@@ -66,7 +66,7 @@ const profiler = newProfiler(provider);
 {
   const { account } = await deployAccount({
     owner: new Secp256r1KeyPair(48n),
-    guardian:  new StarknetKeyPair(47n) ,
+    guardian: new StarknetKeyPair(47n),
   });
   ethContract.connect(account);
   await profiler.profile("Secp256r1 w guardian", await ethContract.transfer(recipient, 1));

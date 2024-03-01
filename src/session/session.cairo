@@ -5,7 +5,8 @@ mod session_component {
     };
     use argent::account::interface::{IAccount, IArgentUserAccount};
     use argent::session::{
-        session_hash::{OffChainMessageHashSession, MerkleLeafHash}, interface::{ISessionable, SessionToken, Session},
+        session_hash::{OffChainMessageHashSessionRev1, MerkleLeafHash},
+        interface::{ISessionable, SessionToken, Session},
     };
     use argent::signer::signer_signature::{SignerSignatureTrait};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
@@ -74,7 +75,7 @@ mod session_component {
             let token: SessionToken = full_deserialize(signature.slice(1, signature.len() - 1))
                 .expect('session/invalid-calldata');
 
-            let token_session_hash = token.session.get_message_hash();
+            let token_session_hash = token.session.get_message_hash_rev_1();
 
             assert(!self.revoked_session.read(token_session_hash), 'session/revoked');
 

@@ -3,19 +3,19 @@ use pedersen::PedersenTrait;
 use poseidon::poseidon_hash_span;
 
 trait IOffChainMessageHashRev0<T> {
-    fn get_message_hash(self: @T) -> felt252;
+    fn get_message_hash_rev_0(self: @T) -> felt252;
 }
 
 trait IOffChainMessageHashRev1<T> {
-    fn get_message_hash(self: @T) -> felt252;
+    fn get_message_hash_rev_1(self: @T) -> felt252;
 }
 
 trait IStructHashRev0<T> {
-    fn get_struct_hash(self: @T) -> felt252;
+    fn get_struct_hash_rev_0(self: @T) -> felt252;
 }
 
 trait IStructHashRev1<T> {
-    fn get_struct_hash(self: @T) -> felt252;
+    fn get_struct_hash_rev_1(self: @T) -> felt252;
 }
 
 // needed for session
@@ -37,7 +37,7 @@ const STARKNET_DOMAIN_TYPE_HASH_REV_0: felt252 = selector!("StarkNetDomain(name:
 // TODO: perhaps add negative impl of IStructHash? 
 // impl StructHashStarknetDomain<-IStructHash<StarkNetDomain>> of IStarknetDomainHash<StarkNetDomain>
 impl StructHashStarkNetDomain of IStructHashRev0<StarkNetDomain> {
-    fn get_struct_hash(self: @StarkNetDomain) -> felt252 {
+    fn get_struct_hash_rev_0(self: @StarkNetDomain) -> felt252 {
         PedersenTrait::new(0).update_with(STARKNET_DOMAIN_TYPE_HASH_REV_0).update_with(*self).update_with(4).finalize()
     }
 }
@@ -58,7 +58,7 @@ const STARKNET_DOMAIN_TYPE_HASH_REV_1: felt252 =
     );
 
 impl StructHashStarknetDomain of IStructHashRev1<StarknetDomain> {
-    fn get_struct_hash(self: @StarknetDomain) -> felt252 {
+    fn get_struct_hash_rev_1(self: @StarknetDomain) -> felt252 {
         poseidon_hash_span(
             array![STARKNET_DOMAIN_TYPE_HASH_REV_1, *self.name, *self.version, *self.chain_id, *self.revision].span()
         )

@@ -1,5 +1,5 @@
 use argent::offchain_message::interface::{
-    StarkNetDomain, StructHashStarkNetDomain, IOffChainMessageHashRev1, IStructHashRev0
+    StarkNetDomain, StructHashStarkNetDomain, IOffChainMessageHashRev0, IStructHashRev0
 };
 use argent::outside_execution::interface::{OutsideExecution};
 use hash::{HashStateTrait, HashStateExTrait};
@@ -17,13 +17,13 @@ const OUTSIDE_EXECUTION_TYPE_HASH: felt252 =
 
 
 impl StructHashOutsideExecution of IStructHashRev0<OutsideExecution> {
-    fn get_struct_hash(self: @OutsideExecution) -> felt252 {
+    fn get_struct_hash_rev_0(self: @OutsideExecution) -> felt252 {
         let mut state = PedersenTrait::new(0);
         let mut calls_span = *self.calls;
         let calls_len = (*self.calls).len().into();
         let calls_hash = loop {
             match calls_span.pop_front() {
-                Option::Some(call) => state = state.update((call.get_struct_hash())),
+                Option::Some(call) => state = state.update((call.get_struct_hash_rev_0())),
                 Option::None => { break state.update(calls_len).finalize(); },
             }
         };
@@ -42,7 +42,7 @@ impl StructHashOutsideExecution of IStructHashRev0<OutsideExecution> {
 }
 
 impl StructHashCall of IStructHashRev0<Call> {
-    fn get_struct_hash(self: @Call) -> felt252 {
+    fn get_struct_hash_rev_0(self: @Call) -> felt252 {
         let mut state = PedersenTrait::new(0);
         let mut calldata_span = *self.calldata;
         let calldata_len = calldata_span.len().into();
@@ -64,17 +64,17 @@ impl StructHashCall of IStructHashRev0<Call> {
     }
 }
 
-impl OffChainMessageOutsideExecution of IOffChainMessageHashRev1<OutsideExecution> {
-    fn get_message_hash(self: @OutsideExecution) -> felt252 {
+impl OffChainMessageOutsideExecutionRev0 of IOffChainMessageHashRev0<OutsideExecution> {
+    fn get_message_hash_rev_0(self: @OutsideExecution) -> felt252 {
         let domain = StarkNetDomain {
             name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id,
         };
 
         PedersenTrait::new(0)
             .update_with('StarkNet Message')
-            .update_with(domain.get_struct_hash())
+            .update_with(domain.get_struct_hash_rev_0())
             .update_with(get_contract_address())
-            .update_with((*self).get_struct_hash())
+            .update_with((*self).get_struct_hash_rev_0())
             .update(4)
             .finalize()
     }

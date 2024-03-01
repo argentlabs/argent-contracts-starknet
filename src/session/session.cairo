@@ -53,8 +53,8 @@ mod session_component {
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentUserAccount<TContractState>,
     > of InternalTrait<TContractState> {
         #[inline(always)]
-        fn is_session(self: @ComponentState<TContractState>, session_signature0: felt252) -> bool {
-            session_signature0 == SESSION_MAGIC
+        fn is_session(self: @ComponentState<TContractState>, session_signature_0: felt252) -> bool {
+            session_signature_0 == SESSION_MAGIC
         }
 
         fn assert_valid_session(

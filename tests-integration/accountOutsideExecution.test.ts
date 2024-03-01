@@ -153,7 +153,7 @@ describe("ArgentAccount: outside execution", function () {
       nonce: randomKeyPair().publicKey,
       execute_after: 0,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(accountContract.populateTransaction.trigger_escape_owner(keyPair.compiledSignerType))],
+      calls: [getOutsideCall(accountContract.populateTransaction.trigger_escape_owner(keyPair.compiledSigner))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(
       outsideExecution,

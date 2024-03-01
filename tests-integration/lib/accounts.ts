@@ -143,7 +143,7 @@ async function deployAccountInner(
   };
   const some_guardian = signerOption(finalParams.guardian?.publicKey);
   const constructorCalldata = CallData.compile({
-    owner: finalParams.owner.signerType,
+    owner: finalParams.owner.signer,
     guardian: some_guardian,
   });
 

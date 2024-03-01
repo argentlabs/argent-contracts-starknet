@@ -137,7 +137,7 @@ export async function deployMultisig1_1(
 
 const sortedKeyPairs = (length: number) => randomKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));
 
-export const keysToSigners = (keys: KeyPair[]) => keys.map(({ signerType }) => signerType);
+export const keysToSigners = (keys: KeyPair[]) => keys.map(({ signer }) => signer);
 
 export async function deployLegacyMultisig(classHash: string) {
   const keys = [new LegacyMultisigKeyPair()];

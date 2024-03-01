@@ -11,7 +11,7 @@ describe("Deploy UDC", function () {
     const argentAccountClassHash = await declareContract("ArgentAccount");
 
     const callData = CallData.compile({
-      owner: owner.signerType,
+      owner: owner.signer,
       guardian: signerOption(guardian.publicKey),
     });
 

@@ -14,7 +14,7 @@ export class EthKeyPair extends KeyPair {
     return BigInt(new Wallet(id(this.privateKey.toString())).address);
   }
 
-  public get signerType() {
+  public get signer() {
     return new CairoCustomEnum({
       Starknet: undefined,
       Secp256k1: { signer: this.publicKey },
@@ -43,7 +43,7 @@ export class Secp256r1KeyPair extends KeyPair {
     return uint256.bnToUint256("0x" + utils.bytesToHex(publicKey));
   }
 
-  public get signerType() {
+  public get signer() {
     return new CairoCustomEnum({
       Starknet: undefined,
       Secp256k1: undefined,

@@ -21,13 +21,13 @@ describe("ArgentMultisig: signer storage", function () {
       await accountContract.is_signer_guid(intoGuid(signers[0])).should.eventually.be.true;
       await accountContract.is_signer_guid(newSigner1.publicKey).should.eventually.be.false;
 
-      await accountContract.add_signers(CallData.compile([1, [newSigner1.signerType]]));
+      await accountContract.add_signers(CallData.compile([1, [newSigner1.signer]]));
       await accountContract.is_signer_guid(newSigner1.publicKey).should.eventually.be.true;
 
       const new_threshold = 2;
 
       const { transaction_hash } = await accountContract.add_signers(
-        CallData.compile([new_threshold, [newSigner2.signerType, newSigner3.signerType]]),
+        CallData.compile([new_threshold, [newSigner2.signer, newSigner3.signer]]),
       );
 
       await expectEvent(transaction_hash, {
@@ -63,7 +63,7 @@ describe("ArgentMultisig: signer storage", function () {
       it("Expect 'argent/already-a-signer' if adding the same owner twice", async function () {
         const { accountContract, threshold } = await deployMultisig1_3();
 
-        const newSigner1 = randomKeyPair().signerType;
+        const newSigner1 = randomKeyPair().signer;
 
         await expectRevertWithErrorMessage("argent/already-a-signer", () =>
           accountContract.add_signers(CallData.compile([threshold, [newSigner1, newSigner1]])),
@@ -81,7 +81,7 @@ describe("ArgentMultisig: signer storage", function () {
       it("Expect 'bad/invalid-threshold' if changing to a zero threshold", async function () {
         const { accountContract } = await deployMultisig1_3();
 
-        const newSigner1 = randomKeyPair().signerType;
+        const newSigner1 = randomKeyPair().signer;
         await expectRevertWithErrorMessage("argent/invalid-threshold", () =>
           accountContract.add_signers(CallData.compile([0, [newSigner1]])),
         );
@@ -90,7 +90,7 @@ describe("ArgentMultisig: signer storage", function () {
       it("Expect 'bad/invalid-threshold' if threshold > no. owners", async function () {
         const { accountContract, signers } = await deployMultisig1_3();
 
-        const newSigner1 = randomKeyPair().signerType;
+        const newSigner1 = randomKeyPair().signer;
 
         await expectRevertWithErrorMessage("argent/bad-threshold", () =>
           accountContract.add_signers(CallData.compile([signers.length + 2, [newSigner1]])),
@@ -146,7 +146,7 @@ describe("ArgentMultisig: signer storage", function () {
 
     describe("Test all possible revert errors when removing signers", function () {
       it("Expect 'argent/not-a-signer' when replacing an owner not in the list", async function () {
-        const nonSigner = randomKeyPair().signerType;
+        const nonSigner = randomKeyPair().signer;
 
         const { accountContract, threshold } = await deployMultisig1_3();
 
@@ -190,7 +190,7 @@ describe("ArgentMultisig: signer storage", function () {
   });
   describe("replace_signers(signer_to_remove, signer_to_add)", function () {
     it("Should replace one signer", async function () {
-      const newSigner = randomKeyPair().signerType;
+      const newSigner = randomKeyPair().signer;
 
       const { accountContract, signers } = await deployMultisig1_1();
 
@@ -210,7 +210,7 @@ describe("ArgentMultisig: signer storage", function () {
     });
 
     it("Should replace first signer", async function () {
-      const newSigner = randomKeyPair().signerType;
+      const newSigner = randomKeyPair().signer;
 
       const { accountContract, signers } = await deployMultisig1_3();
 
@@ -221,7 +221,7 @@ describe("ArgentMultisig: signer storage", function () {
     });
 
     it("Should replace middle signer", async function () {
-      const newSigner = randomKeyPair().signerType;
+      const newSigner = randomKeyPair().signer;
 
       const { accountContract, signers } = await deployMultisig1_3();
 
@@ -232,7 +232,7 @@ describe("ArgentMultisig: signer storage", function () {
     });
 
     it("Should replace last signer", async function () {
-      const newSigner = randomKeyPair().signerType;
+      const newSigner = randomKeyPair().signer;
 
       const { accountContract, signers } = await deployMultisig1_3();
 
@@ -244,8 +244,8 @@ describe("ArgentMultisig: signer storage", function () {
   });
   describe("Expect revert messages under different conditions when trying to replace an owner", function () {
     it("Expect 'argent/not-a-signer' when trying to replace a signer that isn't in the list", async function () {
-      const nonSigner = randomKeyPair().signerType;
-      const newSigner = randomKeyPair().signerType;
+      const nonSigner = randomKeyPair().signer;
+      const newSigner = randomKeyPair().signer;
 
       const { accountContract } = await deployMultisig1_3();
 

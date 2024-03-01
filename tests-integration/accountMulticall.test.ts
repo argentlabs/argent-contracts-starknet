@@ -116,7 +116,7 @@ describe("ArgentAccount: multicall", function () {
     await expectRevertWithErrorMessage("argent/no-multicall-to-self", () =>
       account.execute([
         ethContract.populateTransaction.transfer(recipient, amount),
-        accountContract.populateTransaction.trigger_escape_owner(newOwner.compiledSignerType),
+        accountContract.populateTransaction.trigger_escape_owner(newOwner.compiledSigner),
       ]),
     );
   });

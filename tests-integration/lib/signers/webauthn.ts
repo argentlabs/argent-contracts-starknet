@@ -20,15 +20,6 @@ const rpIdHash: string = buf2hex(
   ]),
 );
 
-interface WebauthnAssertion {
-  authenticatorData: Uint8Array;
-  clientDataJson: Uint8Array;
-  r: Uint8Array;
-  s: Uint8Array;
-  yParity: boolean;
-}
-
-let firstPass = true;
 const origin = "http://localhost:5173";
 const pubkey = buf2hex(
   new Uint8Array([
@@ -36,6 +27,14 @@ const pubkey = buf2hex(
     6, 246, 46, 5, 253, 205, 68,
   ]),
 );
+
+interface WebauthnAssertion {
+  authenticatorData: Uint8Array;
+  clientDataJson: Uint8Array;
+  r: Uint8Array;
+  s: Uint8Array;
+  yParity: boolean;
+}
 
 export async function deployFixedWebauthnAccount(classHash: string): Promise<Account> {
   const constructorCalldata = CallData.compile({
@@ -55,8 +54,8 @@ export async function deployFixedWebauthnAccount(classHash: string): Promise<Acc
 }
 
 class WebauthnOwner extends RawSigner {
-  public async signRaw(): Promise<ArraySignatureType> {
-    const { authenticatorData, clientDataJson, r, s, yParity } = await signTransaction();
+  public async signRaw(messageHash: string): Promise<ArraySignatureType> {
+    const { authenticatorData, clientDataJson, r, s, yParity } = await signTransaction(messageHash);
     const clientDataText = new TextDecoder().decode(clientDataJson.buffer);
     const clientData = JSON.parse(clientDataText);
     const clientDataOffset = (substring: string) => clientDataText.indexOf(substring) + substring.length;
@@ -107,15 +106,15 @@ function webauthnSigner(origin: string, rp_id_hash: string, pubkey: string) {
   });
 }
 
-async function signTransaction(): Promise<WebauthnAssertion> {
-  if (firstPass) {
-    firstPass = false;
+async function signTransaction(messageHash: string): Promise<WebauthnAssertion> {
+  const authenticatorData = new Uint8Array([
+    73, 150, 13, 229, 136, 14, 140, 104, 116, 52, 23, 15, 100, 118, 96, 91, 143, 228, 174, 185, 162, 134, 50, 199, 153,
+    92, 243, 186, 131, 29, 151, 99, 5, 0, 0, 0, 0,
+  ]);
 
+  if (messageHash == "0x4f008e37038b77515c972e58eefe8cb8350317df3d38c4aa04533185fabf69a") {
     return {
-      authenticatorData: new Uint8Array([
-        73, 150, 13, 229, 136, 14, 140, 104, 116, 52, 23, 15, 100, 118, 96, 91, 143, 228, 174, 185, 162, 134, 50, 199,
-        153, 92, 243, 186, 131, 29, 151, 99, 5, 0, 0, 0, 0,
-      ]),
+      authenticatorData,
       clientDataJson: new Uint8Array([
         123, 34, 116, 121, 112, 101, 34, 58, 34, 119, 101, 98, 97, 117, 116, 104, 110, 46, 103, 101, 116, 34, 44, 34,
         99, 104, 97, 108, 108, 101, 110, 103, 101, 34, 58, 34, 66, 80, 65, 73, 52, 51, 65, 52, 116, 51, 85, 86, 121, 88,
@@ -134,12 +133,9 @@ async function signTransaction(): Promise<WebauthnAssertion> {
       ]),
       yParity: true,
     };
-  } else {
+  } else if (messageHash == "0x155341f0085195175c65999b0885998d847f21127076321d8c5c84f20d80ff2") {
     return {
-      authenticatorData: new Uint8Array([
-        73, 150, 13, 229, 136, 14, 140, 104, 116, 52, 23, 15, 100, 118, 96, 91, 143, 228, 174, 185, 162, 134, 50, 199,
-        153, 92, 243, 186, 131, 29, 151, 99, 5, 0, 0, 0, 0,
-      ]),
+      authenticatorData,
       clientDataJson: new Uint8Array([
         123, 34, 116, 121, 112, 101, 34, 58, 34, 119, 101, 98, 97, 117, 116, 104, 110, 46, 103, 101, 116, 34, 44, 34,
         99, 104, 97, 108, 108, 101, 110, 103, 101, 34, 58, 34, 65, 86, 85, 48, 72, 119, 67, 70, 71, 86, 70, 49, 120,
@@ -158,5 +154,7 @@ async function signTransaction(): Promise<WebauthnAssertion> {
       ]),
       yParity: true,
     };
+  } else {
+    throw new Error(`Unsupported message hash: ${messageHash}`);
   }
 }

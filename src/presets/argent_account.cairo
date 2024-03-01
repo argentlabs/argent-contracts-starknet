@@ -286,41 +286,53 @@ mod ArgentAccount {
             let new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(base, 2)).unwrap_syscall();
             assert(new_signer.is_zero(), 'argent/new-signer-shoud-be-null');
 
-            // Check basic invariants and emit missing events
-            let owner = self._signer.read();
-            let guardian = self._guardian.read();
-            let guardian_backup = self._guardian_backup.read();
-            assert(owner != 0, 'argent/null-owner');
-            if guardian == 0 {
-                assert(guardian_backup == 0, 'argent/backup-should-be-null');
+            // TODO Assert we are coming from argent account
+            // TODO Assert we are coming from one of the whitelisted versions, check signatures??
+
+            let owner_old = self._signer.read();
+            assert(owner_old != 0, 'argent/null-owner');
+            let new_owner_guid = starknet_signer_from_pubkey(owner_old).into_guid();
+            self._signer.write(new_owner_guid);
+            self.emit(OwnerChanged { new_owner: new_owner_guid });
+            self.emit(OwnerRemoved { removed_owner_guid: owner_old });
+            self.emit(OwnerAdded { new_owner_guid });
+            self.emit(SignerLinked { signer_guid: new_owner_guid, signer: starknet_signer_from_pubkey(owner_old) });
+
+            let guardian_old = self._guardian.read();
+            let guardian_backup_old = self._guardian_backup.read();
+            if guardian_old == 0 {
+                assert(guardian_backup_old == 0, 'argent/backup-should-be-null');
             } else {
-                self.emit(SignerLinked { signer_guid: guardian, signer: starknet_signer_from_pubkey(guardian) });
-                if (guardian_backup != 0) {
+                let new_guardian_guid = starknet_signer_from_pubkey(guardian_old).into_guid();
+                self._guardian.write(new_guardian_guid);
+                self.emit(GuardianChanged { new_guardian: new_guardian_guid });
+                self.emit(SignerLinked { signer_guid: new_guardian_guid, signer: starknet_signer_from_pubkey(guardian_old) });
+
+
+                if (guardian_backup_old != 0) {
+                    let new_guardian_backup_guid = starknet_signer_from_pubkey(guardian_backup_old).into_guid();
+                    self._guardian_backup.write(new_guardian_backup_guid);
+                    self.emit(GuardianBackupChanged { new_guardian_backup: new_guardian_backup_guid });
                     self
                         .emit(
                             SignerLinked {
-                                signer_guid: guardian_backup, signer: starknet_signer_from_pubkey(guardian_backup)
+                                signer_guid: new_guardian_backup_guid, signer: starknet_signer_from_pubkey(guardian_backup_old)
                             }
                         );
                 }
             }
-            self.emit(SignerLinked { signer_guid: owner, signer: starknet_signer_from_pubkey(owner) });
 
             let implementation = self._implementation.read();
             if implementation != Zeroable::zero() {
                 replace_class_syscall(implementation).expect('argent/invalid-after-upgrade');
                 self._implementation.write(Zeroable::zero());
-                // Technically the owner is not added here, but we emit the event since it wasn't emitted in previous versions
-                self.emit(OwnerAdded { new_owner_guid: owner });
             }
 
             if data.is_empty() {
                 return array![];
             }
 
-            let mut data_span = data.span();
-            let calls: Array<Call> = Serde::deserialize(ref data_span).expect('argent/invalid-calls');
-            assert(data_span.is_empty(), 'argent/invalid-calls');
+            let calls = full_deserialize::<Array<Call>>(data.span()).expect('argent/invalid-calls');
 
             assert_no_self_call(calls.span(), get_contract_address());
 

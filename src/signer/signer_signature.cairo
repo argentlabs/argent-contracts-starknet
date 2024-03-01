@@ -78,9 +78,10 @@ impl SignerTraitImpl of SignerTrait<Signer> {
     fn into_guid(self: Signer) -> felt252 {
         // TODO avoiding excesive hashing rounds
         match self {
-            Signer::Starknet(signer) => signer
-                .pubkey
-                .into(), //PoseidonTrait::new().update_with(('Stark', signer.pubkey)).finalize(),
+            Signer::Starknet(signer) => {
+                let pubkey: felt252 = signer.pubkey.into();
+                PoseidonTrait::new().update_with(('Stark', pubkey)).finalize()
+            },
             Signer::Secp256k1(signer) => {
                 PoseidonTrait::new().update_with(('Secp256k1', signer.pubkey_hash.address)).finalize()
             },

@@ -33,12 +33,12 @@ fn test_double_signature() {
 
     let signature = to_starknet_signer_signatures(
         array![
+            signer_pubkey_2,
+            signer_2_signature_r,
+            signer_2_signature_s,
             signer_pubkey_1,
             signer_1_signature_r,
             signer_1_signature_s,
-            signer_pubkey_2,
-            signer_2_signature_r,
-            signer_2_signature_s
         ]
     );
     assert(multisig.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
@@ -54,12 +54,12 @@ fn test_double_signature_order() {
 
     let signature = to_starknet_signer_signatures(
         array![
+            signer_pubkey_1,
+            signer_1_signature_r,
+            signer_1_signature_s,
             signer_pubkey_2,
             signer_2_signature_r,
             signer_2_signature_s,
-            signer_pubkey_1,
-            signer_1_signature_r,
-            signer_1_signature_s
         ]
     );
     multisig.is_valid_signature(message_hash, signature);

@@ -78,8 +78,10 @@ fn test_trigger_escape_first_signer() {
     let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_1()], array![SIGNER_3()]);
     let (escape, status) = component.get_escape();
-    assert(*escape.target_signers.at(0) == signer_pubkey_1, 'should be signer 1');
-    assert(*escape.new_signers.at(0) == signer_pubkey_3, 'should be signer 3');
+    assert(
+        *escape.target_signers.at(0) == starknet_signer_from_pubkey(signer_pubkey_1).into_guid(), 'should be signer 1'
+    );
+    assert(*escape.new_signers.at(0) == starknet_signer_from_pubkey(signer_pubkey_3).into_guid(), 'should be signer 3');
     assert(escape.ready_at == 10, 'should be 10');
     assert(status == EscapeStatus::NotReady, 'should be NotReady');
 }
@@ -89,8 +91,10 @@ fn test_trigger_escape_last_signer() {
     let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     let (escape, status) = component.get_escape();
-    assert(*escape.target_signers.at(0) == signer_pubkey_2, 'should be signer 2');
-    assert(*escape.new_signers.at(0) == signer_pubkey_3, 'should be signer 3');
+    assert(
+        *escape.target_signers.at(0) == starknet_signer_from_pubkey(signer_pubkey_2).into_guid(), 'should be signer 2'
+    );
+    assert(*escape.new_signers.at(0) == starknet_signer_from_pubkey(signer_pubkey_3).into_guid(), 'should be signer 3');
     assert(escape.ready_at == 10, 'should be 10');
     assert(status == EscapeStatus::NotReady, 'should be NotReady');
 }
@@ -100,9 +104,11 @@ fn test_trigger_escape_can_override() {
     let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_1()], array![SIGNER_3()]);
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    let (escape, status) = component.get_escape();
-    assert(*escape.target_signers.at(0) == signer_pubkey_2, 'should be signer 2');
-    assert(*escape.new_signers.at(0) == signer_pubkey_3, 'should be signer 3');
+    let (escape, _) = component.get_escape();
+    assert(
+        *escape.target_signers.at(0) == starknet_signer_from_pubkey(signer_pubkey_2).into_guid(), 'should be signer 2'
+    );
+    assert(*escape.new_signers.at(0) == starknet_signer_from_pubkey(signer_pubkey_3).into_guid(), 'should be signer 3');
 }
 
 #[test]

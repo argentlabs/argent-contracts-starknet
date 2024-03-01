@@ -22,8 +22,8 @@ const wrong_owner_s: felt252 = 0x2e44d5bad55a0d692e02529e7060f352fde85fae8d5946f
 #[test]
 fn initialize() {
     let account = initialize_account_with(1, 2);
-    assert(account.get_owner() == 1, 'value should be 1');
-    assert(account.get_guardian() == 2, 'value should be 2');
+    assert(account.get_owner() == starknet_signer_from_pubkey(1).into_guid(), 'value should be 1');
+    assert(account.get_guardian() == starknet_signer_from_pubkey(2).into_guid(), 'value should be 2');
     assert(account.get_guardian_backup() == 0, 'value should be 0');
 }
 
@@ -48,7 +48,7 @@ fn check_transaction_version_on_validate() {
 #[test]
 fn initialized_no_guardian_no_backup() {
     let account = initialize_account_with(1, 0);
-    assert(account.get_owner() == 1, 'value should be 1');
+    assert(account.get_owner() == starknet_signer_from_pubkey(1).into_guid(), 'value should be 1');
     assert(account.get_guardian() == 0, 'guardian should be zero');
     assert(account.get_guardian_backup() == 0, 'guardian backup should be zero');
 }

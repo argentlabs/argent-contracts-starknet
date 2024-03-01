@@ -91,8 +91,10 @@ fn test_trigger_escape_first_signer() {
     set_contract_address(GUARDIAN());
     component.trigger_escape(array![SIGNER_1()], array![SIGNER_3()]);
     let (escape, status) = component.get_escape();
-    assert(*escape.target_signers.at(0) == signer_pubkey_1, 'should be signer 1');
-    assert(*escape.new_signers.at(0) == signer_pubkey_3, 'should be signer 1');
+    assert(
+        *escape.target_signers.at(0) == starknet_signer_from_pubkey(signer_pubkey_1).into_guid(), 'should be signer 1'
+    );
+    assert(*escape.new_signers.at(0) == starknet_signer_from_pubkey(signer_pubkey_3).into_guid(), 'should be signer 3');
     assert(escape.ready_at == 10, 'should be 10');
     assert(status == EscapeStatus::NotReady, 'should be NotReady');
 }
@@ -103,8 +105,10 @@ fn test_trigger_escape_last_signer() {
     set_contract_address(GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     let (escape, status) = component.get_escape();
-    assert(*escape.target_signers.at(0) == signer_pubkey_2, 'should be signer 2');
-    assert(*escape.new_signers.at(0) == signer_pubkey_3, 'should be signer 1');
+    assert(
+        *escape.target_signers.at(0) == starknet_signer_from_pubkey(signer_pubkey_2).into_guid(), 'should be signer 2'
+    );
+    assert(*escape.new_signers.at(0) == starknet_signer_from_pubkey(signer_pubkey_3).into_guid(), 'should be signer 3');
     assert(escape.ready_at == 10, 'should be 10');
     assert(status == EscapeStatus::NotReady, 'should be NotReady');
 }
@@ -113,12 +117,16 @@ fn test_trigger_escape_last_signer() {
 fn test_trigger_escape_all_signers() {
     let (component, _, _) = setup();
     set_contract_address(GUARDIAN());
-    component.trigger_escape(array![SIGNER_1(), SIGNER_2()], array![SIGNER_3(), SIGNER_4()]);
+    component.trigger_escape(array![SIGNER_2(), SIGNER_1()], array![SIGNER_4(), SIGNER_3()]);
     let (escape, status) = component.get_escape();
-    assert(*escape.target_signers.at(0) == signer_pubkey_1, 'should be signer 1');
-    assert(*escape.target_signers.at(1) == signer_pubkey_2, 'should be signer 2');
-    assert(*escape.new_signers.at(0) == signer_pubkey_3, 'should be signer 3');
-    assert(*escape.new_signers.at(1) == signer_pubkey_4, 'should be signer 4');
+    assert(
+        *escape.target_signers.at(0) == starknet_signer_from_pubkey(signer_pubkey_2).into_guid(), 'should be signer 1'
+    );
+    assert(
+        *escape.target_signers.at(1) == starknet_signer_from_pubkey(signer_pubkey_1).into_guid(), 'should be signer 2'
+    );
+    assert(*escape.new_signers.at(0) == starknet_signer_from_pubkey(signer_pubkey_4).into_guid(), 'should be signer 4');
+    assert(*escape.new_signers.at(1) == starknet_signer_from_pubkey(signer_pubkey_3).into_guid(), 'should be signer 3');
     assert(escape.ready_at == 10, 'should be 10');
     assert(status == EscapeStatus::NotReady, 'should be NotReady');
 }
@@ -129,9 +137,11 @@ fn test_trigger_escape_can_override() {
     set_contract_address(GUARDIAN());
     component.trigger_escape(array![SIGNER_1()], array![SIGNER_3()]);
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_4()]);
-    let (escape, status) = component.get_escape();
-    assert(*escape.target_signers.at(0) == signer_pubkey_2, 'should be signer 2');
-    assert(*escape.new_signers.at(0) == signer_pubkey_4, 'should be signer 4');
+    let (escape, _) = component.get_escape();
+    assert(
+        *escape.target_signers.at(0) == starknet_signer_from_pubkey(signer_pubkey_2).into_guid(), 'should be signer 2'
+    );
+    assert(*escape.new_signers.at(0) == starknet_signer_from_pubkey(signer_pubkey_4).into_guid(), 'should be signer 4');
 }
 
 #[test]
@@ -179,7 +189,7 @@ fn test_execute_escape() {
 #[test]
 #[should_panic(expected: ('argent/invalid-escape', 'ENTRYPOINT_FAILED'))]
 fn test_execute_escape_NotReady() {
-    let (component, _, multisig_component) = setup();
+    let (component, _, _) = setup();
     set_contract_address(GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     set_block_timestamp(8);
@@ -189,7 +199,7 @@ fn test_execute_escape_NotReady() {
 #[test]
 #[should_panic(expected: ('argent/invalid-escape', 'ENTRYPOINT_FAILED'))]
 fn test_execute_escape_Expired() {
-    let (component, _, multisig_component) = setup();
+    let (component, _, _) = setup();
     set_contract_address(GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     set_block_timestamp(28);

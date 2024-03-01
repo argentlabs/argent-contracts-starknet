@@ -49,7 +49,7 @@ export interface SessionToken {
   session: OnChainSession;
   session_authorisation: string[];
   session_signature: CairoCustomEnum;
-  backend_signature: CairoCustomEnum;
+  guardian_signature: CairoCustomEnum;
   proofs: string[][];
 }
 

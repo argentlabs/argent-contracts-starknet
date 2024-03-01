@@ -185,17 +185,17 @@ export class DappService {
       session_key_guid: completedSession.session_key_guid,
     };
 
-    let backend_signature;
+    let guardian_signature;
 
     if (isOutside) {
-      backend_signature = await this.argentBackend.signOutsideTxAndSession(
+      guardian_signature = await this.argentBackend.signOutsideTxAndSession(
         calls,
         completedSession,
         accountAddress,
         outsideExecution as OutsideExecution,
       );
     } else {
-      backend_signature = await this.argentBackend.signTxAndSession(
+      guardian_signature = await this.argentBackend.signTxAndSession(
         calls,
         transactionsDetail as InvocationsSignerDetails,
         completedSession,
@@ -208,9 +208,9 @@ export class DappService {
       session,
       session_authorisation: accountSessionSignature,
       session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, session_signature),
-      backend_signature: this.getStarknetSignatureType(
+      guardian_signature: this.getStarknetSignatureType(
         this.argentBackend.getBackendKey(accountAddress),
-        backend_signature,
+        guardian_signature,
       ),
       proofs: this.getSessionProofs(completedSession, calls),
     };

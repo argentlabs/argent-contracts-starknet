@@ -26,7 +26,7 @@ struct SessionToken {
     session: Session,
     session_authorisation: Span<felt252>,
     session_signature: SignerSignature,
-    backend_signature: SignerSignature,
+    guardian_signature: SignerSignature,
     proofs: Span<Span<felt252>>,
 }
 

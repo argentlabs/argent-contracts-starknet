@@ -2,7 +2,11 @@ use hash::{HashStateExTrait, HashStateTrait};
 use pedersen::PedersenTrait;
 use poseidon::poseidon_hash_span;
 
-trait IOffChainMessageHash<T> {
+trait IOffChainMessageHashRev0<T> {
+    fn get_message_hash(self: @T) -> felt252;
+}
+
+trait IOffChainMessageHashRev1<T> {
     fn get_message_hash(self: @T) -> felt252;
 }
 

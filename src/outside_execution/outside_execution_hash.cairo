@@ -1,5 +1,5 @@
 use argent::offchain_message::interface::{
-    StarkNetDomain, StructHashStarkNetDomain, IOffChainMessageHash, IStructHashRev0
+    StarkNetDomain, StructHashStarkNetDomain, IOffChainMessageHashRev1, IStructHashRev0
 };
 use argent::outside_execution::interface::{OutsideExecution};
 use hash::{HashStateTrait, HashStateExTrait};
@@ -64,7 +64,7 @@ impl StructHashCall of IStructHashRev0<Call> {
     }
 }
 
-impl OffChainMessageOutsideExecution of IOffChainMessageHash<OutsideExecution> {
+impl OffChainMessageOutsideExecution of IOffChainMessageHashRev1<OutsideExecution> {
     fn get_message_hash(self: @OutsideExecution) -> felt252 {
         let domain = StarkNetDomain {
             name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id,

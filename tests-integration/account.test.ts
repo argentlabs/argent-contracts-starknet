@@ -67,7 +67,7 @@ describe("ArgentAccount", function () {
   it("Expect an error when owner is zero", async function () {
     const owner = starknetSigner(0);
     const guardian = signerOption(undefined);
-    await expectRevertWithErrorMessage("argent/null-owner", () =>
+    await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
       deployer.deployContract({
         classHash: argentAccountClassHash,
         constructorCalldata: CallData.compile({ owner, guardian }),
@@ -143,9 +143,9 @@ describe("ArgentAccount", function () {
       );
     });
 
-    it("Expect 'argent/null-owner' when new_owner is zero", async function () {
+    it("Expect parsing error when new_owner is zero", async function () {
       const { accountContract } = await deployAccount();
-      await expectRevertWithErrorMessage("argent/null-owner", () =>
+      await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
         accountContract.change_owner(starknetSignatureType(0, 13, 14)),
       );
     });
@@ -186,10 +186,18 @@ describe("ArgentAccount", function () {
   describe("change_guardian(new_guardian)", function () {
     it("Should be possible to change_guardian", async function () {
       const { accountContract } = await deployAccount();
-      const newGuardian = 12n;
+      const newGuardian = 43n;
       await accountContract.change_guardian(compiledSignerOption(newGuardian));
-
       await accountContract.get_guardian().should.eventually.equal(newGuardian);
+    });
+
+    it("Shouldn't be possible to use a guardian with pubkey = 0", async function () {
+      const { account } = await deployAccount();
+      const { accountContract } = await deployAccount();
+      accountContract.connect(account);
+      await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
+        accountContract.change_guardian(compiledSignerOption(0n)),
+      );
     });
 
     it("Should be possible to change_guardian to zero when there is no backup", async function () {

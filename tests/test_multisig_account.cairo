@@ -1,6 +1,6 @@
 use argent::presets::multisig_account::ArgentMultisigAccount;
-use argent::signer::signer_signature::IntoGuid;
-use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
+use argent::signer::signer_signature::SignerTrait;
+use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknet_signer_from_pubkey};
 use argent_tests::setup::multisig_test_setup::{
     initialize_multisig, signer_pubkey_1, signer_pubkey_2, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
     initialize_multisig_with_one_signer
@@ -10,7 +10,7 @@ use starknet::deploy_syscall;
 
 #[test]
 fn valid_initialize() {
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
+    let signer_1 = starknet_signer_from_pubkey(signer_pubkey_1);
     let signers_array = array![signer_1];
     let multisig = initialize_multisig_with(threshold: 1, signers: signers_array.span());
     assert(multisig.get_threshold() == 1, 'threshold not set');
@@ -20,13 +20,13 @@ fn valid_initialize() {
     // test signers list
     let signers_guid = multisig.get_signer_guids();
     assert(signers_guid.len() == 1, 'invalid signers length');
-    assert(*signers_guid[0] == signer_1.into_guid().unwrap(), 'invalid signers result');
+    assert(*signers_guid[0] == signer_1.into_guid(), 'invalid signers result');
 }
 
 #[test]
 fn valid_initialize_two_signers() {
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
+    let signer_1 = starknet_signer_from_pubkey(signer_pubkey_1);
+    let signer_2 = starknet_signer_from_pubkey(signer_pubkey_2);
     let threshold = 1;
     let signers_array = array![signer_1, signer_2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
@@ -37,14 +37,14 @@ fn valid_initialize_two_signers() {
     // test signers list
     let signers = multisig.get_signer_guids();
     assert(signers.len() == 2, 'invalid signers length');
-    assert(*signers[0] == signer_1.into_guid().unwrap(), 'invalid signers result');
-    assert(*signers[1] == signer_2.into_guid().unwrap(), 'invalid signers result');
+    assert(*signers[0] == signer_1.into_guid(), 'invalid signers result');
+    assert(*signers[1] == signer_2.into_guid(), 'invalid signers result');
 }
 
 #[test]
 fn invalid_threshold() {
     let threshold = 3;
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
+    let signer_1 = starknet_signer_from_pubkey(signer_pubkey_1);
     let mut calldata = array![];
     threshold.serialize(ref calldata);
     array![signer_1].serialize(ref calldata);
@@ -57,8 +57,8 @@ fn invalid_threshold() {
 #[test]
 fn change_threshold() {
     let threshold = 1;
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 });
+    let signer_1 = starknet_signer_from_pubkey(signer_pubkey_1);
+    let signer_2 = starknet_signer_from_pubkey(signer_pubkey_2);
     let signers_array = array![signer_1, signer_2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
 
@@ -72,7 +72,7 @@ fn add_signers() {
     let multisig = initialize_multisig_with_one_signer();
 
     // add signer
-    let new_signers = array![Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 })];
+    let new_signers = array![starknet_signer_from_pubkey(signer_pubkey_2)];
     multisig.add_signers(2, new_signers);
 
     // check 
@@ -88,7 +88,7 @@ fn add_signer_already_in_list() {
     let multisig = initialize_multisig_with_one_signer();
 
     // add signer
-    let new_signers = array![Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 })];
+    let new_signers = array![starknet_signer_from_pubkey(signer_pubkey_1)];
     multisig.add_signers(2, new_signers);
 }
 

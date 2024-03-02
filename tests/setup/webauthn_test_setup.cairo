@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::WebauthnSigner;
+use argent::signer::signer_signature::{WebauthnSigner, new_web_authn_signer};
 use argent::signer::webauthn::{WebauthnAssertion};
 use argent::utils::bytes::ByteArrayExt;
 use starknet::secp256_trait::Signature;
@@ -50,11 +50,11 @@ fn get_authenticator_data() -> Span<u8> {
 }
 
 fn setup_1() -> (felt252, WebauthnSigner, WebauthnAssertion) {
-    let signer = WebauthnSigner {
-        pubkey: 0x90fa3f868e09db8d7103e1302d8a7aea214a31064b50bbd2545107799d513b25,
+    let signer = new_web_authn_signer(
         origin: 'http://localhost:5173',
-        rp_id_hash: 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763
-    };
+        rp_id_hash: 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763,
+        pubkey: 0x90fa3f868e09db8d7103e1302d8a7aea214a31064b50bbd2545107799d513b25,
+    );
     let assertion = WebauthnAssertion {
         authenticator_data: get_authenticator_data(),
         // challenge = 0xdeadbeef (4 bytes)
@@ -78,11 +78,11 @@ fn setup_1() -> (felt252, WebauthnSigner, WebauthnAssertion) {
 }
 
 fn setup_2() -> (felt252, WebauthnSigner, WebauthnAssertion) {
-    let signer = WebauthnSigner {
-        pubkey: 0x948947bb01aa6bc60a10b0f84f17ce580bf824b904c85381df122fbf64674dbb,
+    let signer = new_web_authn_signer(
         origin: 'http://localhost:5173',
-        rp_id_hash: 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763
-    };
+        rp_id_hash: 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763,
+        pubkey: 0x948947bb01aa6bc60a10b0f84f17ce580bf824b904c85381df122fbf64674dbb,
+    );
     let assertion = WebauthnAssertion {
         authenticator_data: get_authenticator_data(),
         // challenge = 0xdeadbeefff (5 bytes)
@@ -106,11 +106,11 @@ fn setup_2() -> (felt252, WebauthnSigner, WebauthnAssertion) {
 }
 
 fn setup_3() -> (felt252, WebauthnSigner, WebauthnAssertion) {
-    let signer = WebauthnSigner {
-        pubkey: 0xe7e2601548d428b0746936f84034a9869221bb994f8e6dc71953088aa9229bd7,
+    let signer = new_web_authn_signer(
         origin: 'http://localhost:5173',
-        rp_id_hash: 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763
-    };
+        rp_id_hash: 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763,
+        pubkey: 0xe7e2601548d428b0746936f84034a9869221bb994f8e6dc71953088aa9229bd7,
+    );
     let assertion = WebauthnAssertion {
         authenticator_data: get_authenticator_data(),
         client_data_json: "{\"type\":\"webauthn.get\",\"challenge\":\"3q2-7_-q\",\"origin\":\"http://localhost:5173\",\"crossOrigin\":false,\"other_keys_can_be_added_here\":\"do not compare clientDataJSON against a template. See https://goo.gl/yabPex\"}"
@@ -134,11 +134,11 @@ fn setup_3() -> (felt252, WebauthnSigner, WebauthnAssertion) {
 }
 
 fn setup_4() -> (felt252, WebauthnSigner, WebauthnAssertion) {
-    let signer = WebauthnSigner {
-        pubkey: 0x03bac39ba002c54f77a81b211af863646927e7758032ff255a3aa48aa332602b,
+    let signer = new_web_authn_signer(
         origin: 'http://localhost:5173',
-        rp_id_hash: 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763
-    };
+        rp_id_hash: 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763,
+        pubkey: 0x03bac39ba002c54f77a81b211af863646927e7758032ff255a3aa48aa332602b,
+    );
     let assertion = WebauthnAssertion {
         authenticator_data: get_authenticator_data(),
         client_data_json: "{\"type\":\"webauthn.get\",\"challenge\":\"3q2-777vuw\",\"origin\":\"http://localhost:5173\",\"crossOrigin\":false}"

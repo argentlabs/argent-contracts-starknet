@@ -8,7 +8,7 @@ mod ArgentUserAccount {
     };
     use argent::recovery::threshold_recovery::IThresholdRecoveryInternal;
     use argent::recovery::{threshold_recovery::threshold_recovery_component};
-    use argent::signer::{signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait}};
+    use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait}};
     use argent::signer_storage::{
         interface::ISignerList, signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
     };
@@ -269,7 +269,7 @@ mod ArgentUserAccount {
                     Option::Some(signer_sig) => signer_sig,
                     Option::None => { break true; }
                 };
-                let signer_guid = signer_sig.signer_into_guid().expect('argent/invalid-signer-guid');
+                let signer_guid = signer_sig.signer().into_guid();
                 assert(self.multisig.is_signer_guid(signer_guid), 'argent/not-a-signer');
                 assert(signer_guid != excluded_signer, 'argent/unauthorised_signer');
                 let signer_uint: u256 = signer_guid.into();

@@ -1,7 +1,7 @@
 use argent::multisig::interface::IArgentMultisig;
 use argent::multisig::interface::IArgentMultisigInternal;
 use argent::multisig::{multisig::multisig_component};
-use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid}};
+use argent::signer::{signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey, SignerTrait}};
 use argent::signer_storage::signer_list::signer_list_component;
 use argent_tests::mocks::multisig_mocks::MultisigMock;
 use core::array::ArrayTrait;
@@ -17,15 +17,15 @@ fn COMPONENT_STATE() -> ComponentState {
 }
 
 fn SIGNER_1() -> Signer {
-    Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 })
+    starknet_signer_from_pubkey(signer_pubkey_1)
 }
 
 fn SIGNER_2() -> Signer {
-    Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 })
+    starknet_signer_from_pubkey(signer_pubkey_2)
 }
 
 fn SIGNER_3() -> Signer {
-    Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_3 })
+    starknet_signer_from_pubkey(signer_pubkey_3)
 }
 
 // Initialize
@@ -41,9 +41,9 @@ fn test_initialize_3_signers() {
     assert(component.is_signer(SIGNER_3()), 'should be signer');
     let guids = component.get_signer_guids();
     assert(guids.len() == 3, 'wrong signer length');
-    assert(*guids.at(0) == SIGNER_1().into_guid().unwrap(), 'should be signer 0');
-    assert(*guids.at(1) == SIGNER_2().into_guid().unwrap(), 'should be signer 0');
-    assert(*guids.at(2) == SIGNER_3().into_guid().unwrap(), 'should be signer 0');
+    assert(*guids.at(0) == SIGNER_1().into_guid(), 'should be signer 0');
+    assert(*guids.at(1) == SIGNER_2().into_guid(), 'should be signer 0');
+    assert(*guids.at(2) == SIGNER_3().into_guid(), 'should be signer 0');
 }
 
 #[test]
@@ -236,9 +236,9 @@ fn test_reorder_all_signers() {
     component.initialize(3, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.reorder_signers(array![SIGNER_2(), SIGNER_3(), SIGNER_1()]);
     let guids = component.get_signer_guids();
-    assert(*guids.at(0) == SIGNER_2().into_guid().unwrap(), 'should be signer 0');
-    assert(*guids.at(1) == SIGNER_3().into_guid().unwrap(), 'should be signer 1');
-    assert(*guids.at(2) == SIGNER_1().into_guid().unwrap(), 'should be signer 2');
+    assert(*guids.at(0) == SIGNER_2().into_guid(), 'should be signer 0');
+    assert(*guids.at(1) == SIGNER_3().into_guid(), 'should be signer 1');
+    assert(*guids.at(2) == SIGNER_1().into_guid(), 'should be signer 2');
 }
 
 #[test]
@@ -247,9 +247,9 @@ fn test_reorder_2_signers() {
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.reorder_signers(array![SIGNER_1(), SIGNER_3(), SIGNER_2()]);
     let guids = component.get_signer_guids();
-    assert(*guids.at(0) == SIGNER_1().into_guid().unwrap(), 'should be signer 0');
-    assert(*guids.at(1) == SIGNER_3().into_guid().unwrap(), 'should be signer 1');
-    assert(*guids.at(2) == SIGNER_2().into_guid().unwrap(), 'should be signer 2');
+    assert(*guids.at(0) == SIGNER_1().into_guid(), 'should be signer 0');
+    assert(*guids.at(1) == SIGNER_3().into_guid(), 'should be signer 1');
+    assert(*guids.at(2) == SIGNER_2().into_guid(), 'should be signer 2');
 }
 
 #[test]

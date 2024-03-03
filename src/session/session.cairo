@@ -8,6 +8,7 @@ mod session_component {
         session_hash::{OffChainMessageHashSessionRev1, MerkleLeafHash},
         interface::{ISessionable, SessionToken, Session},
     };
+    use argent::signer::signer_signature::SignerTrait;
     use argent::signer::signer_signature::{SignerSignatureTrait};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
     use poseidon::{hades_permutation};
@@ -88,16 +89,13 @@ mod session_component {
             let (message_hash, _, _) = hades_permutation(transaction_hash, token_session_hash, 2);
 
             // checks that the session key the user signed is the same key that signed the session
-            let session_guid_from_sig = token.session_signature.signer_into_guid().expect('session/empty-session-key');
+            let session_guid_from_sig = token.session_signature.signer().into_guid();
             assert(token.session.session_key_guid == session_guid_from_sig, 'session/session-key-mismatch');
             assert(token.session_signature.is_valid_signature(message_hash), 'session/invalid-session-sig');
 
             // checks that its the account guardian that signed the session
             let guardian_guid = state.get_guardian();
-            let guardian_guid_from_sig = token
-                .guardian_signature
-                .signer_into_guid()
-                .expect('session/empty-backend-key');
+            let guardian_guid_from_sig = token.guardian_signature.signer().into_guid();
             assert(guardian_guid_from_sig == guardian_guid, 'session/guardian-key-mismatch');
             assert(token.guardian_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');
 

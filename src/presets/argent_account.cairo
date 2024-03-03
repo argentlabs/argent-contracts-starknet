@@ -10,7 +10,10 @@ mod ArgentAccount {
         interface::SessionToken, session::{session_component::{Internal, InternalTrait}, session_component,}
     };
     use argent::signer::{
-        signer_signature::{Signer, StarknetSigner, StarknetSignature, IntoGuid, SignerSignature, SignerSignatureTrait}
+        signer_signature::{
+            Signer, StarknetSigner, StarknetSignature, SignerTrait, SignerSignature, SignerSignatureTrait,
+            starknet_signer_from_pubkey
+        }
     };
     use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
     use argent::utils::{
@@ -221,14 +224,14 @@ mod ArgentAccount {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: Signer, guardian: Option<Signer>) {
-        let owner_guid: felt252 = owner.into_guid().expect('argent/null-owner');
+        let owner_guid: felt252 = owner.into_guid();
         self._signer.write(owner_guid);
         self.emit(OwnerAdded { new_owner_guid: owner_guid });
         self.emit(SignerLinked { signer_guid: owner_guid, signer: owner });
 
         let guardian_guid: felt252 = match guardian {
             Option::Some(guardian) => {
-                let guardian_guid: felt252 = guardian.into_guid().unwrap();
+                let guardian_guid: felt252 = guardian.into_guid();
                 self._guardian.write(guardian_guid);
                 self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                 guardian_guid
@@ -310,23 +313,17 @@ mod ArgentAccount {
             if guardian == 0 {
                 assert(guardian_backup == 0, 'argent/backup-should-be-null');
             } else {
-                self
-                    .emit(
-                        SignerLinked {
-                            signer_guid: guardian, signer: Signer::Starknet(StarknetSigner { pubkey: guardian })
-                        }
-                    );
+                self.emit(SignerLinked { signer_guid: guardian, signer: starknet_signer_from_pubkey(guardian) });
                 if (guardian_backup != 0) {
                     self
                         .emit(
                             SignerLinked {
-                                signer_guid: guardian_backup,
-                                signer: Signer::Starknet(StarknetSigner { pubkey: guardian_backup })
+                                signer_guid: guardian_backup, signer: starknet_signer_from_pubkey(guardian_backup)
                             }
                         );
                 }
             }
-            self.emit(SignerLinked { signer_guid: owner, signer: Signer::Starknet(StarknetSigner { pubkey: owner }) });
+            self.emit(SignerLinked { signer_guid: owner, signer: starknet_signer_from_pubkey(owner) });
 
             let implementation = self._implementation.read();
             if implementation != Zeroable::zero() {
@@ -405,7 +402,7 @@ mod ArgentAccount {
             self.reset_escape();
             self.reset_escape_attempts();
 
-            let new_owner_guid = signer_signature.signer_into_guid().expect('argent/null-owner');
+            let new_owner_guid = signer_signature.signer().into_guid();
             let old_owner = self._signer.read();
             self.assert_valid_new_owner_signature(signer_signature);
 
@@ -421,7 +418,7 @@ mod ArgentAccount {
 
             let new_guardian_guid: felt252 = match new_guardian {
                 Option::Some(guardian) => {
-                    let guardian_guid = guardian.into_guid().unwrap();
+                    let guardian_guid = guardian.into_guid();
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                     guardian_guid
                 },
@@ -446,7 +443,7 @@ mod ArgentAccount {
 
             let new_guardian_backup_guid: felt252 = match new_guardian_backup {
                 Option::Some(guardian) => {
-                    let guardian_guid = guardian.into_guid().unwrap();
+                    let guardian_guid = guardian.into_guid();
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                     guardian_guid
                 },
@@ -472,7 +469,7 @@ mod ArgentAccount {
             }
 
             self.reset_escape();
-            let new_owner_guid = new_owner.into_guid().expect('argent/null-owner');
+            let new_owner_guid = new_owner.into_guid();
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
             let escape = LegacyEscape { ready_at, escape_type: LegacyEscapeType::Owner, new_signer: new_owner_guid };
             self._escape.write(escape);
@@ -487,7 +484,7 @@ mod ArgentAccount {
 
             let new_guardian_guid: felt252 = match new_guardian {
                 Option::Some(guardian) => {
-                    let guardian_guid = guardian.into_guid().unwrap();
+                    let guardian_guid = guardian.into_guid();
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                     guardian_guid
                 },
@@ -631,9 +628,7 @@ mod ArgentAccount {
                             self.guardian_escape_attempts.write(current_attempts + 1);
                         }
 
-                        let new_owner: Signer = full_deserialize(*call.calldata).expect('argent/invalid-calldata');
-                        assert(new_owner.into_guid().is_ok(), 'argent/null-owner');
-                        self.assert_guardian_set();
+                        full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
 
                         assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
                         let is_valid = self.is_valid_guardian_signature(execution_hash, *signer_signatures.at(0));
@@ -669,10 +664,10 @@ mod ArgentAccount {
 
                         let new_guardian: Option<Signer> = full_deserialize(*call.calldata)
                             .expect('argent/invalid-calldata');
-
-                        if new_guardian.is_none() || new_guardian.unwrap().into_guid().is_err() {
+                        if new_guardian.is_none() {
                             assert(self._guardian_backup.read() == 0, 'argent/backup-should-be-null');
                         }
+
                         self.assert_guardian_set();
 
                         assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
@@ -725,7 +720,10 @@ mod ArgentAccount {
                 signer_signatures
                     .append(
                         SignerSignature::Starknet(
-                            (StarknetSigner { pubkey: owner }, StarknetSignature { r: *sig_owner_r, s: *sig_owner_s })
+                            (
+                                StarknetSigner { pubkey: owner.try_into().expect('argent/zero-pubkey') },
+                                StarknetSignature { r: *sig_owner_r, s: *sig_owner_s }
+                            )
                         )
                     );
                 match signatures.pop_front() {
@@ -736,7 +734,7 @@ mod ArgentAccount {
                             .append(
                                 SignerSignature::Starknet(
                                     (
-                                        StarknetSigner { pubkey: guardian },
+                                        StarknetSigner { pubkey: guardian.try_into().expect('argent/zero-pubkey') },
                                         StarknetSignature { r: *sig_guardian_r, s: *sig_guardian_s }
                                     )
                                 )
@@ -775,13 +773,12 @@ mod ArgentAccount {
         }
 
         fn is_valid_owner_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
-            signer_signature.signer_into_guid().unwrap() == self._signer.read()
-                && signer_signature.is_valid_signature(hash)
+            signer_signature.signer().into_guid() == self._signer.read() && signer_signature.is_valid_signature(hash)
         }
 
         fn is_valid_guardian_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
-            let signer_into_guid = signer_signature.signer_into_guid().unwrap();
-            (signer_into_guid == self._guardian.read() || signer_into_guid == self._guardian_backup.read())
+            let signer_guid = signer_signature.signer().into_guid();
+            (signer_guid == self._guardian.read() || signer_guid == self._guardian_backup.read())
                 && signer_signature.is_valid_signature(hash)
         }
 

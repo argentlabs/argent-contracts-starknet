@@ -1,5 +1,5 @@
 use argent::presets::argent_account::ArgentAccount;
-use argent::signer::signer_signature::{Signer, StarknetSigner};
+use argent::signer::signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey};
 use argent_tests::setup::account_test_setup::{
     ITestArgentAccountDispatcher, ITestArgentAccountDispatcherTrait, owner_pubkey, guardian_pubkey, wrong_owner_pubkey,
     wrong_guardian_pubkey, initialize_account, initialize_account_without_guardian, initialize_account_with
@@ -45,7 +45,7 @@ fn valid_with_guardian() {
 #[test]
 fn valid_with_guardian_backup() {
     let account = initialize_account_with(owner_pubkey, 1);
-    let guardian_backup = Option::Some(Signer::Starknet(StarknetSigner { pubkey: guardian_backup_pubkey }));
+    let guardian_backup = Option::Some(starknet_signer_from_pubkey(guardian_backup_pubkey));
     account.change_guardian_backup(guardian_backup);
     let signatures = to_starknet_signer_signatures(
         array![owner_pubkey, owner_r, owner_s, guardian_backup_pubkey, guardian_backup_r, guardian_backup_s]

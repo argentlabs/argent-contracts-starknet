@@ -261,8 +261,8 @@ export function compiledSignerOption(signer: bigint | undefined) {
   return CallData.compile([signerOption(signer)]);
 }
 
-export function signerOption(signer: bigint | undefined) {
-  if (signer) {
+export function signerOption(signer?: bigint) {
+  if (signer !== undefined) {
     return new CairoOption<any>(CairoOptionVariant.Some, { signer: starknetSigner(signer) });
   }
   return new CairoOption<any>(CairoOptionVariant.None);

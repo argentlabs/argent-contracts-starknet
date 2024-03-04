@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
+use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknet_signer_from_pubkey};
 use super::setup::constants::{MULTISIG_OWNER};
 use super::setup::multisig_test_setup::{
     initialize_multisig, initialize_multisig_with, ITestArgentMultisigDispatcherTrait
@@ -8,9 +8,9 @@ use super::setup::multisig_test_setup::{
 #[test]
 fn remove_signers_first() {
     // init
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(1) });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(2) });
-    let signer_3 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(3) });
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1));
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2));
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3));
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // remove signer
@@ -28,9 +28,9 @@ fn remove_signers_first() {
 #[test]
 fn remove_signers_center() {
     // init
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(1) });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(2) });
-    let signer_3 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(3) });
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1));
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2));
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3));
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // remove signer
@@ -49,9 +49,9 @@ fn remove_signers_center() {
 #[test]
 fn remove_signers_last() {
     // init
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(1) });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(2) });
-    let signer_3 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(3) });
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1));
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2));
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3));
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // remove signer
@@ -70,9 +70,9 @@ fn remove_signers_last() {
 #[test]
 fn remove_1_and_2() {
     // init
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(1) });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(2) });
-    let signer_3 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(3) });
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1));
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2));
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3));
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // remove signer
@@ -91,9 +91,9 @@ fn remove_1_and_2() {
 #[test]
 fn remove_1_and_3() {
     // init
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(1) });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(2) });
-    let signer_3 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(3) });
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1));
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2));
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3));
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // remove signer
@@ -112,9 +112,9 @@ fn remove_1_and_3() {
 #[test]
 fn remove_2_and_3() {
     // init
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(1) });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(2) });
-    let signer_3 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(3) });
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1));
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2));
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3));
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // remove signer
@@ -133,9 +133,9 @@ fn remove_2_and_3() {
 #[test]
 fn remove_2_and_1() {
     // init
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(1) });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(2) });
-    let signer_3 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(3) });
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1));
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2));
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3));
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // remove signer
@@ -154,9 +154,9 @@ fn remove_2_and_1() {
 #[test]
 fn remove_3_and_1() {
     // init
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(1) });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(2) });
-    let signer_3 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(3) });
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1));
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2));
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3));
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // remove signer
@@ -175,9 +175,9 @@ fn remove_3_and_1() {
 #[test]
 fn remove_3_and_2() {
     // init
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(1) });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(2) });
-    let signer_3 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(3) });
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1));
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2));
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3));
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // remove signer
@@ -208,9 +208,9 @@ fn remove_invalid_signers() {
 #[should_panic(expected: ('argent/bad-threshold',))]
 fn remove_signers_invalid_threshold() {
     // init
-    let signer_1 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(1) });
-    let signer_2 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(2) });
-    let signer_3 = Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(3) });
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1));
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2));
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3));
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // remove signer

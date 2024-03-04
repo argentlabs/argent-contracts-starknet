@@ -16,19 +16,19 @@ use starknet::{deploy_syscall, contract_address_const, ContractAddress,};
 use super::setup::constants::{MULTISIG_OWNER};
 
 fn SIGNER_1() -> Signer {
-    Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(1) })
+    starknet_signer_from_pubkey(MULTISIG_OWNER(1))
 }
 
 fn SIGNER_2() -> Signer {
-    Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(2) })
+    starknet_signer_from_pubkey(MULTISIG_OWNER(2))
 }
 
 fn SIGNER_3() -> Signer {
-    Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(3) })
+    starknet_signer_from_pubkey(MULTISIG_OWNER(3))
 }
 
 fn SIGNER_4() -> Signer {
-    Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(4) })
+    starknet_signer_from_pubkey(MULTISIG_OWNER(4))
 }
 
 fn GUARDIAN() -> ContractAddress {

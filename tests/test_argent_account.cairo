@@ -1,5 +1,7 @@
 use argent::presets::argent_account::ArgentAccount;
-use argent::signer::signer_signature::{Signer, SignerSignature, StarknetSignature, StarknetSigner, IntoGuid};
+use argent::signer::signer_signature::{
+    Signer, SignerSignature, StarknetSignature, SignerTrait, StarknetSigner, starknet_signer_from_pubkey
+};
 use snforge_std::cheatcodes::contract_class::ContractClassTrait;
 use snforge_std::{start_prank, declare, start_spoof, get_class_hash, ContractClass, CheatTarget, TxInfoMockTrait};
 use starknet::{contract_address_const, get_tx_info};
@@ -8,7 +10,7 @@ use super::setup::{
         ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
         initialize_account_without_guardian
     },
-    utils::set_tx_foundry,
+    utils::set_tx_version_foundry,
     constants::{
         OWNER_KEY, GUARDIAN_KEY, NEW_OWNER_KEY, NEW_OWNER_SIG, WRONG_OWNER_KEY, WRONG_OWNER_SIG, ARGENT_ACCOUNT_ADDRESS
     }
@@ -27,7 +29,7 @@ fn initialize() {
 fn check_transaction_version_on_execute() {
     let account = initialize_account();
     start_prank(CheatTarget::One(account.contract_address), 0.try_into().unwrap());
-    set_tx_foundry(32, account.contract_address);
+    set_tx_version_foundry(32, account.contract_address);
     account.__execute__(array![]);
 }
 
@@ -36,18 +38,19 @@ fn check_transaction_version_on_execute() {
 fn check_transaction_version_on_validate() {
     let account = initialize_account();
     start_prank(CheatTarget::One(account.contract_address), 0.try_into().unwrap());
-    set_tx_foundry(32, account.contract_address);
+    set_tx_version_foundry(32, account.contract_address);
     account.__validate__(array![]);
 }
 
-//new
+
 #[test]
+#[should_panic(expected: ('argent/zero-pubkey',))]
 fn initialize_with_null_owner() {
     let class_hash = declare('ArgentAccount');
     let mut calldata = array![];
-    Signer::Starknet(StarknetSigner { pubkey: 0 }).serialize(ref calldata);
-    Option::Some(Signer::Starknet(StarknetSigner { pubkey: 0 })).serialize(ref calldata);
-    class_hash.deploy_at(@calldata, 42.try_into().unwrap()).expect_err('argent/null-owner');
+    starknet_signer_from_pubkey(0).serialize(ref calldata);
+    Option::Some(starknet_signer_from_pubkey(0)).serialize(ref calldata);
+    class_hash.deploy_at(@calldata, 42.try_into().unwrap()).unwrap();
 }
 
 #[test]
@@ -87,7 +90,10 @@ fn change_owner() {
     let new_owner_sig = NEW_OWNER_SIG();
     let new_owner_pubkey = NEW_OWNER_KEY();
     let signer_signature = SignerSignature::Starknet(
-        (StarknetSigner { pubkey: new_owner_pubkey }, StarknetSignature { r: new_owner_sig.r, s: new_owner_sig.s })
+        (
+            StarknetSigner { pubkey: new_owner_pubkey.try_into().unwrap() },
+            StarknetSignature { r: new_owner_sig.r, s: new_owner_sig.s }
+        )
     );
     account.change_owner(signer_signature);
     assert(account.get_owner() == new_owner_pubkey, 'value should be new owner pub');
@@ -99,19 +105,23 @@ fn change_owner_only_self() {
     let account = initialize_account();
     start_prank(CheatTarget::One(account.contract_address), 42.try_into().unwrap());
     let new_owner_sig = NEW_OWNER_SIG();
+    let new_owner_pubkey = NEW_OWNER_KEY();
     let signer_signature = SignerSignature::Starknet(
-        (StarknetSigner { pubkey: 0 }, StarknetSignature { r: new_owner_sig.r, s: new_owner_sig.s })
+        (
+            StarknetSigner { pubkey: new_owner_pubkey.try_into().unwrap() },
+            StarknetSignature { r: new_owner_sig.r, s: new_owner_sig.s }
+        )
     );
     account.change_owner(signer_signature);
 }
 
 #[test]
-#[should_panic(expected: ('argent/null-owner',))]
+#[should_panic(expected: ('Option::unwrap failed.',))]
 fn change_owner_to_zero() {
     let account = initialize_account();
     let new_owner_sig = NEW_OWNER_SIG();
     let signer_signature = SignerSignature::Starknet(
-        (StarknetSigner { pubkey: 0 }, StarknetSignature { r: new_owner_sig.r, s: new_owner_sig.s })
+        (StarknetSigner { pubkey: 0.try_into().unwrap() }, StarknetSignature { r: new_owner_sig.r, s: new_owner_sig.s })
     );
     account.change_owner(signer_signature);
 }
@@ -123,7 +133,10 @@ fn change_owner_invalid_message() {
     let new_owner = NEW_OWNER_KEY();
     let wrong_owner_sig = WRONG_OWNER_SIG();
     let signer_signature = SignerSignature::Starknet(
-        (StarknetSigner { pubkey: new_owner }, StarknetSignature { r: wrong_owner_sig.r, s: wrong_owner_sig.s })
+        (
+            StarknetSigner { pubkey: new_owner.try_into().unwrap() },
+            StarknetSignature { r: wrong_owner_sig.r, s: wrong_owner_sig.s }
+        )
     );
     account.change_owner(signer_signature);
 }
@@ -135,7 +148,10 @@ fn change_owner_wrong_pub_key() {
     let wrong_owner = WRONG_OWNER_KEY();
     let new_owner_sig = NEW_OWNER_SIG();
     let signer_signature = SignerSignature::Starknet(
-        (StarknetSigner { pubkey: wrong_owner }, StarknetSignature { r: new_owner_sig.r, s: new_owner_sig.s })
+        (
+            StarknetSigner { pubkey: wrong_owner.try_into().unwrap() },
+            StarknetSignature { r: new_owner_sig.r, s: new_owner_sig.s }
+        )
     );
     account.change_owner(signer_signature);
 }
@@ -152,7 +168,7 @@ fn change_guardian() {
 #[should_panic(expected: ('argent/only-self',))]
 fn change_guardian_only_self() {
     let account = initialize_account();
-    let guardian = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 22 }));
+    let guardian = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 22.try_into().unwrap() }));
     start_prank(CheatTarget::One(account.contract_address), 42.try_into().unwrap());
     account.change_guardian(guardian);
 }
@@ -187,7 +203,7 @@ fn change_guardian_backup() {
 #[should_panic(expected: ('argent/only-self',))]
 fn change_guardian_backup_only_self() {
     let account = initialize_account();
-    let guardian_backup = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 42 }));
+    let guardian_backup = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 42.try_into().unwrap() }));
     start_prank(CheatTarget::One(account.contract_address), 42.try_into().unwrap());
     account.change_guardian_backup(guardian_backup);
 }

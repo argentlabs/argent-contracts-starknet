@@ -1,6 +1,6 @@
 use argent::account::interface::Version;
 use argent::presets::multisig_account::ArgentMultisigAccount;
-use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature};
+use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknet_signer_from_pubkey};
 use snforge_std::{declare, ContractClassTrait, ContractClass, RevertedTransaction, start_prank, CheatTarget};
 use starknet::{contract_address_const, syscalls::deploy_syscall, account::Call};
 use super::constants::MULTISIG_OWNER;
@@ -53,16 +53,16 @@ fn declare_multisig() -> ContractClass {
 fn initialize_multisig() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
     let signers_array = array![
-        Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(1) }),
-        Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(2) }),
-        Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(3) }),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(1)),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(2)),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(3)),
     ];
     initialize_multisig_with(threshold, signers_array.span())
 }
 
 fn initialize_multisig_with_one_signer() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
-    let signers_array = array![Signer::Starknet(StarknetSigner { pubkey: MULTISIG_OWNER(1) })];
+    let signers_array = array![starknet_signer_from_pubkey(MULTISIG_OWNER(1))];
     initialize_multisig_with(threshold, signers_array.span())
 }
 

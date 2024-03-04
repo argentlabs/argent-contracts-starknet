@@ -25,7 +25,7 @@ fn to_starknet_signer_signatures(arr: Array<felt252>) -> Array<felt252> {
     signatures
 }
 
-fn set_tx_foundry(version: felt252, address: ContractAddress) {
+fn set_tx_version_foundry(version: felt252, address: ContractAddress) {
     let mut tx_info = TxInfoMockTrait::default();
     tx_info.version = Option::Some(version);
     start_spoof(CheatTarget::One(address), tx_info);

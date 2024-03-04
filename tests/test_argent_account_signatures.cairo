@@ -1,6 +1,5 @@
 use argent::presets::argent_account::ArgentAccount;
-use argent::signer::signer_signature::{Signer, StarknetSigner};
-
+use argent::signer::signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey};
 use starknet::VALIDATED;
 use super::setup::{
     utils::to_starknet_signer_signatures,
@@ -36,7 +35,7 @@ fn valid_with_guardian_backup() {
     let owner_pub_key = OWNER_KEY();
     let guardian_backup_pubkey = GUARDIAN_BACKUP_KEY();
     let account = initialize_account_with(OWNER_KEY(), 1);
-    let guardian_backup = Option::Some(Signer::Starknet(StarknetSigner { pubkey: guardian_backup_pubkey }));
+    let guardian_backup = Option::Some(starknet_signer_from_pubkey(guardian_backup_pubkey));
     account.change_guardian_backup(guardian_backup);
     let signatures = to_starknet_signer_signatures(
         array![

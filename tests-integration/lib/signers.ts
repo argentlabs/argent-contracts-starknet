@@ -38,13 +38,7 @@ const types = {
     { name: "rp id hash", type: "u256" },
     { name: "Public Key", type: "u256" },
   ],
-  u256: [
-    { name: "low", type: "u128" },
-    { name: "high", type: "u128" },
-  ],
 };
-
-console.log("yo,", typedData.encodeType(types, "u256", typedData.TypedDataRevision.Active));
 
 /**
  * This class allows to easily implement custom signers by overriding the `signRaw` method.

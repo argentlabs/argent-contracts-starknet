@@ -1,15 +1,15 @@
 import { num } from "starknet";
-import { KeyPair, signChangeOwnerMessage } from "../tests-integration/lib";
+import { StarknetKeyPair, signChangeOwnerMessage } from "../tests-integration/lib";
 import { Signature, Wallet, id } from "ethers";
 
-const owner = new KeyPair(1n);
-const guardian = new KeyPair(2n);
-const guardian_backup = new KeyPair(3n);
+const owner = new StarknetKeyPair(1n);
+const guardian = new StarknetKeyPair(2n);
+const guardian_backup = new StarknetKeyPair(3n);
 
-const new_owner = new KeyPair(4n);
+const new_owner = new StarknetKeyPair(4n);
 
-const wrong_owner = new KeyPair(7n);
-const wrong_guardian = new KeyPair(8n);
+const wrong_owner = new StarknetKeyPair(7n);
+const wrong_guardian = new StarknetKeyPair(8n);
 
 function calculate_account_signature() {
   const hash = "0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";
@@ -71,7 +71,7 @@ async function calculate_account_signature_with_eth() {
 async function calculate_change_owner_signature() {
   // message_hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
   const chain_id = "0";
-  const contract_address = "0x1";
+  const contract_address = "0x161ECB417F1E71ACC57AB04B9125EC43584469F09E501803A4707A8F3E6C1EC";
   const old_owner = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfcan;
 
   const starknetSignature = await signChangeOwnerMessage(contract_address, old_owner, new_owner, chain_id);

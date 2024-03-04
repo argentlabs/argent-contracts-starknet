@@ -23,7 +23,7 @@ struct WebauthnAssertion {
 /// - this impl: base64url_decode(C.challenge) and compare one felt to expected_challenge
 fn verify_client_data_json(assertion: @WebauthnAssertion, expected_challenge: felt252, expected_origin: felt252) {
     // 11. Verify that the value of C.type is the string webauthn.get.
-    let WebauthnAssertion{client_data_json, type_offset, .. } = assertion;
+    let WebauthnAssertion { client_data_json, type_offset, .. } = assertion;
     let key = array!['"', 't', 'y', 'p', 'e', '"', ':', '"'];
     let actual_key = (*client_data_json).slice(*type_offset - key.len(), key.len());
     assert(actual_key == key.span(), 'invalid-type-key');
@@ -33,7 +33,7 @@ fn verify_client_data_json(assertion: @WebauthnAssertion, expected_challenge: fe
     assert(type_ == expected.span(), 'invalid-type');
 
     // 12. Verify that the value of C.challenge equals the base64url encoding of options.challenge.
-    let WebauthnAssertion{challenge_offset, challenge_length, .. } = assertion;
+    let WebauthnAssertion { challenge_offset, challenge_length, .. } = assertion;
     let key = array!['"', 'c', 'h', 'a', 'l', 'l', 'e', 'n', 'g', 'e', '"', ':', '"'];
     let actual_key = (*client_data_json).slice(*challenge_offset - key.len(), key.len());
     assert(actual_key == key.span(), 'invalid-challenge-key');
@@ -44,7 +44,7 @@ fn verify_client_data_json(assertion: @WebauthnAssertion, expected_challenge: fe
     assert(challenge == expected_challenge, 'invalid-challenge');
 
     // 13. Verify that the value of C.origin matches the Relying Party's origin.
-    let WebauthnAssertion{origin_offset, origin_length, .. } = assertion;
+    let WebauthnAssertion { origin_offset, origin_length, .. } = assertion;
     let key = array!['"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'];
     let actual_key = (*client_data_json).slice(*origin_offset - key.len(), key.len());
     assert(actual_key == key.span(), 'invalid-origin-key');
@@ -78,7 +78,7 @@ fn verify_authenticator_data(authenticator_data: Span<u8>, expected_rp_id_hash: 
 }
 
 fn get_webauthn_hash(assertion: @WebauthnAssertion) -> u256 {
-    let WebauthnAssertion{authenticator_data, client_data_json, .. } = assertion;
+    let WebauthnAssertion { authenticator_data, client_data_json, .. } = assertion;
     let client_data_hash = sha256((*client_data_json).snapshot.clone());
     let mut message: Array<u8> = (*authenticator_data).snapshot.clone();
     extend(ref message, @client_data_hash);

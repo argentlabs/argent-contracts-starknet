@@ -21,7 +21,7 @@ const gasWeights: Record<string, number> = {
 async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
   const receipt = ensureIncluded(await provider.waitForTransaction(transactionHash));
   let actualFee = 0n;
-  if (receipt.actual_fee?.unit === "WEI" || receipt.actual_fee?.unit === "FRI") {
+  if (receipt.actual_fee?.unit === "WEI") {
     actualFee = BigInt(receipt.actual_fee.amount);
   } else if (receipt.actual_fee && isUndefined(receipt.actual_fee.unit)) {
     actualFee = BigInt(+receipt.actual_fee);

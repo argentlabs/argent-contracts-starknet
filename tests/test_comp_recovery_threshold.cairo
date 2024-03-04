@@ -5,7 +5,7 @@ use argent::recovery::threshold_recovery::{
     IToggleThresholdRecovery, IToggleThresholdRecoveryDispatcher, IToggleThresholdRecoveryDispatcherTrait
 };
 use argent::recovery::{threshold_recovery::threshold_recovery_component};
-use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid}};
+use argent::signer::{signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey, SignerTrait}};
 use argent::signer_storage::signer_list::signer_list_component;
 use argent_tests::mocks::recovery_mocks::ThresholdRecoveryMock;
 use core::array::ArrayTrait;
@@ -21,15 +21,15 @@ const signer_pubkey_2: felt252 = 0x759ca09377679ecd535a81e83039658bf40959283187c
 const signer_pubkey_3: felt252 = 0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2f96fec5ba847310b20;
 
 fn SIGNER_1() -> Signer {
-    Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_1 })
+    starknet_signer_from_pubkey(signer_pubkey_1)
 }
 
 fn SIGNER_2() -> Signer {
-    Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_2 })
+    starknet_signer_from_pubkey(signer_pubkey_2)
 }
 
 fn SIGNER_3() -> Signer {
-    Signer::Starknet(StarknetSigner { pubkey: signer_pubkey_3 })
+    starknet_signer_from_pubkey(signer_pubkey_3)
 }
 
 fn setup() -> (IRecoveryDispatcher, IToggleThresholdRecoveryDispatcher, IArgentMultisigDispatcher) {
@@ -66,7 +66,7 @@ fn test_toggle_escape() {
 #[test]
 #[should_panic(expected: ('argent/only-self', 'ENTRYPOINT_FAILED'))]
 fn test_toggle_unauthorised() {
-    let (component, toggle_component, _) = setup();
+    let (_, toggle_component, _) = setup();
     set_contract_address(42.try_into().unwrap());
     toggle_component.toggle_escape(false, 0, 0);
 }
@@ -155,7 +155,7 @@ fn test_execute_escape() {
 #[test]
 #[should_panic(expected: ('argent/invalid-escape', 'ENTRYPOINT_FAILED'))]
 fn test_execute_escape_NotReady() {
-    let (component, _, multisig_component) = setup();
+    let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     set_block_timestamp(8);
     component.execute_escape();
@@ -164,7 +164,7 @@ fn test_execute_escape_NotReady() {
 #[test]
 #[should_panic(expected: ('argent/invalid-escape', 'ENTRYPOINT_FAILED'))]
 fn test_execute_escape_Expired() {
-    let (component, _, multisig_component) = setup();
+    let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     set_block_timestamp(28);
     component.execute_escape();

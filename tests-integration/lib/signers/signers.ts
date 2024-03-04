@@ -24,6 +24,7 @@ import {
   V2DeclareSignerDetails,
   V3DeclareSignerDetails,
   stark,
+  Calldata,
 } from "starknet";
 
 /**
@@ -183,26 +184,37 @@ export class LegacyMultisigSigner extends RawSigner {
   }
 }
 
-export class KeyPair extends Signer {
+export abstract class KeyPair extends Signer {
+  public get privateKey(): bigint {
+    return BigInt(this.pk as string);
+  }
+
+  public get signer(): CairoCustomEnum {
+    throw Error("Unsupported operation");
+  }
+  public get compiledSigner(): Calldata {
+    return CallData.compile([this.signer]);
+  }
+  public get publicKey(): any {
+    throw Error("Unsupported operation");
+  }
+  public signHash(messageHash: string): Calldata {
+    throw Error("Unsupported operation");
+  }
+}
+
+export class StarknetKeyPair extends KeyPair {
   constructor(pk?: string | bigint) {
     super(pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`);
   }
 
-  public get privateKey() {
-    return BigInt(this.pk as string);
-  }
-
-  public get signerType() {
+  public get signer() {
     return new CairoCustomEnum({
       Starknet: { signer: this.publicKey },
       Secp256k1: undefined,
       Secp256r1: undefined,
       Webauthn: undefined,
     });
-  }
-
-  public get compiledSignerType() {
-    return CallData.compile([this.signerType]);
   }
 
   public get publicKey(): any {
@@ -215,14 +227,14 @@ export class KeyPair extends Signer {
   }
 }
 
-export class LegacyKeyPair extends KeyPair {
+export class LegacyKeyPair extends StarknetKeyPair {
   public signHash(messageHash: string) {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
     return [r.toString(), s.toString()];
   }
 }
 
-export class LegacyMultisigKeyPair extends KeyPair {
+export class LegacyMultisigKeyPair extends StarknetKeyPair {
   public signHash(messageHash: string) {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
     return [this.publicKey.toString(), r.toString(), s.toString()];
@@ -275,5 +287,5 @@ export function zeroStarknetSignatureType() {
   });
 }
 
-export const randomKeyPair = () => new KeyPair();
+export const randomKeyPair = () => new StarknetKeyPair();
 export const randomKeyPairs = (length: number) => Array.from({ length }, randomKeyPair);

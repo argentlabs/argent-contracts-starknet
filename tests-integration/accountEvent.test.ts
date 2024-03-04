@@ -23,7 +23,7 @@ describe("ArgentAccount: events", function () {
   it("Expect 'AccountCreated' and 'OwnerAddded' when deploying an account", async function () {
     const owner = randomKeyPair();
     const guardian = signerOption(42n);
-    const constructorCalldata = CallData.compile({ owner: owner.signerType, guardian });
+    const constructorCalldata = CallData.compile({ owner: owner.signer, guardian });
     const { transaction_hash, contract_address } = await deployer.deployContract({
       classHash: await declareContract("ArgentAccount"),
       constructorCalldata,
@@ -51,7 +51,7 @@ describe("ArgentAccount: events", function () {
     const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
     await setTime(42);
 
-    await expectEvent(() => accountContract.trigger_escape_owner(newOwner.compiledSignerType), {
+    await expectEvent(() => accountContract.trigger_escape_owner(newOwner.compiledSigner), {
       from_address: account.address,
       eventName: "EscapeOwnerTriggered",
       data: [activeAt, newOwner.publicKey],
@@ -65,7 +65,7 @@ describe("ArgentAccount: events", function () {
     const newOwner = randomKeyPair();
     await setTime(42);
 
-    await accountContract.trigger_escape_owner(newOwner.compiledSignerType);
+    await accountContract.trigger_escape_owner(newOwner.compiledSigner);
     await increaseTime(ESCAPE_SECURITY_PERIOD);
     const receipt = await waitForTransaction(await accountContract.escape_owner());
     await expectEvent(receipt, {
@@ -200,11 +200,11 @@ describe("ArgentAccount: events", function () {
     it("Expected on trigger_escape_owner", async function () {
       const { account, accountContract, guardian } = await deployAccount();
       account.signer = new ArgentSigner(guardian);
-      const compiledSignerType = randomKeyPair().compiledSignerType;
+      const compiledSigner = randomKeyPair().compiledSigner;
 
-      await accountContract.trigger_escape_owner(compiledSignerType);
+      await accountContract.trigger_escape_owner(compiledSigner);
 
-      await expectEvent(() => accountContract.trigger_escape_owner(compiledSignerType), {
+      await expectEvent(() => accountContract.trigger_escape_owner(compiledSigner), {
         from_address: account.address,
         eventName: "EscapeCanceled",
       });

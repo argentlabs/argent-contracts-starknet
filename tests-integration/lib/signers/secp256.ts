@@ -3,15 +3,18 @@ import { p256 as secp256r1 } from "@noble/curves/p256";
 import * as utils from "@noble/curves/abstract/utils";
 import { RecoveredSignatureType } from "@noble/curves/abstract/weierstrass";
 import { Wallet, id, Signature as EthersSignature } from "ethers";
-import { KeyPair } from "./signers";
+import { KeyPair } from "../signers/signers";
 
-// TODO Use @noble/curves/secp256K1 and get rid of ethers lib?
 export class EthKeyPair extends KeyPair {
+  constructor(pk?: string | bigint) {
+    super(pk ? `${pk}` : Wallet.createRandom().privateKey);
+  }
+
   public get publicKey() {
     return BigInt(new Wallet(id(this.privateKey.toString())).address);
   }
 
-  public get signerType() {
+  public get signer() {
     return new CairoCustomEnum({
       Starknet: undefined,
       Secp256k1: { signer: this.publicKey },
@@ -31,12 +34,16 @@ export class EthKeyPair extends KeyPair {
 }
 
 export class Secp256r1KeyPair extends KeyPair {
+  constructor(pk?: string | bigint) {
+    super(pk ? `${pk}` : Wallet.createRandom().privateKey);
+  }
+
   public get publicKey() {
     const publicKey = secp256r1.getPublicKey(this.privateKey).slice(1);
     return uint256.bnToUint256("0x" + utils.bytesToHex(publicKey));
   }
 
-  public get signerType() {
+  public get signer() {
     return new CairoCustomEnum({
       Starknet: undefined,
       Secp256k1: undefined,
@@ -85,6 +92,3 @@ function secp256r1SignatureType(signer: Uint256, signature: RecoveredSignatureTy
     }),
   ]);
 }
-
-export const randomEthKeyPair = () => new EthKeyPair();
-export const randomSecp256r1KeyPair = () => new Secp256r1KeyPair();

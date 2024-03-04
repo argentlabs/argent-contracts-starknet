@@ -4,7 +4,6 @@ use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, extend};
 use core::debug::PrintTrait;
 
 #[test]
-#[available_gas(100_000_000)]
 fn create_message_hash() {
     let authenticator_data = get_authenticator_data();
     let client_data_json = get_client_data_json();

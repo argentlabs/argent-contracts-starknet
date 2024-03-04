@@ -26,6 +26,26 @@ import {
   stark,
 } from "starknet";
 
+const types = {
+  Starknet: [{ name: "Starknet", type: "felt" }],
+  Secp256k1: [{ name: "Secp256k1", type: "Ethereum Address" }],
+  Secp256r1: [{ name: "Secp256r1", type: "u256" }],
+  Webauthn: [{ name: "Webauthn", type: "Webauthn Signer" }],
+  "Ethereum Address": [{ name: "Pub Key Hash", type: "EthAddress" }],
+  EthAddress: [{ name: "address", type: "felt" }],
+  "Webauthn Signer": [
+    { name: "origin", type: "felt" },
+    { name: "rp id hash", type: "u256" },
+    { name: "Public Key", type: "u256" },
+  ],
+  u256: [
+    { name: "low", type: "u128" },
+    { name: "high", type: "u128" },
+  ],
+};
+
+console.log("yo,", typedData.encodeType(types, "u256", typedData.TypedDataRevision.Active));
+
 /**
  * This class allows to easily implement custom signers by overriding the `signRaw` method.
  * This is based on Starknet.js implementation of Signer, but it delegates the actual signing to an abstract function

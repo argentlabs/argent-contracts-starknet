@@ -1,14 +1,28 @@
+use argent::signer::hashing_temp::{StructHashu256}; // delete once sessions get merged
 use argent::signer::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };
 use ecdsa::check_ecdsa_signature;
-use hash::{HashStateTrait, HashStateExTrait, Hash};
-use poseidon::{PoseidonTrait, HashState};
+use poseidon::poseidon_hash_span;
 use starknet::SyscallResultTrait;
 use starknet::secp256_trait::{Secp256PointTrait, Signature as Secp256r1Signature, recover_public_key};
 use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
 use starknet::{EthAddress, eth_signature::{Signature as Secp256k1Signature, is_eth_signature_valid}};
+
+const STARKNET_SIGNER_TYPE: felt252 = selector!("\"Starknet\"(\"Starknet\":\"felt\")");
+
+const SECP256k1_SIGNER_TYPE: felt252 =
+    selector!(
+        "\"Secp256k1\"(\"Secp256k1\":\"Ethereum Address\")\"EthAddress\"(\"address\":\"felt\")\"Ethereum Address\"(\"Pub Key Hash\":\"EthAddress\")"
+    );
+
+const SECP256r1_SIGNER_TYPE: felt252 = selector!("\"Secp256r1\"(\"Secp256r1\":\"u256\")");
+
+const WEBAUTHN_TYPE: felt252 =
+    selector!(
+        "\"Webauthn\"(\"Webauthn\":\"Webauthn Signer\")\"Webauthn Signer\"(\"origin\":\"felt\",\"rp id hash\":\"u256\",\"Public Key\":\"u256\")"
+    );
 
 #[derive(Drop, Copy, Serde)]
 enum Signer {
@@ -82,17 +96,20 @@ impl SignerTraitImpl of SignerTrait<Signer> {
                 .pubkey
                 .into(), //PoseidonTrait::new().update_with(('Stark', signer.pubkey)).finalize(),
             Signer::Secp256k1(signer) => {
-                PoseidonTrait::new().update_with(('Secp256k1', signer.pubkey_hash.address)).finalize()
+                poseidon_hash_span(array![SECP256k1_SIGNER_TYPE, signer.pubkey_hash.address].span())
             },
             Signer::Secp256r1(signer) => {
                 let pubkey: u256 = signer.pubkey.into();
-                PoseidonTrait::new().update_with(('Secp256r1', pubkey)).finalize()
+                poseidon_hash_span(array![SECP256r1_SIGNER_TYPE, pubkey.get_struct_hash_rev_1()].span())
             },
             Signer::Webauthn(signer) => {
                 let origin: felt252 = signer.origin.into();
                 let rp_id_hash: u256 = signer.rp_id_hash.into();
                 let pubkey: u256 = signer.pubkey.into();
-                PoseidonTrait::new().update_with(('Webauthn', origin, rp_id_hash, pubkey)).finalize()
+                poseidon_hash_span(
+                    array![WEBAUTHN_TYPE, origin, rp_id_hash.get_struct_hash_rev_1(), pubkey.get_struct_hash_rev_1()]
+                        .span()
+                )
             },
         }
     }

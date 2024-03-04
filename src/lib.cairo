@@ -18,6 +18,7 @@ mod multisig {
 }
 
 mod signer {
+    mod hashing_temp;
     mod signer_signature;
     mod webauthn;
 }

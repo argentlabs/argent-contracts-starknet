@@ -173,13 +173,12 @@ export class StarknetKeyPair extends KeyPair {
     this.pk = pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`;
   }
 
-  public async signRaw(messageHash: string): Promise<string[]> {
-    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
-    return starknetSignatureType(this.publicKey, r, s);
-  }
-
   public get privateKey(): string {
     return this.pk;
+  }
+
+  public get publicKey() {
+    return BigInt(ec.starkCurve.getStarkKey(this.pk));
   }
 
   public get signer(): CairoCustomEnum {
@@ -191,8 +190,9 @@ export class StarknetKeyPair extends KeyPair {
     });
   }
 
-  public get publicKey() {
-    return BigInt(ec.starkCurve.getStarkKey(this.pk));
+  public async signRaw(messageHash: string): Promise<string[]> {
+    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
+    return starknetSignatureType(this.publicKey, r, s);
   }
 }
 

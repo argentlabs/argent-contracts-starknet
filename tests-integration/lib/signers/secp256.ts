@@ -13,6 +13,10 @@ export class EthKeyPair extends KeyPair {
     this.pk = pk ? `${pk}` : Wallet.createRandom().privateKey;
   }
 
+  public get privateKey(): string {
+    return this.pk;
+  }
+
   public get publicKey() {
     return BigInt(new Wallet(id(this.pk.toString())).address);
   }
@@ -24,10 +28,6 @@ export class EthKeyPair extends KeyPair {
       Secp256r1: undefined,
       Webauthn: undefined,
     });
-  }
-
-  public get privateKey(): string {
-    return this.pk;
   }
 
   public async signRaw(messageHash: string): Promise<string[]> {

@@ -54,6 +54,10 @@ interface WebauthnAssertion {
 }
 
 class WebauthnOwner extends KeyPair {
+  public get privateKey(): string {
+    throw new Error(`Not supported`);
+  }
+
   public get publicKey() {
     return buf2hex(
       new Uint8Array([
@@ -61,10 +65,6 @@ class WebauthnOwner extends KeyPair {
         247, 183, 175, 65, 250, 101, 106,
       ]),
     );
-  }
-
-  public get privateKey(): string {
-    throw new Error(`Not supported`);
   }
 
   public get signer(): CairoCustomEnum {

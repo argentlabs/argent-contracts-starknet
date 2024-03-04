@@ -47,17 +47,17 @@ export class LegacyStarknetKeyPair extends LegacyKeyPair {
     this.pk = pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`;
   }
 
-  public async signRaw(messageHash: string): Promise<string[]> {
-    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
-    return [r.toString(), s.toString()];
-  }
-
   public get privateKey(): string {
     return this.pk;
   }
 
   public get publicKey() {
     return BigInt(ec.starkCurve.getStarkKey(this.pk));
+  }
+
+  public async signRaw(messageHash: string): Promise<string[]> {
+    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
+    return [r.toString(), s.toString()];
   }
 }
 
@@ -69,16 +69,16 @@ export class LegacyMultisigKeyPair extends LegacyKeyPair {
     this.pk = pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`;
   }
 
-  public async signRaw(messageHash: string): Promise<string[]> {
-    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
-    return [this.publicKey.toString(), r.toString(), s.toString()];
-  }
-
   public get publicKey() {
     return BigInt(ec.starkCurve.getStarkKey(this.pk));
   }
 
   public get privateKey(): string {
     return this.pk;
+  }
+
+  public async signRaw(messageHash: string): Promise<string[]> {
+    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
+    return [this.publicKey.toString(), r.toString(), s.toString()];
   }
 }

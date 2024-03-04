@@ -38,12 +38,6 @@ const rpIdHash: string = buf2hex(
 );
 
 const origin = "http://localhost:5173";
-const pubkey = buf2hex(
-  new Uint8Array([
-    192, 124, 237, 241, 226, 51, 92, 202, 34, 77, 132, 203, 43, 154, 106, 52, 77, 189, 35, 141, 70, 74, 180, 32, 83,
-    247, 183, 175, 65, 250, 101, 106,
-  ]),
-);
 
 interface WebauthnAssertion {
   authenticatorData: Uint8Array;
@@ -89,7 +83,7 @@ class WebauthnOwner extends KeyPair {
     const cairoAssertion = {
       origin,
       rp_id_hash: uint256.bnToUint256(rpIdHash),
-      pubkey: uint256.bnToUint256(pubkey),
+      pubkey: uint256.bnToUint256(this.publicKey),
       authenticator_data: CallData.compile(Array.from(authenticatorData)),
       client_data_json: CallData.compile(Array.from(clientDataJson)),
       signature: {

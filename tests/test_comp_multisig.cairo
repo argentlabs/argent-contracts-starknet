@@ -2,7 +2,7 @@ use argent::mocks::multisig_mocks::MultisigMock;
 use argent::multisig::interface::IArgentMultisig;
 use argent::multisig::interface::IArgentMultisigInternal;
 use argent::multisig::{multisig::multisig_component};
-use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid}};
+use argent::signer::{signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey, SignerTrait}};
 use argent::signer_storage::signer_list::signer_list_component;
 use snforge_std::{start_prank, CheatTarget, test_address};
 use super::setup::constants::{MULTISIG_OWNER};
@@ -38,9 +38,9 @@ fn test_initialize_3_signers() {
     assert(component.is_signer(SIGNER_3()), 'should be signer');
     let guids = component.get_signer_guids();
     assert(guids.len() == 3, 'wrong signer length');
-    assert(*guids.at(0) == SIGNER_1().into_guid().unwrap(), 'should be signer 0');
-    assert(*guids.at(1) == SIGNER_2().into_guid().unwrap(), 'should be signer 0');
-    assert(*guids.at(2) == SIGNER_3().into_guid().unwrap(), 'should be signer 0');
+    assert(*guids.at(0) == SIGNER_1().into_guid(), 'should be signer 0');
+    assert(*guids.at(1) == SIGNER_2().into_guid(), 'should be signer 0');
+    assert(*guids.at(2) == SIGNER_3().into_guid(), 'should be signer 0');
 }
 
 #[test]
@@ -250,9 +250,9 @@ fn test_reorder_all_signers() {
     component.initialize(3, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.reorder_signers(array![SIGNER_2(), SIGNER_3(), SIGNER_1()]);
     let guids = component.get_signer_guids();
-    assert(*guids.at(0) == SIGNER_2().into_guid().unwrap(), 'should be signer 0');
-    assert(*guids.at(1) == SIGNER_3().into_guid().unwrap(), 'should be signer 1');
-    assert(*guids.at(2) == SIGNER_1().into_guid().unwrap(), 'should be signer 2');
+    assert(*guids.at(0) == SIGNER_2().into_guid(), 'should be signer 0');
+    assert(*guids.at(1) == SIGNER_3().into_guid(), 'should be signer 1');
+    assert(*guids.at(2) == SIGNER_1().into_guid(), 'should be signer 2');
 }
 
 #[test]
@@ -262,9 +262,9 @@ fn test_reorder_2_signers() {
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.reorder_signers(array![SIGNER_1(), SIGNER_3(), SIGNER_2()]);
     let guids = component.get_signer_guids();
-    assert(*guids.at(0) == SIGNER_1().into_guid().unwrap(), 'should be signer 0');
-    assert(*guids.at(1) == SIGNER_3().into_guid().unwrap(), 'should be signer 1');
-    assert(*guids.at(2) == SIGNER_2().into_guid().unwrap(), 'should be signer 2');
+    assert(*guids.at(0) == SIGNER_1().into_guid(), 'should be signer 0');
+    assert(*guids.at(1) == SIGNER_3().into_guid(), 'should be signer 1');
+    assert(*guids.at(2) == SIGNER_2().into_guid(), 'should be signer 2');
 }
 
 #[test]

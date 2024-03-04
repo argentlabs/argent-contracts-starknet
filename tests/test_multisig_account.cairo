@@ -20,7 +20,7 @@ fn valid_initialize() {
     // test signers list
     let signers_guid = multisig.get_signer_guids();
     assert(signers_guid.len() == 1, 'invalid signers length');
-    assert(*signers_guid[0] == signer_1.into_guid().unwrap(), 'invalid signers result');
+    assert(*signers_guid[0] == signer_1.into_guid(), 'invalid signers result');
 }
 
 #[test]
@@ -37,8 +37,8 @@ fn valid_initialize_two_signers() {
     // test signers list
     let signers = multisig.get_signer_guids();
     assert(signers.len() == 2, 'invalid signers length');
-    assert(*signers[0] == signer_1.into_guid().unwrap(), 'invalid signers result');
-    assert(*signers[1] == signer_2.into_guid().unwrap(), 'invalid signers result');
+    assert(*signers[0] == signer_1.into_guid(), 'invalid signers result');
+    assert(*signers[1] == signer_2.into_guid(), 'invalid signers result');
 }
 
 #[test]

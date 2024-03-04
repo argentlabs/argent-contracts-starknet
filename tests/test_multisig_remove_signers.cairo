@@ -200,7 +200,7 @@ fn remove_invalid_signers() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let signer_to_remove = array![Signer::Starknet(StarknetSigner { pubkey: 10 })];
+    let signer_to_remove = array![starknet_signer_from_pubkey(10)];
     multisig.remove_signers(1, signer_to_remove);
 }
 

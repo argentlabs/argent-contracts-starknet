@@ -62,10 +62,10 @@ fn initialize_account_without_guardian() -> ITestArgentAccountDispatcher {
 
 fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAccountDispatcher {
     let mut calldata = array![];
-    Signer::Starknet(StarknetSigner { pubkey: owner }).serialize(ref calldata);
+    starknet_signer_from_pubkey(owner).serialize(ref calldata);
     let guardian_signer: Option<Signer> = match guardian {
         0 => { Option::None },
-        _ => { Option::Some(Signer::Starknet(StarknetSigner { pubkey: guardian })) },
+        _ => { Option::Some(starknet_signer_from_pubkey(guardian)) },
     };
     guardian_signer.serialize(ref calldata);
 

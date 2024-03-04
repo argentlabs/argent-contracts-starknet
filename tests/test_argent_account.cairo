@@ -40,6 +40,7 @@ fn check_transaction_version_on_validate() {
     account.__validate__(array![]);
 }
 
+//new
 #[test]
 fn initialize_with_null_owner() {
     let class_hash = declare('ArgentAccount');
@@ -142,9 +143,9 @@ fn change_owner_wrong_pub_key() {
 #[test]
 fn change_guardian() {
     let account = initialize_account();
-    let guardian = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 22 }));
-    account.change_guardian(guardian);
-    assert(account.get_guardian() == guardian.into_guid().unwrap(), 'value should be 22');
+    let guardian = starknet_signer_from_pubkey(22);
+    account.change_guardian(Option::Some(guardian));
+    assert(account.get_guardian() == guardian.into_guid(), 'value should be 22');
 }
 
 #[test]
@@ -160,7 +161,7 @@ fn change_guardian_only_self() {
 #[should_panic(expected: ('argent/backup-should-be-null',))]
 fn change_guardian_to_zero() {
     let account = initialize_account();
-    let guardian_backup = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 42 }));
+    let guardian_backup = Option::Some(starknet_signer_from_pubkey(42));
     let guardian: Option<Signer> = Option::None;
     account.change_guardian_backup(guardian_backup);
     account.change_guardian(guardian);
@@ -177,9 +178,9 @@ fn change_guardian_to_zero_without_guardian_backup() {
 #[test]
 fn change_guardian_backup() {
     let account = initialize_account();
-    let guardian_backup = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 33 }));
-    account.change_guardian_backup(guardian_backup);
-    assert(account.get_guardian_backup() == guardian_backup.into_guid().unwrap(), 'value should be 33');
+    let guardian_backup = starknet_signer_from_pubkey(33);
+    account.change_guardian_backup(Option::Some(guardian_backup));
+    assert(account.get_guardian_backup() == guardian_backup.into_guid(), 'value should be 33');
 }
 
 #[test]
@@ -203,7 +204,7 @@ fn change_guardian_backup_to_zero() {
 #[should_panic(expected: ('argent/guardian-required',))]
 fn change_invalid_guardian_backup() {
     let account = initialize_account_without_guardian();
-    let guardian_backup = Option::Some(Signer::Starknet(StarknetSigner { pubkey: 2 }));
+    let guardian_backup = Option::Some(starknet_signer_from_pubkey(2));
     account.change_guardian_backup(guardian_backup);
 }
 

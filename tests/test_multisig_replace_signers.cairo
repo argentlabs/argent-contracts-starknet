@@ -32,7 +32,7 @@ fn replace_signer_start() {
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // replace signer
-    let signer_to_add = Signer::Starknet(StarknetSigner { pubkey: 5 });
+    let signer_to_add = starknet_signer_from_pubkey(5);
     multisig.replace_signer(signer_1, signer_to_add);
 
     // check 
@@ -54,7 +54,7 @@ fn replace_signer_middle() {
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // replace signer
-    let signer_to_add = Signer::Starknet(StarknetSigner { pubkey: 5 });
+    let signer_to_add = starknet_signer_from_pubkey(5);
     multisig.replace_signer(signer_2, signer_to_add);
 
     // check 
@@ -76,7 +76,7 @@ fn replace_signer_end() {
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // replace signer
-    let signer_to_add = Signer::Starknet(StarknetSigner { pubkey: 5 });
+    let signer_to_add = starknet_signer_from_pubkey(5);
     multisig.replace_signer(signer_3, signer_to_add);
 
     // check 
@@ -99,8 +99,9 @@ fn replace_invalid_signer() {
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // replace signer
-    let signer_to_add = Signer::Starknet(StarknetSigner { pubkey: 5 });
-    let not_a_signer = Signer::Starknet(StarknetSigner { pubkey: 10 });
+
+    let signer_to_add = starknet_signer_from_pubkey(5);
+    let not_a_signer = starknet_signer_from_pubkey(10);
     multisig.replace_signer(not_a_signer, signer_to_add);
 }
 

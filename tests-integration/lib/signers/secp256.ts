@@ -6,15 +6,18 @@ import { Wallet, id, Signature as EthersSignature } from "ethers";
 import { KeyPair } from "../signers/signers";
 
 export class EthKeyPair extends KeyPair {
+  protected pk: string;
+
   constructor(pk?: string | bigint) {
-    super(pk ? `${pk}` : Wallet.createRandom().privateKey);
+    super();
+    this.pk = pk ? `${pk}` : Wallet.createRandom().privateKey;
   }
 
   public get publicKey() {
-    return BigInt(new Wallet(id(this.privateKey.toString())).address);
+    return BigInt(new Wallet(id(this.pk.toString())).address);
   }
 
-  public get signer() {
+  public get signer(): CairoCustomEnum {
     return new CairoCustomEnum({
       Starknet: undefined,
       Secp256k1: { signer: this.publicKey },
@@ -23,23 +26,37 @@ export class EthKeyPair extends KeyPair {
     });
   }
 
-  public signHash(messageHash: string) {
-    const eth_signer = new Wallet(id(this.privateKey.toString()));
+  public get privateKey(): string {
+    return this.pk;
+  }
+
+  public signRaw(messageHash: string): Promise<string[]> {
+    const eth_signer = new Wallet(id(this.pk.toString()));
     if (messageHash.length < 66) {
       messageHash = "0x" + "0".repeat(66 - messageHash.length) + messageHash.slice(2);
     }
     const signature = EthersSignature.from(eth_signer.signingKey.sign(messageHash));
-    return ethereumSignatureType(this.publicKey, signature);
+
+    return new Promise(() => {
+      ethereumSignatureType(this.publicKey, signature);
+    });
   }
 }
 
 export class Secp256r1KeyPair extends KeyPair {
+  pk: string;
+
   constructor(pk?: string | bigint) {
-    super(pk ? `${pk}` : Wallet.createRandom().privateKey);
+    super();
+    this.pk = pk ? `${pk}` : Wallet.createRandom().privateKey;
+  }
+
+  public get privateKey(): string {
+    return this.pk;
   }
 
   public get publicKey() {
-    const publicKey = secp256r1.getPublicKey(this.privateKey).slice(1);
+    const publicKey = secp256r1.getPublicKey(this.pk).slice(1);
     return uint256.bnToUint256("0x" + utils.bytesToHex(publicKey));
   }
 
@@ -52,12 +69,15 @@ export class Secp256r1KeyPair extends KeyPair {
     });
   }
 
-  public signHash(messageHash: string) {
+  public signRaw(messageHash: string): Promise<string[]> {
     if (messageHash.length < 66) {
       messageHash = "0".repeat(66 - messageHash.length) + messageHash.slice(2);
     }
-    const sig = secp256r1.sign(messageHash, this.privateKey);
-    return secp256r1SignatureType(this.publicKey, sig);
+    const sig = secp256r1.sign(messageHash, this.pk);
+
+    return new Promise(() => {
+      secp256r1SignatureType(this.publicKey, sig);
+    });
   }
 }
 

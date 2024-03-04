@@ -38,7 +38,7 @@ export const signChangeOwnerMessage = async (
   chainId: string,
 ) => {
   const messageHash = await getChangeOwnerMessageHash(accountAddress, owner, chainId);
-  return newOwner.signHash(messageHash);
+  return newOwner.signRaw(messageHash);
 };
 
 export const getChangeOwnerMessageHash = async (accountAddress: string, owner: bigint, chainId: string) => {

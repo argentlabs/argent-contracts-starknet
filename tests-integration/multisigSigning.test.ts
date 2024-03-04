@@ -81,9 +81,9 @@ describe("ArgentMultisig: signing", function () {
     it("Expect 'argent/undeserializable' when the signature is improperly formatted/empty", async function () {
       const messageHash = num.toHex(424242);
 
-      const { accountContract, keys, signers } = await deployMultisig1_1();
+      const { accountContract, keys } = await deployMultisig1_1();
 
-      const [r] = keys[0].signHash(messageHash);
+      const [r] = await keys[0].signRaw(messageHash);
 
       await expectRevertWithErrorMessage("argent/undeserializable", () =>
         // Missing S argument

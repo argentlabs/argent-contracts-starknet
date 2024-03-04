@@ -32,7 +32,7 @@ import {
  * This is based on Starknet.js implementation of Signer, but it delegates the actual signing to an abstract function
  */
 export abstract class RawSigner implements SignerInterface {
-  abstract signRaw(messageHash: string): Promise<Signature>;
+  abstract signRaw(messageHash: string): Promise<string[]>;
 
   public async getPubKey(): Promise<string> {
     throw Error("This signer allows multiple public keys");
@@ -136,8 +136,10 @@ export class MultisigSigner extends RawSigner {
   }
 
   async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    const keys = this.keys.map((key) => key.signHash(messageHash));
-    return [keys.length.toString(), keys.flat()].flat();
+    const keys = await this.keys.map(async (key) => await key.signRaw(messageHash));
+    return new Promise(() => {
+      return [keys.length.toString(), keys.flat()].flat();
+    });
   }
 }
 
@@ -179,36 +181,43 @@ export class LegacyMultisigSigner extends RawSigner {
   }
 
   async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    const keys = this.keys.map((key) => key.signHash(messageHash));
-    return keys.flat();
+    const keys = this.keys.map(async (key) => (await key.signRaw(messageHash)) as string[]);
+    return new Promise(() => {
+      keys.flat();
+    });
   }
 }
 
-export abstract class KeyPair extends Signer {
-  public get privateKey(): bigint {
-    return BigInt(this.pk as string);
-  }
+export abstract class KeyPair extends RawSigner {
+  abstract get signer(): CairoCustomEnum;
+  abstract get privateKey(): string;
+  abstract get publicKey(): any;
 
-  public get signer(): CairoCustomEnum {
-    throw Error("Unsupported operation");
-  }
   public get compiledSigner(): Calldata {
     return CallData.compile([this.signer]);
-  }
-  public get publicKey(): any {
-    throw Error("Unsupported operation");
-  }
-  public signHash(messageHash: string): Calldata {
-    throw Error("Unsupported operation");
   }
 }
 
 export class StarknetKeyPair extends KeyPair {
+  pk: string;
+
   constructor(pk?: string | bigint) {
-    super(pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`);
+    super();
+    this.pk = pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`;
   }
 
-  public get signer() {
+  public signRaw(messageHash: string): Promise<string[]> {
+    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
+    return new Promise(() => {
+      starknetSignatureType(this.publicKey, r, s) as string[];
+    });
+  }
+
+  public get privateKey(): string {
+    return this.pk;
+  }
+
+  public get signer(): CairoCustomEnum {
     return new CairoCustomEnum({
       Starknet: { signer: this.publicKey },
       Secp256k1: undefined,
@@ -217,13 +226,8 @@ export class StarknetKeyPair extends KeyPair {
     });
   }
 
-  public get publicKey(): any {
+  public get publicKey():any {
     return BigInt(ec.starkCurve.getStarkKey(this.pk));
-  }
-
-  public signHash(messageHash: string) {
-    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
-    return starknetSignatureType(this.publicKey, r, s);
   }
 }
 

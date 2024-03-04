@@ -1,4 +1,4 @@
-use argent::signer::{signer_signature::{Signer, StarknetSigner, IntoGuid}};
+use argent::signer::{signer_signature::{Signer, StarknetSigner, SignerTrait}};
 use argent::signer_storage::interface::ISignerList;
 use argent::signer_storage::signer_list::signer_list_component;
 use argent_tests::mocks::signer_list_mocks::SignerListMock;

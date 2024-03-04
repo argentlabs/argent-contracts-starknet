@@ -70,10 +70,10 @@ describe("ArgentMultisig: signer storage", function () {
         );
       });
 
-      it("Expect 'argent/invalid-signer-guid' when adding a zero signer", async function () {
+      it("Expect deserialization error when adding a zero signer", async function () {
         const { accountContract, threshold } = await deployMultisig1_3();
 
-        await expectRevertWithErrorMessage("argent/invalid-signer-guid", () =>
+        await expectRevertWithErrorMessage("Failed to deserialize param #2", () =>
           accountContract.add_signers(CallData.compile([threshold, [zeroStarknetSignatureType()]])),
         );
       });
@@ -155,10 +155,10 @@ describe("ArgentMultisig: signer storage", function () {
         );
       });
 
-      it("Expect 'argent/invalid-signer-guid' when removing a 0 signer", async function () {
+      it("Expect deserialization error when removing a 0 signer", async function () {
         const { accountContract, threshold } = await deployMultisig1_3();
 
-        await expectRevertWithErrorMessage("argent/invalid-signer-guid", () =>
+        await expectRevertWithErrorMessage("Failed to deserialize param #2", () =>
           accountContract.remove_signers(CallData.compile([threshold, [zeroStarknetSignatureType()]])),
         );
       });
@@ -267,10 +267,10 @@ describe("ArgentMultisig: signer storage", function () {
         accountContract.replace_signer(CallData.compile([signers[0], signers[0]])),
       );
     });
-    it("Expect 'argent/invalid-new-signer-guid' when replacing an owner with a zero signer", async function () {
+    it("Expect deserialization error when replacing an owner with a zero signer", async function () {
       const { accountContract, signers } = await deployMultisig1_3();
 
-      await expectRevertWithErrorMessage("argent/invalid-new-signer-guid", () =>
+      await expectRevertWithErrorMessage("Failed to deserialize param #2", () =>
         accountContract.replace_signer(CallData.compile([signers[0], zeroStarknetSignatureType()])),
       );
     });

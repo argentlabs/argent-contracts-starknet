@@ -72,11 +72,11 @@ describe("ArgentAccount: escape mechanism", function () {
       );
     });
 
-    it("Expect 'argent/null-owner' when setting the new_owner to zero", async function () {
+    it("Expect parsing error when setting the new_owner to zero", async function () {
       const { account, accountContract, guardian } = await deployAccount();
       account.signer = new ArgentSigner(guardian);
 
-      await expectRevertWithErrorMessage("argent/null-owner", () =>
+      await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
         accountContract.trigger_escape_owner(CallData.compile([zeroStarknetSignatureType()])),
       );
     });

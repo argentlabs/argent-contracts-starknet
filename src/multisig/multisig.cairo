@@ -3,7 +3,7 @@
 #[starknet::component]
 mod multisig_component {
     use argent::multisig::interface::{IArgentMultisig, IArgentMultisigInternal};
-    use argent::signer::{signer_signature::{Signer, IntoGuid, SignerSignature, SignerSignatureTrait},};
+    use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait},};
     use argent::signer_storage::{
         interface::ISignerList,
         signer_list::{
@@ -77,10 +77,10 @@ mod multisig_component {
                     Option::Some(signer) => (*signer),
                     Option::None => { break; }
                 };
-                let signer_guid = signer.into_guid().expect('argent/invalid-signer-guid');
+                let signer_guid = signer.into_guid();
                 signer_list_comp.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
                 signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
-                signer_list_comp.emit(SignerLinked { signer_guid: signer_guid, signer: signer });
+                signer_list_comp.emit(SignerLinked { signer_guid, signer });
                 last_signer = signer_guid;
             };
 
@@ -105,7 +105,7 @@ mod multisig_component {
             let mut last_signer = last_signer_guid;
             loop {
                 let signer_guid = match signers_span.pop_front() {
-                    Option::Some(signer) => (*signer).into_guid().expect('argent/invalid-signer-guid'),
+                    Option::Some(signer) => (*signer).into_guid(),
                     Option::None => { break; }
                 };
                 last_signer = signer_list_comp.remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
@@ -128,7 +128,7 @@ mod multisig_component {
             let mut new_signer_order_guid = array![];
             loop {
                 let signer_guid = match new_signer_order_span.pop_front() {
-                    Option::Some(signer) => (*signer).into_guid().expect('argent/invalid-signer-guid'),
+                    Option::Some(signer) => (*signer).into_guid(),
                     Option::None => { break; }
                 };
                 new_signer_order_guid.append(signer_guid);
@@ -141,10 +141,10 @@ mod multisig_component {
         fn replace_signer(ref self: ComponentState<TContractState>, signer_to_remove: Signer, signer_to_add: Signer) {
             assert_only_self();
             let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
-            let (new_signers_count, last_signer) = signer_list_comp.load();
+            let (_, last_signer) = signer_list_comp.load();
 
-            let signer_to_remove_guid = signer_to_remove.into_guid().expect('argent/invalid-target-guid');
-            let signer_to_add_guid = signer_to_add.into_guid().expect('argent/invalid-new-signer-guid');
+            let signer_to_remove_guid = signer_to_remove.into_guid();
+            let signer_to_add_guid = signer_to_add.into_guid();
             signer_list_comp.replace_signer(signer_to_remove_guid, signer_to_add_guid, last_signer);
 
             signer_list_comp.emit(OwnerRemoved { removed_owner_guid: signer_to_remove_guid });
@@ -161,7 +161,7 @@ mod multisig_component {
         }
 
         fn is_signer(self: @ComponentState<TContractState>, signer: Signer) -> bool {
-            self.get_contract().is_signer_in_list(signer.into_guid().expect('argent/invalid-signer-guid'))
+            self.get_contract().is_signer_in_list(signer.into_guid())
         }
 
         fn is_signer_guid(self: @ComponentState<TContractState>, signer_guid: felt252) -> bool {
@@ -171,9 +171,7 @@ mod multisig_component {
         fn is_valid_signer_signature(
             self: @ComponentState<TContractState>, hash: felt252, signer_signature: SignerSignature
         ) -> bool {
-            let is_signer = self
-                .get_contract()
-                .is_signer_in_list(signer_signature.signer_into_guid().expect('argent/invalid-signer-guid'));
+            let is_signer = self.get_contract().is_signer_in_list(signer_signature.signer().into_guid());
             assert(is_signer, 'argent/not-a-signer');
             signer_signature.is_valid_signature(hash)
         }
@@ -200,7 +198,7 @@ mod multisig_component {
                     Option::Some(signer) => (*signer),
                     Option::None => { break; }
                 };
-                let signer_guid = signer.into_guid().expect('argent/invalid-signer-guid');
+                let signer_guid = signer.into_guid();
                 signer_list_comp.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
                 signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
                 signer_list_comp.emit(SignerLinked { signer_guid: signer_guid, signer: signer });

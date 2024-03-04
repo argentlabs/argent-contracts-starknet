@@ -42,8 +42,6 @@ export const signTransaction = async (
   const messageHash = await getMessageHash(authenticatorData, clientDataJSON);
   const yParity = getYParity(messageHash, attestation, r, s);
   console.log("authenticatorData");
-  console.log(authenticatorData.toString());
-  console.log(clientDataJSON.toString());
   console.log(r.toString());
   console.log(s.toString());
   console.log(yParity);

@@ -34,7 +34,6 @@ export class LegacyMultisigSigner extends RawSigner {
   }
 }
 
-// TODO Rename this to legacy and legacy to starkentlegacy
 export abstract class LegacyKeyPair extends RawSigner {
   abstract get privateKey(): string;
   abstract get publicKey(): any;

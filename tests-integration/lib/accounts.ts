@@ -16,16 +16,8 @@ import {
 } from "starknet";
 import { ethAddress, loadContract, declareContract, declareFixtureContract, strkAddress } from "./contracts";
 import { provider } from "./provider";
-import {
-  ArgentSigner,
-  KeyPair,
-  LegacyArgentSigner,
-  LegacyKeyPair,
-  LegacyMultisigSigner,
-  compiledSignerOption,
-  randomKeyPair,
-  signerOption,
-} from "./signers/signers";
+import { ArgentSigner, KeyPair, compiledSignerOption, randomKeyPair, signerOption } from "./signers/signers";
+import { LegacyKeyPair, LegacyArgentSigner, LegacyStarknetKeyPair, LegacyMultisigSigner } from "./signers/legacy";
 
 export class ArgentAccount extends Account {
   // Increase the gas limit by 30% to avoid failures due to gas estimation being too low with tx v3 and transactions the use escaping
@@ -62,6 +54,13 @@ export interface ArgentWalletWithGuardian extends ArgentWallet {
   guardian: KeyPair;
 }
 
+export interface LegacyArgentWallet {
+  account: ArgentAccount;
+  accountContract: Contract;
+  owner: LegacyKeyPair;
+  guardian: LegacyKeyPair;
+}
+
 export interface ArgentWalletWithGuardianAndBackup extends ArgentWalletWithGuardian {
   guardianBackup: KeyPair;
 }
@@ -96,11 +95,11 @@ export function setDefaultTransactionVersionV3(account: ArgentAccount): ArgentAc
 
 console.log("Deployer:", deployer.address);
 
-export async function deployOldAccount(): Promise<ArgentWalletWithGuardian> {
+export async function deployOldAccount(): Promise<LegacyArgentWallet> {
   const proxyClassHash = await declareFixtureContract("Proxy");
   const oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
-  const owner = new LegacyKeyPair();
-  const guardian = new LegacyKeyPair();
+  const owner = new LegacyStarknetKeyPair();
+  const guardian = new LegacyStarknetKeyPair();
 
   const constructorCalldata = CallData.compile({
     implementation: oldArgentAccountClassHash,
@@ -244,8 +243,8 @@ export async function deployAccountWithGuardianBackup(
 }
 
 export async function deployLegacyAccount(classHash: string) {
-  const owner = new LegacyKeyPair();
-  const guardian = new LegacyKeyPair();
+  const owner = new LegacyStarknetKeyPair();
+  const guardian = new LegacyStarknetKeyPair();
   const salt = num.toHex(randomKeyPair().privateKey);
   const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian.publicKey });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);

@@ -32,14 +32,14 @@ describe("ArgentAccount: events", function () {
     await expectEvent(transaction_hash, {
       from_address: contract_address,
       eventName: "AccountCreated",
-      additionalKeys: [owner.publicKey],
+      additionalKeys: [owner.publicKey.toString()],
       data: ["42"],
     });
 
     await expectEvent(transaction_hash, {
       from_address: contract_address,
       eventName: "OwnerAdded",
-      additionalKeys: [owner.publicKey],
+      additionalKeys: [owner.publicKey.toString()],
     });
   });
 
@@ -54,7 +54,7 @@ describe("ArgentAccount: events", function () {
     await expectEvent(() => accountContract.trigger_escape_owner(newOwner.compiledSigner), {
       from_address: account.address,
       eventName: "EscapeOwnerTriggered",
-      data: [activeAt, newOwner.publicKey],
+      data: [activeAt, newOwner.publicKey.toString()],
     });
   });
 
@@ -71,7 +71,7 @@ describe("ArgentAccount: events", function () {
     await expectEvent(receipt, {
       from_address: account.address,
       eventName: "OwnerEscaped",
-      data: [newOwner.publicKey],
+      data: [newOwner.publicKey.toString()],
     });
 
     await expectEvent(receipt, {
@@ -83,7 +83,7 @@ describe("ArgentAccount: events", function () {
     await expectEvent(receipt, {
       from_address: account.address,
       eventName: "OwnerAdded",
-      additionalKeys: [newOwner.publicKey],
+      additionalKeys: [newOwner.publicKey.toString()],
     });
   });
 

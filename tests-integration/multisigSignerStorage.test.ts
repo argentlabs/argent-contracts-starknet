@@ -39,12 +39,12 @@ describe("ArgentMultisig: signer storage", function () {
       await expectEvent(transaction_hash, {
         from_address: accountContract.address,
         eventName: "OwnerAdded",
-        additionalKeys: [newSigner2.publicKey],
+        additionalKeys: [newSigner2.publicKey.toString()],
       });
       await expectEvent(transaction_hash, {
         from_address: accountContract.address,
         eventName: "OwnerAdded",
-        additionalKeys: [newSigner3.publicKey],
+        additionalKeys: [newSigner3.publicKey.toString()],
       });
       await accountContract.is_signer_guid(newSigner2.publicKey).should.eventually.be.true;
       await accountContract.is_signer_guid(newSigner3.publicKey).should.eventually.be.true;

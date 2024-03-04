@@ -12,6 +12,7 @@ export * from "./multisig";
 export * from "./outsideExecution";
 export * from "./provider";
 export * from "./recovery";
+export * from "./signers/legacy";
 export * from "./signers/signers";
 export * from "./signers/secp256";
 export * from "./signers/webauthn";

@@ -8,7 +8,7 @@ import {
   hash,
   uint256,
 } from "starknet";
-import { RawSigner, fundAccount, provider } from "..";
+import { KeyPair, fundAccount, provider } from "..";
 
 // Bytes fn
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
@@ -53,24 +53,33 @@ interface WebauthnAssertion {
   yParity: boolean;
 }
 
-export async function deployFixedWebauthnAccount(classHash: string): Promise<Account> {
-  const constructorCalldata = CallData.compile({
-    owner: webauthnSigner(origin, rpIdHash, pubkey),
-    guardian: new CairoOption(CairoOptionVariant.None),
-  });
-  const addressSalt = 12n;
-  const accountAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
+class WebauthnOwner extends KeyPair {
+  public get publicKey() {
+    return buf2hex(
+      new Uint8Array([
+        192, 124, 237, 241, 226, 51, 92, 202, 34, 77, 132, 203, 43, 154, 106, 52, 77, 189, 35, 141, 70, 74, 180, 32, 83,
+        247, 183, 175, 65, 250, 101, 106,
+      ]),
+    );
+  }
 
-  await fundAccount(accountAddress, 1e16, "ETH");
+  public get privateKey(): string {
+    throw new Error(`Not supported`);
+  }
 
-  const account = new Account(provider, accountAddress, webauthnOwner, "1");
-  const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt }, { maxFee: 1e15 });
-  await provider.waitForTransaction(response.transaction_hash);
+  public get signer(): CairoCustomEnum {
+    return new CairoCustomEnum({
+      Starknet: undefined,
+      Secp256k1: undefined,
+      Secp256r1: undefined,
+      Webauthn: {
+        origin,
+        rp_id_hash: uint256.bnToUint256(rpIdHash),
+        pubkey: uint256.bnToUint256(this.publicKey),
+      },
+    });
+  }
 
-  return account;
-}
-
-class WebauthnOwner extends RawSigner {
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
     const { authenticatorData, clientDataJson, r, s, yParity } = await signTransaction(messageHash);
     const clientDataText = new TextDecoder().decode(clientDataJson.buffer);
@@ -108,19 +117,22 @@ class WebauthnOwner extends RawSigner {
   }
 }
 
-const webauthnOwner = new WebauthnOwner();
-
-function webauthnSigner(origin: string, rp_id_hash: string, pubkey: string) {
-  return new CairoCustomEnum({
-    Starknet: undefined,
-    Secp256k1: undefined,
-    Secp256r1: undefined,
-    Webauthn: {
-      origin,
-      rp_id_hash: uint256.bnToUint256(rp_id_hash),
-      pubkey: uint256.bnToUint256(pubkey),
-    },
+export async function deployFixedWebauthnAccount(classHash: string): Promise<Account> {
+  const owner = new WebauthnOwner();
+  const constructorCalldata = CallData.compile({
+    owner: owner.signer,
+    guardian: new CairoOption(CairoOptionVariant.None),
   });
+  const addressSalt = 12n;
+  const accountAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
+
+  await fundAccount(accountAddress, 1e16, "ETH");
+
+  const account = new Account(provider, accountAddress, owner, "1");
+  const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt }, { maxFee: 1e15 });
+  await provider.waitForTransaction(response.transaction_hash);
+
+  return account;
 }
 
 async function signTransaction(messageHash: string): Promise<WebauthnAssertion> {

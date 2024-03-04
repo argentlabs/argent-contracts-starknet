@@ -6,7 +6,7 @@ import { Wallet, id, Signature as EthersSignature } from "ethers";
 import { KeyPair } from "../signers/signers";
 
 export class EthKeyPair extends KeyPair {
-  protected pk: string;
+  pk: string;
 
   constructor(pk?: string | bigint) {
     super();
@@ -30,29 +30,27 @@ export class EthKeyPair extends KeyPair {
     return this.pk;
   }
 
-  public signRaw(messageHash: string): Promise<string[]> {
+  public async signRaw(messageHash: string): Promise<string[]> {
     const eth_signer = new Wallet(id(this.pk.toString()));
     if (messageHash.length < 66) {
       messageHash = "0x" + "0".repeat(66 - messageHash.length) + messageHash.slice(2);
     }
     const signature = EthersSignature.from(eth_signer.signingKey.sign(messageHash));
 
-    return new Promise(() => {
-      ethereumSignatureType(this.publicKey, signature);
-    });
+    return ethereumSignatureType(this.publicKey, signature);
   }
 }
 
 export class Secp256r1KeyPair extends KeyPair {
-  pk: string;
+  pk: bigint;
 
   constructor(pk?: string | bigint) {
     super();
-    this.pk = pk ? `${pk}` : Wallet.createRandom().privateKey;
+    this.pk = BigInt(pk ? `${pk}` : Wallet.createRandom().privateKey);
   }
 
   public get privateKey(): string {
-    return this.pk;
+    return this.pk.toString();
   }
 
   public get publicKey() {
@@ -69,15 +67,13 @@ export class Secp256r1KeyPair extends KeyPair {
     });
   }
 
-  public signRaw(messageHash: string): Promise<string[]> {
+  public async signRaw(messageHash: string): Promise<string[]> {
     if (messageHash.length < 66) {
       messageHash = "0".repeat(66 - messageHash.length) + messageHash.slice(2);
     }
     const sig = secp256r1.sign(messageHash, this.pk);
 
-    return new Promise(() => {
-      secp256r1SignatureType(this.publicKey, sig);
-    });
+    return secp256r1SignatureType(this.publicKey, sig);
   }
 }
 

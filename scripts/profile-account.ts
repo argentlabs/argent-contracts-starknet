@@ -9,7 +9,7 @@ import {
   declareContract,
   removeFromCache,
   deployOldAccount,
-  LegacyKeyPair,
+  LegacyStarknetKeyPair,
   signChangeOwnerMessage,
   starknetSignatureType,
   StarknetKeyPair,
@@ -18,12 +18,19 @@ import {
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
 
+const profiler = newProfiler(provider);
+
+// With the KeyPairs hardcoded, we gotta reset to avoid some issues
+await restart();
+await removeFromCache("Proxy");
+await removeFromCache("OldArgentAccount");
+await removeFromCache("ArgentAccount");
+
 const ethContract = await getEthContract();
 const recipient = "0xadbe1";
 const starknetOwner = new StarknetKeyPair(42n);
 const guardian = new StarknetKeyPair(43n);
 
-const profiler = newProfiler(provider);
 
 {
   const { account } = await deployOldAccount();
@@ -38,7 +45,7 @@ const profiler = newProfiler(provider);
     salt: "0x1",
   });
   const owner = await accountContract.get_owner();
-  const newOwner = new LegacyKeyPair();
+  const newOwner = new LegacyStarknetKeyPair();
   const chainId = await provider.getChainId();
   const [r, s] = await signChangeOwnerMessage(account.address, owner, newOwner, chainId);
   await profiler.profile(

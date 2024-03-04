@@ -194,7 +194,7 @@ describe("ArgentAccount", function () {
       const { accountContract } = await deployAccount();
       accountContract.connect(account);
       await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
-        accountContract.change_guardian(compiledSignerOption(0n)),
+        accountContract.change_guardian(CallData.compile([zeroStarknetSignatureType()])),
       );
     });
 

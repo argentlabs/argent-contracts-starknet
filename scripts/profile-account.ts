@@ -31,7 +31,6 @@ const recipient = "0xadbe1";
 const starknetOwner = new StarknetKeyPair(42n);
 const guardian = new StarknetKeyPair(43n);
 
-
 {
   const { account } = await deployOldAccount();
   ethContract.connect(account);

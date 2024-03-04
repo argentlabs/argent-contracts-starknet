@@ -27,8 +27,8 @@ export class LegacyMultisigSigner extends RawSigner {
 
   async signRaw(messageHash: string): Promise<string[]> {
     const keys = [];
-    for (let i = 0; i < this.keys.length; i++) {
-      keys.push(await this.keys[i].signRaw(messageHash));
+    for (const key of this.keys) {
+      keys.push(await key.signRaw(messageHash));
     }
     return keys.flat();
   }

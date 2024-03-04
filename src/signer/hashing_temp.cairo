@@ -10,7 +10,7 @@ trait IStructHashRev1<T> {
     fn get_struct_hash_rev_1(self: @T) -> felt252;
 }
 
-impl StructHashu256 of IStructHashRev1<u256> {
+impl StructHashU256 of IStructHashRev1<u256> {
     fn get_struct_hash_rev_1(self: @u256) -> felt252 {
         poseidon_hash_span(array![U256_TYPE, (*self.low).into(), (*self.high).into(),].span())
     }

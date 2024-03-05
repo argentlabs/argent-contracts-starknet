@@ -63,6 +63,6 @@ describe("ArgentAccount: outside execution", function () {
 
     await testDappAccount.execute(outsideExecutionCall);
 
-    await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await testDapp.get_number(account.address).should.eventually.equal(42n);
   });
 });

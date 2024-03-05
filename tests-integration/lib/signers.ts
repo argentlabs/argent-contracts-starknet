@@ -26,6 +26,16 @@ import {
   stark,
 } from "starknet";
 
+// reflects the signer type in signer_signature.cairo
+// needs to be updated for the signer types
+// used to convert signertype to guid
+export enum SignerTypeEnum {
+  Starknet,
+  Secp256k1,
+  Secp256r1,
+  Webauthn,
+}
+
 /**
  * This class allows to easily implement custom signers by overriding the `signRaw` method.
  * This is based on Starknet.js implementation of Signer, but it delegates the actual signing to an abstract function

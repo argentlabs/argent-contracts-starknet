@@ -11,7 +11,6 @@ mod introspection {
     mod interface;
     mod src5;
 }
-
 mod multisig {
     mod interface;
     mod multisig;
@@ -31,6 +30,7 @@ mod signer_storage {
 mod outside_execution {
     mod interface;
     mod outside_execution;
+    mod outside_execution_hash;
 }
 
 mod recovery {
@@ -50,8 +50,19 @@ mod utils {
     mod asserts;
     mod bytes;
     mod calls;
+    mod mock_erc20;
     mod multicall;
     mod serialization;
     mod test_dapp;
     mod transaction_version;
+}
+
+mod session {
+    mod interface;
+    mod session;
+    mod session_hash;
+}
+
+mod offchain_message {
+    mod interface;
 }

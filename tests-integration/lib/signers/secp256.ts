@@ -10,7 +10,7 @@ export class EthKeyPair extends KeyPair {
 
   constructor(pk?: string | bigint) {
     super();
-    this.pk = pk ? `${pk}` : Wallet.createRandom().privateKey;
+    this.pk = pk ? `${id(pk.toString())}` : Wallet.createRandom().privateKey;
   }
 
   public get privateKey(): string {
@@ -18,7 +18,7 @@ export class EthKeyPair extends KeyPair {
   }
 
   public get publicKey() {
-    return BigInt(new Wallet(id(this.pk.toString())).address);
+    return BigInt(new Wallet(this.pk).address);
   }
 
   public get signer(): CairoCustomEnum {
@@ -31,7 +31,7 @@ export class EthKeyPair extends KeyPair {
   }
 
   public async signRaw(messageHash: string): Promise<string[]> {
-    const eth_signer = new Wallet(id(this.pk.toString()));
+    const eth_signer = new Wallet(this.pk);
     if (messageHash.length < 66) {
       messageHash = "0x" + "0".repeat(66 - messageHash.length) + messageHash.slice(2);
     }

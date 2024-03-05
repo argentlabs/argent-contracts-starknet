@@ -37,8 +37,8 @@ trait ITestArgentAccount<TContractState> {
     fn get_escape(self: @TContractState) -> LegacyEscape;
     fn get_version(self: @TContractState) -> Version;
     fn get_name(self: @TContractState) -> felt252;
-    fn get_guardian_escape_attempts(self: @TContractState) -> u32;
-    fn get_owner_escape_attempts(self: @TContractState) -> u32;
+    fn get_guardian_escape_last_attempt_timestamp(self: @TContractState) -> u64;
+    fn get_owner_escape_last_attempt_timestamp(self: @TContractState) -> u64;
     fn get_escape_and_status(self: @TContractState) -> (LegacyEscape, EscapeStatus);
 
     // IErc165

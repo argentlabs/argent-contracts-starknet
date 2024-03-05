@@ -39,7 +39,7 @@ mod ArgentAccount {
     const ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
     ///  The escape will be ready and can be completed for this duration
     const ESCAPE_EXPIRY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
-    /// Limit escape attempts by only one party
+    /// Limit amount of escape a party can do to once every X hours
     const TIME_BETWEEN_TWO_ESCAPE: u64 = consteval_int!(12 * 60 * 60); // 12 hours;
 
     /// Limits fee in escapes
@@ -285,7 +285,7 @@ mod ArgentAccount {
             let new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(base, 2)).unwrap_syscall();
             assert(new_signer.is_zero(), 'argent/new-signer-shoud-be-null');
 
-            // Cleaning attempts storage 
+            // Cleaning attempts storage => This should NOT have any impact as we don't allow to upgrade if there is an escape ongoing
             let base = storage_base_address_from_felt252(selector!("guardian_escape_attempts"));
             storage_write_syscall(0, storage_address_from_base_and_offset(base, 0), 0).unwrap_syscall();
             let base = storage_base_address_from_felt252(selector!("owner_escape_attempts"));

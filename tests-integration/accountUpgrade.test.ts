@@ -13,11 +13,7 @@ import {
   expectRevertWithErrorMessage,
   LegacyArgentSigner,
   deployLegacyAccount,
-  ArgentSigner,
-  randomKeyPair,
-  compiledStarknetSigner,
 } from "./lib";
-import { hash } from "starknet";
 
 describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
@@ -105,19 +101,5 @@ describe("ArgentAccount: upgrade", function () {
     await upgradeAccount(account, testDapp.classHash).should.be.rejectedWith(
       `EntryPointSelector(StarkFelt(\\"0x00fe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283\\")) not found in contract`,
     );
-  });
-
-  it("Guardian escape attempts should 0 after upgrading", async function () {
-    const classHash = await declareFixtureContract("ArgentAccount-0.4.0");
-    const { account, guardian, accountContract } = await deployLegacyAccount(classHash);
-
-    account.signer = guardian;
-    await accountContract.trigger_escape_owner(42n);
-    const x = provider.getStorageAt(accountContract.address, hash.getSelectorFromName("owner_escape_attempts"));
-    // TODO LAMA READ Storage
-    console.log(x);
-    // Upgrade
-
-    // READ Storage
   });
 });

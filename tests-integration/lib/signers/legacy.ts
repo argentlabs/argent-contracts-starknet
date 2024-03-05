@@ -36,7 +36,7 @@ export class LegacyMultisigSigner extends RawSigner {
 
 export abstract class LegacyKeyPair extends RawSigner {
   abstract get privateKey(): string;
-  abstract get publicKey(): any;
+  abstract get publicKey(): bigint;
 }
 
 export class LegacyStarknetKeyPair extends LegacyKeyPair {

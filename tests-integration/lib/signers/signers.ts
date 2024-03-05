@@ -211,6 +211,7 @@ export function starknetSignatureType(
   ]);
 }
 
+// TODO Once more used, this should eventually become a function on KeyPair 
 export function intoGuid(signer: CairoCustomEnum) {
   return signer.unwrap().signer;
 }

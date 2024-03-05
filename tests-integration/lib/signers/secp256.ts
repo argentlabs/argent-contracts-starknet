@@ -85,7 +85,7 @@ function ethereumSignatureType(signer: bigint, signature: EthersSignature) {
         signer,
         r: uint256.bnToUint256(signature.r),
         s: uint256.bnToUint256(signature.s),
-        y_parity: signature.yParity.toString(),
+        y_parity: signature.yParity,
       },
       Secp256r1: undefined,
       Webauthn: undefined,

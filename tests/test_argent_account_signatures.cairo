@@ -91,6 +91,7 @@ fn invalid_owner_with_guardian() {
     let signatures = to_starknet_signer_signatures(
         array![guardian_pubkey, guardian_r, guardian_s, guardian_pubkey, guardian_r, guardian_s]
     );
+    account.is_valid_signature(message_hash, signatures);
 }
 
 #[test]

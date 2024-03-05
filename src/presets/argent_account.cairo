@@ -21,17 +21,12 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, assert_no_unsupported_v3_fields, DA_MODE_L1
         }
     };
-    use core::array::ArrayTrait;
-    use core::array::SpanTrait;
-    use core::option::OptionTrait;
-    use core::starknet::event::EventEmitter;
-    use core::traits::TryInto;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
-        ClassHash, get_block_timestamp, get_caller_address, get_contract_address, VALIDATED, replace_class_syscall,
-        account::Call, SyscallResultTrait, get_tx_info, get_execution_info, syscalls::storage_read_syscall,
-        storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252}
+        ClassHash, get_block_timestamp, get_contract_address, VALIDATED, replace_class_syscall, account::Call,
+        SyscallResultTrait, get_tx_info, get_execution_info, syscalls::storage_read_syscall,
+        storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall}
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -44,9 +39,9 @@ mod ArgentAccount {
     const ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
     ///  The escape will be ready and can be completed for this duration
     const ESCAPE_EXPIRY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
-
     /// Limit escape attempts by only one party
-    const MAX_ESCAPE_ATTEMPTS: u32 = 5;
+    const TIME_BETWEEN_TWO_ESCAPE: u64 = consteval_int!(12 * 60 * 60); // 12 hours;
+
     /// Limits fee in escapes
     const MAX_ESCAPE_MAX_FEE_ETH: u128 = 50000000000000000; // 0.05 ETH
     const MAX_ESCAPE_MAX_FEE_STRK: u128 = 50_000000000000000000; // 50 STRK
@@ -80,12 +75,16 @@ mod ArgentAccount {
         _guardian: felt252, /// Current account guardian
         _guardian_backup: felt252, /// Current account backup guardian
         _escape: LegacyEscape, /// The ongoing escape, if any
-        /// Keeps track of how many escaping tx the guardian has submitted. Used to limit the number of transactions the account will pay for
+        /// Keeps track of the last time an escape was performed by the guardian.
+        /// Rounded down to the hour: https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 
+        /// Used to limit the number of transactions the account will pay for
         /// It resets when an escape is completed or canceled
-        guardian_escape_attempts: u32,
-        /// Keeps track of how many escaping tx the owner has submitted. Used to limit the number of transactions the account will pay for
+        guardian_escape_timestamp: u64,
+        /// Keeps track of the last time an escape was performed by the owner. 
+        /// Rounded down to the hour: https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 
+        /// Used to limit the number of transactions the account will pay for
         /// It resets when an escape is completed or canceled
-        owner_escape_attempts: u32
+        owner_escape_timestamp: u64
     }
 
     #[event]
@@ -286,6 +285,12 @@ mod ArgentAccount {
             let new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(base, 2)).unwrap_syscall();
             assert(new_signer.is_zero(), 'argent/new-signer-shoud-be-null');
 
+            // Cleaning attempts storage 
+            let base = storage_base_address_from_felt252(selector!("guardian_escape_attempts"));
+            storage_write_syscall(0, storage_address_from_base_and_offset(base, 0), 0).unwrap_syscall();
+            let base = storage_base_address_from_felt252(selector!("owner_escape_attempts"));
+            storage_write_syscall(0, storage_address_from_base_and_offset(base, 0), 0).unwrap_syscall();
+
             // Check basic invariants and emit missing events
             let owner = self._signer.read();
             let guardian = self._guardian.read();
@@ -378,7 +383,7 @@ mod ArgentAccount {
             assert_only_self();
 
             self.reset_escape();
-            self.reset_escape_attempts();
+            self.reset_escape_timestamps();
 
             let new_owner_guid = signer_signature.signer().into_guid();
             let old_owner = self._signer.read();
@@ -409,7 +414,7 @@ mod ArgentAccount {
             }
 
             self.reset_escape();
-            self.reset_escape_attempts();
+            self.reset_escape_timestamps();
 
             self._guardian.write(new_guardian_guid);
             self.emit(GuardianChanged { new_guardian: new_guardian_guid });
@@ -429,7 +434,7 @@ mod ArgentAccount {
             };
 
             self.reset_escape();
-            self.reset_escape_attempts();
+            self.reset_escape_timestamps();
 
             self._guardian_backup.write(new_guardian_backup_guid);
             self.emit(GuardianBackupChanged { new_guardian_backup: new_guardian_backup_guid });
@@ -485,7 +490,7 @@ mod ArgentAccount {
             let current_escape_status = get_escape_status(current_escape.ready_at);
             assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
-            self.reset_escape_attempts();
+            self.reset_escape_timestamps();
 
             // update owner
             let old_owner = self._signer.read();
@@ -505,7 +510,7 @@ mod ArgentAccount {
             // TODO This could be done during validation?
             assert(get_escape_status(current_escape.ready_at) == EscapeStatus::Ready, 'argent/invalid-escape');
 
-            self.reset_escape_attempts();
+            self.reset_escape_timestamps();
 
             //update guardian
             self._guardian.write(current_escape.new_signer);
@@ -520,7 +525,7 @@ mod ArgentAccount {
             let current_escape_status = get_escape_status(current_escape.ready_at);
             assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
             self.reset_escape();
-            self.reset_escape_attempts();
+            self.reset_escape_timestamps();
         }
 
         fn get_owner(self: @ContractState) -> felt252 {
@@ -548,12 +553,12 @@ mod ArgentAccount {
             NAME
         }
 
-        fn get_guardian_escape_attempts(self: @ContractState) -> u32 {
-            self.guardian_escape_attempts.read()
+        fn get_guardian_escape_last_attempt_timestamp(self: @ContractState) -> u64 {
+            self.guardian_escape_timestamp.read()
         }
 
-        fn get_owner_escape_attempts(self: @ContractState) -> u32 {
-            self.owner_escape_attempts.read()
+        fn get_owner_escape_last_attempt_timestamp(self: @ContractState) -> u64 {
+            self.owner_escape_timestamp.read()
         }
 
         /// Current escape if any, and its status
@@ -601,9 +606,8 @@ mod ArgentAccount {
 
                     if selector == selector!("trigger_escape_owner") {
                         if !is_from_outside {
-                            let current_attempts = self.guardian_escape_attempts.read();
-                            assert_valid_escape_parameters(current_attempts);
-                            self.guardian_escape_attempts.write(current_attempts + 1);
+                            assert_valid_escape_parameters(self.guardian_escape_timestamp.read());
+                            self.guardian_escape_timestamp.write(get_block_timestamp());
                         }
 
                         full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
@@ -615,9 +619,8 @@ mod ArgentAccount {
                     }
                     if selector == selector!("escape_owner") {
                         if !is_from_outside {
-                            let current_attempts = self.guardian_escape_attempts.read();
-                            assert_valid_escape_parameters(current_attempts);
-                            self.guardian_escape_attempts.write(current_attempts + 1);
+                            assert_valid_escape_parameters(self.guardian_escape_timestamp.read());
+                            self.guardian_escape_timestamp.write(get_block_timestamp());
                         }
 
                         assert((*call.calldata).is_empty(), 'argent/invalid-calldata');
@@ -635,9 +638,8 @@ mod ArgentAccount {
                     }
                     if selector == selector!("trigger_escape_guardian") {
                         if !is_from_outside {
-                            let current_attempts = self.owner_escape_attempts.read();
-                            assert_valid_escape_parameters(current_attempts);
-                            self.owner_escape_attempts.write(current_attempts + 1);
+                            assert_valid_escape_parameters(self.owner_escape_timestamp.read());
+                            self.owner_escape_timestamp.write(get_block_timestamp());
                         }
 
                         let new_guardian: Option<Signer> = full_deserialize(*call.calldata)
@@ -655,9 +657,8 @@ mod ArgentAccount {
                     }
                     if selector == selector!("escape_guardian") {
                         if !is_from_outside {
-                            let current_attempts = self.owner_escape_attempts.read();
-                            assert_valid_escape_parameters(current_attempts);
-                            self.owner_escape_attempts.write(current_attempts + 1);
+                            assert_valid_escape_parameters(self.owner_escape_timestamp.read());
+                            self.owner_escape_timestamp.write(get_block_timestamp());
                         }
                         assert((*call.calldata).is_empty(), 'argent/invalid-calldata');
                         self.assert_guardian_set();
@@ -798,13 +799,13 @@ mod ArgentAccount {
         }
 
         #[inline(always)]
-        fn reset_escape_attempts(ref self: ContractState) {
-            self.owner_escape_attempts.write(0);
-            self.guardian_escape_attempts.write(0);
+        fn reset_escape_timestamps(ref self: ContractState) {
+            self.owner_escape_timestamp.write(0);
+            self.guardian_escape_timestamp.write(0);
         }
     }
 
-    fn assert_valid_escape_parameters(attempts: u32) {
+    fn assert_valid_escape_parameters(last_timestamp: u64) {
         let mut tx_info = get_tx_info().unbox();
         if tx_info.version == TX_V3 || tx_info.version == TX_V3_ESTIMATE {
             // No need for modes other than L1 while escaping
@@ -840,7 +841,7 @@ mod ArgentAccount {
         } else {
             panic_with_felt252('argent/invalid-tx-version');
         }
-        assert(attempts < MAX_ESCAPE_ATTEMPTS, 'argent/max-escape-attempts');
+        assert(last_timestamp + TIME_BETWEEN_TWO_ESCAPE < get_block_timestamp(), 'argent/escape-too-');
     }
 
     fn get_escape_status(escape_ready_at: u64) -> EscapeStatus {

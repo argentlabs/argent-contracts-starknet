@@ -129,7 +129,7 @@ fn test_trigger_escape_can_override() {
     set_contract_address(GUARDIAN());
     component.trigger_escape(array![SIGNER_1()], array![SIGNER_3()]);
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_4()]);
-    let (escape, status) = component.get_escape();
+    let (escape, _) = component.get_escape();
     assert(*escape.target_signers.at(0) == signer_pubkey_2, 'should be signer 2');
     assert(*escape.new_signers.at(0) == signer_pubkey_4, 'should be signer 4');
 }
@@ -179,7 +179,7 @@ fn test_execute_escape() {
 #[test]
 #[should_panic(expected: ('argent/invalid-escape', 'ENTRYPOINT_FAILED'))]
 fn test_execute_escape_NotReady() {
-    let (component, _, multisig_component) = setup();
+    let (component, _, _) = setup();
     set_contract_address(GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     set_block_timestamp(8);
@@ -189,7 +189,7 @@ fn test_execute_escape_NotReady() {
 #[test]
 #[should_panic(expected: ('argent/invalid-escape', 'ENTRYPOINT_FAILED'))]
 fn test_execute_escape_Expired() {
-    let (component, _, multisig_component) = setup();
+    let (component, _, _) = setup();
     set_contract_address(GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     set_block_timestamp(28);

@@ -30,10 +30,10 @@ mod ArgentAccount {
     };
 
     const NAME: felt252 = 'ArgentAccount';
-    const VERSION_MAJOR: u8 = 0;
-    const VERSION_MINOR: u8 = 4;
+    const VERSION_MAJOR: u8 = 1;
+    const VERSION_MINOR: u8 = 0;
     const VERSION_PATCH: u8 = 0;
-    const VERSION_COMPAT: felt252 = '0.4.0';
+    const VERSION_COMPAT: felt252 = '1.0.0';
 
     /// Time it takes for the escape to become ready after being triggered
     const ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
@@ -841,7 +841,11 @@ mod ArgentAccount {
         } else {
             panic_with_felt252('argent/invalid-tx-version');
         }
-        assert(last_timestamp + TIME_BETWEEN_TWO_ESCAPE < get_block_timestamp(), 'argent/escape-too-');
+
+        assert(
+            last_timestamp.is_zero() || last_timestamp + TIME_BETWEEN_TWO_ESCAPE < get_block_timestamp(),
+            'argent/escape-window'
+        );
     }
 
     fn get_escape_status(escape_ready_at: u64) -> EscapeStatus {

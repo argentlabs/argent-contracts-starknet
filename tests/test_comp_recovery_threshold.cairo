@@ -100,7 +100,7 @@ fn test_trigger_escape_can_override() {
     let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_1()], array![SIGNER_3()]);
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    let (escape, status) = component.get_escape();
+    let (escape, _) = component.get_escape();
     assert(*escape.target_signers.at(0) == signer_pubkey_2, 'should be signer 2');
     assert(*escape.new_signers.at(0) == signer_pubkey_3, 'should be signer 3');
 }

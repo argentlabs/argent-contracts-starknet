@@ -203,8 +203,10 @@ describe("ArgentAccount: events", function () {
       const { account, accountContract, guardian } = await deployAccount();
       account.signer = new ArgentSigner(guardian);
 
+      await setTime(42);
       await accountContract.trigger_escape_owner(compiledStarknetSigner(42));
 
+      await setTime(42 + 1 + 12 * 60 * 60);
       await expectEvent(() => accountContract.trigger_escape_owner(compiledStarknetSigner(42)), {
         from_address: account.address,
         eventName: "EscapeCanceled",
@@ -215,8 +217,10 @@ describe("ArgentAccount: events", function () {
       const { account, accountContract, owner } = await deployAccount();
       account.signer = new ArgentSigner(owner);
 
+      await setTime(42);
       await accountContract.trigger_escape_guardian(compiledSignerOption(42n));
 
+      await setTime(42 + 1 + 12 * 60 * 60);
       await expectEvent(() => accountContract.trigger_escape_guardian(compiledSignerOption(42n)), {
         from_address: account.address,
         eventName: "EscapeCanceled",

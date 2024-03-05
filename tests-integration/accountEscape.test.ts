@@ -20,7 +20,6 @@ import {
   randomKeyPair,
   setTime,
   upgradeAccount,
-  declareFixtureContract,
   LegacyMultisigSigner,
   compiledStarknetSigner,
   compiledSignerOption,
@@ -78,6 +77,19 @@ describe("ArgentAccount: escape mechanism", function () {
 
       await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
         accountContract.trigger_escape_owner(compiledStarknetSigner(0)),
+      );
+    });
+
+    it("Expect 'argent/escape-window' when trying to escape again too early", async function () {
+      const { account, accountContract, guardian } = await deployAccount();
+      account.signer = new ArgentSigner(guardian);
+
+      await setTime(42);
+      await accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress));
+
+      await setTime(42 + 12 * 60 * 60);
+      await expectRevertWithErrorMessage("argent/escape-window", () =>
+        accountContract.trigger_escape_owner(compiledStarknetSigner(randomAddress)),
       );
     });
 
@@ -275,6 +287,19 @@ describe("ArgentAccount: escape mechanism", function () {
       expect(escape.escape_type).to.deep.equal(ESCAPE_TYPE_GUARDIAN);
       expect(escape.ready_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
       expect(escape.new_signer).to.equal(randomAddress);
+    });
+
+    it("Expect 'argent/escape-window' when trying too escape again too early", async function () {
+      const { account, accountContract, owner } = await deployAccount();
+      account.signer = new ArgentSigner(owner);
+
+      await setTime(42);
+      await accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress));
+
+      await setTime(42 + 12 * 60 * 60);
+      await expectRevertWithErrorMessage("argent/escape-window", () =>
+        accountContract.trigger_escape_guardian(compiledSignerOption(randomAddress)),
+      );
     });
 
     it("Expect the owner to be able to trigger_escape_guardian when trigger_escape_owner was performed", async function () {

@@ -4,7 +4,7 @@ import {
   expectExecutionRevert,
   randomKeyPair,
   compiledStarknetSigner,
-  waitForTransaction,
+  setTime,
 } from "./lib";
 import { num, RPC } from "starknet";
 
@@ -16,13 +16,15 @@ describe("Gas griefing", function () {
     it(`Block guardian attempts (TxV3:${useTxV3})`, async function () {
       const { account, guardian, accountContract } = await deployAccount({ useTxV3 });
       account.signer = new ArgentSigner(guardian);
+      await setTime(42);
+      await accountContract.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey));
+      await setTime(42 + 1);
+      await expectExecutionRevert("argent/escape-window", () =>
+        accountContract.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)),
+      );
 
-      for (let attempt = 1; attempt <= 5; attempt++) {
-        await waitForTransaction(
-          await accountContract.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)),
-        );
-      }
-      await expectExecutionRevert("argent/max-escape-attempts", () =>
+      await setTime(42 + 12 * 60 * 60);
+      await expectExecutionRevert("argent/escape-window", () =>
         accountContract.trigger_escape_owner(compiledStarknetSigner(randomKeyPair().publicKey)),
       );
     });

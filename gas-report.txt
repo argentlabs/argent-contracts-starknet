@@ -1,4 +1,4 @@
 Set number: 4,970 gas
 Set number without guardian: 4,960 gas
-Set number using old account: 4,970 gas
+Set number using old account: 4,960 gas
 Change owner: 3,770 gas

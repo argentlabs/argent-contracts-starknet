@@ -27,19 +27,29 @@ import {
 } from "starknet";
 
 const types = {
-  "Ethereum Address": [{ name: "Pub Key Hash", type: "EthAddress" }],
-  EthAddress: [{ name: "address", type: "felt" }],
-  "Webauthn Signer": [
+  StarknetSigner: [{ name: "Public Key", type: "felt" }],
+  Secp256k1Signer: [{ name: "Public Key Hash", type: "EthAddress" }],
+  Secp256r1Signer: [{ name: "Public Key", type: "u256" }],
+  Eip191Signer: [{ name: "Ethereum Address", type: "EthAddress" }],
+  WebauthnSigner: [
     { name: "origin", type: "felt" },
     { name: "rp id hash", type: "u256" },
     { name: "Public Key", type: "u256" },
   ],
-  Eip191: [{ name: "Eip191", type: "Ethereum Address" }],
-  Starknet: [{ name: "Starknet", type: "felt" }],
-  Secp256k1: [{ name: "Secp256k1", type: "Ethereum Address" }],
-  Secp256r1: [{ name: "Secp256r1", type: "u256" }],
-  Webauthn: [{ name: "Webauthn", type: "Webauthn Signer" }],
+  EthAddress: [{ name: "address", type: "felt" }],
 };
+
+const activeRev = typedData.TypedDataRevision.Active;
+
+export const STARKNET_SIGNER_TYPE_HASH = typedData.getTypeHash(types, "StarknetSigner", activeRev);
+
+export const SECP256K1_SIGNER_TYPE_HASH = typedData.getTypeHash(types, "Secp256k1Signer", activeRev);
+
+export const SECP256R1_SIGNER_TYPE_HASH = typedData.getTypeHash(types, "Secp256r1Signer", activeRev);
+
+export const EIP191_SIGNER_TYPE_HASH = typedData.getTypeHash(types, "Eip191Signer", activeRev);
+
+export const WEB_AUTHN_SIGNER_TYPE_HASH = typedData.getTypeHash(types, "WebauthnSigner", activeRev);
 
 // reflects the signer type in signer_signature.cairo
 // needs to be updated for the signer types

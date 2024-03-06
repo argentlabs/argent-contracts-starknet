@@ -12,19 +12,14 @@ use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
 use starknet::{EthAddress, eth_signature::{Signature as Secp256k1Signature, is_eth_signature_valid}};
 
-const STARKNET_SIGNER_TYPE: felt252 = selector!("\"Starknet\"(\"Starknet\":\"felt\")");
-
-const SECP256k1_SIGNER_TYPE: felt252 =
-    selector!(
-        "\"Secp256k1\"(\"Secp256k1\":\"Ethereum Address\")\"EthAddress\"(\"address\":\"felt\")\"Ethereum Address\"(\"Pub Key Hash\":\"EthAddress\")"
-    );
-
-const SECP256r1_SIGNER_TYPE: felt252 = selector!("\"Secp256r1\"(\"Secp256r1\":\"u256\")");
-
-const WEBAUTHN_TYPE: felt252 =
-    selector!(
-        "\"Webauthn\"(\"Webauthn\":\"Webauthn Signer\")\"Webauthn Signer\"(\"origin\":\"felt\",\"rp id hash\":\"u256\",\"Public Key\":\"u256\")"
-    );
+const STARKNET_SIGNER_TYPE: felt252 = selector!("\"StarknetSigner\"(\"Public Key\":\"felt\")");
+const SECP256K1_SIGNER_TYPE: felt252 =
+    selector!("\"Secp256k1Signer\"(\"Public Key Hash\":\"EthAddress\")\"EthAddress\"(\"address\":\"felt\")");
+const SECP256R1_SIGNER_TYPE: felt252 = selector!("\"Secp256r1Signer\"(\"Public Key\":\"u256\")");
+const EIP191_SIGNER_TYPE: felt252 =
+    selector!("\"Eip191Signer\"(\"Ethereum Address\":\"EthAddress\")\"EthAddress\"(\"address\":\"felt\")");
+const WEBAUTHN_SIGNER_TYPE: felt252 =
+    selector!("\"WebauthnSigner\"(\"origin\":\"felt\",\"rp id hash\":\"u256\",\"Public Key\":\"u256\")");
 
 #[derive(Drop, Copy, Serde)]
 enum Signer {
@@ -118,20 +113,28 @@ impl SignerTraitImpl of SignerTrait<Signer> {
                 .pubkey
                 .into(), //PoseidonTrait::new().update_with(('Stark', signer.pubkey)).finalize(),
             Signer::Secp256k1(signer) => {
-                PoseidonTrait::new().update_with(SECP256k1_SIGNER_TYPE).update_with(signer.pubkey_hash.address).finalize()
+                PoseidonTrait::new()
+                    .update_with(SECP256K1_SIGNER_TYPE)
+                    .update_with(signer.pubkey_hash.address)
+                    .finalize()
             },
             Signer::Secp256r1(signer) => {
                 let pubkey: u256 = signer.pubkey.into();
-                PoseidonTrait::new().update_with(SECP256r1_SIGNER_TYPE).update_with(pubkey).finalize()
+                PoseidonTrait::new().update_with(SECP256R1_SIGNER_TYPE).update_with(pubkey).finalize()
             },
             Signer::Eip191(signer) => {
-                PoseidonTrait::new().update_with(('Eip191', signer.eth_address.address)).finalize()
+                PoseidonTrait::new().update_with(EIP191_SIGNER_TYPE).update_with(signer.eth_address.address).finalize()
             },
             Signer::Webauthn(signer) => {
                 let origin: felt252 = signer.origin.into();
                 let rp_id_hash: u256 = signer.rp_id_hash.into();
                 let pubkey: u256 = signer.pubkey.into();
-                PoseidonTrait::new().update_with(WEBAUTHN_TYPE).update_with(origin).update_with(rp_id_hash).update_with(pubkey).finalize()
+                PoseidonTrait::new()
+                    .update_with(WEBAUTHN_SIGNER_TYPE)
+                    .update_with(origin)
+                    .update_with(rp_id_hash)
+                    .update_with(pubkey)
+                    .finalize()
             },
         }
     }

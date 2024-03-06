@@ -28,13 +28,14 @@ await removeFromCache("ArgentAccount");
 
 const ethContract = await getEthContract();
 const recipient = "0xadbe1";
+const amount = uint256.bnToUint256(1);
 const starknetOwner = new StarknetKeyPair(42n);
 const guardian = new StarknetKeyPair(43n);
 
 {
   const { account } = await deployOldAccount();
   ethContract.connect(account);
-  await profiler.profile("Old account", await ethContract.transfer(recipient, 1));
+  await profiler.profile("Old account", await ethContract.transfer(recipient, amount));
 }
 
 {
@@ -60,13 +61,13 @@ const guardian = new StarknetKeyPair(43n);
     salt: "0x2",
   });
   ethContract.connect(account);
-  await profiler.profile("Account", await ethContract.transfer(recipient, 1));
+  await profiler.profile("Account", await ethContract.transfer(recipient, amount));
 }
 
 {
   const { account } = await deployAccountWithoutGuardian({ owner: starknetOwner, salt: "0x3" });
   ethContract.connect(account);
-  await profiler.profile("Account w/o guardian", await ethContract.transfer(recipient, 1));
+  await profiler.profile("Account w/o guardian", await ethContract.transfer(recipient, amount));
 }
 
 {
@@ -76,7 +77,10 @@ const guardian = new StarknetKeyPair(43n);
     salt: "0x4",
   });
   ethContract.connect(account);
-  await profiler.profile("Eth sig w guardian", await ethContract.transfer(recipient, 1));
+  await profiler.profile(
+    "Eth sig w guardian",
+    await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),
+  );
 }
 
 {
@@ -86,7 +90,10 @@ const guardian = new StarknetKeyPair(43n);
     salt: "0x5",
   });
   ethContract.connect(account);
-  await profiler.profile("Secp256r1 w guardian", await ethContract.transfer(recipient, 1));
+  await profiler.profile(
+    "Secp256r1 w guardian",
+    await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),
+  );
 }
 
 {
@@ -97,7 +104,6 @@ const guardian = new StarknetKeyPair(43n);
   const ethContract = await getEthContract();
   ethContract.connect(account);
   const recipient = 69;
-  const amount = uint256.bnToUint256(1);
   await profiler.profile(
     "Fixed webauthn",
     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),

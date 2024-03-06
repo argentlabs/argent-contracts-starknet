@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { num, shortString } from "starknet";
-import { MultisigSigner, declareContract, expectRevertWithErrorMessage, randomStarknetKeyPair } from "./lib";
+import { MultisigSigner, expectRevertWithErrorMessage, randomStarknetKeyPair } from "./lib";
 import { deployMultisig, deployMultisig1_1 } from "./lib/multisig";
 
 describe("ArgentMultisig: signing", function () {

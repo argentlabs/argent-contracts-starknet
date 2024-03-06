@@ -204,7 +204,7 @@ export class StarknetKeyPair extends KeyPair {
 
   public async signRaw(messageHash: string): Promise<string[]> {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
-    return starknetSignatureType(this.guid, r, s);
+    return starknetSignatureType(this.publicKey, r, s);
   }
 }
 

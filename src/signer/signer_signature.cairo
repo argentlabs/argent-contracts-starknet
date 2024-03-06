@@ -1,5 +1,4 @@
 use argent::signer::eip191::is_valid_eip191_signature;
-use argent::signer::hashing_temp::{StructHashU256}; // delete once sessions get merged
 use argent::signer::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };
@@ -52,8 +51,8 @@ struct Secp256r1Signer {
 #[derive(Drop, Copy, PartialEq)]
 struct Eip191Signer {
     eth_address: EthAddress
-}
 
+}
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSigner {
     origin: NonZero<felt252>,
@@ -113,6 +112,7 @@ impl SignerTraitImpl of SignerTrait<Signer> {
                 .pubkey
                 .into(), //PoseidonTrait::new().update_with(('Stark', signer.pubkey)).finalize(),
             Signer::Secp256k1(signer) => {
+                // hades
                 PoseidonTrait::new()
                     .update_with(SECP256K1_SIGNER_TYPE)
                     .update_with(signer.pubkey_hash.address)
@@ -123,6 +123,7 @@ impl SignerTraitImpl of SignerTrait<Signer> {
                 PoseidonTrait::new().update_with(SECP256R1_SIGNER_TYPE).update_with(pubkey).finalize()
             },
             Signer::Eip191(signer) => {
+                // hades
                 PoseidonTrait::new().update_with(EIP191_SIGNER_TYPE).update_with(signer.eth_address.address).finalize()
             },
             Signer::Webauthn(signer) => {

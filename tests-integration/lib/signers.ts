@@ -27,10 +27,6 @@ import {
 } from "starknet";
 
 const types = {
-  Starknet: [{ name: "Starknet", type: "felt" }],
-  Secp256k1: [{ name: "Secp256k1", type: "Ethereum Address" }],
-  Secp256r1: [{ name: "Secp256r1", type: "u256" }],
-  Webauthn: [{ name: "Webauthn", type: "Webauthn Signer" }],
   "Ethereum Address": [{ name: "Pub Key Hash", type: "EthAddress" }],
   EthAddress: [{ name: "address", type: "felt" }],
   "Webauthn Signer": [
@@ -38,7 +34,13 @@ const types = {
     { name: "rp id hash", type: "u256" },
     { name: "Public Key", type: "u256" },
   ],
+  Eip191: [{ name: "Eip191", type: "Ethereum Address" }],
+  Starknet: [{ name: "Starknet", type: "felt" }],
+  Secp256k1: [{ name: "Secp256k1", type: "Ethereum Address" }],
+  Secp256r1: [{ name: "Secp256r1", type: "u256" }],
+  Webauthn: [{ name: "Webauthn", type: "Webauthn Signer" }],
 };
+
 // reflects the signer type in signer_signature.cairo
 // needs to be updated for the signer types
 // used to convert signertype to guid
@@ -47,6 +49,7 @@ export enum SignerTypeEnum {
   Secp256k1,
   Secp256r1,
   Webauthn,
+  Eip191,
 }
 
 /**

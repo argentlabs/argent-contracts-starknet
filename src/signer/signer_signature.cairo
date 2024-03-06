@@ -118,11 +118,11 @@ impl SignerTraitImpl of SignerTrait<Signer> {
                 .pubkey
                 .into(), //PoseidonTrait::new().update_with(('Stark', signer.pubkey)).finalize(),
             Signer::Secp256k1(signer) => {
-                poseidon_hash_span(array![SECP256k1_SIGNER_TYPE, signer.pubkey_hash.address].span())
+                PoseidonTrait::new().update_with(SECP256k1_SIGNER_TYPE).update_with(signer.pubkey_hash.address).finalize()
             },
             Signer::Secp256r1(signer) => {
                 let pubkey: u256 = signer.pubkey.into();
-                poseidon_hash_span(array![SECP256r1_SIGNER_TYPE, pubkey.get_struct_hash_rev_1()].span())
+                PoseidonTrait::new().update_with(SECP256r1_SIGNER_TYPE).update_with(pubkey).finalize()
             },
             Signer::Eip191(signer) => {
                 PoseidonTrait::new().update_with(('Eip191', signer.eth_address.address)).finalize()
@@ -131,10 +131,7 @@ impl SignerTraitImpl of SignerTrait<Signer> {
                 let origin: felt252 = signer.origin.into();
                 let rp_id_hash: u256 = signer.rp_id_hash.into();
                 let pubkey: u256 = signer.pubkey.into();
-                poseidon_hash_span(
-                    array![WEBAUTHN_TYPE, origin, rp_id_hash.get_struct_hash_rev_1(), pubkey.get_struct_hash_rev_1()]
-                        .span()
-                )
+                PoseidonTrait::new().update_with(WEBAUTHN_TYPE).update_with(origin).update_with(rp_id_hash).update_with(pubkey).finalize()
             },
         }
     }

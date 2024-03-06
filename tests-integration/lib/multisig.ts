@@ -1,14 +1,4 @@
-import {
-  Account,
-  CallData,
-  Contract,
-  GetTransactionReceiptResponse,
-  hash,
-  num,
-  RPC,
-  Call,
-  CairoCustomEnum,
-} from "starknet";
+import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num, RPC, Call } from "starknet";
 import {
   KeyPair,
   MultisigSigner,
@@ -16,8 +6,8 @@ import {
   LegacyMultisigSigner,
   loadContract,
   provider,
-  randomKeyPair,
-  randomKeyPairs,
+  randomStarknetKeyPair,
+  randomStarknetKeyPairs,
   fundAccountCall,
   fundAccount,
   declareContract,
@@ -28,7 +18,6 @@ export interface MultisigWallet {
   account: Account;
   accountContract: Contract;
   keys: KeyPair[];
-  signers: CairoCustomEnum[]; // public keys
   threshold: bigint;
   receipt: GetTransactionReceiptResponse;
 }
@@ -48,7 +37,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   const finalParams = {
     ...params,
     classHash: params.classHash ?? (await declareContract("ArgentMultisigAccount")),
-    salt: params.salt ?? num.toHex(randomKeyPair().privateKey),
+    salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
     useTxV3: params.useTxV3 ?? false,
     selfDeploy: params.selfDeploy ?? false,
     selfDeploymentIndexes: params.selfDeploymentIndexes ?? [0],
@@ -121,7 +110,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   );
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
-  return { account, accountContract, keys, signers, receipt, threshold: BigInt(finalParams.threshold) };
+  return { account, accountContract, keys, receipt, threshold: BigInt(finalParams.threshold) };
 }
 
 export async function deployMultisig1_3(
@@ -135,13 +124,14 @@ export async function deployMultisig1_1(
   return deployMultisig({ ...params, threshold: 1, signersLength: 1 });
 }
 
-const sortedKeyPairs = (length: number) => randomKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));
+const sortedKeyPairs = (length: number) =>
+  randomStarknetKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));
 
 export const keysToSigners = (keys: KeyPair[]) => keys.map(({ signer }) => signer);
 
 export async function deployLegacyMultisig(classHash: string) {
   const keys = [new LegacyMultisigKeyPair()];
-  const salt = num.toHex(randomKeyPair().privateKey);
+  const salt = num.toHex(randomStarknetKeyPair().privateKey);
   const constructorCalldata = CallData.compile({ threshold: 1, signers: [keys[0].publicKey] });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
   await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH

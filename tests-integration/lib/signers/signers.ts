@@ -144,7 +144,7 @@ export class MultisigSigner extends RawSigner {
 
 export class ArgentSigner extends MultisigSigner {
   constructor(
-    public owner: KeyPair = randomKeyPair(),
+    public owner: KeyPair = randomStarknetKeyPair(),
     public guardian?: KeyPair,
   ) {
     const signers = [owner];
@@ -163,8 +163,13 @@ export abstract class KeyPair extends RawSigner {
     return CallData.compile([this.signer]);
   }
 
-  public get compiledSignerOption() {
-    return CallData.compile([signerOption(this)]);
+  public get signerAsOption() {
+    return new CairoOption(CairoOptionVariant.Some, {
+      signer: this.signer,
+    });
+  }
+  public get compiledSignerAsOption() {
+    return CallData.compile([this.signerAsOption]);
   }
 }
 
@@ -218,21 +223,6 @@ export function starknetSignatureType(
   ]);
 }
 
-// TODOREMOVE
-export function intoGuid(signer: CairoCustomEnum) {
-  return signer.unwrap().signer;
-}
-
-// TODO RENAME
-export function signerOption(keyPair?: KeyPair) {
-  if (keyPair) {
-    return new CairoOption(CairoOptionVariant.Some, {
-      signer: keyPair.signer,
-    });
-  }
-  return new CairoOption(CairoOptionVariant.None);
-}
-
 export function zeroStarknetSignatureType() {
   return new CairoCustomEnum({
     Starknet: { signer: 0 },
@@ -242,6 +232,5 @@ export function zeroStarknetSignatureType() {
   });
 }
 
-// TODO RENAME TO STARKNETKEYPAIR
-export const randomKeyPair = () => new StarknetKeyPair();
-export const randomKeyPairs = (length: number) => Array.from({ length }, randomKeyPair);
+export const randomStarknetKeyPair = () => new StarknetKeyPair();
+export const randomStarknetKeyPairs = (length: number) => Array.from({ length }, randomStarknetKeyPair);

@@ -22,9 +22,9 @@ const profiler = newProfiler(provider);
 
 // With the KeyPairs hardcoded, we gotta reset to avoid some issues
 await restart();
-await removeFromCache("Proxy");
-await removeFromCache("OldArgentAccount");
-await removeFromCache("ArgentAccount");
+removeFromCache("Proxy");
+removeFromCache("OldArgentAccount");
+removeFromCache("ArgentAccount");
 
 const ethContract = await getEthContract();
 const recipient = "0xadbe1";

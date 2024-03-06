@@ -1,9 +1,11 @@
 use argent::signer::hashing_temp::{StructHashU256}; // delete once sessions get merged
+use argent::signer::eip191::is_valid_eip191_signature;
 use argent::signer::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };
 use ecdsa::check_ecdsa_signature;
-use poseidon::poseidon_hash_span;
+use hash::{HashStateExTrait, HashStateTrait};
+use poseidon::{poseidon_hash_span, PoseidonTrait};
 use starknet::SyscallResultTrait;
 use starknet::secp256_trait::{Secp256PointTrait, Signature as Secp256r1Signature, recover_public_key};
 use starknet::secp256k1::Secp256k1Point;
@@ -29,7 +31,8 @@ enum Signer {
     Starknet: StarknetSigner,
     Secp256k1: Secp256k1Signer,
     Secp256r1: Secp256r1Signer,
-    Webauthn: WebauthnSigner
+    Eip191: Eip191Signer,
+    Webauthn: WebauthnSigner,
 }
 
 trait SignerTrait<T> {
@@ -51,6 +54,11 @@ struct Secp256r1Signer {
     pubkey: NonZero<u256>
 }
 
+#[derive(Drop, Copy, PartialEq)]
+struct Eip191Signer {
+    eth_address: EthAddress
+}
+
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSigner {
     origin: NonZero<felt252>,
@@ -70,6 +78,20 @@ impl Secp256k1SignerSerde of Serde<Secp256k1Signer> {
         let pubkey_hash = Serde::<EthAddress>::deserialize(ref serialized)?;
         assert(pubkey_hash.address != 0, 'argent/zero-pubkey-hash');
         Option::Some(Secp256k1Signer { pubkey_hash })
+    }
+}
+
+impl Eip191SignerSerde of Serde<Eip191Signer> {
+    #[inline(always)]
+    fn serialize(self: @Eip191Signer, ref output: Array<felt252>) {
+        self.eth_address.serialize(ref output);
+    }
+
+    #[inline(always)]
+    fn deserialize(ref serialized: Span<felt252>) -> Option<Eip191Signer> {
+        let eth_address = Serde::<EthAddress>::deserialize(ref serialized)?;
+        assert(eth_address.address != 0, 'argent/zero-eth-EthAddress');
+        Option::Some(Eip191Signer { eth_address })
     }
 }
 
@@ -102,6 +124,9 @@ impl SignerTraitImpl of SignerTrait<Signer> {
                 let pubkey: u256 = signer.pubkey.into();
                 poseidon_hash_span(array![SECP256r1_SIGNER_TYPE, pubkey.get_struct_hash_rev_1()].span())
             },
+            Signer::Eip191(signer) => {
+                PoseidonTrait::new().update_with(('Eip191', signer.eth_address.address)).finalize()
+            },
             Signer::Webauthn(signer) => {
                 let origin: felt252 = signer.origin.into();
                 let rp_id_hash: u256 = signer.rp_id_hash.into();
@@ -122,6 +147,7 @@ enum SignerSignature {
     Starknet: (StarknetSigner, StarknetSignature),
     Secp256k1: (Secp256k1Signer, Secp256k1Signature),
     Secp256r1: (Secp256r1Signer, Secp256r1Signature),
+    Eip191: (Eip191Signer, Secp256r1Signature),
     Webauthn: (WebauthnSigner, WebauthnAssertion),
 }
 
@@ -147,6 +173,7 @@ impl SignerSignatureImpl of SignerSignatureTrait {
             SignerSignature::Secp256r1((
                 signer, signature
             )) => is_valid_secp256r1_signature(hash.into(), signer, signature),
+            SignerSignature::Eip191((signer, signature)) => is_valid_eip191_signature(hash, signer, signature),
             SignerSignature::Webauthn((signer, signature)) => is_valid_webauthn_signature(hash, signer, signature),
         }
     }
@@ -156,6 +183,7 @@ impl SignerSignatureImpl of SignerSignatureTrait {
             SignerSignature::Starknet((signer, _)) => Signer::Starknet(signer),
             SignerSignature::Secp256k1((signer, _)) => Signer::Secp256k1(signer),
             SignerSignature::Secp256r1((signer, _)) => Signer::Secp256r1(signer),
+            SignerSignature::Eip191((signer, _)) => Signer::Eip191(signer),
             SignerSignature::Webauthn((signer, _)) => Signer::Webauthn(signer)
         }
     }

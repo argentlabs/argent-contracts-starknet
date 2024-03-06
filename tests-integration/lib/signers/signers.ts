@@ -219,7 +219,7 @@ export function intoGuid(signer: CairoCustomEnum) {
   return signer.unwrap().signer;
 }
 
-export function compiledSignerOption(signer: bigint | undefined = undefined) {
+export function compiledSignerOption(signer?: bigint) {
   return CallData.compile([signerOption(signer)]);
 }
 

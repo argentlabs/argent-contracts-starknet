@@ -1,5 +1,5 @@
-use argent::signer::hashing_temp::{StructHashU256}; // delete once sessions get merged
 use argent::signer::eip191::is_valid_eip191_signature;
+use argent::signer::hashing_temp::{StructHashU256}; // delete once sessions get merged
 use argent::signer::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };

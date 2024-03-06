@@ -17,8 +17,8 @@ mod multisig {
 }
 
 mod signer {
-    mod hashing_temp;
     mod eip191;
+    mod hashing_temp;
     mod signer_signature;
     mod webauthn;
 }

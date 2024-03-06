@@ -44,7 +44,7 @@ describe("Gas griefing", function () {
     });
     account.signer = new ArgentSigner(guardian);
 
-    const compiledSigner = randomKeyPair().compiledSigner;
+    const { compiledSigner } = randomKeyPair();
     const estimate = await accountContract.estimateFee.trigger_escape_owner(compiledSigner);
 
     const maxEscapeTip = 1000000000000000000n;

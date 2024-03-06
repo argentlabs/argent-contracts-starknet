@@ -105,7 +105,7 @@ const guardian = new StarknetKeyPair(43n);
   ethContract.connect(account);
   const recipient = 69;
   await profiler.profile(
-    "Fixed webauthn",
+    "Fixed webauthn w/o guardian",
     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),
   );
 }

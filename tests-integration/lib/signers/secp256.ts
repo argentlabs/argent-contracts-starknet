@@ -1,8 +1,8 @@
-import { CairoCustomEnum, CallData, uint256, Uint256 } from "starknet";
+import { CairoCustomEnum, CallData, num, uint256, Uint256 } from "starknet";
 import { p256 as secp256r1 } from "@noble/curves/p256";
 import * as utils from "@noble/curves/abstract/utils";
 import { RecoveredSignatureType } from "@noble/curves/abstract/weierstrass";
-import { Wallet, id, Signature as EthersSignature } from "ethers";
+import { Wallet, Signature as EthersSignature } from "ethers";
 import { KeyPair } from "../signers/signers";
 
 export class EthKeyPair extends KeyPair {
@@ -10,7 +10,11 @@ export class EthKeyPair extends KeyPair {
 
   constructor(pk?: string | bigint) {
     super();
-    this.pk = pk ? `${id(pk.toString())}` : Wallet.createRandom().privateKey;
+    if (pk) {
+      this.pk = "0x" + fixedLength(num.toHex(pk));
+    } else {
+      this.pk = Wallet.createRandom().privateKey;
+    }
   }
 
   public get privateKey(): string {
@@ -32,9 +36,7 @@ export class EthKeyPair extends KeyPair {
 
   public async signRaw(messageHash: string): Promise<string[]> {
     const eth_signer = new Wallet(this.pk);
-    if (messageHash.length < 66) {
-      messageHash = "0x" + "0".repeat(66 - messageHash.length) + messageHash.slice(2);
-    }
+    messageHash = "0x" + fixedLength(messageHash);
     const signature = EthersSignature.from(eth_signer.signingKey.sign(messageHash));
 
     return ethereumSignatureType(this.publicKey, signature);
@@ -68,9 +70,7 @@ export class Secp256r1KeyPair extends KeyPair {
   }
 
   public async signRaw(messageHash: string): Promise<string[]> {
-    if (messageHash.length < 66) {
-      messageHash = "0".repeat(66 - messageHash.length) + messageHash.slice(2);
-    }
+    messageHash = fixedLength(messageHash);
     const sig = secp256r1.sign(messageHash, this.pk);
 
     return secp256r1SignatureType(this.publicKey, sig);
@@ -107,4 +107,11 @@ function secp256r1SignatureType(signer: Uint256, signature: RecoveredSignatureTy
       Webauthn: undefined,
     }),
   ]);
+}
+
+function fixedLength(hexString: string): string {
+  if (hexString.length < 66) {
+    hexString = "0".repeat(66 - hexString.length) + hexString.slice(2);
+  }
+  return hexString;
 }

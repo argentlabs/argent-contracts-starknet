@@ -16,7 +16,7 @@ import {
 } from "starknet";
 import { ethAddress, loadContract, declareContract, declareFixtureContract, strkAddress } from "./contracts";
 import { provider } from "./provider";
-import { ArgentSigner, KeyPair, compiledSignerOption, randomKeyPair, signerOption } from "./signers/signers";
+import { ArgentSigner, KeyPair, randomKeyPair, signerOption } from "./signers/signers";
 import { LegacyKeyPair, LegacyArgentSigner, LegacyStarknetKeyPair, LegacyMultisigSigner } from "./signers/legacy";
 
 export class ArgentAccount extends Account {
@@ -140,7 +140,7 @@ async function deployAccountInner(
     useTxV3: params.useTxV3 ?? false,
     selfDeploy: params.selfDeploy ?? false,
   };
-  const some_guardian = signerOption(finalParams.guardian?.publicKey);
+  const some_guardian = signerOption(finalParams.guardian);
   const constructorCalldata = CallData.compile({
     owner: finalParams.owner.signer,
     guardian: some_guardian,
@@ -234,7 +234,7 @@ export async function deployAccountWithGuardianBackup(
   const guardianBackup = params.guardianBackup ?? randomKeyPair();
 
   const wallet = (await deployAccount(params)) as ArgentWalletWithGuardianAndBackup;
-  await wallet.accountContract.change_guardian_backup(compiledSignerOption(guardianBackup.publicKey));
+  await wallet.accountContract.change_guardian_backup(guardianBackup.compiledSignerOption);
 
   wallet.account.signer = new ArgentSigner(wallet.owner, guardianBackup);
   wallet.guardianBackup = guardianBackup;

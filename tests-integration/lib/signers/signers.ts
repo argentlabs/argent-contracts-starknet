@@ -155,16 +155,16 @@ export class ArgentSigner extends MultisigSigner {
   }
 }
 
-export abstract class Signer extends RawSigner {
-  abstract get publicKey(): any;
-}
-
-export abstract class KeyPair extends Signer {
+export abstract class KeyPair extends RawSigner {
   abstract get signer(): CairoCustomEnum;
-  abstract get privateKey(): string;
+  abstract get guid(): bigint;
 
   public get compiledSigner(): Calldata {
     return CallData.compile([this.signer]);
+  }
+
+  public get compiledSignerOption() {
+    return CallData.compile([signerOption(this)]);
   }
 }
 
@@ -184,9 +184,13 @@ export class StarknetKeyPair extends KeyPair {
     return BigInt(ec.starkCurve.getStarkKey(this.pk));
   }
 
+  public get guid() {
+    return BigInt(ec.starkCurve.getStarkKey(this.pk));
+  }
+
   public get signer(): CairoCustomEnum {
     return new CairoCustomEnum({
-      Starknet: { signer: this.publicKey },
+      Starknet: { signer: this.guid },
       Secp256k1: undefined,
       Secp256r1: undefined,
       Webauthn: undefined,
@@ -195,7 +199,7 @@ export class StarknetKeyPair extends KeyPair {
 
   public async signRaw(messageHash: string): Promise<string[]> {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
-    return starknetSignatureType(this.publicKey, r, s);
+    return starknetSignatureType(this.guid, r, s);
   }
 }
 
@@ -214,24 +218,16 @@ export function starknetSignatureType(
   ]);
 }
 
-// TODO Once more used, this should eventually become a function on KeyPair
+// TODOREMOVE
 export function intoGuid(signer: CairoCustomEnum) {
   return signer.unwrap().signer;
 }
 
-export function compiledSignerOption(signer?: bigint) {
-  return CallData.compile([signerOption(signer)]);
-}
-
-export function signerOption(signer: bigint | undefined = undefined) {
-  if (signer) {
+// TODO RENAME
+export function signerOption(keyPair?: KeyPair) {
+  if (keyPair) {
     return new CairoOption(CairoOptionVariant.Some, {
-      signer: new CairoCustomEnum({
-        Starknet: { signer },
-        Secp256k1: undefined,
-        Secp256r1: undefined,
-        Webauthn: undefined,
-      }),
+      signer: keyPair.signer,
     });
   }
   return new CairoOption(CairoOptionVariant.None);
@@ -246,5 +242,6 @@ export function zeroStarknetSignatureType() {
   });
 }
 
+// TODO RENAME TO STARKNETKEYPAIR
 export const randomKeyPair = () => new StarknetKeyPair();
 export const randomKeyPairs = (length: number) => Array.from({ length }, randomKeyPair);

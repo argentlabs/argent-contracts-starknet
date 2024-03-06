@@ -14,7 +14,6 @@ import {
   declareFixtureContract,
   waitForTransaction,
   signChangeOwnerMessage,
-  compiledSignerOption,
   signerOption,
   getEthBalance,
 } from "./lib";
@@ -22,7 +21,7 @@ import {
 describe("ArgentAccount: events", function () {
   it("Expect 'AccountCreated' and 'OwnerAddded' when deploying an account", async function () {
     const owner = randomKeyPair();
-    const guardian = signerOption(42n);
+    const guardian = signerOption(randomKeyPair());
     const constructorCalldata = CallData.compile({ owner: owner.signer, guardian });
     const { transaction_hash, contract_address } = await deployer.deployContract({
       classHash: await declareContract("ArgentAccount"),
@@ -32,14 +31,14 @@ describe("ArgentAccount: events", function () {
     await expectEvent(transaction_hash, {
       from_address: contract_address,
       eventName: "AccountCreated",
-      additionalKeys: [owner.publicKey.toString()],
+      additionalKeys: [owner.guid.toString()],
       data: ["42"],
     });
 
     await expectEvent(transaction_hash, {
       from_address: contract_address,
       eventName: "OwnerAdded",
-      additionalKeys: [owner.publicKey.toString()],
+      additionalKeys: [owner.guid.toString()],
     });
   });
 
@@ -54,7 +53,7 @@ describe("ArgentAccount: events", function () {
     await expectEvent(() => accountContract.trigger_escape_owner(newOwner.compiledSigner), {
       from_address: account.address,
       eventName: "EscapeOwnerTriggered",
-      data: [activeAt, newOwner.publicKey.toString()],
+      data: [activeAt, newOwner.guid.toString()],
     });
   });
 
@@ -71,19 +70,19 @@ describe("ArgentAccount: events", function () {
     await expectEvent(receipt, {
       from_address: account.address,
       eventName: "OwnerEscaped",
-      data: [newOwner.publicKey.toString()],
+      data: [newOwner.guid.toString()],
     });
 
     await expectEvent(receipt, {
       from_address: account.address,
       eventName: "OwnerRemoved",
-      additionalKeys: [owner.publicKey.toString()],
+      additionalKeys: [owner.guid.toString()],
     });
 
     await expectEvent(receipt, {
       from_address: account.address,
       eventName: "OwnerAdded",
-      additionalKeys: [newOwner.publicKey.toString()],
+      additionalKeys: [newOwner.guid.toString()],
     });
   });
 
@@ -105,10 +104,10 @@ describe("ArgentAccount: events", function () {
   it("Expect 'GuardianEscaped(new_signer)' on escape_guardian", async function () {
     const { account, accountContract, owner } = await deployAccount();
     account.signer = new ArgentSigner(owner);
-    const newGuardian = 42n;
+    const newGuardian = randomKeyPair();
     await setTime(42);
 
-    await accountContract.trigger_escape_guardian(compiledSignerOption(newGuardian));
+    await accountContract.trigger_escape_guardian(newGuardian.compiledSignerOption);
     await increaseTime(ESCAPE_SECURITY_PERIOD);
 
     await expectEvent(() => accountContract.escape_guardian(), {
@@ -124,33 +123,33 @@ describe("ArgentAccount: events", function () {
     const newOwner = randomKeyPair();
     const chainId = await provider.getChainId();
 
-    const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.publicKey, newOwner, chainId);
+    const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.guid, newOwner, chainId);
     const receipt = await waitForTransaction(await accountContract.change_owner(starknetSignature));
     await expectEvent(receipt, {
       from_address: accountContract.address,
       eventName: "OwnerChanged",
-      data: [newOwner.publicKey.toString()],
+      data: [newOwner.guid.toString()],
     });
 
     await expectEvent(receipt, {
       from_address: accountContract.address,
       eventName: "OwnerRemoved",
-      additionalKeys: [owner.publicKey.toString()],
+      additionalKeys: [owner.guid.toString()],
     });
 
     await expectEvent(receipt, {
       from_address: accountContract.address,
       eventName: "OwnerAdded",
-      additionalKeys: [newOwner.publicKey.toString()],
+      additionalKeys: [newOwner.guid.toString()],
     });
   });
 
   it("Expect 'GuardianChanged(new_guardian)' on change_guardian", async function () {
     const { accountContract } = await deployAccount();
 
-    const newGuardian = 42n;
+    const newGuardian = randomKeyPair();
 
-    await expectEvent(() => accountContract.change_guardian(compiledSignerOption(newGuardian)), {
+    await expectEvent(() => accountContract.change_guardian(newGuardian.compiledSignerOption), {
       from_address: accountContract.address,
       eventName: "GuardianChanged",
       data: [newGuardian.toString()],
@@ -160,9 +159,9 @@ describe("ArgentAccount: events", function () {
   it("Expect 'GuardianBackupChanged(new_guardian_backup)' on change_guardian_backup", async function () {
     const { accountContract } = await deployAccount();
 
-    const newGuardianBackup = 42n;
+    const newGuardianBackup = randomKeyPair();
 
-    await expectEvent(() => accountContract.change_guardian_backup(compiledSignerOption(newGuardianBackup)), {
+    await expectEvent(() => accountContract.change_guardian_backup(newGuardianBackup.compiledSignerOption), {
       from_address: accountContract.address,
       eventName: "GuardianBackupChanged",
       data: [newGuardianBackup.toString()],
@@ -188,7 +187,7 @@ describe("ArgentAccount: events", function () {
       const { account, accountContract, owner, guardian } = await deployAccount();
       account.signer = new ArgentSigner(owner);
 
-      await accountContract.trigger_escape_guardian(compiledSignerOption(42n));
+      await accountContract.trigger_escape_guardian(randomKeyPair().compiledSignerOption);
 
       account.signer = new ArgentSigner(owner, guardian);
       await expectEvent(() => accountContract.cancel_escape(), {
@@ -214,9 +213,9 @@ describe("ArgentAccount: events", function () {
       const { account, accountContract, owner } = await deployAccount();
       account.signer = new ArgentSigner(owner);
 
-      await accountContract.trigger_escape_guardian(compiledSignerOption(42n));
+      await accountContract.trigger_escape_guardian(randomKeyPair().compiledSignerOption);
 
-      await expectEvent(() => accountContract.trigger_escape_guardian(compiledSignerOption(42n)), {
+      await expectEvent(() => accountContract.trigger_escape_guardian(randomKeyPair().compiledSignerOption), {
         from_address: account.address,
         eventName: "EscapeCanceled",
       });

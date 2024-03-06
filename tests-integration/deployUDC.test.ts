@@ -12,7 +12,7 @@ describe("Deploy UDC", function () {
 
     const callData = CallData.compile({
       owner: owner.signer,
-      guardian: signerOption(guardian.publicKey),
+      guardian: signerOption(guardian),
     });
 
     const calculatedAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, callData, 0);

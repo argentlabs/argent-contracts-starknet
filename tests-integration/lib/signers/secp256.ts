@@ -13,12 +13,12 @@ export class EthKeyPair extends KeyPair {
     this.pk = pk ? "0x" + fixedLength(num.toHex(pk)) : Wallet.createRandom().privateKey;
   }
 
-  public get privateKey(): string {
-    return this.pk;
-  }
-
   public get publicKey() {
     return BigInt(new Wallet(this.pk).address);
+  }
+
+  public get guid(): bigint {
+    throw new Error("Not implemented yet");
   }
 
   public get signer(): CairoCustomEnum {
@@ -47,13 +47,13 @@ export class Secp256r1KeyPair extends KeyPair {
     this.pk = BigInt(pk ? `${pk}` : Wallet.createRandom().privateKey);
   }
 
-  public get privateKey(): string {
-    return this.pk.toString();
-  }
-
   public get publicKey() {
     const publicKey = secp256r1.getPublicKey(this.pk).slice(1);
     return uint256.bnToUint256("0x" + utils.bytesToHex(publicKey));
+  }
+
+  public get guid(): bigint {
+    throw new Error("Not implemented yet");
   }
 
   public get signer() {

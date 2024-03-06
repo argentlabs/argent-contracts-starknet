@@ -8,7 +8,7 @@ import {
   hash,
   uint256,
 } from "starknet";
-import { Signer, fundAccount, provider } from "..";
+import { KeyPair, fundAccount, provider } from "..";
 
 // Bytes fn
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
@@ -36,9 +36,14 @@ const rpIdHash: string = buf2hex(
     92, 243, 186, 131, 29, 151, 99,
   ]),
 );
-
 const origin = "http://localhost:5173";
 
+const pubkey = buf2hex(
+  new Uint8Array([
+    192, 124, 237, 241, 226, 51, 92, 202, 34, 77, 132, 203, 43, 154, 106, 52, 77, 189, 35, 141, 70, 74, 180, 32, 83,
+    247, 183, 175, 65, 250, 101, 106,
+  ]),
+);
 interface WebauthnAssertion {
   authenticatorData: Uint8Array;
   clientDataJson: Uint8Array;
@@ -47,14 +52,9 @@ interface WebauthnAssertion {
   yParity: boolean;
 }
 
-class WebauthnOwner extends Signer {
-  public get publicKey() {
-    return buf2hex(
-      new Uint8Array([
-        192, 124, 237, 241, 226, 51, 92, 202, 34, 77, 132, 203, 43, 154, 106, 52, 77, 189, 35, 141, 70, 74, 180, 32, 83,
-        247, 183, 175, 65, 250, 101, 106,
-      ]),
-    );
+class WebauthnOwner extends KeyPair {
+  public get guid(): bigint {
+    throw new Error("Not yet implemented");
   }
 
   public get signer(): CairoCustomEnum {
@@ -65,7 +65,7 @@ class WebauthnOwner extends Signer {
       Webauthn: {
         origin,
         rp_id_hash: uint256.bnToUint256(rpIdHash),
-        pubkey: uint256.bnToUint256(this.publicKey),
+        pubkey: uint256.bnToUint256(pubkey),
       },
     });
   }
@@ -79,7 +79,7 @@ class WebauthnOwner extends Signer {
     const cairoAssertion = {
       origin,
       rp_id_hash: uint256.bnToUint256(rpIdHash),
-      pubkey: uint256.bnToUint256(this.publicKey),
+      pubkey: uint256.bnToUint256(pubkey),
       authenticator_data: CallData.compile(Array.from(authenticatorData)),
       client_data_json: CallData.compile(Array.from(clientDataJson)),
       signature: {

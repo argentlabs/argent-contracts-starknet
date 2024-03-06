@@ -8,7 +8,7 @@ console.log("TestDapp class hash:", testDappClassHash);
 
 console.log("Deploying new multisig");
 
-const { account, keys, signers } = await deployMultisig({
+const { account, signers } = await deployMultisig({
   threshold: 1,
   signersLength: 2,
   classHash: multisigClassHash,
@@ -16,10 +16,6 @@ const { account, keys, signers } = await deployMultisig({
 
 console.log("Account address:", account.address);
 console.log("Account signers:", signers);
-console.log(
-  "Account private keys:",
-  keys.map(({ privateKey }) => privateKey),
-);
 
 console.log("Deploying new test dapp");
 const { contract_address } = await deployer.deployContract({ classHash: testDappClassHash });

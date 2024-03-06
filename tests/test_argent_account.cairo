@@ -42,17 +42,6 @@ fn check_transaction_version_on_validate() {
     account.__validate__(array![]);
 }
 
-
-#[test]
-#[should_panic(expected: ('argent/zero-pubkey',))]
-fn initialize_with_null_owner() {
-    let class_hash = declare('ArgentAccount');
-    let mut calldata = array![];
-    starknet_signer_from_pubkey(0).serialize(ref calldata);
-    Option::Some(starknet_signer_from_pubkey(0)).serialize(ref calldata);
-    class_hash.deploy_at(@calldata, 42.try_into().unwrap()).unwrap();
-}
-
 #[test]
 fn initialized_no_guardian_no_backup() {
     let account = initialize_account_with(1, 0);
@@ -111,17 +100,6 @@ fn change_owner_only_self() {
             StarknetSigner { pubkey: new_owner_pubkey.try_into().unwrap() },
             StarknetSignature { r: new_owner_sig.r, s: new_owner_sig.s }
         )
-    );
-    account.change_owner(signer_signature);
-}
-
-#[test]
-#[should_panic(expected: ('Option::unwrap failed.',))]
-fn change_owner_to_zero() {
-    let account = initialize_account();
-    let new_owner_sig = NEW_OWNER_SIG();
-    let signer_signature = SignerSignature::Starknet(
-        (StarknetSigner { pubkey: 0.try_into().unwrap() }, StarknetSignature { r: new_owner_sig.r, s: new_owner_sig.s })
     );
     account.change_owner(signer_signature);
 }

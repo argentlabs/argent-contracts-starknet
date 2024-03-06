@@ -242,7 +242,7 @@ describe("ArgentAccount", function () {
       const newGuardianBackup = randomStarknetKeyPair();
       await accountContract.change_guardian_backup(newGuardianBackup.compiledSignerAsOption);
 
-      await accountContract.get_guardian_backup().should.eventually.equal(newGuardianBackup);
+      await accountContract.get_guardian_backup().should.eventually.equal(newGuardianBackup.guid);
     });
 
     it("Should be possible to change_guardian_backup to zero", async function () {

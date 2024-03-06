@@ -3,6 +3,12 @@ use snforge_std::{declare, ContractClassTrait, ContractClass};
 use starknet::{contract_address_const, account::Call};
 
 // failing test for now
+// As execute doesn't return a result, we cannot catch the 'call_contract_syscall' error
+// "While the Cairo test runner propagates errors to the calling 
+// contract when safe dispatchers are used, the non-panicking behavior 
+// will not be observed on Starknet itself! The production systems (Starknet Testnet or Mainnet) 
+// do not yet support graceful failure in internal calls. If an inner call panics, the entire 
+// transaction immediately reverts. This will change in the future,"
 // #[test]
 // #[should_panic(expected: ('argent/multicall-failed', 0, 'CONTRACT_NOT_DEPLOYED'))]
 // fn execute_multicall_simple() {

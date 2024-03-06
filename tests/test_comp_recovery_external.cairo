@@ -38,7 +38,7 @@ fn GUARDIAN() -> ContractAddress {
 fn setup() -> (IRecoveryDispatcher, IToggleExternalRecoveryDispatcher, IArgentMultisigDispatcher) {
     let contract_class = declare('ExternalRecoveryMock');
     let constructor = array![];
-    let contract_address = contract_class.deploy_at(@constructor, 200.try_into().unwrap()).expect('Deployment failed');
+    let contract_address = contract_class.deploy(@constructor).expect('Deployment failed');
 
     start_prank(CheatTarget::One(contract_address), contract_address);
     IArgentMultisigDispatcher { contract_address }.add_signers(2, array![SIGNER_1(), SIGNER_2()]);

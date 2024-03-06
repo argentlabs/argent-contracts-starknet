@@ -26,31 +26,6 @@ import {
   stark,
 } from "starknet";
 
-const types = {
-  StarknetSigner: [{ name: "Public Key", type: "felt" }],
-  Secp256k1Signer: [{ name: "Public Key Hash", type: "EthAddress" }],
-  Secp256r1Signer: [{ name: "Public Key", type: "u256" }],
-  Eip191Signer: [{ name: "Ethereum Address", type: "EthAddress" }],
-  WebauthnSigner: [
-    { name: "origin", type: "felt" },
-    { name: "rp id hash", type: "u256" },
-    { name: "Public Key", type: "u256" },
-  ],
-  EthAddress: [{ name: "address", type: "felt" }],
-};
-
-const activeRev = typedData.TypedDataRevision.Active;
-
-export const STARKNET_SIGNER_TYPE_HASH = typedData.getTypeHash(types, "StarknetSigner", activeRev);
-
-export const SECP256K1_SIGNER_TYPE_HASH = typedData.getTypeHash(types, "Secp256k1Signer", activeRev);
-
-export const SECP256R1_SIGNER_TYPE_HASH = typedData.getTypeHash(types, "Secp256r1Signer", activeRev);
-
-export const EIP191_SIGNER_TYPE_HASH = typedData.getTypeHash(types, "Eip191Signer", activeRev);
-
-export const WEB_AUTHN_SIGNER_TYPE_HASH = typedData.getTypeHash(types, "WebauthnSigner", activeRev);
-
 // reflects the signer type in signer_signature.cairo
 // needs to be updated for the signer types
 // used to convert signertype to guid

@@ -10,11 +10,7 @@ export class EthKeyPair extends KeyPair {
 
   constructor(pk?: string | bigint) {
     super();
-    if (pk) {
-      this.pk = "0x" + fixedLength(num.toHex(pk));
-    } else {
-      this.pk = Wallet.createRandom().privateKey;
-    }
+    this.pk = pk ? "0x" + fixedLength(num.toHex(pk)) : Wallet.createRandom().privateKey;
   }
 
   public get privateKey(): string {

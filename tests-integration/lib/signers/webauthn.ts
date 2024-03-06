@@ -8,7 +8,7 @@ import {
   hash,
   uint256,
 } from "starknet";
-import { KeyPair, fundAccount, provider } from "..";
+import { Signer, fundAccount, provider } from "..";
 
 // Bytes fn
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
@@ -47,11 +47,7 @@ interface WebauthnAssertion {
   yParity: boolean;
 }
 
-class WebauthnOwner extends KeyPair {
-  public get privateKey(): string {
-    throw new Error(`Not supported`);
-  }
-
+class WebauthnOwner extends Signer {
   public get publicKey() {
     return buf2hex(
       new Uint8Array([

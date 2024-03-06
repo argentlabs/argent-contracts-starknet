@@ -155,10 +155,13 @@ export class ArgentSigner extends MultisigSigner {
   }
 }
 
-export abstract class KeyPair extends RawSigner {
+export abstract class Signer extends RawSigner {
+  abstract get publicKey(): any;
+}
+
+export abstract class KeyPair extends Signer {
   abstract get signer(): CairoCustomEnum;
   abstract get privateKey(): string;
-  abstract get publicKey(): any;
 
   public get compiledSigner(): Calldata {
     return CallData.compile([this.signer]);

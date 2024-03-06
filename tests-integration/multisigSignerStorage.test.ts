@@ -130,7 +130,9 @@ describe("ArgentMultisig: signer storage", function () {
       it(`Removing at index(es): ${indicesToRemove}`, async function () {
         const { accountContract, keys, threshold } = await deployMultisig1_3();
 
-        await accountContract.remove_signers(CallData.compile([threshold, testCase.map((index) => keys[index].signer)]));
+        await accountContract.remove_signers(
+          CallData.compile([threshold, testCase.map((index) => keys[index].signer)]),
+        );
 
         testCase.forEach(async (signerIndex) => {
           await accountContract.is_signer_guid(keys[signerIndex].guid).should.eventually.be.false;
@@ -195,7 +197,9 @@ describe("ArgentMultisig: signer storage", function () {
 
       const { accountContract, keys } = await deployMultisig1_1();
 
-      const { transaction_hash } = await accountContract.replace_signer(CallData.compile([keys[0].signer, newSigner.signer]));
+      const { transaction_hash } = await accountContract.replace_signer(
+        CallData.compile([keys[0].signer, newSigner.signer]),
+      );
 
       await expectEvent(transaction_hash, {
         from_address: accountContract.address,

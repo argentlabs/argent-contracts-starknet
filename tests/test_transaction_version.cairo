@@ -1,7 +1,6 @@
 use argent::utils::transaction_version::{
     assert_correct_invoke_version, assert_correct_deploy_account_version, assert_correct_declare_version
 };
-use starknet::{contract_address_const, account::Call};
 
 #[test]
 fn test_assert_correct_invoke_version() {

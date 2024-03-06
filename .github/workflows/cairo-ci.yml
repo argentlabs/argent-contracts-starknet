@@ -13,7 +13,7 @@ jobs:
       - name: Step 3 - Setting up snfoundry
         uses: foundry-rs/setup-snfoundry@v3
       - name: Step 4 - Running tests
-        run: snforge test
+        run: scarb test
   
   format:
     runs-on: buildjet-4vcpu-ubuntu-2204

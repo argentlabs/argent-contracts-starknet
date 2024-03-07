@@ -27,6 +27,10 @@ mod webauthn {
     mod test_webauthn_sha256;
 }
 
+mod eip191 {
+    mod test_eip191;
+}
+
 mod mocks {
     mod multisig_mocks;
     mod recovery_mocks;

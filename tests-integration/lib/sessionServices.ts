@@ -248,6 +248,7 @@ export class DappService {
     });
   }
 
+  // TODO Can this be removed?
   // method needed as starknetSignatureType in signer.ts is already compiled
   private getStarknetSignatureType(signer: BigNumberish, signature: bigint[]) {
     return new CairoCustomEnum({

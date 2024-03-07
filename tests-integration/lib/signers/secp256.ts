@@ -22,7 +22,7 @@ export class EthKeyPair extends KeyPair {
   }
 
   public get signer(): CairoCustomEnum {
-    return signerTypeToCustomEnum(SignerType.Starknet, { signer: this.publicKey });
+    return signerTypeToCustomEnum(SignerType.Secp256k1, { signer: this.publicKey });
   }
 
   public async signRaw(messageHash: string): Promise<string[]> {

@@ -1,14 +1,11 @@
+use argent::mocks::multisig_mocks::MultisigMock;
 use argent::multisig::interface::IArgentMultisig;
 use argent::multisig::interface::IArgentMultisigInternal;
-use argent::multisig::{multisig::multisig_component};
+use argent::multisig::multisig::multisig_component;
 use argent::signer::{signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey, SignerTrait}};
 use argent::signer_storage::signer_list::signer_list_component;
-use argent_tests::mocks::multisig_mocks::MultisigMock;
-use core::array::ArrayTrait;
-
-const signer_pubkey_1: felt252 = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;
-const signer_pubkey_2: felt252 = 0x759ca09377679ecd535a81e83039658bf40959283187c654c5416f439403cf5;
-const signer_pubkey_3: felt252 = 0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2f96fec5ba847310b20;
+use snforge_std::{start_prank, CheatTarget, test_address};
+use super::setup::constants::{MULTISIG_OWNER};
 
 type ComponentState = multisig_component::ComponentState<MultisigMock::ContractState>;
 
@@ -17,15 +14,15 @@ fn COMPONENT_STATE() -> ComponentState {
 }
 
 fn SIGNER_1() -> Signer {
-    starknet_signer_from_pubkey(signer_pubkey_1)
+    starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)
 }
 
 fn SIGNER_2() -> Signer {
-    starknet_signer_from_pubkey(signer_pubkey_2)
+    starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey)
 }
 
 fn SIGNER_3() -> Signer {
-    starknet_signer_from_pubkey(signer_pubkey_3)
+    starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey)
 }
 
 // Initialize
@@ -81,6 +78,7 @@ fn test_change_threshold() {
     let mut component = COMPONENT_STATE();
     component.initialize(2, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     assert(component.get_threshold() == 2, 'wrong threshold');
+    start_prank(CheatTarget::All, test_address());
     component.change_threshold(3);
     assert(component.get_threshold() == 3, 'wrong threshold');
 }
@@ -91,6 +89,7 @@ fn test_change_threshold_same() {
     let mut component = COMPONENT_STATE();
     component.initialize(2, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     assert(component.get_threshold() == 2, 'wrong threshold');
+    start_prank(CheatTarget::All, test_address());
     component.change_threshold(2);
 }
 
@@ -98,6 +97,7 @@ fn test_change_threshold_same() {
 
 #[test]
 fn test_add_1_signer_same_threshold() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(2, array![SIGNER_1(), SIGNER_2()]);
     assert(component.get_signer_guids().len() == 2, 'wrong signer length');
@@ -109,6 +109,7 @@ fn test_add_1_signer_same_threshold() {
 
 #[test]
 fn test_add_2_signers_same_threshold() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1()]);
     assert(component.get_signer_guids().len() == 1, 'wrong signer length');
@@ -122,6 +123,7 @@ fn test_add_2_signers_same_threshold() {
 #[test]
 #[should_panic(expected: ('argent/bad-threshold',))]
 fn test_add_1_signer_invalid_threshold() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(2, array![SIGNER_1(), SIGNER_2()]);
     component.add_signers(4, array![SIGNER_3()]);
@@ -131,6 +133,7 @@ fn test_add_1_signer_invalid_threshold() {
 
 #[test]
 fn test_remove_first_signer() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(1, array![SIGNER_1()]);
@@ -140,6 +143,7 @@ fn test_remove_first_signer() {
 
 #[test]
 fn test_remove_middle_signer() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(1, array![SIGNER_2()]);
@@ -149,6 +153,7 @@ fn test_remove_middle_signer() {
 
 #[test]
 fn test_remove_last_signer() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(1, array![SIGNER_3()]);
@@ -158,6 +163,7 @@ fn test_remove_last_signer() {
 
 #[test]
 fn test_remove_2_signers() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(1, array![SIGNER_3(), SIGNER_1()]);
@@ -169,6 +175,7 @@ fn test_remove_2_signers() {
 #[test]
 #[should_panic(expected: ('argent/bad-threshold',))]
 fn test_remove_signer_invalid_threshold() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(3, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(3, array![SIGNER_3()]);
@@ -177,6 +184,7 @@ fn test_remove_signer_invalid_threshold() {
 #[test]
 #[should_panic(expected: ('argent/invalid-signers-len',))]
 fn test_remove_all_signers() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(3, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
@@ -185,6 +193,7 @@ fn test_remove_all_signers() {
 #[test]
 #[should_panic(expected: ('argent/not-a-signer',))]
 fn test_remove_unknown_signer() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2()]);
     component.remove_signers(1, array![SIGNER_3()]);
@@ -194,6 +203,7 @@ fn test_remove_unknown_signer() {
 
 #[test]
 fn test_replace_first_signer() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2()]);
     component.replace_signer(SIGNER_1(), SIGNER_3());
@@ -204,6 +214,7 @@ fn test_replace_first_signer() {
 
 #[test]
 fn test_replace_last_signer() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2()]);
     component.replace_signer(SIGNER_2(), SIGNER_3());
@@ -215,6 +226,7 @@ fn test_replace_last_signer() {
 #[test]
 #[should_panic(expected: ('argent/not-a-signer',))]
 fn test_replace_unknown_signer() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1()]);
     component.replace_signer(SIGNER_2(), SIGNER_3());
@@ -223,6 +235,7 @@ fn test_replace_unknown_signer() {
 #[test]
 #[should_panic(expected: ('argent/already-a-signer',))]
 fn test_replace_duplicate_signer() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2()]);
     component.replace_signer(SIGNER_2(), SIGNER_1());
@@ -232,6 +245,7 @@ fn test_replace_duplicate_signer() {
 
 #[test]
 fn test_reorder_all_signers() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(3, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.reorder_signers(array![SIGNER_2(), SIGNER_3(), SIGNER_1()]);
@@ -243,6 +257,7 @@ fn test_reorder_all_signers() {
 
 #[test]
 fn test_reorder_2_signers() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.reorder_signers(array![SIGNER_1(), SIGNER_3(), SIGNER_2()]);
@@ -255,6 +270,7 @@ fn test_reorder_2_signers() {
 #[test]
 #[should_panic(expected: ('argent/too-short',))]
 fn test_reorder_wrong_length() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.reorder_signers(array![SIGNER_2(), SIGNER_3()]);
@@ -263,7 +279,9 @@ fn test_reorder_wrong_length() {
 #[test]
 #[should_panic(expected: ('argent/not-a-signer',))]
 fn test_reorder_unknown_signer() {
+    start_prank(CheatTarget::All, test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2()]);
     component.reorder_signers(array![SIGNER_2(), SIGNER_3()]);
 }
+

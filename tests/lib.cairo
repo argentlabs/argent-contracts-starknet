@@ -16,6 +16,7 @@ mod test_transaction_version;
 
 mod setup {
     mod account_test_setup;
+    mod constants;
     mod multisig_test_setup;
     mod utils;
     mod webauthn_test_setup;
@@ -29,11 +30,4 @@ mod webauthn {
 
 mod eip191 {
     mod test_eip191;
-}
-
-mod mocks {
-    mod multisig_mocks;
-    mod recovery_mocks;
-    mod signer_list_mocks;
-    mod src5_mocks;
 }

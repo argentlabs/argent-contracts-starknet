@@ -19,21 +19,21 @@ describe("ArgentAccount: outside execution", function () {
   this.timeout(320000);
 
   let argentSessionAccountClassHash: string;
-  let testDapp: Contract;
+  let mockDapp: Contract;
 
   before(async () => {
     argentSessionAccountClassHash = await declareContract("ArgentAccount");
-    const testDappClassHash = await declareContract("TestDapp");
+    const mockDappClassHash = await declareContract("MockDapp");
     const { contract_address } = await deployer.deployContract({
-      classHash: testDappClassHash,
+      classHash: mockDappClassHash,
     });
-    testDapp = await loadContract(contract_address);
+    mockDapp = await loadContract(contract_address);
   });
 
   it("Basics", async function () {
     const { account, guardian } = await deployAccount({ classHash: argentSessionAccountClassHash });
 
-    const { account: testDappAccount } = await deployAccount();
+    const { account: mockDappAccount } = await deployAccount();
 
     const backendService = new BackendService(guardian as StarknetKeyPair);
     const dappService = new DappService(backendService);
@@ -41,7 +41,7 @@ describe("ArgentAccount: outside execution", function () {
 
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": testDapp.address,
+        "Contract Address": mockDapp.address,
         selector: "set_number",
       },
     ];
@@ -50,20 +50,20 @@ describe("ArgentAccount: outside execution", function () {
 
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
 
-    const calls = [testDapp.populateTransaction.set_number(42n)];
+    const calls = [mockDapp.populateTransaction.set_number(42n)];
 
     const outsideExecutionCall = await dappService.getOutsideExecutionCall(
       sessionRequest,
       accountSessionSignature,
       calls,
       account.address,
-      testDappAccount.address,
+      mockDappAccount.address,
     );
 
     await setTime(initialTime);
 
-    await testDappAccount.execute(outsideExecutionCall);
+    await mockDappAccount.execute(outsideExecutionCall);
 
-    await testDapp.get_number(account.address).should.eventually.equal(42n);
+    await mockDapp.get_number(account.address).should.eventually.equal(42n);
   });
 });

@@ -1,23 +1,18 @@
 use argent::presets::argent_account::ArgentAccount;
 use argent::signer::signer_signature::{
-    Signer, SignerSignature, StarknetSignature, StarknetSigner, SignerTrait, starknet_signer_from_pubkey
+    Signer, SignerSignature, StarknetSignature, SignerTrait, StarknetSigner, starknet_signer_from_pubkey
 };
-use argent_tests::setup::account_test_setup::{
-    ITestArgentAccountDispatcherTrait, owner_pubkey, wrong_owner_pubkey, initialize_account_with, initialize_account,
-    initialize_account_without_guardian
+use snforge_std::cheatcodes::contract_class::ContractClassTrait;
+use snforge_std::{start_prank, declare, start_spoof, get_class_hash, ContractClass, CheatTarget, TxInfoMockTrait};
+use starknet::{contract_address_const, get_tx_info};
+use super::setup::{
+    account_test_setup::{
+        ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
+        initialize_account_without_guardian
+    },
+    utils::{set_tx_version_foundry, felt252TryIntoStarknetSigner},
+    constants::{OWNER, GUARDIAN, NEW_OWNER, WRONG_OWNER, ARGENT_ACCOUNT_ADDRESS}
 };
-use core::option::OptionTrait;
-use core::result::ResultTrait;
-use core::serde::Serde;
-use core::traits::TryInto;
-use starknet::{contract_address_const, deploy_syscall, testing::{set_version, set_contract_address}};
-
-const new_owner_pubkey: felt252 = 0xa7da05a4d664859ccd6e567b935cdfbfe3018c7771cb980892ef38878ae9bc;
-const new_owner_r: felt252 = 0x149c4c5bcf1676d440a6095b8635f027c45ceb7aa5e731d0785ade0e086aa83;
-const new_owner_s: felt252 = 0x52988bad1a94404491228228b6a923d1106ff4ba7f37e4d0710df4aaa4f8528;
-
-const wrong_owner_r: felt252 = 0x4be5db0599a2e5943f207da3f9bf2dd091acf055b71a1643e9c35fcd7e2c0df;
-const wrong_owner_s: felt252 = 0x2e44d5bad55a0d692e02529e7060f352fde85fae8d5946f28c34a10a29bc83b;
 
 #[test]
 fn initialize() {
@@ -28,20 +23,20 @@ fn initialize() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/invalid-tx-version', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/invalid-tx-version',))]
 fn check_transaction_version_on_execute() {
     let account = initialize_account();
-    set_contract_address(contract_address_const::<0>());
-    set_version(32);
+    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<0>());
+    set_tx_version_foundry(32, account.contract_address);
     account.__execute__(array![]);
 }
 
 #[test]
-#[should_panic(expected: ('argent/invalid-tx-version', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/invalid-tx-version',))]
 fn check_transaction_version_on_validate() {
     let account = initialize_account();
-    set_contract_address(contract_address_const::<0>());
-    set_version(32);
+    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<0>());
+    set_tx_version_foundry(32, account.contract_address);
     account.__validate__(array![]);
 }
 
@@ -75,56 +70,48 @@ fn erc165_supported_interfaces() {
     );
 }
 
-// Test commented until we use forge, because the account address keeps changing.
-// There is an equivalent test on the integration tests
-// #[test]
-// fn change_owner() {
-//     let signer_signature = SignerSignature::Starknet(
-//         (
-//             StarknetSigner { pubkey: new_owner_pubkey.try_into().expect('argent/zero-pubkey') },
-//             StarknetSignature { r: new_owner_r, s: new_owner_s }
-//         )
-//     );
-//     account.change_owner(signer_signature);
-//     assert(account.get_owner() == new_owner_pubkey.try_into().unwrap(), 'value should be new owner pub');
-// }
+#[test]
+fn change_owner() {
+    let account = initialize_account();
+    assert(account.get_owner() == OWNER().pubkey, 'owner not correctly set');
+    let new_owner_pubkey = NEW_OWNER().pubkey;
+    let signer_signature = SignerSignature::Starknet(
+        (new_owner_pubkey.try_into().unwrap(), StarknetSignature { r: NEW_OWNER().sig.r, s: NEW_OWNER().sig.s })
+    );
+    account.change_owner(signer_signature);
+    assert(account.get_owner() == new_owner_pubkey, 'value should be new owner pub');
+}
 
 #[test]
-#[should_panic(expected: ('argent/only-self', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/only-self',))]
 fn change_owner_only_self() {
     let account = initialize_account();
-    set_contract_address(contract_address_const::<42>());
+    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
+    let new_owner_pubkey = NEW_OWNER().pubkey;
     let signer_signature = SignerSignature::Starknet(
-        (
-            StarknetSigner { pubkey: new_owner_pubkey.try_into().expect('argent/zero-pubkey') },
-            StarknetSignature { r: new_owner_r, s: new_owner_s }
-        )
+        (new_owner_pubkey.try_into().unwrap(), StarknetSignature { r: NEW_OWNER().sig.r, s: NEW_OWNER().sig.s })
     );
     account.change_owner(signer_signature);
 }
 
 #[test]
-#[should_panic(expected: ('argent/invalid-owner-sig', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/invalid-owner-sig',))]
 fn change_owner_invalid_message() {
     let account = initialize_account();
+    let new_owner = NEW_OWNER().pubkey;
     let signer_signature = SignerSignature::Starknet(
-        (
-            StarknetSigner { pubkey: new_owner_pubkey.try_into().expect('argent/zero-pubkey') },
-            StarknetSignature { r: wrong_owner_r, s: wrong_owner_s }
-        )
+        (new_owner.try_into().unwrap(), StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s })
     );
     account.change_owner(signer_signature);
 }
 
 #[test]
-#[should_panic(expected: ('argent/invalid-owner-sig', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/invalid-owner-sig',))]
 fn change_owner_wrong_pub_key() {
     let account = initialize_account();
+    let wrong_owner = WRONG_OWNER().pubkey;
     let signer_signature = SignerSignature::Starknet(
-        (
-            StarknetSigner { pubkey: wrong_owner_pubkey.try_into().expect('argent/zero-pubkey') },
-            StarknetSignature { r: new_owner_r, s: new_owner_s }
-        )
+        (wrong_owner.try_into().unwrap(), StarknetSignature { r: NEW_OWNER().sig.r, s: NEW_OWNER().sig.s })
     );
     account.change_owner(signer_signature);
 }
@@ -138,16 +125,16 @@ fn change_guardian() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/only-self', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/only-self',))]
 fn change_guardian_only_self() {
     let account = initialize_account();
     let guardian = Option::Some(starknet_signer_from_pubkey(22));
-    set_contract_address(contract_address_const::<42>());
+    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
     account.change_guardian(guardian);
 }
 
 #[test]
-#[should_panic(expected: ('argent/backup-should-be-null', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/backup-should-be-null',))]
 fn change_guardian_to_zero() {
     let account = initialize_account();
     let guardian_backup = Option::Some(starknet_signer_from_pubkey(42));
@@ -173,11 +160,11 @@ fn change_guardian_backup() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/only-self', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/only-self',))]
 fn change_guardian_backup_only_self() {
     let account = initialize_account();
     let guardian_backup = Option::Some(starknet_signer_from_pubkey(42));
-    set_contract_address(contract_address_const::<42>());
+    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
     account.change_guardian_backup(guardian_backup);
 }
 
@@ -190,10 +177,10 @@ fn change_guardian_backup_to_zero() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/guardian-required', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/guardian-required',))]
 fn change_invalid_guardian_backup() {
     let account = initialize_account_without_guardian();
-    let guardian_backup = Option::Some(starknet_signer_from_pubkey(2));
+    let guardian_backup = Option::Some(starknet_signer_from_pubkey(22));
     account.change_guardian_backup(guardian_backup);
 }
 

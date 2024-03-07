@@ -1,3 +1,4 @@
+use argent::mocks::recovery_mocks::ExternalRecoveryMock;
 use argent::multisig::interface::IArgentMultisigInternal;
 use argent::multisig::interface::{IArgentMultisig, IArgentMultisigDispatcher, IArgentMultisigDispatcherTrait};
 use argent::recovery::external_recovery::{
@@ -7,35 +8,27 @@ use argent::recovery::interface::{IRecovery, IRecoveryDispatcher, IRecoveryDispa
 use argent::recovery::{external_recovery::external_recovery_component};
 use argent::signer::{signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey, SignerTrait}};
 use argent::signer_storage::signer_list::signer_list_component;
-use argent_tests::mocks::recovery_mocks::ExternalRecoveryMock;
-use core::array::ArrayTrait;
-use core::debug::PrintTrait;
-use core::traits::Into;
-use starknet::SyscallResultTrait;
-use starknet::{
-    deploy_syscall, contract_address_const, ContractAddress,
-    testing::{set_contract_address, set_caller_address, set_block_timestamp}
+use snforge_std::{
+    start_prank, stop_prank, start_warp, CheatTarget, test_address, declare, ContractClassTrait, ContractClass
 };
-
-const signer_pubkey_1: felt252 = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;
-const signer_pubkey_2: felt252 = 0x759ca09377679ecd535a81e83039658bf40959283187c654c5416f439403cf5;
-const signer_pubkey_3: felt252 = 0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2f96fec5ba847310b20;
-const signer_pubkey_4: felt252 = 0x05ffbcfeb50d200a0677c48a129a11245a3fc519d1d98d76882d1c9a1b19c6ed;
+use starknet::SyscallResultTrait;
+use starknet::{deploy_syscall, contract_address_const, ContractAddress,};
+use super::setup::constants::{MULTISIG_OWNER};
 
 fn SIGNER_1() -> Signer {
-    starknet_signer_from_pubkey(signer_pubkey_1)
+    starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)
 }
 
 fn SIGNER_2() -> Signer {
-    starknet_signer_from_pubkey(signer_pubkey_2)
+    starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey)
 }
 
 fn SIGNER_3() -> Signer {
-    starknet_signer_from_pubkey(signer_pubkey_3)
+    starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey)
 }
 
 fn SIGNER_4() -> Signer {
-    starknet_signer_from_pubkey(signer_pubkey_4)
+    starknet_signer_from_pubkey(MULTISIG_OWNER(4).pubkey)
 }
 
 fn GUARDIAN() -> ContractAddress {
@@ -43,17 +36,17 @@ fn GUARDIAN() -> ContractAddress {
 }
 
 fn setup() -> (IRecoveryDispatcher, IToggleExternalRecoveryDispatcher, IArgentMultisigDispatcher) {
-    let (address, _) = deploy_syscall(
-        ExternalRecoveryMock::TEST_CLASS_HASH.try_into().unwrap(), 0, array![].span(), false
-    )
-        .unwrap_syscall();
-    set_contract_address(address);
-    IArgentMultisigDispatcher { contract_address: address }.add_signers(2, array![SIGNER_1(), SIGNER_2()]);
-    IToggleExternalRecoveryDispatcher { contract_address: address }.toggle_escape(true, 10, 10, GUARDIAN());
+    let contract_class = declare("ExternalRecoveryMock");
+    let constructor = array![];
+    let contract_address = contract_class.deploy(@constructor).expect('Deployment failed');
+
+    start_prank(CheatTarget::One(contract_address), contract_address);
+    IArgentMultisigDispatcher { contract_address }.add_signers(2, array![SIGNER_1(), SIGNER_2()]);
+    IToggleExternalRecoveryDispatcher { contract_address }.toggle_escape(true, 10, 10, GUARDIAN());
     (
-        IRecoveryDispatcher { contract_address: address },
-        IToggleExternalRecoveryDispatcher { contract_address: address },
-        IArgentMultisigDispatcher { contract_address: address }
+        IRecoveryDispatcher { contract_address },
+        IToggleExternalRecoveryDispatcher { contract_address },
+        IArgentMultisigDispatcher { contract_address }
     )
 }
 
@@ -76,10 +69,10 @@ fn test_toggle_escape() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/only-self', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/only-self',))]
 fn test_toggle_unauthorised() {
     let (_, toggle_component, _) = setup();
-    set_contract_address(42.try_into().unwrap());
+    start_prank(CheatTarget::All, (contract_address_const::<42>()));
     toggle_component.toggle_escape(false, 0, 0, contract_address_const::<0>());
 }
 
@@ -88,11 +81,11 @@ fn test_toggle_unauthorised() {
 #[test]
 fn test_trigger_escape_first_signer() {
     let (component, _, _) = setup();
-    set_contract_address(GUARDIAN());
+    start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_1()], array![SIGNER_3()]);
     let (escape, status) = component.get_escape();
-    assert(*escape.target_signers.at(0) == signer_pubkey_1, 'should be signer 1');
-    assert(*escape.new_signers.at(0) == signer_pubkey_3, 'should be signer 1');
+    assert(*escape.target_signers.at(0) == MULTISIG_OWNER(1).pubkey, 'should be signer 1');
+    assert(*escape.new_signers.at(0) == MULTISIG_OWNER(3).pubkey, 'should be signer 1');
     assert(escape.ready_at == 10, 'should be 10');
     assert(status == EscapeStatus::NotReady, 'should be NotReady');
 }
@@ -100,11 +93,11 @@ fn test_trigger_escape_first_signer() {
 #[test]
 fn test_trigger_escape_last_signer() {
     let (component, _, _) = setup();
-    set_contract_address(GUARDIAN());
+    start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     let (escape, status) = component.get_escape();
-    assert(*escape.target_signers.at(0) == signer_pubkey_2, 'should be signer 2');
-    assert(*escape.new_signers.at(0) == signer_pubkey_3, 'should be signer 1');
+    assert(*escape.target_signers.at(0) == MULTISIG_OWNER(2).pubkey, 'should be signer 2');
+    assert(*escape.new_signers.at(0) == MULTISIG_OWNER(3).pubkey, 'should be signer 1');
     assert(escape.ready_at == 10, 'should be 10');
     assert(status == EscapeStatus::NotReady, 'should be NotReady');
 }
@@ -112,13 +105,13 @@ fn test_trigger_escape_last_signer() {
 #[test]
 fn test_trigger_escape_all_signers() {
     let (component, _, _) = setup();
-    set_contract_address(GUARDIAN());
-    component.trigger_escape(array![SIGNER_1(), SIGNER_2()], array![SIGNER_3(), SIGNER_4()]);
+    start_prank(CheatTarget::All, GUARDIAN());
+    component.trigger_escape(array![SIGNER_1(), SIGNER_2()], array![SIGNER_4(), SIGNER_3()]);
     let (escape, status) = component.get_escape();
-    assert(*escape.target_signers.at(0) == signer_pubkey_1, 'should be signer 1');
-    assert(*escape.target_signers.at(1) == signer_pubkey_2, 'should be signer 2');
-    assert(*escape.new_signers.at(0) == signer_pubkey_3, 'should be signer 3');
-    assert(*escape.new_signers.at(1) == signer_pubkey_4, 'should be signer 4');
+    assert(*escape.target_signers.at(0) == MULTISIG_OWNER(1).pubkey, 'should be signer 1');
+    assert(*escape.target_signers.at(1) == MULTISIG_OWNER(2).pubkey, 'should be signer 2');
+    assert(*escape.new_signers.at(0) == MULTISIG_OWNER(4).pubkey, 'should be signer 4');
+    assert(*escape.new_signers.at(1) == MULTISIG_OWNER(3).pubkey, 'should be signer 3');
     assert(escape.ready_at == 10, 'should be 10');
     assert(status == EscapeStatus::NotReady, 'should be NotReady');
 }
@@ -126,36 +119,36 @@ fn test_trigger_escape_all_signers() {
 #[test]
 fn test_trigger_escape_can_override() {
     let (component, _, _) = setup();
-    set_contract_address(GUARDIAN());
+    start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_1()], array![SIGNER_3()]);
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_4()]);
     let (escape, _) = component.get_escape();
-    assert(*escape.target_signers.at(0) == signer_pubkey_2, 'should be signer 2');
-    assert(*escape.new_signers.at(0) == signer_pubkey_4, 'should be signer 4');
+    assert(*escape.target_signers.at(0) == MULTISIG_OWNER(2).pubkey, 'should be signer 2');
+    assert(*escape.new_signers.at(0) == MULTISIG_OWNER(4).pubkey, 'should be signer 4');
 }
 
 #[test]
-#[should_panic(expected: ('argent/invalid-escape-length', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/invalid-escape-length',))]
 fn test_trigger_escape_invalid_input() {
     let (component, _, _) = setup();
-    set_contract_address(GUARDIAN());
+    start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3(), SIGNER_1()]);
 }
 
 #[test]
-#[should_panic(expected: ('argent/only-guardian', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/only-guardian',))]
 fn test_trigger_escape_not_enabled() {
     let (component, toggle_component, _) = setup();
     toggle_component.toggle_escape(false, 0, 0, contract_address_const::<0>());
-    set_contract_address(GUARDIAN());
+    start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
 }
 
 #[test]
-#[should_panic(expected: ('argent/only-guardian', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/only-guardian',))]
 fn test_trigger_escape_unauthorised() {
     let (component, _, _) = setup();
-    set_contract_address(42.try_into().unwrap());
+    start_prank(CheatTarget::All, contract_address_const::<42>());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
 }
 
@@ -164,9 +157,9 @@ fn test_trigger_escape_unauthorised() {
 #[test]
 fn test_execute_escape() {
     let (component, _, multisig_component) = setup();
-    set_contract_address(GUARDIAN());
+    start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    set_block_timestamp(11);
+    start_warp(CheatTarget::All, 11);
     component.execute_escape();
     let (escape, status) = component.get_escape();
     assert(status == EscapeStatus::None, 'status should be None');
@@ -177,32 +170,32 @@ fn test_execute_escape() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/invalid-escape', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/invalid-escape',))]
 fn test_execute_escape_NotReady() {
     let (component, _, _) = setup();
-    set_contract_address(GUARDIAN());
+    start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    set_block_timestamp(8);
+    start_warp(CheatTarget::All, 8);
     component.execute_escape();
 }
 
 #[test]
-#[should_panic(expected: ('argent/invalid-escape', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/invalid-escape',))]
 fn test_execute_escape_Expired() {
     let (component, _, _) = setup();
-    set_contract_address(GUARDIAN());
+    start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    set_block_timestamp(28);
+    start_warp(CheatTarget::All, 28);
     component.execute_escape();
 }
 
 #[test]
 fn test_execute_escape_everyone_authorised() {
     let (component, _, _) = setup();
-    set_contract_address(GUARDIAN());
+    start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    set_block_timestamp(11);
-    set_contract_address(42.try_into().unwrap());
+    start_prank(CheatTarget::All, contract_address_const::<42>());
+    start_warp(CheatTarget::All, 11);
     component.execute_escape();
 }
 
@@ -211,10 +204,10 @@ fn test_execute_escape_everyone_authorised() {
 #[test]
 fn test_cancel_escape() {
     let (component, _, multisig_component) = setup();
-    set_contract_address(GUARDIAN());
+    start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    set_block_timestamp(11);
-    set_contract_address(component.contract_address);
+    start_warp(CheatTarget::All, 11);
+    start_prank(CheatTarget::All, component.contract_address);
     component.cancel_escape();
     let (escape, status) = component.get_escape();
     assert(status == EscapeStatus::None, 'status should be None');
@@ -225,12 +218,13 @@ fn test_cancel_escape() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/only-self', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/only-self',))]
 fn test_cancel_escape_unauthorised() {
     let (component, _, _) = setup();
-    set_contract_address(GUARDIAN());
+    start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    set_block_timestamp(11);
-    set_contract_address(42.try_into().unwrap());
+    start_warp(CheatTarget::All, 11);
+    start_prank(CheatTarget::All, contract_address_const::<42>());
     component.cancel_escape();
 }
+

@@ -12,10 +12,19 @@ Please refer to [these instructions](https://docs.cairo-lang.org/getting_started
 You can skip cloning the Cairo repository, as this will be done automatically through the Makefile.  
 If you are a developer, we recommend that you install the Cairo extension. You can find it in the vscode Extensions Marketplace by looking for "Cairo 1.0".
 
-### Setup scarb
+### asdf
 
-Refer to this documentation: https://docs.swmansion.com/scarb/download.html#install-via-asdf  
-Thanks to the [.tool-versions file](./.tool-versions), you don't need to install a specific scarb version. The correct one will be automatically downloaded and installed.
+Install asdf following [instructions](https://asdf-vm.com/guide/getting-started.html) and run this
+
+```
+asdf plugin add scarb
+asdf plugin add starknet-foundry
+asdf install
+```
+
+## Setup scarb and foundry
+
+Thanks to the [.tool-versions file](./.tool-versions), you don't need to install a specific scarb or starknet foundry version. The correct one will be automatically downloaded and installed.
 
 ## Test the contracts (Cairo)
 

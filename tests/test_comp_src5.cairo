@@ -5,8 +5,8 @@ use argent::introspection::interface::ISRC5;
 use argent::introspection::interface::ISRC5Legacy;
 use argent::introspection::interface::{SRC5_INTERFACE_ID, SRC5_INTERFACE_ID_OLD};
 use argent::introspection::src5::src5_component;
+use argent::mocks::src5_mocks::SRC5Mock;
 use argent::outside_execution::interface::ERC165_OUTSIDE_EXECUTION_INTERFACE_ID;
-use argent_tests::mocks::src5_mocks::SRC5Mock;
 
 const UNSUPORTED_INTERFACE_ID: felt252 = 0xffffffff;
 
@@ -58,3 +58,4 @@ fn test_introspection_legacy_method() {
     assert(component.supportsInterface(ERC165_OUTSIDE_EXECUTION_INTERFACE_ID) == 1, 'should support');
     assert(component.supportsInterface(UNSUPORTED_INTERFACE_ID) == 0, 'should not support');
 }
+

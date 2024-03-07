@@ -2,7 +2,6 @@ import { num, Contract } from "starknet";
 import {
   declareContract,
   loadContract,
-  randomKeyPair,
   deployer,
   AllowedMethod,
   DappService,
@@ -12,28 +11,30 @@ import {
   getSessionTypedData,
   setTime,
   expectRevertWithErrorMessage,
+  randomStarknetKeyPair,
+  StarknetKeyPair,
 } from "./lib";
 
 describe("Hybrid Session Account: execute calls", function () {
   let sessionAccountClassHash: string;
-  let testDappOneContract: Contract;
+  let mockDappOneContract: Contract;
   let mockErc20Contract: Contract;
 
   before(async () => {
     sessionAccountClassHash = await declareContract("ArgentAccount");
 
-    const testDappClassHash = await declareContract("TestDapp");
-    const deployedTestDappOne = await deployer.deployContract({
-      classHash: testDappClassHash,
-      salt: num.toHex(randomKeyPair().privateKey),
+    const mockDappClassHash = await declareContract("MockDapp");
+    const deployedmockDappOne = await deployer.deployContract({
+      classHash: mockDappClassHash,
+      salt: num.toHex(randomStarknetKeyPair().privateKey),
     });
     const erc20ClassHash = await declareContract("Erc20Mock");
     const deployedErc20 = await deployer.deployContract({
       classHash: erc20ClassHash,
-      salt: num.toHex(randomKeyPair().privateKey),
+      salt: num.toHex(randomStarknetKeyPair().privateKey),
     });
     mockErc20Contract = await loadContract(deployedErc20.contract_address);
-    testDappOneContract = await loadContract(deployedTestDappOne.contract_address);
+    mockDappOneContract = await loadContract(deployedmockDappOne.contract_address);
   });
 
   beforeEach(async function () {
@@ -43,7 +44,7 @@ describe("Hybrid Session Account: execute calls", function () {
   it("Call a contract with backend signer", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
-    const backendService = new BackendService(guardian);
+    const backendService = new BackendService(guardian as StarknetKeyPair);
     const dappService = new DappService(backendService);
     const argentX = new ArgentX(account, backendService);
 
@@ -51,7 +52,7 @@ describe("Hybrid Session Account: execute calls", function () {
     // 1. dapp request session: provides dapp pub key and policies
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": testDappOneContract.address,
+        "Contract Address": mockDappOneContract.address,
         selector: "set_number_double",
       },
     ];
@@ -62,7 +63,7 @@ describe("Hybrid Session Account: execute calls", function () {
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
 
     //  Every request:
-    const calls = [testDappOneContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
 
     // 1. dapp requests backend signature
     // backend: can verify the parameters and check it was signed by the account then provides signature
@@ -76,13 +77,13 @@ describe("Hybrid Session Account: execute calls", function () {
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
     await account.waitForTransaction(transaction_hash);
-    await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
   });
 
   it("Only execute tx if session not expired", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
-    const backendService = new BackendService(guardian);
+    const backendService = new BackendService(guardian as StarknetKeyPair);
     const dappService = new DappService(backendService);
     const argentX = new ArgentX(account, backendService);
 
@@ -90,14 +91,14 @@ describe("Hybrid Session Account: execute calls", function () {
 
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": testDappOneContract.address,
+        "Contract Address": mockDappOneContract.address,
         selector: "set_number_double",
       },
     ];
 
     const sessionRequest = dappService.createSessionRequest(allowedMethods, expiresAt);
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
-    const calls = [testDappOneContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
     const accountWithDappSigner = dappService.getAccountWithSessionSigner(
       account,
       sessionRequest,
@@ -108,20 +109,20 @@ describe("Hybrid Session Account: execute calls", function () {
     // non expired session
     await setTime(expiresAt - 1n);
     await account.waitForTransaction(transaction_hash);
-    await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
 
     // Expired session
     await setTime(expiresAt + 1n);
     await expectRevertWithErrorMessage("session/expired", () =>
       accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
     );
-    await testDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
   });
 
   it("Call a token contract", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
-    const backendService = new BackendService(guardian);
+    const backendService = new BackendService(guardian as StarknetKeyPair);
     const dappService = new DappService(backendService);
     const argentX = new ArgentX(account, backendService);
 

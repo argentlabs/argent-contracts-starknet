@@ -1,5 +1,5 @@
 import { loadContract, deployer, provider } from ".";
-import { CallData, InvokeTransactionReceiptResponse, RawCalldata } from "starknet";
+import { CallData, RawCalldata } from "starknet";
 
 export const udcAddress = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
 

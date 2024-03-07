@@ -2,7 +2,7 @@ import "dotenv/config";
 import { Account, num } from "starknet";
 import {
   getChangeOwnerMessageHash,
-  KeyPair,
+  StarknetKeyPair,
   loadContract,
   provider,
   starknetSignatureType,
@@ -16,7 +16,7 @@ import {
 /// Then run the command: `yarn ts-node scripts/change-owner.ts`
 
 const accountAddress = "0x000000000000000000000000000000000000000000000000000000000000000";
-const ownerSigner = new KeyPair(1000000000000000000000000000000000000000000000000000000000000000000000000000n);
+const ownerSigner = new StarknetKeyPair(1000000000000000000000000000000000000000000000000000000000000000000000000000n);
 const newOwnerPublicKey = "0x000000000000000000000000000000000000000000000000000000000000000";
 
 const accountContract = await loadContract(accountAddress);
@@ -30,7 +30,7 @@ if (owner !== ownerSigner.publicKey) {
 }
 
 // local signing:
-// const newOwner = new KeyPair(100000000000000000000000000000000000000000000000000000000000000000000000000n);
+// const newOwner = new StarknetKeyPair(100000000000000000000000000000000000000000000000000000000000000000000000000n);
 // const newOwnerPublicKey = newOwner.publicKey;
 // if (BigInt(newOwnerPublicKey) !== newOwner.publicKey) {
 //   throw new Error(`new owner public key ${newOwnerPublicKey} != derived ${newOwner.publicKey}`);

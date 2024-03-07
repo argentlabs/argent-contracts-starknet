@@ -1,16 +1,17 @@
 use argent::presets::multisig_account::ArgentMultisigAccount;
-use argent::signer::signer_signature::SignerTrait;
-use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknet_signer_from_pubkey};
-use argent_tests::setup::multisig_test_setup::{
-    initialize_multisig, signer_pubkey_1, signer_pubkey_2, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
-    initialize_multisig_with_one_signer
+use argent::signer::signer_signature::{
+    Signer, StarknetSigner, SignerSignature, SignerTrait, starknet_signer_from_pubkey
 };
-use core::serde::Serde;
-use starknet::deploy_syscall;
+use snforge_std::{get_class_hash, declare, ContractClass, ContractClassTrait};
+use super::setup::constants::{MULTISIG_OWNER};
+use super::setup::multisig_test_setup::{
+    initialize_multisig, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
+    initialize_multisig_with_one_signer, declare_multisig
+};
 
 #[test]
 fn valid_initialize() {
-    let signer_1 = starknet_signer_from_pubkey(signer_pubkey_1);
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
     let signers_array = array![signer_1];
     let multisig = initialize_multisig_with(threshold: 1, signers: signers_array.span());
     assert(multisig.get_threshold() == 1, 'threshold not set');
@@ -25,8 +26,8 @@ fn valid_initialize() {
 
 #[test]
 fn valid_initialize_two_signers() {
-    let signer_1 = starknet_signer_from_pubkey(signer_pubkey_1);
-    let signer_2 = starknet_signer_from_pubkey(signer_pubkey_2);
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
     let threshold = 1;
     let signers_array = array![signer_1, signer_2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
@@ -44,21 +45,20 @@ fn valid_initialize_two_signers() {
 #[test]
 fn invalid_threshold() {
     let threshold = 3;
-    let signer_1 = starknet_signer_from_pubkey(signer_pubkey_1);
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
     let mut calldata = array![];
     threshold.serialize(ref calldata);
     array![signer_1].serialize(ref calldata);
 
-    let class_hash = ArgentMultisigAccount::TEST_CLASS_HASH.try_into().unwrap();
-    let mut err = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap_err();
-    assert(@err.pop_front().unwrap() == @'argent/bad-threshold', 'Should be argent/bad-threshold');
+    let argent_class = declare_multisig();
+    argent_class.deploy(@calldata).expect_err('argent/bad-threshold');
 }
 
 #[test]
 fn change_threshold() {
     let threshold = 1;
-    let signer_1 = starknet_signer_from_pubkey(signer_pubkey_1);
-    let signer_2 = starknet_signer_from_pubkey(signer_pubkey_2);
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
     let signers_array = array![signer_1, signer_2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
 
@@ -72,7 +72,7 @@ fn add_signers() {
     let multisig = initialize_multisig_with_one_signer();
 
     // add signer
-    let new_signers = array![starknet_signer_from_pubkey(signer_pubkey_2)];
+    let new_signers = array![starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey)];
     multisig.add_signers(2, new_signers);
 
     // check 
@@ -82,13 +82,13 @@ fn add_signers() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/already-a-signer', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/already-a-signer',))]
 fn add_signer_already_in_list() {
     // init
     let multisig = initialize_multisig_with_one_signer();
 
     // add signer
-    let new_signers = array![starknet_signer_from_pubkey(signer_pubkey_1)];
+    let new_signers = array![starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)];
     multisig.add_signers(2, new_signers);
 }
 
@@ -104,3 +104,4 @@ fn get_version() {
     assert(version.minor == 2, 'Version minor');
     assert(version.patch == 0, 'Version patch');
 }
+

@@ -3,13 +3,19 @@ use argent::signer::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };
 use ecdsa::check_ecdsa_signature;
-use hash::{HashStateTrait, HashStateExTrait, Hash};
-use poseidon::{PoseidonTrait, HashState};
+use hash::{HashStateExTrait, HashStateTrait};
+use poseidon::{hades_permutation, PoseidonTrait};
 use starknet::SyscallResultTrait;
 use starknet::secp256_trait::{Secp256PointTrait, Signature as Secp256r1Signature, recover_public_key};
 use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
 use starknet::{EthAddress, eth_signature::{Signature as Secp256k1Signature, is_eth_signature_valid}};
+
+const STARKNET_SIGNER_TYPE: felt252 = 'Starknet Signer';
+const SECP256K1_SIGNER_TYPE: felt252 = 'Secp256k1 Signer';
+const SECP256R1_SIGNER_TYPE: felt252 = 'Secp256r1 Signer';
+const EIP191_SIGNER_TYPE: felt252 = 'Eip191 Signer';
+const WEBAUTHN_SIGNER_TYPE: felt252 = 'Webauthn Signer';
 
 #[derive(Drop, Copy, Serde)]
 enum Signer {
@@ -43,7 +49,6 @@ struct Secp256r1Signer {
 struct Eip191Signer {
     eth_address: EthAddress
 }
-
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSigner {
     origin: NonZero<felt252>,
@@ -103,20 +108,27 @@ impl SignerTraitImpl of SignerTrait<Signer> {
                 .pubkey
                 .into(), //PoseidonTrait::new().update_with(('Stark', signer.pubkey)).finalize(),
             Signer::Secp256k1(signer) => {
-                PoseidonTrait::new().update_with(('Secp256k1', signer.pubkey_hash.address)).finalize()
+                let (hash, _, _) = hades_permutation(SECP256K1_SIGNER_TYPE, signer.pubkey_hash.address, 2);
+                hash
             },
             Signer::Secp256r1(signer) => {
                 let pubkey: u256 = signer.pubkey.into();
-                PoseidonTrait::new().update_with(('Secp256r1', pubkey)).finalize()
+                PoseidonTrait::new().update_with(SECP256R1_SIGNER_TYPE).update_with(pubkey).finalize()
             },
             Signer::Eip191(signer) => {
-                PoseidonTrait::new().update_with(('Eip191', signer.eth_address.address)).finalize()
+                let (hash, _, _) = hades_permutation(EIP191_SIGNER_TYPE, signer.eth_address.address, 2);
+                hash
             },
             Signer::Webauthn(signer) => {
                 let origin: felt252 = signer.origin.into();
                 let rp_id_hash: u256 = signer.rp_id_hash.into();
                 let pubkey: u256 = signer.pubkey.into();
-                PoseidonTrait::new().update_with(('Webauthn', origin, rp_id_hash, pubkey)).finalize()
+                PoseidonTrait::new()
+                    .update_with(WEBAUTHN_SIGNER_TYPE)
+                    .update_with(origin)
+                    .update_with(rp_id_hash)
+                    .update_with(pubkey)
+                    .finalize()
             },
         }
     }

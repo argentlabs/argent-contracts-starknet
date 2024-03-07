@@ -62,10 +62,10 @@ describe("ArgentMultisig: signer storage", function () {
       it("Expect 'argent/already-a-signer' if adding the same owner twice", async function () {
         const { accountContract, threshold } = await deployMultisig1_3();
 
-        const newSigner1 = randomStarknetKeyPair().signer;
+        const { signer } = randomStarknetKeyPair();
 
         await expectRevertWithErrorMessage("argent/already-a-signer", () =>
-          accountContract.add_signers(CallData.compile([threshold, [newSigner1, newSigner1]])),
+          accountContract.add_signers(CallData.compile([threshold, [signer, signer]])),
         );
       });
 
@@ -80,19 +80,20 @@ describe("ArgentMultisig: signer storage", function () {
       it("Expect 'bad/invalid-threshold' if changing to a zero threshold", async function () {
         const { accountContract } = await deployMultisig1_3();
 
-        const newSigner1 = randomStarknetKeyPair().signer;
+        const { signer } = randomStarknetKeyPair();
+
         await expectRevertWithErrorMessage("argent/invalid-threshold", () =>
-          accountContract.add_signers(CallData.compile([0, [newSigner1]])),
+          accountContract.add_signers(CallData.compile([0, [signer]])),
         );
       });
 
       it("Expect 'bad/invalid-threshold' if threshold > no. owners", async function () {
         const { accountContract, keys } = await deployMultisig1_3();
 
-        const newSigner1 = randomStarknetKeyPair().signer;
+        const { signer } = randomStarknetKeyPair();
 
         await expectRevertWithErrorMessage("argent/bad-threshold", () =>
-          accountContract.add_signers(CallData.compile([keys.length + 2, [newSigner1]])),
+          accountContract.add_signers(CallData.compile([keys.length + 2, [signer]])),
         );
       });
     });
@@ -149,7 +150,7 @@ describe("ArgentMultisig: signer storage", function () {
 
     describe("Test all possible revert errors when removing signers", function () {
       it("Expect 'argent/not-a-signer' when replacing an owner not in the list", async function () {
-        const nonSigner = randomStarknetKeyPair().signer;
+        const { signer: nonSigner } = randomStarknetKeyPair();
 
         const { accountContract, threshold } = await deployMultisig1_3();
 

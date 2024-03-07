@@ -195,7 +195,7 @@ export class StarknetKeyPair extends KeyPair {
 
   public get signer(): CairoCustomEnum {
     return new CairoCustomEnum({
-      Starknet: { signer: this.guid },
+      Starknet: { signer: this.publicKey },
       Secp256k1: undefined,
       Secp256r1: undefined,
       Webauthn: undefined,

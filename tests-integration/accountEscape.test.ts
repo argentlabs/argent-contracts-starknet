@@ -123,15 +123,15 @@ describe("ArgentAccount: escape mechanism", function () {
             expect(escape.new_signer).to.equal(newKeyPair.guid);
             await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.NotReady);
 
-            const nextKeyPair = randomStarknetKeyPair();
+            const randomKeyPair = randomStarknetKeyPair();
             account.signer = new ArgentSigner(other);
             await setTime(randomTime + ESCAPE_EXPIRY_PERIOD);
             await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.Expired);
-            await accountContract.trigger_escape_owner(nextKeyPair.compiledSigner);
+            await accountContract.trigger_escape_owner(randomKeyPair.compiledSigner);
             const newEscape = await accountContract.get_escape();
             expect(newEscape.escape_type).to.deep.equal(ESCAPE_TYPE_OWNER);
             expect(newEscape.ready_at >= randomTime + ESCAPE_SECURITY_PERIOD + ESCAPE_EXPIRY_PERIOD).to.be.true;
-            expect(newEscape.new_signer).to.equal(nextKeyPair.guid);
+            expect(newEscape.new_signer).to.equal(randomKeyPair.guid);
           });
         });
       });
@@ -290,14 +290,14 @@ describe("ArgentAccount: escape mechanism", function () {
 
       // Let some block pass
       await setTime(randomTime + 10n);
-      const nextKeyPair = randomStarknetKeyPair();
+      const randomKeyPair = randomStarknetKeyPair();
       account.signer = new ArgentSigner(owner);
-      await accountContract.trigger_escape_guardian(nextKeyPair.compiledSignerAsOption);
+      await accountContract.trigger_escape_guardian(randomKeyPair.compiledSignerAsOption);
 
       const escapeGuardian = await accountContract.get_escape();
       expect(escapeGuardian.escape_type).to.deep.equal(ESCAPE_TYPE_GUARDIAN);
       expect(escapeGuardian.ready_at).to.be.equal(randomTime + ESCAPE_SECURITY_PERIOD + 10n);
-      expect(escapeGuardian.new_signer).to.equal(nextKeyPair.guid);
+      expect(escapeGuardian.new_signer).to.equal(randomKeyPair.guid);
     });
 
     it("Expect 'argent/only-self' when called from another account", async function () {

@@ -198,7 +198,7 @@ describe("ArgentAccount: events", function () {
     it("Expected on trigger_escape_owner", async function () {
       const { account, accountContract, guardian } = await deployAccount();
       account.signer = new ArgentSigner(guardian);
-      const compiledSigner = randomStarknetKeyPair().compiledSigner;
+      const { compiledSigner } = randomStarknetKeyPair();
 
       await accountContract.trigger_escape_owner(compiledSigner);
 

@@ -59,6 +59,7 @@ export class DappService {
     account: ArgentAccount,
     completedSession: OffChainSession,
     accountSessionSignature: ArraySignatureType,
+    revision: typedData.TypedDataRevision,
   ) {
     const sessionSigner = new (class extends RawSigner {
       constructor(
@@ -81,7 +82,13 @@ export class DappService {
         return this.signTransactionCallback(calls, transactionsDetail);
       }
     })((calls: Call[], transactionsDetail: InvocationsSignerDetails) => {
-      return this.signRegularTransaction(accountSessionSignature, completedSession, calls, transactionsDetail);
+      return this.signRegularTransaction(
+        accountSessionSignature,
+        completedSession,
+        calls,
+        transactionsDetail,
+        revision,
+      );
     });
     return new Account(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
   }
@@ -90,6 +97,7 @@ export class DappService {
     completedSession: OffChainSession,
     accountSessionSignature: ArraySignatureType,
     calls: Call[],
+    revision: typedData.TypedDataRevision,
     accountAddress: string,
     caller = "ANY_CALLER",
     execute_after = 1,
@@ -104,7 +112,7 @@ export class DappService {
       calls: calls.map((call) => getOutsideCall(call)),
     };
 
-    const currentTypedData = getTypedData(outsideExecution, await provider.getChainId());
+    const currentTypedData = getTypedData(outsideExecution, await provider.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
     const signature = await this.compileSessionSignature(
       accountSessionSignature,
@@ -113,13 +121,14 @@ export class DappService {
       calls,
       accountAddress,
       true,
+      revision,
       undefined,
       outsideExecution,
     );
 
     return {
       contractAddress: accountAddress,
-      entrypoint: "execute_from_outside",
+      entrypoint: revision == typedData.TypedDataRevision.Active ? "execute_from_outside_v2" : "execute_from_outside",
       calldata: CallData.compile({ ...outsideExecution, signature }),
     };
   }
@@ -129,6 +138,7 @@ export class DappService {
     completedSession: OffChainSession,
     calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
+    revision: typedData.TypedDataRevision,
   ): Promise<ArraySignatureType> {
     const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
     let txHash;
@@ -160,6 +170,7 @@ export class DappService {
       calls,
       transactionsDetail.walletAddress,
       false,
+      revision,
       transactionsDetail,
     );
   }
@@ -171,6 +182,7 @@ export class DappService {
     calls: Call[],
     accountAddress: string,
     isOutside: boolean,
+    revision: typedData.TypedDataRevision,
     transactionsDetail?: InvocationsSignerDetails,
     outsideExecution?: OutsideExecution,
   ): Promise<ArraySignatureType> {
@@ -193,6 +205,7 @@ export class DappService {
         completedSession,
         accountAddress,
         outsideExecution as OutsideExecution,
+        revision,
       );
     } else {
       guardian_signature = await this.argentBackend.signTxAndSession(

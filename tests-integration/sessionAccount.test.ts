@@ -1,4 +1,4 @@
-import { num, Contract } from "starknet";
+import { num, Contract, typedData } from "starknet";
 import {
   declareContract,
   loadContract,
@@ -71,6 +71,7 @@ describe("Hybrid Session Account: execute calls", function () {
       account,
       sessionRequest,
       accountSessionSignature,
+      typedData.TypedDataRevision.Legacy,
     );
 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
@@ -102,6 +103,7 @@ describe("Hybrid Session Account: execute calls", function () {
       account,
       sessionRequest,
       accountSessionSignature,
+      typedData.TypedDataRevision.Legacy,
     );
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
@@ -161,6 +163,7 @@ describe("Hybrid Session Account: execute calls", function () {
       account,
       sessionRequest,
       accountSessionSignature,
+      typedData.TypedDataRevision.Legacy,
     );
 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);

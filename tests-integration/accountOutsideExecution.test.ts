@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Contract, num, shortString } from "starknet";
+import { Contract, num, shortString, typedData } from "starknet";
 import {
   ArgentSigner,
   OutsideExecution,
@@ -16,6 +16,9 @@ import {
   compiledStarknetSigner,
   waitForTransaction,
 } from "./lib";
+
+const activeRevision = typedData.TypedDataRevision.Active;
+const legacyRevision = typedData.TypedDataRevision.Legacy;
 
 const initialTime = 1713139200;
 describe("ArgentAccount: outside execution", function () {
@@ -50,11 +53,11 @@ describe("ArgentAccount: outside execution", function () {
     const foundHash = num.toHex(
       await accountContract.get_outside_execution_message_hash(outsideExecution, { nonce: undefined }),
     );
-    const expectedMessageHash = getTypedDataHash(outsideExecution, account.address, chainId);
+    const expectedMessageHash = getTypedDataHash(outsideExecution, account.address, chainId, legacyRevision);
     expect(foundHash).to.equal(expectedMessageHash);
   });
 
-  it("Basics", async function () {
+  it("Basics: Rev 0", async function () {
     const { account, accountContract } = await deployAccount();
 
     await mockDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
@@ -66,7 +69,12 @@ describe("ArgentAccount: outside execution", function () {
       execute_before: initialTime + 100,
       calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
     };
-    const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, account.signer);
+    const outsideExecutionCall = await getOutsideExecutionCall(
+      outsideExecution,
+      account.address,
+      account.signer,
+      legacyRevision,
+    );
 
     // ensure can't be run too early
     await setTime(initialTime - 200);
@@ -79,14 +87,19 @@ describe("ArgentAccount: outside execution", function () {
     // ensure the caller is as expected
     await expectExecutionRevert("argent/invalid-caller", async () =>
       deployer.execute(
-        await getOutsideExecutionCall({ ...outsideExecution, caller: "0x123" }, account.address, account.signer),
+        await getOutsideExecutionCall(
+          { ...outsideExecution, caller: "0x123" },
+          account.address,
+          account.signer,
+          legacyRevision,
+        ),
       ),
     );
 
     await setTime(initialTime);
 
     // ensure the account address is checked
-    const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", account.signer);
+    const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", account.signer, legacyRevision);
     await expectExecutionRevert("argent/invalid-owner-sig", () =>
       deployer.execute({ ...wrongAccountCall, contractAddress: account.address }),
     );
@@ -94,7 +107,83 @@ describe("ArgentAccount: outside execution", function () {
     // ensure the chain id is checked
     await expectExecutionRevert("argent/invalid-owner-sig", async () =>
       deployer.execute(
-        await getOutsideExecutionCall(outsideExecution, account.address, account.signer, "ANOTHER_CHAIN"),
+        await getOutsideExecutionCall(
+          outsideExecution,
+          account.address,
+          account.signer,
+          legacyRevision,
+          "ANOTHER_CHAIN",
+        ),
+      ),
+    );
+
+    // normal scenario
+    await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
+    await waitForTransaction(await deployer.execute(outsideExecutionCall));
+    await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
+
+    // ensure a transaction can't be replayed
+    await expectExecutionRevert("argent/duplicated-outside-nonce", () => deployer.execute(outsideExecutionCall));
+  });
+
+  it("Basics: Revision 1", async function () {
+    const { account, accountContract } = await deployAccount();
+
+    await mockDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
+
+    const outsideExecution: OutsideExecution = {
+      caller: deployer.address,
+      nonce: randomKeyPair().publicKey,
+      execute_after: initialTime - 100,
+      execute_before: initialTime + 100,
+      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
+    };
+    const outsideExecutionCall = await getOutsideExecutionCall(
+      outsideExecution,
+      account.address,
+      account.signer,
+      activeRevision,
+    );
+
+    // ensure can't be run too early
+    await setTime(initialTime - 200);
+    await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
+
+    // ensure can't be run too late
+    await setTime(initialTime + 200);
+    await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
+
+    // ensure the caller is as expected
+    await expectExecutionRevert("argent/invalid-caller", async () =>
+      deployer.execute(
+        await getOutsideExecutionCall(
+          { ...outsideExecution, caller: "0x123" },
+          account.address,
+          account.signer,
+          activeRevision,
+        ),
+      ),
+    );
+
+    await setTime(initialTime);
+
+    // ensure the account address is checked
+    const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", account.signer, activeRevision);
+    await expectExecutionRevert("argent/invalid-owner-sig", () =>
+      deployer.execute({ ...wrongAccountCall, contractAddress: account.address }),
+    );
+
+    // ensure the chain id is checked
+    await expectExecutionRevert("argent/invalid-owner-sig", async () =>
+      deployer.execute(
+        await getOutsideExecutionCall(
+          outsideExecution,
+          account.address,
+          account.signer,
+          activeRevision,
+          "ANOTHER_CHAIN",
+        ),
       ),
     );
 
@@ -120,7 +209,12 @@ describe("ArgentAccount: outside execution", function () {
       execute_before: initialTime + 100,
       calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
     };
-    const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, account.signer);
+    const outsideExecutionCall = await getOutsideExecutionCall(
+      outsideExecution,
+      account.address,
+      account.signer,
+      legacyRevision,
+    );
 
     // ensure the caller is no
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
@@ -137,7 +231,12 @@ describe("ArgentAccount: outside execution", function () {
       execute_before: initialTime + 100,
       calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
     };
-    const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, account.signer);
+    const outsideExecutionCall = await getOutsideExecutionCall(
+      outsideExecution,
+      account.address,
+      account.signer,
+      legacyRevision,
+    );
 
     await setTime(initialTime);
 
@@ -159,6 +258,7 @@ describe("ArgentAccount: outside execution", function () {
       outsideExecution,
       account.address,
       new ArgentSigner(guardian),
+      legacyRevision,
     );
 
     await setTime(initialTime);

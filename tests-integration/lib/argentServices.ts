@@ -76,9 +76,10 @@ export class BackendService {
     sessionTokenToSign: OffChainSession,
     accountAddress: string,
     outsideExecution: OutsideExecution,
+    revision: typedData.TypedDataRevision,
   ): Promise<bigint[]> {
     // TODO backend must verify, timestamps fees, used tokens nfts...
-    const currentTypedData = getTypedData(outsideExecution, await provider.getChainId());
+    const currentTypedData = getTypedData(outsideExecution, await provider.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
 
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(sessionTokenToSign), accountAddress);

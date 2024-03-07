@@ -14,8 +14,6 @@ use starknet::secp256k1::{Secp256k1Point};
 const ARGENT_ACCOUNT_ADDRESS: felt252 = 0x222222222;
 
 const tx_hash: felt252 = 0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8;
-const tx_hash_u256: u256 = 0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8;
-
 
 fn new_owner_message_hash(old_signer: felt252) -> felt252 {
     PedersenTrait::new(0)
@@ -27,9 +25,6 @@ fn new_owner_message_hash(old_signer: felt252) -> felt252 {
         .finalize()
 }
 
-fn ETH_ADDRESS() -> Secp256k1Point {
-    KeyPairTrait::<u256, Secp256k1Point>::from_secret_key('ETH').public_key
-}
 
 fn MULTISIG_OWNER(key: felt252) -> felt252 {
     KeyPairTrait::from_secret_key(key).public_key
@@ -94,12 +89,6 @@ fn WRONG_GUARDIAN_SIG() -> StarknetSignature {
     let wrong_guardian = KeyPairTrait::from_secret_key('WRONG_GUARDIAN');
     let (r, s): (felt252, felt252) = wrong_guardian.sign(tx_hash);
     StarknetSignature { r, s }
-}
-
-fn ETH_SIGNER_SIG() -> Secp256k1Signature {
-    let eth_signer = KeyPairTrait::<u256, Secp256k1Point>::from_secret_key('ETH');
-    let (r, s): (u256, u256) = eth_signer.sign(tx_hash_u256);
-    Secp256k1Signature { r, s, y_parity: false }
 }
 
 // change owner 

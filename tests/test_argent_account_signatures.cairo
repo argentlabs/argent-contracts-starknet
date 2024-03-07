@@ -17,8 +17,7 @@ use super::setup::{
 fn valid_no_guardian() {
     let signatures = to_starknet_signer_signatures(array![OWNER_KEY(), OWNER_SIG().r, OWNER_SIG().s]);
     assert(
-        initialize_account_without_guardian().is_valid_signature(tx_hash, signatures) == VALIDATED,
-        'invalid signature'
+        initialize_account_without_guardian().is_valid_signature(tx_hash, signatures) == VALIDATED, 'invalid signature'
     );
 }
 

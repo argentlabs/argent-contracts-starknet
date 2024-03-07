@@ -83,11 +83,11 @@ describe("ArgentMultisig: signing", function () {
 
       const { accountContract, keys } = await deployMultisig1_1();
 
-      const [r] = await keys[0].signRaw(messageHash);
+      const [publicKey, r] = await keys[0].signRaw(messageHash);
 
       await expectRevertWithErrorMessage("argent/undeserializable", () =>
         // Missing S argument
-        accountContract.is_valid_signature(BigInt(messageHash), [1, 0, keys[0].guid, r]),
+        accountContract.is_valid_signature(BigInt(messageHash), [1, 0, publicKey, r]),
       );
 
       // No SignerSignature

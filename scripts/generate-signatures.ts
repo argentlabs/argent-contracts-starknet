@@ -1,14 +1,14 @@
 import { num } from "starknet";
-import { KeyPair } from "../tests-integration/lib";
+import { StarknetKeyPair } from "../tests-integration/lib";
 import { Signature, Wallet, id } from "ethers";
 
-const owner = new KeyPair(1n);
+const owner = new StarknetKeyPair(1n);
 
 async function calculate_account_signature_with_eth() {
   // Ethers requires hash to be pair length
   const hash = "0x02d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";
   const ethSigner = new Wallet(id("9n"));
-  const [owner_r, owner_s] = owner.signHash(hash);
+  const [owner_r, owner_s] = await owner.signRaw(hash);
   const signature = Signature.from(ethSigner.signingKey.sign(hash));
 
   console.log(`

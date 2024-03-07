@@ -1,4 +1,4 @@
-import { Contract, selector } from "starknet";
+import { Contract } from "starknet";
 import {
   declareContract,
   deployAccount,
@@ -10,6 +10,7 @@ import {
   ArgentX,
   AllowedMethod,
   getSessionTypedData,
+  StarknetKeyPair,
 } from "./lib";
 
 const initialTime = 1713139200n;
@@ -34,7 +35,7 @@ describe("ArgentAccount: outside execution", function () {
 
     const { account: mockDappAccount } = await deployAccount();
 
-    const backendService = new BackendService(guardian);
+    const backendService = new BackendService(guardian as StarknetKeyPair);
     const dappService = new DappService(backendService);
     const argentX = new ArgentX(account, backendService);
 

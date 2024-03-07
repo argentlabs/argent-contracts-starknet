@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { num, shortString } from "starknet";
-import { MultisigSigner, declareContract, expectRevertWithErrorMessage, randomKeyPair } from "./lib";
+import { MultisigSigner, expectRevertWithErrorMessage, randomStarknetKeyPair } from "./lib";
 import { deployMultisig, deployMultisig1_1 } from "./lib/multisig";
 
 describe("ArgentMultisig: signing", function () {
@@ -10,7 +10,7 @@ describe("ArgentMultisig: signing", function () {
     it("Should verify that a multisig owner has signed a message", async function () {
       const messageHash = num.toHex(424242);
 
-      const { accountContract, signers, keys } = await deployMultisig1_1();
+      const { accountContract, keys } = await deployMultisig1_1();
 
       const signatures = await new MultisigSigner(keys).signRaw(messageHash);
 
@@ -22,7 +22,7 @@ describe("ArgentMultisig: signing", function () {
     it("Should verify numerous multisig owners have signed a message", async function () {
       const messageHash = num.toHex(424242);
 
-      const { accountContract, signers, keys } = await deployMultisig({ threshold: 2, signersLength: 2 });
+      const { accountContract, keys } = await deployMultisig({ threshold: 2, signersLength: 2 });
 
       const signatures = await new MultisigSigner(keys).signRaw(messageHash);
 
@@ -34,7 +34,7 @@ describe("ArgentMultisig: signing", function () {
     it("Should verify that signatures are in the correct order", async function () {
       const messageHash = num.toHex(424242);
 
-      const { accountContract, signers, keys } = await deployMultisig({ threshold: 2, signersLength: 2 });
+      const { accountContract, keys } = await deployMultisig({ threshold: 2, signersLength: 2 });
 
       const signatures = await new MultisigSigner(keys.reverse()).signRaw(messageHash);
 
@@ -46,7 +46,7 @@ describe("ArgentMultisig: signing", function () {
     it("Should verify that signatures are in the not repeated", async function () {
       const messageHash = num.toHex(424242);
 
-      const { accountContract, signers, keys } = await deployMultisig({ threshold: 2, signersLength: 2 });
+      const { accountContract, keys } = await deployMultisig({ threshold: 2, signersLength: 2 });
 
       const signatures = await new MultisigSigner([keys[0], keys[0]]).signRaw(messageHash);
 
@@ -57,7 +57,7 @@ describe("ArgentMultisig: signing", function () {
 
     it("Expect 'argent/signature-invalid-length' when an owner's signature is missing", async function () {
       const messageHash = num.toHex(424242);
-      const { accountContract, signers, keys } = await deployMultisig({ threshold: 2, signersLength: 2 });
+      const { accountContract, keys } = await deployMultisig({ threshold: 2, signersLength: 2 });
 
       const signatures = await new MultisigSigner([keys[0]]).signRaw(messageHash);
 
@@ -70,7 +70,7 @@ describe("ArgentMultisig: signing", function () {
       const messageHash = num.toHex(424242);
 
       const { accountContract } = await deployMultisig1_1();
-      const invalid = randomKeyPair();
+      const invalid = randomStarknetKeyPair();
       const signatures = await new MultisigSigner([invalid]).signRaw(messageHash);
 
       await expectRevertWithErrorMessage("argent/not-a-signer", () =>
@@ -81,13 +81,13 @@ describe("ArgentMultisig: signing", function () {
     it("Expect 'argent/undeserializable' when the signature is improperly formatted/empty", async function () {
       const messageHash = num.toHex(424242);
 
-      const { accountContract, keys, signers } = await deployMultisig1_1();
+      const { accountContract, keys } = await deployMultisig1_1();
 
-      const [r] = keys[0].signHash(messageHash);
+      const [publicKey, r] = await keys[0].signRaw(messageHash);
 
       await expectRevertWithErrorMessage("argent/undeserializable", () =>
         // Missing S argument
-        accountContract.is_valid_signature(BigInt(messageHash), [1, 0, keys[0].publicKey, r]),
+        accountContract.is_valid_signature(BigInt(messageHash), [1, 0, publicKey, r]),
       );
 
       // No SignerSignature

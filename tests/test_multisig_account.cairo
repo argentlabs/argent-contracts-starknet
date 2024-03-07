@@ -50,7 +50,7 @@ fn invalid_threshold() {
     threshold.serialize(ref calldata);
     array![signer_1].serialize(ref calldata);
 
-    let argent_class = declare('ArgentMultisigAccount');
+    let argent_class = declare("ArgentMultisigAccount");
     argent_class.deploy(@calldata).expect_err('argent/bad-threshold');
 }
 

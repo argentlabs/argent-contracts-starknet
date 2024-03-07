@@ -69,7 +69,7 @@ fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAcco
     };
     guardian_signer.serialize(ref calldata);
 
-    let contract = declare('ArgentAccount');
+    let contract = declare("ArgentAccount");
     let contract_address = contract
         .deploy_at(@calldata, ARGENT_ACCOUNT_ADDRESS.try_into().unwrap())
         .expect('Failed to deploy ArgentAccount');

@@ -47,7 +47,7 @@ trait ITestArgentMultisig<TContractState> {
 }
 
 fn declare_multisig() -> ContractClass {
-    declare('ArgentMultisigAccount')
+    declare("ArgentMultisigAccount")
 }
 
 fn initialize_multisig() -> ITestArgentMultisigDispatcher {

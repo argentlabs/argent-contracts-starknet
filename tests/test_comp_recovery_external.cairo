@@ -36,7 +36,7 @@ fn GUARDIAN() -> ContractAddress {
 }
 
 fn setup() -> (IRecoveryDispatcher, IToggleExternalRecoveryDispatcher, IArgentMultisigDispatcher) {
-    let contract_class = declare('ExternalRecoveryMock');
+    let contract_class = declare("ExternalRecoveryMock");
     let constructor = array![];
     let contract_address = contract_class.deploy(@constructor).expect('Deployment failed');
 

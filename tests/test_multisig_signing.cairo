@@ -1,6 +1,6 @@
 use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknet_signer_from_pubkey};
 use starknet::VALIDATED;
-use super::setup::constants::{MULTISIG_OWNER, MULTISIG_OWNER_SIG, message_hash};
+use super::setup::constants::{MULTISIG_OWNER, MULTISIG_OWNER_SIG, tx_hash};
 use super::setup::{
     multisig_test_setup::{
         initialize_multisig_with, ITestArgentMultisigDispatcherTrait, initialize_multisig_with_one_signer
@@ -16,7 +16,7 @@ fn test_signature() {
     let signature = to_starknet_signer_signatures(
         array![MULTISIG_OWNER(1), MULTISIG_OWNER_SIG(1).r, MULTISIG_OWNER_SIG(1).s]
     );
-    assert(multisig.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
+    assert(multisig.is_valid_signature(tx_hash, signature) == VALIDATED, 'bad signature');
 }
 #[test]
 fn test_double_signature() {
@@ -36,7 +36,7 @@ fn test_double_signature() {
             MULTISIG_OWNER_SIG(2).s
         ]
     );
-    assert(multisig.is_valid_signature(message_hash, signature) == VALIDATED, 'bad signature');
+    assert(multisig.is_valid_signature(tx_hash, signature) == VALIDATED, 'bad signature');
 }
 
 #[test]
@@ -57,7 +57,7 @@ fn test_double_signature_order() {
             MULTISIG_OWNER_SIG(2).s
         ]
     );
-    multisig.is_valid_signature(message_hash, signature);
+    multisig.is_valid_signature(tx_hash, signature);
 }
 
 #[test]
@@ -78,7 +78,7 @@ fn test_same_owner_twice() {
             MULTISIG_OWNER_SIG(1).s
         ]
     );
-    multisig.is_valid_signature(message_hash, signature);
+    multisig.is_valid_signature(tx_hash, signature);
 }
 
 #[test]
@@ -92,7 +92,7 @@ fn test_missing_owner_signature() {
     let signature = to_starknet_signer_signatures(
         array![MULTISIG_OWNER(1), MULTISIG_OWNER_SIG(1).r, MULTISIG_OWNER_SIG(2).s]
     );
-    multisig.is_valid_signature(message_hash, signature);
+    multisig.is_valid_signature(tx_hash, signature);
 }
 
 #[test]
@@ -102,7 +102,7 @@ fn test_short_signature() {
 
     let mut signature = array![1];
     MULTISIG_OWNER(1).serialize(ref signature);
-    multisig.is_valid_signature(message_hash, signature);
+    multisig.is_valid_signature(tx_hash, signature);
 }
 
 #[test]
@@ -120,6 +120,6 @@ fn test_long_signature() {
             MULTISIG_OWNER_SIG(2).s
         ]
     );
-    multisig.is_valid_signature(message_hash, signature);
+    multisig.is_valid_signature(tx_hash, signature);
 }
 

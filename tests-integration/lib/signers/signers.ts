@@ -209,6 +209,7 @@ export class StarknetKeyPair extends KeyPair {
       Starknet: { signer: this.publicKey },
       Secp256k1: undefined,
       Secp256r1: undefined,
+      Eip191: undefined,
       Webauthn: undefined,
     });
   }
@@ -229,6 +230,7 @@ export function starknetSignatureType(
       Starknet: { signer, r, s },
       Secp256k1: undefined,
       Secp256r1: undefined,
+      Eip191: undefined,
       Webauthn: undefined,
     }),
   ]);
@@ -239,6 +241,7 @@ export function zeroStarknetSignatureType() {
     Starknet: { signer: 0 },
     Secp256k1: undefined,
     Secp256r1: undefined,
+    Eip191: undefined,
     Webauthn: undefined,
   });
 }

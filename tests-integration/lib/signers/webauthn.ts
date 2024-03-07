@@ -62,6 +62,7 @@ class WebauthnOwner extends KeyPair {
       Starknet: undefined,
       Secp256k1: undefined,
       Secp256r1: undefined,
+      Eip191: undefined,
       Webauthn: {
         origin,
         rp_id_hash: uint256.bnToUint256(rpIdHash),
@@ -100,6 +101,7 @@ class WebauthnOwner extends KeyPair {
           Starknet: undefined,
           Secp256k1: undefined,
           Secp256r1: undefined,
+          Eip191: undefined,
           Webauthn: cairoAssertion,
         }),
       ],

@@ -3,7 +3,6 @@ import {
   ArraySignatureType,
   ec,
   CallData,
-  Signature,
   InvocationsSignerDetails,
   Call,
   shortString,
@@ -256,6 +255,7 @@ export class DappService {
       Starknet: { signer, r: signature[0], s: signature[1] },
       Secp256k1: undefined,
       Secp256r1: undefined,
+      Eip191: undefined,
       Webauthn: undefined,
     });
   }

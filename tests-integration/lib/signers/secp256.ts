@@ -21,11 +21,13 @@ export class EthKeyPair extends KeyPair {
     throw new Error("Not implemented yet");
   }
 
+  // TODO Having to redefine this signer struct is quite painful, is there a way not do that?
   public get signer(): CairoCustomEnum {
     return new CairoCustomEnum({
       Starknet: undefined,
       Secp256k1: { signer: this.publicKey },
       Secp256r1: undefined,
+      Eip191: undefined,
       Webauthn: undefined,
     });
   }
@@ -61,6 +63,7 @@ export class Secp256r1KeyPair extends KeyPair {
       Starknet: undefined,
       Secp256k1: undefined,
       Secp256r1: { signer: this.publicKey },
+      Eip191: undefined,
       Webauthn: undefined,
     });
   }
@@ -84,6 +87,7 @@ function ethereumSignatureType(signer: bigint, signature: EthersSignature) {
         y_parity: signature.yParity,
       },
       Secp256r1: undefined,
+      Eip191: undefined,
       Webauthn: undefined,
     }),
   ]);
@@ -100,6 +104,7 @@ function secp256r1SignatureType(signer: Uint256, signature: RecoveredSignatureTy
         s: uint256.bnToUint256(signature.s),
         y_parity: signature.recovery,
       },
+      Eip191: undefined,
       Webauthn: undefined,
     }),
   ]);

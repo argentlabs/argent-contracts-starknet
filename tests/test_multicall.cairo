@@ -20,7 +20,7 @@ use starknet::{contract_address_const, account::Call};
 #[test]
 #[should_panic(expected: ('argent/multicall-failed', 2, 'test dapp reverted',))]
 fn execute_multicall_at_one() {
-    let class_hash = declare("TestDapp");
+    let class_hash = declare("MockDapp");
     let constructor = array![];
     let contract_address = class_hash.deploy(@constructor).expect('Failed to deploy contract');
 

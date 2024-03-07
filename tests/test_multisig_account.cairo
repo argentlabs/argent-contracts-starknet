@@ -6,7 +6,7 @@ use snforge_std::{get_class_hash, declare, ContractClass, ContractClassTrait};
 use super::setup::constants::{MULTISIG_OWNER};
 use super::setup::multisig_test_setup::{
     initialize_multisig, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
-    initialize_multisig_with_one_signer
+    initialize_multisig_with_one_signer, declare_multisig
 };
 
 #[test]
@@ -50,7 +50,7 @@ fn invalid_threshold() {
     threshold.serialize(ref calldata);
     array![signer_1].serialize(ref calldata);
 
-    let argent_class = declare("ArgentMultisigAccount");
+    let argent_class = declare_multisig();
     argent_class.deploy(@calldata).expect_err('argent/bad-threshold');
 }
 

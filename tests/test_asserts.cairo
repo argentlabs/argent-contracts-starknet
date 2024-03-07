@@ -12,7 +12,7 @@ fn test_assert_only_self() {
 #[test]
 #[should_panic(expected: ('argent/only-self',))]
 fn test_assert_only_self_panic() {
-    start_prank(CheatTarget::All, 42.try_into().unwrap());
+    start_prank(CheatTarget::All, contract_address_const::<42>());
     asserts::assert_only_self();
 }
 

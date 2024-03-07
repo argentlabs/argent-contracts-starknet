@@ -15,11 +15,11 @@ import {
 } from "./lib";
 
 describe("ArgentAccount: multicall", function () {
-  let testDappContract: Contract;
+  let mockDappContract: Contract;
   let ethContract: Contract;
 
   before(async () => {
-    testDappContract = await deployContract("TestDapp");
+    mockDappContract = await deployContract("MockDapp");
     ethContract = await getEthContract();
   });
 
@@ -71,18 +71,18 @@ describe("ArgentAccount: multicall", function () {
 
     const senderInitialBalance = await getEthBalance(account.address);
     const recipient1InitialBalance = await getEthBalance(recipient1);
-    const initalNumber = await testDappContract.get_number(account.address);
+    const initalNumber = await mockDappContract.get_number(account.address);
     expect(initalNumber).to.equal(0n);
 
     const { transaction_hash: transferTxHash } = await account.execute([
       ethContract.populateTransaction.transfer(recipient1, amount1),
-      testDappContract.populateTransaction.set_number(42),
+      mockDappContract.populateTransaction.set_number(42),
     ]);
     await account.waitForTransaction(transferTxHash);
 
     const senderFinalBalance = await getEthBalance(account.address);
     const recipient1FinalBalance = await getEthBalance(recipient1);
-    const finalNumber = await testDappContract.get_number(account.address);
+    const finalNumber = await mockDappContract.get_number(account.address);
     // Before amount should be higher than (after + transfer) amount due to fee
     expect(Number(senderInitialBalance)).to.be.greaterThan(Number(senderFinalBalance) + 1000 + 42000);
     expect(recipient1InitialBalance + 1000n).to.equal(recipient1FinalBalance);
@@ -92,20 +92,20 @@ describe("ArgentAccount: multicall", function () {
   it("Should keep the tx in correct order", async function () {
     const { account } = await deployAccount();
 
-    const initalNumber = await testDappContract.get_number(account.address);
+    const initalNumber = await mockDappContract.get_number(account.address);
     expect(initalNumber).to.equal(0n);
 
     // Please only use prime number in this test
     const { transaction_hash: transferTxHash } = await account.execute([
-      testDappContract.populateTransaction.set_number(1),
-      testDappContract.populateTransaction.set_number_double(3),
-      testDappContract.populateTransaction.set_number_times3(5),
-      testDappContract.populateTransaction.set_number(7),
-      testDappContract.populateTransaction.set_number_times3(11),
+      mockDappContract.populateTransaction.set_number(1),
+      mockDappContract.populateTransaction.set_number_double(3),
+      mockDappContract.populateTransaction.set_number_times3(5),
+      mockDappContract.populateTransaction.set_number(7),
+      mockDappContract.populateTransaction.set_number_times3(11),
     ]);
     await account.waitForTransaction(transferTxHash);
 
-    const finalNumber = await testDappContract.get_number(account.address);
+    const finalNumber = await mockDappContract.get_number(account.address);
     expect(finalNumber).to.equal(33n);
   });
 
@@ -126,8 +126,8 @@ describe("ArgentAccount: multicall", function () {
   it("Valid return data", async function () {
     const { account } = await deployAccount();
     const calls = [
-      testDappContract.populateTransaction.increase_number(1),
-      testDappContract.populateTransaction.increase_number(10),
+      mockDappContract.populateTransaction.increase_number(1),
+      mockDappContract.populateTransaction.increase_number(10),
     ];
     const receipt = ensureAccepted(await waitForTransaction(await account.execute(calls)));
 

@@ -1,7 +1,7 @@
 use starknet::ContractAddress;
 
 #[starknet::interface]
-trait ITestDapp<TContractState> {
+trait IMockDapp<TContractState> {
     fn set_number(ref self: TContractState, number: felt252);
     fn set_number_double(ref self: TContractState, number: felt252);
     fn set_number_times3(ref self: TContractState, number: felt252);
@@ -12,7 +12,7 @@ trait ITestDapp<TContractState> {
 }
 
 #[starknet::contract]
-mod TestDapp {
+mod MockDapp {
     use starknet::{get_caller_address, ContractAddress};
 
     #[storage]
@@ -21,7 +21,7 @@ mod TestDapp {
     }
 
     #[abi(embed_v0)]
-    impl TestDappImpl of super::ITestDapp<ContractState> {
+    impl MockDappImpl of super::IMockDapp<ContractState> {
         fn set_number(ref self: ContractState, number: felt252) {
             self.stored_number.write(get_caller_address(), number);
         }

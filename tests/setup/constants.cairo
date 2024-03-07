@@ -56,7 +56,7 @@ fn WRONG_GUARDIAN_KEY() -> felt252 {
 
 fn MULTISIG_OWNER_SIG(owner: felt252) -> StarknetSignature {
     let owner = KeyPairTrait::from_secret_key(owner);
-    let (r, s) = owner.sign(tx_hash);
+    let (r, s): (felt252, felt252) = owner.sign(tx_hash);
     StarknetSignature { r, s }
 }
 

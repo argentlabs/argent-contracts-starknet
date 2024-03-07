@@ -22,10 +22,10 @@ describe("ArgentAccount: outside execution", function () {
   // Avoid timeout
   this.timeout(320000);
 
-  let testDapp: Contract;
+  let MockDapp: Contract;
 
   before(async () => {
-    testDapp = await deployContract("TestDapp");
+    MockDapp = await deployContract("MockDapp");
   });
 
   it("Correct message hash", async function () {
@@ -57,14 +57,14 @@ describe("ArgentAccount: outside execution", function () {
   it("Basics", async function () {
     const { account, accountContract } = await deployAccount();
 
-    await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
+    await MockDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,
       nonce: randomKeyPair().publicKey,
       execute_after: initialTime - 100,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(MockDapp.populateTransaction.set_number(42))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, account.signer);
 
@@ -101,7 +101,7 @@ describe("ArgentAccount: outside execution", function () {
     // normal scenario
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
-    await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await MockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
     // ensure a transaction can't be replayed
@@ -111,20 +111,20 @@ describe("ArgentAccount: outside execution", function () {
   it("Avoid caller check if it caller is ANY_CALLER", async function () {
     const { account } = await deployAccount();
 
-    await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
+    await MockDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
     const outsideExecution: OutsideExecution = {
       caller: shortString.encodeShortString("ANY_CALLER"),
       nonce: randomKeyPair().publicKey,
       execute_after: 0,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(MockDapp.populateTransaction.set_number(42))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, account.signer);
 
     // ensure the caller is no
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
-    await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await MockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 
   it("Owner only account", async function () {
@@ -135,14 +135,14 @@ describe("ArgentAccount: outside execution", function () {
       nonce: randomKeyPair().publicKey,
       execute_after: 0,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(MockDapp.populateTransaction.set_number(42))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, account.signer);
 
     await setTime(initialTime);
 
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
-    await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await MockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 
   it("Escape method", async function () {

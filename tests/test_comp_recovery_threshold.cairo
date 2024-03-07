@@ -63,7 +63,7 @@ fn test_toggle_escape() {
 #[should_panic(expected: ('argent/only-self',))]
 fn test_toggle_unauthorised() {
     let (_, toggle_component, _) = setup();
-    start_prank(CheatTarget::All, (42.try_into().unwrap()));
+    start_prank(CheatTarget::All, (contract_address_const::<42>()));
     toggle_component.toggle_escape(false, 0, 0);
 }
 
@@ -128,7 +128,7 @@ fn test_trigger_escape_not_enabled() {
 #[should_panic(expected: ('argent/only-self',))]
 fn test_trigger_escape_unauthorised() {
     let (component, _, _) = setup();
-    start_prank(CheatTarget::All, (42.try_into().unwrap()));
+    start_prank(CheatTarget::All, (contract_address_const::<42>()));
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
 }
 
@@ -172,7 +172,7 @@ fn test_execute_escape_unauthorised() {
     let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     start_warp(CheatTarget::All, 11);
-    start_prank(CheatTarget::All, (42.try_into().unwrap()));
+    start_prank(CheatTarget::All, (contract_address_const::<42>()));
     component.execute_escape();
 }
 
@@ -198,7 +198,7 @@ fn test_cancel_escape_unauthorised() {
     let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     start_warp(CheatTarget::All, 11);
-    start_prank(CheatTarget::All, (42.try_into().unwrap()));
+    start_prank(CheatTarget::All, (contract_address_const::<42>()));
     component.cancel_escape();
 }
 

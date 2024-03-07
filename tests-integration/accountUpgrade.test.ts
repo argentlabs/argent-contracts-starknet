@@ -17,11 +17,11 @@ import {
 
 describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
-  let testDapp: ContractWithClassHash;
+  let MockDapp: ContractWithClassHash;
 
   before(async () => {
     argentAccountClassHash = await declareContract("ArgentAccount");
-    testDapp = await deployContract("TestDapp");
+    MockDapp = await deployContract("MockDapp");
   });
 
   it("Upgrade cairo 0 to current version", async function () {
@@ -41,10 +41,10 @@ describe("ArgentAccount: upgrade", function () {
     const receipt = await upgradeAccount(
       account,
       argentAccountClassHash,
-      getUpgradeDataLegacy([testDapp.populateTransaction.set_number(42)]),
+      getUpgradeDataLegacy([MockDapp.populateTransaction.set_number(42)]),
     );
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
-    await testDapp.get_number(account.address).should.eventually.equal(42n);
+    await MockDapp.get_number(account.address).should.eventually.equal(42n);
     await expectEvent(receipt, {
       from_address: account.address,
       eventName: "OwnerAdded",
@@ -98,7 +98,7 @@ describe("ArgentAccount: upgrade", function () {
     await upgradeAccount(account, "0x01").should.be.rejectedWith(
       `Class with hash ClassHash(\\n    StarkFelt(\\n        \\"0x0000000000000000000000000000000000000000000000000000000000000001\\",\\n    ),\\n) is not declared`,
     );
-    await upgradeAccount(account, testDapp.classHash).should.be.rejectedWith(
+    await upgradeAccount(account, MockDapp.classHash).should.be.rejectedWith(
       `EntryPointSelector(StarkFelt(\\"0x00fe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283\\")) not found in contract`,
     );
   });

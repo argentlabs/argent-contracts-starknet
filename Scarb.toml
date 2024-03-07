@@ -15,6 +15,7 @@ starknet = "2.5.4"
 alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.5.4" }
 alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.5.4" }
 alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", tag="cairo-v2.5.4" }
+snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.19.0" }
 
 
 [tool.fmt]
@@ -22,6 +23,7 @@ max-line-length = 120
 sort-module-level-items = true
 
 [scripts]
+test = "snforge test"
 format = "scarb fmt && yarn prettier --write ."
 lint = "yarn eslint ."
 test-ts = "scarb --profile release build && yarn tsc && yarn mocha tests-integration/*.test.ts"

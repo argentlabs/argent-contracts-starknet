@@ -81,7 +81,7 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     describe("Testing with all guardian signer combination", function () {
-      guardianType.forEach((type) => {
+      for (const type of guardianType) {
         describe(`Triggered by ${type}`, function () {
           it(`Expect to be able to trigger it alone`, async function () {
             const { account, accountContract, other } = await buildAccount(type);
@@ -134,7 +134,7 @@ describe("ArgentAccount: escape mechanism", function () {
             expect(newEscape.new_signer).to.equal(randomKeyPair.guid);
           });
         });
-      });
+      }
     });
   });
 
@@ -164,7 +164,7 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     describe("Testing with all guardian signer combination", function () {
-      guardianType.forEach((type) => {
+      for (const type of guardianType) {
         describe(`Escaping by ${type}`, function () {
           it("Expect to be able to escape the owner alone", async function () {
             const { account, accountContract, other } = await buildAccount(type);
@@ -258,7 +258,7 @@ describe("ArgentAccount: escape mechanism", function () {
             await expectRevertWithErrorMessage("argent/invalid-escape", () => accountContract.escape_owner());
           });
         });
-      });
+      }
     });
   });
 

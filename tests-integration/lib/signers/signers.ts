@@ -25,17 +25,6 @@ import {
   Calldata,
 } from "starknet";
 
-// reflects the signer type in signer_signature.cairo
-// needs to be updated for the signer types
-// used to convert signertype to guid
-export enum SignerTypeEnum {
-  Starknet,
-  Secp256k1,
-  Secp256r1,
-  Webauthn,
-  Eip191,
-}
-
 /**
  * This class allows to easily implement custom signers by overriding the `signRaw` method.
  * This is based on Starknet.js implementation of Signer, but it delegates the actual signing to an abstract function
@@ -205,13 +194,7 @@ export class StarknetKeyPair extends KeyPair {
   }
 
   public get signer(): CairoCustomEnum {
-    return new CairoCustomEnum({
-      Starknet: { signer: this.publicKey },
-      Secp256k1: undefined,
-      Secp256r1: undefined,
-      Eip191: undefined,
-      Webauthn: undefined,
-    });
+    return signerTypeToCustomEnum(SignerType.Starknet, { signer: this.publicKey });
   }
 
   public async signRaw(messageHash: string): Promise<string[]> {
@@ -225,24 +208,56 @@ export function starknetSignatureType(
   r: bigint | number | string,
   s: bigint | number | string,
 ) {
-  return CallData.compile([
-    new CairoCustomEnum({
-      Starknet: { signer, r, s },
-      Secp256k1: undefined,
-      Secp256r1: undefined,
-      Eip191: undefined,
-      Webauthn: undefined,
-    }),
-  ]);
+  return CallData.compile([signerTypeToCustomEnum(SignerType.Starknet, { signer, r, s })]);
 }
 
 export function zeroStarknetSignatureType() {
+  return signerTypeToCustomEnum(SignerType.Starknet, { signer: 0 });
+}
+
+// reflects the signer type in signer_signature.cairo
+// needs to be updated for the signer types
+// used to convert signertype to guid
+export enum SignerType {
+  Starknet,
+  Secp256k1,
+  Secp256r1,
+  Eip191,
+  Webauthn,
+}
+
+export function signerTypeToCustomEnum(my_enum: SignerType, value: any): CairoCustomEnum {
+  let Starknet;
+  let Secp256k1;
+  let Secp256r1;
+  let Eip191;
+  let Webauthn;
+  switch (my_enum) {
+    case SignerType.Starknet:
+      Starknet = value;
+      break;
+    case SignerType.Secp256k1:
+      Secp256k1 = value;
+      break;
+    case SignerType.Secp256r1:
+      Secp256r1 = value;
+      break;
+    case SignerType.Eip191:
+      Eip191 = value;
+      break;
+    case SignerType.Webauthn:
+      Webauthn = value;
+      break;
+    default:
+      throw new Error(`Unknown SignerType`);
+  }
+
   return new CairoCustomEnum({
-    Starknet: { signer: 0 },
-    Secp256k1: undefined,
-    Secp256r1: undefined,
-    Eip191: undefined,
-    Webauthn: undefined,
+    Starknet,
+    Secp256k1,
+    Secp256r1,
+    Eip191,
+    Webauthn,
   });
 }
 

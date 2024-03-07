@@ -126,7 +126,7 @@ describe("ArgentMultisig: signer storage", function () {
       await accountContract.get_threshold().should.eventually.equal(newThreshold);
     });
 
-    signersToRemove.forEach((testCase) => {
+    for (const testCase of signersToRemove) {
       const indicesToRemove = testCase.join(", ");
       it(`Removing at index(es): ${indicesToRemove}`, async function () {
         const { accountContract, keys, threshold } = await deployMultisig1_3();
@@ -135,18 +135,17 @@ describe("ArgentMultisig: signer storage", function () {
           CallData.compile([threshold, testCase.map((index) => keys[index].signer)]),
         );
 
-        testCase.forEach(async (signerIndex) => {
+        for (const signerIndex of testCase) {
           await accountContract.is_signer_guid(keys[signerIndex].guid).should.eventually.be.false;
-        });
-        keys;
-        const remainingSigners = keys.filter((_, index) => !testCase.includes(index)).map(Number);
-        remainingSigners.forEach(async (signerIndex) => {
-          await accountContract.is_signer_guid(keys[signerIndex].guid).should.eventually.be.true;
-        });
+        }
+        const remainingSigners = keys.filter((_, index) => !testCase.includes(index));
+        for (const keyPair of remainingSigners) {
+          await accountContract.is_signer_guid(keyPair.guid).should.eventually.be.true;
+        }
 
         await accountContract.get_threshold().should.eventually.equal(threshold);
       });
-    });
+    }
 
     describe("Test all possible revert errors when removing signers", function () {
       it("Expect 'argent/not-a-signer' when replacing an owner not in the list", async function () {

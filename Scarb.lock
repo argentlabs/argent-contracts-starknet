@@ -46,4 +46,10 @@ dependencies = [
  "alexandria_encoding",
  "alexandria_math",
  "alexandria_merkle_tree",
+ "snforge_std",
 ]
+
+[[package]]
+name = "snforge_std"
+version = "0.19.0"
+source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.19.0#a3391dce5bdda51c63237032e6cfc64fb7a346d4"

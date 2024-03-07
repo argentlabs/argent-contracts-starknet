@@ -53,8 +53,15 @@ mod utils {
     mod mock_erc20;
     mod multicall;
     mod serialization;
-    mod test_dapp;
     mod transaction_version;
+}
+
+mod mocks {
+    mod multisig_mocks;
+    mod recovery_mocks;
+    mod signer_list_mocks;
+    mod src5_mocks;
+    mod test_dapp;
 }
 
 mod session {

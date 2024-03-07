@@ -8,7 +8,7 @@ import {
   hash,
   uint256,
 } from "starknet";
-import { KeyPair, fundAccount, provider } from "..";
+import { KeyPair, SignerType, fundAccount, provider, signerTypeToCustomEnum } from "..";
 
 // Bytes fn
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
@@ -58,16 +58,10 @@ class WebauthnOwner extends KeyPair {
   }
 
   public get signer(): CairoCustomEnum {
-    return new CairoCustomEnum({
-      Starknet: undefined,
-      Secp256k1: undefined,
-      Secp256r1: undefined,
-      Eip191: undefined,
-      Webauthn: {
-        origin,
-        rp_id_hash: uint256.bnToUint256(rpIdHash),
-        pubkey: uint256.bnToUint256(pubkey),
-      },
+    return signerTypeToCustomEnum(SignerType.Webauthn, {
+      origin,
+      rp_id_hash: uint256.bnToUint256(rpIdHash),
+      pubkey: uint256.bnToUint256(pubkey),
     });
   }
 
@@ -95,17 +89,7 @@ class WebauthnOwner extends KeyPair {
       origin_length: clientData.origin.length,
     };
 
-    return CallData.compile([
-      [
-        new CairoCustomEnum({
-          Starknet: undefined,
-          Secp256k1: undefined,
-          Secp256r1: undefined,
-          Eip191: undefined,
-          Webauthn: cairoAssertion,
-        }),
-      ],
-    ]);
+    return CallData.compile([[signerTypeToCustomEnum(SignerType.Webauthn, cairoAssertion)]]);
   }
 }
 

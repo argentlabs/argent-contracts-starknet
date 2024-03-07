@@ -25,7 +25,7 @@ export class ArgentX {
 }
 
 export class BackendService {
-  // TODO We might want to update this to support KeyPair instead of StarknetKeyPair? 
+  // TODO We might want to update this to support KeyPair instead of StarknetKeyPair?
   // Or that backend becomes: "export class BackendService extends KeyPair {", can also extends RawSigner ?
   constructor(private backendKey: StarknetKeyPair) {}
 

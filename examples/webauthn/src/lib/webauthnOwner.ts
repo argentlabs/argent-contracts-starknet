@@ -52,6 +52,7 @@ export class WebauthnOwner extends RawSigner {
           Starknet: undefined,
           Secp256k1: undefined,
           Secp256r1: undefined,
+          Eip191: undefined,
           Webauthn: cairoAssertion,
         }),
       ],
@@ -64,6 +65,7 @@ export function webauthnSigner(origin: string, rp_id_hash: string, pubkey: strin
     Starknet: undefined,
     Secp256k1: undefined,
     Secp256r1: undefined,
+    Eip191: undefined,
     Webauthn: {
       origin,
       rp_id_hash: uint256.bnToUint256(BigInt(rp_id_hash)),

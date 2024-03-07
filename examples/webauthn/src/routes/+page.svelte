@@ -57,7 +57,7 @@
     {:else}
       <div>Account address: <small>{account.address}</small></div>
       <h1>3. Send transaction</h1>
-      <p>Transfer 42 wei to address 69:</p>
+      <p>Transfer 1 wei to address 69:</p>
       {#if !transactionHash}
         {#if !sendPromise}
           <button on:click={() => (sendPromise = handleClickSendTransaction())}>Sign & broadcast</button>

@@ -10,91 +10,67 @@ use snforge_std::signature::{
 
 use starknet::secp256k1::{Secp256k1Point};
 
+#[derive(Drop, Serde, Copy)]
+struct KeyAndSig {
+    pubkey: felt252,
+    sig: StarknetSignature,
+}
+
 
 const ARGENT_ACCOUNT_ADDRESS: felt252 = 0x222222222;
 
 const tx_hash: felt252 = 0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8;
 
-fn new_owner_message_hash(old_signer: felt252) -> felt252 {
+fn new_owner_message_hash() -> felt252 {
     PedersenTrait::new(0)
         .update(selector!("change_owner"))
         .update('SN_GOERLI')
         .update(ARGENT_ACCOUNT_ADDRESS)
-        .update(OWNER_KEY())
+        .update(OWNER().pubkey)
         .update(4)
         .finalize()
 }
 
 
-fn MULTISIG_OWNER(key: felt252) -> felt252 {
-    KeyPairTrait::from_secret_key(key).public_key
+fn OWNER() -> KeyAndSig {
+    let new_owner = KeyPairTrait::from_secret_key('OWNER');
+    let (r, s): (felt252, felt252) = new_owner.sign(tx_hash);
+    KeyAndSig { pubkey: new_owner.public_key, sig: StarknetSignature { r, s }, }
 }
 
-fn OWNER_KEY() -> felt252 {
-    KeyPairTrait::from_secret_key('OWNER').public_key
+fn MULTISIG_OWNER(key: felt252) -> KeyAndSig {
+    let new_owner = KeyPairTrait::from_secret_key(key);
+    let (r, s): (felt252, felt252) = new_owner.sign(tx_hash);
+    KeyAndSig { pubkey: new_owner.public_key, sig: StarknetSignature { r, s }, }
 }
 
-fn GUARDIAN_KEY() -> felt252 {
-    KeyPairTrait::from_secret_key('GUARDIAN').public_key
+fn GUARDIAN() -> KeyAndSig {
+    let new_owner = KeyPairTrait::from_secret_key('GUARDIAN');
+    let (r, s): (felt252, felt252) = new_owner.sign(tx_hash);
+    KeyAndSig { pubkey: new_owner.public_key, sig: StarknetSignature { r, s }, }
 }
 
-fn GUARDIAN_BACKUP_KEY() -> felt252 {
-    KeyPairTrait::from_secret_key('GUARDIAN_BACKUP').public_key
+fn GUARDIAN_BACKUP() -> KeyAndSig {
+    let new_owner = KeyPairTrait::from_secret_key('GUARDIAN_BACKUP');
+    let (r, s): (felt252, felt252) = new_owner.sign(tx_hash);
+    KeyAndSig { pubkey: new_owner.public_key, sig: StarknetSignature { r, s }, }
 }
 
-fn WRONG_OWNER_KEY() -> felt252 {
-    KeyPairTrait::from_secret_key('WRONG_OWNER').public_key
+fn WRONG_OWNER() -> KeyAndSig {
+    let new_owner = KeyPairTrait::from_secret_key('WRONG_OWNER');
+    let (r, s): (felt252, felt252) = new_owner.sign(tx_hash);
+    KeyAndSig { pubkey: new_owner.public_key, sig: StarknetSignature { r, s }, }
 }
 
-fn NEW_OWNER_KEY() -> felt252 {
-    KeyPairTrait::from_secret_key('NEW_OWNER').public_key
-}
-
-fn WRONG_GUARDIAN_KEY() -> felt252 {
-    KeyPairTrait::from_secret_key('WRONG_GUARDIAN').public_key
-}
-
-fn MULTISIG_OWNER_SIG(owner: felt252) -> StarknetSignature {
-    let owner = KeyPairTrait::from_secret_key(owner);
-    let (r, s): (felt252, felt252) = owner.sign(tx_hash);
-    StarknetSignature { r, s }
-}
-
-fn OWNER_SIG() -> StarknetSignature {
-    let owner = KeyPairTrait::from_secret_key('OWNER');
-    let (r, s): (felt252, felt252) = owner.sign(tx_hash);
-    StarknetSignature { r, s }
-}
-
-fn GUARDIAN_SIG() -> StarknetSignature {
-    let guardian = KeyPairTrait::from_secret_key('GUARDIAN');
-    let (r, s): (felt252, felt252) = guardian.sign(tx_hash);
-    StarknetSignature { r, s }
-}
-
-fn GUARDIAN_BACKUP_SIG() -> StarknetSignature {
-    let guardian_backup = KeyPairTrait::from_secret_key('GUARDIAN_BACKUP');
-    let (r, s): (felt252, felt252) = guardian_backup.sign(tx_hash);
-    StarknetSignature { r, s }
-}
-
-
-fn WRONG_OWNER_SIG() -> StarknetSignature {
-    let wrong_owner = KeyPairTrait::from_secret_key('WRONG_OWNER');
-    let (r, s): (felt252, felt252) = wrong_owner.sign(tx_hash);
-    StarknetSignature { r, s }
-}
-
-fn WRONG_GUARDIAN_SIG() -> StarknetSignature {
-    let wrong_guardian = KeyPairTrait::from_secret_key('WRONG_GUARDIAN');
-    let (r, s): (felt252, felt252) = wrong_guardian.sign(tx_hash);
-    StarknetSignature { r, s }
-}
-
-// change owner 
-fn NEW_OWNER_SIG() -> StarknetSignature {
+fn NEW_OWNER() -> KeyAndSig {
     let new_owner = KeyPairTrait::from_secret_key('NEW_OWNER');
-    let new_owner_message_hash = new_owner_message_hash(new_owner.public_key);
+     let new_owner_message_hash = new_owner_message_hash();
     let (r, s): (felt252, felt252) = new_owner.sign(new_owner_message_hash);
-    StarknetSignature { r, s }
+    KeyAndSig { pubkey: new_owner.public_key, sig: StarknetSignature { r, s }, }
+}
+
+fn WRONG_GUARDIAN() -> KeyAndSig {
+    let new_owner = KeyPairTrait::from_secret_key('WRONG_GUARDIAN');
+    let (r, s): (felt252, felt252) = new_owner.sign(tx_hash);
+    KeyAndSig { pubkey: new_owner.public_key, sig: StarknetSignature { r, s }, }
 }

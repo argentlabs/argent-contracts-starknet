@@ -53,16 +53,16 @@ fn declare_multisig() -> ContractClass {
 fn initialize_multisig() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
     let signers_array = array![
-        starknet_signer_from_pubkey(MULTISIG_OWNER(1)),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(2)),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(3)),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey),
     ];
     initialize_multisig_with(threshold, signers_array.span())
 }
 
 fn initialize_multisig_with_one_signer() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
-    let signers_array = array![starknet_signer_from_pubkey(MULTISIG_OWNER(1))];
+    let signers_array = array![starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)];
     initialize_multisig_with(threshold, signers_array.span())
 }
 

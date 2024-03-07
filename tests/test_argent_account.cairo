@@ -11,9 +11,7 @@ use super::setup::{
         initialize_account_without_guardian
     },
     utils::{set_tx_version_foundry, felt252TryIntoStarknetSigner},
-    constants::{
-        OWNER_KEY, GUARDIAN_KEY, NEW_OWNER_KEY, NEW_OWNER_SIG, WRONG_OWNER_KEY, WRONG_OWNER_SIG, ARGENT_ACCOUNT_ADDRESS
-    }
+    constants::{OWNER, GUARDIAN, NEW_OWNER, WRONG_OWNER, ARGENT_ACCOUNT_ADDRESS}
 };
 
 #[test]
@@ -75,11 +73,10 @@ fn erc165_supported_interfaces() {
 #[test]
 fn change_owner() {
     let account = initialize_account();
-    assert(account.get_owner() == OWNER_KEY(), 'owner not correctly set');
-    let new_owner_sig = NEW_OWNER_SIG();
-    let new_owner_pubkey = NEW_OWNER_KEY();
+    assert(account.get_owner() == OWNER().pubkey, 'owner not correctly set');
+    let new_owner_pubkey = NEW_OWNER().pubkey;
     let signer_signature = SignerSignature::Starknet(
-        (new_owner_pubkey.try_into().unwrap(), StarknetSignature { r: new_owner_sig.r, s: new_owner_sig.s })
+        (new_owner_pubkey.try_into().unwrap(), StarknetSignature { r: NEW_OWNER().sig.r, s: NEW_OWNER().sig.s })
     );
     account.change_owner(signer_signature);
     assert(account.get_owner() == new_owner_pubkey, 'value should be new owner pub');
@@ -90,10 +87,9 @@ fn change_owner() {
 fn change_owner_only_self() {
     let account = initialize_account();
     start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
-    let new_owner_sig = NEW_OWNER_SIG();
-    let new_owner_pubkey = NEW_OWNER_KEY();
+    let new_owner_pubkey = NEW_OWNER().pubkey;
     let signer_signature = SignerSignature::Starknet(
-        (new_owner_pubkey.try_into().unwrap(), StarknetSignature { r: new_owner_sig.r, s: new_owner_sig.s })
+        (new_owner_pubkey.try_into().unwrap(), StarknetSignature { r: NEW_OWNER().sig.r, s: NEW_OWNER().sig.s })
     );
     account.change_owner(signer_signature);
 }
@@ -102,10 +98,9 @@ fn change_owner_only_self() {
 #[should_panic(expected: ('argent/invalid-owner-sig',))]
 fn change_owner_invalid_message() {
     let account = initialize_account();
-    let new_owner = NEW_OWNER_KEY();
-    let wrong_owner_sig = WRONG_OWNER_SIG();
+    let new_owner = NEW_OWNER().pubkey;
     let signer_signature = SignerSignature::Starknet(
-        (new_owner.try_into().unwrap(), StarknetSignature { r: wrong_owner_sig.r, s: wrong_owner_sig.s })
+        (new_owner.try_into().unwrap(), StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s })
     );
     account.change_owner(signer_signature);
 }
@@ -114,10 +109,9 @@ fn change_owner_invalid_message() {
 #[should_panic(expected: ('argent/invalid-owner-sig',))]
 fn change_owner_wrong_pub_key() {
     let account = initialize_account();
-    let wrong_owner = WRONG_OWNER_KEY();
-    let new_owner_sig = NEW_OWNER_SIG();
+    let wrong_owner = WRONG_OWNER().pubkey;
     let signer_signature = SignerSignature::Starknet(
-        (wrong_owner.try_into().unwrap(), StarknetSignature { r: new_owner_sig.r, s: new_owner_sig.s })
+        (wrong_owner.try_into().unwrap(), StarknetSignature { r: NEW_OWNER().sig.r, s: NEW_OWNER().sig.s })
     );
     account.change_owner(signer_signature);
 }

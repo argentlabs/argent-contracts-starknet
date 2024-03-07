@@ -9,9 +9,9 @@ use super::setup::multisig_test_setup::{
 fn reorder_2_signers() {
     // init
     let threshold = 2;
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1));
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2));
-    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3));
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
     let init_order = array![signer_1, signer_2, signer_3];
     let multisig = initialize_multisig_with(threshold, init_order.span());
 
@@ -38,9 +38,9 @@ fn reorder_2_signers() {
 fn reorder_3_signers() {
     // init
     let threshold = 2;
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1));
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2));
-    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3));
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
     let init_order = array![signer_1, signer_2, signer_3];
     let multisig = initialize_multisig_with(threshold, init_order.span());
 
@@ -68,9 +68,9 @@ fn reorder_3_signers() {
 fn reorder_signers_wrong_length() {
     // init
     let threshold = 2;
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1));
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2));
-    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3));
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
     let init_order = array![signer_1, signer_2, signer_3];
     let multisig = initialize_multisig_with(threshold, init_order.span());
 
@@ -91,9 +91,9 @@ fn reorder_signers_wrong_length() {
 fn reorder_signers_wrong_signer() {
     // init
     let threshold = 2;
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1));
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2));
-    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3));
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
     let init_order = array![signer_1, signer_2];
     let multisig = initialize_multisig_with(threshold, init_order.span());
 

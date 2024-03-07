@@ -14,15 +14,15 @@ fn COMPONENT_STATE() -> ComponentState {
 }
 
 fn SIGNER_1() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(1))
+    starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)
 }
 
 fn SIGNER_2() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(2))
+    starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey)
 }
 
 fn SIGNER_3() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(3))
+    starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey)
 }
 
 // Initialize

@@ -4,7 +4,7 @@ use argent::recovery::interface::{LegacyEscape, EscapeStatus};
 use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknet_signer_from_pubkey};
 use snforge_std::{declare, ContractClassTrait, ContractClass, RevertedTransaction, start_prank, CheatTarget};
 use starknet::{contract_address_const, account::Call};
-use super::constants::{OWNER_KEY, GUARDIAN_KEY, ARGENT_ACCOUNT_ADDRESS};
+use super::constants::{OWNER, GUARDIAN, ARGENT_ACCOUNT_ADDRESS};
 
 #[starknet::interface]
 trait ITestArgentAccount<TContractState> {
@@ -53,11 +53,11 @@ trait ITestArgentAccount<TContractState> {
 }
 
 fn initialize_account() -> ITestArgentAccountDispatcher {
-    initialize_account_with(OWNER_KEY(), GUARDIAN_KEY())
+    initialize_account_with(OWNER().pubkey, GUARDIAN().pubkey)
 }
 
 fn initialize_account_without_guardian() -> ITestArgentAccountDispatcher {
-    initialize_account_with(OWNER_KEY(), 0)
+    initialize_account_with(OWNER().pubkey, 0)
 }
 
 fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAccountDispatcher {

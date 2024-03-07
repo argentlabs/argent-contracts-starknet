@@ -31,7 +31,6 @@ import {
   BackendService,
   ArgentAccount,
   OutsideExecution,
-  SignerTypeEnum,
   randomStarknetKeyPair,
   StarknetKeyPair,
 } from ".";
@@ -50,7 +49,7 @@ export class DappService {
       expires_at,
       allowed_methods,
       metadata,
-      session_key_guid: this.intoGuid(this.sessionKey.guid, SignerTypeEnum.Starknet),
+      session_key_guid: this.sessionKey.guid,
     };
   }
 
@@ -258,15 +257,5 @@ export class DappService {
       Eip191: undefined,
       Webauthn: undefined,
     });
-  }
-
-  // method to turn key into guid for now sessions only work with a stark signer
-  // but this method should reflect calculating the guid for the signer in signer_signature.cairo
-  private intoGuid(signer: BigNumberish, signerType: SignerTypeEnum) {
-    if (signerType == SignerTypeEnum.Starknet) {
-      return signer;
-    } else {
-      throw new Error("Not implemented");
-    }
   }
 }

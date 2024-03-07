@@ -32,8 +32,8 @@ export enum SignerTypeEnum {
   Starknet,
   Secp256k1,
   Secp256r1,
-  Webauthn,
   Eip191,
+  Webauthn,
 }
 
 /**

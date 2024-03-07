@@ -8,7 +8,9 @@ mod ArgentUserAccount {
     };
     use argent::recovery::threshold_recovery::IThresholdRecoveryInternal;
     use argent::recovery::{threshold_recovery::threshold_recovery_component};
-    use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait}};
+    use argent::signer::{
+        signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait, parse_signature_array}
+    };
     use argent::signer_storage::{
         interface::ISignerList, signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
     };
@@ -22,6 +24,7 @@ mod ArgentUserAccount {
     };
     use core::array::ArrayTrait;
     use core::result::ResultTrait;
+    use core::traits::Into;
     use starknet::{get_tx_info, get_contract_address, VALIDATED, ClassHash, account::Call};
 
     const NAME: felt252 = 'ArgentAccount';
@@ -138,7 +141,9 @@ mod ArgentUserAccount {
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
             let threshold = self.multisig.threshold.read();
-            if self.is_valid_signature_with_conditions(hash, threshold, 0_felt252, signature.span()) {
+            if self
+                .multisig
+                .is_valid_signature_with_threshold(hash, threshold, parse_signature_array(signature.span())) {
                 VALIDATED
             } else {
                 0
@@ -163,7 +168,11 @@ mod ArgentUserAccount {
             assert_correct_deploy_account_version(tx_info.version);
             assert_no_unsupported_v3_fields();
             // only 1 signer needed to deploy
-            let is_valid = self.is_valid_signature_with_conditions(tx_info.transaction_hash, 1, 0, tx_info.signature);
+            let is_valid = self
+                .multisig
+                .is_valid_signature_with_threshold(
+                    tx_info.transaction_hash, 1, parse_signature_array(tx_info.signature)
+                );
             assert(is_valid, 'argent/invalid-signature');
             VALIDATED
         }
@@ -231,54 +240,34 @@ mod ArgentUserAccount {
             let threshold = self.multisig.threshold.read();
             let first_call = calls.at(0);
 
+            let signature_array = parse_signature_array(signature);
             match self.parse_escape_call(*first_call.to, *first_call.selector, *first_call.calldata, threshold) {
                 Option::Some((
                     required_signatures, excluded_signer_guid
                 )) => {
+                    let mut excluded_check_span = signature_array.span();
+                    loop {
+                        match excluded_check_span.pop_front() {
+                            Option::Some(signer_sig) => assert(
+                                (*signer_sig).signer().into_guid() == excluded_signer_guid, 'argent/unauthorised_signer'
+                            ),
+                            Option::None => { break true; }
+                        };
+                    };
+
                     assert(
                         self
-                            .is_valid_signature_with_conditions(
-                                execution_hash, required_signatures, excluded_signer_guid, signature
-                            ),
+                            .multisig
+                            .is_valid_signature_with_threshold(execution_hash, required_signatures, signature_array),
                         'argent/invalid-signature'
                     );
                 },
                 Option::None => {
                     assert(
-                        self.is_valid_signature_with_conditions(execution_hash, threshold, 0_felt252, signature),
+                        self.multisig.is_valid_signature_with_threshold(execution_hash, threshold, signature_array),
                         'argent/invalid-signature'
                     );
                 }
-            }
-        }
-
-        fn is_valid_signature_with_conditions(
-            self: @ContractState,
-            hash: felt252,
-            expected_length: u32,
-            excluded_signer: felt252,
-            mut signature: Span<felt252>
-        ) -> bool {
-            let mut signer_signatures: Array<SignerSignature> = full_deserialize(signature)
-                .expect('argent/signature-not-empty');
-            assert(signer_signatures.len() == expected_length, 'argent/signature-invalid-length');
-
-            let mut last_signer: u256 = 0;
-            loop {
-                let signer_sig = match signer_signatures.pop_front() {
-                    Option::Some(signer_sig) => signer_sig,
-                    Option::None => { break true; }
-                };
-                let signer_guid = signer_sig.signer().into_guid();
-                assert(self.multisig.is_signer_guid(signer_guid), 'argent/not-a-signer');
-                assert(signer_guid != excluded_signer, 'argent/unauthorised_signer');
-                let signer_uint: u256 = signer_guid.into();
-                assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
-                let is_valid = signer_sig.is_valid_signature(hash);
-                if !is_valid {
-                    break false;
-                }
-                last_signer = signer_uint;
             }
         }
     }

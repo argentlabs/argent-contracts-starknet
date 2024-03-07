@@ -2,6 +2,8 @@ use argent::signer::eip191::is_valid_eip191_signature;
 use argent::signer::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };
+use core::array::ArrayTrait;
+use core::option::OptionTrait;
 use ecdsa::check_ecdsa_signature;
 use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, PoseidonTrait};
@@ -207,4 +209,10 @@ fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, assertion:
 
     let signed_hash = get_webauthn_hash(@assertion);
     is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, assertion.signature)
+}
+
+#[must_use]
+fn parse_signature_array(mut raw_signature: Span<felt252>) -> Array<SignerSignature> {
+    argent::utils::serialization::full_deserialize::<Array<SignerSignature>>(raw_signature)
+        .expect('argent/invalid-signature-array')
 }

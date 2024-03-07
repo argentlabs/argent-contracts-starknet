@@ -10,26 +10,26 @@ import {
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
 
-const testDappContract = await deployContract("TestDapp");
+const mockDappContract = await deployContract("MockDapp");
 
 const profiler = newProfiler(provider);
 
 {
   const { account } = await deployAccount();
-  testDappContract.connect(account);
-  await profiler.profile("Set number", await testDappContract.set_number(42));
+  mockDappContract.connect(account);
+  await profiler.profile("Set number", await mockDappContract.set_number(42));
 }
 
 {
   const { account } = await deployAccountWithoutGuardian();
-  testDappContract.connect(account);
-  await profiler.profile("Set number without guardian", await testDappContract.set_number(42));
+  mockDappContract.connect(account);
+  await profiler.profile("Set number without guardian", await mockDappContract.set_number(42));
 }
 
 {
   const { account } = await deployOldAccount();
-  testDappContract.connect(account);
-  await profiler.profile("Set number using old account", await testDappContract.set_number(42));
+  mockDappContract.connect(account);
+  await profiler.profile("Set number using old account", await mockDappContract.set_number(42));
 }
 
 {

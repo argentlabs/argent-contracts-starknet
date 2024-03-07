@@ -13,9 +13,9 @@ import {
 import { newProfiler } from "../tests-integration/lib/gas";
 
 const genericAccountClassHash = await declareContract("ArgentGenericAccount");
-const testDappClassHash = await declareContract("TestDapp");
-const { contract_address } = await deployer.deployContract({ classHash: testDappClassHash });
-const testDappContract = await loadContract(contract_address);
+const mockDappClassHash = await declareContract("MockDapp");
+const { contract_address } = await deployer.deployContract({ classHash: mockDappClassHash });
+const mockDappContract = await loadContract(contract_address);
 const profiler = newProfiler(provider);
 
 // To be able to run this script using the devnet, update the start-devnet.sh script to ignore this line:
@@ -58,8 +58,8 @@ class EthKeyPair extends KeyPair {
   console.log(name);
   const owners = [new KeyPair()];
   const account = await deployGenericAccount(owners);
-  testDappContract.connect(account);
-  await profiler.profile(name, await testDappContract.set_number(42));
+  mockDappContract.connect(account);
+  await profiler.profile(name, await mockDappContract.set_number(42));
 }
 
 {
@@ -67,8 +67,8 @@ class EthKeyPair extends KeyPair {
   console.log(name);
   const owners = [new EthKeyPair()];
   const account = await deployGenericAccount(owners);
-  testDappContract.connect(account);
-  await profiler.profile(name, await testDappContract.set_number(42));
+  mockDappContract.connect(account);
+  await profiler.profile(name, await mockDappContract.set_number(42));
 }
 
 {
@@ -76,8 +76,8 @@ class EthKeyPair extends KeyPair {
   console.log(name);
   const owners = [new KeyPair(), new KeyPair()];
   const account = await deployGenericAccount(owners);
-  testDappContract.connect(account);
-  await profiler.profile(name, await testDappContract.set_number(42));
+  mockDappContract.connect(account);
+  await profiler.profile(name, await mockDappContract.set_number(42));
 }
 
 {
@@ -85,8 +85,8 @@ class EthKeyPair extends KeyPair {
   console.log(name);
   const owners = [new EthKeyPair(), new EthKeyPair()];
   const account = await deployGenericAccount(owners);
-  testDappContract.connect(account);
-  await profiler.profile(name, await testDappContract.set_number(42));
+  mockDappContract.connect(account);
+  await profiler.profile(name, await mockDappContract.set_number(42));
 }
 
 {
@@ -94,8 +94,8 @@ class EthKeyPair extends KeyPair {
   console.log(name);
   const owners = [new KeyPair(), new KeyPair(), new KeyPair()];
   const account = await deployGenericAccount(owners);
-  testDappContract.connect(account);
-  await profiler.profile(name, await testDappContract.set_number(42));
+  mockDappContract.connect(account);
+  await profiler.profile(name, await mockDappContract.set_number(42));
 }
 
 {
@@ -103,8 +103,8 @@ class EthKeyPair extends KeyPair {
   console.log(name);
   const owners = [new EthKeyPair(), new EthKeyPair(), new EthKeyPair()];
   const account = await deployGenericAccount(owners);
-  testDappContract.connect(account);
-  await profiler.profile(name, await testDappContract.set_number(42));
+  mockDappContract.connect(account);
+  await profiler.profile(name, await mockDappContract.set_number(42));
 }
 
 {
@@ -112,8 +112,8 @@ class EthKeyPair extends KeyPair {
   console.log(name);
   const owners = [new EthKeyPair(), new KeyPair()];
   const account = await deployGenericAccount(owners);
-  testDappContract.connect(account);
-  await profiler.profile(name, await testDappContract.set_number(42));
+  mockDappContract.connect(account);
+  await profiler.profile(name, await mockDappContract.set_number(42));
 }
 
 {
@@ -121,8 +121,8 @@ class EthKeyPair extends KeyPair {
   console.log(name);
   const owners = [new EthKeyPair(), new EthKeyPair(), new KeyPair()];
   const account = await deployGenericAccount(owners);
-  testDappContract.connect(account);
-  await profiler.profile(name, await testDappContract.set_number(42));
+  mockDappContract.connect(account);
+  await profiler.profile(name, await mockDappContract.set_number(42));
 }
 
 {
@@ -133,8 +133,8 @@ class EthKeyPair extends KeyPair {
     owners.push(new KeyPair());
   }
   const account = await deployGenericAccount(owners);
-  testDappContract.connect(account);
-  await profiler.profile(name, await testDappContract.set_number(42));
+  mockDappContract.connect(account);
+  await profiler.profile(name, await mockDappContract.set_number(42));
 }
 
 async function deployGenericAccount(owners: KeyPair[]) {

@@ -154,7 +154,7 @@ describe("ArgentMultisig: outside execution", function () {
 
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,
-      nonce: randomKeyPair().privateKey,
+      nonce: randomStarknetKeyPair().publicKey,
       execute_after: initialTime - 100,
       execute_before: initialTime + 100,
       calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
@@ -224,7 +224,7 @@ describe("ArgentMultisig: outside execution", function () {
 
     const outsideExecution: OutsideExecution = {
       caller: shortString.encodeShortString("ANY_CALLER"),
-      nonce: randomKeyPair().privateKey,
+      nonce: randomStarknetKeyPair().publicKey,
       execute_after: 0,
       execute_before: initialTime + 100,
       calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],

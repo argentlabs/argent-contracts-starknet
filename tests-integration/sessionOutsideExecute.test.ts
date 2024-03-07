@@ -75,7 +75,7 @@ describe("ArgentAccount: outside execution", function () {
 
     const { account: mockDappAccount } = await deployAccount();
 
-    const backendService = new BackendService(guardian);
+    const backendService = new BackendService(guardian as StarknetKeyPair);
     const dappService = new DappService(backendService);
     const argentX = new ArgentX(account, backendService);
 

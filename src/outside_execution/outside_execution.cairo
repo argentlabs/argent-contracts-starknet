@@ -3,7 +3,7 @@
 #[starknet::component]
 mod outside_execution_component {
     use argent::outside_execution::{
-        outside_execution_hash::OffChainMessageOutsideExecutionRev0,
+        outside_execution_hash::{OffChainMessageOutsideExecutionRev0, OffChainMessageOutsideExecutionRev1},
         interface::{OutsideExecution, IOutsideExecutionCallback, IOutsideExecution}
     };
     use hash::{HashStateTrait, HashStateExTrait};
@@ -44,6 +44,28 @@ mod outside_execution_component {
             let outside_tx_hash = outside_execution.get_message_hash_rev_0();
             let mut state = self.get_contract_mut();
             state.execute_from_outside_callback(outside_execution.calls, outside_tx_hash, signature.span())
+        }
+
+        fn execute_from_outside_v2(
+            ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Span<felt252>
+        ) -> Array<Span<felt252>> {
+            // Checks
+            if outside_execution.caller.into() != 'ANY_CALLER' {
+                assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
+            }
+
+            let block_timestamp = get_block_timestamp();
+            assert(
+                outside_execution.execute_after < block_timestamp && block_timestamp < outside_execution.execute_before,
+                'argent/invalid-timestamp'
+            );
+            let nonce = outside_execution.nonce;
+            assert(!self.outside_nonces.read(nonce), 'argent/duplicated-outside-nonce');
+            self.outside_nonces.write(nonce, true);
+
+            let outside_tx_hash = outside_execution.get_message_hash_rev_1();
+            let mut state = self.get_contract_mut();
+            state.execute_from_outside_callback(outside_execution.calls, outside_tx_hash, signature)
         }
 
         fn get_outside_execution_message_hash(

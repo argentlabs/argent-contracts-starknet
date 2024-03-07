@@ -16,6 +16,11 @@ trait IOutsideExecution<TContractState> {
         ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>
     ) -> Array<Span<felt252>>;
 
+    /// @notice Outside execution using SNIP-12 Rev 1 
+    fn execute_from_outside_v2(
+        ref self: TContractState, outside_execution: OutsideExecution, signature: Span<felt252>
+    ) -> Array<Span<felt252>>;
+
     /// Get the status of a given nonce, true if the nonce is available to use
     fn is_valid_outside_execution_nonce(self: @TContractState, nonce: felt252) -> bool;
 
@@ -52,3 +57,4 @@ struct OutsideExecution {
     /// Using `Call` here instead of redeclaring `OutsideCall` to avoid the conversion
     calls: Span<Call>
 }
+

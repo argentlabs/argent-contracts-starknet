@@ -64,7 +64,7 @@ fn WRONG_OWNER() -> KeyAndSig {
 
 fn NEW_OWNER() -> KeyAndSig {
     let new_owner = KeyPairTrait::from_secret_key('NEW_OWNER');
-     let new_owner_message_hash = new_owner_message_hash();
+    let new_owner_message_hash = new_owner_message_hash();
     let (r, s): (felt252, felt252) = new_owner.sign(new_owner_message_hash);
     KeyAndSig { pubkey: new_owner.public_key, sig: StarknetSignature { r, s }, }
 }

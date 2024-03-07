@@ -11,7 +11,7 @@ import {
   transaction,
   typedData,
 } from "starknet";
-import { KeyPair, OffChainSession, OutsideExecution, getSessionTypedData, getTypedData, provider } from "./";
+import { OffChainSession, OutsideExecution, StarknetKeyPair, getSessionTypedData, getTypedData, provider } from "./";
 
 export class ArgentX {
   constructor(
@@ -25,7 +25,9 @@ export class ArgentX {
 }
 
 export class BackendService {
-  constructor(private backendKey: KeyPair) {}
+  // TODO We might want to update this to support KeyPair instead of StarknetKeyPair?
+  // Or that backend becomes: "export class BackendService extends KeyPair {", can also extends RawSigner ?
+  constructor(private backendKey: StarknetKeyPair) {}
 
   public async signTxAndSession(
     calls: Call[],

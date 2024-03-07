@@ -2,16 +2,14 @@ import { expect } from "chai";
 import { Contract, num, uint256 } from "starknet";
 import {
   deployAccount,
-  deployer,
   ensureAccepted,
   expectEvent,
   expectRevertWithErrorMessage,
   getEthContract,
-  loadContract,
-  compiledStarknetSigner,
   waitForTransaction,
   getEthBalance,
   deployContract,
+  randomStarknetKeyPair,
 } from "./lib";
 
 describe("ArgentAccount: multicall", function () {
@@ -113,12 +111,12 @@ describe("ArgentAccount: multicall", function () {
     const { account, accountContract } = await deployAccount();
     const recipient = "42";
     const amount = uint256.bnToUint256(1000);
-    const newOwner = "69";
+    const newOwner = randomStarknetKeyPair();
 
     await expectRevertWithErrorMessage("argent/no-multicall-to-self", () =>
       account.execute([
         ethContract.populateTransaction.transfer(recipient, amount),
-        accountContract.populateTransaction.trigger_escape_owner(compiledStarknetSigner(newOwner)),
+        accountContract.populateTransaction.trigger_escape_owner(newOwner.compiledSigner),
       ]),
     );
   });

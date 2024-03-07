@@ -3,7 +3,6 @@ import {
   ArraySignatureType,
   ec,
   CallData,
-  Signature,
   InvocationsSignerDetails,
   Call,
   shortString,
@@ -22,8 +21,6 @@ import {
 } from "starknet";
 import {
   OffChainSession,
-  KeyPair,
-  randomKeyPair,
   AllowedMethod,
   RawSigner,
   getSessionTypedData,
@@ -34,7 +31,8 @@ import {
   BackendService,
   ArgentAccount,
   OutsideExecution,
-  SignerTypeEnum,
+  randomStarknetKeyPair,
+  StarknetKeyPair,
 } from ".";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -42,7 +40,7 @@ const SESSION_MAGIC = shortString.encodeShortString("session-token");
 export class DappService {
   constructor(
     private argentBackend: BackendService,
-    public sessionKey: KeyPair = randomKeyPair(),
+    public sessionKey: StarknetKeyPair = randomStarknetKeyPair(),
   ) {}
 
   public createSessionRequest(allowed_methods: AllowedMethod[], expires_at = 150n): OffChainSession {
@@ -51,7 +49,7 @@ export class DappService {
       expires_at,
       allowed_methods,
       metadata,
-      session_key_guid: this.intoGuid(this.sessionKey.publicKey, SignerTypeEnum.Starknet),
+      session_key_guid: this.sessionKey.guid,
     };
   }
 
@@ -71,7 +69,7 @@ export class DappService {
         super();
       }
 
-      public async signRaw(messageHash: string): Promise<Signature> {
+      public async signRaw(messageHash: string): Promise<string[]> {
         throw new Error("Method not implemented.");
       }
 
@@ -102,7 +100,7 @@ export class DappService {
     caller = "ANY_CALLER",
     execute_after = 1,
     execute_before = 999999999999999,
-    nonce = randomKeyPair().publicKey,
+    nonce = randomStarknetKeyPair().publicKey,
   ): Promise<Call> {
     const outsideExecution = {
       caller,
@@ -220,7 +218,7 @@ export class DappService {
     const sessionToken = {
       session,
       session_authorisation: accountSessionSignature,
-      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, session_signature),
+      session_signature: this.getStarknetSignatureType(this.sessionKey.guid, session_signature),
       guardian_signature: this.getStarknetSignatureType(
         this.argentBackend.getBackendKey(accountAddress),
         guardian_signature,
@@ -263,23 +261,15 @@ export class DappService {
     });
   }
 
+  // TODO Can this be removed?
   // method needed as starknetSignatureType in signer.ts is already compiled
   private getStarknetSignatureType(signer: BigNumberish, signature: bigint[]) {
     return new CairoCustomEnum({
       Starknet: { signer, r: signature[0], s: signature[1] },
       Secp256k1: undefined,
       Secp256r1: undefined,
+      Eip191: undefined,
       Webauthn: undefined,
     });
-  }
-
-  // method to turn key into guid for now sessions only work with a stark signer
-  // but this method should reflect calculating the guid for the signer in signer_signature.cairo
-  private intoGuid(signer: BigNumberish, signerType: SignerTypeEnum) {
-    if (signerType == SignerTypeEnum.Starknet) {
-      return signer;
-    } else {
-      throw new Error("Not implemented");
-    }
   }
 }

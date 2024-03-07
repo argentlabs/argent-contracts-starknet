@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import { CompiledSierra } from "starknet";
 import {
-  declareContract,
   deployAccount,
   expectRevertWithErrorMessage,
   fixturesFolder,

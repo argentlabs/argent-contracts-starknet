@@ -19,7 +19,7 @@ export async function expectRevertWithErrorMessage(
   try {
     const executionResult = await execute();
     if (!("transaction_hash" in executionResult)) {
-      throw Error(`No transaction hash found on ${JSON.stringify(executionResult)}`);
+      throw new Error(`No transaction hash found on ${JSON.stringify(executionResult)}`);
     }
     await provider.waitForTransaction(executionResult["transaction_hash"]);
   } catch (e: any) {

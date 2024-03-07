@@ -4,3 +4,4 @@ Account: 3,760 gas
 Account w/o guardian: 3,750 gas
 Eth sig w guardian: 7,220 gas
 Secp256r1 w guardian: 10,650 gas
+Fixed webauthn w/o guardian: 20,630 gas

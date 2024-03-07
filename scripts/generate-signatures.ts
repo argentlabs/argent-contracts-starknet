@@ -11,15 +11,15 @@ const new_owner = new StarknetKeyPair(4n);
 const wrong_owner = new StarknetKeyPair(7n);
 const wrong_guardian = new StarknetKeyPair(8n);
 
-function calculate_account_signature() {
+async function calculate_account_signature() {
   const hash = "0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";
   const invalid_hash = "0x02d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a561fa7";
 
-  const [owner_r, owner_s] = owner.signHash(hash);
-  const [guardian_r, guardian_s] = guardian.signHash(hash);
-  const [guardian_backup_r, guardian_backup_s] = guardian_backup.signHash(hash);
-  const [wrong_owner_r, wrong_owner_s] = wrong_owner.signHash(hash);
-  const [wrong_guardian_r, wrong_guardian_s] = wrong_guardian.signHash(hash);
+  const [owner_r, owner_s] = await owner.signRaw(hash);
+  const [guardian_r, guardian_s] = await guardian.signRaw(hash);
+  const [guardian_backup_r, guardian_backup_s] = await guardian_backup.signRaw(hash);
+  const [wrong_owner_r, wrong_owner_s] = await wrong_owner.signRaw(hash);
+  const [wrong_guardian_r, wrong_guardian_s] = await wrong_guardian.signRaw(hash);
 
   console.log(`
     const message_hash: felt252 = ${num.toHex(hash)};
@@ -51,7 +51,7 @@ async function calculate_account_signature_with_eth() {
   // Ethers requires hash to be pair length
   const hash = "0x02d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";
   const ethSigner = new Wallet(id("9n"));
-  const [owner_r, owner_s] = owner.signHash(hash);
+  const [owner_r, owner_s] = await owner.signRaw(hash);
   const signature = Signature.from(ethSigner.signingKey.sign(hash));
 
   console.log(`

@@ -1,5 +1,4 @@
 import {
-  ArraySignatureType,
   CairoCustomEnum,
   CairoOption,
   CairoOptionVariant,
@@ -9,7 +8,6 @@ import {
   DeployAccountSignerDetails,
   InvocationsSignerDetails,
   Signature,
-  Signer,
   SignerInterface,
   ec,
   encode,
@@ -27,15 +25,26 @@ import {
   Calldata,
 } from "starknet";
 
+// reflects the signer type in signer_signature.cairo
+// needs to be updated for the signer types
+// used to convert signertype to guid
+export enum SignerTypeEnum {
+  Starknet,
+  Secp256k1,
+  Secp256r1,
+  Webauthn,
+  Eip191,
+}
+
 /**
  * This class allows to easily implement custom signers by overriding the `signRaw` method.
  * This is based on Starknet.js implementation of Signer, but it delegates the actual signing to an abstract function
  */
 export abstract class RawSigner implements SignerInterface {
-  abstract signRaw(messageHash: string): Promise<Signature>;
+  abstract signRaw(messageHash: string): Promise<string[]>;
 
   public async getPubKey(): Promise<string> {
-    throw Error("This signer allows multiple public keys");
+    throw new Error("This signer allows multiple public keys");
   }
 
   public async signMessage(typedDataArgument: typedData.TypedData, accountAddress: string): Promise<Signature> {
@@ -67,9 +76,9 @@ export abstract class RawSigner implements SignerInterface {
         feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
       });
     } else {
-      throw Error("unsupported signTransaction version");
+      throw new Error("unsupported signTransaction version");
     }
-    return this.signRaw(msgHash);
+    return await this.signRaw(msgHash);
   }
 
   public async signDeployAccountTransaction(details: DeployAccountSignerDetails): Promise<Signature> {
@@ -96,10 +105,10 @@ export abstract class RawSigner implements SignerInterface {
         feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
       });
     } else {
-      throw Error(`unsupported signDeployAccountTransaction version: ${details.version}}`);
+      throw new Error(`unsupported signDeployAccountTransaction version: ${details.version}}`);
     }
 
-    return this.signRaw(msgHash);
+    return await this.signRaw(msgHash);
   }
 
   public async signDeclareTransaction(
@@ -123,27 +132,30 @@ export abstract class RawSigner implements SignerInterface {
         feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
       });
     } else {
-      throw Error("unsupported signDeclareTransaction version");
+      throw new Error("unsupported signDeclareTransaction version");
     }
 
-    return this.signRaw(msgHash);
+    return await this.signRaw(msgHash);
   }
 }
 
 export class MultisigSigner extends RawSigner {
-  constructor(public keys: KeyPair[]) {
+  constructor(public keys: RawSigner[]) {
     super();
   }
 
-  async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    const keys = this.keys.map((key) => key.signHash(messageHash));
+  async signRaw(messageHash: string): Promise<string[]> {
+    const keys = [];
+    for (const key of this.keys) {
+      keys.push(await key.signRaw(messageHash));
+    }
     return [keys.length.toString(), keys.flat()].flat();
   }
 }
 
 export class ArgentSigner extends MultisigSigner {
   constructor(
-    public owner: KeyPair = randomKeyPair(),
+    public owner: KeyPair = randomStarknetKeyPair(),
     public guardian?: KeyPair,
   ) {
     const signers = [owner];
@@ -154,61 +166,45 @@ export class ArgentSigner extends MultisigSigner {
   }
 }
 
-export class LegacyArgentSigner extends RawSigner {
-  constructor(
-    public owner: LegacyKeyPair = new LegacyKeyPair(),
-    public guardian?: LegacyKeyPair,
-  ) {
-    super();
-  }
+export abstract class KeyPair extends RawSigner {
+  abstract get signer(): CairoCustomEnum;
+  abstract get guid(): bigint;
 
-  async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    const signature = this.owner.signHash(messageHash);
-    if (this.guardian) {
-      const [guardianR, guardianS] = this.guardian.signHash(messageHash);
-      signature[2] = guardianR;
-      signature[3] = guardianS;
-    }
-    return signature;
-  }
-}
-
-export class LegacyMultisigSigner extends RawSigner {
-  constructor(public keys: KeyPair[]) {
-    super();
-  }
-
-  async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    const keys = this.keys.map((key) => key.signHash(messageHash));
-    return keys.flat();
-  }
-}
-
-export abstract class KeyPair extends Signer {
-  public get privateKey(): bigint {
-    return BigInt(this.pk as string);
-  }
-
-  public get signer(): CairoCustomEnum {
-    throw Error("Unsupported operation");
-  }
   public get compiledSigner(): Calldata {
     return CallData.compile([this.signer]);
   }
-  public get publicKey(): any {
-    throw Error("Unsupported operation");
+
+  public get signerAsOption() {
+    return new CairoOption(CairoOptionVariant.Some, {
+      signer: this.signer,
+    });
   }
-  public signHash(messageHash: string): Calldata {
-    throw Error("Unsupported operation");
+  public get compiledSignerAsOption() {
+    return CallData.compile([this.signerAsOption]);
   }
 }
 
 export class StarknetKeyPair extends KeyPair {
+  pk: string;
+
   constructor(pk?: string | bigint) {
-    super(pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`);
+    super();
+    this.pk = pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`;
   }
 
-  public get signer() {
+  public get privateKey(): string {
+    return this.pk;
+  }
+
+  public get publicKey() {
+    return BigInt(ec.starkCurve.getStarkKey(this.pk));
+  }
+
+  public get guid() {
+    return BigInt(ec.starkCurve.getStarkKey(this.pk));
+  }
+
+  public get signer(): CairoCustomEnum {
     return new CairoCustomEnum({
       Starknet: { signer: this.publicKey },
       Secp256k1: undefined,
@@ -217,27 +213,9 @@ export class StarknetKeyPair extends KeyPair {
     });
   }
 
-  public get publicKey(): any {
-    return BigInt(ec.starkCurve.getStarkKey(this.pk));
-  }
-
-  public signHash(messageHash: string) {
+  public async signRaw(messageHash: string): Promise<string[]> {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
     return starknetSignatureType(this.publicKey, r, s);
-  }
-}
-
-export class LegacyKeyPair extends StarknetKeyPair {
-  public signHash(messageHash: string) {
-    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
-    return [r.toString(), s.toString()];
-  }
-}
-
-export class LegacyMultisigKeyPair extends StarknetKeyPair {
-  public signHash(messageHash: string) {
-    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
-    return [this.publicKey.toString(), r.toString(), s.toString()];
   }
 }
 
@@ -256,28 +234,6 @@ export function starknetSignatureType(
   ]);
 }
 
-export function intoGuid(signer: CairoCustomEnum) {
-  return signer.unwrap().signer;
-}
-
-export function compiledSignerOption(signer: bigint | undefined = undefined) {
-  return CallData.compile([signerOption(signer)]);
-}
-
-export function signerOption(signer: bigint | undefined = undefined) {
-  if (signer) {
-    return new CairoOption(CairoOptionVariant.Some, {
-      signer: new CairoCustomEnum({
-        Starknet: { signer },
-        Secp256k1: undefined,
-        Secp256r1: undefined,
-        Webauthn: undefined,
-      }),
-    });
-  }
-  return new CairoOption(CairoOptionVariant.None);
-}
-
 export function zeroStarknetSignatureType() {
   return new CairoCustomEnum({
     Starknet: { signer: 0 },
@@ -287,5 +243,5 @@ export function zeroStarknetSignatureType() {
   });
 }
 
-export const randomKeyPair = () => new StarknetKeyPair();
-export const randomKeyPairs = (length: number) => Array.from({ length }, randomKeyPair);
+export const randomStarknetKeyPair = () => new StarknetKeyPair();
+export const randomStarknetKeyPairs = (length: number) => Array.from({ length }, randomStarknetKeyPair);

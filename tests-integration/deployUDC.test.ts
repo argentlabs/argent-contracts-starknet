@@ -1,10 +1,10 @@
 import { expect } from "chai";
-import { declareContract, deployContractUDC, randomKeyPair, signerOption } from "./lib";
+import { declareContract, deployContractUDC, randomStarknetKeyPair } from "./lib";
 import { num, hash, CallData } from "starknet";
 
-const salt = num.toHex(randomKeyPair().privateKey);
-const owner = randomKeyPair();
-const guardian = randomKeyPair();
+const salt = num.toHex(randomStarknetKeyPair().privateKey);
+const owner = randomStarknetKeyPair();
+const guardian = randomStarknetKeyPair();
 
 describe("Deploy UDC", function () {
   it("Calculated contract address should match UDC", async function () {
@@ -12,7 +12,7 @@ describe("Deploy UDC", function () {
 
     const callData = CallData.compile({
       owner: owner.signer,
-      guardian: signerOption(guardian.publicKey),
+      guardian: guardian.signerAsOption,
     });
 
     const calculatedAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, callData, 0);

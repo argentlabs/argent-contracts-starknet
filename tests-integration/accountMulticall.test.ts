@@ -9,7 +9,7 @@ import {
   waitForTransaction,
   getEthBalance,
   deployContract,
-  randomKeyPair,
+  randomStarknetKeyPair,
 } from "./lib";
 
 describe("ArgentAccount: multicall", function () {
@@ -111,7 +111,7 @@ describe("ArgentAccount: multicall", function () {
     const { account, accountContract } = await deployAccount();
     const recipient = "42";
     const amount = uint256.bnToUint256(1000);
-    const newOwner = randomKeyPair();
+    const newOwner = randomStarknetKeyPair();
 
     await expectRevertWithErrorMessage("argent/no-multicall-to-self", () =>
       account.execute([

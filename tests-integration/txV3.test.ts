@@ -3,10 +3,10 @@ import { deployAccount, expectRevertWithErrorMessage, deployMultisig1_1, deployC
 
 for (const accountType of ["individual", "multisig"]) {
   describe(`TxV3 ${accountType} account`, function () {
-    let MockDapp: Contract;
+    let mockDapp: Contract;
 
     before(async () => {
-      MockDapp = await deployContract("MockDapp");
+      mockDapp = await deployContract("MockDapp");
     });
 
     async function deployAccountType() {
@@ -21,16 +21,16 @@ for (const accountType of ["individual", "multisig"]) {
 
     it("Should be possible to call dapp", async function () {
       const { account } = await deployAccountType();
-      MockDapp.connect(account);
-      const { transaction_hash: transferTxHash } = await MockDapp.set_number(42n);
+      mockDapp.connect(account);
+      const { transaction_hash: transferTxHash } = await mockDapp.set_number(42n);
       await account.waitForTransaction(transferTxHash);
-      await MockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+      await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
     });
 
     it("Should reject paymaster data", async function () {
       const { account } = await deployAccountType();
-      MockDapp.connect(account);
-      const call = MockDapp.populateTransaction.set_number(42n);
+      mockDapp.connect(account);
+      const call = mockDapp.populateTransaction.set_number(42n);
       await expectRevertWithErrorMessage("argent/unsupported-paymaster", () => {
         return account.execute(call, undefined, { paymasterData: ["0x1"] });
       });

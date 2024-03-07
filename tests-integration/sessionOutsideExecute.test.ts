@@ -18,7 +18,7 @@ describe("ArgentAccount: outside execution", function () {
   this.timeout(320000);
 
   let argentSessionAccountClassHash: string;
-  let MockDapp: Contract;
+  let mockDapp: Contract;
 
   before(async () => {
     argentSessionAccountClassHash = await declareContract("ArgentAccount");
@@ -26,7 +26,7 @@ describe("ArgentAccount: outside execution", function () {
     const { contract_address } = await deployer.deployContract({
       classHash: mockDappClassHash,
     });
-    MockDapp = await loadContract(contract_address);
+    mockDapp = await loadContract(contract_address);
   });
 
   it("Basics", async function () {
@@ -40,7 +40,7 @@ describe("ArgentAccount: outside execution", function () {
 
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": MockDapp.address,
+        "Contract Address": mockDapp.address,
         selector: "set_number",
       },
     ];
@@ -49,7 +49,7 @@ describe("ArgentAccount: outside execution", function () {
 
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
 
-    const calls = [MockDapp.populateTransaction.set_number(42n)];
+    const calls = [mockDapp.populateTransaction.set_number(42n)];
 
     const outsideExecutionCall = await dappService.getOutsideExecutionCall(
       sessionRequest,
@@ -63,6 +63,6 @@ describe("ArgentAccount: outside execution", function () {
 
     await mockDappAccount.execute(outsideExecutionCall);
 
-    await MockDapp.get_number(account.address).should.eventually.equal(42n);
+    await mockDapp.get_number(account.address).should.eventually.equal(42n);
   });
 });

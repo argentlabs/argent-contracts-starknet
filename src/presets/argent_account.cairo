@@ -614,7 +614,7 @@ mod ArgentAccount {
             let execution_info = get_execution_info().unbox();
             let account_address = execution_info.contract_address;
 
-            let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
+            let signer_signatures: Array<SignerSignature> = self.parse_signature_array_backward_compatible(signatures);
 
             if calls.len() == 1 {
                 let call = calls.at(0);
@@ -708,7 +708,7 @@ mod ArgentAccount {
             self.assert_valid_span_signature(execution_hash, signer_signatures);
         }
 
-        fn parse_signature_array(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
+        fn parse_signature_array_backward_compatible(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
             let first_slot: u256 = (*signatures.at(0)).into();
             // check if legacy signature array
             // Note that it will not work if the guardian_backup was used

@@ -74,11 +74,8 @@ mod multisig_component {
             signer_list_comp.add_signers(guids.span(), last_signer: last_signer_guid);
             let mut signers_to_add_span = signers_to_add.span();
             let mut index = 0;
-            loop {
-                let signer = match signers_to_add_span.pop_front() {
-                    Option::Some(signer) => *signer,
-                    Option::None => { break; }
-                };
+            while !signers_to_add_span.is_empty() {
+                let signer = *signers_to_add_span.pop_front().unwrap();
                 let signer_guid = *guids[index];
                 index += 1;
                 signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
@@ -104,11 +101,9 @@ mod multisig_component {
 
             let mut guids = to_guid_list(signers_to_remove.span());
             signer_list_comp.remove_signers(guids.span(), last_signer: last_signer_guid);
-            loop {
-                match guids.pop_front() {
-                    Option::Some(guid) => signer_list_comp.emit(OwnerRemoved { removed_owner_guid: guid }),
-                    Option::None => { break; }
-                };
+            while !guids.is_empty() {
+                let guid = guids.pop_front().unwrap();
+                signer_list_comp.emit(OwnerRemoved { removed_owner_guid: guid })
             };
 
             self.threshold.write(new_threshold);
@@ -182,12 +177,10 @@ mod multisig_component {
             let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
             let guids = to_guid_list(signers.span());
             signer_list_comp.add_signers(guids.span(), last_signer: 0);
+
             let mut index = 0;
-            loop {
-                let signer = match signers.pop_front() {
-                    Option::Some(signer) => signer,
-                    Option::None => { break; }
-                };
+            while !signers.is_empty() {
+                let signer = signers.pop_front().unwrap();
                 let signer_guid = *guids[index];
                 index += 1;
                 signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });

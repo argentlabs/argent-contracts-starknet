@@ -84,13 +84,9 @@ mod external_recovery_component {
             assert_sorted_guids(target_guids.span(), 'argent/invalid-target-order');
             // assert targets are on the list
             let mut target_guids_span = target_guids.span();
-            loop {
-                match target_guids_span.pop_front() {
-                    Option::Some(target_guid) => {
-                        assert(self.get_contract_mut().is_signer_in_list(*target_guid), 'argent/unknown-signer');
-                    },
-                    Option::None => { break; }
-                };
+            while !target_guids_span.is_empty() {
+                let target_guid = target_guids_span.pop_front().unwrap();
+                assert(self.get_contract_mut().is_signer_in_list(*target_guid), 'argent/unknown-signer');
             };
 
             let new_guids = to_guid_list(new_signers.span());
@@ -99,14 +95,9 @@ mod external_recovery_component {
             // emit SignerLinked events
             let mut new_signers_span = new_signers.span();
             let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
-            loop {
-                match new_signers_span.pop_front() {
-                    Option::Some(new_signer) => {
-                        let new_signer = *new_signer;
-                        signer_list_comp.emit(SignerLinked { signer_guid: new_signer.into_guid(), signer: new_signer });
-                    },
-                    Option::None => { break; }
-                };
+            while !new_signers_span.is_empty() {
+                let new_signer = *new_signers_span.pop_front().unwrap();
+                signer_list_comp.emit(SignerLinked { signer_guid: new_signer.into_guid(), signer: new_signer });
             };
 
             let ready_at = get_block_timestamp() + escape_config.security_period;
@@ -126,19 +117,15 @@ mod external_recovery_component {
             let mut new_signer_guids = current_escape.new_signers.span();
             let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
             let (_, mut last_signer) = signer_list_comp.load();
-            loop {
-                match target_signer_guids.pop_front() {
-                    Option::Some(signer) => {
-                        let target_signer_guid = *signer;
-                        let new_signer_guid = *new_signer_guids.pop_front().expect('argent/invalid-length');
-                        signer_list_comp.replace_signer(target_signer_guid, new_signer_guid, last_signer);
-                        signer_list_comp.emit(OwnerRemoved { removed_owner_guid: target_signer_guid });
-                        signer_list_comp.emit(OwnerAdded { new_owner_guid: new_signer_guid });
-                        if (target_signer_guid == last_signer) {
-                            last_signer = new_signer_guid;
-                        }
-                    },
-                    Option::None => { break; }
+
+            while !target_signer_guids.is_empty() {
+                let target_signer_guid = *target_signer_guids.pop_front().unwrap();
+                let new_signer_guid = *new_signer_guids.pop_front().expect('argent/invalid-length');
+                signer_list_comp.replace_signer(target_signer_guid, new_signer_guid, last_signer);
+                signer_list_comp.emit(OwnerRemoved { removed_owner_guid: target_signer_guid });
+                signer_list_comp.emit(OwnerAdded { new_owner_guid: new_signer_guid });
+                if (target_signer_guid == last_signer) {
+                    last_signer = new_signer_guid;
                 }
             };
 

@@ -9,9 +9,6 @@ import {
   declareContract,
   removeFromCache,
   deployOldAccount,
-  LegacyStarknetKeyPair,
-  signChangeOwnerMessage,
-  starknetSignatureType,
   StarknetKeyPair,
   EthKeyPair,
   Secp256r1KeyPair,
@@ -36,22 +33,6 @@ const guardian = new StarknetKeyPair(43n);
   const { account } = await deployOldAccount();
   ethContract.connect(account);
   await profiler.profile("Old account", await ethContract.transfer(recipient, amount));
-}
-
-{
-  const { account, accountContract } = await deployAccount({
-    owner: starknetOwner,
-    guardian,
-    salt: "0x1",
-  });
-  const owner = await accountContract.get_owner();
-  const newOwner = new LegacyStarknetKeyPair();
-  const chainId = await provider.getChainId();
-  const [r, s] = await signChangeOwnerMessage(account.address, owner, newOwner, chainId);
-  await profiler.profile(
-    "Change owner",
-    await accountContract.change_owner(starknetSignatureType(newOwner.publicKey, r, s)),
-  );
 }
 
 {

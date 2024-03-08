@@ -205,7 +205,7 @@ export class DappService {
     const sessionToken = {
       session,
       session_authorisation: accountSessionSignature,
-      session_signature: this.getStarknetSignatureType(this.sessionKey.guid, session_signature),
+      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, session_signature),
       guardian_signature: this.getStarknetSignatureType(
         this.argentBackend.getBackendKey(accountAddress),
         guardian_signature,
@@ -250,9 +250,9 @@ export class DappService {
 
   // TODO Can this be removed?
   // method needed as starknetSignatureType in signer.ts is already compiled
-  private getStarknetSignatureType(signer: BigNumberish, signature: bigint[]) {
+  private getStarknetSignatureType(pubkey: BigNumberish, signature: bigint[]) {
     return new CairoCustomEnum({
-      Starknet: { signer, r: signature[0], s: signature[1] },
+      Starknet: { pubkey, r: signature[0], s: signature[1] },
       Secp256k1: undefined,
       Secp256r1: undefined,
       Eip191: undefined,

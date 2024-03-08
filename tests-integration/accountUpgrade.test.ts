@@ -13,6 +13,7 @@ import {
   expectRevertWithErrorMessage,
   LegacyArgentSigner,
   deployLegacyAccount,
+  StarknetKeyPair,
 } from "./lib";
 
 describe("ArgentAccount: upgrade", function () {
@@ -29,10 +30,11 @@ describe("ArgentAccount: upgrade", function () {
     const receipt = await upgradeAccount(account, argentAccountClassHash, ["0"]);
     const newClashHash = await provider.getClassHashAt(account.address);
     expect(BigInt(newClashHash)).to.equal(BigInt(argentAccountClassHash));
+    const newOwner = new StarknetKeyPair(owner.privateKey);
     await expectEvent(receipt, {
       from_address: account.address,
       eventName: "OwnerAdded",
-      additionalKeys: [owner.publicKey.toString()],
+      additionalKeys: [newOwner.guid.toString()],
     });
   });
 
@@ -45,10 +47,11 @@ describe("ArgentAccount: upgrade", function () {
     );
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
     await mockDapp.get_number(account.address).should.eventually.equal(42n);
+    const newOwner = new StarknetKeyPair(owner.privateKey);
     await expectEvent(receipt, {
       from_address: account.address,
       eventName: "OwnerAdded",
-      additionalKeys: [owner.publicKey.toString()],
+      additionalKeys: [newOwner.guid.toString()],
     });
   });
 

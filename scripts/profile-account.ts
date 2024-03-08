@@ -96,19 +96,19 @@ const guardian = new StarknetKeyPair(43n);
   );
 }
 
-{
-  await restart();
-  removeFromCache("ArgentAccount");
-  const classHash = await declareContract("ArgentAccount");
-  const account = await deployFixedWebauthnAccount(classHash);
-  const ethContract = await getEthContract();
-  ethContract.connect(account);
-  const recipient = 69;
-  await profiler.profile(
-    "Fixed webauthn w/o guardian",
-    await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),
-  );
-}
+// {
+//   await restart();
+//   removeFromCache("ArgentAccount");
+//   const classHash = await declareContract("ArgentAccount");
+//   const account = await deployFixedWebauthnAccount(classHash);
+//   const ethContract = await getEthContract();
+//   ethContract.connect(account);
+//   const recipient = 69;
+//   await profiler.profile(
+//     "Fixed webauthn w/o guardian",
+//     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),
+//   );
+// }
 
 profiler.printSummary();
 profiler.updateOrCheckReport();

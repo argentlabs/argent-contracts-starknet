@@ -325,8 +325,12 @@ mod ArgentAccount {
                 let new_guardian_guid = starknet_signer_from_pubkey(guardian_old).into_guid();
                 self._guardian.write(new_guardian_guid);
                 self.emit(GuardianChanged { new_guardian: new_guardian_guid });
-                self.emit(SignerLinked { signer_guid: new_guardian_guid, signer: starknet_signer_from_pubkey(guardian_old) });
-
+                self
+                    .emit(
+                        SignerLinked {
+                            signer_guid: new_guardian_guid, signer: starknet_signer_from_pubkey(guardian_old)
+                        }
+                    );
 
                 if (guardian_backup_old != 0) {
                     let new_guardian_backup_guid = starknet_signer_from_pubkey(guardian_backup_old).into_guid();
@@ -335,7 +339,8 @@ mod ArgentAccount {
                     self
                         .emit(
                             SignerLinked {
-                                signer_guid: new_guardian_backup_guid, signer: starknet_signer_from_pubkey(guardian_backup_old)
+                                signer_guid: new_guardian_backup_guid,
+                                signer: starknet_signer_from_pubkey(guardian_backup_old)
                             }
                         );
                 }

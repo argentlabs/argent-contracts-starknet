@@ -84,8 +84,14 @@ fn test_trigger_escape_first_signer() {
     start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_1()], array![SIGNER_3()]);
     let (escape, status) = component.get_escape();
-    assert(*escape.target_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey).into_guid(), 'should be signer 1');
-    assert(*escape.new_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(), 'should be signer 3');
+    assert(
+        *escape.target_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey).into_guid(),
+        'should be signer 1'
+    );
+    assert(
+        *escape.new_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
+        'should be signer 3'
+    );
     assert(escape.ready_at == 10, 'should be 10');
     assert(status == EscapeStatus::NotReady, 'should be NotReady');
 }
@@ -97,9 +103,13 @@ fn test_trigger_escape_last_signer() {
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     let (escape, status) = component.get_escape();
     assert(
-        *escape.target_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(), 'should be signer 2'
+        *escape.target_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(),
+        'should be signer 2'
     );
-    assert(*escape.new_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(), 'should be signer 3');
+    assert(
+        *escape.new_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
+        'should be signer 3'
+    );
 
     assert(escape.ready_at == 10, 'should be 10');
     assert(status == EscapeStatus::NotReady, 'should be NotReady');
@@ -113,13 +123,21 @@ fn test_trigger_escape_all_signers() {
     component.trigger_escape(array![SIGNER_2(), SIGNER_1()], array![SIGNER_4(), SIGNER_3()]);
     let (escape, status) = component.get_escape();
     assert(
-        *escape.target_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(), 'should be signer 1'
+        *escape.target_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(),
+        'should be signer 1'
     );
     assert(
-        *escape.target_signers.at(1) == starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey).into_guid(), 'should be signer 2'
+        *escape.target_signers.at(1) == starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey).into_guid(),
+        'should be signer 2'
     );
-    assert(*escape.new_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(4).pubkey).into_guid(), 'should be signer 4');
-    assert(*escape.new_signers.at(1) == starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(), 'should be signer 3');
+    assert(
+        *escape.new_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(4).pubkey).into_guid(),
+        'should be signer 4'
+    );
+    assert(
+        *escape.new_signers.at(1) == starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
+        'should be signer 3'
+    );
     assert(escape.ready_at == 10, 'should be 10');
     assert(status == EscapeStatus::NotReady, 'should be NotReady');
 }
@@ -132,9 +150,13 @@ fn test_trigger_escape_can_override() {
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_4()]);
     let (escape, _) = component.get_escape();
     assert(
-        *escape.target_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(), 'should be signer 2'
+        *escape.target_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(),
+        'should be signer 2'
     );
-    assert(*escape.new_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(4).pubkey).into_guid(), 'should be signer 4');
+    assert(
+        *escape.new_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(4).pubkey).into_guid(),
+        'should be signer 4'
+    );
 }
 
 #[test]

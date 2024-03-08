@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { CairoCustomEnum, Contract, hash } from "starknet";
-import { KeyPair } from ".";
+import { RawSigner } from ".";
 
 export const ESCAPE_SECURITY_PERIOD = 7n * 24n * 60n * 60n; // 7 days
 export const ESCAPE_EXPIRY_PERIOD = 2n * 7n * 24n * 60n * 60n; // 14 days
@@ -34,11 +34,11 @@ export const ESCAPE_TYPE_OWNER = new CairoCustomEnum({
 export const signChangeOwnerMessage = async (
   accountAddress: string,
   owner: bigint,
-  newOwner: KeyPair,
+  newOwner: RawSigner,
   chainId: string,
 ) => {
   const messageHash = await getChangeOwnerMessageHash(accountAddress, owner, chainId);
-  return newOwner.signHash(messageHash);
+  return newOwner.signRaw(messageHash);
 };
 
 export const getChangeOwnerMessageHash = async (accountAddress: string, owner: bigint, chainId: string) => {

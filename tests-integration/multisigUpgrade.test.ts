@@ -1,13 +1,5 @@
 import { expect } from "chai";
-import {
-  declareContract,
-  provider,
-  upgradeAccount,
-  declareFixtureContract,
-  LegacyMultisigKeyPair,
-  LegacyMultisigSigner,
-  deployLegacyMultisig,
-} from "./lib";
+import { declareContract, provider, upgradeAccount, declareFixtureContract, deployLegacyMultisig } from "./lib";
 import { deployMultisig1_1 } from "./lib/multisig";
 
 describe("ArgentMultisig: upgrade", function () {

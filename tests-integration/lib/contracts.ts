@@ -5,7 +5,6 @@ import {
   DeclareContractPayload,
   json,
   num,
-  uint256,
   UniversalDeployerContractPayload,
   UniversalDetails,
   Abi,

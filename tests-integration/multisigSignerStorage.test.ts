@@ -18,10 +18,10 @@ describe("ArgentMultisig: signer storage", function () {
 
       const { accountContract, keys } = await deployMultisig1_1();
       await accountContract.is_signer_guid(keys[0].guid).should.eventually.be.true;
-      await accountContract.is_signer_guid(newSigner1.publicKey).should.eventually.be.false;
+      await accountContract.is_signer_guid(newSigner1.guid).should.eventually.be.false;
 
       await accountContract.add_signers(CallData.compile([1, [newSigner1.signer]]));
-      await accountContract.is_signer_guid(newSigner1.publicKey).should.eventually.be.true;
+      await accountContract.is_signer_guid(newSigner1.guid).should.eventually.be.true;
 
       const new_threshold = 2;
 

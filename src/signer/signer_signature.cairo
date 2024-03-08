@@ -2,6 +2,7 @@ use argent::signer::eip191::is_valid_eip191_signature;
 use argent::signer::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };
+use argent::utils::hashing::poseidon_2;
 use ecdsa::check_ecdsa_signature;
 use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, PoseidonTrait};
@@ -104,10 +105,7 @@ impl SignerTraitImpl of SignerTrait<Signer> {
     fn into_guid(self: Signer) -> felt252 {
         // TODO avoiding excesive hashing rounds
         match self {
-            Signer::Starknet(signer) => {
-                let pubkey: felt252 = signer.pubkey.into();
-                PoseidonTrait::new().update_with(('Stark', pubkey)).finalize()
-            },
+            Signer::Starknet(signer) => poseidon_2('Stark', signer.pubkey.into()),
             Signer::Secp256k1(signer) => {
                 let (hash, _, _) = hades_permutation(SECP256K1_SIGNER_TYPE, signer.pubkey_hash.address, 2);
                 hash

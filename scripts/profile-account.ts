@@ -20,8 +20,10 @@ import { newProfiler } from "../tests-integration/lib/gas";
 
 const profiler = newProfiler(provider);
 
+if (provider.isDevnet) {
+  await restart();
+}
 // With the KeyPairs hardcoded, we gotta reset to avoid some issues
-await restart();
 removeFromCache("Proxy");
 removeFromCache("OldArgentAccount");
 removeFromCache("ArgentAccount");

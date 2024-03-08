@@ -213,6 +213,5 @@ fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, assertion:
 
 #[must_use]
 fn parse_signature_array(mut raw_signature: Span<felt252>) -> Array<SignerSignature> {
-    argent::utils::serialization::full_deserialize::<Array<SignerSignature>>(raw_signature)
-        .expect('argent/invalid-signature-array')
+    argent::utils::serialization::full_deserialize(raw_signature).expect('argent/invalid-signature-array')
 }

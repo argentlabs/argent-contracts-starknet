@@ -708,7 +708,9 @@ mod ArgentAccount {
             self.assert_valid_span_signature(execution_hash, signer_signatures);
         }
 
-        fn parse_signature_array_backward_compatible(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
+        fn parse_signature_array_backward_compatible(
+            self: @ContractState, mut signatures: Span<felt252>
+        ) -> Array<SignerSignature> {
             let first_slot: u256 = (*signatures.at(0)).into();
             // check if legacy signature array
             // Note that it will not work if the guardian_backup was used

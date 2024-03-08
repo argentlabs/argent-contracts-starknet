@@ -246,13 +246,9 @@ mod ArgentUserAccount {
                     required_signatures, excluded_signer_guid
                 )) => {
                     let mut excluded_check_span = signature_array.span();
-                    loop {
-                        match excluded_check_span.pop_front() {
-                            Option::Some(signer_sig) => assert(
-                                (*signer_sig).signer().into_guid() == excluded_signer_guid, 'argent/unauthorised_signer'
-                            ),
-                            Option::None => { break true; }
-                        };
+                    while !excluded_check_span.is_empty() {
+                        let signer_sig = *excluded_check_span.pop_front().unwrap();
+                        assert(signer_sig.signer().into_guid() == excluded_signer_guid, 'argent/unauthorised_signer')
                     };
 
                     assert(

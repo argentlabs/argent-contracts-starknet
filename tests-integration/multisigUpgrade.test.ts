@@ -1,13 +1,5 @@
 import { expect } from "chai";
-import {
-  declareContract,
-  provider,
-  upgradeAccount,
-  declareFixtureContract,
-  LegacyMultisigKeyPair,
-  LegacyMultisigSigner,
-  deployLegacyMultisig,
-} from "./lib";
+import { declareContract, provider, upgradeAccount, declareFixtureContract, deployLegacyMultisig } from "./lib";
 import { deployMultisig1_1 } from "./lib/multisig";
 
 describe("ArgentMultisig: upgrade", function () {
@@ -33,8 +25,8 @@ describe("ArgentMultisig: upgrade", function () {
       `Class with hash ClassHash(\\n    StarkFelt(\\n        \\"0x0000000000000000000000000000000000000000000000000000000000000001\\",\\n    ),\\n) is not declared`,
     );
 
-    const testDappClassHash = await declareContract("TestDapp");
-    await upgradeAccount(account, testDappClassHash).should.be.rejectedWith(
+    const mockDappClassHash = await declareContract("MockDapp");
+    await upgradeAccount(account, mockDappClassHash).should.be.rejectedWith(
       `EntryPointSelector(StarkFelt(\\"0x00fe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283\\")) not found in contract`,
     );
   });

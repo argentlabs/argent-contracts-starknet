@@ -11,13 +11,13 @@ mod introspection {
     mod interface;
     mod src5;
 }
-
 mod multisig {
     mod interface;
     mod multisig;
 }
 
 mod signer {
+    mod eip191;
     mod signer_signature;
     mod webauthn;
 }
@@ -30,6 +30,7 @@ mod signer_storage {
 mod outside_execution {
     mod interface;
     mod outside_execution;
+    mod outside_execution_hash;
 }
 
 mod recovery {
@@ -49,8 +50,26 @@ mod utils {
     mod asserts;
     mod bytes;
     mod calls;
+    mod mock_erc20;
     mod multicall;
     mod serialization;
-    mod test_dapp;
     mod transaction_version;
+}
+
+mod mocks {
+    mod multisig_mocks;
+    mod recovery_mocks;
+    mod signer_list_mocks;
+    mod src5_mocks;
+    mod test_dapp;
+}
+
+mod session {
+    mod interface;
+    mod session;
+    mod session_hash;
+}
+
+mod offchain_message {
+    mod interface;
 }

@@ -2,8 +2,9 @@
 // This is achieved by adding outside_execution::ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
 #[starknet::component]
 mod outside_execution_component {
-    use argent::outside_execution::interface::{
-        IOutsideExecution, IOffchainMessageHash, OutsideExecution, IOutsideExecutionCallback
+    use argent::outside_execution::{
+        outside_execution_hash::OffChainMessageOutsideExecutionRev0,
+        interface::{OutsideExecution, IOutsideExecutionCallback, IOutsideExecution}
     };
     use hash::{HashStateTrait, HashStateExTrait};
     use pedersen::PedersenTrait;
@@ -40,7 +41,7 @@ mod outside_execution_component {
             assert(!self.outside_nonces.read(nonce), 'argent/duplicated-outside-nonce');
             self.outside_nonces.write(nonce, true);
 
-            let outside_tx_hash = outside_execution.get_message_hash();
+            let outside_tx_hash = outside_execution.get_message_hash_rev_0();
             let mut state = self.get_contract_mut();
             state.execute_from_outside_callback(outside_execution.calls, outside_tx_hash, signature.span())
         }
@@ -48,7 +49,7 @@ mod outside_execution_component {
         fn get_outside_execution_message_hash(
             self: @ComponentState<TContractState>, outside_execution: OutsideExecution
         ) -> felt252 {
-            outside_execution.get_message_hash()
+            outside_execution.get_message_hash_rev_0()
         }
 
         fn is_valid_outside_execution_nonce(self: @ComponentState<TContractState>, nonce: felt252) -> bool {

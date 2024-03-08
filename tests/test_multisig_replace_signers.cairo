@@ -1,17 +1,18 @@
-use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknet_signer_from_pubkey};
-use argent_tests::setup::multisig_test_setup::{
-    initialize_multisig, initialize_multisig_with, signer_pubkey_1, signer_pubkey_2, signer_pubkey_3,
-    ITestArgentMultisigDispatcherTrait, initialize_multisig_with_one_signer
+use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
+use super::setup::constants::MULTISIG_OWNER;
+use super::setup::multisig_test_setup::{
+    initialize_multisig, initialize_multisig_with, ITestArgentMultisigDispatcherTrait,
+    initialize_multisig_with_one_signer
 };
 
 #[test]
 fn replace_signer_1() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(signer_pubkey_1);
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1].span());
 
     // replace signer
-    let signer_to_add = starknet_signer_from_pubkey(signer_pubkey_2);
+    let signer_to_add = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
     multisig.replace_signer(signer_1, signer_to_add);
 
     // check 
@@ -25,9 +26,9 @@ fn replace_signer_1() {
 #[test]
 fn replace_signer_start() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(signer_pubkey_1);
-    let signer_2 = starknet_signer_from_pubkey(signer_pubkey_2);
-    let signer_3 = starknet_signer_from_pubkey(signer_pubkey_3);
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // replace signer
@@ -47,9 +48,9 @@ fn replace_signer_start() {
 #[test]
 fn replace_signer_middle() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(signer_pubkey_1);
-    let signer_2 = starknet_signer_from_pubkey(signer_pubkey_2);
-    let signer_3 = starknet_signer_from_pubkey(signer_pubkey_3);
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // replace signer
@@ -69,9 +70,9 @@ fn replace_signer_middle() {
 #[test]
 fn replace_signer_end() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(signer_pubkey_1);
-    let signer_2 = starknet_signer_from_pubkey(signer_pubkey_2);
-    let signer_3 = starknet_signer_from_pubkey(signer_pubkey_3);
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // replace signer
@@ -89,12 +90,12 @@ fn replace_signer_end() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/not-a-signer', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/not-a-signer',))]
 fn replace_invalid_signer() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(signer_pubkey_1);
-    let signer_2 = starknet_signer_from_pubkey(signer_pubkey_2);
-    let signer_3 = starknet_signer_from_pubkey(signer_pubkey_3);
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // replace signer
@@ -105,14 +106,15 @@ fn replace_invalid_signer() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/already-a-signer', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('argent/already-a-signer',))]
 fn replace_already_signer() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(signer_pubkey_1);
-    let signer_2 = starknet_signer_from_pubkey(signer_pubkey_2);
-    let signer_3 = starknet_signer_from_pubkey(signer_pubkey_3);
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
 
     // replace signer
     multisig.replace_signer(signer_3, signer_1);
 }
+

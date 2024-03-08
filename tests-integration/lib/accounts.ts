@@ -13,20 +13,13 @@ import {
   Abi,
   AllowArray,
   Call,
+  CairoOption,
+  CairoOptionVariant,
 } from "starknet";
 import { ethAddress, loadContract, declareContract, declareFixtureContract, strkAddress } from "./contracts";
 import { provider } from "./provider";
-import {
-  ArgentSigner,
-  KeyPair,
-  LegacyArgentSigner,
-  LegacyKeyPair,
-  LegacyMultisigSigner,
-  compiledSignerOption,
-  randomKeyPair,
-  signerOption,
-  starknetSigner,
-} from "./signers";
+import { ArgentSigner, KeyPair, randomStarknetKeyPair } from "./signers/signers";
+import { LegacyKeyPair, LegacyArgentSigner, LegacyStarknetKeyPair, LegacyMultisigSigner } from "./signers/legacy";
 
 export class ArgentAccount extends Account {
   // Increase the gas limit by 30% to avoid failures due to gas estimation being too low with tx v3 and transactions the use escaping
@@ -63,6 +56,13 @@ export interface ArgentWalletWithGuardian extends ArgentWallet {
   guardian: KeyPair;
 }
 
+export interface LegacyArgentWallet {
+  account: ArgentAccount;
+  accountContract: Contract;
+  owner: LegacyKeyPair;
+  guardian: LegacyKeyPair;
+}
+
 export interface ArgentWalletWithGuardianAndBackup extends ArgentWalletWithGuardian {
   guardianBackup: KeyPair;
 }
@@ -97,11 +97,11 @@ export function setDefaultTransactionVersionV3(account: ArgentAccount): ArgentAc
 
 console.log("Deployer:", deployer.address);
 
-export async function deployOldAccount(): Promise<ArgentWalletWithGuardian> {
+export async function deployOldAccount(): Promise<LegacyArgentWallet> {
   const proxyClassHash = await declareFixtureContract("Proxy");
   const oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
-  const owner = new LegacyKeyPair();
-  const guardian = new LegacyKeyPair();
+  const owner = new LegacyStarknetKeyPair();
+  const guardian = new LegacyStarknetKeyPair();
 
   const constructorCalldata = CallData.compile({
     implementation: oldArgentAccountClassHash,
@@ -109,7 +109,7 @@ export async function deployOldAccount(): Promise<ArgentWalletWithGuardian> {
     calldata: CallData.compile({ owner: owner.publicKey, guardian: guardian.publicKey }),
   });
 
-  const salt = num.toHex(randomKeyPair().privateKey);
+  const salt = num.toHex(randomStarknetKeyPair().privateKey);
   const contractAddress = hash.calculateContractAddressFromHash(salt, proxyClassHash, constructorCalldata, 0);
 
   const account = new Account(provider, contractAddress, owner);
@@ -137,14 +137,16 @@ async function deployAccountInner(
   const finalParams = {
     ...params,
     classHash: params.classHash ?? (await declareContract("ArgentAccount")),
-    salt: params.salt ?? num.toHex(randomKeyPair().privateKey),
-    owner: params.owner ?? randomKeyPair(),
+    salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
+    owner: params.owner ?? randomStarknetKeyPair(),
     useTxV3: params.useTxV3 ?? false,
     selfDeploy: params.selfDeploy ?? false,
   };
-  const some_guardian = signerOption(finalParams.guardian?.publicKey);
+  const some_guardian = finalParams.guardian
+    ? finalParams.guardian.signerAsOption
+    : new CairoOption(CairoOptionVariant.None);
   const constructorCalldata = CallData.compile({
-    owner: starknetSigner(finalParams.owner.publicKey),
+    owner: finalParams.owner.signer,
     guardian: some_guardian,
   });
 
@@ -159,7 +161,7 @@ async function deployAccountInner(
   if (finalParams.useTxV3) {
     fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK"); // 0.01 STRK
   } else {
-    fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "ETH"); // 0.01 ETH
+    fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "ETH"); // 1 ETH
   }
   if (fundingCall) {
     calls.push(fundingCall);
@@ -213,7 +215,7 @@ export type DeployAccountParams = {
 
 export async function deployAccount(params: DeployAccountParams = {}): Promise<ArgentWalletWithGuardian> {
   if (!params.guardian) {
-    params.guardian = randomKeyPair();
+    params.guardian = randomStarknetKeyPair();
   }
   const { account, owner } = await deployAccountInner(params);
   const accountContract = await loadContract(account.address);
@@ -233,10 +235,10 @@ export async function deployAccountWithoutGuardian(
 export async function deployAccountWithGuardianBackup(
   params: DeployAccountParams & { guardianBackup?: KeyPair } = {},
 ): Promise<ArgentWalletWithGuardianAndBackup> {
-  const guardianBackup = params.guardianBackup ?? randomKeyPair();
+  const guardianBackup = params.guardianBackup ?? randomStarknetKeyPair();
 
   const wallet = (await deployAccount(params)) as ArgentWalletWithGuardianAndBackup;
-  await wallet.accountContract.change_guardian_backup(compiledSignerOption(guardianBackup.publicKey));
+  await wallet.accountContract.change_guardian_backup(guardianBackup.compiledSignerAsOption);
 
   wallet.account.signer = new ArgentSigner(wallet.owner, guardianBackup);
   wallet.guardianBackup = guardianBackup;
@@ -245,9 +247,9 @@ export async function deployAccountWithGuardianBackup(
 }
 
 export async function deployLegacyAccount(classHash: string) {
-  const owner = new LegacyKeyPair();
-  const guardian = new LegacyKeyPair();
-  const salt = num.toHex(randomKeyPair().privateKey);
+  const owner = new LegacyStarknetKeyPair();
+  const guardian = new LegacyStarknetKeyPair();
+  const salt = num.toHex(owner.privateKey);
   const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian.publicKey });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
   await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH

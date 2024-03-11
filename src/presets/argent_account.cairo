@@ -87,7 +87,7 @@ mod ArgentAccount {
         _escape: LegacyEscape, /// The ongoing escape, if any
         /// Keeps track of the last time an escape was performed by the guardian.
         /// Rounded down to the hour: https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 
-        /// Used to limit the number of transactions the account will pay for
+        /// Used to limit the number of escapes the account will pay for
         /// It resets when an escape is completed or canceled
         guardian_escape_timestamp: u64,
         /// Keeps track of the last time an escape was performed by the owner. 

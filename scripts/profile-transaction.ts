@@ -9,7 +9,7 @@ const transactions = {
 const profiler = newProfiler(provider);
 
 for (const [name, transaction_hash] of Object.entries(transactions)) {
-  await profiler.profile(name, { transaction_hash });
+  await profiler.profile(name, { transaction_hash }, { allowFailedTransactions: true });
 }
 
 profiler.printSummary();

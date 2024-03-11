@@ -15,13 +15,16 @@ import {
   StarknetKeyPair,
   EthKeyPair,
   Secp256r1KeyPair,
+  Eip191KeyPair,
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
 
 const profiler = newProfiler(provider);
 
+if (provider.isDevnet) {
+  await restart();
+}
 // With the KeyPairs hardcoded, we gotta reset to avoid some issues
-await restart();
 removeFromCache("Proxy");
 removeFromCache("OldArgentAccount");
 removeFromCache("ArgentAccount");
@@ -97,18 +100,31 @@ const guardian = new StarknetKeyPair(43n);
 }
 
 {
-  await restart();
-  removeFromCache("ArgentAccount");
-  const classHash = await declareContract("ArgentAccount");
-  const account = await deployFixedWebauthnAccount(classHash);
-  const ethContract = await getEthContract();
+  const { account } = await deployAccount({
+    owner: new Eip191KeyPair(48n),
+    guardian,
+    salt: "0x6",
+  });
   ethContract.connect(account);
-  const recipient = 69;
   await profiler.profile(
-    "Fixed webauthn w/o guardian",
+    "Eip161 with guardian",
     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),
   );
 }
+
+// {
+//   await restart();
+//   removeFromCache("ArgentAccount");
+//   const classHash = await declareContract("ArgentAccount");
+//   const account = await deployFixedWebauthnAccount(classHash);
+//   const ethContract = await getEthContract();
+//   ethContract.connect(account);
+//   const recipient = 69;
+//   await profiler.profile(
+//     "Fixed webauthn w/o guardian",
+//     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),
+//   );
+// }
 
 profiler.printSummary();
 profiler.updateOrCheckReport();

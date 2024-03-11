@@ -70,14 +70,12 @@ mod multisig_component {
             let new_signers_count = signers_len + signers_to_add.len();
             self.assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-            let guids = to_guid_list(signers_to_add.span());
+            let mut guids = to_guid_list(signers_to_add.span());
             signer_list_comp.add_signers(guids.span(), last_signer: last_signer_guid);
             let mut signers_to_add_span = signers_to_add.span();
-            let mut index = 0;
             while !signers_to_add_span.is_empty() {
                 let signer = *signers_to_add_span.pop_front().unwrap();
-                let signer_guid = *guids[index];
-                index += 1;
+                let signer_guid = guids.pop_front().unwrap();
                 signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
                 signer_list_comp.emit(SignerLinked { signer_guid: signer_guid, signer: signer });
             };
@@ -175,14 +173,13 @@ mod multisig_component {
             self.assert_valid_threshold_and_signers_count(threshold, new_signers_count);
 
             let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
-            let guids = to_guid_list(signers.span());
+            let mut guids = to_guid_list(signers.span());
             signer_list_comp.add_signers(guids.span(), last_signer: 0);
 
             let mut index = 0;
             while !signers.is_empty() {
                 let signer = signers.pop_front().unwrap();
-                let signer_guid = *guids[index];
-                index += 1;
+                let signer_guid = guids.pop_front().unwrap();
                 signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
                 signer_list_comp.emit(SignerLinked { signer_guid: signer_guid, signer: signer });
             };

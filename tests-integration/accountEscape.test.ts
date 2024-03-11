@@ -293,10 +293,10 @@ describe("ArgentAccount: escape mechanism", function () {
       const { account, accountContract, owner } = await deployAccount();
       account.signer = new ArgentSigner(owner);
 
-      await setTime(42);
+      await setTime(randomTime);
       await accountContract.trigger_escape_guardian(newKeyPair.compiledSignerAsOption);
 
-      await setTime(42 + 12 * 60 * 60);
+      await setTime(randomTime + 12n * 60n * 60n);
       await expectRevertWithErrorMessage("argent/escape-window", () =>
         accountContract.trigger_escape_guardian(newKeyPair.compiledSignerAsOption),
       );

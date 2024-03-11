@@ -18,7 +18,7 @@ import {
 } from "./lib";
 
 describe("ArgentAccount: events", function () {
-  const initialTime = 7 * 24 * 60 * 60;
+  const initialTime = 24n * 60n * 60n;
   it("Expect 'AccountCreated' and 'OwnerAddded' when deploying an account", async function () {
     const owner = randomStarknetKeyPair();
     const guardian = randomStarknetKeyPair();
@@ -47,13 +47,13 @@ describe("ArgentAccount: events", function () {
     account.signer = new ArgentSigner(guardian);
 
     const newOwner = randomStarknetKeyPair();
-    const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
+    const activeAt = initialTime + ESCAPE_SECURITY_PERIOD;
     await setTime(initialTime);
 
     await expectEvent(() => accountContract.trigger_escape_owner(newOwner.compiledSigner), {
       from_address: account.address,
       eventName: "EscapeOwnerTriggered",
-      data: [activeAt, newOwner.guid.toString()],
+      data: [activeAt.toString(), newOwner.guid.toString()],
     });
   });
 

@@ -49,15 +49,15 @@ export async function expectExecutionRevert(errorMessage: string, execute: () =>
 }
 
 async function expectEventFromReceipt(receipt: GetTransactionReceiptResponse, event: RPC.Event) {
-  receipt = ensureAccepted(receipt);
+  receipt = await ensureAccepted(receipt);
   expect(event.keys.length).to.be.greaterThan(0, "Unsupported: No keys");
   const events = receipt.events ?? [];
   const normalizedEvent = normalizeEvent(event);
   const matches = events.filter((e) => isEqual(normalizeEvent(e), normalizedEvent)).length;
   if (matches == 0) {
-    assert(false, "No matches detected in this transaction`");
+    assert.fail("No matches detected in this transaction");
   } else if (matches > 1) {
-    assert(false, "Multiple matches detected in this transaction`");
+    assert.fail("Multiple matches detected in this transaction");
   }
 }
 

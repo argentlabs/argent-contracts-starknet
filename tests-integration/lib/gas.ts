@@ -2,7 +2,7 @@ import { exec } from "child_process";
 import fs from "fs";
 import { isUndefined, mapValues, maxBy, sortBy, sum } from "lodash-es";
 import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
-import { ensureIncluded } from ".";
+import { ensureAccepted } from ".";
 
 const ethUsd = 2000n;
 
@@ -19,7 +19,7 @@ const gasWeights: Record<string, number> = {
 };
 
 async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
-  const receipt = ensureIncluded(await provider.waitForTransaction(transactionHash));
+  const receipt = await ensureAccepted(await provider.waitForTransaction(transactionHash));
   let actualFee = 0n;
   if (receipt.actual_fee?.unit === "WEI") {
     actualFee = BigInt(receipt.actual_fee.amount);

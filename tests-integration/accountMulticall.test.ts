@@ -127,7 +127,7 @@ describe("ArgentAccount: multicall", function () {
       mockDappContract.populateTransaction.increase_number(1),
       mockDappContract.populateTransaction.increase_number(10),
     ];
-    const receipt = ensureAccepted(await waitForTransaction(await account.execute(calls)));
+    const receipt = await ensureAccepted(await waitForTransaction(await account.execute(calls)));
 
     const expectedReturnCall1 = [num.toHex(1)];
     const expectedReturnCall2 = [num.toHex(11)];

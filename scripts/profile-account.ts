@@ -15,6 +15,7 @@ import {
   StarknetKeyPair,
   EthKeyPair,
   Secp256r1KeyPair,
+  Eip191KeyPair,
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
 
@@ -94,6 +95,19 @@ const guardian = new StarknetKeyPair(43n);
   ethContract.connect(account);
   await profiler.profile(
     "Secp256r1 w guardian",
+    await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),
+  );
+}
+
+{
+  const { account } = await deployAccount({
+    owner: new Eip191KeyPair(48n),
+    guardian,
+    salt: "0x6",
+  });
+  ethContract.connect(account);
+  await profiler.profile(
+    "Eip161 with guardian",
     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),
   );
 }

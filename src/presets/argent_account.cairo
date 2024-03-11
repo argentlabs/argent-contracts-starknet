@@ -42,7 +42,7 @@ mod ArgentAccount {
     const ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
     ///  The escape will be ready and can be completed for this duration
     const ESCAPE_EXPIRY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
-    /// Limit amount of escape a party can do to once every X hours
+    /// Limit to one escape every X hours
     const TIME_BETWEEN_TWO_ESCAPE: u64 = consteval_int!(12 * 60 * 60); // 12 hours;
 
     /// Limits fee in escapes

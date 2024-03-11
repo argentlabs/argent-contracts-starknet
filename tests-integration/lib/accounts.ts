@@ -39,7 +39,7 @@ export class ArgentAccount extends Account {
         ...estimate.resourceBounds,
         l1_gas: {
           ...estimate.resourceBounds.l1_gas,
-          max_amount: num.toHexString(num.addPercent(estimate.resourceBounds.l1_gas.max_amount, 30)),
+          max_amount: num.toHexString(num.addPercent(estimate.resourceBounds.l1_gas.max_amount, 30) + 170n),
         },
       },
     });

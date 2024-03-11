@@ -1,4 +1,4 @@
-import { CallData, num, uint256 } from "starknet";
+import { CallData, uint256 } from "starknet";
 import {
   ArgentSigner,
   ESCAPE_SECURITY_PERIOD,
@@ -47,9 +47,9 @@ describe("ArgentAccount: events", function () {
     account.signer = new ArgentSigner(guardian);
 
     const newOwner = randomStarknetKeyPair();
-    const activeAt = BigInt(initialTime) + ESCAPE_SECURITY_PERIOD;
     await setTime(initialTime);
 
+    const activeAt = BigInt(initialTime) + ESCAPE_SECURITY_PERIOD;
     await expectEvent(() => accountContract.trigger_escape_owner(newOwner.compiledSigner), {
       from_address: account.address,
       eventName: "EscapeOwnerTriggered",
@@ -91,13 +91,13 @@ describe("ArgentAccount: events", function () {
     account.signer = new ArgentSigner(owner);
 
     const newGuardian = randomStarknetKeyPair();
-    const activeAt = num.toHex(42n + ESCAPE_SECURITY_PERIOD);
     await setTime(initialTime);
 
+    const activeAt = BigInt(initialTime) + ESCAPE_SECURITY_PERIOD;
     await expectEvent(() => accountContract.trigger_escape_guardian(newGuardian.compiledSignerAsOption), {
       from_address: account.address,
       eventName: "EscapeGuardianTriggered",
-      data: [activeAt, newGuardian.guid.toString()],
+      data: [activeAt.toString(), newGuardian.guid.toString()],
     });
   });
 

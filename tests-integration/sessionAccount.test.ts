@@ -19,7 +19,7 @@ describe("Hybrid Session Account: execute calls", function () {
   let sessionAccountClassHash: string;
   let mockDappOneContract: Contract;
   let mockErc20Contract: Contract;
-  const initialTime = 7n * 24n * 60n * 60n;
+  const initialTime = 24 * 60 * 60;
 
   before(async () => {
     sessionAccountClassHash = await declareContract("ArgentAccount");
@@ -58,7 +58,7 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods);
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150);
 
     // 2. Owner and Guardian signs session
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
@@ -88,7 +88,7 @@ describe("Hybrid Session Account: execute calls", function () {
     const dappService = new DappService(backendService);
     const argentX = new ArgentX(account, backendService);
 
-    const expiresAt = initialTime + 100n;
+    const expiresAt = initialTime + 100;
 
     const allowedMethods: AllowedMethod[] = [
       {
@@ -108,12 +108,12 @@ describe("Hybrid Session Account: execute calls", function () {
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
     // non expired session
-    await setTime(expiresAt - 1n);
+    await setTime(expiresAt - 1);
     await account.waitForTransaction(transaction_hash);
     await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
 
     // Expired session
-    await setTime(expiresAt + 1n);
+    await setTime(expiresAt + 1);
     await expectRevertWithErrorMessage("session/expired", () =>
       accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
     );
@@ -144,7 +144,7 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods);
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150);
 
     // 2. Wallet signs session
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));

@@ -58,7 +58,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
   beforeEach(async () => {
     newKeyPair = randomStarknetKeyPair();
-    randomTime = BigInt(7 * 24 * 60 * 60) + BigInt(Math.floor(Math.random() * 1000));
+    randomTime = BigInt(24 * 60 * 60) + BigInt(Math.floor(Math.random() * 1000));
   });
 
   describe("trigger_escape_owner(new_owner)", function () {

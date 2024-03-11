@@ -868,7 +868,7 @@ mod ArgentAccount {
             panic_with_felt252('argent/invalid-tx-version');
         }
 
-        assert(get_block_timestamp() > last_timestamp + TIME_BETWEEN_TWO_ESCAPE, 'argent/escape-window');
+        assert(get_block_timestamp() > last_timestamp + TIME_BETWEEN_TWO_ESCAPE, 'argent/last-escape-too-recent');
     }
 
     fn get_escape_status(escape_ready_at: u64) -> EscapeStatus {

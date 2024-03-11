@@ -11,7 +11,7 @@ describe("Gas griefing", function () {
       account.signer = new ArgentSigner(guardian);
 
       await waitForTransaction(await accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner));
-      await expectExecutionRevert("argent/escape-window", () =>
+      await expectExecutionRevert("argent/last-escape-too-recent", () =>
         accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
       );
     });

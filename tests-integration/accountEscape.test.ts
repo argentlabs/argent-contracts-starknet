@@ -80,7 +80,7 @@ describe("ArgentAccount: escape mechanism", function () {
       );
     });
 
-    it("Expect 'argent/escape-window' when trying to escape again too early", async function () {
+    it("Expect 'argent/last-escape-too-recent' when trying to escape again too early", async function () {
       const { account, accountContract, guardian } = await deployAccount();
       account.signer = new ArgentSigner(guardian);
 
@@ -88,7 +88,7 @@ describe("ArgentAccount: escape mechanism", function () {
       await accountContract.trigger_escape_owner(newKeyPair.compiledSigner);
 
       await setTime(randomTime + 12n * 60n * 60n);
-      await expectRevertWithErrorMessage("argent/escape-window", () =>
+      await expectRevertWithErrorMessage("argent/last-escape-too-recent", () =>
         accountContract.trigger_escape_owner(newKeyPair.compiledSigner),
       );
     });
@@ -289,7 +289,7 @@ describe("ArgentAccount: escape mechanism", function () {
       expect(escape.new_signer).to.equal(newKeyPair.guid);
     });
 
-    it("Expect 'argent/escape-window' when trying too escape again too early", async function () {
+    it("Expect 'argent/last-escape-too-recent' when trying too escape again too early", async function () {
       const { account, accountContract, owner } = await deployAccount();
       account.signer = new ArgentSigner(owner);
 
@@ -297,7 +297,7 @@ describe("ArgentAccount: escape mechanism", function () {
       await accountContract.trigger_escape_guardian(newKeyPair.compiledSignerAsOption);
 
       await setTime(randomTime + 12n * 60n * 60n);
-      await expectRevertWithErrorMessage("argent/escape-window", () =>
+      await expectRevertWithErrorMessage("argent/last-escape-too-recent", () =>
         accountContract.trigger_escape_guardian(newKeyPair.compiledSignerAsOption),
       );
     });

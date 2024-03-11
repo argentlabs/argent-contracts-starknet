@@ -105,19 +105,13 @@ impl SignerTraitImpl of SignerTrait<Signer> {
     fn into_guid(self: Signer) -> felt252 {
         // TODO avoiding excesive hashing rounds
         match self {
-            Signer::Starknet(signer) => poseidon_2('Stark', signer.pubkey.into()),
-            Signer::Secp256k1(signer) => {
-                let (hash, _, _) = hades_permutation(SECP256K1_SIGNER_TYPE, signer.pubkey_hash.address, 2);
-                hash
-            },
+            Signer::Starknet(signer) => poseidon_2(STARKNET_SIGNER_TYPE, signer.pubkey.into()),
+            Signer::Secp256k1(signer) => poseidon_2(SECP256K1_SIGNER_TYPE, signer.pubkey_hash.address.into()),
             Signer::Secp256r1(signer) => {
                 let pubkey: u256 = signer.pubkey.into();
                 PoseidonTrait::new().update_with(SECP256R1_SIGNER_TYPE).update_with(pubkey).finalize()
             },
-            Signer::Eip191(signer) => {
-                let (hash, _, _) = hades_permutation(EIP191_SIGNER_TYPE, signer.eth_address.address, 2);
-                hash
-            },
+            Signer::Eip191(signer) => poseidon_2(EIP191_SIGNER_TYPE, signer.eth_address.address.into()),
             Signer::Webauthn(signer) => {
                 let origin: felt252 = signer.origin.into();
                 let rp_id_hash: u256 = signer.rp_id_hash.into();

@@ -83,11 +83,13 @@ describe("Hybrid Session Account: execute calls", function () {
   it("Only execute tx if session not expired", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
+    await setTime(1710167933n);
+
     const backendService = new BackendService(guardian as StarknetKeyPair);
     const dappService = new DappService(backendService);
     const argentX = new ArgentX(account, backendService);
 
-    const expiresAt = 200n;
+    const expiresAt = 1710182341n;
 
     const allowedMethods: AllowedMethod[] = [
       {
@@ -107,12 +109,12 @@ describe("Hybrid Session Account: execute calls", function () {
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
     // non expired session
-    await setTime(expiresAt - 1n);
+    await setTime(expiresAt - 10800n);
     await account.waitForTransaction(transaction_hash);
     await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
 
     // Expired session
-    await setTime(expiresAt + 1n);
+    await setTime(expiresAt + 7200n);
     await expectRevertWithErrorMessage("session/expired", () =>
       accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
     );

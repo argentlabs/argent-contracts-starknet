@@ -1,10 +1,9 @@
-use argent::common::version::Version;
-use argent::multisig::argent_multisig::ArgentMultisig;
-use starknet::{contract_address_const, syscalls::deploy_syscall, account::Call, testing::set_contract_address};
-
-const signer_pubkey_1: felt252 = 0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca;
-const signer_pubkey_2: felt252 = 0x759ca09377679ecd535a81e83039658bf40959283187c654c5416f439403cf5;
-const signer_pubkey_3: felt252 = 0x411494b501a98abd8262b0da1351e17899a0c4ef23dd2f96fec5ba847310b20;
+use argent::account::interface::Version;
+use argent::presets::multisig_account::ArgentMultisigAccount;
+use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknet_signer_from_pubkey};
+use snforge_std::{declare, ContractClassTrait, ContractClass, RevertedTransaction, start_prank, CheatTarget};
+use starknet::{contract_address_const, syscalls::deploy_syscall, account::Call};
+use super::constants::MULTISIG_OWNER;
 
 #[starknet::interface]
 trait ITestArgentMultisig<TContractState> {
@@ -23,21 +22,19 @@ trait ITestArgentMultisig<TContractState> {
     ) -> felt252;
     // External
     fn change_threshold(ref self: TContractState, new_threshold: usize);
-    fn add_signers(ref self: TContractState, new_threshold: usize, signers_to_add: Array<felt252>);
-    fn remove_signers(ref self: TContractState, new_threshold: usize, signers_to_remove: Array<felt252>);
-    fn replace_signer(ref self: TContractState, signer_to_remove: felt252, signer_to_add: felt252);
+    fn add_signers(ref self: TContractState, new_threshold: usize, signers_to_add: Array<Signer>);
+    fn remove_signers(ref self: TContractState, new_threshold: usize, signers_to_remove: Array<Signer>);
+    fn reorder_signers(ref self: TContractState, new_signer_order: Array<Signer>);
+    fn replace_signer(ref self: TContractState, signer_to_remove: Signer, signer_to_add: Signer);
     // Views
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
     fn get_threshold(self: @TContractState) -> usize;
-    fn get_signers(self: @TContractState) -> Array<felt252>;
-    fn is_signer(self: @TContractState, signer: felt252) -> bool;
-    fn assert_valid_signer_signature(
-        self: @TContractState, hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
-    );
-    fn is_valid_signer_signature(
-        self: @TContractState, hash: felt252, signer: felt252, signature_r: felt252, signature_s: felt252
-    ) -> bool;
+    fn get_signer_guids(self: @TContractState) -> Array<felt252>;
+    fn is_signer_guid(self: @TContractState, signer: felt252) -> bool;
+    fn is_signer(self: @TContractState, signer: Signer) -> bool;
+    fn assert_valid_signer_signature(self: @TContractState, hash: felt252, signer_signature: SignerSignature);
+    fn is_valid_signer_signature(self: @TContractState, hash: felt252, signer_signature: SignerSignature) -> bool;
 
     // IErc165
     fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
@@ -49,31 +46,35 @@ trait ITestArgentMultisig<TContractState> {
     fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }
 
+fn declare_multisig() -> ContractClass {
+    declare("ArgentMultisigAccount")
+}
+
 fn initialize_multisig() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
-    let signers_array = array![signer_pubkey_1, signer_pubkey_2, signer_pubkey_3];
+    let signers_array = array![
+        starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey),
+    ];
     initialize_multisig_with(threshold, signers_array.span())
 }
 
 fn initialize_multisig_with_one_signer() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
-    let signers_array = array![signer_pubkey_1];
+    let signers_array = array![starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)];
     initialize_multisig_with(threshold, signers_array.span())
 }
 
-fn initialize_multisig_with(threshold: usize, mut signers: Span<felt252>) -> ITestArgentMultisigDispatcher {
-    let mut calldata = array![threshold.into(), signers.len().into(),];
-    loop {
-        match signers.pop_front() {
-            Option::Some(signer) => calldata.append(*signer),
-            Option::None => { break; },
-        };
-    };
+fn initialize_multisig_with(threshold: usize, mut signers: Span<Signer>) -> ITestArgentMultisigDispatcher {
+    let class_hash = declare_multisig();
+    let mut calldata = array![];
+    threshold.serialize(ref calldata);
+    signers.serialize(ref calldata);
 
-    let class_hash = ArgentMultisig::TEST_CLASS_HASH.try_into().unwrap();
-    let (contract_address, _) = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap();
+    let contract_address = class_hash.deploy(@calldata).expect('Multisig deployment fail');
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')
-    set_contract_address(contract_address_const::<1>());
+    start_prank(CheatTarget::One(contract_address), contract_address);
     ITestArgentMultisigDispatcher { contract_address }
 }

@@ -9,7 +9,7 @@ import {
   getTypedDataHash,
   deployContract,
   provider,
-  randomKeyPair,
+  randomStarknetKeyPair,
   setTime,
   waitForTransaction,
 } from "./lib";
@@ -20,10 +20,10 @@ describe("ArgentMultisig: outside execution", function () {
   // Avoid timeout
   this.timeout(320000);
 
-  let testDapp: Contract;
+  let mockDapp: Contract;
 
   before(async () => {
-    testDapp = await deployContract("TestDapp");
+    mockDapp = await deployContract("MockDapp");
   });
 
   it("Correct message hash", async function () {
@@ -35,7 +35,7 @@ describe("ArgentMultisig: outside execution", function () {
       caller: deployer.address,
       execute_after: 0,
       execute_before: 1713139200,
-      nonce: randomKeyPair().privateKey,
+      nonce: randomStarknetKeyPair().privateKey,
       calls: [
         {
           to: "0x0424242",
@@ -54,14 +54,14 @@ describe("ArgentMultisig: outside execution", function () {
 
   it("Basics", async function () {
     const { account, accountContract } = await deployMultisig({ threshold: 1, signersLength: 2 });
-    await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
+    await mockDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,
-      nonce: randomKeyPair().privateKey,
+      nonce: randomStarknetKeyPair().privateKey,
       execute_after: initialTime - 100,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, account.signer);
 
@@ -98,7 +98,7 @@ describe("ArgentMultisig: outside execution", function () {
     // normal scenario
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
-    await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
     // ensure a transaction can't be replayed
@@ -108,14 +108,14 @@ describe("ArgentMultisig: outside execution", function () {
   it("Avoid caller check if it caller is ANY_CALLER", async function () {
     const { account } = await deployMultisig({ threshold: 1, signersLength: 2 });
 
-    await testDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
+    await mockDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
     const outsideExecution: OutsideExecution = {
       caller: shortString.encodeShortString("ANY_CALLER"),
-      nonce: randomKeyPair().privateKey,
+      nonce: randomStarknetKeyPair().privateKey,
       execute_after: 0,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(testDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(outsideExecution, account.address, account.signer);
 
@@ -123,6 +123,6 @@ describe("ArgentMultisig: outside execution", function () {
 
     // ensure the caller is not used
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
-    await testDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 });

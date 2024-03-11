@@ -1,4 +1,4 @@
-import { declareContract, deployAccountWithoutGuardian } from "./lib";
+import { deployAccountWithoutGuardian } from "./lib";
 import { deployMultisig1_1 } from "./lib/multisig";
 
 const ERC165_IERC165_INTERFACE_ID = BigInt("0x3f918d17e5ee77373b56385708f855659a07f75997f365cf87748628532a055");

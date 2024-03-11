@@ -1,5 +1,6 @@
-import { ArgentSigner, deployAccount, expectExecutionRevert, randomKeyPair, waitForTransaction } from "./lib";
+import { ArgentSigner, deployAccount, expectExecutionRevert, randomStarknetKeyPair, waitForTransaction } from "./lib";
 import { num, RPC } from "starknet";
+
 describe("Gas griefing", function () {
   this.timeout(320000);
 
@@ -10,10 +11,10 @@ describe("Gas griefing", function () {
       account.signer = new ArgentSigner(guardian);
 
       for (let attempt = 1; attempt <= 5; attempt++) {
-        await waitForTransaction(await accountContract.trigger_escape_owner(randomKeyPair().publicKey));
+        await waitForTransaction(await accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner));
       }
       await expectExecutionRevert("argent/max-escape-attempts", () =>
-        accountContract.trigger_escape_owner(randomKeyPair().publicKey),
+        accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
       );
     });
   }
@@ -26,9 +27,13 @@ describe("Gas griefing", function () {
     });
     account.signer = new ArgentSigner(guardian);
     await expectExecutionRevert("argent/max-fee-too-high", () =>
-      account.execute(accountContract.populateTransaction.trigger_escape_owner(randomKeyPair().publicKey), undefined, {
-        maxFee: "50000000000000001",
-      }),
+      account.execute(
+        accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
+        undefined,
+        {
+          maxFee: "50000000000000001",
+        },
+      ),
     );
   });
 
@@ -39,8 +44,8 @@ describe("Gas griefing", function () {
     });
     account.signer = new ArgentSigner(guardian);
 
-    const newOwnerPubKey = randomKeyPair().publicKey;
-    const estimate = await accountContract.estimateFee.trigger_escape_owner(newOwnerPubKey);
+    const { compiledSigner } = randomStarknetKeyPair();
+    const estimate = await accountContract.estimateFee.trigger_escape_owner(compiledSigner);
 
     const maxEscapeTip = 1000000000000000000n;
     const maxL2GasAmount = 10n;
@@ -54,7 +59,7 @@ describe("Gas griefing", function () {
     const targetTip = maxEscapeTip + 1n;
     const tipInStrkPerL2Gas = targetTip / maxL2GasAmount + 1n; // Add one to make sure it's rounded up
     await expectExecutionRevert("argent/tip-too-high", () =>
-      account.execute(accountContract.populateTransaction.trigger_escape_owner(newOwnerPubKey), undefined, {
+      account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), undefined, {
         resourceBounds: newResourceBounds,
         tip: tipInStrkPerL2Gas,
       }),
@@ -65,14 +70,22 @@ describe("Gas griefing", function () {
     const { account, accountContract, guardian } = await deployAccount({ useTxV3: true });
     account.signer = new ArgentSigner(guardian);
     await expectExecutionRevert("argent/invalid-da-mode", () =>
-      account.execute(accountContract.populateTransaction.trigger_escape_owner(randomKeyPair().publicKey), undefined, {
-        nonceDataAvailabilityMode: RPC.EDataAvailabilityMode.L2,
-      }),
+      account.execute(
+        accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
+        undefined,
+        {
+          nonceDataAvailabilityMode: RPC.EDataAvailabilityMode.L2,
+        },
+      ),
     );
     await expectExecutionRevert("argent/invalid-da-mode", () =>
-      account.execute(accountContract.populateTransaction.trigger_escape_owner(randomKeyPair().publicKey), undefined, {
-        feeDataAvailabilityMode: RPC.EDataAvailabilityMode.L2,
-      }),
+      account.execute(
+        accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
+        undefined,
+        {
+          feeDataAvailabilityMode: RPC.EDataAvailabilityMode.L2,
+        },
+      ),
     );
   });
 
@@ -80,9 +93,13 @@ describe("Gas griefing", function () {
     const { account, accountContract, guardian } = await deployAccount({ useTxV3: true });
     account.signer = new ArgentSigner(guardian);
     await expectExecutionRevert("argent/invalid-deployment-data", () =>
-      account.execute(accountContract.populateTransaction.trigger_escape_owner(randomKeyPair().publicKey), undefined, {
-        accountDeploymentData: ["0x1"],
-      }),
+      account.execute(
+        accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
+        undefined,
+        {
+          accountDeploymentData: ["0x1"],
+        },
+      ),
     );
   });
 });

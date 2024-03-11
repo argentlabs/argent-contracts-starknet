@@ -2,11 +2,14 @@ import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num, 
 import {
   KeyPair,
   MultisigSigner,
+  LegacyMultisigKeyPair,
+  LegacyMultisigSigner,
   loadContract,
   provider,
-  randomKeyPair,
-  randomKeyPairs,
+  randomStarknetKeyPair,
+  randomStarknetKeyPairs,
   fundAccountCall,
+  fundAccount,
   declareContract,
   deployer,
 } from ".";
@@ -15,13 +18,13 @@ export interface MultisigWallet {
   account: Account;
   accountContract: Contract;
   keys: KeyPair[];
-  signers: bigint[]; // public keys
   threshold: bigint;
   receipt: GetTransactionReceiptResponse;
 }
 export type DeployMultisigParams = {
   threshold: number;
   signersLength: number;
+  keys?: KeyPair[];
   useTxV3?: boolean;
   classHash?: string;
   salt?: string;
@@ -33,8 +36,8 @@ export type DeployMultisigParams = {
 export async function deployMultisig(params: DeployMultisigParams): Promise<MultisigWallet> {
   const finalParams = {
     ...params,
-    classHash: params.classHash ?? (await declareContract("ArgentMultisig")),
-    salt: params.salt ?? num.toHex(randomKeyPair().privateKey),
+    classHash: params.classHash ?? (await declareContract("ArgentMultisigAccount")),
+    salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
     useTxV3: params.useTxV3 ?? false,
     selfDeploy: params.selfDeploy ?? false,
     selfDeploymentIndexes: params.selfDeploymentIndexes ?? [0],
@@ -44,7 +47,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     throw new Error("selfDeploymentIndexes can only be used with selfDeploy");
   }
 
-  const keys = sortedKeyPairs(finalParams.signersLength);
+  const keys = params.keys ?? sortedKeyPairs(finalParams.signersLength);
   const signers = keysToSigners(keys);
   const constructorCalldata = CallData.compile({ threshold: finalParams.threshold, signers });
 
@@ -107,7 +110,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   );
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
-  return { account, accountContract, keys, signers, receipt, threshold: BigInt(finalParams.threshold) };
+  return { account, accountContract, keys, receipt, threshold: BigInt(finalParams.threshold) };
 }
 
 export async function deployMultisig1_3(
@@ -121,6 +124,28 @@ export async function deployMultisig1_1(
   return deployMultisig({ ...params, threshold: 1, signersLength: 1 });
 }
 
-const sortedKeyPairs = (length: number) => randomKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));
+const sortedKeyPairs = (length: number) =>
+  randomStarknetKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));
 
-export const keysToSigners = (keys: KeyPair[]) => keys.map(({ publicKey }) => publicKey).map(BigInt);
+const keysToSigners = (keys: KeyPair[]) => keys.map(({ signer }) => signer);
+
+export async function deployLegacyMultisig(classHash: string) {
+  const keys = [new LegacyMultisigKeyPair()];
+  const salt = num.toHex(randomStarknetKeyPair().privateKey);
+  const constructorCalldata = CallData.compile({ threshold: 1, signers: [keys[0].publicKey] });
+  const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
+  await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
+  const signer = new LegacyMultisigSigner(keys);
+  const account = new Account(provider, contractAddress, signer, "1");
+
+  const { transaction_hash } = await account.deploySelf({
+    classHash,
+    constructorCalldata,
+    addressSalt: salt,
+  });
+  await provider.waitForTransaction(transaction_hash);
+
+  const accountContract = await loadContract(account.address);
+  accountContract.connect(account);
+  return { account, accountContract, signer };
+}

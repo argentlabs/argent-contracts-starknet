@@ -1,11 +1,11 @@
 import { CallData, shortString } from "starknet";
-import { expectEvent, expectRevertWithErrorMessage, randomKeyPair, expectExecutionRevert } from "./lib";
+import { expectEvent, expectRevertWithErrorMessage, randomStarknetKeyPair, expectExecutionRevert } from "./lib";
 import { deployMultisig, deployMultisig1_1 } from "./lib/multisig";
 
 describe("ArgentMultisig", function () {
   for (const useTxV3 of [false, true]) {
     it(`Should deploy multisig contract (TxV3:${useTxV3})`, async function () {
-      const { accountContract, signers, receipt, threshold } = await deployMultisig({
+      const { accountContract, keys, receipt, threshold } = await deployMultisig({
         threshold: 1,
         signersLength: 2,
         useTxV3,
@@ -18,30 +18,28 @@ describe("ArgentMultisig", function () {
         data: CallData.compile([threshold]),
       });
 
-      for (const signer of signers) {
+      for (const key of keys) {
         await expectEvent(receipt, {
           from_address: accountContract.address,
           eventName: "OwnerAdded",
-          additionalKeys: [signer.toString()],
+          additionalKeys: [key.guid.toString()],
         });
       }
 
       await accountContract.get_threshold().should.eventually.equal(1n);
-      await accountContract.get_signers().should.eventually.deep.equal(signers);
       await accountContract.get_name().should.eventually.equal(BigInt(shortString.encodeShortString("ArgentMultisig")));
-      await accountContract.get_version().should.eventually.deep.equal({ major: 0n, minor: 1n, patch: 1n });
-
-      await accountContract.is_signer(signers[0]).should.eventually.be.true;
-      await accountContract.is_signer(signers[1]).should.eventually.be.true;
-      await accountContract.is_signer(0).should.eventually.be.false;
-      await accountContract.is_signer(randomKeyPair().publicKey).should.eventually.be.false;
+      await accountContract.get_version().should.eventually.deep.equal({ major: 0n, minor: 2n, patch: 0n });
+      await accountContract.is_signer_guid(keys[0].guid).should.eventually.be.true;
+      await accountContract.is_signer_guid(keys[1].guid).should.eventually.be.true;
+      await accountContract.is_signer_guid(0).should.eventually.be.false;
+      await accountContract.is_signer_guid(randomStarknetKeyPair().publicKey).should.eventually.be.false;
 
       await expectRevertWithErrorMessage("argent/non-null-caller", () => accountContract.__validate__([]));
     });
   }
 
   it("Should fail to deploy with invalid signatures", async function () {
-    await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {
+    await expectRevertWithErrorMessage("argent/signature-invalid-length", async () => {
       const { receipt } = await deployMultisig({
         threshold: 1,
         signersLength: 2,
@@ -51,7 +49,7 @@ describe("ArgentMultisig", function () {
       return receipt;
     });
 
-    await expectRevertWithErrorMessage("argent/invalid-signature-length", async () => {
+    await expectRevertWithErrorMessage("argent/signature-invalid-length", async () => {
       const { receipt } = await deployMultisig({
         threshold: 1,
         signersLength: 2,

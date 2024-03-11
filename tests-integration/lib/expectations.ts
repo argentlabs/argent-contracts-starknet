@@ -9,7 +9,6 @@ import {
   RPC,
 } from "starknet";
 import { isEqual } from "lodash-es";
-
 import { provider } from "./provider";
 import { ensureAccepted } from "./receipts";
 
@@ -20,11 +19,19 @@ export async function expectRevertWithErrorMessage(
   try {
     const executionResult = await execute();
     if (!("transaction_hash" in executionResult)) {
-      throw Error(`No transaction hash found on ${JSON.stringify(executionResult)}`);
+      throw new Error(`No transaction hash found on ${JSON.stringify(executionResult)}`);
     }
     await provider.waitForTransaction(executionResult["transaction_hash"]);
   } catch (e: any) {
-    expect(e.toString()).to.contain(`Failure reason: ${shortString.encodeShortString(errorMessage)}`);
+    if (!e.toString().includes(shortString.encodeShortString(errorMessage))) {
+      const match = e.toString().match(/\[([^\]]+)]/);
+      if (match && match.length > 1) {
+        console.log(e);
+        assert.fail(`"${errorMessage}" not detected, instead got: "${shortString.decodeShortString(match[1])}"`);
+      } else {
+        assert.fail(`No error detected in: ${e.toString()}`);
+      }
+    }
     return;
   }
   assert.fail("No error detected");

@@ -1,8 +1,8 @@
 import { expect } from "chai";
-import { CallData, hash } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData } from "starknet";
 import {
   ArgentSigner,
-  ConcatSigner,
+  MultisigSigner,
   declareContract,
   deployAccount,
   deployAccountWithGuardianBackup,
@@ -12,8 +12,11 @@ import {
   hasOngoingEscape,
   increaseTime,
   provider,
-  randomKeyPair,
+  randomStarknetKeyPair,
   signChangeOwnerMessage,
+  starknetSignatureType,
+  zeroStarknetSignatureType,
+  StarknetKeyPair,
 } from "./lib";
 
 describe("ArgentAccount", function () {
@@ -26,7 +29,7 @@ describe("ArgentAccount", function () {
   it("Deploy externally", async function () {
     const { accountContract, owner } = await deployAccountWithoutGuardian({ fundingAmount: 0, selfDeploy: false });
 
-    await accountContract.get_owner().should.eventually.equal(owner.publicKey);
+    await accountContract.get_owner().should.eventually.equal(owner.guid);
     await accountContract.get_guardian().should.eventually.equal(0n);
     await accountContract.get_guardian_backup().should.eventually.equal(0n);
   });
@@ -35,14 +38,14 @@ describe("ArgentAccount", function () {
     it(`Self deployment (TxV3: ${useTxV3})`, async function () {
       const { accountContract, owner } = await deployAccountWithoutGuardian({ useTxV3, selfDeploy: true });
 
-      await accountContract.get_owner().should.eventually.equal(owner.publicKey);
+      await accountContract.get_owner().should.eventually.equal(owner.guid);
       await accountContract.get_guardian().should.eventually.equal(0n);
       await accountContract.get_guardian_backup().should.eventually.equal(0n);
     });
   }
 
   it("Deploy two accounts with the same owner", async function () {
-    const owner = randomKeyPair();
+    const owner = randomStarknetKeyPair();
     const { accountContract: accountContract1 } = await deployAccountWithoutGuardian({ owner });
     const { accountContract: accountContract2 } = await deployAccountWithoutGuardian({ owner });
     const owner1 = await accountContract1.get_owner();
@@ -54,16 +57,17 @@ describe("ArgentAccount", function () {
   it("Expect guardian backup to be 0 when deployed with an owner and a guardian", async function () {
     const { accountContract, owner, guardian } = await deployAccount();
 
-    await accountContract.get_owner().should.eventually.equal(owner.publicKey);
-    await accountContract.get_guardian().should.eventually.equal(guardian.publicKey);
+    await accountContract.get_owner().should.eventually.equal(owner.guid);
+    await accountContract.get_guardian().should.eventually.equal(guardian.guid);
     await accountContract.get_guardian_backup().should.eventually.equal(0n);
   });
 
   it("Expect an error when owner is zero", async function () {
-    await expectRevertWithErrorMessage("argent/null-owner", () =>
+    const guardian = new CairoOption(CairoOptionVariant.None);
+    await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
       deployer.deployContract({
         classHash: argentAccountClassHash,
-        constructorCalldata: CallData.compile({ owner: 0, guardian: 12 }),
+        constructorCalldata: CallData.compile({ owner: zeroStarknetSignatureType(), guardian }),
       }),
     );
   });
@@ -73,35 +77,39 @@ describe("ArgentAccount", function () {
 
     await accountContract.get_guardian_backup().should.eventually.equal(0n);
     account.signer = new ArgentSigner(owner, guardian);
-    await accountContract.change_guardian_backup(42);
+    const new_guardian = new StarknetKeyPair();
+    await accountContract.change_guardian_backup(new_guardian.compiledSignerAsOption);
 
-    await accountContract.get_guardian_backup().should.eventually.equal(42n);
+    await accountContract.get_guardian_backup().should.eventually.equal(new_guardian.guid);
   });
 
   it("Should sign messages from OWNER and BACKUP_GUARDIAN when there is a GUARDIAN and a BACKUP", async function () {
-    const guardianBackup = randomKeyPair();
+    const guardianBackup = randomStarknetKeyPair();
     const { account, accountContract, owner, guardian } = await deployAccount();
 
     await accountContract.get_guardian_backup().should.eventually.equal(0n);
 
     account.signer = new ArgentSigner(owner, guardian);
-    await accountContract.change_guardian_backup(guardianBackup.publicKey);
+    await accountContract.change_guardian_backup(guardianBackup.compiledSignerAsOption);
 
     await accountContract.get_guardian_backup().should.eventually.equal(guardianBackup.publicKey);
 
     account.signer = new ArgentSigner(owner, guardianBackup);
-    await accountContract.change_guardian(42n);
 
-    await accountContract.get_guardian().should.eventually.equal(42n);
+    const new_guardian = new StarknetKeyPair();
+    await accountContract.change_guardian(new_guardian.compiledSignerAsOption);
+
+    await accountContract.get_guardian().should.eventually.equal(new_guardian.guid);
   });
 
   it("Expect 'argent/invalid-signature-length' when signing a transaction with OWNER, GUARDIAN and BACKUP", async function () {
     const { account, accountContract, owner, guardian, guardianBackup } = await deployAccountWithGuardianBackup();
 
-    account.signer = new ConcatSigner([owner, guardian, guardianBackup]);
+    account.signer = new MultisigSigner([owner, guardian, guardianBackup]);
 
+    const new_guardian = new StarknetKeyPair();
     await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
-      accountContract.change_guardian("0x42"),
+      accountContract.change_guardian(new_guardian.compiledSignerAsOption),
     );
   });
 
@@ -113,11 +121,11 @@ describe("ArgentAccount", function () {
   describe("change_owner(new_owner, signature_r, signature_s)", function () {
     it("Should be possible to change_owner", async function () {
       const { accountContract, owner } = await deployAccount();
-      const newOwner = randomKeyPair();
+      const newOwner = randomStarknetKeyPair();
 
       const chainId = await provider.getChainId();
-      const [r, s] = await signChangeOwnerMessage(accountContract.address, owner.publicKey, newOwner, chainId);
-      await accountContract.change_owner(newOwner.publicKey, r, s);
+      const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.guid, newOwner, chainId);
+      await accountContract.change_owner(starknetSignature);
 
       await accountContract.get_owner().should.eventually.equal(newOwner.publicKey);
     });
@@ -126,36 +134,42 @@ describe("ArgentAccount", function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
       accountContract.connect(account);
-      await expectRevertWithErrorMessage("argent/only-self", () => accountContract.change_owner(12, 13, 14));
+      await expectRevertWithErrorMessage("argent/only-self", () =>
+        accountContract.change_owner(starknetSignatureType(12, 13, 14)),
+      );
     });
 
-    it("Expect 'argent/null-owner' when new_owner is zero", async function () {
+    it("Expect parsing error when new_owner is zero", async function () {
       const { accountContract } = await deployAccount();
-      await expectRevertWithErrorMessage("argent/null-owner", () => accountContract.change_owner(0, 13, 14));
+      await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
+        accountContract.change_owner(starknetSignatureType(0, 13, 14)),
+      );
     });
 
     it("Expect 'argent/invalid-owner-sig' when the signature to change owner is invalid", async function () {
       const { accountContract } = await deployAccount();
-      await expectRevertWithErrorMessage("argent/invalid-owner-sig", () => accountContract.change_owner(11, 12, 42));
+      await expectRevertWithErrorMessage("argent/invalid-owner-sig", () =>
+        accountContract.change_owner(starknetSignatureType(12, 13, 14)),
+      );
     });
 
     it("Expect the escape to be reset", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount();
 
-      const newOwner = randomKeyPair();
-      account.signer = guardian;
+      const newOwner = randomStarknetKeyPair();
+      account.signer = new ArgentSigner(guardian);
 
-      await accountContract.trigger_escape_owner(newOwner.publicKey);
+      await accountContract.trigger_escape_owner(newOwner.compiledSigner);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
       const chainId = await provider.getChainId();
-      const [r, s] = await signChangeOwnerMessage(accountContract.address, owner.publicKey, newOwner, chainId);
+      const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.guid, newOwner, chainId);
 
-      await accountContract.change_owner(newOwner.publicKey, r, s);
+      await accountContract.change_owner(starknetSignature);
 
-      await accountContract.get_owner().should.eventually.equal(newOwner.publicKey);
+      await accountContract.get_owner().should.eventually.equal(newOwner.guid);
       await hasOngoingEscape(accountContract).should.eventually.be.false;
     });
   });
@@ -163,15 +177,23 @@ describe("ArgentAccount", function () {
   describe("change_guardian(new_guardian)", function () {
     it("Should be possible to change_guardian", async function () {
       const { accountContract } = await deployAccount();
-      const newGuardian = 12n;
-      await accountContract.change_guardian(newGuardian);
+      const newGuardian = randomStarknetKeyPair();
+      await accountContract.change_guardian(newGuardian.compiledSignerAsOption);
+      await accountContract.get_guardian().should.eventually.equal(newGuardian.guid);
+    });
 
-      await accountContract.get_guardian().should.eventually.equal(newGuardian);
+    it("Shouldn't be possible to use a guardian with pubkey = 0", async function () {
+      const { account } = await deployAccount();
+      const { accountContract } = await deployAccount();
+      accountContract.connect(account);
+      await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
+        accountContract.change_guardian(CallData.compile([zeroStarknetSignatureType()])),
+      );
     });
 
     it("Should be possible to change_guardian to zero when there is no backup", async function () {
       const { accountContract } = await deployAccount();
-      await accountContract.change_guardian(0);
+      await accountContract.change_guardian(new CairoOption(CairoOptionVariant.None));
 
       await accountContract.get_guardian_backup().should.eventually.equal(0n);
       await accountContract.get_guardian().should.eventually.equal(0n);
@@ -181,30 +203,35 @@ describe("ArgentAccount", function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
       accountContract.connect(account);
-      await expectRevertWithErrorMessage("argent/only-self", () => accountContract.change_guardian(12));
+      const newGuardian = randomStarknetKeyPair();
+      await expectRevertWithErrorMessage("argent/only-self", () =>
+        accountContract.change_guardian(newGuardian.compiledSignerAsOption),
+      );
     });
 
     it("Expect 'argent/backup-should-be-null' when setting the guardian to 0 if there is a backup", async function () {
       const { accountContract } = await deployAccountWithGuardianBackup();
       await accountContract.get_guardian_backup().should.eventually.not.equal(0n);
-      await expectRevertWithErrorMessage("argent/backup-should-be-null", () => accountContract.change_guardian(0));
+      await expectRevertWithErrorMessage("argent/backup-should-be-null", () =>
+        accountContract.change_guardian(new CairoOption(CairoOptionVariant.None)),
+      );
     });
 
     it("Expect the escape to be reset", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount();
-      account.signer = guardian;
+      account.signer = new ArgentSigner(guardian);
 
-      const newOwner = randomKeyPair();
-      const newGuardian = 12n;
+      const newOwner = randomStarknetKeyPair();
+      const newGuardian = randomStarknetKeyPair();
 
-      await accountContract.trigger_escape_owner(newOwner.publicKey);
+      await accountContract.trigger_escape_owner(newOwner.compiledSigner);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
-      await accountContract.change_guardian(newGuardian);
+      await accountContract.change_guardian(newGuardian.compiledSignerAsOption);
 
-      await accountContract.get_guardian().should.eventually.equal(newGuardian);
+      await accountContract.get_guardian().should.eventually.equal(newGuardian.guid);
       await hasOngoingEscape(accountContract).should.eventually.be.false;
     });
   });
@@ -212,15 +239,15 @@ describe("ArgentAccount", function () {
   describe("change_guardian_backup(new_guardian)", function () {
     it("Should be possible to change_guardian_backup", async function () {
       const { accountContract } = await deployAccountWithGuardianBackup();
-      const newGuardianBackup = 12n;
-      await accountContract.change_guardian_backup(newGuardianBackup);
+      const newGuardianBackup = randomStarknetKeyPair();
+      await accountContract.change_guardian_backup(newGuardianBackup.compiledSignerAsOption);
 
-      await accountContract.get_guardian_backup().should.eventually.equal(newGuardianBackup);
+      await accountContract.get_guardian_backup().should.eventually.equal(newGuardianBackup.guid);
     });
 
     it("Should be possible to change_guardian_backup to zero", async function () {
       const { accountContract } = await deployAccountWithGuardianBackup();
-      await accountContract.change_guardian_backup(0);
+      await accountContract.change_guardian_backup(new CairoOption(CairoOptionVariant.None));
 
       await accountContract.get_guardian_backup().should.eventually.equal(0n);
     });
@@ -229,30 +256,34 @@ describe("ArgentAccount", function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
       accountContract.connect(account);
-      await expectRevertWithErrorMessage("argent/only-self", () => accountContract.change_guardian_backup(12));
+      await expectRevertWithErrorMessage("argent/only-self", () =>
+        accountContract.change_guardian_backup(randomStarknetKeyPair().compiledSignerAsOption),
+      );
     });
 
     it("Expect 'argent/guardian-required' when guardian == 0 and setting a guardian backup ", async function () {
       const { accountContract } = await deployAccountWithoutGuardian();
       await accountContract.get_guardian().should.eventually.equal(0n);
-      await expectRevertWithErrorMessage("argent/guardian-required", () => accountContract.change_guardian_backup(12));
+      await expectRevertWithErrorMessage("argent/guardian-required", () =>
+        accountContract.change_guardian_backup(randomStarknetKeyPair().compiledSignerAsOption),
+      );
     });
 
     it("Expect the escape to be reset", async function () {
       const { account, accountContract, owner, guardian } = await deployAccountWithGuardianBackup();
 
-      const newOwner = randomKeyPair();
-      account.signer = guardian;
-      const newGuardian = 12n;
+      const newOwner = randomStarknetKeyPair();
+      account.signer = new ArgentSigner(guardian);
+      const newGuardian = randomStarknetKeyPair();
 
-      await accountContract.trigger_escape_owner(newOwner.publicKey);
+      await accountContract.trigger_escape_owner(newOwner.compiledSigner);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
-      await accountContract.change_guardian_backup(newGuardian);
+      await accountContract.change_guardian_backup(newGuardian.compiledSignerAsOption);
 
-      await accountContract.get_guardian_backup().should.eventually.equal(newGuardian);
+      await accountContract.get_guardian_backup().should.eventually.equal(newGuardian.guid);
       await hasOngoingEscape(accountContract).should.eventually.be.false;
     });
   });

@@ -58,7 +58,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
   beforeEach(async () => {
     newKeyPair = randomStarknetKeyPair();
-    randomTime = BigInt(Math.floor(Math.random() * 1000));
+    randomTime = BigInt(7 * 24 * 60 * 60) + BigInt(Math.floor(Math.random() * 1000));
   });
 
   describe("trigger_escape_owner(new_owner)", function () {
@@ -84,10 +84,10 @@ describe("ArgentAccount: escape mechanism", function () {
       const { account, accountContract, guardian } = await deployAccount();
       account.signer = new ArgentSigner(guardian);
 
-      await setTime(42);
+      await setTime(randomTime);
       await accountContract.trigger_escape_owner(newKeyPair.compiledSigner);
 
-      await setTime(42 + 12 * 60 * 60);
+      await setTime(randomTime + 12n * 60n * 60n);
       await expectRevertWithErrorMessage("argent/escape-window", () =>
         accountContract.trigger_escape_owner(newKeyPair.compiledSigner),
       );

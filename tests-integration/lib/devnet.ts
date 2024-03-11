@@ -12,7 +12,6 @@ export async function increaseTime(timeInSeconds: number | bigint) {
 }
 
 export async function setTime(timeInSeconds: number | bigint) {
-  timeInSeconds = BigInt(timeInSeconds) + BigInt(7 * 24 * 60 * 60);
   await handlePost("set_time", { time: Number(timeInSeconds) });
 }
 

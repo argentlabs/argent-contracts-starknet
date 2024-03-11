@@ -19,6 +19,7 @@ describe("Hybrid Session Account: execute calls", function () {
   let sessionAccountClassHash: string;
   let mockDappOneContract: Contract;
   let mockErc20Contract: Contract;
+  const initialTime = 7n * 24n * 60n * 60n;
 
   before(async () => {
     sessionAccountClassHash = await declareContract("ArgentAccount");
@@ -38,7 +39,7 @@ describe("Hybrid Session Account: execute calls", function () {
   });
 
   beforeEach(async function () {
-    await setTime(100n);
+    await setTime(initialTime);
   });
 
   it("Call a contract with backend signer", async function () {
@@ -87,7 +88,7 @@ describe("Hybrid Session Account: execute calls", function () {
     const dappService = new DappService(backendService);
     const argentX = new ArgentX(account, backendService);
 
-    const expiresAt = 200n;
+    const expiresAt = initialTime + 100n;
 
     const allowedMethods: AllowedMethod[] = [
       {

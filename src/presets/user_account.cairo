@@ -241,7 +241,8 @@ mod ArgentUserAccount {
             let first_call = calls.at(0);
 
             let signature_array = parse_signature_array(signature);
-            match self.parse_escape_call(*first_call.to, *first_call.selector, *first_call.calldata, threshold) {
+            let effective_threshold =
+                match self.parse_escape_call(*first_call.to, *first_call.selector, *first_call.calldata, threshold) {
                 Option::Some((
                     required_signatures, excluded_signer_guid
                 )) => {
@@ -250,21 +251,14 @@ mod ArgentUserAccount {
                         let signer_sig = *excluded_check_span.pop_front().unwrap();
                         assert(signer_sig.signer().into_guid() == excluded_signer_guid, 'argent/unauthorised_signer')
                     };
-
-                    assert(
-                        self
-                            .multisig
-                            .is_valid_signature_with_threshold(execution_hash, required_signatures, signature_array),
-                        'argent/invalid-signature'
-                    );
+                    required_signatures
                 },
-                Option::None => {
-                    assert(
-                        self.multisig.is_valid_signature_with_threshold(execution_hash, threshold, signature_array),
-                        'argent/invalid-signature'
-                    );
-                }
-            }
+                Option::None => threshold
+            };
+            assert(
+                self.multisig.is_valid_signature_with_threshold(execution_hash, effective_threshold, signature_array),
+                'argent/invalid-signature'
+            );
         }
     }
 }

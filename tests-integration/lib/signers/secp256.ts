@@ -63,7 +63,7 @@ export class Eip191KeyPair extends KeyPair {
         ethAddress: this.address,
         r: uint256.bnToUint256(signature.r),
         s: uint256.bnToUint256(signature.s),
-        y_parity: signature.yParity,
+        yParity: signature.yParity,
       }),
     ]);
   }

@@ -7,7 +7,7 @@
   "license": "ISC",
   "dependencies": {
     "ethers": "6.8.1",
-    "starknet": "v6.3.0"
+    "starknet": "https://github.com/PhilippeR26/starknet.js.git#746a21e6e7ae340c543976d983cf7eb9246929c2"
   },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.0",

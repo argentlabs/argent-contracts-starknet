@@ -310,12 +310,13 @@ mod ArgentAccount {
 
             let owner_old = self._signer.read();
             assert(owner_old != 0, 'argent/null-owner');
-            let new_owner_guid = starknet_signer_from_pubkey(owner_old).into_guid();
+            let owner_signer = starknet_signer_from_pubkey(owner_old);
+            let new_owner_guid = owner_signer.into_guid();
             self._signer.write(new_owner_guid);
             self.emit(OwnerChanged { new_owner: new_owner_guid });
             self.emit(OwnerRemoved { removed_owner_guid: owner_old });
             self.emit(OwnerAdded { new_owner_guid });
-            self.emit(SignerLinked { signer_guid: new_owner_guid, signer: starknet_signer_from_pubkey(owner_old) });
+            self.emit(SignerLinked { signer_guid: new_owner_guid, signer: owner_signer });
 
             let guardian_old = self._guardian.read();
             let guardian_backup_old = self._guardian_backup.read();

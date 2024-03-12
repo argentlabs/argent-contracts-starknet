@@ -33,6 +33,8 @@ import {
   OutsideExecution,
   randomStarknetKeyPair,
   StarknetKeyPair,
+  SignerType,
+  signerTypeToCustomEnum,
 } from ".";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -251,12 +253,6 @@ export class DappService {
   // TODO Can this be removed?
   // method needed as starknetSignatureType in signer.ts is already compiled
   private getStarknetSignatureType(pubkey: BigNumberish, signature: bigint[]) {
-    return new CairoCustomEnum({
-      Starknet: { pubkey, r: signature[0], s: signature[1] },
-      Secp256k1: undefined,
-      Secp256r1: undefined,
-      Eip191: undefined,
-      Webauthn: undefined,
-    });
+    return signerTypeToCustomEnum(SignerType.Starknet, { pubkey, r: signature[0], s: signature[1] });
   }
 }

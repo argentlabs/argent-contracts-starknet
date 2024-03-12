@@ -43,7 +43,7 @@ mod ArgentAccount {
     ///  The escape will be ready and can be completed for this duration
     const ESCAPE_EXPIRY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
     /// Limit to one escape every X hours
-    const TIME_BETWEEN_TWO_ESCAPE: u64 = consteval_int!(12 * 60 * 60); // 12 hours;
+    const TIME_BETWEEN_TWO_ESCAPES: u64 = consteval_int!(12 * 60 * 60); // 12 hours;
 
     /// Limits fee in escapes
     const MAX_ESCAPE_MAX_FEE_ETH: u128 = 50000000000000000; // 0.05 ETH
@@ -868,7 +868,7 @@ mod ArgentAccount {
             panic_with_felt252('argent/invalid-tx-version');
         }
 
-        assert(get_block_timestamp() > last_timestamp + TIME_BETWEEN_TWO_ESCAPE, 'argent/last-escape-too-recent');
+        assert(get_block_timestamp() > last_timestamp + TIME_BETWEEN_TWO_ESCAPES, 'argent/last-escape-too-recent');
     }
 
     fn get_escape_status(escape_ready_at: u64) -> EscapeStatus {

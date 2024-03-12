@@ -2,7 +2,7 @@ import { exec } from "child_process";
 import fs from "fs";
 import { isUndefined, mapValues, maxBy, sortBy, sum } from "lodash-es";
 import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
-import { ensureAccepted } from ".";
+import { ensureAccepted, ensureSuccess } from ".";
 
 const ethUsd = 2000n;
 
@@ -18,8 +18,11 @@ const gasWeights: Record<string, number> = {
   ec_op: 5.12,
 };
 
-async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
+async function profileGasUsage(transactionHash: string, provider: RpcProvider, allowFailedTransactions = false) {
   const receipt = await ensureAccepted(await provider.waitForTransaction(transactionHash));
+  if (!allowFailedTransactions) {
+    await ensureSuccess(receipt);
+  }
   let actualFee = 0n;
   if (receipt.actual_fee?.unit === "WEI") {
     actualFee = BigInt(receipt.actual_fee.amount);
@@ -98,10 +101,10 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
     async profile(
       name: string,
       { transaction_hash }: InvokeFunctionResponse,
-      { printProfile = false, printStorage = false } = {},
+      { printProfile = false, printStorage = false, allowFailedTransactions = false } = {},
     ) {
       console.log(`Profiling: ${name} (${transaction_hash})`);
-      const profile = await profileGasUsage(transaction_hash, provider);
+      const profile = await profileGasUsage(transaction_hash, provider, allowFailedTransactions);
       if (printProfile) {
         console.dir(profile, { depth: null });
       }

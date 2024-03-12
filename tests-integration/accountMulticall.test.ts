@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { Contract, num, uint256 } from "starknet";
 import {
   deployAccount,
-  ensureAccepted,
+  ensureSuccess,
   expectEvent,
   expectRevertWithErrorMessage,
   getEthContract,
@@ -127,7 +127,7 @@ describe("ArgentAccount: multicall", function () {
       mockDappContract.populateTransaction.increase_number(1),
       mockDappContract.populateTransaction.increase_number(10),
     ];
-    const receipt = await ensureAccepted(await waitForTransaction(await account.execute(calls)));
+    const receipt = await ensureSuccess(await waitForTransaction(await account.execute(calls)));
 
     const expectedReturnCall1 = [num.toHex(1)];
     const expectedReturnCall2 = [num.toHex(11)];

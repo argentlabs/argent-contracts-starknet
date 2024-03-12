@@ -1,11 +1,70 @@
+use argent::recovery::interface::{EscapeEnabled, EscapeStatus};
+use argent::utils::serialization::serialize;
 use starknet::ContractAddress;
 
+#[derive(Drop, Serde, Copy, starknet::Store)]
+struct Escape {
+    // timestamp for activation of escape mode, 0 otherwise
+    ready_at: u64,
+    call_hash: felt252
+}
+
+#[derive(Drop, Serde)]
+struct EscapeCall {
+    selector: felt252,
+    calldata: Array<felt252>
+}
+
 #[starknet::interface]
-trait IToggleExternalRecovery<TContractState> {
+trait IExternalRecovery<TContractState> {
+    /// @notice Enables/disables recovery and defines the recovery parameters
     fn toggle_escape(
         ref self: TContractState, is_enabled: bool, security_period: u64, expiry_period: u64, guardian: ContractAddress
     );
     fn get_guardian(self: @TContractState) -> ContractAddress;
+    /// @notice Triggers the escape. The method must be called by the guardian.
+    /// @param call Call to trigger on the account to recover the account
+    fn trigger_escape(ref self: TContractState, call: EscapeCall);
+    /// @notice Executes the escape. The method can be called by any external contract/account.
+    /// @param call Call provided to `trigger_escape`
+    fn execute_escape(ref self: TContractState, call: EscapeCall);
+    /// @notice Cancels the ongoing escape.
+    fn cancel_escape(ref self: TContractState);
+    /// @notice Gets the escape configuration.
+    fn get_escape_enabled(self: @TContractState) -> EscapeEnabled;
+    /// @notice Gets the ongoing escape if any, and its status.
+    fn get_escape(self: @TContractState) -> (Escape, EscapeStatus);
+}
+
+/// This trait has to be implemented when using the component `external_recovery`
+trait IExternalRecoveryCallback<TContractState> {
+    #[inline(always)]
+    fn execute_recovery_call(ref self: TContractState, selector: felt252, calldata: Span<felt252>);
+}
+
+/// @notice Escape was triggered
+/// @param ready_at when the escape can be completed
+/// @param call to execute to escape
+/// @param call_hash hash of EscapeCall
+#[derive(Drop, starknet::Event)]
+struct EscapeTriggered {
+    ready_at: u64,
+    call: EscapeCall,
+    call_hash: felt252
+}
+
+/// @notice Signer escape was completed and call was executed
+/// @param call_hash hash of the executed EscapeCall
+#[derive(Drop, starknet::Event)]
+struct EscapeExecuted {
+    call_hash: felt252
+}
+
+/// @notice Signer escape was canceled
+/// @param call_hash hash of EscapeCall
+#[derive(Drop, starknet::Event)]
+struct EscapeCanceled {
+    call_hash: felt252
 }
 
 /// @notice Implements the recovery by defining a guardian (and external contract/account) 
@@ -14,15 +73,14 @@ trait IToggleExternalRecovery<TContractState> {
 /// The recovery can be canceled by the authorised signers through the validation logic of the account. 
 #[starknet::component]
 mod external_recovery_component {
-    use argent::recovery::interface::{
-        Escape, EscapeEnabled, EscapeStatus, IRecovery, EscapeExecuted, EscapeTriggered, EscapeCanceled
-    };
+    use argent::recovery::interface::{EscapeEnabled, EscapeStatus};
     use argent::signer::signer_signature::{Signer, SignerTrait};
     use argent::signer_storage::interface::ISignerList;
     use argent::signer_storage::signer_list::{
         signer_list_component, signer_list_component::{SignerListInternalImpl, OwnerAdded, OwnerRemoved, SignerLinked}
     };
     use argent::utils::asserts::assert_only_self;
+    use argent::utils::serialization::serialize;
     use core::array::ArrayTrait;
     use core::array::SpanTrait;
     use core::debug::PrintTrait;
@@ -33,7 +91,10 @@ mod external_recovery_component {
         get_block_timestamp, get_contract_address, get_caller_address, ContractAddress, account::Call,
         contract_address::contract_address_const
     };
-    use super::IToggleExternalRecovery;
+    use super::{
+        IExternalRecovery, IExternalRecoveryCallback, EscapeCall, Escape, EscapeTriggered, EscapeExecuted,
+        EscapeCanceled, get_escape_call_hash
+    };
 
     #[storage]
     struct Storage {
@@ -49,142 +110,81 @@ mod external_recovery_component {
         EscapeExecuted: EscapeExecuted,
         EscapeCanceled: EscapeCanceled,
     }
+
+
     #[embeddable_as(ExternalRecoveryImpl)]
     impl ExternalRecovery<
         TContractState,
         +HasComponent<TContractState>,
-        impl SignerList: signer_list_component::HasComponent<TContractState>,
+        impl CallBack: IExternalRecoveryCallback<TContractState>,
         +Drop<TContractState>
-    > of IRecovery<ComponentState<TContractState>> {
+    > of IExternalRecovery<ComponentState<TContractState>> {
         /// @notice Triggers the escape. The method must be called by the guardian.
-        /// @param target_signers the signers to escape ordered by increasing GUID
-        /// @param new_signers the new signers to be set after the security period ordered by increasing GUID
-        fn trigger_escape(
-            ref self: ComponentState<TContractState>, target_signers: Array<Signer>, new_signers: Array<Signer>
-        ) {
+        /// @param call Call to trigger on the account to recover the account
+        fn trigger_escape(ref self: ComponentState<TContractState>, call: EscapeCall) {
             self.assert_only_guardian();
-            assert(target_signers.len() == new_signers.len(), 'argent/invalid-escape-length');
 
             let escape_config: EscapeEnabled = self.escape_enabled.read();
             assert(escape_config.is_enabled == 1, 'argent/recovery-disabled');
+            let call_hash = get_escape_call_hash(@call);
+            assert(
+                call.selector == selector!("replace_signer")
+                    || call.selector == selector!("remove_signers")
+                    || call.selector == selector!("add_signers")
+                    || call.selector == selector!("change_threshold"),
+                'argent/invalid-selector'
+            );
 
             let current_escape: Escape = self.escape.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             if (current_escape_status == EscapeStatus::NotReady || current_escape_status == EscapeStatus::Ready) {
-                self
-                    .emit(
-                        EscapeCanceled {
-                            target_signers: current_escape.target_signers.span(),
-                            new_signers: current_escape.new_signers.span()
-                        }
-                    );
+                self.emit(EscapeCanceled { call_hash });
             }
 
-            let mut target_signer_guids = array![];
-            let mut new_signer_guids = array![];
-            let mut target_signers_span = target_signers.span();
-            let mut new_signers_span = new_signers.span();
-            let mut last_target: u256 = 0;
-            let mut last_new: u256 = 0;
-            let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
-            loop {
-                match target_signers_span.pop_front() {
-                    Option::Some(target_signer) => {
-                        let new_signer = new_signers_span.pop_front().expect('argent/wrong-length');
-                        let target_guid = (*target_signer).into_guid();
-                        let new_guid = (*new_signer).into_guid();
-                        // target signers are different
-                        assert(target_guid.into() > last_target, 'argent/invalid-target-order');
-                        // new signers are different
-                        assert(new_guid.into() > last_new, 'argent/invalid-new-order');
-                        // target signers are in the list
-                        assert(self.get_contract_mut().is_signer_in_list(target_guid), 'argent/unknown-signer');
-                        target_signer_guids.append(target_guid);
-                        new_signer_guids.append(new_guid);
-                        last_target = target_guid.into();
-                        last_new = new_guid.into();
-                        signer_list_comp.emit(SignerLinked { signer_guid: new_guid, signer: *new_signer });
-                    },
-                    Option::None => { break; }
-                };
-            };
             let ready_at = get_block_timestamp() + escape_config.security_period;
-            self
-                .emit(
-                    EscapeTriggered {
-                        ready_at, target_signers: target_signer_guids.span(), new_signers: new_signer_guids.span()
-                    }
-                );
-            let escape = Escape { ready_at, target_signers: target_signer_guids, new_signers: new_signer_guids };
+            self.emit(EscapeTriggered { ready_at, call, call_hash });
+            let escape = Escape { ready_at, call_hash };
             self.escape.write(escape);
         }
 
-        /// @notice Executes the escape. The method can be called by any external contract/account.
-        fn execute_escape(ref self: ComponentState<TContractState>) {
+        fn execute_escape(ref self: ComponentState<TContractState>, call: EscapeCall) {
             let current_escape: Escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
+            let call_hash = get_escape_call_hash(@call);
             assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
+            assert(current_escape.call_hash == get_escape_call_hash(@call), 'argent/invalid-escape-call');
 
-            let mut target_signer_guids = current_escape.target_signers.span();
-            let mut new_signer_guids = current_escape.new_signers.span();
-            let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
-            let (_, mut last_signer) = signer_list_comp.load();
-            loop {
-                match target_signer_guids.pop_front() {
-                    Option::Some(signer) => {
-                        let target_signer_guid = *signer;
-                        let new_signer_guid = *new_signer_guids.pop_front().expect('argent/invalid-length');
-                        signer_list_comp.replace_signer(target_signer_guid, new_signer_guid, last_signer);
-                        signer_list_comp.emit(OwnerRemoved { removed_owner_guid: target_signer_guid });
-                        signer_list_comp.emit(OwnerAdded { new_owner_guid: new_signer_guid });
-                        if (target_signer_guid == last_signer) {
-                            last_signer = new_signer_guid;
-                        }
-                    },
-                    Option::None => { break; }
-                }
-            };
+            let mut callback = self.get_contract_mut();
+            callback.execute_recovery_call(call.selector, call.calldata.span());
+
+            self.emit(EscapeExecuted { call_hash });
 
             // clear escape
-            self.escape.write(Escape { ready_at: 0, target_signers: array![], new_signers: array![] });
+            self.escape.write(Escape { ready_at: 0, call_hash: 0 });
         }
 
-        /// @notice Cancels the ongoing escape.
         fn cancel_escape(ref self: ComponentState<TContractState>) {
             assert_only_self();
             let current_escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
-            self.escape.write(Escape { ready_at: 0, target_signers: array![], new_signers: array![] });
-            self
-                .emit(
-                    EscapeCanceled {
-                        target_signers: current_escape.target_signers.span(),
-                        new_signers: current_escape.new_signers.span()
-                    }
-                );
+            self.escape.write(Escape { ready_at: 0, call_hash: 0 });
+            self.emit(EscapeCanceled { call_hash: current_escape.call_hash });
         }
 
-        /// @notice Gets the escape configuration.
         fn get_escape_enabled(self: @ComponentState<TContractState>) -> EscapeEnabled {
             self.escape_enabled.read()
         }
 
-        /// @notice Gets the ongoing escape if any, and its status.
         fn get_escape(self: @ComponentState<TContractState>) -> (Escape, EscapeStatus) {
             let escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
             let escape_status = self.get_escape_status(escape.ready_at, escape_config.expiry_period);
             (escape, escape_status)
         }
-    }
 
-    #[embeddable_as(ToggleExternalRecoveryImpl)]
-    impl ToggleExternalRecovery<
-        TContractState, +HasComponent<TContractState>
-    > of IToggleExternalRecovery<ComponentState<TContractState>> {
         fn toggle_escape(
             ref self: ComponentState<TContractState>,
             is_enabled: bool,
@@ -198,8 +198,7 @@ mod external_recovery_component {
             let current_escape = self.escape.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             assert(
-                current_escape.target_signers.len() == 0 || current_escape_status == EscapeStatus::Expired,
-                'argent/ongoing-escape'
+                current_escape.ready_at == 0 || current_escape_status == EscapeStatus::Expired, 'argent/ongoing-escape'
             );
 
             if (is_enabled) {
@@ -225,6 +224,7 @@ mod external_recovery_component {
         }
     }
 
+
     #[generate_trait]
     impl Private<TContractState, +HasComponent<TContractState>> of PrivateTrait<TContractState> {
         fn get_escape_status(
@@ -249,4 +249,8 @@ mod external_recovery_component {
             assert(self.guardian.read() == get_caller_address(), 'argent/only-guardian');
         }
     }
+}
+#[inline(always)]
+fn get_escape_call_hash(escape_call: @EscapeCall) -> felt252 {
+    poseidon::poseidon_hash_span(serialize(escape_call).span())
 }

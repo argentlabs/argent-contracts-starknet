@@ -17,6 +17,16 @@ const SECP256R1_SIGNER_TYPE: felt252 = 'Secp256r1 Signer';
 const EIP191_SIGNER_TYPE: felt252 = 'Eip191 Signer';
 const WEBAUTHN_SIGNER_TYPE: felt252 = 'Webauthn Signer';
 
+#[derive(Drop, Copy, PartialEq, Serde, Default)]
+enum SignerType {
+    #[default]
+    Starknet,
+    Secp256k1,
+    Secp256r1,
+    Eip191,
+    Webauthn,
+}
+
 #[derive(Drop, Copy, Serde)]
 enum Signer {
     Starknet: StarknetSigner,
@@ -28,6 +38,7 @@ enum Signer {
 
 trait SignerTrait<T> {
     fn into_guid(self: T) -> felt252;
+    fn get_type(self: T) -> SignerType;
 }
 
 #[derive(Drop, Copy, Serde, PartialEq)]
@@ -104,9 +115,7 @@ impl SignerTraitImpl of SignerTrait<Signer> {
     fn into_guid(self: Signer) -> felt252 {
         // TODO avoiding excesive hashing rounds
         match self {
-            Signer::Starknet(signer) => signer
-                .pubkey
-                .into(), //PoseidonTrait::new().update_with(('Stark', signer.pubkey)).finalize(),
+            Signer::Starknet(signer) => signer.pubkey.into(),
             Signer::Secp256k1(signer) => {
                 let (hash, _, _) = hades_permutation(SECP256K1_SIGNER_TYPE, signer.pubkey_hash.address, 2);
                 hash
@@ -130,6 +139,16 @@ impl SignerTraitImpl of SignerTrait<Signer> {
                     .update_with(pubkey)
                     .finalize()
             },
+        }
+    }
+
+    fn get_type(self: Signer) -> SignerType {
+        match self {
+            Signer::Starknet(_) => SignerType::Starknet,
+            Signer::Secp256k1(_) => SignerType::Secp256k1,
+            Signer::Secp256r1(_) => SignerType::Secp256r1,
+            Signer::Eip191(_) => SignerType::Eip191,
+            Signer::Webauthn(_) => SignerType::Webauthn,
         }
     }
 }

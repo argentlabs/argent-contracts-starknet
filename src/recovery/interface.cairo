@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{Signer, SignerSignature};
+use argent::signer::signer_signature::{Signer, SignerSignature, SignerType};
 use argent::utils::array_ext::StoreFelt252Array;
 use core::array::ArrayTrait;
 use core::array::SpanTrait;
@@ -86,12 +86,14 @@ enum LegacyEscapeType {
 
 #[derive(Drop, Copy, Serde, Default)]
 struct LegacyEscape {
-    // timestamp for activation of escape mode, 0 otherwise
-    ready_at: u64,
     // None, Guardian, Owner
     escape_type: LegacyEscapeType,
+    // timestamp for activation of escape mode, 0 otherwise
+    ready_at: u64,
     // new owner or new guardian address
     new_signer: felt252,
+    // new owner or guardian type
+    new_signer_type: SignerType
 }
 
 const SHIFT_8: felt252 = 0x100;
@@ -160,22 +162,29 @@ impl PackEscape of starknet::StorePacking<Escape, Array<felt252>> {
     }
 }
 
-// Packing ready_at and escape_type within same felt:
+// Packing ready_at, escape_type and new_signer_type within same felt:
 // felt1 bits [0; 63] => ready_at
-// felt1 bits [64; 251] => escape_type
+// felt1 bits [64; 127] => escape_type
+// felt1 bits [128; 191] => new_signer_type
 // felt2 bits [0; 251] => new_signer
 impl LegacyEscapeStorePacking of starknet::StorePacking<LegacyEscape, (felt252, felt252)> {
     fn pack(value: LegacyEscape) -> (felt252, felt252) {
-        let packed = value.ready_at.into() + (value.escape_type.into() * SHIFT_64);
+        let packed = value.ready_at.into()
+            + (value.escape_type.into() * SHIFT_64)
+            + (value.new_signer_type.into() * SHIFT_64 * SHIFT_64);
         (packed, value.new_signer)
     }
 
     fn unpack(value: (felt252, felt252)) -> LegacyEscape {
         let (packed, new_signer) = value;
         let shift_64 = integer::u256_as_non_zero(SHIFT_64.into());
-        let (escape_type, ready_at) = integer::u256_safe_div_rem(packed.into(), shift_64);
+        let (remainder, ready_at) = integer::u256_safe_div_rem(packed.into(), shift_64);
+        let (new_signer_type, escape_type) = integer::u256_safe_div_rem(remainder, shift_64);
         LegacyEscape {
-            escape_type: escape_type.try_into().unwrap(), ready_at: ready_at.try_into().unwrap(), new_signer
+            escape_type: escape_type.try_into().unwrap(),
+            ready_at: ready_at.try_into().unwrap(),
+            new_signer: new_signer,
+            new_signer_type: new_signer_type.try_into().unwrap()
         }
     }
 }
@@ -200,6 +209,38 @@ impl U256TryIntoLegacyEscapeType of TryInto<u256, LegacyEscapeType> {
             Option::Some(LegacyEscapeType::Guardian)
         } else if self == 2 {
             Option::Some(LegacyEscapeType::Owner)
+        } else {
+            Option::None
+        }
+    }
+}
+
+impl SignerTypeIntoFelt252 of Into<SignerType, felt252> {
+    #[inline(always)]
+    fn into(self: SignerType) -> felt252 implicits() nopanic {
+        match self {
+            SignerType::Starknet => 0,
+            SignerType::Secp256k1 => 1,
+            SignerType::Secp256r1 => 2,
+            SignerType::Eip191 => 3,
+            SignerType::Webauthn => 4,
+        }
+    }
+}
+
+impl U256TryIntoSignerType of TryInto<u256, SignerType> {
+    #[inline(always)]
+    fn try_into(self: u256) -> Option<SignerType> {
+        if self == 0 {
+            Option::Some(SignerType::Starknet)
+        } else if self == 1 {
+            Option::Some(SignerType::Secp256k1)
+        } else if self == 2 {
+            Option::Some(SignerType::Secp256r1)
+        } else if self == 3 {
+            Option::Some(SignerType::Eip191)
+        } else if self == 4 {
+            Option::Some(SignerType::Webauthn)
         } else {
             Option::None
         }

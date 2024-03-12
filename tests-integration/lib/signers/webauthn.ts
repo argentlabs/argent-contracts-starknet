@@ -13,7 +13,7 @@ import { concatBytes } from "@noble/curves/abstract/utils";
 import { SignatureType } from "@noble/curves/abstract/weierstrass";
 import { p256 as secp256r1 } from "@noble/curves/p256";
 import { KeyPair, SignerType, fundAccount, provider, signerTypeToCustomEnum } from "..";
-import { createHash } from "crypto";
+import { BinaryLike, createHash } from "crypto";
 
 // Bytes fn
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
@@ -35,7 +35,7 @@ const hex2buf = (hex: string) =>
   );
 
 // Constants
-const rpIdHash = createHash("sha256").update("localhost").digest();
+const rpIdHash = sha256("localhost");
 const origin = "http://localhost:5173";
 
 interface WebauthnAssertion {
@@ -105,32 +105,18 @@ class WebauthnOwner extends KeyPair {
     const challenge = buf2base64url(hex2buf(normalizeTransactionHash(transactionHash)));
     const clientData = { type: "webauthn.get", challenge, origin: "http://localhost:5173", crossOrigin: false };
     const clientDataJson = new TextEncoder().encode(JSON.stringify(clientData));
-    const clientDataHash = createHash("sha256").update(clientDataJson).digest();
 
-    const message = concatBytes(authenticatorData, clientDataHash);
-    const messageHash = createHash("sha256").update(message).digest();
+    const message = concatBytes(authenticatorData, sha256(clientDataJson));
+    const messageHash = sha256(message);
 
     const signature = secp256r1.sign(messageHash, this.pk);
-    const yParity = getYParity(messageHash, this.publicKey, signature);
 
-    return { authenticatorData, clientDataJson, r: signature.r, s: signature.s, yParity };
+    return { authenticatorData, clientDataJson, r: signature.r, s: signature.s, yParity: signature.recovery !== 0 };
   }
 }
 
-function getYParity(messageHash: Uint8Array, x: Uint8Array, signature: SignatureType) {
-  const publicKeyX = BigInt(buf2hex(x));
-
-  const recoveredEven = signature.addRecoveryBit(0).recoverPublicKey(messageHash);
-  if (publicKeyX === recoveredEven.x) {
-    return false;
-  }
-
-  const recoveredOdd = signature.addRecoveryBit(1).recoverPublicKey(messageHash);
-  if (publicKeyX === recoveredOdd.x) {
-    return true;
-  }
-
-  throw new Error("Could not determine y_parity");
+function sha256(message: BinaryLike) {
+  return createHash("sha256").update(message).digest();
 }
 
 export async function deployWebauthnAccount(classHash: string): Promise<Account> {

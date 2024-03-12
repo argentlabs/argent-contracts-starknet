@@ -1,5 +1,5 @@
 import { typedData, BigNumberish, CairoCustomEnum, hash } from "starknet";
-import { provider } from ".";
+import { provider } from "..";
 
 export const sessionTypes = {
   StarknetDomain: [

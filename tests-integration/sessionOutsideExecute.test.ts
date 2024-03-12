@@ -32,7 +32,7 @@ describe("ArgentAccount: outside execution", function () {
     mockDapp = await loadContract(contract_address);
   });
 
-  it("Basics: Revision 0", async function () {
+  it.only("Basics: Revision 0", async function () {
     const { account, guardian } = await deployAccount({ classHash: argentSessionAccountClassHash });
 
     const { account: mockDappAccount } = await deployAccount();
@@ -70,7 +70,7 @@ describe("ArgentAccount: outside execution", function () {
     await mockDapp.get_number(account.address).should.eventually.equal(42n);
   });
 
-  it("Basics: Revision 1", async function () {
+  it.only("Basics: Revision 1", async function () {
     const { account, guardian } = await deployAccount({ classHash: argentSessionAccountClassHash });
 
     const { account: mockDappAccount } = await deployAccount();

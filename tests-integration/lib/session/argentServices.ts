@@ -11,7 +11,7 @@ import {
   transaction,
   typedData,
 } from "starknet";
-import { OffChainSession, OutsideExecution, StarknetKeyPair, getSessionTypedData, getTypedData, provider } from "./";
+import { OffChainSession, OutsideExecution, StarknetKeyPair, getSessionTypedData, getTypedData, provider } from "..";
 
 export class ArgentX {
   constructor(

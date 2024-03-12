@@ -1,4 +1,4 @@
-import { num, Contract, typedData } from "starknet";
+import { num, Contract } from "starknet";
 import {
   declareContract,
   loadContract,

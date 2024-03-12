@@ -34,7 +34,7 @@ import {
   randomStarknetKeyPair,
   StarknetKeyPair,
   OnChainSession,
-} from ".";
+} from "..";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
 

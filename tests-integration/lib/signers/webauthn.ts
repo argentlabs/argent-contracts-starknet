@@ -46,7 +46,7 @@ interface WebauthnAssertion {
   yParity: boolean;
 }
 
-class WebauthnOwner extends KeyPair {
+export class WebauthnOwner extends KeyPair {
   pk: Uint8Array;
 
   constructor(pk?: Uint8Array) {
@@ -94,7 +94,7 @@ class WebauthnOwner extends KeyPair {
       origin_length: clientData.origin.length,
     };
 
-    return CallData.compile([[signerTypeToCustomEnum(SignerType.Webauthn, cairoAssertion)]]);
+    return CallData.compile([signerTypeToCustomEnum(SignerType.Webauthn, cairoAssertion)]);
   }
 
   public async signHash(transactionHash: string): Promise<WebauthnAssertion> {
@@ -117,22 +117,4 @@ class WebauthnOwner extends KeyPair {
 
 function sha256(message: BinaryLike) {
   return createHash("sha256").update(message).digest();
-}
-
-export async function deployWebauthnAccount(classHash: string): Promise<Account> {
-  const owner = new WebauthnOwner();
-  const constructorCalldata = CallData.compile({
-    owner: owner.signer,
-    guardian: new CairoOption(CairoOptionVariant.None),
-  });
-  const addressSalt = 12n;
-  const accountAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
-
-  await fundAccount(accountAddress, 1e16, "ETH");
-
-  const account = new Account(provider, accountAddress, owner, "1");
-  const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt }, { maxFee: 1e15 });
-  await provider.waitForTransaction(response.transaction_hash);
-
-  return account;
 }

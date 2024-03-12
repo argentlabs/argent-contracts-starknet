@@ -209,16 +209,26 @@ fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, assertion:
     is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, assertion.signature)
 }
 
-#[must_use]
-fn to_guid_list(mut signers: Span<Signer>) -> Array<felt252> {
-    let mut guids = array![];
-    loop {
-        match signers.pop_front() {
-            Option::Some(signer) => { guids.append((*signer).into_guid()); },
-            Option::None => { break; },
+
+trait SignerSpanTrait {
+    #[must_use]
+    #[inline(always)]
+    fn to_guid_list(self: @Span<Signer>) -> Array<felt252>;
+}
+
+impl SignerSpanTraitImpl of SignerSpanTrait {
+    #[must_use]
+    fn to_guid_list(self: @Span<Signer>) -> Array<felt252> {
+        let mut signers = *self;
+        let mut guids = array![];
+        loop {
+            match signers.pop_front() {
+                Option::Some(signer) => { guids.append((*signer).into_guid()); },
+                Option::None => { break; },
+            };
         };
-    };
-    guids
+        guids
+    }
 }
 
 fn assert_sorted_guids(mut guids: Span<felt252>, error_message: felt252) {

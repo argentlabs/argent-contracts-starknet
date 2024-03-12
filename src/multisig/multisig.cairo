@@ -3,7 +3,9 @@
 #[starknet::component]
 mod multisig_component {
     use argent::multisig::interface::{IArgentMultisig, IArgentMultisigInternal};
-    use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait, to_guid_list},};
+    use argent::signer::{
+        signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait},
+    };
     use argent::signer_storage::{
         interface::ISignerList,
         signer_list::{
@@ -70,7 +72,7 @@ mod multisig_component {
             let new_signers_count = signers_len + signers_to_add.len();
             self.assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-            let mut guids = to_guid_list(signers_to_add.span());
+            let mut guids = signers_to_add.span().to_guid_list();
             signer_list_comp.add_signers(guids.span(), last_signer: last_signer_guid);
             let mut signers_to_add_span = signers_to_add.span();
             while !signers_to_add_span.is_empty() {
@@ -97,7 +99,7 @@ mod multisig_component {
             let new_signers_count = signers_len - signers_to_remove.len();
             self.assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-            let mut guids = to_guid_list(signers_to_remove.span());
+            let mut guids = signers_to_remove.span().to_guid_list();
             signer_list_comp.remove_signers(guids.span(), last_signer: last_signer_guid);
             while !guids.is_empty() {
                 let guid = guids.pop_front().unwrap();
@@ -115,7 +117,7 @@ mod multisig_component {
             let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
             let (signers_len, last_signer) = signer_list_comp.load();
             assert(new_signer_order.len() == signers_len, 'argent/too-short');
-            let guids = to_guid_list(new_signer_order.span());
+            let guids = new_signer_order.span().to_guid_list();
             signer_list_comp.remove_signers(guids.span(), last_signer: last_signer);
             signer_list_comp.add_signers(signers_to_add: guids.span(), last_signer: 0);
         }
@@ -173,10 +175,9 @@ mod multisig_component {
             self.assert_valid_threshold_and_signers_count(threshold, new_signers_count);
 
             let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
-            let mut guids = to_guid_list(signers.span());
+            let mut guids = signers.span().to_guid_list();
             signer_list_comp.add_signers(guids.span(), last_signer: 0);
 
-            let mut index = 0;
             while !signers.is_empty() {
                 let signer = signers.pop_front().unwrap();
                 let signer_guid = guids.pop_front().unwrap();

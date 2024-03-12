@@ -17,7 +17,7 @@ mod external_recovery_component {
     use argent::recovery::interface::{
         Escape, EscapeEnabled, EscapeStatus, IRecovery, EscapeExecuted, EscapeTriggered, EscapeCanceled
     };
-    use argent::signer::signer_signature::{Signer, SignerTrait, to_guid_list, assert_sorted_guids};
+    use argent::signer::signer_signature::{Signer, SignerTrait, SignerSpanTrait, assert_sorted_guids};
     use argent::signer_storage::interface::ISignerList;
     use argent::signer_storage::signer_list::{
         signer_list_component, signer_list_component::{SignerListInternalImpl, OwnerAdded, OwnerRemoved, SignerLinked}
@@ -80,7 +80,7 @@ mod external_recovery_component {
                     );
             }
 
-            let target_guids = to_guid_list(target_signers.span());
+            let target_guids = target_signers.span().to_guid_list();
             assert_sorted_guids(target_guids.span(), 'argent/invalid-target-order');
             // assert targets are on the list
             let mut target_guids_span = target_guids.span();
@@ -89,7 +89,7 @@ mod external_recovery_component {
                 assert(self.get_contract_mut().is_signer_in_list(*target_guid), 'argent/unknown-signer');
             };
 
-            let new_guids = to_guid_list(new_signers.span());
+            let new_guids = new_signers.span().to_guid_list();
             assert_sorted_guids(new_guids.span(), 'argent/invalid-new-order');
 
             // emit SignerLinked events

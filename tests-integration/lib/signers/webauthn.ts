@@ -47,7 +47,12 @@ interface WebauthnAssertion {
 }
 
 class WebauthnOwner extends KeyPair {
-  pk = secp256r1.utils.randomPrivateKey();
+  pk: Uint8Array;
+
+  constructor(pk?: Uint8Array) {
+    super();
+    this.pk = pk ?? secp256r1.utils.randomPrivateKey();
+  }
 
   public get publicKey() {
     return secp256r1.getPublicKey(this.pk).slice(1);
@@ -94,7 +99,7 @@ class WebauthnOwner extends KeyPair {
 
   public async signHash(transactionHash: string): Promise<WebauthnAssertion> {
     const flags = new Uint8Array([0b0001 | 0b0100]); // present and verified
-    const signCount = new Uint8Array(4);
+    const signCount = new Uint8Array(4); // [0_u8, 0_u8, 0_u8, 0_u8]
     const authenticatorData = concatBytes(rpIdHash, flags, signCount);
 
     const challenge = buf2base64url(hex2buf(normalizeTransactionHash(transactionHash)));

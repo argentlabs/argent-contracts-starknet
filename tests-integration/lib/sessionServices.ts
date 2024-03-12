@@ -33,6 +33,7 @@ import {
   OutsideExecution,
   randomStarknetKeyPair,
   StarknetKeyPair,
+  OnChainSession,
 } from ".";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -56,8 +57,7 @@ export class DappService {
   public getAccountWithSessionSigner(
     account: ArgentAccount,
     completedSession: OffChainSession,
-    accountSessionSignature: ArraySignatureType,
-    revision: typedData.TypedDataRevision,
+    sessionAuthorizationSignature: ArraySignatureType,
   ) {
     const sessionSigner = new (class extends RawSigner {
       constructor(
@@ -80,20 +80,14 @@ export class DappService {
         return this.signTransactionCallback(calls, transactionsDetail);
       }
     })((calls: Call[], transactionsDetail: InvocationsSignerDetails) => {
-      return this.signRegularTransaction(
-        accountSessionSignature,
-        completedSession,
-        calls,
-        transactionsDetail,
-        revision,
-      );
+      return this.signRegularTransaction(sessionAuthorizationSignature, completedSession, calls, transactionsDetail);
     });
     return new Account(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
   }
 
   public async getOutsideExecutionCall(
     completedSession: OffChainSession,
-    accountSessionSignature: ArraySignatureType,
+    sessionAuthorizationSignature: ArraySignatureType,
     calls: Call[],
     revision: typedData.TypedDataRevision,
     accountAddress: string,
@@ -112,15 +106,13 @@ export class DappService {
 
     const currentTypedData = getTypedData(outsideExecution, await provider.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
-    const signature = await this.compileSessionSignature(
-      accountSessionSignature,
+    const signature = await this.compileSessionSignatureFromOutside(
+      sessionAuthorizationSignature,
       completedSession,
       messageHash,
       calls,
       accountAddress,
-      true,
       revision,
-      undefined,
       outsideExecution,
     );
 
@@ -132,11 +124,10 @@ export class DappService {
   }
 
   private async signRegularTransaction(
-    accountSessionSignature: ArraySignatureType,
+    sessionAuthorizationSignature: ArraySignatureType,
     completedSession: OffChainSession,
     calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
-    revision: typedData.TypedDataRevision,
   ): Promise<ArraySignatureType> {
     const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
     let txHash;
@@ -162,69 +153,70 @@ export class DappService {
       throw Error("unsupported signTransaction version");
     }
     return this.compileSessionSignature(
-      accountSessionSignature,
+      sessionAuthorizationSignature,
       completedSession,
       txHash,
       calls,
       transactionsDetail.walletAddress,
-      false,
-      revision,
       transactionsDetail,
     );
   }
 
-  private async compileSessionSignature(
-    accountSessionSignature: ArraySignatureType,
+  private async compileSessionSignatureFromOutside(
+    sessionAuthorizationSignature: ArraySignatureType,
     completedSession: OffChainSession,
     transactionHash: string,
     calls: Call[],
     accountAddress: string,
-    isOutside: boolean,
     revision: typedData.TypedDataRevision,
-    transactionsDetail?: InvocationsSignerDetails,
-    outsideExecution?: OutsideExecution,
+    outsideExecution: OutsideExecution,
   ): Promise<ArraySignatureType> {
-    const byteArray = typedData.byteArrayFromString(completedSession.metadata as string);
-    const elements = [byteArray.data.length, ...byteArray.data, byteArray.pending_word, byteArray.pending_word_len];
-    const metadataHash = hash.computePoseidonHashOnElements(elements);
+    let session = this.compileSessionHelper(completedSession);
 
-    const session = {
-      expires_at: completedSession.expires_at,
-      allowed_methods_root: this.buildMerkleTree(completedSession).root.toString(),
-      metadata_hash: metadataHash,
-      session_key_guid: completedSession.session_key_guid,
-    };
-
-    let guardian_signature;
-
-    if (isOutside) {
-      guardian_signature = await this.argentBackend.signOutsideTxAndSession(
-        calls,
-        completedSession,
-        accountAddress,
-        outsideExecution as OutsideExecution,
-        revision,
-      );
-    } else {
-      guardian_signature = await this.argentBackend.signTxAndSession(
-        calls,
-        transactionsDetail as InvocationsSignerDetails,
-        completedSession,
-      );
-    }
+    let guardian_signature = await this.argentBackend.signOutsideTxAndSession(
+      calls,
+      completedSession,
+      accountAddress,
+      outsideExecution as OutsideExecution,
+      revision,
+    );
 
     const session_signature = await this.signTxAndSession(completedSession, transactionHash, accountAddress);
-
-    const sessionToken = {
+    const sessionToken = await this.compileSessionTokenHelper(
       session,
-      session_authorisation: accountSessionSignature,
-      session_signature: this.getStarknetSignatureType(this.sessionKey.guid, session_signature),
-      guardian_signature: this.getStarknetSignatureType(
-        this.argentBackend.getBackendKey(accountAddress),
-        guardian_signature,
-      ),
-      proofs: this.getSessionProofs(completedSession, calls),
-    };
+      completedSession,
+      calls,
+      session_signature,
+      sessionAuthorizationSignature,
+      guardian_signature,
+      accountAddress,
+    );
+
+    return [SESSION_MAGIC, ...CallData.compile(sessionToken)];
+  }
+
+  private async compileSessionSignature(
+    sessionAuthorizationSignature: ArraySignatureType,
+    completedSession: OffChainSession,
+    transactionHash: string,
+    calls: Call[],
+    accountAddress: string,
+    transactionsDetail: InvocationsSignerDetails,
+  ): Promise<ArraySignatureType> {
+    let session = this.compileSessionHelper(completedSession);
+
+    let guardian_signature = await this.argentBackend.signTxAndSession(calls, transactionsDetail, completedSession);
+    const session_signature = await this.signTxAndSession(completedSession, transactionHash, accountAddress);
+    const sessionToken = await this.compileSessionTokenHelper(
+      session,
+      completedSession,
+      calls,
+      session_signature,
+      sessionAuthorizationSignature,
+      guardian_signature,
+      accountAddress,
+    );
+
     return [SESSION_MAGIC, ...CallData.compile(sessionToken)];
   }
 
@@ -259,6 +251,41 @@ export class DappService {
       });
       return tree.getProof(tree.leaves[allowedIndex], tree.leaves);
     });
+  }
+
+  private compileSessionHelper(completedSession: OffChainSession): OnChainSession {
+    const byteArray = typedData.byteArrayFromString(completedSession.metadata as string);
+    const elements = [byteArray.data.length, ...byteArray.data, byteArray.pending_word, byteArray.pending_word_len];
+    const metadataHash = hash.computePoseidonHashOnElements(elements);
+
+    const session = {
+      expires_at: completedSession.expires_at,
+      allowed_methods_root: this.buildMerkleTree(completedSession).root.toString(),
+      metadata_hash: metadataHash,
+      session_key_guid: completedSession.session_key_guid,
+    };
+    return session;
+  }
+
+  private async compileSessionTokenHelper(
+    session: OnChainSession,
+    completedSession: OffChainSession,
+    calls: Call[],
+    sessionSignature: bigint[],
+    session_authorisation: string[],
+    guardian_signature: bigint[],
+    accountAddress: string,
+  ) {
+    return {
+      session,
+      session_authorisation,
+      session_signature: this.getStarknetSignatureType(this.sessionKey.guid, sessionSignature),
+      guardian_signature: this.getStarknetSignatureType(
+        this.argentBackend.getBackendKey(accountAddress),
+        guardian_signature,
+      ),
+      proofs: this.getSessionProofs(completedSession, calls),
+    };
   }
 
   // TODO Can this be removed?

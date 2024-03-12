@@ -38,7 +38,7 @@ export interface OffChainSession {
   session_key_guid: BigNumberish;
 }
 
-interface OnChainSession {
+export interface OnChainSession {
   expires_at: BigNumberish;
   allowed_methods_root: string;
   metadata_hash: string;

@@ -72,7 +72,6 @@ describe("Hybrid Session Account: execute calls", function () {
       account,
       sessionRequest,
       accountSessionSignature,
-      typedData.TypedDataRevision.Legacy,
     );
 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
@@ -104,7 +103,6 @@ describe("Hybrid Session Account: execute calls", function () {
       account,
       sessionRequest,
       accountSessionSignature,
-      typedData.TypedDataRevision.Legacy,
     );
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
@@ -164,7 +162,6 @@ describe("Hybrid Session Account: execute calls", function () {
       account,
       sessionRequest,
       accountSessionSignature,
-      typedData.TypedDataRevision.Legacy,
     );
 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);

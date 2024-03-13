@@ -95,7 +95,6 @@ fn test_trigger_escape_replace_signer() {
     assert(status == EscapeStatus::NotReady, 'should be NotReady');
 }
 
-
 #[test]
 fn test_trigger_escape_can_override() {
     let (component, _) = setup();

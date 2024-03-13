@@ -54,7 +54,7 @@ fn test_double_signature_order() {
             MULTISIG_OWNER(2).sig.s,
             MULTISIG_OWNER(1).pubkey,
             MULTISIG_OWNER(1).sig.r,
-            MULTISIG_OWNER(2).sig.s
+            MULTISIG_OWNER(1).sig.s
         ]
     );
     multisig.is_valid_signature(tx_hash, signature);

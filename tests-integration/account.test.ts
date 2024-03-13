@@ -92,7 +92,7 @@ describe("ArgentAccount", function () {
     account.signer = new ArgentSigner(owner, guardian);
     await accountContract.change_guardian_backup(guardianBackup.compiledSignerAsOption);
 
-    await accountContract.get_guardian_backup().should.eventually.equal(guardianBackup.publicKey);
+    await accountContract.get_guardian_backup().should.eventually.equal(guardianBackup.guid);
 
     account.signer = new ArgentSigner(owner, guardianBackup);
 
@@ -127,7 +127,7 @@ describe("ArgentAccount", function () {
       const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.guid, newOwner, chainId);
       await accountContract.change_owner(starknetSignature);
 
-      await accountContract.get_owner().should.eventually.equal(newOwner.publicKey);
+      await accountContract.get_owner().should.eventually.equal(newOwner.guid);
     });
 
     it("Expect 'argent/only-self' when called from another account", async function () {

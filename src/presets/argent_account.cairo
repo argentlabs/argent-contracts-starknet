@@ -346,10 +346,7 @@ mod ArgentAccount {
                 return array![];
             }
 
-            let mut data_span = data.span();
-            let calls: Array<Call> = Serde::deserialize(ref data_span).expect('argent/invalid-calls');
-            assert(data_span.is_empty(), 'argent/invalid-calls');
-
+            let calls: Array<Call> = full_deserialize(data.span()).expect('argent/invalid-calls');
             assert_no_self_call(calls.span(), get_contract_address());
 
             let multicall_return = execute_multicall(calls.span());

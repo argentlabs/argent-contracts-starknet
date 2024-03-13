@@ -419,13 +419,12 @@ mod ArgentAccount {
             self.reset_escape_attempts();
 
             let new_owner = signer_signature.signer();
-            let (old_owner, old_owner_type) = self.read_owner();
+            let (old_owner, _) = self.read_owner();
             let new_owner_guid = new_owner.into_guid();
             let new_owner_type = new_owner.get_type();
 
             self.assert_valid_new_owner_signature(signer_signature);
 
-            self.write_owner(0, old_owner_type);
             self.write_owner(new_owner_guid, new_owner_type);
 
             self.emit(OwnerChanged { new_owner: new_owner_guid });
@@ -437,27 +436,24 @@ mod ArgentAccount {
         fn change_guardian(ref self: ContractState, new_guardian: Option<Signer>) {
             assert_only_self();
 
-            // clear existing guardian slot
-            self.clear_guardian();
-            // write new guardian slot
-            let new_guardian_guid: felt252 = match new_guardian {
+            let (new_guardian_guid, new_guardian_type): (felt252, SignerType) = match new_guardian {
                 Option::Some(guardian) => {
                     let guardian_guid = guardian.into_guid();
                     let guardian_type = guardian.get_type();
-                    self.write_guardian(guardian_guid, guardian_type);
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
-                    guardian_guid
+                    (guardian_guid, guardian_type)
                 },
                 Option::None => {
                     // There cannot be a guardian_backup when there is no guardian
                     assert(self.read_guardian_backup().is_none(), 'argent/backup-should-be-null');
-                    0
+                    (0, Default::default())
                 },
             };
 
             self.reset_escape();
             self.reset_escape_attempts();
 
+            self.write_guardian(new_guardian_guid, new_guardian_type);
             self.emit(GuardianChanged { new_guardian: new_guardian_guid });
         }
 
@@ -465,23 +461,21 @@ mod ArgentAccount {
             assert_only_self();
             self.assert_guardian_set();
 
-            // clear existing guardian slot
-            self.clear_guardian_backup();
-            // write new guardian backup slot
-            let new_guardian_backup_guid: felt252 = match new_guardian_backup {
+            let (new_guardian_backup_guid, new_guardian_backup_type): (felt252, SignerType) =
+                match new_guardian_backup {
                 Option::Some(guardian) => {
                     let guardian_guid = guardian.into_guid();
                     let guardian_type = guardian.get_type();
-                    self.write_guardian_backup(guardian_guid, guardian_type);
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
-                    guardian_guid
+                    (guardian_guid, guardian_type)
                 },
-                Option::None => { 0_felt252 },
+                Option::None => { (0, Default::default()) },
             };
 
             self.reset_escape();
             self.reset_escape_attempts();
 
+            self.write_guardian_backup(new_guardian_backup_guid, new_guardian_backup_type);
             self.emit(GuardianBackupChanged { new_guardian_backup: new_guardian_backup_guid });
         }
 
@@ -523,7 +517,7 @@ mod ArgentAccount {
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                     (guardian_guid, guardian_type)
                 },
-                Option::None => { (0, SignerType::Starknet) },
+                Option::None => { (0, Default::default()) },
             };
 
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
@@ -548,8 +542,7 @@ mod ArgentAccount {
             self.reset_escape_attempts();
 
             // update owner
-            let (old_owner, old_owner_type) = self.read_owner();
-            self.write_owner(0, old_owner_type);
+            let (old_owner, _) = self.read_owner();
             self.write_owner(current_escape.new_signer, current_escape.new_signer_type);
             self.emit(OwnerEscaped { new_owner: current_escape.new_signer });
             self.emit(OwnerRemoved { removed_owner_guid: old_owner });
@@ -568,9 +561,6 @@ mod ArgentAccount {
 
             self.reset_escape_attempts();
 
-            // clear existing guardian slot
-            self.clear_guardian();
-            //update guardian
             self.write_guardian(current_escape.new_signer, current_escape.new_signer_type);
             self.emit(GuardianEscaped { new_guardian: current_escape.new_signer });
             // clear escape
@@ -937,6 +927,13 @@ mod ArgentAccount {
         }
 
         fn write_owner(ref self: ContractState, owner_guid: felt252, owner_type: SignerType) {
+            // clear storage
+            self._signer.write(0);
+            self._signer_secp256k1.write(0);
+            self._signer_secp256r1.write(0);
+            self._signer_eip191.write(0);
+            self._signer_webauthn.write(0);
+            // write storage
             match owner_type {
                 SignerType::Starknet => self._signer.write(owner_guid),
                 SignerType::Secp256k1 => self._signer_secp256k1.write(owner_guid),
@@ -972,19 +969,19 @@ mod ArgentAccount {
         }
 
         fn write_guardian(ref self: ContractState, guardian_guid: felt252, guardian_type: SignerType) {
+            // clear storage
+            self._guardian.write(0);
+            self._guardian_secp256k1.write(0);
+            self._guardian_secp256r1.write(0);
+            self._guardian_eip191.write(0);
+            self._guardian_webauthn.write(0);
+            // write storage
             match guardian_type {
                 SignerType::Starknet => self._guardian.write(guardian_guid),
                 SignerType::Secp256k1 => self._guardian_secp256k1.write(guardian_guid),
                 SignerType::Secp256r1 => self._guardian_secp256r1.write(guardian_guid),
                 SignerType::Eip191 => self._guardian_eip191.write(guardian_guid),
                 SignerType::Webauthn => self._guardian_webauthn.write(guardian_guid),
-            }
-        }
-
-        fn clear_guardian(ref self: ContractState) {
-            match self.read_guardian() {
-                Option::Some((_, guardian_type)) => { self.write_guardian(0, guardian_type) },
-                Option::None => {},
             }
         }
 
@@ -1020,19 +1017,19 @@ mod ArgentAccount {
         fn write_guardian_backup(
             ref self: ContractState, guardian_backup_guid: felt252, guardian_backup_type: SignerType
         ) {
+            // clear storage
+            self._guardian_backup.write(0);
+            self._guardian_backup_secp256k1.write(0);
+            self._guardian_backup_secp256r1.write(0);
+            self._guardian_backup_eip191.write(0);
+            self._guardian_backup_webauthn.write(0);
+            // write storage
             match guardian_backup_type {
                 SignerType::Starknet => self._guardian_backup.write(guardian_backup_guid),
                 SignerType::Secp256k1 => self._guardian_backup_secp256k1.write(guardian_backup_guid),
                 SignerType::Secp256r1 => self._guardian_backup_secp256r1.write(guardian_backup_guid),
                 SignerType::Eip191 => self._guardian_backup_eip191.write(guardian_backup_guid),
                 SignerType::Webauthn => self._guardian_backup_webauthn.write(guardian_backup_guid),
-            }
-        }
-
-        fn clear_guardian_backup(ref self: ContractState) {
-            match self.read_guardian_backup() {
-                Option::Some((_, guardian_backup_type)) => { self.write_guardian_backup(0, guardian_backup_type) },
-                Option::None => {},
             }
         }
 

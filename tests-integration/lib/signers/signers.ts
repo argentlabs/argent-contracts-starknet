@@ -191,7 +191,7 @@ export class StarknetKeyPair extends KeyPair {
   }
 
   public get guid() {
-    return BigInt(hash.computePoseidonHash(shortString.encodeShortString("Starknet Signer"), this.publicKey));
+    return this.publicKey;
   }
 
   public get signer(): CairoCustomEnum {

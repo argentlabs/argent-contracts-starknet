@@ -12,7 +12,6 @@ use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
 use starknet::{EthAddress, eth_signature::{Signature as Secp256k1Signature, is_eth_signature_valid}};
 
-const STARKNET_SIGNER_TYPE: felt252 = 'Starknet Signer';
 const SECP256K1_SIGNER_TYPE: felt252 = 'Secp256k1 Signer';
 const SECP256R1_SIGNER_TYPE: felt252 = 'Secp256r1 Signer';
 const EIP191_SIGNER_TYPE: felt252 = 'Eip191 Signer';
@@ -103,9 +102,8 @@ fn new_web_authn_signer(origin: felt252, rp_id_hash: u256, pubkey: u256) -> Weba
 impl SignerTraitImpl of SignerTrait<Signer> {
     #[inline(always)]
     fn into_guid(self: Signer) -> felt252 {
-        // TODO avoiding excesive hashing rounds
         match self {
-            Signer::Starknet(signer) => poseidon_2(STARKNET_SIGNER_TYPE, signer.pubkey.into()),
+            Signer::Starknet(signer) => signer.pubkey.into(),
             Signer::Secp256k1(signer) => poseidon_2(SECP256K1_SIGNER_TYPE, signer.pubkey_hash.address.into()),
             Signer::Secp256r1(signer) => {
                 let pubkey: u256 = signer.pubkey.into();

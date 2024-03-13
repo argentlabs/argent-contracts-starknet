@@ -92,9 +92,9 @@ export class Secp256r1KeyPair extends KeyPair {
 
   public async signRaw(messageHash: string): Promise<string[]> {
     messageHash = padTo32Bytes(messageHash);
-    const sig = secp256r1.sign(messageHash, this.pk);
+    const signature = secp256r1.sign(messageHash, this.pk);
 
-    return secp256r1SignatureType(this.publicKey, sig);
+    return secp256r1SignatureType(this.publicKey, signature);
   }
 }
 

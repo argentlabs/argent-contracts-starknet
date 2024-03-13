@@ -7,9 +7,7 @@ mod ArgentMultisigAccount {
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
     use argent::recovery::{external_recovery::external_recovery_component};
-    use argent::signer::{
-        signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait, parse_signature_array}
-    };
+    use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait}};
     use argent::signer_storage::{
         interface::ISignerList, signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
     };
@@ -248,4 +246,11 @@ mod ArgentMultisigAccount {
             assert(valid, 'argent/invalid-signature');
         }
     }
+
+    #[must_use]
+    #[inline(always)]
+    fn parse_signature_array(mut raw_signature: Span<felt252>) -> Array<SignerSignature> {
+        full_deserialize(raw_signature).expect('argent/invalid-signature-array')
+    }
 }
+

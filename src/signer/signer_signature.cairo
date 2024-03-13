@@ -211,11 +211,6 @@ fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, assertion:
     is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, assertion.signature)
 }
 
-#[must_use]
-fn parse_signature_array(mut raw_signature: Span<felt252>) -> Array<SignerSignature> {
-    argent::utils::serialization::full_deserialize(raw_signature).expect('argent/invalid-signature-array')
-}
-
 trait SignerSpanTrait {
     #[must_use]
     #[inline(always)]

@@ -8,9 +8,7 @@ mod ArgentUserAccount {
     };
     use argent::recovery::threshold_recovery::IThresholdRecoveryInternal;
     use argent::recovery::{threshold_recovery::threshold_recovery_component};
-    use argent::signer::{
-        signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait, parse_signature_array}
-    };
+    use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait}};
     use argent::signer_storage::{
         interface::ISignerList, signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
     };
@@ -260,5 +258,11 @@ mod ArgentUserAccount {
                 'argent/invalid-signature'
             );
         }
+    }
+
+    #[must_use]
+    #[inline(always)]
+    fn parse_signature_array(mut raw_signature: Span<felt252>) -> Array<SignerSignature> {
+        full_deserialize(raw_signature).expect('argent/invalid-signature-array')
     }
 }

@@ -89,12 +89,12 @@ mod ArgentAccount {
         /// Rounded down to the hour: https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 
         /// Used to limit the number of escapes the account will pay for
         /// It resets when an escape is completed or canceled
-        guardian_escape_timestamp: u64,
+        last_guardian_escape_attempt: u64,
         /// Keeps track of the last time an escape was performed by the owner. 
         /// Rounded down to the hour: https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 
         /// Used to limit the number of transactions the account will pay for
         /// It resets when an escape is completed or canceled
-        owner_escape_timestamp: u64
+        last_owner_escape_attempt: u64
     }
 
     #[event]
@@ -579,12 +579,12 @@ mod ArgentAccount {
             NAME
         }
 
-        fn get_guardian_escape_last_attempt_timestamp(self: @ContractState) -> u64 {
-            self.guardian_escape_timestamp.read()
+        fn get_last_guardian_escape_attempt(self: @ContractState) -> u64 {
+            self.last_guardian_escape_attempt.read()
         }
 
-        fn get_owner_escape_last_attempt_timestamp(self: @ContractState) -> u64 {
-            self.owner_escape_timestamp.read()
+        fn get_last_owner_escape_attempt(self: @ContractState) -> u64 {
+            self.last_owner_escape_attempt.read()
         }
 
         /// Current escape if any, and its status
@@ -632,8 +632,8 @@ mod ArgentAccount {
 
                     if selector == selector!("trigger_escape_owner") {
                         if !is_from_outside {
-                            assert_valid_escape_parameters(self.guardian_escape_timestamp.read());
-                            self.guardian_escape_timestamp.write(get_block_timestamp());
+                            assert_valid_escape_parameters(self.last_guardian_escape_attempt.read());
+                            self.last_guardian_escape_attempt.write(get_block_timestamp());
                         }
 
                         full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
@@ -645,8 +645,8 @@ mod ArgentAccount {
                     }
                     if selector == selector!("escape_owner") {
                         if !is_from_outside {
-                            assert_valid_escape_parameters(self.guardian_escape_timestamp.read());
-                            self.guardian_escape_timestamp.write(get_block_timestamp());
+                            assert_valid_escape_parameters(self.last_guardian_escape_attempt.read());
+                            self.last_guardian_escape_attempt.write(get_block_timestamp());
                         }
 
                         assert((*call.calldata).is_empty(), 'argent/invalid-calldata');
@@ -664,8 +664,8 @@ mod ArgentAccount {
                     }
                     if selector == selector!("trigger_escape_guardian") {
                         if !is_from_outside {
-                            assert_valid_escape_parameters(self.owner_escape_timestamp.read());
-                            self.owner_escape_timestamp.write(get_block_timestamp());
+                            assert_valid_escape_parameters(self.last_owner_escape_attempt.read());
+                            self.last_owner_escape_attempt.write(get_block_timestamp());
                         }
 
                         let new_guardian: Option<Signer> = full_deserialize(*call.calldata)
@@ -683,8 +683,8 @@ mod ArgentAccount {
                     }
                     if selector == selector!("escape_guardian") {
                         if !is_from_outside {
-                            assert_valid_escape_parameters(self.owner_escape_timestamp.read());
-                            self.owner_escape_timestamp.write(get_block_timestamp());
+                            assert_valid_escape_parameters(self.last_owner_escape_attempt.read());
+                            self.last_owner_escape_attempt.write(get_block_timestamp());
                         }
                         assert((*call.calldata).is_empty(), 'argent/invalid-calldata');
                         self.assert_guardian_set();
@@ -826,8 +826,8 @@ mod ArgentAccount {
 
         #[inline(always)]
         fn reset_escape_timestamps(ref self: ContractState) {
-            self.owner_escape_timestamp.write(0);
-            self.guardian_escape_timestamp.write(0);
+            self.last_owner_escape_attempt.write(0);
+            self.last_guardian_escape_attempt.write(0);
         }
     }
 

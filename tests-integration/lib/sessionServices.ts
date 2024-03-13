@@ -45,7 +45,7 @@ export class DappService {
     public sessionKey: StarknetKeyPair = randomStarknetKeyPair(),
   ) {}
 
-  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at = 150n): OffChainSession {
+  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: number): OffChainSession {
     const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
     return {
       expires_at,

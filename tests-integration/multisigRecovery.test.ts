@@ -34,7 +34,7 @@ describe("ArgentMultisig Recovery", function () {
     accountContract.is_signer(originalSigner.compiledSigner).should.eventually.equal(false);
     accountContract.is_signer(newSigner.compiledSigner).should.eventually.equal(true);
 
-    let { "0": escape, "1": status } = await accountContract.get_escape();
+    const { "0": escape, "1": status } = await accountContract.get_escape();
     expect(escape.ready_at).to.equal(0n);
     expect(escape.call_hash).to.equal(0n);
     expect(status.variant.None).to.eql({});

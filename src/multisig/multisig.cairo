@@ -201,5 +201,29 @@ mod multisig_component {
         fn assert_valid_storage(self: @ComponentState<TContractState>) {
             self.assert_valid_threshold_and_signers_count(self.threshold.read(), self.get_contract().get_signers_len());
         }
+
+        fn is_valid_signature_with_threshold(
+            self: @ComponentState<TContractState>,
+            hash: felt252,
+            threshold: u32,
+            mut signer_signatures: Array<SignerSignature>
+        ) -> bool {
+            assert(signer_signatures.len() == threshold, 'argent/signature-invalid-length');
+            let mut last_signer: u256 = 0;
+            loop {
+                let signer_sig = match signer_signatures.pop_front() {
+                    Option::Some(signer_sig) => signer_sig,
+                    Option::None => { break true; }
+                };
+                let signer_guid = signer_sig.signer().into_guid();
+                assert(self.is_signer_guid(signer_guid), 'argent/not-a-signer');
+                let signer_uint: u256 = signer_guid.into();
+                assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
+                last_signer = signer_uint;
+                if !signer_sig.is_valid_signature(hash) {
+                    break false;
+                }
+            }
+        }
     }
 }

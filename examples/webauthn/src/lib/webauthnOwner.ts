@@ -2,9 +2,8 @@ import { CallData, uint256, type ArraySignatureType, CairoCustomEnum } from "sta
 
 import { buf2hex } from "./bytes";
 import { RawSigner } from "./starknet";
-import { estimateAssertion, signTransaction, type WebauthnAssertion } from "./webauthnAssertion";
+import { estimateAssertion, sha256, signTransaction, type WebauthnAssertion } from "./webauthnAssertion";
 import type { WebauthnAttestation } from "./webauthnAttestation";
-import { rpIdHash } from "./argent";
 
 export class WebauthnOwner extends RawSigner {
   constructor(public attestation: WebauthnAttestation) {
@@ -17,15 +16,16 @@ export class WebauthnOwner extends RawSigner {
       ? await estimateAssertion(messageHash, this.attestation)
       : await signTransaction(messageHash, this.attestation);
     console.log("WebauthnOwner signed, assertion is:", assertion);
-    const signature = this.compileAssertion(assertion);
+    const signature = await this.compileAssertion(assertion);
     return signature;
   }
 
-  public compileAssertion({ authenticatorData, clientDataJSON, r, s, yParity }: WebauthnAssertion): ArraySignatureType {
+  public async compileAssertion({ authenticatorData, clientDataJSON, r, s, yParity }: WebauthnAssertion): Promise<ArraySignatureType> {
     const clientDataText = new TextDecoder().decode(clientDataJSON.buffer);
     const clientData = JSON.parse(clientDataText);
     const clientDataOffset = (substring: string) => clientDataText.indexOf(substring) + substring.length;
     console.log("client data", clientData);
+    const rpIdHash = await sha256(new TextEncoder().encode(this.attestation.rpId));
 
     const cairoAssertion = {
       origin: location.origin,
@@ -46,17 +46,15 @@ export class WebauthnOwner extends RawSigner {
     };
 
     console.log("serialized assertion:", cairoAssertion);
-    return CallData.compile([
-      [
-        new CairoCustomEnum({
-          Starknet: undefined,
-          Secp256k1: undefined,
-          Secp256r1: undefined,
-          Eip191: undefined,
-          Webauthn: cairoAssertion,
-        }),
-      ],
-    ]);
+    const value = new CairoCustomEnum({
+      Starknet: undefined,
+      Secp256k1: undefined,
+      Secp256r1: undefined,
+      Eip191: undefined,
+      Webauthn: cairoAssertion,
+    });
+
+    return CallData.compile([[value]]);
   }
 }
 

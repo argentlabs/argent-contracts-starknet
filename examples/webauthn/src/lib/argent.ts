@@ -15,7 +15,6 @@ import { WebauthnOwner, webauthnSigner } from "./webauthnOwner";
 import casm from "./argent_ArgentAccount.compiled_contract_class.json";
 import sierra from "./argent_ArgentAccount.contract_class.json";
 
-export let rpIdHash: Uint8Array;
 export interface ArgentOwners {
   starkOwner: KeyPair;
   webauthnOwner: WebauthnOwner;
@@ -54,7 +53,7 @@ export async function deployAccount(
   if (location.origin.length > 30) {
     throw new Error("origin must be less than 30 characters");
   }
-  rpIdHash = await sha256(new TextEncoder().encode(rpId));
+  const rpIdHash = await sha256(new TextEncoder().encode(rpId));
 
   const constructorCalldata = CallData.compile({
     owner: webauthnSigner(location.origin, buf2hex(rpIdHash), buf2hex(webauthnOwner.attestation.x)),

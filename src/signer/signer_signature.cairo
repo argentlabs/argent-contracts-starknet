@@ -200,7 +200,6 @@ fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, assertion:
     is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, assertion.signature)
 }
 
-
 trait SignerSpanTrait {
     #[must_use]
     #[inline(always)]
@@ -235,4 +234,3 @@ fn assert_sorted_guids(mut guids: Span<felt252>, error_message: felt252) {
         };
     };
 }
-

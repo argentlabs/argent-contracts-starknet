@@ -20,7 +20,8 @@ export class WebauthnOwner extends RawSigner {
     return signature;
   }
 
-  public async compileAssertion({ authenticatorData, clientDataJSON, r, s, yParity }: WebauthnAssertion): Promise<ArraySignatureType> {
+  public async compileAssertion(assertion: WebauthnAssertion): Promise<ArraySignatureType> {
+    const { authenticatorData, clientDataJSON, r, s, yParity } = assertion;
     const clientDataText = new TextDecoder().decode(clientDataJSON.buffer);
     const clientData = JSON.parse(clientDataText);
     const clientDataOffset = (substring: string) => clientDataText.indexOf(substring) + substring.length;

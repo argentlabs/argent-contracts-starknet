@@ -215,3 +215,38 @@ fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, assertion:
 fn parse_signature_array(mut raw_signature: Span<felt252>) -> Array<SignerSignature> {
     argent::utils::serialization::full_deserialize(raw_signature).expect('argent/invalid-signature-array')
 }
+
+trait SignerSpanTrait {
+    #[must_use]
+    #[inline(always)]
+    fn to_guid_list(self: @Span<Signer>) -> Array<felt252>;
+}
+
+impl SignerSpanTraitImpl of SignerSpanTrait {
+    #[must_use]
+    fn to_guid_list(self: @Span<Signer>) -> Array<felt252> {
+        let mut signers = *self;
+        let mut guids = array![];
+        loop {
+            match signers.pop_front() {
+                Option::Some(signer) => { guids.append((*signer).into_guid()); },
+                Option::None => { break; },
+            };
+        };
+        guids
+    }
+}
+
+fn assert_sorted_guids(mut guids: Span<felt252>, error_message: felt252) {
+    let mut last_guid: u256 = 0;
+    loop {
+        match guids.pop_front() {
+            Option::Some(guid) => {
+                let guid_u256: u256 = (*guid).into();
+                assert(guid_u256 > last_guid, error_message);
+                last_guid = guid_u256;
+            },
+            Option::None => { break; },
+        };
+    };
+}

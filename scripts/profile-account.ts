@@ -4,9 +4,7 @@ import {
   deployAccountWithoutGuardian,
   provider,
   getEthContract,
-  deployFixedWebauthnAccount,
   restart,
-  declareContract,
   removeFromCache,
   deployOldAccount,
   LegacyStarknetKeyPair,
@@ -16,6 +14,7 @@ import {
   EthKeyPair,
   Secp256r1KeyPair,
   Eip191KeyPair,
+  WebauthnOwner,
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
 
@@ -112,19 +111,14 @@ const guardian = new StarknetKeyPair(43n);
   );
 }
 
-// {
-//   await restart();
-//   removeFromCache("ArgentAccount");
-//   const classHash = await declareContract("ArgentAccount");
-//   const account = await deployFixedWebauthnAccount(classHash);
-//   const ethContract = await getEthContract();
-//   ethContract.connect(account);
-//   const recipient = 69;
-//   await profiler.profile(
-//     "Fixed webauthn w/o guardian",
-//     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),
-//   );
-// }
+{
+  const { account } = await deployAccount({ owner: new WebauthnOwner(), salt: "0x7" });
+  ethContract.connect(account);
+  await profiler.profile(
+    "Webauthn w/o guardian",
+    await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),
+  );
+}
 
 profiler.printSummary();
 profiler.updateOrCheckReport();

@@ -34,6 +34,41 @@ export class EthKeyPair extends KeyPair {
   }
 }
 
+export class Eip191KeyPair extends KeyPair {
+  pk: string;
+
+  constructor(pk?: string | bigint) {
+    super();
+    this.pk = pk ? "0x" + padTo32Bytes(num.toHex(pk)) : Wallet.createRandom().privateKey;
+  }
+
+  public get address() {
+    return BigInt(new Wallet(this.pk).address);
+  }
+
+  public get guid(): bigint {
+    throw new Error("Not implemented yet");
+  }
+
+  public get signer(): CairoCustomEnum {
+    return signerTypeToCustomEnum(SignerType.Eip191, { signer: this.address });
+  }
+
+  public async signRaw(messageHash: string): Promise<string[]> {
+    const ethSigner = new Wallet(this.pk);
+    messageHash = "0x" + padTo32Bytes(messageHash);
+    const signature = EthersSignature.from(ethSigner.signMessageSync(num.hexToBytes(messageHash)));
+    return CallData.compile([
+      signerTypeToCustomEnum(SignerType.Eip191, {
+        ethAddress: this.address,
+        r: uint256.bnToUint256(signature.r),
+        s: uint256.bnToUint256(signature.s),
+        yParity: signature.yParity,
+      }),
+    ]);
+  }
+}
+
 export class Secp256r1KeyPair extends KeyPair {
   pk: bigint;
 
@@ -57,9 +92,9 @@ export class Secp256r1KeyPair extends KeyPair {
 
   public async signRaw(messageHash: string): Promise<string[]> {
     messageHash = padTo32Bytes(messageHash);
-    const sig = secp256r1.sign(messageHash, this.pk);
+    const signature = secp256r1.sign(messageHash, this.pk);
 
-    return secp256r1SignatureType(this.publicKey, sig);
+    return secp256r1SignatureType(this.publicKey, signature);
   }
 }
 

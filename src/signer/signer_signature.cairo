@@ -2,8 +2,6 @@ use argent::signer::eip191::is_valid_eip191_signature;
 use argent::signer::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };
-use core::array::ArrayTrait;
-use core::option::OptionTrait;
 use ecdsa::check_ecdsa_signature;
 use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, PoseidonTrait};

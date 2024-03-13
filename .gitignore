@@ -21,3 +21,8 @@ account.json
 dump
 package-lock.json
 .snfoundry_cache
+
+/.svelte-kit
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+yarn-error.log

@@ -23,7 +23,6 @@ const profiler = newProfiler(provider);
 if (provider.isDevnet) {
   await restart();
 }
-// With the KeyPairs hardcoded, we gotta reset to avoid some issues
 removeFromCache("Proxy");
 removeFromCache("OldArgentAccount");
 removeFromCache("ArgentAccount");

@@ -58,7 +58,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
   beforeEach(async () => {
     newKeyPair = randomStarknetKeyPair();
-    randomTime = BigInt(Math.floor(Math.random() * 1000));
+    randomTime = BigInt(24 * 60 * 60) + BigInt(Math.floor(Math.random() * 1000));
   });
 
   describe("trigger_escape_owner(new_owner)", function () {
@@ -77,6 +77,19 @@ describe("ArgentAccount: escape mechanism", function () {
 
       await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
         accountContract.trigger_escape_owner(CallData.compile([zeroStarknetSignatureType()])),
+      );
+    });
+
+    it("Expect 'argent/last-escape-too-recent' when trying to escape again too early", async function () {
+      const { account, accountContract, guardian } = await deployAccount();
+      account.signer = new ArgentSigner(guardian);
+
+      await setTime(randomTime);
+      await accountContract.trigger_escape_owner(newKeyPair.compiledSigner);
+
+      await setTime(randomTime + 12n * 60n * 60n);
+      await expectRevertWithErrorMessage("argent/last-escape-too-recent", () =>
+        accountContract.trigger_escape_owner(newKeyPair.compiledSigner),
       );
     });
 
@@ -274,6 +287,19 @@ describe("ArgentAccount: escape mechanism", function () {
       expect(escape.escape_type).to.deep.equal(ESCAPE_TYPE_GUARDIAN);
       expect(escape.ready_at).to.equal(randomTime + ESCAPE_SECURITY_PERIOD);
       expect(escape.new_signer).to.equal(newKeyPair.guid);
+    });
+
+    it("Expect 'argent/last-escape-too-recent' when trying too escape again too early", async function () {
+      const { account, accountContract, owner } = await deployAccount();
+      account.signer = new ArgentSigner(owner);
+
+      await setTime(randomTime);
+      await accountContract.trigger_escape_guardian(newKeyPair.compiledSignerAsOption);
+
+      await setTime(randomTime + 12n * 60n * 60n);
+      await expectRevertWithErrorMessage("argent/last-escape-too-recent", () =>
+        accountContract.trigger_escape_guardian(newKeyPair.compiledSignerAsOption),
+      );
     });
 
     it("Expect the owner to be able to trigger_escape_guardian when trigger_escape_owner was performed", async function () {

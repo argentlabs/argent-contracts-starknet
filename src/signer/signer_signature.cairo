@@ -38,7 +38,7 @@ enum Signer {
 
 #[derive(Drop, Copy, Serde, PartialEq, Default)]
 struct SignerStorageValue {
-    stored_data: felt252,
+    stored_value: felt252,
     signer_type: SignerType,
 }
 
@@ -155,19 +155,19 @@ impl SignerTraitImpl of SignerTrait<Signer> {
     fn storage_value(self: @Signer) -> SignerStorageValue {
         match self {
             Signer::Starknet(signer) => SignerStorageValue {
-                signer_type: SignerType::Starknet, stored_data: (*signer.pubkey).into()
+                signer_type: SignerType::Starknet, stored_value: (*signer.pubkey).into()
             },
             Signer::Secp256k1(signer) => SignerStorageValue {
-                signer_type: SignerType::Secp256k1, stored_data: *signer.pubkey_hash.address
+                signer_type: SignerType::Secp256k1, stored_value: *signer.pubkey_hash.address
             },
             Signer::Secp256r1(_) => SignerStorageValue {
-                signer_type: SignerType::Secp256r1, stored_data: (*self).into_guid()
+                signer_type: SignerType::Secp256r1, stored_value: (*self).into_guid()
             },
             Signer::Eip191(signer) => SignerStorageValue {
-                signer_type: SignerType::Eip191, stored_data: *signer.eth_address.address
+                signer_type: SignerType::Eip191, stored_value: *signer.eth_address.address
             },
             Signer::Webauthn(_) => SignerStorageValue {
-                signer_type: SignerType::Webauthn, stored_data: (*self).into_guid()
+                signer_type: SignerType::Webauthn, stored_value: (*self).into_guid()
             },
         }
     }
@@ -178,18 +178,18 @@ impl SignerStorageValueImpl of SignerTrait<SignerStorageValue> {
     fn into_guid(self: SignerStorageValue) -> felt252 {
         match self.signer_type {
             SignerType::Starknet => {
-                let (hash, _, _) = hades_permutation(STARKNET_SIGNER_TYPE, self.stored_data, 2);
+                let (hash, _, _) = hades_permutation(STARKNET_SIGNER_TYPE, self.stored_value, 2);
                 hash
             },
             SignerType::Eip191 => {
-                let (hash, _, _) = hades_permutation(EIP191_SIGNER_TYPE, self.stored_data, 2);
+                let (hash, _, _) = hades_permutation(EIP191_SIGNER_TYPE, self.stored_value, 2);
                 hash
             },
             SignerType::Secp256k1 => {
-                let (hash, _, _) = hades_permutation(SECP256K1_SIGNER_TYPE, self.stored_data, 2);
+                let (hash, _, _) = hades_permutation(SECP256K1_SIGNER_TYPE, self.stored_value, 2);
                 hash
             },
-            _ => self.stored_data,
+            _ => self.stored_value,
         }
     }
 

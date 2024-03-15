@@ -163,14 +163,14 @@ impl PackEscape of starknet::StorePacking<Escape, Array<felt252>> {
 // Packing ready_at, escape_type and new_signer.signer_type within same felt:
 // felt1 bits [0; 63] => ready_at
 // felt1 bits [64; 127] => escape_type
-// felt1 bits [128; 191] => new_signer_type
+// felt1 bits [128; 191] => new_signer.signer_type
 // felt2 bits [0; 251] => new_signer
 impl LegacyEscapeStorePacking of starknet::StorePacking<LegacyEscape, (felt252, felt252)> {
     fn pack(value: LegacyEscape) -> (felt252, felt252) {
         let packed = value.ready_at.into()
             + (value.escape_type.into() * SHIFT_64)
             + (value.new_signer.signer_type.into() * SHIFT_64 * SHIFT_64);
-        (packed, value.new_signer.stored_data)
+        (packed, value.new_signer.stored_value)
     }
 
     fn unpack(value: (felt252, felt252)) -> LegacyEscape {
@@ -182,7 +182,7 @@ impl LegacyEscapeStorePacking of starknet::StorePacking<LegacyEscape, (felt252, 
             escape_type: escape_type.try_into().unwrap(),
             ready_at: ready_at.try_into().unwrap(),
             new_signer: SignerStorageValue {
-                stored_data: new_signer_stored_data, signer_type: new_signer_type.try_into().unwrap()
+                stored_value: new_signer_stored_data, signer_type: new_signer_type.try_into().unwrap()
             }
         }
     }

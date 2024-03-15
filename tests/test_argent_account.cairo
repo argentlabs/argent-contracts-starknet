@@ -121,7 +121,7 @@ fn change_guardian() {
     let account = initialize_account();
     let guardian = starknet_signer_from_pubkey(22);
     account.change_guardian(Option::Some(guardian));
-    assert(account.get_guardian() == guardian.into_guid(), 'value should be 22');
+    assert(account.get_guardian() == 22, 'value should be 22');
 }
 
 #[test]
@@ -156,7 +156,7 @@ fn change_guardian_backup() {
     let account = initialize_account();
     let guardian_backup = starknet_signer_from_pubkey(33);
     account.change_guardian_backup(Option::Some(guardian_backup));
-    assert(account.get_guardian_backup() == guardian_backup.into_guid(), 'value should be 33');
+    assert(account.get_guardian_backup() == 33, 'value should be 33');
 }
 
 #[test]

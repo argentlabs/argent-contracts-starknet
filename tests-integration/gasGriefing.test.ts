@@ -35,7 +35,7 @@ describe("Gas griefing", function () {
     );
   });
 
-  it.only("Block high fee TxV3", async function () {
+  it("Block high fee TxV3", async function () {
     const { account, accountContract, guardian } = await deployAccount({
       useTxV3: true,
       fundingAmount: 2000000000000000000n,

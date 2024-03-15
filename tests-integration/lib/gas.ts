@@ -2,8 +2,12 @@ import { exec } from "child_process";
 import fs from "fs";
 import { mapValues, maxBy, sortBy, sum } from "lodash-es";
 import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
+<<<<<<< HEAD
 import { ensureIncluded } from ".";
 import assert from "assert";
+=======
+import { ensureAccepted, ensureSuccess } from ".";
+>>>>>>> develop
 
 const ethUsd = 2000n;
 
@@ -19,6 +23,7 @@ const gasWeights: Record<string, number> = {
   ec_op: 2.56,
 };
 
+<<<<<<< HEAD
 async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
   const receipt = ensureIncluded(await provider.waitForTransaction(transactionHash));
   assert(
@@ -26,6 +31,21 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
     `Unsupported fee unit ${receipt.actual_fee.unit}`,
   );
   const actualFee = BigInt(receipt.actual_fee.amount);
+=======
+async function profileGasUsage(transactionHash: string, provider: RpcProvider, allowFailedTransactions = false) {
+  const receipt = await ensureAccepted(await provider.waitForTransaction(transactionHash));
+  if (!allowFailedTransactions) {
+    await ensureSuccess(receipt);
+  }
+  let actualFee = 0n;
+  if (receipt.actual_fee?.unit === "WEI") {
+    actualFee = BigInt(receipt.actual_fee.amount);
+  } else if (receipt.actual_fee && isUndefined(receipt.actual_fee.unit)) {
+    actualFee = BigInt(+receipt.actual_fee);
+  } else {
+    throw new Error(`unexpected fee: ${receipt.actual_fee}`);
+  }
+>>>>>>> develop
   const rawResources = receipt.execution_resources!;
 
   const expectedResources = [
@@ -105,10 +125,10 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
     async profile(
       name: string,
       { transaction_hash }: InvokeFunctionResponse,
-      { printProfile = false, printStorage = false } = {},
+      { printProfile = false, printStorage = false, allowFailedTransactions = false } = {},
     ) {
       console.log(`Profiling: ${name} (${transaction_hash})`);
-      const profile = await profileGasUsage(transaction_hash, provider);
+      const profile = await profileGasUsage(transaction_hash, provider, allowFailedTransactions);
       if (printProfile) {
         console.dir(profile, { depth: null });
       }

@@ -3,7 +3,9 @@
 #[starknet::component]
 mod multisig_component {
     use argent::multisig::interface::{IArgentMultisig, IArgentMultisigInternal};
-    use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait},};
+    use argent::signer::{
+        signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait},
+    };
     use argent::signer_storage::{
         interface::ISignerList,
         signer_list::{
@@ -70,18 +72,14 @@ mod multisig_component {
             let new_signers_count = signers_len + signers_to_add.len();
             self.assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-            let mut signers_span = signers_to_add.span();
-            let mut last_signer = last_signer_guid;
-            loop {
-                let signer = match signers_span.pop_front() {
-                    Option::Some(signer) => (*signer),
-                    Option::None => { break; }
-                };
-                let signer_guid = signer.into_guid();
-                signer_list_comp.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
+            let mut guids = signers_to_add.span().to_guid_list();
+            signer_list_comp.add_signers(guids.span(), last_signer: last_signer_guid);
+            let mut signers_to_add_span = signers_to_add.span();
+            while !signers_to_add_span.is_empty() {
+                let signer = *signers_to_add_span.pop_front().unwrap();
+                let signer_guid = guids.pop_front().unwrap();
                 signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
-                signer_list_comp.emit(SignerLinked { signer_guid, signer });
-                last_signer = signer_guid;
+                signer_list_comp.emit(SignerLinked { signer_guid: signer_guid, signer: signer });
             };
 
             self.threshold.write(new_threshold);
@@ -101,15 +99,11 @@ mod multisig_component {
             let new_signers_count = signers_len - signers_to_remove.len();
             self.assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-            let mut signers_span = signers_to_remove.span();
-            let mut last_signer = last_signer_guid;
-            loop {
-                let signer_guid = match signers_span.pop_front() {
-                    Option::Some(signer) => (*signer).into_guid(),
-                    Option::None => { break; }
-                };
-                last_signer = signer_list_comp.remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
-                signer_list_comp.emit(OwnerRemoved { removed_owner_guid: signer_guid });
+            let mut guids = signers_to_remove.span().to_guid_list();
+            signer_list_comp.remove_signers(guids.span(), last_signer: last_signer_guid);
+            while !guids.is_empty() {
+                let guid = guids.pop_front().unwrap();
+                signer_list_comp.emit(OwnerRemoved { removed_owner_guid: guid })
             };
 
             self.threshold.write(new_threshold);
@@ -121,21 +115,11 @@ mod multisig_component {
         fn reorder_signers(ref self: ComponentState<TContractState>, new_signer_order: Array<Signer>) {
             assert_only_self();
             let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
-            let (signers_len, mut last_signer) = signer_list_comp.load();
+            let (signers_len, last_signer) = signer_list_comp.load();
             assert(new_signer_order.len() == signers_len, 'argent/too-short');
-            // remove all the signers of the list
-            let mut new_signer_order_span = new_signer_order.span();
-            let mut new_signer_order_guid = array![];
-            loop {
-                let signer_guid = match new_signer_order_span.pop_front() {
-                    Option::Some(signer) => (*signer).into_guid(),
-                    Option::None => { break; }
-                };
-                new_signer_order_guid.append(signer_guid);
-                last_signer = signer_list_comp.remove_signer(signer_to_remove: signer_guid, last_signer: last_signer);
-            };
-            // add all the signers of the list
-            signer_list_comp.add_signers(signers_to_add: new_signer_order_guid.span(), last_signer: 0);
+            let guids = new_signer_order.span().to_guid_list();
+            signer_list_comp.remove_signers(guids.span(), last_signer: last_signer);
+            signer_list_comp.add_signers(signers_to_add: guids.span(), last_signer: 0);
         }
 
         fn replace_signer(ref self: ComponentState<TContractState>, signer_to_remove: Signer, signer_to_add: Signer) {
@@ -184,25 +168,21 @@ mod multisig_component {
         impl SignerList: signer_list_component::HasComponent<TContractState>,
         +Drop<TContractState>
     > of IArgentMultisigInternal<ComponentState<TContractState>> {
-        fn initialize(ref self: ComponentState<TContractState>, threshold: usize, signers: Array<Signer>) {
+        fn initialize(ref self: ComponentState<TContractState>, threshold: usize, mut signers: Array<Signer>) {
             assert(self.threshold.read() == 0, 'argent/already-initialized');
 
             let new_signers_count = signers.len();
             self.assert_valid_threshold_and_signers_count(threshold, new_signers_count);
 
-            let mut signers_span = signers.span();
-            let mut last_signer = 0;
             let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
-            loop {
-                let signer = match signers_span.pop_front() {
-                    Option::Some(signer) => (*signer),
-                    Option::None => { break; }
-                };
-                let signer_guid = signer.into_guid();
-                signer_list_comp.add_signer(signer_to_add: signer_guid, last_signer: last_signer);
+            let mut guids = signers.span().to_guid_list();
+            signer_list_comp.add_signers(guids.span(), last_signer: 0);
+
+            while !signers.is_empty() {
+                let signer = signers.pop_front().unwrap();
+                let signer_guid = guids.pop_front().unwrap();
                 signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
                 signer_list_comp.emit(SignerLinked { signer_guid: signer_guid, signer: signer });
-                last_signer = signer_guid;
             };
 
             self.threshold.write(threshold);
@@ -220,6 +200,30 @@ mod multisig_component {
 
         fn assert_valid_storage(self: @ComponentState<TContractState>) {
             self.assert_valid_threshold_and_signers_count(self.threshold.read(), self.get_contract().get_signers_len());
+        }
+
+        fn is_valid_signature_with_threshold(
+            self: @ComponentState<TContractState>,
+            hash: felt252,
+            threshold: u32,
+            mut signer_signatures: Array<SignerSignature>
+        ) -> bool {
+            assert(signer_signatures.len() == threshold, 'argent/signature-invalid-length');
+            let mut last_signer: u256 = 0;
+            loop {
+                let signer_sig = match signer_signatures.pop_front() {
+                    Option::Some(signer_sig) => signer_sig,
+                    Option::None => { break true; }
+                };
+                let signer_guid = signer_sig.signer().into_guid();
+                assert(self.is_signer_guid(signer_guid), 'argent/not-a-signer');
+                let signer_uint: u256 = signer_guid.into();
+                assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
+                last_signer = signer_uint;
+                if !signer_sig.is_valid_signature(hash) {
+                    break false;
+                }
+            }
         }
     }
 }

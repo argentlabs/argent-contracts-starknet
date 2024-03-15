@@ -45,7 +45,6 @@ struct SignerStorageValue {
 trait SignerTrait<T> {
     fn into_guid(self: T) -> felt252;
     fn storage_value(self: @T) -> SignerStorageValue;
-    fn get_type(self: T) -> SignerType;
 }
 
 #[derive(Drop, Copy, Serde, PartialEq)]
@@ -169,16 +168,6 @@ impl SignerTraitImpl of SignerTrait<Signer> {
             },
         }
     }
-
-    fn get_type(self: Signer) -> SignerType {
-        match self {
-            Signer::Starknet(_) => SignerType::Starknet,
-            Signer::Secp256k1(_) => SignerType::Secp256k1,
-            Signer::Secp256r1(_) => SignerType::Secp256r1,
-            Signer::Eip191(_) => SignerType::Eip191,
-            Signer::Webauthn(_) => SignerType::Webauthn,
-        }
-    }
 }
 
 impl SignerStorageValueImpl of SignerTrait<SignerStorageValue> {
@@ -196,10 +185,6 @@ impl SignerStorageValueImpl of SignerTrait<SignerStorageValue> {
     #[inline(always)]
     fn storage_value(self: @SignerStorageValue) -> SignerStorageValue {
         *self
-    }
-
-    fn get_type(self: SignerStorageValue) -> SignerType {
-        self.signer_type
     }
 }
 

@@ -19,7 +19,7 @@ for (const accountType of ["individual", "multisig"]) {
       }
     }
 
-    it.only("Should be possible to call dapp", async function () {
+    it("Should be possible to call dapp", async function () {
       const { account } = await deployAccountType();
       mockDapp.connect(account);
       const { transaction_hash: transferTxHash } = await mockDapp.set_number(42n);

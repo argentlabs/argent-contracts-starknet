@@ -11,6 +11,7 @@ mod session_component {
     use argent::signer::signer_signature::SignerTrait;
     use argent::signer::signer_signature::{SignerSignatureTrait};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
+    use core::box::BoxTrait;
     use poseidon::{hades_permutation};
     use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp};
 
@@ -55,8 +56,11 @@ mod session_component {
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentUserAccount<TContractState>,
     > of InternalTrait<TContractState> {
         #[inline(always)]
-        fn is_session(self: @ComponentState<TContractState>, session_signature_0: felt252) -> bool {
-            session_signature_0 == SESSION_MAGIC
+        fn is_session(self: @ComponentState<TContractState>, signature: Span<felt252>) -> bool {
+            match signature.get(0) {
+                Option::Some(session_magic) => { *session_magic.unbox() == SESSION_MAGIC },
+                Option::None => false
+            }
         }
 
         fn assert_valid_session(
@@ -69,7 +73,7 @@ mod session_component {
             let account_address = get_contract_address();
 
             assert_no_self_call(calls, account_address);
-            assert(self.is_session(*signature[0]), 'session/invalid-magic-value');
+            assert(self.is_session(signature), 'session/invalid-magic-value');
 
             let token: SessionToken = full_deserialize(signature.slice(1, signature.len() - 1))
                 .expect('session/invalid-calldata');

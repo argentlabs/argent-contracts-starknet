@@ -60,7 +60,7 @@ describe("ArgentMultisig", function () {
     });
   });
 
-  it.only("Block deployment data", async function () {
+  it("Block deployment data", async function () {
     const { account } = await deployMultisig1_1({ useTxV3: true });
     await expectExecutionRevert("argent/invalid-deployment-data", () =>
       account.execute([], undefined, {

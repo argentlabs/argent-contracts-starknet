@@ -1,13 +1,8 @@
 import { exec } from "child_process";
 import fs from "fs";
-import { mapValues, maxBy, sortBy, sum } from "lodash-es";
+import { isUndefined, mapValues, maxBy, sortBy, sum } from "lodash-es";
 import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
-<<<<<<< HEAD
-import { ensureIncluded } from ".";
-import assert from "assert";
-=======
 import { ensureAccepted, ensureSuccess } from ".";
->>>>>>> develop
 
 const ethUsd = 2000n;
 
@@ -23,15 +18,6 @@ const gasWeights: Record<string, number> = {
   ec_op: 2.56,
 };
 
-<<<<<<< HEAD
-async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
-  const receipt = ensureIncluded(await provider.waitForTransaction(transactionHash));
-  assert(
-    receipt.actual_fee.unit === "WEI" || receipt.actual_fee.unit === "FRI",
-    `Unsupported fee unit ${receipt.actual_fee.unit}`,
-  );
-  const actualFee = BigInt(receipt.actual_fee.amount);
-=======
 async function profileGasUsage(transactionHash: string, provider: RpcProvider, allowFailedTransactions = false) {
   const receipt = await ensureAccepted(await provider.waitForTransaction(transactionHash));
   if (!allowFailedTransactions) {
@@ -45,7 +31,6 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   } else {
     throw new Error(`unexpected fee: ${receipt.actual_fee}`);
   }
->>>>>>> develop
   const rawResources = receipt.execution_resources!;
 
   const expectedResources = [

@@ -1,4 +1,4 @@
-use starknet::ContractAddress;
+use starknet::{ContractAddress, ClassHash};
 
 #[starknet::interface]
 trait IMockDapp<TContractState> {
@@ -9,11 +9,14 @@ trait IMockDapp<TContractState> {
     fn throw_error(ref self: TContractState, number: felt252);
 
     fn get_number(self: @TContractState, user: ContractAddress) -> felt252;
+    fn library_call(
+        self: @TContractState, class_hash: ClassHash, selector: felt252, calldata: Span<felt252>
+    ) -> Span<felt252>;
 }
 
 #[starknet::contract]
 mod MockDapp {
-    use starknet::{get_caller_address, ContractAddress};
+    use starknet::{ContractAddress, ClassHash, get_caller_address, library_call_syscall};
 
     #[storage]
     struct Storage {
@@ -48,6 +51,18 @@ mod MockDapp {
 
         fn get_number(self: @ContractState, user: ContractAddress) -> felt252 {
             self.stored_number.read(user)
+        }
+
+        fn library_call(
+            self: @ContractState, class_hash: ClassHash, selector: felt252, calldata: Span<felt252>
+        ) -> Span<felt252> {
+            // match library_call_syscall(class_hash, selector, calldata) {
+            let calldata = array!['localhost'].span();
+            match library_call_syscall(class_hash, selector!("sha256_cairo0"), calldata) {
+                Result::Ok(result) => result,
+                Result::Err(err) => panic(array!['just failed']),
+            }
+            // array![42, 69].span()
         }
     }
 }

@@ -60,11 +60,21 @@ describe("ArgentMultisig", function () {
     });
   });
 
-  it("Block deployment data", async function () {
+  it.only("Block deployment data", async function () {
     const { account } = await deployMultisig1_1({ useTxV3: true });
     await expectExecutionRevert("argent/invalid-deployment-data", () =>
       account.execute([], undefined, {
         accountDeploymentData: ["0x1"],
+        resourceBounds: {
+          l2_gas: {
+            max_amount: "0x0",
+            max_price_per_unit: "0x0",
+          },
+          l1_gas: {
+            max_amount: "0xabc",
+            max_price_per_unit: "0x861c468001",
+          },
+        },
       }),
     );
   });

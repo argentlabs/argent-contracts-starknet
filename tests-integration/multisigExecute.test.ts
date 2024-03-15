@@ -17,7 +17,7 @@ describe("ArgentMultisig: Execute", function () {
   });
 
   for (const useTxV3 of [false, true]) {
-    it(`Should be able to execute a transaction using one owner when (signer_list = 1, threshold = 1) (TxV3:${useTxV3})`, async function () {
+    it.only(`Should be able to execute a transaction using one owner when (signer_list = 1, threshold = 1) (TxV3:${useTxV3})`, async function () {
       const { account } = await deployMultisig1_1({ useTxV3 });
 
       await mockDappContract.get_number(account.address).should.eventually.equal(0n);

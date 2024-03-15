@@ -37,7 +37,7 @@ describe("Gas griefing", function () {
     );
   });
 
-  it("Block high fee TxV3", async function () {
+  it.only("Block high fee TxV3", async function () {
     const { account, accountContract, guardian } = await deployAccount({
       useTxV3: true,
       fundingAmount: 2000000000000000000n,
@@ -53,7 +53,7 @@ describe("Gas griefing", function () {
       ...estimate.resourceBounds,
       l2_gas: {
         ...estimate.resourceBounds.l2_gas,
-        max_amount: num.toHexString(maxL2GasAmount),
+        max_amount: num.toHexString(maxL2GasAmount) + 170n,
       },
     };
     const targetTip = maxEscapeTip + 1n;

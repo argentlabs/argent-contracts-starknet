@@ -107,8 +107,8 @@ trait IArgentUserAccount<TContractState> {
     fn get_escape(self: @TContractState) -> LegacyEscape;
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
-    fn get_guardian_escape_attempts(self: @TContractState) -> u32;
-    fn get_owner_escape_attempts(self: @TContractState) -> u32;
+    fn get_last_owner_escape_attempt(self: @TContractState) -> u64;
+    fn get_last_guardian_escape_attempt(self: @TContractState) -> u64;
 
     /// Current escape if any, and its status
     fn get_escape_and_status(self: @TContractState) -> (LegacyEscape, EscapeStatus);

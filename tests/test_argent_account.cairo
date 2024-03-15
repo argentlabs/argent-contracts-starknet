@@ -1,6 +1,7 @@
 use argent::presets::argent_account::ArgentAccount;
 use argent::signer::signer_signature::{
-    Signer, SignerSignature, StarknetSignature, SignerTrait, StarknetSigner, starknet_signer_from_pubkey
+    Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait, StarknetSigner,
+    starknet_signer_from_pubkey
 };
 use snforge_std::cheatcodes::contract_class::ContractClassTrait;
 use snforge_std::{start_prank, declare, start_spoof, get_class_hash, ContractClass, CheatTarget, TxInfoMockTrait};
@@ -17,8 +18,8 @@ use super::setup::{
 #[test]
 fn initialize() {
     let account = initialize_account_with(1, 2);
-    assert(account.get_owner() == 1, 'value should be 1');
-    assert(account.get_guardian() == 2, 'value should be 2');
+    assert(account.get_owner() == starknet_signer_from_pubkey(1).into_guid(), 'value should be 1');
+    assert(account.get_guardian() == starknet_signer_from_pubkey(2).into_guid(), 'value should be 2');
     assert(account.get_guardian_backup() == 0, 'value should be 0');
 }
 
@@ -43,7 +44,7 @@ fn check_transaction_version_on_validate() {
 #[test]
 fn initialized_no_guardian_no_backup() {
     let account = initialize_account_with(1, 0);
-    assert(account.get_owner() == 1, 'value should be 1');
+    assert(account.get_owner() == starknet_signer_from_pubkey(1).into_guid(), 'value should be 1');
     assert(account.get_guardian() == 0, 'guardian should be zero');
     assert(account.get_guardian_backup() == 0, 'guardian backup should be zero');
 }
@@ -73,13 +74,11 @@ fn erc165_supported_interfaces() {
 #[test]
 fn change_owner() {
     let account = initialize_account();
-    assert(account.get_owner() == OWNER().pubkey, 'owner not correctly set');
-    let new_owner_pubkey = NEW_OWNER().pubkey;
-    let signer_signature = SignerSignature::Starknet(
-        (new_owner_pubkey.try_into().unwrap(), StarknetSignature { r: NEW_OWNER().sig.r, s: NEW_OWNER().sig.s })
-    );
+    assert(account.get_owner() == starknet_signer_from_pubkey(OWNER().pubkey).into_guid(), 'owner not correctly set');
+    let (signer, signature) = NEW_OWNER();
+    let signer_signature = SignerSignature::Starknet((signer, signature));
     account.change_owner(signer_signature);
-    assert(account.get_owner() == new_owner_pubkey, 'value should be new owner pub');
+    assert(account.get_owner() == signer_signature.signer().into_guid(), 'value should be new owner pub');
 }
 
 #[test]
@@ -87,10 +86,8 @@ fn change_owner() {
 fn change_owner_only_self() {
     let account = initialize_account();
     start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
-    let new_owner_pubkey = NEW_OWNER().pubkey;
-    let signer_signature = SignerSignature::Starknet(
-        (new_owner_pubkey.try_into().unwrap(), StarknetSignature { r: NEW_OWNER().sig.r, s: NEW_OWNER().sig.s })
-    );
+    let (signer, signature) = NEW_OWNER();
+    let signer_signature = SignerSignature::Starknet((signer, signature));
     account.change_owner(signer_signature);
 }
 
@@ -98,9 +95,9 @@ fn change_owner_only_self() {
 #[should_panic(expected: ('argent/invalid-owner-sig',))]
 fn change_owner_invalid_message() {
     let account = initialize_account();
-    let new_owner = NEW_OWNER().pubkey;
+    let (signer, _) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet(
-        (new_owner.try_into().unwrap(), StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s })
+        (signer, StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s })
     );
     account.change_owner(signer_signature);
 }
@@ -109,10 +106,8 @@ fn change_owner_invalid_message() {
 #[should_panic(expected: ('argent/invalid-owner-sig',))]
 fn change_owner_wrong_pub_key() {
     let account = initialize_account();
-    let wrong_owner = WRONG_OWNER().pubkey;
-    let signer_signature = SignerSignature::Starknet(
-        (wrong_owner.try_into().unwrap(), StarknetSignature { r: NEW_OWNER().sig.r, s: NEW_OWNER().sig.s })
-    );
+    let (_, signature) = NEW_OWNER();
+    let signer_signature = SignerSignature::Starknet((WRONG_OWNER().pubkey.try_into().unwrap(), signature));
     account.change_owner(signer_signature);
 }
 

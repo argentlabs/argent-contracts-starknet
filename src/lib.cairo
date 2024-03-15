@@ -50,6 +50,7 @@ mod utils {
     mod asserts;
     mod bytes;
     mod calls;
+    mod hashing;
     mod mock_erc20;
     mod multicall;
     mod serialization;

@@ -2,6 +2,7 @@ use argent::signer::eip191::is_valid_eip191_signature;
 use argent::signer::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };
+use argent::utils::hashing::poseidon_2;
 use ecdsa::check_ecdsa_signature;
 use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, PoseidonTrait};
@@ -119,24 +120,14 @@ fn new_web_authn_signer(origin: felt252, rp_id_hash: u256, pubkey: u256) -> Weba
 impl SignerTraitImpl of SignerTrait<Signer> {
     #[inline(always)]
     fn into_guid(self: Signer) -> felt252 {
-        // TODO avoiding excesive hashing rounds
         match self {
-            Signer::Starknet(signer) => {
-                let (hash, _, _) = hades_permutation(STARKNET_SIGNER_TYPE, signer.pubkey.into(), 2);
-                hash
-            },
-            Signer::Secp256k1(signer) => {
-                let (hash, _, _) = hades_permutation(SECP256K1_SIGNER_TYPE, signer.pubkey_hash.address, 2);
-                hash
-            },
+            Signer::Starknet(signer) => poseidon_2(STARKNET_SIGNER_TYPE, signer.pubkey.into()),
+            Signer::Secp256k1(signer) => poseidon_2(SECP256K1_SIGNER_TYPE, signer.pubkey_hash.address.into()),
             Signer::Secp256r1(signer) => {
                 let pubkey: u256 = signer.pubkey.into();
                 PoseidonTrait::new().update_with(SECP256R1_SIGNER_TYPE).update_with(pubkey).finalize()
             },
-            Signer::Eip191(signer) => {
-                let (hash, _, _) = hades_permutation(EIP191_SIGNER_TYPE, signer.eth_address.address, 2);
-                hash
-            },
+            Signer::Eip191(signer) => poseidon_2(EIP191_SIGNER_TYPE, signer.eth_address.address.into()),
             Signer::Webauthn(signer) => {
                 let origin: felt252 = signer.origin.into();
                 let rp_id_hash: u256 = signer.rp_id_hash.into();
@@ -177,18 +168,9 @@ impl SignerStorageValueImpl of SignerTrait<SignerStorageValue> {
     #[inline(always)]
     fn into_guid(self: SignerStorageValue) -> felt252 {
         match self.signer_type {
-            SignerType::Starknet => {
-                let (hash, _, _) = hades_permutation(STARKNET_SIGNER_TYPE, self.stored_value, 2);
-                hash
-            },
-            SignerType::Eip191 => {
-                let (hash, _, _) = hades_permutation(EIP191_SIGNER_TYPE, self.stored_value, 2);
-                hash
-            },
-            SignerType::Secp256k1 => {
-                let (hash, _, _) = hades_permutation(SECP256K1_SIGNER_TYPE, self.stored_value, 2);
-                hash
-            },
+            SignerType::Starknet => poseidon_2(STARKNET_SIGNER_TYPE, self.stored_value),
+            SignerType::Eip191 => poseidon_2(EIP191_SIGNER_TYPE, self.stored_value),
+            SignerType::Secp256k1 => poseidon_2(SECP256K1_SIGNER_TYPE, self.stored_value),
             _ => self.stored_value,
         }
     }
@@ -304,4 +286,39 @@ fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, assertion:
 
     let signed_hash = get_webauthn_hash(@assertion);
     is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, assertion.signature)
+}
+
+trait SignerSpanTrait {
+    #[must_use]
+    #[inline(always)]
+    fn to_guid_list(self: @Span<Signer>) -> Array<felt252>;
+}
+
+impl SignerSpanTraitImpl of SignerSpanTrait {
+    #[must_use]
+    fn to_guid_list(self: @Span<Signer>) -> Array<felt252> {
+        let mut signers = *self;
+        let mut guids = array![];
+        loop {
+            match signers.pop_front() {
+                Option::Some(signer) => { guids.append((*signer).into_guid()); },
+                Option::None => { break; },
+            };
+        };
+        guids
+    }
+}
+
+fn assert_sorted_guids(mut guids: Span<felt252>, error_message: felt252) {
+    let mut last_guid: u256 = 0;
+    loop {
+        match guids.pop_front() {
+            Option::Some(guid) => {
+                let guid_u256: u256 = (*guid).into();
+                assert(guid_u256 > last_guid, error_message);
+                last_guid = guid_u256;
+            },
+            Option::None => { break; },
+        };
+    };
 }

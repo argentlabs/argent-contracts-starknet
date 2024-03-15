@@ -124,8 +124,7 @@ export async function deployMultisig1_1(
   return deployMultisig({ ...params, threshold: 1, signersLength: 1 });
 }
 
-const sortedKeyPairs = (length: number) =>
-  randomStarknetKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));
+const sortedKeyPairs = (length: number) => randomStarknetKeyPairs(length).sort((a, b) => (a.guid < b.guid ? -1 : 1));
 
 const keysToSigners = (keys: KeyPair[]) => keys.map(({ signer }) => signer);
 

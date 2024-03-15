@@ -4,18 +4,14 @@ import {
   deployAccountWithoutGuardian,
   provider,
   getEthContract,
-  deployFixedWebauthnAccount,
   restart,
-  declareContract,
   removeFromCache,
   deployOldAccount,
-  LegacyStarknetKeyPair,
-  signChangeOwnerMessage,
-  starknetSignatureType,
   StarknetKeyPair,
   EthKeyPair,
   Secp256r1KeyPair,
   Eip191KeyPair,
+  WebauthnOwner,
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
 
@@ -24,7 +20,6 @@ const profiler = newProfiler(provider);
 if (provider.isDevnet) {
   await restart();
 }
-// With the KeyPairs hardcoded, we gotta reset to avoid some issues
 removeFromCache("Proxy");
 removeFromCache("OldArgentAccount");
 removeFromCache("ArgentAccount");
@@ -39,22 +34,6 @@ const guardian = new StarknetKeyPair(43n);
   const { account } = await deployOldAccount();
   ethContract.connect(account);
   await profiler.profile("Old account", await ethContract.transfer(recipient, amount));
-}
-
-{
-  const { account, accountContract } = await deployAccount({
-    owner: starknetOwner,
-    guardian,
-    salt: "0x1",
-  });
-  const owner = await accountContract.get_owner();
-  const newOwner = new LegacyStarknetKeyPair();
-  const chainId = await provider.getChainId();
-  const [r, s] = await signChangeOwnerMessage(account.address, owner, newOwner, chainId);
-  await profiler.profile(
-    "Change owner",
-    await accountContract.change_owner(starknetSignatureType(newOwner.publicKey, r, s)),
-  );
 }
 
 {
@@ -112,19 +91,14 @@ const guardian = new StarknetKeyPair(43n);
   );
 }
 
-// {
-//   await restart();
-//   removeFromCache("ArgentAccount");
-//   const classHash = await declareContract("ArgentAccount");
-//   const account = await deployFixedWebauthnAccount(classHash);
-//   const ethContract = await getEthContract();
-//   ethContract.connect(account);
-//   const recipient = 69;
-//   await profiler.profile(
-//     "Fixed webauthn w/o guardian",
-//     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),
-//   );
-// }
+{
+  const { account } = await deployAccount({ owner: new WebauthnOwner(), salt: "0x7" });
+  ethContract.connect(account);
+  await profiler.profile(
+    "Webauthn w/o guardian",
+    await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),
+  );
+}
 
 profiler.printSummary();
 profiler.updateOrCheckReport();

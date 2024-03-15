@@ -560,7 +560,12 @@ mod ArgentAccount {
 
         fn get_owner(self: @ContractState) -> felt252 {
             let owner = self.read_owner();
-            assert(owner.signer_type == SignerType::Starknet, 'argent/only_guid');
+            assert(
+                owner.signer_type == SignerType::Starknet
+                    || owner.signer_type == SignerType::Eip191
+                    || owner.signer_type == SignerType::Secp256k1,
+                'argent/only_guid'
+            );
             owner.stored_data
         }
 
@@ -572,7 +577,12 @@ mod ArgentAccount {
         fn get_guardian(self: @ContractState) -> felt252 {
             match self.read_guardian() {
                 Option::Some(guardian) => {
-                    assert(guardian.signer_type == SignerType::Starknet, 'argent/only_guid');
+                    assert(
+                        guardian.signer_type == SignerType::Starknet
+                            || guardian.signer_type == SignerType::Eip191
+                            || guardian.signer_type == SignerType::Secp256k1,
+                        'argent/only_guid'
+                    );
                     guardian.stored_data
                 },
                 Option::None => { 0 },
@@ -589,7 +599,12 @@ mod ArgentAccount {
         fn get_guardian_backup(self: @ContractState) -> felt252 {
             match self.read_guardian_backup() {
                 Option::Some(guardian_backup) => {
-                    assert(guardian_backup.signer_type == SignerType::Starknet, 'argent/only_guid');
+                    assert(
+                        guardian_backup.signer_type == SignerType::Starknet
+                            || guardian_backup.signer_type == SignerType::Eip191
+                            || guardian_backup.signer_type == SignerType::Secp256k1,
+                        'argent/only_guid'
+                    );
                     guardian_backup.stored_data
                 },
                 Option::None => { 0 },

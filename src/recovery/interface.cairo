@@ -160,7 +160,7 @@ impl PackEscape of starknet::StorePacking<Escape, Array<felt252>> {
     }
 }
 
-// Packing ready_at, escape_type and new_signer_type within same felt:
+// Packing ready_at, escape_type and new_signer.signer_type within same felt:
 // felt1 bits [0; 63] => ready_at
 // felt1 bits [64; 127] => escape_type
 // felt1 bits [128; 191] => new_signer_type

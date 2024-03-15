@@ -121,7 +121,10 @@ impl SignerTraitImpl of SignerTrait<Signer> {
     fn into_guid(self: Signer) -> felt252 {
         // TODO avoiding excesive hashing rounds
         match self {
-            Signer::Starknet(signer) => signer.pubkey.into(),
+            Signer::Starknet(signer) => {
+                let (hash, _, _) = hades_permutation(STARKNET_SIGNER_TYPE, signer.pubkey.into(), 2);
+                hash
+            },
             Signer::Secp256k1(signer) => {
                 let (hash, _, _) = hades_permutation(SECP256K1_SIGNER_TYPE, signer.pubkey_hash.address, 2);
                 hash
@@ -176,6 +179,14 @@ impl SignerStorageValueImpl of SignerTrait<SignerStorageValue> {
         match self.signer_type {
             SignerType::Starknet => {
                 let (hash, _, _) = hades_permutation(STARKNET_SIGNER_TYPE, self.stored_data, 2);
+                hash
+            },
+            SignerType::Eip191 => {
+                let (hash, _, _) = hades_permutation(EIP191_SIGNER_TYPE, self.stored_data, 2);
+                hash
+            },
+            SignerType::Secp256k1 => {
+                let (hash, _, _) = hades_permutation(SECP256K1_SIGNER_TYPE, self.stored_data, 2);
                 hash
             },
             _ => self.stored_data,

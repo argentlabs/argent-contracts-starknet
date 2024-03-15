@@ -36,8 +36,15 @@ enum Signer {
     Webauthn: WebauthnSigner,
 }
 
+#[derive(Drop, Copy, Serde, PartialEq, Default)]
+struct SignerStorageValue {
+    stored_data: felt252,
+    signer_type: SignerType,
+}
+
 trait SignerTrait<T> {
     fn into_guid(self: T) -> felt252;
+    fn storage_value(self: @T) -> SignerStorageValue;
     fn get_type(self: T) -> SignerType;
 }
 
@@ -142,6 +149,27 @@ impl SignerTraitImpl of SignerTrait<Signer> {
         }
     }
 
+    #[inline(always)]
+    fn storage_value(self: @Signer) -> SignerStorageValue {
+        match self {
+            Signer::Starknet(signer) => SignerStorageValue {
+                signer_type: SignerType::Starknet, stored_data: (*signer.pubkey).into()
+            },
+            Signer::Secp256k1(signer) => SignerStorageValue {
+                signer_type: SignerType::Secp256k1, stored_data: *signer.pubkey_hash.address
+            },
+            Signer::Secp256r1(_) => SignerStorageValue {
+                signer_type: SignerType::Secp256r1, stored_data: (*self).into_guid()
+            },
+            Signer::Eip191(signer) => SignerStorageValue {
+                signer_type: SignerType::Eip191, stored_data: *signer.eth_address.address
+            },
+            Signer::Webauthn(_) => SignerStorageValue {
+                signer_type: SignerType::Webauthn, stored_data: (*self).into_guid()
+            },
+        }
+    }
+
     fn get_type(self: Signer) -> SignerType {
         match self {
             Signer::Starknet(_) => SignerType::Starknet,
@@ -150,6 +178,28 @@ impl SignerTraitImpl of SignerTrait<Signer> {
             Signer::Eip191(_) => SignerType::Eip191,
             Signer::Webauthn(_) => SignerType::Webauthn,
         }
+    }
+}
+
+impl SignerStorageValueImpl of SignerTrait<SignerStorageValue> {
+    #[inline(always)]
+    fn into_guid(self: SignerStorageValue) -> felt252 {
+        match self.signer_type {
+            SignerType::Starknet => {
+                let (hash, _, _) = hades_permutation(STARKNET_SIGNER_TYPE, self.stored_data, 2);
+                hash
+            },
+            _ => self.stored_data,
+        }
+    }
+
+    #[inline(always)]
+    fn storage_value(self: @SignerStorageValue) -> SignerStorageValue {
+        *self
+    }
+
+    fn get_type(self: SignerStorageValue) -> SignerType {
+        self.signer_type
     }
 }
 
@@ -198,6 +248,38 @@ impl SignerSignatureImpl of SignerSignatureTrait {
             SignerSignature::Secp256r1((signer, _)) => Signer::Secp256r1(signer),
             SignerSignature::Eip191((signer, _)) => Signer::Eip191(signer),
             SignerSignature::Webauthn((signer, _)) => Signer::Webauthn(signer)
+        }
+    }
+}
+
+impl SignerTypeIntoFelt252 of Into<SignerType, felt252> {
+    #[inline(always)]
+    fn into(self: SignerType) -> felt252 implicits() nopanic {
+        match self {
+            SignerType::Starknet => 0,
+            SignerType::Secp256k1 => 1,
+            SignerType::Secp256r1 => 2,
+            SignerType::Eip191 => 3,
+            SignerType::Webauthn => 4,
+        }
+    }
+}
+
+impl U256TryIntoSignerType of TryInto<u256, SignerType> {
+    #[inline(always)]
+    fn try_into(self: u256) -> Option<SignerType> {
+        if self == 0 {
+            Option::Some(SignerType::Starknet)
+        } else if self == 1 {
+            Option::Some(SignerType::Secp256k1)
+        } else if self == 2 {
+            Option::Some(SignerType::Secp256r1)
+        } else if self == 3 {
+            Option::Some(SignerType::Eip191)
+        } else if self == 4 {
+            Option::Some(SignerType::Webauthn)
+        } else {
+            Option::None
         }
     }
 }

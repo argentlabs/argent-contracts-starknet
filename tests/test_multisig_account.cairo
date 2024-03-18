@@ -2,7 +2,7 @@ use argent::presets::multisig_account::ArgentMultisigAccount;
 use argent::signer::signer_signature::{
     Signer, StarknetSigner, SignerSignature, SignerTrait, starknet_signer_from_pubkey
 };
-use snforge_std::{get_class_hash, declare, ContractClass, ContractClassTrait};
+use snforge_std::{get_class_hash, declare, ContractClass, ContractClassTrait, spy_events, SpyOn, EventSpy, EventFetcher, event_name_hash};
 use super::setup::constants::{MULTISIG_OWNER};
 use super::setup::multisig_test_setup::{
     initialize_multisig, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
@@ -12,8 +12,7 @@ use super::setup::multisig_test_setup::{
 #[test]
 fn valid_initialize() {
     let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
-    let signers_array = array![signer_1];
-    let multisig = initialize_multisig_with(threshold: 1, signers: signers_array.span());
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1].span());
     assert(multisig.get_threshold() == 1, 'threshold not set');
     // test if is signer correctly returns true
     assert(multisig.is_signer(signer_1), 'is signer cant find signer');
@@ -70,6 +69,7 @@ fn change_threshold() {
 fn add_signers() {
     // init
     let multisig = initialize_multisig_with_one_signer();
+    let mut spy = spy_events(SpyOn::One(multisig.contract_address));
 
     // add signer
     let new_signers = array![starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey)];
@@ -79,6 +79,20 @@ fn add_signers() {
     let signers = multisig.get_signer_guids();
     assert(signers.len() == 2, 'invalid signers length');
     assert(multisig.get_threshold() == 2, 'new threshold not set');
+
+    spy.fetch_events();
+
+    let (from, event) = spy.events.at(0);
+    assert(*from == multisig.contract_address, 'wrong emmitter');
+    assert(*event.keys.at(0) == event_name_hash('OwnerAdded'), 'Wrong event name');
+
+    let (from, event) = spy.events.at(1);
+    assert(*from == multisig.contract_address, 'wrong emmitter');
+    assert(*event.keys.at(0) == event_name_hash('SignerLinked'), 'Wrong event name 1');
+
+    let (from, event) = spy.events.at(2);
+    assert(*from == multisig.contract_address, 'wrong emmitter');
+    assert(*event.keys.at(0) == event_name_hash('ThresholdUpdated'), 'Wrong event name 2');
 }
 
 #[test]

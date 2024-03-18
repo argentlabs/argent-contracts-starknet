@@ -16,8 +16,8 @@ import {
   V3InvocationsSignerDetails,
   stark,
   num,
-  CairoCustomEnum,
   BigNumberish,
+  byteArray,
 } from "starknet";
 import {
   OffChainSession,
@@ -45,10 +45,10 @@ export class DappService {
     public sessionKey: StarknetKeyPair = randomStarknetKeyPair(),
   ) {}
 
-  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: number): OffChainSession {
+  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: bigint): OffChainSession {
     const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
     return {
-      expires_at,
+      expires_at: Number(expires_at),
       allowed_methods,
       metadata,
       session_key_guid: this.sessionKey.guid,
@@ -174,8 +174,8 @@ export class DappService {
     transactionsDetail?: InvocationsSignerDetails,
     outsideExecution?: OutsideExecution,
   ): Promise<ArraySignatureType> {
-    const byteArray = typedData.byteArrayFromString(completedSession.metadata as string);
-    const elements = [byteArray.data.length, ...byteArray.data, byteArray.pending_word, byteArray.pending_word_len];
+    const bArray = byteArray.byteArrayFromString(completedSession.metadata as string);
+    const elements = [bArray.data.length, ...bArray.data, bArray.pending_word, bArray.pending_word_len];
     const metadataHash = hash.computePoseidonHashOnElements(elements);
 
     const session = {

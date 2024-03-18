@@ -245,10 +245,13 @@ mod ArgentUserAccount {
                     required_signatures, excluded_signer_guid
                 )) => {
                     let mut signature_span = signature_array.span();
-                    while !signature_span.is_empty() {
-                        let signer_sig = *signature_span.pop_front().unwrap();
-                        assert(signer_sig.signer().into_guid() != excluded_signer_guid, 'argent/unauthorised_signer')
-                    };
+                    while !signature_span
+                        .is_empty() {
+                            let signer_sig = *signature_span.pop_front().unwrap();
+                            assert(
+                                signer_sig.signer().into_guid() != excluded_signer_guid, 'argent/unauthorised_signer'
+                            )
+                        };
                     required_signatures
                 },
                 Option::None => threshold

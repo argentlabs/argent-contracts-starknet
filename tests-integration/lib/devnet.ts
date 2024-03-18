@@ -12,7 +12,7 @@ export async function increaseTime(timeInSeconds: number | bigint) {
 }
 
 export async function setTime(timeInSeconds: number | bigint) {
-  await handlePost("set_time", { time: Number(timeInSeconds) });
+  await handlePost("set_time", { time: Number(timeInSeconds), generate_block: true });
 }
 
 export async function restart() {

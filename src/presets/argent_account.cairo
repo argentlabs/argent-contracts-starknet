@@ -251,7 +251,7 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             assert_no_unsupported_v3_fields();
-            if self.session.is_session(*tx_info.signature[0]) {
+            if self.session.is_session(tx_info.signature) {
                 self.session.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature,);
             } else {
                 self
@@ -267,7 +267,7 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             let signature = tx_info.signature;
-            if self.session.is_session(*signature[0]) {
+            if self.session.is_session(signature) {
                 let session_timestamp = *signature[1];
                 // can call unwrap safely as the session has already been deserialized 
                 let session_timestamp_u64 = session_timestamp.try_into().unwrap();
@@ -359,7 +359,7 @@ mod ArgentAccount {
         fn execute_from_outside_callback(
             ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
-            if self.session.is_session(*signature[0]) {
+            if self.session.is_session(signature) {
                 self.session.assert_valid_session(calls, outside_execution_hash, signature);
             } else {
                 self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature, is_from_outside: true);

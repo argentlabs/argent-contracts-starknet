@@ -52,7 +52,6 @@ mod utils {
     mod bytes;
     mod calls;
     mod hashing;
-    mod mock_erc20;
     mod multicall;
     mod serialization;
     mod transaction_version;
@@ -60,6 +59,7 @@ mod utils {
 
 mod mocks {
     mod mock_dapp;
+    mod mock_erc20;
     mod multisig_mocks;
     mod recovery_mocks;
     mod signer_list_mocks;

@@ -204,7 +204,8 @@ describe("ArgentAccount: events", function () {
       setTime(initialTime);
       await accountContract.trigger_escape_owner(compiledSigner);
 
-      setTime(initialTime + 1 + 12 * 60 * 60);
+      // increased time to prevent escape too recent error
+      setTime(initialTime + 1 + 12 * 60 * 60 * 2);
       await expectEvent(() => accountContract.trigger_escape_owner(compiledSigner), {
         from_address: account.address,
         eventName: "EscapeCanceled",
@@ -218,7 +219,8 @@ describe("ArgentAccount: events", function () {
       setTime(initialTime);
       await accountContract.trigger_escape_guardian(randomStarknetKeyPair().compiledSignerAsOption);
 
-      setTime(initialTime + 1 + 12 * 60 * 60);
+      // increased time to prevent escape too recent error
+      setTime(initialTime + 1 + 12 * 60 * 60 * 2);
       await expectEvent(() => accountContract.trigger_escape_guardian(randomStarknetKeyPair().compiledSignerAsOption), {
         from_address: account.address,
         eventName: "EscapeCanceled",

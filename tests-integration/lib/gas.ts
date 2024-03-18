@@ -8,14 +8,14 @@ const ethUsd = 2000n;
 
 // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
 const gasWeights: Record<string, number> = {
-  steps: 0.005,
-  pedersen: 0.16,
-  poseidon: 0.16,
-  range_check: 0.08,
-  ecdsa: 10.24,
-  keccak: 10.24,
-  bitwise: 0.32,
-  ec_op: 5.12,
+  steps: 0.0025,
+  pedersen: 0.08,
+  poseidon: 0.08,
+  range_check: 0.04,
+  ecdsa: 5.12,
+  keccak: 5.12,
+  bitwise: 0.16,
+  ec_op: 2.56,
 };
 
 async function profileGasUsage(transactionHash: string, provider: RpcProvider, allowFailedTransactions = false) {
@@ -43,6 +43,10 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     "ecdsa_builtin_applications",
     "bitwise_builtin_applications",
     "keccak_builtin_applications",
+    "segment_arena_builtin",
+    "data_availability",
+    "l1_gas",
+    "l1_data_gas",
   ];
   // all keys in rawResources must be in expectedResources
   if (!Object.keys(rawResources).every((key) => expectedResources.includes(key))) {
@@ -59,6 +63,9 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     keccak: rawResources.keccak_builtin_applications ?? 0,
     bitwise: rawResources.bitwise_builtin_applications ?? 0,
     ec_op: rawResources.ec_op_builtin_applications ?? 0,
+    segment_arena_builtin: rawResources.segment_arena_builtin ?? 0,
+    l1_gas: rawResources.data_availability.l1_gas,
+    l1_data_gas: rawResources.data_availability.l1_data_gas,
   };
 
   const blockNumber = receipt.block_number;
@@ -75,7 +82,8 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   );
   const maxComputationCategory = maxBy(Object.entries(gasPerComputationCategory), ([, gas]) => gas)![0];
   const computationGas = BigInt(gasPerComputationCategory[maxComputationCategory]);
-  const l1CalldataGas = gasUsed - computationGas;
+  const l1CalldataGas = executionResources.l1_gas + executionResources.l1_data_gas;
+  const missingDelta = gasUsed - BigInt(l1CalldataGas) - computationGas;
 
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
 
@@ -84,6 +92,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     gasUsed,
     l1CalldataGas,
     computationGas,
+    missingDelta,
     maxComputationCategory,
     gasPerComputationCategory,
     executionResources: sortedResources,
@@ -122,6 +131,7 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
         storageDiffs: sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         computationGas: Number(profile.computationGas),
         l1CalldataGas: Number(profile.l1CalldataGas),
+        missingDelta: Number(profile.missingDelta),
         maxComputationCategory: profile.maxComputationCategory,
       };
     },

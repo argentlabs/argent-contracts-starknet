@@ -1412,10 +1412,10 @@ slash@^3.0.0:
   resolved "https://registry.yarnpkg.com/slash/-/slash-3.0.0.tgz#6539be870c165adbd5240220dbe361f1bc4d4634"
   integrity sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==
 
-starknet@v6.1.3:
-  version "6.1.3"
-  resolved "https://registry.yarnpkg.com/starknet/-/starknet-6.1.3.tgz#3fed576e9011d9d57178efc79dc01dacae98449c"
-  integrity sha512-scXvRz4aRb6psZWVxpHR8FWu1OEEoVNyguanFeczZ5hpae3MY8LnN/YKo5TFM7kSGXUxDmpXbMrcC9VeQkHJOg==
+starknet@6.5.0:
+  version "6.5.0"
+  resolved "https://registry.yarnpkg.com/starknet/-/starknet-6.5.0.tgz#1b984dcf6e4f1960a64d83a84391e98b9926b345"
+  integrity sha512-3W7cpMPE6u1TAjZoT1gfqAtTpSTkAFXwwVbt9IG3oyk8gxBwzpadcMXZ5JRBOv9p06qfnivRkWl2Q1B4tIrSAg==
   dependencies:
     "@noble/curves" "~1.3.0"
     "@scure/base" "~1.1.3"

@@ -31,7 +31,6 @@ export class ArgentAccount extends Account {
     if (details.resourceBounds) {
       return super.execute(calls, abis, details);
     }
-
     const estimate = await this.estimateFee(calls, details);
     return super.execute(calls, abis, {
       ...details,
@@ -178,7 +177,6 @@ async function deployAccountInner(
   if (finalParams.selfDeploy) {
     const response = await deployer.execute(calls);
     await provider.waitForTransaction(response.transaction_hash);
-
     const { transaction_hash } = await account.deploySelf({
       classHash: finalParams.classHash,
       constructorCalldata,

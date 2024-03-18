@@ -8,7 +8,7 @@ const ethUsd = 2000n;
 
 // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
 const gasWeights: Record<string, number> = {
-  steps: 0.00025,
+  steps: 0.0025,
   pedersen: 0.08,
   poseidon: 0.08,
   range_check: 0.04,

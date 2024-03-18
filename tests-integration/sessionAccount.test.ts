@@ -19,7 +19,7 @@ describe("Hybrid Session Account: execute calls", function () {
   let sessionAccountClassHash: string;
   let mockDappOneContract: Contract;
   let mockErc20Contract: Contract;
-  const initialTime = 24 * 60 * 60;
+  const initialTime = 1710167933n;
 
   before(async () => {
     sessionAccountClassHash = await declareContract("ArgentAccount");
@@ -58,7 +58,7 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150);
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
 
     // 2. Owner and Guardian signs session
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
@@ -84,13 +84,11 @@ describe("Hybrid Session Account: execute calls", function () {
   it("Only execute tx if session not expired", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
-    await setTime(1710167933n);
-
     const backendService = new BackendService(guardian as StarknetKeyPair);
     const dappService = new DappService(backendService);
     const argentX = new ArgentX(account, backendService);
 
-    const expiresAt = 1710182341n;
+    const expiresAt = initialTime + 60n * 24n;
 
     const allowedMethods: AllowedMethod[] = [
       {
@@ -99,7 +97,7 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, Number(expiresAt));
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, expiresAt);
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
     const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
     const accountWithDappSigner = dappService.getAccountWithSessionSigner(
@@ -146,7 +144,7 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150);
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
 
     // 2. Wallet signs session
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));

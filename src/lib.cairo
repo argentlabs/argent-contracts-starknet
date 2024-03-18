@@ -11,6 +11,7 @@ mod introspection {
     mod interface;
     mod src5;
 }
+
 mod multisig {
     mod interface;
     mod multisig;
@@ -58,11 +59,11 @@ mod utils {
 }
 
 mod mocks {
+    mod mock_dapp;
     mod multisig_mocks;
     mod recovery_mocks;
     mod signer_list_mocks;
     mod src5_mocks;
-    mod test_dapp;
 }
 
 mod session {

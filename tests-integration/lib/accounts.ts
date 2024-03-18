@@ -31,7 +31,6 @@ export class ArgentAccount extends Account {
     if (details.resourceBounds) {
       return super.execute(calls, abis, details);
     }
-    details.skipValidate = false;
     const estimate = await this.estimateFee(calls, details);
     return super.execute(calls, abis, {
       ...details,
@@ -39,7 +38,7 @@ export class ArgentAccount extends Account {
         ...estimate.resourceBounds,
         l1_gas: {
           ...estimate.resourceBounds.l1_gas,
-          max_amount: num.toHexString(num.addPercent(estimate.resourceBounds.l1_gas.max_amount, 30) + 170n),
+          max_amount: num.toHexString(num.addPercent(estimate.resourceBounds.l1_gas.max_amount, 30)),
         },
       },
     });
@@ -178,26 +177,11 @@ async function deployAccountInner(
   if (finalParams.selfDeploy) {
     const response = await deployer.execute(calls);
     await provider.waitForTransaction(response.transaction_hash);
-    const { transaction_hash } = await account.deploySelf(
-      {
-        classHash: finalParams.classHash,
-        constructorCalldata,
-        addressSalt: finalParams.salt,
-      },
-
-      {
-        resourceBounds: {
-          l2_gas: {
-            max_amount: "0x0",
-            max_price_per_unit: "0x0",
-          },
-          l1_gas: {
-            max_amount: "0xabc",
-            max_price_per_unit: "0x861c468001",
-          },
-        },
-      },
-    );
+    const { transaction_hash } = await account.deploySelf({
+      classHash: finalParams.classHash,
+      constructorCalldata,
+      addressSalt: finalParams.salt,
+    });
     transactionHash = transaction_hash;
   } else {
     calls.push(

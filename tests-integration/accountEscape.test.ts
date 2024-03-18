@@ -75,7 +75,7 @@ describe("ArgentAccount: escape mechanism", function () {
       const { account, accountContract, guardian } = await deployAccount();
       account.signer = new ArgentSigner(guardian);
 
-      await expectRevertWithErrorMessage("argent/undeserializable", () =>
+      await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
         accountContract.trigger_escape_owner(CallData.compile([zeroStarknetSignatureType()])),
       );
     });

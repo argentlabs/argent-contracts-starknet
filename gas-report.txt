@@ -1,7 +1,7 @@
-Old account: 3,750 gas
-Account: 3,760 gas
-Account w/o guardian: 3,760 gas
-Eth sig w guardian: 7,220 gas
-Secp256r1 w guardian: 10,650 gas
-Eip161 with guardian: 7,250 gas
-Webauthn w/o guardian: 20,630 gas
+Old account: 220 gas
+Account: 220 gas
+Account w/o guardian: 220 gas
+Eth sig w guardian: 790 gas
+Secp256r1 w guardian: 1,340 gas
+Eip161 with guardian: 790 gas
+Webauthn w/o guardian: 3,860 gas

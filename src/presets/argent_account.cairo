@@ -707,7 +707,7 @@ mod ArgentAccount {
             // Check if it's a legacy signature array (there's no support for guardian backup)
             // Legacy signatures are always 2 or 4 items long
             // Shortest signature in modern format is at least 5 items [array_len, signer_type, signer_pubkey, r, s]
-            if (signatures.len() != 2 && signatures.len() != 4) {
+            if signatures.len() != 2 && signatures.len() != 4 {
                 return full_deserialize(signatures).expect('argent/invalid-signature-format');
             }
 
@@ -717,7 +717,7 @@ mod ArgentAccount {
                     StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
                 )
             );
-            if (signatures.is_empty()) {
+            if signatures.is_empty() {
                 return array![owner_signature];
             }
 

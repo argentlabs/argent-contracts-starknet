@@ -35,6 +35,9 @@ trait ITestArgentAccount<TContractState> {
     fn get_owner(self: @TContractState) -> felt252;
     fn get_guardian(self: @TContractState) -> felt252;
     fn get_guardian_backup(self: @TContractState) -> felt252;
+    fn get_owner_guid(self: @TContractState) -> felt252;
+    fn get_guardian_guid(self: @TContractState) -> felt252;
+    fn get_guardian_backup_guid(self: @TContractState) -> felt252;
     fn get_escape(self: @TContractState) -> LegacyEscape;
     fn get_version(self: @TContractState) -> Version;
     fn get_name(self: @TContractState) -> felt252;

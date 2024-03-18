@@ -28,12 +28,12 @@ fn test_double_signature() {
 
     let signature = to_starknet_signer_signatures(
         array![
-            MULTISIG_OWNER(1).pubkey,
-            MULTISIG_OWNER(1).sig.r,
-            MULTISIG_OWNER(1).sig.s,
             MULTISIG_OWNER(2).pubkey,
             MULTISIG_OWNER(2).sig.r,
-            MULTISIG_OWNER(2).sig.s
+            MULTISIG_OWNER(2).sig.s,
+            MULTISIG_OWNER(1).pubkey,
+            MULTISIG_OWNER(1).sig.r,
+            MULTISIG_OWNER(1).sig.s
         ]
     );
     assert(multisig.is_valid_signature(tx_hash, signature) == VALIDATED, 'bad signature');
@@ -49,12 +49,12 @@ fn test_double_signature_order() {
 
     let signature = to_starknet_signer_signatures(
         array![
-            MULTISIG_OWNER(2).pubkey,
-            MULTISIG_OWNER(2).sig.r,
-            MULTISIG_OWNER(2).sig.s,
             MULTISIG_OWNER(1).pubkey,
             MULTISIG_OWNER(1).sig.r,
-            MULTISIG_OWNER(1).sig.s
+            MULTISIG_OWNER(1).sig.s,
+            MULTISIG_OWNER(2).pubkey,
+            MULTISIG_OWNER(2).sig.r,
+            MULTISIG_OWNER(2).sig.s
         ]
     );
     multisig.is_valid_signature(tx_hash, signature);

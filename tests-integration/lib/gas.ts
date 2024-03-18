@@ -1,10 +1,11 @@
 import { exec } from "child_process";
 import fs from "fs";
-import { isUndefined, mapValues, maxBy, sortBy, sum } from "lodash-es";
+import { mapValues, maxBy, sortBy, sum } from "lodash-es";
 import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
 import { ensureAccepted, ensureSuccess } from ".";
 
-const ethUsd = 2000n;
+const ethUsd = 4000n;
+// TODO Update formula
 
 // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
 const gasWeights: Record<string, number> = {
@@ -23,14 +24,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   if (!allowFailedTransactions) {
     await ensureSuccess(receipt);
   }
-  let actualFee = 0n;
-  if (receipt.actual_fee?.unit === "WEI") {
-    actualFee = BigInt(receipt.actual_fee.amount);
-  } else if (receipt.actual_fee && isUndefined(receipt.actual_fee.unit)) {
-    actualFee = BigInt(+receipt.actual_fee);
-  } else {
-    throw new Error(`unexpected fee: ${receipt.actual_fee}`);
-  }
+  const actualFee = BigInt(receipt.actual_fee.amount);
   const rawResources = receipt.execution_resources!;
 
   const expectedResources = [
@@ -45,8 +39,6 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     "keccak_builtin_applications",
     "segment_arena_builtin",
     "data_availability",
-    "l1_gas",
-    "l1_data_gas",
   ];
   // all keys in rawResources must be in expectedResources
   if (!Object.keys(rawResources).every((key) => expectedResources.includes(key))) {
@@ -55,7 +47,6 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
 
   const executionResources: Record<string, number> = {
     steps: rawResources.steps,
-    memory_holes: rawResources.memory_holes ?? 0,
     pedersen: rawResources.pedersen_builtin_applications ?? 0,
     range_check: rawResources.range_check_builtin_applications ?? 0,
     poseidon: rawResources.poseidon_builtin_applications ?? 0,
@@ -63,9 +54,6 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     keccak: rawResources.keccak_builtin_applications ?? 0,
     bitwise: rawResources.bitwise_builtin_applications ?? 0,
     ec_op: rawResources.ec_op_builtin_applications ?? 0,
-    segment_arena_builtin: rawResources.segment_arena_builtin ?? 0,
-    l1_gas: rawResources.data_availability.l1_gas,
-    l1_data_gas: rawResources.data_availability.l1_data_gas,
   };
 
   const blockNumber = receipt.block_number;
@@ -82,17 +70,15 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   );
   const maxComputationCategory = maxBy(Object.entries(gasPerComputationCategory), ([, gas]) => gas)![0];
   const computationGas = BigInt(gasPerComputationCategory[maxComputationCategory]);
-  const l1CalldataGas = executionResources.l1_gas + executionResources.l1_data_gas;
-  const missingDelta = gasUsed - BigInt(l1CalldataGas) - computationGas;
 
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
 
   return {
     actualFee,
     gasUsed,
-    l1CalldataGas,
+    l1Gas: rawResources.data_availability.l1_gas,
+    l1DataGas: rawResources.data_availability.l1_data_gas,
     computationGas,
-    missingDelta,
     maxComputationCategory,
     gasPerComputationCategory,
     executionResources: sortedResources,
@@ -126,12 +112,12 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
       const feeUsd = Number((10000n * profile.actualFee * ethUsd) / 10n ** 18n) / 10000;
       return {
         actualFee: Number(profile.actualFee),
-        feeUsd: Number(feeUsd.toFixed(2)),
+        feeUsd: Number(feeUsd.toFixed(4)),
         gasUsed: Number(profile.gasUsed),
         storageDiffs: sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         computationGas: Number(profile.computationGas),
-        l1CalldataGas: Number(profile.l1CalldataGas),
-        missingDelta: Number(profile.missingDelta),
+        l1Gas: Number(profile.l1Gas),
+        l1DataGas: Number(profile.l1DataGas),
         maxComputationCategory: profile.maxComputationCategory,
       };
     },
@@ -155,10 +141,10 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
     },
     formatReport() {
       return Object.entries(profiles)
-        .map(([name, { gasUsed }]) => {
-          const roundingScale = 10 ** (roundingMagnitude ?? 1);
+        .map(([name, { gasUsed, maxComputationCategory }]) => {
+          const roundingScale = 10 ** (roundingMagnitude ?? 0);
           const gasRounded = Math.round(Number(gasUsed) / roundingScale) * roundingScale;
-          return `${name}: ${gasRounded.toLocaleString("en")} gas`;
+          return `${name}: ${gasRounded.toLocaleString("en")} gas (${maxComputationCategory})`;
         })
         .join("\n");
     },

@@ -18,6 +18,7 @@ import {
   num,
   CairoCustomEnum,
   BigNumberish,
+  byteArray,
 } from "starknet";
 import {
   OffChainSession,
@@ -172,8 +173,8 @@ export class DappService {
     transactionsDetail?: InvocationsSignerDetails,
     outsideExecution?: OutsideExecution,
   ): Promise<ArraySignatureType> {
-    const byteArray = typedData.byteArrayFromString(completedSession.metadata as string);
-    const elements = [byteArray.data.length, ...byteArray.data, byteArray.pending_word, byteArray.pending_word_len];
+    const byteArr = byteArray.byteArrayFromString(completedSession.metadata as string);
+    const elements = [byteArr.data.length, ...byteArr.data, byteArr.pending_word, byteArr.pending_word_len];
     const metadataHash = hash.computePoseidonHashOnElements(elements);
 
     const session = {

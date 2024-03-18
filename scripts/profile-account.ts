@@ -18,8 +18,8 @@ import {
 import { newProfiler } from "../tests-integration/lib/gas";
 
 const profiler = newProfiler(provider);
-const fundingAmount = 15e15;
-const maxFee = 12e15;
+const fundingAmount = 2e16;
+const maxFee = 1e16;
 
 let privateKey: string;
 if (provider.isDevnet) {
@@ -46,21 +46,21 @@ const guardian = new StarknetKeyPair(42n);
 //   await profiler.profile("Old account", await ethContract.transfer(recipient, amount));
 // }
 
-// {
-//   const { account, accountContract } = await deployAccount({
-//     owner: starknetOwner,
-//     guardian,
-//     salt: "0x1",
-//   });
-//   const owner = await accountContract.get_owner();
-//   const newOwner = new LegacyStarknetKeyPair();
-//   const chainId = await provider.getChainId();
-//   const [r, s] = await signChangeOwnerMessage(account.address, owner, newOwner, chainId);
-//   await profiler.profile(
-//     "Change owner",
-//     await accountContract.change_owner(starknetSignatureType(newOwner.publicKey, r, s)),
-//   );
-// }
+{
+  const { account, accountContract } = await deployAccount({
+    owner: starknetOwner,
+    guardian,
+    salt: "0x1",
+  });
+  const owner = await accountContract.get_owner();
+  const newOwner = new LegacyStarknetKeyPair();
+  const chainId = await provider.getChainId();
+  const [r, s] = await signChangeOwnerMessage(account.address, owner, newOwner, chainId);
+  await profiler.profile(
+    "Change owner",
+    await accountContract.change_owner(starknetSignatureType(newOwner.publicKey, r, s)),
+  );
+}
 
 {
   const { account } = await deployAccount({

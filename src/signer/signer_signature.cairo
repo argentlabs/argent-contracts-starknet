@@ -3,6 +3,7 @@ use argent::signer::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };
 use argent::utils::hashing::poseidon_2;
+use core::traits::TryInto;
 use ecdsa::check_ecdsa_signature;
 use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, PoseidonTrait};
@@ -37,9 +38,9 @@ enum Signer {
     Webauthn: WebauthnSigner,
 }
 
-#[derive(Drop, Copy, Serde, PartialEq, Default)]
+#[derive(Drop, Copy, Serde, PartialEq)]
 struct SignerStorageValue {
-    stored_value: felt252,
+    stored_value: NonZero<felt252>,
     signer_type: SignerType,
 }
 
@@ -149,16 +150,16 @@ impl SignerTraitImpl of SignerTrait<Signer> {
                 signer_type: SignerType::Starknet, stored_value: (*signer.pubkey).into()
             },
             Signer::Secp256k1(signer) => SignerStorageValue {
-                signer_type: SignerType::Secp256k1, stored_value: *signer.pubkey_hash.address
+                signer_type: SignerType::Secp256k1, stored_value: (*signer).pubkey_hash.address.try_into().unwrap()
             },
             Signer::Secp256r1(_) => SignerStorageValue {
-                signer_type: SignerType::Secp256r1, stored_value: (*self).into_guid()
+                signer_type: SignerType::Secp256r1, stored_value: (*self).into_guid().try_into().unwrap()
             },
             Signer::Eip191(signer) => SignerStorageValue {
-                signer_type: SignerType::Eip191, stored_value: *signer.eth_address.address
+                signer_type: SignerType::Eip191, stored_value: (*signer).eth_address.address.try_into().unwrap()
             },
             Signer::Webauthn(_) => SignerStorageValue {
-                signer_type: SignerType::Webauthn, stored_value: (*self).into_guid()
+                signer_type: SignerType::Webauthn, stored_value: (*self).into_guid().try_into().unwrap()
             },
         }
     }
@@ -168,10 +169,10 @@ impl SignerStorageValueImpl of SignerTrait<SignerStorageValue> {
     #[inline(always)]
     fn into_guid(self: SignerStorageValue) -> felt252 {
         match self.signer_type {
-            SignerType::Starknet => poseidon_2(STARKNET_SIGNER_TYPE, self.stored_value),
-            SignerType::Eip191 => poseidon_2(EIP191_SIGNER_TYPE, self.stored_value),
-            SignerType::Secp256k1 => poseidon_2(SECP256K1_SIGNER_TYPE, self.stored_value),
-            _ => self.stored_value,
+            SignerType::Starknet => poseidon_2(STARKNET_SIGNER_TYPE, self.stored_value.into()),
+            SignerType::Eip191 => poseidon_2(EIP191_SIGNER_TYPE, self.stored_value.into()),
+            SignerType::Secp256k1 => poseidon_2(SECP256K1_SIGNER_TYPE, self.stored_value.into()),
+            _ => self.stored_value.into(),
         }
     }
 

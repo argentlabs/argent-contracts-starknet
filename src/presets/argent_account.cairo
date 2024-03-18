@@ -24,6 +24,8 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, assert_no_unsupported_v3_fields, DA_MODE_L1
         }
     };
+    use core::option::OptionTrait;
+    use core::traits::TryInto;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
@@ -240,7 +242,7 @@ mod ArgentAccount {
         let guardian_guid: felt252 = match guardian {
             Option::Some(guardian) => {
                 let guardian_guid = guardian.into_guid();
-                self.write_guardian(guardian.storage_value());
+                self.init_guardian(guardian.storage_value());
                 self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                 guardian_guid
             },
@@ -430,24 +432,24 @@ mod ArgentAccount {
         fn change_guardian(ref self: ContractState, new_guardian: Option<Signer>) {
             assert_only_self();
 
-            let (new_guardian_guid, new_guardian_storage_value) = match new_guardian {
+            let new_guardian_guid = match new_guardian {
                 Option::Some(guardian) => {
                     let guardian_guid = guardian.into_guid();
-                    let guardian_storage_value = guardian.storage_value();
+                    self.write_guardian(Option::Some(guardian.storage_value()));
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
-                    (guardian_guid, guardian_storage_value)
+                    guardian_guid
                 },
                 Option::None => {
                     // There cannot be a guardian_backup when there is no guardian
                     assert(self.read_guardian_backup().is_none(), 'argent/backup-should-be-null');
-                    (0, Default::default())
+                    self.write_guardian(Option::None);
+                    0
                 },
             };
 
             self.reset_escape();
             self.reset_escape_timestamps();
 
-            self.write_guardian(new_guardian_storage_value);
             self.emit(GuardianChanged { new_guardian: new_guardian_guid });
         }
 
@@ -455,20 +457,22 @@ mod ArgentAccount {
             assert_only_self();
             self.assert_guardian_set();
 
-            let (new_guardian_backup_guid, new_guardian_backup_storage_value) = match new_guardian_backup {
+            let new_guardian_backup_guid = match new_guardian_backup {
                 Option::Some(guardian) => {
                     let guardian_guid = guardian.into_guid();
-                    let guardian_storage_value = guardian.storage_value();
+                    self.write_guardian_backup(Option::Some(guardian.storage_value()));
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
-                    (guardian_guid, guardian_storage_value)
+                    guardian_guid
                 },
-                Option::None => { (0, Default::default()) },
+                Option::None => {
+                    self.write_guardian_backup(Option::None);
+                    0
+                },
             };
 
             self.reset_escape();
             self.reset_escape_timestamps();
 
-            self.write_guardian_backup(new_guardian_backup_storage_value);
             self.emit(GuardianBackupChanged { new_guardian_backup: new_guardian_backup_guid });
         }
 
@@ -486,7 +490,7 @@ mod ArgentAccount {
             self.reset_escape();
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
             let escape = LegacyEscape {
-                ready_at, escape_type: LegacyEscapeType::Owner, new_signer: new_owner.storage_value(),
+                ready_at, escape_type: LegacyEscapeType::Owner, new_signer: Option::Some(new_owner.storage_value()),
             };
             self._escape.write(escape);
 
@@ -503,11 +507,10 @@ mod ArgentAccount {
             let (new_guardian_guid, new_guardian_storage_value) = match new_guardian {
                 Option::Some(guardian) => {
                     let guardian_guid = guardian.into_guid();
-                    let guardian_storage_value = guardian.storage_value();
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
-                    (guardian_guid, guardian_storage_value)
+                    (guardian_guid, Option::Some(guardian.storage_value()))
                 },
-                Option::None => { (0, Default::default()) },
+                Option::None => { (0, Option::None) },
             };
 
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
@@ -529,9 +532,10 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
 
             // update owner
-            self.write_owner(current_escape.new_signer);
+            let new_owner = current_escape.new_signer.unwrap();
+            self.write_owner(new_owner);
             let old_owner_guid = self.read_owner().into_guid();
-            let new_owner_guid = current_escape.new_signer.into_guid();
+            let new_owner_guid = new_owner.into_guid();
             self.emit(OwnerEscaped { new_owner: new_owner_guid });
             self.emit(OwnerRemoved { removed_owner_guid: old_owner_guid });
             self.emit(OwnerAdded { new_owner_guid: new_owner_guid });
@@ -550,7 +554,11 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
 
             self.write_guardian(current_escape.new_signer);
-            self.emit(GuardianEscaped { new_guardian: current_escape.new_signer.into_guid() });
+            let new_guardian_guid = match current_escape.new_signer {
+                Option::Some(guardian) => guardian.into_guid(),
+                Option::None => 0,
+            };
+            self.emit(GuardianEscaped { new_guardian: new_guardian_guid });
             // clear escape
             self._escape.write(Default::default());
         }
@@ -572,7 +580,11 @@ mod ArgentAccount {
                     || owner.signer_type == SignerType::Secp256k1,
                 'argent/only_guid'
             );
-            owner.stored_value
+            owner.stored_value.into()
+        }
+
+        fn get_owner_type(self: @ContractState) -> SignerType {
+            self.read_owner().signer_type
         }
 
         fn get_owner_guid(self: @ContractState) -> felt252 {
@@ -589,10 +601,14 @@ mod ArgentAccount {
                             || guardian.signer_type == SignerType::Secp256k1,
                         'argent/only_guid'
                     );
-                    guardian.stored_value
+                    guardian.stored_value.into()
                 },
                 Option::None => { 0 },
             }
+        }
+
+        fn get_guardian_type(self: @ContractState) -> SignerType {
+            self.read_guardian().expect('argent/no-guardian').signer_type
         }
 
         fn get_guardian_guid(self: @ContractState) -> felt252 {
@@ -611,10 +627,14 @@ mod ArgentAccount {
                             || guardian_backup.signer_type == SignerType::Secp256k1,
                         'argent/only_guid'
                     );
-                    guardian_backup.stored_value
+                    guardian_backup.stored_value.into()
                 },
                 Option::None => { 0 },
             }
+        }
+
+        fn get_guardian_backup_type(self: @ContractState) -> SignerType {
+            self.read_guardian_backup().expect('argent/no-guardian-backup').signer_type
         }
 
         fn get_guardian_backup_guid(self: @ContractState) -> felt252 {
@@ -712,9 +732,6 @@ mod ArgentAccount {
                         assert((*call.calldata).is_empty(), 'argent/invalid-calldata');
                         let current_escape = self._escape.read();
                         assert(current_escape.escape_type == LegacyEscapeType::Owner, 'argent/invalid-escape');
-                        // needed if user started escape in old cairo version and
-                        // upgraded half way through,  then tries to finish the escape in new version
-                        assert(current_escape.new_signer.stored_value != 0, 'argent/null-owner');
 
                         assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
                         let is_valid = self.is_valid_guardian_signature(execution_hash, *signer_signatures.at(0));
@@ -751,12 +768,6 @@ mod ArgentAccount {
                         let current_escape = self._escape.read();
 
                         assert(current_escape.escape_type == LegacyEscapeType::Guardian, 'argent/invalid-escape');
-
-                        // needed if user started escape in old cairo version and
-                        // upgraded half way through, then tries to finish the escape in new version
-                        if current_escape.new_signer.stored_value == 0 {
-                            assert(self.read_guardian_backup().is_none(), 'argent/backup-should-be-null');
-                        }
 
                         assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
                         let is_valid = self.is_valid_owner_signature(execution_hash, *signer_signatures.at(0));
@@ -843,19 +854,12 @@ mod ArgentAccount {
 
         fn is_valid_owner_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
             let signer = signer_signature.signer().storage_value();
-            let owner = self.read_owner();
-            (signer == owner && signer_signature.is_valid_signature(hash))
+            (self.is_owner(signer) && signer_signature.is_valid_signature(hash))
         }
 
         fn is_valid_guardian_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
             let signer = signer_signature.signer().storage_value();
-
-            (signer == self.read_guardian().expect('argent/no-guardian')
-                || match self.read_guardian_backup() {
-                Option::Some(guardian_backup) => { signer == guardian_backup },
-                Option::None => { false },
-                })
-                && signer_signature.is_valid_signature(hash)
+            (self.is_guardian(signer) || self.is_guardian_backup(signer)) && signer_signature.is_valid_signature(hash)
         }
 
         /// The signature is the result of signing the message hash with the new owner private key
@@ -904,8 +908,8 @@ mod ArgentAccount {
 
         fn init_owner(ref self: ContractState, owner: SignerStorageValue) {
             match owner.signer_type {
-                SignerType::Starknet => self._signer.write(owner.stored_value),
-                _ => self._signer_non_stark.write(owner.signer_type.into(), owner.stored_value),
+                SignerType::Starknet => self._signer.write(owner.stored_value.into()),
+                _ => self._signer_non_stark.write(owner.signer_type.into(), owner.stored_value.into()),
             }
         }
 
@@ -918,20 +922,13 @@ mod ArgentAccount {
             }
             // write storage
             match owner.signer_type {
-                SignerType::Starknet => self._signer.write(owner.stored_value),
-                _ => self._signer_non_stark.write(owner.signer_type.into(), owner.stored_value),
+                SignerType::Starknet => self._signer.write(owner.stored_value.into()),
+                _ => self._signer_non_stark.write(owner.signer_type.into(), owner.stored_value.into()),
             }
         }
 
         fn read_owner(self: @ContractState) -> SignerStorageValue {
-            let mut preferred_order = array![
-                SignerType::Starknet,
-                SignerType::Webauthn,
-                SignerType::Eip191,
-                SignerType::Secp256r1,
-                SignerType::Secp256k1
-            ]
-                .span();
+            let mut preferred_order = owner_ordered_types();
             loop {
                 let signer_type = preferred_order.pop_front().expect('argent/owner-not-found');
                 let stored_value = match signer_type {
@@ -939,40 +936,51 @@ mod ArgentAccount {
                     _ => self._signer_non_stark.read((*signer_type).into()),
                 };
                 if (stored_value != 0) {
-                    break SignerStorageValue { stored_value: stored_value, signer_type: *signer_type };
+                    break SignerStorageValue {
+                        stored_value: stored_value.try_into().unwrap(), signer_type: *signer_type
+                    };
                 }
             }
         }
 
-        fn write_guardian(ref self: ContractState, guardian: SignerStorageValue) {
+        #[inline(always)]
+        fn is_owner(self: @ContractState, owner: SignerStorageValue) -> bool {
+            match owner.signer_type {
+                SignerType::Starknet => (self._signer.read() == owner.stored_value.into()),
+                _ => (self._signer_non_stark.read(owner.signer_type.into()) == owner.stored_value.into())
+            }
+        }
+
+        fn init_guardian(ref self: ContractState, guardian: SignerStorageValue) {
+            match guardian.signer_type {
+                SignerType::Starknet => self._guardian.write(guardian.stored_value.into()),
+                _ => self._guardian_non_stark.write(guardian.signer_type.into(), guardian.stored_value.into()),
+            }
+        }
+
+        fn write_guardian(ref self: ContractState, guardian: Option<SignerStorageValue>) {
             // clear storage
             match self.read_guardian() {
                 Option::Some(old_guardian) => {
-                    if (old_guardian.signer_type != guardian.signer_type) {
-                        match old_guardian.signer_type {
-                            SignerType::Starknet => self._guardian.write(0),
-                            _ => self._guardian_non_stark.write(old_guardian.signer_type.into(), 0),
-                        }
+                    match old_guardian.signer_type {
+                        SignerType::Starknet => self._guardian.write(0),
+                        _ => self._guardian_non_stark.write(old_guardian.signer_type.into(), 0),
                     }
                 },
                 Option::None => {},
             };
             // write storage
-            match guardian.signer_type {
-                SignerType::Starknet => self._guardian.write(guardian.stored_value),
-                _ => self._guardian_non_stark.write(guardian.signer_type.into(), guardian.stored_value),
+            if (guardian.is_some()) {
+                let guardian = guardian.unwrap();
+                match guardian.signer_type {
+                    SignerType::Starknet => self._guardian.write(guardian.stored_value.into()),
+                    _ => self._guardian_non_stark.write(guardian.signer_type.into(), guardian.stored_value.into()),
+                }
             }
         }
 
         fn read_guardian(self: @ContractState) -> Option<SignerStorageValue> {
-            let mut preferred_order = array![
-                SignerType::Starknet,
-                SignerType::Eip191,
-                SignerType::Webauthn,
-                SignerType::Secp256r1,
-                SignerType::Secp256k1
-            ]
-                .span();
+            let mut preferred_order = guardian_ordered_types();
             loop {
                 match preferred_order.pop_front() {
                     Option::Some(signer_type) => {
@@ -982,7 +990,9 @@ mod ArgentAccount {
                         };
                         if (guardian_guid != 0) {
                             break Option::Some(
-                                SignerStorageValue { stored_value: guardian_guid, signer_type: *signer_type }
+                                SignerStorageValue {
+                                    stored_value: guardian_guid.try_into().unwrap(), signer_type: *signer_type
+                                }
                             );
                         }
                     },
@@ -991,37 +1001,39 @@ mod ArgentAccount {
             }
         }
 
-        fn write_guardian_backup(ref self: ContractState, guardian_backup: SignerStorageValue) {
+        #[inline(always)]
+        fn is_guardian(self: @ContractState, guardian: SignerStorageValue) -> bool {
+            match guardian.signer_type {
+                SignerType::Starknet => (self._guardian.read() == guardian.stored_value.into()),
+                _ => (self._guardian_non_stark.read(guardian.signer_type.into()) == guardian.stored_value.into())
+            }
+        }
+
+        fn write_guardian_backup(ref self: ContractState, guardian_backup: Option<SignerStorageValue>) {
             // clear storage
             match self.read_guardian_backup() {
                 Option::Some(old_guardian_backup) => {
-                    if (old_guardian_backup.signer_type != guardian_backup.signer_type) {
-                        match old_guardian_backup.signer_type {
-                            SignerType::Starknet => self._guardian_backup.write(0),
-                            _ => self._guardian_backup_non_stark.write(old_guardian_backup.signer_type.into(), 0),
-                        }
+                    match old_guardian_backup.signer_type {
+                        SignerType::Starknet => self._guardian_backup.write(0),
+                        _ => self._guardian_backup_non_stark.write(old_guardian_backup.signer_type.into(), 0),
                     }
                 },
                 Option::None => {},
             };
             // write storage
-            match guardian_backup.signer_type {
-                SignerType::Starknet => self._guardian_backup.write(guardian_backup.stored_value),
-                _ => self
-                    ._guardian_backup_non_stark
-                    .write(guardian_backup.signer_type.into(), guardian_backup.stored_value),
+            if (guardian_backup.is_some()) {
+                let guardian_backup = guardian_backup.unwrap();
+                match guardian_backup.signer_type {
+                    SignerType::Starknet => self._guardian_backup.write(guardian_backup.stored_value.into()),
+                    _ => self
+                        ._guardian_backup_non_stark
+                        .write(guardian_backup.signer_type.into(), guardian_backup.stored_value.into()),
+                }
             }
         }
 
         fn read_guardian_backup(self: @ContractState) -> Option<SignerStorageValue> {
-            let mut preferred_order = array![
-                SignerType::Starknet,
-                SignerType::Eip191,
-                SignerType::Webauthn,
-                SignerType::Secp256r1,
-                SignerType::Secp256k1
-            ]
-                .span();
+            let mut preferred_order = guardian_ordered_types();
             loop {
                 match preferred_order.pop_front() {
                     Option::Some(signer_type) => {
@@ -1031,12 +1043,26 @@ mod ArgentAccount {
                         };
                         if (guardian_backup_guid != 0) {
                             break Option::Some(
-                                SignerStorageValue { stored_value: guardian_backup_guid, signer_type: *signer_type }
+                                SignerStorageValue {
+                                    stored_value: guardian_backup_guid.try_into().unwrap(), signer_type: *signer_type
+                                }
                             );
                         }
                     },
                     Option::None => { break Option::None; },
                 };
+            }
+        }
+
+        #[inline(always)]
+        fn is_guardian_backup(self: @ContractState, guardian_backup: SignerStorageValue) -> bool {
+            match guardian_backup.signer_type {
+                SignerType::Starknet => (self._guardian_backup.read() == guardian_backup.stored_value.into()),
+                _ => (self
+                    ._guardian_backup_non_stark
+                    .read(guardian_backup.signer_type.into()) == guardian_backup
+                    .stored_value
+                    .into())
             }
         }
     }
@@ -1095,5 +1121,19 @@ mod ArgentAccount {
         }
 
         EscapeStatus::Ready
+    }
+
+    fn owner_ordered_types() -> Span<SignerType> {
+        array![
+            SignerType::Starknet, SignerType::Eip191, SignerType::Webauthn, SignerType::Secp256r1, SignerType::Secp256k1
+        ]
+            .span()
+    }
+
+    fn guardian_ordered_types() -> Span<SignerType> {
+        array![
+            SignerType::Starknet, SignerType::Eip191, SignerType::Webauthn, SignerType::Secp256r1, SignerType::Secp256k1
+        ]
+            .span()
     }
 }

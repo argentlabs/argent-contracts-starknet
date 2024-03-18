@@ -31,7 +31,7 @@ export class ArgentAccount extends Account {
     if (details.resourceBounds) {
       return super.execute(calls, abis, details);
     }
-
+    details.skipValidate = false;
     const estimate = await this.estimateFee(calls, details);
     return super.execute(calls, abis, {
       ...details,

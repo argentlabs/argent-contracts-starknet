@@ -81,11 +81,25 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     );
     const account = new Account(provider, accountAddress, selfDeploymentSigner, "1", defaultTxVersion);
 
-    const { transaction_hash } = await account.deploySelf({
-      classHash: finalParams.classHash,
-      constructorCalldata,
-      addressSalt: finalParams.salt,
-    });
+    const { transaction_hash } = await account.deploySelf(
+      {
+        classHash: finalParams.classHash,
+        constructorCalldata,
+        addressSalt: finalParams.salt,
+      },
+      {
+        resourceBounds: {
+          l2_gas: {
+            max_amount: "0x0",
+            max_price_per_unit: "0x0",
+          },
+          l1_gas: {
+            max_amount: "0xabc",
+            max_price_per_unit: "0x861c468001",
+          },
+        },
+      },
+    );
     transactionHash = transaction_hash;
   } else {
     calls.push(
@@ -124,8 +138,7 @@ export async function deployMultisig1_1(
   return deployMultisig({ ...params, threshold: 1, signersLength: 1 });
 }
 
-const sortedKeyPairs = (length: number) =>
-  randomStarknetKeyPairs(length).sort((a, b) => (a.publicKey < b.publicKey ? -1 : 1));
+const sortedKeyPairs = (length: number) => randomStarknetKeyPairs(length).sort((a, b) => (a.guid < b.guid ? -1 : 1));
 
 const keysToSigners = (keys: KeyPair[]) => keys.map(({ signer }) => signer);
 

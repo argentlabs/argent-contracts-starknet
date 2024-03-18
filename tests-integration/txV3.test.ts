@@ -32,7 +32,19 @@ for (const accountType of ["individual", "multisig"]) {
       mockDapp.connect(account);
       const call = mockDapp.populateTransaction.set_number(42n);
       await expectRevertWithErrorMessage("argent/unsupported-paymaster", () => {
-        return account.execute(call, undefined, { paymasterData: ["0x1"] });
+        return account.execute(call, undefined, {
+          paymasterData: ["0x1"],
+          resourceBounds: {
+            l2_gas: {
+              max_amount: "0x0",
+              max_price_per_unit: "0x0",
+            },
+            l1_gas: {
+              max_amount: "0xabc",
+              max_price_per_unit: "0x861c468001",
+            },
+          },
+        });
       });
     });
   });

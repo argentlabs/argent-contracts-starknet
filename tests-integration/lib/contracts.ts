@@ -76,6 +76,7 @@ export function removeFromCache(contractName: string) {
 export function clearCache() {
   Object.keys(classHashCache).forEach((key) => delete classHashCache[key]);
 }
+
 export function getDeclareContractPayload(contractName: string, folder = contractsFolder): DeclareContractPayload {
   const contract: CompiledSierra = readContract(`${folder}${contractName}.contract_class.json`);
   const payload: DeclareContractPayload = { contract };

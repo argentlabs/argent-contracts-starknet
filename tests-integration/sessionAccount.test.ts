@@ -19,6 +19,7 @@ describe("Hybrid Session Account: execute calls", function () {
   let sessionAccountClassHash: string;
   let mockDappOneContract: Contract;
   let mockErc20Contract: Contract;
+  const initialTime = 24 * 60 * 60;
 
   before(async () => {
     sessionAccountClassHash = await declareContract("ArgentAccount");
@@ -38,7 +39,7 @@ describe("Hybrid Session Account: execute calls", function () {
   });
 
   beforeEach(async function () {
-    await setTime(100n);
+    await setTime(initialTime);
   });
 
   it("Call a contract with backend signer", async function () {
@@ -57,7 +58,7 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods);
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150);
 
     // 2. Owner and Guardian signs session
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
@@ -98,7 +99,7 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, expiresAt);
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, Number(expiresAt));
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
     const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
     const accountWithDappSigner = dappService.getAccountWithSessionSigner(
@@ -145,7 +146,7 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods);
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150);
 
     // 2. Wallet signs session
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));

@@ -16,7 +16,6 @@ import {
   V3InvocationsSignerDetails,
   stark,
   num,
-  CairoCustomEnum,
   BigNumberish,
   byteArray,
 } from "starknet";
@@ -34,6 +33,8 @@ import {
   OutsideExecution,
   randomStarknetKeyPair,
   StarknetKeyPair,
+  SignerType,
+  signerTypeToCustomEnum,
 } from ".";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -44,7 +45,7 @@ export class DappService {
     public sessionKey: StarknetKeyPair = randomStarknetKeyPair(),
   ) {}
 
-  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at = 150n): OffChainSession {
+  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: number): OffChainSession {
     const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
     return {
       expires_at,
@@ -173,8 +174,8 @@ export class DappService {
     transactionsDetail?: InvocationsSignerDetails,
     outsideExecution?: OutsideExecution,
   ): Promise<ArraySignatureType> {
-    const byteArr = byteArray.byteArrayFromString(completedSession.metadata as string);
-    const elements = [byteArr.data.length, ...byteArr.data, byteArr.pending_word, byteArr.pending_word_len];
+    const bArray = byteArray.byteArrayFromString(completedSession.metadata as string);
+    const elements = [bArray.data.length, ...bArray.data, bArray.pending_word, bArray.pending_word_len];
     const metadataHash = hash.computePoseidonHashOnElements(elements);
 
     const session = {
@@ -206,7 +207,7 @@ export class DappService {
     const sessionToken = {
       session,
       session_authorisation: accountSessionSignature,
-      session_signature: this.getStarknetSignatureType(this.sessionKey.guid, session_signature),
+      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, session_signature),
       guardian_signature: this.getStarknetSignatureType(
         this.argentBackend.getBackendKey(accountAddress),
         guardian_signature,
@@ -251,13 +252,7 @@ export class DappService {
 
   // TODO Can this be removed?
   // method needed as starknetSignatureType in signer.ts is already compiled
-  private getStarknetSignatureType(signer: BigNumberish, signature: bigint[]) {
-    return new CairoCustomEnum({
-      Starknet: { signer, r: signature[0], s: signature[1] },
-      Secp256k1: undefined,
-      Secp256r1: undefined,
-      Eip191: undefined,
-      Webauthn: undefined,
-    });
+  private getStarknetSignatureType(pubkey: BigNumberish, signature: bigint[]) {
+    return signerTypeToCustomEnum(SignerType.Starknet, { pubkey, r: signature[0], s: signature[1] });
   }
 }

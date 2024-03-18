@@ -33,17 +33,17 @@ export const ESCAPE_TYPE_OWNER = new CairoCustomEnum({
 
 export const signChangeOwnerMessage = async (
   accountAddress: string,
-  owner: bigint,
+  currentOwnerGuid: bigint,
   newOwner: RawSigner,
   chainId: string,
 ) => {
-  const messageHash = await getChangeOwnerMessageHash(accountAddress, owner, chainId);
+  const messageHash = await getChangeOwnerMessageHash(accountAddress, currentOwnerGuid, chainId);
   return newOwner.signRaw(messageHash);
 };
 
-export const getChangeOwnerMessageHash = async (accountAddress: string, owner: bigint, chainId: string) => {
+export const getChangeOwnerMessageHash = async (accountAddress: string, currentOwnerGuid: bigint, chainId: string) => {
   const changeOwnerSelector = hash.getSelectorFromName("change_owner");
-  return hash.computeHashOnElements([changeOwnerSelector, chainId, accountAddress, owner]);
+  return hash.computeHashOnElements([changeOwnerSelector, chainId, accountAddress, currentOwnerGuid]);
 };
 
 export async function hasOngoingEscape(accountContract: Contract): Promise<boolean> {

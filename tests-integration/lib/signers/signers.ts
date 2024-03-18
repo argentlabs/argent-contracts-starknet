@@ -23,6 +23,7 @@ import {
   V3DeclareSignerDetails,
   stark,
   Calldata,
+  shortString,
 } from "starknet";
 
 /**
@@ -190,7 +191,7 @@ export class StarknetKeyPair extends KeyPair {
   }
 
   public get guid() {
-    return BigInt(ec.starkCurve.getStarkKey(this.pk));
+    return this.publicKey;
   }
 
   public get signer(): CairoCustomEnum {

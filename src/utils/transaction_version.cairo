@@ -48,8 +48,10 @@ fn is_estimate_version(tx_version: felt252) -> bool {
 
 #[inline(always)]
 fn is_estimate_transaction() -> bool {
-    if (get_caller_address().is_non_zero()) {
+    let tx_version = get_tx_info().unbox().version;
+    let is_estimate_version = tx_version != TX_V3 && tx_version != TX_V1 && tx_version != TX_V2;
+    if (!is_estimate_version) {
         return false;
     }
-    is_estimate_version(get_tx_info().unbox().version)
+    get_caller_address().is_zero()
 }

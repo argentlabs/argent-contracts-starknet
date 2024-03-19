@@ -75,11 +75,13 @@ fn test_trigger_escape_first_signer() {
     component.trigger_escape(array![SIGNER_1()], array![SIGNER_3()]);
     let (escape, status) = component.get_escape();
     assert_eq!(
-        *escape.target_signers.at(0), starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey).into_guid(),
+        *escape.target_signers.at(0),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey).into_guid(),
         "should be signer 1"
     );
     assert_eq!(
-        *escape.new_signers.at(0), starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
+        *escape.new_signers.at(0),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
         "should be signer 3"
     );
 
@@ -93,11 +95,13 @@ fn test_trigger_escape_last_signer() {
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     let (escape, status) = component.get_escape();
     assert_eq!(
-        *escape.target_signers.at(0), starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(),
+        *escape.target_signers.at(0),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(),
         "should be signer 2"
     );
     assert_eq!(
-        *escape.new_signers.at(0), starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
+        *escape.new_signers.at(0),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
         "should be signer 3"
     );
 
@@ -112,11 +116,13 @@ fn test_trigger_escape_can_override() {
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     let (escape, _) = component.get_escape();
     assert_eq!(
-        *escape.target_signers.at(0), starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey,).into_guid(),
+        *escape.target_signers.at(0),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey,).into_guid(),
         "should be signer 2"
     );
     assert_eq!(
-        *escape.new_signers.at(0), starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey,).into_guid(),
+        *escape.new_signers.at(0),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey,).into_guid(),
         "should be signer 3"
     );
 }

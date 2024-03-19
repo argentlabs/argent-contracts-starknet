@@ -177,11 +177,26 @@ fn test_is_signer_before() {
     let mut component = COMPONENT_STATE();
     component
         .add_signers(array![MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(3).pubkey].span(), 0);
-    assert!(component.is_signer_before(MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(2).pubkey), "signer 1 is before signer 2");
-    assert!(component.is_signer_before(MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(3).pubkey), "signer 1 is before signer 3");
-    assert!(component.is_signer_before(MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(3).pubkey), "signer 2 is before signer 3");
-    assert!(!component.is_signer_before(MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(1).pubkey), "signer 2 is not before signer 1");
-    assert!(!component.is_signer_before(MULTISIG_OWNER(3).pubkey, MULTISIG_OWNER(1).pubkey), "signer 3 is not before signer 1");
-    assert!(!component.is_signer_before(MULTISIG_OWNER(3).pubkey, MULTISIG_OWNER(2).pubkey), "signer 3 is not before signer 2");
+    assert!(
+        component.is_signer_before(MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(2).pubkey), "signer 1 is before signer 2"
+    );
+    assert!(
+        component.is_signer_before(MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(3).pubkey), "signer 1 is before signer 3"
+    );
+    assert!(
+        component.is_signer_before(MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(3).pubkey), "signer 2 is before signer 3"
+    );
+    assert!(
+        !component.is_signer_before(MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(1).pubkey),
+        "signer 2 is not before signer 1"
+    );
+    assert!(
+        !component.is_signer_before(MULTISIG_OWNER(3).pubkey, MULTISIG_OWNER(1).pubkey),
+        "signer 3 is not before signer 1"
+    );
+    assert!(
+        !component.is_signer_before(MULTISIG_OWNER(3).pubkey, MULTISIG_OWNER(2).pubkey),
+        "signer 3 is not before signer 2"
+    );
 }
 

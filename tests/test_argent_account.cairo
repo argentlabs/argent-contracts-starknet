@@ -65,7 +65,10 @@ fn erc165_supported_interfaces() {
     assert!(account.supports_interface(0xa66bd575), "IACCOUNT_OLD_1");
     assert!(account.supports_interface(0x3943f10f), "IACCOUNT_OLD_2");
 
-    assert!(account.supports_interface(0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181), "OUTSIDE_EXECUTION");
+    assert!(
+        account.supports_interface(0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181),
+        "OUTSIDE_EXECUTION"
+    );
 }
 
 #[test]

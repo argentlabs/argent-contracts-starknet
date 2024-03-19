@@ -39,7 +39,7 @@ export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): 
   const fundingCall = finalParams.useTxV3
     ? await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "STRK")
     : await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "ETH");
-  const response = await deployer.execute([fundingCall!!]);
+  const response = await deployer.execute([fundingCall!]);
   await provider.waitForTransaction(response.transaction_hash);
 
   const defaultTxVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;

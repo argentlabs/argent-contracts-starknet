@@ -102,11 +102,11 @@ trait IArgentUserAccount<TContractState> {
     fn get_owner_guid(self: @TContractState) -> felt252;
     fn get_owner_type(self: @TContractState) -> SignerType;
     fn get_guardian(self: @TContractState) -> felt252;
-    fn get_guardian_guid(self: @TContractState) -> felt252;
-    fn get_guardian_type(self: @TContractState) -> SignerType;
+    fn get_guardian_guid(self: @TContractState) -> Option<felt252>;
+    fn get_guardian_type(self: @TContractState) -> Option<SignerType>;
     fn get_guardian_backup(self: @TContractState) -> felt252;
-    fn get_guardian_backup_guid(self: @TContractState) -> felt252;
-    fn get_guardian_backup_type(self: @TContractState) -> SignerType;
+    fn get_guardian_backup_guid(self: @TContractState) -> Option<felt252>;
+    fn get_guardian_backup_type(self: @TContractState) -> Option<SignerType>;
     fn get_escape(self: @TContractState) -> LegacyEscape;
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;

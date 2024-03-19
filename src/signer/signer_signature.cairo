@@ -40,7 +40,7 @@ enum Signer {
 
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct SignerStorageValue {
-    stored_value: NonZero<felt252>,
+    stored_value: felt252,
     signer_type: SignerType,
 }
 
@@ -169,10 +169,10 @@ impl SignerStorageValueImpl of SignerTrait<SignerStorageValue> {
     #[inline(always)]
     fn into_guid(self: SignerStorageValue) -> felt252 {
         match self.signer_type {
-            SignerType::Starknet => poseidon_2(STARKNET_SIGNER_TYPE, self.stored_value.into()),
-            SignerType::Eip191 => poseidon_2(EIP191_SIGNER_TYPE, self.stored_value.into()),
-            SignerType::Secp256k1 => poseidon_2(SECP256K1_SIGNER_TYPE, self.stored_value.into()),
-            _ => self.stored_value.into(),
+            SignerType::Starknet => poseidon_2(STARKNET_SIGNER_TYPE, self.stored_value),
+            SignerType::Eip191 => poseidon_2(EIP191_SIGNER_TYPE, self.stored_value),
+            SignerType::Secp256k1 => poseidon_2(SECP256K1_SIGNER_TYPE, self.stored_value),
+            _ => self.stored_value,
         }
     }
 

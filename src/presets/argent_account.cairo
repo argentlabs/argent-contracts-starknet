@@ -580,7 +580,7 @@ mod ArgentAccount {
                     || owner.signer_type == SignerType::Secp256k1,
                 'argent/only_guid'
             );
-            owner.stored_value.into()
+            owner.stored_value
         }
 
         fn get_owner_type(self: @ContractState) -> SignerType {
@@ -601,20 +601,23 @@ mod ArgentAccount {
                             || guardian.signer_type == SignerType::Secp256k1,
                         'argent/only_guid'
                     );
-                    guardian.stored_value.into()
+                    guardian.stored_value
                 },
                 Option::None => { 0 },
             }
         }
 
-        fn get_guardian_type(self: @ContractState) -> SignerType {
-            self.read_guardian().expect('argent/no-guardian').signer_type
+        fn get_guardian_type(self: @ContractState) -> Option<SignerType> {
+            match self.read_guardian() {
+                Option::Some(guardian) => Option::Some(guardian.signer_type),
+                Option::None => Option::None,
+            }
         }
 
-        fn get_guardian_guid(self: @ContractState) -> felt252 {
+        fn get_guardian_guid(self: @ContractState) -> Option<felt252> {
             match self.read_guardian() {
-                Option::Some(guardian) => { guardian.into_guid() },
-                Option::None => { 0 },
+                Option::Some(guardian) => Option::Some(guardian.into_guid()),
+                Option::None => Option::None,
             }
         }
 
@@ -627,20 +630,23 @@ mod ArgentAccount {
                             || guardian_backup.signer_type == SignerType::Secp256k1,
                         'argent/only_guid'
                     );
-                    guardian_backup.stored_value.into()
+                    guardian_backup.stored_value
                 },
                 Option::None => { 0 },
             }
         }
 
-        fn get_guardian_backup_type(self: @ContractState) -> SignerType {
-            self.read_guardian_backup().expect('argent/no-guardian-backup').signer_type
+        fn get_guardian_backup_type(self: @ContractState) -> Option<SignerType> {
+            match self.read_guardian_backup() {
+                Option::Some(guardian_backup) => Option::Some(guardian_backup.signer_type),
+                Option::None => Option::None,
+            }
         }
 
-        fn get_guardian_backup_guid(self: @ContractState) -> felt252 {
+        fn get_guardian_backup_guid(self: @ContractState) -> Option<felt252> {
             match self.read_guardian_backup() {
-                Option::Some(guardian_backup) => { guardian_backup.into_guid() },
-                Option::None => { 0 },
+                Option::Some(guardian_backup) => Option::Some(guardian_backup.into_guid()),
+                Option::None => Option::None,
             }
         }
 
@@ -908,8 +914,8 @@ mod ArgentAccount {
 
         fn init_owner(ref self: ContractState, owner: SignerStorageValue) {
             match owner.signer_type {
-                SignerType::Starknet => self._signer.write(owner.stored_value.into()),
-                _ => self._signer_non_stark.write(owner.signer_type.into(), owner.stored_value.into()),
+                SignerType::Starknet => self._signer.write(owner.stored_value),
+                _ => self._signer_non_stark.write(owner.signer_type.into(), owner.stored_value),
             }
         }
 
@@ -922,8 +928,8 @@ mod ArgentAccount {
             }
             // write storage
             match owner.signer_type {
-                SignerType::Starknet => self._signer.write(owner.stored_value.into()),
-                _ => self._signer_non_stark.write(owner.signer_type.into(), owner.stored_value.into()),
+                SignerType::Starknet => self._signer.write(owner.stored_value),
+                _ => self._signer_non_stark.write(owner.signer_type.into(), owner.stored_value),
             }
         }
 
@@ -946,15 +952,15 @@ mod ArgentAccount {
         #[inline(always)]
         fn is_owner(self: @ContractState, owner: SignerStorageValue) -> bool {
             match owner.signer_type {
-                SignerType::Starknet => (self._signer.read() == owner.stored_value.into()),
-                _ => (self._signer_non_stark.read(owner.signer_type.into()) == owner.stored_value.into())
+                SignerType::Starknet => (self._signer.read() == owner.stored_value),
+                _ => (self._signer_non_stark.read(owner.signer_type.into()) == owner.stored_value)
             }
         }
 
         fn init_guardian(ref self: ContractState, guardian: SignerStorageValue) {
             match guardian.signer_type {
-                SignerType::Starknet => self._guardian.write(guardian.stored_value.into()),
-                _ => self._guardian_non_stark.write(guardian.signer_type.into(), guardian.stored_value.into()),
+                SignerType::Starknet => self._guardian.write(guardian.stored_value),
+                _ => self._guardian_non_stark.write(guardian.signer_type.into(), guardian.stored_value),
             }
         }
 
@@ -973,8 +979,8 @@ mod ArgentAccount {
             if (guardian.is_some()) {
                 let guardian = guardian.unwrap();
                 match guardian.signer_type {
-                    SignerType::Starknet => self._guardian.write(guardian.stored_value.into()),
-                    _ => self._guardian_non_stark.write(guardian.signer_type.into(), guardian.stored_value.into()),
+                    SignerType::Starknet => self._guardian.write(guardian.stored_value),
+                    _ => self._guardian_non_stark.write(guardian.signer_type.into(), guardian.stored_value),
                 }
             }
         }
@@ -1004,8 +1010,8 @@ mod ArgentAccount {
         #[inline(always)]
         fn is_guardian(self: @ContractState, guardian: SignerStorageValue) -> bool {
             match guardian.signer_type {
-                SignerType::Starknet => (self._guardian.read() == guardian.stored_value.into()),
-                _ => (self._guardian_non_stark.read(guardian.signer_type.into()) == guardian.stored_value.into())
+                SignerType::Starknet => (self._guardian.read() == guardian.stored_value),
+                _ => (self._guardian_non_stark.read(guardian.signer_type.into()) == guardian.stored_value)
             }
         }
 
@@ -1024,10 +1030,10 @@ mod ArgentAccount {
             if (guardian_backup.is_some()) {
                 let guardian_backup = guardian_backup.unwrap();
                 match guardian_backup.signer_type {
-                    SignerType::Starknet => self._guardian_backup.write(guardian_backup.stored_value.into()),
+                    SignerType::Starknet => self._guardian_backup.write(guardian_backup.stored_value),
                     _ => self
                         ._guardian_backup_non_stark
-                        .write(guardian_backup.signer_type.into(), guardian_backup.stored_value.into()),
+                        .write(guardian_backup.signer_type.into(), guardian_backup.stored_value),
                 }
             }
         }
@@ -1057,7 +1063,7 @@ mod ArgentAccount {
         #[inline(always)]
         fn is_guardian_backup(self: @ContractState, guardian_backup: SignerStorageValue) -> bool {
             match guardian_backup.signer_type {
-                SignerType::Starknet => (self._guardian_backup.read() == guardian_backup.stored_value.into()),
+                SignerType::Starknet => (self._guardian_backup.read() == guardian_backup.stored_value),
                 _ => (self
                     ._guardian_backup_non_stark
                     .read(guardian_backup.signer_type.into()) == guardian_backup

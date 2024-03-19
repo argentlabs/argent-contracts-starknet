@@ -3,6 +3,7 @@ use argent::signer::signer_signature::{
     Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait, StarknetSigner,
     starknet_signer_from_pubkey
 };
+use core::option::OptionTrait;
 use snforge_std::cheatcodes::contract_class::ContractClassTrait;
 use snforge_std::{start_prank, declare, start_spoof, get_class_hash, ContractClass, CheatTarget, TxInfoMockTrait};
 use starknet::{contract_address_const, get_tx_info};
@@ -19,8 +20,8 @@ use super::setup::{
 fn initialize() {
     let account = initialize_account_with(1, 2);
     assert(account.get_owner_guid() == starknet_signer_from_pubkey(1).into_guid(), 'value should be 1');
-    assert(account.get_guardian_guid() == starknet_signer_from_pubkey(2).into_guid(), 'value should be 2');
-    assert(account.get_guardian_backup_guid() == 0, 'value should be 0');
+    assert(account.get_guardian_guid().unwrap() == starknet_signer_from_pubkey(2).into_guid(), 'value should be 2');
+    assert(account.get_guardian_backup_guid().is_none(), 'value should be 0');
 }
 
 #[test]
@@ -45,8 +46,8 @@ fn check_transaction_version_on_validate() {
 fn initialized_no_guardian_no_backup() {
     let account = initialize_account_with(1, 0);
     assert(account.get_owner_guid() == starknet_signer_from_pubkey(1).into_guid(), 'value should be 1');
-    assert(account.get_guardian_guid() == 0, 'guardian should be zero');
-    assert(account.get_guardian_backup_guid() == 0, 'guardian backup should be zero');
+    assert(account.get_guardian_guid().is_none(), 'guardian should be zero');
+    assert(account.get_guardian_backup_guid().is_none(), 'guardian backup should be zero');
 }
 
 #[test]

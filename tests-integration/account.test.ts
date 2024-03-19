@@ -36,7 +36,10 @@ describe("ArgentAccount", function () {
 
   for (const useTxV3 of [false, true]) {
     it(`Self deployment (TxV3: ${useTxV3})`, async function () {
-      const { accountContract, owner } = await deployAccountWithoutGuardian({ useTxV3, selfDeploy: true });
+      const { accountContract, owner } = await deployAccountWithoutGuardian({
+        useTxV3,
+        selfDeploy: true,
+      });
 
       await accountContract.get_owner().should.eventually.equal(owner.guid);
       await accountContract.get_guardian().should.eventually.equal(0n);

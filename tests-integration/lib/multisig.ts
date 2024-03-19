@@ -57,7 +57,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   const fundingCall = finalParams.useTxV3
     ? await fundAccountCall(accountAddress, finalParams.fundingAmount ?? 1e16, "STRK") // 0.01 STRK
     : await fundAccountCall(accountAddress, finalParams.fundingAmount ?? 1e15, "ETH"); // 0.001 ETH
-  const calls = [fundingCall];
+  const calls = fundingCall ? [fundingCall] : [];
 
   const transactionVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
 

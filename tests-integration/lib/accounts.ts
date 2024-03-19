@@ -151,7 +151,7 @@ async function deployAccountInner(
   const fundingCall = finalParams.useTxV3
     ? await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK") // 0.01 STRK
     : await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "ETH"); // 1 ETH
-  const calls = [fundingCall];
+  const calls = fundingCall ? [fundingCall] : [];
 
   const transactionVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
   const signer = new ArgentSigner(finalParams.owner, finalParams.guardian);
@@ -251,7 +251,7 @@ export async function upgradeAccount(
 
 export async function fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {
   const call = await fundAccountCall(recipient, amount, token);
-  const response = await deployer.execute([call]);
+  const response = await deployer.execute(call ? [call] : []);
   await provider.waitForTransaction(response.transaction_hash);
 }
 
@@ -259,9 +259,9 @@ export async function fundAccountCall(
   recipient: string,
   amount: number | bigint,
   token: "ETH" | "STRK",
-): Promise<Call> {
+): Promise<Call | undefined> {
   if (amount <= 0n) {
-    throw new Error(`Unsupported amount ${amount}`);
+    return;
   }
   const contractAddress = { ETH: ethAddress, STRK: strkAddress }[token];
   if (!contractAddress) {

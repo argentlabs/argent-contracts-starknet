@@ -256,8 +256,8 @@ export class DappService {
   }
 
   private compileSessionHelper(completedSession: OffChainSession): OnChainSession {
-    const bArray = byteArrayFromString(completedSession.metadata as string);
-    const elements = [byteArray.data.length, ...byteArray.data, byteArray.pending_word, byteArray.pending_word_len];
+    const bArray = byteArray.byteArrayFromString(completedSession.metadata as string);
+    const elements = [bArray.data.length, ...bArray.data, bArray.pending_word, bArray.pending_word_len];
     const metadataHash = hash.computePoseidonHashOnElements(elements);
 
     const session = {

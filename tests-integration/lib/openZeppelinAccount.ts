@@ -21,7 +21,7 @@ export type DeployOzAccountResult = {
   salt: string;
 };
 
-export async function deployOzAccount(params: DeployOzAccountParams): Promise<DeployOzAccountResult> {
+export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): Promise<DeployOzAccountResult> {
   const classHash = await declareContract("OzAccount");
   const finalParams = {
     ...params,
@@ -35,16 +35,11 @@ export async function deployOzAccount(params: DeployOzAccountParams): Promise<De
   });
 
   const contractAddress = hash.calculateContractAddressFromHash(finalParams.salt, classHash, constructorCalldata, 0);
-  const calls: Call[] = [];
-  let fundingCall: Call | null = null;
-  if (finalParams.useTxV3) {
-    fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK"); // 0.01 STRK
-  } else {
-    fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "ETH"); // 1 ETH
-  }
-  if (fundingCall) {
-    calls.push(fundingCall);
-  }
+
+  const fundingCall = finalParams.useTxV3
+    ? await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK")
+    : await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "ETH");
+  const calls = fundingCall ? [fundingCall] : [];
 
   const defaultTxVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
   const account = new Account(provider, contractAddress, finalParams.owner, "1", defaultTxVersion);
@@ -55,13 +50,13 @@ export async function deployOzAccount(params: DeployOzAccountParams): Promise<De
     await provider.waitForTransaction(response.transaction_hash);
   }
   const { transaction_hash: deployTxHash } = await account.deploySelf({
-    classHash: classHash,
+    classHash,
     constructorCalldata,
     addressSalt: finalParams.salt,
   });
 
   await provider.waitForTransaction(deployTxHash);
-  const accountContract = await loadContract(account.address);
+  const accountContract = await loadContract(account.address, classHash);
   accountContract.connect(account);
 
   return { ...finalParams, account, accountContract, deployTxHash };

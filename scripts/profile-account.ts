@@ -12,7 +12,7 @@ import {
   Secp256r1KeyPair,
   Eip191KeyPair,
   WebauthnOwner,
-  deployOzAccount,
+  deployOpenZeppelinAccount,
   LegacyStarknetKeyPair,
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
@@ -49,11 +49,11 @@ const guardian = new StarknetKeyPair(43n);
 {
   const { account } = await deployAccountWithoutGuardian({ owner: starknetOwner, salt: "0x3" });
   ethContract.connect(account);
-  await profiler.profile("Account without guardian", await ethContract.transfer(recipient, amount));
+  await profiler.profile("Account w/o guardian", await ethContract.transfer(recipient, amount));
 }
 
 {
-  const { account } = await deployOzAccount({ owner: new LegacyStarknetKeyPair(42n), salt: "0x1" });
+  const { account } = await deployOpenZeppelinAccount({ owner: new LegacyStarknetKeyPair(42n), salt: "0x1" });
   ethContract.connect(account);
   await profiler.profile("OZ account", await ethContract.transfer(recipient, amount));
 }

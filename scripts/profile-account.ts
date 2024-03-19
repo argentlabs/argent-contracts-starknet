@@ -114,7 +114,7 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
-  const { account } = await deployAccount({ owner: new WebauthnOwner(), salt: "0x7" });
+  const { account } = await deployAccount({ owner: new WebauthnOwner(privateKey), salt: "0x7" });
   ethContract.connect(account);
   await profiler.profile(
     "Webauthn w/o guardian",

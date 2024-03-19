@@ -16,7 +16,7 @@ use starknet::SyscallResultTrait;
 use starknet::{deploy_syscall, contract_address_const, ContractAddress,};
 use super::setup::constants::{MULTISIG_OWNER};
 
-impl PointDisplay of Display<EscapeStatus> {
+impl EscapeStatusDisplay of Display<EscapeStatus> {
     fn fmt(self: @EscapeStatus, ref f: Formatter) -> Result<(), Error> {
         let value: ByteArray = match *self {
             EscapeStatus::None => "None",
@@ -24,8 +24,7 @@ impl PointDisplay of Display<EscapeStatus> {
             EscapeStatus::Ready => "Ready",
             EscapeStatus::Expired => "Expired",
         };
-        let str: ByteArray = format!("EscapeStatus({})", value);
-        f.buffer.append(@str);
+        write!(f, "{value:?}")?;
         Result::Ok(())
     }
 }

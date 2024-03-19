@@ -173,9 +173,9 @@ export class DappService {
     revision: typedData.TypedDataRevision,
     outsideExecution: OutsideExecution,
   ): Promise<ArraySignatureType> {
-    let session = this.compileSessionHelper(completedSession);
+    const session = this.compileSessionHelper(completedSession);
 
-    let guardian_signature = await this.argentBackend.signOutsideTxAndSession(
+    const guardian_signature = await this.argentBackend.signOutsideTxAndSession(
       calls,
       completedSession,
       accountAddress,
@@ -205,9 +205,9 @@ export class DappService {
     accountAddress: string,
     transactionsDetail: InvocationsSignerDetails,
   ): Promise<ArraySignatureType> {
-    let session = this.compileSessionHelper(completedSession);
+    const session = this.compileSessionHelper(completedSession);
 
-    let guardian_signature = await this.argentBackend.signTxAndSession(calls, transactionsDetail, completedSession);
+    const guardian_signature = await this.argentBackend.signTxAndSession(calls, transactionsDetail, completedSession);
     const session_signature = await this.signTxAndSession(completedSession, transactionHash, accountAddress);
     const sessionToken = await this.compileSessionTokenHelper(
       session,

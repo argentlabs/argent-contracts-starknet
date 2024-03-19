@@ -21,9 +21,9 @@ fn remove_signers_first() {
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
-    assert(!multisig.is_signer(signer_1), 'signer 1 was not removed');
-    assert(multisig.is_signer(signer_2), 'signer 2 was removed');
-    assert(multisig.is_signer(signer_3), 'signer 3 was removed');
+    assert!(!multisig.is_signer(signer_1), "signer 1 was not removed");
+    assert!(multisig.is_signer(signer_2), "signer 2 was removed");
+    assert!(multisig.is_signer(signer_3), "signer 3 was removed");
 }
 #[test]
 fn remove_signers_center() {
@@ -41,9 +41,9 @@ fn remove_signers_center() {
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
-    assert(!multisig.is_signer(signer_2), 'signer 2 was not removed');
-    assert(multisig.is_signer(signer_1), 'signer 1 was removed');
-    assert(multisig.is_signer(signer_3), 'signer 3 was removed');
+    assert!(!multisig.is_signer(signer_2), "signer 2 was not removed");
+    assert!(multisig.is_signer(signer_1), "signer 1 was removed");
+    assert!(multisig.is_signer(signer_3), "signer 3 was removed");
 }
 
 #[test]
@@ -62,9 +62,9 @@ fn remove_signers_last() {
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
-    assert(!multisig.is_signer(signer_3), 'signer 3 was not removed');
-    assert(multisig.is_signer(signer_1), 'signer 1 was removed');
-    assert(multisig.is_signer(signer_2), 'signer 2 was removed');
+    assert!(!multisig.is_signer(signer_3), "signer 3 was not removed");
+    assert!(multisig.is_signer(signer_1), "signer 1 was removed");
+    assert!(multisig.is_signer(signer_2), "signer 2 was removed");
 }
 
 #[test]
@@ -83,9 +83,9 @@ fn remove_1_and_2() {
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
-    assert(!multisig.is_signer(signer_1), 'signer 1 was not removed');
-    assert(!multisig.is_signer(signer_2), 'signer 2 was not removed');
-    assert(multisig.is_signer(signer_3), 'signer 3 was removed');
+    assert!(!multisig.is_signer(signer_1), "signer 1 was not removed");
+    assert!(!multisig.is_signer(signer_2), "signer 2 was not removed");
+    assert!(multisig.is_signer(signer_3), "signer 3 was removed");
 }
 
 #[test]
@@ -104,9 +104,9 @@ fn remove_1_and_3() {
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
-    assert(!multisig.is_signer(signer_1), 'signer 1 was not removed');
-    assert(!multisig.is_signer(signer_3), 'signer 3 was not removed');
-    assert(multisig.is_signer(signer_2), 'signer 2 was removed');
+    assert!(!multisig.is_signer(signer_1), "signer 1 was not removed");
+    assert!(!multisig.is_signer(signer_3), "signer 3 was not removed");
+    assert!(multisig.is_signer(signer_2), "signer 2 was removed");
 }
 
 #[test]
@@ -125,9 +125,9 @@ fn remove_2_and_3() {
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
-    assert(!multisig.is_signer(signer_2), 'signer 2 was not removed');
-    assert(!multisig.is_signer(signer_3), 'signer 3 was not removed');
-    assert(multisig.is_signer(signer_1), 'signer 1 was removed');
+    assert!(!multisig.is_signer(signer_2), "signer 2 was not removed");
+    assert!(!multisig.is_signer(signer_3), "signer 3 was not removed");
+    assert!(multisig.is_signer(signer_1), "signer 1 was removed");
 }
 
 #[test]
@@ -146,9 +146,9 @@ fn remove_2_and_1() {
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
-    assert(!multisig.is_signer(signer_2), 'signer 2 was not removed');
-    assert(!multisig.is_signer(signer_1), 'signer 1 was not removed');
-    assert(multisig.is_signer(signer_3), 'signer 3 was removed');
+    assert!(!multisig.is_signer(signer_2), "signer 2 was not removed");
+    assert!(!multisig.is_signer(signer_1), "signer 1 was not removed");
+    assert!(multisig.is_signer(signer_3), "signer 3 was removed");
 }
 
 #[test]
@@ -167,9 +167,9 @@ fn remove_3_and_1() {
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
-    assert(!multisig.is_signer(signer_3), 'signer 3 was not removed');
-    assert(!multisig.is_signer(signer_1), 'signer 1 was not removed');
-    assert(multisig.is_signer(signer_2), 'signer 2 was removed');
+    assert!(!multisig.is_signer(signer_3), "signer 3 was not removed");
+    assert!(!multisig.is_signer(signer_1), "signer 1 was not removed");
+    assert!(multisig.is_signer(signer_2), "signer 2 was removed");
 }
 
 #[test]
@@ -188,9 +188,9 @@ fn remove_3_and_2() {
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
-    assert(!multisig.is_signer(signer_3), 'signer 3 was not removed');
-    assert(!multisig.is_signer(signer_2), 'signer 2 was not removed');
-    assert(multisig.is_signer(signer_1), 'signer 1 was removed');
+    assert!(!multisig.is_signer(signer_3), "signer 3 was not removed");
+    assert!(!multisig.is_signer(signer_2), "signer 2 was not removed");
+    assert!(multisig.is_signer(signer_1), "signer 1 was removed");
 }
 
 #[test]

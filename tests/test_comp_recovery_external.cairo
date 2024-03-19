@@ -206,9 +206,9 @@ fn test_execute_escape() {
     let (escape, status) = component.get_escape();
     assert_eq!(status, EscapeStatus::None, "status should be None");
     assert_eq!(escape.ready_at, 0, "should be no recovery");
-    assert(multisig_component.is_signer(SIGNER_1()), 'should be signer 1');
-    assert(multisig_component.is_signer(SIGNER_3()), 'should be signer 3');
-    assert(!multisig_component.is_signer(SIGNER_2()), 'should not be signer 2');
+    assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
+    assert!(multisig_component.is_signer(SIGNER_3()), "should be signer 3");
+    assert!(!multisig_component.is_signer(SIGNER_2()), "should not be signer 2");
 }
 
 #[test]
@@ -254,9 +254,9 @@ fn test_cancel_escape() {
     let (escape, status) = component.get_escape();
     assert_eq!(status, EscapeStatus::None, "status should be None");
     assert_eq!(escape.ready_at, 0, "should be no recovery");
-    assert(multisig_component.is_signer(SIGNER_1()), 'should be signer 1');
-    assert(multisig_component.is_signer(SIGNER_2()), 'should be signer 2');
-    assert(!multisig_component.is_signer(SIGNER_3()), 'should not be signer 3');
+    assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
+    assert!(multisig_component.is_signer(SIGNER_2()), "should be signer 2");
+    assert!(!multisig_component.is_signer(SIGNER_3()), "should not be signer 3");
 }
 
 #[test]

@@ -16,7 +16,7 @@ fn valid_initialize() {
     let multisig = initialize_multisig_with(threshold: 1, signers: signers_array.span());
     assert_eq!(multisig.get_threshold(), 1, "threshold not set");
     // test if is signer correctly returns true
-    assert(multisig.is_signer(signer_1), 'is signer cant find signer');
+    assert!(multisig.is_signer(signer_1), "is signer cant find signer");
 
     // test signers list
     let signers_guid = multisig.get_signer_guids();
@@ -32,8 +32,8 @@ fn valid_initialize_two_signers() {
     let signers_array = array![signer_1, signer_2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
     // test if is signer correctly returns true
-    assert(multisig.is_signer(signer_1), 'is signer cant find signer 1');
-    assert(multisig.is_signer(signer_2), 'is signer cant find signer 2');
+    assert!(multisig.is_signer(signer_1), "is signer cant find signer 1");
+    assert!(multisig.is_signer(signer_2), "is signer cant find signer 2");
 
     // test signers list
     let signers = multisig.get_signer_guids();

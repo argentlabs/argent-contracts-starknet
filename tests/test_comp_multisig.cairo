@@ -33,9 +33,9 @@ fn test_initialize_3_signers() {
     component.initialize(2, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
 
     assert_eq!(component.get_threshold(), 2, "wrong threshold");
-    assert(component.is_signer(SIGNER_1()), 'should be signer');
-    assert(component.is_signer(SIGNER_2()), 'should be signer');
-    assert(component.is_signer(SIGNER_3()), 'should be signer');
+    assert!(component.is_signer(SIGNER_1()), "should be signer");
+    assert!(component.is_signer(SIGNER_2()), "should be signer");
+    assert!(component.is_signer(SIGNER_3()), "should be signer");
     let guids = component.get_signer_guids();
     assert_eq!(guids.len(), 3, "wrong signer length");
     assert_eq!(*guids.at(0), SIGNER_1().into_guid(), "should be signer 0");
@@ -104,7 +104,7 @@ fn test_add_1_signer_same_threshold() {
 
     component.add_signers(2, array![SIGNER_3()]);
     assert_eq!(component.get_signer_guids().len(), 3, "wrong signer length");
-    assert(component.is_signer(SIGNER_3()), 'should be signer');
+    assert!(component.is_signer(SIGNER_3()), "should be signer");
 }
 
 #[test]
@@ -116,8 +116,8 @@ fn test_add_2_signers_same_threshold() {
 
     component.add_signers(2, array![SIGNER_2(), SIGNER_3()]);
     assert_eq!(component.get_signer_guids().len(), 3, "wrong signer length");
-    assert(component.is_signer(SIGNER_2()), 'should be signer');
-    assert(component.is_signer(SIGNER_3()), 'should be signer');
+    assert!(component.is_signer(SIGNER_2()), "should be signer");
+    assert!(component.is_signer(SIGNER_3()), "should be signer");
 }
 
 #[test]
@@ -138,7 +138,7 @@ fn test_remove_first_signer() {
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(1, array![SIGNER_1()]);
     assert_eq!(component.get_signer_guids().len(), 2, "wrong signer length");
-    assert(!component.is_signer(SIGNER_1()), 'should not be signer');
+    assert!(!component.is_signer(SIGNER_1()), "should not be signer");
 }
 
 #[test]
@@ -148,7 +148,7 @@ fn test_remove_middle_signer() {
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(1, array![SIGNER_2()]);
     assert_eq!(component.get_signer_guids().len(), 2, "wrong signer length");
-    assert(!component.is_signer(SIGNER_2()), 'should not be signer');
+    assert!(!component.is_signer(SIGNER_2()), "should not be signer");
 }
 
 #[test]
@@ -158,7 +158,7 @@ fn test_remove_last_signer() {
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(1, array![SIGNER_3()]);
     assert_eq!(component.get_signer_guids().len(), 2, "wrong signer length");
-    assert(!component.is_signer(SIGNER_3()), 'should not be signer');
+    assert!(!component.is_signer(SIGNER_3()), "should not be signer");
 }
 
 #[test]
@@ -168,8 +168,8 @@ fn test_remove_2_signers() {
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(1, array![SIGNER_3(), SIGNER_1()]);
     assert_eq!(component.get_signer_guids().len(), 1, "wrong signer length");
-    assert(!component.is_signer(SIGNER_3()), 'should not be signer');
-    assert(!component.is_signer(SIGNER_1()), 'should not be signer');
+    assert!(!component.is_signer(SIGNER_3()), "should not be signer");
+    assert!(!component.is_signer(SIGNER_1()), "should not be signer");
 }
 
 #[test]
@@ -208,8 +208,8 @@ fn test_replace_first_signer() {
     component.initialize(1, array![SIGNER_1(), SIGNER_2()]);
     component.replace_signer(SIGNER_1(), SIGNER_3());
     assert_eq!(component.get_signer_guids().len(), 2, "wrong signer length");
-    assert(!component.is_signer(SIGNER_1()), 'should not be signer');
-    assert(component.is_signer(SIGNER_3()), 'should be signer');
+    assert!(!component.is_signer(SIGNER_1()), "should not be signer");
+    assert!(component.is_signer(SIGNER_3()), "should be signer");
 }
 
 #[test]
@@ -219,8 +219,8 @@ fn test_replace_last_signer() {
     component.initialize(1, array![SIGNER_1(), SIGNER_2()]);
     component.replace_signer(SIGNER_2(), SIGNER_3());
     assert_eq!(component.get_signer_guids().len(), 2, "wrong signer length");
-    assert(!component.is_signer(SIGNER_2()), 'should not be signer');
-    assert(component.is_signer(SIGNER_3()), 'should be signer');
+    assert!(!component.is_signer(SIGNER_2()), "should not be signer");
+    assert!(component.is_signer(SIGNER_3()), "should be signer");
 }
 
 #[test]

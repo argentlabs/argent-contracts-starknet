@@ -45,10 +45,10 @@ export class DappService {
     public sessionKey: StarknetKeyPair = randomStarknetKeyPair(),
   ) {}
 
-  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: number): OffChainSession {
+  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: bigint): OffChainSession {
     const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
     return {
-      expires_at,
+      expires_at: Number(expires_at),
       allowed_methods,
       metadata,
       session_key_guid: this.sessionKey.guid,

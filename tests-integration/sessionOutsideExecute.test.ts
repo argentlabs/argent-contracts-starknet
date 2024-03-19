@@ -13,7 +13,7 @@ import {
   StarknetKeyPair,
 } from "./lib";
 
-const initialTime = 1713139200;
+const initialTime = 1713139200n;
 describe("ArgentAccount: outside execution", function () {
   // Avoid timeout
   this.timeout(320000);
@@ -46,7 +46,7 @@ describe("ArgentAccount: outside execution", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 1);
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 1n);
 
     const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
 

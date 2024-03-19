@@ -81,25 +81,11 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     );
     const account = new Account(provider, accountAddress, selfDeploymentSigner, "1", defaultTxVersion);
 
-    const { transaction_hash } = await account.deploySelf(
-      {
-        classHash: finalParams.classHash,
-        constructorCalldata,
-        addressSalt: finalParams.salt,
-      },
-      {
-        resourceBounds: {
-          l2_gas: {
-            max_amount: "0x0",
-            max_price_per_unit: "0x0",
-          },
-          l1_gas: {
-            max_amount: "0xabc",
-            max_price_per_unit: "0x861c468001",
-          },
-        },
-      },
-    );
+    const { transaction_hash } = await account.deploySelf({
+      classHash: finalParams.classHash,
+      constructorCalldata,
+      addressSalt: finalParams.salt,
+    });
     transactionHash = transaction_hash;
   } else {
     calls.push(

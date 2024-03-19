@@ -15,10 +15,11 @@ jobs:
       - name: Install project
         run: yarn install --frozen-lockfile
 
-      - name: Start devnet in background
-        run: |
-          scarb run start-devnet &
-          ./scripts/wait-devnet-ready.sh
+      - name: Build Docker image
+        run: docker build -t my-starknet .
+
+      - name: Run Docker container
+        run: docker run -d -p 127.0.0.1:5050:5050 my-starknet
 
       - name: Run integration tests
         run: scarb --release build && tsc && yarn mocha tests-integration/*.test.ts --forbid-only --forbid-pending
@@ -35,10 +36,11 @@ jobs:
       - name: Install project
         run: yarn install --frozen-lockfile
 
-      - name: Start devnet in background
-        run: |
-          scarb run start-devnet &
-          ./scripts/wait-devnet-ready.sh
+      - name: Build Docker image
+        run: docker build -t my-starknet .
+
+      - name: Run Docker container
+        run: docker run -d -p 127.0.0.1:5050:5050 my-starknet
 
       - name: Gas report
         run: scarb run profile --check

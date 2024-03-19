@@ -12,9 +12,9 @@ fn create_message_hash() {
     let mut message = authenticator_data;
     extend(ref message, @client_data_hash);
     let message_hash: u256 = sha256(message).span().try_into().expect('invalid-message-hash');
-    assert(
-        message_hash == u256 { low: 0xf6af5a3a95f9d23efc991411a4c661c6, high: 0x8b17cd9d759c752ec650f5db242c5a74 },
-        'wrong hash'
+    assert_eq!(
+        message_hash, u256 { low: 0xf6af5a3a95f9d23efc991411a4c661c6, high: 0x8b17cd9d759c752ec650f5db242c5a74 },
+        "wrong hash"
     );
 }
 

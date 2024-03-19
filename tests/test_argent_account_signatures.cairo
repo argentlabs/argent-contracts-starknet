@@ -13,8 +13,8 @@ use super::setup::{
 #[test]
 fn valid_no_guardian() {
     let signatures = to_starknet_signer_signatures(array![OWNER().pubkey, OWNER().sig.r, OWNER().sig.s]);
-    assert(
-        initialize_account_without_guardian().is_valid_signature(tx_hash, signatures) == VALIDATED, 'invalid signature'
+    assert_eq!(
+        initialize_account_without_guardian().is_valid_signature(tx_hash, signatures), VALIDATED, "invalid signature"
     );
 }
 

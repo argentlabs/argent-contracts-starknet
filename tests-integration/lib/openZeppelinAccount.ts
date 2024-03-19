@@ -37,18 +37,15 @@ export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): 
   const contractAddress = hash.calculateContractAddressFromHash(finalParams.salt, classHash, constructorCalldata, 0);
 
   const fundingCall = finalParams.useTxV3
-    ? await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK")
-    : await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "ETH");
-  const calls = fundingCall ? [fundingCall] : [];
+    ? await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "STRK")
+    : await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "ETH");
+  const response = await deployer.execute([fundingCall!!]);
+  await provider.waitForTransaction(response.transaction_hash);
 
   const defaultTxVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
-  const account = new Account(provider, contractAddress, finalParams.owner, "1", defaultTxVersion);
-  account.signer = new LegacyMultisigSigner([finalParams.owner]);
+  const signer = new LegacyMultisigSigner([finalParams.owner]);
+  const account = new Account(provider, contractAddress, signer, "1", defaultTxVersion);
 
-  if (calls.length > 0) {
-    const response = await deployer.execute(calls);
-    await provider.waitForTransaction(response.transaction_hash);
-  }
   const { transaction_hash: deployTxHash } = await account.deploySelf({
     classHash,
     constructorCalldata,

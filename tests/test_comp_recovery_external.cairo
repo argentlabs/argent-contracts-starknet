@@ -1,4 +1,3 @@
-use core::fmt::{Display, Formatter, Error};
 use argent::mocks::recovery_mocks::ExternalRecoveryMock;
 use argent::multisig::interface::IArgentMultisigInternal;
 use argent::multisig::interface::{IArgentMultisig, IArgentMultisigDispatcher, IArgentMultisigDispatcherTrait};
@@ -15,19 +14,6 @@ use snforge_std::{
 use starknet::SyscallResultTrait;
 use starknet::{deploy_syscall, contract_address_const, ContractAddress,};
 use super::setup::constants::{MULTISIG_OWNER};
-
-impl EscapeStatusDisplay of Display<EscapeStatus> {
-    fn fmt(self: @EscapeStatus, ref f: Formatter) -> Result<(), Error> {
-        let value: ByteArray = match *self {
-            EscapeStatus::None => "None",
-            EscapeStatus::NotReady => "NotReady",
-            EscapeStatus::Ready => "Ready",
-            EscapeStatus::Expired => "Expired",
-        };
-        write!(f, "{value:?}")?;
-        Result::Ok(())
-    }
-}
 
 fn SIGNER_1() -> Signer {
     starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)
@@ -130,7 +116,7 @@ fn test_trigger_escape_last_signer() {
     );
 
     assert_eq!(escape.ready_at, 10, "should be 10");
-    assert!(status == EscapeStatus::NotReady, "should be NotReady");
+    assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
 }
 
 #[test]
@@ -161,7 +147,7 @@ fn test_trigger_escape_all_signers() {
         "should be signer 3"
     );
     assert_eq!(escape.ready_at, 10, "should be 10");
-    assert!(status == EscapeStatus::NotReady, "should be NotReady");
+    assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
 }
 
 #[test]
@@ -218,7 +204,7 @@ fn test_execute_escape() {
     start_warp(CheatTarget::All, 11);
     component.execute_escape();
     let (escape, status) = component.get_escape();
-    assert!(status == EscapeStatus::None, "status should be None");
+    assert_eq!(status, EscapeStatus::None, "status should be None");
     assert_eq!(escape.ready_at, 0, "should be no recovery");
     assert(multisig_component.is_signer(SIGNER_1()), 'should be signer 1');
     assert(multisig_component.is_signer(SIGNER_3()), 'should be signer 3');
@@ -266,7 +252,7 @@ fn test_cancel_escape() {
     start_prank(CheatTarget::All, component.contract_address);
     component.cancel_escape();
     let (escape, status) = component.get_escape();
-    assert!(status == EscapeStatus::None, "status should be None");
+    assert_eq!(status, EscapeStatus::None, "status should be None");
     assert_eq!(escape.ready_at, 0, "should be no recovery");
     assert(multisig_component.is_signer(SIGNER_1()), 'should be signer 1');
     assert(multisig_component.is_signer(SIGNER_2()), 'should be signer 2');

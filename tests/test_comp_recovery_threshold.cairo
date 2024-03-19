@@ -84,7 +84,7 @@ fn test_trigger_escape_first_signer() {
     );
 
     assert_eq!(escape.ready_at, 10, "should be 10");
-    assert!(status == EscapeStatus::NotReady, "should be NotReady");
+    assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
 }
 
 #[test]
@@ -102,7 +102,7 @@ fn test_trigger_escape_last_signer() {
     );
 
     assert_eq!(escape.ready_at, 10, "should be 10");
-    assert!(status == EscapeStatus::NotReady, "should be NotReady");
+    assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
 }
 
 #[test]
@@ -161,7 +161,7 @@ fn test_execute_escape() {
     start_warp(CheatTarget::All, 11);
     component.execute_escape();
     let (escape, status) = component.get_escape();
-    assert!(status == EscapeStatus::None, "status should be None");
+    assert_eq!(status, EscapeStatus::None, "status should be None");
     assert_eq!(escape.ready_at, 0, "should be no recovery");
     assert(multisig_component.is_signer(SIGNER_1()), 'should be signer 1');
     assert(multisig_component.is_signer(SIGNER_3()), 'should be signer 3');
@@ -205,7 +205,7 @@ fn test_cancel_escape() {
     start_warp(CheatTarget::All, 11);
     component.cancel_escape();
     let (escape, status) = component.get_escape();
-    assert!(status == EscapeStatus::None, "status should be None");
+    assert_eq!(status, EscapeStatus::None, "status should be None");
     assert_eq!(escape.ready_at, 0, "should be no recovery");
     assert(multisig_component.is_signer(SIGNER_1()), 'should be signer 1');
     assert(multisig_component.is_signer(SIGNER_2()), 'should be signer 2');

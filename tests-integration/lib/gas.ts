@@ -5,7 +5,8 @@ import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
 import { ensureAccepted, ensureSuccess } from ".";
 
 const ethUsd = 4000n;
-// TODO Update formula
+const strkUsd = 2n;
+const dataGasPrice = 1;
 
 // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
 const gasWeights: Record<string, number> = {
@@ -57,12 +58,13 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   };
 
   const blockNumber = receipt.block_number;
-  const blockInfo = await provider.getBlockWithTxHashes(blockNumber);
+  const blockInfo = await provider.getBlockWithReceipts(blockNumber);
   const stateUpdate = await provider.getStateUpdate(blockNumber);
   const storageDiffs = stateUpdate.state_diff.storage_diffs;
-  const gasPrice = BigInt(blockInfo.l1_gas_price.price_in_wei);
-  const gasUsed = actualFee / gasPrice;
+  const paidInStrk = receipt.actual_fee.unit == "FRI";
+  const gasPrice = BigInt(paidInStrk ? blockInfo.l1_gas_price.price_in_fri : blockInfo.l1_gas_price.price_in_wei);
 
+  const gasUsed = (actualFee - BigInt(rawResources.data_availability.l1_data_gas * dataGasPrice)) / gasPrice;
   const gasPerComputationCategory = Object.fromEntries(
     Object.entries(executionResources)
       .filter(([resource]) => resource in gasWeights)
@@ -75,6 +77,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
 
   return {
     actualFee,
+    paidInStrk,
     gasUsed,
     l1Gas: rawResources.data_availability.l1_gas,
     l1DataGas: rawResources.data_availability.l1_data_gas,
@@ -109,9 +112,10 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
       profiles[name] = profile;
     },
     summarizeCost(profile: Profile) {
-      const feeUsd = Number((10000n * profile.actualFee * ethUsd) / 10n ** 18n) / 10000;
+      const usdVal = profile.paidInStrk ? strkUsd : ethUsd;
+      const feeUsd = Number((10000n * profile.actualFee * usdVal) / 10n ** 18n) / 10000;
       return {
-        actualFee: Number(profile.actualFee),
+        actualFee: Number(profile.actualFee).toLocaleString("de-DE"),
         feeUsd: Number(feeUsd.toFixed(4)),
         gasUsed: Number(profile.gasUsed),
         storageDiffs: sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
@@ -153,7 +157,7 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
       const filename = "gas-report.txt";
       const newFilename = "gas-report-new.txt";
       fs.writeFileSync(newFilename, report);
-      exec(`diff ${filename} ${newFilename}`, (err, stdout, stderr) => {
+      exec(`diff ${filename} ${newFilename}`, (err, stdout) => {
         if (stdout) {
           console.log(stdout);
           console.error("⚠️  Changes to gas report detected.\n");

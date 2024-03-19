@@ -2,6 +2,7 @@ import { GetTransactionReceiptResponse, RPC, TransactionExecutionStatus, Transac
 import { provider } from "./provider";
 
 export async function ensureSuccess(receipt: GetTransactionReceiptResponse): Promise<RPC.Receipt> {
+  // TODO This will wait forever if sending a failing Transactions
   await provider.waitForTransaction(receipt.transaction_hash, {
     successStates: [TransactionExecutionStatus.SUCCEEDED],
   });

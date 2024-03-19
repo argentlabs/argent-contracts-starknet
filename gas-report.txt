@@ -1,7 +1,7 @@
-Old account: 220 gas
-Account: 220 gas
-Account w/o guardian: 210 gas
-Eth sig w guardian: 790 gas
-Secp256r1 w guardian: 1,340 gas
-Eip161 with guardian: 790 gas
-Webauthn w/o guardian: 3,860 gas
+Old account: 24 gas (range_check)
+Account: 24 gas (ec_op)
+Account w/o guardian: 22 gas (range_check)
+Eth sig w guardian: 595 gas (range_check)
+Secp256r1 w guardian: 1,146 gas (range_check)
+Eip161 with guardian: 602 gas (range_check)
+Webauthn w/o guardian: 3,665 gas (range_check)

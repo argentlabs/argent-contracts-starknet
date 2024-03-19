@@ -61,7 +61,6 @@ mod mocks {
     mod mock_dapp;
     mod mock_erc20;
     mod multisig_mocks;
-    mod open_zeppelin_account;
     mod recovery_mocks;
     mod signer_list_mocks;
     mod src5_mocks;

@@ -9,6 +9,7 @@ cairo-version = "2.6.3"
 sierra = true
 casm = true
 allowed-libfuncs-list.name = "audited"
+build-external-contracts = ["openzeppelin::presets::account::Account"]
 
 [dependencies]
 starknet = "2.6.3"

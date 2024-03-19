@@ -32,7 +32,6 @@ fn new_owner_message_hash(chainId: felt252, account_address: felt252, current_ow
         .finalize()
 }
 
-
 fn OWNER() -> KeyAndSig {
     let new_owner = KeyPairTrait::from_secret_key('OWNER');
     let (r, s): (felt252, felt252) = new_owner.sign(tx_hash);
@@ -78,5 +77,5 @@ fn NEW_OWNER() -> (StarknetSigner, StarknetSignature) {
 fn WRONG_GUARDIAN() -> KeyAndSig {
     let new_owner = KeyPairTrait::from_secret_key('WRONG_GUARDIAN');
     let (r, s): (felt252, felt252) = new_owner.sign(tx_hash);
-    KeyAndSig { pubkey: new_owner.public_key, sig: StarknetSignature { r, s }, }
+    KeyAndSig { pubkey: new_owner.public_key, sig: StarknetSignature { r, s } }
 }

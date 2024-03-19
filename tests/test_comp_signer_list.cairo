@@ -16,8 +16,8 @@ fn COMPONENT_STATE() -> ComponentState {
 fn test_add_signer() {
     let mut component = COMPONENT_STATE();
     component.add_signer(MULTISIG_OWNER(1).pubkey, 0);
-    assert(component.get_signers_len() == 1, 'len should be 1');
-    assert(*component.get_signers().at(0) == MULTISIG_OWNER(1).pubkey, 'should be signer 1');
+    assert_eq!(component.get_signers_len(), 1, "len should be 1");
+    assert_eq!(*component.get_signers().at(0), MULTISIG_OWNER(1).pubkey, "should be signer 1");
     assert(component.is_signer_in_list(MULTISIG_OWNER(1).pubkey), 'should be signer');
 }
 
@@ -26,10 +26,10 @@ fn test_add_3_signers() {
     let mut component = COMPONENT_STATE();
     component
         .add_signers(array![MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(3).pubkey].span(), 0);
-    assert(component.get_signers_len() == 3, 'len should be 1');
-    assert(*component.get_signers().at(0) == MULTISIG_OWNER(1).pubkey, 'should be signer 1');
-    assert(*component.get_signers().at(1) == MULTISIG_OWNER(2).pubkey, 'should be signer 2');
-    assert(*component.get_signers().at(2) == MULTISIG_OWNER(3).pubkey, 'should be signer 3');
+    assert_eq!(component.get_signers_len(), 3, "len should be 1");
+    assert_eq!(*component.get_signers().at(0), MULTISIG_OWNER(1).pubkey, "should be signer 1");
+    assert_eq!(*component.get_signers().at(1), MULTISIG_OWNER(2).pubkey, "should be signer 2");
+    assert_eq!(*component.get_signers().at(2), MULTISIG_OWNER(3).pubkey, "should be signer 3");
 }
 
 #[test]
@@ -37,10 +37,10 @@ fn test_add_2_signers_after_one() {
     let mut component = COMPONENT_STATE();
     component.add_signer(MULTISIG_OWNER(1).pubkey, 0);
     component.add_signers(array![MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(3).pubkey].span(), MULTISIG_OWNER(1).pubkey);
-    assert(component.get_signers_len() == 3, 'len should be 1');
-    assert(*component.get_signers().at(0) == MULTISIG_OWNER(1).pubkey, 'should be signer 1');
-    assert(*component.get_signers().at(1) == MULTISIG_OWNER(2).pubkey, 'should be signer 2');
-    assert(*component.get_signers().at(2) == MULTISIG_OWNER(3).pubkey, 'should be signer 3');
+    assert_eq!(component.get_signers_len(), 3, "len should be 1");
+    assert_eq!(*component.get_signers().at(0), MULTISIG_OWNER(1).pubkey, "should be signer 1");
+    assert_eq!(*component.get_signers().at(1), MULTISIG_OWNER(2).pubkey, "should be signer 2");
+    assert_eq!(*component.get_signers().at(2), MULTISIG_OWNER(3).pubkey, "should be signer 3");
 }
 
 #[test]
@@ -60,10 +60,10 @@ fn test_remove_first_signer() {
     component
         .add_signers(array![MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(3).pubkey].span(), 0);
     let last_signer = component.remove_signer(MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(3).pubkey);
-    assert(last_signer == MULTISIG_OWNER(3).pubkey, 'signer 3 should be last');
-    assert(component.get_signers_len() == 2, 'len should be 1');
-    assert(*component.get_signers().at(0) == MULTISIG_OWNER(2).pubkey, 'should be signer 2');
-    assert(*component.get_signers().at(1) == MULTISIG_OWNER(3).pubkey, 'should be signer 3');
+    assert_eq!(last_signer, MULTISIG_OWNER(3).pubkey, "signer 3 should be last");
+    assert_eq!(component.get_signers_len(), 2, "len should be 1");
+    assert_eq!(*component.get_signers().at(0), MULTISIG_OWNER(2).pubkey, "should be signer 2");
+    assert_eq!(*component.get_signers().at(1), MULTISIG_OWNER(3).pubkey, "should be signer 3");
 }
 
 #[test]
@@ -72,10 +72,10 @@ fn test_remove_middle_signer() {
     component
         .add_signers(array![MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(3).pubkey].span(), 0);
     let last_signer = component.remove_signer(MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(3).pubkey);
-    assert(last_signer == MULTISIG_OWNER(3).pubkey, 'signer 3 should be last');
-    assert(component.get_signers_len() == 2, 'len should be 1');
-    assert(*component.get_signers().at(0) == MULTISIG_OWNER(1).pubkey, 'should be signer 1');
-    assert(*component.get_signers().at(1) == MULTISIG_OWNER(3).pubkey, 'should be signer 3');
+    assert_eq!(last_signer, MULTISIG_OWNER(3).pubkey, "signer 3 should be last");
+    assert_eq!(component.get_signers_len(), 2, "len should be 1");
+    assert_eq!(*component.get_signers().at(0), MULTISIG_OWNER(1).pubkey, "should be signer 1");
+    assert_eq!(*component.get_signers().at(1), MULTISIG_OWNER(3).pubkey, "should be signer 3");
 }
 
 #[test]
@@ -84,10 +84,10 @@ fn test_remove_last_signer() {
     component
         .add_signers(array![MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(3).pubkey].span(), 0);
     let last_signer = component.remove_signer(MULTISIG_OWNER(3).pubkey, MULTISIG_OWNER(3).pubkey);
-    assert(last_signer == MULTISIG_OWNER(2).pubkey, 'signer 2 should be last');
-    assert(component.get_signers_len() == 2, 'len should be 1');
-    assert(*component.get_signers().at(0) == MULTISIG_OWNER(1).pubkey, 'should be signer 1');
-    assert(*component.get_signers().at(1) == MULTISIG_OWNER(2).pubkey, 'should be signer 2');
+    assert_eq!(last_signer, MULTISIG_OWNER(2).pubkey, "signer 2 should be last");
+    assert_eq!(component.get_signers_len(), 2, "len should be 1");
+    assert_eq!(*component.get_signers().at(0), MULTISIG_OWNER(1).pubkey, "should be signer 1");
+    assert_eq!(*component.get_signers().at(1), MULTISIG_OWNER(2).pubkey, "should be signer 2");
 }
 
 #[test]
@@ -108,7 +108,7 @@ fn test_remove_all_signers() {
             array![MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(3).pubkey].span(),
             MULTISIG_OWNER(3).pubkey
         );
-    assert(component.get_signers_len() == 0, 'len should be 0');
+    assert_eq!(component.get_signers_len(), 0, "len should be 0");
 }
 
 #[test]
@@ -118,8 +118,8 @@ fn test_remove_2_signers() {
         .add_signers(array![MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(3).pubkey].span(), 0);
     component
         .remove_signers(array![MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(2).pubkey].span(), MULTISIG_OWNER(3).pubkey);
-    assert(component.get_signers_len() == 1, 'len should be 1');
-    assert(*component.get_signers().at(0) == MULTISIG_OWNER(3).pubkey, 'should be signer 3');
+    assert_eq!(component.get_signers_len(), 1, "len should be 1");
+    assert_eq!(*component.get_signers().at(0), MULTISIG_OWNER(3).pubkey, "should be signer 3");
 }
 
 // Replace signer
@@ -129,9 +129,9 @@ fn test_replace_first_signer() {
     let mut component = COMPONENT_STATE();
     component.add_signers(array![MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(2).pubkey].span(), 0);
     component.replace_signer(MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(3).pubkey, MULTISIG_OWNER(2).pubkey);
-    assert(component.get_signers_len() == 2, 'len should be 2');
-    assert(*component.get_signers().at(0) == MULTISIG_OWNER(3).pubkey, 'should be signer 3');
-    assert(*component.get_signers().at(1) == MULTISIG_OWNER(2).pubkey, 'should be signer 2');
+    assert_eq!(component.get_signers_len(), 2, "len should be 2");
+    assert_eq!(*component.get_signers().at(0), MULTISIG_OWNER(3).pubkey, "should be signer 3");
+    assert_eq!(*component.get_signers().at(1), MULTISIG_OWNER(2).pubkey, "should be signer 2");
 }
 
 #[test]
@@ -139,9 +139,9 @@ fn test_replace_last_signer() {
     let mut component = COMPONENT_STATE();
     component.add_signers(array![MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(2).pubkey].span(), 0);
     component.replace_signer(MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(3).pubkey, MULTISIG_OWNER(2).pubkey);
-    assert(component.get_signers_len() == 2, 'len should be 2');
-    assert(*component.get_signers().at(0) == MULTISIG_OWNER(1).pubkey, 'should be signer 1');
-    assert(*component.get_signers().at(1) == MULTISIG_OWNER(3).pubkey, 'should be signer 3');
+    assert_eq!(component.get_signers_len(), 2, "len should be 2");
+    assert_eq!(*component.get_signers().at(0), MULTISIG_OWNER(1).pubkey, "should be signer 1");
+    assert_eq!(*component.get_signers().at(1), MULTISIG_OWNER(3).pubkey, "should be signer 3");
 }
 
 #[test]
@@ -168,8 +168,8 @@ fn test_load() {
     component
         .add_signers(array![MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(2).pubkey, MULTISIG_OWNER(3).pubkey].span(), 0);
     let (len, last_signer) = component.load();
-    assert(len == 3, 'len should be 3');
-    assert(last_signer == MULTISIG_OWNER(3).pubkey, 'signer 3 should be last');
+    assert_eq!(len, 3, "len should be 3");
+    assert_eq!(last_signer, MULTISIG_OWNER(3).pubkey, "signer 3 should be last");
 }
 
 #[test]

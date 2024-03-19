@@ -49,14 +49,14 @@ fn setup() -> (IRecoveryDispatcher, IToggleThresholdRecoveryDispatcher, IArgentM
 fn test_toggle_escape() {
     let (component, toggle_component, _) = setup();
     let mut config = component.get_escape_enabled();
-    assert(config.is_enabled == 1, 'should be enabled');
-    assert(config.security_period == 10, 'should be 10');
-    assert(config.expiry_period == 10, 'should be 10');
+    assert_eq!(config.is_enabled, 1, "should be enabled");
+    assert_eq!(config.security_period, 10, "should be 10");
+    assert_eq!(config.expiry_period, 10, "should be 10");
     toggle_component.toggle_escape(false, 0, 0);
     config = component.get_escape_enabled();
-    assert(config.is_enabled == 0, 'should not be enabled');
-    assert(config.security_period == 0, 'should be 0');
-    assert(config.expiry_period == 0, 'should be 0');
+    assert_eq!(config.is_enabled, 0, "should not be enabled");
+    assert_eq!(config.security_period, 0, "should be 0");
+    assert_eq!(config.expiry_period, 0, "should be 0");
 }
 
 #[test]
@@ -83,8 +83,8 @@ fn test_trigger_escape_first_signer() {
         'should be signer 3'
     );
 
-    assert(escape.ready_at == 10, 'should be 10');
-    assert(status == EscapeStatus::NotReady, 'should be NotReady');
+    assert_eq!(escape.ready_at, 10, "should be 10");
+    assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
 }
 
 #[test]
@@ -101,8 +101,8 @@ fn test_trigger_escape_last_signer() {
         'should be signer 3'
     );
 
-    assert(escape.ready_at == 10, 'should be 10');
-    assert(status == EscapeStatus::NotReady, 'should be NotReady');
+    assert_eq!(escape.ready_at, 10, "should be 10");
+    assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
 }
 
 #[test]
@@ -161,8 +161,8 @@ fn test_execute_escape() {
     start_warp(CheatTarget::All, 11);
     component.execute_escape();
     let (escape, status) = component.get_escape();
-    assert(status == EscapeStatus::None, 'status should be None');
-    assert(escape.ready_at == 0, 'should be no recovery');
+    assert_eq!(status, EscapeStatus::None, "status should be None");
+    assert_eq!(escape.ready_at, 0, "should be no recovery");
     assert(multisig_component.is_signer(SIGNER_1()), 'should be signer 1');
     assert(multisig_component.is_signer(SIGNER_3()), 'should be signer 3');
     assert(!multisig_component.is_signer(SIGNER_2()), 'should not be signer 2');
@@ -205,8 +205,8 @@ fn test_cancel_escape() {
     start_warp(CheatTarget::All, 11);
     component.cancel_escape();
     let (escape, status) = component.get_escape();
-    assert(status == EscapeStatus::None, 'status should be None');
-    assert(escape.ready_at == 0, 'should be no recovery');
+    assert_eq!(status, EscapeStatus::None, "status should be None");
+    assert_eq!(escape.ready_at, 0, "should be no recovery");
     assert(multisig_component.is_signer(SIGNER_1()), 'should be signer 1');
     assert(multisig_component.is_signer(SIGNER_2()), 'should be signer 2');
     assert(!multisig_component.is_signer(SIGNER_3()), 'should not be signer 3');

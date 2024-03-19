@@ -14,14 +14,14 @@ fn valid_initialize() {
     let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
     let signers_array = array![signer_1];
     let multisig = initialize_multisig_with(threshold: 1, signers: signers_array.span());
-    assert(multisig.get_threshold() == 1, 'threshold not set');
+    assert_eq!(multisig.get_threshold(), 1, "threshold not set");
     // test if is signer correctly returns true
     assert(multisig.is_signer(signer_1), 'is signer cant find signer');
 
     // test signers list
     let signers_guid = multisig.get_signer_guids();
-    assert(signers_guid.len() == 1, 'invalid signers length');
-    assert(*signers_guid[0] == signer_1.into_guid(), 'invalid signers result');
+    assert_eq!(signers_guid.len(), 1, "invalid signers length");
+    assert_eq!(*signers_guid[0], signer_1.into_guid(), "invalid signers result");
 }
 
 #[test]
@@ -37,9 +37,9 @@ fn valid_initialize_two_signers() {
 
     // test signers list
     let signers = multisig.get_signer_guids();
-    assert(signers.len() == 2, 'invalid signers length');
-    assert(*signers[0] == signer_1.into_guid(), 'invalid signers result');
-    assert(*signers[1] == signer_2.into_guid(), 'invalid signers result');
+    assert_eq!(signers.len(), 2, "invalid signers length");
+    assert_eq!(*signers[0], signer_1.into_guid(), "invalid signers result");
+    assert_eq!(*signers[1], signer_2.into_guid(), "invalid signers result");
 }
 
 #[test]
@@ -63,7 +63,7 @@ fn change_threshold() {
     let multisig = initialize_multisig_with(threshold, signers_array.span());
 
     multisig.change_threshold(2);
-    assert(multisig.get_threshold() == 2, 'new threshold not set');
+    assert_eq!(multisig.get_threshold(), 2, "new threshold not set");
 }
 
 #[test]
@@ -77,8 +77,8 @@ fn add_signers() {
 
     // check 
     let signers = multisig.get_signer_guids();
-    assert(signers.len() == 2, 'invalid signers length');
-    assert(multisig.get_threshold() == 2, 'new threshold not set');
+    assert_eq!(signers.len(), 2, "invalid signers length");
+    assert_eq!(multisig.get_threshold(), 2, "new threshold not set");
 }
 
 #[test]
@@ -94,14 +94,14 @@ fn add_signer_already_in_list() {
 
 #[test]
 fn get_name() {
-    assert(initialize_multisig().get_name() == 'ArgentMultisig', 'Name should be ArgentMultisig');
+    assert_eq!(initialize_multisig().get_name(), 'ArgentMultisig', "Name should be ArgentMultisig");
 }
 
 #[test]
 fn get_version() {
     let version = initialize_multisig().get_version();
-    assert(version.major == 0, 'Version major');
-    assert(version.minor == 2, 'Version minor');
-    assert(version.patch == 0, 'Version patch');
+    assert_eq!(version.major, 0, "Version major");
+    assert_eq!(version.minor, 2, "Version minor");
+    assert_eq!(version.patch, 0, "Version patch");
 }
 

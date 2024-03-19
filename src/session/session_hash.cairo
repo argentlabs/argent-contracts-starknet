@@ -21,13 +21,14 @@ impl MerkleLeafHash of IMerkleLeafHash<Call> {
 
 impl StructHashSession of IStructHashRev1<Session> {
     fn get_struct_hash_rev_1(self: @Session) -> felt252 {
+        let self = *self;
         poseidon_hash_span(
             array![
                 SESSION_TYPE_HASH,
-                (*self.expires_at).into(),
-                *self.allowed_methods_root,
-                *self.metadata_hash,
-                *self.session_key_guid
+                self.expires_at.into(),
+                self.allowed_methods_root,
+                self.metadata_hash,
+                self.session_key_guid
             ]
                 .span()
         )

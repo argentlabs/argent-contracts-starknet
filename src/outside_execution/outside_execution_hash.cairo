@@ -38,13 +38,13 @@ impl StructHashOutsideExecutionRev0 of IStructHashRev0<OutsideExecution> {
                 Option::None => { break state.update(calls_len).finalize(); },
             }
         };
-
+        let self = *self;
         PedersenTrait::new(0)
             .update_with(OUTSIDE_EXECUTION_TYPE_HASH_REV_0)
-            .update_with(*self.caller)
-            .update_with(*self.nonce)
-            .update_with(*self.execute_after)
-            .update_with(*self.execute_before)
+            .update_with(self.caller)
+            .update_with(self.nonce)
+            .update_with(self.execute_after)
+            .update_with(self.execute_before)
             .update_with(calls_len)
             .update_with(calls_hash)
             .update_with(7)
@@ -111,14 +111,14 @@ impl StructHashOutsideExecutionRev1 of IStructHashRev1<OutsideExecution> {
                 Option::None(_) => { break; },
             };
         };
-
+        let self = *self;
         poseidon_hash_span(
             array![
                 OUTSIDE_EXECUTION_TYPE_HASH_REV_1,
-                (*self.caller).into(),
-                *self.nonce,
-                (*self.execute_after).into(),
-                (*self.execute_before).into(),
+                self.caller.into(),
+                self.nonce,
+                self.execute_after.into(),
+                self.execute_before.into(),
                 poseidon_hash_span(hashed_calls.span()),
             ]
                 .span()

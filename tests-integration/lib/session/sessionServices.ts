@@ -16,8 +16,8 @@ import {
   V3InvocationsSignerDetails,
   stark,
   num,
-  CairoCustomEnum,
   BigNumberish,
+  byteArray,
 } from "starknet";
 import {
   OffChainSession,
@@ -33,7 +33,9 @@ import {
   OutsideExecution,
   randomStarknetKeyPair,
   StarknetKeyPair,
+  signerTypeToCustomEnum,
   OnChainSession,
+  SignerType,
 } from "..";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -44,10 +46,10 @@ export class DappService {
     public sessionKey: StarknetKeyPair = randomStarknetKeyPair(),
   ) {}
 
-  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at = 150n): OffChainSession {
+  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: bigint): OffChainSession {
     const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
     return {
-      expires_at,
+      expires_at: Number(expires_at),
       allowed_methods,
       metadata,
       session_key_guid: this.sessionKey.guid,
@@ -254,7 +256,7 @@ export class DappService {
   }
 
   private compileSessionHelper(completedSession: OffChainSession): OnChainSession {
-    const byteArray = typedData.byteArrayFromString(completedSession.metadata as string);
+    const bArray = byteArrayFromString(completedSession.metadata as string);
     const elements = [byteArray.data.length, ...byteArray.data, byteArray.pending_word, byteArray.pending_word_len];
     const metadataHash = hash.computePoseidonHashOnElements(elements);
 
@@ -290,13 +292,7 @@ export class DappService {
 
   // TODO Can this be removed?
   // method needed as starknetSignatureType in signer.ts is already compiled
-  private getStarknetSignatureType(signer: BigNumberish, signature: bigint[]) {
-    return new CairoCustomEnum({
-      Starknet: { signer, r: signature[0], s: signature[1] },
-      Secp256k1: undefined,
-      Secp256r1: undefined,
-      Eip191: undefined,
-      Webauthn: undefined,
-    });
+  private getStarknetSignatureType(pubkey: BigNumberish, signature: bigint[]) {
+    return signerTypeToCustomEnum(SignerType.Starknet, { pubkey, r: signature[0], s: signature[1] });
   }
 }

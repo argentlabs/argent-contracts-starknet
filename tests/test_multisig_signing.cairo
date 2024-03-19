@@ -8,7 +8,6 @@ use super::setup::{
     utils::to_starknet_signer_signatures
 };
 
-
 #[test]
 fn test_signature() {
     let multisig = initialize_multisig_with_one_signer();
@@ -18,6 +17,7 @@ fn test_signature() {
     );
     assert(multisig.is_valid_signature(tx_hash, signature) == VALIDATED, 'bad signature');
 }
+
 #[test]
 fn test_double_signature() {
     // init
@@ -54,7 +54,7 @@ fn test_double_signature_order() {
             MULTISIG_OWNER(2).sig.s,
             MULTISIG_OWNER(1).pubkey,
             MULTISIG_OWNER(1).sig.r,
-            MULTISIG_OWNER(2).sig.s
+            MULTISIG_OWNER(1).sig.s
         ]
     );
     multisig.is_valid_signature(tx_hash, signature);

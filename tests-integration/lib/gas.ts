@@ -2,24 +2,27 @@ import { exec } from "child_process";
 import fs from "fs";
 import { isUndefined, mapValues, maxBy, sortBy, sum } from "lodash-es";
 import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
-import { ensureIncluded } from ".";
+import { ensureAccepted, ensureSuccess } from ".";
 
 const ethUsd = 2000n;
 
 // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
 const gasWeights: Record<string, number> = {
-  steps: 0.005,
-  pedersen: 0.16,
-  poseidon: 0.16,
-  range_check: 0.08,
-  ecdsa: 10.24,
-  keccak: 10.24,
-  bitwise: 0.32,
-  ec_op: 5.12,
+  steps: 0.0025,
+  pedersen: 0.08,
+  poseidon: 0.08,
+  range_check: 0.04,
+  ecdsa: 5.12,
+  keccak: 5.12,
+  bitwise: 0.16,
+  ec_op: 2.56,
 };
 
-async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
-  const receipt = ensureIncluded(await provider.waitForTransaction(transactionHash));
+async function profileGasUsage(transactionHash: string, provider: RpcProvider, allowFailedTransactions = false) {
+  const receipt = await ensureAccepted(await provider.waitForTransaction(transactionHash));
+  if (!allowFailedTransactions) {
+    await ensureSuccess(receipt);
+  }
   let actualFee = 0n;
   if (receipt.actual_fee?.unit === "WEI") {
     actualFee = BigInt(receipt.actual_fee.amount);
@@ -40,6 +43,10 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
     "ecdsa_builtin_applications",
     "bitwise_builtin_applications",
     "keccak_builtin_applications",
+    "segment_arena_builtin",
+    "data_availability",
+    "l1_gas",
+    "l1_data_gas",
   ];
   // all keys in rawResources must be in expectedResources
   if (!Object.keys(rawResources).every((key) => expectedResources.includes(key))) {
@@ -56,6 +63,9 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
     keccak: rawResources.keccak_builtin_applications ?? 0,
     bitwise: rawResources.bitwise_builtin_applications ?? 0,
     ec_op: rawResources.ec_op_builtin_applications ?? 0,
+    segment_arena_builtin: rawResources.segment_arena_builtin ?? 0,
+    l1_gas: rawResources.data_availability.l1_gas,
+    l1_data_gas: rawResources.data_availability.l1_data_gas,
   };
 
   const blockNumber = receipt.block_number;
@@ -72,7 +82,8 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
   );
   const maxComputationCategory = maxBy(Object.entries(gasPerComputationCategory), ([, gas]) => gas)![0];
   const computationGas = BigInt(gasPerComputationCategory[maxComputationCategory]);
-  const l1CalldataGas = gasUsed - computationGas;
+  const l1CalldataGas = executionResources.l1_gas + executionResources.l1_data_gas;
+  const missingDelta = gasUsed - BigInt(l1CalldataGas) - computationGas;
 
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
 
@@ -81,6 +92,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider) {
     gasUsed,
     l1CalldataGas,
     computationGas,
+    missingDelta,
     maxComputationCategory,
     gasPerComputationCategory,
     executionResources: sortedResources,
@@ -98,10 +110,10 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
     async profile(
       name: string,
       { transaction_hash }: InvokeFunctionResponse,
-      { printProfile = false, printStorage = false } = {},
+      { printProfile = false, printStorage = false, allowFailedTransactions = false } = {},
     ) {
       console.log(`Profiling: ${name} (${transaction_hash})`);
-      const profile = await profileGasUsage(transaction_hash, provider);
+      const profile = await profileGasUsage(transaction_hash, provider, allowFailedTransactions);
       if (printProfile) {
         console.dir(profile, { depth: null });
       }
@@ -119,6 +131,7 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
         storageDiffs: sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         computationGas: Number(profile.computationGas),
         l1CalldataGas: Number(profile.l1CalldataGas),
+        missingDelta: Number(profile.missingDelta),
         maxComputationCategory: profile.maxComputationCategory,
       };
     },

@@ -10,10 +10,8 @@ describe("Gas griefing", function () {
       const { account, guardian, accountContract } = await deployAccount({ useTxV3 });
       account.signer = new ArgentSigner(guardian);
 
-      for (let attempt = 1; attempt <= 5; attempt++) {
-        await waitForTransaction(await accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner));
-      }
-      await expectExecutionRevert("argent/max-escape-attempts", () =>
+      await waitForTransaction(await accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner));
+      await expectExecutionRevert("argent/last-escape-too-recent", () =>
         accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
       );
     });
@@ -48,7 +46,8 @@ describe("Gas griefing", function () {
     const estimate = await accountContract.estimateFee.trigger_escape_owner(compiledSigner);
 
     const maxEscapeTip = 1000000000000000000n;
-    const maxL2GasAmount = 10n;
+    // minimum amount of L2 gas allowed
+    const maxL2GasAmount = 170n;
     const newResourceBounds = {
       ...estimate.resourceBounds,
       l2_gas: {

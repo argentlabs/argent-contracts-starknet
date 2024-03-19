@@ -1,29 +1,16 @@
-import { GetTransactionReceiptResponse, RPC } from "starknet";
+import { GetTransactionReceiptResponse, RPC, TransactionExecutionStatus, TransactionFinalityStatus } from "starknet";
+import { provider } from "./provider";
 
-export type AcceptedTransactionReceiptResponse = GetTransactionReceiptResponse & { transaction_hash: string };
-
-// this might eventually be solved in starknet.js https://github.com/starknet-io/starknet.js/issues/796
-export function isAcceptedTransactionReceiptResponse(
-  receipt: GetTransactionReceiptResponse,
-): receipt is AcceptedTransactionReceiptResponse {
-  return "transaction_hash" in receipt;
+export async function ensureSuccess(receipt: GetTransactionReceiptResponse): Promise<RPC.Receipt> {
+  await provider.waitForTransaction(receipt.transaction_hash, {
+    successStates: [TransactionExecutionStatus.SUCCEEDED],
+  });
+  return receipt as RPC.Receipt;
 }
 
-export function isIncludedTransactionReceiptResponse(receipt: GetTransactionReceiptResponse): receipt is RPC.Receipt {
-  return receipt.execution_status == "SUCCEEDED";
-}
-
-export function ensureAccepted(receipt: GetTransactionReceiptResponse): AcceptedTransactionReceiptResponse {
-  if (!isAcceptedTransactionReceiptResponse(receipt)) {
-    throw new Error(`Transaction was rejected: ${JSON.stringify(receipt)}`);
-  }
-  return receipt;
-}
-
-export function ensureIncluded(receipt: GetTransactionReceiptResponse): RPC.Receipt {
-  const acceptedReceipt = ensureAccepted(receipt);
-  if (!isIncludedTransactionReceiptResponse(acceptedReceipt)) {
-    throw new Error(`Transaction was not included in a block: ${JSON.stringify(receipt)}`);
-  }
-  return acceptedReceipt;
+export async function ensureAccepted(receipt: GetTransactionReceiptResponse): Promise<RPC.Receipt> {
+  await provider.waitForTransaction(receipt.transaction_hash, {
+    successStates: [TransactionFinalityStatus.ACCEPTED_ON_L1, TransactionFinalityStatus.ACCEPTED_ON_L2],
+  });
+  return receipt as RPC.Receipt;
 }

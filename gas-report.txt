@@ -1,6 +1,6 @@
 Old account: 220 gas
 Account: 220 gas
-Account without guardian: 210 gas
+Account w/o guardian: 210 gas
 OZ account: 210 gas
 Eth sig w guardian: 790 gas
 Secp256r1 w guardian: 1,340 gas

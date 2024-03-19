@@ -22,7 +22,7 @@ export type DeployOzAccountResult = {
 };
 
 export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): Promise<DeployOzAccountResult> {
-  const classHash = await declareContract("OzAccount");
+  const classHash = await declareContract("Account");
   const finalParams = {
     ...params,
     salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),

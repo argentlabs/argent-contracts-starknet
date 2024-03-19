@@ -16,19 +16,19 @@ use starknet::SyscallResultTrait;
 use starknet::{deploy_syscall, contract_address_const, ContractAddress,};
 use super::setup::constants::{MULTISIG_OWNER};
 
-// impl PointDisplay of Display<EscapeStatus> {
-//     fn fmt(self: @EscapeStatus, ref f: Formatter) -> Result<(), Error> {
-//         let value: ByteArray = match *self {
-//             EscapeStatus::None => "None",
-//             EscapeStatus::NotReady => "NotReady",
-//             EscapeStatus::Ready => "Ready",
-//             EscapeStatus::Expired => "Expired",
-//         };
-//         let str: ByteArray = format!("EscapeStatus({})", value);
-//         f.buffer.append(@str);
-//         Result::Ok(())
-//     }
-// }
+impl PointDisplay of Display<EscapeStatus> {
+    fn fmt(self: @EscapeStatus, ref f: Formatter) -> Result<(), Error> {
+        let value: ByteArray = match *self {
+            EscapeStatus::None => "None",
+            EscapeStatus::NotReady => "NotReady",
+            EscapeStatus::Ready => "Ready",
+            EscapeStatus::Expired => "Expired",
+        };
+        let str: ByteArray = format!("EscapeStatus({})", value);
+        f.buffer.append(@str);
+        Result::Ok(())
+    }
+}
 
 fn SIGNER_1() -> Signer {
     starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)
@@ -110,7 +110,7 @@ fn test_trigger_escape_first_signer() {
         "should be signer 3"
     );
     assert_eq!(escape.ready_at, 10, "should be 10");
-    assert!(status == EscapeStatus::NotReady, "should be NotReady");
+    assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
 }
 
 #[test]

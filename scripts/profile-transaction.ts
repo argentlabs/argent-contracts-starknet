@@ -2,8 +2,7 @@ import { provider } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
 
 const transactions = {
-  "Transaction label 1": "0x111111111111111111111111111111111111111111111111111111111111111",
-  "Transaction label 2": "0x222222222222222222222222222222222222222222222222222222222222222",
+  "Transaction label 1": "0x048662c5d879d6bdf2e0fcffd08ec2eb7362f399604a3d3e20638933bd4bb2f1",
 };
 
 const profiler = newProfiler(provider);

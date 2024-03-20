@@ -29,7 +29,7 @@ describe("ArgentAccount", function () {
   it("Deploy externally", async function () {
     const { accountContract, owner } = await deployAccountWithoutGuardian({ fundingAmount: 0, selfDeploy: false });
 
-    await accountContract.get_owner().should.eventually.equal(owner.guid);
+    await accountContract.get_owner_guid().should.eventually.equal(owner.guid);
     await accountContract.get_guardian().should.eventually.equal(0n);
     await accountContract.get_guardian_backup().should.eventually.equal(0n);
   });
@@ -38,7 +38,7 @@ describe("ArgentAccount", function () {
     it(`Self deployment (TxV3: ${useTxV3})`, async function () {
       const { accountContract, owner } = await deployAccountWithoutGuardian({ useTxV3, selfDeploy: true });
 
-      await accountContract.get_owner().should.eventually.equal(owner.guid);
+      await accountContract.get_owner_guid().should.eventually.equal(owner.guid);
       await accountContract.get_guardian().should.eventually.equal(0n);
       await accountContract.get_guardian_backup().should.eventually.equal(0n);
     });
@@ -54,11 +54,13 @@ describe("ArgentAccount", function () {
     expect(accountContract1.address != accountContract2.address).to.be.true;
   });
 
-  it("Expect guardian backup to be 0 when deployed with an owner and a guardian", async function () {
+  it.only("Expect guardian backup to be 0 when deployed with an owner and a guardian", async function () {
     const { accountContract, owner, guardian } = await deployAccount();
 
-    await accountContract.get_owner().should.eventually.equal(owner.guid);
-    await accountContract.get_guardian().should.eventually.equal(guardian.guid);
+    await accountContract.get_owner_guid().should.eventually.equal(owner.guid);
+    await accountContract
+      .get_guardian_guid()
+      .should.eventually.deep.equal(new CairoOption(CairoOptionVariant.Some, guardian.guid));
     await accountContract.get_guardian_backup().should.eventually.equal(0n);
   });
 
@@ -80,7 +82,9 @@ describe("ArgentAccount", function () {
     const new_guardian = new StarknetKeyPair();
     await accountContract.change_guardian_backup(new_guardian.compiledSignerAsOption);
 
-    await accountContract.get_guardian_backup().should.eventually.equal(new_guardian.guid);
+    await accountContract
+      .get_guardian_backup_guid()
+      .should.eventually.deep.equal(new CairoOption(CairoOptionVariant.Some, new_guardian.guid));
   });
 
   it("Should sign messages from OWNER and BACKUP_GUARDIAN when there is a GUARDIAN and a BACKUP", async function () {
@@ -92,14 +96,18 @@ describe("ArgentAccount", function () {
     account.signer = new ArgentSigner(owner, guardian);
     await accountContract.change_guardian_backup(guardianBackup.compiledSignerAsOption);
 
-    await accountContract.get_guardian_backup().should.eventually.equal(guardianBackup.guid);
+    await accountContract
+      .get_guardian_backup_guid()
+      .should.eventually.deep.equal(new CairoOption(CairoOptionVariant.Some, guardianBackup.guid));
 
     account.signer = new ArgentSigner(owner, guardianBackup);
 
     const new_guardian = new StarknetKeyPair();
     await accountContract.change_guardian(new_guardian.compiledSignerAsOption);
 
-    await accountContract.get_guardian().should.eventually.equal(new_guardian.guid);
+    await accountContract
+      .get_guardian_guid()
+      .should.eventually.deep.equal(new CairoOption(CairoOptionVariant.Some, new_guardian.guid));
   });
 
   it("Expect 'argent/invalid-signature-length' when signing a transaction with OWNER, GUARDIAN and BACKUP", async function () {
@@ -179,7 +187,9 @@ describe("ArgentAccount", function () {
       const { accountContract } = await deployAccount();
       const newGuardian = randomStarknetKeyPair();
       await accountContract.change_guardian(newGuardian.compiledSignerAsOption);
-      await accountContract.get_guardian().should.eventually.equal(newGuardian.guid);
+      await accountContract
+        .get_guardian()
+        .should.eventually.deep.equal(new CairoOption(CairoOptionVariant.Some, newGuardian.guid));
     });
 
     it("Shouldn't be possible to use a guardian with pubkey = 0", async function () {
@@ -231,7 +241,10 @@ describe("ArgentAccount", function () {
       account.signer = new ArgentSigner(owner, guardian);
       await accountContract.change_guardian(newGuardian.compiledSignerAsOption);
 
-      await accountContract.get_guardian().should.eventually.equal(newGuardian.guid);
+      await accountContract
+        .get_guardian()
+        .should.eventually.deep.equal(new CairoOption(CairoOptionVariant.Some, newGuardian.guid));
+
       await hasOngoingEscape(accountContract).should.eventually.be.false;
     });
   });

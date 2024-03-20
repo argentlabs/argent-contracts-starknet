@@ -321,31 +321,29 @@ mod ArgentAccount {
             storage_write_syscall(0, storage_address_from_base_and_offset(base, 0), 0).unwrap_syscall();
 
             // Check basic invariants and emit missing events
-            let owner = self._signer.read();
-            let guardian = self._guardian.read();
-            let guardian_backup = self._guardian_backup.read();
-            assert(owner != 0, 'argent/null-owner');
-            if guardian == 0 {
-                assert(guardian_backup == 0, 'argent/backup-should-be-null');
+            let owner_key = self._signer.read();
+            let guardian_key = self._guardian.read();
+            let guardian_backup_key = self._guardian_backup.read();
+            assert(owner_key != 0, 'argent/null-owner');
+            if guardian_key == 0 {
+                assert(guardian_backup_key == 0, 'argent/backup-should-be-null');
             } else {
-                self.emit(SignerLinked { signer_guid: guardian, signer: starknet_signer_from_pubkey(guardian) });
-                if (guardian_backup != 0) {
-                    self
-                        .emit(
-                            SignerLinked {
-                                signer_guid: guardian_backup, signer: starknet_signer_from_pubkey(guardian_backup)
-                            }
-                        );
+                let guardian = starknet_signer_from_pubkey(guardian_key);
+                self.emit(SignerLinked { signer_guid: guardian.into_guid(), signer: guardian });
+                if (guardian_backup_key != 0) {
+                    let guardian_backup = starknet_signer_from_pubkey(guardian_backup_key);
+                    self.emit(SignerLinked { signer_guid: guardian_backup.into_guid(), signer: guardian_backup });
                 }
             }
-            self.emit(SignerLinked { signer_guid: owner, signer: starknet_signer_from_pubkey(owner) });
+            let owner = starknet_signer_from_pubkey(owner_key);
+            self.emit(SignerLinked { signer_guid: owner.into_guid(), signer: owner });
 
             let implementation = self._implementation.read();
             if implementation != Zeroable::zero() {
                 replace_class_syscall(implementation).expect('argent/invalid-after-upgrade');
                 self._implementation.write(Zeroable::zero());
                 // Technically the owner is not added here, but we emit the event since it wasn't emitted in previous versions
-                self.emit(OwnerAdded { new_owner_guid: owner });
+                self.emit(OwnerAdded { new_owner_guid: owner.into_guid() });
             }
 
             if data.is_empty() {

@@ -374,7 +374,7 @@ describe("ArgentAccount: escape mechanism", function () {
       expect(escape.ready_at).to.equal(0n);
       expect(escape.new_signer.isNone()).to.be.true;
       const newGuardian = await accountContract.get_guardian();
-      expect(newGuardian.unwrap().stored_value).to.equal(newKeyPair.storedValue);
+      expect(newGuardian).to.equal(newKeyPair.storedValue);
     });
 
     it("Expect 'argent/only-self' when called from another account", async function () {

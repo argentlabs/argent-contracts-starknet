@@ -129,9 +129,9 @@ impl StructHashOutsideExecutionRev1 of IStructHashRev1<OutsideExecution> {
 
 impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExecution> {
     fn get_message_hash_rev_1(self: @OutsideExecution) -> felt252 {
-        // WARNING! Please do not use this starknet domain as it is wrong.
-        // Version and Revision should be shortstring '1' not felt 1
-        // This is due to a mistake made in the Braavos contracts and has been copied for compatibility
+        // Version is shortstring '1' not felt 1 for for SNIP-9 due to a mistake made 
+        // in the Braavos contracts and has been copied for compatibility.
+        // Revision will also be a number for all SNIP12-rev1 signatures because of the same issue
         let domain = StarknetDomain {
             name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id, revision: 1
         };

@@ -2,7 +2,12 @@ use hash::{HashStateExTrait, HashStateTrait};
 use pedersen::PedersenTrait;
 use starknet::{ContractAddress, get_contract_address, get_tx_info, account::Call};
 
-const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID: felt252 = 0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181;
+const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0: felt252 =
+    0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181;
+
+const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1: felt252 =
+    0x1d1144bb2138366ff28d8e9ab57456b1d332ac42196230c3a602003c89872;
+
 
 /// Interface ID: 0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181
 // get_outside_execution_message_hash is not part of the standard interface
@@ -24,8 +29,11 @@ trait IOutsideExecution<TContractState> {
     /// Get the status of a given nonce, true if the nonce is available to use
     fn is_valid_outside_execution_nonce(self: @TContractState, nonce: felt252) -> bool;
 
-    /// Get the message hash for some `OutsideExecution` following Eip712. Can be used to know what needs to be signed
-    fn get_outside_execution_message_hash(self: @TContractState, outside_execution: OutsideExecution) -> felt252;
+    /// Get the message hash for some `OutsideExecution` rev 0 following Eip712. Can be used to know what needs to be signed
+    fn get_outside_execution_message_hash_rev_0(self: @TContractState, outside_execution: OutsideExecution) -> felt252;
+
+    /// Get the message hash for some `OutsideExecution` rev 1 following Eip712. Can be used to know what needs to be signed
+    fn get_outside_execution_message_hash_rev_1(self: @TContractState, outside_execution: OutsideExecution) -> felt252;
 }
 
 

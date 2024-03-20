@@ -56,16 +56,16 @@ fn setup() -> (IRecoveryDispatcher, IToggleExternalRecoveryDispatcher, IArgentMu
 fn test_toggle_escape() {
     let (component, toggle_component, _) = setup();
     let mut config = component.get_escape_enabled();
-    assert(config.is_enabled == 1, 'should be enabled');
-    assert(config.security_period == 10, 'should be 10');
-    assert(config.expiry_period == 10, 'should be 10');
-    assert(toggle_component.get_guardian() == GUARDIAN(), 'should be guardian');
+    assert_eq!(config.is_enabled, 1, "should be enabled");
+    assert_eq!(config.security_period, 10, "should be 10");
+    assert_eq!(config.expiry_period, 10, "should be 10");
+    assert_eq!(toggle_component.get_guardian(), GUARDIAN(), "should be guardian");
     toggle_component.toggle_escape(false, 0, 0, contract_address_const::<0>());
     config = component.get_escape_enabled();
-    assert(config.is_enabled == 0, 'should not be enabled');
-    assert(config.security_period == 0, 'should be 0');
-    assert(config.expiry_period == 0, 'should be 0');
-    assert(toggle_component.get_guardian() == contract_address_const::<0>(), 'guardian should be 0');
+    assert_eq!(config.is_enabled, 0, "should not be enabled");
+    assert_eq!(config.security_period, 0, "should be 0");
+    assert_eq!(config.expiry_period, 0, "should be 0");
+    assert_eq!(toggle_component.get_guardian(), contract_address_const::<0>(), "guardian should be 0");
 }
 
 #[test]
@@ -84,16 +84,18 @@ fn test_trigger_escape_first_signer() {
     start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_1()], array![SIGNER_3()]);
     let (escape, status) = component.get_escape();
-    assert(
-        *escape.target_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey).into_guid(),
-        'should be signer 1'
+    assert_eq!(
+        *escape.target_signers.at(0),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey).into_guid(),
+        "should be signer 1"
     );
-    assert(
-        *escape.new_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
-        'should be signer 3'
+    assert_eq!(
+        *escape.new_signers.at(0),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
+        "should be signer 3"
     );
-    assert(escape.ready_at == 10, 'should be 10');
-    assert(status == EscapeStatus::NotReady, 'should be NotReady');
+    assert_eq!(escape.ready_at, 10, "should be 10");
+    assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
 }
 
 #[test]
@@ -102,17 +104,19 @@ fn test_trigger_escape_last_signer() {
     start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     let (escape, status) = component.get_escape();
-    assert(
-        *escape.target_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(),
-        'should be signer 2'
+    assert_eq!(
+        *escape.target_signers.at(0),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(),
+        "should be signer 2"
     );
-    assert(
-        *escape.new_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
-        'should be signer 3'
+    assert_eq!(
+        *escape.new_signers.at(0),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
+        "should be signer 3"
     );
 
-    assert(escape.ready_at == 10, 'should be 10');
-    assert(status == EscapeStatus::NotReady, 'should be NotReady');
+    assert_eq!(escape.ready_at, 10, "should be 10");
+    assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
 }
 
 #[test]
@@ -122,24 +126,28 @@ fn test_trigger_escape_all_signers() {
     start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(array![SIGNER_1(), SIGNER_2()], array![SIGNER_4(), SIGNER_3()]);
     let (escape, status) = component.get_escape();
-    assert(
-        *escape.target_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey).into_guid(),
-        'should be signer 1'
+    assert_eq!(
+        *escape.target_signers.at(0),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey).into_guid(),
+        "should be signer 1"
     );
-    assert(
-        *escape.target_signers.at(1) == starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(),
-        'should be signer 2'
+    assert_eq!(
+        *escape.target_signers.at(1),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(),
+        "should be signer 2"
     );
-    assert(
-        *escape.new_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(4).pubkey).into_guid(),
-        'should be signer 4'
+    assert_eq!(
+        *escape.new_signers.at(0),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(4).pubkey).into_guid(),
+        "should be signer 4"
     );
-    assert(
-        *escape.new_signers.at(1) == starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
-        'should be signer 3'
+    assert_eq!(
+        *escape.new_signers.at(1),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
+        "should be signer 3"
     );
-    assert(escape.ready_at == 10, 'should be 10');
-    assert(status == EscapeStatus::NotReady, 'should be NotReady');
+    assert_eq!(escape.ready_at, 10, "should be 10");
+    assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
 }
 
 #[test]
@@ -149,13 +157,15 @@ fn test_trigger_escape_can_override() {
     component.trigger_escape(array![SIGNER_1()], array![SIGNER_3()]);
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_4()]);
     let (escape, _) = component.get_escape();
-    assert(
-        *escape.target_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(),
-        'should be signer 2'
+    assert_eq!(
+        *escape.target_signers.at(0),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(),
+        "should be signer 2"
     );
-    assert(
-        *escape.new_signers.at(0) == starknet_signer_from_pubkey(MULTISIG_OWNER(4).pubkey).into_guid(),
-        'should be signer 4'
+    assert_eq!(
+        *escape.new_signers.at(0),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(4).pubkey).into_guid(),
+        "should be signer 4"
     );
 }
 
@@ -194,11 +204,11 @@ fn test_execute_escape() {
     start_warp(CheatTarget::All, 11);
     component.execute_escape();
     let (escape, status) = component.get_escape();
-    assert(status == EscapeStatus::None, 'status should be None');
-    assert(escape.ready_at == 0, 'should be no recovery');
-    assert(multisig_component.is_signer(SIGNER_1()), 'should be signer 1');
-    assert(multisig_component.is_signer(SIGNER_3()), 'should be signer 3');
-    assert(!multisig_component.is_signer(SIGNER_2()), 'should not be signer 2');
+    assert_eq!(status, EscapeStatus::None, "status should be None");
+    assert_eq!(escape.ready_at, 0, "should be no recovery");
+    assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
+    assert!(multisig_component.is_signer(SIGNER_3()), "should be signer 3");
+    assert!(!multisig_component.is_signer(SIGNER_2()), "should not be signer 2");
 }
 
 #[test]
@@ -242,11 +252,11 @@ fn test_cancel_escape() {
     start_prank(CheatTarget::All, component.contract_address);
     component.cancel_escape();
     let (escape, status) = component.get_escape();
-    assert(status == EscapeStatus::None, 'status should be None');
-    assert(escape.ready_at == 0, 'should be no recovery');
-    assert(multisig_component.is_signer(SIGNER_1()), 'should be signer 1');
-    assert(multisig_component.is_signer(SIGNER_2()), 'should be signer 2');
-    assert(!multisig_component.is_signer(SIGNER_3()), 'should not be signer 3');
+    assert_eq!(status, EscapeStatus::None, "status should be None");
+    assert_eq!(escape.ready_at, 0, "should be no recovery");
+    assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
+    assert!(multisig_component.is_signer(SIGNER_2()), "should be signer 2");
+    assert!(!multisig_component.is_signer(SIGNER_3()), "should not be signer 3");
 }
 
 #[test]

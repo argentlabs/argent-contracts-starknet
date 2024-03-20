@@ -136,30 +136,6 @@ describe("ArgentMultisig: signer storage", function () {
   });
 
   describe("Expect revert messages under different conditions when trying to replace an owner", function () {
-    it("Expect 'argent/not-a-signer' when trying to replace a signer that isn't in the list", async function () {
-      const nonSigner = randomStarknetKeyPair().signer;
-      const newSigner = randomStarknetKeyPair().signer;
-
-      const { accountContract } = await deployMultisig1_3();
-
-      await expectRevertWithErrorMessage("argent/not-a-signer", () =>
-        accountContract.replace_signer(CallData.compile([nonSigner, newSigner])),
-      );
-    });
-    it("Expect 'argent/already-a-signer' when replacing an owner with one already in the list", async function () {
-      const { accountContract, keys } = await deployMultisig1_3();
-
-      await expectRevertWithErrorMessage("argent/already-a-signer", () =>
-        accountContract.replace_signer(CallData.compile([keys[0].signer, keys[1].signer])),
-      );
-    });
-    it("Expect 'argent/already-a-signer' when replacing an owner with themselves", async function () {
-      const { accountContract, keys } = await deployMultisig1_3();
-
-      await expectRevertWithErrorMessage("argent/already-a-signer", () =>
-        accountContract.replace_signer(CallData.compile([keys[0].signer, keys[0].signer])),
-      );
-    });
     it("Expect deserialization error when replacing an owner with a zero signer", async function () {
       const { accountContract, keys } = await deployMultisig1_3();
 

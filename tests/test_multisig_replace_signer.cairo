@@ -148,3 +148,16 @@ fn replace_already_signer() {
     multisig.replace_signer(signer_3, signer_1);
 }
 
+#[test]
+#[should_panic(expected: ('argent/already-a-signer',))]
+fn replace_already_same_signer() {
+    // init
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
+    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
+
+    // replace signer
+    multisig.replace_signer(signer_1, signer_1);
+}
+

@@ -46,7 +46,8 @@ describe("Gas griefing", function () {
     const estimate = await accountContract.estimateFee.trigger_escape_owner(compiledSigner);
 
     const maxEscapeTip = 1000000000000000000n;
-    const maxL2GasAmount = 10n;
+    // minimum amount of L2 gas allowed
+    const maxL2GasAmount = 170n;
     const newResourceBounds = {
       ...estimate.resourceBounds,
       l2_gas: {

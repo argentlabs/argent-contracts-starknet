@@ -1,7 +1,7 @@
 [package]
 name = "argent"
 version = "0.1.0"
-cairo-version = "2.5.4"
+cairo-version = "2.6.3"
 
 # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest
 
@@ -9,13 +9,15 @@ cairo-version = "2.5.4"
 sierra = true
 casm = true
 allowed-libfuncs-list.name = "audited"
+build-external-contracts = ["openzeppelin::presets::account::Account"]
 
 [dependencies]
-starknet = "2.5.4"
-alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.5.4" }
-alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.5.4" }
-alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", tag="cairo-v2.5.4" }
+starknet = "2.6.3"
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.6.0" }
+alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.6.0" }
+alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", tag="cairo-v2.6.0" }
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.19.0" }
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.10.0" }
 
 
 [tool.fmt]

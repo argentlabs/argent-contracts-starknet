@@ -44,7 +44,7 @@ struct EscapeCanceled {
     new_signers: Span<felt252>
 }
 
-#[derive(Drop, Copy, Serde, PartialEq)]
+#[derive(Drop, Copy, Serde, PartialEq, Debug)]
 enum EscapeStatus {
     /// No escape triggered, or it was canceled
     None,

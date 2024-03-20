@@ -11,6 +11,7 @@ mod introspection {
     mod interface;
     mod src5;
 }
+
 mod multisig {
     mod interface;
     mod multisig;
@@ -51,18 +52,18 @@ mod utils {
     mod bytes;
     mod calls;
     mod hashing;
-    mod mock_erc20;
     mod multicall;
     mod serialization;
     mod transaction_version;
 }
 
 mod mocks {
+    mod mock_dapp;
+    mod mock_erc20;
     mod multisig_mocks;
     mod recovery_mocks;
     mod signer_list_mocks;
     mod src5_mocks;
-    mod test_dapp;
 }
 
 mod session {

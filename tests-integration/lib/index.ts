@@ -22,3 +22,4 @@ export * from "./receipts";
 export * from "./session";
 export * from "./sessionServices";
 export * from "./argentServices";
+export * from "./openZeppelinAccount";

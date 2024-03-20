@@ -259,7 +259,7 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             assert_no_unsupported_v3_fields();
-            if self.session.is_session(*tx_info.signature[0]) {
+            if self.session.is_session(tx_info.signature) {
                 self.session.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature,);
             } else {
                 self
@@ -275,7 +275,7 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             let signature = tx_info.signature;
-            if self.session.is_session(*signature[0]) {
+            if self.session.is_session(signature) {
                 let session_timestamp = *signature[1];
                 // can call unwrap safely as the session has already been deserialized 
                 let session_timestamp_u64 = session_timestamp.try_into().unwrap();
@@ -289,9 +289,7 @@ mod ArgentAccount {
         }
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
-            let signer_signatures: Array<SignerSignature> = full_deserialize(signature.span())
-                .expect('argent/signature-not-empty');
-            if self.is_valid_span_signature(hash, signer_signatures) {
+            if self.is_valid_span_signature(hash, self.parse_signature_array(signature.span())) {
                 VALIDATED
             } else {
                 0
@@ -369,7 +367,7 @@ mod ArgentAccount {
         fn execute_from_outside_callback(
             ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
-            if self.session.is_session(*signature[0]) {
+            if self.session.is_session(signature) {
                 self.session.assert_valid_session(calls, outside_execution_hash, signature);
             } else {
                 self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature, is_from_outside: true);
@@ -386,10 +384,7 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_declare_version(tx_info.version);
             assert_no_unsupported_v3_fields();
-            let mut signatures = tx_info.signature;
-            let signer_signatures: Array<SignerSignature> = full_deserialize(signatures)
-                .expect('argent/signature-not-empty');
-            self.assert_valid_span_signature(tx_info.transaction_hash, signer_signatures);
+            self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
             VALIDATED
         }
 
@@ -403,10 +398,7 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_deploy_account_version(tx_info.version);
             assert_no_unsupported_v3_fields();
-            let mut signatures = tx_info.signature;
-            let signer_signatures: Array<SignerSignature> = full_deserialize(signatures)
-                .expect('argent/signature-not-empty');
-            self.assert_valid_span_signature(tx_info.transaction_hash, signer_signatures);
+            self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
             VALIDATED
         }
 
@@ -791,48 +783,32 @@ mod ArgentAccount {
             self.assert_valid_span_signature(execution_hash, signer_signatures);
         }
 
+        #[inline(always)]
         fn parse_signature_array(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
-            let first_slot: u256 = (*signatures.at(0)).into();
-            // check if legacy signature array
-            // Note that it will not work if the guardian_backup was used
-            if (first_slot > 3 && (signatures.len() == 2 || signatures.len() == 4)) {
-                let mut signer_signatures = array![];
-                let owner = self.read_owner();
-                assert(owner.signer_type == SignerType::Starknet, 'argent/invalid-legacy-signature');
-                let sig_owner_r = signatures.pop_front().unwrap();
-                let sig_owner_s = signatures.pop_front().unwrap();
-                signer_signatures
-                    .append(
-                        SignerSignature::Starknet(
-                            (
-                                StarknetSigner { pubkey: owner.stored_value.try_into().expect('argent/zero-pubkey') },
-                                StarknetSignature { r: *sig_owner_r, s: *sig_owner_s }
-                            )
-                        )
-                    );
-                match signatures.pop_front() {
-                    Option::Some(sig_guardian_r) => {
-                        let guardian = self.read_guardian().expect('argent/no-guardian');
-                        assert(guardian.signer_type == SignerType::Starknet, 'argent/invalid-legacy-signature');
-                        let sig_guardian_s = signatures.pop_front().unwrap();
-                        signer_signatures
-                            .append(
-                                SignerSignature::Starknet(
-                                    (
-                                        StarknetSigner {
-                                            pubkey: guardian.stored_value.try_into().expect('argent/zero-pubkey')
-                                        },
-                                        StarknetSignature { r: *sig_guardian_r, s: *sig_guardian_s }
-                                    )
-                                )
-                            );
-                    },
-                    Option::None => {}
-                };
-                signer_signatures
-            } else {
-                full_deserialize(signatures).expect('argent/signature-not-empty')
+            // Check if it's a legacy signature array (there's no support for guardian backup)
+            // Legacy signatures are always 2 or 4 items long
+            // Shortest signature in modern format is at least 5 items [array_len, signer_type, signer_pubkey, r, s]
+            if signatures.len() != 2 && signatures.len() != 4 {
+                return full_deserialize(signatures).expect('argent/invalid-signature-format');
             }
+
+            let owner_signature = SignerSignature::Starknet(
+                (
+                    StarknetSigner { pubkey: self._signer.read().try_into().expect('argent/zero-pubkey') },
+                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
+                )
+            );
+            if signatures.is_empty() {
+                return array![owner_signature];
+            }
+
+            let guardian_signature = SignerSignature::Starknet(
+                (
+                    StarknetSigner { pubkey: self._guardian.read().try_into().expect('argent/zero-pubkey') },
+                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
+                )
+            );
+            return array![owner_signature, guardian_signature];
         }
 
         fn is_valid_span_signature(

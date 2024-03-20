@@ -4,7 +4,7 @@ version = 1
 [[package]]
 name = "alexandria_data_structures"
 version = "0.2.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.5.4#e7b69575f92076e96a83a76efa6bed3c32a15f9f"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
 dependencies = [
  "alexandria_encoding",
 ]
@@ -12,7 +12,7 @@ dependencies = [
 [[package]]
 name = "alexandria_encoding"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.5.4#e7b69575f92076e96a83a76efa6bed3c32a15f9f"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
 dependencies = [
  "alexandria_math",
  "alexandria_numeric",
@@ -21,7 +21,7 @@ dependencies = [
 [[package]]
 name = "alexandria_math"
 version = "0.2.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.5.4#e7b69575f92076e96a83a76efa6bed3c32a15f9f"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
 dependencies = [
  "alexandria_data_structures",
 ]
@@ -29,12 +29,12 @@ dependencies = [
 [[package]]
 name = "alexandria_merkle_tree"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?tag=cairo-v2.5.4#e7b69575f92076e96a83a76efa6bed3c32a15f9f"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?tag=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
 
 [[package]]
 name = "alexandria_numeric"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.5.4#e7b69575f92076e96a83a76efa6bed3c32a15f9f"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
 dependencies = [
  "alexandria_math",
 ]
@@ -46,8 +46,14 @@ dependencies = [
  "alexandria_encoding",
  "alexandria_math",
  "alexandria_merkle_tree",
+ "openzeppelin",
  "snforge_std",
 ]
+
+[[package]]
+name = "openzeppelin"
+version = "0.10.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.10.0#d77082732daab2690ba50742ea41080eb23299d3"
 
 [[package]]
 name = "snforge_std"

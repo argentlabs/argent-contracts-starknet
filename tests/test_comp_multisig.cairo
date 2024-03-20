@@ -129,6 +129,15 @@ fn test_add_1_signer_invalid_threshold() {
     component.add_signers(4, array![SIGNER_3()]);
 }
 
+#[test]
+#[should_panic(expected: ('argent/already-a-signer',))]
+fn test_initialize_add_duplicate_signer() {
+    start_prank(CheatTarget::All, test_address());
+    let mut component = COMPONENT_STATE();
+    component.initialize(1, array![SIGNER_1()]);
+    component.add_signers(1, array![SIGNER_2(), SIGNER_2()]);
+}
+
 // Remove signers
 
 #[test]

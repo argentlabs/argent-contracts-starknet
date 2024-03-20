@@ -119,11 +119,16 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
-  const { account } = await deployAccount({ owner: new WebauthnOwner(privateKey), salt: "0x7" });
+  const { account } = await deployAccount({
+    owner: new WebauthnOwner(privateKey),
+    guardian,
+    salt: "0x7",
+    fundingAmount,
+  });
   ethContract.connect(account);
   await profiler.profile(
     "Webauthn w/o guardian",
-    await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e15 }),
+    await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
   );
 }
 

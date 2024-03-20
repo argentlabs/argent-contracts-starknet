@@ -64,6 +64,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   const paidInStrk = receipt.actual_fee.unit == "FRI";
   const gasPrice = BigInt(paidInStrk ? blockInfo.l1_gas_price.price_in_fri : blockInfo.l1_gas_price.price_in_wei);
 
+  // Removing the gas used for calldata/blob
   const gasUsed = (actualFee - BigInt(rawResources.data_availability.l1_data_gas * dataGasPrice)) / gasPrice;
   const gasPerComputationCategory = Object.fromEntries(
     Object.entries(executionResources)

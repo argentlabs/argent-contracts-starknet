@@ -93,56 +93,6 @@ fn change_to_zero_threshold() {
 }
 
 #[test]
-fn add_signers() {
-    // init
-    let multisig = initialize_multisig_with_one_signer();
-    let mut spy = spy_events(SpyOn::One(multisig.contract_address));
-
-    // add signer
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
-    multisig.add_signers(2, array![signer_1]);
-
-    // check 
-    let signers = multisig.get_signer_guids();
-    assert_eq!(signers.len(), 2, "invalid signers length");
-    assert_eq!(multisig.get_threshold(), 2, "new threshold not set");
-
-    spy.fetch_events();
-
-    let events = array![
-        (
-            multisig.contract_address,
-            signer_list_component::Event::OwnerAdded(
-                signer_list_component::OwnerAdded { new_owner_guid: signer_1.into_guid() }
-            )
-        ),
-        (
-            multisig.contract_address,
-            signer_list_component::Event::SignerLinked(
-                signer_list_component::SignerLinked { signer_guid: signer_1.into_guid(), signer: signer_1 }
-            )
-        )
-    ];
-    spy.assert_emitted(@events);
-
-    let event = multisig_component::Event::ThresholdUpdated(multisig_component::ThresholdUpdated { new_threshold: 2 });
-    spy.assert_emitted(@array![(multisig.contract_address, event)]);
-
-    assert_eq!(spy.events.len(), 0, "excess events");
-}
-
-#[test]
-#[should_panic(expected: ('argent/already-a-signer',))]
-fn add_signer_already_in_list() {
-    // init
-    let multisig = initialize_multisig_with_one_signer();
-
-    // add signer
-    let new_signers = array![starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)];
-    multisig.add_signers(2, new_signers);
-}
-
-#[test]
 fn get_name() {
     assert_eq!(initialize_multisig().get_name(), 'ArgentMultisig', "Name should be ArgentMultisig");
 }

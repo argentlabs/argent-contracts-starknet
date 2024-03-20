@@ -8,7 +8,7 @@ use pedersen::PedersenTrait;
 use poseidon::poseidon_hash_span;
 use starknet::{get_tx_info, get_contract_address, account::Call};
 
-const OUTSIDE_CALL_TYPE_HASH: felt252 =
+const OUTSIDE_CALL_TYPE_HASH_REV_0: felt252 =
     selector!("OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)");
 
 
@@ -23,7 +23,7 @@ const OUTSIDE_EXECUTION_TYPE_HASH_REV_1: felt252 =
         "\"OutsideExecution\"(\"Caller\":\"ContractAddress\",\"Nonce\":\"felt\",\"Execute After\":\"u128\",\"Execute Before\":\"u128\",\"Calls\":\"Call*\")\"Call\"(\"To\":\"ContractAddress\",\"Selector\":\"selector\",\"Calldata\":\"felt*\")"
     );
 
-const CALL_TYPE_HASH: felt252 =
+const CALL_TYPE_HASH_REV_1: felt252 =
     selector!("\"Call\"(\"To\":\"ContractAddress\",\"Selector\":\"selector\",\"Calldata\":\"felt*\")");
 
 
@@ -65,7 +65,7 @@ impl StructHashCallRev0 of IStructHashRev0<Call> {
         };
 
         PedersenTrait::new(0)
-            .update_with(OUTSIDE_CALL_TYPE_HASH)
+            .update_with(OUTSIDE_CALL_TYPE_HASH_REV_0)
             .update_with(*self.to)
             .update_with(*self.selector)
             .update_with(calldata_len)
@@ -94,7 +94,7 @@ impl OffChainMessageOutsideExecutionRev0 of IOffChainMessageHashRev0<OutsideExec
 impl StructHashCallRev1 of IStructHashRev1<Call> {
     fn get_struct_hash_rev_1(self: @Call) -> felt252 {
         poseidon_hash_span(
-            array![CALL_TYPE_HASH, (*self.to).into(), *self.selector, poseidon_hash_span(*self.calldata)].span()
+            array![CALL_TYPE_HASH_REV_1, (*self.to).into(), *self.selector, poseidon_hash_span(*self.calldata)].span()
         )
     }
 }
@@ -129,6 +129,9 @@ impl StructHashOutsideExecutionRev1 of IStructHashRev1<OutsideExecution> {
 
 impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExecution> {
     fn get_message_hash_rev_1(self: @OutsideExecution) -> felt252 {
+        // WARNING! Please do not use this starknet domain as it is wrong.
+        // Version and Revision should be shortstring '1' not felt 1
+        // This is due to a mistake made in the Braavos contracts and has been copied for compatibility
         let domain = StarknetDomain {
             name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id, revision: 1
         };

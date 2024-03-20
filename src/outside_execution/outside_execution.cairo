@@ -27,20 +27,7 @@ mod outside_execution_component {
         fn execute_from_outside(
             ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Array<felt252>
         ) -> Array<Span<felt252>> {
-            // Checks
-            if outside_execution.caller.into() != 'ANY_CALLER' {
-                assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
-            }
-
-            let block_timestamp = get_block_timestamp();
-            assert(
-                outside_execution.execute_after < block_timestamp && block_timestamp < outside_execution.execute_before,
-                'argent/invalid-timestamp'
-            );
-            let nonce = outside_execution.nonce;
-            assert(!self.outside_nonces.read(nonce), 'argent/duplicated-outside-nonce');
-            self.outside_nonces.write(nonce, true);
-
+            self.assert_valid_outside_execution(outside_execution);
             let outside_tx_hash = outside_execution.get_message_hash_rev_0();
             let mut state = self.get_contract_mut();
             state.execute_from_outside_callback(outside_execution.calls, outside_tx_hash, signature.span())
@@ -49,20 +36,7 @@ mod outside_execution_component {
         fn execute_from_outside_v2(
             ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Span<felt252>
         ) -> Array<Span<felt252>> {
-            // Checks
-            if outside_execution.caller.into() != 'ANY_CALLER' {
-                assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
-            }
-
-            let block_timestamp = get_block_timestamp();
-            assert(
-                outside_execution.execute_after < block_timestamp && block_timestamp < outside_execution.execute_before,
-                'argent/invalid-timestamp'
-            );
-            let nonce = outside_execution.nonce;
-            assert(!self.outside_nonces.read(nonce), 'argent/duplicated-outside-nonce');
-            self.outside_nonces.write(nonce, true);
-
+            self.assert_valid_outside_execution(outside_execution);
             let outside_tx_hash = outside_execution.get_message_hash_rev_1();
             let mut state = self.get_contract_mut();
             state.execute_from_outside_callback(outside_execution.calls, outside_tx_hash, signature)
@@ -76,6 +50,29 @@ mod outside_execution_component {
 
         fn is_valid_outside_execution_nonce(self: @ComponentState<TContractState>, nonce: felt252) -> bool {
             !self.outside_nonces.read(nonce)
+        }
+    }
+
+    #[generate_trait]
+    impl Internal<
+        TContractState, +HasComponent<TContractState>, +IOutsideExecutionCallback<TContractState>, +Drop<TContractState>
+    > of InternalTrait<TContractState> {
+        #[inline(always)]
+        fn assert_valid_outside_execution(
+            ref self: ComponentState<TContractState>, outside_execution: OutsideExecution
+        ) {
+            if outside_execution.caller.into() != 'ANY_CALLER' {
+                assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
+            }
+
+            let block_timestamp = get_block_timestamp();
+            assert(
+                outside_execution.execute_after < block_timestamp && block_timestamp < outside_execution.execute_before,
+                'argent/invalid-timestamp'
+            );
+            let nonce = outside_execution.nonce;
+            assert(!self.outside_nonces.read(nonce), 'argent/duplicated-outside-nonce');
+            self.outside_nonces.write(nonce, true);
         }
     }
 }

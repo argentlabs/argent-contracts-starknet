@@ -46,6 +46,8 @@ const typesRev1 = {
 
 function getDomain(chainId: string, revision: typedData.TypedDataRevision) {
   if (revision == typedData.TypedDataRevision.Active) {
+    // WARNING! These are encoded as numbers in the StarkNetDomain type and not as shortstring
+    // This is due to a bug in the Braavos implementation, and has been kept for compatibility
     return {
       name: "Account.execute_from_outside",
       version: "1",

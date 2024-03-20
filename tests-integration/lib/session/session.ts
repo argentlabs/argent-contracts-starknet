@@ -54,6 +54,8 @@ export interface SessionToken {
 }
 
 export async function getSessionDomain(): Promise<typedData.StarkNetDomain> {
+  // WARNING! These are encoded as numbers in the StarkNetDomain type and not as shortstring
+  // This is due to a bug in the Braavos implementation, and has been kept for compatibility
   const chainId = await provider.getChainId();
   return {
     name: "SessionAccount.session",

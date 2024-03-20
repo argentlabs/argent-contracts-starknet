@@ -55,7 +55,7 @@ export async function getEscapeStatus(accountContract: Contract): Promise<Escape
   // StarknetJs parsing is broken so we do it manually
   const result = (await accountContract.call("get_escape_and_status", undefined, { parseResponse: false })) as string[];
   const result_len = result.length;
-  expect(result_len).to.be.oneOf([4,6]);
+  expect(result_len).to.be.oneOf([4, 6]);
   const status = Number(result[result_len - 1]);
   expect(status).to.be.lessThan(4, `Unknown status ${status}`);
   return status;

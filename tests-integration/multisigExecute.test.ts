@@ -10,8 +10,6 @@ import {
   sort_by_guid,
 } from "./lib";
 
-
-
 describe("ArgentMultisig: Execute", function () {
   let mockDappContract: Contract;
 

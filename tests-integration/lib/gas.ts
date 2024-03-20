@@ -156,7 +156,7 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
       // Restore console.log to its original function
       console.log = log;
       // Remove ANSI escape codes (colors) from the tableString
-      tableString = tableString.replace(/\u001b\[\d+m/g, '');
+      tableString = tableString.replace(/\u001b\[\d+m/g, "");
       return tableString;
     },
     updateOrCheckReport() {

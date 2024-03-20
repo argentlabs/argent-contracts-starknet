@@ -94,7 +94,7 @@ mod session_component {
             assert(token.session_signature.is_valid_signature(message_hash), 'session/invalid-session-sig');
 
             // checks that its the account guardian that signed the session
-            let guardian_guid = state.get_guardian_guid().expect('argent/session-require-guardian');
+            let guardian_guid = state.get_guardian_guid().expect('session/guardian-required');
             let guardian_guid_from_sig = token.guardian_signature.signer().into_guid();
             assert(guardian_guid_from_sig == guardian_guid, 'session/guardian-key-mismatch');
             assert(token.guardian_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');

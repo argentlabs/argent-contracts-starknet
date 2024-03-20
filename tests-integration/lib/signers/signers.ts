@@ -269,13 +269,7 @@ export function signerTypeToCustomEnum(my_enum: SignerType, value: any): CairoCu
 
 export function sortByGuid(keys: KeyPair[]) {
   return [...keys].sort((n1, n2) => {
-    if (n1.guid > n2.guid) {
-      return 1;
-    }
-    if (n1.guid < n2.guid) {
-      return -1;
-    }
-    return 0;
+    return (n1.guid < n2.guid ? -1 : 1);
   });
 }
 

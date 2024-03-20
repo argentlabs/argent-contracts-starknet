@@ -54,7 +54,7 @@ describe("ArgentAccount", function () {
     expect(accountContract1.address != accountContract2.address).to.be.true;
   });
 
-  it.only("Expect guardian backup to be 0 when deployed with an owner and a guardian", async function () {
+  it("Expect guardian backup to be 0 when deployed with an owner and a guardian", async function () {
     const { accountContract, owner, guardian } = await deployAccount();
 
     await accountContract.get_owner_guid().should.eventually.equal(owner.guid);

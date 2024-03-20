@@ -91,7 +91,8 @@ mod ArgentAccount {
         /// Current account backup guardian
         _guardian_backup: felt252,
         _guardian_backup_non_stark: LegacyMap<felt252, felt252>,
-        _escape: LegacyEscape, /// The ongoing escape, if any
+        /// The ongoing escape, if any
+        _escape: LegacyEscape,
         /// Keeps track of the last time an escape was performed by the guardian.
         /// Rounded down to the hour: https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 
         /// Used to limit the number of escapes the account will pay for

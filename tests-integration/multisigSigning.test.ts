@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { num, shortString } from "starknet";
-import { MultisigSigner, expectRevertWithErrorMessage, randomStarknetKeyPair, sort_by_guid } from "./lib";
+import { MultisigSigner, expectRevertWithErrorMessage, randomStarknetKeyPair, sortByGuid } from "./lib";
 import { deployMultisig, deployMultisig1_1 } from "./lib/multisig";
 
 describe("ArgentMultisig: signing", function () {
@@ -36,7 +36,7 @@ describe("ArgentMultisig: signing", function () {
 
       const { accountContract, keys } = await deployMultisig({ threshold: 2, signersLength: 2 });
 
-      const signatures = await new MultisigSigner(sort_by_guid(keys).reverse()).signRaw(messageHash);
+      const signatures = await new MultisigSigner(sortByGuid(keys).reverse()).signRaw(messageHash);
 
       await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
         accountContract.is_valid_signature(BigInt(messageHash), signatures),

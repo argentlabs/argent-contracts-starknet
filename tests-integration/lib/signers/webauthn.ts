@@ -62,7 +62,7 @@ export class WebauthnOwner extends KeyPair {
     throw new Error("Not yet implemented");
   }
 
-  public get stored_value(): bigint {
+  public get storedValue(): bigint {
     throw new Error("Not implemented yet");
   }
 

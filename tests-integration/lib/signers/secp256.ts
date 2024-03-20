@@ -21,7 +21,7 @@ export class EthKeyPair extends KeyPair {
     throw new Error("Not implemented yet");
   }
 
-  public get stored_value(): bigint {
+  public get storedValue(): bigint {
     throw new Error("Not implemented yet");
   }
 
@@ -54,7 +54,7 @@ export class Eip191KeyPair extends KeyPair {
     throw new Error("Not implemented yet");
   }
 
-  public get stored_value(): bigint {
+  public get storedValue(): bigint {
     throw new Error("Not implemented yet");
   }
 
@@ -94,7 +94,7 @@ export class Secp256r1KeyPair extends KeyPair {
     throw new Error("Not implemented yet");
   }
 
-  public get stored_value(): bigint {
+  public get storedValue(): bigint {
     throw new Error("Not implemented yet");
   }
 

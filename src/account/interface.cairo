@@ -102,6 +102,7 @@ trait IArgentUserAccount<TContractState> {
     fn get_owner_guid(self: @TContractState) -> felt252;
     fn get_owner_type(self: @TContractState) -> SignerType;
     fn get_guardian(self: @TContractState) -> felt252;
+    fn is_guardian(self: @TContractState, guardian: Signer) -> bool;
     fn get_guardian_guid(self: @TContractState) -> Option<felt252>;
     fn get_guardian_type(self: @TContractState) -> Option<SignerType>;
     fn get_guardian_backup(self: @TContractState) -> felt252;

@@ -594,6 +594,10 @@ mod ArgentAccount {
             }
         }
 
+        fn is_guardian(self: @ContractState, guardian: Signer) -> bool {
+            self.is_valid_guardian(guardian.storage_value())
+        }
+
         fn get_guardian_guid(self: @ContractState) -> Option<felt252> {
             match self.read_guardian() {
                 Option::Some(guardian) => Option::Some(guardian.into_guid()),
@@ -819,12 +823,13 @@ mod ArgentAccount {
 
         fn is_valid_owner_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
             let signer = signer_signature.signer().storage_value();
-            (self.is_owner(signer) && signer_signature.is_valid_signature(hash))
+            (self.is_valid_owner(signer) && signer_signature.is_valid_signature(hash))
         }
 
         fn is_valid_guardian_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
             let signer = signer_signature.signer().storage_value();
-            (self.is_guardian(signer) || self.is_guardian_backup(signer)) && signer_signature.is_valid_signature(hash)
+            (self.is_valid_guardian(signer) || self.is_valid_guardian_backup(signer))
+                && signer_signature.is_valid_signature(hash)
         }
 
         /// The signature is the result of signing the message hash with the new owner private key
@@ -909,7 +914,7 @@ mod ArgentAccount {
         }
 
         #[inline(always)]
-        fn is_owner(self: @ContractState, owner: SignerStorageValue) -> bool {
+        fn is_valid_owner(self: @ContractState, owner: SignerStorageValue) -> bool {
             match owner.signer_type {
                 SignerType::Starknet => (self._signer.read() == owner.stored_value),
                 _ => (self._signer_non_stark.read(owner.signer_type.into()) == owner.stored_value)
@@ -967,7 +972,7 @@ mod ArgentAccount {
         }
 
         #[inline(always)]
-        fn is_guardian(self: @ContractState, guardian: SignerStorageValue) -> bool {
+        fn is_valid_guardian(self: @ContractState, guardian: SignerStorageValue) -> bool {
             match guardian.signer_type {
                 SignerType::Starknet => (self._guardian.read() == guardian.stored_value),
                 _ => (self._guardian_non_stark.read(guardian.signer_type.into()) == guardian.stored_value)
@@ -1020,7 +1025,7 @@ mod ArgentAccount {
         }
 
         #[inline(always)]
-        fn is_guardian_backup(self: @ContractState, guardian_backup: SignerStorageValue) -> bool {
+        fn is_valid_guardian_backup(self: @ContractState, guardian_backup: SignerStorageValue) -> bool {
             match guardian_backup.signer_type {
                 SignerType::Starknet => (self._guardian_backup.read() == guardian_backup.stored_value),
                 _ => (self

@@ -11,6 +11,7 @@ import {
   getStrkContract,
   EstimateStarknetKeyPair,
   StarknetKeyPair,
+  EstimateEip191KeyPair,
 } from "./lib";
 
 describe("ArgentAccount: Estimates", function () {
@@ -45,9 +46,12 @@ describe("ArgentAccount: Estimates", function () {
   });
 
   it(`Use Eip191Signer and txv3`, async function () {
-    const { account } = await deployAccount({ owner: new Eip191KeyPair(), useTxV3: true });
+    const { account, guardian, owner } = await deployAccount({ owner: new Eip191KeyPair(), useTxV3: true });
 
-    const estimateSigner = new ArgentSigner(new Eip191KeyPair(), randomStarknetKeyPair());
+    const estimateSigner = new ArgentSigner(
+      new EstimateEip191KeyPair((owner as Eip191KeyPair).address),
+      new EstimateStarknetKeyPair((guardian as StarknetKeyPair).publicKey),
+    );
     const estimateAccount = new ArgentAccount(
       provider,
       account.address,

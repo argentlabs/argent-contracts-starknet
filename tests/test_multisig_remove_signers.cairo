@@ -252,6 +252,6 @@ fn remove_signers_zero_threshold() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
-    multisig.remove_signers(1, array![signer_2, signer_2]);
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    multisig.remove_signers(0, array![signer_1]);
 }

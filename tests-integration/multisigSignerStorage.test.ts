@@ -10,9 +10,9 @@ describe("ArgentMultisig: signer storage", function () {
   });
 
   it("Expect deserialization error when replacing an owner with a zero signer", async function () {
-    const { accountContract, keys } = await deployMultisig1_3();
+    const { accountContract, threshold } = await deployMultisig1_3();
     await expectRevertWithErrorMessage("Failed to deserialize param #2", () =>
-      accountContract.replace_signer(CallData.compile([keys[0].signer, zeroStarknetSignatureType()])),
+      accountContract.replace_signer(CallData.compile([threshold, zeroStarknetSignatureType()])),
     );
   });
 

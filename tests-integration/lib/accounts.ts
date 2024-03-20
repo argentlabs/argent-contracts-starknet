@@ -25,7 +25,7 @@ export class ArgentAccount extends Account {
   // Increase the gas limit by 30% to avoid failures due to gas estimation being too low with tx v3 and transactions the use escaping
   override async execute(
     calls: AllowArray<Call>,
-    abis: Abi[] | undefined = undefined,
+    abis?: Abi[],
     details: UniversalDetails = {},
   ): Promise<InvokeFunctionResponse> {
     if (details.resourceBounds) {
@@ -141,59 +141,31 @@ async function deployAccountInner(
     useTxV3: params.useTxV3 ?? false,
     selfDeploy: params.selfDeploy ?? false,
   };
-  const some_guardian = finalParams.guardian
+  const guardian = finalParams.guardian
     ? finalParams.guardian.signerAsOption
     : new CairoOption(CairoOptionVariant.None);
-  const constructorCalldata = CallData.compile({
-    owner: finalParams.owner.signer,
-    guardian: some_guardian,
-  });
+  const constructorCalldata = CallData.compile({ owner: finalParams.owner.signer, guardian });
 
-  const contractAddress = hash.calculateContractAddressFromHash(
-    finalParams.salt,
-    finalParams.classHash,
-    constructorCalldata,
-    0,
-  );
-  const calls: Call[] = [];
-  let fundingCall: Call | null = null;
-  if (finalParams.useTxV3) {
-    fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK"); // 0.01 STRK
-  } else {
-    fundingCall = await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "ETH"); // 1 ETH
-  }
-  if (fundingCall) {
-    calls.push(fundingCall);
-  }
+  const { classHash, salt } = finalParams;
+  const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
+  const fundingCall = finalParams.useTxV3
+    ? await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK") // 0.01 STRK
+    : await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "ETH"); // 1 ETH
+  const calls = fundingCall ? [fundingCall] : [];
 
-  const defaultTxVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
-  const account = new ArgentAccount(provider, contractAddress, finalParams.owner, "1", defaultTxVersion);
-  if (finalParams.guardian) {
-    account.signer = new ArgentSigner(finalParams.owner, finalParams.guardian);
-  } else {
-    account.signer = new ArgentSigner(finalParams.owner);
-  }
+  const transactionVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
+  const signer = new ArgentSigner(finalParams.owner, finalParams.guardian);
+  const account = new ArgentAccount(provider, contractAddress, signer, "1", transactionVersion);
+
   let transactionHash;
   if (finalParams.selfDeploy) {
     const response = await deployer.execute(calls);
     await provider.waitForTransaction(response.transaction_hash);
-    const { transaction_hash } = await account.deploySelf({
-      classHash: finalParams.classHash,
-      constructorCalldata,
-      addressSalt: finalParams.salt,
-    });
+    const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
     transactionHash = transaction_hash;
   } else {
-    calls.push(
-      ...deployer.buildUDCContractPayload({
-        classHash: finalParams.classHash,
-        salt: finalParams.salt,
-        constructorCalldata,
-        unique: false,
-      }),
-    );
-
-    const { transaction_hash } = await deployer.execute(calls);
+    const udcCalls = deployer.buildUDCContractPayload({ classHash, salt, constructorCalldata, unique: false });
+    const { transaction_hash } = await deployer.execute([...calls, ...udcCalls]);
     transactionHash = transaction_hash;
   }
 
@@ -212,9 +184,7 @@ export type DeployAccountParams = {
 };
 
 export async function deployAccount(params: DeployAccountParams = {}): Promise<ArgentWalletWithGuardian> {
-  if (!params.guardian) {
-    params.guardian = randomStarknetKeyPair();
-  }
+  params.guardian ||= randomStarknetKeyPair();
   const { account, owner } = await deployAccountInner(params);
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
@@ -281,31 +251,22 @@ export async function upgradeAccount(
 
 export async function fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {
   const call = await fundAccountCall(recipient, amount, token);
-  if (call) {
-    const response = await deployer.execute([call]);
-    await provider.waitForTransaction(response.transaction_hash);
-  }
+  const response = await deployer.execute(call ? [call] : []);
+  await provider.waitForTransaction(response.transaction_hash);
 }
 
 export async function fundAccountCall(
   recipient: string,
   amount: number | bigint,
   token: "ETH" | "STRK",
-): Promise<Call | null> {
+): Promise<Call | undefined> {
   if (amount <= 0n) {
-    return null;
+    return;
   }
-  let contractAddress;
-  if (token === "ETH") {
-    contractAddress = ethAddress;
-  } else if (token === "STRK") {
-    contractAddress = strkAddress;
-  } else {
+  const contractAddress = { ETH: ethAddress, STRK: strkAddress }[token];
+  if (!contractAddress) {
     throw new Error(`Unsupported token ${token}`);
   }
-  return {
-    contractAddress,
-    calldata: CallData.compile([recipient, uint256.bnToUint256(amount)]),
-    entrypoint: "transfer",
-  };
+  const calldata = CallData.compile([recipient, uint256.bnToUint256(amount)]);
+  return { contractAddress, calldata, entrypoint: "transfer" };
 }

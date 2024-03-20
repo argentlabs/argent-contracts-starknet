@@ -51,63 +51,35 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   const signers = keysToSigners(keys);
   const constructorCalldata = CallData.compile({ threshold: finalParams.threshold, signers });
 
-  const accountAddress = hash.calculateContractAddressFromHash(
-    finalParams.salt,
-    finalParams.classHash,
-    constructorCalldata,
-    0 /* deployerAddress */,
-  );
+  const { classHash, salt, selfDeploymentIndexes } = finalParams;
+  const accountAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
 
-  const calls: Call[] = [];
-  let fundingCall: Call | null = null;
-  if (finalParams.useTxV3) {
-    fundingCall = await fundAccountCall(accountAddress, finalParams.fundingAmount ?? 1e16, "STRK"); // 0.01 STRK
-  } else {
-    fundingCall = await fundAccountCall(accountAddress, finalParams.fundingAmount ?? 1e15, "ETH"); // 0.001 ETH
-  }
-  if (fundingCall) {
-    calls.push(fundingCall);
-  }
+  const fundingCall = finalParams.useTxV3
+    ? await fundAccountCall(accountAddress, finalParams.fundingAmount ?? 1e16, "STRK") // 0.01 STRK
+    : await fundAccountCall(accountAddress, finalParams.fundingAmount ?? 1e15, "ETH"); // 0.001 ETH
+  const calls = fundingCall ? [fundingCall] : [];
 
-  const defaultTxVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
+  const transactionVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
 
   let transactionHash;
   if (finalParams.selfDeploy) {
     const response = await deployer.execute(calls);
     await provider.waitForTransaction(response.transaction_hash);
 
-    const selfDeploymentSigner = new MultisigSigner(
-      keys.filter((_, i) => finalParams.selfDeploymentIndexes.includes(i)),
-    );
-    const account = new Account(provider, accountAddress, selfDeploymentSigner, "1", defaultTxVersion);
+    const selfDeploymentSigner = new MultisigSigner(keys.filter((_, i) => selfDeploymentIndexes.includes(i)));
+    const account = new Account(provider, accountAddress, selfDeploymentSigner, "1", transactionVersion);
 
-    const { transaction_hash } = await account.deploySelf({
-      classHash: finalParams.classHash,
-      constructorCalldata,
-      addressSalt: finalParams.salt,
-    });
+    const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
     transactionHash = transaction_hash;
   } else {
-    calls.push(
-      ...deployer.buildUDCContractPayload({
-        classHash: finalParams.classHash,
-        salt: finalParams.salt,
-        constructorCalldata,
-        unique: false,
-      }),
-    );
-    const { transaction_hash } = await deployer.execute(calls);
+    const udcCalls = deployer.buildUDCContractPayload({ classHash, salt, constructorCalldata, unique: false });
+    const { transaction_hash } = await deployer.execute([...calls, ...udcCalls]);
     transactionHash = transaction_hash;
   }
 
   const receipt = await provider.waitForTransaction(transactionHash);
-  const account = new Account(
-    provider,
-    accountAddress,
-    new MultisigSigner(keys.slice(0, finalParams.threshold)),
-    "1",
-    defaultTxVersion,
-  );
+  const signer = new MultisigSigner(keys.slice(0, finalParams.threshold));
+  const account = new Account(provider, accountAddress, signer, "1", transactionVersion);
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
   return { account, accountContract, keys, receipt, threshold: BigInt(finalParams.threshold) };

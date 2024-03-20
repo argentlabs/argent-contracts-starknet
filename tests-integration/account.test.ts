@@ -127,7 +127,7 @@ describe("ArgentAccount", function () {
       const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.guid, newOwner, chainId);
       await accountContract.change_owner(starknetSignature);
 
-      await accountContract.get_owner().should.eventually.equal(newOwner.guid);
+      await accountContract.get_owner_guid().should.eventually.equal(newOwner.guid);
     });
 
     it("Expect 'argent/only-self' when called from another account", async function () {
@@ -169,7 +169,7 @@ describe("ArgentAccount", function () {
 
       await accountContract.change_owner(starknetSignature);
 
-      await accountContract.get_owner().should.eventually.equal(newOwner.guid);
+      await accountContract.get_owner_guid().should.eventually.equal(newOwner.guid);
       await hasOngoingEscape(accountContract).should.eventually.be.false;
     });
   });

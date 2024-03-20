@@ -130,7 +130,7 @@ export abstract class RawSigner implements SignerInterface {
 }
 
 export class MultisigSigner extends RawSigner {
-  constructor(public keys: RawSigner[]) {
+  constructor(public keys: KeyPair[]) {
     super();
   }
 
@@ -159,6 +159,7 @@ export class ArgentSigner extends MultisigSigner {
 export abstract class KeyPair extends RawSigner {
   abstract get signer(): CairoCustomEnum;
   abstract get guid(): bigint;
+  abstract get stored_value(): bigint;
 
   public get compiledSigner(): Calldata {
     return CallData.compile([this.signer]);
@@ -191,6 +192,10 @@ export class StarknetKeyPair extends KeyPair {
   }
 
   public get guid() {
+    return BigInt(hash.computePoseidonHash(shortString.encodeShortString("Starknet Signer"), this.publicKey));
+  }
+
+  public get stored_value() {
     return this.publicKey;
   }
 
@@ -259,6 +264,18 @@ export function signerTypeToCustomEnum(my_enum: SignerType, value: any): CairoCu
     Secp256r1,
     Eip191,
     Webauthn,
+  });
+}
+
+export function sort_by_guid(keys: KeyPair[]) {
+  return [...keys].sort((n1,n2) => {
+    if (n1.guid > n2.guid) {
+        return 1;
+    }
+    if (n1.guid < n2.guid) {
+        return -1;
+    }
+    return 0;
   });
 }
 

@@ -532,9 +532,9 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
 
             // update owner
+            let old_owner_guid = self.read_owner().into_guid();
             let new_owner = current_escape.new_signer.unwrap();
             self.write_owner(new_owner);
-            let old_owner_guid = self.read_owner().into_guid();
             let new_owner_guid = new_owner.into_guid();
             self.emit(OwnerEscaped { new_owner: new_owner_guid });
             self.emit(OwnerRemoved { removed_owner_guid: old_owner_guid });

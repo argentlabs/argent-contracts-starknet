@@ -119,8 +119,8 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
         actualFee: Number(profile.actualFee).toLocaleString("de-DE"),
         feeUsd: Number(feeUsd.toFixed(4)),
         gasUsed: Number(profile.gasUsed),
-        storageDiffs: sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         computationGas: Number(profile.computationGas),
+        storageDiffs: sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         l1Gas: Number(profile.l1Gas),
         l1DataGas: Number(profile.l1DataGas),
         maxComputationCategory: profile.maxComputationCategory,
@@ -149,7 +149,7 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
         .map(([name, { gasUsed, maxComputationCategory }]) => {
           const roundingScale = 10 ** (roundingMagnitude ?? 0);
           const gasRounded = Math.round(Number(gasUsed) / roundingScale) * roundingScale;
-          return `${name}: ${gasRounded.toLocaleString("en")} gas (${maxComputationCategory})`;
+          return `${name}: ${gasRounded.toLocaleString("en")} gas (${maxComputationCategory})`; // TODO ADD STORAGE DIFFS + L1 DATA GAS
         })
         .join("\n");
     },

@@ -7,7 +7,6 @@ import {
   expectRevertWithErrorMessage,
   deployContract,
   deployMultisig1_1,
-  provider,
 } from "./lib";
 
 describe("ArgentMultisig: Execute", function () {

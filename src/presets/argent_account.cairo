@@ -758,18 +758,21 @@ mod ArgentAccount {
         #[inline(always)]
         #[must_use]
         fn is_valid_owner_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
-            let valid_signature = signer_signature.signer().into_guid() == self._signer.read()
-                && signer_signature.is_valid_signature(hash);
-            return valid_signature || is_estimate_transaction();
+            if signer_signature.signer().into_guid() != self._signer.read() {
+                return false;
+            };
+            return signer_signature.is_valid_signature(hash) || is_estimate_transaction();
         }
 
         #[inline(always)]
         #[must_use]
         fn is_valid_guardian_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
             let signer_guid = signer_signature.signer().into_guid();
-            let valid_signature = (signer_guid == self._guardian.read() || signer_guid == self._guardian_backup.read())
-                && signer_signature.is_valid_signature(hash);
-            return valid_signature || is_estimate_transaction();
+            let valid_signer = (signer_guid == self._guardian.read() || signer_guid == self._guardian_backup.read());
+            if (!valid_signer) {
+                return false;
+            }
+            return signer_signature.is_valid_signature(hash) || is_estimate_transaction();
         }
 
         /// The signature is the result of signing the message hash with the new owner private key

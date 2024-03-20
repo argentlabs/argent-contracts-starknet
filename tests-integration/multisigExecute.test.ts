@@ -7,6 +7,7 @@ import {
   expectRevertWithErrorMessage,
   deployContract,
   deployMultisig1_1,
+  provider,
 } from "./lib";
 
 describe("ArgentMultisig: Execute", function () {
@@ -54,7 +55,7 @@ describe("ArgentMultisig: Execute", function () {
     account.signer = new MultisigSigner(keys.slice(0, 3));
 
     mockDappContract.connect(account);
-    await mockDappContract.set_number(42);
+    await mockDappContract.invoke("set_number", [42], { maxFee: 1e15 });
 
     await mockDappContract.get_number(account.address).should.eventually.equal(42n);
   });

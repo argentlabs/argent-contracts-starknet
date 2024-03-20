@@ -75,7 +75,7 @@ describe("Hybrid Session Account: execute calls", function () {
       accountSessionSignature,
     );
 
-    const { transaction_hash } = await accountWithDappSigner.execute(calls);
+    const { transaction_hash } = await accountWithDappSigner.execute(calls, undefined, { maxFee: 1e15 });
 
     await account.waitForTransaction(transaction_hash);
     await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
@@ -105,7 +105,7 @@ describe("Hybrid Session Account: execute calls", function () {
       sessionRequest,
       accountSessionSignature,
     );
-    const { transaction_hash } = await accountWithDappSigner.execute(calls);
+    const { transaction_hash } = await accountWithDappSigner.execute(calls, undefined, { maxFee: 1e15 });
 
     // non expired session
     await setTime(expiresAt - 10800n);
@@ -165,7 +165,7 @@ describe("Hybrid Session Account: execute calls", function () {
       accountSessionSignature,
     );
 
-    const { transaction_hash } = await accountWithDappSigner.execute(calls);
+    const { transaction_hash } = await accountWithDappSigner.execute(calls, undefined, { maxFee: 1e15 });
     await account.waitForTransaction(transaction_hash);
     await mockErc20Contract.balance_of(accountContract.address).should.eventually.equal(0n);
     await mockErc20Contract.balance_of("0x999").should.eventually.equal(10n);

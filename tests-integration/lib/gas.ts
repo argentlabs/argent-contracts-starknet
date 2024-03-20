@@ -145,13 +145,19 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
       console.table(mapValues(profiles, "executionResources"));
     },
     formatReport() {
-      return Object.entries(profiles)
-        .map(([name, { gasUsed, maxComputationCategory }]) => {
-          const roundingScale = 10 ** (roundingMagnitude ?? 0);
-          const gasRounded = Math.round(Number(gasUsed) / roundingScale) * roundingScale;
-          return `${name}: ${gasRounded.toLocaleString("en")} gas (${maxComputationCategory})`; // TODO ADD STORAGE DIFFS + L1 DATA GAS
-        })
-        .join("\n");
+      // Capture console.table output into a variable
+      let tableString = "";
+      const log = console.log;
+      console.log = (...args) => {
+        tableString += args.join("") + "\n";
+      };
+      // Print the table using console.table()
+      console.table(mapValues(profiles, this.summarizeCost));
+      // Restore console.log to its original function
+      console.log = log;
+      // Remove ANSI escape codes (colors) from the tableString
+      tableString = tableString.replace(/\u001b\[\d+m/g, '');
+      return tableString;
     },
     updateOrCheckReport() {
       const report = this.formatReport();

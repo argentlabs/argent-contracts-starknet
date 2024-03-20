@@ -11,8 +11,8 @@ mod ArgentAccount {
     };
     use argent::signer::{
         signer_signature::{
-            Signer, SignerStorageValue, SignerType, StarknetSigner, StarknetSignature, SignerTrait, SignerSignature,
-            SignerSignatureTrait, starknet_signer_from_pubkey
+            Signer, SignerStorageValue, SignerType, StarknetSigner, StarknetSignature, SignerTrait, SignerStorageTrait,
+            SignerSignature, SignerSignatureTrait, starknet_signer_from_pubkey
         }
     };
     use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
@@ -567,12 +567,7 @@ mod ArgentAccount {
 
         fn get_owner(self: @ContractState) -> felt252 {
             let owner = self.read_owner();
-            assert(
-                owner.signer_type == SignerType::Starknet
-                    || owner.signer_type == SignerType::Eip191
-                    || owner.signer_type == SignerType::Secp256k1,
-                'argent/only_guid'
-            );
+            assert(!owner.is_stored_as_guid(), 'argent/only_guid');
             owner.stored_value
         }
 
@@ -581,19 +576,13 @@ mod ArgentAccount {
         }
 
         fn get_owner_guid(self: @ContractState) -> felt252 {
-            let owner = self.read_owner();
-            owner.into_guid()
+            self.read_owner().into_guid()
         }
 
         fn get_guardian(self: @ContractState) -> felt252 {
             match self.read_guardian() {
                 Option::Some(guardian) => {
-                    assert(
-                        guardian.signer_type == SignerType::Starknet
-                            || guardian.signer_type == SignerType::Eip191
-                            || guardian.signer_type == SignerType::Secp256k1,
-                        'argent/only_guid'
-                    );
+                    assert(!guardian.is_stored_as_guid(), 'argent/only_guid');
                     guardian.stored_value
                 },
                 Option::None => { 0 },
@@ -617,12 +606,7 @@ mod ArgentAccount {
         fn get_guardian_backup(self: @ContractState) -> felt252 {
             match self.read_guardian_backup() {
                 Option::Some(guardian_backup) => {
-                    assert(
-                        guardian_backup.signer_type == SignerType::Starknet
-                            || guardian_backup.signer_type == SignerType::Eip191
-                            || guardian_backup.signer_type == SignerType::Secp256k1,
-                        'argent/only_guid'
-                    );
+                    assert(!guardian_backup.is_stored_as_guid(), 'argent/only_guid');
                     guardian_backup.stored_value
                 },
                 Option::None => { 0 },

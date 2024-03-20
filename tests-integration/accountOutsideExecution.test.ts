@@ -165,6 +165,6 @@ describe("ArgentAccount: outside execution", function () {
 
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
     const current_escape = await accountContract.get_escape();
-    expect(current_escape.new_signer.unwrap().storedValue).to.equal(keyPair.storedValue);
+    expect(current_escape.new_signer.unwrap().stored_value).to.equal(keyPair.storedValue);
   });
 });

@@ -76,14 +76,15 @@ struct EscapeEnabled {
     expiry_period: u64,
 }
 
-#[derive(Drop, Copy, Serde, PartialEq)]
+#[derive(Drop, Copy, Serde, PartialEq, Default)]
 enum LegacyEscapeType {
+    #[default]
     None,
     Guardian,
     Owner
 }
 
-#[derive(Drop, Copy, Serde)]
+#[derive(Drop, Copy, Serde, Default)]
 struct LegacyEscape {
     // timestamp for activation of escape mode, 0 otherwise
     ready_at: u64,
@@ -95,6 +96,7 @@ struct LegacyEscape {
 
 const SHIFT_8: felt252 = 0x100;
 const SHIFT_64: felt252 = 0x10000000000000000;
+const SHIFT_128: felt252 = consteval_int!(0x10000000000000000 * 0x10000000000000000);
 
 impl PackEscapeEnabled of starknet::StorePacking<EscapeEnabled, felt252> {
     fn pack(value: EscapeEnabled) -> felt252 {
@@ -170,9 +172,7 @@ impl LegacyEscapeStorePacking of starknet::StorePacking<LegacyEscape, (felt252, 
             Option::Some(new_signer) => (new_signer.signer_type.into(), new_signer.stored_value.into()),
             Option::None => (0, 0)
         };
-        let packed = value.ready_at.into()
-            + (value.escape_type.into() * SHIFT_64)
-            + (signer_type_ordinal * SHIFT_64 * SHIFT_64);
+        let packed = value.ready_at.into() + (value.escape_type.into() * SHIFT_64) + (signer_type_ordinal * SHIFT_128);
         (packed, stored_value)
     }
 
@@ -224,9 +224,9 @@ impl U256TryIntoLegacyEscapeType of TryInto<u256, LegacyEscapeType> {
     }
 }
 
-impl LegacyEscapeDefault of Default<LegacyEscape> {
+impl OptionDefault<T> of Default<Option<T>> {
     #[inline(always)]
-    fn default() -> LegacyEscape {
-        LegacyEscape { ready_at: 0, escape_type: LegacyEscapeType::None, new_signer: Option::None }
+    fn default() -> Option<T> {
+        Option::None
     }
 }

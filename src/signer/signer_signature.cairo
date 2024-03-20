@@ -49,6 +49,11 @@ trait SignerTrait<T> {
     fn storage_value(self: @T) -> SignerStorageValue;
 }
 
+trait SignerStorageTrait<T> {
+    fn into_guid(self: T) -> felt252;
+    fn is_stored_as_guid(self: @T) -> bool;
+}
+
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct StarknetSigner {
     pubkey: NonZero<felt252>
@@ -165,7 +170,7 @@ impl SignerTraitImpl of SignerTrait<Signer> {
     }
 }
 
-impl SignerStorageValueImpl of SignerTrait<SignerStorageValue> {
+impl SignerStorageValueImpl of SignerStorageTrait<SignerStorageValue> {
     #[inline(always)]
     fn into_guid(self: SignerStorageValue) -> felt252 {
         match self.signer_type {
@@ -177,8 +182,13 @@ impl SignerStorageValueImpl of SignerTrait<SignerStorageValue> {
     }
 
     #[inline(always)]
-    fn storage_value(self: @SignerStorageValue) -> SignerStorageValue {
-        *self
+    fn is_stored_as_guid(self: @SignerStorageValue) -> bool {
+        match self.signer_type {
+            SignerType::Starknet => false,
+            SignerType::Eip191 => false,
+            SignerType::Secp256k1 => false,
+            _ => true,
+        }
     }
 }
 

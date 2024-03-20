@@ -15,7 +15,7 @@ fn test_signature() {
     let signature = to_starknet_signer_signatures(
         array![MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(1).sig.r, MULTISIG_OWNER(1).sig.s]
     );
-    assert(multisig.is_valid_signature(tx_hash, signature) == VALIDATED, 'bad signature');
+    assert_eq!(multisig.is_valid_signature(tx_hash, signature), VALIDATED, "bad signature");
 }
 
 #[test]
@@ -36,7 +36,7 @@ fn test_double_signature() {
             MULTISIG_OWNER(2).sig.s
         ]
     );
-    assert(multisig.is_valid_signature(tx_hash, signature) == VALIDATED, 'bad signature');
+    assert_eq!(multisig.is_valid_signature(tx_hash, signature), VALIDATED, "bad signature");
 }
 
 #[test]

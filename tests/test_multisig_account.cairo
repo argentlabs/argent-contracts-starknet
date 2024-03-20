@@ -62,9 +62,33 @@ fn change_threshold() {
     let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
     let signers_array = array![signer_1, signer_2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
+    let mut spy = spy_events(SpyOn::One(multisig.contract_address));
 
     multisig.change_threshold(2);
     assert(multisig.get_threshold() == 2, 'new threshold not set');
+
+    let event = multisig_component::Event::ThresholdUpdated(multisig_component::ThresholdUpdated { new_threshold: 2 });
+    spy.assert_emitted(@array![(multisig.contract_address, event)]);
+
+    assert_eq!(spy.events.len(), 0, "excess events");
+}
+
+#[test]
+#[should_panic(expected: ('argent/bad-threshold',))]
+fn change_to_excessive_threshold() {
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1].span());
+
+    multisig.change_threshold(2);
+}
+
+#[test]
+#[should_panic(expected: ('argent/invalid-threshold',))]
+fn change_to_zero_threshold() {
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1].span());
+
+    multisig.change_threshold(0);
 }
 
 #[test]

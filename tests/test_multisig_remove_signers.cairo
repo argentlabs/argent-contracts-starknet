@@ -217,6 +217,17 @@ fn remove_invalid_signers() {
 }
 
 #[test]
+#[should_panic(expected: ('argent/not-a-signer',))]
+fn remove_same_signer_twice() {
+    // init
+    let multisig = initialize_multisig();
+
+    // remove signer
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
+    multisig.remove_signers(1, array![signer_2, signer_2]);
+}
+
+#[test]
 #[should_panic(expected: ('argent/bad-threshold',))]
 fn remove_signers_invalid_threshold() {
     // init

@@ -44,16 +44,6 @@ struct SignerStorageValue {
     signer_type: SignerType,
 }
 
-trait SignerTrait<T> {
-    fn into_guid(self: T) -> felt252;
-    fn storage_value(self: @T) -> SignerStorageValue;
-}
-
-trait SignerStorageTrait<T> {
-    fn into_guid(self: T) -> felt252;
-    fn is_stored_as_guid(self: @T) -> bool;
-}
-
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct StarknetSigner {
     pubkey: NonZero<felt252>
@@ -123,7 +113,8 @@ fn new_web_authn_signer(origin: felt252, rp_id_hash: u256, pubkey: u256) -> Weba
     }
 }
 
-impl SignerTraitImpl of SignerTrait<Signer> {
+#[generate_trait]
+impl SignerTraitImpl of SignerTrait {
     #[inline(always)]
     fn into_guid(self: Signer) -> felt252 {
         match self {
@@ -168,9 +159,20 @@ impl SignerTraitImpl of SignerTrait<Signer> {
             },
         }
     }
+    #[inline(always)]
+    fn signer_type(self: @Signer) -> SignerType {
+        match self {
+            Signer::Starknet(_) => SignerType::Starknet,
+            Signer::Secp256k1(_) => SignerType::Secp256k1,
+            Signer::Secp256r1(_) => SignerType::Secp256r1,
+            Signer::Eip191(_) => SignerType::Eip191,
+            Signer::Webauthn(_) => SignerType::Webauthn,
+        }
+    }
 }
 
-impl SignerStorageValueImpl of SignerStorageTrait<SignerStorageValue> {
+#[generate_trait]
+impl SignerStorageValueImpl of SignerStorageTrait {
     #[inline(always)]
     fn into_guid(self: SignerStorageValue) -> felt252 {
         match self.signer_type {
@@ -188,6 +190,14 @@ impl SignerStorageValueImpl of SignerStorageTrait<SignerStorageValue> {
             SignerType::Eip191 => false,
             SignerType::Secp256k1 => false,
             _ => true,
+        }
+    }
+
+    #[inline(always)]
+    fn starknet_pubkey_or_none(self: @SignerStorageValue) -> Option<felt252> {
+        match self.signer_type {
+            SignerType::Starknet => Option::Some(*self.stored_value),
+            _ => Option::None,
         }
     }
 }

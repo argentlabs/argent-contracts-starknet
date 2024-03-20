@@ -5,13 +5,15 @@ import {
   provider,
   getEthContract,
   restart,
-  removeFromCache,
+  clearCache,
   deployOldAccount,
   StarknetKeyPair,
   EthKeyPair,
   Secp256r1KeyPair,
   Eip191KeyPair,
   WebauthnOwner,
+  deployOpenZeppelinAccount,
+  LegacyStarknetKeyPair,
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
 
@@ -24,13 +26,10 @@ if (provider.isDevnet) {
   // With the KeyPairs hardcoded, we gotta reset to avoid some issues
   await restart();
   privateKey = "0x1";
+  clearCache();
 } else {
   privateKey = new StarknetKeyPair().privateKey;
 }
-
-removeFromCache("Proxy");
-removeFromCache("OldArgentAccount");
-removeFromCache("ArgentAccount");
 
 const ethContract = await getEthContract();
 const recipient = "0xadbe1";
@@ -69,6 +68,12 @@ const guardian = new StarknetKeyPair(42n);
     "Account w/o guardian",
     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
   );
+}
+
+{
+  const { account } = await deployOpenZeppelinAccount({ owner: new LegacyStarknetKeyPair(42n), salt: "0x1" });
+  ethContract.connect(account);
+  await profiler.profile("OZ account", await ethContract.transfer(recipient, amount));
 }
 
 {

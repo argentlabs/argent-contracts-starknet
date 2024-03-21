@@ -1,4 +1,4 @@
-import { Contract } from "starknet";
+import { Contract, typedData } from "starknet";
 import {
   declareContract,
   deployAccount,
@@ -14,6 +14,8 @@ import {
 } from "./lib";
 
 const initialTime = 1713139200n;
+const legacyRevision = typedData.TypedDataRevision.Legacy;
+const activeRevision = typedData.TypedDataRevision.Active;
 describe("ArgentAccount: outside execution", function () {
   // Avoid timeout
   this.timeout(320000);
@@ -30,7 +32,7 @@ describe("ArgentAccount: outside execution", function () {
     mockDapp = await loadContract(contract_address);
   });
 
-  it("Basics", async function () {
+  it("Basics: Revision 0", async function () {
     const { account, guardian } = await deployAccount({ classHash: argentSessionAccountClassHash });
 
     const { account: mockDappAccount } = await deployAccount();
@@ -56,6 +58,45 @@ describe("ArgentAccount: outside execution", function () {
       sessionRequest,
       accountSessionSignature,
       calls,
+      legacyRevision,
+      account.address,
+      mockDappAccount.address,
+    );
+
+    await setTime(initialTime);
+
+    await mockDappAccount.execute(outsideExecutionCall);
+
+    await mockDapp.get_number(account.address).should.eventually.equal(42n);
+  });
+
+  it("Basics: Revision 1", async function () {
+    const { account, guardian } = await deployAccount({ classHash: argentSessionAccountClassHash });
+
+    const { account: mockDappAccount } = await deployAccount();
+
+    const backendService = new BackendService(guardian as StarknetKeyPair);
+    const dappService = new DappService(backendService);
+    const argentX = new ArgentX(account, backendService);
+
+    const allowedMethods: AllowedMethod[] = [
+      {
+        "Contract Address": mockDapp.address,
+        selector: "set_number",
+      },
+    ];
+
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 1n);
+
+    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
+
+    const calls = [mockDapp.populateTransaction.set_number(42n)];
+
+    const outsideExecutionCall = await dappService.getOutsideExecutionCall(
+      sessionRequest,
+      accountSessionSignature,
+      calls,
+      activeRevision,
       account.address,
       mockDappAccount.address,
     );

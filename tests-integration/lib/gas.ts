@@ -80,7 +80,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     l1Gas = rawResources.data_availability.l1_gas;
     l1DataGas = BigInt(rawResources.data_availability.l1_data_gas);
   } else {
-    gasUsedWithoutDA =  actualFee / gasPrice;
+    gasUsedWithoutDA = actualFee / gasPrice;
     l1Gas = 0;
     l1DataGas = gasUsedWithoutDA - computationGas;
   }

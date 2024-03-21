@@ -73,16 +73,13 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   const computationGas = BigInt(gasPerComputationCategory[maxComputationCategory]);
 
   let gasUsedWithoutDA;
-  let l1Gas;
-  let l1DataGas;
+  let DAGas;
   if (rawResources.data_availability) {
     gasUsedWithoutDA = (actualFee - BigInt(rawResources.data_availability.l1_data_gas * dataGasPrice)) / gasPrice;
-    l1Gas = rawResources.data_availability.l1_gas;
-    l1DataGas = BigInt(rawResources.data_availability.l1_data_gas);
+    DAGas = rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas;
   } else {
     gasUsedWithoutDA = actualFee / gasPrice;
-    l1Gas = 0;
-    l1DataGas = gasUsedWithoutDA - computationGas;
+    DAGas = gasUsedWithoutDA - computationGas;
   }
 
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
@@ -91,8 +88,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     actualFee,
     paidInStrk,
     gasUsedWithoutDA,
-    l1Gas,
-    l1DataGas,
+    DAGas,
     computationGas,
     maxComputationCategory,
     gasPerComputationCategory,
@@ -104,7 +100,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
 
 type Profile = Awaited<ReturnType<typeof profileGasUsage>>;
 
-export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
+export function newProfiler(provider: RpcProvider) {
   const profiles: Record<string, Profile> = {};
 
   return {
@@ -127,14 +123,13 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
       const usdVal = profile.paidInStrk ? strkUsd : ethUsd;
       const feeUsd = Number((10000n * profile.actualFee * usdVal) / 10n ** 18n) / 10000;
       return {
-        actualFee: Number(profile.actualFee).toLocaleString("de-DE"),
-        feeUsd: Number(feeUsd.toFixed(4)),
-        gasUsedWithoutDA: Number(profile.gasUsedWithoutDA),
-        computationGas: Number(profile.computationGas),
-        storageDiffs: sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
-        l1Gas: Number(profile.l1Gas),
-        l1DataGas: Number(profile.l1DataGas),
-        maxComputationCategory: profile.maxComputationCategory,
+        "Actual fee": Number(profile.actualFee).toLocaleString("de-DE"),
+        "Fee usd": Number(feeUsd.toFixed(4)),
+        "W/o DA gas": Number(profile.gasUsedWithoutDA),
+        "Computation gas": Number(profile.computationGas),
+        "Storage diffs": sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
+        "DA gas": Number(profile.DAGas),
+        "Max computation per Category": profile.maxComputationCategory,
       };
     },
     printStorageDiffs({ storageDiffs }: Profile) {

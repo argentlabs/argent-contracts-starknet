@@ -28,14 +28,14 @@ fn valid_with_guardian() {
 
 #[test]
 fn valid_with_guardian_backup() {
-    let owner_pub_key = OWNER().pubkey;
+    let owner_pubkey = OWNER().pubkey;
     let guardian_backup_pubkey = GUARDIAN_BACKUP().pubkey;
     let account = initialize_account_with(OWNER().pubkey, 1);
     let guardian_backup = Option::Some(starknet_signer_from_pubkey(guardian_backup_pubkey));
     account.change_guardian_backup(guardian_backup);
     let signatures = to_starknet_signer_signatures(
         array![
-            owner_pub_key,
+            owner_pubkey,
             OWNER().sig.r,
             OWNER().sig.s,
             guardian_backup_pubkey,

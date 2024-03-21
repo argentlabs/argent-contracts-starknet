@@ -1,11 +1,10 @@
 use argent::signer::signer_signature::{SignerSignature, StarknetSignature, StarknetSigner};
-use integer::{u32_safe_divmod, u32_to_felt252};
-use snforge_std::{start_prank, start_spoof, CheatTarget, TxInfoMockTrait};
+use snforge_std::{start_spoof, CheatTarget, TxInfoMockTrait};
 use starknet::ContractAddress;
 
 fn to_starknet_signer_signatures(arr: Array<felt252>) -> Array<felt252> {
-    let size = arr.len() / 3_u32;
-    let mut signatures = array![u32_to_felt252(size)];
+    let size = arr.len() / 3;
+    let mut signatures = array![size.into()];
     let mut i: usize = 0;
     loop {
         if i == size {

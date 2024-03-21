@@ -64,8 +64,8 @@ fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAcco
     let mut calldata = array![];
     starknet_signer_from_pubkey(owner).serialize(ref calldata);
     let guardian_signer: Option<Signer> = match guardian {
-        0 => { Option::None },
-        _ => { Option::Some(starknet_signer_from_pubkey(guardian)) },
+        0 => Option::None,
+        _ => Option::Some(starknet_signer_from_pubkey(guardian)),
     };
     guardian_signer.serialize(ref calldata);
 

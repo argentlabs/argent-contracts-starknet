@@ -5,7 +5,7 @@ import { expect } from "chai";
 describe("ArgentMultisig Recovery", function () {
   it(`Should be able to perform recovery on multisig`, async function () {
     const { accountContract, keys: originalKeys } = await deployMultisig1_1();
-    const { account: guardianAccount, keys: guardianKeys } = await deployMultisig1_1();
+    const { account: guardianAccount } = await deployMultisig1_1();
     const { account: thirdPartyAccount } = await deployMultisig1_1();
 
     const originalSigner = originalKeys[0];

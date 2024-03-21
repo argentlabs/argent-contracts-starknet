@@ -105,11 +105,8 @@ impl StructHashOutsideExecutionRev1 of IStructHashRev1<OutsideExecution> {
         let mut calls_span = *self.calls;
         let mut hashed_calls = array![];
 
-        loop {
-            match calls_span.pop_front() {
-                Option::Some(call) => { hashed_calls.append(call.get_struct_hash_rev_1()); },
-                Option::None(_) => { break; },
-            };
+        while let Option::Some(call) = calls_span.pop_front() {
+            hashed_calls.append(call.get_struct_hash_rev_1());
         };
         let self = *self;
         poseidon_hash_span(

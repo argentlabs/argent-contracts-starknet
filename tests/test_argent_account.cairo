@@ -3,8 +3,8 @@ use argent::signer::signer_signature::{
     Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait, StarknetSigner,
     starknet_signer_from_pubkey
 };
-use snforge_std::{spy_events, SpyOn, EventSpy, EventFetcher, EventAssertions};
 use snforge_std::cheatcodes::contract_class::ContractClassTrait;
+use snforge_std::{spy_events, SpyOn, EventSpy, EventFetcher, EventAssertions};
 use snforge_std::{start_prank, declare, start_spoof, get_class_hash, ContractClass, CheatTarget, TxInfoMockTrait};
 use starknet::{contract_address_const, get_tx_info};
 use super::setup::{

@@ -710,6 +710,10 @@ mod ArgentAccount {
             }
         }
 
+        fn is_guardian(self: @ContractState, guardian: Signer) -> bool {
+            self.is_valid_guardian(guardian.storage_value())
+        }
+
         fn get_guardian_guid(self: @ContractState) -> Option<felt252> {
             match self.read_guardian() {
                 Option::Some(guardian) => Option::Some(guardian.into_guid()),
@@ -935,12 +939,13 @@ mod ArgentAccount {
 
         fn is_valid_owner_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
             let signer = signer_signature.signer().storage_value();
-            (self.is_owner(signer) && signer_signature.is_valid_signature(hash))
+            (self.is_valid_owner(signer) && signer_signature.is_valid_signature(hash))
         }
 
         fn is_valid_guardian_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
             let signer = signer_signature.signer().storage_value();
-            (self.is_guardian(signer) || self.is_guardian_backup(signer)) && signer_signature.is_valid_signature(hash)
+            (self.is_valid_guardian(signer) || self.is_valid_guardian_backup(signer))
+                && signer_signature.is_valid_signature(hash)
         }
 
         /// The signature is the result of signing the message hash with the new owner private key
@@ -950,7 +955,7 @@ mod ArgentAccount {
         fn assert_valid_new_owner_signature(self: @ContractState, signer_signature: SignerSignature) {
             let chain_id = get_tx_info().unbox().chain_id;
             let owner_guid = self.read_owner().into_guid();
-            // We now need to hash message_hash with the size of the array: (change_owner selector, chainid, contract address, old_owner guid)
+            // We now need to hash message_hash with the size of the array: (change_owner selector, chain id, contract address, old_owner_guid)
             // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
             let message_hash = PedersenTrait::new(0)
                 .update(selector!("change_owner"))
@@ -1011,24 +1016,22 @@ mod ArgentAccount {
         fn read_owner(self: @ContractState) -> SignerStorageValue {
             let mut preferred_order = owner_ordered_types();
             loop {
-                let signer_type = preferred_order.pop_front().expect('argent/owner-not-found');
+                let signer_type = *preferred_order.pop_front().expect('argent/owner-not-found');
                 let stored_value = match signer_type {
                     SignerType::Starknet => self._signer.read(),
-                    _ => self._signer_non_stark.read((*signer_type).into()),
+                    _ => self._signer_non_stark.read(signer_type.into()),
                 };
-                if (stored_value != 0) {
-                    break SignerStorageValue {
-                        stored_value: stored_value.try_into().unwrap(), signer_type: *signer_type
-                    };
+                if stored_value != 0 {
+                    break SignerStorageValue { stored_value: stored_value.try_into().unwrap(), signer_type };
                 }
             }
         }
 
         #[inline(always)]
-        fn is_owner(self: @ContractState, owner: SignerStorageValue) -> bool {
+        fn is_valid_owner(self: @ContractState, owner: SignerStorageValue) -> bool {
             match owner.signer_type {
-                SignerType::Starknet => (self._signer.read() == owner.stored_value),
-                _ => (self._signer_non_stark.read(owner.signer_type.into()) == owner.stored_value)
+                SignerType::Starknet => self._signer.read() == owner.stored_value,
+                _ => self._signer_non_stark.read(owner.signer_type.into()) == owner.stored_value,
             }
         }
 
@@ -1041,18 +1044,14 @@ mod ArgentAccount {
 
         fn write_guardian(ref self: ContractState, guardian: Option<SignerStorageValue>) {
             // clear storage
-            match self.read_guardian() {
-                Option::Some(old_guardian) => {
-                    match old_guardian.signer_type {
-                        SignerType::Starknet => self._guardian.write(0),
-                        _ => self._guardian_non_stark.write(old_guardian.signer_type.into(), 0),
-                    }
-                },
-                Option::None => {},
-            };
+            if let Option::Some(old_guardian) = self.read_guardian() {
+                match old_guardian.signer_type {
+                    SignerType::Starknet => self._guardian.write(0),
+                    _ => self._guardian_non_stark.write(old_guardian.signer_type.into(), 0),
+                }
+            }
             // write storage
-            if (guardian.is_some()) {
-                let guardian = guardian.unwrap();
+            if let Option::Some(guardian) = guardian {
                 match guardian.signer_type {
                     SignerType::Starknet => self._guardian.write(guardian.stored_value),
                     _ => self._guardian_non_stark.write(guardian.signer_type.into(), guardian.stored_value),
@@ -1083,7 +1082,7 @@ mod ArgentAccount {
         }
 
         #[inline(always)]
-        fn is_guardian(self: @ContractState, guardian: SignerStorageValue) -> bool {
+        fn is_valid_guardian(self: @ContractState, guardian: SignerStorageValue) -> bool {
             match guardian.signer_type {
                 SignerType::Starknet => (self._guardian.read() == guardian.stored_value),
                 _ => (self._guardian_non_stark.read(guardian.signer_type.into()) == guardian.stored_value)
@@ -1136,7 +1135,7 @@ mod ArgentAccount {
         }
 
         #[inline(always)]
-        fn is_guardian_backup(self: @ContractState, guardian_backup: SignerStorageValue) -> bool {
+        fn is_valid_guardian_backup(self: @ContractState, guardian_backup: SignerStorageValue) -> bool {
             match guardian_backup.signer_type {
                 SignerType::Starknet => (self._guardian_backup.read() == guardian_backup.stored_value),
                 _ => (self

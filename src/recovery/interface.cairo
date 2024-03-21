@@ -96,7 +96,7 @@ struct LegacyEscape {
 
 const SHIFT_8: felt252 = 0x100;
 const SHIFT_64: felt252 = 0x10000000000000000;
-const SHIFT_128: felt252 = consteval_int!(0x10000000000000000 * 0x10000000000000000);
+const SHIFT_128: felt252 = 0x100000000000000000000000000000000;
 
 impl PackEscapeEnabled of starknet::StorePacking<EscapeEnabled, felt252> {
     fn pack(value: EscapeEnabled) -> felt252 {

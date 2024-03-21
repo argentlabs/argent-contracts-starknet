@@ -268,9 +268,7 @@ export function signerTypeToCustomEnum(my_enum: SignerType, value: any): CairoCu
 }
 
 export function sortByGuid(keys: KeyPair[]) {
-  return [...keys].sort((n1, n2) => {
-    return n1.guid < n2.guid ? -1 : 1;
-  });
+  return keys.sort((n1, n2) => (n1.guid < n2.guid ? -1 : 1));
 }
 
 export const randomStarknetKeyPair = () => new StarknetKeyPair();

@@ -900,15 +900,13 @@ mod ArgentAccount {
         fn read_owner(self: @ContractState) -> SignerStorageValue {
             let mut preferred_order = owner_ordered_types();
             loop {
-                let signer_type = preferred_order.pop_front().expect('argent/owner-not-found');
+                let signer_type = *preferred_order.pop_front().expect('argent/owner-not-found');
                 let stored_value = match signer_type {
                     SignerType::Starknet => self._signer.read(),
-                    _ => self._signer_non_stark.read((*signer_type).into()),
+                    _ => self._signer_non_stark.read(signer_type.into()),
                 };
-                if (stored_value != 0) {
-                    break SignerStorageValue {
-                        stored_value: stored_value.try_into().unwrap(), signer_type: *signer_type
-                    };
+                if stored_value != 0 {
+                    break SignerStorageValue { stored_value: stored_value.try_into().unwrap(), signer_type };
                 }
             }
         }
@@ -916,8 +914,8 @@ mod ArgentAccount {
         #[inline(always)]
         fn is_valid_owner(self: @ContractState, owner: SignerStorageValue) -> bool {
             match owner.signer_type {
-                SignerType::Starknet => (self._signer.read() == owner.stored_value),
-                _ => (self._signer_non_stark.read(owner.signer_type.into()) == owner.stored_value)
+                SignerType::Starknet => self._signer.read() == owner.stored_value,
+                _ => self._signer_non_stark.read(owner.signer_type.into()) == owner.stored_value,
             }
         }
 
@@ -930,18 +928,14 @@ mod ArgentAccount {
 
         fn write_guardian(ref self: ContractState, guardian: Option<SignerStorageValue>) {
             // clear storage
-            match self.read_guardian() {
-                Option::Some(old_guardian) => {
-                    match old_guardian.signer_type {
-                        SignerType::Starknet => self._guardian.write(0),
-                        _ => self._guardian_non_stark.write(old_guardian.signer_type.into(), 0),
-                    }
-                },
-                Option::None => {},
-            };
+            if let Option::Some(old_guardian) = self.read_guardian() {
+                match old_guardian.signer_type {
+                    SignerType::Starknet => self._guardian.write(0),
+                    _ => self._guardian_non_stark.write(old_guardian.signer_type.into(), 0),
+                }
+            }
             // write storage
-            if (guardian.is_some()) {
-                let guardian = guardian.unwrap();
+            if let Option::Some(guardian) = guardian {
                 match guardian.signer_type {
                     SignerType::Starknet => self._guardian.write(guardian.stored_value),
                     _ => self._guardian_non_stark.write(guardian.signer_type.into(), guardian.stored_value),

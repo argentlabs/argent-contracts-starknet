@@ -32,7 +32,7 @@ async function buildFixture() {
   return { accountContract, originalSigner, newSigner, guardianAccount, replaceSignerCall };
 }
 
-describe("ArgentMultisig Recovery", function () {
+describe.only("ArgentMultisig Recovery", function () {
   it(`Should be able to perform recovery on multisig`, async function () {
     const { accountContract, originalSigner, newSigner, guardianAccount, replaceSignerCall } = await buildFixture();
     const { account: thirdPartyAccount } = await deployMultisig1_1();

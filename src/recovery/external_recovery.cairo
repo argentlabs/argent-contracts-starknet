@@ -122,7 +122,7 @@ mod external_recovery_component {
             self.assert_only_guardian();
 
             let escape_config: EscapeEnabled = self.escape_enabled.read();
-            assert(escape_config.is_enabled == 1, 'argent/recovery-disabled');
+            assert(escape_config.is_enabled, 'argent/recovery-disabled');
             let call_hash = get_escape_call_hash(@call);
             assert(
                 call.selector == selector!("replace_signer")
@@ -203,15 +203,15 @@ mod external_recovery_component {
                     security_period != 0 && expiry_period != 0 && guardian != contract_address_const::<0>(),
                     'argent/invalid-escape-params'
                 );
-                self.escape_enabled.write(EscapeEnabled { is_enabled: 1, security_period, expiry_period });
+                self.escape_enabled.write(EscapeEnabled { is_enabled: true, security_period, expiry_period });
                 self.guardian.write(guardian);
             } else {
-                assert(escape_config.is_enabled == 1, 'argent/escape-disabled');
+                assert(escape_config.is_enabled, 'argent/escape-disabled');
                 assert(
                     security_period == 0 && expiry_period == 0 && guardian == contract_address_const::<0>(),
                     'argent/invalid-escape-params'
                 );
-                self.escape_enabled.write(EscapeEnabled { is_enabled: 0, security_period, expiry_period });
+                self.escape_enabled.write(EscapeEnabled { is_enabled: false, security_period, expiry_period });
                 self.guardian.write(contract_address_const::<0>());
             }
         }

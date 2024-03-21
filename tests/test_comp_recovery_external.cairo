@@ -56,13 +56,13 @@ fn setup() -> (IExternalRecoveryDispatcher, IArgentMultisigDispatcher) {
 fn test_toggle_escape() {
     let (component, _) = setup();
     let mut config = component.get_escape_enabled();
-    assert_eq!(config.is_enabled, 1, "should be enabled");
+    assert_eq!(config.is_enabled, true, "should be enabled");
     assert_eq!(config.security_period, 10, "should be 10");
     assert_eq!(config.expiry_period, 10, "should be 10");
     assert_eq!(component.get_guardian(), GUARDIAN(), "should be guardian");
     component.toggle_escape(false, 0, 0, contract_address_const::<0>());
     config = component.get_escape_enabled();
-    assert_eq!(config.is_enabled, 0, "should not be enabled");
+    assert_eq!(config.is_enabled, false, "should not be enabled");
     assert_eq!(config.security_period, 0, "should be 0");
     assert_eq!(config.expiry_period, 0, "should be 0");
     assert_eq!(component.get_guardian(), contract_address_const::<0>(), "guardian should be 0");

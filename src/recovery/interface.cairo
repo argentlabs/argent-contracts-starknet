@@ -69,7 +69,7 @@ struct Escape {
 #[derive(Drop, Copy, Serde, starknet::StorePacking)]
 struct EscapeEnabled {
     // The escape is enabled
-    is_enabled: u8,
+    is_enabled: bool,
     // Time it takes for the escape to become ready after being triggered
     security_period: u64,
     //  The escape will be ready and can be completed for this duration
@@ -112,7 +112,7 @@ impl PackEscapeEnabled of starknet::StorePacking<EscapeEnabled, felt252> {
         let (expiry_period, security_period) = integer::u256_safe_div_rem(rest, shift_64);
 
         EscapeEnabled {
-            is_enabled: is_enabled.try_into().unwrap(),
+            is_enabled: !is_enabled.is_zero(),
             security_period: security_period.try_into().unwrap(),
             expiry_period: expiry_period.try_into().unwrap(),
         }

@@ -45,12 +45,10 @@ trait IExternalRecoveryCallback<TContractState> {
 /// @notice Escape was triggered
 /// @param ready_at when the escape can be completed
 /// @param call to execute to escape
-/// @param call_hash hash of EscapeCall
 #[derive(Drop, starknet::Event)]
 struct EscapeTriggered {
     ready_at: u64,
     call: EscapeCall,
-    call_hash: felt252
 }
 
 /// @notice Signer escape was completed and call was executed
@@ -139,7 +137,7 @@ mod external_recovery_component {
             }
 
             let ready_at = get_block_timestamp() + escape_config.security_period;
-            self.emit(EscapeTriggered { ready_at, call, call_hash });
+            self.emit(EscapeTriggered { ready_at, call });
             let escape = Escape { ready_at, call_hash };
             self.escape.write(escape);
         }

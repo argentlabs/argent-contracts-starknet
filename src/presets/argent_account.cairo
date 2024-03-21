@@ -21,7 +21,7 @@ mod ArgentAccount {
         serialization::full_deserialize,
         transaction_version::{
             TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
-            assert_correct_deploy_account_version, assert_no_unsupported_v3_fields, DA_MODE_L1
+            assert_correct_deploy_account_version, assert_no_unsupported_v3_fields, DA_MODE_L1, is_estimate_transaction
         }
     };
     use core::option::OptionTrait;
@@ -821,15 +821,25 @@ mod ArgentAccount {
             }
         }
 
+
+        #[inline(always)]
+        #[must_use]
         fn is_valid_owner_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
             let signer = signer_signature.signer().storage_value();
-            (self.is_valid_owner(signer) && signer_signature.is_valid_signature(hash))
+            if !self.is_valid_owner(signer) {
+                return false;
+            }
+            return signer_signature.is_valid_signature(hash) || is_estimate_transaction();
         }
 
+        #[inline(always)]
+        #[must_use]
         fn is_valid_guardian_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
             let signer = signer_signature.signer().storage_value();
-            (self.is_valid_guardian(signer) || self.is_valid_guardian_backup(signer))
-                && signer_signature.is_valid_signature(hash)
+            if !self.is_valid_guardian(signer) && !self.is_valid_guardian_backup(signer) {
+                return false;
+            }
+            return signer_signature.is_valid_signature(hash) || is_estimate_transaction();
         }
 
         /// The signature is the result of signing the message hash with the new owner private key

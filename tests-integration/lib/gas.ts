@@ -64,8 +64,6 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   const paidInStrk = receipt.actual_fee.unit == "FRI";
   const gasPrice = BigInt(paidInStrk ? blockInfo.l1_gas_price.price_in_fri : blockInfo.l1_gas_price.price_in_wei);
 
-  // Removing the gas used for calldata/blob
-  const gasUsed = (actualFee - BigInt(rawResources.data_availability.l1_data_gas * dataGasPrice)) / gasPrice;
   const gasPerComputationCategory = Object.fromEntries(
     Object.entries(executionResources)
       .filter(([resource]) => resource in gasWeights)
@@ -74,14 +72,29 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   const maxComputationCategory = maxBy(Object.entries(gasPerComputationCategory), ([, gas]) => gas)![0];
   const computationGas = BigInt(gasPerComputationCategory[maxComputationCategory]);
 
+  const gasUsed = actualFee / gasPrice;
+  let gasUsedWithoutDA;
+  let l1Gas;
+  let l1DataGas;
+  if (rawResources.data_availability) {
+    gasUsedWithoutDA = (actualFee - BigInt(rawResources.data_availability.l1_data_gas * dataGasPrice)) / gasPrice;
+    l1Gas = rawResources.data_availability.l1_gas;
+    l1DataGas = BigInt(rawResources.data_availability.l1_data_gas);
+  } else {
+    gasUsedWithoutDA = gasUsed;
+    l1Gas = 0;
+    l1DataGas = gasUsed - computationGas;
+  }
+
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
 
   return {
     actualFee,
     paidInStrk,
     gasUsed,
-    l1Gas: rawResources.data_availability.l1_gas,
-    l1DataGas: rawResources.data_availability.l1_data_gas,
+    gasUsedWithoutDA,
+    l1Gas,
+    l1DataGas,
     computationGas,
     maxComputationCategory,
     gasPerComputationCategory,
@@ -119,6 +132,7 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
         actualFee: Number(profile.actualFee).toLocaleString("de-DE"),
         feeUsd: Number(feeUsd.toFixed(4)),
         gasUsed: Number(profile.gasUsed),
+        gasUsedWithoutDA: Number(profile.gasUsedWithoutDA),
         computationGas: Number(profile.computationGas),
         storageDiffs: sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         l1Gas: Number(profile.l1Gas),

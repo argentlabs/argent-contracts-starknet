@@ -177,7 +177,8 @@ impl SignerStorageValueImpl of SignerStorageTrait<SignerStorageValue> {
             SignerType::Starknet => poseidon_2(STARKNET_SIGNER_TYPE, self.stored_value),
             SignerType::Eip191 => poseidon_2(EIP191_SIGNER_TYPE, self.stored_value),
             SignerType::Secp256k1 => poseidon_2(SECP256K1_SIGNER_TYPE, self.stored_value),
-            _ => self.stored_value,
+            SignerType::Secp256r1 => self.stored_value,
+            SignerType::Webauthn => self.stored_value,
         }
     }
 
@@ -187,7 +188,8 @@ impl SignerStorageValueImpl of SignerStorageTrait<SignerStorageValue> {
             SignerType::Starknet => false,
             SignerType::Eip191 => false,
             SignerType::Secp256k1 => false,
-            _ => true,
+            SignerType::Secp256r1 => true,
+            SignerType::Webauthn => true,
         }
     }
 }

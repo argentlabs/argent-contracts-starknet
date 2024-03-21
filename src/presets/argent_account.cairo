@@ -129,7 +129,7 @@ mod ArgentAccount {
         GuardianEscapedGuid: GuardianEscapedGuid,
         EscapeCanceled: EscapeCanceled,
         OwnerChanged: OwnerChanged,
-        OwnerChangeGuid: OwnerChangedGuid,
+        OwnerChangedGuid: OwnerChangedGuid,
         GuardianChanged: GuardianChanged,
         GuardianChangedGuid: GuardianChangedGuid,
         GuardianBackupChanged: GuardianBackupChanged,
@@ -614,7 +614,7 @@ mod ArgentAccount {
                 },
                 Option::None => { self.emit(EscapeGuardianTriggered { ready_at, new_guardian: 0 }); },
             }
-            self.emit(EscapeGuardianTriggered { ready_at, new_guardian: new_guardian_guid });
+            self.emit(EscapeGuardianTriggeredGuid { ready_at, new_guardian_guid });
         }
 
         fn escape_owner(ref self: ContractState) {

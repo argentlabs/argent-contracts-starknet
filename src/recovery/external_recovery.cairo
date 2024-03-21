@@ -114,10 +114,7 @@ mod external_recovery_component {
 
     #[embeddable_as(ExternalRecoveryImpl)]
     impl ExternalRecovery<
-        TContractState,
-        +HasComponent<TContractState>,
-        impl CallBack: IExternalRecoveryCallback<TContractState>,
-        +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +IExternalRecoveryCallback<TContractState>, +Drop<TContractState>
     > of IExternalRecovery<ComponentState<TContractState>> {
         /// @notice Triggers the escape. The method must be called by the guardian.
         /// @param call Call to trigger on the account to recover the account

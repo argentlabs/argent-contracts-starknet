@@ -1,5 +1,5 @@
 import { typedData, BigNumberish, CairoCustomEnum, hash } from "starknet";
-import { provider } from ".";
+import { provider } from "..";
 
 export const sessionTypes = {
   StarknetDomain: [
@@ -38,7 +38,7 @@ export interface OffChainSession {
   session_key_guid: BigNumberish;
 }
 
-interface OnChainSession {
+export interface OnChainSession {
   expires_at: BigNumberish;
   allowed_methods_root: string;
   metadata_hash: string;
@@ -54,6 +54,8 @@ export interface SessionToken {
 }
 
 export async function getSessionDomain(): Promise<typedData.StarkNetDomain> {
+  // WARNING! These are encoded as numbers in the StarkNetDomain type and not as shortstring
+  // This is due to a bug in the Braavos implementation, and has been kept for compatibility
   const chainId = await provider.getChainId();
   return {
     name: "SessionAccount.session",

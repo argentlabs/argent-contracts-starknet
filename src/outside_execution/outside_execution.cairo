@@ -27,19 +27,15 @@ mod outside_execution_component {
         fn execute_from_outside(
             ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Array<felt252>
         ) -> Array<Span<felt252>> {
-            self
-                .assert_valid_outside_execution(
-                    outside_execution, outside_execution.get_message_hash_rev_0(), signature.span()
-                )
+            let hash = outside_execution.get_message_hash_rev_0();
+            self.assert_valid_outside_execution(outside_execution, hash, signature.span())
         }
 
         fn execute_from_outside_v2(
             ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Span<felt252>
         ) -> Array<Span<felt252>> {
-            self
-                .assert_valid_outside_execution(
-                    outside_execution, outside_execution.get_message_hash_rev_1(), signature
-                )
+            let hash = outside_execution.get_message_hash_rev_1();
+            self.assert_valid_outside_execution(outside_execution, hash, signature)
         }
 
         fn get_outside_execution_message_hash_rev_0(

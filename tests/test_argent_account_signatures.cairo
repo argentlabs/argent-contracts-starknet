@@ -187,3 +187,25 @@ fn invalid_signature_length_with_guardian() {
     let signatures = to_starknet_signer_signatures(array![OWNER().pubkey, OWNER().sig.r, OWNER().sig.s]);
     account.is_valid_signature(tx_hash, signatures);
 }
+
+#[test]
+#[should_panic(expected: ('argent/invalid-signature-length',))]
+fn invalid_signature_length_with_owner_and_guardian_and_backup() {
+    let account = initialize_account_with(OWNER().pubkey, 1);
+    let guardian_backup = starknet_signer_from_pubkey(GUARDIAN_BACKUP().pubkey);
+    account.change_guardian_backup(Option::Some(guardian_backup));
+    let signatures = to_starknet_signer_signatures(
+        array![
+            OWNER().pubkey,
+            OWNER().sig.r,
+            OWNER().sig.s,
+            GUARDIAN().pubkey,
+            GUARDIAN().sig.r,
+            GUARDIAN().sig.s,
+            GUARDIAN_BACKUP().pubkey,
+            GUARDIAN_BACKUP().sig.r,
+            GUARDIAN_BACKUP().sig.s,
+        ]
+    );
+    account.is_valid_signature(tx_hash, signatures);
+}

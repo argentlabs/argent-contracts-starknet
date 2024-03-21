@@ -2,7 +2,6 @@ import { expect } from "chai";
 import { CairoOption, CairoOptionVariant, CallData } from "starknet";
 import {
   ArgentSigner,
-  MultisigSigner,
   declareContract,
   deployAccount,
   deployAccountWithGuardianBackup,
@@ -36,34 +35,13 @@ describe("ArgentAccount", function () {
 
   for (const useTxV3 of [false, true]) {
     it(`Self deployment (TxV3: ${useTxV3})`, async function () {
-      const { accountContract, owner } = await deployAccountWithoutGuardian({
-        useTxV3,
-        selfDeploy: true,
-      });
+      const { accountContract, owner } = await deployAccountWithoutGuardian({ useTxV3, selfDeploy: true });
 
       await accountContract.get_owner().should.eventually.equal(owner.guid);
       await accountContract.get_guardian().should.eventually.equal(0n);
       await accountContract.get_guardian_backup().should.eventually.equal(0n);
     });
   }
-
-  it("Deploy two accounts with the same owner", async function () {
-    const owner = randomStarknetKeyPair();
-    const { accountContract: accountContract1 } = await deployAccountWithoutGuardian({ owner });
-    const { accountContract: accountContract2 } = await deployAccountWithoutGuardian({ owner });
-    const owner1 = await accountContract1.get_owner();
-    const owner2 = await accountContract1.get_owner();
-    expect(owner1).to.equal(owner2);
-    expect(accountContract1.address != accountContract2.address).to.be.true;
-  });
-
-  it("Expect guardian backup to be 0 when deployed with an owner and a guardian", async function () {
-    const { accountContract, owner, guardian } = await deployAccount();
-
-    await accountContract.get_owner().should.eventually.equal(owner.guid);
-    await accountContract.get_guardian().should.eventually.equal(guardian.guid);
-    await accountContract.get_guardian_backup().should.eventually.equal(0n);
-  });
 
   it("Expect an error when owner is zero", async function () {
     const guardian = new CairoOption(CairoOptionVariant.None);
@@ -73,17 +51,6 @@ describe("ArgentAccount", function () {
         constructorCalldata: CallData.compile({ owner: zeroStarknetSignatureType(), guardian }),
       }),
     );
-  });
-
-  it("Should use signature from BOTH OWNER and GUARDIAN when there is a GUARDIAN", async function () {
-    const { account, accountContract, owner, guardian } = await deployAccount();
-
-    await accountContract.get_guardian_backup().should.eventually.equal(0n);
-    account.signer = new ArgentSigner(owner, guardian);
-    const new_guardian = new StarknetKeyPair();
-    await accountContract.change_guardian_backup(new_guardian.compiledSignerAsOption);
-
-    await accountContract.get_guardian_backup().should.eventually.equal(new_guardian.guid);
   });
 
   it("Should sign messages from OWNER and BACKUP_GUARDIAN when there is a GUARDIAN and a BACKUP", async function () {
@@ -103,22 +70,6 @@ describe("ArgentAccount", function () {
     await accountContract.change_guardian(new_guardian.compiledSignerAsOption);
 
     await accountContract.get_guardian().should.eventually.equal(new_guardian.guid);
-  });
-
-  it("Expect 'argent/invalid-signature-length' when signing a transaction with OWNER, GUARDIAN and BACKUP", async function () {
-    const { account, accountContract, owner, guardian, guardianBackup } = await deployAccountWithGuardianBackup();
-
-    account.signer = new MultisigSigner([owner, guardian, guardianBackup]);
-
-    const new_guardian = new StarknetKeyPair();
-    await expectRevertWithErrorMessage("argent/invalid-signature-length", () =>
-      accountContract.change_guardian(new_guardian.compiledSignerAsOption),
-    );
-  });
-
-  it("Should be impossible to call __validate__ from outside", async function () {
-    const { accountContract } = await deployAccount();
-    await expectRevertWithErrorMessage("argent/non-null-caller", () => accountContract.__validate__([]));
   });
 
   describe("change_owner(new_owner, signature_r, signature_s)", function () {

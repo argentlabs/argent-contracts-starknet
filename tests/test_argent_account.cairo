@@ -151,6 +151,7 @@ fn change_guardian_to_zero_without_guardian_backup() {
 fn change_guardian_backup() {
     let account = initialize_account();
     let guardian_backup = starknet_signer_from_pubkey(33);
+    assert_eq!(account.get_guardian_backup(), 0, "value should be 0");
     account.change_guardian_backup(Option::Some(guardian_backup));
     assert_eq!(account.get_guardian_backup(), guardian_backup.into_guid(), "value should be 33");
 }
@@ -169,7 +170,7 @@ fn change_guardian_backup_to_zero() {
     let account = initialize_account();
     let guardian_backup: Option<Signer> = Option::None;
     account.change_guardian_backup(guardian_backup);
-    assert!(account.get_guardian_backup().is_zero(), "value should be 0");
+    assert_eq!(account.get_guardian_backup(), 0, "value should be 0");
 }
 
 #[test]
@@ -216,4 +217,12 @@ fn supportsInterface() {
     assert_eq!(account.supportsInterface(0x01ffc9a7), 1, "ERC165_IERC165_INTERFACE_ID");
     assert_eq!(account.supportsInterface(0xa66bd575), 1, "ERC165_ACCOUNT_INTERFACE_ID");
     assert_eq!(account.supportsInterface(0x3943f10f), 1, "ERC165_OLD_ACCOUNT_INTERFACE_ID");
+}
+
+#[test]
+#[should_panic(expected: ('argent/non-null-caller',))]
+fn cant_call_validate() {
+    let account = initialize_account();
+    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
+    account.__validate__(array![]);
 }

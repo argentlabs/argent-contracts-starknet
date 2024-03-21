@@ -300,31 +300,21 @@ mod ArgentAccount {
         self.init_owner(owner.storage_value());
         self.emit(SignerLinked { signer_guid: owner_guid, signer: owner });
 
-        let guardian_guid: felt252 = match guardian {
-            Option::Some(guardian) => {
-                let guardian_guid = guardian.into_guid();
-                self.init_guardian(guardian.storage_value());
-                self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
-                match owner.storage_value().starknet_pubkey_or_none() {
-                    Option::Some(owner_pubkey) => {
-                        match guardian.storage_value().starknet_pubkey_or_none() {
-                            Option::Some(guardian_pubkey) => {
-                                self.emit(AccountCreated { owner: owner_pubkey, guardian: guardian_pubkey });
-                            },
-                            Option::None => {},
-                        }
-                    },
-                    Option::None => {},
-                }
-                guardian_guid
-            },
-            Option::None => {
-                match owner.storage_value().starknet_pubkey_or_none() {
-                    Option::Some(owner_pubkey) => { self.emit(AccountCreated { owner: owner_pubkey, guardian: 0 }); },
-                    Option::None => {},
-                }
-                0
-            },
+        let guardian_guid: felt252 = if let Option::Some(guardian) = guardian {
+            let guardian_guid = guardian.into_guid();
+            self.init_guardian(guardian.storage_value());
+            self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
+            if let Option::Some(owner_pubkey) = owner.storage_value().starknet_pubkey_or_none() {
+                if let Option::Some(guardian_pubkey) = guardian.storage_value().starknet_pubkey_or_none() {
+                    self.emit(AccountCreated { owner: owner_pubkey, guardian: guardian_pubkey });
+                };
+            };
+            guardian_guid
+        } else {
+            if let Option::Some(owner_pubkey) = owner.storage_value().starknet_pubkey_or_none() {
+                self.emit(AccountCreated { owner: owner_pubkey, guardian: 0 });
+            };
+            0
         };
 
         self.emit(AccountCreatedGuid { owner_guid, guardian_guid });
@@ -488,10 +478,10 @@ mod ArgentAccount {
 
             let new_owner_storage_value = new_owner.storage_value();
             self.write_owner(new_owner_storage_value);
-            match new_owner_storage_value.starknet_pubkey_or_none() {
-                Option::Some(new_owner_pubkey) => { self.emit(OwnerChanged { new_owner: new_owner_pubkey }); },
-                Option::None => {},
-            }
+
+            if let Option::Some(new_owner_pubkey) = new_owner_storage_value.starknet_pubkey_or_none() {
+                self.emit(OwnerChanged { new_owner: new_owner_pubkey });
+            };
             let new_owner_guid = new_owner_storage_value.into_guid();
             self.emit(OwnerChangedGuid { new_owner_guid });
             self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
@@ -500,28 +490,23 @@ mod ArgentAccount {
         fn change_guardian(ref self: ContractState, new_guardian: Option<Signer>) {
             assert_only_self();
 
-            match new_guardian {
-                Option::Some(guardian) => {
-                    let guardian_storage_value = guardian.storage_value();
-                    let new_guardian_guid = guardian_storage_value.into_guid();
-                    self.write_guardian(Option::Some(guardian_storage_value));
-                    self.emit(SignerLinked { signer_guid: new_guardian_guid, signer: guardian });
-                    match guardian_storage_value.starknet_pubkey_or_none() {
-                        Option::Some(guardian_pubkey) => {
-                            self.emit(GuardianChanged { new_guardian: guardian_pubkey });
-                        },
-                        Option::None => {},
-                    }
-                    self.emit(GuardianChangedGuid { new_guardian_guid });
-                },
-                Option::None => {
-                    // There cannot be a guardian_backup when there is no guardian
-                    assert(self.read_guardian_backup().is_none(), 'argent/backup-should-be-null');
-                    self.write_guardian(Option::None);
-                    self.emit(GuardianChanged { new_guardian: 0 });
-                    self.emit(GuardianChangedGuid { new_guardian_guid: 0 });
-                },
-            };
+            if let Option::Some(guardian) = new_guardian {
+                let guardian_storage_value = guardian.storage_value();
+                let new_guardian_guid = guardian_storage_value.into_guid();
+                self.write_guardian(Option::Some(guardian_storage_value));
+                self.emit(SignerLinked { signer_guid: new_guardian_guid, signer: guardian });
+
+                if let Option::Some(guardian_pubkey) = guardian_storage_value.starknet_pubkey_or_none() {
+                    self.emit(GuardianChanged { new_guardian: guardian_pubkey });
+                };
+                self.emit(GuardianChangedGuid { new_guardian_guid });
+            } else {
+                // There cannot be a guardian_backup when there is no guardian
+                assert(self.read_guardian_backup().is_none(), 'argent/backup-should-be-null');
+                self.write_guardian(Option::None);
+                self.emit(GuardianChanged { new_guardian: 0 });
+                self.emit(GuardianChangedGuid { new_guardian_guid: 0 });
+            }
             self.reset_escape();
             self.reset_escape_timestamps();
         }
@@ -529,26 +514,19 @@ mod ArgentAccount {
         fn change_guardian_backup(ref self: ContractState, new_guardian_backup: Option<Signer>) {
             assert_only_self();
             self.assert_guardian_set();
-
-            match new_guardian_backup {
-                Option::Some(guardian) => {
-                    let guardian_storage_value = guardian.storage_value();
-                    let new_guardian_guid = guardian_storage_value.into_guid();
-                    self.write_guardian_backup(Option::Some(guardian.storage_value()));
-                    self.emit(SignerLinked { signer_guid: new_guardian_guid, signer: guardian });
-                    match guardian_storage_value.starknet_pubkey_or_none() {
-                        Option::Some(guardian_pubkey) => {
-                            self.emit(GuardianBackupChanged { new_guardian_backup: guardian_pubkey });
-                        },
-                        Option::None => {},
-                    }
-                    self.emit(GuardianBackupChangedGuid { new_guardian_backup_guid: new_guardian_guid });
-                },
-                Option::None => {
-                    self.write_guardian_backup(Option::None);
-                    self.emit(GuardianBackupChanged { new_guardian_backup: 0 });
-                    self.emit(GuardianBackupChangedGuid { new_guardian_backup_guid: 0 });
-                },
+            if let Option::Some(guardian) = new_guardian_backup {
+                let guardian_storage_value = guardian.storage_value();
+                let new_guardian_guid = guardian_storage_value.into_guid();
+                self.write_guardian_backup(Option::Some(guardian.storage_value()));
+                self.emit(SignerLinked { signer_guid: new_guardian_guid, signer: guardian });
+                if let Option::Some(guardian_pubkey) = guardian_storage_value.starknet_pubkey_or_none() {
+                    self.emit(GuardianBackupChanged { new_guardian_backup: guardian_pubkey });
+                };
+                self.emit(GuardianBackupChangedGuid { new_guardian_backup_guid: new_guardian_guid });
+            } else {
+                self.write_guardian_backup(Option::None);
+                self.emit(GuardianBackupChanged { new_guardian_backup: 0 });
+                self.emit(GuardianBackupChangedGuid { new_guardian_backup_guid: 0 });
             };
 
             self.reset_escape();
@@ -574,12 +552,10 @@ mod ArgentAccount {
             self._escape.write(escape);
 
             let new_owner_guid = new_owner.into_guid();
-            match new_owner.storage_value().starknet_pubkey_or_none() {
-                Option::Some(new_owner_pubkey) => {
-                    self.emit(EscapeOwnerTriggered { ready_at, new_owner: new_owner_pubkey });
-                },
-                Option::None => {},
-            }
+
+            if let Option::Some(new_owner_pubkey) = new_owner.storage_value().starknet_pubkey_or_none() {
+                self.emit(EscapeOwnerTriggered { ready_at, new_owner: new_owner_pubkey });
+            };
             self.emit(EscapeOwnerTriggeredGuid { ready_at, new_owner_guid: new_owner_guid });
             self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
         }
@@ -588,14 +564,12 @@ mod ArgentAccount {
             assert_only_self();
 
             self.reset_escape();
-
-            let (new_guardian_guid, new_guardian_storage_value) = match new_guardian {
-                Option::Some(guardian) => {
-                    let guardian_guid = guardian.into_guid();
-                    self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
-                    (guardian_guid, Option::Some(guardian.storage_value()))
-                },
-                Option::None => { (0, Option::None) },
+            let (new_guardian_guid, new_guardian_storage_value) = if let Option::Some(guardian) = new_guardian {
+                let guardian_guid = guardian.into_guid();
+                self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
+                (guardian_guid, Option::Some(guardian.storage_value()))
+            } else {
+                (0, Option::None)
             };
 
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
@@ -603,17 +577,13 @@ mod ArgentAccount {
                 ready_at, escape_type: LegacyEscapeType::Guardian, new_signer: new_guardian_storage_value,
             };
             self._escape.write(escape);
-            match new_guardian_storage_value {
-                Option::Some(new_guardian_storage_value) => {
-                    match new_guardian_storage_value.starknet_pubkey_or_none() {
-                        Option::Some(new_guardian_pubkey) => {
-                            self.emit(EscapeGuardianTriggered { ready_at, new_guardian: new_guardian_pubkey });
-                        },
-                        Option::None => {},
-                    }
-                },
-                Option::None => { self.emit(EscapeGuardianTriggered { ready_at, new_guardian: 0 }); },
-            }
+            if let Option::Some(new_guardian_storage_value) = new_guardian_storage_value {
+                if let Option::Some(new_guardian_pubkey) = new_guardian_storage_value.starknet_pubkey_or_none() {
+                    self.emit(EscapeGuardianTriggered { ready_at, new_guardian: new_guardian_pubkey });
+                };
+            } else {
+                self.emit(EscapeGuardianTriggered { ready_at, new_guardian: 0 });
+            };
             self.emit(EscapeGuardianTriggeredGuid { ready_at, new_guardian_guid });
         }
 
@@ -630,12 +600,10 @@ mod ArgentAccount {
             // update owner
             let new_owner = current_escape.new_signer.unwrap();
             self.write_owner(new_owner);
-            let new_owner_guid = new_owner.into_guid();
-            match new_owner.starknet_pubkey_or_none() {
-                Option::Some(new_owner_pubkey) => { self.emit(OwnerEscaped { new_owner: new_owner_pubkey }); },
-                Option::None => {},
+            if let Option::Some(new_owner_pubkey) = new_owner.starknet_pubkey_or_none() {
+                self.emit(OwnerEscaped { new_owner: new_owner_pubkey });
             }
-            self.emit(OwnerEscapedGuid { new_owner_guid });
+            self.emit(OwnerEscapedGuid { new_owner_guid: new_owner.into_guid() });
 
             // clear escape
             self._escape.write(Default::default());
@@ -651,21 +619,15 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
 
             self.write_guardian(current_escape.new_signer);
-            match current_escape.new_signer {
-                Option::Some(guardian) => {
-                    match guardian.starknet_pubkey_or_none() {
-                        Option::Some(guardian_pubkey) => {
-                            self.emit(GuardianEscaped { new_guardian: guardian_pubkey });
-                        },
-                        Option::None => {},
-                    }
-                    self.emit(GuardianEscapedGuid { new_guardian_guid: guardian.into_guid() });
-                },
-                Option::None => {
-                    self.emit(GuardianEscaped { new_guardian: 0 });
-                    self.emit(GuardianEscapedGuid { new_guardian_guid: 0 });
-                },
-            };
+            if let Option::Some(guardian) = current_escape.new_signer {
+                if let Option::Some(guardian_pubkey) = guardian.starknet_pubkey_or_none() {
+                    self.emit(GuardianEscaped { new_guardian: guardian_pubkey });
+                };
+                self.emit(GuardianEscapedGuid { new_guardian_guid: guardian.into_guid() });
+            } else {
+                self.emit(GuardianEscaped { new_guardian: 0 });
+                self.emit(GuardianEscapedGuid { new_guardian_guid: 0 });
+            }
             // clear escape
             self._escape.write(Default::default());
         }

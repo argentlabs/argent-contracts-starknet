@@ -53,7 +53,7 @@ describe("ArgentMultisig Recovery", function () {
   });
 
   it(`Escape should fail outside time window`, async function () {
-    const { accountContract, originalSigner, newSigner, guardianAccount, replaceSignerCall } = await buildFixture();
+    const { accountContract, guardianAccount, replaceSignerCall } = await buildFixture();
     await setTime(initialTime);
     accountContract.connect(guardianAccount);
     await accountContract.trigger_escape(replaceSignerCall);

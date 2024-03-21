@@ -158,7 +158,7 @@ mod external_recovery_component {
             self.emit(EscapeExecuted { call_hash });
 
             // clear escape
-            self.escape.write(Escape { ready_at: 0, call_hash: 0 });
+            self.escape.write(Default::default());
         }
 
         fn cancel_escape(ref self: ComponentState<TContractState>) {
@@ -167,7 +167,7 @@ mod external_recovery_component {
             let escape_config = self.escape_enabled.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
-            self.escape.write(Escape { ready_at: 0, call_hash: 0 });
+            self.escape.write(Default::default());
             self.emit(EscapeCanceled { call_hash: current_escape.call_hash });
         }
 
@@ -250,4 +250,11 @@ mod external_recovery_component {
 #[inline(always)]
 fn get_escape_call_hash(escape_call: @EscapeCall) -> felt252 {
     poseidon::poseidon_hash_span(serialize(escape_call).span())
+}
+
+
+impl DefaultEscape of Default<Escape> {
+    fn default() -> Escape {
+        Escape { ready_at: 0, call_hash: 0 }
+    }
 }

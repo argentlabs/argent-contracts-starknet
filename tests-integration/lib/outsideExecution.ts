@@ -1,7 +1,7 @@
 import { Call, CallData, hash, num, RawArgs, SignerInterface, typedData } from "starknet";
 import { provider } from "./";
 
-const types = {
+const typesRev0 = {
   StarkNetDomain: [
     { name: "name", type: "felt" },
     { name: "version", type: "felt" },
@@ -23,7 +23,38 @@ const types = {
   ],
 };
 
-function getDomain(chainId: string) {
+const typesRev1 = {
+  StarknetDomain: [
+    { name: "name", type: "shortstring" },
+    { name: "version", type: "shortstring" },
+    { name: "chainId", type: "shortstring" },
+    { name: "revision", type: "shortstring" },
+  ],
+  OutsideExecution: [
+    { name: "Caller", type: "ContractAddress" },
+    { name: "Nonce", type: "felt" },
+    { name: "Execute After", type: "u128" },
+    { name: "Execute Before", type: "u128" },
+    { name: "Calls", type: "Call*" },
+  ],
+  Call: [
+    { name: "To", type: "ContractAddress" },
+    { name: "Selector", type: "selector" },
+    { name: "Calldata", type: "felt*" },
+  ],
+};
+
+function getDomain(chainId: string, revision: typedData.TypedDataRevision) {
+  if (revision == typedData.TypedDataRevision.Active) {
+    // WARNING! These are encoded as numbers in the StarkNetDomain type and not as shortstring
+    // This is due to a bug in the Braavos implementation, and has been kept for compatibility
+    return {
+      name: "Account.execute_from_outside",
+      version: "1",
+      chainId: chainId,
+      revision: "1",
+    };
+  }
   return {
     name: "Account.execute_from_outside",
     version: "1",
@@ -57,15 +88,41 @@ export function getTypedDataHash(
   outsideExecution: OutsideExecution,
   accountAddress: num.BigNumberish,
   chainId: string,
+  revision: typedData.TypedDataRevision,
 ): string {
-  return typedData.getMessageHash(getTypedData(outsideExecution, chainId), accountAddress);
+  return typedData.getMessageHash(getTypedData(outsideExecution, chainId, revision), accountAddress);
 }
 
-export function getTypedData(outsideExecution: OutsideExecution, chainId: string) {
+export function getTypedData(
+  outsideExecution: OutsideExecution,
+  chainId: string,
+  revision: typedData.TypedDataRevision,
+) {
+  if (revision == typedData.TypedDataRevision.Active) {
+    return {
+      types: typesRev1,
+      primaryType: "OutsideExecution",
+      domain: getDomain(chainId, revision),
+      message: {
+        Caller: outsideExecution.caller,
+        Nonce: outsideExecution.nonce,
+        "Execute After": outsideExecution.execute_after,
+        "Execute Before": outsideExecution.execute_before,
+        Calls: outsideExecution.calls.map((call) => {
+          return {
+            To: call.to,
+            Selector: call.selector,
+            Calldata: call.calldata,
+          };
+        }),
+      },
+    };
+  }
+
   return {
-    types: types,
+    types: typesRev0,
     primaryType: "OutsideExecution",
-    domain: getDomain(chainId),
+    domain: getDomain(chainId, revision),
     message: {
       ...outsideExecution,
       calls_len: outsideExecution.calls.length,
@@ -84,14 +141,15 @@ export async function getOutsideExecutionCall(
   outsideExecution: OutsideExecution,
   accountAddress: string,
   signer: SignerInterface,
+  revision: typedData.TypedDataRevision,
   chainId?: string,
 ): Promise<Call> {
   chainId = chainId ?? (await provider.getChainId());
-  const currentTypedData = getTypedData(outsideExecution, chainId);
+  const currentTypedData = getTypedData(outsideExecution, chainId, revision);
   const signature = await signer.signMessage(currentTypedData, accountAddress);
   return {
     contractAddress: accountAddress,
-    entrypoint: "execute_from_outside",
+    entrypoint: revision == typedData.TypedDataRevision.Active ? "execute_from_outside_v2" : "execute_from_outside",
     calldata: CallData.compile({ ...outsideExecution, signature }),
   };
 }

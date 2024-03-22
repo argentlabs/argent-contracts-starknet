@@ -93,6 +93,10 @@ export class EstimateEip191KeyPair extends KeyPair {
     throw new Error("Not implemented yet");
   }
 
+  public get storedValue(): bigint {
+    throw new Error("Not implemented yet");
+  }
+
   public get signer(): CairoCustomEnum {
     return signerTypeToCustomEnum(SignerType.Eip191, { signer: this.address });
   }

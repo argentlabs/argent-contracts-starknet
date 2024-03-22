@@ -226,6 +226,10 @@ export class EstimateStarknetKeyPair extends KeyPair {
   }
 
   public get guid() {
+    return BigInt(hash.computePoseidonHash(shortString.encodeShortString("Starknet Signer"), this.publicKey));
+  }
+
+  public get storedValue() {
     return this.publicKey;
   }
 

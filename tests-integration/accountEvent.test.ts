@@ -66,7 +66,7 @@ describe("ArgentAccount: events", function () {
   });
 
   it("Expect 'OwnerEscaped' on escape_owner", async function () {
-    const { account, accountContract, guardian, owner } = await deployAccount();
+    const { account, accountContract, guardian } = await deployAccount();
     account.signer = new ArgentSigner(guardian);
 
     const newOwner = randomStarknetKeyPair();

@@ -169,7 +169,7 @@ mod ArgentAccount {
         response: Span<Span<felt252>>
     }
 
-    /// @notice Deprecated. This is only emmited if new owner is a starknet key
+    /// @notice Deprecated from v0.4.0. This is only emmited if new owner is a starknet key
     /// @notice Owner escape was triggered by the guardian
     /// @param ready_at when the escape can be completed
     /// @param new_owner new starknet pubkey to be set after the security period
@@ -188,7 +188,7 @@ mod ArgentAccount {
         new_owner_guid: felt252
     }
 
-    /// @notice Deprecated. This is only emmited if the guardian is empty or a starknet key
+    /// @notice Deprecated from v0.4.0. This is only emmited if the guardian is empty or a starknet key
     /// @notice Guardian escape was triggered by the owner
     /// @param ready_at when the escape can be completed
     /// @param new_guardian address of the new guardian to be set after the security period. O if the guardian will be removed
@@ -207,7 +207,7 @@ mod ArgentAccount {
         new_guardian_guid: felt252
     }
 
-    /// @notice Deprecated. This is only emmited if the new owner is a starknet key
+    /// @notice Deprecated from v0.4.0. This is only emmited if the new owner is a starknet key
     /// @notice Owner escape was completed and there is a new account owner
     /// @param new_owner new owner address
     #[derive(Drop, starknet::Event)]
@@ -223,7 +223,7 @@ mod ArgentAccount {
     }
 
 
-    /// @notice Deprecated. This is only emmited if the new guardian is empty or a starknet key
+    /// @notice Deprecated from v0.4.0. This is only emmited if the new guardian is empty or a starknet key
     /// @notice Guardian escape was completed and there is a new account guardian
     /// @param new_guardian address of the new guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
@@ -242,7 +242,7 @@ mod ArgentAccount {
     #[derive(Drop, starknet::Event)]
     struct EscapeCanceled {}
 
-    /// @notice Deprecated. This is only emmited if the new owner is a starknet key
+    /// @notice Deprecated from v0.4.0. This is only emmited if the new owner is a starknet key
     /// @notice The account owner was changed
     /// @param new_owner new owner address
     #[derive(Drop, starknet::Event)]
@@ -257,7 +257,7 @@ mod ArgentAccount {
         new_owner_guid: felt252
     }
 
-    /// @notice Deprecated. This is only emmited if the new guardian is empty or a starknet key
+    /// @notice Deprecated from v0.4.0. This is only emmited if the new guardian is empty or a starknet key
     /// @notice The account guardian was changed or removed
     /// @param new_guardian address of the new guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
@@ -272,7 +272,7 @@ mod ArgentAccount {
         new_guardian_guid: felt252
     }
 
-    /// @notice Deprecated. This is only emmited if the new guardian backup is empty or a starknet key
+    /// @notice Deprecated from v0.4.0. This is only emmited if the new guardian backup is empty or a starknet key
     /// @notice The account backup guardian was changed or removed
     /// @param new_guardian_backup address of the backup guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]

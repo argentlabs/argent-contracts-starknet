@@ -8,12 +8,10 @@ import {
   provider,
   upgradeAccount,
   declareFixtureContract,
-  expectEvent,
   ContractWithClassHash,
   expectRevertWithErrorMessage,
   LegacyArgentSigner,
   deployLegacyAccount,
-  StarknetKeyPair,
 } from "./lib";
 
 describe("ArgentAccount: upgrade", function () {
@@ -26,14 +24,14 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Upgrade cairo 0 to current version", async function () {
-    const { account, owner } = await deployOldAccount();
+    const { account } = await deployOldAccount();
     await upgradeAccount(account, argentAccountClassHash, ["0"]);
     const newClashHash = await provider.getClassHashAt(account.address);
     expect(BigInt(newClashHash)).to.equal(BigInt(argentAccountClassHash));
   });
 
   it("Upgrade cairo 0 to cairo 1 with multicall", async function () {
-    const { account, owner } = await deployOldAccount();
+    const { account } = await deployOldAccount();
     await upgradeAccount(
       account,
       argentAccountClassHash,

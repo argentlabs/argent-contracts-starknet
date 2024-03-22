@@ -84,7 +84,7 @@ export class DappService {
     })((calls: Call[], transactionsDetail: InvocationsSignerDetails) => {
       return this.signRegularTransaction(sessionAuthorizationSignature, completedSession, calls, transactionsDetail);
     });
-    return new Account(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
+    return new ArgentAccount(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
   }
 
   public async getOutsideExecutionCall(

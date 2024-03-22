@@ -56,7 +56,7 @@ describe("ArgentMultisig: Execute", function () {
 
     mockDappContract.connect(account);
     const calls = [mockDappContract.populateTransaction.set_number(42)];
-    await account.execute(calls, undefined, { skipValidate: false });
+    await account.execute(calls);
 
     await mockDappContract.get_number(account.address).should.eventually.equal(42n);
   });

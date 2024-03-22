@@ -15,6 +15,8 @@ import {
   Call,
   CairoOption,
   CairoOptionVariant,
+  DeployAccountContractPayload,
+  DeployContractResponse
 } from "starknet";
 import { ethAddress, loadContract, declareContract, declareFixtureContract, strkAddress } from "./contracts";
 import { provider } from "./provider";
@@ -23,11 +25,24 @@ import { LegacyKeyPair, LegacyArgentSigner, LegacyStarknetKeyPair, LegacyMultisi
 
 export class ArgentAccount extends Account {
   // Increase the gas limit by 30% to avoid failures due to gas estimation being too low with tx v3 and transactions the use escaping
+  override async deployAccount(payload: DeployAccountContractPayload, details?: UniversalDetails ): Promise<DeployContractResponse>{
+    details ||= {};
+    if (!details.skipValidate) {
+      details.skipValidate = false;
+    }
+    return super.deployAccount(payload, details)
+  }
+
+
   override async execute(
     calls: AllowArray<Call>,
     abis?: Abi[],
     details: UniversalDetails = {},
   ): Promise<InvokeFunctionResponse> {
+    details ||= {};
+    if (!details.skipValidate) {
+      details.skipValidate = false;
+    }
     if (details.resourceBounds) {
       return super.execute(calls, abis, details);
     }
@@ -163,7 +178,6 @@ async function deployAccountInner(
     await provider.waitForTransaction(response.transaction_hash);
     const { transaction_hash } = await account.deploySelf(
       { classHash, constructorCalldata, addressSalt: salt },
-      { skipValidate: false },
     );
     transactionHash = transaction_hash;
   } else {

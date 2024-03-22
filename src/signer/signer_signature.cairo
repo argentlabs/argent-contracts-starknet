@@ -124,7 +124,6 @@ fn new_web_authn_signer(origin: felt252, rp_id_hash: u256, pubkey: u256) -> Weba
 }
 
 impl SignerTraitImpl of SignerTrait<Signer> {
-    #[inline(always)]
     fn into_guid(self: Signer) -> felt252 {
         match self {
             Signer::Starknet(signer) => poseidon_2(STARKNET_SIGNER_TYPE, signer.pubkey.into()),
@@ -148,7 +147,6 @@ impl SignerTraitImpl of SignerTrait<Signer> {
         }
     }
 
-    #[inline(always)]
     fn storage_value(self: @Signer) -> SignerStorageValue {
         match self {
             Signer::Starknet(signer) => SignerStorageValue {
@@ -171,7 +169,6 @@ impl SignerTraitImpl of SignerTrait<Signer> {
 }
 
 impl SignerStorageValueImpl of SignerStorageTrait<SignerStorageValue> {
-    #[inline(always)]
     fn into_guid(self: SignerStorageValue) -> felt252 {
         match self.signer_type {
             SignerType::Starknet => poseidon_2(STARKNET_SIGNER_TYPE, self.stored_value),
@@ -182,7 +179,6 @@ impl SignerStorageValueImpl of SignerStorageTrait<SignerStorageValue> {
         }
     }
 
-    #[inline(always)]
     fn is_stored_as_guid(self: @SignerStorageValue) -> bool {
         match self.signer_type {
             SignerType::Starknet => false,

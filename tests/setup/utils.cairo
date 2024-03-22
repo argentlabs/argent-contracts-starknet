@@ -1,4 +1,5 @@
-use argent::signer::signer_signature::{SignerSignature, StarknetSignature, StarknetSigner};
+use argent::signer::signer_signature::{Signer, SignerSignature, StarknetSignature, StarknetSigner, SignerTrait};
+use core::array::ArrayTrait;
 use integer::{u32_safe_divmod, u32_to_felt252};
 use snforge_std::{start_prank, start_spoof, CheatTarget, TxInfoMockTrait};
 use starknet::ContractAddress;

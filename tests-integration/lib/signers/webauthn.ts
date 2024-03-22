@@ -51,6 +51,10 @@ export class WebauthnOwner extends KeyPair {
     throw new Error("Not yet implemented");
   }
 
+  public get storedValue(): bigint {
+    throw new Error("Not implemented yet");
+  }
+
   public get signer(): CairoCustomEnum {
     return signerTypeToCustomEnum(SignerType.Webauthn, {
       origin,

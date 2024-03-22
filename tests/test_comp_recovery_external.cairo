@@ -124,27 +124,27 @@ fn test_trigger_escape_all_signers() {
     let (component, _, _) = setup();
 
     start_prank(CheatTarget::All, GUARDIAN());
-    component.trigger_escape(array![SIGNER_1(), SIGNER_2()], array![SIGNER_4(), SIGNER_3()]);
+    component.trigger_escape(array![SIGNER_2(), SIGNER_1()], array![SIGNER_3(), SIGNER_4()]);
     let (escape, status) = component.get_escape();
     assert_eq!(
         *escape.target_signers.at(0),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey).into_guid(),
-        "should be signer 1"
-    );
-    assert_eq!(
-        *escape.target_signers.at(1),
         starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(),
         "should be signer 2"
     );
     assert_eq!(
+        *escape.target_signers.at(1),
+        starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey).into_guid(),
+        "should be signer 1"
+    );
+    assert_eq!(
         *escape.new_signers.at(0),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(4).pubkey).into_guid(),
-        "should be signer 4"
+        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
+        "should be signer 3"
     );
     assert_eq!(
         *escape.new_signers.at(1),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
-        "should be signer 3"
+        starknet_signer_from_pubkey(MULTISIG_OWNER(4).pubkey).into_guid(),
+        "should be signer 4"
     );
     assert_eq!(escape.ready_at, 10, "should be 10");
     assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");

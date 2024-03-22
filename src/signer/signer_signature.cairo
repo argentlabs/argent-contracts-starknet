@@ -162,11 +162,11 @@ impl SignerTraitImpl of SignerTrait {
     #[inline(always)]
     fn signer_type(self: @Signer) -> SignerType {
         match self {
-            Signer::Starknet(_) => SignerType::Starknet,
-            Signer::Secp256k1(_) => SignerType::Secp256k1,
-            Signer::Secp256r1(_) => SignerType::Secp256r1,
-            Signer::Eip191(_) => SignerType::Eip191,
-            Signer::Webauthn(_) => SignerType::Webauthn,
+            Signer::Starknet => SignerType::Starknet,
+            Signer::Secp256k1 => SignerType::Secp256k1,
+            Signer::Secp256r1 => SignerType::Secp256r1,
+            Signer::Eip191 => SignerType::Eip191,
+            Signer::Webauthn => SignerType::Webauthn,
         }
     }
 }

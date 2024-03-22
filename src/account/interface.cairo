@@ -1,5 +1,5 @@
 use argent::recovery::interface::{LegacyEscape, EscapeStatus};
-use argent::signer::signer_signature::{Signer, SignerSignature};
+use argent::signer::signer_signature::{Signer, SignerType, SignerSignature};
 use starknet::account::Call;
 
 const SRC5_ACCOUNT_INTERFACE_ID: felt252 = 0x2ceccef7f994940b3962a6c67e0ba4fcd37df7d131417c604f91e03caecc1cd;
@@ -99,8 +99,15 @@ trait IArgentUserAccount<TContractState> {
 
     // Views
     fn get_owner(self: @TContractState) -> felt252;
+    fn get_owner_guid(self: @TContractState) -> felt252;
+    fn get_owner_type(self: @TContractState) -> SignerType;
     fn get_guardian(self: @TContractState) -> felt252;
+    fn is_guardian(self: @TContractState, guardian: Signer) -> bool;
+    fn get_guardian_guid(self: @TContractState) -> Option<felt252>;
+    fn get_guardian_type(self: @TContractState) -> Option<SignerType>;
     fn get_guardian_backup(self: @TContractState) -> felt252;
+    fn get_guardian_backup_guid(self: @TContractState) -> Option<felt252>;
+    fn get_guardian_backup_type(self: @TContractState) -> Option<SignerType>;
     fn get_escape(self: @TContractState) -> LegacyEscape;
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;

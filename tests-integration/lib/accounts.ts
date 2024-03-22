@@ -161,7 +161,10 @@ async function deployAccountInner(
   if (finalParams.selfDeploy) {
     const response = await deployer.execute(calls);
     await provider.waitForTransaction(response.transaction_hash);
-    const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
+    const { transaction_hash } = await account.deploySelf(
+      { classHash, constructorCalldata, addressSalt: salt },
+      { skipValidate: false },
+    );
     transactionHash = transaction_hash;
   } else {
     const udcCalls = deployer.buildUDCContractPayload({ classHash, salt, constructorCalldata, unique: false });

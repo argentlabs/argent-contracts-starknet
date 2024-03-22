@@ -72,14 +72,14 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   const maxComputationCategory = maxBy(Object.entries(gasPerComputationCategory), ([, gas]) => gas)![0];
   const computationGas = BigInt(gasPerComputationCategory[maxComputationCategory]);
 
-  let gasUsedWithoutDA;
-  let DAGas;
+  let gasUsedWithoutDa;
+  let daGas;
   if (rawResources.data_availability) {
-    gasUsedWithoutDA = (actualFee - BigInt(rawResources.data_availability.l1_data_gas * dataGasPrice)) / gasPrice;
-    DAGas = rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas;
+    gasUsedWithoutDa = (actualFee - BigInt(rawResources.data_availability.l1_data_gas * dataGasPrice)) / gasPrice;
+    daGas = rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas;
   } else {
-    gasUsedWithoutDA = actualFee / gasPrice;
-    DAGas = gasUsedWithoutDA - computationGas;
+    gasUsedWithoutDa = actualFee / gasPrice;
+    daGas = gasUsedWithoutDa - computationGas;
   }
 
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
@@ -87,8 +87,8 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   return {
     actualFee,
     paidInStrk,
-    gasUsedWithoutDA,
-    DAGas,
+    gasUsedWithoutDa,
+    daGas,
     computationGas,
     maxComputationCategory,
     gasPerComputationCategory,
@@ -125,10 +125,10 @@ export function newProfiler(provider: RpcProvider) {
       return {
         "Actual fee": Number(profile.actualFee).toLocaleString("de-DE"),
         "Fee usd": Number(feeUsd.toFixed(4)),
-        "W/o DA gas": Number(profile.gasUsedWithoutDA),
+        "W/o DA gas": Number(profile.gasUsedWithoutDa),
         "Computation gas": Number(profile.computationGas),
         "Storage diffs": sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
-        "DA gas": Number(profile.DAGas),
+        "DA gas": Number(profile.daGas),
         "Max computation per Category": profile.maxComputationCategory,
       };
     },

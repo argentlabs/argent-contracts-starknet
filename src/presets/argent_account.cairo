@@ -200,7 +200,7 @@ mod ArgentAccount {
 
     /// @notice Guardian escape was triggered by the owner
     /// @param ready_at when the escape can be completed
-    /// @param new_guardian guid to be set after the security period. O if the guardian will be removed
+    /// @param new_guardian_guid to be set after the security period. O if the guardian will be removed
     #[derive(Drop, starknet::Event)]
     struct EscapeGuardianTriggeredGuid {
         ready_at: u64,

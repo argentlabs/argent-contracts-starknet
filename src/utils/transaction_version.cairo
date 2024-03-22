@@ -1,4 +1,4 @@
-use starknet::{SyscallResultTrait, get_execution_info, get_tx_info};
+use starknet::{SyscallResultTrait, get_execution_info, get_tx_info, get_caller_address};
 
 const TX_V1: felt252 = 1; // INVOKE
 const TX_V1_ESTIMATE: felt252 = consteval_int!(0x100000000000000000000000000000000 + 1); // 2**128 + TX_V1
@@ -39,4 +39,14 @@ fn assert_correct_declare_version(tx_version: felt252) {
 fn assert_no_unsupported_v3_fields() {
     let tx_info = get_tx_info().unbox();
     assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
+}
+
+#[inline(always)]
+fn is_estimate_version(tx_version: felt252) -> bool {
+    tx_version == TX_V3_ESTIMATE || tx_version == TX_V2_ESTIMATE || tx_version == TX_V1_ESTIMATE
+}
+
+#[inline(always)]
+fn is_estimate_transaction() -> bool {
+    get_caller_address().is_zero() && is_estimate_version(get_tx_info().unbox().version)
 }

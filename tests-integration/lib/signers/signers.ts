@@ -130,7 +130,7 @@ export abstract class RawSigner implements SignerInterface {
 }
 
 export class MultisigSigner extends RawSigner {
-  constructor(public keys: RawSigner[]) {
+  constructor(public keys: KeyPair[]) {
     super();
   }
 
@@ -159,6 +159,7 @@ export class ArgentSigner extends MultisigSigner {
 export abstract class KeyPair extends RawSigner {
   abstract get signer(): CairoCustomEnum;
   abstract get guid(): bigint;
+  abstract get storedValue(): bigint;
 
   public get compiledSigner(): Calldata {
     return CallData.compile([this.signer]);
@@ -191,6 +192,10 @@ export class StarknetKeyPair extends KeyPair {
   }
 
   public get guid() {
+    return BigInt(hash.computePoseidonHash(shortString.encodeShortString("Starknet Signer"), this.publicKey));
+  }
+
+  public get storedValue() {
     return this.publicKey;
   }
 
@@ -201,6 +206,41 @@ export class StarknetKeyPair extends KeyPair {
   public async signRaw(messageHash: string): Promise<string[]> {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
     return starknetSignatureType(this.publicKey, r, s);
+  }
+}
+
+export class EstimateStarknetKeyPair extends KeyPair {
+  readonly pubKey: bigint;
+
+  constructor(pubKey: bigint) {
+    super();
+    this.pubKey = pubKey;
+  }
+
+  public get privateKey(): string {
+    throw new Error("EstimateStarknetKeyPair does not have a private key");
+  }
+
+  public get publicKey() {
+    return this.pubKey;
+  }
+
+  public get guid() {
+    return BigInt(hash.computePoseidonHash(shortString.encodeShortString("Starknet Signer"), this.publicKey));
+  }
+
+  public get storedValue() {
+    return this.publicKey;
+  }
+
+  public get signer(): CairoCustomEnum {
+    return signerTypeToCustomEnum(SignerType.Starknet, { signer: this.publicKey });
+  }
+
+  public async signRaw(messageHash: string): Promise<string[]> {
+    const fakeR = "0x6cefb49a1f4eb406e8112db9b8cdf247965852ddc5ca4d74b09e42471689495";
+    const fakeS = "0x25760910405a052b7f08ec533939c54948bc530c662c5d79e8ff416579087f7";
+    return starknetSignatureType(this.publicKey, fakeR, fakeS);
   }
 }
 
@@ -251,6 +291,10 @@ export function signerTypeToCustomEnum(signerType: SignerType, value: any): Cair
   }
 
   return new CairoCustomEnum(contents);
+}
+
+export function sortByGuid(keys: KeyPair[]) {
+  return keys.sort((n1, n2) => (n1.guid < n2.guid ? -1 : 1));
 }
 
 export const randomStarknetKeyPair = () => new StarknetKeyPair();

@@ -281,7 +281,7 @@ export class DappService {
     return {
       session,
       session_authorisation,
-      session_signature: this.getStarknetSignatureType(this.sessionKey.guid, sessionSignature),
+      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
       guardian_signature: this.getStarknetSignatureType(
         this.argentBackend.getBackendKey(accountAddress),
         guardian_signature,

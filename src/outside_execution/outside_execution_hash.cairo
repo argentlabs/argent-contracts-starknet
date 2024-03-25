@@ -11,12 +11,10 @@ use starknet::{get_tx_info, get_contract_address, account::Call};
 const OUTSIDE_CALL_TYPE_HASH_REV_0: felt252 =
     selector!("OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)");
 
-
 const OUTSIDE_EXECUTION_TYPE_HASH_REV_0: felt252 =
     selector!(
         "OutsideExecution(caller:felt,nonce:felt,execute_after:felt,execute_before:felt,calls_len:felt,calls:OutsideCall*)OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)"
     );
-
 
 const OUTSIDE_EXECUTION_TYPE_HASH_REV_1: felt252 =
     selector!(
@@ -25,7 +23,6 @@ const OUTSIDE_EXECUTION_TYPE_HASH_REV_1: felt252 =
 
 const CALL_TYPE_HASH_REV_1: felt252 =
     selector!("\"Call\"(\"To\":\"ContractAddress\",\"Selector\":\"selector\",\"Calldata\":\"felt*\")");
-
 
 impl StructHashOutsideExecutionRev0 of IStructHashRev0<OutsideExecution> {
     fn get_struct_hash_rev_0(self: @OutsideExecution) -> felt252 {
@@ -100,7 +97,6 @@ impl StructHashCallRev1 of IStructHashRev1<Call> {
     }
 }
 
-
 impl StructHashOutsideExecutionRev1 of IStructHashRev1<OutsideExecution> {
     fn get_struct_hash_rev_1(self: @OutsideExecution) -> felt252 {
         let self = *self;
@@ -123,7 +119,6 @@ impl StructHashOutsideExecutionRev1 of IStructHashRev1<OutsideExecution> {
         )
     }
 }
-
 
 impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExecution> {
     fn get_message_hash_rev_1(self: @OutsideExecution) -> felt252 {

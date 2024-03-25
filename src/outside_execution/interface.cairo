@@ -7,13 +7,11 @@ use starknet::{ContractAddress, get_contract_address, get_tx_info, account::Call
 const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0: felt252 =
     0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181;
 
-
 // Interface ID for revision 0 of the OutsideExecute interface
 // see https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-9.md
 // calculated using https://github.com/ericnordelo/src5-rs
 const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1: felt252 =
     0x1d1144bb2138366ff28d8e9ab57456b1d332ac42196230c3a602003c89872;
-
 
 // get_outside_execution_message_hash is not part of the standard interface
 #[starknet::interface]
@@ -40,7 +38,6 @@ trait IOutsideExecution<TContractState> {
     /// Get the message hash for some `OutsideExecution` rev 1 following Eip712. Can be used to know what needs to be signed
     fn get_outside_execution_message_hash_rev_1(self: @TContractState, outside_execution: OutsideExecution) -> felt252;
 }
-
 
 /// This trait has to be implemented when using the component `outside_execution_component` (This is enforced by the compiler)
 trait IOutsideExecutionCallback<TContractState> {

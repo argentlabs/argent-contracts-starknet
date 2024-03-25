@@ -77,8 +77,8 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   let daFee;
   // This should later be based on l1_da_mode, "BLOB" should use this while "CALLDATA" should use the else part
   if (rawResources.data_availability) {
-    daFee = rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas;
-    feeWithoutDa = actualFee - BigInt(daFee * dataGasPrice);
+    daFee = (rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas) * dataGasPrice;
+    feeWithoutDa = actualFee - BigInt(daFee);
     gasWithoutDa = feeWithoutDa / gasPrice;
   } else {
     // This only happens for tx before Dencun

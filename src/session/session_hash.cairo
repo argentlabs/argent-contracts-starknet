@@ -9,9 +9,9 @@ const SESSION_TYPE_HASH_REV_1: felt252 =
     selector!(
         "\"Session\"(\"Expires At\":\"timestamp\",\"Allowed Methods\":\"merkletree\",\"Metadata\":\"string\",\"Session Key\":\"felt\")"
     );
+
 const ALLOWED_METHOD_HASH_REV_1: felt252 =
     selector!("\"Allowed Method\"(\"Contract Address\":\"ContractAddress\",\"selector\":\"selector\")");
-
 
 impl MerkleLeafHash of IMerkleLeafHash<Call> {
     fn get_merkle_leaf(self: @Call) -> felt252 {

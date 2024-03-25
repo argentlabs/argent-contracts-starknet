@@ -39,19 +39,16 @@ mod ThresholdRecoveryMock {
         EscapeEvents: threshold_recovery_component::Event,
     }
 }
-
 #[starknet::contract]
 mod ExternalRecoveryMock {
+    use argent::external_recovery::{external_recovery::{external_recovery_component, IExternalRecoveryCallback}};
     use argent::multisig::multisig::multisig_component;
-    use argent::recovery::{external_recovery::external_recovery_component};
     use argent::signer_storage::signer_list::signer_list_component;
-
+    use argent::utils::calls::execute_multicall;
     component!(path: external_recovery_component, storage: escape, event: EscapeEvents);
     #[abi(embed_v0)]
     impl ExternalRecovery = external_recovery_component::ExternalRecoveryImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl ToggleExternalRecovery =
-        external_recovery_component::ToggleExternalRecoveryImpl<ContractState>;
+
 
     component!(path: multisig_component, storage: multisig, event: MultisigEvents);
     #[abi(embed_v0)]
@@ -79,4 +76,13 @@ mod ExternalRecoveryMock {
         MultisigEvents: multisig_component::Event,
         EscapeEvents: external_recovery_component::Event,
     }
+
+    impl IExternalRecoveryCallbackImpl of IExternalRecoveryCallback<ContractState> {
+        fn execute_recovery_call(ref self: ContractState, selector: felt252, calldata: Span<felt252>) {
+            execute_multicall(
+                array![starknet::account::Call { to: starknet::get_contract_address(), selector, calldata }].span()
+            );
+        }
+    }
 }
+

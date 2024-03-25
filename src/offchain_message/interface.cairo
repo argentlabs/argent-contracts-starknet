@@ -23,7 +23,6 @@ trait IMerkleLeafHash<T> {
     fn get_merkle_leaf(self: @T) -> felt252;
 }
 
-
 // SNIP 12 Revision 0
 #[derive(Copy, Drop, Hash)]
 struct StarkNetDomain {
@@ -50,7 +49,6 @@ struct StarknetDomain {
     chain_id: felt252,
     revision: felt252,
 }
-
 
 const STARKNET_DOMAIN_TYPE_HASH_REV_1: felt252 =
     selector!(

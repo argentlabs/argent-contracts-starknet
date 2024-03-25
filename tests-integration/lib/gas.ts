@@ -6,6 +6,7 @@ import { ensureAccepted, ensureSuccess } from ".";
 
 const ethUsd = 4000n;
 const strkUsd = 2n;
+// This should match what is given to the devnet for '--data-gas-price'
 const dataGasPrice = 1;
 
 // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
@@ -72,14 +73,18 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   const maxComputationCategory = maxBy(Object.entries(gasPerComputationCategory), ([, gas]) => gas)![0];
   const computationGas = BigInt(gasPerComputationCategory[maxComputationCategory]);
 
-  let gasUsedWithoutDa;
-  let daGas;
+  let gasWithoutDa;
+  let feeWithoutDa;
+  let daFee;
   if (rawResources.data_availability) {
-    gasUsedWithoutDa = (actualFee - BigInt(rawResources.data_availability.l1_data_gas * dataGasPrice)) / gasPrice;
-    daGas = rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas;
+    daFee = (rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas) * dataGasPrice;
+    feeWithoutDa = actualFee - BigInt(daFee);
+    gasWithoutDa = feeWithoutDa / gasPrice;
   } else {
-    gasUsedWithoutDa = actualFee / gasPrice;
-    daGas = gasUsedWithoutDa - computationGas;
+    // This only happens for tx before Dencun
+    gasWithoutDa = actualFee / gasPrice;
+    daFee = gasWithoutDa - computationGas;
+    feeWithoutDa = actualFee;
   }
 
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
@@ -87,14 +92,16 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   return {
     actualFee,
     paidInStrk,
-    gasUsedWithoutDa,
-    daGas,
+    gasWithoutDa,
+    feeWithoutDa,
+    daFee,
     computationGas,
     maxComputationCategory,
     gasPerComputationCategory,
     executionResources: sortedResources,
     gasPrice,
     storageDiffs,
+    daMode: blockInfo.l1_da_mode,
   };
 }
 
@@ -125,11 +132,13 @@ export function newProfiler(provider: RpcProvider) {
       return {
         "Actual fee": Number(profile.actualFee).toLocaleString("de-DE"),
         "Fee usd": Number(feeUsd.toFixed(4)),
-        "W/o DA gas": Number(profile.gasUsedWithoutDa),
+        "Fee without DA": Number(profile.feeWithoutDa),
+        "Gas without DA": Number(profile.gasWithoutDa),
         "Computation gas": Number(profile.computationGas),
-        "Storage diffs": sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
-        "DA gas": Number(profile.daGas),
         "Max computation per Category": profile.maxComputationCategory,
+        "Storage diffs": sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
+        "DA fee": Number(profile.daFee),
+        "DA mode": profile.daMode,
       };
     },
     printStorageDiffs({ storageDiffs }: Profile) {

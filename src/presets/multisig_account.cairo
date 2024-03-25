@@ -1,12 +1,12 @@
 #[starknet::contract(account)]
 mod ArgentMultisigAccount {
     use argent::account::interface::{IAccount, IArgentAccount, Version};
+    use argent::external_recovery::{external_recovery::{external_recovery_component, IExternalRecoveryCallback}};
     use argent::introspection::src5::src5_component;
     use argent::multisig::{multisig::multisig_component};
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
-    use argent::recovery::{external_recovery::external_recovery_component};
     use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait}};
     use argent::signer_storage::{
         interface::ISignerList, signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
@@ -53,10 +53,7 @@ mod ArgentMultisigAccount {
     // External Recovery
     component!(path: external_recovery_component, storage: escape, event: EscapeEvents);
     #[abi(embed_v0)]
-    impl ExternalRecovery = external_recovery_component::ExternalRecoveryImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl ToggleExternalRecovery =
-        external_recovery_component::ToggleExternalRecoveryImpl<ContractState>;
+    impl ToggleExternalRecovery = external_recovery_component::ExternalRecoveryImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -200,6 +197,16 @@ mod ArgentMultisigAccount {
             let retdata = execute_multicall(calls);
             self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
             retdata
+        }
+    }
+
+    impl IExternalRecoveryCallbackImpl of IExternalRecoveryCallback<ContractState> {
+        #[inline(always)]
+        fn execute_recovery_call(ref self: ContractState, selector: felt252, calldata: Span<felt252>) {
+            let calls = array![Call { to: get_contract_address(), selector, calldata }].span();
+            self.assert_valid_calls(calls);
+            let retdata = execute_multicall(calls);
+            self.emit(TransactionExecuted { hash: get_tx_info().unbox().transaction_hash, response: retdata.span() });
         }
     }
 

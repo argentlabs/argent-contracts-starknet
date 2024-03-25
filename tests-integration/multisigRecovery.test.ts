@@ -17,10 +17,7 @@ async function buildFixture() {
   const originalSigner = originalKeys[0];
   const newSigner = randomStarknetKeyPair();
   await accountContract.toggle_escape(
-    true, // is_enabled,
-    10, // security_period
-    10, // expiry_period
-    guardianAccount.address, // guardian
+    CallData.compile({ is_enabled: true, security_period: 10, expiry_period: 10, guardian: guardianAccount.address }),
   );
   const replaceSignerCall = CallData.compile({
     selector: hash.getSelectorFromName("replace_signer"),

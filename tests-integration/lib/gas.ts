@@ -78,7 +78,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   // This should later be based on l1_da_mode, "BLOB" should use this while "CALLDATA" should use the else part
   if (rawResources.data_availability) {
     daFee = rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas;
-    feeWithoutDA = (actualFee - BigInt(daFee * dataGasPrice));
+    feeWithoutDA = actualFee - BigInt(daFee * dataGasPrice);
     gasWithoutDA = feeWithoutDA / gasPrice;
   } else {
     // This only happens for tx before Dencun
@@ -101,7 +101,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     executionResources: sortedResources,
     gasPrice,
     storageDiffs,
-    daMode:blockInfo.l1_da_mode,
+    daMode: blockInfo.l1_da_mode,
   };
 }
 
@@ -138,7 +138,7 @@ export function newProfiler(provider: RpcProvider) {
         "Max computation per Category": profile.maxComputationCategory,
         "Storage diffs": sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         "DA fee": Number(profile.daFee),
-        "DA mode":profile.daMode,
+        "DA mode": profile.daMode,
       };
     },
     printStorageDiffs({ storageDiffs }: Profile) {

@@ -54,7 +54,7 @@ fn setup() -> (IExternalRecoveryDispatcher, IArgentMultisigDispatcher) {
 fn test_toggle_escape() {
     let (component, _) = setup();
     let mut config = component.get_escape_enabled();
-    assert_eq!(config.is_enabled, true, "should be enabled");
+    assert!(config.is_enabled, "should be enabled");
     assert_eq!(config.security_period, 10, "should be 10");
     assert_eq!(config.expiry_period, 10, "should be 10");
     assert_eq!(component.get_guardian(), GUARDIAN(), "should be guardian");

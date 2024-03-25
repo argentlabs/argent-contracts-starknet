@@ -55,11 +55,6 @@ describe("ArgentAccount: events", function () {
 
     await expectEvent(receipt, {
       from_address: account.address,
-      eventName: "EscapeOwnerTriggered",
-      data: [activeAt.toString(), newOwner.storedValue.toString()],
-    });
-    await expectEvent(receipt, {
-      from_address: account.address,
       eventName: "EscapeOwnerTriggeredGuid",
       data: [activeAt.toString(), newOwner.guid.toString()],
     });
@@ -75,11 +70,6 @@ describe("ArgentAccount: events", function () {
     await accountContract.trigger_escape_owner(newOwner.compiledSigner);
     await increaseTime(ESCAPE_SECURITY_PERIOD);
     const receipt = await waitForTransaction(await accountContract.escape_owner());
-    await expectEvent(receipt, {
-      from_address: account.address,
-      eventName: "OwnerEscaped",
-      data: [newOwner.storedValue.toString()],
-    });
     await expectEvent(receipt, {
       from_address: account.address,
       eventName: "OwnerEscapedGuid",
@@ -100,11 +90,6 @@ describe("ArgentAccount: events", function () {
     const activeAt = BigInt(initialTime) + ESCAPE_SECURITY_PERIOD;
     await expectEvent(receipt, {
       from_address: account.address,
-      eventName: "EscapeGuardianTriggered",
-      data: [activeAt.toString(), newGuardian.storedValue.toString()],
-    });
-    await expectEvent(receipt, {
-      from_address: account.address,
       eventName: "EscapeGuardianTriggeredGuid",
       data: [activeAt.toString(), newGuardian.guid.toString()],
     });
@@ -119,12 +104,6 @@ describe("ArgentAccount: events", function () {
     await accountContract.trigger_escape_guardian(newGuardian.compiledSignerAsOption);
     await increaseTime(ESCAPE_SECURITY_PERIOD);
     const receipt = await waitForTransaction(await accountContract.escape_guardian());
-
-    await expectEvent(receipt, {
-      from_address: account.address,
-      eventName: "GuardianEscaped",
-      data: [newGuardian.storedValue.toString()],
-    });
     await expectEvent(receipt, {
       from_address: account.address,
       eventName: "GuardianEscapedGuid",

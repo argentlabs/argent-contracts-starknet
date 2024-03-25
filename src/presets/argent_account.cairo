@@ -119,13 +119,9 @@ mod ArgentAccount {
         TransactionExecuted: TransactionExecuted,
         AccountCreated: AccountCreated,
         AccountCreatedGuid: AccountCreatedGuid,
-        EscapeOwnerTriggered: EscapeOwnerTriggered,
         EscapeOwnerTriggeredGuid: EscapeOwnerTriggeredGuid,
-        EscapeGuardianTriggered: EscapeGuardianTriggered,
         EscapeGuardianTriggeredGuid: EscapeGuardianTriggeredGuid,
-        OwnerEscaped: OwnerEscaped,
         OwnerEscapedGuid: OwnerEscapedGuid,
-        GuardianEscaped: GuardianEscaped,
         GuardianEscapedGuid: GuardianEscapedGuid,
         EscapeCanceled: EscapeCanceled,
         OwnerChanged: OwnerChanged,
@@ -553,9 +549,6 @@ mod ArgentAccount {
 
             let new_owner_guid = new_owner.into_guid();
 
-            if let Option::Some(new_owner_pubkey) = new_owner.storage_value().starknet_pubkey_or_none() {
-                self.emit(EscapeOwnerTriggered { ready_at, new_owner: new_owner_pubkey });
-            };
             self.emit(EscapeOwnerTriggeredGuid { ready_at, new_owner_guid: new_owner_guid });
             self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
         }
@@ -577,13 +570,6 @@ mod ArgentAccount {
                 ready_at, escape_type: LegacyEscapeType::Guardian, new_signer: new_guardian_storage_value,
             };
             self._escape.write(escape);
-            if let Option::Some(new_guardian_storage_value) = new_guardian_storage_value {
-                if let Option::Some(new_guardian_pubkey) = new_guardian_storage_value.starknet_pubkey_or_none() {
-                    self.emit(EscapeGuardianTriggered { ready_at, new_guardian: new_guardian_pubkey });
-                };
-            } else {
-                self.emit(EscapeGuardianTriggered { ready_at, new_guardian: 0 });
-            };
             self.emit(EscapeGuardianTriggeredGuid { ready_at, new_guardian_guid });
         }
 
@@ -600,9 +586,6 @@ mod ArgentAccount {
             // update owner
             let new_owner = current_escape.new_signer.unwrap();
             self.write_owner(new_owner);
-            if let Option::Some(new_owner_pubkey) = new_owner.starknet_pubkey_or_none() {
-                self.emit(OwnerEscaped { new_owner: new_owner_pubkey });
-            }
             self.emit(OwnerEscapedGuid { new_owner_guid: new_owner.into_guid() });
 
             // clear escape
@@ -620,12 +603,8 @@ mod ArgentAccount {
 
             self.write_guardian(current_escape.new_signer);
             if let Option::Some(guardian) = current_escape.new_signer {
-                if let Option::Some(guardian_pubkey) = guardian.starknet_pubkey_or_none() {
-                    self.emit(GuardianEscaped { new_guardian: guardian_pubkey });
-                };
                 self.emit(GuardianEscapedGuid { new_guardian_guid: guardian.into_guid() });
             } else {
-                self.emit(GuardianEscaped { new_guardian: 0 });
                 self.emit(GuardianEscapedGuid { new_guardian_guid: 0 });
             }
             // clear escape

@@ -72,15 +72,19 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   const maxComputationCategory = maxBy(Object.entries(gasPerComputationCategory), ([, gas]) => gas)![0];
   const computationGas = BigInt(gasPerComputationCategory[maxComputationCategory]);
 
-  let feeWithoutDa;
+  let gasWithoutDA;
+  let feeWithoutDA;
   let daFee;
+  // This should later be based on l1_da_mode, "BLOB" should use this while "CALLDATA" should use the else part
   if (rawResources.data_availability) {
     daFee = rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas;
-    feeWithoutDa = (actualFee - BigInt(daFee * dataGasPrice)) / gasPrice;
+    feeWithoutDA = (actualFee - BigInt(daFee * dataGasPrice));
+    gasWithoutDA = feeWithoutDA / gasPrice;
   } else {
     // This only happens for tx before Dencun
-    feeWithoutDa = actualFee / gasPrice;
-    daFee = feeWithoutDa - computationGas;
+    gasWithoutDA = actualFee / gasPrice;
+    daFee = gasWithoutDA - computationGas;
+    feeWithoutDA = actualFee;
   }
 
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
@@ -88,7 +92,8 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   return {
     actualFee,
     paidInStrk,
-    feeWithoutDa,
+    gasWithoutDA,
+    feeWithoutDA,
     daFee,
     computationGas,
     maxComputationCategory,
@@ -96,6 +101,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     executionResources: sortedResources,
     gasPrice,
     storageDiffs,
+    daMode:blockInfo.l1_da_mode,
   };
 }
 
@@ -126,11 +132,13 @@ export function newProfiler(provider: RpcProvider) {
       return {
         "Actual fee": Number(profile.actualFee).toLocaleString("de-DE"),
         "Fee usd": Number(feeUsd.toFixed(4)),
-        "Fee without DA": Number(profile.feeWithoutDa),
+        "Fee without DA": Number(profile.feeWithoutDA),
+        "Gas without DA": Number(profile.gasWithoutDA),
         "Computation gas": Number(profile.computationGas),
+        "Max computation per Category": profile.maxComputationCategory,
         "Storage diffs": sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         "DA fee": Number(profile.daFee),
-        "Max computation per Category": profile.maxComputationCategory,
+        "DA mode":profile.daMode,
       };
     },
     printStorageDiffs({ storageDiffs }: Profile) {

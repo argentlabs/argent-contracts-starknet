@@ -6,6 +6,7 @@ import { ensureAccepted, ensureSuccess } from ".";
 
 const ethUsd = 4000n;
 const strkUsd = 2n;
+// This should match what is given to the devnet for '--data-gas-price'
 const dataGasPrice = 1;
 
 // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
@@ -75,7 +76,6 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   let gasWithoutDa;
   let feeWithoutDa;
   let daFee;
-  // This should later be based on l1_da_mode, "BLOB" should use this while "CALLDATA" should use the else part
   if (rawResources.data_availability) {
     daFee = (rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas) * dataGasPrice;
     feeWithoutDa = actualFee - BigInt(daFee);

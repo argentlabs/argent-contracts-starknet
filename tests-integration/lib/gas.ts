@@ -77,7 +77,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   if (rawResources.data_availability) {
     daFee = rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas;
     feeWithoutDa = (actualFee - BigInt(daFee * dataGasPrice)) / gasPrice;
-  } else {
+  } else { // This only happens for tx before Dencun
     feeWithoutDa = actualFee / gasPrice;
     daFee = feeWithoutDa - computationGas;
   }

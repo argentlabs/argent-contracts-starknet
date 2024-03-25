@@ -14,7 +14,6 @@ mod session_component {
     use poseidon::{hades_permutation};
     use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp};
 
-
     #[storage]
     struct Storage {
         revoked_session: LegacyMap<felt252, bool>,
@@ -57,7 +56,7 @@ mod session_component {
         #[inline(always)]
         fn is_session(self: @ComponentState<TContractState>, signature: Span<felt252>) -> bool {
             match signature.get(0) {
-                Option::Some(session_magic) => { *session_magic.unbox() == SESSION_MAGIC },
+                Option::Some(session_magic) => *session_magic.unbox() == SESSION_MAGIC,
                 Option::None => false
             }
         }
@@ -104,22 +103,17 @@ mod session_component {
         }
     }
 
-
     fn assert_valid_session_calls(token: @SessionToken, mut calls: Span<Call>) {
         assert((*token.proofs).len() == calls.len(), 'session/unaligned-proofs');
         let merkle_root = *token.session.allowed_methods_root;
         let mut merkle_tree: MerkleTree<Hasher> = MerkleTreeImpl::new();
         let mut proofs = *token.proofs;
-        loop {
-            match calls.pop_front() {
-                Option::Some(call) => {
-                    let leaf = call.get_merkle_leaf();
-                    let proof = proofs.pop_front().expect('session/proof-empty');
-                    let is_valid = merkle_tree.verify(merkle_root, leaf, *proof);
-                    assert(is_valid, 'session/invalid-call');
-                },
-                Option::None => { break; },
+        while let Option::Some(call) = calls
+            .pop_front() {
+                let leaf = call.get_merkle_leaf();
+                let proof = proofs.pop_front().expect('session/proof-empty');
+                let is_valid = merkle_tree.verify(merkle_root, leaf, *proof);
+                assert(is_valid, 'session/invalid-call');
             };
-        }
     }
 }

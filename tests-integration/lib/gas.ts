@@ -72,19 +72,19 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   const maxComputationCategory = maxBy(Object.entries(gasPerComputationCategory), ([, gas]) => gas)![0];
   const computationGas = BigInt(gasPerComputationCategory[maxComputationCategory]);
 
-  let gasWithoutDA;
-  let feeWithoutDA;
+  let gasWithoutDa;
+  let feeWithoutDa;
   let daFee;
   // This should later be based on l1_da_mode, "BLOB" should use this while "CALLDATA" should use the else part
   if (rawResources.data_availability) {
     daFee = rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas;
-    feeWithoutDA = actualFee - BigInt(daFee * dataGasPrice);
-    gasWithoutDA = feeWithoutDA / gasPrice;
+    feeWithoutDa = actualFee - BigInt(daFee * dataGasPrice);
+    gasWithoutDa = feeWithoutDa / gasPrice;
   } else {
     // This only happens for tx before Dencun
-    gasWithoutDA = actualFee / gasPrice;
-    daFee = gasWithoutDA - computationGas;
-    feeWithoutDA = actualFee;
+    gasWithoutDa = actualFee / gasPrice;
+    daFee = gasWithoutDa - computationGas;
+    feeWithoutDa = actualFee;
   }
 
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
@@ -92,8 +92,8 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   return {
     actualFee,
     paidInStrk,
-    gasWithoutDA,
-    feeWithoutDA,
+    gasWithoutDa,
+    feeWithoutDa,
     daFee,
     computationGas,
     maxComputationCategory,
@@ -132,8 +132,8 @@ export function newProfiler(provider: RpcProvider) {
       return {
         "Actual fee": Number(profile.actualFee).toLocaleString("de-DE"),
         "Fee usd": Number(feeUsd.toFixed(4)),
-        "Fee without DA": Number(profile.feeWithoutDA),
-        "Gas without DA": Number(profile.gasWithoutDA),
+        "Fee without DA": Number(profile.feeWithoutDa),
+        "Gas without DA": Number(profile.gasWithoutDa),
         "Computation gas": Number(profile.computationGas),
         "Max computation per Category": profile.maxComputationCategory,
         "Storage diffs": sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),

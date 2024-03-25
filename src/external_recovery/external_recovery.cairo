@@ -100,7 +100,6 @@ mod external_recovery_component {
             callback.execute_recovery_call(call.selector, call.calldata.span());
 
             self.emit(EscapeExecuted { call_hash });
-
             // clear escape
             self.escape.write(Default::default());
         }
@@ -142,7 +141,7 @@ mod external_recovery_component {
                 current_escape.ready_at == 0 || current_escape_status == EscapeStatus::Expired, 'argent/ongoing-escape'
             );
 
-            if (is_enabled) {
+            if is_enabled {
                 assert(
                     security_period != 0 && expiry_period != 0 && guardian != contract_address_const::<0>(),
                     'argent/invalid-escape-params'

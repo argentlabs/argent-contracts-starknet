@@ -193,10 +193,10 @@ mod signer_list_component {
             let mut current_signer = first_signer;
             loop {
                 let next_signer = self.signer_list.read(current_signer);
-                if (next_signer == 0) {
+                if next_signer == 0 {
                     break;
                 }
-                if (next_signer == second_signer) {
+                if next_signer == second_signer {
                     is_before = true;
                     break;
                 }

@@ -127,14 +127,11 @@ impl PackEscape of starknet::StorePacking<Escape, Array<felt252>> {
         let mut target_signers_span = value.target_signers.span();
         let mut new_signers_span = value.new_signers.span();
         assert(target_signers_span.len() == new_signers_span.len(), 'argent/invalid-len');
-        loop {
-            let target_signer = match target_signers_span.pop_front() {
-                Option::Some(target_signer) => (*target_signer),
-                Option::None => { break; }
+        while let Option::Some(target_signer) = target_signers_span
+            .pop_front() {
+                arr.append(*target_signer);
+                arr.append(*new_signers_span.pop_front().expect('argent/invalid-array-len'));
             };
-            arr.append(target_signer);
-            arr.append(*new_signers_span.pop_front().expect('argent/invalid-array-len'));
-        };
         arr
     }
 
@@ -184,15 +181,12 @@ impl LegacyEscapeStorePacking of starknet::StorePacking<LegacyEscape, (felt252, 
         LegacyEscape {
             escape_type: escape_type.try_into().unwrap(),
             ready_at: ready_at.try_into().unwrap(),
-            new_signer: if (signer_type_ordinal == 0 && stored_value == 0) {
+            new_signer: if signer_type_ordinal == 0 && stored_value == 0 {
                 Option::None
             } else {
-                Option::Some(
-                    SignerStorageValue {
-                        signer_type: signer_type_ordinal.try_into().unwrap(),
-                        stored_value: stored_value.try_into().unwrap()
-                    }
-                )
+                let signer_type = signer_type_ordinal.try_into().unwrap();
+                let stored_value = stored_value.try_into().unwrap();
+                Option::Some(SignerStorageValue { signer_type, stored_value })
             }
         }
     }

@@ -240,14 +240,14 @@ mod ArgentAccount {
         self.emit(OwnerAdded { new_owner_guid: owner_guid });
         self.emit(SignerLinked { signer_guid: owner_guid, signer: owner });
 
-        let guardian_guid: felt252 = match guardian {
+        let guardian_guid = match guardian {
             Option::Some(guardian) => {
                 let guardian_guid = guardian.into_guid();
                 self.init_guardian(guardian.storage_value());
                 self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                 guardian_guid
             },
-            Option::None => { 0 },
+            Option::None => 0,
         };
         self.emit(AccountCreated { owner: owner_guid, guardian: guardian_guid });
     }
@@ -330,7 +330,7 @@ mod ArgentAccount {
             } else {
                 let guardian = starknet_signer_from_pubkey(guardian_key);
                 self.emit(SignerLinked { signer_guid: guardian.into_guid(), signer: guardian });
-                if (guardian_backup_key != 0) {
+                if guardian_backup_key != 0 {
                     let guardian_backup = starknet_signer_from_pubkey(guardian_backup_key);
                     self.emit(SignerLinked { signer_guid: guardian_backup.into_guid(), signer: guardian_backup });
                 }
@@ -501,7 +501,7 @@ mod ArgentAccount {
                     self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
                     (guardian_guid, Option::Some(guardian.storage_value()))
                 },
-                Option::None => { (0, Option::None) },
+                Option::None => (0, Option::None),
             };
 
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
@@ -583,7 +583,7 @@ mod ArgentAccount {
                     assert(!guardian.is_stored_as_guid(), 'argent/only_guid');
                     guardian.stored_value
                 },
-                Option::None => { 0 },
+                Option::None => 0,
             }
         }
 
@@ -611,7 +611,7 @@ mod ArgentAccount {
                     assert(!guardian_backup.is_stored_as_guid(), 'argent/only_guid');
                     guardian_backup.stored_value
                 },
-                Option::None => { 0 },
+                Option::None => 0,
             }
         }
 
@@ -954,22 +954,19 @@ mod ArgentAccount {
         fn read_guardian(self: @ContractState) -> Option<SignerStorageValue> {
             let mut preferred_order = guardian_ordered_types();
             loop {
-                match preferred_order.pop_front() {
-                    Option::Some(signer_type) => {
-                        let guardian_guid = match signer_type {
-                            SignerType::Starknet => self._guardian.read(),
-                            _ => self._guardian_non_stark.read((*signer_type).into()),
-                        };
-                        if (guardian_guid != 0) {
-                            break Option::Some(
-                                SignerStorageValue {
-                                    stored_value: guardian_guid.try_into().unwrap(), signer_type: *signer_type
-                                }
-                            );
-                        }
-                    },
+                let signer_type = match preferred_order.pop_front() {
+                    Option::Some(signer_type) => *signer_type,
                     Option::None => { break Option::None; },
                 };
+                let guardian_guid = match signer_type {
+                    SignerType::Starknet => self._guardian.read(),
+                    _ => self._guardian_non_stark.read(signer_type.into()),
+                };
+                if guardian_guid != 0 {
+                    break Option::Some(
+                        SignerStorageValue { stored_value: guardian_guid.try_into().unwrap(), signer_type }
+                    );
+                }
             }
         }
 
@@ -983,18 +980,14 @@ mod ArgentAccount {
 
         fn write_guardian_backup(ref self: ContractState, guardian_backup: Option<SignerStorageValue>) {
             // clear storage
-            match self.read_guardian_backup() {
-                Option::Some(old_guardian_backup) => {
-                    match old_guardian_backup.signer_type {
-                        SignerType::Starknet => self._guardian_backup.write(0),
-                        _ => self._guardian_backup_non_stark.write(old_guardian_backup.signer_type.into(), 0),
-                    }
-                },
-                Option::None => {},
+            if let Option::Some(old_guardian_backup) = self.read_guardian_backup() {
+                match old_guardian_backup.signer_type {
+                    SignerType::Starknet => self._guardian_backup.write(0),
+                    _ => self._guardian_backup_non_stark.write(old_guardian_backup.signer_type.into(), 0),
+                }
             };
             // write storage
-            if (guardian_backup.is_some()) {
-                let guardian_backup = guardian_backup.unwrap();
+            if let Option::Some(guardian_backup) = guardian_backup {
                 match guardian_backup.signer_type {
                     SignerType::Starknet => self._guardian_backup.write(guardian_backup.stored_value),
                     _ => self
@@ -1007,22 +1000,19 @@ mod ArgentAccount {
         fn read_guardian_backup(self: @ContractState) -> Option<SignerStorageValue> {
             let mut preferred_order = guardian_ordered_types();
             loop {
-                match preferred_order.pop_front() {
-                    Option::Some(signer_type) => {
-                        let guardian_backup_guid = match signer_type {
-                            SignerType::Starknet => self._guardian_backup.read(),
-                            _ => self._guardian_backup_non_stark.read((*signer_type).into()),
-                        };
-                        if (guardian_backup_guid != 0) {
-                            break Option::Some(
-                                SignerStorageValue {
-                                    stored_value: guardian_backup_guid.try_into().unwrap(), signer_type: *signer_type
-                                }
-                            );
-                        }
-                    },
+                let signer_type = match preferred_order.pop_front() {
+                    Option::Some(signer_type) => *signer_type,
                     Option::None => { break Option::None; },
                 };
+                let guardian_backup_guid = match signer_type {
+                    SignerType::Starknet => self._guardian_backup.read(),
+                    _ => self._guardian_backup_non_stark.read(signer_type.into()),
+                };
+                if guardian_backup_guid != 0 {
+                    break Option::Some(
+                        SignerStorageValue { stored_value: guardian_backup_guid.try_into().unwrap(), signer_type }
+                    );
+                }
             }
         }
 
@@ -1056,10 +1046,10 @@ mod ArgentAccount {
             let mut max_tip: u128 = 0;
             loop {
                 match tx_info.resource_bounds.pop_front() {
-                    Option::Some(r) => {
-                        let max_resource_amount: u128 = (*r.max_amount).into();
-                        max_fee += *r.max_price_per_unit * max_resource_amount;
-                        if *r.resource == 'L2_GAS' {
+                    Option::Some(bound) => {
+                        let max_resource_amount: u128 = (*bound.max_amount).into();
+                        max_fee += *bound.max_price_per_unit * max_resource_amount;
+                        if *bound.resource == 'L2_GAS' {
                             max_tip += tx_info.tip * max_resource_amount;
                         }
                     },

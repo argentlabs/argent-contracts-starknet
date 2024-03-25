@@ -1,14 +1,12 @@
+use argent::external_recovery::{
+    interface::{IExternalRecovery, IExternalRecoveryDispatcher, IExternalRecoveryDispatcherTrait,},
+    external_recovery::{external_recovery_component, EscapeCall, get_escape_call_hash}
+};
 use argent::mocks::recovery_mocks::ExternalRecoveryMock;
 use argent::multisig::interface::IArgentMultisigInternal;
 use argent::multisig::interface::{IArgentMultisig, IArgentMultisigDispatcher, IArgentMultisigDispatcherTrait};
 
 use argent::recovery::interface::{EscapeStatus};
-use argent::recovery::{
-    external_recovery::{
-        external_recovery_component, EscapeCall, IExternalRecovery, IExternalRecoveryDispatcher,
-        IExternalRecoveryDispatcherTrait, get_escape_call_hash
-    }
-};
 use argent::signer::{signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey, SignerTrait}};
 use argent::signer_storage::signer_list::signer_list_component;
 use argent::utils::serialization::serialize;

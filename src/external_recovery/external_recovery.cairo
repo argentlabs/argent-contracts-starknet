@@ -1,40 +1,8 @@
+use argent::external_recovery::interface::{EscapeCall, Escape};
 use argent::recovery::interface::{EscapeEnabled, EscapeStatus};
+
 use argent::utils::serialization::serialize;
 use starknet::ContractAddress;
-
-#[derive(Drop, Serde, Copy, starknet::Store)]
-struct Escape {
-    // timestamp for activation of escape mode, 0 otherwise
-    ready_at: u64,
-    call_hash: felt252
-}
-
-#[derive(Drop, Serde)]
-struct EscapeCall {
-    selector: felt252,
-    calldata: Array<felt252>
-}
-
-#[starknet::interface]
-trait IExternalRecovery<TContractState> {
-    /// @notice Enables/disables recovery and defines the recovery parameters
-    fn toggle_escape(
-        ref self: TContractState, is_enabled: bool, security_period: u64, expiry_period: u64, guardian: ContractAddress
-    );
-    fn get_guardian(self: @TContractState) -> ContractAddress;
-    /// @notice Triggers the escape. The method must be called by the guardian.
-    /// @param call Call to trigger on the account to recover the account
-    fn trigger_escape(ref self: TContractState, call: EscapeCall);
-    /// @notice Executes the escape. The method can be called by any external contract/account.
-    /// @param call Call provided to `trigger_escape`
-    fn execute_escape(ref self: TContractState, call: EscapeCall);
-    /// @notice Cancels the ongoing escape.
-    fn cancel_escape(ref self: TContractState);
-    /// @notice Gets the escape configuration.
-    fn get_escape_enabled(self: @TContractState) -> EscapeEnabled;
-    /// @notice Gets the ongoing escape if any, and its status.
-    fn get_escape(self: @TContractState) -> (Escape, EscapeStatus);
-}
 
 /// This trait has to be implemented when using the component `external_recovery`
 trait IExternalRecoveryCallback<TContractState> {
@@ -42,28 +10,6 @@ trait IExternalRecoveryCallback<TContractState> {
     fn execute_recovery_call(ref self: TContractState, selector: felt252, calldata: Span<felt252>);
 }
 
-/// @notice Escape was triggered
-/// @param ready_at when the escape can be completed
-/// @param call to execute to escape
-#[derive(Drop, starknet::Event)]
-struct EscapeTriggered {
-    ready_at: u64,
-    call: EscapeCall,
-}
-
-/// @notice Signer escape was completed and call was executed
-/// @param call_hash hash of the executed EscapeCall
-#[derive(Drop, starknet::Event)]
-struct EscapeExecuted {
-    call_hash: felt252
-}
-
-/// @notice Signer escape was canceled
-/// @param call_hash hash of EscapeCall
-#[derive(Drop, starknet::Event)]
-struct EscapeCanceled {
-    call_hash: felt252
-}
 
 /// @notice Implements the recovery by defining a guardian (and external contract/account) 
 /// that can trigger the recovery and replace a set of signers. 
@@ -71,6 +17,9 @@ struct EscapeCanceled {
 /// The recovery can be canceled by the authorised signers through the validation logic of the account. 
 #[starknet::component]
 mod external_recovery_component {
+    use argent::external_recovery::interface::{
+        IExternalRecovery, EscapeCall, Escape, EscapeTriggered, EscapeExecuted, EscapeCanceled,
+    };
     use argent::recovery::interface::{EscapeEnabled, EscapeStatus};
     use argent::signer::signer_signature::{Signer, SignerTrait};
     use argent::signer_storage::interface::ISignerList;
@@ -89,10 +38,7 @@ mod external_recovery_component {
         get_block_timestamp, get_contract_address, get_caller_address, ContractAddress, account::Call,
         contract_address::contract_address_const
     };
-    use super::{
-        IExternalRecovery, IExternalRecoveryCallback, EscapeCall, Escape, EscapeTriggered, EscapeExecuted,
-        EscapeCanceled, get_escape_call_hash
-    };
+    use super::{IExternalRecoveryCallback, get_escape_call_hash};
 
     #[storage]
     struct Storage {
@@ -248,11 +194,4 @@ mod external_recovery_component {
 #[inline(always)]
 fn get_escape_call_hash(escape_call: @EscapeCall) -> felt252 {
     poseidon::poseidon_hash_span(serialize(escape_call).span())
-}
-
-
-impl DefaultEscape of Default<Escape> {
-    fn default() -> Escape {
-        Escape { ready_at: 0, call_hash: 0 }
-    }
 }

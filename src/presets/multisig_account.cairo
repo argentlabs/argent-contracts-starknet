@@ -1,12 +1,12 @@
 #[starknet::contract(account)]
 mod ArgentMultisigAccount {
     use argent::account::interface::{IAccount, IArgentAccount, Version};
+    use argent::external_recovery::{external_recovery::{external_recovery_component, IExternalRecoveryCallback}};
     use argent::introspection::src5::src5_component;
     use argent::multisig::{multisig::multisig_component};
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
-    use argent::recovery::{external_recovery::{external_recovery_component, IExternalRecoveryCallback}};
     use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait}};
     use argent::signer_storage::{
         interface::ISignerList, signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}

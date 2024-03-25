@@ -146,13 +146,13 @@ impl SignerTraitImpl of SignerTrait {
             Signer::Secp256k1(signer) => SignerStorageValue {
                 signer_type: SignerType::Secp256k1, stored_value: (*signer).pubkey_hash.address.try_into().unwrap()
             },
-            Signer::Secp256r1(_) => SignerStorageValue {
+            Signer::Secp256r1 => SignerStorageValue {
                 signer_type: SignerType::Secp256r1, stored_value: (*self).into_guid().try_into().unwrap()
             },
             Signer::Eip191(signer) => SignerStorageValue {
                 signer_type: SignerType::Eip191, stored_value: (*signer).eth_address.address.try_into().unwrap()
             },
-            Signer::Webauthn(_) => SignerStorageValue {
+            Signer::Webauthn => SignerStorageValue {
                 signer_type: SignerType::Webauthn, stored_value: (*self).into_guid().try_into().unwrap()
             },
         }
@@ -320,7 +320,7 @@ impl SignerSpanTraitImpl of SignerSpanTrait {
         let mut guids = array![];
         loop {
             match signers.pop_front() {
-                Option::Some(signer) => { guids.append((*signer).into_guid()); },
+                Option::Some(signer) => guids.append((*signer).into_guid()),
                 Option::None => { break; },
             };
         };

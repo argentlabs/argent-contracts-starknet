@@ -75,12 +75,11 @@ mod multisig_component {
             let mut guids = signers_to_add.span().to_guid_list();
             signer_list_comp.add_signers(guids.span(), last_signer: last_signer_guid);
             let mut signers_to_add_span = signers_to_add.span();
-            while !signers_to_add_span
-                .is_empty() {
-                    let signer = *signers_to_add_span.pop_front().unwrap();
+            while let Option::Some(signer) = signers_to_add_span
+                .pop_front() {
                     let signer_guid = guids.pop_front().unwrap();
                     signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
-                    signer_list_comp.emit(SignerLinked { signer_guid: signer_guid, signer: signer });
+                    signer_list_comp.emit(SignerLinked { signer_guid, signer: *signer });
                 };
 
             self.threshold.write(new_threshold);
@@ -102,9 +101,8 @@ mod multisig_component {
 
             let mut guids = signers_to_remove.span().to_guid_list();
             signer_list_comp.remove_signers(guids.span(), last_signer: last_signer_guid);
-            while !guids
-                .is_empty() {
-                    let guid = guids.pop_front().unwrap();
+            while let Option::Some(guid) = guids
+                .pop_front() {
                     signer_list_comp.emit(OwnerRemoved { removed_owner_guid: guid })
                 };
 
@@ -180,12 +178,11 @@ mod multisig_component {
             let mut guids = signers.span().to_guid_list();
             signer_list_comp.add_signers(guids.span(), last_signer: 0);
 
-            while !signers
-                .is_empty() {
-                    let signer = signers.pop_front().unwrap();
+            while let Option::Some(signer) = signers
+                .pop_front() {
                     let signer_guid = guids.pop_front().unwrap();
                     signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
-                    signer_list_comp.emit(SignerLinked { signer_guid: signer_guid, signer: signer });
+                    signer_list_comp.emit(SignerLinked { signer_guid, signer });
                 };
 
             self.threshold.write(threshold);

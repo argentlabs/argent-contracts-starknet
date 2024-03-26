@@ -1,5 +1,5 @@
 import { exec } from "child_process";
-import fs from "fs";
+import fs, { cpSync } from "fs";
 import { mapValues, maxBy, sortBy, sum } from "lodash-es";
 import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
 import { ensureAccepted, ensureSuccess } from ".";
@@ -19,6 +19,12 @@ const gasWeights: Record<string, number> = {
   keccak: 5.12,
   bitwise: 0.16,
   ec_op: 2.56,
+};
+
+const l2PayloadsWeights: Record<string, number> = {
+  eventKey: 0.256,
+  eventData: 0.12,
+  calldata: 0.128,
 };
 
 async function profileGasUsage(transactionHash: string, provider: RpcProvider, allowFailedTransactions = false) {
@@ -60,6 +66,17 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
 
   const blockNumber = receipt.block_number;
   const blockInfo = await provider.getBlockWithReceipts(blockNumber);
+  const { calldata, signature } = (await provider.getTransaction(receipt.transaction_hash)) as any;
+  console.log(calldata);
+  const calldataGas = Math.floor(calldata.length + signature.length * l2PayloadsWeights.calldata);
+  const eventGas = Math.floor(
+    receipt.events.reduce(
+      (sum, { keys, data }) =>
+        sum + keys.length * l2PayloadsWeights.eventKey + data.length * l2PayloadsWeights.eventData,
+      0,
+    ),
+  );
+
   const stateUpdate = await provider.getStateUpdate(blockNumber);
   const storageDiffs = stateUpdate.state_diff.storage_diffs;
   const paidInStrk = receipt.actual_fee.unit == "FRI";
@@ -102,6 +119,8 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     gasPrice,
     storageDiffs,
     daMode: blockInfo.l1_da_mode,
+    calldataGas,
+    eventGas,
   };
 }
 
@@ -135,6 +154,8 @@ export function newProfiler(provider: RpcProvider) {
         "Fee without DA": Number(profile.feeWithoutDa),
         "Gas without DA": Number(profile.gasWithoutDa),
         "Computation gas": Number(profile.computationGas),
+        "Event gas": Number(profile.eventGas),
+        "Calldata gas": Number(profile.calldataGas),
         "Max computation per Category": profile.maxComputationCategory,
         "Storage diffs": sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         "DA fee": Number(profile.daFee),

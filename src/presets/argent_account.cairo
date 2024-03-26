@@ -114,30 +114,43 @@ mod ArgentAccount {
         UpgradeEvents: upgrade_component::Event,
         #[flat]
         SessionableEvents: session_component::Event,
-        AccountCreated: AccountCreated,
         TransactionExecuted: TransactionExecuted,
-        EscapeOwnerTriggered: EscapeOwnerTriggered,
-        EscapeGuardianTriggered: EscapeGuardianTriggered,
-        OwnerEscaped: OwnerEscaped,
-        GuardianEscaped: GuardianEscaped,
+        AccountCreated: AccountCreated,
+        AccountCreatedGuid: AccountCreatedGuid,
+        EscapeOwnerTriggeredGuid: EscapeOwnerTriggeredGuid,
+        EscapeGuardianTriggeredGuid: EscapeGuardianTriggeredGuid,
+        OwnerEscapedGuid: OwnerEscapedGuid,
+        GuardianEscapedGuid: GuardianEscapedGuid,
         EscapeCanceled: EscapeCanceled,
         OwnerChanged: OwnerChanged,
+        OwnerChangedGuid: OwnerChangedGuid,
         GuardianChanged: GuardianChanged,
+        GuardianChangedGuid: GuardianChangedGuid,
         GuardianBackupChanged: GuardianBackupChanged,
-        OwnerAdded: OwnerAdded,
-        OwnerRemoved: OwnerRemoved,
+        GuardianBackupChangedGuid: GuardianBackupChangedGuid,
         SignerLinked: SignerLinked,
     }
 
-    /// @notice Emitted exactly once when the account is initialized
-    /// @param account The account address
-    /// @param owner The owner address
-    /// @param guardian The guardian address
+    /// @notice Deprecated. This is only emmited if both owner and guardian (if any) are starknetKeys
+    /// Emitted exactly once when the account is initialized
+    /// @param owner The owner starknet pubkey
+    /// @param guardian The guardian starknet pubkey or 0 if there's no guardian
     #[derive(Drop, starknet::Event)]
     struct AccountCreated {
         #[key]
         owner: felt252,
         guardian: felt252
+    }
+
+    /// This is only emmited if both owner and guardian (if any) are starknetKeys
+    /// Emitted exactly once when the account is initialized
+    /// @param owner The owner guid
+    /// @param guardian The guardian guid or 0 if there's no guardian
+    #[derive(Drop, starknet::Event)]
+    struct AccountCreatedGuid {
+        #[key]
+        owner_guid: felt252,
+        guardian_guid: felt252
     }
 
     /// @notice Emitted when the account executes a transaction
@@ -150,15 +163,26 @@ mod ArgentAccount {
         response: Span<Span<felt252>>
     }
 
+    /// @notice Deprecated from v0.4.0. This is only emmited if new owner is a starknet key
     /// @notice Owner escape was triggered by the guardian
     /// @param ready_at when the escape can be completed
-    /// @param new_owner new owner address to be set after the security period
+    /// @param new_owner new starknet pubkey to be set after the security period
     #[derive(Drop, starknet::Event)]
     struct EscapeOwnerTriggered {
         ready_at: u64,
         new_owner: felt252
     }
 
+    /// @notice Owner escape was triggered by the guardian
+    /// @param ready_at when the escape can be completed
+    /// @param new_owner_guid new guid to be set after the security period
+    #[derive(Drop, starknet::Event)]
+    struct EscapeOwnerTriggeredGuid {
+        ready_at: u64,
+        new_owner_guid: felt252
+    }
+
+    /// @notice Deprecated from v0.4.0. This is only emmited if the guardian is empty or a starknet key
     /// @notice Guardian escape was triggered by the owner
     /// @param ready_at when the escape can be completed
     /// @param new_guardian address of the new guardian to be set after the security period. O if the guardian will be removed
@@ -168,6 +192,16 @@ mod ArgentAccount {
         new_guardian: felt252
     }
 
+    /// @notice Guardian escape was triggered by the owner
+    /// @param ready_at when the escape can be completed
+    /// @param new_guardian_guid to be set after the security period. O if the guardian will be removed
+    #[derive(Drop, starknet::Event)]
+    struct EscapeGuardianTriggeredGuid {
+        ready_at: u64,
+        new_guardian_guid: felt252
+    }
+
+    /// @notice Deprecated from v0.4.0. This is only emmited if the new owner is a starknet key
     /// @notice Owner escape was completed and there is a new account owner
     /// @param new_owner new owner address
     #[derive(Drop, starknet::Event)]
@@ -175,6 +209,15 @@ mod ArgentAccount {
         new_owner: felt252
     }
 
+    /// @notice Owner escape was completed and there is a new account owner
+    /// @param new_owner_guid new owner guid
+    #[derive(Drop, starknet::Event)]
+    struct OwnerEscapedGuid {
+        new_owner_guid: felt252
+    }
+
+
+    /// @notice Deprecated from v0.4.0. This is only emmited if the new guardian is empty or a starknet key
     /// @notice Guardian escape was completed and there is a new account guardian
     /// @param new_guardian address of the new guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
@@ -182,10 +225,18 @@ mod ArgentAccount {
         new_guardian: felt252
     }
 
+    /// @notice Guardian escape was completed and there is a new account guardian
+    /// @param new_guardian_guid guid of the new guardian or 0 if it was removed
+    #[derive(Drop, starknet::Event)]
+    struct GuardianEscapedGuid {
+        new_guardian_guid: felt252
+    }
+
     /// An ongoing escape was canceled
     #[derive(Drop, starknet::Event)]
     struct EscapeCanceled {}
 
+    /// @notice Deprecated from v0.4.0. This is only emmited if the new owner is a starknet key
     /// @notice The account owner was changed
     /// @param new_owner new owner address
     #[derive(Drop, starknet::Event)]
@@ -193,6 +244,14 @@ mod ArgentAccount {
         new_owner: felt252
     }
 
+    /// @notice The account owner was changed
+    /// @param new_owner_guid new owner guid
+    #[derive(Drop, starknet::Event)]
+    struct OwnerChangedGuid {
+        new_owner_guid: felt252
+    }
+
+    /// @notice Deprecated from v0.4.0. This is only emmited if the new guardian is empty or a starknet key
     /// @notice The account guardian was changed or removed
     /// @param new_guardian address of the new guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
@@ -200,6 +259,14 @@ mod ArgentAccount {
         new_guardian: felt252
     }
 
+    /// @notice The account guardian was changed or removed
+    /// @param new_guardian_guid address of the new guardian or 0 if it was removed
+    #[derive(Drop, starknet::Event)]
+    struct GuardianChangedGuid {
+        new_guardian_guid: felt252
+    }
+
+    /// @notice Deprecated from v0.4.0. This is only emmited if the new guardian backup is empty or a starknet key
     /// @notice The account backup guardian was changed or removed
     /// @param new_guardian_backup address of the backup guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
@@ -207,21 +274,11 @@ mod ArgentAccount {
         new_guardian_backup: felt252
     }
 
-    /// This event is part of an account discoverability standard, SNIP not yet created
-    /// Emitted when an account owner is added, including when the account is created.
-    /// Should also be emitted with the current owners when upgrading an account from Cairo 0
+    /// @notice The account backup guardian was changed or removed
+    /// @param new_guardian_backup_guid guid of the backup guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
-    struct OwnerAdded {
-        #[key]
-        new_owner_guid: felt252
-    }
-
-    /// This event is part of an account discoverability standard, SNIP not yet created
-    /// Emitted when an account owner is removed
-    #[derive(Drop, starknet::Event)]
-    struct OwnerRemoved {
-        #[key]
-        removed_owner_guid: felt252,
+    struct GuardianBackupChangedGuid {
+        new_guardian_backup_guid: felt252
     }
 
     #[derive(Drop, starknet::Event)]
@@ -235,19 +292,26 @@ mod ArgentAccount {
     fn constructor(ref self: ContractState, owner: Signer, guardian: Option<Signer>) {
         let owner_guid = owner.into_guid();
         self.init_owner(owner.storage_value());
-        self.emit(OwnerAdded { new_owner_guid: owner_guid });
         self.emit(SignerLinked { signer_guid: owner_guid, signer: owner });
 
-        let guardian_guid = match guardian {
-            Option::Some(guardian) => {
-                let guardian_guid = guardian.into_guid();
-                self.init_guardian(guardian.storage_value());
-                self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
-                guardian_guid
-            },
-            Option::None => 0,
+        let guardian_guid: felt252 = if let Option::Some(guardian) = guardian {
+            let guardian_guid = guardian.into_guid();
+            self.init_guardian(guardian.storage_value());
+            self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
+            if let Option::Some(owner_pubkey) = owner.storage_value().starknet_pubkey_or_none() {
+                if let Option::Some(guardian_pubkey) = guardian.storage_value().starknet_pubkey_or_none() {
+                    self.emit(AccountCreated { owner: owner_pubkey, guardian: guardian_pubkey });
+                };
+            };
+            guardian_guid
+        } else {
+            if let Option::Some(owner_pubkey) = owner.storage_value().starknet_pubkey_or_none() {
+                self.emit(AccountCreated { owner: owner_pubkey, guardian: 0 });
+            };
+            0
         };
-        self.emit(AccountCreated { owner: owner_guid, guardian: guardian_guid });
+
+        self.emit(AccountCreatedGuid { owner_guid, guardian_guid });
     }
 
     #[abi(embed_v0)]
@@ -340,8 +404,6 @@ mod ArgentAccount {
             if implementation != Zeroable::zero() {
                 replace_class_syscall(implementation).expect('argent/invalid-after-upgrade');
                 self._implementation.write(Zeroable::zero());
-                // Technically the owner is not added here, but we emit the event since it wasn't emitted in previous versions
-                self.emit(OwnerAdded { new_owner_guid: owner.into_guid() });
             }
 
             if data.is_empty() {
@@ -405,64 +467,64 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
 
             let new_owner = signer_signature.signer();
-            let old_owner_guid = self.read_owner().into_guid();
-            let new_owner_guid = new_owner.into_guid();
 
             self.assert_valid_new_owner_signature(signer_signature);
 
-            self.write_owner(new_owner.storage_value());
+            let new_owner_storage_value = new_owner.storage_value();
+            self.write_owner(new_owner_storage_value);
 
-            self.emit(OwnerChanged { new_owner: new_owner_guid });
-            self.emit(OwnerRemoved { removed_owner_guid: old_owner_guid });
-            self.emit(OwnerAdded { new_owner_guid: new_owner_guid });
-            self.emit(SignerLinked { signer_guid: new_owner_guid, signer: signer_signature.signer() });
+            if let Option::Some(new_owner_pubkey) = new_owner_storage_value.starknet_pubkey_or_none() {
+                self.emit(OwnerChanged { new_owner: new_owner_pubkey });
+            };
+            let new_owner_guid = new_owner_storage_value.into_guid();
+            self.emit(OwnerChangedGuid { new_owner_guid });
+            self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
         }
 
         fn change_guardian(ref self: ContractState, new_guardian: Option<Signer>) {
             assert_only_self();
 
-            let new_guardian_guid = match new_guardian {
-                Option::Some(guardian) => {
-                    let guardian_guid = guardian.into_guid();
-                    self.write_guardian(Option::Some(guardian.storage_value()));
-                    self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
-                    guardian_guid
-                },
-                Option::None => {
-                    // There cannot be a guardian_backup when there is no guardian
-                    assert(self.read_guardian_backup().is_none(), 'argent/backup-should-be-null');
-                    self.write_guardian(Option::None);
-                    0
-                },
-            };
+            if let Option::Some(guardian) = new_guardian {
+                let guardian_storage_value = guardian.storage_value();
+                let new_guardian_guid = guardian_storage_value.into_guid();
+                self.write_guardian(Option::Some(guardian_storage_value));
+                self.emit(SignerLinked { signer_guid: new_guardian_guid, signer: guardian });
 
+                if let Option::Some(guardian_pubkey) = guardian_storage_value.starknet_pubkey_or_none() {
+                    self.emit(GuardianChanged { new_guardian: guardian_pubkey });
+                };
+                self.emit(GuardianChangedGuid { new_guardian_guid });
+            } else {
+                // There cannot be a guardian_backup when there is no guardian
+                assert(self.read_guardian_backup().is_none(), 'argent/backup-should-be-null');
+                self.write_guardian(Option::None);
+                self.emit(GuardianChanged { new_guardian: 0 });
+                self.emit(GuardianChangedGuid { new_guardian_guid: 0 });
+            }
             self.reset_escape();
             self.reset_escape_timestamps();
-
-            self.emit(GuardianChanged { new_guardian: new_guardian_guid });
         }
 
         fn change_guardian_backup(ref self: ContractState, new_guardian_backup: Option<Signer>) {
             assert_only_self();
             self.assert_guardian_set();
-
-            let new_guardian_backup_guid = match new_guardian_backup {
-                Option::Some(guardian) => {
-                    let guardian_guid = guardian.into_guid();
-                    self.write_guardian_backup(Option::Some(guardian.storage_value()));
-                    self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
-                    guardian_guid
-                },
-                Option::None => {
-                    self.write_guardian_backup(Option::None);
-                    0
-                },
+            if let Option::Some(guardian) = new_guardian_backup {
+                let guardian_storage_value = guardian.storage_value();
+                let new_guardian_guid = guardian_storage_value.into_guid();
+                self.write_guardian_backup(Option::Some(guardian.storage_value()));
+                self.emit(SignerLinked { signer_guid: new_guardian_guid, signer: guardian });
+                if let Option::Some(guardian_pubkey) = guardian_storage_value.starknet_pubkey_or_none() {
+                    self.emit(GuardianBackupChanged { new_guardian_backup: guardian_pubkey });
+                };
+                self.emit(GuardianBackupChangedGuid { new_guardian_backup_guid: new_guardian_guid });
+            } else {
+                self.write_guardian_backup(Option::None);
+                self.emit(GuardianBackupChanged { new_guardian_backup: 0 });
+                self.emit(GuardianBackupChangedGuid { new_guardian_backup_guid: 0 });
             };
 
             self.reset_escape();
             self.reset_escape_timestamps();
-
-            self.emit(GuardianBackupChanged { new_guardian_backup: new_guardian_backup_guid });
         }
 
         fn trigger_escape_owner(ref self: ContractState, new_owner: Signer) {
@@ -484,7 +546,8 @@ mod ArgentAccount {
             self._escape.write(escape);
 
             let new_owner_guid = new_owner.into_guid();
-            self.emit(EscapeOwnerTriggered { ready_at, new_owner: new_owner_guid });
+
+            self.emit(EscapeOwnerTriggeredGuid { ready_at, new_owner_guid: new_owner_guid });
             self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
         }
 
@@ -492,14 +555,12 @@ mod ArgentAccount {
             assert_only_self();
 
             self.reset_escape();
-
-            let (new_guardian_guid, new_guardian_storage_value) = match new_guardian {
-                Option::Some(guardian) => {
-                    let guardian_guid = guardian.into_guid();
-                    self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
-                    (guardian_guid, Option::Some(guardian.storage_value()))
-                },
-                Option::None => (0, Option::None),
+            let (new_guardian_guid, new_guardian_storage_value) = if let Option::Some(guardian) = new_guardian {
+                let guardian_guid = guardian.into_guid();
+                self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
+                (guardian_guid, Option::Some(guardian.storage_value()))
+            } else {
+                (0, Option::None)
             };
 
             let ready_at = get_block_timestamp() + ESCAPE_SECURITY_PERIOD;
@@ -507,7 +568,7 @@ mod ArgentAccount {
                 ready_at, escape_type: LegacyEscapeType::Guardian, new_signer: new_guardian_storage_value,
             };
             self._escape.write(escape);
-            self.emit(EscapeGuardianTriggered { ready_at, new_guardian: new_guardian_guid });
+            self.emit(EscapeGuardianTriggeredGuid { ready_at, new_guardian_guid });
         }
 
         fn escape_owner(ref self: ContractState) {
@@ -521,13 +582,9 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
 
             // update owner
-            let old_owner_guid = self.read_owner().into_guid();
             let new_owner = current_escape.new_signer.unwrap();
             self.write_owner(new_owner);
-            let new_owner_guid = new_owner.into_guid();
-            self.emit(OwnerEscaped { new_owner: new_owner_guid });
-            self.emit(OwnerRemoved { removed_owner_guid: old_owner_guid });
-            self.emit(OwnerAdded { new_owner_guid: new_owner_guid });
+            self.emit(OwnerEscapedGuid { new_owner_guid: new_owner.into_guid() });
 
             // clear escape
             self._escape.write(Default::default());
@@ -543,11 +600,11 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
 
             self.write_guardian(current_escape.new_signer);
-            let new_guardian_guid = match current_escape.new_signer {
-                Option::Some(guardian) => guardian.into_guid(),
-                Option::None => 0,
-            };
-            self.emit(GuardianEscaped { new_guardian: new_guardian_guid });
+            if let Option::Some(guardian) = current_escape.new_signer {
+                self.emit(GuardianEscapedGuid { new_guardian_guid: guardian.into_guid() });
+            } else {
+                self.emit(GuardianEscapedGuid { new_guardian_guid: 0 });
+            }
             // clear escape
             self._escape.write(Default::default());
         }

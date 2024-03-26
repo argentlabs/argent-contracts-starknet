@@ -1,5 +1,5 @@
 import { exec } from "child_process";
-import fs, { cpSync } from "fs";
+import fs from "fs";
 import { mapValues, maxBy, sortBy, sum } from "lodash-es";
 import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
 import { ensureAccepted, ensureSuccess } from ".";
@@ -66,16 +66,6 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
 
   const blockNumber = receipt.block_number;
   const blockInfo = await provider.getBlockWithReceipts(blockNumber);
-  const { calldata, signature } = (await provider.getTransaction(receipt.transaction_hash)) as any;
-  console.log(calldata);
-  const calldataGas = Math.floor(calldata.length + signature.length * l2PayloadsWeights.calldata);
-  const eventGas = Math.floor(
-    receipt.events.reduce(
-      (sum, { keys, data }) =>
-        sum + keys.length * l2PayloadsWeights.eventKey + data.length * l2PayloadsWeights.eventData,
-      0,
-    ),
-  );
 
   const stateUpdate = await provider.getStateUpdate(blockNumber);
   const storageDiffs = stateUpdate.state_diff.storage_diffs;
@@ -106,6 +96,17 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
 
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
 
+  // L2 payloads
+  const { calldata, signature } = (await provider.getTransaction(receipt.transaction_hash)) as any;
+  const calldataGas = Math.floor((calldata.length + signature.length) * l2PayloadsWeights.calldata);
+  console.log(receipt.events);
+  const eventGas = Math.floor(
+    receipt.events.reduce(
+      (sum, { keys, data }) =>
+        sum + keys.length * l2PayloadsWeights.eventKey + data.length * l2PayloadsWeights.eventData,
+      0,
+    ),
+  );
   return {
     actualFee,
     paidInStrk,

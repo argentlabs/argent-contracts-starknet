@@ -60,7 +60,7 @@ mod threshold_recovery_component {
             assert(target_signers.len() == 1 && new_signers.len() == 1, 'argent/invalid-escape-length');
 
             let escape_config: EscapeEnabled = self.escape_enabled.read();
-            assert(escape_config.is_enabled == 1, 'argent/escape-disabled');
+            assert(escape_config.is_enabled, 'argent/escape-disabled');
 
             let target_signer_guid = (*target_signers[0]).into_guid();
             let new_signer_guid = (*new_signers[0]).into_guid();
@@ -172,11 +172,11 @@ mod threshold_recovery_component {
 
             if is_enabled {
                 assert(security_period != 0 && expiry_period != 0, 'argent/invalid-escape-params');
-                self.escape_enabled.write(EscapeEnabled { is_enabled: 1, security_period, expiry_period });
+                self.escape_enabled.write(EscapeEnabled { is_enabled: true, security_period, expiry_period });
             } else {
-                assert(escape_config.is_enabled == 1, 'argent/escape-disabled');
+                assert(escape_config.is_enabled, 'argent/escape-disabled');
                 assert(security_period == 0 && expiry_period == 0, 'argent/invalid-escape-params');
-                self.escape_enabled.write(EscapeEnabled { is_enabled: 0, security_period, expiry_period });
+                self.escape_enabled.write(EscapeEnabled { is_enabled: false, security_period, expiry_period });
             }
         }
     }
@@ -197,7 +197,7 @@ mod threshold_recovery_component {
                 if selector == selector!("trigger_escape_signer") {
                     // check we can do recovery
                     let escape_config: EscapeEnabled = self.escape_enabled.read();
-                    assert(escape_config.is_enabled == 1 && threshold > 1, 'argent/recovery-unavailable');
+                    assert(escape_config.is_enabled && threshold > 1, 'argent/recovery-unavailable');
                     // get escaped signer
                     let escaped_signer: Signer = Serde::deserialize(ref calldata).expect('argent/invalid-calldata');
                     let escaped_signer_guid = escaped_signer.into_guid();
@@ -209,7 +209,7 @@ mod threshold_recovery_component {
                 } else if selector == selector!("escape_signer") {
                     // check we can do recovery
                     let escape_config: EscapeEnabled = self.escape_enabled.read();
-                    assert(escape_config.is_enabled == 1 && threshold > 1, 'argent/recovery-unavailable');
+                    assert(escape_config.is_enabled && threshold > 1, 'argent/recovery-unavailable');
                     // get escaped signer
                     let current_escape: Escape = self.escape.read();
                     let escaped_signer_guid = *current_escape.target_signers.at(0);

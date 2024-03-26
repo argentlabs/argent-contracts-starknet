@@ -57,10 +57,19 @@ mod MockDapp {
             self: @ContractState, class_hash: ClassHash, selector: felt252, calldata: Span<felt252>
         ) -> Span<felt252> {
             // match library_call_syscall(class_hash, selector, calldata) {
-            let calldata = array!['localhost'].span();
-            match library_call_syscall(class_hash, selector!("sha256_cairo0"), calldata) {
+            // let client_data: Array<u32> = array!['hell', 'o wo', 'rld\x00'];
+            let client_data: Array<u32> = array!['h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', 0];
+            // let calldata: Array<u32> = array![];
+            let mut calldata: Array<felt252> = array![];
+            client_data.serialize(ref calldata);
+            // let client_data_u32s_padding: u32 = 1;
+            // calldata.append((client_data.len() * 4 - client_data_u32s_padding).into());
+            // auth_data_cdata_concat.serialize(ref calldata);
+            let calldata = array![0, 0];
+            println!("calldata: {calldata:?}");
+            match library_call_syscall(class_hash, selector!("sha256_cairo0"), calldata.span()) {
                 Result::Ok(result) => result,
-                Result::Err(err) => panic(array!['just failed']),
+                Result::Err(_err) => panic(array!['just failed']),
             }
             // array![42, 69].span()
         }

@@ -55,7 +55,8 @@ describe("ArgentMultisig: Execute", function () {
     account.signer = new MultisigSigner(sortByGuid(keys).slice(0, 3));
 
     mockDappContract.connect(account);
-    await mockDappContract.set_number(42);
+    const calls = [mockDappContract.populateTransaction.set_number(42)];
+    await account.execute(calls);
 
     await mockDappContract.get_number(account.address).should.eventually.equal(42n);
   });

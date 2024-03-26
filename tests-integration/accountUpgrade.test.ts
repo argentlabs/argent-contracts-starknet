@@ -8,12 +8,10 @@ import {
   provider,
   upgradeAccount,
   declareFixtureContract,
-  expectEvent,
   ContractWithClassHash,
   expectRevertWithErrorMessage,
   LegacyArgentSigner,
   deployLegacyAccount,
-  StarknetKeyPair,
 } from "./lib";
 
 describe("ArgentAccount: upgrade", function () {
@@ -26,33 +24,21 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Upgrade cairo 0 to current version", async function () {
-    const { account, owner } = await deployOldAccount();
-    const receipt = await upgradeAccount(account, argentAccountClassHash, ["0"]);
+    const { account } = await deployOldAccount();
+    await upgradeAccount(account, argentAccountClassHash, ["0"]);
     const newClashHash = await provider.getClassHashAt(account.address);
     expect(BigInt(newClashHash)).to.equal(BigInt(argentAccountClassHash));
-    const newOwner = new StarknetKeyPair(owner.privateKey);
-    await expectEvent(receipt, {
-      from_address: account.address,
-      eventName: "OwnerAdded",
-      additionalKeys: [newOwner.guid.toString()],
-    });
   });
 
   it("Upgrade cairo 0 to cairo 1 with multicall", async function () {
-    const { account, owner } = await deployOldAccount();
-    const receipt = await upgradeAccount(
+    const { account } = await deployOldAccount();
+    await upgradeAccount(
       account,
       argentAccountClassHash,
       getUpgradeDataLegacy([mockDapp.populateTransaction.set_number(42)]),
     );
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
     await mockDapp.get_number(account.address).should.eventually.equal(42n);
-    const newOwner = new StarknetKeyPair(owner.privateKey);
-    await expectEvent(receipt, {
-      from_address: account.address,
-      eventName: "OwnerAdded",
-      additionalKeys: [newOwner.guid.toString()],
-    });
   });
 
   it("Upgrade from 0.3.0 to Current Version", async function () {

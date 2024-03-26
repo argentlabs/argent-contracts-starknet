@@ -1,5 +1,6 @@
 import "dotenv/config";
-import { declareFixtureContract, deployContract, loadContract } from "../tests-integration/lib";
+import { declareFixtureContract, deployContract } from "../tests-integration/lib";
+import { hash } from "starknet";
 
 console.log("declaring");
 
@@ -10,7 +11,8 @@ console.log("sha256 class hash:", classHash);
 const mockDapp = await deployContract("MockDapp");
 console.log("mock dapp address:", mockDapp.address);
 
-const result = await mockDapp.library_call(classHash, "sha256_cairo0", ["0x42"]);
-// const result = await mockDapp.get_number("0x42");
+const selector = hash.getSelectorFromName("sha256_cairo0");
+const calldata = [0, 0];
+const result = await mockDapp.library_call(classHash, selector, calldata);
 
 console.log("result:", result);

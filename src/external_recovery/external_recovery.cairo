@@ -23,9 +23,7 @@ mod external_recovery_component {
     use argent::recovery::interface::{EscapeEnabled, EscapeStatus};
     use argent::signer::signer_signature::{Signer, SignerTrait};
     use argent::signer_storage::interface::ISignerList;
-    use argent::signer_storage::signer_list::{
-        signer_list_component, signer_list_component::{SignerListInternalImpl, OwnerAdded, OwnerRemoved, SignerLinked}
-    };
+    use argent::signer_storage::signer_list::{signer_list_component, signer_list_component::{SignerListInternalImpl}};
     use argent::utils::asserts::assert_only_self;
     use argent::utils::serialization::serialize;
     use core::array::ArrayTrait;

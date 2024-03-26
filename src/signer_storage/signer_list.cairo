@@ -11,23 +11,21 @@ mod signer_list_component {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        OwnerAdded: OwnerAdded,
-        OwnerRemoved: OwnerRemoved,
+        OwnerAddedGuid: OwnerAddedGuid,
+        OwnerRemovedGuid: OwnerRemovedGuid,
         SignerLinked: SignerLinked,
     }
 
-    /// This event is part of an account discoverability standard, SNIP not yet created
     /// Emitted when an account owner is added, including when the account is created.
     #[derive(Drop, starknet::Event)]
-    struct OwnerAdded {
+    struct OwnerAddedGuid {
         #[key]
         new_owner_guid: felt252,
     }
 
-    /// This event is part of an account discoverability standard, SNIP not yet created
     /// Emitted when an an account owner is removed
     #[derive(Drop, starknet::Event)]
-    struct OwnerRemoved {
+    struct OwnerRemovedGuid {
         #[key]
         removed_owner_guid: felt252,
     }

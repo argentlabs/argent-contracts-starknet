@@ -1,10 +1,13 @@
 import { exec } from "child_process";
 import fs from "fs";
-import { isUndefined, mapValues, maxBy, sortBy, sum } from "lodash-es";
+import { mapValues, maxBy, sortBy, sum } from "lodash-es";
 import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
 import { ensureAccepted, ensureSuccess } from ".";
 
-const ethUsd = 2000n;
+const ethUsd = 4000n;
+const strkUsd = 2n;
+// This should match what is given to the devnet for '--data-gas-price'
+const dataGasPrice = 1;
 
 // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
 const gasWeights: Record<string, number> = {
@@ -23,14 +26,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   if (!allowFailedTransactions) {
     await ensureSuccess(receipt);
   }
-  let actualFee = 0n;
-  if (receipt.actual_fee?.unit === "WEI") {
-    actualFee = BigInt(receipt.actual_fee.amount);
-  } else if (receipt.actual_fee && isUndefined(receipt.actual_fee.unit)) {
-    actualFee = BigInt(+receipt.actual_fee);
-  } else {
-    throw new Error(`unexpected fee: ${receipt.actual_fee}`);
-  }
+  const actualFee = BigInt(receipt.actual_fee.amount);
   const rawResources = receipt.execution_resources!;
 
   const expectedResources = [
@@ -45,8 +41,6 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     "keccak_builtin_applications",
     "segment_arena_builtin",
     "data_availability",
-    "l1_gas",
-    "l1_data_gas",
   ];
   // all keys in rawResources must be in expectedResources
   if (!Object.keys(rawResources).every((key) => expectedResources.includes(key))) {
@@ -55,7 +49,6 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
 
   const executionResources: Record<string, number> = {
     steps: rawResources.steps,
-    memory_holes: rawResources.memory_holes ?? 0,
     pedersen: rawResources.pedersen_builtin_applications ?? 0,
     range_check: rawResources.range_check_builtin_applications ?? 0,
     poseidon: rawResources.poseidon_builtin_applications ?? 0,
@@ -63,17 +56,14 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     keccak: rawResources.keccak_builtin_applications ?? 0,
     bitwise: rawResources.bitwise_builtin_applications ?? 0,
     ec_op: rawResources.ec_op_builtin_applications ?? 0,
-    segment_arena_builtin: rawResources.segment_arena_builtin ?? 0,
-    l1_gas: rawResources.data_availability.l1_gas,
-    l1_data_gas: rawResources.data_availability.l1_data_gas,
   };
 
   const blockNumber = receipt.block_number;
-  const blockInfo = await provider.getBlockWithTxHashes(blockNumber);
+  const blockInfo = await provider.getBlockWithReceipts(blockNumber);
   const stateUpdate = await provider.getStateUpdate(blockNumber);
   const storageDiffs = stateUpdate.state_diff.storage_diffs;
-  const gasPrice = BigInt(blockInfo.l1_gas_price.price_in_wei);
-  const gasUsed = actualFee / gasPrice;
+  const paidInStrk = receipt.actual_fee.unit == "FRI";
+  const gasPrice = BigInt(paidInStrk ? blockInfo.l1_gas_price.price_in_fri : blockInfo.l1_gas_price.price_in_wei);
 
   const gasPerComputationCategory = Object.fromEntries(
     Object.entries(executionResources)
@@ -82,28 +72,42 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   );
   const maxComputationCategory = maxBy(Object.entries(gasPerComputationCategory), ([, gas]) => gas)![0];
   const computationGas = BigInt(gasPerComputationCategory[maxComputationCategory]);
-  const l1CalldataGas = executionResources.l1_gas + executionResources.l1_data_gas;
-  const missingDelta = gasUsed - BigInt(l1CalldataGas) - computationGas;
+
+  let gasWithoutDa;
+  let feeWithoutDa;
+  let daFee;
+  if (rawResources.data_availability) {
+    daFee = (rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas) * dataGasPrice;
+    feeWithoutDa = actualFee - BigInt(daFee);
+    gasWithoutDa = feeWithoutDa / gasPrice;
+  } else {
+    // This only happens for tx before Dencun
+    gasWithoutDa = actualFee / gasPrice;
+    daFee = gasWithoutDa - computationGas;
+    feeWithoutDa = actualFee;
+  }
 
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
 
   return {
     actualFee,
-    gasUsed,
-    l1CalldataGas,
+    paidInStrk,
+    gasWithoutDa,
+    feeWithoutDa,
+    daFee,
     computationGas,
-    missingDelta,
     maxComputationCategory,
     gasPerComputationCategory,
     executionResources: sortedResources,
     gasPrice,
     storageDiffs,
+    daMode: blockInfo.l1_da_mode,
   };
 }
 
 type Profile = Awaited<ReturnType<typeof profileGasUsage>>;
 
-export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
+export function newProfiler(provider: RpcProvider) {
   const profiles: Record<string, Profile> = {};
 
   return {
@@ -123,16 +127,18 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
       profiles[name] = profile;
     },
     summarizeCost(profile: Profile) {
-      const feeUsd = Number((10000n * profile.actualFee * ethUsd) / 10n ** 18n) / 10000;
+      const usdVal = profile.paidInStrk ? strkUsd : ethUsd;
+      const feeUsd = Number((10000n * profile.actualFee * usdVal) / 10n ** 18n) / 10000;
       return {
-        actualFee: Number(profile.actualFee),
-        feeUsd: Number(feeUsd.toFixed(2)),
-        gasUsed: Number(profile.gasUsed),
-        storageDiffs: sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
-        computationGas: Number(profile.computationGas),
-        l1CalldataGas: Number(profile.l1CalldataGas),
-        missingDelta: Number(profile.missingDelta),
-        maxComputationCategory: profile.maxComputationCategory,
+        "Actual fee": Number(profile.actualFee).toLocaleString("de-DE"),
+        "Fee usd": Number(feeUsd.toFixed(4)),
+        "Fee without DA": Number(profile.feeWithoutDa),
+        "Gas without DA": Number(profile.gasWithoutDa),
+        "Computation gas": Number(profile.computationGas),
+        "Max computation per Category": profile.maxComputationCategory,
+        "Storage diffs": sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
+        "DA fee": Number(profile.daFee),
+        "DA mode": profile.daMode,
       };
     },
     printStorageDiffs({ storageDiffs }: Profile) {
@@ -154,20 +160,26 @@ export function newProfiler(provider: RpcProvider, roundingMagnitude?: number) {
       console.table(mapValues(profiles, "executionResources"));
     },
     formatReport() {
-      return Object.entries(profiles)
-        .map(([name, { gasUsed }]) => {
-          const roundingScale = 10 ** (roundingMagnitude ?? 1);
-          const gasRounded = Math.round(Number(gasUsed) / roundingScale) * roundingScale;
-          return `${name}: ${gasRounded.toLocaleString("en")} gas`;
-        })
-        .join("\n");
+      // Capture console.table output into a variable
+      let tableString = "";
+      const log = console.log;
+      console.log = (...args) => {
+        tableString += args.join("") + "\n";
+      };
+      // Print the table using console.table()
+      console.table(mapValues(profiles, this.summarizeCost));
+      // Restore console.log to its original function
+      console.log = log;
+      // Remove ANSI escape codes (colors) from the tableString
+      tableString = tableString.replace(/\u001b\[\d+m/g, "");
+      return tableString;
     },
     updateOrCheckReport() {
       const report = this.formatReport();
       const filename = "gas-report.txt";
       const newFilename = "gas-report-new.txt";
       fs.writeFileSync(newFilename, report);
-      exec(`diff ${filename} ${newFilename}`, (err, stdout, stderr) => {
+      exec(`diff ${filename} ${newFilename}`, (err, stdout) => {
         if (stdout) {
           console.log(stdout);
           console.error("⚠️  Changes to gas report detected.\n");

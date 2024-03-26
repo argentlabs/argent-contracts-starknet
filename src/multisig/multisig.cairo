@@ -13,7 +13,7 @@ mod multisig_component {
             signer_list_component::{OwnerAdded, OwnerRemoved, SignerLinked, SignerListInternalImpl}
         }
     };
-    use argent::utils::asserts::assert_only_self;
+    use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
 
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
@@ -200,6 +200,7 @@ mod multisig_component {
             mut signer_signatures: Array<SignerSignature>
         ) -> bool {
             assert(signer_signatures.len() == threshold, 'argent/signature-invalid-length');
+            let is_estimate_transaction = is_estimate_transaction();
             let mut last_signer: u256 = 0;
             loop {
                 let signer_sig = match signer_signatures.pop_front() {
@@ -211,7 +212,10 @@ mod multisig_component {
                 let signer_uint: u256 = signer_guid.into();
                 assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
                 last_signer = signer_uint;
-                if !signer_sig.is_valid_signature(hash) {
+                if signer_sig.is_valid_signature(hash) {
+                    continue;
+                }
+                if !is_estimate_transaction {
                     break false;
                 }
             }

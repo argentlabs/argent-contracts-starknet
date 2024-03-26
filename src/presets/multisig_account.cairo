@@ -14,8 +14,7 @@ mod ArgentMultisigAccount {
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
         serialization::full_deserialize,
         transaction_version::{
-            is_estimate_transaction, assert_correct_invoke_version, assert_no_unsupported_v3_fields,
-            assert_correct_deploy_account_version
+            assert_correct_invoke_version, assert_no_unsupported_v3_fields, assert_correct_deploy_account_version
         },
     };
     use starknet::{get_tx_info, get_contract_address, VALIDATED, account::Call};
@@ -239,7 +238,7 @@ mod ArgentMultisigAccount {
                 .is_valid_signature_with_threshold(
                     execution_hash, self.multisig.threshold.read(), signer_signatures: parse_signature_array(signature)
                 );
-            assert(valid || is_estimate_transaction(), 'argent/invalid-signature');
+            assert(valid, 'argent/invalid-signature');
         }
     }
 

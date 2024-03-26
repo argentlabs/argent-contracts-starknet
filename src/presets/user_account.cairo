@@ -187,14 +187,8 @@ mod ArgentUserAccount {
 
     #[abi(embed_v0)]
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
-        fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
-            assert_only_self();
-
-            // Check basic invariants
-            self.multisig.assert_valid_storage();
-
-            assert(data.len() == 0, 'argent/unexpected-data');
-            array![]
+        fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
+            panic_with_felt252('argent/downgrade-not-allowed');
         }
     }
 
@@ -222,7 +216,7 @@ mod ArgentUserAccount {
                 let call = calls.at(0);
                 if *call.to == account_address {
                     // This should only be called after an upgrade, never directly
-                    assert(*call.selector != selector!("execute_after_upgrade"), 'argent/forbidden-call');
+                    assert(*call.selector != selector!("perform_upgrade"), 'argent/forbidden-call');
                 }
             } else {
                 // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions

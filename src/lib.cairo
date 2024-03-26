@@ -62,6 +62,7 @@ mod utils {
 }
 
 mod mocks {
+    mod future_argent_account;
     mod mock_dapp;
     mod mock_erc20;
     mod multisig_mocks;

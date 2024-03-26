@@ -200,7 +200,6 @@ mod multisig_component {
             mut signer_signatures: Array<SignerSignature>
         ) -> bool {
             assert(signer_signatures.len() == threshold, 'argent/signature-invalid-length');
-            let is_estimate_transaction = is_estimate_transaction();
             let mut last_signer: u256 = 0;
             loop {
                 let signer_sig = match signer_signatures.pop_front() {
@@ -215,7 +214,7 @@ mod multisig_component {
                 if signer_sig.is_valid_signature(hash) {
                     continue;
                 }
-                if !is_estimate_transaction {
+                if !is_estimate_transaction() {
                     break false;
                 }
             }

@@ -1,4 +1,4 @@
-use argent::utils::bytes::{SpanU8TryIntoFelt252, SpanU8TryIntoU256, ByteArrayExt, u8s_to_u32s};
+use argent::utils::bytes::{U256IntoSpanU8, SpanU8TryIntoFelt252, SpanU8TryIntoU256, ByteArrayExt, u8s_to_u32s};
 
 #[test]
 fn convert_bytes_to_u256_fit_128() {
@@ -145,4 +145,45 @@ fn convert_u8s_to_u32s() {
     let input = "localhost:69".into_bytes();
     let output = u8s_to_u32s(input.span());
     assert_eq!(output, array!['loca', 'lhos', 't:69'], "invalid");
+}
+
+#[test]
+fn convert_u256_to_u8s() {
+    let input = 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763_u256;
+    let output: Span<u8> = input.into();
+    let expected = array![
+        0x49,
+        0x96,
+        0x0d,
+        0xe5,
+        0x88,
+        0x0e,
+        0x8c,
+        0x68,
+        0x74,
+        0x34,
+        0x17,
+        0x0f,
+        0x64,
+        0x76,
+        0x60,
+        0x5b,
+        0x8f,
+        0xe4,
+        0xae,
+        0xb9,
+        0xa2,
+        0x86,
+        0x32,
+        0xc7,
+        0x99,
+        0x5c,
+        0xf3,
+        0xba,
+        0x83,
+        0x1d,
+        0x97,
+        0x63
+    ];
+    assert_eq!(output, expected.span(), "invalid");
 }

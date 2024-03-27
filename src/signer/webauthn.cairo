@@ -73,6 +73,7 @@ fn verify_authenticator_data(authenticator_data: Span<u8>, expected_rp_id_hash: 
 
     // 17. If user verification is required for this assertion, verify that the User Verified bit of the flags in authData is set.
     assert((flags & 4) == 4, 'unverified-user');
+
     // 18. Skipping extensions
     ()
 }

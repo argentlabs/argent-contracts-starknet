@@ -1,7 +1,7 @@
 import { exec } from "child_process";
 import fs from "fs";
 import { mapValues, maxBy, sortBy, sum } from "lodash-es";
-import { InvokeFunctionResponse, RPC, RpcProvider, shortString } from "starknet";
+import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
 import { ensureAccepted, ensureSuccess } from ".";
 
 const ethUsd = 4000n;

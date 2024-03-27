@@ -12,7 +12,8 @@ impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
         }
         let mut result = 0;
         while let Option::Some(byte) = self.pop_front() {
-            result = result * 0x100 + (*byte).into();
+            let byte: u256 = (*byte).into();
+            result = (256 * result) + byte; // x << 8 is the same as x * 256
         };
         Option::Some(result)
     }
@@ -25,10 +26,15 @@ impl SpanU8TryIntoFelt252 of TryInto<Span<u8>, felt252> {
             return Option::None;
         }
         let mut result = 0;
-        while let Option::Some(byte) = self.pop_front() {
-            result = result * 0x100 + (*byte).into();
-        };
-        Option::Some(result)
+        loop {
+            match self.pop_front() {
+                Option::Some(byte) => {
+                    let byte: felt252 = (*byte).into();
+                    result = (256 * result) + byte; // x << 8 is the same as x * 256
+                },
+                Option::None => { break Option::Some(result); }
+            };
+        }
     }
 }
 

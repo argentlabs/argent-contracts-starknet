@@ -171,7 +171,7 @@ describe("ArgentAccount: events", function () {
 
   it("Expect 'AccountUpgraded(new_implementation)' on upgrade", async function () {
     const { account, accountContract } = await deployAccount();
-    const argentAccountFutureClassHash = await declareFixtureContract("ArgentAccountFutureVersion");
+    const argentAccountFutureClassHash = await declareContract("MockFutureArgentAccount");
 
     await expectEvent(
       () => account.execute(accountContract.populateTransaction.upgrade(argentAccountFutureClassHash, ["0"])),

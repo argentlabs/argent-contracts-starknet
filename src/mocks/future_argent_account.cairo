@@ -105,6 +105,15 @@ mod MockFutureArgentAccount {
     }
 
     #[abi(embed_v0)]
+    impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
+        // Called when coming from account < 0.4.0
+        fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
+            panic_with_felt252('argent/no-direct-upgrade');
+            array![]
+        }
+    }
+
+    #[abi(embed_v0)]
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
         // Called when coming from account 0.4.0+
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {

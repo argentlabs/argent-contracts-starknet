@@ -6,8 +6,8 @@ import { ensureAccepted, ensureSuccess } from ".";
 
 const ethUsd = 4000n;
 const strkUsd = 2n;
-// This should match what is given to the devnet for '--data-gas-price'
-const dataGasPrice = 1;
+// Used for Pre-Dencun transactions
+const fallbackDataGasPrice = 1;
 
 // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
 const gasWeights: Record<string, number> = {
@@ -84,6 +84,18 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   let feeWithoutDa;
   let daFee;
   if (rawResources.data_availability) {
+    let dataGasPrice;
+    if (blockInfo.l1_da_mode) {
+      dataGasPrice = Number(
+        blockInfo.l1_da_mode == "BLOB"
+          ? blockInfo.l1_data_gas_price.price_in_wei
+          : blockInfo.l1_data_gas_price.price_in_fri,
+      );
+    }
+    if (!dataGasPrice || dataGasPrice == 0) {
+      dataGasPrice = fallbackDataGasPrice;
+    }
+
     daFee = (rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas) * dataGasPrice;
     feeWithoutDa = actualFee - BigInt(daFee);
     gasWithoutDa = feeWithoutDa / gasPrice;
@@ -99,7 +111,6 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   // L2 payloads
   const { calldata, signature } = (await provider.getTransaction(receipt.transaction_hash)) as any;
   const calldataGas = Math.floor((calldata.length + signature.length) * l2PayloadsWeights.calldata);
-  console.log(receipt.events);
   const eventGas = Math.floor(
     receipt.events.reduce(
       (sum, { keys, data }) =>

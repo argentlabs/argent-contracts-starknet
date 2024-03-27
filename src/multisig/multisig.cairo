@@ -211,8 +211,8 @@ mod multisig_component {
                 let signer_uint: u256 = signer_guid.into();
                 assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
                 last_signer = signer_uint;
-                if !signer_sig.is_valid(hash) && !is_estimate() {
-                    break false
+                if !signer_sig.is_valid_signature(hash) && !is_estimate_transaction() {
+                    break false;
                 }
             }
         }

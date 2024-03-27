@@ -101,9 +101,9 @@ mod multisig_component {
 
             let mut guids = signers_to_remove.span().to_guid_list();
             signer_list_comp.remove_signers(guids.span(), last_signer: last_signer_guid);
-            while let Option::Some(guid) = guids
+            while let Option::Some(removed_owner_guid) = guids
                 .pop_front() {
-                    signer_list_comp.emit(OwnerRemovedGuid { removed_owner_guid: guid })
+                    signer_list_comp.emit(OwnerRemovedGuid { removed_owner_guid })
                 };
 
             self.threshold.write(new_threshold);

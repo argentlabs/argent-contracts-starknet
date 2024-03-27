@@ -1,7 +1,7 @@
 import { exec } from "child_process";
 import fs from "fs";
 import { mapValues, maxBy, sortBy, sum } from "lodash-es";
-import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
+import { InvokeFunctionResponse, RPC, RpcProvider, shortString } from "starknet";
 import { ensureAccepted, ensureSuccess } from ".";
 
 const ethUsd = 4000n;
@@ -83,9 +83,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   let daFee;
   if (rawResources.data_availability) {
     const dataGasPrice = Number(
-      blockInfo.l1_da_mode == "BLOB"
-        ? blockInfo.l1_data_gas_price.price_in_wei
-        : blockInfo.l1_data_gas_price.price_in_fri,
+      paidInStrk ? blockInfo.l1_data_gas_price.price_in_fri : blockInfo.l1_data_gas_price.price_in_wei,
     );
 
     daFee = (rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas) * dataGasPrice;

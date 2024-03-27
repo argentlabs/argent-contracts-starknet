@@ -18,7 +18,7 @@ trait IMockDapp<TContractState> {
 #[starknet::contract]
 mod MockDapp {
     use alexandria_math::sha256::sha256;
-    use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, extend};
+    use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, extend, u32s_to_u256};
     use starknet::{ContractAddress, ClassHash, get_caller_address, library_call_syscall};
 
     #[storage]
@@ -80,18 +80,5 @@ mod MockDapp {
             println!("hash2: {}", message_hash);
             assert!(message_hash == expected, "invalid-message-hash2");
         }
-    }
-
-    fn u32s_to_u256(arr: Span<felt252>) -> u256 {
-        assert(arr.len() == 8, 'INVALID_FELT252s_U256_CONV_LEN');
-        let high = *arr.at(0) * 0x1000000000000000000000000
-            + *arr.at(1) * 0x10000000000000000
-            + *arr.at(2) * 0x100000000
-            + *arr.at(3);
-        let low = *arr.at(4) * 0x1000000000000000000000000
-            + *arr.at(5) * 0x10000000000000000
-            + *arr.at(6) * 0x100000000
-            + *arr.at(7);
-        u256 { high: high.try_into().unwrap(), low: low.try_into().unwrap() }
     }
 }

@@ -1,4 +1,4 @@
-use argent::utils::bytes::{SpanU8TryIntoFelt252, SpanU8TryIntoU256};
+use argent::utils::bytes::{SpanU8TryIntoFelt252, SpanU8TryIntoU256, ByteArrayExt, u8s_to_u32s};
 
 #[test]
 fn convert_bytes_to_u256_fit_128() {
@@ -126,4 +126,23 @@ fn convert_bytes_to_max_felt252() {
     ];
     let value: felt252 = bytes.span().try_into().unwrap();
     assert_eq!(value, -1, "invalid");
+}
+
+#[test]
+fn convert_u8s_to_u32s() {
+    let input = "localhost".into_bytes();
+    let output = u8s_to_u32s(input.span());
+    assert_eq!(output, array!['loca', 'lhos', 't\x00\x00\x00'], "invalid");
+
+    let input = "localhost:".into_bytes();
+    let output = u8s_to_u32s(input.span());
+    assert_eq!(output, array!['loca', 'lhos', 't:\x00\x00'], "invalid");
+
+    let input = "localhost:6".into_bytes();
+    let output = u8s_to_u32s(input.span());
+    assert_eq!(output, array!['loca', 'lhos', 't:6\x00'], "invalid");
+
+    let input = "localhost:69".into_bytes();
+    let output = u8s_to_u32s(input.span());
+    assert_eq!(output, array!['loca', 'lhos', 't:69'], "invalid");
 }

@@ -1,5 +1,4 @@
-fn extend(ref arr: Array<u8>, src: @Array<u8>) {
-    let mut src = src.span();
+fn extend(ref arr: Array<u8>, mut src: Span<u8>) {
     while let Option::Some(byte) = src.pop_front() {
         arr.append(*byte);
     };

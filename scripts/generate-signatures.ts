@@ -1,6 +1,6 @@
+import { Signature, Wallet, id } from "ethers";
 import { num } from "starknet";
 import { StarknetKeyPair } from "../tests-integration/lib";
-import { Signature, Wallet, id } from "ethers";
 
 const owner = new StarknetKeyPair(1n);
 

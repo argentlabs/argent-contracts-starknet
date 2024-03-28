@@ -1,18 +1,18 @@
-import { num, Contract } from "starknet";
+import { Contract, num } from "starknet";
 import {
-  declareContract,
-  loadContract,
-  deployer,
   AllowedMethod,
-  DappService,
-  BackendService,
   ArgentX,
-  deployAccount,
-  getSessionTypedData,
-  setTime,
-  expectRevertWithErrorMessage,
-  randomStarknetKeyPair,
+  BackendService,
+  DappService,
   StarknetKeyPair,
+  declareContract,
+  deployAccount,
+  deployer,
+  expectRevertWithErrorMessage,
+  getSessionTypedData,
+  loadContract,
+  randomStarknetKeyPair,
+  setTime,
 } from "./lib";
 
 describe("Hybrid Session Account: execute calls", function () {

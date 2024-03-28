@@ -1,13 +1,13 @@
+import { expect } from "chai";
 import { CallData, hash } from "starknet";
 import {
   deployMultisig1_1,
-  setTime,
   ensureSuccess,
-  waitForTransaction,
-  randomStarknetKeyPair,
   expectRevertWithErrorMessage,
+  randomStarknetKeyPair,
+  setTime,
+  waitForTransaction,
 } from "./lib";
-import { expect } from "chai";
 
 const initialTime = 100;
 

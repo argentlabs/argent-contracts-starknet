@@ -21,20 +21,16 @@ impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
 
 impl SpanU8TryIntoFelt252 of TryInto<Span<u8>, felt252> {
     fn try_into(mut self: Span<u8>) -> Option<felt252> {
-        // TODO: check if it shouldn't be 31
         if self.len() > 32 {
             return Option::None;
         }
         let mut result = 0;
-        loop {
-            match self.pop_front() {
-                Option::Some(byte) => {
-                    let byte: felt252 = (*byte).into();
-                    result = (256 * result) + byte; // x << 8 is the same as x * 256
-                },
-                Option::None => { break Option::Some(result); }
+        while let Option::Some(byte) = self
+            .pop_front() {
+                let byte: felt252 = (*byte).into();
+                result = (256 * result) + byte; // x << 8 is the same as x * 256
             };
-        }
+        Option::Some(result)
     }
 }
 
@@ -69,13 +65,14 @@ fn u32s_to_u256(arr: Span<felt252>) -> u256 {
 
 fn u32s_to_u8s(mut input: Span<felt252>) -> Span<u8> {
     let mut output = array![];
-    while let Option::Some(word) = input.pop_front() {
-        let word: u32 = (*word).try_into().unwrap();
-        output.append(((word / 0x1000000) & 0xFF).try_into().unwrap());
-        output.append(((word / 0x10000) & 0xFF).try_into().unwrap());
-        output.append(((word / 0x100) & 0xFF).try_into().unwrap());
-        output.append((word & 0xFF).try_into().unwrap());
-    };
+    while let Option::Some(word) = input
+        .pop_front() {
+            let word: u32 = (*word).try_into().unwrap();
+            output.append(((word / 0x1000000) & 0xFF).try_into().unwrap());
+            output.append(((word / 0x10000) & 0xFF).try_into().unwrap());
+            output.append(((word / 0x100) & 0xFF).try_into().unwrap());
+            output.append((word & 0xFF).try_into().unwrap());
+        };
     output.span()
 }
 

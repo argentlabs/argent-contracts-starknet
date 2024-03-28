@@ -2,11 +2,11 @@ import { expect } from "chai";
 import { CallData, Contract } from "starknet";
 import {
   MultisigSigner,
+  deployContract,
   deployMultisig,
+  deployMultisig1_1,
   expectEvent,
   expectRevertWithErrorMessage,
-  deployContract,
-  deployMultisig1_1,
   sortByGuid,
 } from "./lib";
 

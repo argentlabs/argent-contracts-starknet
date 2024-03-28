@@ -5,12 +5,10 @@ mod ArgentMultisigAccount {
     use argent::introspection::src5::src5_component;
     use argent::multisig::{multisig::multisig_component};
     use argent::outside_execution::{
-        outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
+        outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
-    use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait}};
-    use argent::signer_storage::{
-        interface::ISignerList, signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
-    };
+    use argent::signer::signer_signature::{Signer, SignerSignature};
+    use argent::signer_storage::{signer_list::{signer_list_component}};
     use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
@@ -19,14 +17,10 @@ mod ArgentMultisigAccount {
             assert_correct_invoke_version, assert_no_unsupported_v3_fields, assert_correct_deploy_account_version
         },
     };
-    use core::array::ArrayTrait;
-    use core::result::ResultTrait;
-    use starknet::{get_tx_info, get_contract_address, VALIDATED, ClassHash, account::Call};
+    use starknet::{get_tx_info, get_contract_address, VALIDATED, account::Call};
 
     const NAME: felt252 = 'ArgentMultisig';
-    const VERSION_MAJOR: u8 = 0;
-    const VERSION_MINOR: u8 = 2;
-    const VERSION_PATCH: u8 = 0;
+    const VERSION: Version = Version { major: 0, minor: 2, patch: 0 };
 
     // Signer storage
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
@@ -135,9 +129,7 @@ mod ArgentMultisigAccount {
             if self
                 .multisig
                 .is_valid_signature_with_threshold(
-                    hash: hash,
-                    threshold: self.multisig.threshold.read(),
-                    signer_signatures: parse_signature_array(signature.span())
+                    hash, self.multisig.threshold.read(), signer_signatures: parse_signature_array(signature.span())
                 ) {
                 VALIDATED
             } else {
@@ -166,9 +158,7 @@ mod ArgentMultisigAccount {
             let is_valid = self
                 .multisig
                 .is_valid_signature_with_threshold(
-                    hash: tx_info.transaction_hash,
-                    threshold: 1,
-                    signer_signatures: parse_signature_array(tx_info.signature)
+                    tx_info.transaction_hash, threshold: 1, signer_signatures: parse_signature_array(tx_info.signature)
                 );
             assert(is_valid, 'argent/invalid-signature');
             VALIDATED
@@ -180,7 +170,7 @@ mod ArgentMultisigAccount {
 
         /// Semantic version of this contract
         fn get_version(self: @ContractState) -> Version {
-            Version { major: VERSION_MAJOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
+            VERSION
         }
     }
 
@@ -246,9 +236,7 @@ mod ArgentMultisigAccount {
             let valid = self
                 .multisig
                 .is_valid_signature_with_threshold(
-                    hash: execution_hash,
-                    threshold: self.multisig.threshold.read(),
-                    signer_signatures: parse_signature_array(signature)
+                    execution_hash, self.multisig.threshold.read(), signer_signatures: parse_signature_array(signature)
                 );
             assert(valid, 'argent/invalid-signature');
         }

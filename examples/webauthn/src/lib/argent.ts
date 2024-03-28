@@ -1,5 +1,7 @@
-import { Account, CallData, Contract, hash, uint256, CairoOption, CairoOptionVariant } from "starknet";
-import { createWebauthnAttestation } from "./webauthnAttestation";
+import { Account, CairoOption, CairoOptionVariant, CallData, Contract, hash, uint256 } from "starknet";
+import casm from "./argent_ArgentAccount.compiled_contract_class.json";
+import sierra from "./argent_ArgentAccount.contract_class.json";
+import { buf2hex } from "./bytes";
 import {
   fundAccount,
   getEthContract,
@@ -9,11 +11,9 @@ import {
   type KeyPair,
   type ProviderType,
 } from "./starknet";
-import { buf2hex } from "./bytes";
 import { sha256 } from "./webauthnAssertion";
+import { createWebauthnAttestation } from "./webauthnAttestation";
 import { WebauthnOwner, webauthnSigner } from "./webauthnOwner";
-import casm from "./argent_ArgentAccount.compiled_contract_class.json";
-import sierra from "./argent_ArgentAccount.contract_class.json";
 
 export interface ArgentOwners {
   starkOwner: KeyPair;

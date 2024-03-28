@@ -32,7 +32,9 @@ fn remove_signers_first() {
     spy.fetch_events();
 
     let removed_owner_guid = signer_1.into_guid();
-    let event = signer_list_component::Event::OwnerRemoved(signer_list_component::OwnerRemoved { removed_owner_guid });
+    let event = signer_list_component::Event::OwnerRemovedGuid(
+        signer_list_component::OwnerRemovedGuid { removed_owner_guid }
+    );
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
 
     let event = multisig_component::Event::ThresholdUpdated(multisig_component::ThresholdUpdated { new_threshold: 2 });

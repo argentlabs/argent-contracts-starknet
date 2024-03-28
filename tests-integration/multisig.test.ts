@@ -1,5 +1,5 @@
 import { CallData, shortString } from "starknet";
-import { expectEvent, expectRevertWithErrorMessage, randomStarknetKeyPair, expectExecutionRevert } from "./lib";
+import { expectEvent, expectExecutionRevert, expectRevertWithErrorMessage, randomStarknetKeyPair } from "./lib";
 import { deployMultisig, deployMultisig1_1 } from "./lib/multisig";
 
 describe("ArgentMultisig", function () {
@@ -21,7 +21,7 @@ describe("ArgentMultisig", function () {
       for (const key of keys) {
         await expectEvent(receipt, {
           from_address: accountContract.address,
-          eventName: "OwnerAdded",
+          eventName: "OwnerAddedGuid",
           additionalKeys: [key.guid.toString()],
         });
       }

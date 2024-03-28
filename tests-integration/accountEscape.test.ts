@@ -1,13 +1,17 @@
 import { expect } from "chai";
+import { CairoOption, CairoOptionVariant, CallData } from "starknet";
 import {
   ArgentSigner,
   ArgentWallet,
   ESCAPE_EXPIRY_PERIOD,
   ESCAPE_SECURITY_PERIOD,
   ESCAPE_TYPE_GUARDIAN,
+  ESCAPE_TYPE_NONE,
   ESCAPE_TYPE_OWNER,
   EscapeStatus,
   KeyPair,
+  LegacyMultisigSigner,
+  MAX_U64,
   declareContract,
   deployAccount,
   deployAccountWithGuardianBackup,
@@ -20,12 +24,8 @@ import {
   randomStarknetKeyPair,
   setTime,
   upgradeAccount,
-  LegacyMultisigSigner,
-  MAX_U64,
-  ESCAPE_TYPE_NONE,
   zeroStarknetSignatureType,
 } from "./lib";
-import { CairoOption, CairoOptionVariant, CallData } from "starknet";
 
 describe("ArgentAccount: escape mechanism", function () {
   let argentAccountClassHash: string;

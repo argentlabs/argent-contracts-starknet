@@ -10,7 +10,7 @@ mod multisig_component {
         interface::ISignerList,
         signer_list::{
             signer_list_component,
-            signer_list_component::{OwnerAdded, OwnerRemoved, SignerLinked, SignerListInternalImpl}
+            signer_list_component::{OwnerAddedGuid, OwnerRemovedGuid, SignerLinked, SignerListInternalImpl}
         }
     };
     use argent::utils::{
@@ -78,7 +78,7 @@ mod multisig_component {
             while let Option::Some(signer) = signers_to_add_span
                 .pop_front() {
                     let signer_guid = guids.pop_front().unwrap();
-                    signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
+                    signer_list_comp.emit(OwnerAddedGuid { new_owner_guid: signer_guid });
                     signer_list_comp.emit(SignerLinked { signer_guid, signer: *signer });
                 };
 
@@ -101,9 +101,9 @@ mod multisig_component {
 
             let mut guids = signers_to_remove.span().to_guid_list();
             signer_list_comp.remove_signers(guids.span(), last_signer: last_signer_guid);
-            while let Option::Some(guid) = guids
+            while let Option::Some(removed_owner_guid) = guids
                 .pop_front() {
-                    signer_list_comp.emit(OwnerRemoved { removed_owner_guid: guid })
+                    signer_list_comp.emit(OwnerRemovedGuid { removed_owner_guid })
                 };
 
             self.threshold.write(new_threshold);
@@ -121,8 +121,8 @@ mod multisig_component {
             let signer_to_add_guid = signer_to_add.into_guid();
             signer_list_comp.replace_signer(signer_to_remove_guid, signer_to_add_guid, last_signer);
 
-            signer_list_comp.emit(OwnerRemoved { removed_owner_guid: signer_to_remove_guid });
-            signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_to_add_guid });
+            signer_list_comp.emit(OwnerRemovedGuid { removed_owner_guid: signer_to_remove_guid });
+            signer_list_comp.emit(OwnerAddedGuid { new_owner_guid: signer_to_add_guid });
             signer_list_comp.emit(SignerLinked { signer_guid: signer_to_add_guid, signer: signer_to_add });
         }
 
@@ -171,7 +171,7 @@ mod multisig_component {
             while let Option::Some(signer) = signers
                 .pop_front() {
                     let signer_guid = guids.pop_front().unwrap();
-                    signer_list_comp.emit(OwnerAdded { new_owner_guid: signer_guid });
+                    signer_list_comp.emit(OwnerAddedGuid { new_owner_guid: signer_guid });
                     signer_list_comp.emit(SignerLinked { signer_guid, signer });
                 };
 

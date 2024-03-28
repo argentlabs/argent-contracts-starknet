@@ -14,6 +14,7 @@ import {
   WebauthnOwner,
   deployOpenZeppelinAccount,
   LegacyStarknetKeyPair,
+  setupSession,
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
 
@@ -55,6 +56,20 @@ const guardian = new StarknetKeyPair(42n);
     "Account",
     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
   );
+}
+
+{
+  const { account } = await deployAccount({
+    owner: starknetOwner,
+    guardian,
+    salt: "0x2",
+    fundingAmount,
+  });
+  const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
+  const call = [ethContract.populateTransaction.transfer(recipient, amount)];
+  console.log(Date.now());
+  const sessionAccount = await setupSession(guardian, account, allowedMethod, BigInt(Date.now() + 10000));
+  // await profiler.profile("Account with Session", await sessionAccount.execute(call));
 }
 
 {

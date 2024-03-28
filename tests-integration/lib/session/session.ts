@@ -1,5 +1,5 @@
-import { typedData, BigNumberish, CairoCustomEnum, hash } from "starknet";
-import { provider } from "..";
+import { typedData, BigNumberish, CairoCustomEnum, Account } from "starknet";
+import { provider, BackendService, DappService, ArgentX, StarknetKeyPair, ArgentAccount } from "..";
 
 export const sessionTypes = {
   StarknetDomain: [
@@ -77,4 +77,21 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
       "Session Key": sessionRequest.session_key_guid,
     },
   };
+}
+
+export async function setupSession(
+  guardian: StarknetKeyPair,
+  account: Account,
+  allowedMethods: AllowedMethod[],
+  expiry: bigint,
+): Promise<ArgentAccount> {
+  const backendService = new BackendService(guardian);
+  const dappService = new DappService(backendService);
+  const argentX = new ArgentX(account, backendService);
+
+  const sessionRequest = dappService.createSessionRequest(allowedMethods, expiry);
+
+  const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
+
+  return dappService.getAccountWithSessionSigner(account, sessionRequest, accountSessionSignature);
 }

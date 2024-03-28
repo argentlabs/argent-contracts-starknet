@@ -1,8 +1,8 @@
-import { ArraySignatureType, CairoCustomEnum, CallData, uint256 } from "starknet";
 import { concatBytes } from "@noble/curves/abstract/utils";
 import { p256 as secp256r1 } from "@noble/curves/p256";
-import { KeyPair, SignerType, signerTypeToCustomEnum } from "..";
 import { BinaryLike, createHash } from "crypto";
+import { ArraySignatureType, CairoCustomEnum, CallData, uint256 } from "starknet";
+import { KeyPair, SignerType, signerTypeToCustomEnum } from "..";
 
 // Bytes fn
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>

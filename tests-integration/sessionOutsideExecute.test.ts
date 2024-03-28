@@ -1,16 +1,16 @@
 import { Contract, typedData } from "starknet";
 import {
+  AllowedMethod,
+  ArgentX,
+  BackendService,
+  DappService,
+  StarknetKeyPair,
   declareContract,
   deployAccount,
   deployer,
+  getSessionTypedData,
   loadContract,
   setTime,
-  BackendService,
-  DappService,
-  ArgentX,
-  AllowedMethod,
-  getSessionTypedData,
-  StarknetKeyPair,
 } from "./lib";
 
 const initialTime = 1713139200n;

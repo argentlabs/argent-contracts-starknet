@@ -3,7 +3,6 @@ import {
   ArgentSigner,
   ESCAPE_SECURITY_PERIOD,
   declareContract,
-  declareFixtureContract,
   deployAccount,
   deployer,
   expectEvent,

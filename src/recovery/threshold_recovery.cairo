@@ -23,7 +23,8 @@ mod threshold_recovery_component {
     use argent::signer::signer_signature::{Signer, SignerTrait};
     use argent::signer_storage::interface::ISignerList;
     use argent::signer_storage::signer_list::{
-        signer_list_component, signer_list_component::{SignerListInternalImpl, OwnerAdded, OwnerRemoved, SignerLinked}
+        signer_list_component,
+        signer_list_component::{SignerListInternalImpl, OwnerAddedGuid, OwnerRemovedGuid, SignerLinked}
     };
     use argent::utils::asserts::assert_only_self;
     use core::array::ArrayTrait;
@@ -115,8 +116,8 @@ mod threshold_recovery_component {
                         new_signers: current_escape.new_signers.span()
                     }
                 );
-            signer_list_comp.emit(OwnerRemoved { removed_owner_guid: target_signer_guid });
-            signer_list_comp.emit(OwnerAdded { new_owner_guid: new_signer_guid });
+            signer_list_comp.emit(OwnerRemovedGuid { removed_owner_guid: target_signer_guid });
+            signer_list_comp.emit(OwnerAddedGuid { new_owner_guid: new_signer_guid });
 
             // clear escape
             self.escape.write(Escape { ready_at: 0, target_signers: array![], new_signers: array![] });

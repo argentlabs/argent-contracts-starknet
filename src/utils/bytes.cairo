@@ -1,3 +1,4 @@
+use core::traits::TryInto;
 fn extend(ref arr: Array<u8>, mut src: Span<u8>) {
     while let Option::Some(byte) = src.pop_front() {
         arr.append(*byte);
@@ -6,16 +7,14 @@ fn extend(ref arr: Array<u8>, mut src: Span<u8>) {
 
 impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
     fn try_into(mut self: Span<u8>) -> Option<u256> {
-        if self.len() > 32 {
-            return Option::None;
+        if self.len() < 32 {
+            let self: felt252 = self.try_into()?;
+            Option::Some(self.into())
+        } else {
+            let result: felt252 = self.slice(0, 31).try_into()?;
+            let last_byte = *self.at(31);
+            Option::Some((0x100 * result.into()) + last_byte.into())
         }
-        let mut result = 0;
-        while let Option::Some(byte) = self
-            .pop_front() {
-                let byte: u256 = (*byte).into();
-                result = (256 * result) + byte; // x << 8 is the same as x * 256
-            };
-        Option::Some(result)
     }
 }
 
@@ -28,7 +27,7 @@ impl SpanU8TryIntoFelt252 of TryInto<Span<u8>, felt252> {
         while let Option::Some(byte) = self
             .pop_front() {
                 let byte: felt252 = (*byte).into();
-                result = (256 * result) + byte; // x << 8 is the same as x * 256
+                result = (0x100 * result) + byte;
             };
         Option::Some(result)
     }

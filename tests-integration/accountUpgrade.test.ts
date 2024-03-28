@@ -1,17 +1,17 @@
 import { expect } from "chai";
 import {
+  ContractWithClassHash,
+  LegacyArgentSigner,
   declareContract,
+  declareFixtureContract,
   deployAccount,
-  deployOldAccount,
   deployContract,
+  deployLegacyAccount,
+  deployOldAccount,
+  expectRevertWithErrorMessage,
   getUpgradeDataLegacy,
   provider,
   upgradeAccount,
-  declareFixtureContract,
-  ContractWithClassHash,
-  expectRevertWithErrorMessage,
-  LegacyArgentSigner,
-  deployLegacyAccount,
 } from "./lib";
 
 describe("ArgentAccount: upgrade", function () {

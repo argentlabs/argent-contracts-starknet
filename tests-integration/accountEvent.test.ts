@@ -3,18 +3,18 @@ import {
   ArgentSigner,
   ESCAPE_SECURITY_PERIOD,
   declareContract,
+  declareFixtureContract,
   deployAccount,
   deployer,
   expectEvent,
+  getEthBalance,
   getEthContract,
   increaseTime,
   provider,
   randomStarknetKeyPair,
   setTime,
-  declareFixtureContract,
-  waitForTransaction,
   signChangeOwnerMessage,
-  getEthBalance,
+  waitForTransaction,
 } from "./lib";
 
 describe("ArgentAccount: events", function () {

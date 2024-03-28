@@ -2,12 +2,12 @@ import { expect } from "chai";
 import { Contract, num, shortString, typedData } from "starknet";
 import {
   OutsideExecution,
+  deployContract,
   deployer,
   expectExecutionRevert,
   getOutsideCall,
   getOutsideExecutionCall,
   getTypedDataHash,
-  deployContract,
   provider,
   randomStarknetKeyPair,
   setTime,

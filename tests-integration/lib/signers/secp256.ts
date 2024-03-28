@@ -1,8 +1,8 @@
-import { CairoCustomEnum, CallData, num, uint256, Uint256 } from "starknet";
-import { p256 as secp256r1 } from "@noble/curves/p256";
 import * as utils from "@noble/curves/abstract/utils";
 import { RecoveredSignatureType } from "@noble/curves/abstract/weierstrass";
-import { Wallet, Signature as EthersSignature } from "ethers";
+import { p256 as secp256r1 } from "@noble/curves/p256";
+import { Signature as EthersSignature, Wallet } from "ethers";
+import { CairoCustomEnum, CallData, Uint256, num, uint256 } from "starknet";
 import { KeyPair, SignerType, signerTypeToCustomEnum } from "../signers/signers";
 
 export class EthKeyPair extends KeyPair {

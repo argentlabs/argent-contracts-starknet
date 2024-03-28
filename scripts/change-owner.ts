@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { Account, num } from "starknet";
 import {
-  getChangeOwnerMessageHash,
   StarknetKeyPair,
+  getChangeOwnerMessageHash,
   loadContract,
   provider,
   starknetSignatureType,

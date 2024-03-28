@@ -1,9 +1,9 @@
-import { Account, CallData, RPC, hash, num, Call } from "starknet";
-import { loadContract, declareContract, ContractWithClassHash } from "./contracts";
+import { Account, CallData, RPC, hash, num } from "starknet";
+import { deployer, fundAccountCall } from "./accounts";
+import { ContractWithClassHash, declareContract, loadContract } from "./contracts";
 import { provider } from "./provider";
+import { LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { randomStarknetKeyPair } from "./signers/signers";
-import { LegacyStarknetKeyPair, LegacyMultisigSigner } from "./signers/legacy";
-import { fundAccountCall, deployer } from "./accounts";
 
 export type DeployOzAccountParams = {
   useTxV3?: boolean;

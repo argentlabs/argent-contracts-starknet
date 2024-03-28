@@ -1,4 +1,4 @@
-import { typedData, BigNumberish, CairoCustomEnum, hash } from "starknet";
+import { BigNumberish, CairoCustomEnum, typedData } from "starknet";
 import { provider } from "..";
 
 export const sessionTypes = {

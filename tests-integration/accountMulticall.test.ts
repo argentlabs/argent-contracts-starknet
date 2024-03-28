@@ -2,14 +2,14 @@ import { expect } from "chai";
 import { Contract, num, uint256 } from "starknet";
 import {
   deployAccount,
+  deployContract,
   ensureSuccess,
   expectEvent,
   expectRevertWithErrorMessage,
-  getEthContract,
-  waitForTransaction,
   getEthBalance,
-  deployContract,
+  getEthContract,
   randomStarknetKeyPair,
+  waitForTransaction,
 } from "./lib";
 
 describe("ArgentAccount: multicall", function () {

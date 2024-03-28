@@ -1,18 +1,18 @@
-import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num, RPC, Call } from "starknet";
+import { Account, CallData, Contract, GetTransactionReceiptResponse, RPC, hash, num } from "starknet";
 import {
+  ArgentAccount,
   KeyPair,
-  MultisigSigner,
   LegacyMultisigKeyPair,
   LegacyMultisigSigner,
+  MultisigSigner,
+  declareContract,
+  deployer,
+  fundAccount,
+  fundAccountCall,
   loadContract,
   provider,
   randomStarknetKeyPair,
   randomStarknetKeyPairs,
-  fundAccountCall,
-  fundAccount,
-  declareContract,
-  deployer,
-  ArgentAccount,
 } from ".";
 
 export interface MultisigWallet {

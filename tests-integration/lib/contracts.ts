@@ -1,15 +1,15 @@
 import { readFileSync } from "fs";
 import {
+  Abi,
+  AccountInterface,
   CompiledSierra,
   Contract,
   DeclareContractPayload,
-  json,
-  num,
+  ProviderInterface,
   UniversalDeployerContractPayload,
   UniversalDetails,
-  Abi,
-  ProviderInterface,
-  AccountInterface,
+  json,
+  num,
 } from "starknet";
 import { deployer } from "./accounts";
 import { provider } from "./provider";

@@ -55,7 +55,7 @@ mod upgrade_component {
 
     #[embeddable_as(UpgradableInternalImpl)]
     impl UpgradableInternal<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>
     > of super::IUpgradeInternal<ComponentState<TContractState>> {
         fn complete_upgrade(ref self: ComponentState<TContractState>, new_implementation: ClassHash) {
             replace_class_syscall(new_implementation).expect('argent/invalid-upgrade');

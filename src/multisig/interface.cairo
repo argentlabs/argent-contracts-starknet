@@ -18,10 +18,6 @@ trait IArgentMultisig<TContractState> {
     /// @param signers_to_remove Should contain only current signers, otherwise it will revert
     fn remove_signers(ref self: TContractState, new_threshold: usize, signers_to_remove: Array<Signer>);
 
-    /// @dev Re-oders the account signers
-    /// @param new_signer_order Should contain only current signers, otherwise it will revert
-    fn reorder_signers(ref self: TContractState, new_signer_order: Array<Signer>);
-
     /// @dev Replace one signer with a different one
     /// @param signer_to_remove Signer to remove
     /// @param signer_to_add Signer to add

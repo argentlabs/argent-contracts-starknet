@@ -38,6 +38,32 @@ const starknetOwner = new StarknetKeyPair(privateKey);
 const guardian = new StarknetKeyPair(42n);
 
 {
+  const { transactionHash } = await deployAccountWithoutGuardian({
+    owner: starknetOwner,
+    selfDeploy: true,
+    salt: "0x200",
+    fundingAmount,
+  });
+  await profiler.profile("Deploy without guardian", transactionHash);
+}
+
+{
+  const { transactionHash } = await deployAccount({
+    owner: starknetOwner,
+    guardian,
+    selfDeploy: true,
+    salt: "0xDE",
+    fundingAmount,
+  });
+  await profiler.profile("Deploy with guardian", transactionHash);
+}
+
+{
+  const { deployTxHash } = await deployOpenZeppelinAccount({ owner: new LegacyStarknetKeyPair(42n), salt: "0xDE" });
+  await profiler.profile("Deploy OZ", deployTxHash);
+}
+
+{
   const { account } = await deployOldAccount();
   ethContract.connect(account);
   await profiler.profile("Old account", await ethContract.transfer(recipient, amount));
@@ -65,7 +91,7 @@ const guardian = new StarknetKeyPair(42n);
   });
   ethContract.connect(account);
   await profiler.profile(
-    "Account w/o guardian",
+    "Account without guardian",
     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
   );
 }
@@ -127,7 +153,7 @@ const guardian = new StarknetKeyPair(42n);
   });
   ethContract.connect(account);
   await profiler.profile(
-    "Webauthn w/o guardian",
+    "Webauthn without guardian",
     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
   );
 }

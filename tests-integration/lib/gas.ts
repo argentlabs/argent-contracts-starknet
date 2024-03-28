@@ -100,7 +100,15 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
 
   // L2 payloads
   const { calldata, signature } = (await provider.getTransaction(receipt.transaction_hash)) as any;
-  const calldataGas = Math.floor((calldata.length + signature.length) * l2PayloadsWeights.calldata);
+  const calldataGas = (() => {
+    if (!calldata || !signature) {
+      // TODO find workaround for deployment transactions
+      return undefined;
+    } else {
+      return Math.floor((calldata.length + signature.length) * l2PayloadsWeights.calldata);
+    }
+  })();
+
   const eventGas = Math.floor(
     receipt.events.reduce(
       (sum, { keys, data }) =>
@@ -134,11 +142,14 @@ export function newProfiler(provider: RpcProvider) {
   return {
     async profile(
       name: string,
-      { transaction_hash }: InvokeFunctionResponse,
+      transactionHash: InvokeFunctionResponse | string,
       { printProfile = false, printStorage = false, allowFailedTransactions = false } = {},
     ) {
-      console.log(`Profiling: ${name} (${transaction_hash})`);
-      const profile = await profileGasUsage(transaction_hash, provider, allowFailedTransactions);
+      if (typeof transactionHash === "object") {
+        transactionHash = transactionHash.transaction_hash;
+      }
+      console.log(`Profiling: ${name} (${transactionHash})`);
+      const profile = await profileGasUsage(transactionHash, provider, allowFailedTransactions);
       if (printProfile) {
         console.dir(profile, { depth: null });
       }
@@ -189,8 +200,7 @@ export function newProfiler(provider: RpcProvider) {
       console.log = (...args) => {
         tableString += args.join("") + "\n";
       };
-      // Print the table using console.table()
-      console.table(mapValues(profiles, this.summarizeCost));
+      this.printSummary();
       // Restore console.log to its original function
       console.log = log;
       // Remove ANSI escape codes (colors) from the tableString

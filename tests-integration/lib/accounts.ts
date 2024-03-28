@@ -145,10 +145,15 @@ export async function deployOldAccount(): Promise<LegacyArgentWallet> {
   return { account, accountContract, owner, guardian };
 }
 
-async function deployAccountInner(
-  params: DeployAccountParams,
-): Promise<
-  DeployAccountParams & { account: Account; classHash: string; owner: KeyPair; guardian?: KeyPair; salt: string }
+async function deployAccountInner(params: DeployAccountParams): Promise<
+  DeployAccountParams & {
+    account: Account;
+    classHash: string;
+    owner: KeyPair;
+    guardian?: KeyPair;
+    salt: string;
+    transactionHash: string;
+  }
 > {
   const finalParams = {
     ...params,
@@ -187,7 +192,7 @@ async function deployAccountInner(
   }
 
   await provider.waitForTransaction(transactionHash);
-  return { ...finalParams, account };
+  return { ...finalParams, account, transactionHash };
 }
 
 export type DeployAccountParams = {
@@ -200,21 +205,23 @@ export type DeployAccountParams = {
   selfDeploy?: boolean;
 };
 
-export async function deployAccount(params: DeployAccountParams = {}): Promise<ArgentWalletWithGuardian> {
+export async function deployAccount(
+  params: DeployAccountParams = {},
+): Promise<ArgentWalletWithGuardian & { transactionHash: string }> {
   params.guardian ||= randomStarknetKeyPair();
-  const { account, owner } = await deployAccountInner(params);
+  const { account, owner, transactionHash } = await deployAccountInner(params);
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
-  return { account, accountContract, owner, guardian: params.guardian };
+  return { account, accountContract, owner, guardian: params.guardian, transactionHash };
 }
 
 export async function deployAccountWithoutGuardian(
   params: Omit<DeployAccountParams, "guardian"> = {},
-): Promise<ArgentWallet> {
-  const { account, owner } = await deployAccountInner(params);
+): Promise<ArgentWallet & { transactionHash: string }> {
+  const { account, owner, transactionHash } = await deployAccountInner(params);
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
-  return { account, accountContract, owner };
+  return { account, accountContract, owner, transactionHash };
 }
 
 export async function deployAccountWithGuardianBackup(
@@ -222,7 +229,7 @@ export async function deployAccountWithGuardianBackup(
 ): Promise<ArgentWalletWithGuardianAndBackup> {
   const guardianBackup = params.guardianBackup ?? randomStarknetKeyPair();
 
-  const wallet = (await deployAccount(params)) as ArgentWalletWithGuardianAndBackup;
+  const wallet = (await deployAccount(params)) as ArgentWalletWithGuardianAndBackup & { transactionHash: string };
   await wallet.accountContract.change_guardian_backup(guardianBackup.compiledSignerAsOption);
 
   wallet.account.signer = new ArgentSigner(wallet.owner, guardianBackup);

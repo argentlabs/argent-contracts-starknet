@@ -1,3 +1,4 @@
+import assert from "assert";
 import { CallData, uint256 } from "starknet";
 import {
   Eip191KeyPair,
@@ -17,7 +18,6 @@ import {
   restart,
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
-import assert from "assert";
 
 const profiler = newProfiler(provider);
 const fundingAmount = 2e16;

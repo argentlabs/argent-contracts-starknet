@@ -3,6 +3,7 @@ import { CairoOption, CairoOptionVariant, CallData } from "starknet";
 import {
   ArgentSigner,
   MultisigSigner,
+  StarknetKeyPair,
   declareContract,
   deployAccount,
   deployAccountWithGuardianBackup,
@@ -16,7 +17,6 @@ import {
   signChangeOwnerMessage,
   starknetSignatureType,
   zeroStarknetSignatureType,
-  StarknetKeyPair,
 } from "./lib";
 
 describe("ArgentAccount", function () {

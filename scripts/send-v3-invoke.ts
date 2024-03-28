@@ -1,4 +1,4 @@
-import { uint256, Call } from "starknet";
+import { Call, uint256 } from "starknet";
 import { deployerV3, getStrkContract } from "../tests-integration/lib";
 
 //////////////////// Configure the tx to send here: ///////////

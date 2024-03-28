@@ -1,6 +1,6 @@
+import { assert } from "chai";
 import { GetTransactionReceiptResponse, RPC, TransactionExecutionStatus, TransactionFinalityStatus } from "starknet";
 import { provider } from "./provider";
-import { assert } from "chai";
 
 export async function ensureSuccess(receipt: GetTransactionReceiptResponse): Promise<RPC.Receipt> {
   const tx = await provider.waitForTransaction(receipt.transaction_hash, {

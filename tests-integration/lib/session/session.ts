@@ -1,5 +1,5 @@
-import { typedData, BigNumberish, CairoCustomEnum, Account } from "starknet";
-import { provider, BackendService, DappService, ArgentX, StarknetKeyPair, ArgentAccount } from "..";
+import { Account, BigNumberish, CairoCustomEnum, typedData } from "starknet";
+import { ArgentAccount, ArgentX, BackendService, DappService, StarknetKeyPair, provider } from "..";
 
 export const sessionTypes = {
   StarknetDomain: [

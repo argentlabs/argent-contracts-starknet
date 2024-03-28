@@ -1,7 +1,7 @@
-import { RpcProvider } from "starknet";
 import dotenv from "dotenv";
-import { restart } from "./devnet";
+import { RpcProvider } from "starknet";
 import { clearCache } from "./contracts";
+import { restart } from "./devnet";
 
 dotenv.config({ override: true });
 

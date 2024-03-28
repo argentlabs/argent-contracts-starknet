@@ -1,5 +1,5 @@
 import { CallData, shortString } from "starknet";
-import { expectEvent, expectRevertWithErrorMessage, randomStarknetKeyPair, expectExecutionRevert } from "./lib";
+import { expectEvent, expectExecutionRevert, expectRevertWithErrorMessage, randomStarknetKeyPair } from "./lib";
 import { deployMultisig, deployMultisig1_1 } from "./lib/multisig";
 
 describe("ArgentMultisig", function () {

@@ -6,8 +6,6 @@ import { ensureAccepted, ensureSuccess } from ".";
 
 const ethUsd = 4000n;
 const strkUsd = 2n;
-// This should match what is given to the devnet for '--data-gas-price'
-const dataGasPrice = 1;
 
 // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
 const gasWeights: Record<string, number> = {
@@ -19,6 +17,12 @@ const gasWeights: Record<string, number> = {
   keccak: 5.12,
   bitwise: 0.16,
   ec_op: 2.56,
+};
+
+const l2PayloadsWeights: Record<string, number> = {
+  eventKey: 0.256,
+  eventData: 0.12,
+  calldata: 0.128,
 };
 
 async function profileGasUsage(transactionHash: string, provider: RpcProvider, allowFailedTransactions = false) {
@@ -60,6 +64,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
 
   const blockNumber = receipt.block_number;
   const blockInfo = await provider.getBlockWithReceipts(blockNumber);
+
   const stateUpdate = await provider.getStateUpdate(blockNumber);
   const storageDiffs = stateUpdate.state_diff.storage_diffs;
   const paidInStrk = receipt.actual_fee.unit == "FRI";
@@ -77,6 +82,10 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   let feeWithoutDa;
   let daFee;
   if (rawResources.data_availability) {
+    const dataGasPrice = Number(
+      paidInStrk ? blockInfo.l1_data_gas_price.price_in_fri : blockInfo.l1_data_gas_price.price_in_wei,
+    );
+
     daFee = (rawResources.data_availability.l1_gas + rawResources.data_availability.l1_data_gas) * dataGasPrice;
     feeWithoutDa = actualFee - BigInt(daFee);
     gasWithoutDa = feeWithoutDa / gasPrice;
@@ -89,6 +98,16 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
 
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
 
+  // L2 payloads
+  const { calldata, signature } = (await provider.getTransaction(receipt.transaction_hash)) as any;
+  const calldataGas = Math.floor((calldata.length + signature.length) * l2PayloadsWeights.calldata);
+  const eventGas = Math.floor(
+    receipt.events.reduce(
+      (sum, { keys, data }) =>
+        sum + keys.length * l2PayloadsWeights.eventKey + data.length * l2PayloadsWeights.eventData,
+      0,
+    ),
+  );
   return {
     actualFee,
     paidInStrk,
@@ -102,6 +121,8 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     gasPrice,
     storageDiffs,
     daMode: blockInfo.l1_da_mode,
+    calldataGas,
+    eventGas,
   };
 }
 
@@ -135,6 +156,8 @@ export function newProfiler(provider: RpcProvider) {
         "Fee without DA": Number(profile.feeWithoutDa),
         "Gas without DA": Number(profile.gasWithoutDa),
         "Computation gas": Number(profile.computationGas),
+        "Event gas": Number(profile.eventGas),
+        "Calldata gas": Number(profile.calldataGas),
         "Max computation per Category": profile.maxComputationCategory,
         "Storage diffs": sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         "DA fee": Number(profile.daFee),

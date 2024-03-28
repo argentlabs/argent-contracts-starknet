@@ -2,6 +2,7 @@ import { CallData, uint256 } from "starknet";
 import {
   Eip191KeyPair,
   EthKeyPair,
+  LegacyArgentSigner,
   LegacyStarknetKeyPair,
   Secp256r1KeyPair,
   StarknetKeyPair,
@@ -44,7 +45,7 @@ const guardian = new StarknetKeyPair(42n);
     salt: "0x200",
     fundingAmount,
   });
-  await profiler.profile("Deploy without guardian", transactionHash);
+  await profiler.profile("Deploy no guardian", transactionHash);
 }
 
 {
@@ -66,7 +67,20 @@ const guardian = new StarknetKeyPair(42n);
 {
   const { account } = await deployOldAccount();
   ethContract.connect(account);
-  await profiler.profile("Old account", await ethContract.transfer(recipient, amount));
+  await profiler.profile("Old account with guardian", await ethContract.transfer(recipient, amount));
+}
+
+{
+  const { account } = await deployAccountWithoutGuardian({
+    owner: starknetOwner,
+    salt: "0x3",
+    fundingAmount,
+  });
+  ethContract.connect(account);
+  await profiler.profile(
+    "Account no guardian",
+    await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
+  );
 }
 
 {
@@ -78,7 +92,7 @@ const guardian = new StarknetKeyPair(42n);
   });
   ethContract.connect(account);
   await profiler.profile(
-    "Account",
+    "Account with guardian",
     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
   );
 }
@@ -86,12 +100,31 @@ const guardian = new StarknetKeyPair(42n);
 {
   const { account } = await deployAccountWithoutGuardian({
     owner: starknetOwner,
-    salt: "0x3",
+    salt: "0xF1",
     fundingAmount,
   });
+  account.signer = new LegacyStarknetKeyPair(starknetOwner.privateKey);
   ethContract.connect(account);
   await profiler.profile(
-    "Account without guardian",
+    "Account no guardian. Old Sig",
+    await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
+  );
+}
+
+{
+  const { account } = await deployAccount({
+    owner: starknetOwner,
+    guardian,
+    salt: "0xF2",
+    fundingAmount,
+  });
+  account.signer = new LegacyArgentSigner(
+    new LegacyStarknetKeyPair(starknetOwner.privateKey),
+    new LegacyStarknetKeyPair(guardian.privateKey),
+  );
+  ethContract.connect(account);
+  await profiler.profile(
+    "Account with guardian. Old Sig",
     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
   );
 }
@@ -111,7 +144,7 @@ const guardian = new StarknetKeyPair(42n);
   });
   ethContract.connect(account);
   await profiler.profile(
-    "Eth sig w guardian",
+    "Eth sig with guardian",
     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
   );
 }
@@ -125,7 +158,7 @@ const guardian = new StarknetKeyPair(42n);
   });
   ethContract.connect(account);
   await profiler.profile(
-    "Secp256r1 w guardian",
+    "Secp256r1 with guardian",
     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
   );
 }
@@ -153,7 +186,7 @@ const guardian = new StarknetKeyPair(42n);
   });
   ethContract.connect(account);
   await profiler.profile(
-    "Webauthn without guardian",
+    "Webauthn no guardian",
     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
   );
 }

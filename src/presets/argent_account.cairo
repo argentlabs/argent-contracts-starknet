@@ -364,7 +364,7 @@ mod ArgentAccount {
     // Required Callbacks
 
     #[abi(embed_v0)]
-    impl UpgradeableCallbackOlImpl of IUpgradableCallbackOld<ContractState> {
+    impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
         // Called when coming from account 0.3.1 or older
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();

@@ -79,24 +79,17 @@ fn u32s_to_u8s(mut input: Span<felt252>) -> Span<u8> {
     output.span()
 }
 
-fn u8s_to_u32s(input: Span<u8>) -> Array<u32> {
-    let len = input.len();
+fn u8s_to_u32s(mut input: Span<u8>) -> Array<u32> {
     let mut output = array![];
-    let mut i = 0;
-    while i < len {
-        let mut word = 0;
-        let mut j = 0;
-        while j != 4 {
-            let byte = if i < len {
-                (*input.at(i)).into()
-            } else {
-                0
-            };
-            word = word * 0x100 + byte;
-            i += 1;
-            j += 1;
+    loop {
+        let word1 = match input.pop_front() {
+            Option::Some(word) => *word,
+            Option::None => { break; }
         };
-        output.append(word);
+        let word2 = *input.pop_front().unwrap_or_default();
+        let word3 = *input.pop_front().unwrap_or_default();
+        let word4 = *input.pop_front().unwrap_or_default();
+        output.append(0x1000000 * word1.into() + 0x10000 * word2.into() + 0x100 * word3.into() + word4.into());
     };
     output
 }

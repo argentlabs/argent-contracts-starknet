@@ -31,8 +31,8 @@ fn add_signers() {
     let events = array![
         (
             multisig.contract_address,
-            signer_list_component::Event::OwnerAdded(
-                signer_list_component::OwnerAdded { new_owner_guid: signer_1.into_guid() }
+            signer_list_component::Event::OwnerAddedGuid(
+                signer_list_component::OwnerAddedGuid { new_owner_guid: signer_1.into_guid() }
             )
         ),
         (

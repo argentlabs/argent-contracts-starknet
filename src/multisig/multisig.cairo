@@ -13,16 +13,7 @@ mod multisig_component {
             signer_list_component::{OwnerAddedGuid, OwnerRemovedGuid, SignerLinked, SignerListInternalImpl}
         }
     };
-    use argent::utils::{
-        asserts::{assert_only_self},
-        transaction_version::{
-            assert_correct_invoke_version, assert_no_unsupported_v3_fields, assert_correct_deploy_account_version
-        },
-        serialization::full_deserialize,
-    };
-    use core::array::ArrayTrait;
-    use core::result::ResultTrait;
-    use starknet::{get_tx_info, get_contract_address, VALIDATED, ClassHash, account::Call};
+    use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
 
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
@@ -210,7 +201,7 @@ mod multisig_component {
                 let signer_uint: u256 = signer_guid.into();
                 assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
                 last_signer = signer_uint;
-                if !signer_sig.is_valid_signature(hash) {
+                if !signer_sig.is_valid_signature(hash) && !is_estimate_transaction() {
                     break false;
                 }
             }

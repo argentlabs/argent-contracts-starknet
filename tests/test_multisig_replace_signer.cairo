@@ -53,14 +53,14 @@ fn replace_signer_start() {
     let events = array![
         (
             multisig.contract_address,
-            signer_list_component::Event::OwnerRemoved(
-                signer_list_component::OwnerRemoved { removed_owner_guid: signer_1.into_guid() }
+            signer_list_component::Event::OwnerRemovedGuid(
+                signer_list_component::OwnerRemovedGuid { removed_owner_guid: signer_1.into_guid() }
             )
         ),
         (
             multisig.contract_address,
-            signer_list_component::Event::OwnerAdded(
-                signer_list_component::OwnerAdded { new_owner_guid: signer_to_add.into_guid() }
+            signer_list_component::Event::OwnerAddedGuid(
+                signer_list_component::OwnerAddedGuid { new_owner_guid: signer_to_add.into_guid() }
             )
         ),
         (

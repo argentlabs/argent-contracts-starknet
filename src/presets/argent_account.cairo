@@ -35,9 +35,7 @@ mod ArgentAccount {
     };
 
     const NAME: felt252 = 'ArgentAccount';
-    const VERSION_MAJOR: u8 = 0;
-    const VERSION_MINOR: u8 = 4;
-    const VERSION_PATCH: u8 = 0;
+    const VERSION: Version = Version { major: 0, minor: 4, patch: 0 };
     const VERSION_COMPAT: felt252 = '0.4.0';
 
     /// Time it takes for the escape to become ready after being triggered
@@ -692,7 +690,7 @@ mod ArgentAccount {
 
         /// Semantic version of this contract
         fn get_version(self: @ContractState) -> Version {
-            Version { major: VERSION_MAJOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
+            VERSION
         }
 
         fn get_name(self: @ContractState) -> felt252 {

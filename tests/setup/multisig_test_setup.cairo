@@ -24,7 +24,6 @@ trait ITestArgentMultisig<TContractState> {
     fn change_threshold(ref self: TContractState, new_threshold: usize);
     fn add_signers(ref self: TContractState, new_threshold: usize, signers_to_add: Array<Signer>);
     fn remove_signers(ref self: TContractState, new_threshold: usize, signers_to_remove: Array<Signer>);
-    fn reorder_signers(ref self: TContractState, new_signer_order: Array<Signer>);
     fn replace_signer(ref self: TContractState, signer_to_remove: Signer, signer_to_add: Signer);
     // Views
     fn get_name(self: @TContractState) -> felt252;

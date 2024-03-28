@@ -103,16 +103,6 @@ mod multisig_component {
             }
         }
 
-        fn reorder_signers(ref self: ComponentState<TContractState>, new_signer_order: Array<Signer>) {
-            assert_only_self();
-            let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);
-            let (signers_len, last_signer) = signer_list_comp.load();
-            assert(new_signer_order.len() == signers_len, 'argent/too-short');
-            let guids = new_signer_order.span().to_guid_list();
-            signer_list_comp.remove_signers(guids.span(), last_signer: last_signer);
-            signer_list_comp.add_signers(signers_to_add: guids.span(), last_signer: 0);
-        }
-
         fn replace_signer(ref self: ComponentState<TContractState>, signer_to_remove: Signer, signer_to_add: Signer) {
             assert_only_self();
             let mut signer_list_comp = get_dep_component_mut!(ref self, SignerList);

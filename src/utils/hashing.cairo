@@ -1,4 +1,4 @@
-use argent::utils::bytes::{u8s_to_u32s, u32s_to_u256};
+use argent::utils::bytes::{u8s_to_u32s};
 use argent::utils::serialization::{serialize};
 use starknet::{class_hash_const, library_call_syscall};
 
@@ -15,7 +15,7 @@ fn sha256_cairo0(message: Span<u8>) -> Span<felt252> {
     let class_hash = class_hash_const::<0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6d>();
     match library_call_syscall(class_hash, selector!("sha256_cairo0"), calldata.span()) {
         Result::Ok(output) => {
-            assert!(output.len() == 9 && *output.at(0) == 8, "invalid-output-format");
+            assert!(output.len() == 9 && *output.at(0) == 8, "sha256_cairo0:invalid-output-format");
             output.slice(1, 8)
         },
         Result::Err(err) => panic(err),

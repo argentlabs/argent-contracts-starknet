@@ -7,6 +7,7 @@ import {
   StarknetKeyPair,
   WebauthnOwner,
   clearCache,
+  declareFixtureContract,
   deployAccount,
   deployAccountWithoutGuardian,
   deployOldAccount,
@@ -16,6 +17,7 @@ import {
   restart,
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
+import assert from "assert";
 
 const profiler = newProfiler(provider);
 const fundingAmount = 2e16;
@@ -119,6 +121,8 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
+  const classHash = await declareFixtureContract("Sha256Cairo0");
+  assert(BigInt(classHash) === 0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
   const { account } = await deployAccount({
     owner: new WebauthnOwner(privateKey),
     guardian,

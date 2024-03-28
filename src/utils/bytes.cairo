@@ -10,10 +10,11 @@ impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
             return Option::None;
         }
         let mut result = 0;
-        while let Option::Some(byte) = self.pop_front() {
-            let byte: u256 = (*byte).into();
-            result = (256 * result) + byte; // x << 8 is the same as x * 256
-        };
+        while let Option::Some(byte) = self
+            .pop_front() {
+                let byte: u256 = (*byte).into();
+                result = (256 * result) + byte; // x << 8 is the same as x * 256
+            };
         Option::Some(result)
     }
 }

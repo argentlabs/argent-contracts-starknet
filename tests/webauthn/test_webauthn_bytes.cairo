@@ -1,4 +1,4 @@
-use argent::utils::bytes::{U256IntoSpanU8, SpanU8TryIntoFelt252, SpanU8TryIntoU256, ByteArrayExt, u8s_to_u32s};
+use argent::utils::bytes::{SpanU8TryIntoFelt252, SpanU8TryIntoU256, ByteArrayExt, u8s_to_u32s, u32s_to_u8s};
 
 #[test]
 fn convert_bytes_to_u256_fit_128() {
@@ -148,42 +148,9 @@ fn convert_u8s_to_u32s() {
 }
 
 #[test]
-fn convert_u256_to_u8s() {
-    let input = 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763_u256;
-    let output: Span<u8> = input.into();
-    let expected = array![
-        0x49,
-        0x96,
-        0x0d,
-        0xe5,
-        0x88,
-        0x0e,
-        0x8c,
-        0x68,
-        0x74,
-        0x34,
-        0x17,
-        0x0f,
-        0x64,
-        0x76,
-        0x60,
-        0x5b,
-        0x8f,
-        0xe4,
-        0xae,
-        0xb9,
-        0xa2,
-        0x86,
-        0x32,
-        0xc7,
-        0x99,
-        0x5c,
-        0xf3,
-        0xba,
-        0x83,
-        0x1d,
-        0x97,
-        0x63
-    ];
-    assert_eq!(output, expected.span(), "invalid");
+fn convert_u32s_to_u8s() {
+    let input = array![0x6a09e667, 0xbb67ae85].span();
+    let output = u32s_to_u8s(input);
+    let expected = array![0x6a, 0x09, 0xe6, 0x67, 0xbb, 0x67, 0xae, 0x85].span();
+    assert_eq!(output, expected, "invalid");
 }

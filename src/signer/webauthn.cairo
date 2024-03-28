@@ -1,5 +1,5 @@
 use alexandria_encoding::base64::Base64UrlDecoder;
-use argent::utils::bytes::{U256IntoSpanU8, SpanU8TryIntoU256, SpanU8TryIntoFelt252, extend, u32s_to_u256};
+use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, extend, u32s_to_u256, u32s_to_u8s};
 use argent::utils::hashing::{sha256_cairo0};
 use starknet::secp256_trait::Signature;
 
@@ -80,9 +80,9 @@ fn verify_authenticator_data(authenticator_data: Span<u8>, expected_rp_id_hash: 
 
 fn get_webauthn_hash(assertion: @WebauthnAssertion) -> u256 {
     let WebauthnAssertion { authenticator_data, client_data_json, .. } = *assertion;
-    let client_data_hash = u32s_to_u256(sha256_cairo0(client_data_json));
+    let client_data_hash = u32s_to_u8s(sha256_cairo0(client_data_json));
     let mut message = authenticator_data.snapshot.clone();
-    extend(ref message, client_data_hash.into());
+    extend(ref message, client_data_hash);
     u32s_to_u256(sha256_cairo0(message.span()))
 }
 

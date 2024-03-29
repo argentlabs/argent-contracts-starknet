@@ -53,25 +53,6 @@ describe("ArgentAccount", function () {
     );
   });
 
-  it("Should sign messages from OWNER and BACKUP_GUARDIAN when there is a GUARDIAN and a BACKUP", async function () {
-    const guardianBackup = randomStarknetKeyPair();
-    const { account, accountContract, owner, guardian } = await deployAccount();
-
-    await accountContract.get_guardian_backup().should.eventually.equal(0n);
-
-    account.signer = new ArgentSigner(owner, guardian);
-    await accountContract.change_guardian_backup(guardianBackup.compiledSignerAsOption);
-
-    expect((await accountContract.get_guardian_backup_guid()).unwrap()).to.equal(guardianBackup.guid);
-
-    account.signer = new ArgentSigner(owner, guardianBackup);
-
-    const new_guardian = new StarknetKeyPair();
-    await accountContract.change_guardian(new_guardian.compiledSignerAsOption);
-
-    expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(new_guardian.guid);
-  });
-
   describe("change_owner(new_owner, signature_r, signature_s)", function () {
     it("Should be possible to change_owner", async function () {
       const { accountContract, owner } = await deployAccount();

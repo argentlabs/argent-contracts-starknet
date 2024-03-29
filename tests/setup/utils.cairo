@@ -1,5 +1,6 @@
-use argent::signer::signer_signature::{SignerSignature, StarknetSignature, StarknetSigner};
-use snforge_std::{start_spoof, CheatTarget, TxInfoMockTrait};
+use argent::signer::signer_signature::{Signer, SignerSignature, StarknetSignature, StarknetSigner, SignerTrait};
+use integer::{u32_safe_divmod, u32_to_felt252};
+use snforge_std::{start_prank, start_spoof, CheatTarget, TxInfoMockTrait};
 use starknet::ContractAddress;
 
 fn to_starknet_signer_signatures(arr: Array<felt252>) -> Array<felt252> {

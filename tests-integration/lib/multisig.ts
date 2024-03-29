@@ -1,17 +1,18 @@
-import { Account, CallData, Contract, GetTransactionReceiptResponse, hash, num, RPC, Call } from "starknet";
+import { Account, CallData, Contract, GetTransactionReceiptResponse, RPC, hash, num } from "starknet";
 import {
+  ArgentAccount,
   KeyPair,
-  MultisigSigner,
   LegacyMultisigKeyPair,
   LegacyMultisigSigner,
+  MultisigSigner,
+  declareContract,
+  deployer,
+  fundAccount,
+  fundAccountCall,
   loadContract,
   provider,
   randomStarknetKeyPair,
   randomStarknetKeyPairs,
-  fundAccountCall,
-  fundAccount,
-  declareContract,
-  deployer,
 } from ".";
 
 export interface MultisigWallet {
@@ -80,7 +81,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
 
   const receipt = await provider.waitForTransaction(transactionHash);
   const signer = new MultisigSigner(keys.slice(0, finalParams.threshold));
-  const account = new Account(provider, accountAddress, signer, "1", transactionVersion);
+  const account = new ArgentAccount(provider, accountAddress, signer, "1", transactionVersion);
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
   return { account, accountContract, keys, receipt, threshold: BigInt(finalParams.threshold) };

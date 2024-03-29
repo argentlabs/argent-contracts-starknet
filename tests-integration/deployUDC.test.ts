@@ -1,6 +1,6 @@
 import { expect } from "chai";
+import { CallData, hash, num } from "starknet";
 import { declareContract, deployContractUDC, randomStarknetKeyPair } from "./lib";
-import { num, hash, CallData } from "starknet";
 
 const salt = num.toHex(randomStarknetKeyPair().privateKey);
 const owner = randomStarknetKeyPair();

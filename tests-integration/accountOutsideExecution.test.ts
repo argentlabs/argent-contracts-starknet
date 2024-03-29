@@ -4,12 +4,12 @@ import {
   ArgentSigner,
   OutsideExecution,
   deployAccount,
+  deployContract,
   deployer,
   expectExecutionRevert,
   getOutsideCall,
   getOutsideExecutionCall,
   getTypedDataHash,
-  deployContract,
   provider,
   randomStarknetKeyPair,
   setTime,
@@ -265,6 +265,6 @@ describe("ArgentAccount: outside execution", function () {
 
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
     const current_escape = await accountContract.get_escape();
-    expect(current_escape.new_signer).to.equal(keyPair.guid);
+    expect(current_escape.new_signer.unwrap().stored_value).to.equal(keyPair.storedValue);
   });
 });

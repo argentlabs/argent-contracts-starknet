@@ -1,33 +1,50 @@
 import {
+  Abi,
   Account,
+  AllowArray,
+  CairoOption,
+  CairoOptionVariant,
+  Call,
   CallData,
   Contract,
+  DeployAccountContractPayload,
+  DeployContractResponse,
   GetTransactionReceiptResponse,
+  InvokeFunctionResponse,
   RPC,
   RawCalldata,
+  UniversalDetails,
   hash,
   num,
   uint256,
-  InvokeFunctionResponse,
-  UniversalDetails,
-  Abi,
-  AllowArray,
-  Call,
-  CairoOption,
-  CairoOptionVariant,
 } from "starknet";
-import { ethAddress, loadContract, declareContract, declareFixtureContract, strkAddress } from "./contracts";
+import { declareContract, declareFixtureContract, ethAddress, loadContract, strkAddress } from "./contracts";
 import { provider } from "./provider";
+import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { ArgentSigner, KeyPair, randomStarknetKeyPair } from "./signers/signers";
-import { LegacyKeyPair, LegacyArgentSigner, LegacyStarknetKeyPair, LegacyMultisigSigner } from "./signers/legacy";
 
 export class ArgentAccount extends Account {
   // Increase the gas limit by 30% to avoid failures due to gas estimation being too low with tx v3 and transactions the use escaping
+  override async deployAccount(
+    payload: DeployAccountContractPayload,
+    details?: UniversalDetails,
+  ): Promise<DeployContractResponse> {
+    details ||= {};
+    if (!details.skipValidate) {
+      details.skipValidate = false;
+    }
+    return super.deployAccount(payload, details);
+  }
+
   override async execute(
     calls: AllowArray<Call>,
     abis?: Abi[],
     details: UniversalDetails = {},
   ): Promise<InvokeFunctionResponse> {
+    details ||= {};
+    if (!details.skipValidate) {
+      details.skipValidate = false;
+    }
     if (details.resourceBounds) {
       return super.execute(calls, abis, details);
     }

@@ -8,13 +8,11 @@ mod session_component {
         session_hash::{OffChainMessageHashSessionRev1, MerkleLeafHash},
         interface::{ISessionable, SessionToken, Session},
     };
-    use argent::signer::signer_signature::SignerTrait;
-    use argent::signer::signer_signature::{SignerSignatureTrait};
+    use argent::signer::signer_signature::{SignerSignatureTrait, SignerTrait};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
     use core::box::BoxTrait;
     use poseidon::{hades_permutation};
     use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp};
-
 
     #[storage]
     struct Storage {
@@ -58,7 +56,7 @@ mod session_component {
         #[inline(always)]
         fn is_session(self: @ComponentState<TContractState>, signature: Span<felt252>) -> bool {
             match signature.get(0) {
-                Option::Some(session_magic) => { *session_magic.unbox() == SESSION_MAGIC },
+                Option::Some(session_magic) => *session_magic.unbox() == SESSION_MAGIC,
                 Option::None => false
             }
         }
@@ -98,31 +96,24 @@ mod session_component {
             assert(token.session_signature.is_valid_signature(message_hash), 'session/invalid-session-sig');
 
             // checks that its the account guardian that signed the session
-            let guardian_guid = state.get_guardian();
-            let guardian_guid_from_sig = token.guardian_signature.signer().into_guid();
-            assert(guardian_guid_from_sig == guardian_guid, 'session/guardian-key-mismatch');
+            assert(state.is_guardian(token.guardian_signature.signer()), 'session/guardian-key-mismatch');
             assert(token.guardian_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');
 
             assert_valid_session_calls(@token, calls);
         }
     }
 
-
     fn assert_valid_session_calls(token: @SessionToken, mut calls: Span<Call>) {
         assert((*token.proofs).len() == calls.len(), 'session/unaligned-proofs');
         let merkle_root = *token.session.allowed_methods_root;
         let mut merkle_tree: MerkleTree<Hasher> = MerkleTreeImpl::new();
         let mut proofs = *token.proofs;
-        loop {
-            match calls.pop_front() {
-                Option::Some(call) => {
-                    let leaf = call.get_merkle_leaf();
-                    let proof = proofs.pop_front().expect('session/proof-empty');
-                    let is_valid = merkle_tree.verify(merkle_root, leaf, *proof);
-                    assert(is_valid, 'session/invalid-call');
-                },
-                Option::None => { break; },
+        while let Option::Some(call) = calls
+            .pop_front() {
+                let leaf = call.get_merkle_leaf();
+                let proof = proofs.pop_front().expect('session/proof-empty');
+                let is_valid = merkle_tree.verify(merkle_root, leaf, *proof);
+                assert(is_valid, 'session/invalid-call');
             };
-        }
     }
 }

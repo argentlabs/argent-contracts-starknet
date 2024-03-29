@@ -1,15 +1,15 @@
 import { readFileSync } from "fs";
 import {
+  Abi,
+  AccountInterface,
   CompiledSierra,
   Contract,
   DeclareContractPayload,
-  json,
-  num,
+  ProviderInterface,
   UniversalDeployerContractPayload,
   UniversalDetails,
-  Abi,
-  ProviderInterface,
-  AccountInterface,
+  json,
+  num,
 } from "starknet";
 import { deployer } from "./accounts";
 import { provider } from "./provider";
@@ -36,7 +36,11 @@ export class ContractWithClassHash extends Contract {
   }
 }
 
-export async function getEthContract() {
+export async function getFeeTokenContract(useTxV3: boolean): Promise<Contract> {
+  return useTxV3 ? getStrkContract() : getEthContract();
+}
+
+export async function getEthContract(): Promise<Contract> {
   if (ethContract) {
     return ethContract;
   }
@@ -51,7 +55,7 @@ export async function getEthContract() {
   return ethContract;
 }
 
-export async function getStrkContract() {
+export async function getStrkContract(): Promise<Contract> {
   if (strkContract) {
     return strkContract;
   }

@@ -3,6 +3,7 @@ use argent::signer::webauthn::{
     WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
 };
 use argent::utils::hashing::poseidon_2;
+use core::traits::TryInto;
 use ecdsa::check_ecdsa_signature;
 use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, PoseidonTrait};
@@ -12,10 +13,21 @@ use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
 use starknet::{EthAddress, eth_signature::{Signature as Secp256k1Signature, is_eth_signature_valid}};
 
+const STARKNET_SIGNER_TYPE: felt252 = 'Starknet Signer';
 const SECP256K1_SIGNER_TYPE: felt252 = 'Secp256k1 Signer';
 const SECP256R1_SIGNER_TYPE: felt252 = 'Secp256r1 Signer';
 const EIP191_SIGNER_TYPE: felt252 = 'Eip191 Signer';
 const WEBAUTHN_SIGNER_TYPE: felt252 = 'Webauthn Signer';
+
+#[derive(Drop, Copy, PartialEq, Serde, Default)]
+enum SignerType {
+    #[default]
+    Starknet,
+    Secp256k1,
+    Secp256r1,
+    Eip191,
+    Webauthn,
+}
 
 #[derive(Drop, Copy, Serde)]
 enum Signer {
@@ -26,8 +38,10 @@ enum Signer {
     Webauthn: WebauthnSigner,
 }
 
-trait SignerTrait<T> {
-    fn into_guid(self: T) -> felt252;
+#[derive(Drop, Copy, Serde, PartialEq)]
+struct SignerStorageValue {
+    stored_value: felt252,
+    signer_type: SignerType,
 }
 
 #[derive(Drop, Copy, Serde, PartialEq)]
@@ -99,11 +113,11 @@ fn new_web_authn_signer(origin: felt252, rp_id_hash: u256, pubkey: u256) -> Weba
     }
 }
 
-impl SignerTraitImpl of SignerTrait<Signer> {
-    #[inline(always)]
+#[generate_trait]
+impl SignerTraitImpl of SignerTrait {
     fn into_guid(self: Signer) -> felt252 {
         match self {
-            Signer::Starknet(signer) => signer.pubkey.into(),
+            Signer::Starknet(signer) => poseidon_2(STARKNET_SIGNER_TYPE, signer.pubkey.into()),
             Signer::Secp256k1(signer) => poseidon_2(SECP256K1_SIGNER_TYPE, signer.pubkey_hash.address.into()),
             Signer::Secp256r1(signer) => {
                 let pubkey: u256 = signer.pubkey.into();
@@ -121,6 +135,67 @@ impl SignerTraitImpl of SignerTrait<Signer> {
                     .update_with(pubkey)
                     .finalize()
             },
+        }
+    }
+
+    fn storage_value(self: @Signer) -> SignerStorageValue {
+        match self {
+            Signer::Starknet(signer) => SignerStorageValue {
+                signer_type: SignerType::Starknet, stored_value: (*signer.pubkey).into()
+            },
+            Signer::Secp256k1(signer) => SignerStorageValue {
+                signer_type: SignerType::Secp256k1, stored_value: (*signer).pubkey_hash.address.try_into().unwrap()
+            },
+            Signer::Secp256r1 => SignerStorageValue {
+                signer_type: SignerType::Secp256r1, stored_value: (*self).into_guid().try_into().unwrap()
+            },
+            Signer::Eip191(signer) => SignerStorageValue {
+                signer_type: SignerType::Eip191, stored_value: (*signer).eth_address.address.try_into().unwrap()
+            },
+            Signer::Webauthn => SignerStorageValue {
+                signer_type: SignerType::Webauthn, stored_value: (*self).into_guid().try_into().unwrap()
+            },
+        }
+    }
+    #[inline(always)]
+    fn signer_type(self: @Signer) -> SignerType {
+        match self {
+            Signer::Starknet => SignerType::Starknet,
+            Signer::Secp256k1 => SignerType::Secp256k1,
+            Signer::Secp256r1 => SignerType::Secp256r1,
+            Signer::Eip191 => SignerType::Eip191,
+            Signer::Webauthn => SignerType::Webauthn,
+        }
+    }
+}
+
+#[generate_trait]
+impl SignerStorageValueImpl of SignerStorageTrait {
+    fn into_guid(self: SignerStorageValue) -> felt252 {
+        match self.signer_type {
+            SignerType::Starknet => poseidon_2(STARKNET_SIGNER_TYPE, self.stored_value),
+            SignerType::Eip191 => poseidon_2(EIP191_SIGNER_TYPE, self.stored_value),
+            SignerType::Secp256k1 => poseidon_2(SECP256K1_SIGNER_TYPE, self.stored_value),
+            SignerType::Secp256r1 => self.stored_value,
+            SignerType::Webauthn => self.stored_value,
+        }
+    }
+
+    fn is_stored_as_guid(self: @SignerStorageValue) -> bool {
+        match self.signer_type {
+            SignerType::Starknet => false,
+            SignerType::Eip191 => false,
+            SignerType::Secp256k1 => false,
+            SignerType::Secp256r1 => true,
+            SignerType::Webauthn => true,
+        }
+    }
+
+    #[inline(always)]
+    fn starknet_pubkey_or_none(self: @SignerStorageValue) -> Option<felt252> {
+        match self.signer_type {
+            SignerType::Starknet => Option::Some(*self.stored_value),
+            _ => Option::None,
         }
     }
 }
@@ -174,6 +249,38 @@ impl SignerSignatureImpl of SignerSignatureTrait {
     }
 }
 
+impl SignerTypeIntoFelt252 of Into<SignerType, felt252> {
+    #[inline(always)]
+    fn into(self: SignerType) -> felt252 implicits() nopanic {
+        match self {
+            SignerType::Starknet => 0,
+            SignerType::Secp256k1 => 1,
+            SignerType::Secp256r1 => 2,
+            SignerType::Eip191 => 3,
+            SignerType::Webauthn => 4,
+        }
+    }
+}
+
+impl U256TryIntoSignerType of TryInto<u256, SignerType> {
+    #[inline(always)]
+    fn try_into(self: u256) -> Option<SignerType> {
+        if self == 0 {
+            Option::Some(SignerType::Starknet)
+        } else if self == 1 {
+            Option::Some(SignerType::Secp256k1)
+        } else if self == 2 {
+            Option::Some(SignerType::Secp256r1)
+        } else if self == 3 {
+            Option::Some(SignerType::Eip191)
+        } else if self == 4 {
+            Option::Some(SignerType::Webauthn)
+        } else {
+            Option::None
+        }
+    }
+}
+
 #[inline(always)]
 fn is_valid_starknet_signature(hash: felt252, signer: StarknetSigner, signature: StarknetSignature) -> bool {
     check_ecdsa_signature(hash, signer.pubkey.into(), signature.r, signature.s)
@@ -213,7 +320,7 @@ impl SignerSpanTraitImpl of SignerSpanTrait {
         let mut guids = array![];
         loop {
             match signers.pop_front() {
-                Option::Some(signer) => { guids.append((*signer).into_guid()); },
+                Option::Some(signer) => guids.append((*signer).into_guid()),
                 Option::None => { break; },
             };
         };

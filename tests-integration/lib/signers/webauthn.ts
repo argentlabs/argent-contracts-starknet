@@ -1,19 +1,8 @@
-import {
-  Account,
-  ArraySignatureType,
-  CairoCustomEnum,
-  CairoOption,
-  CairoOptionVariant,
-  CallData,
-  hash,
-  num,
-  uint256,
-} from "starknet";
 import { concatBytes } from "@noble/curves/abstract/utils";
-import { SignatureType } from "@noble/curves/abstract/weierstrass";
 import { p256 as secp256r1 } from "@noble/curves/p256";
-import { KeyPair, SignerType, fundAccount, provider, signerTypeToCustomEnum } from "..";
 import { BinaryLike, createHash } from "crypto";
+import { ArraySignatureType, CairoCustomEnum, CallData, uint256 } from "starknet";
+import { KeyPair, SignerType, signerTypeToCustomEnum } from "..";
 
 // Bytes fn
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
@@ -49,9 +38,9 @@ interface WebauthnAssertion {
 export class WebauthnOwner extends KeyPair {
   pk: Uint8Array;
 
-  constructor(pk?: Uint8Array) {
+  constructor(pk?: string) {
     super();
-    this.pk = pk ?? secp256r1.utils.randomPrivateKey();
+    this.pk = pk ? hex2buf(normalizeTransactionHash(pk)) : secp256r1.utils.randomPrivateKey();
   }
 
   public get publicKey() {
@@ -60,6 +49,10 @@ export class WebauthnOwner extends KeyPair {
 
   public get guid(): bigint {
     throw new Error("Not yet implemented");
+  }
+
+  public get storedValue(): bigint {
+    throw new Error("Not implemented yet");
   }
 
   public get signer(): CairoCustomEnum {

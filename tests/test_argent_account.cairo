@@ -3,6 +3,7 @@ use argent::signer::signer_signature::{
     Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait, StarknetSigner,
     starknet_signer_from_pubkey
 };
+use core::option::OptionTrait;
 use snforge_std::cheatcodes::contract_class::ContractClassTrait;
 use snforge_std::{spy_events, SpyOn, EventSpy, EventFetcher, EventAssertions};
 use snforge_std::{start_prank, declare, start_spoof, get_class_hash, ContractClass, CheatTarget, TxInfoMockTrait};
@@ -19,9 +20,9 @@ use super::setup::{
 #[test]
 fn initialize() {
     let account = initialize_account_with(1, 2);
-    assert_eq!(account.get_owner(), starknet_signer_from_pubkey(1).into_guid(), "value should be 1");
-    assert_eq!(account.get_guardian(), starknet_signer_from_pubkey(2).into_guid(), "value should be 2");
-    assert_eq!(account.get_guardian_backup(), 0, "value should be 0");
+    assert_eq!(account.get_owner_guid(), starknet_signer_from_pubkey(1).into_guid(), "value should be 1");
+    assert_eq!(account.get_guardian_guid().unwrap(), starknet_signer_from_pubkey(2).into_guid(), "value should be 2");
+    assert(account.get_guardian_backup_guid().is_none(), 'value should be 0');
 }
 
 #[test]
@@ -45,9 +46,9 @@ fn check_transaction_version_on_validate() {
 #[test]
 fn initialized_no_guardian_no_backup() {
     let account = initialize_account_with(1, 0);
-    assert_eq!(account.get_owner(), starknet_signer_from_pubkey(1).into_guid(), "value should be 1");
-    assert_eq!(account.get_guardian(), 0, "guardian should be zero");
-    assert_eq!(account.get_guardian_backup(), 0, "guardian backup should be zero");
+    assert_eq!(account.get_owner_guid(), starknet_signer_from_pubkey(1).into_guid(), "value should be 1");
+    assert(account.get_guardian_guid().is_none(), 'guardian should be zero');
+    assert(account.get_guardian_backup_guid().is_none(), 'guardian backup should be zero');
 }
 
 #[test]
@@ -75,11 +76,13 @@ fn erc165_supported_interfaces() {
 #[test]
 fn change_owner() {
     let account = initialize_account();
-    assert_eq!(account.get_owner(), starknet_signer_from_pubkey(OWNER().pubkey).into_guid(), "owner not correctly set");
+    assert_eq!(
+        account.get_owner_guid(), starknet_signer_from_pubkey(OWNER().pubkey).into_guid(), "owner not correctly set"
+    );
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
     account.change_owner(signer_signature);
-    assert_eq!(account.get_owner(), signer_signature.signer().into_guid(), "value should be new owner pub");
+    assert_eq!(account.get_owner_guid(), signer_signature.signer().into_guid(), "value should be new owner pub");
 }
 
 #[test]
@@ -117,7 +120,7 @@ fn change_guardian() {
     let account = initialize_account();
     let guardian = starknet_signer_from_pubkey(22);
     account.change_guardian(Option::Some(guardian));
-    assert_eq!(account.get_guardian(), guardian.into_guid(), "value should be 22");
+    assert_eq!(account.get_guardian(), 22, "value should be 22");
 }
 
 #[test]
@@ -153,7 +156,7 @@ fn change_guardian_backup() {
     let guardian_backup = starknet_signer_from_pubkey(33);
     assert_eq!(account.get_guardian_backup(), 0, "value should be 0");
     account.change_guardian_backup(Option::Some(guardian_backup));
-    assert_eq!(account.get_guardian_backup(), guardian_backup.into_guid(), "value should be 33");
+    assert_eq!(account.get_guardian_backup(), 33, "value should be 33");
 }
 
 #[test]

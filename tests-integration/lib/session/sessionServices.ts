@@ -1,41 +1,40 @@
 import {
-  typedData,
   ArraySignatureType,
-  ec,
+  BigNumberish,
+  Call,
   CallData,
   InvocationsSignerDetails,
-  Call,
-  shortString,
-  hash,
-  selector,
-  merkle,
   RPC,
   V2InvocationsSignerDetails,
-  transaction,
-  Account,
   V3InvocationsSignerDetails,
-  stark,
-  num,
-  BigNumberish,
   byteArray,
+  ec,
+  hash,
+  merkle,
+  num,
+  selector,
+  shortString,
+  stark,
+  transaction,
+  typedData,
 } from "starknet";
 import {
-  OffChainSession,
-  AllowedMethod,
-  RawSigner,
-  getSessionTypedData,
   ALLOWED_METHOD_HASH,
+  AllowedMethod,
+  ArgentAccount,
+  BackendService,
+  OffChainSession,
+  OnChainSession,
+  OutsideExecution,
+  RawSigner,
+  SignerType,
+  StarknetKeyPair,
   getOutsideCall,
+  getSessionTypedData,
   getTypedData,
   provider,
-  BackendService,
-  ArgentAccount,
-  OutsideExecution,
   randomStarknetKeyPair,
-  StarknetKeyPair,
   signerTypeToCustomEnum,
-  OnChainSession,
-  SignerType,
 } from "..";
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
@@ -84,7 +83,7 @@ export class DappService {
     })((calls: Call[], transactionsDetail: InvocationsSignerDetails) => {
       return this.signRegularTransaction(sessionAuthorizationSignature, completedSession, calls, transactionsDetail);
     });
-    return new Account(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
+    return new ArgentAccount(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
   }
 
   public async getOutsideExecutionCall(
@@ -281,7 +280,7 @@ export class DappService {
     return {
       session,
       session_authorisation,
-      session_signature: this.getStarknetSignatureType(this.sessionKey.guid, sessionSignature),
+      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
       guardian_signature: this.getStarknetSignatureType(
         this.argentBackend.getBackendKey(accountAddress),
         guardian_signature,

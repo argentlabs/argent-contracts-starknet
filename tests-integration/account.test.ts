@@ -2,7 +2,6 @@ import { expect } from "chai";
 import { CairoOption, CairoOptionVariant, CallData } from "starknet";
 import {
   ArgentSigner,
-  StarknetKeyPair,
   declareContract,
   deployAccount,
   deployAccountWithGuardianBackup,

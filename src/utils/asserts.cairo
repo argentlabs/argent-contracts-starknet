@@ -11,10 +11,7 @@ fn assert_only_protocol() {
 }
 
 fn assert_no_self_call(mut calls: Span::<Call>, self: ContractAddress) {
-    loop {
-        match calls.pop_front() {
-            Option::Some(call) => assert(*call.to != self, 'argent/no-multicall-to-self'),
-            Option::None => { break; },
-        }
-    }
+    while let Option::Some(call) = calls.pop_front() {
+        assert(*call.to != self, 'argent/no-multicall-to-self');
+    };
 }

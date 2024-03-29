@@ -10,7 +10,6 @@ const TX_V3_ESTIMATE: felt252 = consteval_int!(0x1000000000000000000000000000000
 const DA_MODE_L1: u32 = 0;
 const DA_MODE_L2: u32 = 1;
 
-
 #[inline(always)]
 fn assert_correct_invoke_version(tx_version: felt252) {
     assert(

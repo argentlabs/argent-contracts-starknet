@@ -32,11 +32,7 @@ impl StoreFelt252Array of Store<Array<felt252>> {
 
         // Sequentially read all stored elements and append them to the array.
         let exit = len + offset;
-        loop {
-            if offset >= exit {
-                break;
-            }
-
+        while offset < exit {
             let value = Store::<felt252>::read_at_offset(address_domain, base, offset).unwrap();
             arr.append(value);
             offset += Store::<felt252>::size();
@@ -55,15 +51,12 @@ impl StoreFelt252Array of Store<Array<felt252>> {
         offset += 1;
 
         // Store the array elements sequentially
-        loop {
-            match value.pop_front() {
-                Option::Some(element) => {
-                    Store::<felt252>::write_at_offset(address_domain, base, offset, element).unwrap();
-                    offset += Store::<felt252>::size();
-                },
-                Option::None => { break Result::Ok(()); }
+        while let Option::Some(element) = value
+            .pop_front() {
+                Store::<felt252>::write_at_offset(address_domain, base, offset, element).unwrap();
+                offset += Store::<felt252>::size();
             };
-        }
+        Result::Ok(())
     }
 
     fn size() -> u8 {

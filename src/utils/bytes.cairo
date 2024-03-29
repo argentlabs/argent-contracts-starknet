@@ -17,11 +17,10 @@ impl SpanU8TryIntoFelt252 of TryInto<Span<u8>, felt252> {
             return Option::None;
         }
         let mut result = 0;
-        while let Option::Some(byte) = self
-            .pop_front() {
-                let byte: felt252 = (*byte).into();
-                result = (0x100 * result) + byte;
-            };
+        while let Option::Some(byte) = self.pop_front() {
+            let byte = (*byte).into();
+            result = (0x100 * result) + byte;
+        };
         Option::Some(result)
     }
 }

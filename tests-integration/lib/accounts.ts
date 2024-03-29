@@ -258,12 +258,12 @@ export async function upgradeAccount(
   newClassHash: string,
   calldata: RawCalldata = [],
 ): Promise<GetTransactionReceiptResponse> {
-  const { transaction_hash: transferTxHash } = await accountToUpgrade.execute({
+  const { transaction_hash } = await accountToUpgrade.execute({
     contractAddress: accountToUpgrade.address,
     entrypoint: "upgrade",
     calldata: CallData.compile({ implementation: newClassHash, calldata }),
   });
-  return await provider.waitForTransaction(transferTxHash);
+  return await provider.waitForTransaction(transaction_hash);
 }
 
 export async function fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {

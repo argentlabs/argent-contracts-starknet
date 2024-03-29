@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CairoOption, CairoOptionVariant, CallData } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, hash } from "starknet";
 import {
   ArgentSigner,
   declareContract,
@@ -7,9 +7,11 @@ import {
   deployAccountWithGuardianBackup,
   deployAccountWithoutGuardian,
   deployer,
+  expectEvent,
   expectRevertWithErrorMessage,
   hasOngoingEscape,
   increaseTime,
+  loadContract,
   provider,
   randomStarknetKeyPair,
   signChangeOwnerMessage,
@@ -25,10 +27,33 @@ describe("ArgentAccount", function () {
   });
 
   it("Deploy externally", async function () {
-    const { accountContract, owner } = await deployAccountWithoutGuardian({ fundingAmount: 0, selfDeploy: false });
+    const owner = randomStarknetKeyPair();
+    const guardian = randomStarknetKeyPair();
+    const constructorCalldata = CallData.compile({ owner: owner.signer, guardian: guardian.signerAsOption });
 
+    const classHash = await declareContract("ArgentAccount");
+    const salt = "123";
+    const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
+    const udcCalls = deployer.buildUDCContractPayload({ classHash, salt, constructorCalldata, unique: false });
+    const { transaction_hash } = await deployer.execute(udcCalls);
+
+    await expectEvent(transaction_hash, {
+      from_address: contractAddress,
+      eventName: "AccountCreated",
+      additionalKeys: [owner.storedValue.toString()],
+      data: [guardian.storedValue.toString()],
+    });
+
+    await expectEvent(transaction_hash, {
+      from_address: contractAddress,
+      eventName: "AccountCreatedGuid",
+      additionalKeys: [owner.guid.toString()],
+      data: [guardian.guid.toString()],
+    });
+
+    const accountContract = await loadContract(contractAddress);
     await accountContract.get_owner_guid().should.eventually.equal(owner.guid);
-    await accountContract.get_guardian().should.eventually.equal(0n);
+    expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(guardian.guid);
     await accountContract.get_guardian_backup().should.eventually.equal(0n);
   });
 

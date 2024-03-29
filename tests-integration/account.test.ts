@@ -2,7 +2,6 @@ import { expect } from "chai";
 import { CairoOption, CairoOptionVariant, CallData } from "starknet";
 import {
   ArgentSigner,
-  MultisigSigner,
   StarknetKeyPair,
   declareContract,
   deployAccount,
@@ -44,24 +43,6 @@ describe("ArgentAccount", function () {
     });
   }
 
-  // it("Deploy two accounts with the same owner", async function () {
-  //   const owner = randomStarknetKeyPair();
-  //   const { accountContract: accountContract1 } = await deployAccountWithoutGuardian({ owner });
-  //   const { accountContract: accountContract2 } = await deployAccountWithoutGuardian({ owner });
-  //   const owner1 = await accountContract1.get_owner();
-  //   const owner2 = await accountContract1.get_owner();
-  //   expect(owner1).to.equal(owner2);
-  //   expect(accountContract1.address != accountContract2.address).to.be.true;
-  // });
-
-  // it("Expect guardian backup to be 0 when deployed with an owner and a guardian", async function () {
-  //   const { accountContract, owner, guardian } = await deployAccount();
-
-  //   await accountContract.get_owner_guid().should.eventually.equal(owner.guid);
-  //   expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(guardian.guid);
-  //   await accountContract.get_guardian_backup().should.eventually.equal(0n);
-  // });
-
   it("Expect an error when owner is zero", async function () {
     const guardian = new CairoOption(CairoOptionVariant.None);
     await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
@@ -71,17 +52,6 @@ describe("ArgentAccount", function () {
       }),
     );
   });
-
-  // it("Should use signature from BOTH OWNER and GUARDIAN when there is a GUARDIAN", async function () {
-  //   const { account, accountContract, owner, guardian } = await deployAccount();
-
-  //   await accountContract.get_guardian_backup().should.eventually.equal(0n);
-  //   account.signer = new ArgentSigner(owner, guardian);
-  //   const new_guardian = new StarknetKeyPair();
-  //   await accountContract.change_guardian_backup(new_guardian.compiledSignerAsOption);
-
-  //   expect((await accountContract.get_guardian_backup_guid()).unwrap()).to.equal(new_guardian.guid);
-  // });
 
   it("Should sign messages from OWNER and BACKUP_GUARDIAN when there is a GUARDIAN and a BACKUP", async function () {
     const guardianBackup = randomStarknetKeyPair();

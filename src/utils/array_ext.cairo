@@ -2,17 +2,14 @@ use array::ArrayTrait;
 
 use starknet::{SyscallResult, storage_access::{Store, StorageBaseAddress}};
 trait ArrayExtTrait<T> {
-    fn append_all(ref self: Array<T>, value: Array<T>);
+    fn append_all(ref self: Array<T>, value: Span<T>);
 }
 
-impl ArrayExtImpl<T, +Drop<T>> of ArrayExtTrait<T> {
-    fn append_all(ref self: Array<T>, mut value: Array<T>) {
-        loop {
-            match value.pop_front() {
-                Option::Some(item) => self.append(item),
-                Option::None => { break; },
-            }
-        }
+impl ArrayExtImpl<T, +Drop<T>, +Copy<T>> of ArrayExtTrait<T> {
+    fn append_all(ref self: Array<T>, mut value: Span<T>) {
+        while let Option::Some(item) = value.pop_front() {
+            self.append(*item);
+        };
     }
 }
 

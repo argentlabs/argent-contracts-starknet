@@ -1,6 +1,7 @@
 use alexandria_encoding::base64::Base64UrlDecoder;
 use alexandria_math::sha256::sha256;
-use argent::utils::bytes::{ByteArrayExt, SpanU8TryIntoU256, SpanU8TryIntoFelt252, extend};
+use argent::utils::array_ext::ArrayExtTrait;
+use argent::utils::bytes::{ByteArrayExt, SpanU8TryIntoU256, SpanU8TryIntoFelt252};
 
 #[test]
 fn create_message_hash() {
@@ -9,9 +10,9 @@ fn create_message_hash() {
         "{\"type\":\"webauthn.get\",\"challenge\":\"3q2-7_-q\",\"origin\":\"http://localhost:5173\",\"crossOrigin\":false,\"other_keys_can_be_added_here\":\"do not compare clientDataJSON against a template. See https://goo.gl/yabPex\"}"
         .into_bytes();
 
-    let client_data_hash = sha256(client_data_json);
+    let client_data_hash = sha256(client_data_json).span();
     let mut message = authenticator_data;
-    extend(ref message, client_data_hash.span());
+    message.append_all(client_data_hash);
     let message_hash: u256 = sha256(message).span().try_into().expect('invalid-message-hash');
     assert_eq!(message_hash, 0x8b17cd9d759c752ec650f5db242c5a74f6af5a3a95f9d23efc991411a4c661c6, "wrong hash");
 }

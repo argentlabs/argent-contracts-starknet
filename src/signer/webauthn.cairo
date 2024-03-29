@@ -1,6 +1,8 @@
 use alexandria_encoding::base64::Base64UrlDecoder;
-use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, extend, u32s_to_u256, u32s_to_u8s};
+use alexandria_math::sha256::{sha256};
+use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, u32s_to_u256, u32s_to_u8s};
 use argent::utils::hashing::{sha256_cairo0};
+use argent::utils::array_ext::ArrayExtTrait;
 use starknet::secp256_trait::Signature;
 
 #[derive(Drop, Copy, Serde, PartialEq)]
@@ -78,14 +80,6 @@ fn verify_authenticator_data(authenticator_data: Span<u8>, expected_rp_id_hash: 
     ()
 }
 
-fn get_webauthn_hash(assertion: @WebauthnAssertion) -> u256 {
-    let WebauthnAssertion { authenticator_data, client_data_json, .. } = *assertion;
-    let client_data_hash = u32s_to_u8s(sha256_cairo0(client_data_json));
-    let mut message = authenticator_data.snapshot.clone();
-    extend(ref message, client_data_hash);
-    u32s_to_u256(sha256_cairo0(message.span()))
-}
-
 fn decode_base64(mut encoded: Array<u8>) -> Array<u8> {
     // TODO: should this be added to alexandria? https://gist.github.com/catwell/3046205
     let len_mod_4 = encoded.len() % 4;
@@ -97,4 +91,27 @@ fn decode_base64(mut encoded: Array<u8>) -> Array<u8> {
     }
     let decoded = Base64UrlDecoder::decode(encoded);
     decoded
+}
+
+fn get_webauthn_hash_cairo0(assertion: @WebauthnAssertion) -> Result<u256, Array<felt252>> {
+    let WebauthnAssertion { authenticator_data, client_data_json, .. } = *assertion;
+    let client_data_hash = u32s_to_u8s(sha256_cairo0(client_data_json)?);
+    let mut message = authenticator_data.snapshot.clone();
+    message.append_all(client_data_hash);
+    Result::Ok(u32s_to_u256(sha256_cairo0(message.span())?))
+}
+
+fn get_webauthn_hash_cairo1(assertion: @WebauthnAssertion) -> u256 {
+    let WebauthnAssertion { authenticator_data, client_data_json, .. } = *assertion;
+    let client_data_hash = sha256(client_data_json.snapshot.clone()).span();
+    let mut message = authenticator_data.snapshot.clone();
+    message.append_all(client_data_hash);
+    sha256(message).span().try_into().expect('invalid-hash')
+}
+
+fn get_webauthn_hash(assertion: @WebauthnAssertion) -> u256 {
+    match get_webauthn_hash_cairo0(assertion) {
+        Result::Ok(hash) => hash,
+        Result::Err => get_webauthn_hash_cairo1(assertion),
+    }
 }

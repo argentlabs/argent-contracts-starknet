@@ -14,7 +14,7 @@ fn execute_multicall(mut calls: Span<Call>) -> Array<Span<felt252>> {
                     },
                     Result::Err(revert_reason) => {
                         let mut data = array!['argent/multicall-failed', idx];
-                        data.append_all(revert_reason);
+                        data.append_all(revert_reason.span());
                         panic(data);
                     },
                 }

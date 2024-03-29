@@ -1,10 +1,3 @@
-use core::traits::TryInto;
-fn extend(ref arr: Array<u8>, mut src: Span<u8>) {
-    while let Option::Some(byte) = src.pop_front() {
-        arr.append(*byte);
-    };
-}
-
 impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
     fn try_into(mut self: Span<u8>) -> Option<u256> {
         if self.len() < 32 {

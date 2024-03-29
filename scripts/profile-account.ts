@@ -106,7 +106,7 @@ const guardian = new StarknetKeyPair(42n);
   account.signer = new LegacyStarknetKeyPair(starknetOwner.privateKey);
   ethContract.connect(account);
   await profiler.profile(
-    "Account no guardian. Old Sig",
+    "Account no guardian (Old Sig)",
     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
   );
 }

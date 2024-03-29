@@ -1,8 +1,8 @@
 impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
     fn try_into(mut self: Span<u8>) -> Option<u256> {
         if self.len() < 32 {
-            let self: felt252 = self.try_into()?;
-            Option::Some(self.into())
+            let result: felt252 = self.try_into()?;
+            Option::Some(result.into())
         } else {
             let result: felt252 = self.slice(0, 31).try_into()?;
             let last_byte = *self.at(31);

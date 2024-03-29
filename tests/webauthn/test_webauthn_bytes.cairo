@@ -132,19 +132,23 @@ fn convert_bytes_to_max_felt252() {
 fn convert_u8s_to_u32s() {
     let input = "localhost".into_bytes();
     let output = u8s_to_u32s(input.span());
-    assert_eq!(output, array!['loca', 'lhos', 't\x00\x00\x00'], "invalid");
+    let expected = array!['loca', 'lhos', 't\x00\x00\x00'];
+    assert_eq!(output, expected, "invalid");
 
     let input = "localhost:".into_bytes();
     let output = u8s_to_u32s(input.span());
-    assert_eq!(output, array!['loca', 'lhos', 't:\x00\x00'], "invalid");
+    let expected = array!['loca', 'lhos', 't:\x00\x00'];
+    assert_eq!(output, expected, "invalid");
 
     let input = "localhost:6".into_bytes();
     let output = u8s_to_u32s(input.span());
-    assert_eq!(output, array!['loca', 'lhos', 't:6\x00'], "invalid");
+    let expected = array!['loca', 'lhos', 't:6\x00'];
+    assert_eq!(output, expected, "invalid");
 
     let input = "localhost:69".into_bytes();
     let output = u8s_to_u32s(input.span());
-    assert_eq!(output, array!['loca', 'lhos', 't:69'], "invalid");
+    let expected = array!['loca', 'lhos', 't:69'];
+    assert_eq!(output, expected, "invalid");
 }
 
 #[test]

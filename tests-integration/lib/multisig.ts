@@ -22,6 +22,7 @@ export interface MultisigWallet {
   threshold: bigint;
   receipt: GetTransactionReceiptResponse;
 }
+
 export type DeployMultisigParams = {
   threshold: number;
   signersLength: number;
@@ -110,11 +111,7 @@ export async function deployLegacyMultisig(classHash: string) {
   const signer = new LegacyMultisigSigner(keys);
   const account = new Account(provider, contractAddress, signer, "1");
 
-  const { transaction_hash } = await account.deploySelf({
-    classHash,
-    constructorCalldata,
-    addressSalt: salt,
-  });
+  const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
   await provider.waitForTransaction(transaction_hash);
 
   const accountContract = await loadContract(account.address);

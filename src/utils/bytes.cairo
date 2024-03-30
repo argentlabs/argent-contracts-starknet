@@ -26,7 +26,7 @@ impl SpanU8TryIntoFelt252 of TryInto<Span<u8>, felt252> {
 }
 
 #[generate_trait]
-impl ByteArrayExt of ByteArrayExTrait {
+impl ByteArrayExt of ByteArrayExtTrait {
     fn into_bytes(self: ByteArray) -> Array<u8> {
         let len = self.len();
         let mut output = array![];

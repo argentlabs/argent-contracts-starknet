@@ -63,6 +63,7 @@ struct Secp256r1Signer {
 struct Eip191Signer {
     eth_address: EthAddress
 }
+
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSigner {
     origin: NonZero<felt252>,
@@ -300,10 +301,10 @@ fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: 
 
 #[inline(always)]
 fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, assertion: WebauthnAssertion) -> bool {
-    verify_client_data_json(@assertion, hash, signer.origin.into());
+    verify_client_data_json(assertion, hash, signer.origin.into());
     verify_authenticator_data(assertion.authenticator_data, signer.rp_id_hash.into());
 
-    let signed_hash = get_webauthn_hash(@assertion);
+    let signed_hash = get_webauthn_hash(assertion);
     is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, assertion.signature)
 }
 

@@ -84,9 +84,15 @@ describe("ArgentAccount", function () {
 
       const chainId = await provider.getChainId();
       const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.guid, newOwner, chainId);
-      await accountContract.change_owner(starknetSignature);
+
+      const response = await accountContract.change_owner(starknetSignature);
+      const receipt = await provider.waitForTransaction(response.transaction_hash);
 
       await accountContract.get_owner_guid().should.eventually.equal(newOwner.guid);
+
+      const from_address = accountContract.address;
+      await expectEvent(receipt, { from_address, eventName: "OwnerChanged", data: [newOwner.storedValue.toString()] });
+      await expectEvent(receipt, { from_address, eventName: "OwnerChangedGuid", data: [newOwner.guid.toString()] });
     });
 
     it("Expect 'argent/only-self' when called from another account", async function () {
@@ -137,8 +143,22 @@ describe("ArgentAccount", function () {
     it("Should be possible to change_guardian", async function () {
       const { accountContract } = await deployAccount();
       const newGuardian = randomStarknetKeyPair();
-      await accountContract.change_guardian(newGuardian.compiledSignerAsOption);
+
+      const response = await accountContract.change_guardian(newGuardian.compiledSignerAsOption);
+      const receipt = await provider.waitForTransaction(response.transaction_hash);
+
       expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(newGuardian.guid);
+
+      await expectEvent(receipt, {
+        from_address: accountContract.address,
+        eventName: "GuardianChanged",
+        data: [newGuardian.storedValue.toString()],
+      });
+      await expectEvent(receipt, {
+        from_address: accountContract.address,
+        eventName: "GuardianChangedGuid",
+        data: [newGuardian.guid.toString()],
+      });
     });
 
     it("Shouldn't be possible to use a guardian with pubkey = 0", async function () {
@@ -200,8 +220,22 @@ describe("ArgentAccount", function () {
     it("Should be possible to change_guardian_backup", async function () {
       const { accountContract } = await deployAccountWithGuardianBackup();
       const newGuardianBackup = randomStarknetKeyPair();
-      await accountContract.change_guardian_backup(newGuardianBackup.compiledSignerAsOption);
+
+      const response = await accountContract.change_guardian_backup(newGuardianBackup.compiledSignerAsOption);
+      const receipt = await provider.waitForTransaction(response.transaction_hash);
+
       expect((await accountContract.get_guardian_backup_guid()).unwrap()).to.equal(newGuardianBackup.guid);
+
+      await expectEvent(receipt, {
+        from_address: accountContract.address,
+        eventName: "GuardianBackupChanged",
+        data: [newGuardianBackup.storedValue.toString()],
+      });
+      await expectEvent(receipt, {
+        from_address: accountContract.address,
+        eventName: "GuardianBackupChangedGuid",
+        data: [newGuardianBackup.guid.toString()],
+      });
     });
 
     it("Should be possible to change_guardian_backup to zero", async function () {

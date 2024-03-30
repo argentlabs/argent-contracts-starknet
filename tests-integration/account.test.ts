@@ -31,20 +31,21 @@ describe("ArgentAccount", function () {
     const guardian = randomStarknetKeyPair();
     const constructorCalldata = CallData.compile({ owner: owner.signer, guardian: guardian.signerAsOption });
 
-    const classHash = await declareContract("ArgentAccount");
     const salt = "123";
+    const classHash = argentAccountClassHash;
     const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
     const udcCalls = deployer.buildUDCContractPayload({ classHash, salt, constructorCalldata, unique: false });
-    const { transaction_hash } = await deployer.execute(udcCalls);
+    const response = await deployer.execute(udcCalls);
+    const receipt = await provider.waitForTransaction(response.transaction_hash);
 
-    await expectEvent(transaction_hash, {
+    await expectEvent(receipt, {
       from_address: contractAddress,
       eventName: "AccountCreated",
       additionalKeys: [owner.storedValue.toString()],
       data: [guardian.storedValue.toString()],
     });
 
-    await expectEvent(transaction_hash, {
+    await expectEvent(receipt, {
       from_address: contractAddress,
       eventName: "AccountCreatedGuid",
       additionalKeys: [owner.guid.toString()],

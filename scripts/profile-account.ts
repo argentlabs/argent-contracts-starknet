@@ -65,7 +65,11 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
-  const { account } = await deployOldAccount();
+  const { account } = await deployOldAccount(
+    new LegacyStarknetKeyPair(privateKey),
+    new LegacyStarknetKeyPair(guardian.privateKey),
+    "0xDE",
+  );
   ethContract.connect(account);
   await profiler.profile("Transfer - Old account with guardian", await ethContract.transfer(recipient, amount));
 }

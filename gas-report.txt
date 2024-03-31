@@ -23,7 +23,7 @@ Resources:
 │         Deploy - No guardian         │    0    │   3   │   0   │   0    │    29    │    1     │     104     │  6249  │
 │        Deploy - With guardian        │    0    │   6   │   0   │   0    │    33    │    2     │     115     │  7194  │
 │             Deploy - OZ              │    0    │   3   │   0   │   0    │    26    │    0     │     103     │  4638  │
-│ Transfer - Old account with guardian │    0    │   3   │   1   │   0    │    27    │    0     │     192     │  9167  │
+│ Transfer - Old account with guardian │    0    │   3   │   1   │   0    │    27    │    0     │     192     │  9139  │
 │        Transfer - No guardian        │    0    │   3   │   0   │   0    │    25    │    0     │     192     │  8432  │
 │       Transfer - With guardian       │    0    │   6   │   0   │   0    │    25    │    0     │     201     │  9000  │
 │   Transfer - No guardian (Old Sig)   │    0    │   3   │   0   │   0    │    25    │    0     │     191     │  8374  │

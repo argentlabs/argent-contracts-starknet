@@ -113,11 +113,13 @@ export function setDefaultTransactionVersionV3(account: ArgentAccount): ArgentAc
 
 console.log("Deployer:", deployer.address);
 
-export async function deployOldAccount(): Promise<LegacyArgentWallet> {
+export async function deployOldAccount(
+  owner = new LegacyStarknetKeyPair(),
+  guardian = new LegacyStarknetKeyPair(),
+  salt = num.toHex(randomStarknetKeyPair().privateKey),
+): Promise<LegacyArgentWallet> {
   const proxyClassHash = await declareFixtureContract("Proxy");
   const oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
-  const owner = new LegacyStarknetKeyPair();
-  const guardian = new LegacyStarknetKeyPair();
 
   const constructorCalldata = CallData.compile({
     implementation: oldArgentAccountClassHash,
@@ -125,7 +127,6 @@ export async function deployOldAccount(): Promise<LegacyArgentWallet> {
     calldata: CallData.compile({ owner: owner.publicKey, guardian: guardian.publicKey }),
   });
 
-  const salt = num.toHex(randomStarknetKeyPair().privateKey);
   const contractAddress = hash.calculateContractAddressFromHash(salt, proxyClassHash, constructorCalldata, 0);
 
   const account = new Account(provider, contractAddress, owner);

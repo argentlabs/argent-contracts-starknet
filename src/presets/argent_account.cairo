@@ -85,7 +85,6 @@ mod ArgentAccount {
         _signer_non_stark: LegacyMap<felt252, felt252>,
         /// Current account guardian
         _guardian: felt252,
-        _guardian_non_stark: LegacyMap<felt252, felt252>,
         /// Current account backup guardian
         _guardian_backup: felt252,
         _guardian_backup_non_stark: LegacyMap<felt252, felt252>,
@@ -295,13 +294,13 @@ mod ArgentAccount {
         self.emit(SignerLinked { signer_guid: owner_guid, signer: owner });
 
         let guardian_guid: felt252 = if let Option::Some(guardian) = guardian {
-            let guardian_guid = guardian.into_guid();
-            self.init_guardian(guardian.storage_value());
+            let guardian_storage_value = guardian.storage_value();
+            assert(guardian_storage_value.signer_type == SignerType::Starknet, 'argent/invalid-guardian-type');
+            self._guardian.write(guardian_storage_value.stored_value);
+            let guardian_guid = guardian_storage_value.into_guid();
             self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
             if let Option::Some(owner_pubkey) = owner.storage_value().starknet_pubkey_or_none() {
-                if let Option::Some(guardian_pubkey) = guardian.storage_value().starknet_pubkey_or_none() {
-                    self.emit(AccountCreated { owner: owner_pubkey, guardian: guardian_pubkey });
-                };
+                self.emit(AccountCreated { owner: owner_pubkey, guardian: guardian_storage_value.stored_value });
             };
             guardian_guid
         } else {
@@ -495,13 +494,11 @@ mod ArgentAccount {
 
             if let Option::Some(guardian) = new_guardian {
                 let guardian_storage_value = guardian.storage_value();
+                assert(guardian_storage_value.signer_type == SignerType::Starknet, 'argent/invalid-guardian-type');
                 let new_guardian_guid = guardian_storage_value.into_guid();
                 self.write_guardian(Option::Some(guardian_storage_value));
                 self.emit(SignerLinked { signer_guid: new_guardian_guid, signer: guardian });
-
-                if let Option::Some(guardian_pubkey) = guardian_storage_value.starknet_pubkey_or_none() {
-                    self.emit(GuardianChanged { new_guardian: guardian_pubkey });
-                };
+                self.emit(GuardianChanged { new_guardian: guardian_storage_value.stored_value });
                 self.emit(GuardianChangedGuid { new_guardian_guid });
             } else {
                 // There cannot be a guardian_backup when there is no guardian
@@ -797,7 +794,10 @@ mod ArgentAccount {
 
                         let new_guardian: Option<Signer> = full_deserialize(*call.calldata)
                             .expect('argent/invalid-calldata');
-                        if new_guardian.is_none() {
+
+                        if let Option::Some(new_guardian) = new_guardian {
+                            assert(new_guardian.signer_type() == SignerType::Starknet, 'argent/invalid-guardian-type');
+                        } else {
                             assert(self.read_guardian_backup().is_none(), 'argent/backup-should-be-null');
                         }
 
@@ -992,46 +992,28 @@ mod ArgentAccount {
             }
         }
 
-        fn init_guardian(ref self: ContractState, guardian: SignerStorageValue) {
-            match guardian.signer_type {
-                SignerType::Starknet => self._guardian.write(guardian.stored_value),
-                _ => self._guardian_non_stark.write(guardian.signer_type.into(), guardian.stored_value),
-            }
-        }
-
         fn write_guardian(ref self: ContractState, guardian: Option<SignerStorageValue>) {
             // clear storage
             if let Option::Some(old_guardian) = self.read_guardian() {
-                match old_guardian.signer_type {
-                    SignerType::Starknet => self._guardian.write(0),
-                    _ => self._guardian_non_stark.write(old_guardian.signer_type.into(), 0),
-                }
+                assert(old_guardian.signer_type == SignerType::Starknet, 'argent/invalid-guardian-type');
+                self._guardian.write(0);
             }
             // write storage
             if let Option::Some(guardian) = guardian {
-                match guardian.signer_type {
-                    SignerType::Starknet => self._guardian.write(guardian.stored_value),
-                    _ => self._guardian_non_stark.write(guardian.signer_type.into(), guardian.stored_value),
-                }
+                assert(guardian.signer_type == SignerType::Starknet, 'argent/invalid-guardian-type');
+                self._guardian.write(guardian.stored_value);
             }
         }
 
         fn read_guardian(self: @ContractState) -> Option<SignerStorageValue> {
-            let mut preferred_order = guardian_ordered_types();
-            loop {
-                let signer_type = match preferred_order.pop_front() {
-                    Option::Some(signer_type) => *signer_type,
-                    Option::None => { break Option::None; },
-                };
-                let guardian_guid = match signer_type {
-                    SignerType::Starknet => self._guardian.read(),
-                    _ => self._guardian_non_stark.read(signer_type.into()),
-                };
-                if guardian_guid != 0 {
-                    break Option::Some(
-                        SignerStorageValue { stored_value: guardian_guid.try_into().unwrap(), signer_type }
-                    );
-                }
+            // Guardian is restricted to Starknet Key
+            let guardian_stored_value = self._guardian.read();
+            if guardian_stored_value == 0 {
+                Option::None
+            } else {
+                Option::Some(
+                    SignerStorageValue { stored_value: guardian_stored_value, signer_type: SignerType::Starknet }
+                )
             }
         }
 
@@ -1039,7 +1021,7 @@ mod ArgentAccount {
         fn is_valid_guardian(self: @ContractState, guardian: SignerStorageValue) -> bool {
             match guardian.signer_type {
                 SignerType::Starknet => (self._guardian.read() == guardian.stored_value),
-                _ => (self._guardian_non_stark.read(guardian.signer_type.into()) == guardian.stored_value)
+                _ => false
             }
         }
 

@@ -103,8 +103,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   const calldataGas =
     calldata && signature
       ? Math.floor((calldata.length + signature.length) * l2PayloadsWeights.calldata)
-      : // TODO find workaround for deployment transactions
-        undefined;
+      : undefined; // TODO find workaround for deployment transactions
 
   const eventGas = Math.floor(
     receipt.events.reduce(

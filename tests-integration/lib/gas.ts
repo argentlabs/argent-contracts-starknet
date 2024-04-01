@@ -101,9 +101,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   // L2 payloads
   const { calldata, signature } = (await provider.getTransaction(receipt.transaction_hash)) as any;
   const calldataGas =
-    calldata && signature
-      ? Math.floor((calldata.length + signature.length) * l2PayloadsWeights.calldata)
-      : undefined; // TODO find workaround for deployment transactions
+    calldata && signature ? Math.floor((calldata.length + signature.length) * l2PayloadsWeights.calldata) : undefined; // TODO find workaround for deployment transactions
 
   const eventGas = Math.floor(
     receipt.events.reduce(

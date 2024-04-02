@@ -41,13 +41,13 @@ impl ByteArrayExt of ByteArrayExtTrait {
 
 fn u32s_to_u256(arr: Span<felt252>) -> u256 {
     assert!(arr.len() == 8, "u32s_to_u256: input must be 8 elements long");
-    let high = *arr.at(0) * 0x1000000000000000000000000
-        + *arr.at(1) * 0x10000000000000000
-        + *arr.at(2) * 0x100000000
+    let high = *arr.at(0) * 0x1_000_000_000_000_000_000_000_000
+        + *arr.at(1) * 0x10_000_000_000_000_000
+        + *arr.at(2) * 0x100_000_000
         + *arr.at(3);
     let high = high.try_into().expect('u32s_to_u256:overflow-high');
-    let low = *arr.at(4) * 0x1000000000000000000000000
-        + *arr.at(5) * 0x10000000000000000
+    let low = *arr.at(4) * 0x1_000_000_000_000_000_000_000_000
+        + *arr.at(5) * 0x10_000_000_000_000_000
         + *arr.at(6) * 0x100_000_000
         + *arr.at(7);
     let low = low.try_into().expect('u32s_to_u256:overflow-low');

@@ -8,6 +8,7 @@ import {
   deployContract,
   deployLegacyAccount,
   deployOldAccount,
+  expectEvent,
   expectRevertWithErrorMessage,
   getUpgradeDataLegacy,
   provider,
@@ -52,8 +53,11 @@ describe("ArgentAccount: upgrade", function () {
     const argentAccountFutureClassHash = await declareFixtureContract("ArgentAccountFutureVersion");
     const { account } = await deployAccount();
 
-    await upgradeAccount(account, argentAccountFutureClassHash);
+    const response = await upgradeAccount(account, argentAccountFutureClassHash);
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountFutureClassHash));
+
+    const data = [argentAccountFutureClassHash];
+    await expectEvent(response, { from_address: account.address, eventName: "AccountUpgraded", data });
   });
 
   it("Shouldn't be possible to upgrade if an owner escape is ongoing", async function () {

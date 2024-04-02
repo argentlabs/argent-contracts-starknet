@@ -48,7 +48,7 @@ fn u32s_to_u256(arr: Span<felt252>) -> u256 {
     let high = high.try_into().expect('u32s_to_u256:overflow-high');
     let low = *arr.at(4) * 0x1000000000000000000000000
         + *arr.at(5) * 0x10000000000000000
-        + *arr.at(6) * 0x100000000
+        + *arr.at(6) * 0x100_000_000
         + *arr.at(7);
     let low = low.try_into().expect('u32s_to_u256:overflow-low');
     u256 { high, low }

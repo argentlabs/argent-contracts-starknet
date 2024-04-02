@@ -8,6 +8,7 @@ Summary:
 │ Transfer - Old account with guardian │   '864.000.000.192'   │ 0.0034  │  864000000000   │       24       │       23        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
 │        Transfer - No guardian        │   '828.000.000.192'   │ 0.0033  │  828000000000   │       23       │       22        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
 │       Transfer - With guardian       │   '900.000.000.192'   │ 0.0036  │  900000000000   │       25       │       23        │     2     │      2       │           'steps'            │       3       │  192   │ 'BLOB'  │
+│       Transfer - With Session        │  '1.260.000.000.192'  │  0.005  │  1260000000000  │       35       │       31        │     2     │      4       │           'ec_op'            │       3       │  192   │ 'BLOB'  │
 │   Transfer - No guardian (Old Sig)   │   '792.000.000.192'   │ 0.0031  │  792000000000   │       22       │       21        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
 │  Transfer - With guardian (Old Sig)  │   '864.000.000.192'   │ 0.0034  │  864000000000   │       24       │       23        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
 │        Transfer - OZ account         │   '720.000.000.192'   │ 0.0028  │  720000000000   │       20       │       19        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
@@ -26,11 +27,12 @@ Resources:
 │ Transfer - Old account with guardian │    0    │   3   │   1   │   0    │    27    │    0     │     192     │  9139  │
 │        Transfer - No guardian        │    0    │   3   │   0   │   0    │    25    │    0     │     192     │  8432  │
 │       Transfer - With guardian       │    0    │   6   │   0   │   0    │    25    │    0     │     201     │  9000  │
+│       Transfer - With Session        │    0    │  12   │   0   │   0    │    26    │    13    │     276     │ 11623  │
 │   Transfer - No guardian (Old Sig)   │    0    │   3   │   0   │   0    │    25    │    0     │     191     │  8374  │
 │  Transfer - With guardian (Old Sig)  │    0    │   6   │   0   │   0    │    25    │    0     │     200     │  8949  │
 │        Transfer - OZ account         │    0    │   3   │   0   │   0    │    25    │    0     │     183     │  7267  │
-│   Transfer - Eth sig with guardian   │   30    │   3   │   0   │   1    │    26    │    0     │    14801    │ 165556 │
-│  Transfer - Secp256r1 with guardian  │    0    │   3   │   0   │   0    │    26    │    2     │    28577    │ 262598 │
+│   Transfer - Eth sig with guardian   │   30    │   3   │   0   │   1    │    26    │    0     │    14801    │ 165557 │
+│  Transfer - Secp256r1 with guardian  │    0    │   3   │   0   │   0    │    26    │    2     │    28577    │ 262600 │
 │   Transfer - Eip161 with guardian    │   64    │   3   │   0   │   2    │    26    │    0     │    14976    │ 166751 │
-│   Transfer - Webauthn no guardian    │  9268   │   3   │   0   │   0    │    26    │    4     │    90981    │ 595957 │
+│   Transfer - Webauthn no guardian    │  9268   │   3   │   0   │   0    │    26    │    4     │    90984    │ 595954 │
 └──────────────────────────────────────┴─────────┴───────┴───────┴────────┴──────────┴──────────┴─────────────┴────────┘

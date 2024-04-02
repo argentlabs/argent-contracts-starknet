@@ -48,6 +48,46 @@ fn convert_bytes_to_u256_fit_256() {
 }
 
 #[test]
+fn convert_bytes_to_felt252_overflow() {
+    let bytes = array![
+        73,
+        150,
+        13,
+        229,
+        136,
+        14,
+        140,
+        104,
+        116,
+        52,
+        23,
+        15,
+        100,
+        118,
+        96,
+        91,
+        143,
+        228,
+        174,
+        185,
+        162,
+        134,
+        50,
+        199,
+        153,
+        92,
+        243,
+        186,
+        131,
+        29,
+        151,
+        99,
+    ];
+    let value: felt252 = bytes.span().try_into().unwrap(); // sha256("localhost")
+    assert_eq!(value, 1, "invalid");
+}
+
+#[test]
 fn convert_bytes_to_felt252() {
     let bytes = array![222, 173, 190, 239,];
     let value: felt252 = bytes.span().try_into().unwrap();

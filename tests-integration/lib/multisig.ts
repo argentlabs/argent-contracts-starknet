@@ -92,6 +92,7 @@ export async function deployMultisig1_3(
 ): Promise<MultisigWallet> {
   return deployMultisig({ ...params, threshold: 1, signersLength: 3 });
 }
+
 export async function deployMultisig1_1(
   params: Omit<DeployMultisigParams, "threshold" | "signersLength"> = {},
 ): Promise<MultisigWallet> {

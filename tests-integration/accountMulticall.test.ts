@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Contract, num, uint256 } from "starknet";
+import { CallData, Contract, num, uint256 } from "starknet";
 import {
   deployAccount,
   deployContract,
@@ -28,13 +28,22 @@ describe("ArgentAccount: multicall", function () {
     const senderInitialBalance = await getEthBalance(account.address);
     const recipientInitialBalance = await getEthBalance(recipient);
     ethContract.connect(account);
-    const { transaction_hash: transferTxHash } = await ethContract.transfer(recipient, amount);
-    await account.waitForTransaction(transferTxHash);
+    const { transaction_hash } = await ethContract.transfer(recipient, amount);
+    await account.waitForTransaction(transaction_hash);
+
     const senderFinalBalance = await getEthBalance(account.address);
     const recipientFinalBalance = await getEthBalance(recipient);
     // Before amount should be higher than (after + transfer) amount due to fee
     expect(senderInitialBalance + 1000n > senderFinalBalance).to.be.true;
     expect(recipientInitialBalance + 1000n).to.equal(recipientFinalBalance);
+
+    const first_retdata = [1];
+    await expectEvent(transaction_hash, {
+      from_address: account.address,
+      eventName: "TransactionExecuted",
+      additionalKeys: [transaction_hash],
+      data: CallData.compile([[first_retdata]]),
+    });
   });
 
   it("Should be possible to send eth with a Cairo1 account using a multicall", async function () {

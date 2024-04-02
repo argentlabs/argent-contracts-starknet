@@ -41,14 +41,14 @@ impl ByteArrayExt of ByteArrayExtTrait {
 
 fn u32s_to_u256(arr: Span<felt252>) -> u256 {
     assert!(arr.len() == 8, "u32s_to_u256: input must be 8 elements long");
-    let high = *arr.at(0) * 0x1_000_000_000_000_000_000_000_000
-        + *arr.at(1) * 0x10_000_000_000_000_000
-        + *arr.at(2) * 0x100_000_000
+    let high = *arr.at(0) * 0x1_0000_0000_0000_0000_0000_0000
+        + *arr.at(1) * 0x1_0000_0000_0000_0000
+        + *arr.at(2) * 0x1_0000_0000
         + *arr.at(3);
     let high = high.try_into().expect('u32s_to_u256:overflow-high');
-    let low = *arr.at(4) * 0x1_000_000_000_000_000_000_000_000
-        + *arr.at(5) * 0x10_000_000_000_000_000
-        + *arr.at(6) * 0x100_000_000
+    let low = *arr.at(4) * 0x1_0000_0000_0000_0000_0000_0000
+        + *arr.at(5) * 0x1_0000_0000_0000_0000
+        + *arr.at(6) * 0x1_0000_0000
         + *arr.at(7);
     let low = low.try_into().expect('u32s_to_u256:overflow-low');
     u256 { high, low }
@@ -59,8 +59,8 @@ fn u32s_to_u8s(mut input: Span<felt252>) -> Span<u8> {
     while let Option::Some(word) = input
         .pop_front() {
             let word: u32 = (*word).try_into().unwrap();
-            output.append(((word / 0x1000000) & 0xFF).try_into().unwrap());
-            output.append(((word / 0x10000) & 0xFF).try_into().unwrap());
+            output.append(((word / 0x100_00_00) & 0xFF).try_into().unwrap());
+            output.append(((word / 0x100_00) & 0xFF).try_into().unwrap());
             output.append(((word / 0x100) & 0xFF).try_into().unwrap());
             output.append((word & 0xFF).try_into().unwrap());
         };
@@ -75,7 +75,7 @@ fn u8s_to_u32s(mut input: Span<u8>) -> Array<u32> {
             let word2 = *input.pop_front().unwrap_or_default();
             let word3 = *input.pop_front().unwrap_or_default();
             let word4 = *input.pop_front().unwrap_or_default();
-            output.append(0x1000000 * word1.into() + 0x10000 * word2.into() + 0x100 * word3.into() + word4.into());
+            output.append(0x100_00_00 * word1.into() + 0x100_00 * word2.into() + 0x100 * word3.into() + word4.into());
         };
     output
 }

@@ -337,7 +337,7 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             let signature = tx_info.signature;
-            if self.session.is_session(signature.get(0)) {
+            if self.session.is_session(signature) {
                 let session_timestamp = *signature[1];
                 // can call unwrap safely as the session has already been deserialized 
                 let session_timestamp_u64 = session_timestamp.try_into().unwrap();

@@ -15,6 +15,7 @@ import {
   getEthContract,
   provider,
   restart,
+  setupSession,
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
 
@@ -94,21 +95,18 @@ const guardian = new StarknetKeyPair(42n);
   await profiler.profile("Transfer - With guardian", await ethContract.transfer(recipient, amount));
 }
 
-// {
-//   const { account } = await deployAccount({
-//     owner: starknetOwner,
-//     guardian,
-//     salt: "0x40",
-//     fundingAmount,
-//   });
-//   const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
-//   const sessionAccount = await setupSession(guardian, account, allowedMethod);
-//   ethContract.connect(sessionAccount);
-//   await profiler.profile(
-//     "Account With Session",
-//     await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
-//   );
-// }
+{
+  const { account } = await deployAccount({
+    guardian,
+    salt: "0x40",
+    fundingAmount,
+  });
+
+  const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
+  const sessionAccount = await setupSession(guardian as StarknetKeyPair, account, allowedMethod);
+  ethContract.connect(sessionAccount);
+  await profiler.profile("Transfer - With Session", await ethContract.transfer(recipient, amount));
+}
 
 {
   const { account } = await deployAccountWithoutGuardian({

@@ -64,8 +64,8 @@ async function expectEventFromReceipt(receipt: GetTransactionReceiptResponse, ev
 function normalizeEvent(event: RPC.Event): RPC.Event {
   return {
     from_address: event.from_address.toLowerCase(),
-    keys: event.keys.map(num.toBigInt).map((key) => key.toString()),
-    data: event.data.map(num.toBigInt).map((data) => data.toString()),
+    keys: event.keys.map(num.toBigInt).map(String),
+    data: event.data.map(num.toBigInt).map(String),
   };
 }
 

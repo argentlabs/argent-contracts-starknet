@@ -83,7 +83,7 @@ export async function setupSession(
   guardian: StarknetKeyPair,
   account: Account,
   allowedMethods: AllowedMethod[],
-  expiry: bigint,
+  expiry = BigInt(Date.now()) + 10000n,
 ): Promise<ArgentAccount> {
   const backendService = new BackendService(guardian);
   const dappService = new DappService(backendService);

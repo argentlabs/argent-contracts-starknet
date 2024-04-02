@@ -62,20 +62,22 @@ const guardian = new StarknetKeyPair(42n);
   const { account } = await deployAccount({
     owner: starknetOwner,
     guardian,
-    salt: "0x2",
+    salt: "0x40",
     fundingAmount,
   });
   const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
-  const call = [ethContract.populateTransaction.transfer(recipient, amount)];
-  console.log(Date.now());
-  const sessionAccount = await setupSession(guardian, account, allowedMethod, BigInt(Date.now() + 10000));
-  // await profiler.profile("Account with Session", await sessionAccount.execute(call));
+  const sessionAccount = await setupSession(guardian, account, allowedMethod);
+  ethContract.connect(sessionAccount);
+  await profiler.profile(
+    "Account With Session",
+    await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee }),
+  );
 }
 
 {
   const { account } = await deployAccountWithoutGuardian({
     owner: starknetOwner,
-    salt: "0x3",
+    salt: "0x4",
     fundingAmount,
   });
   ethContract.connect(account);

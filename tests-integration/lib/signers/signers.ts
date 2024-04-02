@@ -20,6 +20,7 @@ import {
   ec,
   encode,
   hash,
+  num,
   shortString,
   stark,
   transaction,
@@ -180,7 +181,7 @@ export class StarknetKeyPair extends KeyPair {
 
   constructor(pk?: string | bigint) {
     super();
-    this.pk = pk ? `${pk}` : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`;
+    this.pk = pk ? num.toHex(pk) : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`;
   }
 
   public get privateKey(): string {

@@ -113,11 +113,13 @@ export function setDefaultTransactionVersionV3(account: ArgentAccount): ArgentAc
 
 console.log("Deployer:", deployer.address);
 
-export async function deployOldAccount(): Promise<LegacyArgentWallet> {
+export async function deployOldAccount(
+  owner = new LegacyStarknetKeyPair(),
+  guardian = new LegacyStarknetKeyPair(),
+  salt = num.toHex(randomStarknetKeyPair().privateKey),
+): Promise<LegacyArgentWallet> {
   const proxyClassHash = await declareFixtureContract("Proxy");
   const oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
-  const owner = new LegacyStarknetKeyPair();
-  const guardian = new LegacyStarknetKeyPair();
 
   const constructorCalldata = CallData.compile({
     implementation: oldArgentAccountClassHash,
@@ -125,7 +127,6 @@ export async function deployOldAccount(): Promise<LegacyArgentWallet> {
     calldata: CallData.compile({ owner: owner.publicKey, guardian: guardian.publicKey }),
   });
 
-  const salt = num.toHex(randomStarknetKeyPair().privateKey);
   const contractAddress = hash.calculateContractAddressFromHash(salt, proxyClassHash, constructorCalldata, 0);
 
   const account = new Account(provider, contractAddress, owner);
@@ -145,10 +146,15 @@ export async function deployOldAccount(): Promise<LegacyArgentWallet> {
   return { account, accountContract, owner, guardian };
 }
 
-async function deployAccountInner(
-  params: DeployAccountParams,
-): Promise<
-  DeployAccountParams & { account: Account; classHash: string; owner: KeyPair; guardian?: KeyPair; salt: string }
+async function deployAccountInner(params: DeployAccountParams): Promise<
+  DeployAccountParams & {
+    account: Account;
+    classHash: string;
+    owner: KeyPair;
+    guardian?: KeyPair;
+    salt: string;
+    transactionHash: string;
+  }
 > {
   const finalParams = {
     ...params,
@@ -187,7 +193,7 @@ async function deployAccountInner(
   }
 
   await provider.waitForTransaction(transactionHash);
-  return { ...finalParams, account };
+  return { ...finalParams, account, transactionHash };
 }
 
 export type DeployAccountParams = {
@@ -200,21 +206,23 @@ export type DeployAccountParams = {
   selfDeploy?: boolean;
 };
 
-export async function deployAccount(params: DeployAccountParams = {}): Promise<ArgentWalletWithGuardian> {
+export async function deployAccount(
+  params: DeployAccountParams = {},
+): Promise<ArgentWalletWithGuardian & { transactionHash: string }> {
   params.guardian ||= randomStarknetKeyPair();
-  const { account, owner } = await deployAccountInner(params);
+  const { account, owner, transactionHash } = await deployAccountInner(params);
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
-  return { account, accountContract, owner, guardian: params.guardian };
+  return { account, accountContract, owner, guardian: params.guardian, transactionHash };
 }
 
 export async function deployAccountWithoutGuardian(
   params: Omit<DeployAccountParams, "guardian"> = {},
-): Promise<ArgentWallet> {
-  const { account, owner } = await deployAccountInner(params);
+): Promise<ArgentWallet & { transactionHash: string }> {
+  const { account, owner, transactionHash } = await deployAccountInner(params);
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
-  return { account, accountContract, owner };
+  return { account, accountContract, owner, transactionHash };
 }
 
 export async function deployAccountWithGuardianBackup(
@@ -222,7 +230,7 @@ export async function deployAccountWithGuardianBackup(
 ): Promise<ArgentWalletWithGuardianAndBackup> {
   const guardianBackup = params.guardianBackup ?? randomStarknetKeyPair();
 
-  const wallet = (await deployAccount(params)) as ArgentWalletWithGuardianAndBackup;
+  const wallet = (await deployAccount(params)) as ArgentWalletWithGuardianAndBackup & { transactionHash: string };
   await wallet.accountContract.change_guardian_backup(guardianBackup.compiledSignerAsOption);
 
   wallet.account.signer = new ArgentSigner(wallet.owner, guardianBackup);

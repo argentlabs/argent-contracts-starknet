@@ -51,7 +51,7 @@ struct StarknetSigner {
 
 #[derive(Drop, Copy, PartialEq)]
 struct Secp256k1Signer {
-    pubkey_hash: EthAddress // Is this a pubkey_hash or just a pubkey?
+    pubkey_hash: EthAddress
 }
 
 #[derive(Drop, Copy, Serde, PartialEq)]

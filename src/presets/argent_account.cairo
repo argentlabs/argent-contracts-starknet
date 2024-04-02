@@ -862,30 +862,31 @@ mod ArgentAccount {
             return array![owner_signature, guardian_signature];
         }
 
+        #[inline(always)]
         fn is_valid_span_signature(
             self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>
         ) -> bool {
-            if self.read_guardian().is_none() {
-                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
-                self.is_valid_owner_signature(hash, *signer_signatures.at(0))
-            } else {
+            if self.has_guardian() {
                 assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
                 self.is_valid_owner_signature(hash, *signer_signatures.at(0))
                     && self.is_valid_guardian_signature(hash, *signer_signatures.at(1))
+            } else {
+                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
+                self.is_valid_owner_signature(hash, *signer_signatures.at(0))
             }
         }
 
+        #[inline(always)]
         fn assert_valid_span_signature(self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>) {
-            if self.read_guardian().is_none() {
-                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
-                assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
-            } else {
+            if self.has_guardian() {
                 assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
                 assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
                 assert(self.is_valid_guardian_signature(hash, *signer_signatures.at(1)), 'argent/invalid-guardian-sig');
+            } else {
+                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
+                assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
             }
         }
-
 
         #[inline(always)]
         #[must_use]
@@ -1017,6 +1018,12 @@ mod ArgentAccount {
                     SignerStorageValue { stored_value: guardian_stored_value, signer_type: SignerType::Starknet }
                 )
             }
+        }
+
+        #[inline(always)]
+        fn has_guardian(self: @ContractState) -> bool {
+            // Guardian is restricted to Starknet Key
+            self._guardian.read() != 0
         }
 
         #[inline(always)]

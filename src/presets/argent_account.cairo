@@ -851,7 +851,7 @@ mod ArgentAccount {
             if signatures.len() != 2 && signatures.len() != 4 {
                 // manual inlining instead of calling full_deserialize for performance
                 let deseriliazed: Array<SignerSignature> = Serde::deserialize(ref signatures)
-                    .expect('argent/invalid-signature-format');
+                    .expect('argent/undeserializable');
                 assert(signatures.is_empty(), 'argent/invalid-signature-length');
                 return deseriliazed;
             }

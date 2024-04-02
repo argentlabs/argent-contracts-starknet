@@ -9,14 +9,14 @@ fn poseidon_2(a: felt252, b: felt252) -> felt252 {
     hash
 }
 
-fn sha256_cairo0(message: Span<u8>) -> Result<Span<felt252>, Array<felt252>> {
+fn sha256_cairo0(message: Span<u8>) -> Option<Span<felt252>> {
     let mut calldata = serialize(@u8s_to_u32s(message));
     calldata.append(message.len().into());
     let class_hash = class_hash_const::<0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6d>();
-    let output = library_call_syscall(class_hash, selector!("sha256_cairo0"), calldata.span())?;
-    if output.len() == 9 && *output.at(0) == 8 {
-        Result::Ok(output.slice(1, 8))
-    } else {
-        Result::Err(array!['sha256_cairo0:invalid-output'])
+    if let Result::Ok(output) = library_call_syscall(class_hash, selector!("sha256_cairo0"), calldata.span()) {
+        if output.len() == 9 && *output.at(0) == 8 {
+            return Option::Some(output.slice(1, 8));
+        }
     }
+    Option::None
 }

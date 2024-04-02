@@ -93,12 +93,12 @@ fn decode_base64(mut encoded: Array<u8>) -> Array<u8> {
     decoded
 }
 
-fn get_webauthn_hash_cairo0(assertion: WebauthnAssertion) -> Result<u256, Array<felt252>> {
+fn get_webauthn_hash_cairo0(assertion: WebauthnAssertion) -> Option<u256> {
     let WebauthnAssertion { authenticator_data, client_data_json, .. } = assertion;
     let client_data_hash = u32s_to_u8s(sha256_cairo0(client_data_json)?);
     let mut message = authenticator_data.snapshot.clone();
     message.append_all(client_data_hash);
-    Result::Ok(u32s_to_u256(sha256_cairo0(message.span())?))
+    Option::Some(u32s_to_u256(sha256_cairo0(message.span())?))
 }
 
 fn get_webauthn_hash_cairo1(assertion: WebauthnAssertion) -> u256 {
@@ -111,7 +111,7 @@ fn get_webauthn_hash_cairo1(assertion: WebauthnAssertion) -> u256 {
 
 fn get_webauthn_hash(assertion: WebauthnAssertion) -> u256 {
     match get_webauthn_hash_cairo0(assertion) {
-        Result::Ok(hash) => hash,
-        Result::Err => get_webauthn_hash_cairo1(assertion),
+        Option::Some(hash) => hash,
+        Option::None => get_webauthn_hash_cairo1(assertion),
     }
 }

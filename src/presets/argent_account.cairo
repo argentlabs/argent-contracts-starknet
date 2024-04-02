@@ -7,7 +7,7 @@ mod ArgentAccount {
     };
     use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
     use argent::session::{
-        interface::SessionToken, session::{session_component::{Internal, InternalTrait}, session_component,}
+        interface::{SessionToken, ISessionCallback}, session::{session_component::{Internal, InternalTrait}, session_component,}
     };
     use argent::signer::{
         signer_signature::{
@@ -336,7 +336,7 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_invoke_version(tx_info.version);
             let signature = tx_info.signature;
-            if self.session.is_session(signature) {
+            if self.session.is_session(signature.get(0)) {
                 let session_timestamp = *signature[1];
                 // can call unwrap safely as the session has already been deserialized 
                 let session_timestamp_u64 = session_timestamp.try_into().unwrap();
@@ -432,6 +432,16 @@ mod ArgentAccount {
             let retdata = execute_multicall(calls);
             self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
             retdata
+        }
+    }
+
+
+    impl SessionCallbackImpl of ISessionCallback<ContractState> {
+        #[inline(always)]
+        fn session_callback(
+            self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>,
+        ) -> bool {
+            self.is_valid_span_signature(session_hash, self.parse_signature_array(authorization_signature))
         }
     }
 

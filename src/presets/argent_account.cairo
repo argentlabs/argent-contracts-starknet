@@ -24,7 +24,7 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, assert_no_unsupported_v3_fields, DA_MODE_L1, is_estimate_transaction
         }
     };
-    use core::option::OptionTrait;
+    use core::option::{Option, OptionTrait};
     use core::traits::TryInto;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
@@ -830,12 +830,17 @@ mod ArgentAccount {
             self.assert_valid_span_signature(execution_hash, signer_signatures);
         }
 
+        #[inline(always)]
         fn parse_signature_array(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
             // Check if it's a legacy signature array (there's no support for guardian backup)
             // Legacy signatures are always 2 or 4 items long
             // Shortest signature in modern format is at least 5 items [array_len, signer_type, signer_pubkey, r, s]
             if signatures.len() != 2 && signatures.len() != 4 {
-                return full_deserialize(signatures).expect('argent/invalid-signature-format');
+                // manual inlining instead of calling full_deserialize for performance
+                let deseriliazed: Array<SignerSignature> = Serde::deserialize(ref signatures)
+                    .expect('argent/invalid-signature-format');
+                assert(signatures.is_empty(), 'argent/invalid-signature-length');
+                return deseriliazed;
             }
 
             let owner_signature = SignerSignature::Starknet(

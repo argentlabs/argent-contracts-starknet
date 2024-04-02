@@ -1,5 +1,13 @@
 import { Account, BigNumberish, CairoCustomEnum, typedData } from "starknet";
-import { ArgentAccount, ArgentX, BackendService, DappService, StarknetKeyPair, provider } from "..";
+import {
+  ArgentAccount,
+  ArgentX,
+  BackendService,
+  DappService,
+  StarknetKeyPair,
+  provider,
+  randomStarknetKeyPair,
+} from "..";
 
 export const sessionTypes = {
   StarknetDomain: [
@@ -83,10 +91,11 @@ export async function setupSession(
   guardian: StarknetKeyPair,
   account: Account,
   allowedMethods: AllowedMethod[],
-  expiry = BigInt(Date.now()) + 10000n,
+  expiry: bigint = BigInt(Date.now()) + 10000n,
+  dappKey: StarknetKeyPair = randomStarknetKeyPair(),
 ): Promise<ArgentAccount> {
   const backendService = new BackendService(guardian);
-  const dappService = new DappService(backendService);
+  const dappService = new DappService(backendService, dappKey);
   const argentX = new ArgentX(account, backendService);
 
   const sessionRequest = dappService.createSessionRequest(allowedMethods, expiry);

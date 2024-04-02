@@ -15,6 +15,7 @@ import {
   getEthContract,
   provider,
   restart,
+  setTime,
   setupSession,
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
@@ -97,13 +98,23 @@ const guardian = new StarknetKeyPair(42n);
 
 {
   const { account } = await deployAccount({
+    owner: starknetOwner,
     guardian,
     salt: "0x40",
     fundingAmount,
   });
-
+  const sessionTime = 1710167933n;
+  await setTime(sessionTime);
+  const dappKey = new StarknetKeyPair(39n);
   const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
-  const sessionAccount = await setupSession(guardian as StarknetKeyPair, account, allowedMethod);
+
+  const sessionAccount = await setupSession(
+    guardian as StarknetKeyPair,
+    account,
+    allowedMethod,
+    sessionTime + 150n,
+    dappKey,
+  );
   ethContract.connect(sessionAccount);
   await profiler.profile("Transfer - With Session", await ethContract.transfer(recipient, amount));
 }

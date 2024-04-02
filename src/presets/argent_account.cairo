@@ -289,8 +289,9 @@ mod ArgentAccount {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: Signer, guardian: Option<Signer>) {
-        let owner_guid = owner.into_guid();
-        self.init_owner(owner.storage_value());
+        let owner_storage_value = owner.storage_value();
+        let owner_guid = owner_storage_value.into_guid();
+        self.init_owner(owner_storage_value);
         self.emit(SignerLinked { signer_guid: owner_guid, signer: owner });
 
         let guardian_guid: felt252 = if let Option::Some(guardian) = guardian {
@@ -299,13 +300,18 @@ mod ArgentAccount {
             self._guardian.write(guardian_storage_value.stored_value);
             let guardian_guid = guardian_storage_value.into_guid();
             self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
-            if let Option::Some(owner_pubkey) = owner.storage_value().starknet_pubkey_or_none() {
-                self.emit(AccountCreated { owner: owner_pubkey, guardian: guardian_storage_value.stored_value });
+            if owner_storage_value.signer_type == SignerType::Starknet {
+                self
+                    .emit(
+                        AccountCreated {
+                            owner: owner_storage_value.stored_value, guardian: guardian_storage_value.stored_value
+                        }
+                    );
             };
             guardian_guid
         } else {
-            if let Option::Some(owner_pubkey) = owner.storage_value().starknet_pubkey_or_none() {
-                self.emit(AccountCreated { owner: owner_pubkey, guardian: 0 });
+            if owner_storage_value.signer_type == SignerType::Starknet {
+                self.emit(AccountCreated { owner: owner_storage_value.stored_value, guardian: 0 });
             };
             0
         };
@@ -939,6 +945,7 @@ mod ArgentAccount {
             self.last_guardian_escape_attempt.write(0);
         }
 
+        #[inline(always)]
         fn init_owner(ref self: ContractState, owner: SignerStorageValue) {
             match owner.signer_type {
                 SignerType::Starknet => self._signer.write(owner.stored_value),

@@ -51,7 +51,11 @@ mod session_component {
 
     #[generate_trait]
     impl Internal<
-        TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentUserAccount<TContractState>, +ISessionCallback<TContractState>
+        TContractState,
+        +HasComponent<TContractState>,
+        +IAccount<TContractState>,
+        +IArgentUserAccount<TContractState>,
+        +ISessionCallback<TContractState>
     > of InternalTrait<TContractState> {
         #[inline(always)]
         fn is_session(self: @ComponentState<TContractState>, signature: Span<felt252>) -> bool {
@@ -82,11 +86,9 @@ mod session_component {
 
             // timestamp check
             assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
-    
-    
+
             assert(
-                state.session_callback(token_session_hash, token.session_authorisation),
-                'session/invalid-account-sig'
+                state.session_callback(token_session_hash, token.session_authorisation), 'session/invalid-account-sig'
             );
 
             let (message_hash, _, _) = hades_permutation(transaction_hash, token_session_hash, 2);

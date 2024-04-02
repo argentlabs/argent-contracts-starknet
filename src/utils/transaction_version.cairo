@@ -42,6 +42,11 @@ fn assert_no_unsupported_v3_fields() {
 }
 
 #[inline(always)]
+fn assert_no_unsupported_v3_fields_with_data(paymaster_data_empty: bool) {
+    assert(paymaster_data_empty, 'argent/unsupported-paymaster')
+}
+
+#[inline(always)]
 fn is_estimate_version(tx_version: felt252) -> bool {
     tx_version == TX_V3_ESTIMATE || tx_version == TX_V2_ESTIMATE || tx_version == TX_V1_ESTIMATE
 }

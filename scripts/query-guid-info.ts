@@ -8,13 +8,16 @@ const keyFilter = [num.toHex(hash.starknetKeccak("SignerLinked")), guidToFind];
 
 // Just gotta find any event matching this.
 // It should be (almost) impossible for 2 guids to collide.
+const MAX_STEP = 100_000;
+const block_number = Math.max(lastBlock.block_number - MAX_STEP, 0);
 const eventsList = await provider.getEvents({
   // address: myContractAddress, // If you have the address of the contract, you can fill it in
-  from_block: { block_number: lastBlock.block_number - 20 },
+  from_block: { block_number },
   // to_block: { block_number: lastBlock.block_number }, // Defaults to latest
   keys: [keyFilter],
   chunk_size: 1000,
 });
+// If not found check from lastBlock - MAX_STEP to lastBlock - (2 * MAX_STEP) and so on.
 console.log(eventsList);
 const lastEvent = eventsList.events[eventsList.events.length - 1];
 console.log(lastEvent);

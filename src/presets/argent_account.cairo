@@ -15,7 +15,7 @@ mod ArgentAccount {
             SignerSignature, SignerSignatureTrait, starknet_signer_from_pubkey
         }
     };
-    use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
+    use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self, assert_only_protocol}, calls::execute_multicall,
         serialization::full_deserialize,
@@ -381,7 +381,8 @@ mod ArgentAccount {
     // Required Callbacks
 
     #[abi(embed_v0)]
-    impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
+    impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
+        // Called when coming from account 0.3.1 or older
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
@@ -436,6 +437,14 @@ mod ArgentAccount {
             let mut output = array![];
             multicall_return.serialize(ref output);
             output
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
+        // Called when coming from account 0.4.0+
+        fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
+            panic_with_felt252('argent/downgrade-not-allowed');
         }
     }
 
@@ -861,6 +870,7 @@ mod ArgentAccount {
                         return; // valid
                     }
                     assert(selector != selector!("execute_after_upgrade"), 'argent/forbidden-call');
+                    assert(selector != selector!("perform_upgrade"), 'argent/forbidden-call');
                 }
             } else {
                 // make sure no call is to the account

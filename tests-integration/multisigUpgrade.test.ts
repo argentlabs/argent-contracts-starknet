@@ -5,7 +5,8 @@ import { deployMultisig1_1 } from "./lib/multisig";
 describe("ArgentMultisig: upgrade", function () {
   it("Upgrade from current version to FutureVersionMultisig", async function () {
     // This is the same as Argent Multisig but with a different version (to have another class hash)
-    const argentMultisigFutureClassHash = await declareFixtureContract("ArgentMultisigFutureVersion");
+    const argentMultisigFutureClassHash = await declareContract("MockFutureArgentMultisig");
+
     const { account } = await deployMultisig1_1();
     await upgradeAccount(account, argentMultisigFutureClassHash);
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentMultisigFutureClassHash));

@@ -78,4 +78,5 @@ mod session {
 
 mod offchain_message {
     mod interface;
+    mod precalculated_hashing;
 }

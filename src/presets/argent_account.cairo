@@ -17,20 +17,21 @@ mod ArgentAccount {
     };
     use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
     use argent::utils::{
-        asserts::{assert_no_self_call, assert_only_protocol, assert_only_self}, calls::execute_multicall,
+        asserts::{assert_no_self_call, assert_only_self, assert_only_protocol}, calls::execute_multicall,
         serialization::full_deserialize,
         transaction_version::{
             TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
-            assert_correct_deploy_account_version, assert_no_unsupported_v3_fields, DA_MODE_L1, is_estimate_transaction
+            assert_correct_deploy_account_version, DA_MODE_L1, is_estimate_transaction
         }
     };
-    use core::option::OptionTrait;
+    use core::box::BoxTrait;
+    use core::option::{Option, OptionTrait};
     use core::traits::TryInto;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
-        ClassHash, get_block_timestamp, get_contract_address, VALIDATED, replace_class_syscall, account::Call,
-        SyscallResultTrait, get_tx_info, get_execution_info, syscalls::storage_read_syscall,
+        ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, replace_class_syscall,
+        account::Call, SyscallResultTrait, get_tx_info, get_execution_info, syscalls::storage_read_syscall,
         storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall}
     };
 
@@ -289,8 +290,9 @@ mod ArgentAccount {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: Signer, guardian: Option<Signer>) {
-        let owner_guid = owner.into_guid();
-        self.init_owner(owner.storage_value());
+        let owner_storage_value = owner.storage_value();
+        let owner_guid = owner_storage_value.into_guid();
+        self.init_owner(owner_storage_value);
         self.emit(SignerLinked { signer_guid: owner_guid, signer: owner });
 
         let guardian_guid: felt252 = if let Option::Some(guardian) = guardian {
@@ -299,13 +301,18 @@ mod ArgentAccount {
             self._guardian.write(guardian_storage_value.stored_value);
             let guardian_guid = guardian_storage_value.into_guid();
             self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
-            if let Option::Some(owner_pubkey) = owner.storage_value().starknet_pubkey_or_none() {
-                self.emit(AccountCreated { owner: owner_pubkey, guardian: guardian_storage_value.stored_value });
+            if owner_storage_value.signer_type == SignerType::Starknet {
+                self
+                    .emit(
+                        AccountCreated {
+                            owner: owner_storage_value.stored_value, guardian: guardian_storage_value.stored_value
+                        }
+                    );
             };
             guardian_guid
         } else {
-            if let Option::Some(owner_pubkey) = owner.storage_value().starknet_pubkey_or_none() {
-                self.emit(AccountCreated { owner: owner_pubkey, guardian: 0 });
+            if owner_storage_value.signer_type == SignerType::Starknet {
+                self.emit(AccountCreated { owner: owner_storage_value.stored_value, guardian: 0 });
             };
             0
         };
@@ -316,31 +323,37 @@ mod ArgentAccount {
     #[abi(embed_v0)]
     impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
-            assert_only_protocol();
-            let tx_info = get_tx_info().unbox();
+            let exec_info = get_execution_info().unbox();
+            let tx_info = exec_info.tx_info.unbox();
+            assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
-            assert_no_unsupported_v3_fields();
+            assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             if self.session.is_session(tx_info.signature) {
                 self.session.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature,);
             } else {
                 self
                     .assert_valid_calls_and_signature(
-                        calls.span(), tx_info.transaction_hash, tx_info.signature, is_from_outside: false
+                        calls.span(),
+                        tx_info.transaction_hash,
+                        tx_info.signature,
+                        is_from_outside: false,
+                        account_address: exec_info.contract_address,
                     );
             }
             VALIDATED
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
-            assert_only_protocol();
-            let tx_info = get_tx_info().unbox();
+            let exec_info = get_execution_info().unbox();
+            let tx_info = exec_info.tx_info.unbox();
+            assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
             let signature = tx_info.signature;
             if self.session.is_session(signature) {
                 let session_timestamp = *signature[1];
                 // can call unwrap safely as the session has already been deserialized 
                 let session_timestamp_u64 = session_timestamp.try_into().unwrap();
-                assert(session_timestamp_u64 >= get_block_timestamp(), 'session/expired');
+                assert(session_timestamp_u64 >= exec_info.block_info.unbox().block_timestamp, 'session/expired');
             }
 
             let retdata = execute_multicall(calls.span());
@@ -427,7 +440,14 @@ mod ArgentAccount {
             if self.session.is_session(signature) {
                 self.session.assert_valid_session(calls, outside_execution_hash, signature);
             } else {
-                self.assert_valid_calls_and_signature(calls, outside_execution_hash, signature, is_from_outside: true);
+                self
+                    .assert_valid_calls_and_signature(
+                        calls,
+                        outside_execution_hash,
+                        signature,
+                        is_from_outside: true,
+                        account_address: get_contract_address()
+                    );
             }
             let retdata = execute_multicall(calls);
             self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
@@ -440,7 +460,7 @@ mod ArgentAccount {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_declare_version(tx_info.version);
-            assert_no_unsupported_v3_fields();
+            assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
             VALIDATED
         }
@@ -454,7 +474,7 @@ mod ArgentAccount {
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_deploy_account_version(tx_info.version);
-            assert_no_unsupported_v3_fields();
+            assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
             VALIDATED
         }
@@ -733,11 +753,9 @@ mod ArgentAccount {
             calls: Span<Call>,
             execution_hash: felt252,
             mut signatures: Span<felt252>,
-            is_from_outside: bool
+            is_from_outside: bool,
+            account_address: ContractAddress,
         ) {
-            let execution_info = get_execution_info().unbox();
-            let account_address = execution_info.contract_address;
-
             let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
 
             if calls.len() == 1 {
@@ -824,12 +842,17 @@ mod ArgentAccount {
             self.assert_valid_span_signature(execution_hash, signer_signatures);
         }
 
+        #[inline(always)]
         fn parse_signature_array(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
             // Check if it's a legacy signature array (there's no support for guardian backup)
             // Legacy signatures are always 2 or 4 items long
             // Shortest signature in modern format is at least 5 items [array_len, signer_type, signer_pubkey, r, s]
             if signatures.len() != 2 && signatures.len() != 4 {
-                return full_deserialize(signatures).expect('argent/invalid-signature-format');
+                // manual inlining instead of calling full_deserialize for performance
+                let deseriliazed: Array<SignerSignature> = Serde::deserialize(ref signatures)
+                    .expect('argent/undeserializable');
+                assert(signatures.is_empty(), 'argent/invalid-signature-length');
+                return deseriliazed;
             }
 
             let owner_signature = SignerSignature::Starknet(
@@ -851,30 +874,32 @@ mod ArgentAccount {
             return array![owner_signature, guardian_signature];
         }
 
+        #[must_use]
+        #[inline(always)]
         fn is_valid_span_signature(
             self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>
         ) -> bool {
-            if self.read_guardian().is_none() {
-                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
-                self.is_valid_owner_signature(hash, *signer_signatures.at(0))
-            } else {
+            if self.has_guardian() {
                 assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
                 self.is_valid_owner_signature(hash, *signer_signatures.at(0))
                     && self.is_valid_guardian_signature(hash, *signer_signatures.at(1))
+            } else {
+                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
+                self.is_valid_owner_signature(hash, *signer_signatures.at(0))
             }
         }
 
+        #[inline(always)]
         fn assert_valid_span_signature(self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>) {
-            if self.read_guardian().is_none() {
-                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
-                assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
-            } else {
+            if self.has_guardian() {
                 assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
                 assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
                 assert(self.is_valid_guardian_signature(hash, *signer_signatures.at(1)), 'argent/invalid-guardian-sig');
+            } else {
+                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
+                assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
             }
         }
-
 
         #[inline(always)]
         #[must_use]
@@ -939,6 +964,7 @@ mod ArgentAccount {
             self.last_guardian_escape_attempt.write(0);
         }
 
+        #[inline(always)]
         fn init_owner(ref self: ContractState, owner: SignerStorageValue) {
             match owner.signer_type {
                 SignerType::Starknet => self._signer.write(owner.stored_value),
@@ -1005,6 +1031,12 @@ mod ArgentAccount {
                     SignerStorageValue { stored_value: guardian_stored_value, signer_type: SignerType::Starknet }
                 )
             }
+        }
+
+        #[inline(always)]
+        fn has_guardian(self: @ContractState) -> bool {
+            // Guardian is restricted to Starknet Key
+            self._guardian.read() != 0
         }
 
         #[inline(always)]

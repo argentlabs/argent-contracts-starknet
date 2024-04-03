@@ -45,10 +45,6 @@ impl OffChainMessageHashSessionRev1 of IOffChainMessageHashRev1<Session> {
         // This is due to a mistake made in the Braavos contracts and has been copied for compatibility
         let chain_id = get_tx_info().unbox().chain_id;
         if chain_id == 'SN_MAIN' {
-            // mainnet_domain_hash = domain.get_struct_hash_rev_1()
-
-            // mainnet_domain_hash = 396976932011104915691903508476593435452325164665257511598712881532315662893;
-            // first permutation == hades_permutation('StarkNet Message', mainnet_domain_hash, 0);
             let mainnet_first_hades_permutation = (
                 2323134905843710400277850554467420438836802451436694979291226432262210349922,
                 497047802536209445013847976375993952138881488253153206740640135894961444223,
@@ -57,9 +53,6 @@ impl OffChainMessageHashSessionRev1 of IOffChainMessageHashRev1<Session> {
             return get_message_hash_rev_1_with_precalc(mainnet_first_hades_permutation, *self);
         }
         if chain_id == 'SN_GOERLI' {
-            // goerli_domain_hash = domain.get_struct_hash_rev_1()
-            // goerli_domain_hash = 675582295603192327528831240503702820896706487235401654583087856516636529744;
-            // first permutation == hades_permutation('StarkNet Message', goerli_domain_hash, 0);
             let goerli_first_hades_permutation = (
                 66935669433055122830338184180135473587363615299602357034397441854497537432,
                 3129201308487698509211263622535430894718798011618046231006704155132513876661,

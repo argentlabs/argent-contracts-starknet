@@ -131,9 +131,6 @@ impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExec
 
         let chain_id = get_tx_info().unbox().chain_id;
         if chain_id == 'SN_MAIN' {
-            // mainnet_domain_hash = domain.get_struct_hash_rev_1()
-            // mainnet_domain_hash = 33781215245670134228908646522746461659628127223637352174002236121260749013;
-            // first permutation == hades_permutation('StarkNet Message', mainnet_domain_hash, 0);
             let mainnet_first_hades_permutation = (
                 466771826862796654720497916898873955545764255168198993180536052682392700659,
                 8304264822580609485631142291553027424455705068469035347025093264477380363,
@@ -143,9 +140,6 @@ impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExec
             return get_message_hash_rev_1_with_precalc(mainnet_first_hades_permutation, *self);
         }
         if chain_id == 'SN_GOERLI' {
-            // goerli_domain_hash = domain.get_struct_hash_rev_1()
-            // goerli_domain_hash = 1701745446521084880398304892663153620369986404965355966845160547816664289809;
-            // first permutation == hades_permutation('StarkNet Message', goerli_domain_hash, 0);
             let goerli_first_hades_permutation = (
                 525530995690438368115298687904315435654197055547696923992434565646087910422,
                 3038768008552013550623612989523737978318878097021728028876203655331048060334,

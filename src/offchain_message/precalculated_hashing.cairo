@@ -1,7 +1,6 @@
 use argent::offchain_message::interface::IStructHashRev1;
-use hash::{HashStateTrait, HashStateExTrait};
-use pedersen::PedersenTrait;
-use poseidon::{poseidon_hash_span, hades_permutation, HashState};
+use hash::HashStateTrait;
+use poseidon::{hades_permutation, HashState};
 use starknet::get_contract_address;
 
 fn get_message_hash_rev_1_with_precalc<T, +Drop<T>, +Copy<T>, +IStructHashRev1<T>>(

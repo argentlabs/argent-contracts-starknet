@@ -100,7 +100,7 @@ mod ArgentAccount {
         /// Used to limit the number of transactions the account will pay for
         /// It resets when an escape is completed or canceled
         last_owner_escape_attempt: u64,
-        security_period: u64,
+        escape_security_period: u64,
     }
 
     #[event]
@@ -292,7 +292,7 @@ mod ArgentAccount {
     #[derive(Drop, starknet::Event)]
     struct EscapeSecurityPeriodChanged {
         // Time it takes for the escape to become ready after being triggered
-        security_period: u64,
+        escape_security_period: u64,
     }
 
     #[constructor]
@@ -498,12 +498,12 @@ mod ArgentAccount {
         fn set_escape_security_period(ref self: ContractState, new_security_period: u64) {
             assert_only_self();
             assert(new_security_period != 0, 'argent/invalid-security-period');
-            self.security_period.write(new_security_period);
-            self.emit(EscapeSecurityPeriodChanged { security_period: new_security_period });
+            self.escape_security_period.write(new_security_period);
+            self.emit(EscapeSecurityPeriodChanged { escape_security_period: new_security_period });
         }
 
         fn get_escape_security_period(self: @ContractState) -> u64 {
-            let storage_value = self.security_period.read();
+            let storage_value = self.escape_security_period.read();
             if storage_value == 0 {
                 DEFAULT_ESCAPE_SECURITY_PERIOD
             } else {
@@ -581,16 +581,15 @@ mod ArgentAccount {
 
             // no escape if there is a guardian escape triggered by the owner in progress
             let current_escape = self._escape.read();
-            let security_period = self.get_escape_security_period();
             if current_escape.escape_type == LegacyEscapeType::Guardian {
                 assert(
-                    get_escape_status(current_escape.ready_at, security_period) == EscapeStatus::Expired,
+                    self.get_escape_status(current_escape.ready_at) == EscapeStatus::Expired,
                     'argent/cannot-override-escape'
                 );
             }
 
             self.reset_escape();
-            let ready_at = get_block_timestamp() + security_period;
+            let ready_at = get_block_timestamp() + self.get_escape_security_period();
             let escape = LegacyEscape {
                 ready_at, escape_type: LegacyEscapeType::Owner, new_signer: Option::Some(new_owner.storage_value()),
             };
@@ -627,7 +626,7 @@ mod ArgentAccount {
 
             let current_escape = self._escape.read();
 
-            let current_escape_status = get_escape_status(current_escape.ready_at, self.get_escape_security_period());
+            let current_escape_status = self.get_escape_status(current_escape.ready_at);
             assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
             self.reset_escape_timestamps();
@@ -646,10 +645,7 @@ mod ArgentAccount {
 
             let current_escape = self._escape.read();
             // TODO This could be done during validation?
-            assert(
-                get_escape_status(current_escape.ready_at, self.get_escape_security_period()) == EscapeStatus::Ready,
-                'argent/invalid-escape'
-            );
+            assert(self.get_escape_status(current_escape.ready_at) == EscapeStatus::Ready, 'argent/invalid-escape');
 
             self.reset_escape_timestamps();
 
@@ -666,7 +662,7 @@ mod ArgentAccount {
         fn cancel_escape(ref self: ContractState) {
             assert_only_self();
             let current_escape = self._escape.read();
-            let current_escape_status = get_escape_status(current_escape.ready_at, self.get_escape_security_period());
+            let current_escape_status = self.get_escape_status(current_escape.ready_at);
             assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
             self.reset_escape();
             self.reset_escape_timestamps();
@@ -762,7 +758,7 @@ mod ArgentAccount {
         /// Current escape if any, and its status
         fn get_escape_and_status(self: @ContractState) -> (LegacyEscape, EscapeStatus) {
             let current_escape = self._escape.read();
-            (current_escape, get_escape_status(current_escape.ready_at, self.get_escape_security_period()))
+            (current_escape, self.get_escape_status(current_escape.ready_at))
         }
     }
 
@@ -980,10 +976,24 @@ mod ArgentAccount {
             assert(is_valid, 'argent/invalid-owner-sig');
         }
 
+        fn get_escape_status(self: @ContractState, escape_ready_at: u64) -> EscapeStatus {
+            if escape_ready_at == 0 {
+                return EscapeStatus::None;
+            }
+
+            let block_timestamp = get_block_timestamp();
+            if block_timestamp < escape_ready_at {
+                return EscapeStatus::NotReady;
+            }
+            if escape_ready_at + self.get_escape_security_period() <= block_timestamp {
+                return EscapeStatus::Expired;
+            }
+
+            EscapeStatus::Ready
+        }
+
         fn reset_escape(ref self: ContractState) {
-            let current_escape_status = get_escape_status(
-                self._escape.read().ready_at, self.get_escape_security_period()
-            );
+            let current_escape_status = self.get_escape_status(self._escape.read().ready_at);
             if current_escape_status == EscapeStatus::None {
                 return;
             }
@@ -1176,23 +1186,6 @@ mod ArgentAccount {
         }
 
         assert(get_block_timestamp() > last_timestamp + TIME_BETWEEN_TWO_ESCAPES, 'argent/last-escape-too-recent');
-    }
-
-
-    fn get_escape_status(escape_ready_at: u64, security_period: u64) -> EscapeStatus {
-        if escape_ready_at == 0 {
-            return EscapeStatus::None;
-        }
-
-        let block_timestamp = get_block_timestamp();
-        if block_timestamp < escape_ready_at {
-            return EscapeStatus::NotReady;
-        }
-        if escape_ready_at + security_period <= block_timestamp {
-            return EscapeStatus::Expired;
-        }
-
-        EscapeStatus::Ready
     }
 
     fn owner_ordered_types() -> Span<SignerType> {

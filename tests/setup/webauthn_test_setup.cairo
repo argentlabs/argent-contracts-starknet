@@ -72,6 +72,7 @@ fn setup_1() -> (felt252, WebauthnSigner, WebauthnAssertion) {
         challenge_length: 6,
         origin_offset: 54,
         origin_length: 21,
+        sha256_implementation: 'cairo1',
     };
     let challenge = 0xdeadbeef;
     (challenge, signer, assertion)
@@ -100,6 +101,7 @@ fn setup_2() -> (felt252, WebauthnSigner, WebauthnAssertion) {
         challenge_length: 7,
         origin_offset: 55,
         origin_length: 21,
+        sha256_implementation: 'cairo1',
     };
     let challenge = 0xdeadbeefff;
     (challenge, signer, assertion)
@@ -128,6 +130,7 @@ fn setup_3() -> (felt252, WebauthnSigner, WebauthnAssertion) {
         challenge_length: 8,
         origin_offset: 56,
         origin_length: 21,
+        sha256_implementation: 'cairo1',
     };
     let challenge = 0xdeadbeefffaa;
     (challenge, signer, assertion)
@@ -156,6 +159,7 @@ fn setup_4() -> (felt252, WebauthnSigner, WebauthnAssertion) {
         challenge_length: 10,
         origin_offset: 58,
         origin_length: 21,
+        sha256_implementation: 'cairo1',
     };
     let challenge = 0xdeadbeefbeefbb;
     (challenge, signer, assertion)

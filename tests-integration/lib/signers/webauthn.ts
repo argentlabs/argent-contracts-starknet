@@ -1,7 +1,7 @@
 import { concatBytes } from "@noble/curves/abstract/utils";
 import { p256 as secp256r1 } from "@noble/curves/p256";
 import { BinaryLike, createHash } from "crypto";
-import { ArraySignatureType, CairoCustomEnum, CallData, uint256 } from "starknet";
+import { ArraySignatureType, CairoCustomEnum, CallData, shortString, uint256 } from "starknet";
 import { KeyPair, SignerType, signerTypeToCustomEnum } from "..";
 
 // Bytes fn
@@ -85,6 +85,7 @@ export class WebauthnOwner extends KeyPair {
       challenge_length: clientData.challenge.length,
       origin_offset: clientDataOffset('"origin":"'),
       origin_length: clientData.origin.length,
+      sha256_implementation: shortString.encodeShortString("cairo0"),
     };
 
     return CallData.compile([signerTypeToCustomEnum(SignerType.Webauthn, cairoAssertion)]);

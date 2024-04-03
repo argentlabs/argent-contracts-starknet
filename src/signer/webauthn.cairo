@@ -15,6 +15,7 @@ struct WebauthnAssertion {
     challenge_length: usize,
     origin_offset: usize,
     origin_length: usize,
+    sha256_implementation: felt252,
 }
 
 /// Example JSON:
@@ -113,8 +114,11 @@ fn get_webauthn_hash_cairo1(assertion: WebauthnAssertion) -> u256 {
 }
 
 fn get_webauthn_hash(assertion: WebauthnAssertion) -> u256 {
-    match get_webauthn_hash_cairo0(assertion) {
-        Option::Some(hash) => hash,
-        Option::None => get_webauthn_hash_cairo1(assertion),
+    if assertion.sha256_implementation == 'cairo0' {
+        get_webauthn_hash_cairo0(assertion).expect('sha256-cairo0-failed')
+    } else if assertion.sha256_implementation == 'cairo1' {
+        get_webauthn_hash_cairo1(assertion)
+    } else {
+        panic!("invalid-sha256-implementation: {}", assertion.sha256_implementation)
     }
 }

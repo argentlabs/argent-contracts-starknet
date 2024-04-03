@@ -44,6 +44,7 @@ impl ByteArrayExt of ByteArrayExtTrait {
     }
 }
 
+// Accepts felt252 for efficiency as it's the type of retdata but all values are expected to fit u32
 fn u32s_to_u256(arr: Span<felt252>) -> u256 {
     assert!(arr.len() == 8, "u32s_to_u256: input must be 8 elements long");
     let high = *arr.at(0) * 0x1_0000_0000_0000_0000_0000_0000

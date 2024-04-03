@@ -473,9 +473,6 @@ mod ArgentAccount {
         fn change_owner(ref self: ContractState, signer_signature: SignerSignature) {
             assert_only_self();
 
-            self.reset_escape();
-            self.reset_escape_timestamps();
-
             let new_owner = signer_signature.signer();
 
             self.assert_valid_new_owner_signature(signer_signature);
@@ -489,6 +486,9 @@ mod ArgentAccount {
             let new_owner_guid = new_owner_storage_value.into_guid();
             self.emit(OwnerChangedGuid { new_owner_guid });
             self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
+
+            self.reset_escape();
+            self.reset_escape_timestamps();
         }
 
         fn change_guardian(ref self: ContractState, new_guardian: Option<Signer>) {

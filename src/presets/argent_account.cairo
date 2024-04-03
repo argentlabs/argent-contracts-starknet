@@ -46,8 +46,8 @@ mod ArgentAccount {
     const TIME_BETWEEN_TWO_ESCAPES: u64 = consteval_int!(12 * 60 * 60); // 12 hours;
 
     /// Limits fee in escapes
-    const MAX_ESCAPE_MAX_FEE_ETH: u128 = 50000000000000000; // 0.05 ETH
-    const MAX_ESCAPE_MAX_FEE_STRK: u128 = 50_000000000000000000; // 50 STRK
+    const MAX_ESCAPE_MAX_FEE_ETH: u128 = 5000000000000000; // 0.005 ETH
+    const MAX_ESCAPE_MAX_FEE_STRK: u128 = 5_000000000000000000; // 5 STRK
     const MAX_ESCAPE_TIP_STRK: u128 = 1_000000000000000000; // 1 STRK
 
     #[abi(embed_v0)]
@@ -462,9 +462,6 @@ mod ArgentAccount {
         fn change_owner(ref self: ContractState, signer_signature: SignerSignature) {
             assert_only_self();
 
-            self.reset_escape();
-            self.reset_escape_timestamps();
-
             let new_owner = signer_signature.signer();
 
             self.assert_valid_new_owner_signature(signer_signature);
@@ -478,6 +475,9 @@ mod ArgentAccount {
             let new_owner_guid = new_owner_storage_value.into_guid();
             self.emit(OwnerChangedGuid { new_owner_guid });
             self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
+
+            self.reset_escape();
+            self.reset_escape_timestamps();
         }
 
         fn change_guardian(ref self: ContractState, new_guardian: Option<Signer>) {

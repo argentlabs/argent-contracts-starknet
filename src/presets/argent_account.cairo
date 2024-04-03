@@ -875,6 +875,7 @@ mod ArgentAccount {
             return array![owner_signature, guardian_signature];
         }
 
+        #[must_use]
         #[inline(always)]
         fn is_valid_span_signature(
             self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>

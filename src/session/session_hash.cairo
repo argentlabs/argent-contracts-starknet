@@ -52,13 +52,13 @@ impl OffChainMessageHashSessionRev1 of IOffChainMessageHashRev1<Session> {
             );
             return get_message_hash_rev_1_with_precalc(mainnet_first_hades_permutation, *self);
         }
-        if chain_id == 'SN_GOERLI' {
-            let goerli_first_hades_permutation = (
-                66935669433055122830338184180135473587363615299602357034397441854497537432,
-                3129201308487698509211263622535430894718798011618046231006704155132513876661,
-                1564676662968736057938598045533672220702488601100673957348600464129471843386
+        if chain_id == 'SN_SEPOLIA' {
+            let sepolia_first_hades_permutation = (
+                1455693979196931730158938525193757396832111609401196356440323511906411072336,
+                1285103549382792039971227731321331281062781607693790103788417106544479526918,
+                355603609913586297640159467947347365736400566364146250616789011948497476301
             );
-            return get_message_hash_rev_1_with_precalc(goerli_first_hades_permutation, *self);
+            return get_message_hash_rev_1_with_precalc(sepolia_first_hades_permutation, *self);
         }
         let domain = StarknetDomain { name: 'SessionAccount.session', version: 1, chain_id, revision: 1, };
         poseidon_hash_span(

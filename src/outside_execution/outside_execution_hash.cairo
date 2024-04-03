@@ -139,13 +139,13 @@ impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExec
 
             return get_message_hash_rev_1_with_precalc(mainnet_first_hades_permutation, *self);
         }
-        if chain_id == 'SN_GOERLI' {
-            let goerli_first_hades_permutation = (
-                525530995690438368115298687904315435654197055547696923992434565646087910422,
-                3038768008552013550623612989523737978318878097021728028876203655331048060334,
-                385518898049765577769956278469845800327401014397379779953573488122407330399
+        if chain_id == 'SN_SEPOLIA' {
+            let sepolia_first_hades_permutation = (
+                745540723582226592436632693000411598770476874516739165104583972640400378932,
+                62154301810125581556071585758541948884661504815060895665449539162589631391,
+                3469680712295219559397768335134989296665687247431765753301038002536467417786
             );
-            return get_message_hash_rev_1_with_precalc(goerli_first_hades_permutation, *self);
+            return get_message_hash_rev_1_with_precalc(sepolia_first_hades_permutation, *self);
         }
         let domain = StarknetDomain { name: 'Account.execute_from_outside', version: 1, chain_id, revision: 1 };
         poseidon_hash_span(

@@ -909,7 +909,6 @@ mod ArgentAccount {
         }
 
         #[must_use]
-        #[inline(always)]
         fn is_valid_span_signature(
             self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>
         ) -> bool {
@@ -923,7 +922,6 @@ mod ArgentAccount {
             }
         }
 
-        #[inline(always)]
         fn assert_valid_span_signature(self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>) {
             if self.has_guardian() {
                 assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
@@ -935,7 +933,6 @@ mod ArgentAccount {
             }
         }
 
-        #[inline(always)]
         #[must_use]
         fn is_valid_owner_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
             let signer = signer_signature.signer().storage_value();
@@ -945,7 +942,6 @@ mod ArgentAccount {
             return signer_signature.is_valid_signature(hash) || is_estimate_transaction();
         }
 
-        #[inline(always)]
         #[must_use]
         fn is_valid_guardian_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {
             let signer = signer_signature.signer().storage_value();

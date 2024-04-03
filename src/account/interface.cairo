@@ -45,6 +45,11 @@ trait IArgentUserAccount<TContractState> {
         guardian: Option<Signer>
     ) -> felt252;
 
+    /// @notice Changes the security period used for escapes
+    /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
+    /// @param new_security_period new delay in seconds before the escape can be completed.
+    fn set_escape_security_period(ref self: TContractState, new_security_period: u64);
+
     /// @notice Changes the owner
     /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
     /// @param signer_signature SignerSignature of the new owner 
@@ -116,6 +121,8 @@ trait IArgentUserAccount<TContractState> {
 
     /// Current escape if any, and its status
     fn get_escape_and_status(self: @TContractState) -> (LegacyEscape, EscapeStatus);
+    /// Reads the current security period used for escapes
+    fn get_escape_security_period(self: @TContractState) -> u64;
 }
 
 /// Deprecated methods for compatibility reasons

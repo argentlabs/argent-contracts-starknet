@@ -15,10 +15,11 @@ impl SpanU8TryIntoFelt252 of TryInto<Span<u8>, felt252> {
     fn try_into(mut self: Span<u8>) -> Option<felt252> {
         if self.len() < 32 {
             let mut result = 0;
-            while let Option::Some(byte) = self.pop_front() {
-                let byte = (*byte).into();
-                result = (0x100 * result) + byte;
-            };
+            while let Option::Some(byte) = self
+                .pop_front() {
+                    let byte = (*byte).into();
+                    result = (0x100 * result) + byte;
+                };
             Option::Some(result)
         } else if self.len() == 32 {
             let result: u256 = self.try_into()?;

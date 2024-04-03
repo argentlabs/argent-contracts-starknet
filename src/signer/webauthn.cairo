@@ -71,12 +71,15 @@ fn verify_authenticator_data(authenticator_data: Span<u8>, expected_rp_id_hash: 
 
     // 16. Verify that the User Present bit of the flags in authData is set.
     let flags: u128 = (*authenticator_data.at(32)).into();
-    assert((flags & 1) == 1, 'nonpresent-user');
+    assert((flags & 0b00000001) == 0b00000001, 'nonpresent-user');
 
     // 17. If user verification is required for this assertion, verify that the User Verified bit of the flags in authData is set.
-    assert((flags & 4) == 4, 'unverified-user');
+    assert((flags & 0b00000100) == 0b00000100, 'unverified-user');
 
-    // 18. Skipping extensions
+    // Verify bits reserved for future use aren't set
+    assert((flags & 0b00111010) == 0, 'unexpected-flags');
+
+    // 18. Allowing attested credential data and extension data if present
     ()
 }
 

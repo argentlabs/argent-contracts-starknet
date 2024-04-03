@@ -1,6 +1,5 @@
 use argent::offchain_message::interface::{
     StarknetDomain, StructHashStarknetDomain, IMerkleLeafHash, IStructHashRev1, IOffChainMessageHashRev1,
-    MAINNET_FIRST_HADES_PERMUTATION_REV_1
 };
 use argent::session::interface::Session;
 use hash::{HashStateExTrait, HashStateTrait};
@@ -45,7 +44,15 @@ impl OffChainMessageHashSessionRev1 of IOffChainMessageHashRev1<Session> {
         // This is due to a mistake made in the Braavos contracts and has been copied for compatibility
         let chain_id = get_tx_info().unbox().chain_id;
         if chain_id == 'SN_MAIN' {
-            let (mfhp0, mfhp1, mfhp2) = MAINNET_FIRST_HADES_PERMUTATION_REV_1;
+            // mainnet_domain_hash = 396976932011104915691903508476593435452325164665257511598712881532315662893;
+            // result of hades_permutation('StarkNet Message', mainnet_domain_hash, 0);
+            let mainnet_first_hades_permutation = (
+                2323134905843710400277850554467420438836802451436694979291226432262210349922,
+                497047802536209445013847976375993952138881488253153206740640135894961444223,
+                1534648249535688540587269261500462862519297145299981583675973457661163002808
+            );
+
+            let (mfhp0, mfhp1, mfhp2) = mainnet_first_hades_permutation;
 
             let (fs0, fs1, fs2) = hades_permutation(
                 mfhp0 + get_contract_address().into(), mfhp1 + self.get_struct_hash_rev_1(), mfhp2

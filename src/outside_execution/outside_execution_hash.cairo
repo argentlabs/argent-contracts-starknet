@@ -1,6 +1,6 @@
 use argent::offchain_message::interface::{
     StarkNetDomain, StarknetDomain, StructHashStarkNetDomain, IOffChainMessageHashRev0, IStructHashRev0,
-    IOffChainMessageHashRev1, IStructHashRev1, MAINNET_FIRST_HADES_PERMUTATION_REV_1
+    IOffChainMessageHashRev1, IStructHashRev1
 };
 use argent::outside_execution::interface::{OutsideExecution};
 use hash::{HashStateTrait, HashStateExTrait};
@@ -128,7 +128,15 @@ impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExec
 
         let chain_id = get_tx_info().unbox().chain_id;
         if chain_id == 'SN_MAIN' {
-            let (mfhp0, mfhp1, mfhp2) = MAINNET_FIRST_HADES_PERMUTATION_REV_1;
+            // mainnet_domain_hash = 33781215245670134228908646522746461659628127223637352174002236121260749013;
+            // result of hades_permutation('StarkNet Message', mainnet_domain_hash, 0);
+            let mainnet_first_hades_permutation = (
+                466771826862796654720497916898873955545764255168198993180536052682392700659,
+                8304264822580609485631142291553027424455705068469035347025093264477380363,
+                105288646621191754218635047234198033888793063910621244998394884076270002325
+            );
+
+            let (mfhp0, mfhp1, mfhp2) = mainnet_first_hades_permutation;
 
             let (fs0, fs1, fs2) = hades_permutation(
                 mfhp0 + get_contract_address().into(), mfhp1 + self.get_struct_hash_rev_1(), mfhp2
@@ -136,17 +144,17 @@ impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExec
             return HashState { s0: fs0, s1: fs1, s2: fs2, odd: false }.finalize();
         }
         if chain_id == 'SN_GOERLI' {
-            // goerli_domain_hash = 675582295603192327528831240503702820896706487235401654583087856516636529744;
+            // goerli_domain_hash = 1701745446521084880398304892663153620369986404965355966845160547816664289809;
             // result of hades_permutation('StarkNet Message', goerli_domain_hash, 0);
             let goerli_first_hades_permutation = (
-                66935669433055122830338184180135473587363615299602357034397441854497537432,
-                3129201308487698509211263622535430894718798011618046231006704155132513876661,
-                1564676662968736057938598045533672220702488601100673957348600464129471843386
+                525530995690438368115298687904315435654197055547696923992434565646087910422,
+                3038768008552013550623612989523737978318878097021728028876203655331048060334,
+                385518898049765577769956278469845800327401014397379779953573488122407330399
             );
             let (mfhp0, mfhp1, mfhp2) = goerli_first_hades_permutation;
 
             let (fs0, fs1, fs2) = hades_permutation(
-                mfhp0 + get_contract_address().into(), mfhp1 + self.get_struct_hash_rev_1(), mfhp2
+                mfhp0 + get_contract_address().into(), mfhp1 + (*self).get_struct_hash_rev_1(), mfhp2
             );
             return HashState { s0: fs0, s1: fs1, s2: fs2, odd: false }.finalize();
         }

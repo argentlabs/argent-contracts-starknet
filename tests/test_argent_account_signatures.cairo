@@ -1,9 +1,5 @@
-use argent::offchain_message::interface::{StructHashStarknetDomain, StarknetDomain};
 use argent::presets::argent_account::ArgentAccount;
 use argent::signer::signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey};
-use hash::{HashStateExTrait, HashStateTrait};
-use poseidon::poseidon_hash_span;
-use poseidon::{hades_permutation, PoseidonTrait, HashState};
 use starknet::VALIDATED;
 use starknet::{get_contract_address, get_tx_info, account::Call};
 use super::setup::{
@@ -14,19 +10,6 @@ use super::setup::{
         initialize_account_without_guardian, initialize_account_with
     }
 };
-
-
-#[test]
-fn my_test() {
-    let domain = StarknetDomain {
-        name: 'Account.execute_from_outside', version: 1, chain_id: 0x534e5f4d41494e, revision: 1,
-    };
-
-    println!("{}", domain.get_struct_hash_rev_1());
-
-    let (ms0, ms1, ms2) = hades_permutation('StarkNet Message', domain.get_struct_hash_rev_1(), 0);
-    println!("1: {}, 2: {}, 3: {}", ms0, ms1, ms2);
-}
 
 #[test]
 fn valid_no_guardian() {

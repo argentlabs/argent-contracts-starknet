@@ -6,12 +6,7 @@ fn assert_only_self() {
 }
 
 #[inline(always)]
-fn assert_only_protocol() {
-    assert(get_caller_address().is_zero(), 'argent/non-null-caller');
-}
-
-#[inline(always)]
-fn assert_only_protocol_with_caller_address(caller_address: ContractAddress) {
+fn assert_only_protocol(caller_address: ContractAddress) {
     assert(caller_address.is_zero(), 'argent/non-null-caller');
 }
 

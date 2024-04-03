@@ -17,12 +17,11 @@ mod ArgentAccount {
     };
     use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
     use argent::utils::{
-        asserts::{assert_no_self_call, assert_only_protocol_with_caller_address, assert_only_self},
-        calls::execute_multicall, serialization::full_deserialize,
+        asserts::{assert_no_self_call, assert_only_self, assert_only_protocol}, calls::execute_multicall,
+        serialization::full_deserialize,
         transaction_version::{
             TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
-            assert_correct_deploy_account_version, assert_no_unsupported_v3_fields,
-            assert_no_unsupported_v3_fields_with_data, DA_MODE_L1, is_estimate_transaction
+            assert_correct_deploy_account_version, DA_MODE_L1, is_estimate_transaction
         }
     };
     use core::box::BoxTrait;
@@ -326,9 +325,9 @@ mod ArgentAccount {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             let exec_info = get_execution_info().unbox();
             let tx_info = exec_info.tx_info.unbox();
-            assert_only_protocol_with_caller_address(exec_info.caller_address);
+            assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
-            assert_no_unsupported_v3_fields_with_data(tx_info.paymaster_data.is_empty());
+            assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             if self.session.is_session(tx_info.signature) {
                 self.session.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature,);
             } else {
@@ -347,7 +346,7 @@ mod ArgentAccount {
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
             let exec_info = get_execution_info().unbox();
             let tx_info = exec_info.tx_info.unbox();
-            assert_only_protocol_with_caller_address(exec_info.caller_address);
+            assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
             let signature = tx_info.signature;
             if self.session.is_session(signature) {
@@ -461,7 +460,7 @@ mod ArgentAccount {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_declare_version(tx_info.version);
-            assert_no_unsupported_v3_fields();
+            assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
             VALIDATED
         }
@@ -475,7 +474,7 @@ mod ArgentAccount {
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_deploy_account_version(tx_info.version);
-            assert_no_unsupported_v3_fields_with_data(tx_info.paymaster_data.is_empty());
+            assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
             VALIDATED
         }

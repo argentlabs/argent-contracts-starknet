@@ -1,9 +1,5 @@
 use argent::signer::signer_signature::{Signer, SignerStorageValue, SignerSignature, SignerType};
 use argent::utils::array_ext::StoreFelt252Array;
-use core::array::ArrayTrait;
-use core::array::SpanTrait;
-use core::option::OptionTrait;
-use core::traits::TryInto;
 use starknet::ContractAddress;
 
 #[starknet::interface]
@@ -44,6 +40,7 @@ struct EscapeCanceled {
     new_signers: Span<felt252>
 }
 
+/// @notice The status of the Escape
 #[derive(Drop, Copy, Serde, PartialEq, Debug)]
 enum EscapeStatus {
     /// No escape triggered, or it was canceled
@@ -56,26 +53,29 @@ enum EscapeStatus {
     Expired,
 }
 
+/// @notice Information relative to escaping signers
+/// @param ready_at when the escape can be completed
+/// @param target_signers the signers to escape
+/// @param new_signers the new signers to be set after the security period
 #[derive(Drop, Serde, starknet::StorePacking)]
 struct Escape {
-    // timestamp for activation of escape mode, 0 otherwise
     ready_at: u64,
-    // target signer address
     target_signers: Array<felt252>,
-    // new signer address
     new_signers: Array<felt252>,
 }
 
+/// @notice Information relative to whether the escape is enabled
+/// @param is_enabled The escape is enabled
+/// @param security_period Time it takes for the escape to become ready after being triggered
+/// @param expiry_period The escape will be ready and can be completed for this duration
 #[derive(Drop, Copy, Serde, starknet::StorePacking)]
 struct EscapeEnabled {
-    // The escape is enabled
     is_enabled: bool,
-    // Time it takes for the escape to become ready after being triggered
     security_period: u64,
-    //  The escape will be ready and can be completed for this duration
     expiry_period: u64,
 }
 
+/// @notice The type of the escape telling who is about to be escaped
 #[derive(Drop, Copy, Serde, PartialEq, Default)]
 enum LegacyEscapeType {
     #[default]
@@ -84,13 +84,14 @@ enum LegacyEscapeType {
     Owner
 }
 
+/// @notice The Legace Escape (only used in the ArgentAccount)
+/// @param ready_at when the escape can be completed
+/// @param escape_type The type of the escape telling who is about to be escaped
+/// @param new_signer The new signer (new owner or new guardian address) or zero if guardian removed
 #[derive(Drop, Copy, Serde, Default)]
 struct LegacyEscape {
-    // timestamp for activation of escape mode, 0 otherwise
     ready_at: u64,
-    // None, Guardian, Owner
     escape_type: LegacyEscapeType,
-    // new owner or new guardian address
     new_signer: Option<SignerStorageValue>,
 }
 

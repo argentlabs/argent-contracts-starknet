@@ -39,7 +39,7 @@ trait IOutsideExecution<TContractState> {
     fn get_outside_execution_message_hash_rev_1(self: @TContractState, outside_execution: OutsideExecution) -> felt252;
 }
 
-/// This trait has to be implemented when using the component `outside_execution_component` (This is enforced by the compiler)
+/// This trait must be implemented when using the component `outside_execution_component` (This is enforced by the compiler)
 trait IOutsideExecutionCallback<TContractState> {
     /// @notice Callback performed after checking the OutsideExecution is valid
     /// @dev Make the correct access control checks in this callback

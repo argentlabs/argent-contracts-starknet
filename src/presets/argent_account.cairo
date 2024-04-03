@@ -24,8 +24,6 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, assert_no_unsupported_v3_fields, DA_MODE_L1, is_estimate_transaction
         }
     };
-    use core::option::OptionTrait;
-    use core::traits::TryInto;
     use hash::HashStateTrait;
     use pedersen::PedersenTrait;
     use starknet::{
@@ -50,10 +48,10 @@ mod ArgentAccount {
     const MAX_ESCAPE_MAX_FEE_STRK: u128 = 5_000000000000000000; // 5 STRK
     const MAX_ESCAPE_TIP_STRK: u128 = 1_000000000000000000; // 1 STRK
 
-    #[abi(embed_v0)]
-    impl Sessionable = session_component::SessionImpl<ContractState>;
     // session 
     component!(path: session_component, storage: session, event: SessionableEvents);
+    #[abi(embed_v0)]
+    impl Sessionable = session_component::SessionImpl<ContractState>;
     // Execute from outside
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]

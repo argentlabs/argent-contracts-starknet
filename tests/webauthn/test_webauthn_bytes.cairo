@@ -83,8 +83,8 @@ fn convert_bytes_to_felt252_overflow() {
         151,
         99,
     ];
-    let value: felt252 = bytes.span().try_into().unwrap(); // sha256("localhost")
-    assert_eq!(value, 1, "invalid");
+    let output: Option<felt252> = bytes.span().try_into(); // sha256("localhost")
+    assert!(output.is_none(), "invalid");
 }
 
 #[test]

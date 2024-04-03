@@ -9,6 +9,50 @@ use super::setup::{
         initialize_account_without_guardian, initialize_account_with
     }
 };
+use argent::offchain_message::interface::{StructHashStarknetDomain, StarknetDomain};
+use starknet::{get_contract_address, get_tx_info, account::Call};
+use poseidon::poseidon_hash_span;
+use poseidon::{hades_permutation, PoseidonTrait, HashState};
+use hash::{HashStateExTrait, HashStateTrait};
+
+
+
+#[test]
+fn my_test() {
+            let domain = StarknetDomain {
+            name: 'SessionAccount.session', version: 1, chain_id: 0x534e5f474f45524c49, revision: 1,
+        };
+
+        let a = poseidon_hash_span(
+            array![
+                1,
+                2,
+                3,
+                4,
+            ]
+                .span()
+        );
+        println!("{}", a);
+
+    // let (ms0, ms1, ms2) = hades_permutation(1 ,2, 0);
+    // let (fs0, fs1, fs2) = hades_permutation(ms0 + 3, ms1 + 4, ms2);
+    // let hashstate = HashState { s0: fs0, s1:fs1, s2:fs2, odd: false }.finalize();
+    // println!("{}", hashstate);
+
+     let (ms0, ms1, ms2) = hades_permutation('StarkNet Message' ,675582295603192327528831240503702820896706487235401654583087856516636529744, 0);
+     println!("1: {}, 2: {}, 3: {}", ms0, ms1, ms2);
+
+        // let b = poseidon_hash_span(
+        //     array![
+        //          message_hash,
+        //         3,
+                
+        //     ]
+        //         .span()
+        // );
+        //     println!("{}", b);
+
+}
 
 #[test]
 fn valid_no_guardian() {

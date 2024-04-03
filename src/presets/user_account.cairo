@@ -16,14 +16,12 @@ mod ArgentUserAccount {
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
         serialization::full_deserialize,
-        transaction_version::{
-            assert_correct_invoke_version, assert_no_unsupported_v3_fields, assert_correct_deploy_account_version
-        },
+        transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
     };
     use core::array::ArrayTrait;
     use core::result::ResultTrait;
     use core::traits::Into;
-    use starknet::{get_tx_info, get_contract_address, VALIDATED, ClassHash, account::Call};
+    use starknet::{get_tx_info, get_contract_address, get_execution_info, VALIDATED, ClassHash, account::Call};
 
     const NAME: felt252 = 'ArgentAccount';
     const VERSION_MAJOR: u8 = 0;
@@ -113,19 +111,20 @@ mod ArgentUserAccount {
     #[abi(embed_v0)]
     impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
-            assert_only_protocol();
-            let tx_info = get_tx_info().unbox();
+            let exec_info = get_execution_info().unbox();
+            let tx_info = exec_info.tx_info.unbox();
+            assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
-            assert_no_unsupported_v3_fields();
-
+            assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             self.assert_valid_calls(calls.span());
             self.assert_valid_signatures(calls.span(), tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
-            assert_only_protocol();
-            let tx_info = get_tx_info().unbox();
+            let exec_info = get_execution_info().unbox();
+            let tx_info = exec_info.tx_info.unbox();
+            assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
 
             // execute calls
@@ -164,7 +163,7 @@ mod ArgentUserAccount {
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_deploy_account_version(tx_info.version);
-            assert_no_unsupported_v3_fields();
+            assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             // only 1 signer needed to deploy
             let is_valid = self
                 .multisig

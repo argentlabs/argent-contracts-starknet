@@ -19,9 +19,7 @@ mod MockFutureArgentAccount {
     };
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
-        asserts::{assert_no_self_call, assert_only_protocol, assert_only_self}, calls::execute_multicall,
-        serialization::full_deserialize,
-        transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version,}
+        asserts::{assert_no_self_call, assert_only_self}, calls::execute_multicall, serialization::full_deserialize,
     };
     use core::option::OptionTrait;
     use core::traits::TryInto;
@@ -82,16 +80,12 @@ mod MockFutureArgentAccount {
     #[abi(embed_v0)]
     impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
-            assert_only_protocol();
             let tx_info = get_tx_info().unbox();
-            assert_correct_invoke_version(tx_info.version);
             self.assert_valid_calls_and_signature(calls.span(), tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
-            assert_only_protocol();
-            assert_correct_invoke_version(get_tx_info().unbox().version);
             execute_multicall(calls.span())
         }
 
@@ -142,7 +136,6 @@ mod MockFutureArgentAccount {
             guardian: Option<Signer>
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
-            assert_correct_deploy_account_version(tx_info.version);
             self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
             VALIDATED
         }

@@ -15,7 +15,6 @@ mod MockFutureArgentMultisig {
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
         serialization::full_deserialize,
-        transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
     };
     use core::array::ArrayTrait;
     use core::result::ResultTrait;
@@ -78,16 +77,12 @@ mod MockFutureArgentMultisig {
     #[abi(embed_v0)]
     impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
-            assert_only_protocol();
             let tx_info = get_tx_info().unbox();
-            assert_correct_invoke_version(tx_info.version);
             self.assert_valid_signatures(calls.span(), tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
-            assert_only_protocol();
-            assert_correct_invoke_version(get_tx_info().unbox().version);
             execute_multicall(calls.span())
         }
 
@@ -119,18 +114,7 @@ mod MockFutureArgentMultisig {
             threshold: usize,
             signers: Array<Signer>
         ) -> felt252 {
-            let tx_info = get_tx_info().unbox();
-            assert_correct_deploy_account_version(tx_info.version);
-            // only 1 signer needed to deploy
-            let is_valid = self
-                .multisig
-                .is_valid_signature_with_threshold(
-                    hash: tx_info.transaction_hash,
-                    threshold: 1,
-                    signer_signatures: parse_signature_array(tx_info.signature)
-                );
-            assert(is_valid, 'argent/invalid-signature');
-            VALIDATED
+            panic_with_felt252('argent/deploy-not-available')
         }
 
         fn get_name(self: @ContractState) -> felt252 {

@@ -128,7 +128,7 @@ mod ArgentAccount {
         GuardianBackupChanged: GuardianBackupChanged,
         GuardianBackupChangedGuid: GuardianBackupChangedGuid,
         SignerLinked: SignerLinked,
-        EscapeDelayChanged: EscapeDelayChanged,
+        EscapeSecurityPeriodChanged: EscapeSecurityPeriodChanged,
     }
 
     /// @notice Deprecated. This is only emmited if both owner and guardian (if any) are starknetKeys
@@ -289,7 +289,7 @@ mod ArgentAccount {
     }
 
     #[derive(Drop, starknet::Event)]
-    struct EscapeDelayChanged {
+    struct EscapeSecurityPeriodChanged {
         // Time it takes for the escape to become ready after being triggered
         security_period: u64,
     }
@@ -470,10 +470,10 @@ mod ArgentAccount {
             assert_only_self();
             assert(new_security_period != 0, 'argent/invalid-security-period');
             self.security_period.write(new_security_period);
-            self.emit(EscapeDelayChanged { security_period: new_security_period });
+            self.emit(EscapeSecurityPeriodChanged { security_period: new_security_period });
         }
 
-        fn get_security_period(self: @ContractState) -> u64 {
+        fn get_escape_security_period(self: @ContractState) -> u64 {
             let storage_value = self.security_period.read();
             if storage_value == 0 {
                 DEFAULT_ESCAPE_SECURITY_PERIOD
@@ -552,7 +552,7 @@ mod ArgentAccount {
 
             // no escape if there is a guardian escape triggered by the owner in progress
             let current_escape = self._escape.read();
-            let security_period = self.get_security_period();
+            let security_period = self.get_escape_security_period();
             if current_escape.escape_type == LegacyEscapeType::Guardian {
                 assert(
                     get_escape_status(current_escape.ready_at, security_period) == EscapeStatus::Expired,
@@ -585,7 +585,7 @@ mod ArgentAccount {
                 (0, Option::None)
             };
 
-            let ready_at = get_block_timestamp() + self.get_security_period();
+            let ready_at = get_block_timestamp() + self.get_escape_security_period();
             let escape = LegacyEscape {
                 ready_at, escape_type: LegacyEscapeType::Guardian, new_signer: new_guardian_storage_value,
             };
@@ -598,7 +598,7 @@ mod ArgentAccount {
 
             let current_escape = self._escape.read();
 
-            let current_escape_status = get_escape_status(current_escape.ready_at, self.get_security_period());
+            let current_escape_status = get_escape_status(current_escape.ready_at, self.get_escape_security_period());
             assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
             self.reset_escape_timestamps();
@@ -618,7 +618,7 @@ mod ArgentAccount {
             let current_escape = self._escape.read();
             // TODO This could be done during validation?
             assert(
-                get_escape_status(current_escape.ready_at, self.get_security_period()) == EscapeStatus::Ready,
+                get_escape_status(current_escape.ready_at, self.get_escape_security_period()) == EscapeStatus::Ready,
                 'argent/invalid-escape'
             );
 
@@ -637,7 +637,7 @@ mod ArgentAccount {
         fn cancel_escape(ref self: ContractState) {
             assert_only_self();
             let current_escape = self._escape.read();
-            let current_escape_status = get_escape_status(current_escape.ready_at, self.get_security_period());
+            let current_escape_status = get_escape_status(current_escape.ready_at, self.get_escape_security_period());
             assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
             self.reset_escape();
             self.reset_escape_timestamps();
@@ -733,7 +733,7 @@ mod ArgentAccount {
         /// Current escape if any, and its status
         fn get_escape_and_status(self: @ContractState) -> (LegacyEscape, EscapeStatus) {
             let current_escape = self._escape.read();
-            (current_escape, get_escape_status(current_escape.ready_at, self.get_security_period()))
+            (current_escape, get_escape_status(current_escape.ready_at, self.get_escape_security_period()))
         }
     }
 
@@ -946,7 +946,9 @@ mod ArgentAccount {
         }
 
         fn reset_escape(ref self: ContractState) {
-            let current_escape_status = get_escape_status(self._escape.read().ready_at, self.get_security_period());
+            let current_escape_status = get_escape_status(
+                self._escape.read().ready_at, self.get_escape_security_period()
+            );
             if current_escape_status == EscapeStatus::None {
                 return;
             }

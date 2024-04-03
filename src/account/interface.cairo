@@ -122,7 +122,7 @@ trait IArgentUserAccount<TContractState> {
     /// Current escape if any, and its status
     fn get_escape_and_status(self: @TContractState) -> (LegacyEscape, EscapeStatus);
     /// Reads the current security period used for escapes
-    fn get_security_period(self: @TContractState) -> u64;
+    fn get_escape_security_period(self: @TContractState) -> u64;
 }
 
 /// Deprecated methods for compatibility reasons

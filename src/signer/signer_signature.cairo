@@ -63,6 +63,7 @@ struct Secp256r1Signer {
 struct Eip191Signer {
     eth_address: EthAddress
 }
+
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSigner {
     origin: NonZero<felt252>,
@@ -138,27 +139,28 @@ impl SignerTraitImpl of SignerTrait {
         }
     }
 
-    fn storage_value(self: @Signer) -> SignerStorageValue {
+    fn storage_value(self: Signer) -> SignerStorageValue {
         match self {
             Signer::Starknet(signer) => SignerStorageValue {
-                signer_type: SignerType::Starknet, stored_value: (*signer.pubkey).into()
+                signer_type: SignerType::Starknet, stored_value: signer.pubkey.into()
             },
             Signer::Secp256k1(signer) => SignerStorageValue {
-                signer_type: SignerType::Secp256k1, stored_value: (*signer).pubkey_hash.address.try_into().unwrap()
+                signer_type: SignerType::Secp256k1, stored_value: signer.pubkey_hash.address.try_into().unwrap()
             },
             Signer::Secp256r1 => SignerStorageValue {
-                signer_type: SignerType::Secp256r1, stored_value: (*self).into_guid().try_into().unwrap()
+                signer_type: SignerType::Secp256r1, stored_value: self.into_guid().try_into().unwrap()
             },
             Signer::Eip191(signer) => SignerStorageValue {
-                signer_type: SignerType::Eip191, stored_value: (*signer).eth_address.address.try_into().unwrap()
+                signer_type: SignerType::Eip191, stored_value: signer.eth_address.address.try_into().unwrap()
             },
             Signer::Webauthn => SignerStorageValue {
-                signer_type: SignerType::Webauthn, stored_value: (*self).into_guid().try_into().unwrap()
+                signer_type: SignerType::Webauthn, stored_value: self.into_guid().try_into().unwrap()
             },
         }
     }
+
     #[inline(always)]
-    fn signer_type(self: @Signer) -> SignerType {
+    fn signer_type(self: Signer) -> SignerType {
         match self {
             Signer::Starknet => SignerType::Starknet,
             Signer::Secp256k1 => SignerType::Secp256k1,
@@ -181,7 +183,7 @@ impl SignerStorageValueImpl of SignerStorageTrait {
         }
     }
 
-    fn is_stored_as_guid(self: @SignerStorageValue) -> bool {
+    fn is_stored_as_guid(self: SignerStorageValue) -> bool {
         match self.signer_type {
             SignerType::Starknet => false,
             SignerType::Eip191 => false,
@@ -192,9 +194,9 @@ impl SignerStorageValueImpl of SignerStorageTrait {
     }
 
     #[inline(always)]
-    fn starknet_pubkey_or_none(self: @SignerStorageValue) -> Option<felt252> {
+    fn starknet_pubkey_or_none(self: SignerStorageValue) -> Option<felt252> {
         match self.signer_type {
-            SignerType::Starknet => Option::Some(*self.stored_value),
+            SignerType::Starknet => Option::Some(self.stored_value),
             _ => Option::None,
         }
     }
@@ -310,19 +312,15 @@ fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, assertion:
 trait SignerSpanTrait {
     #[must_use]
     #[inline(always)]
-    fn to_guid_list(self: @Span<Signer>) -> Array<felt252>;
+    fn to_guid_list(self: Span<Signer>) -> Array<felt252>;
 }
 
 impl SignerSpanTraitImpl of SignerSpanTrait {
     #[must_use]
-    fn to_guid_list(self: @Span<Signer>) -> Array<felt252> {
-        let mut signers = *self;
+    fn to_guid_list(mut self: Span<Signer>) -> Array<felt252> {
         let mut guids = array![];
-        loop {
-            match signers.pop_front() {
-                Option::Some(signer) => guids.append((*signer).into_guid()),
-                Option::None => { break; },
-            };
+        while let Option::Some(signer) = self.pop_front() {
+            guids.append((*signer).into_guid());
         };
         guids
     }
@@ -330,14 +328,10 @@ impl SignerSpanTraitImpl of SignerSpanTrait {
 
 fn assert_sorted_guids(mut guids: Span<felt252>, error_message: felt252) {
     let mut last_guid: u256 = 0;
-    loop {
-        match guids.pop_front() {
-            Option::Some(guid) => {
-                let guid_u256: u256 = (*guid).into();
-                assert(guid_u256 > last_guid, error_message);
-                last_guid = guid_u256;
-            },
-            Option::None => { break; },
+    while let Option::Some(guid) = guids
+        .pop_front() {
+            let guid_u256: u256 = (*guid).into();
+            assert(guid_u256 > last_guid, error_message);
+            last_guid = guid_u256;
         };
-    };
 }

@@ -18,7 +18,7 @@ const MAINNET_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
         105288646621191754218635047234198033888793063910621244998394884076270002325
     );
 
-const SEPOLIA_FRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
+const SEPOLIA_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
     (
         745540723582226592436632693000411598770476874516739165104583972640400378932,
         62154301810125581556071585758541948884661504815060895665449539162589631391,
@@ -149,7 +149,7 @@ impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExec
             return get_message_hash_rev_1_with_precalc(MAINNET_FIRST_HADES_PERMUTATION, *self);
         }
         if chain_id == 'SN_SEPOLIA' {
-            return get_message_hash_rev_1_with_precalc(SEPOLIA_FRST_HADES_PERMUTATION, *self);
+            return get_message_hash_rev_1_with_precalc(SEPOLIA_FIRST_HADES_PERMUTATION, *self);
         }
         let domain = StarknetDomain { name: 'Account.execute_from_outside', version: 1, chain_id, revision: 1 };
         poseidon_hash_span(

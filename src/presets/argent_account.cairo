@@ -389,25 +389,25 @@ mod ArgentAccount {
             // As the storage layout for the escape is changing, if there is an ongoing escape it should revert
             // Expired escapes will be cleared
             let base = storage_base_address_from_felt252(selector!("_escape"));
-            let escape_ready_at: u64 = storage_read_syscall(0, storage_address_from_base_and_offset(base, 0))
-                .unwrap_syscall()
-                .try_into()
-                .unwrap();
-            let escape_type = storage_read_syscall(0, storage_address_from_base_and_offset(base, 1)).unwrap_syscall();
-            let escape_new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(base, 2))
+            let escape_ready_at = storage_read_syscall(0, storage_address_from_base_and_offset(base, 0))
                 .unwrap_syscall();
 
             if escape_ready_at == 0 {
+                let escape_type = storage_read_syscall(0, storage_address_from_base_and_offset(base, 1))
+                    .unwrap_syscall();
+                let escape_new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(base, 2))
+                    .unwrap_syscall();
                 assert(escape_type.is_zero(), 'argent/esc-type-shoud-be-null');
                 assert(escape_new_signer.is_zero(), 'argent/new-signer-shoud-be-null');
             } else {
-                if escape_ready_at + DEFAULT_ESCAPE_SECURITY_PERIOD <= get_block_timestamp() {
-                    // Expired. Clear escape
-                    self._escape.write(Default::default());
-                } else {
-                    // NotReady or Ready
-                    panic_with_felt252('argent/invalid-escape-status');
-                }
+                let escape_ready_at: u64 = escape_ready_at.try_into().unwrap();
+                // Block upgrade if there is an ongoing escape
+                assert(
+                    get_block_timestamp() > escape_ready_at + DEFAULT_ESCAPE_SECURITY_PERIOD,
+                    'argent/invalid-escape-status'
+                );
+                // Clear the escape if it was expired
+                self._escape.write(Default::default());
             }
 
             // Cleaning attempts storage => This should NOT have any impact as we don't allow to upgrade if there is an escape ongoing

@@ -228,7 +228,6 @@ export class DappService {
   ): Promise<bigint[]> {
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
     const sessionWithTxHash = hash.computePoseidonHash(transactionHash, sessionMessageHash);
-    console.log("sessionWithTxHash", sessionWithTxHash);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));
     return [signature.r, signature.s];
   }

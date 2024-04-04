@@ -161,16 +161,6 @@ mod ArgentAccount {
         response: Span<Span<felt252>>
     }
 
-    /// @notice Deprecated from v0.4.0. This is only emitted if new owner is a starknet key
-    /// @notice Owner escape was triggered by the guardian
-    /// @param ready_at when the escape can be completed
-    /// @param new_owner new starknet pubkey to be set after the security period
-    #[derive(Drop, starknet::Event)]
-    struct EscapeOwnerTriggered {
-        ready_at: u64,
-        new_owner: felt252
-    }
-
     /// @notice Owner escape was triggered by the guardian
     /// @param ready_at when the escape can be completed
     /// @param new_owner_guid new guid to be set after the security period
@@ -178,16 +168,6 @@ mod ArgentAccount {
     struct EscapeOwnerTriggeredGuid {
         ready_at: u64,
         new_owner_guid: felt252
-    }
-
-    /// @notice Deprecated from v0.4.0. This is only emitted if the guardian is empty or a starknet key
-    /// @notice Guardian escape was triggered by the owner
-    /// @param ready_at when the escape can be completed
-    /// @param new_guardian address of the new guardian to be set after the security period. O if the guardian will be removed
-    #[derive(Drop, starknet::Event)]
-    struct EscapeGuardianTriggered {
-        ready_at: u64,
-        new_guardian: felt252
     }
 
     /// @notice Guardian escape was triggered by the owner
@@ -199,27 +179,11 @@ mod ArgentAccount {
         new_guardian_guid: felt252
     }
 
-    /// @notice Deprecated from v0.4.0. This is only emitted if the new owner is a starknet key
-    /// @notice Owner escape was completed and there is a new account owner
-    /// @param new_owner new owner address
-    #[derive(Drop, starknet::Event)]
-    struct OwnerEscaped {
-        new_owner: felt252
-    }
-
     /// @notice Owner escape was completed and there is a new account owner
     /// @param new_owner_guid new owner guid
     #[derive(Drop, starknet::Event)]
     struct OwnerEscapedGuid {
         new_owner_guid: felt252
-    }
-
-    /// @notice Deprecated from v0.4.0. This is only emitted if the new guardian is empty or a starknet key
-    /// @notice Guardian escape was completed and there is a new account guardian
-    /// @param new_guardian address of the new guardian or 0 if it was removed
-    #[derive(Drop, starknet::Event)]
-    struct GuardianEscaped {
-        new_guardian: felt252
     }
 
     /// @notice Guardian escape was completed and there is a new account guardian
@@ -229,7 +193,7 @@ mod ArgentAccount {
         new_guardian_guid: felt252
     }
 
-    /// An ongoing escape was canceled
+    /// @notice An ongoing escape was canceled
     #[derive(Drop, starknet::Event)]
     struct EscapeCanceled {}
 
@@ -278,6 +242,10 @@ mod ArgentAccount {
         new_guardian_backup_guid: felt252
     }
 
+    /// @notice A new signer was linked 
+    /// @param signer_guid the guid of the signer derived from the signer
+    /// @param signer the signer being added 
+    /// @dev This is the only way to get the signer struct knowing a only guid
     #[derive(Drop, starknet::Event)]
     struct SignerLinked {
         #[key]
@@ -285,9 +253,10 @@ mod ArgentAccount {
         signer: Signer,
     }
 
+    /// @notice The security period for the escape was update
+    /// @param escape_security_period the new security for the escape in seconds
     #[derive(Drop, starknet::Event)]
     struct EscapeSecurityPeriodChanged {
-        // Time it takes for the escape to become ready after being triggered
         escape_security_period: u64,
     }
 

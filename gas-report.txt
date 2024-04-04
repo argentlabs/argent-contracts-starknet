@@ -31,8 +31,8 @@ Resources:
 │   Transfer - No guardian (Old Sig)   │    0    │   3   │   0   │   0    │    25    │    0     │     187     │  7935  │
 │  Transfer - With guardian (Old Sig)  │    0    │   6   │   0   │   0    │    25    │    0     │     196     │  8510  │
 │        Transfer - OZ account         │    0    │   3   │   0   │   0    │    25    │    0     │     183     │  7267  │
-│   Transfer - Eth sig with guardian   │   30    │   3   │   0   │   1    │    26    │    0     │    14797    │ 165113 │
-│  Transfer - Secp256r1 with guardian  │    0    │   3   │   0   │   0    │    26    │    2     │    28573    │ 262156 │
+│   Transfer - Eth sig with guardian   │   30    │   3   │   0   │   1    │    26    │    0     │    14798    │ 165112 │
+│  Transfer - Secp256r1 with guardian  │    0    │   3   │   0   │   0    │    26    │    2     │    28573    │ 262157 │
 │   Transfer - Eip161 with guardian    │   64    │   3   │   0   │   2    │    26    │    0     │    14972    │ 166306 │
-│   Transfer - Webauthn no guardian    │  9268   │   3   │   0   │   0    │    26    │    4     │    90960    │ 595478 │
+│   Transfer - Webauthn no guardian    │  9268   │   3   │   0   │   0    │    26    │    4     │    90975    │ 595497 │
 └──────────────────────────────────────┴─────────┴───────┴───────┴────────┴──────────┴──────────┴─────────────┴────────┘

@@ -15,24 +15,24 @@ Summary:
 │   Transfer - Eth sig with guardian   │ '21.384.000.000.192' │ 0.0855  │ 21384000000000 │      594       │       592       │     2     │      2       │        'range_check'         │       3       │  192   │ 'BLOB'  │
 │  Transfer - Secp256r1 with guardian  │ '41.220.000.000.192' │ 0.1648  │ 41220000000000 │      1145      │      1143       │     2     │      2       │        'range_check'         │       3       │  192   │ 'BLOB'  │
 │   Transfer - Eip161 with guardian    │ '21.636.000.000.192' │ 0.0865  │ 21636000000000 │      601       │       599       │     2     │      2       │        'range_check'         │       3       │  192   │ 'BLOB'  │
-│   Transfer - Webauthn no guardian    │ '50.508.000.000.192' │  0.202  │ 50508000000000 │      1403      │      1378       │     2     │      25      │        'range_check'         │       3       │  192   │ 'BLOB'  │
+│   Transfer - Webauthn no guardian    │ '51.156.000.000.192' │ 0.2046  │ 51156000000000 │      1421      │      1395       │     2     │      26      │        'range_check'         │       3       │  192   │ 'BLOB'  │
 └──────────────────────────────────────┴──────────────────────┴─────────┴────────────────┴────────────────┴─────────────────┴───────────┴──────────────┴──────────────────────────────┴───────────────┴────────┴─────────┘
 Resources:
 ┌──────────────────────────────────────┬─────────┬───────┬───────┬────────┬──────────┬──────────┬─────────────┬────────┐
 │               (index)                │ bitwise │ ec_op │ ecdsa │ keccak │ pedersen │ poseidon │ range_check │ steps  │
 ├──────────────────────────────────────┼─────────┼───────┼───────┼────────┼──────────┼──────────┼─────────────┼────────┤
-│         Deploy - No guardian         │    0    │   3   │   0   │   0    │    29    │    1     │     103     │  5945  │
-│        Deploy - With guardian        │    0    │   6   │   0   │   0    │    33    │    2     │     114     │  6898  │
+│         Deploy - No guardian         │    0    │   3   │   0   │   0    │    29    │    1     │     103     │  5943  │
+│        Deploy - With guardian        │    0    │   6   │   0   │   0    │    33    │    2     │     114     │  6894  │
 │             Deploy - OZ              │    0    │   3   │   0   │   0    │    26    │    0     │     103     │  4638  │
 │ Transfer - Old account with guardian │    0    │   3   │   1   │   0    │    27    │    0     │     192     │  9139  │
-│        Transfer - No guardian        │    0    │   3   │   0   │   0    │    25    │    0     │     188     │  7976  │
-│       Transfer - With guardian       │    0    │   6   │   0   │   0    │    25    │    0     │     197     │  8551  │
-│       Transfer - With Session        │    0    │  12   │   0   │   0    │    26    │    13    │     272     │ 11291  │
-│   Transfer - No guardian (Old Sig)   │    0    │   3   │   0   │   0    │    25    │    0     │     187     │  7938  │
-│  Transfer - With guardian (Old Sig)  │    0    │   6   │   0   │   0    │    25    │    0     │     196     │  8516  │
+│        Transfer - No guardian        │    0    │   3   │   0   │   0    │    25    │    0     │     188     │  7974  │
+│       Transfer - With guardian       │    0    │   6   │   0   │   0    │    25    │    0     │     197     │  8547  │
+│       Transfer - With Session        │    0    │  12   │   0   │   0    │    26    │    13    │     272     │ 11279  │
+│   Transfer - No guardian (Old Sig)   │    0    │   3   │   0   │   0    │    25    │    0     │     187     │  7937  │
+│  Transfer - With guardian (Old Sig)  │    0    │   6   │   0   │   0    │    25    │    0     │     196     │  8514  │
 │        Transfer - OZ account         │    0    │   3   │   0   │   0    │    25    │    0     │     183     │  7267  │
-│   Transfer - Eth sig with guardian   │   30    │   3   │   0   │   1    │    26    │    0     │    14797    │ 165120 │
-│  Transfer - Secp256r1 with guardian  │    0    │   3   │   0   │   0    │    26    │    2     │    28574    │ 262165 │
-│   Transfer - Eip161 with guardian    │   64    │   3   │   0   │   2    │    26    │    0     │    14972    │ 166316 │
-│   Transfer - Webauthn no guardian    │   101   │   3   │   0   │   0    │    26    │    4     │    34441    │ 303911 │
+│   Transfer - Eth sig with guardian   │   30    │   3   │   0   │   1    │    26    │    0     │    14798    │ 165117 │
+│  Transfer - Secp256r1 with guardian  │    0    │   3   │   0   │   0    │    26    │    2     │    28573    │ 262157 │
+│   Transfer - Eip161 with guardian    │   64    │   3   │   0   │   2    │    26    │    0     │    14972    │ 166311 │
+│   Transfer - Webauthn no guardian    │   105   │   3   │   0   │   0    │    26    │    4     │    34851    │ 305894 │
 └──────────────────────────────────────┴─────────┴───────┴───────┴────────┴──────────┴──────────┴─────────────┴────────┘

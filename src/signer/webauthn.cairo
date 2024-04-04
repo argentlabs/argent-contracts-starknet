@@ -107,9 +107,6 @@ fn verify_authenticator_data(authenticator_data: Span<u8>, expected_rp_id_hash: 
     // 17. If user verification is required for this assertion, verify that the User Verified bit of the flags in authData is set.
     assert((flags & 0b00000100) == 0b00000100, 'unverified-user');
 
-    // Verify bits reserved for future use aren't set
-    assert((flags & 0b00111010) == 0, 'unexpected-flags');
-
     // 18. Allowing attested credential data and extension data if present
     ()
 }

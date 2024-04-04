@@ -42,7 +42,6 @@ mod signer_list_component {
 
     #[embeddable_as(SignerListInternalImpl)]
     impl InternalImpl<TContractState, +HasComponent<TContractState>> of ISignerList<ComponentState<TContractState>> {
-        // TODO rename to is_signer when upgrading the Cairo version
         #[inline(always)]
         fn is_signer_in_list(self: @ComponentState<TContractState>, signer: felt252) -> bool {
             if signer == 0 {

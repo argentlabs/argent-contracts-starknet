@@ -14,10 +14,6 @@ use starknet::secp256r1::Secp256r1Point;
 use starknet::{EthAddress, eth_signature::{Signature as Secp256k1Signature, is_eth_signature_valid}};
 
 /// All signer type magic values. Used to derive their guid
-// TODO worth moving all those in a mod
-// mod signer_magic {const STARKNET: felt252 = 'Starknet Signer';}
-// would be used like: signer_magic::STARKNET 
-// ???
 const STARKNET_SIGNER_TYPE: felt252 = 'Starknet Signer';
 const SECP256K1_SIGNER_TYPE: felt252 = 'Secp256k1 Signer';
 const SECP256R1_SIGNER_TYPE: felt252 = 'Secp256r1 Signer';
@@ -53,7 +49,7 @@ struct StarknetSignature {
     s: felt252,
 }
 
-/// @notice All supported Signer types with their public key (<= ???HELP TODO This isn't the correct term, but idk what is???)
+/// @notice Represents all supported Signers with their different signing schemes
 #[derive(Drop, Copy, Serde)]
 enum Signer {
     Starknet: StarknetSigner,
@@ -69,28 +65,28 @@ struct SignerStorageValue {
     signer_type: SignerType,
 }
 
-/// @notice The Starknet signer
+/// @notice The Starknet signer using the Starknet Curve
 /// @param pubkey the public key as felt252 for a starknet signature. Cannot be zero
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct StarknetSigner {
     pubkey: NonZero<felt252>
 }
 
-/// @notice The Secp256k1 signer
+/// @notice The Secp256k1 signer using the Secp256k1 elliptic curve
 /// @param pubkey_hash the right-most 160 bits of a Keccak hash of an ECDSA public key
 #[derive(Drop, Copy, PartialEq)]
 struct Secp256k1Signer {
     pubkey_hash: EthAddress
 }
 
-/// @notice The Secp256r1 signer
+/// @notice The Secp256r1 signer using the Secp256r1 elliptic curve
 /// @param pubkey the public key as a u256. Cannot be zero
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct Secp256r1Signer {
     pubkey: NonZero<u256>
 }
 
-/// @notice The Eip191Signer signer
+/// @notice The Eip191Signer signer conforming to the EIP-191 standard
 /// @param eth_address the ethereum address that signed the data 
 #[derive(Drop, Copy, PartialEq)]
 struct Eip191Signer {

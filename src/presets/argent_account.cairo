@@ -401,16 +401,15 @@ mod ArgentAccount {
                 assert(escape_new_signer.is_zero(), 'argent/new-signer-shoud-be-null');
             } else {
                 let escape_ready_at: u64 = escape_ready_at.try_into().unwrap();
-                // Block upgrade if there is an ongoing escape
-                assert(
-                    get_block_timestamp() > escape_ready_at + DEFAULT_ESCAPE_SECURITY_PERIOD,
-                    'argent/invalid-escape-status'
-                );
-                // Clear the escape if it was expired
+                if  get_block_timestamp() > escape_ready_at + DEFAULT_ESCAPE_SECURITY_PERIOD {
+                    // Not expired. Automatically cancelling the escape when upgrading
+                    self.emit(EscapeCanceled {});
+                }
+                // Clear the escape
                 self._escape.write(Default::default());
             }
 
-            // Cleaning attempts storage => This should NOT have any impact as we don't allow to upgrade if there is an escape ongoing
+            // Cleaning attempts storage as the escape was cleared
             let base = storage_base_address_from_felt252(selector!("guardian_escape_attempts"));
             storage_write_syscall(0, storage_address_from_base_and_offset(base, 0), 0).unwrap_syscall();
             let base = storage_base_address_from_felt252(selector!("owner_escape_attempts"));

@@ -1,7 +1,6 @@
 use argent::presets::argent_account::ArgentAccount;
 use argent::signer::signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey};
 use starknet::VALIDATED;
-use starknet::{get_contract_address, get_tx_info, account::Call};
 use super::setup::{
     utils::to_starknet_signer_signatures,
     constants::{GUARDIAN, OWNER, GUARDIAN_BACKUP, WRONG_OWNER, WRONG_GUARDIAN, tx_hash},

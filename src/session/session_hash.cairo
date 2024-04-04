@@ -8,6 +8,21 @@ use poseidon::{hades_permutation, poseidon_hash_span, HashState};
 use starknet::{get_contract_address, get_tx_info, account::Call};
 
 
+const MAINNET_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
+    (
+        2323134905843710400277850554467420438836802451436694979291226432262210349922,
+        497047802536209445013847976375993952138881488253153206740640135894961444223,
+        1534648249535688540587269261500462862519297145299981583675973457661163002808
+    );
+
+const SEPOLIA_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
+    (
+        1455693979196931730158938525193757396832111609401196356440323511906411072336,
+        1285103549382792039971227731321331281062781607693790103788417106544479526918,
+        355603609913586297640159467947347365736400566364146250616789011948497476301
+    );
+
+
 const SESSION_TYPE_HASH_REV_1: felt252 =
     selector!(
         "\"Session\"(\"Expires At\":\"timestamp\",\"Allowed Methods\":\"merkletree\",\"Metadata\":\"string\",\"Session Key\":\"felt\")"
@@ -45,20 +60,10 @@ impl OffChainMessageHashSessionRev1 of IOffChainMessageHashRev1<Session> {
         // This is due to a mistake made in the Braavos contracts and has been copied for compatibility
         let chain_id = get_tx_info().unbox().chain_id;
         if chain_id == 'SN_MAIN' {
-            let mainnet_first_hades_permutation = (
-                2323134905843710400277850554467420438836802451436694979291226432262210349922,
-                497047802536209445013847976375993952138881488253153206740640135894961444223,
-                1534648249535688540587269261500462862519297145299981583675973457661163002808
-            );
-            return get_message_hash_rev_1_with_precalc(mainnet_first_hades_permutation, *self);
+            return get_message_hash_rev_1_with_precalc(MAINNET_FIRST_HADES_PERMUTATION, *self);
         }
         if chain_id == 'SN_SEPOLIA' {
-            let sepolia_first_hades_permutation = (
-                1455693979196931730158938525193757396832111609401196356440323511906411072336,
-                1285103549382792039971227731321331281062781607693790103788417106544479526918,
-                355603609913586297640159467947347365736400566364146250616789011948497476301
-            );
-            return get_message_hash_rev_1_with_precalc(sepolia_first_hades_permutation, *self);
+            return get_message_hash_rev_1_with_precalc(SEPOLIA_FIRST_HADES_PERMUTATION, *self);
         }
         let domain = StarknetDomain { name: 'SessionAccount.session', version: 1, chain_id, revision: 1, };
         poseidon_hash_span(

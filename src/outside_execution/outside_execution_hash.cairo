@@ -11,6 +11,21 @@ use pedersen::PedersenTrait;
 use poseidon::{poseidon_hash_span, hades_permutation, HashState};
 use starknet::{get_tx_info, get_contract_address, account::Call};
 
+const MAINNET_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
+    (
+        466771826862796654720497916898873955545764255168198993180536052682392700659,
+        8304264822580609485631142291553027424455705068469035347025093264477380363,
+        105288646621191754218635047234198033888793063910621244998394884076270002325
+    );
+
+const SEPOLIA_FRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
+    (
+        745540723582226592436632693000411598770476874516739165104583972640400378932,
+        62154301810125581556071585758541948884661504815060895665449539162589631391,
+        3469680712295219559397768335134989296665687247431765753301038002536467417786
+    );
+
+
 const OUTSIDE_CALL_TYPE_HASH_REV_0: felt252 =
     selector!("OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)");
 
@@ -131,21 +146,10 @@ impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExec
 
         let chain_id = get_tx_info().unbox().chain_id;
         if chain_id == 'SN_MAIN' {
-            let mainnet_first_hades_permutation = (
-                466771826862796654720497916898873955545764255168198993180536052682392700659,
-                8304264822580609485631142291553027424455705068469035347025093264477380363,
-                105288646621191754218635047234198033888793063910621244998394884076270002325
-            );
-
-            return get_message_hash_rev_1_with_precalc(mainnet_first_hades_permutation, *self);
+            return get_message_hash_rev_1_with_precalc(MAINNET_FIRST_HADES_PERMUTATION, *self);
         }
         if chain_id == 'SN_SEPOLIA' {
-            let sepolia_first_hades_permutation = (
-                745540723582226592436632693000411598770476874516739165104583972640400378932,
-                62154301810125581556071585758541948884661504815060895665449539162589631391,
-                3469680712295219559397768335134989296665687247431765753301038002536467417786
-            );
-            return get_message_hash_rev_1_with_precalc(sepolia_first_hades_permutation, *self);
+            return get_message_hash_rev_1_with_precalc(SEPOLIA_FRST_HADES_PERMUTATION, *self);
         }
         let domain = StarknetDomain { name: 'Account.execute_from_outside', version: 1, chain_id, revision: 1 };
         poseidon_hash_span(

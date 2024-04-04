@@ -16,6 +16,7 @@ use starknet::{EthAddress, eth_signature::{Signature as Secp256k1Signature, is_e
 /// All signer type magic values. Used to derive their guid
 // TODO worth moving all those in a mod
 // mod signer_magic {const STARKNET: felt252 = 'Starknet Signer';}
+// would be used like: signer_magic::STARKNET 
 // ???
 const STARKNET_SIGNER_TYPE: felt252 = 'Starknet Signer';
 const SECP256K1_SIGNER_TYPE: felt252 = 'Secp256k1 Signer';
@@ -23,7 +24,7 @@ const SECP256R1_SIGNER_TYPE: felt252 = 'Secp256r1 Signer';
 const EIP191_SIGNER_TYPE: felt252 = 'Eip191 Signer';
 const WEBAUTHN_SIGNER_TYPE: felt252 = 'Webauthn Signer';
 
-/// @notice The type of the signer
+/// @notice The type of the signer that this version of the accounts supports
 #[derive(Drop, Copy, PartialEq, Serde, Default)]
 enum SignerType {
     #[default]
@@ -34,8 +35,8 @@ enum SignerType {
     Webauthn,
 }
 
-/// @notice The different signature type supported.
-/// For each type the variant contains a signer and an associated signature.
+/// @notice The different signature type supported
+/// Each variant must contain a signer and its associated signature
 #[derive(Drop, Copy, Serde)]
 enum SignerSignature {
     Starknet: (StarknetSigner, StarknetSignature),
@@ -45,7 +46,7 @@ enum SignerSignature {
     Webauthn: (WebauthnSigner, WebauthnAssertion),
 }
 
-/// @notice The starknet signature
+/// @notice The starknet signature using the stark-curve
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct StarknetSignature {
     r: felt252,
@@ -107,7 +108,7 @@ struct WebauthnSigner {
     pubkey: NonZero<u256>
 }
 
-// Ensures that the pubkey_hash is not zero as we can't do NonZero<EthAddress>.
+// Ensures that the pubkey_hash is not zero as we can't do NonZero<EthAddress>
 impl Secp256k1SignerSerde of Serde<Secp256k1Signer> {
     #[inline(always)]
     fn serialize(self: @Secp256k1Signer, ref output: Array<felt252>) {

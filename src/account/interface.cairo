@@ -52,9 +52,9 @@ trait IArgentUserAccount<TContractState> {
 
     /// @notice Changes the owner
     /// @param signer_signature SignerSignature of the new owner 
-    /// Signature is required to prevent changing to an address which is not in control of the user
-    /// Signature is the Signed Message of this hash:
-    /// hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
+    /// Required to prevent changing to an address which is not in control of the user
+    /// is the Signed Message of this hash
+    ///  hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
     /// @dev Must be called by the account and authorised by the owner and a guardian (if guardian is set)
     fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
 

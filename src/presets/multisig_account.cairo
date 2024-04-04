@@ -9,13 +9,13 @@ mod ArgentMultisigAccount {
     };
     use argent::signer::signer_signature::{Signer, SignerSignature};
     use argent::signer_storage::{signer_list::{signer_list_component}};
-    use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
+    use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
         serialization::full_deserialize,
         transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
     };
-    use starknet::{get_tx_info, get_execution_info, get_contract_address, VALIDATED, account::Call};
+    use starknet::{get_tx_info, get_execution_info, get_contract_address, VALIDATED, account::Call, ClassHash};
 
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION: Version = Version { major: 0, minor: 2, patch: 0 };
@@ -201,15 +201,20 @@ mod ArgentMultisigAccount {
     }
 
     #[abi(embed_v0)]
-    impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
+    impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
-
             // Check basic invariants
             self.multisig.assert_valid_storage();
-
             assert(data.len() == 0, 'argent/unexpected-data');
             array![]
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
+        fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
+            panic_with_felt252('argent/downgrade-not-allowed');
         }
     }
 
@@ -222,6 +227,7 @@ mod ArgentMultisigAccount {
                 if *call.to == account_address {
                     // This should only be called after an upgrade, never directly
                     assert(*call.selector != selector!("execute_after_upgrade"), 'argent/forbidden-call');
+                    assert(*call.selector != selector!("perform_upgrade"), 'argent/forbidden-call');
                 }
             } else {
                 // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions

@@ -59,7 +59,6 @@ mod outside_execution_component {
     impl Internal<
         TContractState, +HasComponent<TContractState>, +IOutsideExecutionCallback<TContractState>, +Drop<TContractState>
     > of InternalTrait<TContractState> {
-        #[inline(always)]
         fn assert_valid_outside_execution(
             ref self: ComponentState<TContractState>,
             outside_execution: OutsideExecution,

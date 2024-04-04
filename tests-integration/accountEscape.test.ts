@@ -196,7 +196,7 @@ describe("ArgentAccount: escape mechanism", function () {
       await provider.waitForTransaction(transaction_hash);
 
       account.signer = new LegacyMultisigSigner([owner, guardian]);
-      await expectRevertWithErrorMessage("argent/ready-at-shoud-be-null", () =>
+      await expectRevertWithErrorMessage("argent/ready-at-should-be-null", () =>
         upgradeAccount(account, argentAccountClassHash, ["0"]),
       );
     });

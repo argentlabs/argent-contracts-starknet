@@ -129,10 +129,10 @@ mod ArgentAccount {
         EscapeSecurityPeriodChanged: EscapeSecurityPeriodChanged,
     }
 
-    /// @notice Deprecated. This is only emmited if both owner and guardian (if any) are starknetKeys
-    /// Emitted exactly once when the account is initialized
+    /// @notice Deprecated. This is only emitted for the owner and then guardian when they of type SignerType::Starknet
     /// @param owner The owner starknet pubkey
     /// @param guardian The guardian starknet pubkey or 0 if there's no guardian
+    /// @dev Emitted exactly once when the account is initialized
     #[derive(Drop, starknet::Event)]
     struct AccountCreated {
         #[key]
@@ -140,10 +140,10 @@ mod ArgentAccount {
         guardian: felt252
     }
 
-    /// This is only emmited if both owner and guardian (if any) are starknetKeys
-    /// Emitted exactly once when the account is initialized
+    /// @notice Emitted on initialization with the guids of the owner and the guardian (or 0 if none) 
     /// @param owner The owner guid
     /// @param guardian The guardian guid or 0 if there's no guardian
+    /// @dev Emitted exactly once when the account is initialized
     #[derive(Drop, starknet::Event)]
     struct AccountCreatedGuid {
         #[key]
@@ -161,7 +161,7 @@ mod ArgentAccount {
         response: Span<Span<felt252>>
     }
 
-    /// @notice Deprecated from v0.4.0. This is only emmited if new owner is a starknet key
+    /// @notice Deprecated from v0.4.0. This is only emitted if new owner is a starknet key
     /// @notice Owner escape was triggered by the guardian
     /// @param ready_at when the escape can be completed
     /// @param new_owner new starknet pubkey to be set after the security period
@@ -180,7 +180,7 @@ mod ArgentAccount {
         new_owner_guid: felt252
     }
 
-    /// @notice Deprecated from v0.4.0. This is only emmited if the guardian is empty or a starknet key
+    /// @notice Deprecated from v0.4.0. This is only emitted if the guardian is empty or a starknet key
     /// @notice Guardian escape was triggered by the owner
     /// @param ready_at when the escape can be completed
     /// @param new_guardian address of the new guardian to be set after the security period. O if the guardian will be removed
@@ -199,7 +199,7 @@ mod ArgentAccount {
         new_guardian_guid: felt252
     }
 
-    /// @notice Deprecated from v0.4.0. This is only emmited if the new owner is a starknet key
+    /// @notice Deprecated from v0.4.0. This is only emitted if the new owner is a starknet key
     /// @notice Owner escape was completed and there is a new account owner
     /// @param new_owner new owner address
     #[derive(Drop, starknet::Event)]
@@ -214,7 +214,7 @@ mod ArgentAccount {
         new_owner_guid: felt252
     }
 
-    /// @notice Deprecated from v0.4.0. This is only emmited if the new guardian is empty or a starknet key
+    /// @notice Deprecated from v0.4.0. This is only emitted if the new guardian is empty or a starknet key
     /// @notice Guardian escape was completed and there is a new account guardian
     /// @param new_guardian address of the new guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
@@ -233,7 +233,7 @@ mod ArgentAccount {
     #[derive(Drop, starknet::Event)]
     struct EscapeCanceled {}
 
-    /// @notice Deprecated from v0.4.0. This is only emmited if the new owner is a starknet key
+    /// @notice Deprecated from v0.4.0. This is only emitted if the new owner is a starknet key
     /// @notice The account owner was changed
     /// @param new_owner new owner address
     #[derive(Drop, starknet::Event)]
@@ -248,7 +248,7 @@ mod ArgentAccount {
         new_owner_guid: felt252
     }
 
-    /// @notice Deprecated from v0.4.0. This is only emmited if the new guardian is empty or a starknet key
+    /// @notice Deprecated from v0.4.0. This is only emitted if the new guardian is empty or a starknet key
     /// @notice The account guardian was changed or removed
     /// @param new_guardian address of the new guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
@@ -263,7 +263,7 @@ mod ArgentAccount {
         new_guardian_guid: felt252
     }
 
-    /// @notice Deprecated from v0.4.0. This is only emmited if the new guardian backup is empty or a starknet key
+    /// @notice Deprecated from v0.4.0. This is only emitted if the new guardian backup is empty or a starknet key
     /// @notice The account backup guardian was changed or removed
     /// @param new_guardian_backup address of the backup guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
@@ -386,11 +386,11 @@ mod ArgentAccount {
             // We have to use raw syscall, as using the read fn would make use of the new way of reading
             let base = storage_base_address_from_felt252(selector!("_escape"));
             let ready_at = storage_read_syscall(0, storage_address_from_base_and_offset(base, 0)).unwrap_syscall();
-            assert(ready_at.is_zero(), 'argent/ready-at-shoud-be-null');
+            assert(ready_at.is_zero(), 'argent/ready-at-should-be-null');
             let escape_type = storage_read_syscall(0, storage_address_from_base_and_offset(base, 1)).unwrap_syscall();
-            assert(escape_type.is_zero(), 'argent/esc-type-shoud-be-null');
+            assert(escape_type.is_zero(), 'argent/esc-type-should-be-null');
             let new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(base, 2)).unwrap_syscall();
-            assert(new_signer.is_zero(), 'argent/new-signer-shoud-be-null');
+            assert(new_signer.is_zero(), 'argent/new-signer-should-be-nul');
 
             // Cleaning attempts storage => This should NOT have any impact as we don't allow to upgrade if there is an escape ongoing
             let base = storage_base_address_from_felt252(selector!("guardian_escape_attempts"));
@@ -879,10 +879,10 @@ mod ArgentAccount {
             // Shortest signature in modern format is at least 5 items [array_len, signer_type, signer_pubkey, r, s]
             if signatures.len() != 2 && signatures.len() != 4 {
                 // manual inlining instead of calling full_deserialize for performance
-                let deseriliazed: Array<SignerSignature> = Serde::deserialize(ref signatures)
+                let deserialized: Array<SignerSignature> = Serde::deserialize(ref signatures)
                     .expect('argent/undeserializable');
                 assert(signatures.is_empty(), 'argent/invalid-signature-length');
-                return deseriliazed;
+                return deserialized;
             }
 
             let owner_signature = SignerSignature::Starknet(

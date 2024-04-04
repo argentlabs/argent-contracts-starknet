@@ -67,7 +67,7 @@ describe("ArgentAccount: upgrade", function () {
     await accountContract.trigger_escape_owner(12);
 
     account.signer = new LegacyArgentSigner(owner, guardian);
-    await expectRevertWithErrorMessage("argent/ready-at-shoud-be-null", () =>
+    await expectRevertWithErrorMessage("argent/ready-at-should-be-null", () =>
       upgradeAccount(account, argentAccountClassHash),
     );
   });
@@ -80,7 +80,7 @@ describe("ArgentAccount: upgrade", function () {
     await accountContract.trigger_escape_guardian(12);
 
     account.signer = new LegacyArgentSigner(owner, guardian);
-    await expectRevertWithErrorMessage("argent/ready-at-shoud-be-null", () =>
+    await expectRevertWithErrorMessage("argent/ready-at-should-be-null", () =>
       upgradeAccount(account, argentAccountClassHash),
     );
   });

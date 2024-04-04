@@ -15,7 +15,7 @@ mod ArgentUserAccount {
     use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
-        serialization::full_deserialize,
+        serialization::full_deserialize_or_error,
         transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
     };
     use core::array::ArrayTrait;
@@ -259,6 +259,6 @@ mod ArgentUserAccount {
     #[must_use]
     #[inline(always)]
     fn parse_signature_array(mut raw_signature: Span<felt252>) -> Array<SignerSignature> {
-        full_deserialize(raw_signature).expect('argent/invalid-signature-array')
+        full_deserialize_or_error(raw_signature, 'argent/invalid-signature-array')
     }
 }

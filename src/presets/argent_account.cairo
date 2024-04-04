@@ -19,7 +19,7 @@ mod ArgentAccount {
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self, assert_only_protocol}, calls::execute_multicall,
-        serialization::full_deserialize,
+        serialization::full_deserialize_or_error,
         transaction_version::{
             TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
             assert_correct_deploy_account_version, DA_MODE_L1, is_estimate_transaction
@@ -431,7 +431,7 @@ mod ArgentAccount {
                 return array![];
             }
 
-            let calls: Array<Call> = full_deserialize(data.span()).expect('argent/invalid-calls');
+            let calls: Array<Call> = full_deserialize_or_error(data.span(), 'argent/invalid-calls');
             assert_no_self_call(calls.span(), get_contract_address());
 
             let multicall_return = execute_multicall(calls.span());
@@ -811,7 +811,7 @@ mod ArgentAccount {
                             self.last_guardian_escape_attempt.write(get_block_timestamp());
                         }
 
-                        full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
+                        full_deserialize_or_error::<Signer>(*call.calldata, 'argent/invalid-calldata');
 
                         assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
                         let is_valid = self.is_valid_guardian_signature(execution_hash, *signer_signatures.at(0));
@@ -843,8 +843,9 @@ mod ArgentAccount {
                             self.last_owner_escape_attempt.write(get_block_timestamp());
                         }
 
-                        let new_guardian: Option<Signer> = full_deserialize(*call.calldata)
-                            .expect('argent/invalid-calldata');
+                        let new_guardian: Option<Signer> = full_deserialize_or_error(
+                            *call.calldata, 'argent/invalid-calldata'
+                        );
 
                         if let Option::Some(new_guardian) = new_guardian {
                             assert(new_guardian.signer_type() == SignerType::Starknet, 'argent/invalid-guardian-type');
@@ -893,7 +894,7 @@ mod ArgentAccount {
             if signatures.len() != 2 && signatures.len() != 4 {
                 // manual inlining instead of calling full_deserialize for performance
                 let deseriliazed: Array<SignerSignature> = Serde::deserialize(ref signatures)
-                    .expect('argent/undeserializable');
+                    .expect('argent/invalid-signature-format');
                 assert(signatures.is_empty(), 'argent/invalid-signature-length');
                 return deseriliazed;
             }

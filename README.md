@@ -2,29 +2,13 @@
 
 ## Specification
 
-See [Argent Account](src/account/README.md) and [Argent Multisig](src/multisig/README.md) for more details.
+See [Argent Account](src/README.md#argent-multisig) and [Argent Multisig](src/README.md#argent-multisig) for more details.
 
 ## Development
 
-### Setup Rust
+### Setup
 
-Please refer to [these instructions](https://docs.cairo-lang.org/getting_started/prerequisits.html).  
-You can skip cloning the Cairo repository, as this will be done automatically through the Makefile.  
-If you are a developer, we recommend that you install the Cairo extension. You can find it in the vscode Extensions Marketplace by looking for "Cairo 1.0".
-
-### asdf
-
-Install asdf following [instructions](https://asdf-vm.com/guide/getting-started.html) and run this
-
-```
-asdf plugin add scarb
-asdf plugin add starknet-foundry
-asdf install
-```
-
-## Setup scarb and foundry
-
-Thanks to the [.tool-versions file](./.tool-versions), you don't need to install a specific scarb or starknet foundry version. The correct one will be automatically downloaded and installed.
+Please refer to [these instructions](https://docs.starknet.io/documentation/quick_start/environment_setup/#installing_scarb).  
 
 ## Test the contracts (Cairo)
 
@@ -71,7 +55,7 @@ scarb run format
 
 ### Contract fixtures
 
-The [fixtures folder](./tests-integrations/fixtures/) contains pre-compiled contracts used for tests (both json and casm).
+The [fixtures folder](./tests-integration/fixtures/) contains pre-compiled contracts used for tests (both json and casm).
 
 ### Interface IDs
 

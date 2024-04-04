@@ -53,7 +53,7 @@ mod threshold_recovery_component {
         +Drop<TContractState>
     > of IRecovery<ComponentState<TContractState>> {
         /// @notice Triggers the escape. The function must be called through the __validate__ method
-        /// and authorised by threshold-1 signers.
+        /// and authorized by threshold-1 signers.
         fn trigger_escape(
             ref self: ComponentState<TContractState>, target_signers: Array<Signer>, new_signers: Array<Signer>
         ) {
@@ -94,7 +94,7 @@ mod threshold_recovery_component {
         }
 
         /// @notice Executes the escape. The function must be called through the __validate__ method
-        /// and authorised by threshold-1 signers.
+        /// and authorized by threshold-1 signers.
         fn execute_escape(ref self: ComponentState<TContractState>) {
             assert_only_self();
 

@@ -10,7 +10,7 @@ struct Escape {
     call_hash: felt252
 }
 
-/// @notice The call to be perfomed once the escape is Ready
+/// @notice The call to be performed once the escape is Ready
 #[derive(Drop, Serde)]
 struct EscapeCall {
     selector: felt252,

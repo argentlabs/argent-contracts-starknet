@@ -2,7 +2,7 @@ use hash::{HashStateExTrait, HashStateTrait};
 use pedersen::PedersenTrait;
 use poseidon::poseidon_hash_span;
 
-/// Refererence to SNIP-12: https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-12.md
+/// Reference to SNIP-12: https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-12.md
 
 /// @notice Defines the function to generate the SNIP-12 revision 0 compliant message hash
 trait IOffChainMessageHashRev0<T> {

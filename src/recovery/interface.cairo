@@ -84,7 +84,7 @@ enum LegacyEscapeType {
     Owner
 }
 
-/// @notice The Legace Escape (only used in the ArgentAccount)
+/// @notice The Legacy Escape (only used in the ArgentAccount)
 /// @param ready_at when the escape can be completed
 /// @param escape_type The type of the escape telling who is about to be escaped
 /// @param new_signer The new signer (new owner or new guardian address) or zero if guardian removed
@@ -195,7 +195,7 @@ impl LegacyEscapeStorePacking of starknet::StorePacking<LegacyEscape, (felt252, 
 
 impl EscapeTypeIntoFelt252 of Into<LegacyEscapeType, felt252> {
     #[inline(always)]
-    fn into(self: LegacyEscapeType) -> felt252 implicits() nopanic {
+    fn into(self: LegacyEscapeType) -> felt252 {
         match self {
             LegacyEscapeType::None => 0,
             LegacyEscapeType::Guardian => 1,

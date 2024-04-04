@@ -268,7 +268,7 @@ impl SignerSignatureImpl of SignerSignatureTrait {
 
 impl SignerTypeIntoFelt252 of Into<SignerType, felt252> {
     #[inline(always)]
-    fn into(self: SignerType) -> felt252 implicits() nopanic {
+    fn into(self: SignerType) -> felt252 {
         match self {
             SignerType::Starknet => 0,
             SignerType::Secp256k1 => 1,

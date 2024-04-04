@@ -238,7 +238,7 @@ mod ArgentUserAccount {
                         .is_empty() {
                             let signer_sig = *signature_span.pop_front().unwrap();
                             assert(
-                                signer_sig.signer().into_guid() != excluded_signer_guid, 'argent/unauthorised_signer'
+                                signer_sig.signer().into_guid() != excluded_signer_guid, 'argent/unauthorized_signer'
                             )
                         };
                     required_signatures

@@ -24,7 +24,7 @@ trait IArgentMultisig<TContractState> {
     /// @param signer_to_remove Signer to remove
     /// @param signer_to_add Signer to add
     /// @dev Will revert when trying to remove a signer that isn't in the list
-    /// @dev Will revert when trying to add a signer that is in the list or if the sigenr is zero
+    /// @dev Will revert when trying to add a signer that is in the list or if the signer is zero
     fn replace_signer(ref self: TContractState, signer_to_remove: Signer, signer_to_add: Signer);
 
     /// @notice Returns the threshold

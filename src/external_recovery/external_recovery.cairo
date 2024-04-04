@@ -11,7 +11,7 @@ trait IExternalRecoveryCallback<TContractState> {
 /// @notice Implements the recovery by defining a guardian (an external contract/account) 
 /// that can trigger the recovery and replace a set of signers
 /// @dev The recovery can be executed by anyone after the security period
-/// @dev The recovery can be canceled by the authorised signers
+/// @dev The recovery can be canceled by the authorized signers
 #[starknet::component]
 mod external_recovery_component {
     use argent::external_recovery::interface::{

@@ -39,7 +39,6 @@ struct StarkNetDomain {
 
 const STARKNET_DOMAIN_TYPE_HASH_REV_0: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
 
-// TODO: perhaps add negative impl of IStructHash? 
 // impl StructHashStarknetDomain<-IStructHash<StarkNetDomain>> of IStarknetDomainHash<StarkNetDomain>
 impl StructHashStarkNetDomain of IStructHashRev0<StarkNetDomain> {
     fn get_struct_hash_rev_0(self: @StarkNetDomain) -> felt252 {

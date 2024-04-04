@@ -7,7 +7,8 @@ mod ArgentAccount {
     };
     use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
     use argent::session::{
-        interface::SessionToken, session::{session_component::{Internal, InternalTrait}, session_component,}
+        interface::{SessionToken, ISessionCallback},
+        session::{session_component::{Internal, InternalTrait}, session_component,}
     };
     use argent::signer::{
         signer_signature::{
@@ -470,6 +471,16 @@ mod ArgentAccount {
             retdata
         }
     }
+
+
+    impl SessionCallbackImpl of ISessionCallback<ContractState> {
+        fn session_callback(
+            self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>
+        ) -> bool {
+            self.is_valid_span_signature(session_hash, self.parse_signature_array(authorization_signature))
+        }
+    }
+
 
     #[abi(embed_v0)]
     impl ArgentUserAccountImpl of IArgentUserAccount<ContractState> {

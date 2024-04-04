@@ -8,7 +8,7 @@ See [Argent Account](src/README.md#argent-multisig) and [Argent Multisig](src/RE
 
 ### Setup
 
-Please refer to [these instructions](https://docs.starknet.io/documentation/quick_start/environment_setup/#installing_scarb).  
+Please refer to [these instructions](https://docs.starknet.io/documentation/quick_start/environment_setup/#installing_scarb).
 
 ## Test the contracts (Cairo)
 

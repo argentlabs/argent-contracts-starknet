@@ -401,7 +401,7 @@ mod ArgentAccount {
                 assert(escape_new_signer.is_zero(), 'argent/new-signer-shoud-be-null');
             } else {
                 let escape_ready_at: u64 = escape_ready_at.try_into().unwrap();
-                if get_block_timestamp() > escape_ready_at + DEFAULT_ESCAPE_SECURITY_PERIOD {
+                if get_block_timestamp() < escape_ready_at + DEFAULT_ESCAPE_SECURITY_PERIOD {
                     // Not expired. Automatically cancelling the escape when upgrading
                     self.emit(EscapeCanceled {});
                 }

@@ -186,7 +186,6 @@ mod threshold_recovery_component {
     impl ThresholdRecoveryInternal<
         TContractState, +HasComponent<TContractState>, +ISignerList<TContractState>
     > of IThresholdRecoveryInternal<ComponentState<TContractState>> {
-        // TODO pass a Call instead of (to, selector, calldata)
         fn parse_escape_call(
             self: @ComponentState<TContractState>,
             to: ContractAddress,

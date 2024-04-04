@@ -112,7 +112,6 @@ fn verify_authenticator_data(authenticator_data: Span<u8>, expected_rp_id_hash: 
 }
 
 fn decode_base64(mut encoded: Array<u8>) -> Array<u8> {
-    // TODO: should this be added to alexandria? https://gist.github.com/catwell/3046205
     let len_mod_4 = encoded.len() % 4;
     if len_mod_4 == 2 {
         encoded.append('=');

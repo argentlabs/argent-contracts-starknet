@@ -15,16 +15,45 @@ struct WebauthnAssertion {
     challenge_length: usize,
     origin_offset: usize,
     origin_length: usize,
-    sha256_implementation: felt252,
+}
+
+#[derive(Drop, Copy, PartialEq, Serde, Default)]
+struct Challenge {
+    transaction_hash: felt252,
+    sha256_implementation: Sha256Implementation,
+}
+
+#[derive(Drop, Copy, PartialEq, Serde, Default)]
+enum Sha256Implementation {
+    #[default]
+    Native,
+    Cairo0,
+    Cairo1,
+}
+
+fn deserialize_challenge(challenge: Span<u8>) -> Option<Challenge> {
+    assert(challenge.len() == 32 || challenge.len() == 34, 'invalid-challenge-length');
+    let transaction_hash = challenge.slice(0, 32).try_into()?;
+    if challenge.len() == 32 {
+        return Option::Some(Challenge { transaction_hash, ..Default::default() });
+    }
+    assert(challenge.len() == 34, 'invalid-challenge-length');
+    assert(*challenge.at(32) == 0xEF, 'invalid-challenge-magic');
+    let sha256_implementation = match *challenge.at(33) {
+        0 => Sha256Implementation::Native,
+        1 => Sha256Implementation::Cairo1,
+        2 => Sha256Implementation::Cairo0,
+        _ => { return Option::None; },
+    };
+    Option::Some(Challenge { transaction_hash, sha256_implementation })
 }
 
 /// Example JSON:
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
-/// TODO: benchmark both for (12.):
-/// - cartridge impl: base64url_encode(expected_challenge) and compare byte by byte to C.challenge 
-/// - this impl: base64url_decode(C.challenge) and compare one felt to expected_challenge
-fn verify_client_data_json(assertion: WebauthnAssertion, expected_challenge: felt252, expected_origin: felt252) {
+fn verify_client_data_json(
+    assertion: WebauthnAssertion, expected_transaction_hash: felt252, expected_origin: felt252
+) -> Challenge {
     // 11. Verify that the value of C.type is the string webauthn.get.
     let WebauthnAssertion { client_data_json, type_offset, .. } = assertion;
     let key = array!['"', 't', 'y', 'p', 'e', '"', ':', '"'];
@@ -42,9 +71,9 @@ fn verify_client_data_json(assertion: WebauthnAssertion, expected_challenge: fel
     assert(actual_key == key.span(), 'invalid-challenge-key');
 
     let challenge = client_data_json.slice(challenge_offset, challenge_length);
-    let challenge = challenge.snapshot.clone(); // TODO: can we avoid the clone?
-    let challenge: felt252 = decode_base64(challenge).span().try_into().expect('invalid-challenge');
-    assert(challenge == expected_challenge, 'invalid-challenge');
+    let challenge = decode_base64(challenge.snapshot.clone()).span();
+    let challenge = deserialize_challenge(challenge).expect('undeserializable-challenge');
+    assert(challenge.transaction_hash == expected_transaction_hash, 'invalid-transaction-hash');
 
     // 13. Verify that the value of C.origin matches the Relying Party's origin.
     let WebauthnAssertion { origin_offset, origin_length, .. } = assertion;
@@ -56,7 +85,8 @@ fn verify_client_data_json(assertion: WebauthnAssertion, expected_challenge: fel
     assert(origin == expected_origin, 'invalid-origin');
 
     // 14. Skipping tokenBindings
-    ()
+
+    challenge
 }
 
 /// Example data:
@@ -113,12 +143,10 @@ fn get_webauthn_hash_cairo1(assertion: WebauthnAssertion) -> u256 {
     sha256(message).span().try_into().expect('invalid-hash')
 }
 
-fn get_webauthn_hash(assertion: WebauthnAssertion) -> u256 {
-    if assertion.sha256_implementation == 'cairo0' {
-        get_webauthn_hash_cairo0(assertion).expect('sha256-cairo0-failed')
-    } else if assertion.sha256_implementation == 'cairo1' {
-        get_webauthn_hash_cairo1(assertion)
-    } else {
-        panic!("invalid-sha256-implementation: {}", assertion.sha256_implementation)
+fn get_webauthn_hash(assertion: WebauthnAssertion, challenge: Challenge) -> u256 {
+    match challenge.sha256_implementation {
+        Sha256Implementation::Native => panic_with_felt252('unimplemented native sha256'),
+        Sha256Implementation::Cairo0 => get_webauthn_hash_cairo0(assertion).expect('sha256-cairo0-failed'),
+        Sha256Implementation::Cairo1 => get_webauthn_hash_cairo1(assertion),
     }
 }

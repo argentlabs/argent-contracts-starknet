@@ -301,10 +301,10 @@ fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: 
 
 #[inline(always)]
 fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, assertion: WebauthnAssertion) -> bool {
-    verify_client_data_json(assertion, hash, signer.origin.into());
+    let challenge = verify_client_data_json(assertion, hash, signer.origin.into());
     verify_authenticator_data(assertion.authenticator_data, signer.rp_id_hash.into());
 
-    let signed_hash = get_webauthn_hash(assertion);
+    let signed_hash = get_webauthn_hash(assertion, challenge);
     is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, assertion.signature)
 }
 

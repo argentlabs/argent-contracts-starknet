@@ -3,14 +3,11 @@ use argent::account::interface::SRC5_ACCOUNT_INTERFACE_ID;
 use starknet::{ClassHash, syscalls::replace_class_syscall};
 
 
-// #[inline(always)]
-// fn do_upgrade(class_hash: ClassHash, calldata: Array<felt252>) -> Array<felt252> {
-//     let supports_interface = ISRC5LibraryDispatcher { class_hash }.supports_interface(SRC5_ACCOUNT_INTERFACE_ID);
-//     assert(supports_interface, 'argent/invalid-implementation');
+#[starknet::interface]
+trait IUpgradeInternal<TContractState> {
+    fn complete_upgrade(ref self: TContractState, new_implementation: ClassHash);
+}
 
-//     replace_class_syscall(class_hash).expect('argent/invalid-upgrade');
-//     IUpgradeableLibraryDispatcher { class_hash }.execute_after_upgrade(calldata)
-// }
 
 #[starknet::component]
 mod upgrade_component {
@@ -50,10 +47,19 @@ mod upgrade_component {
             let supports_interface = ISRC5LibraryDispatcher { class_hash: new_implementation }
                 .supports_interface(SRC5_ACCOUNT_INTERFACE_ID);
             assert(supports_interface, 'argent/invalid-implementation');
+            IUpgradableCallbackLibraryDispatcher { class_hash: new_implementation }
+                .perform_upgrade(new_implementation, calldata.span());
+            array![]
+        }
+    }
 
+    #[embeddable_as(UpgradableInternalImpl)]
+    impl UpgradableInternal<
+        TContractState, +HasComponent<TContractState>
+    > of super::IUpgradeInternal<ComponentState<TContractState>> {
+        fn complete_upgrade(ref self: ComponentState<TContractState>, new_implementation: ClassHash) {
             replace_class_syscall(new_implementation).expect('argent/invalid-upgrade');
             self.emit(AccountUpgraded { new_implementation });
-            IUpgradableCallbackLibraryDispatcher { class_hash: new_implementation }.execute_after_upgrade(calldata)
         }
     }
 }

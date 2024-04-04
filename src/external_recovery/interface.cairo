@@ -1,7 +1,7 @@
 use argent::recovery::interface::{EscapeEnabled, EscapeStatus};
 use starknet::ContractAddress;
 
-/// @notice Escape was triggered
+/// @notice Escape represent a call that will be performed on the account when the escape is ready
 /// @param ready_at when the escape can be completed
 /// @param call_hash the hash of the EscapeCall to be performed
 #[derive(Drop, Serde, Copy, starknet::Store)]
@@ -24,10 +24,11 @@ trait IExternalRecovery<TContractState> {
         ref self: TContractState, is_enabled: bool, security_period: u64, expiry_period: u64, guardian: ContractAddress
     );
     fn get_guardian(self: @TContractState) -> ContractAddress;
-    /// @notice Triggers the escape. The method must be called by the guardian.
+    /// @notice Triggers the escape.
     /// @param call Call to trigger on the account to recover the account
+    /// @dev This function must be called by the guardian.
     fn trigger_escape(ref self: TContractState, call: EscapeCall);
-    /// @notice Executes the escape. The method can be called by any external contract
+    /// @notice Executes the escape. The function can be called by any external contract
     /// @param call Call provided to `trigger_escape`
     fn execute_escape(ref self: TContractState, call: EscapeCall);
     /// @notice Cancels the ongoing escape.

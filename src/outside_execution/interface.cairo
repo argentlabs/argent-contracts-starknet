@@ -33,10 +33,10 @@ struct OutsideExecution {
 /// @notice get_outside_execution_message_hash_rev_* is not part of the standard interface
 #[starknet::interface]
 trait IOutsideExecution<TContractState> {
-    /// @notice This method allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
+    /// @notice This function allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
     /// @param outside_execution The parameters of the transaction to execute
     /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
-    /// @notice This method allows re-entrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
+    /// @notice This function allows re-entrancy. A call to `__execute__` or `execute_from_outside` can trigger another nested transaction to `execute_from_outside`.
     fn execute_from_outside(
         ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>
     ) -> Array<Span<felt252>>;

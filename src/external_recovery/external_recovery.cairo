@@ -50,7 +50,7 @@ mod external_recovery_component {
     impl ExternalRecovery<
         TContractState, +HasComponent<TContractState>, +IExternalRecoveryCallback<TContractState>, +Drop<TContractState>
     > of IExternalRecovery<ComponentState<TContractState>> {
-        /// @notice Triggers the escape. The method must be called by the guardian.
+        /// @notice Triggers the escape. The function must be called by the guardian.
         /// @param call Call to trigger on the account to recover the account
         fn trigger_escape(ref self: ComponentState<TContractState>, call: EscapeCall) {
             self.assert_only_guardian();

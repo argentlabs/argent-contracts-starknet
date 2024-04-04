@@ -73,7 +73,7 @@ trait IArgentUserAccount<TContractState> {
     /// Must be called by the account and authorised by just a guardian.
     /// Cannot override an ongoing escape of the guardian.
     /// @param new_owner The new account owner if the escape completes
-    /// @dev This method assumes that there is a guardian, and that `_newOwner` is not 0.
+    /// @dev This function assumes that there is a guardian, and that `_newOwner` is not 0.
     /// This must be guaranteed before calling this method, usually when validating the transaction.
     fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);
 
@@ -81,20 +81,20 @@ trait IArgentUserAccount<TContractState> {
     /// Must be called by the account and authorised by the owner alone.
     /// Can override an ongoing escape of the owner.
     /// @param new_guardian The new account guardian if the escape completes
-    /// @dev This method assumes that there is a guardian, and that `new_guardian` can only be 0
+    /// @dev This function assumes that there is a guardian, and that `new_guardian` can only be 0
     /// if there is no guardian backup.
     /// This must be guaranteed before calling this method, usually when validating the transaction
     fn trigger_escape_guardian(ref self: TContractState, new_guardian: Option<Signer>);
 
     /// @notice Completes the escape and changes the owner after the security period
     /// Must be called by the account and authorised by just a guardian
-    /// @dev This method assumes that there is a guardian, and that the there is an escape for the owner.
+    /// @dev This function assumes that there is a guardian, and that the there is an escape for the owner.
     /// This must be guaranteed before calling this method, usually when validating the transaction.
     fn escape_owner(ref self: TContractState);
 
     /// @notice Completes the escape and changes the guardian after the security period
     /// Must be called by the account and authorised by just the owner
-    /// @dev This method assumes that there is a guardian, and that the there is an escape for the guardian.
+    /// @dev This function assumes that there is a guardian, and that the there is an escape for the guardian.
     /// This must be guaranteed before calling this method. Usually when validating the transaction.
     fn escape_guardian(ref self: TContractState);
 
@@ -130,6 +130,6 @@ trait IArgentUserAccount<TContractState> {
 trait IDeprecatedArgentAccount<TContractState> {
     fn getVersion(self: @TContractState) -> felt252;
     fn getName(self: @TContractState) -> felt252;
-    /// For compatibility reasons this method returns 1 when the signature is valid, and panics otherwise
+    /// For compatibility reasons this function returns 1 when the signature is valid, and panics otherwise
     fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }

@@ -291,7 +291,7 @@ export class DappService {
   }
 
   // TODO Can this be removed?
-  // method needed as starknetSignatureType in signer.ts is already compiled
+  // function needed as starknetSignatureType in signer.ts is already compiled
   private getStarknetSignatureType(pubkey: BigNumberish, signature: bigint[]) {
     return signerTypeToCustomEnum(SignerType.Starknet, { pubkey, r: signature[0], s: signature[1] });
   }

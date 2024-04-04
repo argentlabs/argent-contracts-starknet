@@ -18,7 +18,6 @@ struct WebauthnAssertion {
 /// Example JSON:
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
-/// TODO: benchmark both for (12.):
 /// - cartridge impl: base64url_encode(expected_challenge) and compare byte by byte to C.challenge 
 /// - this impl: base64url_decode(C.challenge) and compare one felt to expected_challenge
 fn verify_client_data_json(assertion: @WebauthnAssertion, expected_challenge: felt252, expected_origin: felt252) {
@@ -87,7 +86,6 @@ fn get_webauthn_hash(assertion: @WebauthnAssertion) -> u256 {
 }
 
 fn decode_base64(mut encoded: Array<u8>) -> Array<u8> {
-    // TODO: should this be added to alexandria? https://gist.github.com/catwell/3046205
     let len_mod_4 = encoded.len() % 4;
     if len_mod_4 == 2 {
         encoded.append('=');

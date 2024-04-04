@@ -31,21 +31,21 @@ enum Sha256Implementation {
     Cairo1,
 }
 
-fn deserialize_challenge(challenge: Span<u8>) -> Option<Challenge> {
+fn deserialize_challenge(challenge: Span<u8>) -> Challenge {
     assert(challenge.len() == 32 || challenge.len() == 34, 'invalid-challenge-length');
-    let transaction_hash = challenge.slice(0, 32).try_into()?;
+    let transaction_hash = challenge.slice(0, 32).try_into().unwrap();
     if challenge.len() == 32 {
-        return Option::Some(Challenge { transaction_hash, ..Default::default() });
+        Challenge { transaction_hash, ..Default::default() }
+    } else {
+        assert(*challenge.at(32) == 0xEF, 'invalid-challenge-magic');
+        let sha256_implementation = match *challenge.at(33) {
+            0 => Sha256Implementation::Native,
+            1 => Sha256Implementation::Cairo1,
+            2 => Sha256Implementation::Cairo0,
+            _ => panic_with_felt252('invalid-challenge-sha256'),
+        };
+        Challenge { transaction_hash, sha256_implementation }
     }
-    assert(challenge.len() == 34, 'invalid-challenge-length');
-    assert(*challenge.at(32) == 0xEF, 'invalid-challenge-magic');
-    let sha256_implementation = match *challenge.at(33) {
-        0 => Sha256Implementation::Native,
-        1 => Sha256Implementation::Cairo1,
-        2 => Sha256Implementation::Cairo0,
-        _ => { return Option::None; },
-    };
-    Option::Some(Challenge { transaction_hash, sha256_implementation })
 }
 
 /// Example JSON:
@@ -72,7 +72,7 @@ fn verify_client_data_json(
 
     let challenge = client_data_json.slice(challenge_offset, challenge_length);
     let challenge = decode_base64(challenge.snapshot.clone()).span();
-    let challenge = deserialize_challenge(challenge).expect('undeserializable-challenge');
+    let challenge = deserialize_challenge(challenge);
     assert(challenge.transaction_hash == expected_transaction_hash, 'invalid-transaction-hash');
 
     // 13. Verify that the value of C.origin matches the Relying Party's origin.

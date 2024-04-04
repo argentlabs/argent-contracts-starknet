@@ -655,7 +655,6 @@ mod ArgentAccount {
             assert_only_self();
 
             let current_escape = self._escape.read();
-            // TODO This could be done during validation?
             assert(self.get_escape_status(current_escape.ready_at) == EscapeStatus::Ready, 'argent/invalid-escape');
 
             self.reset_escape_timestamps();
@@ -773,7 +772,6 @@ mod ArgentAccount {
         }
     }
 
-    // TODO is this still needed?
     #[abi(embed_v0)]
     impl DeprecatedArgentAccountImpl of IDeprecatedArgentAccount<ContractState> {
         fn getVersion(self: @ContractState) -> felt252 {

@@ -24,18 +24,19 @@ trait IExternalRecovery<TContractState> {
         ref self: TContractState, is_enabled: bool, security_period: u64, expiry_period: u64, guardian: ContractAddress
     );
     fn get_guardian(self: @TContractState) -> ContractAddress;
-    /// @notice Triggers the escape.
+    /// @notice Triggers the escape
     /// @param call Call to trigger on the account to recover the account
-    /// @dev This function must be called by the guardian.
+    /// @dev This function must be called by the guardian
     fn trigger_escape(ref self: TContractState, call: EscapeCall);
-    /// @notice Executes the escape. The function can be called by any external contract
+    /// @notice Executes the escape
     /// @param call Call provided to `trigger_escape`
+    /// @dev This function can be called by any external contract
     fn execute_escape(ref self: TContractState, call: EscapeCall);
-    /// @notice Cancels the ongoing escape.
+    /// @notice Cancels the ongoing escape
     fn cancel_escape(ref self: TContractState);
-    /// @notice Gets the escape configuration.
+    /// @notice Gets the escape configuration
     fn get_escape_enabled(self: @TContractState) -> EscapeEnabled;
-    /// @notice Gets the ongoing escape if any, and its status.
+    /// @notice Gets the ongoing escape if any, and its status
     fn get_escape(self: @TContractState) -> (Escape, EscapeStatus);
 }
 

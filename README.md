@@ -59,7 +59,7 @@ The [fixtures folder](./tests-integration/fixtures/) contains pre-compiled contr
 
 ### Interface IDs
 
-For compatibility reasons we support legacy interface IDs. But new interface IDs will follow [SNIP-5](https://github.com/ericnordelo/SNIPs/blob/feat/standard-interface-detection/SNIPS/snip-5.md#how-interfaces-are-identified)
+For compatibility reasons we support legacy interface IDs. But new interface IDs will follow [SNIP-5](https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-5.md#how-interfaces-are-identified)
 Tool to calculate interface IDs: https://github.com/ericnordelo/src5-rs
 
 ## Release checklist

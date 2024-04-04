@@ -397,8 +397,8 @@ mod ArgentAccount {
                     .unwrap_syscall();
                 let escape_new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(base, 2))
                     .unwrap_syscall();
-                assert(escape_type.is_zero(), 'argent/esc-type-should-be-null');
-                assert(escape_new_signer.is_zero(), 'argent/new-signer-should-be-null');
+                assert(escape_type.is_zero(), 'argent/esc-type-not-null');
+                assert(escape_new_signer.is_zero(), 'argent/esc-new-signer-not-null');
             } else {
                 let escape_ready_at: u64 = escape_ready_at.try_into().unwrap();
                 if get_block_timestamp() < escape_ready_at + DEFAULT_ESCAPE_SECURITY_PERIOD {

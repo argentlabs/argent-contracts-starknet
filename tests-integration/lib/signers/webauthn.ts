@@ -95,7 +95,7 @@ export class WebauthnOwner extends KeyPair {
     const signCount = new Uint8Array(4); // [0_u8, 0_u8, 0_u8, 0_u8]
     const authenticatorData = concatBytes(rpIdHash, flags, signCount);
 
-    const challenge = buf2base64url(hex2buf(normalizeTransactionHash(transactionHash) + "02"));
+    const challenge = buf2base64url(hex2buf(normalizeTransactionHash(transactionHash) + "00"));
     const clientData = { type: "webauthn.get", challenge, origin: "http://localhost:5173", crossOrigin: false };
     const clientDataJson = new TextEncoder().encode(JSON.stringify(clientData));
 

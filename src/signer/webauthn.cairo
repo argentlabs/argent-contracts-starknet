@@ -17,16 +17,14 @@ struct WebauthnAssertion {
     origin_length: usize,
 }
 
-#[derive(Drop, Copy, PartialEq, Serde, Default)]
+#[derive(Drop, Copy, PartialEq)]
 struct Challenge {
     transaction_hash: felt252,
     sha256_implementation: Sha256Implementation,
 }
 
-#[derive(Drop, Copy, PartialEq, Serde, Default)]
+#[derive(Drop, Copy, PartialEq)]
 enum Sha256Implementation {
-    #[default]
-    Native,
     Cairo0,
     Cairo1,
 }
@@ -35,9 +33,8 @@ fn deserialize_challenge(challenge: Span<u8>) -> Challenge {
     assert(challenge.len() == 33, 'invalid-challenge-length');
     let transaction_hash = challenge.slice(0, 32).try_into().unwrap();
     let sha256_implementation = match *challenge.at(32) {
-        0 => Sha256Implementation::Native,
+        0 => Sha256Implementation::Cairo0,
         1 => Sha256Implementation::Cairo1,
-        2 => Sha256Implementation::Cairo0,
         _ => panic_with_felt252('invalid-challenge-sha256'),
     };
     Challenge { transaction_hash, sha256_implementation }
@@ -136,7 +133,6 @@ fn get_webauthn_hash_cairo1(assertion: WebauthnAssertion) -> u256 {
 
 fn get_webauthn_hash(assertion: WebauthnAssertion, sha256_implementation: Sha256Implementation) -> u256 {
     match sha256_implementation {
-        Sha256Implementation::Native => panic_with_felt252('unimplemented native sha256'),
         Sha256Implementation::Cairo0 => get_webauthn_hash_cairo0(assertion).expect('sha256-cairo0-failed'),
         Sha256Implementation::Cairo1 => get_webauthn_hash_cairo1(assertion),
     }

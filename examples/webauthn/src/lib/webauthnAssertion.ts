@@ -19,7 +19,7 @@ export const signTransaction = async (
   transactionHash: string,
   attestation: WebauthnAttestation,
 ): Promise<WebauthnAssertion> => {
-  const challenge = hex2buf(normalizeTransactionHash(transactionHash) + "02");
+  const challenge = hex2buf(normalizeTransactionHash(transactionHash) + "00");
 
   const credential = await navigator.credentials.get({
     publicKey: {

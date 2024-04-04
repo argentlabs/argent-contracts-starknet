@@ -62,6 +62,8 @@ mod utils {
 }
 
 mod mocks {
+    mod future_argent_account;
+    mod future_argent_multisig;
     mod mock_dapp;
     mod mock_erc20;
     mod multisig_mocks;
@@ -78,4 +80,5 @@ mod session {
 
 mod offchain_message {
     mod interface;
+    mod precalculated_hashing;
 }

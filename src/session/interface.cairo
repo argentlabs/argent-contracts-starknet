@@ -4,11 +4,6 @@ use starknet::account::Call;
 use starknet::{get_tx_info, get_contract_address, ContractAddress};
 
 #[starknet::interface]
-trait ISessionCallback<TContractState> {
-    fn session_callback(self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>) -> bool;
-}
-
-#[starknet::interface]
 trait ISessionable<TContractState> {
     /// @notice This method allows user to revoke a session based on its hash
     /// @param session_hash Hash of the session token

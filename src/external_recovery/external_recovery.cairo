@@ -11,8 +11,8 @@ trait IExternalRecoveryCallback<TContractState> {
 
 /// @notice Implements the recovery by defining a guardian (an external contract/account) 
 /// that can trigger the recovery and replace a set of signers
-/// The recovery can be executed by anyone after the security period
-/// The recovery can be canceled by the authorised signers through the validation logic of the account
+/// @dev The recovery can be executed by anyone after the security period
+/// @dev The recovery can be canceled by the authorised signers through the validation logic of the account
 #[starknet::component]
 mod external_recovery_component {
     use argent::external_recovery::interface::{
@@ -50,8 +50,6 @@ mod external_recovery_component {
     impl ExternalRecovery<
         TContractState, +HasComponent<TContractState>, +IExternalRecoveryCallback<TContractState>, +Drop<TContractState>
     > of IExternalRecovery<ComponentState<TContractState>> {
-        /// @notice Triggers the escape. The function must be called by the guardian.
-        /// @param call Call to trigger on the account to recover the account
         fn trigger_escape(ref self: ComponentState<TContractState>, call: EscapeCall) {
             self.assert_only_guardian();
 

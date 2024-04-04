@@ -93,13 +93,13 @@ trait IArgentUserAccount<TContractState> {
     fn escape_owner(ref self: TContractState);
 
     /// @notice Completes the escape and changes the guardian after the security period
-    /// Must be called by the account and authorised by just the owner
+    /// @dev Must be called by the account and authorised by just the owner
     /// @dev This function assumes that there is a guardian, and that the there is an escape for the guardian
-    /// This must be guaranteed before calling this method. Usually when validating the transaction
+    /// @dev This must be guaranteed before calling this method. Usually when validating the transaction
     fn escape_guardian(ref self: TContractState);
 
     /// @notice Cancels an ongoing escape if any
-    /// Must be called by the account and authorised by the owner and a guardian (if guardian is set)
+    /// @dev Must be called by the account and authorised by the owner and a guardian (if guardian is set)
     fn cancel_escape(ref self: TContractState);
 
     // Views

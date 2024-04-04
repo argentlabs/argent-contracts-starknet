@@ -49,8 +49,7 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Upgrade from current version FutureVersion", async function () {
-    // This is the same as ArgentAccount but with a different version (to have another class hash)
-    const argentAccountFutureClassHash = await declareFixtureContract("ArgentAccountFutureVersion");
+    const argentAccountFutureClassHash = await declareContract("MockFutureArgentAccount");
     const { account } = await deployAccount();
 
     const response = await upgradeAccount(account, argentAccountFutureClassHash);
@@ -94,5 +93,10 @@ describe("ArgentAccount: upgrade", function () {
     await upgradeAccount(account, mockDapp.classHash).should.be.rejectedWith(
       `EntryPointSelector(StarkFelt(\\"0x00fe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283\\")) not found in contract`,
     );
+  });
+
+  it("Shouldn't upgrade from current version to itself", async function () {
+    const { account } = await deployAccount();
+    expectRevertWithErrorMessage("argent/downgrade-not-allowed", () => upgradeAccount(account, argentAccountClassHash));
   });
 });

@@ -10,7 +10,6 @@ mod session_component {
     };
     use argent::signer::signer_signature::{SignerSignatureTrait, SignerTrait};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
-    use core::box::BoxTrait;
     use poseidon::{hades_permutation};
     use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp};
 

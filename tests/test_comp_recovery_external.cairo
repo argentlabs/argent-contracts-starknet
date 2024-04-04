@@ -103,7 +103,6 @@ fn test_trigger_escape_can_override() {
     assert_eq!(escape.call_hash, second_call_hash, "invalid call hash");
 }
 
-
 #[test]
 #[should_panic(expected: ('argent/only-guardian',))]
 fn test_trigger_escape_not_enabled() {

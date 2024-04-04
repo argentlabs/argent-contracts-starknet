@@ -8,11 +8,10 @@ trait IExternalRecoveryCallback<TContractState> {
     fn execute_recovery_call(ref self: TContractState, selector: felt252, calldata: Span<felt252>);
 }
 
-
 /// @notice Implements the recovery by defining a guardian (an external contract/account) 
 /// that can trigger the recovery and replace a set of signers
 /// @dev The recovery can be executed by anyone after the security period
-/// @dev The recovery can be canceled by the authorised signers through the validation logic of the account
+/// @dev The recovery can be canceled by the authorised signers
 #[starknet::component]
 mod external_recovery_component {
     use argent::external_recovery::interface::{
@@ -44,7 +43,6 @@ mod external_recovery_component {
         EscapeExecuted: EscapeExecuted,
         EscapeCanceled: EscapeCanceled,
     }
-
 
     #[embeddable_as(ExternalRecoveryImpl)]
     impl ExternalRecovery<
@@ -151,7 +149,6 @@ mod external_recovery_component {
             self.guardian.read()
         }
     }
-
 
     #[generate_trait]
     impl Private<TContractState, +HasComponent<TContractState>> of PrivateTrait<TContractState> {

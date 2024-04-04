@@ -43,7 +43,6 @@ mod MockFutureArgentMultisig {
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
 
-
     #[storage]
     struct Storage {
         #[substorage(v0)]
@@ -164,7 +163,6 @@ mod MockFutureArgentMultisig {
             assert(valid, 'argent/invalid-signature');
         }
     }
-
 
     fn parse_signature_array(mut raw_signature: Span<felt252>) -> Array<SignerSignature> {
         full_deserialize(raw_signature).expect('argent/invalid-signature-array')

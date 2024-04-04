@@ -214,7 +214,6 @@ mod ArgentAccount {
         new_owner_guid: felt252
     }
 
-
     /// @notice Deprecated from v0.4.0. This is only emmited if the new guardian is empty or a starknet key
     /// @notice Guardian escape was completed and there is a new account guardian
     /// @param new_guardian address of the new guardian or 0 if it was removed

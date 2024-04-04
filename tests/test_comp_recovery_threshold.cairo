@@ -15,7 +15,6 @@ use starknet::SyscallResultTrait;
 use starknet::{ContractAddress, contract_address_const,};
 use super::setup::constants::{MULTISIG_OWNER};
 
-
 fn SIGNER_1() -> Signer {
     starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)
 }

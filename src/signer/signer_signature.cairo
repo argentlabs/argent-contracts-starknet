@@ -70,7 +70,7 @@ struct SignerStorageValue {
 }
 
 /// @notice The Starknet signer
-/// @param pubkey the public key as felt252 for a starknet signature (cannot be zero)
+/// @param pubkey the public key as felt252 for a starknet signature. Cannot be zero
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct StarknetSigner {
     pubkey: NonZero<felt252>
@@ -84,7 +84,7 @@ struct Secp256k1Signer {
 }
 
 /// @notice The Secp256r1 signer
-/// @param pubkey the public key as a u256
+/// @param pubkey the public key as a u256. Cannot be zero
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct Secp256r1Signer {
     pubkey: NonZero<u256>
@@ -98,9 +98,9 @@ struct Eip191Signer {
 }
 
 /// @notice The webauthn signer
-/// @param origin The origin of the request
-/// @param rp_id_hash The SHA-256 hash of the Relying Party Identifier
-/// @param pubkey the public key as a u256
+/// @param origin The origin of the request. Cannot be zero
+/// @param rp_id_hash The SHA-256 hash of the Relying Party Identifier. Cannot be zero
+/// @param pubkey the public key as a u256. Cannot be zero
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSigner {
     origin: NonZero<felt252>,
@@ -242,7 +242,6 @@ trait SignerSignatureTrait {
     fn is_valid_signature(self: SignerSignature, hash: felt252) -> bool;
     fn signer(self: SignerSignature) -> Signer;
 }
-
 
 impl SignerSignatureImpl of SignerSignatureTrait {
     #[inline(always)]

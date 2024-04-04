@@ -34,7 +34,9 @@ trait IArgentMultisig<TContractState> {
     fn is_signer(self: @TContractState, signer: Signer) -> bool;
     fn is_signer_guid(self: @TContractState, signer_guid: felt252) -> bool;
 
-    /// Checks if a given signature is a valid signature from one of the multisig owners
+    /// @notice Verifies whether a provided signature is valid and comes from one of the multisig owners.
+    /// @param hash Hash of the message being signed
+    /// @param signer_signature Signature to be verified
     fn is_valid_signer_signature(self: @TContractState, hash: felt252, signer_signature: SignerSignature) -> bool;
 }
 

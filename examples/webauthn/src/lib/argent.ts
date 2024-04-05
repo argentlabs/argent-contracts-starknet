@@ -50,9 +50,6 @@ export async function deployAccount(
   rpId: string,
   provider: ProviderType,
 ): Promise<ArgentWallet> {
-  if (location.origin.length > 30) {
-    throw new Error("origin must be less than 30 characters");
-  }
   const rpIdHash = await sha256(new TextEncoder().encode(rpId));
 
   const constructorCalldata = CallData.compile({

@@ -13,12 +13,14 @@ use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
 use starknet::{EthAddress, eth_signature::{Signature as Secp256k1Signature, is_eth_signature_valid}};
 
+/// All signer type magic values. Used to derive their guid
 const STARKNET_SIGNER_TYPE: felt252 = 'Starknet Signer';
 const SECP256K1_SIGNER_TYPE: felt252 = 'Secp256k1 Signer';
 const SECP256R1_SIGNER_TYPE: felt252 = 'Secp256r1 Signer';
 const EIP191_SIGNER_TYPE: felt252 = 'Eip191 Signer';
 const WEBAUTHN_SIGNER_TYPE: felt252 = 'Webauthn Signer';
 
+/// @notice The type of the signer that this version of the accounts supports
 #[derive(Drop, Copy, PartialEq, Serde, Default)]
 enum SignerType {
     #[default]
@@ -29,6 +31,25 @@ enum SignerType {
     Webauthn,
 }
 
+/// @notice The different signature type supported
+/// Each variant must contain a signer and its associated signature
+#[derive(Drop, Copy, Serde)]
+enum SignerSignature {
+    Starknet: (StarknetSigner, StarknetSignature),
+    Secp256k1: (Secp256k1Signer, Secp256k1Signature),
+    Secp256r1: (Secp256r1Signer, Secp256r1Signature),
+    Eip191: (Eip191Signer, Secp256r1Signature),
+    Webauthn: (WebauthnSigner, WebauthnAssertion),
+}
+
+/// @notice The starknet signature using the stark-curve
+#[derive(Drop, Copy, Serde, PartialEq)]
+struct StarknetSignature {
+    r: felt252,
+    s: felt252,
+}
+
+/// @notice Represents all supported Signers with their different signing schemes
 #[derive(Drop, Copy, Serde)]
 enum Signer {
     Starknet: StarknetSigner,
@@ -44,26 +65,38 @@ struct SignerStorageValue {
     signer_type: SignerType,
 }
 
+/// @notice The Starknet signer using the Starknet Curve
+/// @param pubkey the public key as felt252 for a starknet signature. Cannot be zero
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct StarknetSigner {
     pubkey: NonZero<felt252>
 }
 
+/// @notice The Secp256k1 signer using the Secp256k1 elliptic curve
+/// @param pubkey_hash the right-most 160 bits of a Keccak hash of an ECDSA public key
 #[derive(Drop, Copy, PartialEq)]
 struct Secp256k1Signer {
     pubkey_hash: EthAddress
 }
 
+/// @notice The Secp256r1 signer using the Secp256r1 elliptic curve
+/// @param pubkey the public key as a u256. Cannot be zero
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct Secp256r1Signer {
     pubkey: NonZero<u256>
 }
 
+/// @notice The Eip191Signer signer conforming to the EIP-191 standard
+/// @param eth_address the ethereum address that signed the data 
 #[derive(Drop, Copy, PartialEq)]
 struct Eip191Signer {
     eth_address: EthAddress
 }
 
+/// @notice The webauthn signer
+/// @param origin The origin of the request. Cannot be zero
+/// @param rp_id_hash The SHA-256 hash of the Relying Party Identifier. Cannot be zero
+/// @param pubkey the public key as a u256. Cannot be zero
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSigner {
     origin: Span<u8>,
@@ -71,7 +104,7 @@ struct WebauthnSigner {
     pubkey: NonZero<u256>
 }
 
-// Ensures that the pubkey_hash is not zero as we can't do NonZero<EthAddress>.
+// Ensures that the pubkey_hash is not zero as we can't do NonZero<EthAddress>
 impl Secp256k1SignerSerde of Serde<Secp256k1Signer> {
     #[inline(always)]
     fn serialize(self: @Secp256k1Signer, ref output: Array<felt252>) {
@@ -192,26 +225,9 @@ impl SignerStorageValueImpl of SignerStorageTrait {
     }
 }
 
-/// Enum of the different signature type supported.
-/// For each type the variant contains a signer and an associated signature.
-#[derive(Drop, Copy, Serde)]
-enum SignerSignature {
-    Starknet: (StarknetSigner, StarknetSignature),
-    Secp256k1: (Secp256k1Signer, Secp256k1Signature),
-    Secp256r1: (Secp256r1Signer, Secp256r1Signature),
-    Eip191: (Eip191Signer, Secp256r1Signature),
-    Webauthn: (WebauthnSigner, WebauthnAssertion),
-}
-
 trait SignerSignatureTrait {
     fn is_valid_signature(self: SignerSignature, hash: felt252) -> bool;
     fn signer(self: SignerSignature) -> Signer;
-}
-
-#[derive(Drop, Copy, Serde, PartialEq)]
-struct StarknetSignature {
-    r: felt252,
-    s: felt252,
 }
 
 impl SignerSignatureImpl of SignerSignatureTrait {
@@ -243,7 +259,7 @@ impl SignerSignatureImpl of SignerSignatureTrait {
 
 impl SignerTypeIntoFelt252 of Into<SignerType, felt252> {
     #[inline(always)]
-    fn into(self: SignerType) -> felt252 implicits() nopanic {
+    fn into(self: SignerType) -> felt252 {
         match self {
             SignerType::Starknet => 0,
             SignerType::Secp256k1 => 1,

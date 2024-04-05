@@ -96,7 +96,7 @@ fn test_missing_owner_signature() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/undeserializable',))]
+#[should_panic(expected: ('argent/invalid-signature-format',))]
 fn test_short_signature() {
     let multisig = initialize_multisig_with_one_signer();
 

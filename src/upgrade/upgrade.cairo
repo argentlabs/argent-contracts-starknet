@@ -2,12 +2,10 @@ use argent::account::interface::SRC5_ACCOUNT_INTERFACE_ID;
 
 use starknet::{ClassHash, syscalls::replace_class_syscall};
 
-
 #[starknet::interface]
 trait IUpgradeInternal<TContractState> {
     fn complete_upgrade(ref self: TContractState, new_implementation: ClassHash);
 }
-
 
 #[starknet::component]
 mod upgrade_component {

@@ -1,20 +1,17 @@
 use argent::external_recovery::interface::{EscapeCall, Escape};
 use argent::recovery::interface::{EscapeEnabled, EscapeStatus};
-
 use argent::utils::serialization::serialize;
-use starknet::ContractAddress;
 
-/// This trait has to be implemented when using the component `external_recovery`
+/// This trait must be implemented when using the component `external_recovery`
 trait IExternalRecoveryCallback<TContractState> {
     #[inline(always)]
     fn execute_recovery_call(ref self: TContractState, selector: felt252, calldata: Span<felt252>);
 }
 
-
-/// @notice Implements the recovery by defining a guardian (and external contract/account) 
-/// that can trigger the recovery and replace a set of signers. 
-/// The recovery can be executed by anyone after the security period.
-/// The recovery can be canceled by the authorised signers through the validation logic of the account. 
+/// @notice Implements the recovery by defining a guardian (an external contract/account) 
+/// that can trigger the recovery and replace a set of signers
+/// @dev The recovery can be executed by anyone after the security period
+/// @dev The recovery can be canceled by the authorized signers
 #[starknet::component]
 mod external_recovery_component {
     use argent::external_recovery::interface::{
@@ -26,12 +23,6 @@ mod external_recovery_component {
     use argent::signer_storage::signer_list::{signer_list_component, signer_list_component::{SignerListInternalImpl}};
     use argent::utils::asserts::assert_only_self;
     use argent::utils::serialization::serialize;
-    use core::array::ArrayTrait;
-    use core::array::SpanTrait;
-    use core::debug::PrintTrait;
-    use core::option::OptionTrait;
-    use core::result::ResultTrait;
-    use core::traits::TryInto;
     use starknet::{
         get_block_timestamp, get_contract_address, get_caller_address, ContractAddress, account::Call,
         contract_address::contract_address_const
@@ -53,13 +44,10 @@ mod external_recovery_component {
         EscapeCanceled: EscapeCanceled,
     }
 
-
     #[embeddable_as(ExternalRecoveryImpl)]
     impl ExternalRecovery<
         TContractState, +HasComponent<TContractState>, +IExternalRecoveryCallback<TContractState>, +Drop<TContractState>
     > of IExternalRecovery<ComponentState<TContractState>> {
-        /// @notice Triggers the escape. The method must be called by the guardian.
-        /// @param call Call to trigger on the account to recover the account
         fn trigger_escape(ref self: ComponentState<TContractState>, call: EscapeCall) {
             self.assert_only_guardian();
 
@@ -161,7 +149,6 @@ mod external_recovery_component {
             self.guardian.read()
         }
     }
-
 
     #[generate_trait]
     impl Private<TContractState, +HasComponent<TContractState>> of PrivateTrait<TContractState> {

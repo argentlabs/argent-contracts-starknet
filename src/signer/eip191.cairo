@@ -3,7 +3,6 @@ use integer::{u128_byte_reverse, u256_safe_div_rem, u256_as_non_zero};
 use keccak::cairo_keccak;
 use starknet::{EthAddress, eth_signature::{Signature as Secp256k1Signature, is_eth_signature_valid}};
 
-
 #[must_use]
 #[inline(always)]
 fn is_valid_eip191_signature(hash: felt252, signer: Eip191Signer, signature: Secp256k1Signature) -> bool {

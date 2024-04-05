@@ -22,7 +22,6 @@ fn base64_unpadded_decoding() {
 
 #[test]
 fn base64_max_felt_decoding() {
-    // CAAAAAAAABEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
     let encoded = "CAAAAAAAABEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=".into_bytes();
     let value = Base64UrlDecoder::decode(encoded);
 

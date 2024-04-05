@@ -85,13 +85,13 @@ describe("ArgentMultisig: signing", function () {
 
       const [publicKey, r] = await keys[0].signRaw(messageHash);
 
-      await expectRevertWithErrorMessage("argent/undeserializable", () =>
+      await expectRevertWithErrorMessage("argent/invalid-signature-format", () =>
         // Missing S argument
         accountContract.is_valid_signature(BigInt(messageHash), [1, 0, publicKey, r]),
       );
 
       // No SignerSignature
-      await expectRevertWithErrorMessage("argent/undeserializable", () =>
+      await expectRevertWithErrorMessage("argent/invalid-signature-format", () =>
         accountContract.is_valid_signature(BigInt(messageHash), []),
       );
     });

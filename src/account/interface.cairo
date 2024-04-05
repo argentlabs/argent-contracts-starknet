@@ -45,56 +45,61 @@ trait IArgentUserAccount<TContractState> {
         guardian: Option<Signer>
     ) -> felt252;
 
+    /// @notice Changes the security period used for escapes
+    /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
+    /// @param new_security_period new delay in seconds before the escape can be completed
+    fn set_escape_security_period(ref self: TContractState, new_security_period: u64);
+
     /// @notice Changes the owner
-    /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
+    /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     /// @param signer_signature SignerSignature of the new owner 
-    /// Signature is required to prevent changing to an address which is not in control of the user
-    /// Signature is the Signed Message of this hash:
-    /// hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
+    /// Required to prevent changing to an address which is not in control of the user
+    /// is the signature of this hash
+    ///  hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
     fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
 
     /// @notice Changes the guardian
-    /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
-    /// @param new_guardian The address of the new guardian, or 0 to disable the guardian
+    /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     /// @dev can only be set to 0 if there is no guardian backup set
+    /// @param new_guardian The address of the new guardian, or 0 to disable the guardian
     fn change_guardian(ref self: TContractState, new_guardian: Option<Signer>);
 
     /// @notice Changes the backup guardian
-    /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
+    /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     /// @param new_guardian_backup The address of the new backup guardian, or 0 to disable the backup guardian
     fn change_guardian_backup(ref self: TContractState, new_guardian_backup: Option<Signer>);
 
-    /// @notice Triggers the escape of the owner when it is lost or compromised.
-    /// Must be called by the account and authorised by just a guardian.
-    /// Cannot override an ongoing escape of the guardian.
+    /// @notice Triggers the escape of the owner when it is lost or compromised
+    /// @dev Must be called by the account and authorized by just a guardian
+    /// @dev This function assumes that there is a guardian, and that `new_owner` is not 0
+    /// @dev Cannot override an ongoing escape of the guardian
     /// @param new_owner The new account owner if the escape completes
-    /// @dev This method assumes that there is a guardian, and that `_newOwner` is not 0.
-    /// This must be guaranteed before calling this method, usually when validating the transaction.
+    /// This must be guaranteed before calling this method, usually when validating the transaction
     fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);
 
-    /// @notice Triggers the escape of the guardian when it is lost or compromised.
-    /// Must be called by the account and authorised by the owner alone.
-    /// Can override an ongoing escape of the owner.
-    /// @param new_guardian The new account guardian if the escape completes
-    /// @dev This method assumes that there is a guardian, and that `new_guardian` can only be 0
-    /// if there is no guardian backup.
+    /// @notice Triggers the escape of the guardian when it is lost or compromised
+    /// @dev Can override an ongoing escape of the owner
+    /// @dev Must be called by the account and authorized by the owner alone
+    /// @dev This function assumes that there is a guardian, and that `new_guardian` can only be 0
+    /// if there is no guardian backup
     /// This must be guaranteed before calling this method, usually when validating the transaction
+    /// @param new_guardian The new account guardian if the escape completes
     fn trigger_escape_guardian(ref self: TContractState, new_guardian: Option<Signer>);
 
     /// @notice Completes the escape and changes the owner after the security period
-    /// Must be called by the account and authorised by just a guardian
-    /// @dev This method assumes that there is a guardian, and that the there is an escape for the owner.
-    /// This must be guaranteed before calling this method, usually when validating the transaction.
+    /// @dev Must be called by the account and authorized by just a guardian
+    /// @dev This function assumes that there is a guardian, and that the there is an escape for the owner
+    /// This must be guaranteed before calling this method, usually when validating the transaction
     fn escape_owner(ref self: TContractState);
 
     /// @notice Completes the escape and changes the guardian after the security period
-    /// Must be called by the account and authorised by just the owner
-    /// @dev This method assumes that there is a guardian, and that the there is an escape for the guardian.
-    /// This must be guaranteed before calling this method. Usually when validating the transaction.
+    /// @dev Must be called by the account and authorized by just the owner
+    /// @dev This function assumes that there is a guardian, and that the there is an escape for the guardian
+    /// @dev This must be guaranteed before calling this method. Usually when validating the transaction
     fn escape_guardian(ref self: TContractState);
 
-    /// @notice Cancels an ongoing escape if any.
-    /// Must be called by the account and authorised by the owner and a guardian (if guardian is set).
+    /// @notice Cancels an ongoing escape if any
+    /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     fn cancel_escape(ref self: TContractState);
 
     // Views
@@ -116,6 +121,8 @@ trait IArgentUserAccount<TContractState> {
 
     /// Current escape if any, and its status
     fn get_escape_and_status(self: @TContractState) -> (LegacyEscape, EscapeStatus);
+    /// Reads the current security period used for escapes
+    fn get_escape_security_period(self: @TContractState) -> u64;
 }
 
 /// Deprecated methods for compatibility reasons
@@ -123,6 +130,6 @@ trait IArgentUserAccount<TContractState> {
 trait IDeprecatedArgentAccount<TContractState> {
     fn getVersion(self: @TContractState) -> felt252;
     fn getName(self: @TContractState) -> felt252;
-    /// For compatibility reasons this method returns 1 when the signature is valid, and panics otherwise
+    /// For compatibility reasons this function returns 1 when the signature is valid, and panics otherwise
     fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }

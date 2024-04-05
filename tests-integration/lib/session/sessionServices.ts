@@ -273,13 +273,13 @@ export class DappService {
     completedSession: OffChainSession,
     calls: Call[],
     sessionSignature: bigint[],
-    session_authorisation: string[],
+    session_authorization: string[],
     guardian_signature: bigint[],
     accountAddress: string,
   ) {
     return {
       session,
-      session_authorisation,
+      session_authorization,
       session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
       guardian_signature: this.getStarknetSignatureType(
         this.argentBackend.getBackendKey(accountAddress),
@@ -289,8 +289,7 @@ export class DappService {
     };
   }
 
-  // TODO Can this be removed?
-  // method needed as starknetSignatureType in signer.ts is already compiled
+  // function needed as starknetSignatureType in signer.ts is already compiled
   private getStarknetSignatureType(pubkey: BigNumberish, signature: bigint[]) {
     return signerTypeToCustomEnum(SignerType.Starknet, { pubkey, r: signature[0], s: signature[1] });
   }

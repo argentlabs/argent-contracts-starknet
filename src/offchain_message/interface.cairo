@@ -2,28 +2,34 @@ use hash::{HashStateExTrait, HashStateTrait};
 use pedersen::PedersenTrait;
 use poseidon::poseidon_hash_span;
 
+/// Reference to SNIP-12: https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-12.md
+
+/// @notice Defines the function to generate the SNIP-12 revision 0 compliant message hash
 trait IOffChainMessageHashRev0<T> {
     fn get_message_hash_rev_0(self: @T) -> felt252;
 }
 
+/// @notice Defines the function to generate the SNIP-12 revision 1 compliant message hash
 trait IOffChainMessageHashRev1<T> {
     fn get_message_hash_rev_1(self: @T) -> felt252;
 }
 
+/// @notice Defines the function to generates the SNIP-12 revision 0 compliant hash on an object
 trait IStructHashRev0<T> {
     fn get_struct_hash_rev_0(self: @T) -> felt252;
 }
 
+/// @notice Defines the function to generates the SNIP-12 revision 1 compliant hash on an object
 trait IStructHashRev1<T> {
     fn get_struct_hash_rev_1(self: @T) -> felt252;
 }
 
-// needed for session
+/// @dev required for session
 trait IMerkleLeafHash<T> {
     fn get_merkle_leaf(self: @T) -> felt252;
 }
 
-// SNIP 12 Revision 0
+/// @notice StarkNetDomain using SNIP 12 Revision 0
 #[derive(Copy, Drop, Hash)]
 struct StarkNetDomain {
     name: felt252,
@@ -40,7 +46,7 @@ impl StructHashStarkNetDomain of IStructHashRev0<StarkNetDomain> {
     }
 }
 
-// SNIP 12 REV 1
+/// @notice StarkNetDomain using SNIP 12 Revision 1
 #[derive(Hash, Drop, Copy)]
 struct StarknetDomain {
     name: felt252,

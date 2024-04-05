@@ -125,7 +125,6 @@ mod MockFutureArgentAccount {
         }
     }
 
-
     #[abi(embed_v0)]
     impl ArgentUserAccountImpl of super::IFutureArgentUserAccount<ContractState> {
         fn __validate_deploy__(

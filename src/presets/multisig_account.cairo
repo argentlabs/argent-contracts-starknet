@@ -3,7 +3,7 @@ mod ArgentMultisigAccount {
     use argent::account::interface::{IAccount, IArgentAccount, Version};
     use argent::external_recovery::{external_recovery::{external_recovery_component, IExternalRecoveryCallback}};
     use argent::introspection::src5::src5_component;
-    use argent::multisig::{multisig::multisig_component};
+    use argent::multisig::{multisig::{multisig_component, multisig_component::MultisigInternalImpl}};
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
@@ -27,7 +27,6 @@ mod ArgentMultisigAccount {
     component!(path: multisig_component, storage: multisig, event: MultisigEvents);
     #[abi(embed_v0)]
     impl Multisig = multisig_component::MultisigImpl<ContractState>;
-    impl MultisigInternal = multisig_component::MultisigInternalImpl<ContractState>;
     // Execute from outside
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]

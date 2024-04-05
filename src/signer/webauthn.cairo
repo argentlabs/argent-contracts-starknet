@@ -3,6 +3,15 @@ use alexandria_math::sha256::sha256;
 use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, extend};
 use starknet::secp256_trait::Signature;
 
+/// @notice The webauthn asserion that needs to be validated
+/// @param authenticator_data The data returned by the authenticator
+/// @param client_data_json JSON compatible serialization of the client data, the hash of which is passed to the authenticator by the client
+/// @param signature The signature as {r, s, y_parity}
+/// @param type_offset The offset index of the type
+/// @param challenge_offset the offset index of the challenge
+/// @param challenge_length the length of the challenge
+/// @param origin_offset the offset index of the origin
+/// @param origin_length the length of the origin
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnAssertion {
     authenticator_data: Span<u8>,

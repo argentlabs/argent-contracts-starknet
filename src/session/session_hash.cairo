@@ -56,7 +56,7 @@ impl StructHashSession of IStructHashRev1<Session> {
 impl OffChainMessageHashSessionRev1 of IOffChainMessageHashRev1<Session> {
     fn get_message_hash_rev_1(self: @Session) -> felt252 {
         // WARNING! Please do not use this starknet domain as it is wrong.
-        // Version and Revision should be shortstring '1' not felt 1
+        // Revision should be shortstring '1' not felt 1
         // This is due to a mistake made in the Braavos contracts and has been copied for compatibility
         let chain_id = get_tx_info().unbox().chain_id;
         if chain_id == 'SN_MAIN' {

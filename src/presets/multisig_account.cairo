@@ -12,7 +12,7 @@ mod ArgentMultisigAccount {
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
-        serialization::full_deserialize_or_panic,
+        serialization::full_deserialize,
         transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
     };
     use starknet::{get_tx_info, get_execution_info, get_contract_address, VALIDATED, account::Call, ClassHash};
@@ -251,7 +251,7 @@ mod ArgentMultisigAccount {
     #[must_use]
     #[inline(always)]
     fn parse_signature_array(mut raw_signature: Span<felt252>) -> Array<SignerSignature> {
-        full_deserialize_or_panic(raw_signature, 'argent/invalid-signature-format')
+        full_deserialize(raw_signature).expect( 'argent/invalid-signature-format')
     }
 }
 

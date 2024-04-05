@@ -75,13 +75,13 @@ fn u32s_to_u8s(mut input: Span<felt252>) -> Span<u8> {
 
 fn u8s_to_u32s(mut input: Span<u8>) -> Array<u32> {
     let mut output = array![];
-    while let Option::Some(word1) = input
+    while let Option::Some(byte1) = input
         .pop_front() {
-            let word1 = *word1;
-            let word2 = *input.pop_front().unwrap_or_default();
-            let word3 = *input.pop_front().unwrap_or_default();
-            let word4 = *input.pop_front().unwrap_or_default();
-            output.append(0x100_00_00 * word1.into() + 0x100_00 * word2.into() + 0x100 * word3.into() + word4.into());
+            let byte1 = *byte1;
+            let byte2 = *input.pop_front().unwrap_or_default();
+            let byte3 = *input.pop_front().unwrap_or_default();
+            let byte4 = *input.pop_front().unwrap_or_default();
+            output.append(0x100_00_00 * byte1.into() + 0x100_00 * byte2.into() + 0x100 * byte3.into() + byte4.into());
         };
     output
 }

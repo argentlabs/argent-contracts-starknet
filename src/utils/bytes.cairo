@@ -1,12 +1,15 @@
 impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
     fn try_into(mut self: Span<u8>) -> Option<u256> {
         if self.len() < 32 {
-            let result: felt252 = self.try_into()?;
+            let result: felt252 = self.try_into().unwrap();
             Option::Some(result.into())
-        } else {
-            let result: felt252 = self.slice(0, 31).try_into()?;
+        } else if self.len() == 32 {
+            let higher_bytes: felt252 = self.slice(0, 31).try_into().unwrap();
             let last_byte = *self.at(31);
-            Option::Some((0x100 * result.into()) + last_byte.into())
+            Option::Some((0x100 * higher_bytes.into()) + last_byte.into())
+        } else {
+            // Not support for more than 32 bytes
+            Option::None
         }
     }
 }
@@ -60,6 +63,7 @@ fn u32s_to_u256(arr: Span<felt252>) -> u256 {
     u256 { high, low }
 }
 
+// Accepts felt252 for efficiency as it's the type of retdata but all values are expected to fit u32
 fn u32s_to_u8s(mut input: Span<felt252>) -> Span<u8> {
     let mut output = array![];
     while let Option::Some(word) = input

@@ -6,6 +6,7 @@ use argent::utils::hashing::poseidon_2;
 use core::traits::TryInto;
 use ecdsa::check_ecdsa_signature;
 use hash::{HashStateExTrait, HashStateTrait};
+use poseidon::poseidon_hash_span;
 use poseidon::{hades_permutation, PoseidonTrait};
 use starknet::SyscallResultTrait;
 use starknet::secp256_trait::{Secp256PointTrait, Signature as Secp256r1Signature, recover_public_key};
@@ -150,14 +151,19 @@ impl SignerTraitImpl of SignerTrait {
             },
             Signer::Eip191(signer) => poseidon_2(EIP191_SIGNER_TYPE, signer.eth_address.address.into()),
             Signer::Webauthn(signer) => {
-                let mut origin = signer.origin;
+                let mut origin_u8s = signer.origin;
+                let mut origin_felt252s: Array<felt252> = array![];
+                while let Option::Some(byte) = origin_u8s.pop_front() {
+                    origin_felt252s.append((*byte).into());
+                };
                 let rp_id_hash: u256 = signer.rp_id_hash.into();
                 let pubkey: u256 = signer.pubkey.into();
-                let mut state = PoseidonTrait::new().update_with(WEBAUTHN_SIGNER_TYPE);
-                while let Option::Some(byte) = origin.pop_front() {
-                    state = state.update_with(*byte);
-                };
-                state.update_with(rp_id_hash).update_with(pubkey).finalize()
+                PoseidonTrait::new()
+                    .update_with(WEBAUTHN_SIGNER_TYPE)
+                    .update_with(poseidon_hash_span(origin_felt252s.span()))
+                    .update_with(rp_id_hash)
+                    .update_with(pubkey)
+                    .finalize()
             },
         }
     }

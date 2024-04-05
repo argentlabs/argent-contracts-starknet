@@ -165,7 +165,7 @@ mod MockFutureArgentMultisig {
     }
 
     fn parse_signature_array(mut raw_signature: Span<felt252>) -> Array<SignerSignature> {
-        full_deserialize(raw_signature).expect('argent/invalid-signature-array')
+        full_deserialize(raw_signature).expect('argent/invalid-signature-format')
     }
 }
 

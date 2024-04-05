@@ -1,4 +1,4 @@
-import { Account, BigNumberish, CairoCustomEnum, typedData } from "starknet";
+import { Account, BigNumberish, CairoCustomEnum, shortString, typedData } from "starknet";
 import {
   ArgentAccount,
   ArgentX,
@@ -67,7 +67,7 @@ export async function getSessionDomain(): Promise<typedData.StarkNetDomain> {
   const chainId = await provider.getChainId();
   return {
     name: "SessionAccount.session",
-    version: "1",
+    version: shortString.encodeShortString("1"),
     chainId: chainId,
     revision: "1",
   };

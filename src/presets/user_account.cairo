@@ -2,7 +2,7 @@
 mod ArgentUserAccount {
     use argent::account::interface::{IAccount, IArgentAccount, Version};
     use argent::introspection::src5::src5_component;
-    use argent::multisig::{multisig::multisig_component};
+    use argent::multisig::{multisig::{multisig_component, multisig_component::MultisigInternalImpl}};
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
@@ -18,9 +18,6 @@ mod ArgentUserAccount {
         serialization::full_deserialize,
         transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
     };
-    use core::array::ArrayTrait;
-    use core::result::ResultTrait;
-    use core::traits::Into;
     use starknet::{get_tx_info, get_contract_address, get_execution_info, VALIDATED, ClassHash, account::Call};
 
     const NAME: felt252 = 'ArgentAccount';
@@ -35,7 +32,6 @@ mod ArgentUserAccount {
     component!(path: multisig_component, storage: multisig, event: MultisigEvents);
     #[abi(embed_v0)]
     impl Multisig = multisig_component::MultisigImpl<ContractState>;
-    impl MultisigInternal = multisig_component::MultisigInternalImpl<ContractState>;
     // Execute from outside
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
@@ -242,7 +238,7 @@ mod ArgentUserAccount {
                         .is_empty() {
                             let signer_sig = *signature_span.pop_front().unwrap();
                             assert(
-                                signer_sig.signer().into_guid() != excluded_signer_guid, 'argent/unauthorised_signer'
+                                signer_sig.signer().into_guid() != excluded_signer_guid, 'argent/unauthorized-signer'
                             )
                         };
                     required_signatures

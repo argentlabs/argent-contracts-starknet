@@ -3,33 +3,42 @@ use starknet::{ContractAddress, account::Call};
 
 #[starknet::interface]
 trait IArgentMultisig<TContractState> {
-    /// @dev Change threshold
+    /// @notice Change threshold
+    /// @dev will revert if invalid threshold
     /// @param new_threshold New threshold
     fn change_threshold(ref self: TContractState, new_threshold: usize);
 
-    /// @dev Adds new signers to the account, additionally sets a new threshold
+    /// @notice Adds new signers to the account, additionally sets a new threshold
+    /// @dev will revert when trying to add a user already in the list
+    /// @dev will revert if invalid threshold
     /// @param new_threshold New threshold
     /// @param signers_to_add An array with all the signers to add
-    /// @dev will revert when trying to add a user already in the list
     fn add_signers(ref self: TContractState, new_threshold: usize, signers_to_add: Array<Signer>);
 
-    /// @dev Removes account signers, additionally sets a new threshold
+    /// @notice Removes account signers, additionally sets a new threshold
+    /// @dev Will revert if any of the signers isn't in the multisig's list of signers
+    /// @dev will revert if invalid threshold
     /// @param new_threshold New threshold
-    /// @param signers_to_remove Should contain only current signers, otherwise it will revert
+    /// @param signers_to_remove All the signers to remove 
     fn remove_signers(ref self: TContractState, new_threshold: usize, signers_to_remove: Array<Signer>);
 
-    /// @dev Replace one signer with a different one
+    /// @notice Replace one signer with a different one
+    /// @dev Will revert when trying to remove a signer that isn't in the list
+    /// @dev Will revert when trying to add a signer that is in the list or if the signer is zero
     /// @param signer_to_remove Signer to remove
     /// @param signer_to_add Signer to add
     fn replace_signer(ref self: TContractState, signer_to_remove: Signer, signer_to_add: Signer);
 
-    /// @dev Returns the threshold, the number of signers required to control this account
+    /// @notice Returns the threshold
     fn get_threshold(self: @TContractState) -> usize;
+    /// @notice Returns the guid of all the signers
     fn get_signer_guids(self: @TContractState) -> Array<felt252>;
     fn is_signer(self: @TContractState, signer: Signer) -> bool;
     fn is_signer_guid(self: @TContractState, signer_guid: felt252) -> bool;
 
-    /// Checks if a given signature is a valid signature from one of the multisig owners
+    /// @notice Verifies whether a provided signature is valid and comes from one of the multisig owners.
+    /// @param hash Hash of the message being signed
+    /// @param signer_signature Signature to be verified
     fn is_valid_signer_signature(self: @TContractState, hash: felt252, signer_signature: SignerSignature) -> bool;
 }
 

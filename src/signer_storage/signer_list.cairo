@@ -203,7 +203,6 @@ mod signer_list_component {
         }
     }
 
-
     #[generate_trait]
     impl Private<TContractState, +HasComponent<TContractState>> of PrivateTrait<TContractState> {
         // Optimized version of `is_signer` with constant compute cost. To use when you know the last signer

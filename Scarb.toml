@@ -3,8 +3,6 @@ name = "argent"
 version = "0.1.0"
 cairo-version = "2.6.3"
 
-# See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest
-
 [[target.starknet-contract]]
 sierra = true
 casm = true

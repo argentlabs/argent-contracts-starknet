@@ -59,7 +59,7 @@ describe("ArgentAccount: upgrade", function () {
     await expectEvent(response, { from_address: account.address, eventName: "AccountUpgraded", data });
   });
 
-  it("Shouldn't be possible to upgrade if an owner escape is ongoing", async function () {
+  it("Should be possible to upgrade if an owner escape is ongoing", async function () {
     const classHash = await declareFixtureContract("ArgentAccount-0.3.0");
     const { account, accountContract, owner, guardian } = await deployLegacyAccount(classHash);
 
@@ -67,12 +67,13 @@ describe("ArgentAccount: upgrade", function () {
     await accountContract.trigger_escape_owner(12);
 
     account.signer = new LegacyArgentSigner(owner, guardian);
-    await expectRevertWithErrorMessage("argent/ready-at-should-be-null", () =>
-      upgradeAccount(account, argentAccountClassHash),
-    );
+    await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
+      from_address: account.address,
+      eventName: "EscapeCanceled",
+    });
   });
 
-  it("Shouldn't be possible to upgrade if a guardian escape is ongoing", async function () {
+  it("Should be possible to upgrade if a guardian escape is ongoing", async function () {
     const classHash = await declareFixtureContract("ArgentAccount-0.3.0");
     const { account, accountContract, owner, guardian } = await deployLegacyAccount(classHash);
 
@@ -80,9 +81,10 @@ describe("ArgentAccount: upgrade", function () {
     await accountContract.trigger_escape_guardian(12);
 
     account.signer = new LegacyArgentSigner(owner, guardian);
-    await expectRevertWithErrorMessage("argent/ready-at-should-be-null", () =>
-      upgradeAccount(account, argentAccountClassHash),
-    );
+    await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
+      from_address: account.address,
+      eventName: "EscapeCanceled",
+    });
   });
 
   it("Reject invalid upgrade targets", async function () {

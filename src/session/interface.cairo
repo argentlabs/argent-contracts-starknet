@@ -3,6 +3,16 @@ use poseidon::{poseidon_hash_span};
 use starknet::account::Call;
 use starknet::{get_tx_info, get_contract_address, ContractAddress};
 
+
+/// This trait has to be implemented when using the component `session_component` (This is enforced by the compiler)
+#[starknet::interface]
+trait ISessionCallback<TContractState> {
+    /// @notice Callback performed to check valid account signature
+    /// @param session_hash The hash of session
+    /// @param authorization_signature The owner + guardian signature of the session
+    fn session_callback(self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>) -> bool;
+}
+
 #[starknet::interface]
 trait ISessionable<TContractState> {
     /// @notice This function allows user to revoke a session based on its hash

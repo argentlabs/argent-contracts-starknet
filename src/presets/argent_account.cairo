@@ -7,7 +7,8 @@ mod ArgentAccount {
     };
     use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
     use argent::session::{
-        interface::SessionToken, session::{session_component::{Internal, InternalTrait}, session_component,}
+        interface::{SessionToken, ISessionCallback},
+        session::{session_component::{Internal, InternalTrait}, session_component,}
     };
     use argent::signer::{
         signer_signature::{
@@ -352,16 +353,29 @@ mod ArgentAccount {
             assert_only_self();
 
             // As the storage layout for the escape is changing, if there is an ongoing escape it should revert
-            // We have to use raw syscall, as using the read fn would make use of the new way of reading
+            // Expired escapes will be cleared
             let base = storage_base_address_from_felt252(selector!("_escape"));
-            let ready_at = storage_read_syscall(0, storage_address_from_base_and_offset(base, 0)).unwrap_syscall();
-            assert(ready_at.is_zero(), 'argent/ready-at-should-be-null');
-            let escape_type = storage_read_syscall(0, storage_address_from_base_and_offset(base, 1)).unwrap_syscall();
-            assert(escape_type.is_zero(), 'argent/esc-type-should-be-null');
-            let new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(base, 2)).unwrap_syscall();
-            assert(new_signer.is_zero(), 'argent/new-signer-should-be-nul');
+            let escape_ready_at = storage_read_syscall(0, storage_address_from_base_and_offset(base, 0))
+                .unwrap_syscall();
 
-            // Cleaning attempts storage => This should NOT have any impact as we don't allow to upgrade if there is an escape ongoing
+            if escape_ready_at == 0 {
+                let escape_type = storage_read_syscall(0, storage_address_from_base_and_offset(base, 1))
+                    .unwrap_syscall();
+                let escape_new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(base, 2))
+                    .unwrap_syscall();
+                assert(escape_type.is_zero(), 'argent/esc-type-not-null');
+                assert(escape_new_signer.is_zero(), 'argent/esc-new-signer-not-null');
+            } else {
+                let escape_ready_at: u64 = escape_ready_at.try_into().unwrap();
+                if get_block_timestamp() < escape_ready_at + DEFAULT_ESCAPE_SECURITY_PERIOD {
+                    // Not expired. Automatically cancelling the escape when upgrading
+                    self.emit(EscapeCanceled {});
+                }
+                // Clear the escape
+                self._escape.write(Default::default());
+            }
+
+            // Cleaning attempts storage as the escape was cleared
             let base = storage_base_address_from_felt252(selector!("guardian_escape_attempts"));
             storage_write_syscall(0, storage_address_from_base_and_offset(base, 0), 0).unwrap_syscall();
             let base = storage_base_address_from_felt252(selector!("owner_escape_attempts"));
@@ -435,6 +449,16 @@ mod ArgentAccount {
             retdata
         }
     }
+
+
+    impl SessionCallbackImpl of ISessionCallback<ContractState> {
+        fn session_callback(
+            self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>
+        ) -> bool {
+            self.is_valid_span_signature(session_hash, self.parse_signature_array(authorization_signature))
+        }
+    }
+
 
     #[abi(embed_v0)]
     impl ArgentUserAccountImpl of IArgentUserAccount<ContractState> {

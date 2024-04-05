@@ -6,7 +6,7 @@ mod session_component {
     use argent::account::interface::{IAccount, IArgentUserAccount};
     use argent::session::{
         session_hash::{OffChainMessageHashSessionRev1, MerkleLeafHash},
-        interface::{ISessionable, SessionToken, Session},
+        interface::{ISessionable, SessionToken, Session, ISessionCallback},
     };
     use argent::signer::signer_signature::{SignerSignatureTrait, SignerTrait};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
@@ -50,7 +50,11 @@ mod session_component {
 
     #[generate_trait]
     impl Internal<
-        TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentUserAccount<TContractState>,
+        TContractState,
+        +HasComponent<TContractState>,
+        +IAccount<TContractState>,
+        +IArgentUserAccount<TContractState>,
+        +ISessionCallback<TContractState>,
     > of InternalTrait<TContractState> {
         #[inline(always)]
         fn is_session(self: @ComponentState<TContractState>, signature: Span<felt252>) -> bool {
@@ -83,8 +87,7 @@ mod session_component {
             assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
 
             assert(
-                state.is_valid_signature(token_session_hash, token.session_authorisation.snapshot.clone()) == VALIDATED,
-                'session/invalid-account-sig'
+                state.session_callback(token_session_hash, token.session_authorisation), 'session/invalid-account-sig'
             );
 
             let (message_hash, _, _) = hades_permutation(transaction_hash, token_session_hash, 2);

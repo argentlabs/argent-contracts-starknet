@@ -21,6 +21,7 @@ import {
   expectRevertWithErrorMessage,
   getEscapeStatus,
   hasOngoingEscape,
+  loadContract,
   provider,
   randomStarknetKeyPair,
   setTime,
@@ -184,7 +185,7 @@ describe("ArgentAccount: escape mechanism", function () {
       await expectRevertWithErrorMessage("argent/only-self", () => accountContract.escape_owner());
     });
 
-    it("Expect 'argent/null-owner' new_owner is zero", async function () {
+    it("Cancel escape when upgrading", async function () {
       const { account, owner, guardian } = await deployOldAccount();
       account.signer = new LegacyMultisigSigner([guardian]);
 
@@ -196,9 +197,31 @@ describe("ArgentAccount: escape mechanism", function () {
       await provider.waitForTransaction(transaction_hash);
 
       account.signer = new LegacyMultisigSigner([owner, guardian]);
-      await expectRevertWithErrorMessage("argent/ready-at-should-be-null", () =>
-        upgradeAccount(account, argentAccountClassHash, ["0"]),
-      );
+      const upgradeReceipt = await upgradeAccount(account, argentAccountClassHash, ["0"]);
+
+      await expectEvent(upgradeReceipt.transaction_hash, {
+        from_address: account.address,
+        eventName: "EscapeCanceled",
+      });
+      await getEscapeStatus(await loadContract(account.address)).should.eventually.equal(EscapeStatus.None);
+    });
+
+    it("Clear expired escape when upgrading", async function () {
+      const { account, owner, guardian } = await deployOldAccount();
+      account.signer = new LegacyMultisigSigner([guardian]);
+
+      await setTime(randomTime);
+      const { transaction_hash } = await account.execute({
+        contractAddress: account.address,
+        entrypoint: "triggerEscapeSigner",
+      });
+      await provider.waitForTransaction(transaction_hash);
+
+      await setTime(randomTime + ESCAPE_EXPIRY_PERIOD + 1n);
+
+      account.signer = new LegacyMultisigSigner([owner, guardian]);
+      await upgradeAccount(account, argentAccountClassHash, ["0"]);
+      await getEscapeStatus(await loadContract(account.address)).should.eventually.equal(EscapeStatus.None);
     });
 
     describe("Testing with all guardian signer combination", function () {

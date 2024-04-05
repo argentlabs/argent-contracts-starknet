@@ -1,18 +1,11 @@
-use array::ArrayTrait;
-
 use starknet::{SyscallResult, storage_access::{Store, StorageBaseAddress}};
-trait ArrayExtTrait<T> {
-    fn append_all(ref self: Array<T>, value: Array<T>);
-}
 
-impl ArrayExtImpl<T, +Drop<T>> of ArrayExtTrait<T> {
-    fn append_all(ref self: Array<T>, mut value: Array<T>) {
-        loop {
-            match value.pop_front() {
-                Option::Some(item) => self.append(item),
-                Option::None => { break; },
-            }
-        }
+#[generate_trait]
+impl ArrayExt<T, +Drop<T>, +Copy<T>> of ArrayExtTrait<T> {
+    fn append_all(ref self: Array<T>, mut value: Span<T>) {
+        while let Option::Some(item) = value.pop_front() {
+            self.append(*item);
+        };
     }
 }
 
@@ -35,11 +28,7 @@ impl StoreFelt252Array of Store<Array<felt252>> {
 
         // Sequentially read all stored elements and append them to the array.
         let exit = len + offset;
-        loop {
-            if offset >= exit {
-                break;
-            }
-
+        while offset < exit {
             let value = Store::<felt252>::read_at_offset(address_domain, base, offset).unwrap();
             arr.append(value);
             offset += Store::<felt252>::size();
@@ -58,15 +47,12 @@ impl StoreFelt252Array of Store<Array<felt252>> {
         offset += 1;
 
         // Store the array elements sequentially
-        loop {
-            match value.pop_front() {
-                Option::Some(element) => {
-                    Store::<felt252>::write_at_offset(address_domain, base, offset, element).unwrap();
-                    offset += Store::<felt252>::size();
-                },
-                Option::None => { break Result::Ok(()); }
+        while let Option::Some(element) = value
+            .pop_front() {
+                Store::<felt252>::write_at_offset(address_domain, base, offset, element).unwrap();
+                offset += Store::<felt252>::size();
             };
-        }
+        Result::Ok(())
     }
 
     fn size() -> u8 {

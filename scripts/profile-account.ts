@@ -1,3 +1,4 @@
+import assert from "assert";
 import { uint256 } from "starknet";
 import {
   Eip191KeyPair,
@@ -8,6 +9,7 @@ import {
   StarknetKeyPair,
   WebauthnOwner,
   clearCache,
+  declareFixtureContract,
   deployAccount,
   deployAccountWithoutGuardian,
   deployOldAccount,
@@ -185,6 +187,8 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
+  const classHash = await declareFixtureContract("Sha256Cairo0");
+  assert(BigInt(classHash) === 0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
   const { account } = await deployAccount({
     owner: new WebauthnOwner(privateKey),
     guardian,

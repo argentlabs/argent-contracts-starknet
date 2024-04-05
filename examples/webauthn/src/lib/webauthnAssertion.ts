@@ -19,7 +19,7 @@ export const signTransaction = async (
   transactionHash: string,
   attestation: WebauthnAttestation,
 ): Promise<WebauthnAssertion> => {
-  const challenge = hex2buf(normalizeTransactionHash(transactionHash));
+  const challenge = hex2buf(normalizeTransactionHash(transactionHash) + "00");
 
   const credential = await navigator.credentials.get({
     publicKey: {
@@ -41,10 +41,6 @@ export const signTransaction = async (
   const { r, s } = parseASN1Signature(assertionResponse.signature);
   const messageHash = await getMessageHash(authenticatorData, clientDataJSON);
   const yParity = getYParity(messageHash, attestation, r, s);
-  console.log("authenticatorData");
-  console.log(r.toString());
-  console.log(s.toString());
-  console.log(yParity);
   return { authenticatorData, clientDataJSON, r, s, yParity };
 };
 

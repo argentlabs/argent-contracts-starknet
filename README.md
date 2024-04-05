@@ -8,7 +8,8 @@ See [Argent Account](src/README.md#argent-multisig) and [Argent Multisig](src/RE
 
 ### Setup
 
-Please refer to [these instructions](https://docs.starknet.io/documentation/quick_start/environment_setup/#installing_scarb).
+We recommend you to install scarb through ASDF.  Please refer to [these instructions](https://docs.swmansion.com/scarb/download.html#install-via-asdf).  
+Thanks to the [.tool-versions file](./.tool-versions), you don't need to install a specific scarb or starknet foundry version. The correct one will be automatically downloaded and installed.
 
 ## Test the contracts (Cairo)
 

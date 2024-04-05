@@ -12,12 +12,14 @@ trait IArgentMultisig<TContractState> {
     /// @param new_threshold New threshold
     /// @param signers_to_add An array with all the signers to add
     /// @dev will revert when trying to add a user already in the list
+    /// @dev will revert if invalid threshold
     fn add_signers(ref self: TContractState, new_threshold: usize, signers_to_add: Array<Signer>);
 
     /// @notice Removes account signers, additionally sets a new threshold
     /// @param new_threshold New threshold
     /// @param signers_to_remove All the signers to remove 
     /// @dev Will revert if any of the signers isn't in the multisig's list of signers
+    /// @dev will revert if invalid threshold
     fn remove_signers(ref self: TContractState, new_threshold: usize, signers_to_remove: Array<Signer>);
 
     /// @notice Replace one signer with a different one

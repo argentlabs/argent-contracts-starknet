@@ -83,9 +83,9 @@ mod session_component {
 
             assert(!self.revoked_session.read(token_session_hash), 'session/revoked');
 
-            // timestamp check
             assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
 
+            // callback verifies the owner + guardian signature is valid
             assert(
                 state.session_callback(token_session_hash, token.session_authorisation), 'session/invalid-account-sig'
             );

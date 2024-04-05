@@ -3,6 +3,35 @@ use poseidon::{poseidon_hash_span};
 use starknet::account::Call;
 use starknet::{get_tx_info, get_contract_address, ContractAddress};
 
+/// @notice Session struct that the owner and guardian has to sign to initiate a session
+/// @param expires_at Expiry timestamp of the session (seconds)
+/// @param allowed_methods_root The root of the merkle tree of the allowed methods
+/// @param metadata_hash The hash of the metadata JSON string of the session
+/// @param session_key_guid The GUID of the session key
+#[derive(Drop, Serde, Copy)]
+struct Session {
+    expires_at: u64,
+    allowed_methods_root: felt252,
+    metadata_hash: felt252,
+    session_key_guid: felt252,
+}
+
+/// @notice Session Token is signed by the guardian (backend) and 
+/// the dapp (session key) for every session call
+/// @param session The session struct
+/// @param session_authorisation The owner + guardian signature of the session + their public keys
+/// @param session_signature Session signature of the poseidon H(tx_hash, session hash)
+/// @param guardian_signature Guardian signature of the poseidon H(tx_hash, session hash)
+/// @param proofs The merkle proof of the session call
+#[derive(Drop, Serde, Copy)]
+struct SessionToken {
+    session: Session,
+    session_authorisation: Span<felt252>,
+    session_signature: SignerSignature,
+    guardian_signature: SignerSignature,
+    proofs: Span<Span<felt252>>,
+}
+
 
 /// This trait has to be implemented when using the component `session_component` (This is enforced by the compiler)
 #[starknet::interface]
@@ -21,21 +50,4 @@ trait ISessionable<TContractState> {
 
     /// @notice View function to see if a session is revoked, returns a boolean 
     fn is_session_revoked(self: @TContractState, session_hash: felt252) -> bool;
-}
-
-#[derive(Drop, Serde, Copy)]
-struct Session {
-    expires_at: u64,
-    allowed_methods_root: felt252,
-    metadata_hash: felt252,
-    session_key_guid: felt252,
-}
-
-#[derive(Drop, Serde, Copy)]
-struct SessionToken {
-    session: Session,
-    session_authorisation: Span<felt252>,
-    session_signature: SignerSignature,
-    guardian_signature: SignerSignature,
-    proofs: Span<Span<felt252>>,
 }

@@ -131,9 +131,9 @@ mod ArgentAccount {
     }
 
     /// @notice Deprecated. This is only emitted for the owner and then guardian when they of type SignerType::Starknet
+    /// @dev Emitted exactly once when the account is initialized
     /// @param owner The owner starknet pubkey
     /// @param guardian The guardian starknet pubkey or 0 if there's no guardian
-    /// @dev Emitted exactly once when the account is initialized
     #[derive(Drop, starknet::Event)]
     struct AccountCreated {
         #[key]
@@ -142,9 +142,9 @@ mod ArgentAccount {
     }
 
     /// @notice Emitted on initialization with the guids of the owner and the guardian (or 0 if none) 
+    /// @dev Emitted exactly once when the account is initialized
     /// @param owner The owner guid
     /// @param guardian The guardian guid or 0 if there's no guardian
-    /// @dev Emitted exactly once when the account is initialized
     #[derive(Drop, starknet::Event)]
     struct AccountCreatedGuid {
         #[key]
@@ -244,9 +244,9 @@ mod ArgentAccount {
     }
 
     /// @notice A new signer was linked 
+    /// @dev This is the only way to get the signer struct knowing a only guid
     /// @param signer_guid the guid of the signer derived from the signer
     /// @param signer the signer being added 
-    /// @dev This is the only way to get the signer struct knowing a only guid
     #[derive(Drop, starknet::Event)]
     struct SignerLinked {
         #[key]

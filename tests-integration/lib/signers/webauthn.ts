@@ -26,6 +26,7 @@ const hex2buf = (hex: string) =>
 // Constants
 const rpIdHash = sha256("localhost");
 const origin = "http://localhost:5173";
+const originBytes = CallData.compile(origin.split("").map(shortString.encodeShortString));
 
 interface WebauthnAssertion {
   authenticatorData: Uint8Array;
@@ -57,7 +58,7 @@ export class WebauthnOwner extends KeyPair {
 
   public get signer(): CairoCustomEnum {
     return signerTypeToCustomEnum(SignerType.Webauthn, {
-      origin: CallData.compile([origin.split("").map(shortString.encodeShortString)]),
+      origin: originBytes,
       rp_id_hash: uint256.bnToUint256(buf2hex(rpIdHash)),
       pubkey: uint256.bnToUint256(buf2hex(this.publicKey)),
     });
@@ -70,7 +71,7 @@ export class WebauthnOwner extends KeyPair {
     const clientDataOffset = (substring: string) => clientDataText.indexOf(substring) + substring.length;
 
     const cairoAssertion = {
-      origin,
+      origin: originBytes,
       rp_id_hash: uint256.bnToUint256(buf2hex(rpIdHash)),
       pubkey: uint256.bnToUint256(buf2hex(this.publicKey)),
       authenticator_data: CallData.compile(Array.from(authenticatorData)),
@@ -96,7 +97,7 @@ export class WebauthnOwner extends KeyPair {
     const authenticatorData = concatBytes(rpIdHash, flags, signCount);
 
     const challenge = buf2base64url(hex2buf(normalizeTransactionHash(transactionHash) + "00"));
-    const clientData = { type: "webauthn.get", challenge, origin: "http://localhost:5173", crossOrigin: false };
+    const clientData = { type: "webauthn.get", challenge, origin, crossOrigin: false };
     const clientDataJson = new TextEncoder().encode(JSON.stringify(clientData));
 
     const message = concatBytes(authenticatorData, sha256(clientDataJson));

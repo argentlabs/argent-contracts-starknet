@@ -273,13 +273,13 @@ export class DappService {
     completedSession: OffChainSession,
     calls: Call[],
     sessionSignature: bigint[],
-    session_authorisation: string[],
+    session_authorization: string[],
     guardian_signature: bigint[],
     accountAddress: string,
   ) {
     return {
       session,
-      session_authorisation,
+      session_authorization,
       session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
       guardian_signature: this.getStarknetSignatureType(
         this.argentBackend.getBackendKey(accountAddress),

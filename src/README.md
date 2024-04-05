@@ -10,7 +10,7 @@ The user can always opt-out of the guardian service and manage the guardian key 
 
 By default the account can execute a sequence of operations such as calling external contracts in a multicall. A multicall will fail if one of the inner call fails. Whenever a function of the account must be called (`change_owner`, `trigger_escape_guardian`, `upgrade`, etc), it should be the only call performed in this multicall.
 
-In addition to the main `__execute__` entry point used by the Starknet protocol, the account can also be called by an external party via the `execute_from_outside` function to e.g. enable sponsored transactions. The calling party must provide a valid signature (`owner` and/or `guardian`) for the target execution.
+In addition to the main `__execute__` entry point used by the Starknet protocol, the account can also be called by an external contract via the `execute_from_outside` function to e.g. enable sponsored transactions. The calling contract must provide a valid signature (`owner` and/or `guardian`) for the target execution.
 
 Normal operations of the wallet (calling external contracts via `__execute__` or `execute_from_outside`, `change_owner`, `change_guardian`, `change_guardian_backup`, `cancel_escape`, `upgrade`) require the approval of the `owner` and a `guardian` to be executed.
 

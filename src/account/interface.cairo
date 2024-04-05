@@ -72,7 +72,7 @@ trait IArgentUserAccount<TContractState> {
     /// @notice Triggers the escape of the owner when it is lost or compromised
     /// @param new_owner The new account owner if the escape completes
     /// @dev Must be called by the account and authorized by just a guardian
-    /// @dev This function assumes that there is a guardian, and that `_newOwner` is not 0
+    /// @dev This function assumes that there is a guardian, and that `new_owner` is not 0
     /// @dev Cannot override an ongoing escape of the guardian
     /// This must be guaranteed before calling this method, usually when validating the transaction
     fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);

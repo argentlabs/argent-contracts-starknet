@@ -173,7 +173,7 @@ fn invalid_signature_length_without_guardian() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/invalid-signature',))]
+#[should_panic(expected: ('argent/invalid-signature-format',))]
 fn invalid_empty_signature_with_guardian() {
     let account = initialize_account();
     let signatures = array![];

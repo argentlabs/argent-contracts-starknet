@@ -66,7 +66,7 @@ struct Eip191Signer {
 
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSigner {
-    origin: NonZero<felt252>,
+    origin: Span<u8>,
     rp_id_hash: NonZero<u256>,
     pubkey: NonZero<u256>
 }
@@ -105,15 +105,6 @@ fn starknet_signer_from_pubkey(pubkey: felt252) -> Signer {
     Signer::Starknet(StarknetSigner { pubkey: pubkey.try_into().expect('argent/zero-pubkey') })
 }
 
-#[inline(always)]
-fn new_web_authn_signer(origin: felt252, rp_id_hash: u256, pubkey: u256) -> WebauthnSigner {
-    WebauthnSigner {
-        origin: origin.try_into().expect('argent/zero-origin'),
-        rp_id_hash: rp_id_hash.try_into().expect('argent/zero-rp-id-hash'),
-        pubkey: pubkey.try_into().expect('argent/zero-pubkey')
-    }
-}
-
 #[generate_trait]
 impl SignerTraitImpl of SignerTrait {
     fn into_guid(self: Signer) -> felt252 {
@@ -126,15 +117,14 @@ impl SignerTraitImpl of SignerTrait {
             },
             Signer::Eip191(signer) => poseidon_2(EIP191_SIGNER_TYPE, signer.eth_address.address.into()),
             Signer::Webauthn(signer) => {
-                let origin: felt252 = signer.origin.into();
+                let mut origin = signer.origin;
                 let rp_id_hash: u256 = signer.rp_id_hash.into();
                 let pubkey: u256 = signer.pubkey.into();
-                PoseidonTrait::new()
-                    .update_with(WEBAUTHN_SIGNER_TYPE)
-                    .update_with(origin)
-                    .update_with(rp_id_hash)
-                    .update_with(pubkey)
-                    .finalize()
+                let mut state = PoseidonTrait::new().update_with(WEBAUTHN_SIGNER_TYPE);
+                while let Option::Some(byte) = origin.pop_front() {
+                    state = state.update_with(*byte);
+                };
+                state.update_with(rp_id_hash).update_with(pubkey).finalize()
             },
         }
     }
@@ -302,7 +292,7 @@ fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: 
 
 #[inline(always)]
 fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, assertion: WebauthnAssertion) -> bool {
-    let sha256_implementation = verify_client_data_json(assertion, hash, signer.origin.into());
+    let sha256_implementation = verify_client_data_json(assertion, hash, signer.origin);
     verify_authenticator_data(assertion.authenticator_data, signer.rp_id_hash.into());
 
     let signed_hash = get_webauthn_hash(assertion, sha256_implementation);

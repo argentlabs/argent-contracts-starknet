@@ -44,7 +44,7 @@ fn deserialize_challenge(challenge: Span<u8>) -> Challenge {
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
 fn verify_client_data_json(
-    assertion: WebauthnAssertion, expected_transaction_hash: felt252, expected_origin: felt252
+    assertion: WebauthnAssertion, expected_transaction_hash: felt252, expected_origin: Span<u8>
 ) -> Sha256Implementation {
     // 11. Verify that the value of C.type is the string webauthn.get.
     let WebauthnAssertion { client_data_json, type_offset, .. } = assertion;
@@ -73,7 +73,7 @@ fn verify_client_data_json(
     let actual_key = client_data_json.slice(origin_offset - key.len(), key.len());
     assert(actual_key == key.span(), 'invalid-origin-key');
 
-    let origin = client_data_json.slice(origin_offset, origin_length).try_into().expect('invalid-origin');
+    let origin = client_data_json.slice(origin_offset, origin_length);
     assert(origin == expected_origin, 'invalid-origin');
 
     // 14. Skipping tokenBindings

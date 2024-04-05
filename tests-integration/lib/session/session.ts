@@ -55,7 +55,7 @@ export interface OnChainSession {
 
 export interface SessionToken {
   session: OnChainSession;
-  session_authorisation: string[];
+  session_authorization: string[];
   session_signature: CairoCustomEnum;
   guardian_signature: CairoCustomEnum;
   proofs: string[][];

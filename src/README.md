@@ -70,4 +70,4 @@ This allows for better UX.
 
 ## Upgrade
 
-To enable the model to evolve, the account implements an `upgrade` function that replaces the implementation. Calling this method, as any other method, requires the approval from `threshold` owners.
+To enable the model to evolve, the account implements an `upgrade` function that will delegate the upgrade to the new class_hash. Calling this method, as any other method, requires the approval from `threshold` owners.

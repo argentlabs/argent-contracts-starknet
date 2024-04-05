@@ -153,11 +153,14 @@ impl SignerTraitImpl of SignerTrait {
                 let mut origin = signer.origin;
                 let rp_id_hash: u256 = signer.rp_id_hash.into();
                 let pubkey: u256 = signer.pubkey.into();
-                let mut state = PoseidonTrait::new().update_with(WEBAUTHN_SIGNER_TYPE);
+                let mut hash_state = PoseidonTrait::new()
+                    .update_with(WEBAUTHN_SIGNER_TYPE)
+                    .update_with(signer.origin.len());
+
                 while let Option::Some(byte) = origin.pop_front() {
-                    state = state.update_with(*byte);
+                    hash_state = hash_state.update_with(*byte);
                 };
-                state.update_with(rp_id_hash).update_with(pubkey).finalize()
+                hash_state.update_with(rp_id_hash).update_with(pubkey).finalize()
             },
         }
     }

@@ -55,7 +55,7 @@ fn deserialize_challenge(challenge: Span<u8>) -> Challenge {
 fn verify_client_data_json(
     assertion: WebauthnAssertion, expected_transaction_hash: felt252, expected_origin: Span<u8>
 ) -> Sha256Implementation {
-    // 11. Verify that the value of C.type is the string webauthn.get.
+    // Verify that the value of C.type is the string webauthn.get.
     let WebauthnAssertion { client_data_json, type_offset, .. } = assertion;
     let key = array!['"', 't', 'y', 'p', 'e', '"', ':', '"'];
     let actual_key = client_data_json.slice(type_offset - key.len(), key.len());
@@ -65,7 +65,7 @@ fn verify_client_data_json(
     let type_ = client_data_json.slice(type_offset - 1, expected.len());
     assert(type_ == expected.span(), 'invalid-type');
 
-    // 12. Verify that the value of C.challenge equals the base64url encoding of options.challenge.
+    // Verify that the value of C.challenge equals the base64url encoding of options.challenge.
     let WebauthnAssertion { challenge_offset, challenge_length, .. } = assertion;
     let key = array!['"', 'c', 'h', 'a', 'l', 'l', 'e', 'n', 'g', 'e', '"', ':', '"'];
     let actual_key = client_data_json.slice(challenge_offset - key.len(), key.len());
@@ -76,7 +76,7 @@ fn verify_client_data_json(
     let challenge = deserialize_challenge(challenge);
     assert(challenge.transaction_hash == expected_transaction_hash, 'invalid-transaction-hash');
 
-    // 13. Verify that the value of C.origin matches the Relying Party's origin.
+    // Verify that the value of C.origin matches the Relying Party's origin.
     let WebauthnAssertion { origin_offset, origin_length, .. } = assertion;
     let key = array!['"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'];
     let actual_key = client_data_json.slice(origin_offset - key.len(), key.len());
@@ -85,7 +85,7 @@ fn verify_client_data_json(
     let origin = client_data_json.slice(origin_offset, origin_length);
     assert(origin == expected_origin, 'invalid-origin');
 
-    // 14. Skipping tokenBindings
+    // Skipping tokenBindings
 
     challenge.sha256_implementation
 }
@@ -97,18 +97,17 @@ fn verify_client_data_json(
 ///                                                    flags (1 byte) | 
 /// Memory layout: https://www.w3.org/TR/webauthn/#sctn-authenticator-data
 fn verify_authenticator_data(authenticator_data: Span<u8>, expected_rp_id_hash: u256) {
-    // 15. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party. 
+    // Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party. 
     let actual_rp_id_hash = authenticator_data.slice(0, 32).try_into().expect('invalid-rp-id-hash');
     assert(actual_rp_id_hash == expected_rp_id_hash, 'invalid-rp-id');
 
-    // 16. Verify that the User Present bit of the flags in authData is set.
+    // Verify that the User Present bit of the flags in authData is set.
     let flags: u128 = (*authenticator_data.at(32)).into();
     assert((flags & 0b00000001) == 0b00000001, 'nonpresent-user');
 
-    // 17. If user verification is required for this assertion, verify that the User Verified bit of the flags in authData is set.
+    // If user verification is required for this assertion, verify that the User Verified bit of the flags in authData is set.
     assert((flags & 0b00000100) == 0b00000100, 'unverified-user');
-
-    // 18. Allowing attested credential data and extension data if present
+    // Allowing attested credential data and extension data if present
     ()
 }
 

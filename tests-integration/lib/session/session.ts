@@ -1,4 +1,4 @@
-import { Account, BigNumberish, CairoCustomEnum, typedData } from "starknet";
+import { Account, BigNumberish, CairoCustomEnum, shortString, typedData } from "starknet";
 import {
   ArgentAccount,
   ArgentX,
@@ -62,12 +62,12 @@ export interface SessionToken {
 }
 
 export async function getSessionDomain(): Promise<typedData.StarkNetDomain> {
-  // WARNING! These are encoded as numbers in the StarkNetDomain type and not as shortstring
+  // WARNING! Revision is encoded as a number in the StarkNetDomain type and not as shortstring
   // This is due to a bug in the Braavos implementation, and has been kept for compatibility
   const chainId = await provider.getChainId();
   return {
     name: "SessionAccount.session",
-    version: "1",
+    version: shortString.encodeShortString("1"),
     chainId: chainId,
     revision: "1",
   };

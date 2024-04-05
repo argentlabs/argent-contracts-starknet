@@ -10,16 +10,16 @@ use starknet::{get_contract_address, get_tx_info, account::Call};
 
 const MAINNET_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
     (
-        2323134905843710400277850554467420438836802451436694979291226432262210349922,
-        497047802536209445013847976375993952138881488253153206740640135894961444223,
-        1534648249535688540587269261500462862519297145299981583675973457661163002808
+        3159357451750963173197764487250193801745009044296318704413979805593222351753,
+        2856607116111318915813829371903536205200021468882518469573183227809900863246,
+        2405333218043798385503929428387279699579326006043041470088260529024671365157
     );
 
 const SEPOLIA_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
     (
-        1455693979196931730158938525193757396832111609401196356440323511906411072336,
-        1285103549382792039971227731321331281062781607693790103788417106544479526918,
-        355603609913586297640159467947347365736400566364146250616789011948497476301
+        691798498452391354097240300284680479233893583850648846821812933705410085810,
+        317062340895242311773051982041708757540909251525159061717012359096590796798,
+        517893314125397876808992724850240644188517690767234330219248407741294215037
     );
 
 
@@ -55,9 +55,6 @@ impl StructHashSession of IStructHashRev1<Session> {
 
 impl OffChainMessageHashSessionRev1 of IOffChainMessageHashRev1<Session> {
     fn get_message_hash_rev_1(self: @Session) -> felt252 {
-        // WARNING! Please do not use this starknet domain as it is wrong.
-        // Version and Revision should be shortstring '1' not felt 1
-        // This is due to a mistake made in the Braavos contracts and has been copied for compatibility
         let chain_id = get_tx_info().unbox().chain_id;
         if chain_id == 'SN_MAIN' {
             return get_message_hash_rev_1_with_precalc(MAINNET_FIRST_HADES_PERMUTATION, *self);
@@ -65,7 +62,7 @@ impl OffChainMessageHashSessionRev1 of IOffChainMessageHashRev1<Session> {
         if chain_id == 'SN_SEPOLIA' {
             return get_message_hash_rev_1_with_precalc(SEPOLIA_FIRST_HADES_PERMUTATION, *self);
         }
-        let domain = StarknetDomain { name: 'SessionAccount.session', version: 1, chain_id, revision: 1, };
+        let domain = StarknetDomain { name: 'SessionAccount.session', version: '1', chain_id, revision: 1, };
         poseidon_hash_span(
             array![
                 'StarkNet Message',

@@ -905,10 +905,10 @@ mod ArgentAccount {
             // Shortest signature in modern format is at least 5 items [array_len, signer_type, signer_pubkey, r, s]
             if signatures.len() != 2 && signatures.len() != 4 {
                 // manual inlining instead of calling full_deserialize for performance
-                let deseriliazed: Array<SignerSignature> = Serde::deserialize(ref signatures)
+                let deserialized: Array<SignerSignature> = Serde::deserialize(ref signatures)
                     .expect('argent/invalid-signature-format');
                 assert(signatures.is_empty(), 'argent/invalid-signature-length');
-                return deseriliazed;
+                return deserialized;
             }
 
             let owner_signature = SignerSignature::Starknet(

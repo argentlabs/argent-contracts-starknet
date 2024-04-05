@@ -14,7 +14,7 @@ mod MockFutureArgentMultisig {
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
-        serialization::full_deserialize_or_error,
+        serialization::full_deserialize_or_panic,
     };
     use core::array::ArrayTrait;
     use core::result::ResultTrait;
@@ -167,7 +167,7 @@ mod MockFutureArgentMultisig {
 
 
     fn parse_signature_array(mut raw_signature: Span<felt252>) -> Array<SignerSignature> {
-        full_deserialize_or_error(raw_signature, 'argent/invalid-signature-format')
+        full_deserialize_or_panic(raw_signature, 'argent/invalid-signature-format')
     }
 }
 

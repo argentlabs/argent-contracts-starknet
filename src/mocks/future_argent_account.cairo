@@ -20,7 +20,7 @@ mod MockFutureArgentAccount {
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self}, calls::execute_multicall,
-        serialization::full_deserialize_or_error,
+        serialization::full_deserialize_or_panic,
     };
     use core::option::OptionTrait;
     use core::traits::TryInto;
@@ -120,7 +120,7 @@ mod MockFutureArgentAccount {
             if data.is_empty() {
                 return;
             }
-            let calls: Array<Call> = full_deserialize_or_error(data, 'argent/invalid-calls');
+            let calls: Array<Call> = full_deserialize_or_panic(data, 'argent/invalid-calls');
             assert_no_self_call(calls.span(), get_contract_address());
             execute_multicall(calls.span());
         }
@@ -168,7 +168,7 @@ mod MockFutureArgentAccount {
         }
 
         fn parse_signature_array(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
-            full_deserialize_or_error(signatures, 'argent/invalid-signature-format')
+            full_deserialize_or_panic(signatures, 'argent/invalid-signature-format')
         }
 
         fn is_valid_span_signature(

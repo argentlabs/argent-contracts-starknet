@@ -9,7 +9,7 @@ mod session_component {
         interface::{ISessionable, SessionToken, Session, ISessionCallback},
     };
     use argent::signer::signer_signature::{SignerSignatureTrait, SignerTrait};
-    use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize_or_error};
+    use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize_or_panic};
     use poseidon::{hades_permutation};
     use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp};
 
@@ -76,7 +76,7 @@ mod session_component {
             assert_no_self_call(calls, account_address);
             assert(self.is_session(signature), 'session/invalid-magic-value');
 
-            let token: SessionToken = full_deserialize_or_error(
+            let token: SessionToken = full_deserialize_or_panic(
                 signature.slice(1, signature.len() - 1), 'session/invalid-calldata'
             );
 

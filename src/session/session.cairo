@@ -87,7 +87,7 @@ mod session_component {
 
             // callback verifies the owner + guardian signature is valid
             assert(
-                state.session_callback(token_session_hash, token.session_authorisation), 'session/invalid-account-sig'
+                state.session_callback(token_session_hash, token.session_authorization), 'session/invalid-account-sig'
             );
 
             let (message_hash, _, _) = hades_permutation(transaction_hash, token_session_hash, 2);

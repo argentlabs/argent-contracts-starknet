@@ -20,14 +20,14 @@ struct Session {
 
 /// @notice Session Token struct contains the session struct, relevant signatures and merkle proofs
 /// @param session The session struct
-/// @param session_authorisation The owner + guardian signature of the session + their public keys
+/// @param session_authorization The owner + guardian signature of the session + their public keys
 /// @param session_signature Session signature of the poseidon H(tx_hash, session hash)
 /// @param guardian_signature Guardian signature of the poseidon H(tx_hash, session hash)
 /// @param proofs The merkle proof of the session calls
 #[derive(Drop, Serde, Copy)]
 struct SessionToken {
     session: Session,
-    session_authorisation: Span<felt252>,
+    session_authorization: Span<felt252>,
     session_signature: SignerSignature,
     guardian_signature: SignerSignature,
     proofs: Span<Span<felt252>>,

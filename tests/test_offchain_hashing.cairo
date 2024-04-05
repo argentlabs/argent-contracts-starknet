@@ -18,13 +18,12 @@ use super::setup::utils::set_chain_id_foundry;
 #[test]
 fn session_precalculated_hash_sepolia() {
     let domain = StarknetDomain {
-        name: 'SessionAccount.session', version: 1, chain_id: get_tx_info().unbox().chain_id, revision: 1,
+        name: 'SessionAccount.session', version: '1', chain_id: get_tx_info().unbox().chain_id, revision: 1,
     };
     let domain_hash = domain.get_struct_hash_rev_1();
-    println!("Domain hash: {}", domain_hash);
     assert_eq!(
         domain_hash,
-        640216939008907789943813061079974447151049103721626129915530357512787739361,
+        619758417781242245767049076918858457415551753537846667520424572098880841663,
         "Precalculated domain hash is incorrect"
     );
     let (ch0, ch1, ch2) = hades_permutation('StarkNet Message', domain_hash, 0);
@@ -38,12 +37,13 @@ fn session_precalculated_hash_sepolia() {
 fn session_precalculated_hash_mainnet() {
     set_chain_id_foundry('SN_MAIN');
     let domain = StarknetDomain {
-        name: 'SessionAccount.session', version: 1, chain_id: get_tx_info().unbox().chain_id, revision: 1,
+        name: 'SessionAccount.session', version: '1', chain_id: get_tx_info().unbox().chain_id, revision: 1,
     };
+
     let domain_hash = domain.get_struct_hash_rev_1();
     assert_eq!(
         domain_hash,
-        396976932011104915691903508476593435452325164665257511598712881532315662893,
+        2582418177524800175369952028489274182629686649307104766546635017155738899824,
         "Precalculated domain hash is incorrect"
     );
     let (ch0, ch1, ch2) = hades_permutation('StarkNet Message', domain_hash, 0);

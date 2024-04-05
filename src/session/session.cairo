@@ -76,9 +76,8 @@ mod session_component {
             assert_no_self_call(calls, account_address);
             assert(self.is_session(signature), 'session/invalid-magic-value');
 
-            let token: SessionToken = full_deserialize(
-                signature.slice(1, signature.len() - 1)).expect('session/invalid-calldata'
-            );
+            let token: SessionToken = full_deserialize(signature.slice(1, signature.len() - 1))
+                .expect('session/invalid-calldata');
 
             let token_session_hash = token.session.get_message_hash_rev_1();
 

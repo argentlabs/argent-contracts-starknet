@@ -251,7 +251,7 @@ mod ArgentMultisigAccount {
     #[must_use]
     #[inline(always)]
     fn parse_signature_array(mut raw_signature: Span<felt252>) -> Array<SignerSignature> {
-        full_deserialize(raw_signature).expect( 'argent/invalid-signature-format')
+        full_deserialize(raw_signature).expect('argent/invalid-signature-format')
     }
 }
 

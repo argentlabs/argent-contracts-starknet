@@ -4,7 +4,7 @@ on: push
 
 jobs:
   tests:
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
     steps:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3
@@ -16,7 +16,7 @@ jobs:
         run: scarb test
   
   format:
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
     steps:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3

@@ -3,18 +3,14 @@ use argent::signer::signer_signature::{
     Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait, StarknetSigner,
     starknet_signer_from_pubkey
 };
-use core::option::OptionTrait;
-use snforge_std::cheatcodes::contract_class::ContractClassTrait;
-use snforge_std::{spy_events, SpyOn, EventSpy, EventFetcher, EventAssertions};
-use snforge_std::{start_prank, declare, start_spoof, get_class_hash, ContractClass, CheatTarget, TxInfoMockTrait};
-use starknet::{contract_address_const, get_tx_info};
+use snforge_std::{spy_events, start_warp, SpyOn, EventSpy, start_prank, CheatTarget, EventAssertions};
+use starknet::contract_address_const;
 use super::setup::{
     account_test_setup::{
         ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
         initialize_account_without_guardian
     },
-    utils::{set_tx_version_foundry, felt252TryIntoStarknetSigner},
-    constants::{OWNER, GUARDIAN, NEW_OWNER, WRONG_OWNER, ARGENT_ACCOUNT_ADDRESS}
+    utils::{set_tx_version_foundry, felt252TryIntoStarknetSigner}, constants::{OWNER, NEW_OWNER, WRONG_OWNER}
 };
 
 #[test]
@@ -208,7 +204,7 @@ fn getName() {
 }
 
 #[test]
-fn unsuported_supportsInterface() {
+fn unsupported_supportsInterface() {
     let account = initialize_account();
     assert_eq!(account.supportsInterface(0), 0, "value should be false");
     assert_eq!(account.supportsInterface(0xffffffff), 0, "Should not support 0xffffffff");
@@ -228,4 +224,82 @@ fn cant_call_validate() {
     let account = initialize_account();
     start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
     account.__validate__(array![]);
+}
+
+#[test]
+fn set_escape_security_period() {
+    let account = initialize_account();
+    let default_escape_security_period = account.get_escape_security_period();
+    assert_eq!(default_escape_security_period, consteval_int!(7 * 24 * 60 * 60), "Default value incorrect");
+    let mut spy = spy_events(SpyOn::One(account.contract_address));
+    account.set_escape_security_period(42);
+    let new_escape_security_period = account.get_escape_security_period();
+    assert_eq!(new_escape_security_period, 42, "New value incorrect");
+
+    let event = ArgentAccount::Event::EscapeSecurityPeriodChanged(
+        ArgentAccount::EscapeSecurityPeriodChanged { escape_security_period: 42 }
+    );
+    spy.assert_emitted(@array![(account.contract_address, event)]);
+    assert_eq!(spy.events.len(), 0, "excess events");
+}
+
+#[test]
+#[should_panic(expected: ('argent/only-self',))]
+fn set_escape_security_period_outside() {
+    let account = initialize_account();
+    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
+    account.set_escape_security_period(42);
+}
+
+#[test]
+#[should_panic(expected: ('argent/invalid-security-period',))]
+fn set_escape_security_period__to_zero() {
+    let account = initialize_account();
+    account.set_escape_security_period(0);
+}
+
+#[test]
+#[should_panic(expected: ('argent/invalid-escape',))]
+fn set_escape_security_period_escape_too_early() {
+    let account = initialize_account();
+    account.set_escape_security_period(42);
+    start_warp(CheatTarget::One(account.contract_address), 100);
+    account.trigger_escape_owner(starknet_signer_from_pubkey(12));
+    start_warp(CheatTarget::One(account.contract_address), 100 + 42 - 1);
+    account.escape_owner();
+}
+
+#[test]
+fn set_escape_security_period_escape_escape() {
+    let account = initialize_account();
+    account.set_escape_security_period(42);
+    start_warp(CheatTarget::One(account.contract_address), 100);
+    account.trigger_escape_owner(starknet_signer_from_pubkey(12));
+    start_warp(CheatTarget::One(account.contract_address), 100 + 42);
+    account.escape_owner();
+    let new_owner = account.get_owner();
+    assert_eq!(new_owner, 12, "Wrong new owner");
+}
+
+#[test]
+#[should_panic(expected: ('argent/invalid-escape',))]
+fn set_escape_security_period_escape_escape_too_late() {
+    let account = initialize_account();
+    account.set_escape_security_period(42);
+    start_warp(CheatTarget::One(account.contract_address), 100);
+    account.trigger_escape_owner(starknet_signer_from_pubkey(12));
+    start_warp(CheatTarget::One(account.contract_address), 100 + 42 + consteval_int!(7 * 24 * 60 * 60));
+    account.escape_owner();
+}
+
+
+#[test]
+fn escape_owner_default() {
+    let account = initialize_account();
+    start_warp(CheatTarget::One(account.contract_address), 100);
+    account.trigger_escape_owner(starknet_signer_from_pubkey(12));
+    start_warp(CheatTarget::One(account.contract_address), 100 + consteval_int!(7 * 24 * 60 * 60));
+    account.escape_owner();
+    let new_owner = account.get_owner();
+    assert_eq!(new_owner, 12, "Wrong new owner");
 }

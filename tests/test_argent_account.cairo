@@ -319,7 +319,7 @@ fn set_escape_security_period_escape_escape_too_late() {
     account.set_escape_security_period(42);
     start_warp(CheatTarget::One(account.contract_address), 100);
     account.trigger_escape_owner(starknet_signer_from_pubkey(12));
-    start_warp(CheatTarget::One(account.contract_address), 100 + 42 + consteval_int!(7 * 24 * 60 * 60));
+    start_warp(CheatTarget::One(account.contract_address), 100 + (42 * 2));
     account.escape_owner();
 }
 

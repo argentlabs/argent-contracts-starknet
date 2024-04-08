@@ -1,5 +1,5 @@
-import { declareContract, deployAccount, expectRevertWithErrorMessage, upgradeAccount } from "./lib";
-import { deployMultisig1_1 } from "./lib/multisig";
+import { declareContract, deployAccount, expectRevertWithErrorMessage, upgradeAccount } from "../lib";
+import { deployMultisig1_1 } from "../lib/multisig";
 
 describe("Upgrades to a different account type", function () {
   it("Upgrade Account to Multisig should fail", async function () {

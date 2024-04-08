@@ -7,7 +7,7 @@ import {
   randomStarknetKeyPair,
   setTime,
   waitForTransaction,
-} from "./lib";
+} from "../lib";
 
 const initialTime = 100;
 

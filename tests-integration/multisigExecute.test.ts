@@ -8,7 +8,7 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   sortByGuid,
-} from "./lib";
+} from "../lib";
 
 describe("ArgentMultisig: Execute", function () {
   let mockDappContract: Contract;

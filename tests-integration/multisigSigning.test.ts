@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { num, shortString } from "starknet";
-import { MultisigSigner, expectRevertWithErrorMessage, randomStarknetKeyPair, sortByGuid } from "./lib";
-import { deployMultisig, deployMultisig1_1 } from "./lib/multisig";
+import { MultisigSigner, expectRevertWithErrorMessage, randomStarknetKeyPair, sortByGuid } from "../lib";
+import { deployMultisig, deployMultisig1_1 } from "../lib/multisig";
 
 describe("ArgentMultisig: signing", function () {
   const VALID = BigInt(shortString.encodeShortString("VALID"));

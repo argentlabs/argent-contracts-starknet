@@ -19,8 +19,8 @@ import {
   restart,
   setTime,
   setupSession,
-} from "../tests-integration/lib";
-import { newProfiler } from "../tests-integration/lib/gas";
+} from "../lib";
+import { newProfiler } from "../lib/gas";
 
 const profiler = newProfiler(provider);
 const fundingAmount = 2e16;

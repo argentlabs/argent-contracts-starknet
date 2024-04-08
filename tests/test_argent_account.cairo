@@ -1,7 +1,8 @@
 use argent::presets::argent_account::ArgentAccount;
+use argent::recovery::interface::EscapeStatus;
 use argent::signer::signer_signature::{
     Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait, StarknetSigner,
-    starknet_signer_from_pubkey
+    starknet_signer_from_pubkey,
 };
 use snforge_std::{spy_events, start_warp, SpyOn, EventSpy, start_prank, CheatTarget, EventAssertions};
 use starknet::contract_address_const;
@@ -242,6 +243,36 @@ fn set_escape_security_period() {
     spy.assert_emitted(@array![(account.contract_address, event)]);
     assert_eq!(spy.events.len(), 0, "excess events");
 }
+
+
+#[test]
+fn set_escape_security_period_get_escape_status() {
+    let account = initialize_account();
+    account.set_escape_security_period(42);
+
+    let (_, no_escape) = account.get_escape_and_status();
+    assert_eq!(no_escape, EscapeStatus::None, "Should be EscapeStatus::None");
+
+    start_warp(CheatTarget::One(account.contract_address), 100);
+    account.trigger_escape_owner(starknet_signer_from_pubkey(12));
+
+    start_warp(CheatTarget::One(account.contract_address), 100 + 42 - 1);
+    let (_, not_ready) = account.get_escape_and_status();
+    assert_eq!(not_ready, EscapeStatus::NotReady, "Should be EscapeStatus::NotReady");
+
+    start_warp(CheatTarget::One(account.contract_address), 100 + 42);
+    let (_, ready_early) = account.get_escape_and_status();
+    assert_eq!(ready_early, EscapeStatus::Ready, "Should be EscapeStatus::Ready 1");
+
+    start_warp(CheatTarget::One(account.contract_address), 100 + (42 * 2) - 1);
+    let (_, ready_late) = account.get_escape_and_status();
+    assert_eq!(ready_late, EscapeStatus::Ready, "Should be EscapeStatus::Ready 2");
+
+    start_warp(CheatTarget::One(account.contract_address), 100 + (42 * 2));
+    let (_, expired) = account.get_escape_and_status();
+    assert_eq!(expired, EscapeStatus::Expired, "Should be EscapeStatus::Expired");
+}
+
 
 #[test]
 #[should_panic(expected: ('argent/only-self',))]

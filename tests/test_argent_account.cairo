@@ -211,6 +211,14 @@ fn unsupported_supportsInterface() {
 }
 
 #[test]
+fn supportsInterface() {
+    let account = initialize_account();
+    assert_eq!(account.supportsInterface(0x01ffc9a7), 1, "ERC165_IERC165_INTERFACE_ID");
+    assert_eq!(account.supportsInterface(0xa66bd575), 1, "ERC165_ACCOUNT_INTERFACE_ID");
+    assert_eq!(account.supportsInterface(0x3943f10f), 1, "ERC165_OLD_ACCOUNT_INTERFACE_ID");
+}
+
+#[test]
 #[should_panic(expected: ('argent/non-null-caller',))]
 fn cant_call_validate() {
     let account = initialize_account();
@@ -218,10 +226,3 @@ fn cant_call_validate() {
     account.__validate__(array![]);
 }
 
-#[test]
-fn supportsInterface() {
-    let account = initialize_account();
-    assert_eq!(account.supportsInterface(0x01ffc9a7), 1, "ERC165_IERC165_INTERFACE_ID");
-    assert_eq!(account.supportsInterface(0xa66bd575), 1, "ERC165_ACCOUNT_INTERFACE_ID");
-    assert_eq!(account.supportsInterface(0x3943f10f), 1, "ERC165_OLD_ACCOUNT_INTERFACE_ID");
-}

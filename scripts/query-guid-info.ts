@@ -29,7 +29,11 @@ function dataToSignature(data: string[]) {
   } else if (type == "0x1") {
     return { name: "Secp256k1Signer", pubkey_hash: data[1] };
   } else if (type == "0x2") {
-    return { name: "Secp256r1Signer", pubkey_r: data[1], pubkey_s: data[2] };
+    const pubkey = uint256.uint256ToBN({
+      low: data[1],
+      high: data[2],
+    });
+    return { name: "Secp256r1Signer", pubkey };
   } else if (type == "0x3") {
     return { name: "Eip191Signer", eth_address: data[1] };
   } else if (type == "0x4") {

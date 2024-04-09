@@ -10,7 +10,6 @@ const TX_V3_ESTIMATE: felt252 = consteval_int!(0x1000000000000000000000000000000
 const DA_MODE_L1: u32 = 0;
 const DA_MODE_L2: u32 = 1;
 
-
 #[inline(always)]
 fn assert_correct_invoke_version(tx_version: felt252) {
     assert(
@@ -33,12 +32,6 @@ fn assert_correct_declare_version(tx_version: felt252) {
         tx_version == TX_V3 || tx_version == TX_V2 || tx_version == TX_V3_ESTIMATE || tx_version == TX_V2_ESTIMATE,
         'argent/invalid-declare-version'
     )
-}
-
-#[inline(always)]
-fn assert_no_unsupported_v3_fields() {
-    let tx_info = get_tx_info().unbox();
-    assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
 }
 
 #[inline(always)]

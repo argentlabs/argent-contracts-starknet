@@ -6,7 +6,7 @@ use argent::utils::bytes::ByteArrayExt;
 fn base64_decoding() {
     // 0xdeadbeef
     // 3q2-7w==
-    let encoded: Array<u8> = "3q2-7w==".into_bytes();
+    let encoded = "3q2-7w==".into_bytes();
     let value = Base64UrlDecoder::decode(encoded);
     assert_eq!(value, array![0xde, 0xad, 0xbe, 0xef], "Base64 decoding failed");
 }
@@ -15,15 +15,14 @@ fn base64_decoding() {
 fn base64_unpadded_decoding() {
     // 0xdeadbeef
     // 3q2-7w
-    let encoded: Array<u8> = "3q2-7w".into_bytes();
+    let encoded = "3q2-7w".into_bytes();
     let value = decode_base64(encoded);
     assert_eq!(value, array![0xde, 0xad, 0xbe, 0xef], "Base64 decoding failed");
 }
 
 #[test]
 fn base64_max_felt_decoding() {
-    // CAAAAAAAABEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-    let encoded: Array<u8> = "CAAAAAAAABEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=".into_bytes();
+    let encoded = "CAAAAAAAABEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=".into_bytes();
     let value = Base64UrlDecoder::decode(encoded);
 
     // 0x08000000000000110000000000000000000000000000000000000000000000000

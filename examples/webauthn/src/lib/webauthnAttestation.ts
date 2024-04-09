@@ -42,13 +42,5 @@ export const createWebauthnAttestation = async (email: string, rpId: string): Pr
   const publicKey = new Uint8Array(attestationResponse.getPublicKey()!);
   const x = publicKey.slice(-64, -32);
   const y = publicKey.slice(-32);
-  console.log("pubKey");
-  console.log(x.toString());
-  return {
-    email,
-    rpId,
-    credentialId,
-    x,
-    y,
-  };
+  return { email, rpId, credentialId, x, y };
 };

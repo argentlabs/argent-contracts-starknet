@@ -2,7 +2,7 @@
 mod ArgentUserAccount {
     use argent::account::interface::{IAccount, IArgentAccount, Version};
     use argent::introspection::src5::src5_component;
-    use argent::multisig::{multisig::multisig_component};
+    use argent::multisig::{multisig::{multisig_component, multisig_component::MultisigInternalImpl}};
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
@@ -16,14 +16,9 @@ mod ArgentUserAccount {
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
         serialization::full_deserialize,
-        transaction_version::{
-            assert_correct_invoke_version, assert_no_unsupported_v3_fields, assert_correct_deploy_account_version
-        },
+        transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
     };
-    use core::array::ArrayTrait;
-    use core::result::ResultTrait;
-    use core::traits::Into;
-    use starknet::{get_tx_info, get_contract_address, VALIDATED, ClassHash, account::Call};
+    use starknet::{get_tx_info, get_contract_address, get_execution_info, VALIDATED, ClassHash, account::Call};
 
     const NAME: felt252 = 'ArgentAccount';
     const VERSION_MAJOR: u8 = 0;
@@ -37,7 +32,6 @@ mod ArgentUserAccount {
     component!(path: multisig_component, storage: multisig, event: MultisigEvents);
     #[abi(embed_v0)]
     impl Multisig = multisig_component::MultisigImpl<ContractState>;
-    impl MultisigInternal = multisig_component::MultisigInternalImpl<ContractState>;
     // Execute from outside
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
@@ -113,19 +107,20 @@ mod ArgentUserAccount {
     #[abi(embed_v0)]
     impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
-            assert_only_protocol();
-            let tx_info = get_tx_info().unbox();
+            let exec_info = get_execution_info().unbox();
+            let tx_info = exec_info.tx_info.unbox();
+            assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
-            assert_no_unsupported_v3_fields();
-
+            assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             self.assert_valid_calls(calls.span());
             self.assert_valid_signatures(calls.span(), tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
-            assert_only_protocol();
-            let tx_info = get_tx_info().unbox();
+            let exec_info = get_execution_info().unbox();
+            let tx_info = exec_info.tx_info.unbox();
+            assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
 
             // execute calls
@@ -164,7 +159,7 @@ mod ArgentUserAccount {
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_deploy_account_version(tx_info.version);
-            assert_no_unsupported_v3_fields();
+            assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             // only 1 signer needed to deploy
             let is_valid = self
                 .multisig
@@ -187,14 +182,8 @@ mod ArgentUserAccount {
 
     #[abi(embed_v0)]
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
-        fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
-            assert_only_self();
-
-            // Check basic invariants
-            self.multisig.assert_valid_storage();
-
-            assert(data.len() == 0, 'argent/unexpected-data');
-            array![]
+        fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
+            panic_with_felt252('argent/downgrade-not-allowed');
         }
     }
 
@@ -222,7 +211,7 @@ mod ArgentUserAccount {
                 let call = calls.at(0);
                 if *call.to == account_address {
                     // This should only be called after an upgrade, never directly
-                    assert(*call.selector != selector!("execute_after_upgrade"), 'argent/forbidden-call');
+                    assert(*call.selector != selector!("perform_upgrade"), 'argent/forbidden-call');
                 }
             } else {
                 // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions
@@ -249,7 +238,7 @@ mod ArgentUserAccount {
                         .is_empty() {
                             let signer_sig = *signature_span.pop_front().unwrap();
                             assert(
-                                signer_sig.signer().into_guid() != excluded_signer_guid, 'argent/unauthorised_signer'
+                                signer_sig.signer().into_guid() != excluded_signer_guid, 'argent/unauthorized-signer'
                             )
                         };
                     required_signatures

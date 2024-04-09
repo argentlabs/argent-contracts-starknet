@@ -1,4 +1,4 @@
-import { CairoCustomEnum, CallData, uint256, type ArraySignatureType } from "starknet";
+import { CairoCustomEnum, CallData, shortString, uint256, type ArraySignatureType } from "starknet";
 
 import { buf2hex } from "./bytes";
 import { RawSigner } from "./starknet";
@@ -29,7 +29,7 @@ export class WebauthnOwner extends RawSigner {
     const rpIdHash = await sha256(new TextEncoder().encode(this.attestation.rpId));
 
     const cairoAssertion = {
-      origin: location.origin,
+      origin: CallData.compile(location.origin.split("").map(shortString.encodeShortString)),
       rp_id_hash: uint256.bnToUint256(BigInt(buf2hex(rpIdHash))),
       pubkey: uint256.bnToUint256(BigInt(buf2hex(this.attestation.x))),
       authenticator_data: CallData.compile(Array.from(authenticatorData)),
@@ -66,7 +66,7 @@ export function webauthnSigner(origin: string, rp_id_hash: string, pubkey: strin
     Secp256r1: undefined,
     Eip191: undefined,
     Webauthn: {
-      origin,
+      origin: CallData.compile(origin.split("").map(shortString.encodeShortString)),
       rp_id_hash: uint256.bnToUint256(BigInt(rp_id_hash)),
       pubkey: uint256.bnToUint256(BigInt(pubkey)),
     },

@@ -1,3 +1,4 @@
+import assert from "assert";
 import { uint256 } from "starknet";
 import {
   Eip191KeyPair,
@@ -8,6 +9,7 @@ import {
   StarknetKeyPair,
   WebauthnOwner,
   clearCache,
+  declareFixtureContract,
   deployAccount,
   deployAccountWithoutGuardian,
   deployOldAccount,
@@ -15,6 +17,8 @@ import {
   getEthContract,
   provider,
   restart,
+  setTime,
+  setupSession,
 } from "../tests-integration/lib";
 import { newProfiler } from "../tests-integration/lib/gas";
 
@@ -95,6 +99,29 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
+  const { account } = await deployAccount({
+    owner: starknetOwner,
+    guardian,
+    salt: "0x40",
+    fundingAmount,
+  });
+  const sessionTime = 1710167933n;
+  await setTime(sessionTime);
+  const dappKey = new StarknetKeyPair(39n);
+  const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
+
+  const sessionAccount = await setupSession(
+    guardian as StarknetKeyPair,
+    account,
+    allowedMethod,
+    sessionTime + 150n,
+    dappKey,
+  );
+  ethContract.connect(sessionAccount);
+  await profiler.profile("Transfer - With Session", await ethContract.transfer(recipient, amount));
+}
+
+{
   const { account } = await deployAccountWithoutGuardian({
     owner: starknetOwner,
     salt: "0xF1",
@@ -160,6 +187,8 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
+  const classHash = await declareFixtureContract("Sha256Cairo0");
+  assert(BigInt(classHash) === 0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
   const { account } = await deployAccount({
     owner: new WebauthnOwner(privateKey),
     guardian,

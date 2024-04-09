@@ -1,118 +1,91 @@
-fn extend(ref arr: Array<u8>, src: @Array<u8>) {
-    let mut src = src.span();
-    loop {
-        match src.pop_front() {
-            Option::Some(a) => arr.append(*a),
-            Option::None => { break; },
-        };
-    };
-}
-
 impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
     fn try_into(mut self: Span<u8>) -> Option<u256> {
-        if self.len() > 32 {
-            return Option::None;
-        }
-        let mut result = 0;
-        loop {
-            match self.pop_front() {
-                Option::Some(byte) => {
-                    let byte: u256 = (*byte).into();
-                    result = (256 * result) + byte; // x << 8 is the same as x * 256
-                },
-                Option::None => { break Option::Some(result); }
-            };
+        if self.len() < 32 {
+            let result: felt252 = self.try_into().unwrap();
+            Option::Some(result.into())
+        } else if self.len() == 32 {
+            let higher_bytes: felt252 = self.slice(0, 31).try_into().unwrap();
+            let last_byte = *self.at(31);
+            Option::Some((0x100 * higher_bytes.into()) + last_byte.into())
+        } else {
+            // Not support for more than 32 bytes
+            Option::None
         }
     }
 }
 
 impl SpanU8TryIntoFelt252 of TryInto<Span<u8>, felt252> {
     fn try_into(mut self: Span<u8>) -> Option<felt252> {
-        // TODO: check if it shouldn't be 31
-        if self.len() > 32 {
-            return Option::None;
-        }
-        let mut result = 0;
-        loop {
-            match self.pop_front() {
-                Option::Some(byte) => {
-                    let byte: felt252 = (*byte).into();
-                    result = (256 * result) + byte; // x << 8 is the same as x * 256
-                },
-                Option::None => { break Option::Some(result); }
-            };
+        if self.len() < 32 {
+            let mut result = 0;
+            while let Option::Some(byte) = self
+                .pop_front() {
+                    let byte = (*byte).into();
+                    result = (0x100 * result) + byte;
+                };
+            Option::Some(result)
+        } else if self.len() == 32 {
+            let result: u256 = self.try_into()?;
+            Option::Some(result.try_into()?)
+        } else {
+            Option::None
         }
     }
 }
 
-const POW_256_1: felt252 = 0x100;
-
 #[generate_trait]
-impl ByteArrayExt of ByteArrayExTrait {
-    fn is_empty(self: @ByteArray) -> bool {
-        self.len() == 0
-    }
-
-    fn append_span_bytes(ref self: ByteArray, mut bytes: Span<u8>) {
-        loop {
-            match bytes.pop_front() {
-                Option::Some(val) => self.append_byte(*val),
-                Option::None => { break; }
-            }
-        }
-    }
-
-    fn from_bytes(mut bytes: Span<u8>) -> ByteArray {
-        let mut arr: ByteArray = Default::default();
-        let (nb_full_words, pending_word_len) = DivRem::div_rem(bytes.len(), 31_u32.try_into().unwrap());
-        let mut i = 0;
-        loop {
-            if i == nb_full_words {
-                break;
-            };
-            let mut word: felt252 = 0;
-            let mut j = 0;
-            loop {
-                if j == 31 {
-                    break;
-                };
-                word = word * POW_256_1 + (*bytes.pop_front().unwrap()).into();
-                j += 1;
-            };
-            arr.data.append(word.try_into().unwrap());
-            i += 1;
-        };
-
-        if pending_word_len == 0 {
-            return arr;
-        };
-
-        let mut pending_word: felt252 = 0;
-        let mut i = 0;
-
-        loop {
-            if i == pending_word_len {
-                break;
-            };
-            pending_word = pending_word * POW_256_1.into() + (*bytes.pop_front().unwrap()).into();
-            i += 1;
-        };
-        arr.pending_word_len = pending_word_len;
-        arr.pending_word = pending_word;
-        arr
-    }
-
+impl ByteArrayExt of ByteArrayExtTrait {
     fn into_bytes(self: ByteArray) -> Array<u8> {
         let len = self.len();
-        let mut output: Array<u8> = Default::default();
+        let mut output = array![];
         let mut i = 0;
-        loop {
-            if i == len {
-                break;
-            };
+        while i != len {
             output.append(self[i]);
             i += 1;
         };
         output
     }
+}
+
+// Accepts felt252 for efficiency as it's the type of retdata but all values are expected to fit u32
+fn u32s_to_u256(arr: Span<felt252>) -> u256 {
+    assert!(arr.len() == 8, "u32s_to_u256: input must be 8 elements long");
+    let low = *arr.at(7)
+        + *arr.at(6) * 0x1_0000_0000
+        + *arr.at(5) * 0x1_0000_0000_0000_0000
+        + *arr.at(4) * 0x1_0000_0000_0000_0000_0000_0000;
+    let low = low.try_into().expect('u32s_to_u256:overflow-low');
+    let high = *arr.at(3)
+        + *arr.at(2) * 0x1_0000_0000
+        + *arr.at(1) * 0x1_0000_0000_0000_0000
+        + *arr.at(0) * 0x1_0000_0000_0000_0000_0000_0000;
+    let high = high.try_into().expect('u32s_to_u256:overflow-high');
+    u256 { high, low }
+}
+
+// Accepts felt252 for efficiency as it's the type of retdata but all values are expected to fit u32
+fn u32s_to_u8s(mut input: Span<felt252>) -> Span<u8> {
+    let mut output = array![];
+    while let Option::Some(word) = input
+        .pop_front() {
+            let word: u32 = (*word).try_into().unwrap();
+            output.append(((word / 0x100_00_00) & 0xFF).try_into().unwrap());
+            output.append(((word / 0x100_00) & 0xFF).try_into().unwrap());
+            output.append(((word / 0x100) & 0xFF).try_into().unwrap());
+            output.append((word & 0xFF).try_into().unwrap());
+        };
+    output.span()
+}
+
+fn u8s_to_u32s(mut input: Span<u8>) -> Array<u32> {
+    let mut output = array![];
+    while let Option::Some(byte1) = input
+        .pop_front() {
+            let byte1 = *byte1;
+            let byte2 = *input.pop_front().unwrap_or_default();
+            let byte3 = *input.pop_front().unwrap_or_default();
+            let byte4 = *input.pop_front().unwrap_or_default();
+            output.append(0x100_00_00 * byte1.into() + 0x100_00 * byte2.into() + 0x100 * byte3.into() + byte4.into());
+        };
+    output
 }

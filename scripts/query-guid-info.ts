@@ -18,11 +18,8 @@ const eventsList = await provider.getEvents({
   chunk_size: 1000,
 });
 // If not found check from lastBlock - MAX_STEP to lastBlock - (2 * MAX_STEP) and so on.
-console.log(eventsList);
+
 const lastEvent = eventsList.events[eventsList.events.length - 1];
-console.log(lastEvent);
-console.log(lastEvent.keys);
-console.log(lastEvent.data);
 console.log(dataToSignature(lastEvent.data));
 
 function dataToSignature(data: string[]) {

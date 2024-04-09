@@ -211,6 +211,14 @@ fn unsupported_supportsInterface() {
 }
 
 #[test]
+#[should_panic(expected: ('argent/non-null-caller',))]
+fn cant_call_validate() {
+    let account = initialize_account();
+    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
+    account.__validate__(array![]);
+}
+
+#[test]
 fn supportsInterface() {
     let account = initialize_account();
     assert_eq!(account.supportsInterface(0x01ffc9a7), 1, "ERC165_IERC165_INTERFACE_ID");

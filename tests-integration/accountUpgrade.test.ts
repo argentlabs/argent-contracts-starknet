@@ -13,7 +13,7 @@ import {
   getUpgradeDataLegacy,
   provider,
   upgradeAccount,
-} from "./lib";
+} from "../lib";
 
 describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;

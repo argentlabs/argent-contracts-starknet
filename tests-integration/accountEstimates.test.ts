@@ -12,7 +12,7 @@ import {
   expectRevertWithErrorMessage,
   getFeeTokenContract,
   provider,
-} from "./lib";
+} from "../lib";
 
 const recipient = "0xadbe1";
 const amount = uint256.bnToUint256(1);

@@ -8,7 +8,7 @@ import {
   provider,
   readContract,
   restartDevnet,
-} from "./lib";
+} from "../lib";
 
 describe("ArgentAccount: declare", function () {
   beforeEach(async () => {

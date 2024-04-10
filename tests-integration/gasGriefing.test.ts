@@ -1,5 +1,5 @@
 import { RPC, num } from "starknet";
-import { ArgentSigner, deployAccount, expectExecutionRevert, randomStarknetKeyPair, waitForTransaction } from "./lib";
+import { ArgentSigner, deployAccount, expectExecutionRevert, randomStarknetKeyPair, waitForTransaction } from "../lib";
 
 describe("Gas griefing", function () {
   this.timeout(320000);

@@ -1,6 +1,6 @@
 import { expect } from "chai";
-import { declareContract, declareFixtureContract, deployLegacyMultisig, provider, upgradeAccount } from "./lib";
-import { deployMultisig1_1 } from "./lib/multisig";
+import { declareContract, declareFixtureContract, deployLegacyMultisig, provider, upgradeAccount } from "../lib";
+import { deployMultisig1_1 } from "../lib/multisig";
 
 describe("ArgentMultisig: upgrade", function () {
   it("Upgrade from current version to FutureVersionMultisig", async function () {

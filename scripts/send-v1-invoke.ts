@@ -1,5 +1,5 @@
 import { Call, uint256 } from "starknet";
-import { deployer, getEthContract } from "../tests-integration/lib";
+import { deployer, getEthContract } from "../lib";
 
 //////////////////// Configure the tx to send here: ///////////
 const call = await (

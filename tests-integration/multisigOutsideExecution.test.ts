@@ -12,8 +12,8 @@ import {
   randomStarknetKeyPair,
   setTime,
   waitForTransaction,
-} from "./lib";
-import { deployMultisig } from "./lib/multisig";
+} from "../lib";
+import { deployMultisig } from "../lib/multisig";
 
 const legacyRevision = typedData.TypedDataRevision.Legacy;
 const initialTime = 1713139200;

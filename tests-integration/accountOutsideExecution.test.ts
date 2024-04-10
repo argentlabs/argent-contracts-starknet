@@ -14,7 +14,7 @@ import {
   randomStarknetKeyPair,
   setTime,
   waitForTransaction,
-} from "./lib";
+} from "../lib";
 
 const activeRevision = typedData.TypedDataRevision.Active;
 const legacyRevision = typedData.TypedDataRevision.Legacy;

@@ -1,5 +1,5 @@
 import { CallData } from "starknet";
-import { deployMultisig1_3, expectRevertWithErrorMessage, zeroStarknetSignatureType } from "./lib";
+import { deployMultisig1_3, expectRevertWithErrorMessage, zeroStarknetSignatureType } from "../lib";
 
 describe("ArgentMultisig: signer storage", function () {
   it("Expect deserialization error when adding a zero signer", async function () {

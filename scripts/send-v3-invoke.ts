@@ -1,5 +1,5 @@
 import { Call, uint256 } from "starknet";
-import { deployerV3, getStrkContract } from "../tests-integration/lib";
+import { deployerV3, getStrkContract } from "../lib";
 
 //////////////////// Configure the tx to send here: ///////////
 const strk = await getStrkContract();

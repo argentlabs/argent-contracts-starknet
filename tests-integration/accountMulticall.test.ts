@@ -10,7 +10,7 @@ import {
   getEthContract,
   randomStarknetKeyPair,
   waitForTransaction,
-} from "./lib";
+} from "../lib";
 
 describe("ArgentAccount: multicall", function () {
   let mockDappContract: Contract;

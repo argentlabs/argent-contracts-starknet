@@ -13,7 +13,7 @@ import {
   loadContract,
   randomStarknetKeyPair,
   setTime,
-} from "./lib";
+} from "../lib";
 
 describe("Hybrid Session Account: execute calls", function () {
   let sessionAccountClassHash: string;

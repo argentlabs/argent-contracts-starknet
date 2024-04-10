@@ -1,5 +1,5 @@
-import { provider } from "../tests-integration/lib";
-import { newProfiler } from "../tests-integration/lib/gas";
+import { provider } from "../lib";
+import { newProfiler } from "../lib/gas";
 
 const transactions = {
   "Transaction label 1": "0x111111111111111111111111111111111111111111111111111111111111111",

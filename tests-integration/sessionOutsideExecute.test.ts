@@ -11,7 +11,7 @@ import {
   getSessionTypedData,
   loadContract,
   setTime,
-} from "./lib";
+} from "../lib";
 
 const initialTime = 1713139200n;
 const legacyRevision = typedData.TypedDataRevision.Legacy;

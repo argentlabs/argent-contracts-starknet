@@ -2,7 +2,7 @@ import * as utils from "@noble/curves/abstract/utils";
 import { RecoveredSignatureType } from "@noble/curves/abstract/weierstrass";
 import { p256 as secp256r1 } from "@noble/curves/p256";
 import { Signature as EthersSignature, Wallet } from "ethers";
-import { CairoCustomEnum, CallData, Uint256, num, uint256 } from "starknet";
+import { CairoCustomEnum, CallData, Uint256, hash, num, shortString, uint256 } from "starknet";
 import { KeyPair, SignerType, signerTypeToCustomEnum } from "../signers/signers";
 
 export class EthKeyPair extends KeyPair {
@@ -18,7 +18,7 @@ export class EthKeyPair extends KeyPair {
   }
 
   public get guid(): bigint {
-    throw new Error("Not implemented yet");
+    return BigInt(hash.computePoseidonHash(shortString.encodeShortString("Secp256k1 Signer"), this.address));
   }
 
   public get storedValue(): bigint {
@@ -51,7 +51,7 @@ export class Eip191KeyPair extends KeyPair {
   }
 
   public get guid(): bigint {
-    throw new Error("Not implemented yet");
+    return BigInt(hash.computePoseidonHash(shortString.encodeShortString("Eip191 Signer"), this.address));
   }
 
   public get storedValue(): bigint {
@@ -127,7 +127,13 @@ export class Secp256r1KeyPair extends KeyPair {
   }
 
   public get guid(): bigint {
-    throw new Error("Not implemented yet");
+    return BigInt(
+      hash.computePoseidonHashOnElements([
+        shortString.encodeShortString("Secp256r1 Signer"),
+        this.publicKey.low,
+        this.publicKey.high,
+      ]),
+    );
   }
 
   public get storedValue(): bigint {
@@ -174,3 +180,7 @@ function padTo32Bytes(hexString: string): string {
   }
   return hexString;
 }
+
+export const randomEthKeyPair = () => new EthKeyPair();
+export const randomEip191KeyPair = () => new Eip191KeyPair();
+export const randomSecp256r1KeyPair = () => new Secp256r1KeyPair();

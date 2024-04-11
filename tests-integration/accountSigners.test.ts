@@ -63,8 +63,7 @@ describe("ArgentAccount: testing all signers", function () {
     it(`trigger_escape_guardian "${name}"`, async function () {
       const { accountContract, account, owner } = await deployAccount();
       account.signer = new ArgentSigner(owner);
-      await expectRevertWithErrorMessage(
-        "argent/invalid-guardian-type", () => 
+      await expectRevertWithErrorMessage("argent/invalid-guardian-type", () =>
         accountContract.trigger_escape_guardian(keyPair.compiledSignerAsOption),
       );
     });

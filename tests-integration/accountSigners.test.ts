@@ -49,8 +49,7 @@ describe("ArgentAccount", function () {
   });
 
   it("Waiting accounts to be filled", function () {
-    describe("Simple transfer", 
-     function () {
+    describe("Simple transfer", function () {
       for (const { name, account } of accounts) {
         it(`Using "${name}"`, async function () {
           ethContract.connect(account);

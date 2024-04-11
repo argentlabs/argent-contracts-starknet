@@ -21,7 +21,7 @@ interface Account {
   account: ArgentAccount;
 }
 
-describe("ArgentAccount", function () {
+describe("ArgentAccount: Signers types", function () {
   const recipient = "0xadbe1";
   const amount = uint256.bnToUint256(1);
   let ethContract: Contract;

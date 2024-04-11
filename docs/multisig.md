@@ -16,10 +16,9 @@ By default the account can execute a sequence of operations such as calling exte
 
 In addition to the main `__execute__` entry point used by the Starknet protocol, the account can also be called by an external party via the `execute_from_outside` function to e.g. enable sponsored transactions. The calling party must provide a valid account signature for the target execution.
 
-
 ## Signer types
-There's more information about it in [Signers](./signers_and_signatures.md#Multiple_Signer_Types).
 
+There's more information about it in [Signers](./signers_and_signatures.md#Multiple_Signer_Types).
 
 ## Signature format
 

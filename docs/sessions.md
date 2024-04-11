@@ -1,4 +1,5 @@
 # Sessions
+
 Sessions allow dapps to submit transactions on behalf of the user without requiring any user interaction, as long as the transaction to execute follows some restrictions defined when the session is created. This will allow for a better UX in areas such a gaming
 
 This feature is only available to argent account where there's a guardian
@@ -12,15 +13,16 @@ If the message is signed, then the dapp trigger transaction without user interac
 ![Sessions diagram](session.png)
 
 ### Offchain checks by guardian:
+
 - Session expiration
 - Anything included in the `Metadata` field
 
 ### Onchain checks by the account:
+
 - Methods to call
 - Backend and dapp signatures
 - Check if session is revoked (see [Session Revocation ](#session-revocation))
 - Session expiration: it can only be done with some level precision during validation because of starknet restrictions to timestamps during validation, but the check will be also performed on execution with a more accurate timestamp. This could allow the dapp to perform some gas griefing but it is mitigated by the fact the guardian is also performing the check offchain
-
 
 ### Session revocation:
 
@@ -39,6 +41,6 @@ fn revoke_session(session_hash: felt252)
 fn is_session_revoked(session_hash: felt252) -> bool
 ```
 
-
 ### Examples
+
 There are some examples in typescript about how to use this feature [here](../lib/session/) and [here](../tests-integration/sessionAccount.test.ts)

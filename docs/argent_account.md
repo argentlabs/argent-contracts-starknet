@@ -39,8 +39,8 @@ To enable that model to evolve the account can be upgraded. Upgrading the wallet
 | Cancel Escape           | X     | X        |                                          |
 | Upgrade                 | X     | X        |                                          |
 
-
 ## Signer types
+
 There's more information about it in [Signers](./signers_and_signatures.md#Multiple_Signer_Types).
 This account restricts the guardian role to only StarknetSigner. Note that the guardian backup supports every type
 
@@ -51,20 +51,19 @@ The information available in [Signatures](./signers_and_signatures.md#Signatures
 Additionally, this account also supports providing signatures in a concise way when al signers involved are StarknetSigners
 
 The account will accept the format
-    [first_signer_r, first_signer_s]
+[first_signer_r, first_signer_s]
 
 And also
-    [first_signer_r, first_signer_s, second_signer_r, second_signer_s]
-
+[first_signer_r, first_signer_s, second_signer_r, second_signer_s]
 
 ## Outside Execution
+
 See [Outside Execution](./outside_execution.md)
 
 ## Sessions
+
 See [Sessions](./sessions.md)
 
 # Upgrades
+
 See [Upgrades](./argen_account_upgrades.md)
-
-
-

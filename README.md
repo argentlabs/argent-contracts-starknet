@@ -2,7 +2,7 @@
 
 ## Specification
 
-See [Argent Account](src/README.md#argent-multisig) and [Argent Multisig](src/README.md#argent-multisig) for more details.
+See [Argent Account](./docs/argent_account.md) and [Argent Multisig](./docs/multisig.md) for more details.
 
 ## Development
 

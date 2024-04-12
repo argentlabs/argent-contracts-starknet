@@ -37,17 +37,13 @@ mod upgrade_component {
     impl Upgradable<
         TContractState, +HasComponent<TContractState>, +IUpgradableCallback<TContractState>
     > of IUpgradeable<ComponentState<TContractState>> {
-        fn upgrade(
-            ref self: ComponentState<TContractState>, new_implementation: ClassHash, calldata: Array<felt252>
-        ) -> Array<felt252> {
+        fn upgrade(ref self: ComponentState<TContractState>, new_implementation: ClassHash, data: Array<felt252>) {
             assert_only_self();
-
             let supports_interface = ISRC5LibraryDispatcher { class_hash: new_implementation }
                 .supports_interface(SRC5_ACCOUNT_INTERFACE_ID);
             assert(supports_interface, 'argent/invalid-implementation');
             IUpgradableCallbackLibraryDispatcher { class_hash: new_implementation }
-                .perform_upgrade(new_implementation, calldata.span());
-            array![]
+                .perform_upgrade(new_implementation, data.span());
         }
     }
 

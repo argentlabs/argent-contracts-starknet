@@ -51,7 +51,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   }
 
   if (!params.keys && !finalParams.signersLength) {
-    throw new Error("Either keys or signersLength should be filled in");
+    throw new Error("Fill in one of 'keys' or 'signersLength'");
   }
   const keys = params.keys ?? sortedKeyPairs(finalParams.signersLength!);
   const signers = keysToSigners(keys);

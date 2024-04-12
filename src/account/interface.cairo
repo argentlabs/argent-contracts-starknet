@@ -116,6 +116,8 @@ trait IArgentUserAccount<TContractState> {
     fn get_escape(self: @TContractState) -> LegacyEscape;
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
+    fn get_last_owner_trigger_escape_attempt(self: @TContractState) -> u64;
+    fn get_last_guardian_trigger_escape_attempt(self: @TContractState) -> u64;
     fn get_last_owner_escape_attempt(self: @TContractState) -> u64;
     fn get_last_guardian_escape_attempt(self: @TContractState) -> u64;
 

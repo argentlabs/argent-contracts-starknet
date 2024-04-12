@@ -115,9 +115,9 @@ export class WebauthnOwner extends KeyPair {
     const message = concatBytes(authenticatorData, sha256(clientDataJson));
     const messageHash = sha256(message);
 
-    const signature = secp256r1.sign(messageHash, this.pk);
+    const { r, s, recovery } = secp256r1.sign(messageHash, this.pk);
 
-    return { authenticatorData, clientDataJson, r: signature.r, s: signature.s, yParity: signature.recovery !== 0 };
+    return { authenticatorData, clientDataJson, r, s, yParity: recovery !== 0 };
   }
 }
 

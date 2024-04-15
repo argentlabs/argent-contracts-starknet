@@ -41,6 +41,80 @@ fn revoke_session(session_hash: felt252)
 fn is_session_revoked(session_hash: felt252) -> bool
 ```
 
+### Signature format
+
+To use session, the tx signature should be `SESSION_MAGIC` followed by the serialized SessionToken. Where `SESSION_MAGIC` is the shortstring `session-token`
+
+```
+struct SessionToken {
+  /// Data of the session signed during creation
+  session: Session,
+  /// the owner and guardian session signatures from the session creation phase
+  session_authorisation: Span<felt252>,
+  /// the session key signature over poseidon(transaction_hash, session_hash)
+  session_signature: SignerSignature,
+  /// the session key signature over poseidon(transaction_hash, session_hash)
+  guardian_signature: SignerSignature,
+  /// a proof for each call to execute
+  proofs: Span<Span<felt252>>,
+}
+
+struct Session {
+  expires_at: u64,
+  allowed_methods_root: felt252,
+  metadata_hash: felt252,
+  session_key_guid: felt252,
+}
+```
+
+
+### Offchain message example
+
+```
+{
+  types: {
+    StarknetDomain: [
+      { name: 'name', type: 'shortstring' },
+      { name: 'version', type: 'shortstring' },
+      { name: 'chainId', type: 'shortstring' },
+      { name: 'revision', type: 'shortstring' }
+    ],
+    'Allowed Method': [
+      { name: 'Contract Address', type: 'ContractAddress' },
+      { name: 'selector', type: 'selector' }
+    ],
+    Session: [
+      { name: 'Expires At', type: 'timestamp' },
+      {
+        name: 'Allowed Methods',
+        type: 'merkletree',
+        contains: 'Allowed Method'
+      },
+      { name: 'Metadata', type: 'string' },
+      { name: 'Session Key', type: 'felt' }
+    ]
+  },
+  primaryType: 'Session',
+  domain: {
+    name: 'SessionAccount.session',
+    version: '1',
+    chainId: 'SN_SEPOLIA',
+    revision: '1'
+  },
+  message: {
+    'Expires At': '117090256870',
+    'Allowed Methods': [
+      {
+        'Contract Address': '0x3f68e12789ace09d195ba1a587550c19dbd665b7bd82da33b08ac83123db652',
+        selector: 'set_number_double'
+      }
+    ],
+    Metadata: '{ "projectID": "123456", "maxFee": 1000000000000, "feeToken": "STRK", "tokenLimits" : { "0x989898989" : 9999999999 } }',
+    'Session Key': '2543707029695183230146761574221281240112511463954890350766793321580039814416'
+  }
+}
+```
+
 ### Examples
 
 There are some examples in typescript about how to use this feature [here](../lib/session/) and [here](../tests-integration/sessionAccount.test.ts)

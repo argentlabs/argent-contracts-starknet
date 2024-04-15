@@ -64,6 +64,6 @@ See [Outside Execution](./outside_execution.md)
 
 See [Sessions](./sessions.md)
 
-# Upgrades
+## Upgrades
 
 See [Upgrades](./argen_account_upgrades.md)

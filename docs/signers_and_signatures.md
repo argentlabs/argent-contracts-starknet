@@ -25,6 +25,26 @@ struct SignerLinked {
 [More info about signers](../src/signer/signer_signature.cairo)
 [More info about Cairo serialization](https://docs.starknet.io/documentation/architecture_and_concepts/Smart_Contracts/serialization_of_Cairo_types/#data_types_of_252_bits_or_less)
 
+## Calculate GUIDs from Signer data
+
+- Starknet:
+
+  `poseidon('Starknet Signer', signer.pubkey)`
+- Secp256k1:
+
+  `poseidon('Secp256k1 Signer', signer.pubkey_hash)`
+- Secp256r1:
+  
+  `poseidon('Secp256r1 Signer', signer.pubkey.low, signer.pubkey.high)`
+- Eip191:
+  
+  `poseidon('Eip191 Signer', signer.eth_address)`
+
+- Webauthn:
+  
+  `poseidon('Webauthn Signer', signer.origin.len(), ...signer.origin, signer.rp_id_hash.low, signer.rp_id_hash.high, signer.pubkey.low, signer.pubkey.high)`
+
+
 # Signatures
 
 **NOTE** Besides the format specified here, the argent account also supports concise signatures. See [Signatures](./argent_account.md#Signatures)

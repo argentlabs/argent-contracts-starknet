@@ -30,20 +30,22 @@ struct SignerLinked {
 - Starknet:
 
   `poseidon('Starknet Signer', signer.pubkey)`
+
 - Secp256k1:
 
   `poseidon('Secp256k1 Signer', signer.pubkey_hash)`
+
 - Secp256r1:
-  
+
   `poseidon('Secp256r1 Signer', signer.pubkey.low, signer.pubkey.high)`
+
 - Eip191:
-  
+
   `poseidon('Eip191 Signer', signer.eth_address)`
 
 - Webauthn:
-  
-  `poseidon('Webauthn Signer', signer.origin.len(), ...signer.origin, signer.rp_id_hash.low, signer.rp_id_hash.high, signer.pubkey.low, signer.pubkey.high)`
 
+  `poseidon('Webauthn Signer', signer.origin.len(), ...signer.origin, signer.rp_id_hash.low, signer.rp_id_hash.high, signer.pubkey.low, signer.pubkey.high)`
 
 # Signatures
 

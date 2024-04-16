@@ -56,6 +56,12 @@ The account will accept the format
 And also
 [first_signer_r, first_signer_s, second_signer_r, second_signer_s]
 
+## Change owner signature
+
+To prevent mistakes where someone changes the owner to some key they don't control, the account will require a signature from the new owner as an argument to the `change_owner` function.
+
+New owner should sign the pedersen hash of the array: `[change_owner_selector, chain_id, account_address, old_owner_guid]`
+
 ## Outside Execution
 
 See [Outside Execution](./outside_execution.md)

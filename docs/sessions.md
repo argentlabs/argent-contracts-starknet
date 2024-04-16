@@ -67,7 +67,6 @@ struct Session {
 }
 ```
 
-
 ### Offchain message example
 
 ```

@@ -940,7 +940,7 @@ mod ArgentAccount {
 
         /// The signature is the result of signing the message hash with the new owner private key
         /// The message hash is the result of hashing the array:
-        /// [change_owner selector, chainid, contract address, old_owner]
+        /// [change_owner selector, chainid, contract address, old_owner_guid]
         /// as specified here: https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
         fn assert_valid_new_owner_signature(self: @ContractState, signer_signature: SignerSignature) {
             let chain_id = get_tx_info().unbox().chain_id;

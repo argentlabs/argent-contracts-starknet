@@ -34,6 +34,10 @@
   fn get_escape_and_status() -> (Escape, EscapeStatus)
   ```
 
+- Different signature for the `change_owner` function
+  Before, the signature included the old owner pubkey, but it has been replaced by the old guid
+  The hash to sign is now the pedersen hash of the array: [change_owner_selector, chain_id, account_address, old_owner_guid]
+
 - Escape struct also changed, creating some changes to the escape functions
 
   ```

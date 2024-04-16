@@ -48,6 +48,9 @@ mod ArgentAccount {
     const MAX_ESCAPE_MAX_FEE_STRK: u128 = 5_000000000000000000; // 5 STRK
     const MAX_ESCAPE_TIP_STRK: u128 = 1_000000000000000000; // 1 STRK
 
+    /// Minimum time for the escape security period
+    const MIN_ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(60 * 10); // 10 minutes;
+
     // session 
     component!(path: session_component, storage: session, event: SessionableEvents);
     #[abi(embed_v0)]
@@ -486,7 +489,7 @@ mod ArgentAccount {
 
         fn set_escape_security_period(ref self: ContractState, new_security_period: u64) {
             assert_only_self();
-            assert(new_security_period != 0, 'argent/invalid-security-period');
+            assert(new_security_period >= MIN_ESCAPE_SECURITY_PERIOD, 'argent/invalid-security-period');
             self.escape_security_period.write(new_security_period);
             self.emit(EscapeSecurityPeriodChanged { escape_security_period: new_security_period });
         }

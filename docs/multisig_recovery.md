@@ -2,7 +2,7 @@
 
 A multisig account might become unusable if a number of owner keys are lost. For instance, a multisig with 3 owners and a threshold of 3 will be unable to perform any transaction if any of the 3 owner loses their keys.
 
-To prevent this scenario, account owner can setup the recovery mechanism, which is turned off by default. To turn it on, owners will define:
+To prevent this scenario, account owners can setup their recovery mechanism, which is turned off by default. To turn it on, owners will define:
 
 - a security period
 - an expiration period

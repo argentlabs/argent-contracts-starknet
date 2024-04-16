@@ -2,7 +2,7 @@
 
 Sessions allow dapps to submit transactions on behalf of the user without requiring any user interaction, as long as the transaction to execute follows some restrictions defined when the session is created. This will allow for a better UX in areas such a gaming
 
-This feature is only available to argent account where there's a guardian
+This feature is only available to argent accounts where there's a guardian
 
 Many of these restrictions are guaranteed onchain by the contract but others could rely on the account guardian.
 

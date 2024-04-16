@@ -13,6 +13,7 @@ import {
   provider,
   randomStarknetKeyPair,
   randomStarknetKeyPairs,
+  sortByGuid,
 } from ".";
 
 export interface MultisigWallet {
@@ -25,7 +26,7 @@ export interface MultisigWallet {
 
 export type DeployMultisigParams = {
   threshold: number;
-  signersLength: number;
+  signersLength?: number;
   keys?: KeyPair[];
   useTxV3?: boolean;
   classHash?: string;
@@ -49,7 +50,10 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     throw new Error("selfDeploymentIndexes can only be used with selfDeploy");
   }
 
-  const keys = params.keys ?? sortedKeyPairs(finalParams.signersLength);
+  if (!params.keys && !finalParams.signersLength) {
+    throw new Error("Fill in one of 'keys' or 'signersLength'");
+  }
+  const keys = params.keys ?? sortedKeyPairs(finalParams.signersLength!);
   const signers = keysToSigners(keys);
   const constructorCalldata = CallData.compile({ threshold: finalParams.threshold, signers });
 
@@ -99,7 +103,7 @@ export async function deployMultisig1_1(
   return deployMultisig({ ...params, threshold: 1, signersLength: 1 });
 }
 
-const sortedKeyPairs = (length: number) => randomStarknetKeyPairs(length).sort((a, b) => (a.guid < b.guid ? -1 : 1));
+const sortedKeyPairs = (length: number) => sortByGuid(randomStarknetKeyPairs(length));
 
 const keysToSigners = (keys: KeyPair[]) => keys.map(({ signer }) => signer);
 

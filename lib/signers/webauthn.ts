@@ -1,7 +1,7 @@
 import { concatBytes } from "@noble/curves/abstract/utils";
 import { p256 as secp256r1 } from "@noble/curves/p256";
 import { BinaryLike, createHash } from "crypto";
-import { ArraySignatureType, CairoCustomEnum, CallData, shortString, uint256 } from "starknet";
+import { ArraySignatureType, CairoCustomEnum, CallData, hash, shortString, uint256 } from "starknet";
 import { KeyPair, SignerType, signerTypeToCustomEnum } from "..";
 
 // Bytes fn
@@ -49,7 +49,19 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public get guid(): bigint {
-    throw new Error("Not yet implemented");
+    const rpIdHashAsU256 = uint256.bnToUint256(buf2hex(rpIdHash));
+    const publicKeyAsU256 = uint256.bnToUint256(buf2hex(this.publicKey));
+    return BigInt(
+      hash.computePoseidonHashOnElements([
+        shortString.encodeShortString("Webauthn Signer"),
+        originBytes.length,
+        ...originBytes,
+        rpIdHashAsU256.low,
+        rpIdHashAsU256.high,
+        publicKeyAsU256.low,
+        publicKeyAsU256.high,
+      ]),
+    );
   }
 
   public get storedValue(): bigint {
@@ -112,3 +124,5 @@ export class WebauthnOwner extends KeyPair {
 function sha256(message: BinaryLike) {
   return createHash("sha256").update(message).digest();
 }
+
+export const randomWebauthnOwner = () => new WebauthnOwner();

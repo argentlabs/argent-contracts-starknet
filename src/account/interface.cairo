@@ -54,7 +54,7 @@ trait IArgentUserAccount<TContractState> {
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     /// @param signer_signature SignerSignature of the new owner 
     /// Required to prevent changing to an address which is not in control of the user
-    /// is the signature of the hashing this array with pedersen
+    /// is the signature of the pedersen hashed array: 
     /// [change_owner_selector, chain_id, account_address, old_owner_guid]
     fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
 

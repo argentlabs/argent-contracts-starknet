@@ -102,7 +102,7 @@ First release using Cairo 2
 
 - Renamed functions and events to follow Cairo conventions. Renamed signer to owner to make the role clearer
 - Events include more keys for indexing
-- Implements the new SNIP-5
+- Implements the new [SNIP-5](https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-5.md)
 - Recovery changes: For extra safety now you need to specify the new signer when triggering the escape. Escapes will automatically expire after a week if not completed
 - Outside execution: A new feature to allows metatransactions by leveraging offchain signatures
 - This account can only declare Cairo 1 contracts, not allowed to declare Cairo 0 code

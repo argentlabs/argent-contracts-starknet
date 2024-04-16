@@ -43,7 +43,7 @@ fn is_session_revoked(session_hash: felt252) -> bool
 
 ### Signature format
 
-To use session, the tx signature should be `SESSION_MAGIC` followed by the serialized SessionToken. Where `SESSION_MAGIC` is the shortstring `session-token`
+To use sessions, the tx signature should start with `SESSION_MAGIC` followed by the serialized SessionToken. Where `SESSION_MAGIC` is the shortstring `session-token`
 
 ```
 struct SessionToken {

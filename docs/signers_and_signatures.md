@@ -1,6 +1,6 @@
 # Multiple Signer Types
 
-Starting on argent [account](./argent-account.md) v0.4.0 and [multisig](./multisig.md) v0.2.0, the accounts allow to use other types of signatures besides the Starknet native signatures. We support the following:
+Starting from argent [account](./argent-account.md) v0.4.0 and [multisig](./multisig.md) v0.2.0, the accounts will allow the use of other signatures types, besides the Starknet native one. We support the following:
 
 - **Starknet**: native starknet key signature, it will be the most efficient in terms of gas usage
 - **Secp256k1**: Uses the curve used by Ethereum and other cryptocurrencies

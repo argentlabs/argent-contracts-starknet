@@ -8,7 +8,7 @@ Many of these restrictions are guaranteed onchain by the contract but others cou
 
 In order to start a session a dapp must generate a key pair (dapp key), and request the account to sign an offchain message with the session parameters.
 
-If the message is signed, then the dapp trigger transaction without user interactions using the session signed in the previous step, plus a guardian and a dapp key signature for every new transaction
+If the message is signed, then the dapp can trigger transactions without the need for user interactions using the session signed in the previous step - plus a guardian and a dapp key signature for every new transaction
 
 ![Sessions diagram](session.png)
 

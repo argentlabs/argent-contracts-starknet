@@ -29,7 +29,7 @@ import {
   zeroStarknetSignatureType,
 } from "../lib";
 
-describe.only("ArgentAccount: escape mechanism", function () {
+describe("ArgentAccount: escape mechanism", function () {
   let argentAccountClassHash: string;
   let newKeyPair: KeyPair;
   let randomTime: bigint;

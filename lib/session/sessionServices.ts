@@ -27,6 +27,7 @@ import {
   OnChainSession,
   OutsideExecution,
   RawSigner,
+  SessionToken,
   SignerType,
   StarknetKeyPair,
   getOutsideCall,
@@ -59,6 +60,7 @@ export class DappService {
     account: ArgentAccount,
     completedSession: OffChainSession,
     sessionAuthorizationSignature: ArraySignatureType,
+    cache_authorization: boolean = false,
   ) {
     const sessionSigner = new (class extends RawSigner {
       constructor(
@@ -81,7 +83,13 @@ export class DappService {
         return this.signTransactionCallback(calls, transactionsDetail);
       }
     })((calls: Call[], transactionsDetail: InvocationsSignerDetails) => {
-      return this.signRegularTransaction(sessionAuthorizationSignature, completedSession, calls, transactionsDetail);
+      return this.signRegularTransaction(
+        sessionAuthorizationSignature,
+        completedSession,
+        calls,
+        transactionsDetail,
+        cache_authorization,
+      );
     });
     return new ArgentAccount(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
   }
@@ -96,6 +104,7 @@ export class DappService {
     execute_after = 1,
     execute_before = 999999999999999,
     nonce = randomStarknetKeyPair().publicKey,
+    cache_authorization: boolean = false,
   ): Promise<Call> {
     const outsideExecution = {
       caller,
@@ -115,6 +124,7 @@ export class DappService {
       accountAddress,
       revision,
       outsideExecution,
+      cache_authorization,
     );
 
     return {
@@ -129,6 +139,7 @@ export class DappService {
     completedSession: OffChainSession,
     calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
+    cache_authorization: boolean,
   ): Promise<ArraySignatureType> {
     const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
     let txHash;
@@ -160,6 +171,7 @@ export class DappService {
       calls,
       transactionsDetail.walletAddress,
       transactionsDetail,
+      cache_authorization,
     );
   }
 
@@ -171,6 +183,7 @@ export class DappService {
     accountAddress: string,
     revision: typedData.TypedDataRevision,
     outsideExecution: OutsideExecution,
+    cache_authorization: boolean,
   ): Promise<ArraySignatureType> {
     const session = this.compileSessionHelper(completedSession);
 
@@ -188,12 +201,13 @@ export class DappService {
       completedSession,
       calls,
       session_signature,
+      cache_authorization,
       sessionAuthorizationSignature,
       guardian_signature,
       accountAddress,
     );
 
-    return [SESSION_MAGIC, ...CallData.compile(sessionToken)];
+    return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
   }
 
   private async compileSessionSignature(
@@ -203,6 +217,7 @@ export class DappService {
     calls: Call[],
     accountAddress: string,
     transactionsDetail: InvocationsSignerDetails,
+    cache_authorization: boolean,
   ): Promise<ArraySignatureType> {
     const session = this.compileSessionHelper(completedSession);
 
@@ -213,12 +228,13 @@ export class DappService {
       completedSession,
       calls,
       session_signature,
+      cache_authorization,
       sessionAuthorizationSignature,
       guardian_signature,
       accountAddress,
     );
 
-    return [SESSION_MAGIC, ...CallData.compile(sessionToken)];
+    return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
   }
 
   private async signTxAndSession(
@@ -273,12 +289,14 @@ export class DappService {
     completedSession: OffChainSession,
     calls: Call[],
     sessionSignature: bigint[],
+    cache_authorization: boolean,
     session_authorization: string[],
     guardian_signature: bigint[],
     accountAddress: string,
-  ) {
+  ): Promise<SessionToken> {
     return {
       session,
+      cache_authorization,
       session_authorization,
       session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
       guardian_signature: this.getStarknetSignatureType(

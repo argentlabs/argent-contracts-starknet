@@ -20,6 +20,7 @@ struct Session {
 
 /// @notice Session Token struct contains the session struct, relevant signatures and merkle proofs
 /// @param session The session struct
+/// @param cache_authorization Whether the authorization is cached
 /// @param session_authorization A valid account signature over the Session
 /// @param session_signature Session signature of the poseidon H(tx_hash, session hash)
 /// @param guardian_signature Guardian signature of the poseidon H(tx_hash, session hash)
@@ -27,6 +28,7 @@ struct Session {
 #[derive(Drop, Serde, Copy)]
 struct SessionToken {
     session: Session,
+    cache_authorization: bool,
     session_authorization: Span<felt252>,
     session_signature: SignerSignature,
     guardian_signature: SignerSignature,

@@ -170,4 +170,37 @@ describe("Hybrid Session Account: execute calls", function () {
     await mockErc20Contract.balance_of(accountContract.address).should.eventually.equal(0n);
     await mockErc20Contract.balance_of("0x999").should.eventually.equal(10n);
   });
+
+  it.only("Use Session with caching enabled", async function () {
+    const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
+
+    const backendService = new BackendService(guardian as StarknetKeyPair);
+    const dappService = new DappService(backendService);
+    const argentX = new ArgentX(account, backendService);
+
+    // Session creation:
+    // 1. dapp request session: provides dapp pub key and policies
+    const allowedMethods: AllowedMethod[] = [
+      {
+        "Contract Address": mockDappOneContract.address,
+        selector: "set_number_double",
+      },
+    ];
+
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
+    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
+
+    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+      account,
+      sessionRequest,
+      accountSessionSignature,
+      true,
+    );
+
+    const { transaction_hash } = await accountWithDappSigner.execute(calls);
+
+    await account.waitForTransaction(transaction_hash);
+    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+  });
 });

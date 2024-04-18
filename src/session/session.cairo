@@ -10,12 +10,16 @@ mod session_component {
     };
     use argent::signer::signer_signature::{SignerSignatureTrait, SignerTrait};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
+    use core::zeroable::Zeroable;
     use poseidon::{hades_permutation};
     use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp};
 
+    type SessionHash = felt252;
+
     #[storage]
     struct Storage {
-        revoked_session: LegacyMap<felt252, bool>,
+        revoked_session: LegacyMap<SessionHash, bool>,
+        valid_session_cache: LegacyMap<SessionHash, (felt252, felt252)>,
     }
 
     const SESSION_MAGIC: felt252 = 'session-token';
@@ -35,7 +39,7 @@ mod session_component {
     impl Sessionable<
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentUserAccount<TContractState>,
     > of ISessionable<ComponentState<TContractState>> {
-        fn revoke_session(ref self: ComponentState<TContractState>, session_hash: felt252) {
+        fn revoke_session(ref self: ComponentState<TContractState>, session_hash: SessionHash) {
             assert_only_self();
             assert(!self.revoked_session.read(session_hash), 'session/already-revoked');
             self.emit(SessionRevoked { session_hash });
@@ -43,7 +47,7 @@ mod session_component {
         }
 
         #[inline(always)]
-        fn is_session_revoked(self: @ComponentState<TContractState>, session_hash: felt252) -> bool {
+        fn is_session_revoked(self: @ComponentState<TContractState>, session_hash: SessionHash) -> bool {
             self.revoked_session.read(session_hash)
         }
     }
@@ -65,7 +69,7 @@ mod session_component {
         }
 
         fn assert_valid_session(
-            self: @ComponentState<TContractState>,
+            ref self: ComponentState<TContractState>,
             calls: Span<Call>,
             transaction_hash: felt252,
             signature: Span<felt252>,
@@ -85,10 +89,31 @@ mod session_component {
 
             assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
 
-            // callback verifies the owner + guardian signature is valid
-            assert(
-                state.session_callback(token_session_hash, token.session_authorization), 'session/invalid-account-sig'
-            );
+            if (token.cache_authorization) {
+                let (cached_owner_pubkey, cached_guardian_pubkey): (felt252, felt252) = self
+                    .valid_session_cache
+                    .read(token_session_hash);
+                if cached_owner_pubkey == 0 && cached_guardian_pubkey == 0 {
+                    assert(
+                        state.session_callback(token_session_hash, token.session_authorization),
+                        'session/invalid-account-sig'
+                    );
+                    self
+                        .valid_session_cache
+                        .write(token_session_hash, (*token.session_authorization[2], *token.session_authorization[6]));
+                } else {
+                    assert(cached_owner_pubkey == *token.session_authorization[2], 'session/mismatch-owner-cache');
+                    assert(
+                        cached_guardian_pubkey == *token.session_authorization[6], 'session/mismatch-guardian-cache'
+                    );
+                }
+            } else {
+                // callback verifies the owner + guardian signature is valid
+                assert(
+                    state.session_callback(token_session_hash, token.session_authorization),
+                    'session/invalid-account-sig'
+                );
+            }
 
             let (message_hash, _, _) = hades_permutation(transaction_hash, token_session_hash, 2);
 

@@ -405,7 +405,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
       await setTime(randomTime);
       await accountContract.trigger_escape_guardian(newKeyPair.compiledSignerAsOption);
-      await setTime(randomTime + 60n * 60n );
+      await setTime(randomTime + 60n * 60n);
       await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.Ready);
 
       await accountContract.escape_guardian();
@@ -429,7 +429,6 @@ describe("ArgentAccount: escape mechanism", function () {
 
       await expectRevertWithErrorMessage("argent/invalid-escape", () => accountContract.escape_guardian());
     });
-
 
     it("Expect 'argent/last-escape-too-recent' when trying too escape again too early", async function () {
       const { account, accountContract, owner } = await deployAccount();

@@ -56,7 +56,7 @@ describe("Gas griefing", function () {
       l2_gas: {
         ...estimate.resourceBounds.l2_gas,
         // Need (max_amount * max_price_per_unit) + (tip * max_amount)> 5e18
-        max_amount: num.toHexString(1000000000000000000n - (l1_gas / 5n) + 1n), // we can't use 1e18, not enough precision
+        max_amount: num.toHexString(1000000000000000000n - l1_gas / 5n + 1n), // we can't use 1e18, not enough precision
         max_price_per_unit: num.toHexString(4),
       },
     };

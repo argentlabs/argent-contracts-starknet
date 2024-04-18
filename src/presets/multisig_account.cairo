@@ -7,8 +7,10 @@ mod ArgentMultisigAccount {
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
-    use argent::signer::signer_signature::{Signer, SignerSignature};
-    use argent::signer_storage::{signer_list::{signer_list_component}};
+    use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
+    use argent::signer_storage::{
+        interface::ISignerList, {signer_list::{signer_list_component, signer_list_component::SignerLinked}}
+    };
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
@@ -205,6 +207,13 @@ mod ArgentMultisigAccount {
             assert_only_self();
             // Check basic invariants
             self.multisig.assert_valid_storage();
+            let mut signers = self.signer_list.get_signers();
+            while let Option::Some(signer) = signers
+                .pop_front() {
+                    self
+                        .signer_list
+                        .emit(SignerLinked { signer_guid: signer, signer: starknet_signer_from_pubkey(signer) });
+                };
             assert(data.len() == 0, 'argent/unexpected-data');
             array![]
         }

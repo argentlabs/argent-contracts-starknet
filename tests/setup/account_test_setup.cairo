@@ -31,6 +31,7 @@ trait ITestArgentAccount<TContractState> {
     fn escape_owner(ref self: TContractState);
     fn escape_guardian(ref self: TContractState);
     fn cancel_escape(ref self: TContractState);
+    fn set_escape_security_period(ref self: TContractState, new_security_period: u64);
     // Views
     fn get_owner(self: @TContractState) -> felt252;
     fn get_guardian(self: @TContractState) -> felt252;
@@ -44,6 +45,7 @@ trait ITestArgentAccount<TContractState> {
     fn get_last_owner_escape_attempt(self: @TContractState) -> u64;
     fn get_last_guardian_escape_attempt(self: @TContractState) -> u64;
     fn get_escape_and_status(self: @TContractState) -> (LegacyEscape, EscapeStatus);
+    fn get_escape_security_period(self: @TContractState) -> u64;
 
     // IErc165
     fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;

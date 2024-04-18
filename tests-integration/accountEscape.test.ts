@@ -134,7 +134,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
             await setTime(randomTime);
             await accountContract.trigger_escape_owner(newKeyPair.compiledSigner);
-            await setTime(randomTime + 60n * 60n + 1n);
+            await setTime(randomTime + 60n * 60n);
             await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.Ready);
 
             await accountContract.escape_owner();
@@ -144,6 +144,19 @@ describe("ArgentAccount: escape mechanism", function () {
             expect(escape.ready_at).to.equal(0n);
             expect(escape.new_signer.isNone()).to.be.true;
             await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.None);
+          });
+
+          it("Expect 'argent/invalid-escape' when escaping too early when a small escape security period is used", async function () {
+            const { account, accountContract, other } = await buildAccount(type);
+
+            await accountContract.set_escape_security_period(60 * 60); // 1h
+            account.signer = new ArgentSigner(other);
+
+            await setTime(randomTime);
+            await accountContract.trigger_escape_owner(newKeyPair.compiledSigner);
+            await setTime(randomTime + 60n * 60n - 1n);
+
+            await expectRevertWithErrorMessage("argent/invalid-escape", () => accountContract.escape_owner());
           });
 
           it(`Triggered by ${type}. Expect 'argent/cannot-override-escape' when the owner is already being escaped`, async function () {
@@ -392,7 +405,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
       await setTime(randomTime);
       await accountContract.trigger_escape_guardian(newKeyPair.compiledSignerAsOption);
-      await setTime(randomTime + 60n * 60n + 1n);
+      await setTime(randomTime + 60n * 60n );
       await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.Ready);
 
       await accountContract.escape_guardian();
@@ -403,6 +416,20 @@ describe("ArgentAccount: escape mechanism", function () {
       expect(escape.new_signer.isNone()).to.be.true;
       await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.None);
     });
+
+    it("Expect 'argent/invalid-escape' when escaping too early when a small escape security period is used", async function () {
+      const { account, accountContract, owner } = await deployAccount();
+
+      await accountContract.set_escape_security_period(60 * 60); // 1h
+      account.signer = new ArgentSigner(owner);
+
+      await setTime(randomTime);
+      await accountContract.trigger_escape_guardian(newKeyPair.compiledSignerAsOption);
+      await setTime(randomTime + 60n * 60n - 1n);
+
+      await expectRevertWithErrorMessage("argent/invalid-escape", () => accountContract.escape_guardian());
+    });
+
 
     it("Expect 'argent/last-escape-too-recent' when trying too escape again too early", async function () {
       const { account, accountContract, owner } = await deployAccount();

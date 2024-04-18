@@ -123,6 +123,10 @@ describe("ArgentAccount: escape mechanism", function () {
           });
 
           it(`Should be possible to use the legacy signature on trigger_escape_owner`, async function () {
+            if (type == guardianType[2]) {
+              return; // Skip this test for "backup guardian"
+            }
+
             const { account, accountContract, other } = await buildAccount(type);
             account.signer = new LegacyArgentSigner(new LegacyStarknetKeyPair((other as StarknetKeyPair).privateKey));
 
@@ -399,7 +403,7 @@ describe("ArgentAccount: escape mechanism", function () {
       account.signer = new ArgentSigner(guardian);
 
       await setTime(randomTime);
-      await accountContract.trigger_escape_owner(newKeyPair.compiledSignerAsOption);
+      await accountContract.trigger_escape_owner(newKeyPair.compiledSigner);
 
       const escapeOwner = await accountContract.get_escape();
       expect(escapeOwner.escape_type).to.deep.equal(ESCAPE_TYPE_OWNER);

@@ -60,7 +60,7 @@ export class DappService {
     account: ArgentAccount,
     completedSession: OffChainSession,
     sessionAuthorizationSignature: ArraySignatureType,
-    cache_authorization: boolean = false,
+    cache_authorization = false,
   ) {
     const sessionSigner = new (class extends RawSigner {
       constructor(
@@ -104,7 +104,7 @@ export class DappService {
     execute_after = 1,
     execute_before = 999999999999999,
     nonce = randomStarknetKeyPair().publicKey,
-    cache_authorization: boolean = false,
+    cache_authorization = false,
   ): Promise<Call> {
     const outsideExecution = {
       caller,

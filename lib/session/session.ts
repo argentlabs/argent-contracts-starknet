@@ -94,7 +94,7 @@ export async function setupSession(
   allowedMethods: AllowedMethod[],
   expiry: bigint = BigInt(Date.now()) + 10000n,
   dappKey: StarknetKeyPair = randomStarknetKeyPair(),
-  cache_authorization: boolean = false,
+  cache_authorization = false,
 ): Promise<ArgentAccount> {
   const backendService = new BackendService(guardian);
   const dappService = new DappService(backendService, dappKey);

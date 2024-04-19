@@ -19,8 +19,8 @@ mod session_component {
     struct Storage {
         /// A map of session hashes to a boolean indicating if the session has been revoked.
         revoked_session: LegacyMap<felt252, bool>,
-        /// A map of (owner_guid, guardian_guid, session_hash) to a boolean indicating if the session is valid.
-        valid_session_cache: LegacyMap<(felt252, felt252, felt252), bool>,
+        /// A map of (owner_guid, guardian_guid, session_hash) to a len of authorization signature
+        valid_session_cache: LegacyMap<(felt252, felt252, felt252), u32>,
     }
 
     const SESSION_MAGIC: felt252 = 'session-token';
@@ -53,10 +53,11 @@ mod session_component {
         }
 
         #[inline(always)]
-        fn is_session_authorization_cached(
-            self: @ComponentState<TContractState>, owner_guid: felt252, guardian_guid: felt252, session_hash: felt252
-        ) -> bool {
-            self.valid_session_cache.read((owner_guid, guardian_guid, session_hash))
+        fn is_session_authorization_cached(self: @ComponentState<TContractState>, session_hash: felt252) -> bool {
+            let state = self.get_contract();
+            let guardian_guid = state.get_guardian_guid().expect('session/no-guardian');
+            let owner_guid = state.get_owner_guid();
+            self.valid_session_cache.read((owner_guid, guardian_guid, session_hash)).is_non_zero()
         }
     }
 
@@ -97,36 +98,7 @@ mod session_component {
 
             assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
 
-            if (token.cache_authorization) {
-                let owner_guid_from_account = state.get_owner_guid();
-                let guardian_guid_from_account = state.get_guardian_guid().expect('session/no-guardian');
-
-                if self
-                    .is_session_authorization_cached(
-                        owner_guid_from_account, guardian_guid_from_account, token_session_hash
-                    ) {
-                    assert(token.session_authorization.len() == 0, 'session/invalid-signature-len');
-                } else {
-                    // let parsed_signers = state.session_parse_signatures_callback(token.session_authorization);
-                    // assert(parsed_signers.len() == 2, 'session/invalid-signature-len');
-                    // let guardian_guid_from_sig = (*parsed_signers.at(1)).signer().into_guid();
-                    // assert(guardian_guid_from_sig == state.get_guardian_backup_guid(), 'session/invalid-guardian-sig');
-
-                    assert(
-                        state.session_verify_sig_callback(token_session_hash, token.session_authorization),
-                        'session/invalid-account-sig'
-                    );
-                    self
-                        .valid_session_cache
-                        .write((owner_guid_from_account, guardian_guid_from_account, token_session_hash), true);
-                }
-            } else {
-                // callback verifies the owner + guardian signature is valid
-                assert(
-                    state.session_verify_sig_callback(token_session_hash, token.session_authorization),
-                    'session/invalid-account-sig'
-                );
-            }
+            self.assert_valid_session_authorization(state, @token, token_session_hash);
 
             let message_hash = PoseidonTrait::new()
                 .update_with(transaction_hash)
@@ -144,6 +116,38 @@ mod session_component {
             assert(token.guardian_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');
 
             assert_valid_session_calls(@token, calls);
+        }
+
+
+        fn assert_valid_session_authorization(
+            ref self: ComponentState<TContractState>,
+            state: @TContractState,
+            token: @SessionToken,
+            session_hash: felt252,
+        ) {
+            let session_authorization = *token.session_authorization;
+            let guardian_guid = state.get_guardian_guid().expect('session/no-guardian');
+            if (*token.cache_authorization) {
+                let owner_guid = state.get_owner_guid();
+                let cached_sig_len = self.valid_session_cache.read((owner_guid, guardian_guid, session_hash));
+                let authorization_len = session_authorization.len();
+                if cached_sig_len != 0 {
+                    assert(authorization_len <= cached_sig_len, 'session/invalid-signature-len');
+                    return;
+                } else {
+                    assert(
+                        state.session_verify_sig_callback(session_hash, session_authorization, guardian_guid),
+                        'session/invalid-account-sig'
+                    );
+                    self.valid_session_cache.write((owner_guid, guardian_guid, session_hash), authorization_len);
+                    return;
+                }
+            }
+
+            assert(
+                state.session_verify_sig_callback(session_hash, session_authorization, guardian_guid),
+                'session/invalid-account-sig'
+            );
         }
     }
 

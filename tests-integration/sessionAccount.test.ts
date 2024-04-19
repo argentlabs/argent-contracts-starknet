@@ -7,12 +7,14 @@ import {
   StarknetKeyPair,
   declareContract,
   deployAccount,
+  deployAccountWithGuardianBackup,
   deployer,
   expectRevertWithErrorMessage,
   getSessionTypedData,
   loadContract,
   randomStarknetKeyPair,
   setTime,
+  setupSession,
 } from "../lib";
 
 describe("Hybrid Session Account: execute calls", function () {
@@ -209,5 +211,55 @@ describe("Hybrid Session Account: execute calls", function () {
 
     await account.waitForTransaction(tx2);
     await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(8n);
+  });
+
+  it("Fail if guardian backup signed session (uncached)", async function () {
+    const { account, guardian } = await deployAccountWithGuardianBackup({
+      classHash: sessionAccountClassHash,
+    });
+
+    const allowedMethods: AllowedMethod[] = [
+      {
+        "Contract Address": mockDappOneContract.address,
+        selector: "set_number_double",
+      },
+    ];
+
+    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+
+    const accountWithDappSigner = await setupSession(
+      guardian as StarknetKeyPair,
+      account,
+      allowedMethods,
+      initialTime + 150n,
+      randomStarknetKeyPair(),
+    );
+
+    expectRevertWithErrorMessage("session/backup-guardian-found", () => accountWithDappSigner.execute(calls));
+  });
+
+  it("Fail if guardian backup signed session (cached)", async function () {
+    const { account, guardian } = await deployAccountWithGuardianBackup({
+      classHash: sessionAccountClassHash,
+    });
+
+    const allowedMethods: AllowedMethod[] = [
+      {
+        "Contract Address": mockDappOneContract.address,
+        selector: "set_number_double",
+      },
+    ];
+
+    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+
+    const accountWithDappSigner = await setupSession(
+      guardian as StarknetKeyPair,
+      account,
+      allowedMethods,
+      initialTime + 150n,
+      randomStarknetKeyPair(),
+    );
+
+    expectRevertWithErrorMessage("session/backup-guardian-found", () => accountWithDappSigner.execute(calls));
   });
 });

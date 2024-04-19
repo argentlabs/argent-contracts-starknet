@@ -42,16 +42,10 @@ trait ISessionCallback<TContractState> {
     /// @notice Callback performed to check valid account signature
     /// @param session_hash The hash of session
     /// @param authorization_signature The owner + guardian signature of the session
+    /// @param guardian_guid The guardian guid (needed to verify if its the primary or backup guardian)
     fn session_verify_sig_callback(
-        self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>
+        self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>, guardian_guid: felt252
     ) -> bool;
-
-    /// @notice Callback performed to parse the signatures of the session authorization
-    /// @param authorization_signature The owner + guardian signature of the session
-    /// @return An array of SignerSignature
-    fn session_parse_signatures_callback(
-        self: @TContractState, authorization_signature: Span<felt252>
-    ) -> Array<SignerSignature>;
 }
 
 #[starknet::interface]
@@ -64,7 +58,5 @@ trait ISessionable<TContractState> {
     fn is_session_revoked(self: @TContractState, session_hash: felt252) -> bool;
 
     /// @notice View function to see if a session authorization is cached, returns a boolean
-    fn is_session_authorization_cached(
-        self: @TContractState, owner_guid: felt252, guardian_guid: felt252, session_hash: felt252
-    ) -> bool;
+    fn is_session_authorization_cached(self: @TContractState, session_hash: felt252) -> bool;
 }

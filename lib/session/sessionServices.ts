@@ -318,13 +318,7 @@ export class DappService {
   ): Promise<SessionToken> {
     const sessionContract = await loadContract(accountAddress);
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
-    const ownerGuid = await sessionContract.get_owner_guid();
-    const guardianGuid = await sessionContract.get_guardian_guid();
-    const isSessionCached = await sessionContract.is_session_authorization_cached(
-      ownerGuid,
-      guardianGuid.unwrap(),
-      sessionMessageHash,
-    );
+    const isSessionCached = await sessionContract.is_session_authorization_cached(sessionMessageHash);
     return {
       session,
       cache_authorization,

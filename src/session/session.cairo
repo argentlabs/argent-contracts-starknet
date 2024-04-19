@@ -10,9 +10,8 @@ mod session_component {
     };
     use argent::signer::signer_signature::{SignerSignatureTrait, SignerTrait, SignerSignature};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
-    use core::option::OptionTrait;
-    use core::zeroable::Zeroable;
-    use poseidon::{hades_permutation};
+    use hash::{HashStateExTrait, HashStateTrait};
+    use poseidon::PoseidonTrait;
     use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp};
 
 
@@ -119,7 +118,11 @@ mod session_component {
                 );
             }
 
-            let (message_hash, _, _) = hades_permutation(transaction_hash, token_session_hash, 2);
+            let message_hash = PoseidonTrait::new()
+                .update_with(transaction_hash)
+                .update_with(token_session_hash)
+                .update_with(token.cache_authorization)
+                .finalize();
 
             // checks that the session key the user signed is the same key that signed the session
             let session_guid_from_sig = token.session_signature.signer().into_guid();

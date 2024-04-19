@@ -193,9 +193,15 @@ export class DappService {
       accountAddress,
       outsideExecution as OutsideExecution,
       revision,
+      cache_authorization,
     );
 
-    const session_signature = await this.signTxAndSession(completedSession, transactionHash, accountAddress);
+    const session_signature = await this.signTxAndSession(
+      completedSession,
+      transactionHash,
+      accountAddress,
+      cache_authorization,
+    );
     const sessionToken = await this.compileSessionTokenHelper(
       session,
       completedSession,
@@ -221,8 +227,18 @@ export class DappService {
   ): Promise<ArraySignatureType> {
     const session = this.compileSessionHelper(completedSession);
 
-    const guardian_signature = await this.argentBackend.signTxAndSession(calls, transactionsDetail, completedSession);
-    const session_signature = await this.signTxAndSession(completedSession, transactionHash, accountAddress);
+    const guardian_signature = await this.argentBackend.signTxAndSession(
+      calls,
+      transactionsDetail,
+      completedSession,
+      cache_authorization,
+    );
+    const session_signature = await this.signTxAndSession(
+      completedSession,
+      transactionHash,
+      accountAddress,
+      cache_authorization,
+    );
     const sessionToken = await this.compileSessionTokenHelper(
       session,
       completedSession,
@@ -241,9 +257,14 @@ export class DappService {
     completedSession: OffChainSession,
     transactionHash: string,
     accountAddress: string,
+    cache_authorization: boolean,
   ): Promise<bigint[]> {
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
-    const sessionWithTxHash = hash.computePoseidonHash(transactionHash, sessionMessageHash);
+    const sessionWithTxHash = hash.computePoseidonHashOnElements([
+      transactionHash,
+      sessionMessageHash,
+      +cache_authorization,
+    ]);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));
     return [signature.r, signature.s];
   }

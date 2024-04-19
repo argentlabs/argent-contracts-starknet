@@ -1,5 +1,5 @@
-use argent::signer::signer_signature::{SignerSignature};
-use poseidon::{poseidon_hash_span};
+use argent::signer::signer_signature::SignerSignature;
+use poseidon::poseidon_hash_span;
 use starknet::account::Call;
 use starknet::{get_tx_info, get_contract_address, ContractAddress};
 
@@ -42,7 +42,16 @@ trait ISessionCallback<TContractState> {
     /// @notice Callback performed to check valid account signature
     /// @param session_hash The hash of session
     /// @param authorization_signature The owner + guardian signature of the session
-    fn session_callback(self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>) -> bool;
+    fn session_verify_sig_callback(
+        self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>
+    ) -> bool;
+
+    /// @notice Callback performed to parse the signatures of the session authorization
+    /// @param authorization_signature The owner + guardian signature of the session
+    /// @return An array of SignerSignature
+    fn session_parse_signatures_callback(
+        self: @TContractState, authorization_signature: Span<felt252>
+    ) -> Array<SignerSignature>;
 }
 
 #[starknet::interface]

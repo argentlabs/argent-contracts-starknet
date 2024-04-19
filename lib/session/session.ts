@@ -94,6 +94,7 @@ export async function setupSession(
   allowedMethods: AllowedMethod[],
   expiry: bigint = BigInt(Date.now()) + 10000n,
   dappKey: StarknetKeyPair = randomStarknetKeyPair(),
+  cache_authorization: boolean = false,
 ): Promise<ArgentAccount> {
   const backendService = new BackendService(guardian);
   const dappService = new DappService(backendService, dappKey);
@@ -102,6 +103,5 @@ export async function setupSession(
   const sessionRequest = dappService.createSessionRequest(allowedMethods, expiry);
 
   const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
-
-  return dappService.getAccountWithSessionSigner(account, sessionRequest, accountSessionSignature);
+  return dappService.getAccountWithSessionSigner(account, sessionRequest, accountSessionSignature, cache_authorization);
 }

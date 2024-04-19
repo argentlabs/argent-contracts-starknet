@@ -452,10 +452,16 @@ mod ArgentAccount {
 
 
     impl SessionCallbackImpl of ISessionCallback<ContractState> {
-        fn session_callback(
+        fn session_verify_sig_callback(
             self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>
         ) -> bool {
             self.is_valid_span_signature(session_hash, self.parse_signature_array(authorization_signature))
+        }
+
+        fn session_parse_signatures_callback(
+            self: @ContractState, authorization_signature: Span<felt252>
+        ) -> Array<SignerSignature> {
+            self.parse_signature_array(authorization_signature)
         }
     }
 

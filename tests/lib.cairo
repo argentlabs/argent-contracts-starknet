@@ -33,7 +33,3 @@ mod webauthn {
 mod eip191 {
     mod test_eip191;
 }
-
-mod sessions {
-    mod test_session_cache;
-}

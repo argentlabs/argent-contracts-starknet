@@ -171,7 +171,7 @@ describe("Hybrid Session Account: execute calls", function () {
     await mockErc20Contract.balance_of("0x999").should.eventually.equal(10n);
   });
 
-  it.only("Use Session with caching enabled", async function () {
+  it("Use Session with caching enabled", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const backendService = new BackendService(guardian as StarknetKeyPair);
@@ -202,5 +202,12 @@ describe("Hybrid Session Account: execute calls", function () {
 
     await account.waitForTransaction(transaction_hash);
     await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+
+    const calls2 = [mockDappOneContract.populateTransaction.set_number_double(4)];
+
+    const { transaction_hash: tx2 } = await accountWithDappSigner.execute(calls2);
+
+    await account.waitForTransaction(tx2);
+    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(8n);
   });
 });

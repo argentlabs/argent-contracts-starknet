@@ -1,20 +1,16 @@
 use argent::presets::argent_account::ArgentAccount;
 use argent::signer::signer_signature::{
     Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait, StarknetSigner,
-    starknet_signer_from_pubkey
+    starknet_signer_from_pubkey,
 };
-use core::option::OptionTrait;
-use snforge_std::cheatcodes::contract_class::ContractClassTrait;
-use snforge_std::{spy_events, SpyOn, EventSpy, EventFetcher, EventAssertions};
-use snforge_std::{start_prank, declare, start_spoof, get_class_hash, ContractClass, CheatTarget, TxInfoMockTrait};
-use starknet::{contract_address_const, get_tx_info};
+use snforge_std::{start_prank, CheatTarget};
+use starknet::contract_address_const;
 use super::setup::{
     account_test_setup::{
         ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
         initialize_account_without_guardian
     },
-    utils::{set_tx_version_foundry, felt252TryIntoStarknetSigner},
-    constants::{OWNER, GUARDIAN, NEW_OWNER, WRONG_OWNER, ARGENT_ACCOUNT_ADDRESS}
+    utils::{set_tx_version_foundry, felt252TryIntoStarknetSigner}, constants::{OWNER, NEW_OWNER, WRONG_OWNER}
 };
 
 #[test]
@@ -208,7 +204,7 @@ fn getName() {
 }
 
 #[test]
-fn unsuported_supportsInterface() {
+fn unsupported_supportsInterface() {
     let account = initialize_account();
     assert_eq!(account.supportsInterface(0), 0, "value should be false");
     assert_eq!(account.supportsInterface(0xffffffff), 0, "Should not support 0xffffffff");
@@ -229,3 +225,4 @@ fn cant_call_validate() {
     start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
     account.__validate__(array![]);
 }
+

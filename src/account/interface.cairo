@@ -54,8 +54,8 @@ trait IArgentUserAccount<TContractState> {
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     /// @param signer_signature SignerSignature of the new owner 
     /// Required to prevent changing to an address which is not in control of the user
-    /// is the signature of this hash
-    ///  hash = pedersen(0, (change_owner selector, chainid, contract address, old_owner))
+    /// is the signature of the pedersen hashed array: 
+    /// [change_owner_selector, chain_id, account_address, old_owner_guid]
     fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
 
     /// @notice Changes the guardian
@@ -103,15 +103,21 @@ trait IArgentUserAccount<TContractState> {
     fn cancel_escape(ref self: TContractState);
 
     // Views
+
+    /// @notice Returns the public key if the requested role is Starknet, Eip191 or Secp256k1 and panic for other types
     fn get_owner(self: @TContractState) -> felt252;
     fn get_owner_guid(self: @TContractState) -> felt252;
     fn get_owner_type(self: @TContractState) -> SignerType;
+    /// @notice Returns the starknet pub key or `0` if there's no guardian
     fn get_guardian(self: @TContractState) -> felt252;
     fn is_guardian(self: @TContractState, guardian: Signer) -> bool;
     fn get_guardian_guid(self: @TContractState) -> Option<felt252>;
+    /// @notice Returns `Starknet` if there's a guardian, `None` otherwise
     fn get_guardian_type(self: @TContractState) -> Option<SignerType>;
+    /// @notice Returns `0` if there's no guardian backup, the public key if the requested role is Starknet, Eip191 or Secp256k1 and panic for other types
     fn get_guardian_backup(self: @TContractState) -> felt252;
     fn get_guardian_backup_guid(self: @TContractState) -> Option<felt252>;
+    /// @notice Returns the backup guardian type if there's any backup guardian
     fn get_guardian_backup_type(self: @TContractState) -> Option<SignerType>;
     fn get_escape(self: @TContractState) -> LegacyEscape;
     fn get_name(self: @TContractState) -> felt252;

@@ -22,10 +22,6 @@ export class ArgentX {
   public async getOffchainSignature(typedData: typedData.TypedData): Promise<ArraySignatureType> {
     return (await this.account.signMessage(typedData)) as ArraySignatureType;
   }
-
-  public async getOffchainSignatureWithGuardianBackup(typedData: typedData.TypedData): Promise<ArraySignatureType> {
-    return (await this.account.signMessage(typedData)) as ArraySignatureType;
-  }
 }
 
 export class BackendService {

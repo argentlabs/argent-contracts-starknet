@@ -459,7 +459,7 @@ mod ArgentAccount {
             assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
 
             // checks that second signature is the guardian and not the backup guardian
-            let guardian_guid_from_sig = (*parsed_session_authorization.at(1)).signer().into_guid();
+            let guardian_guid_from_sig = (*parsed_session_authorization[0]).signer().into_guid();
             assert(guardian_guid_from_sig == guardian_guid, 'session/backup-guardian-found');
 
             self.is_valid_span_signature(session_hash, parsed_session_authorization)

@@ -33,6 +33,7 @@ import {
   getOutsideCall,
   getSessionTypedData,
   getTypedData,
+  loadContract,
   provider,
   randomStarknetKeyPair,
   signerTypeToCustomEnum,
@@ -315,10 +316,19 @@ export class DappService {
     guardian_signature: bigint[],
     accountAddress: string,
   ): Promise<SessionToken> {
+    const sessionContract = await loadContract(accountAddress);
+    const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
+    const ownerGuid = await sessionContract.get_owner_guid();
+    const guardianGuid = await sessionContract.get_guardian_guid();
+    const isSessionCached = await sessionContract.is_session_authorization_cached(
+      ownerGuid,
+      guardianGuid.unwrap(),
+      sessionMessageHash,
+    );
     return {
       session,
       cache_authorization,
-      session_authorization,
+      session_authorization: isSessionCached ? [] : session_authorization,
       session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
       guardian_signature: this.getStarknetSignatureType(
         this.argentBackend.getBackendKey(accountAddress),

@@ -51,6 +51,13 @@ mod session_component {
         fn is_session_revoked(self: @ComponentState<TContractState>, session_hash: felt252) -> bool {
             self.revoked_session.read(session_hash)
         }
+
+        #[inline(always)]
+        fn is_session_authorization_cached(
+            self: @ComponentState<TContractState>, owner_guid: felt252, guardian_guid: felt252, session_hash: felt252
+        ) -> bool {
+            self.valid_session_cache.read((owner_guid, guardian_guid, session_hash))
+        }
     }
 
     #[generate_trait]
@@ -91,24 +98,27 @@ mod session_component {
             assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
 
             if (token.cache_authorization) {
-                let parsed_signers = state.session_parse_signatures_callback(token.session_authorization);
-                let owner_guid_from_sig = (*parsed_signers.at(0)).signer().into_guid();
-                let guardian_guid_from_sig = (*parsed_signers.at(1)).signer().into_guid();
+                let owner_guid_from_account = state.get_owner_guid();
+                let guardian_guid_from_account = state.get_guardian_guid().expect('session/no-guardian');
 
-                if self.valid_session_cache.read((owner_guid_from_sig, guardian_guid_from_sig, token_session_hash)) {
-                    let owner_guid_from_account = state.get_owner_guid();
-                    // unwrap cant fail because guardian needs to be set
-                    let guardian_guid_from_account = state.get_guardian_guid().unwrap();
-                    assert(owner_guid_from_account == owner_guid_from_sig, 'session/mismatch-owner-cache');
-                    assert(guardian_guid_from_account == guardian_guid_from_sig, 'session/mismatch-guardian-cache');
+                if self
+                    .is_session_authorization_cached(
+                        owner_guid_from_account, guardian_guid_from_account, token_session_hash
+                    ) {
+                    assert(token.session_authorization.len() == 0, 'session/invalid-signature-len');
                 } else {
+                    // let parsed_signers = state.session_parse_signatures_callback(token.session_authorization);
+                    // assert(parsed_signers.len() == 2, 'session/invalid-signature-len');
+                    // let guardian_guid_from_sig = (*parsed_signers.at(1)).signer().into_guid();
+                    // assert(guardian_guid_from_sig == state.get_guardian_backup_guid(), 'session/invalid-guardian-sig');
+
                     assert(
                         state.session_verify_sig_callback(token_session_hash, token.session_authorization),
                         'session/invalid-account-sig'
                     );
                     self
                         .valid_session_cache
-                        .write((owner_guid_from_sig, guardian_guid_from_sig, token_session_hash), true);
+                        .write((owner_guid_from_account, guardian_guid_from_account, token_session_hash), true);
                 }
             } else {
                 // callback verifies the owner + guardian signature is valid

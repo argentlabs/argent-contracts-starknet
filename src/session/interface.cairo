@@ -20,7 +20,7 @@ struct Session {
 
 /// @notice Session Token struct contains the session struct, relevant signatures and merkle proofs
 /// @param session The session struct
-/// @param cache_authorization Whether the authorization is cached
+/// @param cache_authorization Whether the authorization is cached, this makes subsequent transactions in the session will be cheaper
 /// @param session_authorization A valid account signature over the Session
 /// @param session_signature Session signature of the poseidon H(tx_hash, session hash)
 /// @param guardian_signature Guardian signature of the poseidon H(tx_hash, session hash)
@@ -62,4 +62,9 @@ trait ISessionable<TContractState> {
 
     /// @notice View function to see if a session is revoked, returns a boolean 
     fn is_session_revoked(self: @TContractState, session_hash: felt252) -> bool;
+
+    /// @notice View function to see if a session authorization is cached, returns a boolean
+    fn is_session_authorization_cached(
+        self: @TContractState, owner_guid: felt252, guardian_guid: felt252, session_hash: felt252
+    ) -> bool;
 }

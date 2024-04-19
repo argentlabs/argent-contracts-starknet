@@ -2,12 +2,10 @@ use argent::account::interface::Version;
 use starknet::ClassHash;
 #[starknet::interface]
 trait IUpgradeable<TContractState> {
-    /// @notice Upgrades the implementation of the account
-    /// @dev Also call `execute_after_upgrade` on the new implementation
+    /// @notice Upgrades the implementation of the account by doing a library call to `perform_upgrade` on the new implementation
     /// @param implementation The class hash of the new implementation
-    /// @param calldata Data to be passed to the implementation in `execute_after_upgrade`
-    /// @return retdata The data returned by `execute_after_upgrade`
-    fn upgrade(ref self: TContractState, new_implementation: ClassHash, calldata: Array<felt252>) -> Array<felt252>;
+    /// @param data Data to be passed in `perform_upgrade` in the `data` argument
+    fn upgrade(ref self: TContractState, new_implementation: ClassHash, data: Array<felt252>);
 }
 
 #[starknet::interface]

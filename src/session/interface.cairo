@@ -20,7 +20,7 @@ struct Session {
 
 /// @notice Session Token struct contains the session struct, relevant signatures and merkle proofs
 /// @param session The session struct
-/// @param cache_authorization Whether the authorization is cached, this makes subsequent transactions in the session will be cheaper
+/// @param cache_authorization Flag indicating whether to cache the authorization signature for the session (for cheaper txs)
 /// @param session_authorization A valid account signature over the Session
 /// @param session_signature Session signature of the poseidon H(tx_hash, session hash)
 /// @param guardian_signature Guardian signature of the poseidon H(tx_hash, session hash)
@@ -39,16 +39,12 @@ struct SessionToken {
 /// This trait has to be implemented when using the component `session_component` (This is enforced by the compiler)
 #[starknet::interface]
 trait ISessionCallback<TContractState> {
-    /// @notice Callback performed to check valid account signature
+    /// @notice Callback performed to check parse and validate account signature
     /// @param session_hash The hash of session
-    /// @param parsed_session_authorization The owner + guardian signature of the session
-    fn session_verify_signature_callback(
-        self: @TContractState, session_hash: felt252, parsed_session_authorization: Array<SignerSignature>
-    ) -> bool;
-
-    /// @notice Callbacks to parse a signature array as an array of SignerSignatures
-    fn parse_signature_array_callback(
-        self: @TContractState, authorization_signature: Span<felt252>
+    /// @param authorization_signature The owner + guardian signature of the session
+    /// @return The parsed array of SignerSignature
+    fn session_parse_and_verify_signature_callback(
+        self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>
     ) -> Array<SignerSignature>;
 }
 

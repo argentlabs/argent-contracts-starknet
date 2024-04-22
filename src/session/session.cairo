@@ -55,9 +55,13 @@ mod session_component {
         #[inline(always)]
         fn is_session_authorization_cached(self: @ComponentState<TContractState>, session_hash: felt252) -> bool {
             let state = self.get_contract();
-            let guardian_guid = state.get_guardian_guid().expect('session/no-guardian');
-            let owner_guid = state.get_owner_guid();
-            self.valid_session_cache.read((owner_guid, guardian_guid, session_hash)).is_non_zero()
+            match state.get_guardian_guid() {
+                Option::Some(guardian_guid) => {
+                    let owner_guid = state.get_owner_guid();
+                    self.valid_session_cache.read((owner_guid, guardian_guid, session_hash)).is_non_zero()
+                },
+                Option::None => false
+            }
         }
     }
 
@@ -145,16 +149,14 @@ mod session_component {
                 }
             }
 
-            let parsed_session_authorization = state.parse_signature_array_callback(session_authorization);
+            let parsed_session_authorization = state
+                .session_parse_and_verify_signature_callback(session_hash, session_authorization);
+            
+            // only owner + guardian signed 
             assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
-
             // checks that second signature is the guardian and not the backup guardian
             let guardian_guid_from_sig = (*parsed_session_authorization[1]).signer().into_guid();
             assert(guardian_guid_from_sig == guardian_guid, 'session/signer-is-not-guardian');
-            assert(
-                state.session_verify_signature_callback(session_hash, parsed_session_authorization),
-                'session/invalid-account-sig'
-            );
 
             if (use_cache) {
                 self

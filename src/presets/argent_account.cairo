@@ -102,6 +102,8 @@ mod ArgentAccount {
         /// It resets when an escape is completed or canceled
         last_owner_escape_attempt: u64,
         escape_security_period: u64,
+        /// Lock to preveent reentrancy in the execute_from_outside
+        execution_reentrancy_lock: bool,
     }
 
     #[event]
@@ -320,6 +322,7 @@ mod ArgentAccount {
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
+            self.enter_execution_lock();
             let exec_info = get_execution_info().unbox();
             let tx_info = exec_info.tx_info.unbox();
             assert_only_protocol(exec_info.caller_address);
@@ -335,6 +338,7 @@ mod ArgentAccount {
             let retdata = execute_multicall(calls.span());
 
             self.emit(TransactionExecuted { hash: tx_info.transaction_hash, response: retdata.span() });
+            self.exit_execution_lock();
             retdata
         }
 
@@ -435,6 +439,8 @@ mod ArgentAccount {
         fn execute_from_outside_callback(
             ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
+            self.enter_execution_lock();
+
             if self.session.is_session(signature) {
                 self.session.assert_valid_session(calls, outside_execution_hash, signature);
             } else {
@@ -449,6 +455,7 @@ mod ArgentAccount {
             }
             let retdata = execute_multicall(calls);
             self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
+            self.exit_execution_lock();
             retdata
         }
     }
@@ -1146,6 +1153,17 @@ mod ArgentAccount {
                     );
                 }
             }
+        }
+
+        #[inline(always)]
+        fn enter_execution_lock(ref self: ContractState,) {
+            assert(self.execution_reentrancy_lock.read() == false, 'argent/reentrancy');
+            self.execution_reentrancy_lock.write(true);
+        }
+
+        #[inline(always)]
+        fn exit_execution_lock(ref self: ContractState,) {
+            self.execution_reentrancy_lock.write(false);
         }
 
         #[inline(always)]

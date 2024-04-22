@@ -132,7 +132,8 @@ mod session_component {
                 let cached_sig_len = self.valid_session_cache.read((owner_guid, guardian_guid, session_hash));
                 let authorization_len = session_authorization.len();
                 if cached_sig_len != 0 {
-                    assert(authorization_len <= cached_sig_len, 'session/invalid-signature-len');
+                    // prevents a DoS attack where a user can send a large session authorization
+                    assert(authorization_len <= cached_sig_len, 'session/invalid-auth-len');
                     return;
                 } else {
                     assert(

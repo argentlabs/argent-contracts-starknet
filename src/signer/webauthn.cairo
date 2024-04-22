@@ -17,13 +17,9 @@ use starknet::secp256_trait::Signature;
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnAssertion {
     authenticator_data: Span<u8>,
-    client_data_json: Span<u8>,
+    challenge: Span<u8>,
+    client_data_json_outro: Span<u8>,
     signature: Signature,
-    type_offset: usize,
-    challenge_offset: usize,
-    challenge_length: usize,
-    origin_offset: usize,
-    origin_length: usize,
 }
 
 #[derive(Drop, Copy, PartialEq)]
@@ -49,45 +45,23 @@ fn deserialize_challenge(challenge: Span<u8>) -> Challenge {
     Challenge { transaction_hash, sha256_implementation }
 }
 
+fn verify_challenge(challenge_base64: Span<u8>, expected_transaction_hash: felt252) -> Sha256Implementation {
+    let challenge = decode_base64(challenge_base64.snapshot.clone()).span();
+    let Challenge { transaction_hash, sha256_implementation } = deserialize_challenge(challenge);
+    assert(transaction_hash == expected_transaction_hash, 'invalid-transaction-hash');
+    sha256_implementation
+}
+
 /// Example JSON:
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
-fn verify_client_data_json(
-    assertion: WebauthnAssertion, expected_transaction_hash: felt252, expected_origin: Span<u8>
-) -> Sha256Implementation {
-    // Verify that the value of C.type is the string webauthn.get.
-    let WebauthnAssertion { client_data_json, type_offset, .. } = assertion;
-    let key = array!['"', 't', 'y', 'p', 'e', '"', ':', '"'];
-    let actual_key = client_data_json.slice(type_offset - key.len(), key.len());
-    assert(actual_key == key.span(), 'invalid-type-key');
-
-    let expected = array!['"', 'w', 'e', 'b', 'a', 'u', 't', 'h', 'n', '.', 'g', 'e', 't', '"'];
-    let type_ = client_data_json.slice(type_offset - 1, expected.len());
-    assert(type_ == expected.span(), 'invalid-type');
-
-    // Verify that the value of C.challenge equals the base64url encoding of options.challenge.
-    let WebauthnAssertion { challenge_offset, challenge_length, .. } = assertion;
-    let key = array!['"', 'c', 'h', 'a', 'l', 'l', 'e', 'n', 'g', 'e', '"', ':', '"'];
-    let actual_key = client_data_json.slice(challenge_offset - key.len(), key.len());
-    assert(actual_key == key.span(), 'invalid-challenge-key');
-
-    let challenge = client_data_json.slice(challenge_offset, challenge_length);
-    let challenge = decode_base64(challenge.snapshot.clone()).span();
-    let challenge = deserialize_challenge(challenge);
-    assert(challenge.transaction_hash == expected_transaction_hash, 'invalid-transaction-hash');
-
-    // Verify that the value of C.origin matches the Relying Party's origin.
-    let WebauthnAssertion { origin_offset, origin_length, .. } = assertion;
-    let key = array!['"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'];
-    let actual_key = client_data_json.slice(origin_offset - key.len(), key.len());
-    assert(actual_key == key.span(), 'invalid-origin-key');
-
-    let origin = client_data_json.slice(origin_offset, origin_length);
-    assert(origin == expected_origin, 'invalid-origin');
-
-    // Skipping tokenBindings
-
-    challenge.sha256_implementation
+fn build_client_data_json(assertion: WebauthnAssertion, origin: Span<u8>) -> Span<u8> {
+    let mut json = client_data_json_intro();
+    json.append_all(assertion.challenge);
+    json.append_all(array!['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
+    json.append_all(origin);
+    json.append_all(assertion.client_data_json_outro);
+    json.span()
 }
 
 /// Example data:
@@ -123,25 +97,68 @@ fn decode_base64(mut encoded: Array<u8>) -> Array<u8> {
     decoded
 }
 
-fn get_webauthn_hash_cairo0(assertion: WebauthnAssertion) -> Option<u256> {
-    let WebauthnAssertion { authenticator_data, client_data_json, .. } = assertion;
+fn get_webauthn_hash_cairo0(assertion: WebauthnAssertion, origin: Span<u8>) -> Option<u256> {
+    let client_data_json = build_client_data_json(assertion, origin);
     let client_data_hash = u32s_to_u8s(sha256_cairo0(client_data_json)?);
-    let mut message = authenticator_data.snapshot.clone();
+    let mut message = assertion.authenticator_data.snapshot.clone();
     message.append_all(client_data_hash);
     Option::Some(u32s_to_u256(sha256_cairo0(message.span())?))
 }
 
-fn get_webauthn_hash_cairo1(assertion: WebauthnAssertion) -> u256 {
-    let WebauthnAssertion { authenticator_data, client_data_json, .. } = assertion;
+fn get_webauthn_hash_cairo1(assertion: WebauthnAssertion, origin: Span<u8>) -> u256 {
+    let client_data_json = build_client_data_json(assertion, origin);
     let client_data_hash = sha256(client_data_json.snapshot.clone()).span();
-    let mut message = authenticator_data.snapshot.clone();
+    let mut message = assertion.authenticator_data.snapshot.clone();
     message.append_all(client_data_hash);
     sha256(message).span().try_into().expect('invalid-hash')
 }
 
-fn get_webauthn_hash(assertion: WebauthnAssertion, sha256_implementation: Sha256Implementation) -> u256 {
+fn get_webauthn_hash(
+    assertion: WebauthnAssertion, origin: Span<u8>, sha256_implementation: Sha256Implementation
+) -> u256 {
     match sha256_implementation {
-        Sha256Implementation::Cairo0 => get_webauthn_hash_cairo0(assertion).expect('sha256-cairo0-failed'),
-        Sha256Implementation::Cairo1 => get_webauthn_hash_cairo1(assertion),
+        Sha256Implementation::Cairo0 => get_webauthn_hash_cairo0(assertion, origin).expect('sha256-cairo0-failed'),
+        Sha256Implementation::Cairo1 => get_webauthn_hash_cairo1(assertion, origin),
     }
+}
+
+fn client_data_json_intro() -> Array<u8> {
+    array![
+        '{',
+        '"',
+        't',
+        'y',
+        'p',
+        'e',
+        '"',
+        ':',
+        '"',
+        'w',
+        'e',
+        'b',
+        'a',
+        'u',
+        't',
+        'h',
+        'n',
+        '.',
+        'g',
+        'e',
+        't',
+        '"',
+        ',',
+        '"',
+        'c',
+        'h',
+        'a',
+        'l',
+        'l',
+        'e',
+        'n',
+        'g',
+        'e',
+        '"',
+        ':',
+        '"'
+    ]
 }

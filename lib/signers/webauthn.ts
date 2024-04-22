@@ -23,10 +23,11 @@ const hex2buf = (hex: string) =>
       .map((byte) => parseInt(byte, 16)),
   );
 
+const toShortStringCharacters = (value: string) => CallData.compile(value.split("").map(shortString.encodeShortString));
+
 // Constants
 const rpIdHash = sha256("localhost");
 const origin = "http://localhost:5173";
-const originBytes = CallData.compile(origin.split("").map(shortString.encodeShortString));
 
 interface WebauthnAssertion {
   authenticatorData: Uint8Array;
@@ -70,7 +71,7 @@ export class WebauthnOwner extends KeyPair {
 
   public get signer(): CairoCustomEnum {
     return signerTypeToCustomEnum(SignerType.Webauthn, {
-      origin: originBytes,
+      origin: toShortStringCharacters(origin),
       rp_id_hash: uint256.bnToUint256(buf2hex(rpIdHash)),
       pubkey: uint256.bnToUint256(buf2hex(this.publicKey)),
     });
@@ -79,28 +80,26 @@ export class WebauthnOwner extends KeyPair {
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
     const { authenticatorData, clientDataJson, r, s, yParity } = await this.signHash(messageHash);
     const clientDataText = new TextDecoder().decode(clientDataJson.buffer);
-    const clientData = JSON.parse(clientDataText);
-    const clientDataOffset = (substring: string) => clientDataText.indexOf(substring) + substring.length;
+    const { challenge } = JSON.parse(clientDataText);
+    const clientDataJsonOutro = clientDataText.slice(clientDataText.indexOf(origin) + origin.length);
 
-    const cairoAssertion = {
-      origin: originBytes,
+    const webauthnSigner = {
+      origin: toShortStringCharacters(origin),
       rp_id_hash: uint256.bnToUint256(buf2hex(rpIdHash)),
       pubkey: uint256.bnToUint256(buf2hex(this.publicKey)),
+    };
+    const webauthnAssertion = {
       authenticator_data: CallData.compile(Array.from(authenticatorData)),
-      client_data_json: CallData.compile(Array.from(clientDataJson)),
+      challenge: toShortStringCharacters(challenge),
+      client_data_json_outro: toShortStringCharacters(clientDataJsonOutro),
       signature: {
         r: uint256.bnToUint256(r),
         s: uint256.bnToUint256(s),
         y_parity: yParity,
       },
-      type_offset: clientDataOffset('"type":"'),
-      challenge_offset: clientDataOffset('"challenge":"'),
-      challenge_length: clientData.challenge.length,
-      origin_offset: clientDataOffset('"origin":"'),
-      origin_length: clientData.origin.length,
     };
 
-    return CallData.compile([signerTypeToCustomEnum(SignerType.Webauthn, cairoAssertion)]);
+    return CallData.compile([signerTypeToCustomEnum(SignerType.Webauthn, { webauthnSigner, webauthnAssertion })]);
   }
 
   public async signHash(transactionHash: string): Promise<WebauthnAssertion> {

@@ -65,19 +65,13 @@ fn setup_1() -> (felt252, WebauthnSigner, WebauthnAssertion) {
     );
     let assertion = WebauthnAssertion {
         authenticator_data: get_authenticator_data(),
-        client_data_json: "{\"type\":\"webauthn.get\",\"challenge\":\"Bv1mcyh7ouTSl1rYeNwmwKmJxUklnYegRKjTe7kWi7QB\",\"origin\":\"http://localhost:5173\",\"crossOrigin\":false}"
-            .into_bytes()
-            .span(),
+        challenge: "Bv1mcyh7ouTSl1rYeNwmwKmJxUklnYegRKjTe7kWi7QB".into_bytes().span(),
+        client_data_json_outro: "\",\"crossOrigin\":false}".into_bytes().span(),
         signature: Signature {
             r: 17964448168501796902021058754052023747843800978633577064976152434953556917106,
             s: 24325385074589667029100892281776352749061721889898781064305922798414532583201,
             y_parity: true,
         },
-        type_offset: 9,
-        challenge_offset: 36,
-        challenge_length: 44,
-        origin_offset: 92,
-        origin_length: 21,
     };
     (transaction_hash, signer, assertion)
 }

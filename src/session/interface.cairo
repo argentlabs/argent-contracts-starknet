@@ -41,11 +41,15 @@ struct SessionToken {
 trait ISessionCallback<TContractState> {
     /// @notice Callback performed to check valid account signature
     /// @param session_hash The hash of session
-    /// @param authorization_signature The owner + guardian signature of the session
-    /// @param guardian_guid The guardian guid (needed to verify if its the primary or backup guardian)
-    fn session_verify_sig_callback(
-        self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>, guardian_guid: felt252
+    /// @param parsed_session_authorization The owner + guardian signature of the session
+    fn session_verify_signature_callback(
+        self: @TContractState, session_hash: felt252, parsed_session_authorization: Array<SignerSignature>
     ) -> bool;
+
+    /// @notice Callbacks to parse a signature array as an array of SignerSignatures
+    fn parse_signature_array_callback(
+        self: @TContractState, authorization_signature: Span<felt252>
+    ) -> Array<SignerSignature>;
 }
 
 #[starknet::interface]

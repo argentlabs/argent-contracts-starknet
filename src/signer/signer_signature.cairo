@@ -309,10 +309,10 @@ fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: 
 
 #[inline(always)]
 fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, assertion: WebauthnAssertion) -> bool {
-    let sha256_implementation = verify_challenge(assertion.challenge, hash);
+    verify_challenge(assertion, hash);
     verify_authenticator_data(assertion.authenticator_data, signer.rp_id_hash.into());
 
-    let signed_hash = get_webauthn_hash(assertion, signer.origin, sha256_implementation);
+    let signed_hash = get_webauthn_hash(assertion, signer.origin);
     is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, assertion.signature)
 }
 

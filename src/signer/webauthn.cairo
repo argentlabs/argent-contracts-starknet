@@ -1,4 +1,4 @@
-use alexandria_encoding::base64::Base64UrlDecoder;
+use alexandria_encoding::base64::Base64UrlEncoder;
 use alexandria_math::sha256::{sha256};
 use argent::utils::array_ext::ArrayExtTrait;
 use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, u32s_to_u256, u32s_to_u8s};
@@ -17,39 +17,32 @@ use starknet::secp256_trait::Signature;
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnAssertion {
     authenticator_data: Span<u8>,
-    challenge: Span<u8>,
+    transaction_hash: Span<u8>,
+    sha256_implementation: Sha256Implementation,
     client_data_json_outro: Span<u8>,
     signature: Signature,
 }
 
-#[derive(Drop, Copy, PartialEq)]
-struct Challenge {
-    transaction_hash: felt252,
-    sha256_implementation: Sha256Implementation,
-}
-
-#[derive(Drop, Copy, PartialEq)]
+#[derive(Drop, Copy, Serde, PartialEq)]
 enum Sha256Implementation {
     Cairo0,
     Cairo1,
 }
 
-fn deserialize_challenge(challenge: Span<u8>) -> Challenge {
-    assert(challenge.len() == 33, 'invalid-challenge-length');
-    let transaction_hash = challenge.slice(0, 32).try_into().unwrap();
-    let sha256_implementation = match *challenge.at(32) {
-        0 => Sha256Implementation::Cairo0,
-        1 => Sha256Implementation::Cairo1,
-        _ => panic_with_felt252('invalid-challenge-sha256'),
+fn encode_challenge(assertion: WebauthnAssertion) -> Span<u8> {
+    let mut bytes = assertion.transaction_hash.snapshot.clone();
+    let last_byte = match assertion.sha256_implementation {
+        Sha256Implementation::Cairo0 => 0,
+        Sha256Implementation::Cairo1 => 1,
     };
-    Challenge { transaction_hash, sha256_implementation }
+    bytes.append(last_byte);
+    Base64UrlEncoder::encode(bytes).span()
 }
 
-fn verify_challenge(challenge_base64: Span<u8>, expected_transaction_hash: felt252) -> Sha256Implementation {
-    let challenge = decode_base64(challenge_base64.snapshot.clone()).span();
-    let Challenge { transaction_hash, sha256_implementation } = deserialize_challenge(challenge);
+fn verify_challenge(assertion: WebauthnAssertion, expected_transaction_hash: felt252) -> Sha256Implementation {
+    let transaction_hash = assertion.transaction_hash.try_into().expect('invalid-transaction-hash-format');
     assert(transaction_hash == expected_transaction_hash, 'invalid-transaction-hash');
-    sha256_implementation
+    assertion.sha256_implementation
 }
 
 /// Example JSON:
@@ -57,7 +50,7 @@ fn verify_challenge(challenge_base64: Span<u8>, expected_transaction_hash: felt2
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
 fn build_client_data_json(assertion: WebauthnAssertion, origin: Span<u8>) -> Span<u8> {
     let mut json = client_data_json_intro();
-    json.append_all(assertion.challenge);
+    json.append_all(encode_challenge(assertion));
     json.append_all(array!['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
     json.append_all(origin);
     json.append_all(assertion.client_data_json_outro);
@@ -85,18 +78,6 @@ fn verify_authenticator_data(authenticator_data: Span<u8>, expected_rp_id_hash: 
     ()
 }
 
-fn decode_base64(mut encoded: Array<u8>) -> Array<u8> {
-    let len_mod_4 = encoded.len() % 4;
-    if len_mod_4 == 2 {
-        encoded.append('=');
-        encoded.append('=');
-    } else if len_mod_4 == 3 {
-        encoded.append('=');
-    }
-    let decoded = Base64UrlDecoder::decode(encoded);
-    decoded
-}
-
 fn get_webauthn_hash_cairo0(assertion: WebauthnAssertion, origin: Span<u8>) -> Option<u256> {
     let client_data_json = build_client_data_json(assertion, origin);
     let client_data_hash = u32s_to_u8s(sha256_cairo0(client_data_json)?);
@@ -113,10 +94,8 @@ fn get_webauthn_hash_cairo1(assertion: WebauthnAssertion, origin: Span<u8>) -> u
     sha256(message).span().try_into().expect('invalid-hash')
 }
 
-fn get_webauthn_hash(
-    assertion: WebauthnAssertion, origin: Span<u8>, sha256_implementation: Sha256Implementation
-) -> u256 {
-    match sha256_implementation {
+fn get_webauthn_hash(assertion: WebauthnAssertion, origin: Span<u8>) -> u256 {
+    match assertion.sha256_implementation {
         Sha256Implementation::Cairo0 => get_webauthn_hash_cairo0(assertion, origin).expect('sha256-cairo0-failed'),
         Sha256Implementation::Cairo1 => get_webauthn_hash_cairo1(assertion, origin),
     }

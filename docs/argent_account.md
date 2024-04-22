@@ -14,7 +14,7 @@ In addition to the main `__execute__` entry point used by the Starknet protocol,
 
 Normal operations of the wallet (calling external contracts via `__execute__` or `execute_from_outside`, `change_owner`, `change_guardian`, `change_guardian_backup`, `cancel_escape`, `upgrade`) require the approval of the `owner` and a `guardian` to be executed.
 
-Each party alone can trigger the `escape` mode (a.k.a. recovery) on the wallet if the other party is not cooperating or lost. An escape takes 7 days before being active, after which the non-cooperating party can be replaced. The escape expires 7 days after being active.
+Each party alone can trigger the `escape` mode (a.k.a. recovery) on the wallet if the other party is not cooperating or lost. You need to wait for the security period to elapse before the escape is active. Then the non-cooperating party can be replaced. If another security period elapses where the escape is not completed, it will expire. The default security period is 7 days but it can be defined by the user.
 
 The wallet is asymmetric in favor of the `owner` who can override an escape triggered by a `guardian`.
 

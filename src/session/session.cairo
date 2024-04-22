@@ -151,7 +151,7 @@ mod session_component {
 
             let parsed_session_authorization = state
                 .session_parse_and_verify_signature_callback(session_hash, session_authorization);
-            
+
             // only owner + guardian signed 
             assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
             // checks that second signature is the guardian and not the backup guardian

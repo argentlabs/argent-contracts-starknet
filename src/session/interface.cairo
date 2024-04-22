@@ -20,7 +20,7 @@ struct Session {
 
 /// @notice Session Token struct contains the session struct, relevant signatures and merkle proofs
 /// @param session The session struct
-/// @param cache_authorization Flag indicating whether to cache the authorization signature for the session (for cheaper txs)
+/// @param cache_authorization Flag indicating whether to cache the authorization signature for the session
 /// @param session_authorization A valid account signature over the Session
 /// @param session_signature Session signature of the poseidon H(tx_hash, session hash)
 /// @param guardian_signature Guardian signature of the poseidon H(tx_hash, session hash)

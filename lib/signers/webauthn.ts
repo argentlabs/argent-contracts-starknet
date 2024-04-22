@@ -52,6 +52,7 @@ export class WebauthnOwner extends KeyPair {
   public get guid(): bigint {
     const rpIdHashAsU256 = uint256.bnToUint256(buf2hex(rpIdHash));
     const publicKeyAsU256 = uint256.bnToUint256(buf2hex(this.publicKey));
+    const originBytes = toShortStringCharacters(origin);
     return BigInt(
       hash.computePoseidonHashOnElements([
         shortString.encodeShortString("Webauthn Signer"),
@@ -78,9 +79,9 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
+    messageHash = normalizeTransactionHash(messageHash);
     const { authenticatorData, clientDataJson, r, s, yParity } = await this.signHash(messageHash);
     const clientDataText = new TextDecoder().decode(clientDataJson.buffer);
-    const { challenge } = JSON.parse(clientDataText);
     const clientDataJsonOutro = clientDataText.slice(clientDataText.indexOf(origin) + origin.length);
 
     const webauthnSigner = {
@@ -90,7 +91,8 @@ export class WebauthnOwner extends KeyPair {
     };
     const webauthnAssertion = {
       authenticator_data: CallData.compile(Array.from(authenticatorData)),
-      challenge: toShortStringCharacters(challenge),
+      transaction_hash: CallData.compile(Array.from(hex2buf(messageHash))),
+      sha256_implementation: new CairoCustomEnum({ Cairo0: {}, Cairo1: undefined }),
       client_data_json_outro: toShortStringCharacters(clientDataJsonOutro),
       signature: {
         r: uint256.bnToUint256(r),
@@ -107,7 +109,7 @@ export class WebauthnOwner extends KeyPair {
     const signCount = new Uint8Array(4); // [0_u8, 0_u8, 0_u8, 0_u8]
     const authenticatorData = concatBytes(rpIdHash, flags, signCount);
 
-    const challenge = buf2base64url(hex2buf(normalizeTransactionHash(transactionHash) + "00"));
+    const challenge = buf2base64url(hex2buf(transactionHash + "00"));
     const clientData = { type: "webauthn.get", challenge, origin, crossOrigin: false };
     const clientDataJson = new TextEncoder().encode(JSON.stringify(clientData));
 

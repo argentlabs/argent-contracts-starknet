@@ -2,7 +2,6 @@ import { Account, CallData, Contract, GetTransactionReceiptResponse, RPC, hash, 
 import {
   ArgentAccount,
   KeyPair,
-  LegacyMultisigKeyPair,
   LegacyMultisigSigner,
   MultisigSigner,
   declareContract,
@@ -11,6 +10,7 @@ import {
   fundAccountCall,
   loadContract,
   provider,
+  randomLegacyMultisigKeyPairs,
   randomStarknetKeyPair,
   randomStarknetKeyPairs,
   sortByGuid,
@@ -107,19 +107,23 @@ const sortedKeyPairs = (length: number) => sortByGuid(randomStarknetKeyPairs(len
 
 const keysToSigners = (keys: KeyPair[]) => keys.map(({ signer }) => signer);
 
-export async function deployLegacyMultisig(classHash: string) {
-  const keys = [new LegacyMultisigKeyPair()];
+export async function deployLegacyMultisig(classHash: string, threshold = 1) {
+  const keys = randomLegacyMultisigKeyPairs(threshold);
+  const signersPublicKeys = keys.map((key) => key.publicKey);
   const salt = num.toHex(randomStarknetKeyPair().privateKey);
-  const constructorCalldata = CallData.compile({ threshold: 1, signers: [keys[0].publicKey] });
+  const constructorCalldata = CallData.compile({ threshold, signers: signersPublicKeys });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
   await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
-  const signer = new LegacyMultisigSigner(keys);
-  const account = new Account(provider, contractAddress, signer, "1");
+  const deploySigner = new LegacyMultisigSigner([keys[0]]);
+  const account = new Account(provider, contractAddress, deploySigner, "1");
 
   const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
   await provider.waitForTransaction(transaction_hash);
 
+  const sortedKeys = keys.sort((n1, n2) => (n1.publicKey < n2.publicKey ? -1 : 1));
+  const signers = new LegacyMultisigSigner(sortedKeys);
+  account.signer = signers;
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);
-  return { account, accountContract, signer };
+  return { account, accountContract, deploySigner, signers };
 }

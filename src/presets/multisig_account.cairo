@@ -207,14 +207,18 @@ mod ArgentMultisigAccount {
             assert_only_self();
             // Check basic invariants
             self.multisig.assert_valid_storage();
-            let mut signers = self.signer_list.get_signers();
-            while let Option::Some(signer) = signers
+            let signers = self.signer_list.get_signers();
+            let mut signers_span = signers.span();
+            let mut signers_to_add = array![];
+            // Converting storage from public keys to guid 
+            while let Option::Some(signer) = signers_span
                 .pop_front() {
-                    self
-                        .signer_list
-                        .emit(SignerLinked { signer_guid: signer, signer: starknet_signer_from_pubkey(signer) });
+                    signers_to_add.append(starknet_signer_from_pubkey(*signer));
                 };
             assert(data.len() == 0, 'argent/unexpected-data');
+            let (_, last_signer) = self.signer_list.load();
+            self.signer_list.remove_signers(signers.span(), last_signer);
+            self.multisig.add_signers(self.get_threshold(), signers_to_add);
             array![]
         }
     }

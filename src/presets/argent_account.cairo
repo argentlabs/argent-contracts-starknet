@@ -48,6 +48,9 @@ mod ArgentAccount {
     const MAX_ESCAPE_MAX_FEE_STRK: u128 = 5_000000000000000000; // 5 STRK
     const MAX_ESCAPE_TIP_STRK: u128 = 1_000000000000000000; // 1 STRK
 
+    /// Minimum time for the escape security period
+    const MIN_ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(60 * 10); // 10 minutes;
+
     // session 
     component!(path: session_component, storage: session, event: SessionableEvents);
     #[abi(embed_v0)]
@@ -493,7 +496,7 @@ mod ArgentAccount {
 
         fn set_escape_security_period(ref self: ContractState, new_security_period: u64) {
             assert_only_self();
-            assert(new_security_period != 0, 'argent/invalid-security-period');
+            assert(new_security_period >= MIN_ESCAPE_SECURITY_PERIOD, 'argent/invalid-security-period');
             self.escape_security_period.write(new_security_period);
             self.emit(EscapeSecurityPeriodChanged { escape_security_period: new_security_period });
         }
@@ -783,8 +786,6 @@ mod ArgentAccount {
             is_from_outside: bool,
             account_address: ContractAddress,
         ) {
-            let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
-
             if calls.len() == 1 {
                 let call = calls.at(0);
                 if *call.to == account_address {
@@ -797,9 +798,8 @@ mod ArgentAccount {
                         }
 
                         full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
-
-                        assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
-                        let is_valid = self.is_valid_guardian_signature(execution_hash, *signer_signatures.at(0));
+                        let guardian_signature = self.parse_single_guardian_signature(signatures);
+                        let is_valid = self.is_valid_guardian_signature(execution_hash, guardian_signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');
                         return; // valid
                     }
@@ -814,9 +814,8 @@ mod ArgentAccount {
                         assert((*call.calldata).is_empty(), 'argent/invalid-calldata');
                         let current_escape = self._escape.read();
                         assert(current_escape.escape_type == LegacyEscapeType::Owner, 'argent/invalid-escape');
-
-                        assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
-                        let is_valid = self.is_valid_guardian_signature(execution_hash, *signer_signatures.at(0));
+                        let guardian_signature = self.parse_single_guardian_signature(signatures);
+                        let is_valid = self.is_valid_guardian_signature(execution_hash, guardian_signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');
                         return; // valid
                     }
@@ -836,9 +835,8 @@ mod ArgentAccount {
                         } else {
                             assert(self.read_guardian_backup().is_none(), 'argent/backup-should-be-null');
                         }
-
-                        assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
-                        let is_valid = self.is_valid_owner_signature(execution_hash, *signer_signatures.at(0));
+                        let owner_signature = self.parse_single_owner_signature(signatures);
+                        let is_valid = self.is_valid_owner_signature(execution_hash, owner_signature);
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return; // valid
                     }
@@ -854,8 +852,8 @@ mod ArgentAccount {
 
                         assert(current_escape.escape_type == LegacyEscapeType::Guardian, 'argent/invalid-escape');
 
-                        assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
-                        let is_valid = self.is_valid_owner_signature(execution_hash, *signer_signatures.at(0));
+                        let owner_signature = self.parse_single_owner_signature(signatures);
+                        let is_valid = self.is_valid_owner_signature(execution_hash, owner_signature);
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return; // valid
                     }
@@ -866,7 +864,7 @@ mod ArgentAccount {
                 // make sure no call is to the account
                 assert_no_self_call(calls, account_address);
             }
-
+            let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
             self.assert_valid_span_signature(execution_hash, signer_signatures);
         }
 
@@ -900,6 +898,38 @@ mod ArgentAccount {
                 )
             );
             return array![owner_signature, guardian_signature];
+        }
+
+        /// Parses the signature when its expected to be a single guardian signature
+        fn parse_single_guardian_signature(self: @ContractState, mut signatures: Span<felt252>) -> SignerSignature {
+            if signatures.len() != 2 {
+                let signature_array: Array<SignerSignature> = full_deserialize(signatures)
+                    .expect('argent/invalid-signature-format');
+                assert(signature_array.len() == 1, 'argent/invalid-signature-length');
+                return *signature_array.at(0);
+            }
+            return SignerSignature::Starknet(
+                (
+                    StarknetSigner { pubkey: self._guardian.read().try_into().expect('argent/zero-pubkey') },
+                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
+                )
+            );
+        }
+
+        /// Parses the signature when its expected to be a single owner signature
+        fn parse_single_owner_signature(self: @ContractState, mut signatures: Span<felt252>) -> SignerSignature {
+            if signatures.len() != 2 {
+                let signature_array: Array<SignerSignature> = full_deserialize(signatures)
+                    .expect('argent/invalid-signature-format');
+                assert(signature_array.len() == 1, 'argent/invalid-signature-length');
+                return *signature_array.at(0);
+            }
+            return SignerSignature::Starknet(
+                (
+                    StarknetSigner { pubkey: self._signer.read().try_into().expect('argent/zero-pubkey') },
+                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
+                )
+            );
         }
 
         #[must_use]

@@ -29,32 +29,9 @@ enum Sha256Implementation {
     Cairo1,
 }
 
-fn encode_challenge(assertion: WebauthnAssertion) -> Span<u8> {
-    let mut bytes = assertion.transaction_hash.snapshot.clone();
-    let last_byte = match assertion.sha256_implementation {
-        Sha256Implementation::Cairo0 => 0,
-        Sha256Implementation::Cairo1 => 1,
-    };
-    bytes.append(last_byte);
-    Base64UrlEncoder::encode(bytes).span()
-}
-
-fn verify_challenge(assertion: WebauthnAssertion, expected_transaction_hash: felt252) -> Sha256Implementation {
+fn verify_transaction_hash(assertion: WebauthnAssertion, expected_transaction_hash: felt252) {
     let transaction_hash = assertion.transaction_hash.try_into().expect('invalid-transaction-hash-format');
     assert(transaction_hash == expected_transaction_hash, 'invalid-transaction-hash');
-    assertion.sha256_implementation
-}
-
-/// Example JSON:
-/// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
-/// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
-fn build_client_data_json(assertion: WebauthnAssertion, origin: Span<u8>) -> Span<u8> {
-    let mut json = client_data_json_intro();
-    json.append_all(encode_challenge(assertion));
-    json.append_all(array!['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
-    json.append_all(origin);
-    json.append_all(assertion.client_data_json_outro);
-    json.span()
 }
 
 /// Example data:
@@ -76,6 +53,28 @@ fn verify_authenticator_data(authenticator_data: Span<u8>, expected_rp_id_hash: 
     assert((flags & 0b00000100) == 0b00000100, 'unverified-user');
     // Allowing attested credential data and extension data if present
     ()
+}
+
+/// Example JSON:
+/// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
+/// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
+fn build_client_data_json(assertion: WebauthnAssertion, origin: Span<u8>) -> Span<u8> {
+    let mut json = client_data_json_intro();
+    json.append_all(encode_challenge(assertion));
+    json.append_all(array!['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
+    json.append_all(origin);
+    json.append_all(assertion.client_data_json_outro);
+    json.span()
+}
+
+fn encode_challenge(assertion: WebauthnAssertion) -> Span<u8> {
+    let mut bytes = assertion.transaction_hash.snapshot.clone();
+    let last_byte = match assertion.sha256_implementation {
+        Sha256Implementation::Cairo0 => 0,
+        Sha256Implementation::Cairo1 => 1,
+    };
+    bytes.append(last_byte);
+    Base64UrlEncoder::encode(bytes).span()
 }
 
 fn get_webauthn_hash_cairo0(assertion: WebauthnAssertion, origin: Span<u8>) -> Option<u256> {

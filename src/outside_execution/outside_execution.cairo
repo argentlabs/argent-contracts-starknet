@@ -6,6 +6,7 @@ mod outside_execution_component {
         outside_execution_hash::{OffChainMessageOutsideExecutionRev0, OffChainMessageOutsideExecutionRev1},
         interface::{OutsideExecution, IOutsideExecutionCallback, IOutsideExecution}
     };
+    use argent::reentrancy_guard::reentrancy_guard::{reentrancy_guard_component, IReentrancyGuard};
     use hash::{HashStateTrait, HashStateExTrait};
     use pedersen::PedersenTrait;
     use starknet::{get_caller_address, get_contract_address, get_block_timestamp, get_tx_info, account::Call};
@@ -15,14 +16,17 @@ mod outside_execution_component {
         /// Keeps track of used nonces for outside transactions (`execute_from_outside`)
         outside_nonces: LegacyMap<felt252, bool>,
     }
-
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {}
 
     #[embeddable_as(OutsideExecutionImpl)]
     impl ImplOutsideExecution<
-        TContractState, +HasComponent<TContractState>, +IOutsideExecutionCallback<TContractState>, +Drop<TContractState>
+        TContractState,
+        +HasComponent<TContractState>,
+        +IOutsideExecutionCallback<TContractState>,
+        +Drop<TContractState>,
+        impl ReentrancyGuard: reentrancy_guard_component::HasComponent<TContractState>,
     > of IOutsideExecution<ComponentState<TContractState>> {
         fn execute_from_outside(
             ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Array<felt252>
@@ -57,7 +61,11 @@ mod outside_execution_component {
 
     #[generate_trait]
     impl Internal<
-        TContractState, +HasComponent<TContractState>, +IOutsideExecutionCallback<TContractState>, +Drop<TContractState>
+        TContractState,
+        +HasComponent<TContractState>,
+        +IOutsideExecutionCallback<TContractState>,
+        +Drop<TContractState>,
+        impl ReentrancyGuard: reentrancy_guard_component::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
         fn assert_valid_outside_execution(
             ref self: ComponentState<TContractState>,
@@ -65,6 +73,9 @@ mod outside_execution_component {
             outside_tx_hash: felt252,
             signature: Span<felt252>
         ) -> Array<Span<felt252>> {
+            let mut reentrancy_guard = get_dep_component_mut!(ref self, ReentrancyGuard);
+            reentrancy_guard.enter_lock();
+
             if outside_execution.caller.into() != 'ANY_CALLER' {
                 assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
             }
@@ -78,7 +89,9 @@ mod outside_execution_component {
             assert(!self.outside_nonces.read(nonce), 'argent/duplicated-outside-nonce');
             self.outside_nonces.write(nonce, true);
             let mut state = self.get_contract_mut();
-            state.execute_from_outside_callback(outside_execution.calls, outside_tx_hash, signature)
+            let result = state.execute_from_outside_callback(outside_execution.calls, outside_tx_hash, signature);
+            reentrancy_guard.exit_lock();
+            result
         }
     }
 }

@@ -8,10 +8,12 @@ mod ArgentUserAccount {
     };
     use argent::recovery::threshold_recovery::IThresholdRecoveryInternal;
     use argent::recovery::{threshold_recovery::threshold_recovery_component};
+    use argent::reentrancy_guard::reentrancy_guard::reentrancy_guard_component;
     use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait}};
     use argent::signer_storage::{
         interface::ISignerList, signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
     };
+
     use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
@@ -54,6 +56,9 @@ mod ArgentUserAccount {
     impl ToggleThresholdRecovery =
         threshold_recovery_component::ToggleThresholdRecoveryImpl<ContractState>;
     impl ThresholdRecoveryInternal = threshold_recovery_component::ThresholdRecoveryInternalImpl<ContractState>;
+    // Reentrancy guard
+    component!(path: reentrancy_guard_component, storage: reentrancy_guard, event: ReentrancyGuardEvents);
+    impl ReentrancyGuardInternalImpl = reentrancy_guard_component::ReentrancyGuardInternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -69,6 +74,8 @@ mod ArgentUserAccount {
         upgrade: upgrade_component::Storage,
         #[substorage(v0)]
         escape: threshold_recovery_component::Storage,
+        #[substorage(v0)]
+        reentrancy_guard: reentrancy_guard_component::Storage,
     }
 
     #[event]
@@ -86,6 +93,8 @@ mod ArgentUserAccount {
         UpgradeEvents: upgrade_component::Event,
         #[flat]
         EscapeEvents: threshold_recovery_component::Event,
+        #[flat]
+        ReentrancyGuardEvents: reentrancy_guard_component::Event,
         TransactionExecuted: TransactionExecuted,
     }
 
@@ -118,6 +127,7 @@ mod ArgentUserAccount {
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
+            self.reentrancy_guard.enter_lock_from_non_reentrant();
             let exec_info = get_execution_info().unbox();
             let tx_info = exec_info.tx_info.unbox();
             assert_only_protocol(exec_info.caller_address);
@@ -129,6 +139,7 @@ mod ArgentUserAccount {
             let hash = tx_info.transaction_hash;
             let response = retdata.span();
             self.emit(TransactionExecuted { hash, response });
+            self.reentrancy_guard.exit_lock();
             retdata
         }
 

@@ -6,6 +6,7 @@ mod ArgentAccount {
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
     use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
+    use argent::reentrancy_guard::reentrancy_guard::reentrancy_guard_component;
     use argent::session::{
         interface::{SessionToken, ISessionCallback},
         session::{session_component::{Internal, InternalTrait}, session_component,}
@@ -69,6 +70,9 @@ mod ArgentAccount {
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
+    // Reentrancy guard
+    component!(path: reentrancy_guard_component, storage: reentrancy_guard, event: ReentrancyGuardEvents);
+    impl ReentrancyGuardInternalImpl = reentrancy_guard_component::ReentrancyGuardInternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -80,6 +84,8 @@ mod ArgentAccount {
         upgrade: upgrade_component::Storage,
         #[substorage(v0)]
         session: session_component::Storage,
+        #[substorage(v0)]
+        reentrancy_guard: reentrancy_guard_component::Storage,
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         /// Current account owner
         _signer: felt252,
@@ -102,8 +108,6 @@ mod ArgentAccount {
         /// It resets when an escape is completed or canceled
         last_owner_escape_attempt: u64,
         escape_security_period: u64,
-        /// Lock to preveent reentrancy in the execute_from_outside
-        execution_reentrancy_lock: bool,
     }
 
     #[event]
@@ -117,6 +121,8 @@ mod ArgentAccount {
         UpgradeEvents: upgrade_component::Event,
         #[flat]
         SessionableEvents: session_component::Event,
+        #[flat]
+        ReentrancyGuardEvents: reentrancy_guard_component::Event,
         TransactionExecuted: TransactionExecuted,
         AccountCreated: AccountCreated,
         AccountCreatedGuid: AccountCreatedGuid,
@@ -322,7 +328,7 @@ mod ArgentAccount {
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
-            self.enter_execution_lock();
+            self.reentrancy_guard.enter_lock_from_non_reentrant();
             let exec_info = get_execution_info().unbox();
             let tx_info = exec_info.tx_info.unbox();
             assert_only_protocol(exec_info.caller_address);
@@ -338,7 +344,7 @@ mod ArgentAccount {
             let retdata = execute_multicall(calls.span());
 
             self.emit(TransactionExecuted { hash: tx_info.transaction_hash, response: retdata.span() });
-            self.exit_execution_lock();
+            self.reentrancy_guard.exit_lock();
             retdata
         }
 
@@ -439,8 +445,6 @@ mod ArgentAccount {
         fn execute_from_outside_callback(
             ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
-            self.enter_execution_lock();
-
             if self.session.is_session(signature) {
                 self.session.assert_valid_session(calls, outside_execution_hash, signature);
             } else {
@@ -455,7 +459,6 @@ mod ArgentAccount {
             }
             let retdata = execute_multicall(calls);
             self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
-            self.exit_execution_lock();
             retdata
         }
     }
@@ -1153,17 +1156,6 @@ mod ArgentAccount {
                     );
                 }
             }
-        }
-
-        #[inline(always)]
-        fn enter_execution_lock(ref self: ContractState,) {
-            assert(self.execution_reentrancy_lock.read() == false, 'argent/reentrancy');
-            self.execution_reentrancy_lock.write(true);
-        }
-
-        #[inline(always)]
-        fn exit_execution_lock(ref self: ContractState,) {
-            self.execution_reentrancy_lock.write(false);
         }
 
         #[inline(always)]

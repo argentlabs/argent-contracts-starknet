@@ -33,6 +33,73 @@ impl SpanU8TryIntoFelt252 of TryInto<Span<u8>, felt252> {
     }
 }
 
+fn u256_to_u8s(input: u256) -> Array<u8> {
+    let (rest, out32) = core::integer::u128_safe_divmod(input.low, 0x100);
+    let (rest, out31) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out30) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out29) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out28) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out27) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out26) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out25) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out24) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out23) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out22) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out21) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out20) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out19) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (out17, out18) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out16) = core::integer::u128_safe_divmod(input.high, 0x100);
+    let (rest, out15) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out14) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out13) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out12) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out11) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out10) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out9) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out8) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out7) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out6) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out5) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out4) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (rest, out3) = core::integer::u128_safe_divmod(rest, 0x100);
+    let (out1, out2) = core::integer::u128_safe_divmod(rest, 0x100);
+    array![
+        out1.try_into().unwrap(),
+        out2.try_into().unwrap(),
+        out3.try_into().unwrap(),
+        out4.try_into().unwrap(),
+        out5.try_into().unwrap(),
+        out6.try_into().unwrap(),
+        out7.try_into().unwrap(),
+        out8.try_into().unwrap(),
+        out9.try_into().unwrap(),
+        out10.try_into().unwrap(),
+        out11.try_into().unwrap(),
+        out12.try_into().unwrap(),
+        out13.try_into().unwrap(),
+        out14.try_into().unwrap(),
+        out15.try_into().unwrap(),
+        out16.try_into().unwrap(),
+        out17.try_into().unwrap(),
+        out18.try_into().unwrap(),
+        out19.try_into().unwrap(),
+        out20.try_into().unwrap(),
+        out21.try_into().unwrap(),
+        out22.try_into().unwrap(),
+        out23.try_into().unwrap(),
+        out24.try_into().unwrap(),
+        out25.try_into().unwrap(),
+        out26.try_into().unwrap(),
+        out27.try_into().unwrap(),
+        out28.try_into().unwrap(),
+        out29.try_into().unwrap(),
+        out30.try_into().unwrap(),
+        out31.try_into().unwrap(),
+        out32.try_into().unwrap(),
+    ]
+}
+
 #[generate_trait]
 impl ByteArrayExt of ByteArrayExtTrait {
     fn into_bytes(self: ByteArray) -> Array<u8> {

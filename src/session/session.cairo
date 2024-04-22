@@ -133,6 +133,7 @@ mod session_component {
                 let authorization_len = session_authorization.len();
                 if cached_sig_len != 0 {
                     // prevents a DoS attack where a user can send a large session authorization
+                    // in the case where the session is already cached
                     assert(authorization_len <= cached_sig_len, 'session/invalid-auth-len');
                     return;
                 } else {

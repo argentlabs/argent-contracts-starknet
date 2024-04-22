@@ -455,17 +455,16 @@ mod ArgentAccount {
 
 
     impl SessionCallbackImpl of ISessionCallback<ContractState> {
-        fn session_verify_sig_callback(
-            self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>, guardian_guid: felt252,
+        fn session_verify_signature_callback(
+            self: @ContractState, session_hash: felt252, parsed_session_authorization: Array<SignerSignature>
         ) -> bool {
-            let parsed_session_authorization = self.parse_signature_array(authorization_signature);
-            assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
-
-            // checks that second signature is the guardian and not the backup guardian
-            let guardian_guid_from_sig = (*parsed_session_authorization[1]).signer().into_guid();
-            assert(guardian_guid_from_sig == guardian_guid, 'session/backup-guardian-found');
-
             self.is_valid_span_signature(session_hash, parsed_session_authorization)
+        }
+
+        fn parse_signature_array_callback(
+            self: @ContractState, authorization_signature: Span<felt252>
+        ) -> Array<SignerSignature> {
+            self.parse_signature_array(authorization_signature)
         }
     }
 

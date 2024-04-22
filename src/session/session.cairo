@@ -98,7 +98,10 @@ mod session_component {
 
             assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
 
-            self.assert_valid_session_authorization(state, @token, token_session_hash);
+            self
+                .assert_valid_session_authorization(
+                    state, token.session_authorization, token.cache_authorization, token_session_hash
+                );
 
             let message_hash = PoseidonTrait::new()
                 .update_with(transaction_hash)
@@ -122,33 +125,42 @@ mod session_component {
         fn assert_valid_session_authorization(
             ref self: ComponentState<TContractState>,
             state: @TContractState,
-            token: @SessionToken,
+            session_authorization: Span<felt252>,
+            use_cache: bool,
             session_hash: felt252,
         ) {
-            let session_authorization = *token.session_authorization;
             let guardian_guid = state.get_guardian_guid().expect('session/no-guardian');
-            if (*token.cache_authorization) {
-                let owner_guid = state.get_owner_guid();
-                let cached_sig_len = self.valid_session_cache.read((owner_guid, guardian_guid, session_hash));
-                let authorization_len = session_authorization.len();
+            let owner_guid_for_cache = if (use_cache) {
+                state.get_owner_guid()
+            } else {
+                0
+            };
+            if (use_cache) {
+                let cached_sig_len = self.valid_session_cache.read((owner_guid_for_cache, guardian_guid, session_hash));
                 if cached_sig_len != 0 {
-                    // prevents a DoS attack where a user can send a large session authorization
-                    assert(authorization_len <= cached_sig_len, 'session/invalid-auth-len');
-                    return;
-                } else {
-                    assert(
-                        state.session_verify_sig_callback(session_hash, session_authorization, guardian_guid),
-                        'session/invalid-account-sig'
-                    );
-                    self.valid_session_cache.write((owner_guid, guardian_guid, session_hash), authorization_len);
+                    // authorization is cached, we can skip the signature verification
+                    // prevents a DoS attack where authorization can be replaces by a bigger one
+                    assert(session_authorization.len() <= cached_sig_len, 'session/invalid-auth-len');
                     return;
                 }
             }
 
+            let parsed_session_authorization = state.parse_signature_array_callback(session_authorization);
+            assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
+
+            // checks that second signature is the guardian and not the backup guardian
+            let guardian_guid_from_sig = (*parsed_session_authorization[1]).signer().into_guid();
+            assert(guardian_guid_from_sig == guardian_guid, 'session/signer-is-not-guardian');
             assert(
-                state.session_verify_sig_callback(session_hash, session_authorization, guardian_guid),
+                state.session_verify_signature_callback(session_hash, parsed_session_authorization),
                 'session/invalid-account-sig'
             );
+
+            if (use_cache) {
+                self
+                    .valid_session_cache
+                    .write((owner_guid_for_cache, guardian_guid, session_hash), session_authorization.len());
+            }
         }
     }
 

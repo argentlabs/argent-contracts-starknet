@@ -139,7 +139,7 @@ mod session_component {
                 let cached_sig_len = self.valid_session_cache.read((owner_guid_for_cache, guardian_guid, session_hash));
                 if cached_sig_len != 0 {
                     // authorization is cached, we can skip the signature verification
-                    // prevents a DoS attack where authorization can be replaces by a bigger one
+                    // prevents a DoS attack where authorization can be replaced by a bigger one
                     assert(session_authorization.len() <= cached_sig_len, 'session/invalid-auth-len');
                     return;
                 }

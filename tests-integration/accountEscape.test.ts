@@ -10,8 +10,11 @@ import {
   ESCAPE_TYPE_OWNER,
   EscapeStatus,
   KeyPair,
+  LegacyArgentSigner,
   LegacyMultisigSigner,
+  LegacyStarknetKeyPair,
   MAX_U64,
+  StarknetKeyPair,
   declareContract,
   deployAccount,
   deployAccountWithGuardianBackup,
@@ -117,6 +120,24 @@ describe("ArgentAccount: escape mechanism", function () {
               eventName: "EscapeOwnerTriggeredGuid",
               data: [readyAt.toString(), newKeyPair.guid.toString()],
             });
+          });
+
+          it(`Should be possible to use the legacy signature on trigger_escape_owner`, async function () {
+            if (type == guardianType[2]) {
+              return; // Skip this test for "backup guardian"
+            }
+
+            const { account, accountContract, other } = await buildAccount(type);
+            account.signer = new LegacyArgentSigner(new LegacyStarknetKeyPair((other as StarknetKeyPair).privateKey));
+
+            await setTime(randomTime);
+            const readyAt = BigInt(randomTime) + ESCAPE_SECURITY_PERIOD;
+            await accountContract.trigger_escape_owner(newKeyPair.compiledSigner);
+
+            const escape = await accountContract.get_escape();
+            expect(escape.escape_type).to.deep.equal(ESCAPE_TYPE_OWNER);
+            expect(escape.ready_at).to.equal(readyAt);
+            expect(escape.new_signer.unwrap().stored_value).to.equal(newKeyPair.storedValue);
           });
 
           it(`Triggered by ${type}. Expect 'argent/cannot-override-escape' when the owner is already being escaped`, async function () {
@@ -350,6 +371,20 @@ describe("ArgentAccount: escape mechanism", function () {
       });
     });
 
+    it(`Should be possible to use the legacy signature on trigger_escape_guardian`, async function () {
+      const { account, accountContract, owner } = await deployAccount();
+      account.signer = new LegacyArgentSigner(new LegacyStarknetKeyPair((owner as StarknetKeyPair).privateKey));
+
+      await setTime(randomTime);
+      const readyAt = BigInt(randomTime) + ESCAPE_SECURITY_PERIOD;
+      await accountContract.trigger_escape_guardian(newKeyPair.compiledSignerAsOption);
+
+      const escape = await accountContract.get_escape();
+      expect(escape.escape_type).to.deep.equal(ESCAPE_TYPE_GUARDIAN);
+      expect(escape.ready_at).to.equal(readyAt);
+      expect(escape.new_signer.unwrap().stored_value).to.equal(newKeyPair.storedValue);
+    });
+
     it("Expect 'argent/last-escape-too-recent' when trying too escape again too early", async function () {
       const { account, accountContract, owner } = await deployAccount();
       account.signer = new ArgentSigner(owner);
@@ -444,6 +479,25 @@ describe("ArgentAccount: escape mechanism", function () {
         eventName: "GuardianEscapedGuid",
         data: [newKeyPair.guid.toString()],
       });
+    });
+
+    it(`Should be possible to use the legacy signature on escape_guardian`, async function () {
+      const { account, accountContract, owner } = await deployAccount();
+      account.signer = new ArgentSigner(owner);
+
+      await setTime(randomTime);
+      await accountContract.trigger_escape_guardian(newKeyPair.compiledSignerAsOption);
+
+      account.signer = new LegacyArgentSigner(new LegacyStarknetKeyPair((owner as StarknetKeyPair).privateKey));
+      await setTime(randomTime + ESCAPE_SECURITY_PERIOD);
+      await accountContract.escape_guardian();
+
+      const escape = await accountContract.get_escape();
+      expect(escape.escape_type).to.deep.equal(ESCAPE_TYPE_NONE);
+      expect(escape.ready_at).to.equal(0n);
+      expect(escape.new_signer.isNone()).to.be.true;
+      const newGuardian = await accountContract.get_guardian();
+      expect(newGuardian).to.equal(newKeyPair.storedValue);
     });
 
     it("Expect 'argent/only-self' when called from another account", async function () {

@@ -1,8 +1,8 @@
 use argent::signer::signer_signature::{WebauthnSigner};
 use argent::signer::webauthn::{WebauthnAssertion, Sha256Implementation};
-use argent::utils::bytes::{ByteArrayExt, SpanU8TryIntoFelt252};
+use argent::utils::array_ext::ArrayExtTrait;
+use argent::utils::bytes::{ByteArrayExt, SpanU8TryIntoFelt252, u256_to_u8s};
 use starknet::secp256_trait::Signature;
-
 
 fn new_webauthn_signer(origin: ByteArray, rp_id_hash: u256, pubkey: u256) -> WebauthnSigner {
     let origin = origin.into_bytes().span();
@@ -15,46 +15,10 @@ fn get_authenticator_data() -> Span<u8> {
     // rp id hash = 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763
     // flags (binary) = 101
     // sign count = 0
-    array![
-        73,
-        150,
-        13,
-        229,
-        136,
-        14,
-        140,
-        104,
-        116,
-        52,
-        23,
-        15,
-        100,
-        118,
-        96,
-        91,
-        143,
-        228,
-        174,
-        185,
-        162,
-        134,
-        50,
-        199,
-        153,
-        92,
-        243,
-        186,
-        131,
-        29,
-        151,
-        99,
-        5,
-        0,
-        0,
-        0,
-        0
-    ]
-        .span()
+    let mut data = u256_to_u8s(0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763);
+    data.append(0b101);
+    data.append_all(array![0, 0, 0, 0].span());
+    data.span()
 }
 
 fn setup_1() -> (felt252, WebauthnSigner, WebauthnAssertion) {
@@ -67,7 +31,7 @@ fn setup_1() -> (felt252, WebauthnSigner, WebauthnAssertion) {
     let assertion = WebauthnAssertion {
         authenticator_data: get_authenticator_data(),
         cross_origin: false,
-        client_data_json_outro: array!['}'].span(),
+        client_data_json_outro: array![].span(),
         sha256_implementation: Sha256Implementation::Cairo1,
         signature: Signature {
             r: 17964448168501796902021058754052023747843800978633577064976152434953556917106,

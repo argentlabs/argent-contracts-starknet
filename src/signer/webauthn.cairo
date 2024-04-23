@@ -61,7 +61,12 @@ fn build_client_data_json(assertion: WebauthnAssertion, origin: Span<u8>, hash: 
     } else {
         json.append_all(array!['f', 'a', 'l', 's', 'e'].span());
     }
-    json.append_all(assertion.client_data_json_outro);
+    if assertion.client_data_json_outro.is_empty() {
+        json.append('}');
+    } else {
+        json.append(',');
+        json.append_all(assertion.client_data_json_outro);
+    }
     json.span()
 }
 

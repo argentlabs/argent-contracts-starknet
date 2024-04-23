@@ -89,7 +89,7 @@ export class WebauthnOwner extends KeyPair {
     const webauthnAssertion = {
       authenticator_data: CallData.compile(Array.from(authenticatorData)),
       cross_origin: false,
-      client_data_json_outro: toCharArray("}"),
+      client_data_json_outro: [],
       sha256_implementation: new CairoCustomEnum({ Cairo0: {}, Cairo1: undefined }),
       signature: {
         r: uint256.bnToUint256(r),

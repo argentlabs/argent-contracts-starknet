@@ -8,7 +8,6 @@ mod ArgentUserAccount {
     };
     use argent::recovery::threshold_recovery::IThresholdRecoveryInternal;
     use argent::recovery::{threshold_recovery::threshold_recovery_component};
-    use argent::reentrancy_guard::reentrancy_guard::reentrancy_guard_component;
     use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait}};
     use argent::signer_storage::{
         interface::ISignerList, signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
@@ -20,6 +19,7 @@ mod ArgentUserAccount {
         serialization::full_deserialize,
         transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
     };
+    use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use starknet::{get_tx_info, get_contract_address, get_execution_info, VALIDATED, ClassHash, account::Call};
 
     const NAME: felt252 = 'ArgentAccount';
@@ -57,8 +57,8 @@ mod ArgentUserAccount {
         threshold_recovery_component::ToggleThresholdRecoveryImpl<ContractState>;
     impl ThresholdRecoveryInternal = threshold_recovery_component::ThresholdRecoveryInternalImpl<ContractState>;
     // Reentrancy guard
-    component!(path: reentrancy_guard_component, storage: reentrancy_guard, event: ReentrancyGuardEvents);
-    impl ReentrancyGuardInternalImpl = reentrancy_guard_component::ReentrancyGuardInternalImpl<ContractState>;
+    component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
+    impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -75,7 +75,7 @@ mod ArgentUserAccount {
         #[substorage(v0)]
         escape: threshold_recovery_component::Storage,
         #[substorage(v0)]
-        reentrancy_guard: reentrancy_guard_component::Storage,
+        reentrancy_guard: ReentrancyGuardComponent::Storage,
     }
 
     #[event]
@@ -94,7 +94,7 @@ mod ArgentUserAccount {
         #[flat]
         EscapeEvents: threshold_recovery_component::Event,
         #[flat]
-        ReentrancyGuardEvents: reentrancy_guard_component::Event,
+        ReentrancyGuardEvent: ReentrancyGuardComponent::Event,
         TransactionExecuted: TransactionExecuted,
     }
 
@@ -127,7 +127,7 @@ mod ArgentUserAccount {
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
-            self.reentrancy_guard.enter_lock_from_non_reentrant();
+            self.reentrancy_guard.start();
             let exec_info = get_execution_info().unbox();
             let tx_info = exec_info.tx_info.unbox();
             assert_only_protocol(exec_info.caller_address);
@@ -139,7 +139,7 @@ mod ArgentUserAccount {
             let hash = tx_info.transaction_hash;
             let response = retdata.span();
             self.emit(TransactionExecuted { hash, response });
-            self.reentrancy_guard.exit_lock();
+            self.reentrancy_guard.end();
             retdata
         }
 

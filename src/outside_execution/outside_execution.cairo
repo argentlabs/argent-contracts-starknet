@@ -6,8 +6,8 @@ mod outside_execution_component {
         outside_execution_hash::{OffChainMessageOutsideExecutionRev0, OffChainMessageOutsideExecutionRev1},
         interface::{OutsideExecution, IOutsideExecutionCallback, IOutsideExecution}
     };
-    use argent::reentrancy_guard::reentrancy_guard::{reentrancy_guard_component, IReentrancyGuard};
     use hash::{HashStateTrait, HashStateExTrait};
+    use openzeppelin::security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use pedersen::PedersenTrait;
     use starknet::{get_caller_address, get_contract_address, get_block_timestamp, get_tx_info, account::Call};
 
@@ -26,7 +26,7 @@ mod outside_execution_component {
         +HasComponent<TContractState>,
         +IOutsideExecutionCallback<TContractState>,
         +Drop<TContractState>,
-        impl ReentrancyGuard: reentrancy_guard_component::HasComponent<TContractState>,
+        impl ReentrancyGuard: ReentrancyGuardComponent::HasComponent<TContractState>,
     > of IOutsideExecution<ComponentState<TContractState>> {
         fn execute_from_outside(
             ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Array<felt252>
@@ -65,7 +65,7 @@ mod outside_execution_component {
         +HasComponent<TContractState>,
         +IOutsideExecutionCallback<TContractState>,
         +Drop<TContractState>,
-        impl ReentrancyGuard: reentrancy_guard_component::HasComponent<TContractState>,
+        impl ReentrancyGuard: ReentrancyGuardComponent::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
         fn assert_valid_outside_execution(
             ref self: ComponentState<TContractState>,
@@ -74,7 +74,7 @@ mod outside_execution_component {
             signature: Span<felt252>
         ) -> Array<Span<felt252>> {
             let mut reentrancy_guard = get_dep_component_mut!(ref self, ReentrancyGuard);
-            reentrancy_guard.enter_lock();
+            reentrancy_guard.start();
 
             if outside_execution.caller.into() != 'ANY_CALLER' {
                 assert(get_caller_address() == outside_execution.caller, 'argent/invalid-caller');
@@ -90,7 +90,7 @@ mod outside_execution_component {
             self.outside_nonces.write(nonce, true);
             let mut state = self.get_contract_mut();
             let result = state.execute_from_outside_callback(outside_execution.calls, outside_tx_hash, signature);
-            reentrancy_guard.exit_lock();
+            reentrancy_guard.end();
             result
         }
     }

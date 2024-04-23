@@ -6,7 +6,6 @@ mod ArgentAccount {
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
     use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
-    use argent::reentrancy_guard::reentrancy_guard::reentrancy_guard_component;
     use argent::session::{
         interface::{SessionToken, ISessionCallback},
         session::{session_component::{Internal, InternalTrait}, session_component,}
@@ -17,6 +16,7 @@ mod ArgentAccount {
             SignerSignature, SignerSignatureTrait, starknet_signer_from_pubkey
         }
     };
+
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self, assert_only_protocol}, calls::execute_multicall,
@@ -27,6 +27,7 @@ mod ArgentAccount {
         }
     };
     use hash::HashStateTrait;
+    use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use pedersen::PedersenTrait;
     use starknet::{
         ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, replace_class_syscall,
@@ -71,8 +72,8 @@ mod ArgentAccount {
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
     // Reentrancy guard
-    component!(path: reentrancy_guard_component, storage: reentrancy_guard, event: ReentrancyGuardEvents);
-    impl ReentrancyGuardInternalImpl = reentrancy_guard_component::ReentrancyGuardInternalImpl<ContractState>;
+    component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
+    impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -85,7 +86,7 @@ mod ArgentAccount {
         #[substorage(v0)]
         session: session_component::Storage,
         #[substorage(v0)]
-        reentrancy_guard: reentrancy_guard_component::Storage,
+        reentrancy_guard: ReentrancyGuardComponent::Storage,
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         /// Current account owner
         _signer: felt252,
@@ -120,7 +121,7 @@ mod ArgentAccount {
         #[flat]
         SessionableEvents: session_component::Event,
         #[flat]
-        ReentrancyGuardEvents: reentrancy_guard_component::Event,
+        ReentrancyGuardEvent: ReentrancyGuardComponent::Event,
         TransactionExecuted: TransactionExecuted,
         AccountCreated: AccountCreated,
         AccountCreatedGuid: AccountCreatedGuid,
@@ -326,7 +327,7 @@ mod ArgentAccount {
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
-            self.reentrancy_guard.enter_lock_from_non_reentrant();
+            self.reentrancy_guard.start();
             let exec_info = get_execution_info().unbox();
             let tx_info = exec_info.tx_info.unbox();
             assert_only_protocol(exec_info.caller_address);
@@ -342,7 +343,7 @@ mod ArgentAccount {
             let retdata = execute_multicall(calls.span());
 
             self.emit(TransactionExecuted { hash: tx_info.transaction_hash, response: retdata.span() });
-            self.reentrancy_guard.exit_lock();
+            self.reentrancy_guard.end();
             retdata
         }
 

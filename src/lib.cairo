@@ -11,9 +11,6 @@ mod introspection {
     mod interface;
     mod src5;
 }
-mod reentrancy_guard {
-    mod reentrancy_guard;
-}
 
 mod multisig {
     mod interface;

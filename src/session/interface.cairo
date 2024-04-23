@@ -39,7 +39,7 @@ struct SessionToken {
 /// This trait has to be implemented when using the component `session_component` (This is enforced by the compiler)
 #[starknet::interface]
 trait ISessionCallback<TContractState> {
-    /// @notice Callback performed to check parse and validate account signature
+    /// @notice Callback performed to parse and validate account signature
     /// @param session_hash The hash of session
     /// @param authorization_signature The owner + guardian signature of the session
     /// @return The parsed array of SignerSignature

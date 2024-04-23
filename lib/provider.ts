@@ -6,7 +6,7 @@ import { WithTokens } from "./tokens";
 
 dotenv.config({ override: true });
 
-const Provider = WithTokens(WithDevnet(WithContracts(RpcProvider)));
+const Provider = WithTokens(WithContracts(WithDevnet(RpcProvider)));
 
 export const provider = new Provider({ nodeUrl: process.env.RPC_URL || `${devnetBaseUrl}` });
 

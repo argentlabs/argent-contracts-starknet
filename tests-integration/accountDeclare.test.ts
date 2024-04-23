@@ -11,7 +11,7 @@ import {
 
 describe("ArgentAccount: declare", function () {
   beforeEach(async () => {
-    await provider.restartDevnet();
+    await provider.restartDevnetAndClearClassCache();
   });
   for (const useTxV3 of [false, true]) {
     it(`Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) (TxV3: ${useTxV3})`, async function () {

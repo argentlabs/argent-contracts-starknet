@@ -1,10 +1,10 @@
-import { RawArgs } from "starknet";
-import { WithContracts } from "./contracts";
+import { RawArgs, RpcProvider } from "starknet";
+import { Constructor } from ".";
 
 export const dumpFolderPath = "./dump";
 export const devnetBaseUrl = "http://127.0.0.1:5050";
 
-export const WithDevnet = <T extends ReturnType<typeof WithContracts>>(Base: T) =>
+export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
   class extends Base {
     get isDevnet() {
       return this.channel.nodeUrl.startsWith(devnetBaseUrl);
@@ -14,13 +14,6 @@ export const WithDevnet = <T extends ReturnType<typeof WithContracts>>(Base: T) 
     waitForTransaction(transactionHash: string, options = {}) {
       const retryInterval = this.isDevnet ? 250 : 1000;
       return super.waitForTransaction(transactionHash, { retryInterval, ...options });
-    }
-
-    async restartDevnet() {
-      if (this.isDevnet) {
-        await this.restart();
-        this.clearClassCache();
-      }
     }
 
     async mintEth(address: string, amount: number | bigint) {

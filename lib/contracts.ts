@@ -6,21 +6,19 @@ import {
   Contract,
   DeclareContractPayload,
   ProviderInterface,
-  RpcProvider,
   UniversalDeployerContractPayload,
   UniversalDetails,
   json,
 } from "starknet";
-import { Constructor } from ".";
 import { deployer } from "./accounts";
-import { provider } from "./provider";
+import { WithDevnet } from "./devnet";
 
 export const contractsFolder = "./target/release/argent_";
 export const fixturesFolder = "./tests-integration/fixtures/argent_";
 
-export const WithContracts = <T extends Constructor<RpcProvider>>(Base: T) =>
+export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) =>
   class extends Base {
-    private classCache: Record<string, string> = {};
+    protected classCache: Record<string, string> = {};
 
     removeFromClassCache(contractName: string) {
       delete this.classCache[contractName];
@@ -32,6 +30,13 @@ export const WithContracts = <T extends Constructor<RpcProvider>>(Base: T) =>
       }
     }
 
+    async restartDevnetAndClearClassCache() {
+      if (this.isDevnet) {
+        await this.restart();
+        this.clearClassCache();
+      }
+    }
+
     // Could extends Account to add our specific fn but that's too early.
     async declareLocalContract(contractName: string, wait = true, folder = contractsFolder): Promise<string> {
       const cachedClass = this.classCache[contractName];
@@ -39,14 +44,14 @@ export const WithContracts = <T extends Constructor<RpcProvider>>(Base: T) =>
         return cachedClass;
       }
       const payload = getDeclareContractPayload(contractName, folder);
-      const skipSimulation = provider.isDevnet;
+      const skipSimulation = this.isDevnet;
       // max fee avoids slow estimate
       const maxFee = skipSimulation ? 1e18 : undefined;
 
       const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee });
 
       if (wait && transaction_hash) {
-        await provider.waitForTransaction(transaction_hash);
+        await this.waitForTransaction(transaction_hash);
         console.log(`\t${contractName} declared`);
       }
       this.classCache[contractName] = class_hash;
@@ -58,9 +63,9 @@ export const WithContracts = <T extends Constructor<RpcProvider>>(Base: T) =>
     }
 
     async loadContract(contractAddress: string, classHash?: string): Promise<ContractWithClass> {
-      const { abi } = await provider.getClassAt(contractAddress);
-      classHash ??= await provider.getClassHashAt(contractAddress);
-      return new ContractWithClass(abi, contractAddress, provider, classHash);
+      const { abi } = await this.getClassAt(contractAddress);
+      classHash ??= await this.getClassHashAt(contractAddress);
+      return new ContractWithClass(abi, contractAddress, this, classHash);
     }
 
     async deployContract(

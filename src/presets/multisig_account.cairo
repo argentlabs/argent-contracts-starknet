@@ -205,18 +205,18 @@ mod ArgentMultisigAccount {
             assert_only_self();
             // Check basic invariants
             self.multisig.assert_valid_storage();
-            let signers = self.signer_list.get_signers();
-            let mut signers_span = signers.span();
+            let pubkeys = self.signer_list.get_signers();
+            let mut pubkeys_span = pubkeys.span();
             let mut signers_to_add = array![];
             // Converting storage from public keys to guid 
-            while let Option::Some(signer) = signers_span
+            while let Option::Some(signer) = pubkeys_span
                 .pop_front() {
                     signers_to_add.append(starknet_signer_from_pubkey(*signer));
                 };
             assert(data.len() == 0, 'argent/unexpected-data');
             let (_, last_signer) = self.signer_list.load();
             // Removing directly from list to avoid events being emitted
-            self.signer_list.remove_signers(signers.span(), last_signer);
+            self.signer_list.remove_signers(pubkeys.span(), last_signer);
             // Adding to multisig to have events emitted
             self.multisig.add_signers(self.get_threshold(), signers_to_add);
             array![]

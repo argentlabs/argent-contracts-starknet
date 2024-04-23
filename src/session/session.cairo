@@ -133,12 +133,12 @@ mod session_component {
             session_hash: felt252,
         ) {
             let guardian_guid = state.get_guardian_guid().expect('session/no-guardian');
-            let owner_guid_for_cache = if (use_cache) {
+            let owner_guid_for_cache = if use_cache {
                 state.get_owner_guid()
             } else {
                 0
             };
-            if (use_cache) {
+            if use_cache {
                 let cached_sig_len = self.valid_session_cache.read((owner_guid_for_cache, guardian_guid, session_hash));
                 if cached_sig_len != 0 {
                     // authorization is cached, we can skip the signature verification
@@ -157,7 +157,7 @@ mod session_component {
             let guardian_guid_from_sig = (*parsed_session_authorization[1]).signer().into_guid();
             assert(guardian_guid_from_sig == guardian_guid, 'session/signer-is-not-guardian');
 
-            if (use_cache) {
+            if use_cache {
                 self
                     .valid_session_cache
                     .write((owner_guid_for_cache, guardian_guid, session_hash), session_authorization.len());

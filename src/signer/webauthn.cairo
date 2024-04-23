@@ -1,5 +1,6 @@
 use alexandria_encoding::base64::Base64UrlEncoder;
 use alexandria_math::sha256::{sha256};
+use argent::signer::signer_signature::{WebauthnSigner};
 use argent::utils::array_ext::ArrayExtTrait;
 use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, u32s_to_u256, u32s_to_u8s, u256_to_u8s};
 use argent::utils::hashing::{sha256_cairo0};
@@ -13,18 +14,12 @@ use starknet::secp256_trait::Signature;
 /// @param signature The signature as {r, s, y_parity}
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnAssertion {
-    authenticator_data: AuthenticatorData,
     cross_origin: bool,
     client_data_json_outro: Span<u8>,
-    sha256_implementation: Sha256Implementation,
-    signature: Signature,
-}
-
-#[derive(Drop, Copy, Serde, PartialEq)]
-struct AuthenticatorData {
-    rp_id_hash: u256,
     flags: u8,
     sign_count: u32,
+    signature: Signature,
+    sha256_implementation: Sha256Implementation,
 }
 
 #[derive(Drop, Copy, Serde, PartialEq)]
@@ -39,15 +34,14 @@ enum Sha256Implementation {
 ///                         rpIdHash (32 bytes)                       ^   sign count (4 bytes)
 ///                                                    flags (1 byte) | 
 /// Memory layout: https://www.w3.org/TR/webauthn/#sctn-authenticator-data
-fn verify_authenticator_data(authenticator_data: AuthenticatorData, expected_rp_id_hash: u256) {
-    // Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party. 
-    assert(authenticator_data.rp_id_hash == expected_rp_id_hash, 'invalid-rp-id');
+fn verify_authenticator_flags(flags: u8) {
+    // rpIdHash is verified being signer over the Array<u8> encoding
 
     // Verify that the User Present bit of the flags in authData is set.
-    assert((authenticator_data.flags & 0b00000001) == 0b00000001, 'nonpresent-user');
+    assert((flags & 0b00000001) == 0b00000001, 'nonpresent-user');
 
     // If user verification is required for this assertion, verify that the User Verified bit of the flags in authData is set.
-    assert((authenticator_data.flags & 0b00000100) == 0b00000100, 'unverified-user');
+    assert((flags & 0b00000100) == 0b00000100, 'unverified-user');
 
     // Allowing attested credential data and extension data if present
     ()
@@ -57,7 +51,7 @@ fn verify_authenticator_data(authenticator_data: AuthenticatorData, expected_rp_
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
 /// Encoding spec: https://www.w3.org/TR/webauthn/#clientdatajson-verification
-fn encode_client_data_json(assertion: WebauthnAssertion, origin: Span<u8>, hash: felt252) -> Span<u8> {
+fn encode_client_data_json(hash: felt252, assertion: WebauthnAssertion, origin: Span<u8>) -> Span<u8> {
     let mut json = client_data_json_intro();
     json.append_all(encode_challenge(hash, assertion.sha256_implementation));
     json.append_all(array!['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
@@ -89,33 +83,34 @@ fn encode_challenge(hash: felt252, sha256_implementation: Sha256Implementation) 
     encoded
 }
 
-fn encode_authenticator_data(authenticator_data: AuthenticatorData) -> Array<u8> {
-    let mut bytes = u256_to_u8s(authenticator_data.rp_id_hash);
-    bytes.append(authenticator_data.flags);
-    bytes.append_all(u32s_to_u8s(array![authenticator_data.sign_count.into()].span()));
+fn encode_authenticator_data(assertion: WebauthnAssertion, rp_id_hash: u256) -> Array<u8> {
+    let mut bytes = u256_to_u8s(rp_id_hash);
+    bytes.append(assertion.flags);
+    bytes.append_all(u32s_to_u8s(array![assertion.sign_count.into()].span()));
     bytes
 }
 
-fn get_webauthn_hash_cairo0(authenticator_data: AuthenticatorData, client_data_json: Span<u8>) -> Option<u256> {
+fn get_webauthn_hash_cairo0(hash: felt252, signer: WebauthnSigner, assertion: WebauthnAssertion) -> Option<u256> {
+    let client_data_json = encode_client_data_json(hash, assertion, signer.origin);
     let client_data_hash = u32s_to_u8s(sha256_cairo0(client_data_json)?);
-    let mut message = encode_authenticator_data(authenticator_data);
+    let mut message = encode_authenticator_data(assertion, signer.rp_id_hash.into());
     message.append_all(client_data_hash);
     Option::Some(u32s_to_u256(sha256_cairo0(message.span())?))
 }
 
-fn get_webauthn_hash_cairo1(authenticator_data: AuthenticatorData, client_data_json: Span<u8>) -> u256 {
+fn get_webauthn_hash_cairo1(hash: felt252, signer: WebauthnSigner, assertion: WebauthnAssertion) -> u256 {
+    let client_data_json = encode_client_data_json(hash, assertion, signer.origin);
     let client_data_hash = sha256(client_data_json.snapshot.clone()).span();
-    let mut message = encode_authenticator_data(authenticator_data);
+    let mut message = encode_authenticator_data(assertion, signer.rp_id_hash.into());
     message.append_all(client_data_hash);
     sha256(message).span().try_into().expect('invalid-hash')
 }
 
-fn get_webauthn_hash(assertion: WebauthnAssertion, origin: Span<u8>, hash: felt252) -> u256 {
-    let client_data_json = encode_client_data_json(assertion, origin, hash);
+fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, assertion: WebauthnAssertion) -> u256 {
     match assertion.sha256_implementation {
-        Sha256Implementation::Cairo0 => get_webauthn_hash_cairo0(assertion.authenticator_data, client_data_json)
+        Sha256Implementation::Cairo0 => get_webauthn_hash_cairo0(hash, signer, assertion)
             .expect('sha256-cairo0-failed'),
-        Sha256Implementation::Cairo1 => get_webauthn_hash_cairo1(assertion.authenticator_data, client_data_json),
+        Sha256Implementation::Cairo1 => get_webauthn_hash_cairo1(hash, signer, assertion),
     }
 }
 

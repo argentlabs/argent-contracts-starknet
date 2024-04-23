@@ -22,7 +22,6 @@ mod setup {
     mod constants;
     mod multisig_test_setup;
     mod utils;
-    mod webauthn_test_setup;
 }
 
 mod webauthn {

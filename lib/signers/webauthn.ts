@@ -4,7 +4,6 @@ import { BinaryLike, createHash } from "crypto";
 import { ArraySignatureType, CairoCustomEnum, CallData, Uint256, hash, shortString, uint256 } from "starknet";
 import { KeyPair, SignerType, signerTypeToCustomEnum } from "..";
 
-// Bytes fn
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
   `${prefix ? "0x" : ""}${[...new Uint8Array(buffer)].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 
@@ -26,17 +25,12 @@ const hex2buf = (hex: string) =>
 const toCharArray = (value: string) => CallData.compile(value.split("").map(shortString.encodeShortString));
 
 interface WebauthnAssertion {
-  authenticator_data: AuthenticatorData;
   cross_origin: boolean;
   client_data_json_outro: number[];
-  sha256_implementation: CairoCustomEnum;
-  signature: { r: Uint256; s: Uint256; y_parity: boolean };
-}
-
-interface AuthenticatorData {
-  rp_id_hash: Uint256;
   flags: number;
   sign_count: number;
+  signature: { r: Uint256; s: Uint256; y_parity: boolean };
+  sha256_implementation: CairoCustomEnum;
 }
 
 export class WebauthnOwner extends KeyPair {
@@ -92,29 +86,25 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public async signHash(transactionHash: string): Promise<WebauthnAssertion> {
-    const flags = 0b0101; // present and verified
-    const authenticator_data = { rp_id_hash: this.rpIdHash, flags, sign_count: 0 };
-    const authenticatorBytes = concatBytes(sha256(this.rpId), new Uint8Array([flags]), new Uint8Array(4));
+    const flags = 0b00000101; // present and verified
+    const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([flags]), new Uint8Array(4));
 
     const challenge = buf2base64url(hex2buf(normalizeTransactionHash(transactionHash) + "00"));
     const clientData = { type: "webauthn.get", challenge, origin: this.origin, crossOrigin: false };
     const clientDataJson = new TextEncoder().encode(JSON.stringify(clientData));
 
-    const message = concatBytes(authenticatorBytes, sha256(clientDataJson));
+    const message = concatBytes(authenticatorData, sha256(clientDataJson));
     const messageHash = sha256(message);
 
     const { r, s, recovery } = secp256r1.sign(messageHash, this.pk);
 
     return {
-      authenticator_data,
       cross_origin: false,
       client_data_json_outro: [],
+      flags,
+      sign_count: 0,
+      signature: { r: uint256.bnToUint256(r), s: uint256.bnToUint256(s), y_parity: recovery !== 0 },
       sha256_implementation: new CairoCustomEnum({ Cairo0: {}, Cairo1: undefined }),
-      signature: {
-        r: uint256.bnToUint256(r),
-        s: uint256.bnToUint256(s),
-        y_parity: recovery !== 0,
-      },
     };
   }
 }

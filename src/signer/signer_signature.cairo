@@ -1,5 +1,5 @@
 use argent::signer::eip191::is_valid_eip191_signature;
-use argent::signer::webauthn::{WebauthnAssertion, get_webauthn_hash, verify_authenticator_data};
+use argent::signer::webauthn::{WebauthnAssertion, get_webauthn_hash, verify_authenticator_flags};
 use argent::utils::hashing::poseidon_2;
 use core::traits::TryInto;
 use ecdsa::check_ecdsa_signature;
@@ -309,9 +309,9 @@ fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: 
 
 #[inline(always)]
 fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, assertion: WebauthnAssertion) -> bool {
-    verify_authenticator_data(assertion.authenticator_data, signer.rp_id_hash.into());
+    verify_authenticator_flags(assertion.flags);
 
-    let signed_hash = get_webauthn_hash(assertion, signer.origin, hash);
+    let signed_hash = get_webauthn_hash(hash, signer, assertion);
     is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, assertion.signature)
 }
 

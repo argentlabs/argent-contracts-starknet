@@ -8,7 +8,6 @@ impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
             let last_byte = *self.at(31);
             Option::Some((0x100 * higher_bytes.into()) + last_byte.into())
         } else {
-            // Not support for more than 32 bytes
             Option::None
         }
     }
@@ -33,70 +32,70 @@ impl SpanU8TryIntoFelt252 of TryInto<Span<u8>, felt252> {
     }
 }
 
-fn u256_to_u8s(input: u256) -> Array<u8> {
-    let (rest, out32) = core::integer::u128_safe_divmod(input.low, 0x100);
-    let (rest, out31) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out30) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out29) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out28) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out27) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out26) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out25) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out24) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out23) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out22) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out21) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out20) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out19) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (out17, out18) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out16) = core::integer::u128_safe_divmod(input.high, 0x100);
-    let (rest, out15) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out14) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out13) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out12) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out11) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out10) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out9) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out8) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out7) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out6) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out5) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out4) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (rest, out3) = core::integer::u128_safe_divmod(rest, 0x100);
-    let (out1, out2) = core::integer::u128_safe_divmod(rest, 0x100);
+fn u256_to_u8s(word: u256) -> Array<u8> {
+    let (rest, byte_32) = integer::u128_safe_divmod(word.low, 0x100);
+    let (rest, byte_31) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_30) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_29) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_28) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_27) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_26) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_25) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_24) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_23) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_22) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_21) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_20) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_19) = integer::u128_safe_divmod(rest, 0x100);
+    let (byte_17, byte_18) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_16) = integer::u128_safe_divmod(word.high, 0x100);
+    let (rest, byte_15) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_14) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_13) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_12) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_11) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_10) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_9) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_8) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_7) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_6) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_5) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_4) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_3) = integer::u128_safe_divmod(rest, 0x100);
+    let (byte_1, byte_2) = integer::u128_safe_divmod(rest, 0x100);
     array![
-        out1.try_into().unwrap(),
-        out2.try_into().unwrap(),
-        out3.try_into().unwrap(),
-        out4.try_into().unwrap(),
-        out5.try_into().unwrap(),
-        out6.try_into().unwrap(),
-        out7.try_into().unwrap(),
-        out8.try_into().unwrap(),
-        out9.try_into().unwrap(),
-        out10.try_into().unwrap(),
-        out11.try_into().unwrap(),
-        out12.try_into().unwrap(),
-        out13.try_into().unwrap(),
-        out14.try_into().unwrap(),
-        out15.try_into().unwrap(),
-        out16.try_into().unwrap(),
-        out17.try_into().unwrap(),
-        out18.try_into().unwrap(),
-        out19.try_into().unwrap(),
-        out20.try_into().unwrap(),
-        out21.try_into().unwrap(),
-        out22.try_into().unwrap(),
-        out23.try_into().unwrap(),
-        out24.try_into().unwrap(),
-        out25.try_into().unwrap(),
-        out26.try_into().unwrap(),
-        out27.try_into().unwrap(),
-        out28.try_into().unwrap(),
-        out29.try_into().unwrap(),
-        out30.try_into().unwrap(),
-        out31.try_into().unwrap(),
-        out32.try_into().unwrap(),
+        byte_1.try_into().unwrap(),
+        byte_2.try_into().unwrap(),
+        byte_3.try_into().unwrap(),
+        byte_4.try_into().unwrap(),
+        byte_5.try_into().unwrap(),
+        byte_6.try_into().unwrap(),
+        byte_7.try_into().unwrap(),
+        byte_8.try_into().unwrap(),
+        byte_9.try_into().unwrap(),
+        byte_10.try_into().unwrap(),
+        byte_11.try_into().unwrap(),
+        byte_12.try_into().unwrap(),
+        byte_13.try_into().unwrap(),
+        byte_14.try_into().unwrap(),
+        byte_15.try_into().unwrap(),
+        byte_16.try_into().unwrap(),
+        byte_17.try_into().unwrap(),
+        byte_18.try_into().unwrap(),
+        byte_19.try_into().unwrap(),
+        byte_20.try_into().unwrap(),
+        byte_21.try_into().unwrap(),
+        byte_22.try_into().unwrap(),
+        byte_23.try_into().unwrap(),
+        byte_24.try_into().unwrap(),
+        byte_25.try_into().unwrap(),
+        byte_26.try_into().unwrap(),
+        byte_27.try_into().unwrap(),
+        byte_28.try_into().unwrap(),
+        byte_29.try_into().unwrap(),
+        byte_30.try_into().unwrap(),
+        byte_31.try_into().unwrap(),
+        byte_32.try_into().unwrap(),
     ]
 }
 
@@ -131,27 +130,30 @@ fn u32s_to_u256(arr: Span<felt252>) -> u256 {
 }
 
 // Accepts felt252 for efficiency as it's the type of retdata but all values are expected to fit u32
-fn u32s_to_u8s(mut input: Span<felt252>) -> Span<u8> {
+fn u32s_to_u8s(mut words: Span<felt252>) -> Span<u8> {
     let mut output = array![];
-    while let Option::Some(word) = input
+    while let Option::Some(word) = words
         .pop_front() {
             let word: u32 = (*word).try_into().unwrap();
-            output.append(((word / 0x100_00_00) & 0xFF).try_into().unwrap());
-            output.append(((word / 0x100_00) & 0xFF).try_into().unwrap());
-            output.append(((word / 0x100) & 0xFF).try_into().unwrap());
-            output.append((word & 0xFF).try_into().unwrap());
+            let (rest, byte_4) = integer::u32_safe_divmod(word, 0x100);
+            let (rest, byte_3) = integer::u32_safe_divmod(rest, 0x100);
+            let (byte_1, byte_2) = integer::u32_safe_divmod(rest, 0x100);
+            output.append(byte_1.try_into().unwrap());
+            output.append(byte_2.try_into().unwrap());
+            output.append(byte_3.try_into().unwrap());
+            output.append(byte_4.try_into().unwrap());
         };
     output.span()
 }
 
-fn u8s_to_u32s(mut input: Span<u8>) -> Array<u32> {
+fn u8s_to_u32s(mut bytes: Span<u8>) -> Array<u32> {
     let mut output = array![];
-    while let Option::Some(byte1) = input
+    while let Option::Some(byte1) = bytes
         .pop_front() {
             let byte1 = *byte1;
-            let byte2 = *input.pop_front().unwrap_or_default();
-            let byte3 = *input.pop_front().unwrap_or_default();
-            let byte4 = *input.pop_front().unwrap_or_default();
+            let byte2 = *bytes.pop_front().unwrap_or_default();
+            let byte3 = *bytes.pop_front().unwrap_or_default();
+            let byte4 = *bytes.pop_front().unwrap_or_default();
             output.append(0x100_00_00 * byte1.into() + 0x100_00 * byte2.into() + 0x100 * byte3.into() + byte4.into());
         };
     output

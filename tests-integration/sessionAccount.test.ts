@@ -258,6 +258,7 @@ describe("Hybrid Session Account: execute calls", function () {
       allowedMethods,
       initialTime + 150n,
       randomStarknetKeyPair(),
+      true,
     );
 
     await expectRevertWithErrorMessage("session/signer-is-not-guardian", () => accountWithDappSigner.execute(calls));

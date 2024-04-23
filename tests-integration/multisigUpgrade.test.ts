@@ -31,7 +31,7 @@ describe("ArgentMultisig: upgrade", function () {
   });
 
   for (const threshold of [1, 3, 10]) {
-    it.only(`Upgrade from 0.1.0 to Current Version with ${threshold} key(s)`, async function () {
+    it(`Upgrade from 0.1.0 to Current Version with ${threshold} key(s)`, async function () {
       const { account, accountContract, signers } = await deployLegacyMultisig(
         await declareFixtureContract("ArgentMultisig-0.1.0"),
         threshold,

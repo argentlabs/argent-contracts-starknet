@@ -1,5 +1,5 @@
 import { CallData, hash } from "starknet";
-import { deployer, getEthBalance, provider } from "../lib";
+import { deployer, provider } from "../lib";
 
 const prodClassHash = "0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003";
 const newClassHash = "0x2fadbf77a721b94bdcc3032d86a8921661717fa55145bccf88160ee2a5efcd1";
@@ -8,7 +8,7 @@ const newClassHash = "0x2fadbf77a721b94bdcc3032d86a8921661717fa55145bccf88160ee2
 const classHashToUse = newClassHash;
 /////////////////////////////////////////////
 
-const ethBalance = await getEthBalance(deployer.address);
+const ethBalance = await provider.getEthBalance(deployer.address);
 console.log(`eth balance: ${ethBalance}`);
 if (ethBalance == 0n) {
   throw new Error("eth balance is 0");

@@ -2,15 +2,7 @@ import { Account, CairoOption, CairoOptionVariant, CallData, Contract, hash, uin
 import casm from "./argent_ArgentAccount.compiled_contract_class.json";
 import sierra from "./argent_ArgentAccount.contract_class.json";
 import { buf2hex } from "./bytes";
-import {
-  fundAccount,
-  getEthContract,
-  loadContract,
-  loadDeployer,
-  randomKeyPair,
-  type KeyPair,
-  type ProviderType,
-} from "./starknet";
+import { fundAccount, loadContract, loadDeployer, randomKeyPair, type KeyPair, type ProviderType } from "./starknet";
 import { sha256 } from "./webauthnAssertion";
 import { createWebauthnAttestation } from "./webauthnAttestation";
 import { WebauthnOwner, webauthnSigner } from "./webauthnOwner";
@@ -77,7 +69,7 @@ export async function deployAccount(
 }
 
 export async function transferDust(account: Account, provider: ProviderType): Promise<string> {
-  const ethContract = await getEthContract(provider);
+  const ethContract = await provider.getEthContract(provider);
   ethContract.connect(account);
   const recipient = 69;
   const amount = uint256.bnToUint256(1);

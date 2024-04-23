@@ -6,8 +6,7 @@ import {
   ensureSuccess,
   expectEvent,
   expectRevertWithErrorMessage,
-  getEthBalance,
-  getEthContract,
+  provider,
   randomStarknetKeyPair,
   waitForTransaction,
 } from "../lib";
@@ -18,21 +17,21 @@ describe("ArgentAccount: multicall", function () {
 
   before(async () => {
     mockDappContract = await deployContract("MockDapp");
-    ethContract = await getEthContract();
+    ethContract = await provider.getEthContract();
   });
 
   it("Should be possible to send eth", async function () {
     const { account } = await deployAccount();
     const recipient = "0x42";
     const amount = uint256.bnToUint256(1000);
-    const senderInitialBalance = await getEthBalance(account.address);
-    const recipientInitialBalance = await getEthBalance(recipient);
+    const senderInitialBalance = await provider.getEthBalance(account.address);
+    const recipientInitialBalance = await provider.getEthBalance(recipient);
     ethContract.connect(account);
     const { transaction_hash } = await ethContract.transfer(recipient, amount);
     await account.waitForTransaction(transaction_hash);
 
-    const senderFinalBalance = await getEthBalance(account.address);
-    const recipientFinalBalance = await getEthBalance(recipient);
+    const senderFinalBalance = await provider.getEthBalance(account.address);
+    const recipientFinalBalance = await provider.getEthBalance(recipient);
     // Before amount should be higher than (after + transfer) amount due to fee
     expect(senderInitialBalance + 1000n > senderFinalBalance).to.be.true;
     expect(recipientInitialBalance + 1000n).to.equal(recipientFinalBalance);
@@ -53,9 +52,9 @@ describe("ArgentAccount: multicall", function () {
     const recipient2 = "43";
     const amount2 = uint256.bnToUint256(42000);
 
-    const senderInitialBalance = await getEthBalance(account.address);
-    const recipient1InitialBalance = await getEthBalance(recipient1);
-    const recipient2InitialBalance = await getEthBalance(recipient2);
+    const senderInitialBalance = await provider.getEthBalance(account.address);
+    const recipient1InitialBalance = await provider.getEthBalance(recipient1);
+    const recipient2InitialBalance = await provider.getEthBalance(recipient2);
 
     const { transaction_hash: transferTxHash } = await account.execute([
       ethContract.populateTransaction.transfer(recipient1, amount1),
@@ -63,9 +62,9 @@ describe("ArgentAccount: multicall", function () {
     ]);
     await account.waitForTransaction(transferTxHash);
 
-    const senderFinalBalance = await getEthBalance(account.address);
-    const recipient1FinalBalance = await getEthBalance(recipient1);
-    const recipient2FinalBalance = await getEthBalance(recipient2);
+    const senderFinalBalance = await provider.getEthBalance(account.address);
+    const recipient1FinalBalance = await provider.getEthBalance(recipient1);
+    const recipient2FinalBalance = await provider.getEthBalance(recipient2);
     expect(senderInitialBalance > senderFinalBalance + 1000n + 4200n).to.be.true;
     expect(recipient1InitialBalance + 1000n).to.equal(recipient1FinalBalance);
     expect(recipient2InitialBalance + 42000n).to.equal(recipient2FinalBalance);
@@ -76,8 +75,8 @@ describe("ArgentAccount: multicall", function () {
     const recipient1 = "42";
     const amount1 = uint256.bnToUint256(1000);
 
-    const senderInitialBalance = await getEthBalance(account.address);
-    const recipient1InitialBalance = await getEthBalance(recipient1);
+    const senderInitialBalance = await provider.getEthBalance(account.address);
+    const recipient1InitialBalance = await provider.getEthBalance(recipient1);
     const initalNumber = await mockDappContract.get_number(account.address);
     expect(initalNumber).to.equal(0n);
 
@@ -87,8 +86,8 @@ describe("ArgentAccount: multicall", function () {
     ]);
     await account.waitForTransaction(transferTxHash);
 
-    const senderFinalBalance = await getEthBalance(account.address);
-    const recipient1FinalBalance = await getEthBalance(recipient1);
+    const senderFinalBalance = await provider.getEthBalance(account.address);
+    const recipient1FinalBalance = await provider.getEthBalance(recipient1);
     const finalNumber = await mockDappContract.get_number(account.address);
     // Before amount should be higher than (after + transfer) amount due to fee
     expect(Number(senderInitialBalance)).to.be.greaterThan(Number(senderFinalBalance) + 1000 + 42000);

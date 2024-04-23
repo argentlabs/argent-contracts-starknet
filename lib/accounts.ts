@@ -18,10 +18,11 @@ import {
   num,
   uint256,
 } from "starknet";
-import { declareContract, declareFixtureContract, ethAddress, loadContract, strkAddress } from "./contracts";
+import { declareContract, declareFixtureContract, loadContract } from "./contracts";
 import { provider } from "./provider";
 import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { ArgentSigner, KeyPair, randomStarknetKeyPair } from "./signers/signers";
+import { ethAddress, strkAddress } from "./tokens";
 
 export class ArgentAccount extends Account {
   // Increase the gas limit by 30% to avoid failures due to gas estimation being too low with tx v3 and transactions the use escaping

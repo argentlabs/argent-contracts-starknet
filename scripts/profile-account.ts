@@ -14,7 +14,6 @@ import {
   deployAccountWithoutGuardian,
   deployOldAccount,
   deployOpenZeppelinAccount,
-  getEthContract,
   provider,
   setupSession,
 } from "../lib";
@@ -33,7 +32,7 @@ if (provider.isDevnet) {
   privateKey = new StarknetKeyPair().privateKey;
 }
 
-const ethContract = await getEthContract();
+const ethContract = await provider.getEthContract();
 const recipient = "0xadbe1";
 const amount = uint256.bnToUint256(1);
 const starknetOwner = new StarknetKeyPair(privateKey);

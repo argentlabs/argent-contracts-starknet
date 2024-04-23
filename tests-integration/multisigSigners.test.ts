@@ -4,7 +4,7 @@ import {
   declareFixtureContract,
   deployMultisig,
   ensureSuccess,
-  getEthContract,
+  provider,
   randomEip191KeyPair,
   randomEthKeyPair,
   randomSecp256r1KeyPair,
@@ -32,7 +32,7 @@ describe("Multisig: Signers types", function () {
   ];
 
   before(async () => {
-    ethContract = await getEthContract();
+    ethContract = await provider.getEthContract();
     await declareFixtureContract("Sha256Cairo0");
 
     for (const { name, keyPair } of keyPairs) {

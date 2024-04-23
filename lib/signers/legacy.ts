@@ -82,5 +82,4 @@ export class LegacyMultisigKeyPair extends LegacyKeyPair {
     return [this.publicKey.toString(), r.toString(), s.toString()];
   }
 }
-export const randomLegacyMultisigKeyPair = () => new LegacyMultisigKeyPair();
-export const randomLegacyMultisigKeyPairs = (length: number) => Array.from({ length }, randomLegacyMultisigKeyPair);
+export const randomLegacyMultisigKeyPairs = (length: number) => Array.from({ length }, () => new LegacyMultisigKeyPair());

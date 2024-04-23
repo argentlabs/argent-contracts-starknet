@@ -120,8 +120,7 @@ export async function deployLegacyMultisig(classHash: string, threshold = 1) {
   const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
   await provider.waitForTransaction(transaction_hash);
 
-  const sortedKeys = keys.sort((n1, n2) => (n1.publicKey < n2.publicKey ? -1 : 1));
-  const signers = new LegacyMultisigSigner(sortedKeys);
+  const signers = new LegacyMultisigSigner(keys);
   account.signer = signers;
   const accountContract = await loadContract(account.address);
   accountContract.connect(account);

@@ -8,9 +8,7 @@ mod ArgentMultisigAccount {
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
     use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
-    use argent::signer_storage::{
-        interface::ISignerList, {signer_list::{signer_list_component, signer_list_component::SignerLinked}}
-    };
+    use argent::signer_storage::signer_list::signer_list_component;
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
@@ -217,7 +215,9 @@ mod ArgentMultisigAccount {
                 };
             assert(data.len() == 0, 'argent/unexpected-data');
             let (_, last_signer) = self.signer_list.load();
+            // Removing directly from list to avoid events being emitted
             self.signer_list.remove_signers(signers.span(), last_signer);
+            // Adding to multisig to have events emitted
             self.multisig.add_signers(self.get_threshold(), signers_to_add);
             array![]
         }

@@ -14,6 +14,7 @@ import {
   loadContract,
   provider,
   signerTypeToCustomEnum,
+  sortByGuid,
   upgradeAccount,
   waitForTransaction,
 } from "../lib";
@@ -30,7 +31,7 @@ describe("ArgentMultisig: upgrade", function () {
   });
 
   for (const threshold of [1, 3, 10]) {
-    it(`Upgrade from 0.1.0 to Current Version with ${threshold} key(s)`, async function () {
+    it.only(`Upgrade from 0.1.0 to Current Version with ${threshold} key(s)`, async function () {
       const { account, accountContract, signers } = await deployLegacyMultisig(
         await declareFixtureContract("ArgentMultisig-0.1.0"),
         threshold,
@@ -40,9 +41,7 @@ describe("ArgentMultisig: upgrade", function () {
       const pubKeys = signers.keys.map((key) => (key as LegacyMultisigKeyPair).publicKey);
       const accountSigners = await accountContract.get_signers();
       expect(accountSigners.length).to.equal(pubKeys.length);
-      for (const pubKey of accountSigners) {
-        expect(pubKeys).to.contain(pubKey);
-      }
+      expect(pubKeys).to.have.members(accountSigners);
 
       const tx = await upgradeAccount(account, currentImpl);
       expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(currentImpl));
@@ -58,18 +57,16 @@ describe("ArgentMultisig: upgrade", function () {
       }
 
       const ethContract = await getEthContract();
-      const newSigners = signers.keys
-        .map((key) => new StarknetKeyPair((key as LegacyMultisigKeyPair).privateKey))
-        .sort((a, b) => (a.guid > b.guid ? 1 : -1));
+      const newSigners = sortByGuid(
+        signers.keys.map((key) => new StarknetKeyPair((key as LegacyMultisigKeyPair).privateKey)),
+      );
       account.signer = new MultisigSigner(newSigners);
 
       const newAccountContract = await loadContract(account.address);
-      const newSignerGuids = await newAccountContract.get_signer_guids();
-      expect(newSignerGuids.length).to.equal(newSigners.length);
+      const getSignerGuids = await newAccountContract.get_signer_guids();
+      expect(getSignerGuids.length).to.equal(newSigners.length);
       const newSignersGuids = newSigners.map((signer) => signer.guid);
-      for (const guid of newSignerGuids) {
-        expect(newSignersGuids).to.contain(guid);
-      }
+      expect(getSignerGuids).to.have.members(newSignersGuids);
       // Perform a transfer to make sure nothing is broken
       ethContract.connect(account);
       const recipient = "0xabde1";

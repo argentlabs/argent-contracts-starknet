@@ -72,7 +72,7 @@ export async function fundAccount(recipient: string, amount: number | bigint, pr
     await mintEth(recipient, provider);
     return;
   }
-  const ethContract = await provider.getEthContract(provider);
+  const ethContract = await getEthContract(provider);
   const deployer = await loadDeployer(provider);
   ethContract.connect(deployer);
 

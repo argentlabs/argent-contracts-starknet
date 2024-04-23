@@ -12,7 +12,6 @@ import {
   getTypedDataHash,
   provider,
   randomStarknetKeyPair,
-  setTime,
   waitForTransaction,
 } from "../lib";
 
@@ -76,11 +75,11 @@ describe("ArgentAccount: outside execution", function () {
     );
 
     // ensure can't be run too early
-    await setTime(initialTime - 200);
+    await provider.setTime(initialTime - 200);
     await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
 
     // ensure can't be run too late
-    await setTime(initialTime + 200);
+    await provider.setTime(initialTime + 200);
     await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
 
     // ensure the caller is as expected
@@ -95,7 +94,7 @@ describe("ArgentAccount: outside execution", function () {
       ),
     );
 
-    await setTime(initialTime);
+    await provider.setTime(initialTime);
 
     // ensure the account address is checked
     const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", account.signer, legacyRevision);
@@ -146,11 +145,11 @@ describe("ArgentAccount: outside execution", function () {
     );
 
     // ensure can't be run too early
-    await setTime(initialTime - 200);
+    await provider.setTime(initialTime - 200);
     await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
 
     // ensure can't be run too late
-    await setTime(initialTime + 200);
+    await provider.setTime(initialTime + 200);
     await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
 
     // ensure the caller is as expected
@@ -165,7 +164,7 @@ describe("ArgentAccount: outside execution", function () {
       ),
     );
 
-    await setTime(initialTime);
+    await provider.setTime(initialTime);
 
     // ensure the account address is checked
     const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", account.signer, activeRevision);
@@ -237,7 +236,7 @@ describe("ArgentAccount: outside execution", function () {
       legacyRevision,
     );
 
-    await setTime(initialTime);
+    await provider.setTime(initialTime);
 
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
@@ -261,7 +260,7 @@ describe("ArgentAccount: outside execution", function () {
       legacyRevision,
     );
 
-    await setTime(initialTime);
+    await provider.setTime(initialTime);
 
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
     const current_escape = await accountContract.get_escape();

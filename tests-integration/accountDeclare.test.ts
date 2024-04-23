@@ -7,12 +7,11 @@ import {
   getDeclareContractPayload,
   provider,
   readContract,
-  restartDevnet,
 } from "../lib";
 
 describe("ArgentAccount: declare", function () {
   beforeEach(async () => {
-    await restartDevnet();
+    await provider.restartDevnet();
   });
   for (const useTxV3 of [false, true]) {
     it(`Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) (TxV3: ${useTxV3})`, async function () {

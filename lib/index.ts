@@ -23,3 +23,5 @@ export * from "./signers/signers";
 export * from "./signers/webauthn";
 export * from "./udc";
 export * from "./upgrade";
+
+export type Constructor<T> = new (...args: any[]) => T;

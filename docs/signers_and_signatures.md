@@ -59,7 +59,7 @@ enum SignerSignature {
   Secp256k1: (Secp256k1Signer, Secp256k1Signature),
   Secp256r1: (Secp256r1Signer, Secp256r1Signature),
   Eip191: (Eip191Signer, Secp256r1Signature),
-  Webauthn: (WebauthnSigner, WebauthnAssertion),
+  Webauthn: (WebauthnSigner, WebauthnSignature),
 }
 ```
 

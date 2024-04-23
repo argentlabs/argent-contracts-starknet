@@ -24,7 +24,7 @@ const hex2buf = (hex: string) =>
 
 const toCharArray = (value: string) => CallData.compile(value.split("").map(shortString.encodeShortString));
 
-interface WebauthnAssertion {
+interface WebauthnSignature {
   cross_origin: boolean;
   client_data_json_outro: number[];
   flags: number;
@@ -81,11 +81,11 @@ export class WebauthnOwner extends KeyPair {
 
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
     const webauthnSigner = this.signer.variant.Webauthn;
-    const webauthnAssertion = await this.signHash(messageHash);
-    return CallData.compile([signerTypeToCustomEnum(SignerType.Webauthn, { webauthnSigner, webauthnAssertion })]);
+    const webauthnSignature = await this.signHash(messageHash);
+    return CallData.compile([signerTypeToCustomEnum(SignerType.Webauthn, { webauthnSigner, webauthnSignature })]);
   }
 
-  public async signHash(transactionHash: string): Promise<WebauthnAssertion> {
+  public async signHash(transactionHash: string): Promise<WebauthnSignature> {
     const flags = 0b00000101; // present and verified
     const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([flags]), new Uint8Array(4));
 

@@ -6,19 +6,20 @@ use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, u32s_to_u256
 use argent::utils::hashing::{sha256_cairo0};
 use starknet::secp256_trait::Signature;
 
-/// @notice The webauthn asserion that needs to be validated
-/// @param authenticator_data The data returned by the authenticator
-/// @param transaction_hash The transaction hash encoded in the challenge
-/// @param sha256_implementation The implementation of the sha256 hash 
+/// @notice The webauthn signature that needs to be validated
+/// @param cross_origin
 /// @param client_data_json_outro The rest of the JSON contents coming after the 'crossOrigin' value
-/// @param signature The signature as {r, s, y_parity}
+/// @param flags
+/// @param sign_count
+/// @param ec_signature The signature as {r, s, y_parity}
+/// @param sha256_implementation The implementation of the sha256 hash 
 #[derive(Drop, Copy, Serde, PartialEq)]
-struct WebauthnAssertion {
+struct WebauthnSignature {
     cross_origin: bool,
     client_data_json_outro: Span<u8>,
     flags: u8,
     sign_count: u32,
-    signature: Signature,
+    ec_signature: Signature,
     sha256_implementation: Sha256Implementation,
 }
 
@@ -40,7 +41,7 @@ fn verify_authenticator_flags(flags: u8) {
     // Verify that the User Present bit of the flags in authData is set.
     assert((flags & 0b00000001) == 0b00000001, 'nonpresent-user');
 
-    // If user verification is required for this assertion, verify that the User Verified bit of the flags in authData is set.
+    // If user verification is required for this signature, verify that the User Verified bit of the flags in authData is set.
     assert((flags & 0b00000100) == 0b00000100, 'unverified-user');
 
     // Allowing attested credential data and extension data if present
@@ -51,22 +52,22 @@ fn verify_authenticator_flags(flags: u8) {
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
 /// Encoding spec: https://www.w3.org/TR/webauthn/#clientdatajson-verification
-fn encode_client_data_json(hash: felt252, assertion: WebauthnAssertion, origin: Span<u8>) -> Span<u8> {
+fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: Span<u8>) -> Span<u8> {
     let mut json = client_data_json_intro();
-    json.append_all(encode_challenge(hash, assertion.sha256_implementation));
+    json.append_all(encode_challenge(hash, signature.sha256_implementation));
     json.append_all(array!['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
     json.append_all(origin);
     json.append_all(array!['"', ',', '"', 'c', 'r', 'o', 's', 's', 'O', 'r', 'i', 'g', 'i', 'n', '"', ':'].span());
-    if assertion.cross_origin {
+    if signature.cross_origin {
         json.append_all(array!['t', 'r', 'u', 'e'].span());
     } else {
         json.append_all(array!['f', 'a', 'l', 's', 'e'].span());
     }
-    if assertion.client_data_json_outro.is_empty() {
+    if signature.client_data_json_outro.is_empty() {
         json.append('}');
     } else {
         json.append(',');
-        json.append_all(assertion.client_data_json_outro);
+        json.append_all(signature.client_data_json_outro);
     }
     json.span()
 }
@@ -78,39 +79,38 @@ fn encode_challenge(hash: felt252, sha256_implementation: Sha256Implementation) 
         Sha256Implementation::Cairo1 => 1,
     };
     bytes.append(last_byte);
-    assert(bytes.len() == 33, 'invalid-challenge-length'); // remove appended '=' signs if this assertion fails
-    let encoded = Base64UrlEncoder::encode(bytes).span();
-    encoded
+    assert(bytes.len() == 33, 'invalid-challenge-length'); // remove appended '=' signs if this signature fails
+    Base64UrlEncoder::encode(bytes).span()
 }
 
-fn encode_authenticator_data(assertion: WebauthnAssertion, rp_id_hash: u256) -> Array<u8> {
+fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> Array<u8> {
     let mut bytes = u256_to_u8s(rp_id_hash);
-    bytes.append(assertion.flags);
-    bytes.append_all(u32s_to_u8s(array![assertion.sign_count.into()].span()));
+    bytes.append(signature.flags);
+    bytes.append_all(u32s_to_u8s(array![signature.sign_count.into()].span()));
     bytes
 }
 
-fn get_webauthn_hash_cairo0(hash: felt252, signer: WebauthnSigner, assertion: WebauthnAssertion) -> Option<u256> {
-    let client_data_json = encode_client_data_json(hash, assertion, signer.origin);
+fn get_webauthn_hash_cairo0(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> Option<u256> {
+    let client_data_json = encode_client_data_json(hash, signature, signer.origin);
     let client_data_hash = u32s_to_u8s(sha256_cairo0(client_data_json)?);
-    let mut message = encode_authenticator_data(assertion, signer.rp_id_hash.into());
+    let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
     message.append_all(client_data_hash);
     Option::Some(u32s_to_u256(sha256_cairo0(message.span())?))
 }
 
-fn get_webauthn_hash_cairo1(hash: felt252, signer: WebauthnSigner, assertion: WebauthnAssertion) -> u256 {
-    let client_data_json = encode_client_data_json(hash, assertion, signer.origin);
+fn get_webauthn_hash_cairo1(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
+    let client_data_json = encode_client_data_json(hash, signature, signer.origin);
     let client_data_hash = sha256(client_data_json.snapshot.clone()).span();
-    let mut message = encode_authenticator_data(assertion, signer.rp_id_hash.into());
+    let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
     message.append_all(client_data_hash);
     sha256(message).span().try_into().expect('invalid-hash')
 }
 
-fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, assertion: WebauthnAssertion) -> u256 {
-    match assertion.sha256_implementation {
-        Sha256Implementation::Cairo0 => get_webauthn_hash_cairo0(hash, signer, assertion)
+fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
+    match signature.sha256_implementation {
+        Sha256Implementation::Cairo0 => get_webauthn_hash_cairo0(hash, signer, signature)
             .expect('sha256-cairo0-failed'),
-        Sha256Implementation::Cairo1 => get_webauthn_hash_cairo1(hash, signer, assertion),
+        Sha256Implementation::Cairo1 => get_webauthn_hash_cairo1(hash, signer, signature),
     }
 }
 

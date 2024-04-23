@@ -1,6 +1,5 @@
 #[starknet::contract(account)]
 mod ArgentAccount {
-    use alexandria_data_structures::array_ext::ArrayTraitExt;
     use argent::account::interface::{IAccount, IArgentAccount, IArgentUserAccount, IDeprecatedArgentAccount, Version};
     use argent::introspection::src5::src5_component;
     use argent::outside_execution::{

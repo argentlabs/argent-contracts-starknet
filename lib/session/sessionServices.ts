@@ -188,7 +188,7 @@ export class DappService {
   ): Promise<ArraySignatureType> {
     const session = this.compileSessionHelper(completedSession);
 
-    const guardian_signature = await this.argentBackend.signOutsideTxAndSession(
+    const guardianSignature = await this.argentBackend.signOutsideTxAndSession(
       calls,
       completedSession,
       accountAddress,
@@ -210,7 +210,7 @@ export class DappService {
       sessionSignature,
       cacheAuthorization,
       sessionAuthorizationSignature,
-      guardian_signature,
+      guardianSignature,
       accountAddress,
     );
 
@@ -228,7 +228,7 @@ export class DappService {
   ): Promise<ArraySignatureType> {
     const session = this.compileSessionHelper(completedSession);
 
-    const guardian_signature = await this.argentBackend.signTxAndSession(
+    const guardianSignature = await this.argentBackend.signTxAndSession(
       calls,
       transactionsDetail,
       completedSession,
@@ -247,7 +247,7 @@ export class DappService {
       session_signature,
       cacheAuthorization,
       sessionAuthorizationSignature,
-      guardian_signature,
+      guardianSignature,
       accountAddress,
     );
 
@@ -313,7 +313,7 @@ export class DappService {
     sessionSignature: bigint[],
     cache_authorization: boolean,
     session_authorization: string[],
-    guardian_signature: bigint[],
+    guardianSignature: bigint[],
     accountAddress: string,
   ): Promise<SessionToken> {
     const sessionContract = await loadContract(accountAddress);
@@ -326,7 +326,7 @@ export class DappService {
       session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
       guardian_signature: this.getStarknetSignatureType(
         this.argentBackend.getBackendKey(accountAddress),
-        guardian_signature,
+        guardianSignature,
       ),
       proofs: this.getSessionProofs(completedSession, calls),
     };

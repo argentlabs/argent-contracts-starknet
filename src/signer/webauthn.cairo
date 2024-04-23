@@ -9,7 +9,7 @@ use starknet::secp256_trait::Signature;
 /// @param authenticator_data The data returned by the authenticator
 /// @param transaction_hash The transaction hash encoded in the challenge
 /// @param sha256_implementation The implementation of the sha256 hash 
-/// @param client_data_json_outro The rest of the JSON contents coming after the 'origin' value
+/// @param client_data_json_outro The rest of the JSON contents coming after the 'crossOrigin' value
 /// @param signature The signature as {r, s, y_parity}
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnAssertion {

@@ -8,7 +8,7 @@ const newClassHash = "0x2fadbf77a721b94bdcc3032d86a8921661717fa55145bccf88160ee2
 const classHashToUse = newClassHash;
 /////////////////////////////////////////////
 
-const ethBalance = await provider.getEthBalance(deployer.address);
+const ethBalance = await provider.ethBalance(deployer.address);
 console.log(`eth balance: ${ethBalance}`);
 if (ethBalance == 0n) {
   throw new Error("eth balance is 0");

@@ -2,7 +2,7 @@ import { Call, uint256 } from "starknet";
 import { deployerV3, provider } from "../lib";
 
 //////////////////// Configure the tx to send here: ///////////
-const strk = await provider.getStrkContract();
+const strk = await provider.strkContract();
 // const call = await eth.populateTransaction.transfer("deployerV3.address", uint256.bnToUint256(42n));
 const call = await strk.populateTransaction.transfer(deployerV3.address, uint256.bnToUint256(10000000000000000000000n));
 ///////////////////////////////////////////////////////////////

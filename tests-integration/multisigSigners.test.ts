@@ -32,7 +32,7 @@ describe("Multisig: Signers types", function () {
   ];
 
   before(async () => {
-    ethContract = await provider.getEthContract();
+    ethContract = await provider.ethContract();
     await declareFixtureContract("Sha256Cairo0");
 
     for (const { name, keyPair } of keyPairs) {

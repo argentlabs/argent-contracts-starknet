@@ -20,10 +20,10 @@ describe("ArgentAccount: declare", function () {
     it(`Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) (TxV3: ${useTxV3})`, async function () {
       const { account } = await deployAccount({ useTxV3 });
       // Using version 1 will require ETH
-      mintEth(account.address, 1e18);
+      await mintEth(account.address, 1e18);
       const contract: CompiledSierra = readContract(`${fixturesFolder}Proxy.contract_class.json`);
       await expectRevertWithErrorMessage("argent/invalid-declare-version", () =>
-        account.declare({ contract }, { version: "0x1" }),
+        account.declare({ contract }),
       );
     });
 

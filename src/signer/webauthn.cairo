@@ -39,10 +39,10 @@ fn verify_authenticator_flags(flags: u8) {
     // rpIdHash is verified being signer over the Array<u8> encoding
 
     // Verify that the User Present bit of the flags in authData is set.
-    assert((flags & 0b00000001) == 0b00000001, 'nonpresent-user');
+    assert!((flags & 0b00000001) == 0b00000001, "webauthn/nonpresent-user");
 
     // If user verification is required for this signature, verify that the User Verified bit of the flags in authData is set.
-    assert((flags & 0b00000100) == 0b00000100, 'unverified-user');
+    assert!((flags & 0b00000100) == 0b00000100, "webauthn/unverified-user");
 
     // Allowing attested credential data and extension data if present
     ()
@@ -79,7 +79,7 @@ fn encode_challenge(hash: felt252, sha256_implementation: Sha256Implementation) 
         Sha256Implementation::Cairo1 => 1,
     };
     bytes.append(last_byte);
-    assert(bytes.len() == 33, 'invalid-challenge-length'); // remove appended '=' signs if this signature fails
+    assert!(bytes.len() == 33, "webauthn/invalid-challenge-length"); // remove '=' signs if this assert fails
     Base64UrlEncoder::encode(bytes).span()
 }
 
@@ -103,13 +103,13 @@ fn get_webauthn_hash_cairo1(hash: felt252, signer: WebauthnSigner, signature: We
     let client_data_hash = sha256(client_data_json.snapshot.clone()).span();
     let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
     message.append_all(client_data_hash);
-    sha256(message).span().try_into().expect('invalid-hash')
+    sha256(message).span().try_into().expect('webauthn/invalid-hash')
 }
 
 fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
     match signature.sha256_implementation {
         Sha256Implementation::Cairo0 => get_webauthn_hash_cairo0(hash, signer, signature)
-            .expect('sha256-cairo0-failed'),
+            .expect('webauthn/sha256-cairo0-failed'),
         Sha256Implementation::Cairo1 => get_webauthn_hash_cairo1(hash, signer, signature),
     }
 }

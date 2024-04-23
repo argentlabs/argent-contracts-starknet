@@ -56,6 +56,7 @@ fn verify_authenticator_data(authenticator_data: AuthenticatorData, expected_rp_
 /// Example JSON:
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
+/// Encoding spec: https://www.w3.org/TR/webauthn/#clientdatajson-verification
 fn encode_client_data_json(assertion: WebauthnAssertion, origin: Span<u8>, hash: felt252) -> Span<u8> {
     let mut json = client_data_json_intro();
     json.append_all(encode_challenge(hash, assertion.sha256_implementation));

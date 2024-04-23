@@ -1,7 +1,7 @@
 import { concatBytes } from "@noble/curves/abstract/utils";
 import { p256 as secp256r1 } from "@noble/curves/p256";
 import { BinaryLike, createHash } from "crypto";
-import { ArraySignatureType, CairoCustomEnum, CallData, hash, shortString, uint256 } from "starknet";
+import { ArraySignatureType, CairoCustomEnum, CallData, RawArgs, Uint256, hash, shortString, uint256 } from "starknet";
 import { KeyPair, SignerType, signerTypeToCustomEnum } from "..";
 
 // Bytes fn
@@ -25,24 +25,28 @@ const hex2buf = (hex: string) =>
 
 const toCharArray = (value: string) => CallData.compile(value.split("").map(shortString.encodeShortString));
 
-// Constants
-const rpIdHash = sha256("localhost");
-const origin = "http://localhost:5173";
-
 interface WebauthnAssertion {
-  authenticatorData: Uint8Array;
-  clientDataJson: Uint8Array;
-  r: bigint;
-  s: bigint;
-  yParity: boolean;
+  authenticator_data: AuthenticatorData;
+  cross_origin: boolean;
+  client_data_json_outro: number[];
+  sha256_implementation: CairoCustomEnum;
+  signature: { r: Uint256; s: Uint256; y_parity: boolean; };
+}
+
+interface AuthenticatorData {
+  rp_id_hash: Uint256;
+  flags: number;
+  sign_count: number;
 }
 
 export class WebauthnOwner extends KeyPair {
   pk: Uint8Array;
+  rpIdHash: Uint256;
 
-  constructor(pk?: string) {
+  constructor(pk?: string, public rpId = "localhost", public origin = "http://localhost:5173") {
     super();
     this.pk = pk ? hex2buf(normalizeTransactionHash(pk)) : secp256r1.utils.randomPrivateKey();
+    this.rpIdHash = uint256.bnToUint256(buf2hex(sha256(rpId)));
   }
 
   public get publicKey() {
@@ -50,9 +54,9 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public get guid(): bigint {
-    const rpIdHashAsU256 = uint256.bnToUint256(buf2hex(rpIdHash));
+    const rpIdHashAsU256 = this.rpIdHash;
     const publicKeyAsU256 = uint256.bnToUint256(buf2hex(this.publicKey));
-    const originBytes = toCharArray(origin);
+    const originBytes = toCharArray(this.origin);
     const elements = [
       shortString.encodeShortString("Webauthn Signer"),
       originBytes.length,
@@ -71,51 +75,43 @@ export class WebauthnOwner extends KeyPair {
 
   public get signer(): CairoCustomEnum {
     return signerTypeToCustomEnum(SignerType.Webauthn, {
-      origin: toCharArray(origin),
-      rp_id_hash: uint256.bnToUint256(buf2hex(rpIdHash)),
+      origin: toCharArray(this.origin),
+      rp_id_hash: this.rpIdHash,
       pubkey: uint256.bnToUint256(buf2hex(this.publicKey)),
     });
   }
 
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    messageHash = normalizeTransactionHash(messageHash);
-    const { authenticatorData, r, s, yParity } = await this.signHash(messageHash);
+    const webauthnSigner = this.signer.variant.Webauthn;
+    const webauthnAssertion = await this.signHash(messageHash);
+    return CallData.compile([signerTypeToCustomEnum(SignerType.Webauthn, { webauthnSigner, webauthnAssertion })]);
+  }
 
-    const webauthnSigner = {
-      origin: toCharArray(origin),
-      rp_id_hash: uint256.bnToUint256(buf2hex(rpIdHash)),
-      pubkey: uint256.bnToUint256(buf2hex(this.publicKey)),
-    };
-    const webauthnAssertion = {
-      authenticator_data: CallData.compile(Array.from(authenticatorData)),
+  public async signHash(transactionHash: string): Promise<WebauthnAssertion> {
+    const flags = 0b0101; // present and verified
+    const authenticator_data = { rp_id_hash: this.rpIdHash, flags, sign_count: 0 };
+    const authenticatorBytes = concatBytes(sha256(this.rpId), new Uint8Array([flags]), new Uint8Array(4));
+
+    const challenge = buf2base64url(hex2buf(normalizeTransactionHash(transactionHash) + "00"));
+    const clientData = { type: "webauthn.get", challenge, origin: this.origin, crossOrigin: false };
+    const clientDataJson = new TextEncoder().encode(JSON.stringify(clientData));
+
+    const message = concatBytes(authenticatorBytes, sha256(clientDataJson));
+    const messageHash = sha256(message);
+
+    const { r, s, recovery } = secp256r1.sign(messageHash, this.pk);
+
+    return {
+      authenticator_data,
       cross_origin: false,
       client_data_json_outro: [],
       sha256_implementation: new CairoCustomEnum({ Cairo0: {}, Cairo1: undefined }),
       signature: {
         r: uint256.bnToUint256(r),
         s: uint256.bnToUint256(s),
-        y_parity: yParity,
+        y_parity: recovery !== 0,
       },
-    };
-
-    return CallData.compile([signerTypeToCustomEnum(SignerType.Webauthn, { webauthnSigner, webauthnAssertion })]);
-  }
-
-  public async signHash(transactionHash: string): Promise<WebauthnAssertion> {
-    const flags = new Uint8Array([0b0001 | 0b0100]); // present and verified
-    const signCount = new Uint8Array(4); // [0_u8, 0_u8, 0_u8, 0_u8]
-    const authenticatorData = concatBytes(rpIdHash, flags, signCount);
-
-    const challenge = buf2base64url(hex2buf(transactionHash + "00"));
-    const clientData = { type: "webauthn.get", challenge, origin, crossOrigin: false };
-    const clientDataJson = new TextEncoder().encode(JSON.stringify(clientData));
-
-    const message = concatBytes(authenticatorData, sha256(clientDataJson));
-    const messageHash = sha256(message);
-
-    const { r, s, recovery } = secp256r1.sign(messageHash, this.pk);
-
-    return { authenticatorData, clientDataJson, r, s, yParity: recovery !== 0 };
+    }
   }
 }
 

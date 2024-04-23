@@ -57,6 +57,8 @@ trait ISessionable<TContractState> {
     /// @notice View function to see if a session is revoked, returns a boolean 
     fn is_session_revoked(self: @TContractState, session_hash: felt252) -> bool;
 
-    /// @notice View function to see if a session authorization is cached, returns a boolean
+    /// @notice View function to see if a session authorization is cached
+    /// @param session_hash Hash of the session token
+    /// @return Whether the session is cached
     fn is_session_authorization_cached(self: @TContractState, session_hash: felt252) -> bool;
 }

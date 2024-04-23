@@ -20,21 +20,21 @@ export const fixturesFolder = "./tests-integration/fixtures/argent_";
 
 export const WithContracts = <T extends Constructor<RpcProvider>>(Base: T) =>
   class extends Base {
-    private classHashCache: Record<string, string> = {};
+    private classCache: Record<string, string> = {};
 
-    removeFromCache(contractName: string) {
-      delete this.classHashCache[contractName];
+    removeFromClassCache(contractName: string) {
+      delete this.classCache[contractName];
     }
 
-    clearCache() {
-      for (const contractName of Object.keys(this.classHashCache)) {
-        delete this.classHashCache[contractName];
+    clearClassCache() {
+      for (const contractName of Object.keys(this.classCache)) {
+        delete this.classCache[contractName];
       }
     }
 
     // Could extends Account to add our specific fn but that's too early.
     async declareLocalContract(contractName: string, wait = true, folder = contractsFolder): Promise<string> {
-      const cachedClass = this.classHashCache[contractName];
+      const cachedClass = this.classCache[contractName];
       if (cachedClass) {
         return cachedClass;
       }
@@ -49,7 +49,7 @@ export const WithContracts = <T extends Constructor<RpcProvider>>(Base: T) =>
         await provider.waitForTransaction(transaction_hash);
         console.log(`\t${contractName} declared`);
       }
-      this.classHashCache[contractName] = class_hash;
+      this.classCache[contractName] = class_hash;
       return class_hash;
     }
 
@@ -57,10 +57,10 @@ export const WithContracts = <T extends Constructor<RpcProvider>>(Base: T) =>
       return await this.declareLocalContract(contractName, wait, fixturesFolder);
     }
 
-    async loadContract(contractAddress: string, classHash?: string): Promise<ContractWithClassHash> {
+    async loadContract(contractAddress: string, classHash?: string): Promise<ContractWithClass> {
       const { abi } = await provider.getClassAt(contractAddress);
       classHash ??= await provider.getClassHashAt(contractAddress);
-      return new ContractWithClassHash(abi, contractAddress, provider, classHash);
+      return new ContractWithClass(abi, contractAddress, provider, classHash);
     }
 
     async deployContract(
@@ -68,7 +68,7 @@ export const WithContracts = <T extends Constructor<RpcProvider>>(Base: T) =>
       payload: Omit<UniversalDeployerContractPayload, "classHash"> | UniversalDeployerContractPayload[] = {},
       details?: UniversalDetails,
       folder = contractsFolder,
-    ): Promise<ContractWithClassHash> {
+    ): Promise<ContractWithClass> {
       const classHash = await this.declareLocalContract(contractName, true, folder);
       const { contract_address } = await deployer.deployContract({ ...payload, classHash }, details);
 
@@ -77,7 +77,7 @@ export const WithContracts = <T extends Constructor<RpcProvider>>(Base: T) =>
     }
   };
 
-export class ContractWithClassHash extends Contract {
+export class ContractWithClass extends Contract {
   constructor(
     abi: Abi,
     address: string,

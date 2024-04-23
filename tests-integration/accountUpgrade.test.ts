@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import {
-  ContractWithClassHash,
+  ContractWithClass,
   LegacyArgentSigner,
   deployAccount,
   deployLegacyAccount,
@@ -14,7 +14,7 @@ import {
 
 describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
-  let mockDapp: ContractWithClassHash;
+  let mockDapp: ContractWithClass;
 
   before(async () => {
     argentAccountClassHash = await provider.declareLocalContract("ArgentAccount");

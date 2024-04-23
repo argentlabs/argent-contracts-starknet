@@ -25,7 +25,7 @@ if (provider.isDevnet) {
   // With the KeyPairs hardcoded, we gotta reset to avoid some issues
   await provider.restart();
   privateKey = "0x1";
-  provider.clearCache();
+  provider.clearClassCache();
 } else {
   privateKey = new StarknetKeyPair().privateKey;
 }

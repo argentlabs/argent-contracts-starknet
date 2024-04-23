@@ -19,7 +19,7 @@ export const WithDevnet = <T extends ReturnType<typeof WithContracts>>(Base: T) 
     async restartDevnet() {
       if (this.isDevnet) {
         await this.restart();
-        this.clearCache();
+        this.clearClassCache();
       }
     }
 

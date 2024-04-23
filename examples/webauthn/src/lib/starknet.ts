@@ -34,7 +34,7 @@ export async function getEthContract(provider: ProviderType) {
   if (ethContract) {
     return ethContract;
   }
-  ethContract = await provider.loadContract(ethAddress, provider);
+  ethContract = await loadContract(ethAddress, provider);
   return ethContract;
 }
 

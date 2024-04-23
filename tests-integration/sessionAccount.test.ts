@@ -235,7 +235,7 @@ describe("Hybrid Session Account: execute calls", function () {
       randomStarknetKeyPair(),
     );
 
-    await expectRevertWithErrorMessage("session/backup-guardian-found", () => accountWithDappSigner.execute(calls));
+    await expectRevertWithErrorMessage("session/signer-is-not-guardian", () => accountWithDappSigner.execute(calls));
   });
 
   it("Fail if guardian backup signed session (cached)", async function () {
@@ -260,6 +260,6 @@ describe("Hybrid Session Account: execute calls", function () {
       randomStarknetKeyPair(),
     );
 
-    await expectRevertWithErrorMessage("session/backup-guardian-found", () => accountWithDappSigner.execute(calls));
+    await expectRevertWithErrorMessage("session/signer-is-not-guardian", () => accountWithDappSigner.execute(calls));
   });
 });

@@ -197,7 +197,7 @@ export class DappService {
       cache_authorization,
     );
 
-    const session_signature = await this.signTxAndSession(
+    const sessionSignature = await this.signTxAndSession(
       completedSession,
       transactionHash,
       accountAddress,

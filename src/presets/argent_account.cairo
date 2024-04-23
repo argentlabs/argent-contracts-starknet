@@ -97,15 +97,13 @@ mod ArgentAccount {
         _guardian_backup_non_stark: LegacyMap<felt252, felt252>,
         /// The ongoing escape, if any
         _escape: LegacyEscape,
-        /// Keeps track of the last time an escape was performed by the guardian.
-        /// Rounded down to the hour: https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 
-        /// Used to limit the number of escapes the account will pay for
-        /// It resets when an escape is completed or canceled
+        /// The following 4 fields are used to limit the number of escapes the account will pay for
+        /// Values are Rounded down to the hour: https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 
+        /// Values are resets when an escape is completed or canceled
+        last_guardian_trigger_escape_attempt: u64,
+        last_owner_trigger_escape_attempt: u64,
         last_guardian_escape_attempt: u64,
-        /// Keeps track of the last time an escape was performed by the owner. 
-        /// Rounded down to the hour: https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 
-        /// Used to limit the number of transactions the account will pay for
-        /// It resets when an escape is completed or canceled
+        //
         last_owner_escape_attempt: u64,
         escape_security_period: u64,
     }
@@ -748,6 +746,14 @@ mod ArgentAccount {
             NAME
         }
 
+        fn get_last_owner_trigger_escape_attempt(self: @ContractState) -> u64 {
+            self.last_owner_trigger_escape_attempt.read()
+        }
+
+        fn get_last_guardian_trigger_escape_attempt(self: @ContractState) -> u64 {
+            self.last_guardian_trigger_escape_attempt.read()
+        }
+
         fn get_last_guardian_escape_attempt(self: @ContractState) -> u64 {
             self.last_guardian_escape_attempt.read()
         }
@@ -796,8 +802,8 @@ mod ArgentAccount {
 
                     if selector == selector!("trigger_escape_owner") {
                         if !is_from_outside {
-                            assert_valid_escape_parameters(self.last_guardian_escape_attempt.read());
-                            self.last_guardian_escape_attempt.write(get_block_timestamp());
+                            assert_valid_escape_parameters(self.last_guardian_trigger_escape_attempt.read());
+                            self.last_guardian_trigger_escape_attempt.write(get_block_timestamp());
                         }
 
                         full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
@@ -826,8 +832,8 @@ mod ArgentAccount {
                         self.assert_guardian_set();
 
                         if !is_from_outside {
-                            assert_valid_escape_parameters(self.last_owner_escape_attempt.read());
-                            self.last_owner_escape_attempt.write(get_block_timestamp());
+                            assert_valid_escape_parameters(self.last_owner_trigger_escape_attempt.read());
+                            self.last_owner_trigger_escape_attempt.write(get_block_timestamp());
                         }
 
                         let new_guardian: Option<Signer> = full_deserialize(*call.calldata)
@@ -1033,6 +1039,8 @@ mod ArgentAccount {
 
         #[inline(always)]
         fn reset_escape_timestamps(ref self: ContractState) {
+            self.last_owner_trigger_escape_attempt.write(0);
+            self.last_guardian_trigger_escape_attempt.write(0);
             self.last_owner_escape_attempt.write(0);
             self.last_guardian_escape_attempt.write(0);
         }

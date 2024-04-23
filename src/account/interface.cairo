@@ -47,7 +47,7 @@ trait IArgentUserAccount<TContractState> {
 
     /// @notice Changes the security period used for escapes
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
-    /// @param new_security_period new delay in seconds before the escape can be completed
+    /// @param new_security_period new delay in seconds before the escape can be completed. Must be >= 10 minutes
     fn set_escape_security_period(ref self: TContractState, new_security_period: u64);
 
     /// @notice Changes the owner
@@ -122,6 +122,8 @@ trait IArgentUserAccount<TContractState> {
     fn get_escape(self: @TContractState) -> LegacyEscape;
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
+    fn get_last_owner_trigger_escape_attempt(self: @TContractState) -> u64;
+    fn get_last_guardian_trigger_escape_attempt(self: @TContractState) -> u64;
     fn get_last_owner_escape_attempt(self: @TContractState) -> u64;
     fn get_last_guardian_escape_attempt(self: @TContractState) -> u64;
 

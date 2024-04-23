@@ -10,12 +10,12 @@ fn set_escape_security_period() {
     let default_escape_security_period = account.get_escape_security_period();
     assert_eq!(default_escape_security_period, consteval_int!(7 * 24 * 60 * 60), "Default value incorrect");
     let mut spy = spy_events(SpyOn::One(account.contract_address));
-    account.set_escape_security_period(42);
+    account.set_escape_security_period(4200);
     let new_escape_security_period = account.get_escape_security_period();
-    assert_eq!(new_escape_security_period, 42, "New value incorrect");
+    assert_eq!(new_escape_security_period, 4200, "New value incorrect");
 
     let event = ArgentAccount::Event::EscapeSecurityPeriodChanged(
-        ArgentAccount::EscapeSecurityPeriodChanged { escape_security_period: 42 }
+        ArgentAccount::EscapeSecurityPeriodChanged { escape_security_period: 4200 }
     );
     spy.assert_emitted(@array![(account.contract_address, event)]);
     assert_eq!(spy.events.len(), 0, "excess events");
@@ -24,7 +24,7 @@ fn set_escape_security_period() {
 #[test]
 fn set_escape_security_period_get_escape_status() {
     let account = initialize_account();
-    account.set_escape_security_period(42);
+    account.set_escape_security_period(4200);
 
     let (_, no_escape) = account.get_escape_and_status();
     assert_eq!(no_escape, EscapeStatus::None, "Should be EscapeStatus::None");
@@ -32,19 +32,19 @@ fn set_escape_security_period_get_escape_status() {
     start_warp(CheatTarget::One(account.contract_address), 100);
     account.trigger_escape_owner(starknet_signer_from_pubkey(12));
 
-    start_warp(CheatTarget::One(account.contract_address), 100 + 42 - 1);
+    start_warp(CheatTarget::One(account.contract_address), 100 + 4200 - 1);
     let (_, not_ready) = account.get_escape_and_status();
     assert_eq!(not_ready, EscapeStatus::NotReady, "Should be EscapeStatus::NotReady");
 
-    start_warp(CheatTarget::One(account.contract_address), 100 + 42);
+    start_warp(CheatTarget::One(account.contract_address), 100 + 4200);
     let (_, ready_early) = account.get_escape_and_status();
     assert_eq!(ready_early, EscapeStatus::Ready, "Should be EscapeStatus::Ready 1");
 
-    start_warp(CheatTarget::One(account.contract_address), 100 + (42 * 2) - 1);
+    start_warp(CheatTarget::One(account.contract_address), 100 + (4200 * 2) - 1);
     let (_, ready_late) = account.get_escape_and_status();
     assert_eq!(ready_late, EscapeStatus::Ready, "Should be EscapeStatus::Ready 2");
 
-    start_warp(CheatTarget::One(account.contract_address), 100 + (42 * 2));
+    start_warp(CheatTarget::One(account.contract_address), 100 + (4200 * 2));
     let (_, expired) = account.get_escape_and_status();
     assert_eq!(expired, EscapeStatus::Expired, "Should be EscapeStatus::Expired");
 }
@@ -54,7 +54,7 @@ fn set_escape_security_period_get_escape_status() {
 fn set_escape_security_period_outside() {
     let account = initialize_account();
     start_prank(CheatTarget::One(account.contract_address), 'another caller'.try_into().unwrap());
-    account.set_escape_security_period(42);
+    account.set_escape_security_period(4200);
 }
 
 #[test]
@@ -68,20 +68,20 @@ fn set_escape_security_period__to_zero() {
 #[should_panic(expected: ('argent/invalid-escape',))]
 fn set_escape_security_period_escape_too_early() {
     let account = initialize_account();
-    account.set_escape_security_period(42);
+    account.set_escape_security_period(4200);
     start_warp(CheatTarget::One(account.contract_address), 100);
     account.trigger_escape_owner(starknet_signer_from_pubkey(12));
-    start_warp(CheatTarget::One(account.contract_address), 100 + 42 - 1);
+    start_warp(CheatTarget::One(account.contract_address), 100 + 4200 - 1);
     account.escape_owner();
 }
 
 #[test]
 fn set_escape_security_period_escape_escape() {
     let account = initialize_account();
-    account.set_escape_security_period(42);
+    account.set_escape_security_period(4200);
     start_warp(CheatTarget::One(account.contract_address), 100);
     account.trigger_escape_owner(starknet_signer_from_pubkey(12));
-    start_warp(CheatTarget::One(account.contract_address), 100 + 42);
+    start_warp(CheatTarget::One(account.contract_address), 100 + 4200);
     account.escape_owner();
     let new_owner = account.get_owner();
     assert_eq!(new_owner, 12, "Wrong new owner");
@@ -91,10 +91,10 @@ fn set_escape_security_period_escape_escape() {
 #[should_panic(expected: ('argent/invalid-escape',))]
 fn set_escape_security_period_escape_escape_too_late() {
     let account = initialize_account();
-    account.set_escape_security_period(42);
+    account.set_escape_security_period(4200);
     start_warp(CheatTarget::One(account.contract_address), 100);
     account.trigger_escape_owner(starknet_signer_from_pubkey(12));
-    start_warp(CheatTarget::One(account.contract_address), 100 + (42 * 2));
+    start_warp(CheatTarget::One(account.contract_address), 100 + (4200 * 2));
     account.escape_owner();
 }
 

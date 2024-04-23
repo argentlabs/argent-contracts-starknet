@@ -1,7 +1,7 @@
 import { concatBytes } from "@noble/curves/abstract/utils";
 import { p256 as secp256r1 } from "@noble/curves/p256";
 import { BinaryLike, createHash } from "crypto";
-import { ArraySignatureType, CairoCustomEnum, CallData, RawArgs, Uint256, hash, shortString, uint256 } from "starknet";
+import { ArraySignatureType, CairoCustomEnum, CallData, Uint256, hash, shortString, uint256 } from "starknet";
 import { KeyPair, SignerType, signerTypeToCustomEnum } from "..";
 
 // Bytes fn
@@ -30,7 +30,7 @@ interface WebauthnAssertion {
   cross_origin: boolean;
   client_data_json_outro: number[];
   sha256_implementation: CairoCustomEnum;
-  signature: { r: Uint256; s: Uint256; y_parity: boolean; };
+  signature: { r: Uint256; s: Uint256; y_parity: boolean };
 }
 
 interface AuthenticatorData {
@@ -43,7 +43,11 @@ export class WebauthnOwner extends KeyPair {
   pk: Uint8Array;
   rpIdHash: Uint256;
 
-  constructor(pk?: string, public rpId = "localhost", public origin = "http://localhost:5173") {
+  constructor(
+    pk?: string,
+    public rpId = "localhost",
+    public origin = "http://localhost:5173",
+  ) {
     super();
     this.pk = pk ? hex2buf(normalizeTransactionHash(pk)) : secp256r1.utils.randomPrivateKey();
     this.rpIdHash = uint256.bnToUint256(buf2hex(sha256(rpId)));
@@ -111,7 +115,7 @@ export class WebauthnOwner extends KeyPair {
         s: uint256.bnToUint256(s),
         y_parity: recovery !== 0,
       },
-    }
+    };
   }
 }
 

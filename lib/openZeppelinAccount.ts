@@ -1,6 +1,6 @@
 import { Account, CallData, RPC, hash, num } from "starknet";
 import { deployer, fundAccountCall } from "./accounts";
-import { ContractWithClassHash, declareContract, loadContract } from "./contracts";
+import { ContractWithClassHash } from "./contracts";
 import { provider } from "./provider";
 import { LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { randomStarknetKeyPair } from "./signers/signers";
@@ -22,7 +22,7 @@ export type DeployOzAccountResult = {
 };
 
 export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): Promise<DeployOzAccountResult> {
-  const classHash = await declareContract("Account");
+  const classHash = await provider.declareLocalContract("Account");
   const finalParams = {
     ...params,
     salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
@@ -53,7 +53,7 @@ export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): 
   });
 
   await provider.waitForTransaction(deployTxHash);
-  const accountContract = await loadContract(account.address, classHash);
+  const accountContract = await provider.loadContract(account.address, classHash);
   accountContract.connect(account);
 
   return { ...finalParams, account, accountContract, deployTxHash };

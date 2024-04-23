@@ -2,7 +2,6 @@ import { expect } from "chai";
 import { CallData, Contract, num, uint256 } from "starknet";
 import {
   deployAccount,
-  deployContract,
   ensureSuccess,
   expectEvent,
   expectRevertWithErrorMessage,
@@ -16,7 +15,7 @@ describe("ArgentAccount: multicall", function () {
   let ethContract: Contract;
 
   before(async () => {
-    mockDappContract = await deployContract("MockDapp");
+    mockDappContract = await provider.deployContract("MockDapp");
     ethContract = await provider.ethContract();
   });
 

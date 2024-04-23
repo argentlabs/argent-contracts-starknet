@@ -1,9 +1,9 @@
 import "dotenv/config";
-import { declareContract, deployAccount, deployer, loadContract, provider } from "../lib";
+import { deployAccount, deployer, provider } from "../lib";
 
-const accountClassHash = await declareContract("ArgentAccount", true);
+const accountClassHash = await provider.declareLocalContract("ArgentAccount", true);
 console.log("ArgentAccount class hash:", accountClassHash);
-const mockDappClassHash = await declareContract("MockDapp", true);
+const mockDappClassHash = await provider.declareLocalContract("MockDapp", true);
 console.log("MockDapp class hash:", mockDappClassHash);
 
 console.log("Deploying new account");
@@ -13,7 +13,7 @@ console.log("Account address:", account.address);
 console.log("Deploying new test dapp");
 const { contract_address } = await deployer.deployContract({ classHash: mockDappClassHash });
 console.log("MockDapp address:", contract_address);
-const mockDappContract = await loadContract(contract_address);
+const mockDappContract = await provider.loadContract(contract_address);
 
 console.log("Calling test dapp");
 mockDappContract.connect(account);

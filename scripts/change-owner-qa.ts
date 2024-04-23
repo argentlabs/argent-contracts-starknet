@@ -14,9 +14,9 @@ const accountAddress = "0x064645274c31f18081e1a6b6748cfa513e59deda120a308e705cc6
 
 import "dotenv/config";
 import { num, shortString } from "starknet";
-import { StarknetKeyPair, loadContract, provider, signChangeOwnerMessage } from "../lib";
+import { StarknetKeyPair, provider, signChangeOwnerMessage } from "../lib";
 const chainId = await provider.getChainId();
-const currentOwnerGuid = await (await loadContract(accountAddress)).get_owner();
+const currentOwnerGuid = await (await provider.loadContract(accountAddress)).get_owner();
 const newOwnerKeyPair = new StarknetKeyPair();
 const [r, s] = await signChangeOwnerMessage(accountAddress, currentOwnerGuid, newOwnerKeyPair, chainId);
 console.log("account:", accountAddress);

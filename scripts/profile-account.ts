@@ -8,8 +8,6 @@ import {
   Secp256r1KeyPair,
   StarknetKeyPair,
   WebauthnOwner,
-  clearCache,
-  declareFixtureContract,
   deployAccount,
   deployAccountWithoutGuardian,
   deployOldAccount,
@@ -27,7 +25,7 @@ if (provider.isDevnet) {
   // With the KeyPairs hardcoded, we gotta reset to avoid some issues
   await provider.restart();
   privateKey = "0x1";
-  clearCache();
+  provider.clearCache();
 } else {
   privateKey = new StarknetKeyPair().privateKey;
 }
@@ -184,7 +182,7 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
-  const classHash = await declareFixtureContract("Sha256Cairo0");
+  const classHash = await provider.declareFixtureContract("Sha256Cairo0");
   assert(BigInt(classHash) === 0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
   const { account } = await deployAccount({
     owner: new WebauthnOwner(privateKey),

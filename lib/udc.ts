@@ -1,12 +1,12 @@
 import { CallData, RawCalldata } from "starknet";
-import { deployer, loadContract, provider } from ".";
+import { deployer, provider } from ".";
 
 export const udcAddress = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
 
 export async function deployContractUDC(classHash: string, salt: string, calldata: RawCalldata) {
   const unique = 0n; //false
 
-  const udcContract = await loadContract(udcAddress);
+  const udcContract = await provider.loadContract(udcAddress);
 
   udcContract.connect(deployer);
 

@@ -2,7 +2,6 @@ import { Contract, uint256 } from "starknet";
 import {
   ArgentAccount,
   ArgentSigner,
-  declareFixtureContract,
   deployAccount,
   deployAccountWithoutGuardian,
   ensureSuccess,
@@ -38,7 +37,7 @@ describe("ArgentAccount: Signers types", function () {
 
   before(async () => {
     ethContract = await provider.ethContract();
-    await declareFixtureContract("Sha256Cairo0");
+    await provider.declareFixtureContract("Sha256Cairo0");
 
     for (const { name, keyPair } of [...starknetKeyPairs, ...nonStarknetKeyPairs]) {
       const { account: withGuardian } = await deployAccount({ owner: keyPair() });

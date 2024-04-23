@@ -6,17 +6,76 @@ import {
   Contract,
   DeclareContractPayload,
   ProviderInterface,
+  RpcProvider,
   UniversalDeployerContractPayload,
   UniversalDetails,
   json,
 } from "starknet";
+import { Constructor } from ".";
 import { deployer } from "./accounts";
 import { provider } from "./provider";
 
-const classHashCache: Record<string, string> = {};
-
 export const contractsFolder = "./target/release/argent_";
 export const fixturesFolder = "./tests-integration/fixtures/argent_";
+
+export const WithContracts = <T extends Constructor<RpcProvider>>(Base: T) =>
+  class extends Base {
+    private classHashCache: Record<string, string> = {};
+
+    removeFromCache(contractName: string) {
+      delete this.classHashCache[contractName];
+    }
+
+    clearCache() {
+      for (const contractName of Object.keys(this.classHashCache)) {
+        delete this.classHashCache[contractName];
+      }
+    }
+
+    // Could extends Account to add our specific fn but that's too early.
+    async declareLocalContract(contractName: string, wait = true, folder = contractsFolder): Promise<string> {
+      const cachedClass = this.classHashCache[contractName];
+      if (cachedClass) {
+        return cachedClass;
+      }
+      const payload = getDeclareContractPayload(contractName, folder);
+      const skipSimulation = provider.isDevnet;
+      // max fee avoids slow estimate
+      const maxFee = skipSimulation ? 1e18 : undefined;
+
+      const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee });
+
+      if (wait && transaction_hash) {
+        await provider.waitForTransaction(transaction_hash);
+        console.log(`\t${contractName} declared`);
+      }
+      this.classHashCache[contractName] = class_hash;
+      return class_hash;
+    }
+
+    async declareFixtureContract(contractName: string, wait = true): Promise<string> {
+      return await this.declareLocalContract(contractName, wait, fixturesFolder);
+    }
+
+    async loadContract(contractAddress: string, classHash?: string): Promise<ContractWithClassHash> {
+      const { abi } = await provider.getClassAt(contractAddress);
+      classHash ??= await provider.getClassHashAt(contractAddress);
+      return new ContractWithClassHash(abi, contractAddress, provider, classHash);
+    }
+
+    async deployContract(
+      contractName: string,
+      payload: Omit<UniversalDeployerContractPayload, "classHash"> | UniversalDeployerContractPayload[] = {},
+      details?: UniversalDetails,
+      folder = contractsFolder,
+    ): Promise<ContractWithClassHash> {
+      const classHash = await this.declareLocalContract(contractName, true, folder);
+      const { contract_address } = await deployer.deployContract({ ...payload, classHash }, details);
+
+      // TODO could avoid network request and just create the contract using the ABI
+      return await this.loadContract(contract_address, classHash);
+    }
+  };
 
 export class ContractWithClassHash extends Contract {
   constructor(
@@ -29,14 +88,6 @@ export class ContractWithClassHash extends Contract {
   }
 }
 
-export function removeFromCache(contractName: string) {
-  delete classHashCache[contractName];
-}
-
-export function clearCache() {
-  Object.keys(classHashCache).forEach((key) => delete classHashCache[key]);
-}
-
 export function getDeclareContractPayload(contractName: string, folder = contractsFolder): DeclareContractPayload {
   const contract: CompiledSierra = readContract(`${folder}${contractName}.contract_class.json`);
   const payload: DeclareContractPayload = { contract };
@@ -46,58 +97,6 @@ export function getDeclareContractPayload(contractName: string, folder = contrac
   return payload;
 }
 
-// Could extends Account to add our specific fn but that's too early.
-export async function declareContract(contractName: string, wait = true, folder = contractsFolder): Promise<string> {
-  const cachedClass = classHashCache[contractName];
-  if (cachedClass) {
-    return cachedClass;
-  }
-  const payload = getDeclareContractPayload(contractName, folder);
-  const skipSimulation = provider.isDevnet;
-  // max fee avoids slow estimate
-  const maxFee = skipSimulation ? 1e18 : undefined;
-
-  const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee });
-
-  if (wait && transaction_hash) {
-    await provider.waitForTransaction(transaction_hash);
-    console.log(`\t${contractName} declared`);
-  }
-  classHashCache[contractName] = class_hash;
-  return class_hash;
-}
-
-export async function declareFixtureContract(contractName: string, wait = true): Promise<string> {
-  return await declareContract(contractName, wait, fixturesFolder);
-}
-
-export async function loadContract(contractAddress: string, classHash?: string): Promise<ContractWithClassHash> {
-  const { abi } = await provider.getClassAt(contractAddress);
-  if (!abi) {
-    throw new Error("Error while getting ABI");
-  }
-
-  return new ContractWithClassHash(
-    abi,
-    contractAddress,
-    provider,
-    classHash ?? (await provider.getClassHashAt(contractAddress)),
-  );
-}
-
 export function readContract(path: string) {
   return json.parse(readFileSync(path).toString("ascii"));
-}
-
-export async function deployContract(
-  contractName: string,
-  payload: Omit<UniversalDeployerContractPayload, "classHash"> | UniversalDeployerContractPayload[] = {},
-  details?: UniversalDetails,
-  folder = contractsFolder,
-): Promise<ContractWithClassHash> {
-  const declaredClassHash = await declareContract(contractName, true, folder);
-  const { contract_address } = await deployer.deployContract({ ...payload, classHash: declaredClassHash }, details);
-
-  // TODO could avoid network request and just create the contract using the ABI
-  return await loadContract(contract_address, declaredClassHash);
 }

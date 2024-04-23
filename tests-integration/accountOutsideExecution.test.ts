@@ -4,7 +4,6 @@ import {
   ArgentSigner,
   OutsideExecution,
   deployAccount,
-  deployContract,
   deployer,
   expectExecutionRevert,
   getOutsideCall,
@@ -26,7 +25,7 @@ describe("ArgentAccount: outside execution", function () {
   let mockDapp: Contract;
 
   before(async () => {
-    mockDapp = await deployContract("MockDapp");
+    mockDapp = await provider.deployContract("MockDapp");
   });
 
   it("Correct message hash", async function () {

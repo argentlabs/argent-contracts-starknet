@@ -1,9 +1,9 @@
 import "dotenv/config";
-import { declareContract, deployer, deployMultisig, loadContract, provider } from "../lib";
+import { deployer, deployMultisig, provider } from "../lib";
 
-const multisigClassHash = await declareContract("ArgentMultisig", true);
+const multisigClassHash = await provider.declareLocalContract("ArgentMultisig", true);
 console.log("ArgentMultisig class hash:", multisigClassHash);
-const mockDappClassHash = await declareContract("MockDapp", true);
+const mockDappClassHash = await provider.declareLocalContract("MockDapp", true);
 console.log("MockDapp class hash:", mockDappClassHash);
 
 console.log("Deploying new multisig");
@@ -20,7 +20,7 @@ console.log("Account keys:", keys);
 console.log("Deploying new test dapp");
 const { contract_address } = await deployer.deployContract({ classHash: mockDappClassHash });
 console.log("MockDapp address:", contract_address);
-const mockDappContract = await loadContract(contract_address);
+const mockDappContract = await provider.loadContract(contract_address);
 
 console.log("Calling test dapp");
 mockDappContract.connect(account);

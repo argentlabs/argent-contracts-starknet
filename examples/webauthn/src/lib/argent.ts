@@ -2,15 +2,7 @@ import { Account, CairoOption, CairoOptionVariant, CallData, Contract, hash, uin
 import casm from "./argent_ArgentAccount.compiled_contract_class.json";
 import sierra from "./argent_ArgentAccount.contract_class.json";
 import { buf2hex } from "./bytes";
-import {
-  fundAccount,
-  getEthContract,
-  loadContract,
-  loadDeployer,
-  randomKeyPair,
-  type KeyPair,
-  type ProviderType,
-} from "./starknet";
+import { fundAccount, getEthContract, loadDeployer, randomKeyPair, type KeyPair, type ProviderType } from "./starknet";
 import { sha256 } from "./webauthnAssertion";
 import { createWebauthnAttestation } from "./webauthnAttestation";
 import { WebauthnOwner, webauthnSigner } from "./webauthnOwner";
@@ -69,7 +61,7 @@ export async function deployAccount(
   console.log("waiting for deployment tx", response.transaction_hash);
   await provider.waitForTransaction(response.transaction_hash);
 
-  const accountContract = await loadContract(account.address, provider);
+  const accountContract = await provider.loadContract(account.address, provider);
   accountContract.connect(account);
   console.log("deployed");
 

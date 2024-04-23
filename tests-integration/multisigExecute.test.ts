@@ -2,11 +2,11 @@ import { expect } from "chai";
 import { CallData, Contract } from "starknet";
 import {
   MultisigSigner,
-  deployContract,
   deployMultisig,
   deployMultisig1_1,
   expectEvent,
   expectRevertWithErrorMessage,
+  provider,
   sortByGuid,
 } from "../lib";
 
@@ -14,7 +14,7 @@ describe("ArgentMultisig: Execute", function () {
   let mockDappContract: Contract;
 
   before(async () => {
-    mockDappContract = await deployContract("MockDapp");
+    mockDappContract = await provider.deployContract("MockDapp");
   });
 
   for (const useTxV3 of [false, true]) {

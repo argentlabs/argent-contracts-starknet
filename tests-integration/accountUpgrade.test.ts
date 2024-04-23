@@ -2,10 +2,7 @@ import { expect } from "chai";
 import {
   ContractWithClassHash,
   LegacyArgentSigner,
-  declareContract,
-  declareFixtureContract,
   deployAccount,
-  deployContract,
   deployLegacyAccount,
   deployOldAccount,
   expectEvent,
@@ -20,8 +17,8 @@ describe("ArgentAccount: upgrade", function () {
   let mockDapp: ContractWithClassHash;
 
   before(async () => {
-    argentAccountClassHash = await declareContract("ArgentAccount");
-    mockDapp = await deployContract("MockDapp");
+    argentAccountClassHash = await provider.declareLocalContract("ArgentAccount");
+    mockDapp = await provider.deployContract("MockDapp");
   });
 
   it("Upgrade cairo 0 to current version", async function () {
@@ -43,13 +40,13 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Upgrade from 0.3.0 to Current Version", async function () {
-    const { account } = await deployLegacyAccount(await declareFixtureContract("ArgentAccount-0.3.0"));
+    const { account } = await deployLegacyAccount(await provider.declareFixtureContract("ArgentAccount-0.3.0"));
     await upgradeAccount(account, argentAccountClassHash);
     expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
   });
 
   it("Upgrade from current version FutureVersion", async function () {
-    const argentAccountFutureClassHash = await declareContract("MockFutureArgentAccount");
+    const argentAccountFutureClassHash = await provider.declareLocalContract("MockFutureArgentAccount");
     const { account } = await deployAccount();
 
     const response = await upgradeAccount(account, argentAccountFutureClassHash);
@@ -60,7 +57,7 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Should be possible to upgrade if an owner escape is ongoing", async function () {
-    const classHash = await declareFixtureContract("ArgentAccount-0.3.0");
+    const classHash = await provider.declareFixtureContract("ArgentAccount-0.3.0");
     const { account, accountContract, owner, guardian } = await deployLegacyAccount(classHash);
 
     account.signer = guardian;
@@ -74,7 +71,7 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Should be possible to upgrade if a guardian escape is ongoing", async function () {
-    const classHash = await declareFixtureContract("ArgentAccount-0.3.0");
+    const classHash = await provider.declareFixtureContract("ArgentAccount-0.3.0");
     const { account, accountContract, owner, guardian } = await deployLegacyAccount(classHash);
 
     account.signer = owner;

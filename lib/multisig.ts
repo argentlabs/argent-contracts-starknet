@@ -5,11 +5,9 @@ import {
   LegacyMultisigKeyPair,
   LegacyMultisigSigner,
   MultisigSigner,
-  declareContract,
   deployer,
   fundAccount,
   fundAccountCall,
-  loadContract,
   provider,
   randomStarknetKeyPair,
   randomStarknetKeyPairs,
@@ -39,7 +37,7 @@ export type DeployMultisigParams = {
 export async function deployMultisig(params: DeployMultisigParams): Promise<MultisigWallet> {
   const finalParams = {
     ...params,
-    classHash: params.classHash ?? (await declareContract("ArgentMultisigAccount")),
+    classHash: params.classHash ?? (await provider.declareLocalContract("ArgentMultisigAccount")),
     salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
     useTxV3: params.useTxV3 ?? false,
     selfDeploy: params.selfDeploy ?? false,
@@ -86,7 +84,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   const receipt = await provider.waitForTransaction(transactionHash);
   const signer = new MultisigSigner(keys.slice(0, finalParams.threshold));
   const account = new ArgentAccount(provider, accountAddress, signer, "1", transactionVersion);
-  const accountContract = await loadContract(account.address);
+  const accountContract = await provider.loadContract(account.address);
   accountContract.connect(account);
   return { account, accountContract, keys, receipt, threshold: BigInt(finalParams.threshold) };
 }
@@ -119,7 +117,7 @@ export async function deployLegacyMultisig(classHash: string) {
   const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
   await provider.waitForTransaction(transaction_hash);
 
-  const accountContract = await loadContract(account.address);
+  const accountContract = await provider.loadContract(account.address);
   accountContract.connect(account);
   return { account, accountContract, signer };
 }

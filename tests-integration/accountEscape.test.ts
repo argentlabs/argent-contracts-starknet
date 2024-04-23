@@ -15,7 +15,6 @@ import {
   LegacyStarknetKeyPair,
   MAX_U64,
   StarknetKeyPair,
-  declareContract,
   deployAccount,
   deployAccountWithGuardianBackup,
   deployAccountWithoutGuardian,
@@ -24,7 +23,6 @@ import {
   expectRevertWithErrorMessage,
   getEscapeStatus,
   hasOngoingEscape,
-  loadContract,
   provider,
   randomStarknetKeyPair,
   upgradeAccount,
@@ -57,7 +55,7 @@ describe("ArgentAccount: escape mechanism", function () {
   }
 
   before(async () => {
-    argentAccountClassHash = await declareContract("ArgentAccount");
+    argentAccountClassHash = await provider.declareLocalContract("ArgentAccount");
   });
 
   beforeEach(async () => {
@@ -263,7 +261,7 @@ describe("ArgentAccount: escape mechanism", function () {
         from_address: account.address,
         eventName: "EscapeCanceled",
       });
-      await getEscapeStatus(await loadContract(account.address)).should.eventually.equal(EscapeStatus.None);
+      await getEscapeStatus(await provider.loadContract(account.address)).should.eventually.equal(EscapeStatus.None);
     });
 
     it("Clear expired escape when upgrading", async function () {
@@ -281,7 +279,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
       account.signer = new LegacyMultisigSigner([owner, guardian]);
       await upgradeAccount(account, argentAccountClassHash, ["0"]);
-      await getEscapeStatus(await loadContract(account.address)).should.eventually.equal(EscapeStatus.None);
+      await getEscapeStatus(await provider.loadContract(account.address)).should.eventually.equal(EscapeStatus.None);
     });
 
     describe("Testing with all guardian signer combination", function () {

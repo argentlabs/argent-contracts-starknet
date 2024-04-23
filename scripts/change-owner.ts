@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { Account, num } from "starknet";
-import { StarknetKeyPair, getChangeOwnerMessageHash, loadContract, provider, starknetSignatureType } from "../lib";
+import { StarknetKeyPair, getChangeOwnerMessageHash, provider, starknetSignatureType } from "../lib";
 
 /// To use this script, fill the following three values:
 /// - accountAddress: the address of the account to change owner
@@ -13,7 +13,7 @@ const accountAddress = "0x000000000000000000000000000000000000000000000000000000
 const ownerSigner = new StarknetKeyPair(1000000000000000000000000000000000000000000000000000000000000000000000000000n);
 const newOwnerPublicKey = "0x000000000000000000000000000000000000000000000000000000000000000";
 
-const accountContract = await loadContract(accountAddress);
+const accountContract = await provider.loadContract(accountAddress);
 const owner: bigint = await accountContract.get_owner();
 const account = new Account(provider, accountAddress, ownerSigner, "1");
 accountContract.connect(account);

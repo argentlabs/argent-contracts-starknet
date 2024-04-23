@@ -2,7 +2,6 @@ import { expect } from "chai";
 import { CairoOption, CairoOptionVariant, CallData, hash } from "starknet";
 import {
   ArgentSigner,
-  declareContract,
   deployAccount,
   deployAccountWithGuardianBackup,
   deployAccountWithoutGuardian,
@@ -10,7 +9,6 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   hasOngoingEscape,
-  loadContract,
   provider,
   randomStarknetKeyPair,
   signChangeOwnerMessage,
@@ -22,7 +20,7 @@ describe("ArgentAccount", function () {
   let argentAccountClassHash: string;
 
   before(async () => {
-    argentAccountClassHash = await declareContract("ArgentAccount");
+    argentAccountClassHash = await provider.declareLocalContract("ArgentAccount");
   });
 
   it("Deploy externally", async function () {
@@ -51,7 +49,7 @@ describe("ArgentAccount", function () {
       data: [guardian.guid.toString()],
     });
 
-    const accountContract = await loadContract(contractAddress);
+    const accountContract = await provider.loadContract(contractAddress);
     await accountContract.get_owner_guid().should.eventually.equal(owner.guid);
     expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(guardian.guid);
     await accountContract.get_guardian_backup().should.eventually.equal(0n);

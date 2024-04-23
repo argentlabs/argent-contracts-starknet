@@ -5,12 +5,10 @@ import {
   BackendService,
   DappService,
   StarknetKeyPair,
-  declareContract,
   deployAccount,
   deployer,
   expectRevertWithErrorMessage,
   getSessionTypedData,
-  loadContract,
   provider,
   randomStarknetKeyPair,
 } from "../lib";
@@ -22,20 +20,20 @@ describe("Hybrid Session Account: execute calls", function () {
   const initialTime = 1710167933n;
 
   before(async () => {
-    sessionAccountClassHash = await declareContract("ArgentAccount");
+    sessionAccountClassHash = await provider.declareLocalContract("ArgentAccount");
 
-    const mockDappClassHash = await declareContract("MockDapp");
+    const mockDappClassHash = await provider.declareLocalContract("MockDapp");
     const deployedmockDappOne = await deployer.deployContract({
       classHash: mockDappClassHash,
       salt: num.toHex(randomStarknetKeyPair().privateKey),
     });
-    const erc20ClassHash = await declareContract("Erc20Mock");
+    const erc20ClassHash = await provider.declareLocalContract("Erc20Mock");
     const deployedErc20 = await deployer.deployContract({
       classHash: erc20ClassHash,
       salt: num.toHex(randomStarknetKeyPair().privateKey),
     });
-    mockErc20Contract = await loadContract(deployedErc20.contract_address);
-    mockDappOneContract = await loadContract(deployedmockDappOne.contract_address);
+    mockErc20Contract = await provider.loadContract(deployedErc20.contract_address);
+    mockDappOneContract = await provider.loadContract(deployedmockDappOne.contract_address);
   });
 
   beforeEach(async function () {

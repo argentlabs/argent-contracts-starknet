@@ -1,11 +1,10 @@
-import { RawArgs, RpcProvider } from "starknet";
-import { Constructor } from ".";
-import { clearCache } from "./contracts";
+import { RawArgs } from "starknet";
+import { WithContracts } from "./contracts";
 
 export const dumpFolderPath = "./dump";
 export const devnetBaseUrl = "http://127.0.0.1:5050";
 
-export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
+export const WithDevnet = <T extends ReturnType<typeof WithContracts>>(Base: T) =>
   class extends Base {
     get isDevnet() {
       return this.channel.nodeUrl.startsWith(devnetBaseUrl);
@@ -20,7 +19,7 @@ export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
     async restartDevnet() {
       if (this.isDevnet) {
         await this.restart();
-        clearCache();
+        this.clearCache();
       }
     }
 

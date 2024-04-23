@@ -18,7 +18,6 @@ import {
   num,
   uint256,
 } from "starknet";
-import { declareContract, declareFixtureContract, loadContract } from "./contracts";
 import { provider } from "./provider";
 import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { ArgentSigner, KeyPair, randomStarknetKeyPair } from "./signers/signers";
@@ -119,8 +118,8 @@ export async function deployOldAccount(
   guardian = new LegacyStarknetKeyPair(),
   salt = num.toHex(randomStarknetKeyPair().privateKey),
 ): Promise<LegacyArgentWallet> {
-  const proxyClassHash = await declareFixtureContract("Proxy");
-  const oldArgentAccountClassHash = await declareFixtureContract("OldArgentAccount");
+  const proxyClassHash = await provider.declareFixtureContract("Proxy");
+  const oldArgentAccountClassHash = await provider.declareFixtureContract("OldArgentAccount");
 
   const constructorCalldata = CallData.compile({
     implementation: oldArgentAccountClassHash,
@@ -142,7 +141,7 @@ export async function deployOldAccount(
     addressSalt: salt,
   });
   await provider.waitForTransaction(transaction_hash);
-  const accountContract = await loadContract(account.address);
+  const accountContract = await provider.loadContract(account.address);
   accountContract.connect(account);
   return { account, accountContract, owner, guardian };
 }
@@ -159,7 +158,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<
 > {
   const finalParams = {
     ...params,
-    classHash: params.classHash ?? (await declareContract("ArgentAccount")),
+    classHash: params.classHash ?? (await provider.declareLocalContract("ArgentAccount")),
     salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
     owner: params.owner ?? randomStarknetKeyPair(),
     useTxV3: params.useTxV3 ?? false,
@@ -212,7 +211,7 @@ export async function deployAccount(
 ): Promise<ArgentWalletWithGuardian & { transactionHash: string }> {
   params.guardian ||= randomStarknetKeyPair();
   const { account, owner, transactionHash } = await deployAccountInner(params);
-  const accountContract = await loadContract(account.address);
+  const accountContract = await provider.loadContract(account.address);
   accountContract.connect(account);
   return { account, accountContract, owner, guardian: params.guardian, transactionHash };
 }
@@ -221,7 +220,7 @@ export async function deployAccountWithoutGuardian(
   params: Omit<DeployAccountParams, "guardian"> = {},
 ): Promise<ArgentWallet & { transactionHash: string }> {
   const { account, owner, transactionHash } = await deployAccountInner(params);
-  const accountContract = await loadContract(account.address);
+  const accountContract = await provider.loadContract(account.address);
   accountContract.connect(account);
   return { account, accountContract, owner, transactionHash };
 }
@@ -257,7 +256,7 @@ export async function deployLegacyAccount(classHash: string) {
   });
   await provider.waitForTransaction(transaction_hash);
 
-  const accountContract = await loadContract(account.address);
+  const accountContract = await provider.loadContract(account.address);
   accountContract.connect(account);
   return { account, accountContract, owner, guardian };
 }

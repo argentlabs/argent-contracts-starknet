@@ -55,12 +55,11 @@ mod session_component {
         #[inline(always)]
         fn is_session_authorization_cached(self: @ComponentState<TContractState>, session_hash: felt252) -> bool {
             let state = self.get_contract();
-            match state.get_guardian_guid() {
-                Option::Some(guardian_guid) => {
-                    let owner_guid = state.get_owner_guid();
-                    self.valid_session_cache.read((owner_guid, guardian_guid, session_hash)).is_non_zero()
-                },
-                Option::None => false
+            if let Option::Some(guardian_guid) = state.get_guardian_guid() {
+                let owner_guid = state.get_owner_guid();
+                self.valid_session_cache.read((owner_guid, guardian_guid, session_hash)).is_non_zero()
+            } else {
+                false
             }
         }
     }

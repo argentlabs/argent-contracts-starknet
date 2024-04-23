@@ -41,7 +41,7 @@ fn revoke_session(session_hash: felt252)
 fn is_session_revoked(session_hash: felt252) -> bool
 
 /// Check if the authorization signature is cached for a given session
-fn is_session_authorization_cached(self: @ComponentState<TContractState>, session_hash: felt252) -> bool
+fn is_session_authorization_cached(session_hash: felt252) -> bool
 ```
 
 ### Session Caching

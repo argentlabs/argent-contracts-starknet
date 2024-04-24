@@ -7,6 +7,7 @@ import {
   deployContract,
   deployer,
   expectExecutionRevert,
+  expectRevertWithErrorMessage,
   getOutsideCall,
   getOutsideExecutionCall,
   getTypedDataHash,
@@ -266,5 +267,30 @@ describe("ArgentAccount: outside execution", function () {
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
     const current_escape = await accountContract.get_escape();
     expect(current_escape.new_signer.unwrap().stored_value).to.equal(keyPair.storedValue);
+  });
+
+  it("No reentrancy", async function () {
+    const { account, accountContract, guardian } = await deployAccount();
+
+    const outsideExecutionCall = await getOutsideExecutionCall(
+      {
+        caller: shortString.encodeShortString("ANY_CALLER"),
+        nonce: randomStarknetKeyPair().publicKey,
+        execute_after: 0,
+        execute_before: initialTime + 100,
+        calls: [
+          getOutsideCall(
+            accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
+          ),
+        ],
+      },
+      account.address,
+      new ArgentSigner(guardian),
+      activeRevision,
+    );
+
+    await setTime(initialTime);
+
+    await expectRevertWithErrorMessage("ReentrancyGuard: reentrant call", () => account.execute(outsideExecutionCall));
   });
 });

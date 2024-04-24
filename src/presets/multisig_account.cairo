@@ -7,8 +7,8 @@ mod ArgentMultisigAccount {
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
-    use argent::signer::signer_signature::{Signer, SignerSignature};
-    use argent::signer_storage::{signer_list::{signer_list_component}};
+    use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey, SignerTrait};
+    use argent::signer_storage::signer_list::signer_list_component;
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
@@ -215,7 +215,21 @@ mod ArgentMultisigAccount {
             assert_only_self();
             // Check basic invariants
             self.multisig.assert_valid_storage();
+            let pubkeys = self.signer_list.get_signers();
+            let mut pubkeys_span = pubkeys.span();
+            let mut signers_to_add = array![];
+            // Converting storage from public keys to guid 
+            while let Option::Some(pubkey) = pubkeys_span
+                .pop_front() {
+                    let starknet_signer = starknet_signer_from_pubkey(*pubkey);
+                    let signer_guid = starknet_signer.into_guid();
+                    signers_to_add.append(signer_guid);
+                    self.signer_list.emit(signer_list_component::SignerLinked { signer_guid, signer: starknet_signer });
+                };
             assert(data.len() == 0, 'argent/unexpected-data');
+            let last_signer = *pubkeys[pubkeys.len() - 1];
+            self.signer_list.remove_signers(pubkeys.span(), last_signer);
+            self.signer_list.add_signers(signers_to_add.span(), 0);
             array![]
         }
     }

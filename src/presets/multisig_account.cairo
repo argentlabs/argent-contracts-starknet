@@ -214,7 +214,7 @@ mod ArgentMultisigAccount {
                     signers_to_add.append(starknet_signer_from_pubkey(*pubkey));
                 };
             assert(data.len() == 0, 'argent/unexpected-data');
-            let (_, last_signer) = self.signer_list.load();
+            let last_signer = *pubkeys[pubkeys.len() - 1];
             // Removing directly from list to avoid events being emitted
             self.signer_list.remove_signers(pubkeys.span(), last_signer);
             // Adding to multisig to have events emitted

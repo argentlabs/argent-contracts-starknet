@@ -7,7 +7,7 @@ mod ArgentMultisigAccount {
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
-    use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
+    use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey, SignerTrait};
     use argent::signer_storage::signer_list::signer_list_component;
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
@@ -211,14 +211,15 @@ mod ArgentMultisigAccount {
             // Converting storage from public keys to guid 
             while let Option::Some(pubkey) = pubkeys_span
                 .pop_front() {
-                    signers_to_add.append(starknet_signer_from_pubkey(*pubkey));
+                    let starknet_signer = starknet_signer_from_pubkey(*pubkey);
+                    let signer_guid = starknet_signer.into_guid();
+                    signers_to_add.append(signer_guid);
+                    self.signer_list.emit(signer_list_component::SignerLinked { signer_guid, signer: starknet_signer });
                 };
             assert(data.len() == 0, 'argent/unexpected-data');
             let last_signer = *pubkeys[pubkeys.len() - 1];
-            // Removing directly from list to avoid events being emitted
             self.signer_list.remove_signers(pubkeys.span(), last_signer);
-            // Adding to multisig to have events emitted
-            self.multisig.add_signers(self.get_threshold(), signers_to_add);
+            self.signer_list.add_signers(signers_to_add.span(), 0);
             array![]
         }
     }

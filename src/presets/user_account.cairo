@@ -18,6 +18,7 @@ mod ArgentUserAccount {
         serialization::full_deserialize,
         transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
     };
+    use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use starknet::{get_tx_info, get_contract_address, get_execution_info, VALIDATED, ClassHash, account::Call};
 
     const NAME: felt252 = 'ArgentAccount';
@@ -54,6 +55,9 @@ mod ArgentUserAccount {
     impl ToggleThresholdRecovery =
         threshold_recovery_component::ToggleThresholdRecoveryImpl<ContractState>;
     impl ThresholdRecoveryInternal = threshold_recovery_component::ThresholdRecoveryInternalImpl<ContractState>;
+    // Reentrancy guard
+    component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
+    impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -69,6 +73,8 @@ mod ArgentUserAccount {
         upgrade: upgrade_component::Storage,
         #[substorage(v0)]
         escape: threshold_recovery_component::Storage,
+        #[substorage(v0)]
+        reentrancy_guard: ReentrancyGuardComponent::Storage,
     }
 
     #[event]
@@ -86,6 +92,8 @@ mod ArgentUserAccount {
         UpgradeEvents: upgrade_component::Event,
         #[flat]
         EscapeEvents: threshold_recovery_component::Event,
+        #[flat]
+        ReentrancyGuardEvent: ReentrancyGuardComponent::Event,
         TransactionExecuted: TransactionExecuted,
     }
 
@@ -118,6 +126,7 @@ mod ArgentUserAccount {
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
+            self.reentrancy_guard.start();
             let exec_info = get_execution_info().unbox();
             let tx_info = exec_info.tx_info.unbox();
             assert_only_protocol(exec_info.caller_address);
@@ -129,6 +138,7 @@ mod ArgentUserAccount {
             let hash = tx_info.transaction_hash;
             let response = retdata.span();
             self.emit(TransactionExecuted { hash, response });
+            self.reentrancy_guard.end();
             retdata
         }
 

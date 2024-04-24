@@ -44,18 +44,18 @@ fn test_is_valid_webauthn_signature() {
 fn test_is_valid_webauthn_signature_with_extra_json() {
     let (origin, rp_id_hash) = localhost_rp();
 
-    let transaction_hash = 0x35f7efbc8625d39206e89353ec1eb55498e0accfacb5bd1e32139aae90a1321;
+    let transaction_hash = 0x5f7154b851dc016f851672905d64360fb098c8fd7417d1dd1e83aa46eb6d363;
     let pubkey = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
-        cross_origin: false,
+        cross_origin: true,
         client_data_json_outro: ",\"extraField\":\"random data\"}".into_bytes().span(),
-        flags: 0b00000101,
-        sign_count: 0,
+        flags: 0b00010101,
+        sign_count: 42,
         ec_signature: Signature {
-            r: 0xad375e31efee9918afdb342c678c3305a883e38c661ad3e109b30fabf499685,
-            s: 0x4d9aafb8b438cd866700834e1fddb6bb52a26286f9e0d19f235160ce6f7c1a9,
-            y_parity: true,
+            r: 0x5cceed8562c156cb79e222afc5fd95b57a3c732795fb9b315582c57e8017f277,
+            s: 0x3cedd77bd9069c8b250f6a435cce5a379257b18daf7c81136c5ca3075824b68f,
+            y_parity: false,
         },
         sha256_implementation: Sha256Implementation::Cairo1,
     };

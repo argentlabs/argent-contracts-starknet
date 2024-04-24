@@ -209,9 +209,9 @@ mod ArgentMultisigAccount {
             let mut pubkeys_span = pubkeys.span();
             let mut signers_to_add = array![];
             // Converting storage from public keys to guid 
-            while let Option::Some(signer) = pubkeys_span
+            while let Option::Some(pubkey) = pubkeys_span
                 .pop_front() {
-                    signers_to_add.append(starknet_signer_from_pubkey(*signer));
+                    signers_to_add.append(starknet_signer_from_pubkey(*pubkey));
                 };
             assert(data.len() == 0, 'argent/unexpected-data');
             let (_, last_signer) = self.signer_list.load();

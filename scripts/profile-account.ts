@@ -3,7 +3,7 @@ import { newProfiler } from "../lib/gas";
 
 const profiler = newProfiler(provider);
 
-for (const threshold of [1, 3, 10]) {
+for (const threshold of [1, 3, 10, 31]) {
   const { account } = await deployLegacyMultisig(await declareFixtureContract("ArgentMultisig-0.1.0"), threshold);
   const currentImpl = await declareContract("ArgentMultisigAccount");
 

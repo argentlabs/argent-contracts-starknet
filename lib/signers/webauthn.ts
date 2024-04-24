@@ -1,7 +1,16 @@
 import { concatBytes } from "@noble/curves/abstract/utils";
 import { p256 as secp256r1 } from "@noble/curves/p256";
 import { BinaryLike, createHash } from "crypto";
-import { ArraySignatureType, CairoCustomEnum, CallData, Uint256, hash, shortString, uint256 } from "starknet";
+import {
+  ArraySignatureType,
+  BigNumberish,
+  CairoCustomEnum,
+  CallData,
+  Uint256,
+  hash,
+  shortString,
+  uint256,
+} from "starknet";
 import { KeyPair, SignerType, signerTypeToCustomEnum } from "..";
 
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
@@ -24,12 +33,18 @@ const hex2buf = (hex: string) =>
 
 const toCharArray = (value: string) => CallData.compile(value.split("").map(shortString.encodeShortString));
 
+interface WebauthnSigner {
+  origin: BigNumberish[];
+  rp_id_hash: Uint256;
+  pubkey: Uint256;
+}
+
 interface WebauthnSignature {
   cross_origin: boolean;
-  client_data_json_outro: number[];
+  client_data_json_outro: BigNumberish[];
   flags: number;
   sign_count: number;
-  signature: { r: Uint256; s: Uint256; y_parity: boolean };
+  ec_signature: { r: Uint256; s: Uint256; y_parity: boolean };
   sha256_implementation: CairoCustomEnum;
 }
 
@@ -41,6 +56,8 @@ export class WebauthnOwner extends KeyPair {
     pk?: string,
     public rpId = "localhost",
     public origin = "http://localhost:5173",
+    public extraJson = "",
+    // public extraJson = `,"extraField":"random data"}`,
   ) {
     super();
     this.pk = pk ? hex2buf(normalizeTransactionHash(pk)) : secp256r1.utils.randomPrivateKey();
@@ -72,11 +89,12 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public get signer(): CairoCustomEnum {
-    return signerTypeToCustomEnum(SignerType.Webauthn, {
+    const signer: WebauthnSigner = {
       origin: toCharArray(this.origin),
       rp_id_hash: this.rpIdHash,
       pubkey: uint256.bnToUint256(buf2hex(this.publicKey)),
-    });
+    };
+    return signerTypeToCustomEnum(SignerType.Webauthn, signer);
   }
 
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
@@ -90,20 +108,38 @@ export class WebauthnOwner extends KeyPair {
     const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([flags]), new Uint8Array(4));
 
     const challenge = buf2base64url(hex2buf(normalizeTransactionHash(transactionHash) + "00"));
-    const clientData = { type: "webauthn.get", challenge, origin: this.origin, crossOrigin: false };
-    const clientDataJson = new TextEncoder().encode(JSON.stringify(clientData));
+    const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin, crossOrigin: false });
+    const clientDataJson = this.extraJson ? clientData.replace(/}$/, this.extraJson) : clientData;
+    const clientDataHash = sha256(new TextEncoder().encode(clientDataJson));
 
-    const message = concatBytes(authenticatorData, sha256(clientDataJson));
+    const message = concatBytes(authenticatorData, clientDataHash);
     const messageHash = sha256(message);
 
     const { r, s, recovery } = secp256r1.sign(messageHash, this.pk);
 
+    // console.log(`
+    // let transaction_hash = ${transactionHash};
+    // let pubkey = ${buf2hex(this.publicKey)};
+    // let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
+    // let signature = WebauthnSignature {
+    //     cross_origin: false,
+    //     client_data_json_outro: ${this.extraJson ? `${JSON.stringify(this.extraJson)}.into_bytes()` : "array![]"}.span(),
+    //     flags: 0b00000101,
+    //     sign_count: 0,
+    //     ec_signature: Signature {
+    //         r: 0x${r.toString(16)},
+    //         s: 0x${s.toString(16)},
+    //         y_parity: ${recovery !== 0},
+    //     },
+    //     sha256_implementation: Sha256Implementation::Cairo1,
+    // };`);
+
     return {
       cross_origin: false,
-      client_data_json_outro: [],
+      client_data_json_outro: CallData.compile(toCharArray(this.extraJson)),
       flags,
       sign_count: 0,
-      signature: { r: uint256.bnToUint256(r), s: uint256.bnToUint256(s), y_parity: recovery !== 0 },
+      ec_signature: { r: uint256.bnToUint256(r), s: uint256.bnToUint256(s), y_parity: recovery !== 0 },
       sha256_implementation: new CairoCustomEnum({ Cairo0: {}, Cairo1: undefined }),
     };
   }

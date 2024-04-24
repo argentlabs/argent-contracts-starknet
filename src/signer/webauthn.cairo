@@ -7,10 +7,10 @@ use argent::utils::hashing::{sha256_cairo0};
 use starknet::secp256_trait::Signature;
 
 /// @notice The webauthn signature that needs to be validated
-/// @param cross_origin
+/// @param cross_origin From the client data JSON
 /// @param client_data_json_outro The rest of the JSON contents coming after the 'crossOrigin' value
-/// @param flags
-/// @param sign_count
+/// @param flags From authenticator data
+/// @param sign_count From authenticator data
 /// @param ec_signature The signature as {r, s, y_parity}
 /// @param sha256_implementation The implementation of the sha256 hash 
 #[derive(Drop, Copy, Serde, PartialEq)]
@@ -36,7 +36,7 @@ enum Sha256Implementation {
 ///                                                    flags (1 byte) | 
 /// Memory layout: https://www.w3.org/TR/webauthn/#sctn-authenticator-data
 fn verify_authenticator_flags(flags: u8) {
-    // rpIdHash is verified being signer over the Array<u8> encoding
+    // rpIdHash is verified with the signature over the authenticator
 
     // Verify that the User Present bit of the flags in authData is set.
     assert!((flags & 0b00000001) == 0b00000001, "webauthn/nonpresent-user");
@@ -63,11 +63,10 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: 
     } else {
         json.append_all(array!['f', 'a', 'l', 's', 'e'].span());
     }
-    if signature.client_data_json_outro.is_empty() {
-        json.append('}');
-    } else {
-        json.append(',');
+    if !signature.client_data_json_outro.is_empty() {
         json.append_all(signature.client_data_json_outro);
+    } else {
+        json.append('}');
     }
     json.span()
 }

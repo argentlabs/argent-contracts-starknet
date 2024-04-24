@@ -16,7 +16,6 @@ mod ArgentAccount {
             SignerSignature, SignerSignatureTrait, starknet_signer_from_pubkey
         }
     };
-
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self, assert_only_protocol}, calls::execute_multicall,

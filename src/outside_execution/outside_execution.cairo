@@ -16,6 +16,7 @@ mod outside_execution_component {
         /// Keeps track of used nonces for outside transactions (`execute_from_outside`)
         outside_nonces: LegacyMap<felt252, bool>,
     }
+    
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {}

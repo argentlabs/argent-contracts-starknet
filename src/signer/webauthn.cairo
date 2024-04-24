@@ -64,6 +64,7 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: 
         json.append_all(array!['f', 'a', 'l', 's', 'e'].span());
     }
     if !signature.client_data_json_outro.is_empty() {
+        assert!(*signature.client_data_json_outro.at(0) == ',', "webauthn/invalid-json-outro");
         json.append_all(signature.client_data_json_outro);
     } else {
         json.append('}');

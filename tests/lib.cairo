@@ -7,6 +7,7 @@ mod test_comp_recovery_external;
 mod test_comp_recovery_threshold;
 mod test_comp_signer_list;
 mod test_comp_src5;
+mod test_eip191;
 mod test_multicall;
 mod test_multisig_account;
 mod test_multisig_add_signers;
@@ -21,15 +22,10 @@ mod setup {
     mod constants;
     mod multisig_test_setup;
     mod utils;
-    mod webauthn_test_setup;
 }
 
 mod webauthn {
-    mod test_webauthn_base64;
     mod test_webauthn_bytes;
     mod test_webauthn_sha256;
-}
-
-mod eip191 {
-    mod test_eip191;
+    mod test_webauthn_validation;
 }

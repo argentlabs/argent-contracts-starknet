@@ -20,6 +20,7 @@ import {
 } from "starknet";
 import { declareContract, declareFixtureContract, ethAddress, loadContract, strkAddress } from "./contracts";
 import { provider } from "./provider";
+import { ensureSuccess } from "./receipts";
 import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { ArgentSigner, KeyPair, randomStarknetKeyPair } from "./signers/signers";
 
@@ -266,12 +267,16 @@ export async function upgradeAccount(
   newClassHash: string,
   calldata: RawCalldata = [],
 ): Promise<GetTransactionReceiptResponse> {
-  const { transaction_hash } = await accountToUpgrade.execute({
-    contractAddress: accountToUpgrade.address,
-    entrypoint: "upgrade",
-    calldata: CallData.compile({ implementation: newClassHash, calldata }),
-  });
-  return await provider.waitForTransaction(transaction_hash);
+  const { transaction_hash } = await accountToUpgrade.execute(
+    {
+      contractAddress: accountToUpgrade.address,
+      entrypoint: "upgrade",
+      calldata: CallData.compile({ implementation: newClassHash, calldata }),
+    },
+    undefined,
+    { maxFee: 1e14 },
+  );
+  return await ensureSuccess(await provider.waitForTransaction(transaction_hash));
 }
 
 export async function fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {

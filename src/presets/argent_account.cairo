@@ -26,6 +26,7 @@ mod ArgentAccount {
         }
     };
     use hash::HashStateTrait;
+    use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use pedersen::PedersenTrait;
     use starknet::{
         ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, replace_class_syscall,
@@ -69,6 +70,9 @@ mod ArgentAccount {
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
+    // Reentrancy guard
+    component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
+    impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -80,6 +84,8 @@ mod ArgentAccount {
         upgrade: upgrade_component::Storage,
         #[substorage(v0)]
         session: session_component::Storage,
+        #[substorage(v0)]
+        reentrancy_guard: ReentrancyGuardComponent::Storage,
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         /// Current account owner
         _signer: felt252,
@@ -113,6 +119,8 @@ mod ArgentAccount {
         UpgradeEvents: upgrade_component::Event,
         #[flat]
         SessionableEvents: session_component::Event,
+        #[flat]
+        ReentrancyGuardEvent: ReentrancyGuardComponent::Event,
         TransactionExecuted: TransactionExecuted,
         AccountCreated: AccountCreated,
         AccountCreatedGuid: AccountCreatedGuid,
@@ -318,6 +326,7 @@ mod ArgentAccount {
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
+            self.reentrancy_guard.start();
             let exec_info = get_execution_info().unbox();
             let tx_info = exec_info.tx_info.unbox();
             assert_only_protocol(exec_info.caller_address);
@@ -333,6 +342,7 @@ mod ArgentAccount {
             let retdata = execute_multicall(calls.span());
 
             self.emit(TransactionExecuted { hash: tx_info.transaction_hash, response: retdata.span() });
+            self.reentrancy_guard.end();
             retdata
         }
 

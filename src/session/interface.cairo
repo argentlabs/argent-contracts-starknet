@@ -43,7 +43,7 @@ trait ISessionCallback<TContractState> {
     /// @param session_hash The hash of session
     /// @param authorization_signature The owner + guardian signature of the session
     /// @return The parsed array of SignerSignature
-    fn session_parse_and_verify_signature_callback(
+    fn parse_and_verify_authorization(
         self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>
     ) -> Array<SignerSignature>;
 }

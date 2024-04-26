@@ -463,7 +463,7 @@ mod ArgentAccount {
 
 
     impl SessionCallbackImpl of ISessionCallback<ContractState> {
-        fn session_parse_and_verify_signature_callback(
+        fn parse_and_verify_authorization(
             self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>
         ) -> Array<SignerSignature> {
             let parsed_session_authorization = self.parse_signature_array(authorization_signature);

@@ -347,7 +347,7 @@ mod ArgentAccount {
         }
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
-            if self.is_valid_span_signature(hash, self.parse_signature_array(signature.span())) {
+            if self.is_valid_span_signature(hash, self.parse_signature_array(signature.span()).span()) {
                 VALIDATED
             } else {
                 0
@@ -463,10 +463,15 @@ mod ArgentAccount {
 
 
     impl SessionCallbackImpl of ISessionCallback<ContractState> {
-        fn session_callback(
+        fn parse_and_verify_authorization(
             self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>
-        ) -> bool {
-            self.is_valid_span_signature(session_hash, self.parse_signature_array(authorization_signature))
+        ) -> Array<SignerSignature> {
+            let parsed_session_authorization = self.parse_signature_array(authorization_signature);
+            assert(
+                self.is_valid_span_signature(session_hash, parsed_session_authorization.span()),
+                'session/invalid-account-sig'
+            );
+            return parsed_session_authorization;
         }
     }
 
@@ -477,7 +482,10 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_declare_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
-            self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
+            self
+                .assert_valid_span_signature(
+                    tx_info.transaction_hash, self.parse_signature_array(tx_info.signature).span()
+                );
             VALIDATED
         }
 
@@ -491,7 +499,10 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_deploy_account_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
-            self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
+            self
+                .assert_valid_span_signature(
+                    tx_info.transaction_hash, self.parse_signature_array(tx_info.signature).span()
+                );
             VALIDATED
         }
 
@@ -874,7 +885,7 @@ mod ArgentAccount {
                 assert_no_self_call(calls, account_address);
             }
             let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
-            self.assert_valid_span_signature(execution_hash, signer_signatures);
+            self.assert_valid_span_signature(execution_hash, signer_signatures.span());
         }
 
         #[inline(always)]
@@ -943,7 +954,7 @@ mod ArgentAccount {
 
         #[must_use]
         fn is_valid_span_signature(
-            self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>
+            self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>
         ) -> bool {
             if self.has_guardian() {
                 assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
@@ -955,7 +966,7 @@ mod ArgentAccount {
             }
         }
 
-        fn assert_valid_span_signature(self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>) {
+        fn assert_valid_span_signature(self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>) {
             if self.has_guardian() {
                 assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
                 assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');

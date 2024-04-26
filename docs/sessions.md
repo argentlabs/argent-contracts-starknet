@@ -66,7 +66,7 @@ struct SessionToken {
   /// Flag indicating whether to cache the authorization signature for the session
   cache_authorization: bool
   /// the owner and guardian session signatures from the session creation phase
-  session_authorisation: Span<felt252>,
+  session_authorization: Span<felt252>,
   /// the session key signature over poseidon(transaction_hash, session_hash)
   session_signature: SignerSignature,
   /// the session key signature over poseidon(transaction_hash, session_hash)

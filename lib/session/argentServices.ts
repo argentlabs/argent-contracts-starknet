@@ -33,6 +33,7 @@ export class BackendService {
     calls: Call[],
     transactionsDetail: InvocationsSignerDetails,
     sessionTokenToSign: OffChainSession,
+    cacheAuthorization: boolean,
   ): Promise<bigint[]> {
     // verify session param correct
     // extremely simplified version of the backend verification
@@ -68,7 +69,7 @@ export class BackendService {
       await getSessionTypedData(sessionTokenToSign),
       transactionsDetail.walletAddress,
     );
-    const sessionWithTxHash = hash.computePoseidonHash(msgHash, sessionMessageHash);
+    const sessionWithTxHash = hash.computePoseidonHashOnElements([msgHash, sessionMessageHash, +cacheAuthorization]);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
     return [signature.r, signature.s];
   }
@@ -79,13 +80,17 @@ export class BackendService {
     accountAddress: string,
     outsideExecution: OutsideExecution,
     revision: typedData.TypedDataRevision,
+    cacheAuthorization: boolean,
   ): Promise<bigint[]> {
     // TODO backend must verify, timestamps fees, used tokens nfts...
     const currentTypedData = getTypedData(outsideExecution, await provider.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
-
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(sessionTokenToSign), accountAddress);
-    const sessionWithTxHash = hash.computePoseidonHash(messageHash, sessionMessageHash);
+    const sessionWithTxHash = hash.computePoseidonHashOnElements([
+      messageHash,
+      sessionMessageHash,
+      +cacheAuthorization,
+    ]);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
     return [signature.r, signature.s];
   }

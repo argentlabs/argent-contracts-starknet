@@ -50,7 +50,9 @@ describe("Gas griefing", function () {
     const { compiledSigner } = randomStarknetKeyPair();
     const estimate = await accountContract.estimateFee.trigger_escape_owner(compiledSigner);
 
-    const l1_gas = 1458000000000n;
+    const l1_gas = BigInt(
+      estimate.resourceBounds.l1_gas.max_amount * estimate.resourceBounds.l1_gas.max_price_per_unit,
+    );
     const newResourceBounds = {
       ...estimate.resourceBounds,
       l2_gas: {

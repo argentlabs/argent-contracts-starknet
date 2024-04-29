@@ -22,7 +22,7 @@ struct EscapeTriggered {
     new_signers: Span<felt252>
 }
 
-/// @notice Signer escape was completed and there is a new signer
+/// @notice Signer escape was completed
 /// @param target_signers the signers to escape
 /// @param new_signers the new signers to be set after the security period
 #[derive(Drop, starknet::Event)]
@@ -31,7 +31,7 @@ struct EscapeExecuted {
     new_signers: Span<felt252>
 }
 
-/// @notice Signer escape was completed and there is a new signer
+/// @notice Signer escape was canceled
 /// @param target_signers the signers to escape
 /// @param new_signers the new signers to be set after the security period
 #[derive(Drop, starknet::Event)]

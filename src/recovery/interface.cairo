@@ -45,7 +45,7 @@ struct EscapeCanceled {
 enum EscapeStatus {
     /// No escape triggered, or it was canceled
     None,
-    /// Escape was triggered and it's waiting for the `escapeSecurityPeriod`
+    /// Escape was triggered and it's waiting for the `expiry_period`
     NotReady,
     /// The security period has elapsed and the escape is ready to be completed
     Ready,

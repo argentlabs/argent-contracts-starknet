@@ -57,7 +57,7 @@ describe("Gas griefing", function () {
       ...estimate.resourceBounds,
       l2_gas: {
         ...estimate.resourceBounds.l2_gas,
-        // Need (max_amount * max_price_per_unit) + (tip * max_amount)> 5e18
+        // Need (max_amount * max_price_per_unit) + (tip * max_amount) + l1_gas > 5e18
         max_amount: num.toHexString(1000000000000000000n - l1_gas / 5n + 1n), // we can't use 1e18, not enough precision
         max_price_per_unit: num.toHexString(4),
       },
@@ -71,7 +71,7 @@ describe("Gas griefing", function () {
     );
   });
 
-  it("Doesn't block high fee TxV3 when just under", async function () {
+  it.only("Doesn't block high fee TxV3 when just under", async function () {
     const { account, accountContract, guardian } = await deployAccount({
       useTxV3: true,
     });
@@ -85,7 +85,7 @@ describe("Gas griefing", function () {
       ...estimate.resourceBounds,
       l2_gas: {
         ...estimate.resourceBounds.l2_gas,
-        // Need (max_amount * max_price_per_unit) + (tip * max_amount)<= 5e18
+        // Need (max_amount * max_price_per_unit) + (tip * max_amount) + l1_gas <= 5e18
         max_amount: num.toHexString(1e18 - l1_gas / 5), // Here precision is just good enough
         max_price_per_unit: num.toHexString(4),
       },

@@ -49,7 +49,7 @@ enum EscapeStatus {
     NotReady,
     /// The security period has elapsed and the escape is ready to be completed
     Ready,
-    /// No confirmation happened for `escapeExpiryPeriod` since it became `Ready`. The escape cannot be completed now, only canceled
+    /// No confirmation happened for `expiry_period` since it became `Ready`. The escape cannot be completed now, only canceled
     Expired,
 }
 

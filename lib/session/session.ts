@@ -55,6 +55,7 @@ export interface OnChainSession {
 
 export interface SessionToken {
   session: OnChainSession;
+  cache_authorization: boolean;
   session_authorization: string[];
   session_signature: CairoCustomEnum;
   guardian_signature: CairoCustomEnum;
@@ -93,6 +94,7 @@ export async function setupSession(
   allowedMethods: AllowedMethod[],
   expiry: bigint = BigInt(Date.now()) + 10000n,
   dappKey: StarknetKeyPair = randomStarknetKeyPair(),
+  cacheAuthorization = false,
 ): Promise<ArgentAccount> {
   const backendService = new BackendService(guardian);
   const dappService = new DappService(backendService, dappKey);
@@ -101,6 +103,5 @@ export async function setupSession(
   const sessionRequest = dappService.createSessionRequest(allowedMethods, expiry);
 
   const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
-
-  return dappService.getAccountWithSessionSigner(account, sessionRequest, accountSessionSignature);
+  return dappService.getAccountWithSessionSigner(account, sessionRequest, accountSessionSignature, cacheAuthorization);
 }

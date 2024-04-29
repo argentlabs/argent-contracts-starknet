@@ -7,14 +7,15 @@ mod ArgentMultisigAccount {
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
-    use argent::signer::signer_signature::{Signer, SignerSignature};
-    use argent::signer_storage::{signer_list::{signer_list_component}};
+    use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey, SignerTrait};
+    use argent::signer_storage::signer_list::signer_list_component;
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
         serialization::full_deserialize,
         transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
     };
+    use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use starknet::{get_tx_info, get_execution_info, get_contract_address, VALIDATED, account::Call, ClassHash};
 
     const NAME: felt252 = 'ArgentMultisig';
@@ -45,6 +46,9 @@ mod ArgentMultisigAccount {
     component!(path: external_recovery_component, storage: escape, event: EscapeEvents);
     #[abi(embed_v0)]
     impl ToggleExternalRecovery = external_recovery_component::ExternalRecoveryImpl<ContractState>;
+    // Reentrancy guard
+    component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
+    impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -60,6 +64,8 @@ mod ArgentMultisigAccount {
         upgrade: upgrade_component::Storage,
         #[substorage(v0)]
         escape: external_recovery_component::Storage,
+        #[substorage(v0)]
+        reentrancy_guard: ReentrancyGuardComponent::Storage,
     }
 
     #[event]
@@ -77,6 +83,8 @@ mod ArgentMultisigAccount {
         UpgradeEvents: upgrade_component::Event,
         #[flat]
         EscapeEvents: external_recovery_component::Event,
+        #[flat]
+        ReentrancyGuardEvent: ReentrancyGuardComponent::Event,
         TransactionExecuted: TransactionExecuted,
     }
 
@@ -110,6 +118,7 @@ mod ArgentMultisigAccount {
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
+            self.reentrancy_guard.start();
             let exec_info = get_execution_info().unbox();
             let tx_info = exec_info.tx_info.unbox();
             assert_only_protocol(exec_info.caller_address);
@@ -121,6 +130,7 @@ mod ArgentMultisigAccount {
             let hash = tx_info.transaction_hash;
             let response = retdata.span();
             self.emit(TransactionExecuted { hash, response });
+            self.reentrancy_guard.end();
             retdata
         }
 
@@ -205,7 +215,21 @@ mod ArgentMultisigAccount {
             assert_only_self();
             // Check basic invariants
             self.multisig.assert_valid_storage();
+            let pubkeys = self.signer_list.get_signers();
+            let mut pubkeys_span = pubkeys.span();
+            let mut signers_to_add = array![];
+            // Converting storage from public keys to guid 
+            while let Option::Some(pubkey) = pubkeys_span
+                .pop_front() {
+                    let starknet_signer = starknet_signer_from_pubkey(*pubkey);
+                    let signer_guid = starknet_signer.into_guid();
+                    signers_to_add.append(signer_guid);
+                    self.signer_list.emit(signer_list_component::SignerLinked { signer_guid, signer: starknet_signer });
+                };
             assert(data.len() == 0, 'argent/unexpected-data');
+            let last_signer = *pubkeys[pubkeys.len() - 1];
+            self.signer_list.remove_signers(pubkeys.span(), last_signer);
+            self.signer_list.add_signers(signers_to_add.span(), 0);
             array![]
         }
     }

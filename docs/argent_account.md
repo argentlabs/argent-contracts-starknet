@@ -14,7 +14,7 @@ In addition to the main `__execute__` entry point used by the Starknet protocol,
 
 Normal operations of the wallet (calling external contracts via `__execute__` or `execute_from_outside`, `change_owner`, `change_guardian`, `change_guardian_backup`, `cancel_escape`, `upgrade`) require the approval of the `owner` and a `guardian` to be executed.
 
-Each party alone can trigger the `escape` mode (a.k.a. recovery) on the wallet if the other party is not cooperating or lost. An escape takes 7 days before being active, after which the non-cooperating party can be replaced. The escape expires 7 days after being active.
+Each party alone can trigger the `escape` mode (a.k.a. recovery) on the wallet if the other party is not cooperating or lost. You need to wait for the security period to elapse before the escape is active. Then the non-cooperating party can be replaced. If another security period elapses where the escape is not completed, it will expire. The default security period is 7 days but it can be defined by the user.
 
 The wallet is asymmetric in favor of the `owner` who can override an escape triggered by a `guardian`.
 
@@ -39,35 +39,37 @@ To enable that model to evolve the account can be upgraded. Upgrading the wallet
 | Cancel Escape           | X     | X        |                                          |
 | Upgrade                 | X     | X        |                                          |
 
-# Argent Multisig
+## Signer types
 
-## High-Level Specification
-
-The Argent Multisig account is a typical n-of-m multisig. It requires multiple signatures from different parties to authorize any operation from the account.
-
-The account is controlled by multiple owners (or `signers`). The number of owners that need to approve an operation is called the `threshold`.
-
-This account leverages account abstraction, so the account can pay for its own transaction fees.
-
-A valid account signature is a list of `threshold` individual owner signatures. This account signature can be used to validate a Starknet transaction or an off-chain message through the `is_valid_signature` method.
-
-Any operation that changes the security parameters of the account, like adding/removing/changing owners, upgrading, or changing the threshold will also require the approval (signature) of `threshold` owners.
-
-By default the account can execute a sequence of operations such as calling external contracts in a multicall. A multicall will fail if one of the inner call fails. Whenever a function of the account must be called (`add_signers`, `remove_signers`, `upgrade`, etc), it should be the only call performed in this multicall.
-
-In addition to the main `__execute__` entry point used by the Starknet protocol, the account can also be called by an external party via the `execute_from_outside` function to e.g. enable sponsored transactions. The calling party must provide a valid account signature for the target execution.
+There's more information about it in [Signers](./signers_and_signatures.md#Multiple_Signer_Types).
+This account restricts the guardian role to only StarknetSigner. Note that the guardian backup supports every type
 
 ## Signature format
 
-The account signature is a list of owner signatures. The list must contain exactly `threshold` signatures and every owner can only sign once. Moreover, to simplify processing, the signatures need to be ordered by the owner public key, in ascending order.
+The information available in [Signatures](./signers_and_signatures.md#Signatures) is also applicable for the argent account.
 
-## Self-deployment
+Additionally, this account also supports providing signatures in a concise way when al signers involved are StarknetSigners
 
-The account can pay the transaction fee for its own deployment. In this scenario, the multisig only requires the signature of one of the owners.
-This allows for better UX.
+The account will accept the format
+[first_signer_r, first_signer_s]
 
-**For extra safety, it's recommended to deploy the account before depositing large amounts in the account**.
+And also
+[first_signer_r, first_signer_s, second_signer_r, second_signer_s]
 
-## Upgrade
+## Change owner signature
 
-To enable the model to evolve, the account implements an `upgrade` function that will delegate the upgrade to the new class_hash. Calling this method, as any other method, requires the approval from `threshold` owners.
+To prevent mistakes where someone changes the owner to some key they don't control, the account will require a signature from the new owner as an argument to the `change_owner` function.
+
+New owner should sign the pedersen hash of the array: `[change_owner_selector, chain_id, account_address, old_owner_guid]`
+
+## Outside Execution
+
+See [Outside Execution](./outside_execution.md)
+
+## Sessions
+
+See [Sessions](./sessions.md)
+
+## Upgrades
+
+See [Upgrades](./argen_account_upgrades.md)

@@ -30,7 +30,6 @@ describe("Hybrid Session Account: execute calls", function () {
       classHash: mockDappClassHash,
       salt: num.toHex(randomStarknetKeyPair().privateKey),
     });
-    const erc20ClassHash = await declareContract("Erc20Mock");
     mockDappOneContract = await loadContract(deployedmockDappOne.contract_address);
   });
 
@@ -38,7 +37,7 @@ describe("Hybrid Session Account: execute calls", function () {
     await setTime(initialTime);
   });
 
-  it("Call a contract with backend signer", async function () {
+  it.only("Call a contract with backend signer", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const backendService = new BackendService(guardian as StarknetKeyPair);

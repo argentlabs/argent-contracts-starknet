@@ -2,6 +2,8 @@ import {
   Abi,
   Account,
   AllowArray,
+  ArraySignatureType,
+  BigNumberish,
   CairoOption,
   CairoOptionVariant,
   Call,
@@ -10,12 +12,16 @@ import {
   DeployAccountContractPayload,
   DeployContractResponse,
   GetTransactionReceiptResponse,
+  InvocationsSignerDetails,
   InvokeFunctionResponse,
   RPC,
   RawCalldata,
+  TransactionType,
   UniversalDetails,
   hash,
   num,
+  stark,
+  transaction,
   uint256,
 } from "starknet";
 import { declareContract, declareFixtureContract, ethAddress, loadContract, strkAddress } from "./contracts";
@@ -62,6 +68,100 @@ export class ArgentAccount extends Account {
     });
   }
 }
+
+export class ArgentAccountWithSig extends Account {
+  override async deployAccount(
+    payload: DeployAccountContractPayload,
+    details?: UniversalDetails,
+  ): Promise<DeployContractResponse> {
+    details ||= {};
+    if (!details.skipValidate) {
+      details.skipValidate = false;
+    }
+    return super.deployAccount(payload, details);
+  }
+
+  public async executeWithCustomSig(
+    transactions: AllowArray<Call>,
+    signature?: ArraySignatureType,
+    arg2?: Abi[] | UniversalDetails,
+    transactionsDetail: UniversalDetails = {},
+  ): Promise<InvokeFunctionResponse> {
+    const details = arg2 === undefined || Array.isArray(arg2) ? transactionsDetail : arg2;
+    const calls = Array.isArray(transactions) ? transactions : [transactions];
+    const nonce = num.toBigInt(details.nonce ?? (await this.getNonce()));
+    const version = stark.toTransactionVersion(RPC.ETransactionVersion.V1, details.version);
+
+    let maxFee: BigNumberish = 0;
+    let resourceBounds = stark.estimateFeeToBounds(0n);
+    if (version === RPC.ETransactionVersion.V3) {
+      resourceBounds =
+        details.resourceBounds ??
+        (await this.getSuggestedFee({ TransactionType: TransactionType.INVOKE, payload: transactions } as any, details))
+          .resourceBounds;
+    } else {
+      // hardcoded for now
+      maxFee = 1e12;
+    }
+
+    const estimate = { maxFee, resourceBounds };
+
+    const chainId = await this.getChainId();
+
+    const signerDetails: InvocationsSignerDetails = {
+      ...stark.v3Details(details),
+      resourceBounds: estimate.resourceBounds,
+      walletAddress: this.address,
+      nonce,
+      maxFee: estimate.maxFee,
+      version,
+      chainId,
+      cairoVersion: await this.getCairoVersion(),
+    };
+
+    const regularSignature = await this.signer.signTransaction(calls, signerDetails);
+
+    const calldata = transaction.getExecuteCalldata(calls, await this.getCairoVersion());
+
+    return this.invokeFunction(
+      { contractAddress: this.address, calldata, signature },
+      {
+        ...stark.v3Details(details),
+        resourceBounds: estimate.resourceBounds,
+        nonce,
+        maxFee: estimate.maxFee,
+        version,
+      },
+    );
+  }
+
+  override async execute(
+    calls: AllowArray<Call>,
+    abis?: Abi[],
+    details: UniversalDetails = {},
+  ): Promise<InvokeFunctionResponse> {
+    details ||= {};
+    if (!details.skipValidate) {
+      details.skipValidate = false;
+    }
+    if (details.resourceBounds) {
+      return super.execute(calls, abis, details);
+    }
+    const estimate = await this.estimateFee(calls, details);
+    return super.execute(calls, abis, {
+      ...details,
+      resourceBounds: {
+        ...estimate.resourceBounds,
+        l1_gas: {
+          ...estimate.resourceBounds.l1_gas,
+          max_amount: num.toHexString(num.addPercent(estimate.resourceBounds.l1_gas.max_amount, 30)),
+        },
+      },
+    });
+  }
+}
+
+new ArgentAccountWithSig(provider, "", RPC.ETransactionVersion.V3);
 
 export interface ArgentWallet {
   account: ArgentAccount;

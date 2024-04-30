@@ -22,6 +22,7 @@ import {
   ALLOWED_METHOD_HASH,
   AllowedMethod,
   ArgentAccount,
+  ArgentAccountWithSig,
   BackendService,
   OffChainSession,
   OnChainSession,
@@ -92,7 +93,13 @@ export class DappService {
         cacheAuthorization,
       );
     });
-    return new ArgentAccount(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
+    return new ArgentAccountWithSig(
+      account,
+      account.address,
+      sessionSigner,
+      account.cairoVersion,
+      account.transactionVersion,
+    );
   }
 
   public async getOutsideExecutionCall(

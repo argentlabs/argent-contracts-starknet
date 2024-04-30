@@ -6,10 +6,10 @@ use ecdsa::check_ecdsa_signature;
 use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, PoseidonTrait};
 use starknet::SyscallResultTrait;
-use starknet::secp256_trait::{Secp256PointTrait, Signature as Secp256r1Signature, recover_public_key};
+use starknet::secp256_trait::{Secp256PointTrait, Signature as Secp256Signature, recover_public_key};
 use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
-use starknet::{EthAddress, eth_signature::{Signature as Secp256k1Signature, is_eth_signature_valid}};
+use starknet::{EthAddress, eth_signature::is_eth_signature_valid};
 
 /// All signer type magic values. Used to derive their guid
 const STARKNET_SIGNER_TYPE: felt252 = 'Starknet Signer';
@@ -34,9 +34,9 @@ enum SignerType {
 #[derive(Drop, Copy, Serde)]
 enum SignerSignature {
     Starknet: (StarknetSigner, StarknetSignature),
-    Secp256k1: (Secp256k1Signer, Secp256k1Signature),
-    Secp256r1: (Secp256r1Signer, Secp256r1Signature),
-    Eip191: (Eip191Signer, Secp256r1Signature),
+    Secp256k1: (Secp256k1Signer, Secp256Signature),
+    Secp256r1: (Secp256r1Signer, Secp256Signature),
+    Eip191: (Eip191Signer, Secp256Signature),
     Webauthn: (WebauthnSigner, WebauthnSignature),
 }
 
@@ -296,12 +296,12 @@ fn is_valid_starknet_signature(hash: felt252, signer: StarknetSigner, signature:
 }
 
 #[inline(always)]
-fn is_valid_secp256k1_signature(hash: u256, signer: Secp256k1Signer, signature: Secp256k1Signature) -> bool {
+fn is_valid_secp256k1_signature(hash: u256, signer: Secp256k1Signer, signature: Secp256Signature) -> bool {
     is_eth_signature_valid(hash, signature, signer.pubkey_hash.into()).is_ok()
 }
 
 #[inline(always)]
-fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: Secp256r1Signature) -> bool {
+fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: Secp256Signature) -> bool {
     let recovered = recover_public_key::<Secp256r1Point>(hash, signature).expect('argent/invalid-sig-format');
     let (recovered_signer, _) = recovered.get_coordinates().expect('argent/invalid-sig-format');
     recovered_signer == signer.pubkey.into()

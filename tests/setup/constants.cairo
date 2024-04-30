@@ -1,5 +1,5 @@
 use argent::signer::signer_signature::{
-    Secp256k1Signature, SignerTrait, StarknetSigner, StarknetSignature, starknet_signer_from_pubkey
+    Secp256Signature, SignerTrait, StarknetSigner, StarknetSignature, starknet_signer_from_pubkey
 };
 use ecdsa::check_ecdsa_signature;
 use hash::{HashStateTrait};

@@ -69,7 +69,7 @@ export class ArgentAccount extends Account {
   }
 }
 
-export class ArgentAccountWithSig extends Account {
+export class ArgentAccountCustomSig extends Account {
   override async deployAccount(
     payload: DeployAccountContractPayload,
     details?: UniversalDetails,
@@ -83,7 +83,7 @@ export class ArgentAccountWithSig extends Account {
 
   public async executeWithCustomSig(
     transactions: AllowArray<Call>,
-    signature?: ArraySignatureType,
+    signature: ArraySignatureType,
     arg2?: Abi[] | UniversalDetails,
     transactionsDetail: UniversalDetails = {},
   ): Promise<InvokeFunctionResponse> {
@@ -106,21 +106,6 @@ export class ArgentAccountWithSig extends Account {
 
     const estimate = { maxFee, resourceBounds };
 
-    const chainId = await this.getChainId();
-
-    const signerDetails: InvocationsSignerDetails = {
-      ...stark.v3Details(details),
-      resourceBounds: estimate.resourceBounds,
-      walletAddress: this.address,
-      nonce,
-      maxFee: estimate.maxFee,
-      version,
-      chainId,
-      cairoVersion: await this.getCairoVersion(),
-    };
-
-    const regularSignature = await this.signer.signTransaction(calls, signerDetails);
-
     const calldata = transaction.getExecuteCalldata(calls, await this.getCairoVersion());
 
     return this.invokeFunction(
@@ -133,6 +118,42 @@ export class ArgentAccountWithSig extends Account {
         version,
       },
     );
+  }
+  public async getSignerDetails(
+    transactions: AllowArray<Call>,
+    arg2?: Abi[] | UniversalDetails,
+    transactionsDetail: UniversalDetails = {},
+  ): Promise<InvocationsSignerDetails> {
+    const details = arg2 === undefined || Array.isArray(arg2) ? transactionsDetail : arg2;
+    const nonce = num.toBigInt(details.nonce ?? (await this.getNonce()));
+    const version = stark.toTransactionVersion(RPC.ETransactionVersion.V1, details.version);
+
+    let maxFee: BigNumberish = 0;
+    let resourceBounds = stark.estimateFeeToBounds(0n);
+    if (version === RPC.ETransactionVersion.V3) {
+      resourceBounds =
+        details.resourceBounds ??
+        (await this.getSuggestedFee({ TransactionType: TransactionType.INVOKE, payload: transactions } as any, details))
+          .resourceBounds;
+    } else {
+      // hardcoded for now
+      maxFee = 1e12;
+    }
+
+    const estimate = { maxFee, resourceBounds };
+
+    const chainId = await this.getChainId();
+
+    return {
+      ...stark.v3Details(details),
+      resourceBounds: estimate.resourceBounds,
+      walletAddress: this.address,
+      nonce,
+      maxFee: estimate.maxFee,
+      version,
+      chainId,
+      cairoVersion: await this.getCairoVersion(),
+    };
   }
 
   override async execute(
@@ -160,8 +181,6 @@ export class ArgentAccountWithSig extends Account {
     });
   }
 }
-
-new ArgentAccountWithSig(provider, "", RPC.ETransactionVersion.V3);
 
 export interface ArgentWallet {
   account: ArgentAccount;

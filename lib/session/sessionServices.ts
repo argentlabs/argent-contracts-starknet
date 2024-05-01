@@ -22,7 +22,7 @@ import {
   ALLOWED_METHOD_HASH,
   AllowedMethod,
   ArgentAccount,
-  ArgentAccountWithSig,
+  ArgentAccountCustomSig,
   BackendService,
   OffChainSession,
   OnChainSession,
@@ -93,12 +93,53 @@ export class DappService {
         cacheAuthorization,
       );
     });
-    return new ArgentAccountWithSig(
+    return new ArgentAccountCustomSig(
       account,
       account.address,
       sessionSigner,
       account.cairoVersion,
       account.transactionVersion,
+    );
+  }
+
+  public async getRawSessionToken(
+    calls: Call[],
+    completedSession: OffChainSession,
+    sessionAuthorizationSignature: ArraySignatureType,
+    transactionsDetail: InvocationsSignerDetails,
+    cacheAuthorization = false,
+  ) {
+    const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
+    let txHash;
+    if (Object.values(RPC.ETransactionVersion2).includes(transactionsDetail.version as any)) {
+      const det = transactionsDetail as V2InvocationsSignerDetails;
+      txHash = hash.calculateInvokeTransactionHash({
+        ...det,
+        senderAddress: det.walletAddress,
+        compiledCalldata,
+        version: det.version,
+      });
+    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionsDetail.version as any)) {
+      const det = transactionsDetail as V3InvocationsSignerDetails;
+      txHash = hash.calculateInvokeTransactionHash({
+        ...det,
+        senderAddress: det.walletAddress,
+        compiledCalldata,
+        version: det.version,
+        nonceDataAvailabilityMode: stark.intDAM(det.nonceDataAvailabilityMode),
+        feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
+      });
+    } else {
+      throw Error("unsupported signTransaction version");
+    }
+    return this.compileSessionSignature(
+      sessionAuthorizationSignature,
+      completedSession,
+      txHash,
+      calls,
+      transactionsDetail.walletAddress,
+      transactionsDetail,
+      cacheAuthorization,
     );
   }
 
@@ -172,7 +213,7 @@ export class DappService {
     } else {
       throw Error("unsupported signTransaction version");
     }
-    return this.compileSessionSignature(
+    const sessionToken = await this.compileSessionSignature(
       sessionAuthorizationSignature,
       completedSession,
       txHash,
@@ -181,6 +222,7 @@ export class DappService {
       transactionsDetail,
       cacheAuthorization,
     );
+    return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
   }
 
   private async compileSessionSignatureFromOutside(
@@ -232,7 +274,7 @@ export class DappService {
     accountAddress: string,
     transactionsDetail: InvocationsSignerDetails,
     cacheAuthorization: boolean,
-  ): Promise<ArraySignatureType> {
+  ): Promise<SessionToken> {
     const session = this.compileSessionHelper(completedSession);
 
     const guardianSignature = await this.argentBackend.signTxAndSession(
@@ -247,7 +289,7 @@ export class DappService {
       accountAddress,
       cacheAuthorization,
     );
-    const sessionToken = await this.compileSessionTokenHelper(
+    return await this.compileSessionTokenHelper(
       session,
       completedSession,
       calls,
@@ -257,8 +299,6 @@ export class DappService {
       guardianSignature,
       accountAddress,
     );
-
-    return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
   }
 
   private async signTxAndSession(

@@ -1,9 +1,11 @@
-import { Contract, num, typedData } from "starknet";
+import { CallData, Contract, num, typedData } from "starknet";
 import {
   AllowedMethod,
   ArgentX,
   BackendService,
   DappService,
+  SESSION_MAGIC,
+  SignerType,
   StarknetKeyPair,
   declareContract,
   deployAccount,
@@ -15,6 +17,7 @@ import {
   randomStarknetKeyPair,
   setTime,
   setupSession,
+  signerTypeToCustomEnum,
 } from "../lib";
 
 describe("Hybrid Session Account: execute calls", function () {
@@ -210,5 +213,168 @@ describe("Hybrid Session Account: execute calls", function () {
     );
 
     await expectRevertWithErrorMessage("session/signer-is-not-guardian", () => accountWithDappSigner.execute(calls));
+  });
+
+  it("Fail with 'argent/invalid-signature-len' if more than owner + guardian signed session", async function () {
+    const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
+
+    const backendService = new BackendService(guardian as StarknetKeyPair);
+    const dappService = new DappService(backendService);
+    const argentX = new ArgentX(account, backendService);
+
+    const allowedMethods: AllowedMethod[] = [
+      {
+        "Contract Address": mockDappOneContract.address,
+        selector: "set_number_double",
+      },
+    ];
+
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
+
+    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
+
+    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+
+    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+      account,
+      sessionRequest,
+      accountSessionSignature,
+    );
+
+    const signerDetails = await accountWithDappSigner.getSignerDetails(calls);
+    let sessionToken = await dappService.getRawSessionToken(
+      calls,
+      sessionRequest,
+      accountSessionSignature,
+      signerDetails,
+    );
+    sessionToken = {
+      ...sessionToken,
+      session_authorization: [...sessionToken.session_authorization, "0x00"],
+    };
+
+    await expectRevertWithErrorMessage("argent/invalid-signature-len", () =>
+      accountWithDappSigner.executeWithCustomSig(calls, [SESSION_MAGIC, ...CallData.compile({ sessionToken })]),
+    );
+  });
+
+  it("Fail if a different dapp key signed session token", async function () {
+    const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
+
+    const backendService = new BackendService(guardian as StarknetKeyPair);
+    const dappService = new DappService(backendService);
+    const argentX = new ArgentX(account, backendService);
+
+    const allowedMethods: AllowedMethod[] = [
+      {
+        "Contract Address": mockDappOneContract.address,
+        selector: "set_number_double",
+      },
+    ];
+
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
+
+    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
+
+    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+
+    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+      account,
+      sessionRequest,
+      accountSessionSignature,
+    );
+
+    const signerDetails = await accountWithDappSigner.getSignerDetails(calls);
+    const sessionToken = await dappService.getRawSessionToken(
+      calls,
+      sessionRequest,
+      accountSessionSignature,
+      signerDetails,
+    );
+    let sessionTokenWrongPub = {
+      ...sessionToken,
+      session_signature: signerTypeToCustomEnum(SignerType.Starknet, {
+        pubkey: 100n,
+        r: sessionToken.session_signature.variant.Starknet.r,
+        s: sessionToken.session_signature.variant.Starknet.s,
+      }),
+    };
+
+    await expectRevertWithErrorMessage("session/session-key-mismatch", () =>
+      accountWithDappSigner.executeWithCustomSig(calls, [SESSION_MAGIC, ...CallData.compile({ sessionTokenWrongPub })]),
+    );
+
+    const sessionTokenWrongSig = {
+      ...sessionToken,
+      session_signature: signerTypeToCustomEnum(SignerType.Starknet, {
+        pubkey: sessionToken.session_signature.variant.Starknet.pubkey,
+        r: 200n,
+        s: 100n,
+      }),
+    };
+
+    await expectRevertWithErrorMessage("session/invalid-session-sig", () =>
+      accountWithDappSigner.executeWithCustomSig(calls, [SESSION_MAGIC, ...CallData.compile({ sessionTokenWrongSig })]),
+    );
+  });
+
+  it("Fail if a different guardian key signed session token", async function () {
+    const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
+
+    const backendService = new BackendService(guardian as StarknetKeyPair);
+    const dappService = new DappService(backendService);
+    const argentX = new ArgentX(account, backendService);
+
+    const allowedMethods: AllowedMethod[] = [
+      {
+        "Contract Address": mockDappOneContract.address,
+        selector: "set_number_double",
+      },
+    ];
+
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
+
+    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
+
+    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+
+    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+      account,
+      sessionRequest,
+      accountSessionSignature,
+    );
+
+    const signerDetails = await accountWithDappSigner.getSignerDetails(calls);
+    const sessionToken = await dappService.getRawSessionToken(
+      calls,
+      sessionRequest,
+      accountSessionSignature,
+      signerDetails,
+    );
+    const sessionTokenWrongPub = {
+      ...sessionToken,
+      guardian_signature: signerTypeToCustomEnum(SignerType.Starknet, {
+        pubkey: 100n,
+        r: sessionToken.guardian_signature.variant.Starknet.r,
+        s: sessionToken.guardian_signature.variant.Starknet.s,
+      }),
+    };
+
+    await expectRevertWithErrorMessage("session/guardian-key-mismatch", () =>
+      accountWithDappSigner.executeWithCustomSig(calls, [SESSION_MAGIC, ...CallData.compile({ sessionTokenWrongPub })]),
+    );
+
+    const sessionTokenWrongSig = {
+      ...sessionToken,
+      guardian_signature: signerTypeToCustomEnum(SignerType.Starknet, {
+        pubkey: sessionToken.guardian_signature.variant.Starknet.pubkey,
+        r: 200n,
+        s: 100n,
+      }),
+    };
+
+    await expectRevertWithErrorMessage("session/invalid-backend-sig", () =>
+      accountWithDappSigner.executeWithCustomSig(calls, [SESSION_MAGIC, ...CallData.compile({ sessionTokenWrongSig })]),
+    );
   });
 });

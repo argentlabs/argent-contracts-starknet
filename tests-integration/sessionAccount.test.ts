@@ -377,4 +377,63 @@ describe("Hybrid Session Account: execute calls", function () {
       accountWithDappSigner.executeWithCustomSig(calls, [SESSION_MAGIC, ...CallData.compile({ sessionTokenWrongSig })]),
     );
   });
+
+  it.only("Fail if proofs are misaligned", async function () {
+    const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
+
+    const backendService = new BackendService(guardian as StarknetKeyPair);
+    const dappService = new DappService(backendService);
+    const argentX = new ArgentX(account, backendService);
+
+    const allowedMethods: AllowedMethod[] = [
+      {
+        "Contract Address": mockDappOneContract.address,
+        selector: "set_number_double",
+      },
+      {
+        "Contract Address": mockDappOneContract.address,
+        selector: "set_number_times3",
+      },
+      {
+        "Contract Address": mockDappOneContract.address,
+        selector: "increase_number",
+      },
+    ];
+
+    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
+
+    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
+
+    const calls = [
+      mockDappOneContract.populateTransaction.set_number_double(2),
+      mockDappOneContract.populateTransaction.set_number_double(4),
+      mockDappOneContract.populateTransaction.increase_number(2),
+      mockDappOneContract.populateTransaction.increase_number(2),
+    ];
+
+    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+      account,
+      sessionRequest,
+      accountSessionSignature,
+    );
+
+    const signerDetails = await accountWithDappSigner.getSignerDetails(calls);
+    const sessionToken = await dappService.getRawSessionToken(
+      calls,
+      sessionRequest,
+      accountSessionSignature,
+      signerDetails,
+    );
+    const sessionTokenWrongProofs = {
+      ...sessionToken,
+      proofs: [["0x2", "0x1"]],
+    };
+
+    await expectRevertWithErrorMessage("session/unaligned-proofs", () =>
+      accountWithDappSigner.executeWithCustomSig(calls, [
+        SESSION_MAGIC,
+        ...CallData.compile({ sessionTokenWrongProofs }),
+      ]),
+    );
+  });
 });

@@ -40,7 +40,7 @@ import {
   signerTypeToCustomEnum,
 } from "..";
 
-const SESSION_MAGIC = shortString.encodeShortString("session-token");
+export const SESSION_MAGIC = shortString.encodeShortString("session-token");
 
 export class DappService {
   constructor(

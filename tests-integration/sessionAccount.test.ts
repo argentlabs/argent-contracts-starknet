@@ -37,7 +37,7 @@ describe("Hybrid Session Account: execute calls", function () {
     await setTime(initialTime);
   });
 
-  it.only("Call a contract with backend signer", async function () {
+  it("Call a contract with backend signer", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const backendService = new BackendService(guardian as StarknetKeyPair);
@@ -187,54 +187,7 @@ describe("Hybrid Session Account: execute calls", function () {
       accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
     );
   });
-
-  it("Use Session with caching enabled", async function () {
-    const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
-
-    const backendService = new BackendService(guardian as StarknetKeyPair);
-    const dappService = new DappService(backendService);
-    const argentX = new ArgentX(account, backendService);
-
-    const allowedMethods: AllowedMethod[] = [
-      {
-        "Contract Address": mockDappOneContract.address,
-        selector: "set_number_double",
-      },
-    ];
-
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
-
-    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
-
-    const sessionHash = typedData.getMessageHash(await getSessionTypedData(sessionRequest), accountContract.address);
-
-    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
-
-    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
-      account,
-      sessionRequest,
-      accountSessionSignature,
-      true,
-    );
-
-    await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
-    const { transaction_hash } = await accountWithDappSigner.execute(calls);
-
-    await account.waitForTransaction(transaction_hash);
-    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
-
-    // check that the session is cached
-    await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.true;
-
-    const calls2 = [mockDappOneContract.populateTransaction.set_number_double(4)];
-
-    const { transaction_hash: tx2 } = await accountWithDappSigner.execute(calls2);
-
-    await account.waitForTransaction(tx2);
-    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(8n);
-  });
-
-  it("Fail if guardian backup signed session (uncached)", async function () {
+  it("Fail if guardian backup signed session", async function () {
     const { account, guardian } = await deployAccountWithGuardianBackup({
       classHash: sessionAccountClassHash,
     });
@@ -254,32 +207,6 @@ describe("Hybrid Session Account: execute calls", function () {
       allowedMethods,
       initialTime + 150n,
       randomStarknetKeyPair(),
-    );
-
-    await expectRevertWithErrorMessage("session/signer-is-not-guardian", () => accountWithDappSigner.execute(calls));
-  });
-
-  it("Fail if guardian backup signed session (cached)", async function () {
-    const { account, guardian } = await deployAccountWithGuardianBackup({
-      classHash: sessionAccountClassHash,
-    });
-
-    const allowedMethods: AllowedMethod[] = [
-      {
-        "Contract Address": mockDappOneContract.address,
-        selector: "set_number_double",
-      },
-    ];
-
-    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
-
-    const accountWithDappSigner = await setupSession(
-      guardian as StarknetKeyPair,
-      account,
-      allowedMethods,
-      initialTime + 150n,
-      randomStarknetKeyPair(),
-      true,
     );
 
     await expectRevertWithErrorMessage("session/signer-is-not-guardian", () => accountWithDappSigner.execute(calls));

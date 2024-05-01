@@ -291,7 +291,7 @@ describe("Hybrid Session Account: execute calls", function () {
       accountSessionSignature,
       signerDetails,
     );
-    let sessionTokenWrongPub = {
+    const sessionTokenWrongPub = {
       ...sessionToken,
       session_signature: signerTypeToCustomEnum(SignerType.Starknet, {
         pubkey: 100n,
@@ -378,7 +378,7 @@ describe("Hybrid Session Account: execute calls", function () {
     );
   });
 
-  it.only("Fail if proofs are misaligned", async function () {
+  it("Fail if proofs are misaligned", async function () {
     const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const backendService = new BackendService(guardian as StarknetKeyPair);

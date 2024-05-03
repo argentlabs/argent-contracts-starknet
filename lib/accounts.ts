@@ -336,7 +336,7 @@ export async function getSignerDetails(account: ArgentAccount, calls: Call[]): P
     await newAccount.execute(calls, undefined);
     throw Error("OMG");
   } catch (customError) {
-    return customSigner.signerDetails!!;
+    return customSigner.signerDetails!;
   }
 }
 

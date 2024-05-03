@@ -312,29 +312,20 @@ export async function getSignerDetails(account: ArgentAccount, calls: Call[]): P
     account.cairoVersion,
     account.transactionVersion,
   );
-  // const customSigner = new RawSigner {
-  //     let signerDetails?;
-  //     public async signTransaction(calls, signerDetails) {
-  //        this.signerDetails = signerDetails
-  //        throw CustomError;
-  //     }
-  // };
-
   const customSigner = new (class extends RawSigner {
     public signerDetails?: InvocationsSignerDetails;
     public async signTransaction(calls: Call[], signerDetails: InvocationsSignerDetails): Promise<Signature> {
       this.signerDetails = signerDetails;
-      throw Error("OMG");
+      throw Error("Should not execute");
     }
     public async signRaw(messageHash: string): Promise<string[]> {
-      return ["0", "1"];
+      throw Error("Not implemented");
     }
   })();
-
   newAccount.signer = customSigner;
   try {
     await newAccount.execute(calls, undefined);
-    throw Error("OMG");
+    throw Error("Should not execute");
   } catch (customError) {
     return customSigner.signerDetails!;
   }

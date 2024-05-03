@@ -146,7 +146,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
     // check that the session is cached
     await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.true;
 
-    let sessionToken = await dappService.getRawSessionToken(
+    let sessionToken = await dappService.getSessionToken(
       calls,
       accountWithDappSigner,
       sessionRequest,

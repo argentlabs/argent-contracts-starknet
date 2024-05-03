@@ -96,13 +96,13 @@ export class DappService {
     return new ArgentAccount(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
   }
 
-  public async getRawSessionToken(
+  public async getSessionToken(
     calls: Call[],
     account: ArgentAccount,
     completedSession: OffChainSession,
     sessionAuthorizationSignature: ArraySignatureType,
     cacheAuthorization = false,
-  ) {
+  ): Promise<SessionToken> {
     const transactionDetail = await getSignerDetails(account, calls);
     const compiledCalldata = transaction.getExecuteCalldata(calls, "1");
     let txHash;

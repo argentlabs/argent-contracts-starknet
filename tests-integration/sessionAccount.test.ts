@@ -242,7 +242,7 @@ describe("Hybrid Session Account: execute calls", function () {
       accountSessionSignature,
     );
 
-    let sessionToken = await dappService.getRawSessionToken(
+    let sessionToken = await dappService.getSessionToken(
       calls,
       accountWithDappSigner,
       sessionRequest,
@@ -284,7 +284,7 @@ describe("Hybrid Session Account: execute calls", function () {
       accountSessionSignature,
     );
 
-    const sessionToken = await dappService.getRawSessionToken(
+    const sessionToken = await dappService.getSessionToken(
       calls,
       accountWithDappSigner,
       sessionRequest,
@@ -349,7 +349,7 @@ describe("Hybrid Session Account: execute calls", function () {
       accountSessionSignature,
     );
 
-    const sessionToken = await dappService.getRawSessionToken(
+    const sessionToken = await dappService.getSessionToken(
       calls,
       accountWithDappSigner,
       sessionRequest,
@@ -427,7 +427,7 @@ describe("Hybrid Session Account: execute calls", function () {
       accountSessionSignature,
     );
 
-    const sessionToken = await dappService.getRawSessionToken(
+    const sessionToken = await dappService.getSessionToken(
       calls,
       accountWithDappSigner,
       sessionRequest,

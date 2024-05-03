@@ -11,6 +11,7 @@ import {
   deployAccount,
   deployAccountWithGuardianBackup,
   deployer,
+  executeWithCustomSig,
   expectRevertWithErrorMessage,
   getSessionTypedData,
   loadContract,
@@ -241,12 +242,11 @@ describe("Hybrid Session Account: execute calls", function () {
       accountSessionSignature,
     );
 
-    const signerDetails = await accountWithDappSigner.getSignerDetails(calls);
     let sessionToken = await dappService.getRawSessionToken(
       calls,
+      accountWithDappSigner,
       sessionRequest,
       accountSessionSignature,
-      signerDetails,
     );
     sessionToken = {
       ...sessionToken,
@@ -254,7 +254,7 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("argent/invalid-signature-len", () =>
-      accountWithDappSigner.executeWithCustomSig(calls, [SESSION_MAGIC, ...CallData.compile({ sessionToken })]),
+      executeWithCustomSig(accountWithDappSigner, calls, [SESSION_MAGIC, ...CallData.compile({ sessionToken })]),
     );
   });
 
@@ -284,12 +284,11 @@ describe("Hybrid Session Account: execute calls", function () {
       accountSessionSignature,
     );
 
-    const signerDetails = await accountWithDappSigner.getSignerDetails(calls);
     const sessionToken = await dappService.getRawSessionToken(
       calls,
+      accountWithDappSigner,
       sessionRequest,
       accountSessionSignature,
-      signerDetails,
     );
     const sessionTokenWrongPub = {
       ...sessionToken,
@@ -301,7 +300,10 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/session-key-mismatch", () =>
-      accountWithDappSigner.executeWithCustomSig(calls, [SESSION_MAGIC, ...CallData.compile({ sessionTokenWrongPub })]),
+      executeWithCustomSig(accountWithDappSigner, calls, [
+        SESSION_MAGIC,
+        ...CallData.compile({ sessionTokenWrongPub }),
+      ]),
     );
 
     const sessionTokenWrongSig = {
@@ -314,7 +316,10 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/invalid-session-sig", () =>
-      accountWithDappSigner.executeWithCustomSig(calls, [SESSION_MAGIC, ...CallData.compile({ sessionTokenWrongSig })]),
+      executeWithCustomSig(accountWithDappSigner, calls, [
+        SESSION_MAGIC,
+        ...CallData.compile({ sessionTokenWrongSig }),
+      ]),
     );
   });
 
@@ -344,12 +349,11 @@ describe("Hybrid Session Account: execute calls", function () {
       accountSessionSignature,
     );
 
-    const signerDetails = await accountWithDappSigner.getSignerDetails(calls);
     const sessionToken = await dappService.getRawSessionToken(
       calls,
+      accountWithDappSigner,
       sessionRequest,
       accountSessionSignature,
-      signerDetails,
     );
     const sessionTokenWrongPub = {
       ...sessionToken,
@@ -361,7 +365,10 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/guardian-key-mismatch", () =>
-      accountWithDappSigner.executeWithCustomSig(calls, [SESSION_MAGIC, ...CallData.compile({ sessionTokenWrongPub })]),
+      executeWithCustomSig(accountWithDappSigner, calls, [
+        SESSION_MAGIC,
+        ...CallData.compile({ sessionTokenWrongPub }),
+      ]),
     );
 
     const sessionTokenWrongSig = {
@@ -374,7 +381,10 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/invalid-backend-sig", () =>
-      accountWithDappSigner.executeWithCustomSig(calls, [SESSION_MAGIC, ...CallData.compile({ sessionTokenWrongSig })]),
+      executeWithCustomSig(accountWithDappSigner, calls, [
+        SESSION_MAGIC,
+        ...CallData.compile({ sessionTokenWrongSig }),
+      ]),
     );
   });
 
@@ -417,12 +427,11 @@ describe("Hybrid Session Account: execute calls", function () {
       accountSessionSignature,
     );
 
-    const signerDetails = await accountWithDappSigner.getSignerDetails(calls);
     const sessionToken = await dappService.getRawSessionToken(
       calls,
+      accountWithDappSigner,
       sessionRequest,
       accountSessionSignature,
-      signerDetails,
     );
     const sessionTokenWrongProofs = {
       ...sessionToken,
@@ -430,7 +439,7 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/unaligned-proofs", () =>
-      accountWithDappSigner.executeWithCustomSig(calls, [
+      executeWithCustomSig(accountWithDappSigner, calls, [
         SESSION_MAGIC,
         ...CallData.compile({ sessionTokenWrongProofs }),
       ]),

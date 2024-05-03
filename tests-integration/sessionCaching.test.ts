@@ -10,6 +10,7 @@ import {
   deployAccount,
   deployAccountWithGuardianBackup,
   deployer,
+  executeWithCustomSig,
   expectRevertWithErrorMessage,
   getSessionTypedData,
   loadContract,
@@ -145,12 +146,11 @@ describe("Hybrid Session Account: execute session calls with caching", function 
     // check that the session is cached
     await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.true;
 
-    const signerDetails = await accountWithDappSigner.getSignerDetails(calls);
     let sessionToken = await dappService.getRawSessionToken(
       calls,
+      accountWithDappSigner,
       sessionRequest,
       accountSessionSignature,
-      signerDetails,
       true,
     );
     sessionToken = {
@@ -160,7 +160,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         .map(() => "1"),
     };
     await expectRevertWithErrorMessage("session/invalid-auth-len", () =>
-      accountWithDappSigner.executeWithCustomSig(calls, [SESSION_MAGIC, ...CallData.compile({ sessionToken })]),
+      executeWithCustomSig(accountWithDappSigner, calls, [SESSION_MAGIC, ...CallData.compile({ sessionToken })]),
     );
   });
 });

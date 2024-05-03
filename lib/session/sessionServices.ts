@@ -22,7 +22,6 @@ import {
   ALLOWED_METHOD_HASH,
   AllowedMethod,
   ArgentAccount,
-  ArgentAccountCustomSig,
   BackendService,
   OffChainSession,
   OnChainSession,
@@ -33,6 +32,7 @@ import {
   StarknetKeyPair,
   getOutsideCall,
   getSessionTypedData,
+  getSignerDetails,
   getTypedData,
   loadContract,
   provider,
@@ -93,34 +93,29 @@ export class DappService {
         cacheAuthorization,
       );
     });
-    return new ArgentAccountCustomSig(
-      account,
-      account.address,
-      sessionSigner,
-      account.cairoVersion,
-      account.transactionVersion,
-    );
+    return new ArgentAccount(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
   }
 
   public async getRawSessionToken(
     calls: Call[],
+    account: ArgentAccount,
     completedSession: OffChainSession,
     sessionAuthorizationSignature: ArraySignatureType,
-    transactionsDetail: InvocationsSignerDetails,
     cacheAuthorization = false,
   ) {
-    const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
+    const transactionDetail = await getSignerDetails(account, calls);
+    const compiledCalldata = transaction.getExecuteCalldata(calls, "1");
     let txHash;
-    if (Object.values(RPC.ETransactionVersion2).includes(transactionsDetail.version as any)) {
-      const det = transactionsDetail as V2InvocationsSignerDetails;
+    if (Object.values(RPC.ETransactionVersion2).includes(transactionDetail.version as any)) {
+      const det = transactionDetail as V2InvocationsSignerDetails;
       txHash = hash.calculateInvokeTransactionHash({
         ...det,
         senderAddress: det.walletAddress,
         compiledCalldata,
         version: det.version,
       });
-    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionsDetail.version as any)) {
-      const det = transactionsDetail as V3InvocationsSignerDetails;
+    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionDetail.version as any)) {
+      const det = transactionDetail as V3InvocationsSignerDetails;
       txHash = hash.calculateInvokeTransactionHash({
         ...det,
         senderAddress: det.walletAddress,
@@ -137,8 +132,8 @@ export class DappService {
       completedSession,
       txHash,
       calls,
-      transactionsDetail.walletAddress,
-      transactionsDetail,
+      transactionDetail.walletAddress,
+      transactionDetail,
       cacheAuthorization,
     );
   }

@@ -3,7 +3,6 @@ import {
   Account,
   AllowArray,
   ArraySignatureType,
-  BigNumberish,
   CairoOption,
   CairoOptionVariant,
   Call,
@@ -16,19 +15,17 @@ import {
   InvokeFunctionResponse,
   RPC,
   RawCalldata,
-  TransactionType,
+  Signature,
   UniversalDetails,
   hash,
   num,
-  stark,
-  transaction,
   uint256,
 } from "starknet";
 import { declareContract, declareFixtureContract, ethAddress, loadContract, strkAddress } from "./contracts";
 import { provider } from "./provider";
 import { ensureSuccess } from "./receipts";
 import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
-import { ArgentSigner, KeyPair, randomStarknetKeyPair } from "./signers/signers";
+import { ArgentSigner, KeyPair, RawSigner, randomStarknetKeyPair } from "./signers/signers";
 
 export class ArgentAccount extends Account {
   // Increase the gas limit by 30% to avoid failures due to gas estimation being too low with tx v3 and transactions the use escaping
@@ -41,119 +38,6 @@ export class ArgentAccount extends Account {
       details.skipValidate = false;
     }
     return super.deployAccount(payload, details);
-  }
-
-  override async execute(
-    calls: AllowArray<Call>,
-    abis?: Abi[],
-    details: UniversalDetails = {},
-  ): Promise<InvokeFunctionResponse> {
-    details ||= {};
-    if (!details.skipValidate) {
-      details.skipValidate = false;
-    }
-    if (details.resourceBounds) {
-      return super.execute(calls, abis, details);
-    }
-    const estimate = await this.estimateFee(calls, details);
-    return super.execute(calls, abis, {
-      ...details,
-      resourceBounds: {
-        ...estimate.resourceBounds,
-        l1_gas: {
-          ...estimate.resourceBounds.l1_gas,
-          max_amount: num.toHexString(num.addPercent(estimate.resourceBounds.l1_gas.max_amount, 30)),
-        },
-      },
-    });
-  }
-}
-
-export class ArgentAccountCustomSig extends Account {
-  override async deployAccount(
-    payload: DeployAccountContractPayload,
-    details?: UniversalDetails,
-  ): Promise<DeployContractResponse> {
-    details ||= {};
-    if (!details.skipValidate) {
-      details.skipValidate = false;
-    }
-    return super.deployAccount(payload, details);
-  }
-
-  public async executeWithCustomSig(
-    transactions: AllowArray<Call>,
-    signature: ArraySignatureType,
-    arg2?: Abi[] | UniversalDetails,
-    transactionsDetail: UniversalDetails = {},
-  ): Promise<InvokeFunctionResponse> {
-    const details = arg2 === undefined || Array.isArray(arg2) ? transactionsDetail : arg2;
-    const calls = Array.isArray(transactions) ? transactions : [transactions];
-    const nonce = num.toBigInt(details.nonce ?? (await this.getNonce()));
-    const version = stark.toTransactionVersion(RPC.ETransactionVersion.V1, details.version);
-
-    let maxFee: BigNumberish = 0;
-    let resourceBounds = stark.estimateFeeToBounds(0n);
-    if (version === RPC.ETransactionVersion.V3) {
-      resourceBounds =
-        details.resourceBounds ??
-        (await this.getSuggestedFee({ TransactionType: TransactionType.INVOKE, payload: transactions } as any, details))
-          .resourceBounds;
-    } else {
-      // hardcoded for now
-      maxFee = 1e12;
-    }
-
-    const estimate = { maxFee, resourceBounds };
-
-    const calldata = transaction.getExecuteCalldata(calls, await this.getCairoVersion());
-
-    return this.invokeFunction(
-      { contractAddress: this.address, calldata, signature },
-      {
-        ...stark.v3Details(details),
-        resourceBounds: estimate.resourceBounds,
-        nonce,
-        maxFee: estimate.maxFee,
-        version,
-      },
-    );
-  }
-  public async getSignerDetails(
-    transactions: AllowArray<Call>,
-    arg2?: Abi[] | UniversalDetails,
-    transactionsDetail: UniversalDetails = {},
-  ): Promise<InvocationsSignerDetails> {
-    const details = arg2 === undefined || Array.isArray(arg2) ? transactionsDetail : arg2;
-    const nonce = num.toBigInt(details.nonce ?? (await this.getNonce()));
-    const version = stark.toTransactionVersion(RPC.ETransactionVersion.V1, details.version);
-
-    let maxFee: BigNumberish = 0;
-    let resourceBounds = stark.estimateFeeToBounds(0n);
-    if (version === RPC.ETransactionVersion.V3) {
-      resourceBounds =
-        details.resourceBounds ??
-        (await this.getSuggestedFee({ TransactionType: TransactionType.INVOKE, payload: transactions } as any, details))
-          .resourceBounds;
-    } else {
-      // hardcoded for now
-      maxFee = 1e12;
-    }
-
-    const estimate = { maxFee, resourceBounds };
-
-    const chainId = await this.getChainId();
-
-    return {
-      ...stark.v3Details(details),
-      resourceBounds: estimate.resourceBounds,
-      walletAddress: this.address,
-      nonce,
-      maxFee: estimate.maxFee,
-      version,
-      chainId,
-      cairoVersion: await this.getCairoVersion(),
-    };
   }
 
   override async execute(
@@ -396,6 +280,64 @@ export async function upgradeAccount(
     { maxFee: 1e14 },
   );
   return await ensureSuccess(await provider.waitForTransaction(transaction_hash));
+}
+
+export async function executeWithCustomSig(
+  account: ArgentAccount,
+  transactions: AllowArray<Call>,
+  signature: ArraySignatureType,
+  transactionsDetail: UniversalDetails = {},
+): Promise<InvokeFunctionResponse> {
+  const signer = new (class extends RawSigner {
+    public async signRaw(messageHash: string): Promise<string[]> {
+      return signature;
+    }
+  })();
+  const newAccount = new ArgentAccount(
+    provider,
+    account.address,
+    signer,
+    account.cairoVersion,
+    account.transactionVersion,
+  );
+
+  return await newAccount.execute(transactions, undefined, transactionsDetail);
+}
+
+export async function getSignerDetails(account: ArgentAccount, calls: Call[]): Promise<InvocationsSignerDetails> {
+  const newAccount = new ArgentAccount(
+    provider,
+    account.address,
+    account.signer,
+    account.cairoVersion,
+    account.transactionVersion,
+  );
+  // const customSigner = new RawSigner {
+  //     let signerDetails?;
+  //     public async signTransaction(calls, signerDetails) {
+  //        this.signerDetails = signerDetails
+  //        throw CustomError;
+  //     }
+  // };
+
+  const customSigner = new (class extends RawSigner {
+    public signerDetails?: InvocationsSignerDetails;
+    public async signTransaction(calls: Call[], signerDetails: InvocationsSignerDetails): Promise<Signature> {
+      this.signerDetails = signerDetails;
+      throw Error("OMG");
+    }
+    public async signRaw(messageHash: string): Promise<string[]> {
+      return ["0", "1"];
+    }
+  })();
+
+  newAccount.signer = customSigner;
+  try {
+    await newAccount.execute(calls, undefined);
+    throw Error("OMG");
+  } catch (customError) {
+    return customSigner.signerDetails!!;
+  }
 }
 
 export async function fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {

@@ -103,7 +103,6 @@ mod ArgentAccount {
         last_guardian_trigger_escape_attempt: u64,
         last_owner_trigger_escape_attempt: u64,
         last_guardian_escape_attempt: u64,
-        //
         last_owner_escape_attempt: u64,
         escape_security_period: u64,
     }

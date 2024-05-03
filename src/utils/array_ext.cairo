@@ -41,7 +41,7 @@ impl StoreFelt252Array of Store<Array<felt252>> {
     fn write_at_offset(
         address_domain: u32, base: StorageBaseAddress, mut offset: u8, mut value: Array<felt252>
     ) -> SyscallResult<()> {
-        // // Store the length of the array in the first storage slot.
+        // Store the length of the array in the first storage slot.
         let len: u8 = value.len().try_into().expect('argent/array-too-large');
         Store::<u8>::write_at_offset(address_domain, base, offset, len).expect('argent/unwritable');
         offset += 1;

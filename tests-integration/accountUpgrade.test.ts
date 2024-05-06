@@ -96,6 +96,8 @@ describe("ArgentAccount: upgrade", function () {
 
   it("Shouldn't upgrade from current version to itself", async function () {
     const { account } = await deployAccount();
-    expectRevertWithErrorMessage("argent/downgrade-not-allowed", () => upgradeAccount(account, argentAccountClassHash));
+    await expectRevertWithErrorMessage("argent/downgrade-not-allowed", () =>
+      upgradeAccount(account, argentAccountClassHash),
+    );
   });
 });

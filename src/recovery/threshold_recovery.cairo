@@ -133,7 +133,7 @@ mod threshold_recovery_component {
             self.escape.write(Escape { ready_at: 0, target_signers: array![], new_signers: array![] });
             if current_escape_status != EscapeStatus::Expired {
                 let target_signers = current_escape.target_signers.span();
-                let new_signers = current_escape.target_signers.span();
+                let new_signers = current_escape.new_signers.span();
                 self.emit(EscapeCanceled { target_signers, new_signers });
             }
         }

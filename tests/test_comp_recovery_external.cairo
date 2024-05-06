@@ -41,7 +41,7 @@ fn setup() -> (IExternalRecoveryDispatcher, IArgentMultisigDispatcher) {
     let contract_address = declare("ExternalRecoveryMock").deploy(@array![]).expect('Deployment failed');
     start_prank(CheatTarget::One(contract_address), contract_address);
     IArgentMultisigDispatcher { contract_address }.add_signers(2, array![SIGNER_1(), SIGNER_2()]);
-    IExternalRecoveryDispatcher { contract_address }.toggle_escape(true, 10, 10, GUARDIAN());
+    IExternalRecoveryDispatcher { contract_address }.toggle_escape(true, (10 * 60), 10, GUARDIAN());
     (IExternalRecoveryDispatcher { contract_address }, IArgentMultisigDispatcher { contract_address })
 }
 
@@ -52,7 +52,7 @@ fn test_toggle_escape() {
     let (component, _) = setup();
     let mut config = component.get_escape_enabled();
     assert!(config.is_enabled, "should be enabled");
-    assert_eq!(config.security_period, 10, "should be 10");
+    assert_eq!(config.security_period, 10 * 60, "should be 10");
     assert_eq!(config.expiry_period, 10, "should be 10");
     assert_eq!(component.get_guardian(), GUARDIAN(), "should be guardian");
     component.toggle_escape(false, 0, 0, contract_address_const::<0>());
@@ -71,6 +71,13 @@ fn test_toggle_unauthorized() {
     component.toggle_escape(false, 0, 0, contract_address_const::<0>());
 }
 
+#[test]
+#[should_panic(expected: ('argent/invalid-security-period',))]
+fn test_toggle_small_security_period() {
+    let (component, _) = setup();
+    component.toggle_escape(true, (10 * 60) - 1, 0, contract_address_const::<0>());
+}
+
 fn replace_signer_call(remove: Signer, replace_with: Signer) -> EscapeCall {
     EscapeCall { selector: selector!("replace_signer"), calldata: serialize(@(remove, replace_with)), }
 }
@@ -86,7 +93,7 @@ fn test_trigger_escape_replace_signer() {
     component.trigger_escape(call);
     let (escape, status) = component.get_escape();
     assert_eq!(escape.call_hash, call_hash, "invalid call hash");
-    assert_eq!(escape.ready_at, 10, "should be 10");
+    assert_eq!(escape.ready_at, 10 * 60, "should be 10");
     assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
 }
 

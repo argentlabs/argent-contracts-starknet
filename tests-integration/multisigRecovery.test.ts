@@ -17,7 +17,12 @@ async function buildFixture() {
   const originalSigner = originalKeys[0];
   const newSigner = randomStarknetKeyPair();
   await accountContract.toggle_escape(
-    CallData.compile({ is_enabled: true, security_period: 10, expiry_period: 10, guardian: guardianAccount.address }),
+    CallData.compile({
+      is_enabled: true,
+      security_period: 10 * 60,
+      expiry_period: 10,
+      guardian: guardianAccount.address,
+    }),
   );
   const replaceSignerCall = CallData.compile({
     selector: hash.getSelectorFromName("replace_signer"),
@@ -37,7 +42,7 @@ describe("ArgentMultisig Recovery", function () {
     accountContract.connect(guardianAccount);
     await accountContract.trigger_escape(replaceSignerCall);
 
-    await setTime(initialTime + 15);
+    await setTime(initialTime + 10 * 60);
     accountContract.connect(thirdPartyAccount);
     await ensureSuccess(await waitForTransaction(await accountContract.execute_escape(replaceSignerCall)));
     accountContract.is_signer(originalSigner.compiledSigner).should.eventually.equal(false);

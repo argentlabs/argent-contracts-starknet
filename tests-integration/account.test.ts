@@ -10,7 +10,6 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   hasOngoingEscape,
-  increaseTime,
   loadContract,
   provider,
   randomStarknetKeyPair,
@@ -127,7 +126,7 @@ describe("ArgentAccount", function () {
 
       await accountContract.trigger_escape_owner(newOwner.compiledSigner);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
-      await increaseTime(10);
+      await provider.increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
       const chainId = await provider.getChainId();
@@ -206,7 +205,7 @@ describe("ArgentAccount", function () {
 
       await accountContract.trigger_escape_owner(newOwner.compiledSigner);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
-      await increaseTime(10);
+      await provider.increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
       await accountContract.change_guardian(newGuardian.compiledSignerAsOption);
@@ -272,7 +271,7 @@ describe("ArgentAccount", function () {
 
       await accountContract.trigger_escape_owner(newOwner.compiledSigner);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
-      await increaseTime(10);
+      await provider.increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
       await accountContract.change_guardian_backup(newGuardian.compiledSignerAsOption);

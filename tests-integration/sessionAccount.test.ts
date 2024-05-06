@@ -12,8 +12,8 @@ import {
   expectRevertWithErrorMessage,
   getSessionTypedData,
   loadContract,
+  provider,
   randomStarknetKeyPair,
-  setTime,
   setupSession,
 } from "../lib";
 
@@ -41,7 +41,7 @@ describe("Hybrid Session Account: execute calls", function () {
   });
 
   beforeEach(async function () {
-    await setTime(initialTime);
+    await provider.setTime(initialTime);
   });
 
   it("Call a contract with backend signer", async function () {
@@ -110,12 +110,12 @@ describe("Hybrid Session Account: execute calls", function () {
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
     // non expired session
-    await setTime(expiresAt - 10800n);
+    await provider.setTime(expiresAt - 10800n);
     await account.waitForTransaction(transaction_hash);
     await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
 
     // Expired session
-    await setTime(expiresAt + 7200n);
+    await provider.setTime(expiresAt + 7200n);
     await expectRevertWithErrorMessage("session/expired", () =>
       accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
     );

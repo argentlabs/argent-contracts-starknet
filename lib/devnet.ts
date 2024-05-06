@@ -1,40 +1,59 @@
-import { RawArgs } from "starknet";
-import { provider } from "./provider";
+import { RawArgs, RpcProvider } from "starknet";
+import { Constructor } from ".";
+import { clearCache } from "./contracts";
 
-const DUMP_FOLDER_PATH = "./dump";
+export const dumpFolderPath = "./dump";
+export const devnetBaseUrl = "http://127.0.0.1:5050";
 
-export async function mintEth(address: string, amount: number | bigint) {
-  await handlePost("mint", { address, amount: Number(amount) });
-}
+export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
+  class extends Base {
+    get isDevnet() {
+      return this.channel.nodeUrl.startsWith(devnetBaseUrl);
+    }
 
-export async function increaseTime(timeInSeconds: number | bigint) {
-  await handlePost("increase_time", { time: Number(timeInSeconds) });
-}
+    // Polls quickly for a local network
+    waitForTransaction(transactionHash: string, options = {}) {
+      const retryInterval = this.isDevnet ? 250 : 1000;
+      return super.waitForTransaction(transactionHash, { retryInterval, ...options });
+    }
 
-export async function setTime(timeInSeconds: number | bigint) {
-  await handlePost("set_time", { time: Number(timeInSeconds), generate_block: true });
-}
+    async restartDevnet() {
+      if (this.isDevnet) {
+        await this.restart();
+        clearCache();
+      }
+    }
 
-export async function restart() {
-  await handlePost("restart");
-}
+    async mintEth(address: string, amount: number | bigint) {
+      await this.handlePost("mint", { address, amount: Number(amount) });
+    }
 
-export async function dump() {
-  await handlePost("dump", { path: DUMP_FOLDER_PATH });
-}
+    async increaseTime(timeInSeconds: number | bigint) {
+      await this.handlePost("increase_time", { time: Number(timeInSeconds) });
+    }
 
-export async function load() {
-  await handlePost("load", { path: DUMP_FOLDER_PATH });
-}
+    async setTime(timeInSeconds: number | bigint) {
+      await this.handlePost("set_time", { time: Number(timeInSeconds), generate_block: true });
+    }
 
-async function handlePost(path: string, payload?: RawArgs) {
-  const url = `${provider.channel.nodeUrl}/${path}`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    throw new Error(`HTTP error! calling ${url} Status: ${response.status} Message: ${await response.text()}`);
-  }
-}
+    async restart() {
+      await this.handlePost("restart");
+    }
+
+    async dump() {
+      await this.handlePost("dump", { path: dumpFolderPath });
+    }
+
+    async load() {
+      await this.handlePost("load", { path: dumpFolderPath });
+    }
+
+    async handlePost(path: string, payload?: RawArgs) {
+      const url = `${this.channel.nodeUrl}/${path}`;
+      const headers = { "Content-Type": "application/json" };
+      const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+      if (!response.ok) {
+        throw new Error(`HTTP error! calling ${url} Status: ${response.status} Message: ${await response.text()}`);
+      }
+    }
+  };

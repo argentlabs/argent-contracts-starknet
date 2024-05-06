@@ -16,8 +16,6 @@ import {
   deployOpenZeppelinAccount,
   getEthContract,
   provider,
-  restart,
-  setTime,
   setupSession,
 } from "../lib";
 import { newProfiler } from "../lib/gas";
@@ -28,7 +26,7 @@ const fundingAmount = 2e16;
 let privateKey: string;
 if (provider.isDevnet) {
   // With the KeyPairs hardcoded, we gotta reset to avoid some issues
-  await restart();
+  await provider.restart();
   privateKey = "0x1";
   clearCache();
 } else {
@@ -106,7 +104,7 @@ const guardian = new StarknetKeyPair(42n);
     fundingAmount,
   });
   const sessionTime = 1710167933n;
-  await setTime(sessionTime);
+  await provider.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
   const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
 
@@ -129,7 +127,7 @@ const guardian = new StarknetKeyPair(42n);
     fundingAmount,
   });
   const sessionTime = 1710167933n;
-  await setTime(sessionTime);
+  await provider.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
   const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
 
@@ -156,7 +154,7 @@ const guardian = new StarknetKeyPair(42n);
     fundingAmount,
   });
   const sessionTime = 1710167933n;
-  await setTime(sessionTime);
+  await provider.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
   const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
 

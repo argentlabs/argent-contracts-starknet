@@ -163,7 +163,7 @@ fn test_cancel_escape() {
 
     let call_hash = get_escape_call_hash(@replace_signer_call(SIGNER_2(), SIGNER_3()));
     let event = external_recovery_component::Event::EscapeCanceled(
-        external_recovery_component::EscapeCanceled { call_hash: call_hash }
+        external_recovery_component::EscapeCanceled { call_hash }
     );
     spy.assert_emitted(@array![(component.contract_address, event)]);
 

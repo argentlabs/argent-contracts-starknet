@@ -34,8 +34,11 @@ mod ThresholdRecoveryMock {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
         SignerListEvents: signer_list_component::Event,
+        #[flat]
         MultisigEvents: multisig_component::Event,
+        #[flat]
         EscapeEvents: threshold_recovery_component::Event,
     }
 }
@@ -71,8 +74,11 @@ mod ExternalRecoveryMock {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
         SignerListEvents: signer_list_component::Event,
+        #[flat]
         MultisigEvents: multisig_component::Event,
+        #[flat]
         EscapeEvents: external_recovery_component::Event,
     }
 

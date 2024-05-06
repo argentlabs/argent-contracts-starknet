@@ -52,7 +52,7 @@ describe("ArgentMultisig: upgrade", function () {
         });
       }
 
-      const ethContract = await provider.ethContract();
+      const ethContract = await provider.tokens.ethContract();
       const newSigners = sortByGuid(
         signers.keys.map((key) => new StarknetKeyPair((key as LegacyMultisigKeyPair).privateKey)),
       );

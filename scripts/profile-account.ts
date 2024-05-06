@@ -30,7 +30,7 @@ if (provider.isDevnet) {
   privateKey = new StarknetKeyPair().privateKey;
 }
 
-const ethContract = await provider.ethContract();
+const ethContract = await provider.tokens.ethContract();
 const recipient = "0xadbe1";
 const amount = uint256.bnToUint256(1);
 const starknetOwner = new StarknetKeyPair(privateKey);

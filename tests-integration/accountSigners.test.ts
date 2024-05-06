@@ -36,7 +36,7 @@ describe("ArgentAccount: Signers types", function () {
   ];
 
   before(async () => {
-    ethContract = await provider.ethContract();
+    ethContract = await provider.tokens.ethContract();
     await provider.declareFixtureContract("Sha256Cairo0");
 
     for (const { name, keyPair } of [...starknetKeyPairs, ...nonStarknetKeyPairs]) {

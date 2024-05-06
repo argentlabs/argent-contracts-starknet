@@ -2,12 +2,19 @@ import dotenv from "dotenv";
 import { RpcProvider } from "starknet";
 import { WithContracts } from "./contracts";
 import { WithDevnet, devnetBaseUrl } from "./devnet";
-import { WithTokens } from "./tokens";
+import { TokenManager } from "./tokens";
 
 dotenv.config({ override: true });
 
-const Provider = WithTokens(WithContracts(WithDevnet(RpcProvider)));
+export class Manager extends WithContracts(WithDevnet(RpcProvider)) {
+  tokens: TokenManager;
 
-export const provider = new Provider({ nodeUrl: process.env.RPC_URL || `${devnetBaseUrl}` });
+  constructor() {
+    super({ nodeUrl: process.env.RPC_URL || `${devnetBaseUrl}` });
+    this.tokens = new TokenManager(this);
+  }
+}
+
+export const provider = new Manager();
 
 console.log("Provider:", provider.channel.nodeUrl);

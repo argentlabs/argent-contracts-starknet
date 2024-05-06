@@ -5,6 +5,7 @@ import {
   deployContract,
   deployer,
   expectExecutionRevert,
+  expectRevertWithErrorMessage,
   getOutsideCall,
   getOutsideExecutionCall,
   getTypedDataHash,
@@ -15,6 +16,8 @@ import {
 import { deployMultisig } from "../lib/multisig";
 
 const legacyRevision = typedData.TypedDataRevision.Legacy;
+const activeRevision = typedData.TypedDataRevision.Active;
+
 const initialTime = 1713139200;
 describe("ArgentMultisig: outside execution", function () {
   // Avoid timeout
@@ -240,5 +243,26 @@ describe("ArgentMultisig: outside execution", function () {
     // ensure the caller is not used
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+  });
+
+  it("No reentrancy", async function () {
+    const { account, accountContract } = await deployMultisig({ threshold: 1, signersLength: 2 });
+
+    const outsideExecutionCall = await getOutsideExecutionCall(
+      {
+        caller: shortString.encodeShortString("ANY_CALLER"),
+        nonce: randomStarknetKeyPair().publicKey,
+        execute_after: 0,
+        execute_before: initialTime + 100,
+        calls: [getOutsideCall(accountContract.populateTransaction.change_threshold(2))],
+      },
+      account.address,
+      account.signer,
+      activeRevision,
+    );
+
+    await provider.setTime(initialTime);
+
+    await expectRevertWithErrorMessage("ReentrancyGuard: reentrant call", () => account.execute(outsideExecutionCall));
   });
 });

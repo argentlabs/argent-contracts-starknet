@@ -26,6 +26,7 @@ mod ArgentAccount {
         }
     };
     use hash::HashStateTrait;
+    use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use pedersen::PedersenTrait;
     use starknet::{
         ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, replace_class_syscall,
@@ -69,6 +70,9 @@ mod ArgentAccount {
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
+    // Reentrancy guard
+    component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
+    impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -80,6 +84,8 @@ mod ArgentAccount {
         upgrade: upgrade_component::Storage,
         #[substorage(v0)]
         session: session_component::Storage,
+        #[substorage(v0)]
+        reentrancy_guard: ReentrancyGuardComponent::Storage,
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         /// Current account owner
         _signer: felt252,
@@ -97,7 +103,6 @@ mod ArgentAccount {
         last_guardian_trigger_escape_attempt: u64,
         last_owner_trigger_escape_attempt: u64,
         last_guardian_escape_attempt: u64,
-        //
         last_owner_escape_attempt: u64,
         escape_security_period: u64,
     }
@@ -113,6 +118,8 @@ mod ArgentAccount {
         UpgradeEvents: upgrade_component::Event,
         #[flat]
         SessionableEvents: session_component::Event,
+        #[flat]
+        ReentrancyGuardEvent: ReentrancyGuardComponent::Event,
         TransactionExecuted: TransactionExecuted,
         AccountCreated: AccountCreated,
         AccountCreatedGuid: AccountCreatedGuid,
@@ -318,6 +325,7 @@ mod ArgentAccount {
         }
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
+            self.reentrancy_guard.start();
             let exec_info = get_execution_info().unbox();
             let tx_info = exec_info.tx_info.unbox();
             assert_only_protocol(exec_info.caller_address);
@@ -333,11 +341,12 @@ mod ArgentAccount {
             let retdata = execute_multicall(calls.span());
 
             self.emit(TransactionExecuted { hash: tx_info.transaction_hash, response: retdata.span() });
+            self.reentrancy_guard.end();
             retdata
         }
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
-            if self.is_valid_span_signature(hash, self.parse_signature_array(signature.span())) {
+            if self.is_valid_span_signature(hash, self.parse_signature_array(signature.span()).span()) {
                 VALIDATED
             } else {
                 0
@@ -453,10 +462,15 @@ mod ArgentAccount {
 
 
     impl SessionCallbackImpl of ISessionCallback<ContractState> {
-        fn session_callback(
+        fn parse_and_verify_authorization(
             self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>
-        ) -> bool {
-            self.is_valid_span_signature(session_hash, self.parse_signature_array(authorization_signature))
+        ) -> Array<SignerSignature> {
+            let parsed_session_authorization = self.parse_signature_array(authorization_signature);
+            assert(
+                self.is_valid_span_signature(session_hash, parsed_session_authorization.span()),
+                'session/invalid-account-sig'
+            );
+            return parsed_session_authorization;
         }
     }
 
@@ -467,7 +481,10 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_declare_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
-            self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
+            self
+                .assert_valid_span_signature(
+                    tx_info.transaction_hash, self.parse_signature_array(tx_info.signature).span()
+                );
             VALIDATED
         }
 
@@ -481,7 +498,10 @@ mod ArgentAccount {
             let tx_info = get_tx_info().unbox();
             assert_correct_deploy_account_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
-            self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
+            self
+                .assert_valid_span_signature(
+                    tx_info.transaction_hash, self.parse_signature_array(tx_info.signature).span()
+                );
             VALIDATED
         }
 
@@ -864,7 +884,7 @@ mod ArgentAccount {
                 assert_no_self_call(calls, account_address);
             }
             let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
-            self.assert_valid_span_signature(execution_hash, signer_signatures);
+            self.assert_valid_span_signature(execution_hash, signer_signatures.span());
         }
 
         #[inline(always)]
@@ -933,7 +953,7 @@ mod ArgentAccount {
 
         #[must_use]
         fn is_valid_span_signature(
-            self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>
+            self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>
         ) -> bool {
             if self.has_guardian() {
                 assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
@@ -945,7 +965,7 @@ mod ArgentAccount {
             }
         }
 
-        fn assert_valid_span_signature(self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>) {
+        fn assert_valid_span_signature(self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>) {
             if self.has_guardian() {
                 assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
                 assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');

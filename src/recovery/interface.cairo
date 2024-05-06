@@ -22,7 +22,7 @@ struct EscapeTriggered {
     new_signers: Span<felt252>
 }
 
-/// @notice Signer escape was completed and there is a new signer
+/// @notice Signer escape was completed
 /// @param target_signers the signers to escape
 /// @param new_signers the new signers to be set after the security period
 #[derive(Drop, starknet::Event)]
@@ -31,7 +31,7 @@ struct EscapeExecuted {
     new_signers: Span<felt252>
 }
 
-/// @notice Signer escape was completed and there is a new signer
+/// @notice Signer escape was canceled
 /// @param target_signers the signers to escape
 /// @param new_signers the new signers to be set after the security period
 #[derive(Drop, starknet::Event)]
@@ -45,11 +45,11 @@ struct EscapeCanceled {
 enum EscapeStatus {
     /// No escape triggered, or it was canceled
     None,
-    /// Escape was triggered and it's waiting for the `escapeSecurityPeriod`
+    /// Escape was triggered and it's waiting for the `security_period`
     NotReady,
     /// The security period has elapsed and the escape is ready to be completed
     Ready,
-    /// No confirmation happened for `escapeExpiryPeriod` since it became `Ready`. The escape cannot be completed now, only canceled
+    /// No confirmation happened for `expiry_period` since it became `Ready`. The escape cannot be completed now, only canceled
     Expired,
 }
 

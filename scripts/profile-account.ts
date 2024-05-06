@@ -120,6 +120,64 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
+  const { account } = await deployAccount({
+    owner: starknetOwner,
+    guardian,
+    salt: "0x41",
+    fundingAmount,
+  });
+  const sessionTime = 1710167933n;
+  await provider.setTime(sessionTime);
+  const dappKey = new StarknetKeyPair(39n);
+  const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
+
+  const sessionAccount = await setupSession(
+    guardian as StarknetKeyPair,
+    account,
+    allowedMethod,
+    sessionTime + 150n,
+    dappKey,
+    true,
+  );
+  ethContract.connect(sessionAccount);
+  await profiler.profile("Transfer - With Session - Caching Values (1)", await ethContract.transfer(recipient, amount));
+  await profiler.profile("Transfer - With Session - Cached (2)", await ethContract.transfer(recipient, amount));
+}
+
+{
+  const classHash = await declareFixtureContract("Sha256Cairo0");
+  assert(BigInt(classHash) === 0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
+  const { account } = await deployAccount({
+    owner: new WebauthnOwner(privateKey),
+    guardian,
+    salt: "0x42",
+    fundingAmount,
+  });
+  const sessionTime = 1710167933n;
+  await provider.setTime(sessionTime);
+  const dappKey = new StarknetKeyPair(39n);
+  const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
+
+  const sessionAccount = await setupSession(
+    guardian as StarknetKeyPair,
+    account,
+    allowedMethod,
+    sessionTime + 150n,
+    dappKey,
+    true,
+  );
+  ethContract.connect(sessionAccount);
+  await profiler.profile(
+    "Transfer - With Session (Webauthn owner) - Caching Values (1)",
+    await ethContract.transfer(recipient, amount),
+  );
+  await profiler.profile(
+    "Transfer - With Session (Webauthn owner) - Cached (2)",
+    await ethContract.transfer(recipient, amount),
+  );
+}
+
+{
   const { account } = await deployAccountWithoutGuardian({
     owner: starknetOwner,
     salt: "0xF1",

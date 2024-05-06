@@ -3,7 +3,7 @@ use starknet::ClassHash;
 #[starknet::interface]
 trait IUpgradeable<TContractState> {
     /// @notice Upgrades the implementation of the account by doing a library call to `perform_upgrade` on the new implementation
-    /// @param implementation The class hash of the new implementation
+    /// @param new_implementation The class hash of the new implementation
     /// @param data Data to be passed in `perform_upgrade` in the `data` argument
     fn upgrade(ref self: TContractState, new_implementation: ClassHash, data: Array<felt252>);
 }

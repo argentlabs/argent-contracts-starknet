@@ -1,17 +1,15 @@
 use argent::signer::eip191::is_valid_eip191_signature;
-use argent::signer::webauthn::{
-    WebauthnAssertion, get_webauthn_hash, verify_client_data_json, verify_authenticator_data
-};
+use argent::signer::webauthn::{WebauthnSignature, get_webauthn_hash, verify_authenticator_flags};
 use argent::utils::hashing::poseidon_2;
 use core::traits::TryInto;
 use ecdsa::check_ecdsa_signature;
 use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, PoseidonTrait};
 use starknet::SyscallResultTrait;
-use starknet::secp256_trait::{Secp256PointTrait, Signature as Secp256r1Signature, recover_public_key};
+use starknet::secp256_trait::{Secp256PointTrait, Signature as Secp256Signature, recover_public_key};
 use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
-use starknet::{EthAddress, eth_signature::{Signature as Secp256k1Signature, is_eth_signature_valid}};
+use starknet::{EthAddress, eth_signature::is_eth_signature_valid};
 
 /// All signer type magic values. Used to derive their guid
 const STARKNET_SIGNER_TYPE: felt252 = 'Starknet Signer';
@@ -36,10 +34,10 @@ enum SignerType {
 #[derive(Drop, Copy, Serde)]
 enum SignerSignature {
     Starknet: (StarknetSigner, StarknetSignature),
-    Secp256k1: (Secp256k1Signer, Secp256k1Signature),
-    Secp256r1: (Secp256r1Signer, Secp256r1Signature),
-    Eip191: (Eip191Signer, Secp256r1Signature),
-    Webauthn: (WebauthnSigner, WebauthnAssertion),
+    Secp256k1: (Secp256k1Signer, Secp256Signature),
+    Secp256r1: (Secp256r1Signer, Secp256Signature),
+    Eip191: (Eip191Signer, Secp256Signature),
+    Webauthn: (WebauthnSigner, WebauthnSignature),
 }
 
 /// @notice The starknet signature using the stark-curve
@@ -298,24 +296,23 @@ fn is_valid_starknet_signature(hash: felt252, signer: StarknetSigner, signature:
 }
 
 #[inline(always)]
-fn is_valid_secp256k1_signature(hash: u256, signer: Secp256k1Signer, signature: Secp256k1Signature) -> bool {
+fn is_valid_secp256k1_signature(hash: u256, signer: Secp256k1Signer, signature: Secp256Signature) -> bool {
     is_eth_signature_valid(hash, signature, signer.pubkey_hash.into()).is_ok()
 }
 
 #[inline(always)]
-fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: Secp256r1Signature) -> bool {
+fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: Secp256Signature) -> bool {
     let recovered = recover_public_key::<Secp256r1Point>(hash, signature).expect('argent/invalid-sig-format');
     let (recovered_signer, _) = recovered.get_coordinates().expect('argent/invalid-sig-format');
     recovered_signer == signer.pubkey.into()
 }
 
 #[inline(always)]
-fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, assertion: WebauthnAssertion) -> bool {
-    let sha256_implementation = verify_client_data_json(assertion, hash, signer.origin);
-    verify_authenticator_data(assertion.authenticator_data, signer.rp_id_hash.into());
+fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> bool {
+    verify_authenticator_flags(signature.flags);
 
-    let signed_hash = get_webauthn_hash(assertion, sha256_implementation);
-    is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, assertion.signature)
+    let signed_hash = get_webauthn_hash(hash, signer, signature);
+    is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, signature.ec_signature)
 }
 
 trait SignerSpanTrait {

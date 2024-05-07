@@ -104,29 +104,7 @@ export class DappService {
     cacheAuthorization = false,
   ): Promise<SessionToken> {
     const transactionDetail = await getSignerDetails(account, calls);
-    const compiledCalldata = transaction.getExecuteCalldata(calls, "1");
-    let txHash;
-    if (Object.values(RPC.ETransactionVersion2).includes(transactionDetail.version as any)) {
-      const det = transactionDetail as V2InvocationsSignerDetails;
-      txHash = hash.calculateInvokeTransactionHash({
-        ...det,
-        senderAddress: det.walletAddress,
-        compiledCalldata,
-        version: det.version,
-      });
-    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionDetail.version as any)) {
-      const det = transactionDetail as V3InvocationsSignerDetails;
-      txHash = hash.calculateInvokeTransactionHash({
-        ...det,
-        senderAddress: det.walletAddress,
-        compiledCalldata,
-        version: det.version,
-        nonceDataAvailabilityMode: stark.intDAM(det.nonceDataAvailabilityMode),
-        feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
-      });
-    } else {
-      throw Error("unsupported signTransaction version");
-    }
+    const txHash = this.calculateTransactionHash(transactionDetail, calls);
     return this.compileSessionSignature(
       sessionAuthorizationSignature,
       completedSession,
@@ -182,39 +160,17 @@ export class DappService {
     sessionAuthorizationSignature: ArraySignatureType,
     completedSession: OffChainSession,
     calls: Call[],
-    transactionsDetail: InvocationsSignerDetails,
+    transactionDetail: InvocationsSignerDetails,
     cacheAuthorization: boolean,
   ): Promise<ArraySignatureType> {
-    const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
-    let txHash;
-    if (Object.values(RPC.ETransactionVersion2).includes(transactionsDetail.version as any)) {
-      const det = transactionsDetail as V2InvocationsSignerDetails;
-      txHash = hash.calculateInvokeTransactionHash({
-        ...det,
-        senderAddress: det.walletAddress,
-        compiledCalldata,
-        version: det.version,
-      });
-    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionsDetail.version as any)) {
-      const det = transactionsDetail as V3InvocationsSignerDetails;
-      txHash = hash.calculateInvokeTransactionHash({
-        ...det,
-        senderAddress: det.walletAddress,
-        compiledCalldata,
-        version: det.version,
-        nonceDataAvailabilityMode: stark.intDAM(det.nonceDataAvailabilityMode),
-        feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
-      });
-    } else {
-      throw Error("unsupported signTransaction version");
-    }
+    const txHash = this.calculateTransactionHash(transactionDetail, calls);
     const sessionToken = await this.compileSessionSignature(
       sessionAuthorizationSignature,
       completedSession,
       txHash,
       calls,
-      transactionsDetail.walletAddress,
-      transactionsDetail,
+      transactionDetail.walletAddress,
+      transactionDetail,
       cacheAuthorization,
     );
     return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
@@ -372,6 +328,31 @@ export class DappService {
       ),
       proofs: this.getSessionProofs(completedSession, calls),
     };
+  }
+
+  private calculateTransactionHash(transactionDetail: InvocationsSignerDetails, calls: Call[]): string {
+    const compiledCalldata = transaction.getExecuteCalldata(calls, "1");
+    let txHash;
+    if (Object.values(RPC.ETransactionVersion2).includes(transactionDetail.version as any)) {
+      const transactionDetailV2 = transactionDetail as V2InvocationsSignerDetails;
+      txHash = hash.calculateInvokeTransactionHash({
+        ...transactionDetailV2,
+        senderAddress: transactionDetailV2.walletAddress,
+        compiledCalldata,
+      });
+    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionDetail.version as any)) {
+      const transactionDetailV3 = transactionDetail as V3InvocationsSignerDetails;
+      txHash = hash.calculateInvokeTransactionHash({
+        ...transactionDetailV3,
+        senderAddress: transactionDetailV3.walletAddress,
+        compiledCalldata,
+        nonceDataAvailabilityMode: stark.intDAM(transactionDetailV3.nonceDataAvailabilityMode),
+        feeDataAvailabilityMode: stark.intDAM(transactionDetailV3.feeDataAvailabilityMode),
+      });
+    } else {
+      throw Error("unsupported signTransaction version");
+    }
+    return txHash;
   }
 
   // function needed as starknetSignatureType in signer.ts is already compiled

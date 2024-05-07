@@ -5,9 +5,11 @@ import {
   InvocationsSignerDetails,
   RPC,
   V2InvocationsSignerDetails,
+  V3InvocationsSignerDetails,
   ec,
   hash,
   num,
+  stark,
   transaction,
   typedData,
 } from "starknet";
@@ -31,7 +33,7 @@ export class BackendService {
 
   public async signTxAndSession(
     calls: Call[],
-    transactionsDetail: InvocationsSignerDetails,
+    transactionDetail: InvocationsSignerDetails,
     sessionTokenToSign: OffChainSession,
     cacheAuthorization: boolean,
   ): Promise<bigint[]> {
@@ -49,25 +51,31 @@ export class BackendService {
       throw new Error("Call not allowed by backend");
     }
 
-    const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
+    const compiledCalldata = transaction.getExecuteCalldata(calls, transactionDetail.cairoVersion);
     let msgHash;
-    if (Object.values(RPC.ETransactionVersion2).includes(transactionsDetail.version as any)) {
-      const det = transactionsDetail as V2InvocationsSignerDetails;
+    if (Object.values(RPC.ETransactionVersion2).includes(transactionDetail.version as any)) {
+      const transactionDetailV2 = transactionDetail as V2InvocationsSignerDetails;
       msgHash = hash.calculateInvokeTransactionHash({
-        ...det,
-        senderAddress: det.walletAddress,
+        ...transactionDetailV2,
+        senderAddress: transactionDetailV2.walletAddress,
         compiledCalldata,
-        version: det.version,
       });
-    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionsDetail.version as any)) {
-      throw Error("not implemented");
+    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionDetail.version as any)) {
+      const transactionDetailV3 = transactionDetail as V3InvocationsSignerDetails;
+      msgHash = hash.calculateInvokeTransactionHash({
+        ...transactionDetailV3,
+        senderAddress: transactionDetailV3.walletAddress,
+        compiledCalldata,
+        nonceDataAvailabilityMode: stark.intDAM(transactionDetailV3.nonceDataAvailabilityMode),
+        feeDataAvailabilityMode: stark.intDAM(transactionDetailV3.feeDataAvailabilityMode),
+      });
     } else {
       throw Error("unsupported signTransaction version");
     }
 
     const sessionMessageHash = typedData.getMessageHash(
       await getSessionTypedData(sessionTokenToSign),
-      transactionsDetail.walletAddress,
+      transactionDetail.walletAddress,
     );
     const sessionWithTxHash = hash.computePoseidonHashOnElements([msgHash, sessionMessageHash, +cacheAuthorization]);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));

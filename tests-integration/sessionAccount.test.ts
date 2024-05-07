@@ -41,7 +41,7 @@ describe("Hybrid Session Account: execute calls", function () {
     await provider.setTime(initialTime);
   });
 
-  it("Call a contract with backend signer", async function () {
+  it("Execute basic session", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const backendService = new BackendService(guardian as StarknetKeyPair);
@@ -72,6 +72,34 @@ describe("Hybrid Session Account: execute calls", function () {
       account,
       sessionRequest,
       accountSessionSignature,
+    );
+
+    const { transaction_hash } = await accountWithDappSigner.execute(calls);
+
+    await account.waitForTransaction(transaction_hash);
+    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+  });
+
+  it("Execute basic session using TxV3", async function () {
+    const { accountContract, account, guardian } = await deployAccount({
+      useTxV3: true,
+      classHash: sessionAccountClassHash,
+    });
+    const allowedMethods: AllowedMethod[] = [
+      {
+        "Contract Address": mockDappOneContract.address,
+        selector: "set_number_double",
+      },
+    ];
+
+    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+
+    const accountWithDappSigner = await setupSession(
+      guardian as StarknetKeyPair,
+      account,
+      allowedMethods,
+      initialTime + 150n,
+      randomStarknetKeyPair(),
     );
 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);

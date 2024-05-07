@@ -34,8 +34,11 @@ mod ThresholdRecoveryMock {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
         SignerListEvents: signer_list_component::Event,
+        #[flat]
         MultisigEvents: multisig_component::Event,
+        #[flat]
         EscapeEvents: threshold_recovery_component::Event,
     }
 }
@@ -45,6 +48,7 @@ mod ExternalRecoveryMock {
     use argent::multisig::multisig::multisig_component;
     use argent::signer_storage::signer_list::signer_list_component;
     use argent::utils::calls::execute_multicall;
+    use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     component!(path: external_recovery_component, storage: escape, event: EscapeEvents);
     #[abi(embed_v0)]
     impl ExternalRecovery = external_recovery_component::ExternalRecoveryImpl<ContractState>;
@@ -58,6 +62,10 @@ mod ExternalRecoveryMock {
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
     impl SignerListInternal = signer_list_component::SignerListInternalImpl<ContractState>;
 
+    // Reentrancy guard
+    component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
+    impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
+
     #[storage]
     struct Storage {
         #[substorage(v0)]
@@ -66,14 +74,21 @@ mod ExternalRecoveryMock {
         multisig: multisig_component::Storage,
         #[substorage(v0)]
         escape: external_recovery_component::Storage,
+        #[substorage(v0)]
+        reentrancy_guard: ReentrancyGuardComponent::Storage,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
         SignerListEvents: signer_list_component::Event,
+        #[flat]
         MultisigEvents: multisig_component::Event,
+        #[flat]
         EscapeEvents: external_recovery_component::Event,
+        #[flat]
+        ReentrancyGuardEvent: ReentrancyGuardComponent::Event,
     }
 
     impl IExternalRecoveryCallbackImpl of IExternalRecoveryCallback<ContractState> {

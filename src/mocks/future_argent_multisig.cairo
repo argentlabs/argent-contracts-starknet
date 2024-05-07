@@ -3,7 +3,7 @@ mod MockFutureArgentMultisig {
     use argent::account::interface::{
         IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version
     };
-    use argent::external_recovery::{external_recovery::{external_recovery_component, IExternalRecoveryCallback}};
+    use argent::external_recovery::external_recovery::IExternalRecoveryCallback;
     use argent::introspection::src5::src5_component;
     use argent::multisig::{multisig::multisig_component};
 

@@ -14,8 +14,8 @@ import {
   expectRevertWithErrorMessage,
   getSessionTypedData,
   loadContract,
+  provider,
   randomStarknetKeyPair,
-  setTime,
   setupSession,
 } from "../lib";
 
@@ -36,7 +36,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
   });
 
   beforeEach(async function () {
-    await setTime(initialTime);
+    await provider.setTime(initialTime);
   });
 
   it("Use Session with caching enabled", async function () {

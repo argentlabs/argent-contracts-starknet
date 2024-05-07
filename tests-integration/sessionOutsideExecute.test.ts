@@ -10,7 +10,7 @@ import {
   deployer,
   getSessionTypedData,
   loadContract,
-  setTime,
+  provider,
 } from "../lib";
 
 const initialTime = 1713139200n;
@@ -63,7 +63,7 @@ describe("ArgentAccount: outside execution", function () {
       mockDappAccount.address,
     );
 
-    await setTime(initialTime);
+    await provider.setTime(initialTime);
 
     await mockDappAccount.execute(outsideExecutionCall);
 
@@ -101,7 +101,7 @@ describe("ArgentAccount: outside execution", function () {
       mockDappAccount.address,
     );
 
-    await setTime(initialTime);
+    await provider.setTime(initialTime);
 
     await mockDappAccount.execute(outsideExecutionCall);
 

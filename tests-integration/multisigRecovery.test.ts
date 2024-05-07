@@ -49,6 +49,19 @@ describe("ArgentMultisig Recovery", function () {
     expect(status.variant.None).to.eql({});
   });
 
+  it(`Shouldn't be possible to call 'execute_escape' when calling 'trigger_escape'`, async function () {
+    const { accountContract, guardianAccount } = await buildFixture();
+    await provider.setTime(initialTime);
+    accountContract.connect(guardianAccount);
+    const replaceSignerCall = CallData.compile({
+      selector: hash.getSelectorFromName("execute_escape"),
+      calldata: [],
+    });
+    await expectRevertWithErrorMessage("argent/invalid-selector", () =>
+      accountContract.trigger_escape(replaceSignerCall),
+    );
+  });
+
   it(`Escape should fail outside time window`, async function () {
     const { accountContract, guardianAccount, replaceSignerCall } = await buildFixture();
     await provider.setTime(initialTime);

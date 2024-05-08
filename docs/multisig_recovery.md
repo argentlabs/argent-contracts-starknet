@@ -4,8 +4,8 @@ A multisig account might become unusable if a number of owner keys are lost. For
 
 To prevent this scenario, account owners can setup their recovery mechanism, which is turned off by default. To turn it on, owners will define:
 
-- a security period
-- an expiration period
+- a security period (minimum 10 minutes)
+- an expiration period (minimum 10 minutes)
 - a guardian address
 
 The guardian can be another multisig or any other account on Starknet, the account owners give the guardian the power to trigger escapes at any time, but the owners can still cancel the escape and change/remove the guardian as long as they have enough signatures.

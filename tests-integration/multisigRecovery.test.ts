@@ -20,7 +20,7 @@ async function buildFixture() {
     CallData.compile({
       is_enabled: true,
       security_period: 10 * 60,
-      expiry_period: 10,
+      expiry_period: 10 * 60,
       guardian: guardianAccount.address,
     }),
   );

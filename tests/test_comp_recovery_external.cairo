@@ -41,7 +41,7 @@ fn setup() -> (IExternalRecoveryDispatcher, IArgentMultisigDispatcher) {
     let contract_address = declare("ExternalRecoveryMock").deploy(@array![]).expect('Deployment failed');
     start_prank(CheatTarget::One(contract_address), contract_address);
     IArgentMultisigDispatcher { contract_address }.add_signers(2, array![SIGNER_1(), SIGNER_2()]);
-    IExternalRecoveryDispatcher { contract_address }.toggle_escape(true, (10 * 60), 10, GUARDIAN());
+    IExternalRecoveryDispatcher { contract_address }.toggle_escape(true, (10 * 60), (10 * 60), GUARDIAN());
     (IExternalRecoveryDispatcher { contract_address }, IArgentMultisigDispatcher { contract_address })
 }
 
@@ -52,8 +52,8 @@ fn test_toggle_escape() {
     let (component, _) = setup();
     let mut config = component.get_escape_enabled();
     assert!(config.is_enabled, "should be enabled");
-    assert_eq!(config.security_period, 10 * 60, "should be 10");
-    assert_eq!(config.expiry_period, 10, "should be 10");
+    assert_eq!(config.security_period, 10 * 60, "should be 600");
+    assert_eq!(config.expiry_period, 10 * 60, "should be 600");
     assert_eq!(component.get_guardian(), GUARDIAN(), "should be guardian");
     component.toggle_escape(false, 0, 0, contract_address_const::<0>());
     config = component.get_escape_enabled();
@@ -75,7 +75,15 @@ fn test_toggle_unauthorized() {
 #[should_panic(expected: ('argent/invalid-security-period',))]
 fn test_toggle_small_security_period() {
     let (component, _) = setup();
-    component.toggle_escape(true, (10 * 60) - 1, 0, contract_address_const::<0>());
+    component.toggle_escape(true, (10 * 60) - 1, (10 * 60), contract_address_const::<0>());
+}
+
+
+#[test]
+#[should_panic(expected: ('argent/invalid-expiry-period',))]
+fn test_toggle_small_expiry_period() {
+    let (component, _) = setup();
+    component.toggle_escape(true, (10 * 60), (10 * 60) - 1, contract_address_const::<0>());
 }
 
 fn replace_signer_call(remove: Signer, replace_with: Signer) -> EscapeCall {

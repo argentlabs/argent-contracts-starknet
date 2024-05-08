@@ -55,7 +55,6 @@ mod ExternalRecoveryMock {
     component!(path: multisig_component, storage: multisig, event: MultisigEvents);
     #[abi(embed_v0)]
     impl Multisig = multisig_component::MultisigImpl<ContractState>;
-    #[abi(embed_v0)]
     impl MultisigInternal = multisig_component::MultisigInternalImpl<ContractState>;
 
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);

@@ -97,7 +97,9 @@ mod external_recovery_component {
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
             self.escape.write(Default::default());
-            self.emit(EscapeCanceled { call_hash: current_escape.call_hash });
+            if current_escape_status != EscapeStatus::Expired {
+                self.emit(EscapeCanceled { call_hash: current_escape.call_hash });
+            }
         }
 
         fn get_escape_enabled(self: @ComponentState<TContractState>) -> EscapeEnabled {

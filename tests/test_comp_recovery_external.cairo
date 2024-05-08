@@ -167,6 +167,7 @@ fn test_cancel_escape() {
     component.trigger_escape(replace_signer_call(SIGNER_2(), SIGNER_3()));
     start_warp(CheatTarget::All, 11);
     start_prank(CheatTarget::All, component.contract_address);
+    let mut spy = spy_events(SpyOn::One(component.contract_address));
     component.cancel_escape();
     let (escape, status) = component.get_escape();
     assert_eq!(status, EscapeStatus::None, "status should be None");
@@ -174,6 +175,39 @@ fn test_cancel_escape() {
     assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
     assert!(multisig_component.is_signer(SIGNER_2()), "should be signer 2");
     assert!(!multisig_component.is_signer(SIGNER_3()), "should not be signer 3");
+
+    let call_hash = get_escape_call_hash(@replace_signer_call(SIGNER_2(), SIGNER_3()));
+    let event = external_recovery_component::Event::EscapeCanceled(
+        external_recovery_component::EscapeCanceled { call_hash }
+    );
+    spy.assert_emitted(@array![(component.contract_address, event)]);
+
+    assert_eq!(spy.events.len(), 0, "excess events");
+}
+
+#[test]
+fn test_cancel_escape_expired() {
+    let (component, multisig_component) = setup();
+    start_prank(CheatTarget::All, GUARDIAN());
+    component.trigger_escape(replace_signer_call(SIGNER_2(), SIGNER_3()));
+    start_warp(CheatTarget::All, 21);
+    start_prank(CheatTarget::All, component.contract_address);
+    let mut spy = spy_events(SpyOn::One(component.contract_address));
+    component.cancel_escape();
+    let (escape, status) = component.get_escape();
+    assert_eq!(status, EscapeStatus::None, "status should be None");
+    assert_eq!(escape.ready_at, 0, "should be no recovery");
+    assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
+    assert!(multisig_component.is_signer(SIGNER_2()), "should be signer 2");
+    assert!(!multisig_component.is_signer(SIGNER_3()), "should not be signer 3");
+
+    let call_hash = get_escape_call_hash(@replace_signer_call(SIGNER_2(), SIGNER_3()));
+    let event = external_recovery_component::Event::EscapeCanceled(
+        external_recovery_component::EscapeCanceled { call_hash: call_hash }
+    );
+    spy.assert_not_emitted(@array![(component.contract_address, event)]);
+
+    assert_eq!(spy.events.len(), 0, "excess events");
 }
 
 #[test]

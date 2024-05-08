@@ -221,7 +221,7 @@ export function newProfiler(provider: RpcProvider) {
           fs.writeFileSync(filename, report);
           console.log("✨  Gas report updated.");
         } else if (process.argv.includes("--check")) {
-          console.error(`⚠️  Please update ${filename} and commit it in this PR.\n`);
+          console.error(`⚠️ Please update ${filename} and commit it in this PR.\n`);
           return process.exit(1);
         } else {
           console.log(`Usage: append either --write or --check to the CLI command.`);

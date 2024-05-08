@@ -1,4 +1,4 @@
-/// @dev 🚨 Attention: This file has not undergone an audit and is not intended for production use. Use at your own risk.  Please exercise caution and conduct your own due diligence before interacting with this contract. 🚨
+/// @dev 🚨 Attention: This file has not undergone an audit and is not intended for production use. Use at your own risk. Please exercise caution and conduct your own due diligence before interacting with this contract. 🚨
 use starknet::{SyscallResult, storage_access::{Store, StorageBaseAddress}};
 
 // Can store up to 255 felt252

@@ -1,4 +1,4 @@
-/// @dev 🚨 Attention: This smart contract has not undergone an audit and is not intended for production use. Use at your own risk.  Please exercise caution and conduct your own due diligence before interacting with this contract. 🚨
+/// @dev 🚨 Attention: This smart contract has not undergone an audit and is not intended for production use. Use at your own risk. Please exercise caution and conduct your own due diligence before interacting with this contract. 🚨
 use starknet::ContractAddress;
 
 #[starknet::interface]

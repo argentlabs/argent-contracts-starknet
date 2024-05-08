@@ -102,7 +102,7 @@ fn test_trigger_escape_replace_signer() {
     component.trigger_escape(call);
     let (escape, status) = component.get_escape();
     assert_eq!(escape.call_hash, call_hash, "invalid call hash");
-    assert_eq!(escape.ready_at, 10 * 60, "should be 10");
+    assert_eq!(escape.ready_at, 10 * 60, "should be 600");
     assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
 }
 
@@ -190,7 +190,7 @@ fn test_cancel_escape_expired() {
     let (component, multisig_component) = setup();
     start_prank(CheatTarget::All, GUARDIAN());
     component.trigger_escape(replace_signer_call(SIGNER_2(), SIGNER_3()));
-    start_warp(CheatTarget::All, 21);
+    start_warp(CheatTarget::All, 2 * (60 * 10) + 1);
     start_prank(CheatTarget::All, component.contract_address);
     let mut spy = spy_events(SpyOn::One(component.contract_address));
     component.cancel_escape();

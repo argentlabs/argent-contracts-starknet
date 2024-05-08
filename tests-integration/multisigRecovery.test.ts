@@ -42,7 +42,7 @@ describe("ArgentMultisig Recovery", function () {
     accountContract.connect(guardianAccount);
     await accountContract.trigger_escape(replaceSignerCall);
 
-    await setTime(initialTime + 10 * 60);
+    await provider.setTime(initialTime + 10 * 60);
     accountContract.connect(thirdPartyAccount);
     await ensureSuccess(await waitForTransaction(await accountContract.execute_escape(replaceSignerCall)));
     accountContract.is_signer(originalSigner.compiledSigner).should.eventually.equal(false);

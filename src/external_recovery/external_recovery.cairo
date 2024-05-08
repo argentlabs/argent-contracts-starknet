@@ -29,6 +29,9 @@ mod external_recovery_component {
     };
     use super::{IExternalRecoveryCallback, get_escape_call_hash};
 
+    /// Minimum time for the escape security period
+    const MIN_ESCAPE_PERIOD: u64 = consteval_int!(60 * 10); // 10 minutes;
+
     #[storage]
     struct Storage {
         escape_enabled: EscapeEnabled,
@@ -130,10 +133,9 @@ mod external_recovery_component {
             );
 
             if is_enabled {
-                assert(
-                    security_period != 0 && expiry_period != 0 && guardian != contract_address_const::<0>(),
-                    'argent/invalid-escape-params'
-                );
+                assert(security_period >= MIN_ESCAPE_PERIOD, 'argent/invalid-security-period');
+                assert(expiry_period >= MIN_ESCAPE_PERIOD, 'argent/invalid-expiry-period');
+                assert(guardian != contract_address_const::<0>(), 'argent/invalid-zero-guardian');
                 self.escape_enabled.write(EscapeEnabled { is_enabled: true, security_period, expiry_period });
                 self.guardian.write(guardian);
             } else {

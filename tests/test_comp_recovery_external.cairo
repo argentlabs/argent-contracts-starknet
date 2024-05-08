@@ -1,3 +1,4 @@
+use argent::external_recovery::interface::Escape;
 use argent::external_recovery::{
     interface::{IExternalRecovery, IExternalRecoveryDispatcher, IExternalRecoveryDispatcherTrait,},
     external_recovery::{external_recovery_component, EscapeCall, get_escape_call_hash}
@@ -114,7 +115,21 @@ fn test_trigger_escape_can_override() {
     component.trigger_escape(replace_signer_call(SIGNER_1(), SIGNER_4()));
     let second_call = replace_signer_call(SIGNER_1(), SIGNER_3());
     let second_call_hash = get_escape_call_hash(@second_call);
+
+    let mut spy = spy_events(SpyOn::One(component.contract_address));
     component.trigger_escape(second_call);
+    let first_call_hash = get_escape_call_hash(@replace_signer_call(SIGNER_1(), SIGNER_4()));
+    let escape_canceled_event = external_recovery_component::Event::EscapeCanceled(
+        external_recovery_component::EscapeCanceled { call_hash: first_call_hash }
+    );
+    spy.assert_emitted(@array![(component.contract_address, escape_canceled_event)]);
+
+    let escape_event = external_recovery_component::Event::EscapeTriggered(
+        external_recovery_component::EscapeTriggered { ready_at: 10, call: replace_signer_call(SIGNER_1(), SIGNER_3()) }
+    );
+    spy.assert_emitted(@array![(component.contract_address, escape_event)]);
+    assert_eq!(spy.events.len(), 0, "excess events");
+
     let (escape, _) = component.get_escape();
     assert_eq!(escape.call_hash, second_call_hash, "invalid call hash");
 }

@@ -80,12 +80,19 @@ fn test_toggle_small_security_period() {
     component.toggle_escape(true, (10 * 60) - 1, (10 * 60), contract_address_const::<0>());
 }
 
-
 #[test]
 #[should_panic(expected: ('argent/invalid-expiry-period',))]
 fn test_toggle_small_expiry_period() {
     let (component, _) = setup();
     component.toggle_escape(true, (10 * 60), (10 * 60) - 1, contract_address_const::<0>());
+}
+
+
+#[test]
+#[should_panic(expected: ('argent/invalid-zero-guardian',))]
+fn test_toggle_zero_guardian() {
+    let (component, _) = setup();
+    component.toggle_escape(true, (10 * 60), (10 * 60), contract_address_const::<0>());
 }
 
 fn replace_signer_call(remove: Signer, replace_with: Signer) -> EscapeCall {
@@ -125,7 +132,9 @@ fn test_trigger_escape_can_override() {
     spy.assert_emitted(@array![(component.contract_address, escape_canceled_event)]);
 
     let escape_event = external_recovery_component::Event::EscapeTriggered(
-        external_recovery_component::EscapeTriggered { ready_at: 10, call: replace_signer_call(SIGNER_1(), SIGNER_3()) }
+        external_recovery_component::EscapeTriggered {
+            ready_at: 10 * 60, call: replace_signer_call(SIGNER_1(), SIGNER_3())
+        }
     );
     spy.assert_emitted(@array![(component.contract_address, escape_event)]);
     assert_eq!(spy.events.len(), 0, "excess events");

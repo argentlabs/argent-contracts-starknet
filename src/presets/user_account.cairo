@@ -1,3 +1,4 @@
+/// @dev 🚨 Attention: This smart contract has not undergone an audit and is not intended for production use. Use at your own risk.  Please exercise caution and conduct your own due diligence before interacting with this contract. 🚨
 #[starknet::contract(account)]
 mod ArgentUserAccount {
     use argent::account::interface::{IAccount, IArgentAccount, Version};

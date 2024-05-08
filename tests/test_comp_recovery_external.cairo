@@ -73,6 +73,14 @@ fn test_toggle_unauthorized() {
     component.toggle_escape(false, 0, 0, contract_address_const::<0>());
 }
 
+#[test]
+#[should_panic(expected: ('argent/invalid-guardian',))]
+fn test_toggle_guardian_same_as_account() {
+    let (component, _) = setup();
+    // start_prank(CheatTarget::All, component.contract_address);
+    component.toggle_escape(true, 10 * 60, 10 * 60, component.contract_address);
+}
+
 fn replace_signer_call(remove: Signer, replace_with: Signer) -> EscapeCall {
     EscapeCall { selector: selector!("replace_signer"), calldata: serialize(@(remove, replace_with)), }
 }

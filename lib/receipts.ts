@@ -1,9 +1,9 @@
 import { assert } from "chai";
 import { GetTransactionReceiptResponse, RPC, TransactionExecutionStatus, TransactionFinalityStatus } from "starknet";
-import { provider } from "./provider";
+import { manager } from "./manager";
 
 export async function ensureSuccess(receipt: GetTransactionReceiptResponse): Promise<RPC.Receipt> {
-  const tx = await provider.waitForTransaction(receipt.transaction_hash, {
+  const tx = await manager.waitForTransaction(receipt.transaction_hash, {
     successStates: [TransactionFinalityStatus.ACCEPTED_ON_L1, TransactionFinalityStatus.ACCEPTED_ON_L2],
   });
   assert(
@@ -14,7 +14,7 @@ export async function ensureSuccess(receipt: GetTransactionReceiptResponse): Pro
 }
 
 export async function ensureAccepted(receipt: GetTransactionReceiptResponse): Promise<RPC.Receipt> {
-  await provider.waitForTransaction(receipt.transaction_hash, {
+  await manager.waitForTransaction(receipt.transaction_hash, {
     successStates: [TransactionFinalityStatus.ACCEPTED_ON_L1, TransactionFinalityStatus.ACCEPTED_ON_L2],
   });
   return receipt as RPC.Receipt;

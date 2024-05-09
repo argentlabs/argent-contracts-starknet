@@ -40,7 +40,7 @@ import {
   signerTypeToCustomEnum,
 } from "..";
 
-export const SESSION_MAGIC = shortString.encodeShortString("session-token");
+const SESSION_MAGIC = shortString.encodeShortString("session-token");
 
 export class DappService {
   constructor(
@@ -105,7 +105,7 @@ export class DappService {
   ): Promise<SessionToken> {
     const transactionDetail = await getSignerDetails(account, calls);
     const txHash = this.calculateTransactionHash(transactionDetail, calls);
-    return this.compileSessionSignature(
+    return this.buildSessionToken(
       sessionAuthorizationSignature,
       completedSession,
       txHash,
@@ -156,6 +156,10 @@ export class DappService {
     };
   }
 
+  public compileSessionSignature(sessionToken: SessionToken): string[] {
+    return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
+  }
+
   private async signRegularTransaction(
     sessionAuthorizationSignature: ArraySignatureType,
     completedSession: OffChainSession,
@@ -164,7 +168,7 @@ export class DappService {
     cacheAuthorization: boolean,
   ): Promise<ArraySignatureType> {
     const txHash = this.calculateTransactionHash(transactionDetail, calls);
-    const sessionToken = await this.compileSessionSignature(
+    const sessionToken = await this.buildSessionToken(
       sessionAuthorizationSignature,
       completedSession,
       txHash,
@@ -217,7 +221,7 @@ export class DappService {
     return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
   }
 
-  private async compileSessionSignature(
+  private async buildSessionToken(
     sessionAuthorizationSignature: ArraySignatureType,
     completedSession: OffChainSession,
     transactionHash: string,

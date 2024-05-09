@@ -1,10 +1,9 @@
-import { CallData, Contract, num, typedData } from "starknet";
+import { Contract, num, typedData } from "starknet";
 import {
   AllowedMethod,
   ArgentX,
   BackendService,
   DappService,
-  SESSION_MAGIC,
   StarknetKeyPair,
   declareContract,
   deployAccount,
@@ -160,7 +159,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         .map(() => "1"),
     };
     await expectRevertWithErrorMessage("session/invalid-auth-len", () =>
-      executeWithCustomSig(accountWithDappSigner, calls, [SESSION_MAGIC, ...CallData.compile({ sessionToken })]),
+      executeWithCustomSig(accountWithDappSigner, calls, dappService.compileSessionSignature(sessionToken)),
     );
   });
 });

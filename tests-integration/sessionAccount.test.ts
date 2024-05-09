@@ -1,10 +1,9 @@
-import { CallData, Contract, num, typedData } from "starknet";
+import { Contract, num, typedData } from "starknet";
 import {
   AllowedMethod,
   ArgentX,
   BackendService,
   DappService,
-  SESSION_MAGIC,
   SignerType,
   StarknetKeyPair,
   declareContract,
@@ -245,7 +244,7 @@ describe("Hybrid Session Account: execute calls", function () {
   });
 
   it("Fail with 'argent/invalid-signature-len' if more than owner + guardian signed session", async function () {
-    const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
+    const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const backendService = new BackendService(guardian as StarknetKeyPair);
     const dappService = new DappService(backendService);
@@ -282,7 +281,7 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("argent/invalid-signature-len", () =>
-      executeWithCustomSig(accountWithDappSigner, calls, [SESSION_MAGIC, ...CallData.compile({ sessionToken })]),
+      executeWithCustomSig(accountWithDappSigner, calls, dappService.compileSessionSignature(sessionToken)),
     );
   });
 
@@ -328,10 +327,7 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/session-key-mismatch", () =>
-      executeWithCustomSig(accountWithDappSigner, calls, [
-        SESSION_MAGIC,
-        ...CallData.compile({ sessionTokenWrongPub }),
-      ]),
+      executeWithCustomSig(accountWithDappSigner, calls, dappService.compileSessionSignature(sessionTokenWrongPub)),
     );
 
     const sessionTokenWrongSig = {
@@ -344,10 +340,7 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/invalid-session-sig", () =>
-      executeWithCustomSig(accountWithDappSigner, calls, [
-        SESSION_MAGIC,
-        ...CallData.compile({ sessionTokenWrongSig }),
-      ]),
+      executeWithCustomSig(accountWithDappSigner, calls, dappService.compileSessionSignature(sessionTokenWrongSig)),
     );
   });
 
@@ -393,10 +386,7 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/guardian-key-mismatch", () =>
-      executeWithCustomSig(accountWithDappSigner, calls, [
-        SESSION_MAGIC,
-        ...CallData.compile({ sessionTokenWrongPub }),
-      ]),
+      executeWithCustomSig(accountWithDappSigner, calls, dappService.compileSessionSignature(sessionTokenWrongPub)),
     );
 
     const sessionTokenWrongSig = {
@@ -409,10 +399,7 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/invalid-backend-sig", () =>
-      executeWithCustomSig(accountWithDappSigner, calls, [
-        SESSION_MAGIC,
-        ...CallData.compile({ sessionTokenWrongSig }),
-      ]),
+      executeWithCustomSig(accountWithDappSigner, calls, dappService.compileSessionSignature(sessionTokenWrongSig)),
     );
   });
 
@@ -467,10 +454,7 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/unaligned-proofs", () =>
-      executeWithCustomSig(accountWithDappSigner, calls, [
-        SESSION_MAGIC,
-        ...CallData.compile({ sessionTokenWrongProofs }),
-      ]),
+      executeWithCustomSig(accountWithDappSigner, calls, dappService.compileSessionSignature(sessionTokenWrongProofs)),
     );
   });
 });

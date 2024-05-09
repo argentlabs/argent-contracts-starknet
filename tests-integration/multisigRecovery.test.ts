@@ -4,7 +4,7 @@ import {
   deployMultisig1_1,
   ensureSuccess,
   expectRevertWithErrorMessage,
-  provider,
+  manager,
   randomStarknetKeyPair,
   waitForTransaction,
 } from "../lib";
@@ -38,11 +38,11 @@ describe("ArgentMultisig Recovery", function () {
   it(`Should be able to perform recovery on multisig`, async function () {
     const { accountContract, originalSigner, newSigner, guardianAccount, replaceSignerCall } = await buildFixture();
     const { account: thirdPartyAccount } = await deployMultisig1_1();
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
     accountContract.connect(guardianAccount);
     await accountContract.trigger_escape(replaceSignerCall);
 
-    await provider.setTime(initialTime + 10 * 60);
+    await manager.setTime(initialTime + 10 * 60);
     accountContract.connect(thirdPartyAccount);
     await ensureSuccess(await waitForTransaction(await accountContract.execute_escape(replaceSignerCall)));
     accountContract.is_signer(originalSigner.compiledSigner).should.eventually.equal(false);
@@ -56,11 +56,11 @@ describe("ArgentMultisig Recovery", function () {
 
   it(`Escape should fail outside time window`, async function () {
     const { accountContract, guardianAccount, replaceSignerCall } = await buildFixture();
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
     accountContract.connect(guardianAccount);
     await accountContract.trigger_escape(replaceSignerCall);
 
-    await provider.setTime(initialTime + 1);
+    await manager.setTime(initialTime + 1);
     await expectRevertWithErrorMessage("argent/invalid-escape", () =>
       accountContract.execute_escape(replaceSignerCall),
     );

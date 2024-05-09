@@ -3,7 +3,7 @@ import {
   ArgentAccount,
   deployMultisig,
   ensureSuccess,
-  provider,
+  manager,
   randomEip191KeyPair,
   randomEthKeyPair,
   randomSecp256r1KeyPair,
@@ -32,8 +32,8 @@ describe("Multisig: Signers types", function () {
   ];
 
   before(async () => {
-    ethContract = await provider.tokens.ethContract();
-    await provider.declareFixtureContract("Sha256Cairo0");
+    ethContract = await manager.tokens.ethContract();
+    await manager.declareFixtureContract("Sha256Cairo0");
 
     for (const { name, keyPair } of keyPairs) {
       const { account: oneSigner } = await deployMultisig({ threshold: 1, keys: [keyPair()] });

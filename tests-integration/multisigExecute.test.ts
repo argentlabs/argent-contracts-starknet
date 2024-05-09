@@ -6,7 +6,7 @@ import {
   deployMultisig1_1,
   expectEvent,
   expectRevertWithErrorMessage,
-  provider,
+  manager,
   sortByGuid,
 } from "../lib";
 
@@ -14,7 +14,7 @@ describe("ArgentMultisig: Execute", function () {
   let mockDappContract: Contract;
 
   before(async () => {
-    mockDappContract = await provider.deployContract("MockDapp");
+    mockDappContract = await manager.deployContract("MockDapp");
   });
 
   for (const useTxV3 of [false, true]) {

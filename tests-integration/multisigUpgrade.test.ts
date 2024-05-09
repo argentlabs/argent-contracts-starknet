@@ -8,7 +8,7 @@ import {
   deployLegacyMultisig,
   ensureSuccess,
   expectEvent,
-  provider,
+  manager,
   signerTypeToCustomEnum,
   sortByGuid,
   upgradeAccount,
@@ -19,20 +19,20 @@ import { deployMultisig1_1 } from "../lib/multisig";
 describe("ArgentMultisig: upgrade", function () {
   it("Upgrade from current version to FutureVersionMultisig", async function () {
     // This is the same as Argent Multisig but with a different version (to have another class hash)
-    const argentMultisigFutureClassHash = await provider.declareLocalContract("MockFutureArgentMultisig");
+    const argentMultisigFutureClassHash = await manager.declareLocalContract("MockFutureArgentMultisig");
 
     const { account } = await deployMultisig1_1();
     await upgradeAccount(account, argentMultisigFutureClassHash);
-    expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(argentMultisigFutureClassHash));
+    expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentMultisigFutureClassHash));
   });
 
   for (const threshold of [1, 3, 10]) {
     it(`Upgrade from 0.1.0 to Current Version with ${threshold} key(s)`, async function () {
       const { account, accountContract, signers } = await deployLegacyMultisig(
-        await provider.declareFixtureContract("ArgentMultisig-0.1.0"),
+        await manager.declareFixtureContract("ArgentMultisig-0.1.0"),
         threshold,
       );
-      const currentImpl = await provider.declareLocalContract("ArgentMultisigAccount");
+      const currentImpl = await manager.declareLocalContract("ArgentMultisigAccount");
 
       const pubKeys = signers.keys.map((key) => (key as LegacyMultisigKeyPair).publicKey);
       const accountSigners = await accountContract.get_signers();
@@ -40,7 +40,7 @@ describe("ArgentMultisig: upgrade", function () {
       expect(pubKeys).to.have.members(accountSigners);
 
       const tx = await upgradeAccount(account, currentImpl);
-      expect(BigInt(await provider.getClassHashAt(account.address))).to.equal(BigInt(currentImpl));
+      expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(currentImpl));
 
       for (const key of signers.keys) {
         const snKeyPair = new StarknetKeyPair((key as LegacyMultisigKeyPair).privateKey);
@@ -52,13 +52,13 @@ describe("ArgentMultisig: upgrade", function () {
         });
       }
 
-      const ethContract = await provider.tokens.ethContract();
+      const ethContract = await manager.tokens.ethContract();
       const newSigners = sortByGuid(
         signers.keys.map((key) => new StarknetKeyPair((key as LegacyMultisigKeyPair).privateKey)),
       );
       account.signer = new MultisigSigner(newSigners);
 
-      const newAccountContract = await provider.loadContract(account.address);
+      const newAccountContract = await manager.loadContract(account.address);
       const getSignerGuids = await newAccountContract.get_signer_guids();
       expect(getSignerGuids.length).to.equal(newSigners.length);
       const newSignersGuids = newSigners.map((signer) => signer.guid);
@@ -78,7 +78,7 @@ describe("ArgentMultisig: upgrade", function () {
       `Class with hash ClassHash(\\n    StarkFelt(\\n        \\"0x0000000000000000000000000000000000000000000000000000000000000001\\",\\n    ),\\n) is not declared`,
     );
 
-    const mockDappClassHash = await provider.declareLocalContract("MockDapp");
+    const mockDappClassHash = await manager.declareLocalContract("MockDapp");
     await upgradeAccount(account, mockDappClassHash).should.be.rejectedWith(
       `EntryPointSelector(StarkFelt(\\"0x00fe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283\\")) not found in contract`,
     );

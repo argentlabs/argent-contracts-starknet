@@ -9,7 +9,7 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   hasOngoingEscape,
-  provider,
+  manager,
   randomStarknetKeyPair,
   signChangeOwnerMessage,
   starknetSignatureType,
@@ -20,7 +20,7 @@ describe("ArgentAccount", function () {
   let argentAccountClassHash: string;
 
   before(async () => {
-    argentAccountClassHash = await provider.declareLocalContract("ArgentAccount");
+    argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
   });
 
   it("Deploy externally", async function () {
@@ -33,7 +33,7 @@ describe("ArgentAccount", function () {
     const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
     const udcCalls = deployer.buildUDCContractPayload({ classHash, salt, constructorCalldata, unique: false });
     const response = await deployer.execute(udcCalls);
-    const receipt = await provider.waitForTransaction(response.transaction_hash);
+    const receipt = await manager.waitForTransaction(response.transaction_hash);
 
     await expectEvent(receipt, {
       from_address: contractAddress,
@@ -49,7 +49,7 @@ describe("ArgentAccount", function () {
       data: [guardian.guid.toString()],
     });
 
-    const accountContract = await provider.loadContract(contractAddress);
+    const accountContract = await manager.loadContract(contractAddress);
     await accountContract.get_owner_guid().should.eventually.equal(owner.guid);
     expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(guardian.guid);
     await accountContract.get_guardian_backup().should.eventually.equal(0n);
@@ -80,11 +80,11 @@ describe("ArgentAccount", function () {
       const { accountContract, owner } = await deployAccount();
       const newOwner = randomStarknetKeyPair();
 
-      const chainId = await provider.getChainId();
+      const chainId = await manager.getChainId();
       const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.guid, newOwner, chainId);
 
       const response = await accountContract.change_owner(starknetSignature);
-      const receipt = await provider.waitForTransaction(response.transaction_hash);
+      const receipt = await manager.waitForTransaction(response.transaction_hash);
 
       await accountContract.get_owner_guid().should.eventually.equal(newOwner.guid);
 
@@ -124,10 +124,10 @@ describe("ArgentAccount", function () {
 
       await accountContract.trigger_escape_owner(newOwner.compiledSigner);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
-      await provider.increaseTime(10);
+      await manager.increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
-      const chainId = await provider.getChainId();
+      const chainId = await manager.getChainId();
       const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.guid, newOwner, chainId);
 
       await accountContract.change_owner(starknetSignature);
@@ -143,7 +143,7 @@ describe("ArgentAccount", function () {
       const newGuardian = randomStarknetKeyPair();
 
       const response = await accountContract.change_guardian(newGuardian.compiledSignerAsOption);
-      const receipt = await provider.waitForTransaction(response.transaction_hash);
+      const receipt = await manager.waitForTransaction(response.transaction_hash);
 
       expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(newGuardian.guid);
 
@@ -203,7 +203,7 @@ describe("ArgentAccount", function () {
 
       await accountContract.trigger_escape_owner(newOwner.compiledSigner);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
-      await provider.increaseTime(10);
+      await manager.increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
       await accountContract.change_guardian(newGuardian.compiledSignerAsOption);
@@ -220,7 +220,7 @@ describe("ArgentAccount", function () {
       const newGuardianBackup = randomStarknetKeyPair();
 
       const response = await accountContract.change_guardian_backup(newGuardianBackup.compiledSignerAsOption);
-      const receipt = await provider.waitForTransaction(response.transaction_hash);
+      const receipt = await manager.waitForTransaction(response.transaction_hash);
 
       expect((await accountContract.get_guardian_backup_guid()).unwrap()).to.equal(newGuardianBackup.guid);
 
@@ -269,7 +269,7 @@ describe("ArgentAccount", function () {
 
       await accountContract.trigger_escape_owner(newOwner.compiledSigner);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
-      await provider.increaseTime(10);
+      await manager.increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
       await accountContract.change_guardian_backup(newGuardian.compiledSignerAsOption);
@@ -287,7 +287,7 @@ describe("ArgentAccount", function () {
         entrypoint: "constructor",
         calldata: CallData.compile({ owner: 12, guardian: 13 }),
       });
-      await provider.waitForTransaction(transaction_hash);
+      await manager.waitForTransaction(transaction_hash);
     } catch (e: any) {
       expect(e.toString()).to.contain(
         `Entry point EntryPointSelector(StarkFelt(\\"0x028ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194\\")) not found in contract`,

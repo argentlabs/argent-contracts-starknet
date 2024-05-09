@@ -15,6 +15,6 @@ export class Manager extends WithContracts(WithDevnet(RpcProvider)) {
   }
 }
 
-export const provider = new Manager();
+export const manager = new Manager();
 
-console.log("Provider:", provider.channel.nodeUrl);
+console.log("Provider:", manager.channel.nodeUrl);

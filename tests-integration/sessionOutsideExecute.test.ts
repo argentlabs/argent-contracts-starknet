@@ -8,7 +8,7 @@ import {
   deployAccount,
   deployer,
   getSessionTypedData,
-  provider,
+  manager,
 } from "../lib";
 
 const initialTime = 1713139200n;
@@ -22,12 +22,12 @@ describe("ArgentAccount: outside execution", function () {
   let mockDapp: Contract;
 
   before(async () => {
-    argentSessionAccountClassHash = await provider.declareLocalContract("ArgentAccount");
-    const mockDappClassHash = await provider.declareLocalContract("MockDapp");
+    argentSessionAccountClassHash = await manager.declareLocalContract("ArgentAccount");
+    const mockDappClassHash = await manager.declareLocalContract("MockDapp");
     const { contract_address } = await deployer.deployContract({
       classHash: mockDappClassHash,
     });
-    mockDapp = await provider.loadContract(contract_address);
+    mockDapp = await manager.loadContract(contract_address);
   });
 
   it("Basics: Revision 0", async function () {
@@ -61,7 +61,7 @@ describe("ArgentAccount: outside execution", function () {
       mockDappAccount.address,
     );
 
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
 
     await mockDappAccount.execute(outsideExecutionCall);
 
@@ -99,7 +99,7 @@ describe("ArgentAccount: outside execution", function () {
       mockDappAccount.address,
     );
 
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
 
     await mockDappAccount.execute(outsideExecutionCall);
 

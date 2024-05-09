@@ -1,9 +1,9 @@
 import { pick } from "lodash-es";
 import { Call, uint256 } from "starknet";
-import { deployer, provider } from "../lib";
+import { deployer, manager } from "../lib";
 
 //////////////////// Configure the tx to send here: ///////////
-const eth = await provider.tokens.ethContract();
+const eth = await manager.tokens.ethContract();
 const call = await eth.populateTransaction.transfer(deployer.address, uint256.bnToUint256(1000000000000000n));
 // const call = await strk.populateTransaction.transfer(deployer.address, uint256.bnToUint256(10000000000000000000000n));
 const maxFee = 1000000000000000n;

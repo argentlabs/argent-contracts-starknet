@@ -1,4 +1,4 @@
-import { provider } from "../lib";
+import { manager } from "../lib";
 import { newProfiler } from "../lib/gas";
 
 const transactions = {
@@ -6,7 +6,7 @@ const transactions = {
   "Transaction label 2": "0x222222222222222222222222222222222222222222222222222222222222222",
 };
 
-const profiler = newProfiler(provider);
+const profiler = newProfiler(manager);
 
 for (const [name, transaction_hash] of Object.entries(transactions)) {
   await profiler.profile(name, { transaction_hash }, { allowFailedTransactions: true });

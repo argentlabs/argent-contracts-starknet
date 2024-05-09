@@ -1,4 +1,4 @@
-import { Contract, num, typedData } from "starknet";
+import { Contract, num } from "starknet";
 import {
   AllowedMethod,
   ArgentX,
@@ -93,7 +93,7 @@ describe("Hybrid Session Account: execute calls", function () {
 
     const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
 
-    const accountWithDappSigner = await setupSession(
+    const { accountWithDappSigner } = await setupSession(
       guardian as StarknetKeyPair,
       account,
       allowedMethods,
@@ -121,7 +121,7 @@ describe("Hybrid Session Account: execute calls", function () {
 
     const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
 
-    const accountWithDappSigner = await setupSession(
+    const { accountWithDappSigner } = await setupSession(
       guardian as StarknetKeyPair,
       account,
       allowedMethods,
@@ -146,10 +146,6 @@ describe("Hybrid Session Account: execute calls", function () {
   it("Revoke a session", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
-    const backendService = new BackendService(guardian as StarknetKeyPair);
-    const dappService = new DappService(backendService);
-    const argentX = new ArgentX(account, backendService);
-
     const allowedMethods: AllowedMethod[] = [
       {
         "Contract Address": mockDappOneContract.address,
@@ -157,17 +153,13 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
-
-    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
-
-    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+    const { accountWithDappSigner, sessionHash } = await setupSession(
+      guardian as StarknetKeyPair,
       account,
-      sessionRequest,
-      accountSessionSignature,
+      allowedMethods,
+      initialTime + 150n,
+      randomStarknetKeyPair(),
     );
-
-    const sessionHash = typedData.getMessageHash(await getSessionTypedData(sessionRequest), accountContract.address);
 
     const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
 
@@ -232,7 +224,7 @@ describe("Hybrid Session Account: execute calls", function () {
 
     const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
 
-    const accountWithDappSigner = await setupSession(
+    const { accountWithDappSigner } = await setupSession(
       guardian as StarknetKeyPair,
       account,
       allowedMethods,

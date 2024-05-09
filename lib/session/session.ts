@@ -87,7 +87,10 @@ export async function getSessionTypedData(sessionRequest: OffChainSession): Prom
     },
   };
 }
-
+interface SessionSetup {
+  accountWithDappSigner: ArgentAccount;
+  sessionHash: string;
+}
 export async function setupSession(
   guardian: StarknetKeyPair,
   account: Account,
@@ -95,7 +98,7 @@ export async function setupSession(
   expiry: bigint = BigInt(Date.now()) + 10000n,
   dappKey: StarknetKeyPair = randomStarknetKeyPair(),
   cacheAuthorization = false,
-): Promise<ArgentAccount> {
+): Promise<SessionSetup> {
   const backendService = new BackendService(guardian);
   const dappService = new DappService(backendService, dappKey);
   const argentX = new ArgentX(account, backendService);
@@ -103,5 +106,13 @@ export async function setupSession(
   const sessionRequest = dappService.createSessionRequest(allowedMethods, expiry);
 
   const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
-  return dappService.getAccountWithSessionSigner(account, sessionRequest, accountSessionSignature, cacheAuthorization);
+  return {
+    accountWithDappSigner: dappService.getAccountWithSessionSigner(
+      account,
+      sessionRequest,
+      accountSessionSignature,
+      cacheAuthorization,
+    ),
+    sessionHash: typedData.getMessageHash(await getSessionTypedData(sessionRequest), account.address),
+  };
 }

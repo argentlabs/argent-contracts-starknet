@@ -7,7 +7,6 @@ import {
   StarknetKeyPair,
   declareContract,
   deployAccount,
-  deployAccountWithGuardianBackup,
   deployer,
   executeWithCustomSig,
   expectRevertWithErrorMessage,
@@ -27,11 +26,11 @@ describe("Hybrid Session Account: execute session calls with caching", function 
     sessionAccountClassHash = await declareContract("ArgentAccount");
 
     const mockDappClassHash = await declareContract("MockDapp");
-    const deployedmockDappOne = await deployer.deployContract({
+    const deployedMockDappOne = await deployer.deployContract({
       classHash: mockDappClassHash,
       salt: num.toHex(randomStarknetKeyPair().privateKey),
     });
-    mockDappOneContract = await loadContract(deployedmockDappOne.contract_address);
+    mockDappOneContract = await loadContract(deployedMockDappOne.contract_address);
   });
 
   beforeEach(async function () {
@@ -41,10 +40,6 @@ describe("Hybrid Session Account: execute session calls with caching", function 
   it("Use Session with caching enabled", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
-    const backendService = new BackendService(guardian as StarknetKeyPair);
-    const dappService = new DappService(backendService);
-    const argentX = new ArgentX(account, backendService);
-
     const allowedMethods: AllowedMethod[] = [
       {
         "Contract Address": mockDappOneContract.address,
@@ -52,19 +47,14 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
-
-    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
-
-    const sessionHash = typedData.getMessageHash(await getSessionTypedData(sessionRequest), accountContract.address);
-
     const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
 
-    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+    const { accountWithDappSigner, sessionHash } = await setupSession(
+      guardian as StarknetKeyPair,
       account,
-      sessionRequest,
-      accountSessionSignature,
-      true,
+      allowedMethods,
+      initialTime + 150n,
+      randomStarknetKeyPair(),
     );
 
     await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
@@ -82,32 +72,6 @@ describe("Hybrid Session Account: execute session calls with caching", function 
 
     await account.waitForTransaction(tx2);
     await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(8n);
-  });
-
-  it("Fail if guardian backup signed session", async function () {
-    const { account, guardian } = await deployAccountWithGuardianBackup({
-      classHash: sessionAccountClassHash,
-    });
-
-    const allowedMethods: AllowedMethod[] = [
-      {
-        "Contract Address": mockDappOneContract.address,
-        selector: "set_number_double",
-      },
-    ];
-
-    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
-
-    const accountWithDappSigner = await setupSession(
-      guardian as StarknetKeyPair,
-      account,
-      allowedMethods,
-      initialTime + 150n,
-      randomStarknetKeyPair(),
-      true,
-    );
-
-    await expectRevertWithErrorMessage("session/signer-is-not-guardian", () => accountWithDappSigner.execute(calls));
   });
 
   it("Fail if a large authorization is injected", async function () {

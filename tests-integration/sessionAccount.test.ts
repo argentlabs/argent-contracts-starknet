@@ -23,89 +23,67 @@ import {
 
 describe("Hybrid Session Account: execute calls", function () {
   let sessionAccountClassHash: string;
-  let mockDappOneContract: Contract;
+  let mockDappContract: Contract;
   const initialTime = 1710167933n;
 
   before(async () => {
     sessionAccountClassHash = await declareContract("ArgentAccount");
 
     const mockDappClassHash = await declareContract("MockDapp");
-    const deployedmockDappOne = await deployer.deployContract({
+    const deployedMockDapp = await deployer.deployContract({
       classHash: mockDappClassHash,
       salt: num.toHex(randomStarknetKeyPair().privateKey),
     });
-    mockDappOneContract = await loadContract(deployedmockDappOne.contract_address);
+    mockDappContract = await loadContract(deployedMockDapp.contract_address);
   });
 
   beforeEach(async function () {
     await provider.setTime(initialTime);
   });
 
-  it("Execute basic session", async function () {
-    const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
+  for (const useTxV3 of [false, true]) {
+    it(`Execute basic session (TxV3: ${useTxV3})`, async function () {
+      const { accountContract, account, guardian } = await deployAccount({
+        useTxV3,
+        classHash: sessionAccountClassHash,
+      });
 
-    const backendService = new BackendService(guardian as StarknetKeyPair);
-    const dappService = new DappService(backendService);
-    const argentX = new ArgentX(account, backendService);
+      const backendService = new BackendService(guardian as StarknetKeyPair);
+      const dappService = new DappService(backendService);
+      const argentX = new ArgentX(account, backendService);
 
-    // Session creation:
-    // 1. dapp request session: provides dapp pub key and policies
-    const allowedMethods: AllowedMethod[] = [
-      {
-        "Contract Address": mockDappOneContract.address,
-        selector: "set_number_double",
-      },
-    ];
+      // Session creation:
+      // 1. dapp request session: provides dapp pub key and policies
+      const allowedMethods: AllowedMethod[] = [
+        {
+          "Contract Address": mockDappContract.address,
+          selector: "set_number_double",
+        },
+      ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
+      const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
 
-    // 2. Owner and Guardian signs session
-    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
+      // 2. Owner and Guardian signs session
+      const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
 
-    //  Every request:
-    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+      //  Every request:
+      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
-    // 1. dapp requests backend signature
-    // backend: can verify the parameters and check it was signed by the account then provides signature
-    // 2. dapp signs tx and session, crafts signature and submits transaction
-    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
-      account,
-      sessionRequest,
-      accountSessionSignature,
-    );
+      // 1. dapp requests backend signature
+      // backend: can verify the parameters and check it was signed by the account then provides signature
+      // 2. dapp signs tx and session, crafts signature and submits transaction
+      const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+        account,
+        sessionRequest,
+        accountSessionSignature,
+      );
 
-    const { transaction_hash } = await accountWithDappSigner.execute(calls);
+      const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
-    await account.waitForTransaction(transaction_hash);
-    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
-  });
-
-  it("Execute basic session using TxV3", async function () {
-    const { accountContract, account, guardian } = await deployAccount({
-      useTxV3: true,
-      classHash: sessionAccountClassHash,
+      await account.waitForTransaction(transaction_hash);
+      await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
     });
-    const allowedMethods: AllowedMethod[] = [
-      {
-        "Contract Address": mockDappOneContract.address,
-        selector: "set_number_double",
-      },
-    ];
-
-    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
-
-    const { accountWithDappSigner } = await setupSession(
-      guardian as StarknetKeyPair,
-      account,
-      allowedMethods,
-      initialTime + 150n,
-    );
-
-    const { transaction_hash } = await accountWithDappSigner.execute(calls);
-
-    await account.waitForTransaction(transaction_hash);
-    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
-  });
+  }
 
   it("Only execute tx if session not expired", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
@@ -114,12 +92,12 @@ describe("Hybrid Session Account: execute calls", function () {
 
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": mockDappOneContract.address,
+        "Contract Address": mockDappContract.address,
         selector: "set_number_double",
       },
     ];
 
-    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
     const { accountWithDappSigner } = await setupSession(
       guardian as StarknetKeyPair,
@@ -132,14 +110,14 @@ describe("Hybrid Session Account: execute calls", function () {
     // non expired session
     await provider.setTime(expiresAt - 10800n);
     await account.waitForTransaction(transaction_hash);
-    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+    await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
 
     // Expired session
     await provider.setTime(expiresAt + 7200n);
     await expectRevertWithErrorMessage("session/expired", () =>
       accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
     );
-    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+    await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
   });
 
   it("Revoke a session", async function () {
@@ -147,7 +125,7 @@ describe("Hybrid Session Account: execute calls", function () {
 
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": mockDappOneContract.address,
+        "Contract Address": mockDappContract.address,
         selector: "set_number_double",
       },
     ];
@@ -159,12 +137,12 @@ describe("Hybrid Session Account: execute calls", function () {
       initialTime + 150n,
     );
 
-    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
     await account.waitForTransaction(transaction_hash);
-    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+    await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
 
     // Revoke Session
     await accountContract.revoke_session(sessionHash);
@@ -172,7 +150,7 @@ describe("Hybrid Session Account: execute calls", function () {
     await expectRevertWithErrorMessage("session/revoked", () =>
       accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
     );
-    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+    await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
 
     await expectRevertWithErrorMessage("session/already-revoked", () => accountContract.revoke_session(sessionHash));
   });
@@ -187,7 +165,7 @@ describe("Hybrid Session Account: execute calls", function () {
 
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": mockDappOneContract.address,
+        "Contract Address": mockDappContract.address,
         selector: "set_number_double",
       },
     ];
@@ -202,7 +180,7 @@ describe("Hybrid Session Account: execute calls", function () {
       accountSessionSignature,
     );
 
-    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
     await expectRevertWithErrorMessage("session/guardian-key-mismatch", () =>
       accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
@@ -215,12 +193,12 @@ describe("Hybrid Session Account: execute calls", function () {
 
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": mockDappOneContract.address,
+        "Contract Address": mockDappContract.address,
         selector: "set_number_double",
       },
     ];
 
-    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
     const { accountWithDappSigner } = await setupSession(
       guardian as StarknetKeyPair,
@@ -237,12 +215,12 @@ describe("Hybrid Session Account: execute calls", function () {
 
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": mockDappOneContract.address,
+        "Contract Address": mockDappContract.address,
         selector: "set_number_double",
       },
     ];
 
-    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
     const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(
       guardian as StarknetKeyPair,
@@ -272,12 +250,12 @@ describe("Hybrid Session Account: execute calls", function () {
 
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": mockDappOneContract.address,
+        "Contract Address": mockDappContract.address,
         selector: "set_number_double",
       },
     ];
 
-    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
     const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(
       guardian as StarknetKeyPair,
@@ -324,12 +302,12 @@ describe("Hybrid Session Account: execute calls", function () {
 
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": mockDappOneContract.address,
+        "Contract Address": mockDappContract.address,
         selector: "set_number_double",
       },
     ];
 
-    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
     const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(
       guardian as StarknetKeyPair,
@@ -376,24 +354,24 @@ describe("Hybrid Session Account: execute calls", function () {
 
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": mockDappOneContract.address,
+        "Contract Address": mockDappContract.address,
         selector: "set_number_double",
       },
       {
-        "Contract Address": mockDappOneContract.address,
+        "Contract Address": mockDappContract.address,
         selector: "set_number_times3",
       },
       {
-        "Contract Address": mockDappOneContract.address,
+        "Contract Address": mockDappContract.address,
         selector: "increase_number",
       },
     ];
 
     const calls = [
-      mockDappOneContract.populateTransaction.set_number_double(2),
-      mockDappOneContract.populateTransaction.set_number_double(4),
-      mockDappOneContract.populateTransaction.increase_number(2),
-      mockDappOneContract.populateTransaction.increase_number(2),
+      mockDappContract.populateTransaction.set_number_double(2),
+      mockDappContract.populateTransaction.set_number_double(4),
+      mockDappContract.populateTransaction.increase_number(2),
+      mockDappContract.populateTransaction.increase_number(2),
     ];
 
     const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(

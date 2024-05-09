@@ -16,18 +16,18 @@ import {
 
 describe("Hybrid Session Account: execute session calls with caching", function () {
   let sessionAccountClassHash: string;
-  let mockDappOneContract: Contract;
+  let mockDappContract: Contract;
   const initialTime = 1710167933n;
 
   before(async () => {
     sessionAccountClassHash = await declareContract("ArgentAccount");
 
     const mockDappClassHash = await declareContract("MockDapp");
-    const deployedMockDappOne = await deployer.deployContract({
+    const deployedMockDapp = await deployer.deployContract({
       classHash: mockDappClassHash,
       salt: num.toHex(randomStarknetKeyPair().privateKey),
     });
-    mockDappOneContract = await loadContract(deployedMockDappOne.contract_address);
+    mockDappContract = await loadContract(deployedMockDapp.contract_address);
   });
 
   beforeEach(async function () {
@@ -39,12 +39,12 @@ describe("Hybrid Session Account: execute session calls with caching", function 
 
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": mockDappOneContract.address,
+        "Contract Address": mockDappContract.address,
         selector: "set_number_double",
       },
     ];
 
-    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
     const { accountWithDappSigner, sessionHash } = await setupSession(
       guardian as StarknetKeyPair,
@@ -59,17 +59,17 @@ describe("Hybrid Session Account: execute session calls with caching", function 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
     await account.waitForTransaction(transaction_hash);
-    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
+    await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
 
     // check that the session is cached
     await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.true;
 
-    const calls2 = [mockDappOneContract.populateTransaction.set_number_double(4)];
+    const calls2 = [mockDappContract.populateTransaction.set_number_double(4)];
 
     const { transaction_hash: tx2 } = await accountWithDappSigner.execute(calls2);
 
     await account.waitForTransaction(tx2);
-    await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(8n);
+    await mockDappContract.get_number(accountContract.address).should.eventually.equal(8n);
   });
 
   it("Fail if a large authorization is injected", async function () {
@@ -77,12 +77,12 @@ describe("Hybrid Session Account: execute session calls with caching", function 
 
     const allowedMethods: AllowedMethod[] = [
       {
-        "Contract Address": mockDappOneContract.address,
+        "Contract Address": mockDappContract.address,
         selector: "set_number_double",
       },
     ];
 
-    const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
     const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature, sessionHash } =
       await setupSession(

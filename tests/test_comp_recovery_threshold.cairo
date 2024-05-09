@@ -9,7 +9,8 @@ use argent::recovery::{threshold_recovery::threshold_recovery_component};
 use argent::signer::{signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey, SignerTrait}};
 use argent::signer_storage::signer_list::signer_list_component;
 use snforge_std::{
-    start_prank, stop_prank, start_warp, CheatTarget, test_address, declare, ContractClassTrait, ContractClass
+    start_prank, stop_prank, start_warp, CheatTarget, test_address, declare, ContractClassTrait, ContractClass,
+    spy_events, SpyOn, EventSpy, EventFetcher, EventAssertions
 };
 use starknet::SyscallResultTrait;
 use starknet::{ContractAddress, contract_address_const,};
@@ -208,6 +209,7 @@ fn test_cancel_escape() {
     let (component, _, multisig_component) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     start_warp(CheatTarget::All, 11);
+    let mut spy = spy_events(SpyOn::One(component.contract_address));
     component.cancel_escape();
     let (escape, status) = component.get_escape();
     assert_eq!(status, EscapeStatus::None, "status should be None");
@@ -215,6 +217,39 @@ fn test_cancel_escape() {
     assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
     assert!(multisig_component.is_signer(SIGNER_2()), "should be signer 2");
     assert!(!multisig_component.is_signer(SIGNER_3()), "should not be signer 3");
+
+    let event = threshold_recovery_component::Event::EscapeCanceled(
+        threshold_recovery_component::EscapeCanceled {
+            target_signers: array![SIGNER_2().into_guid()].span(), new_signers: array![SIGNER_3().into_guid()].span(),
+        }
+    );
+    spy.assert_emitted(@array![(component.contract_address, event)]);
+
+    assert_eq!(spy.events.len(), 0, "excess events");
+}
+
+#[test]
+fn test_cancel_escape_expired() {
+    let (component, _, multisig_component) = setup();
+    component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
+    start_warp(CheatTarget::All, 21);
+    let mut spy = spy_events(SpyOn::One(component.contract_address));
+    component.cancel_escape();
+    let (escape, status) = component.get_escape();
+    assert_eq!(status, EscapeStatus::None, "status should be None");
+    assert_eq!(escape.ready_at, 0, "should be no recovery");
+    assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
+    assert!(multisig_component.is_signer(SIGNER_2()), "should be signer 2");
+    assert!(!multisig_component.is_signer(SIGNER_3()), "should not be signer 3");
+
+    let event = threshold_recovery_component::Event::EscapeCanceled(
+        threshold_recovery_component::EscapeCanceled {
+            target_signers: array![SIGNER_2().into_guid()].span(), new_signers: array![SIGNER_3().into_guid()].span(),
+        }
+    );
+    spy.assert_not_emitted(@array![(component.contract_address, event)]);
+
+    assert_eq!(spy.events.len(), 0, "excess events");
 }
 
 #[test]

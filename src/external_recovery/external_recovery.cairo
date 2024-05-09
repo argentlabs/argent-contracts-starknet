@@ -29,6 +29,9 @@ mod external_recovery_component {
     };
     use super::{IExternalRecoveryCallback, get_escape_call_hash};
 
+    /// Minimum time for the escape security period
+    const MIN_ESCAPE_PERIOD: u64 = consteval_int!(60 * 10); // 10 minutes;
+
     #[storage]
     struct Storage {
         escape_enabled: EscapeEnabled,
@@ -65,7 +68,7 @@ mod external_recovery_component {
             let current_escape: Escape = self.escape.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             if (current_escape_status == EscapeStatus::NotReady || current_escape_status == EscapeStatus::Ready) {
-                self.emit(EscapeCanceled { call_hash });
+                self.emit(EscapeCanceled { call_hash: current_escape.call_hash });
             }
 
             let ready_at = get_block_timestamp() + escape_config.security_period;
@@ -97,7 +100,9 @@ mod external_recovery_component {
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
             self.escape.write(Default::default());
-            self.emit(EscapeCanceled { call_hash: current_escape.call_hash });
+            if current_escape_status != EscapeStatus::Expired {
+                self.emit(EscapeCanceled { call_hash: current_escape.call_hash });
+            }
         }
 
         fn get_escape_enabled(self: @ComponentState<TContractState>) -> EscapeEnabled {
@@ -128,10 +133,9 @@ mod external_recovery_component {
             );
 
             if is_enabled {
-                assert(
-                    security_period != 0 && expiry_period != 0 && guardian != contract_address_const::<0>(),
-                    'argent/invalid-escape-params'
-                );
+                assert(security_period >= MIN_ESCAPE_PERIOD, 'argent/invalid-security-period');
+                assert(expiry_period >= MIN_ESCAPE_PERIOD, 'argent/invalid-expiry-period');
+                assert(guardian != contract_address_const::<0>(), 'argent/invalid-zero-guardian');
                 self.escape_enabled.write(EscapeEnabled { is_enabled: true, security_period, expiry_period });
                 self.guardian.write(guardian);
             } else {

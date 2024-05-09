@@ -1,16 +1,13 @@
 import { Contract, typedData } from "starknet";
 import {
   AllowedMethod,
-  ArgentX,
-  BackendService,
-  DappService,
   StarknetKeyPair,
   declareContract,
   deployAccount,
   deployer,
-  getSessionTypedData,
   loadContract,
   provider,
+  setupSession,
 } from "../lib";
 
 const initialTime = 1713139200n;
@@ -37,10 +34,6 @@ describe("ArgentAccount: outside execution", function () {
 
     const { account: mockDappAccount } = await deployAccount();
 
-    const backendService = new BackendService(guardian as StarknetKeyPair);
-    const dappService = new DappService(backendService);
-    const argentX = new ArgentX(account, backendService);
-
     const allowedMethods: AllowedMethod[] = [
       {
         "Contract Address": mockDapp.address,
@@ -48,15 +41,18 @@ describe("ArgentAccount: outside execution", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 1n);
-
-    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
+    const { dappService, sessionRequest, authorizationSignature } = await setupSession(
+      guardian as StarknetKeyPair,
+      account,
+      allowedMethods,
+      initialTime + 150n,
+    );
 
     const calls = [mockDapp.populateTransaction.set_number(42n)];
 
     const outsideExecutionCall = await dappService.getOutsideExecutionCall(
       sessionRequest,
-      accountSessionSignature,
+      authorizationSignature,
       calls,
       legacyRevision,
       account.address,
@@ -75,10 +71,6 @@ describe("ArgentAccount: outside execution", function () {
 
     const { account: mockDappAccount } = await deployAccount();
 
-    const backendService = new BackendService(guardian as StarknetKeyPair);
-    const dappService = new DappService(backendService);
-    const argentX = new ArgentX(account, backendService);
-
     const allowedMethods: AllowedMethod[] = [
       {
         "Contract Address": mockDapp.address,
@@ -86,15 +78,18 @@ describe("ArgentAccount: outside execution", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 1n);
-
-    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
-
     const calls = [mockDapp.populateTransaction.set_number(42n)];
+
+    const { dappService, sessionRequest, authorizationSignature } = await setupSession(
+      guardian as StarknetKeyPair,
+      account,
+      allowedMethods,
+      initialTime + 150n,
+    );
 
     const outsideExecutionCall = await dappService.getOutsideExecutionCall(
       sessionRequest,
-      accountSessionSignature,
+      authorizationSignature,
       calls,
       activeRevision,
       account.address,

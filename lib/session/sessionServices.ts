@@ -42,6 +42,10 @@ import {
 
 const SESSION_MAGIC = shortString.encodeShortString("session-token");
 
+export function compileSessionSignature(sessionToken: SessionToken): string[] {
+  return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
+}
+
 export class DappService {
   constructor(
     private argentBackend: BackendService,
@@ -154,10 +158,6 @@ export class DappService {
       entrypoint: revision == typedData.TypedDataRevision.Active ? "execute_from_outside_v2" : "execute_from_outside",
       calldata: CallData.compile({ ...outsideExecution, signature }),
     };
-  }
-
-  public compileSessionSignature(sessionToken: SessionToken): string[] {
-    return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
   }
 
   private async signRegularTransaction(

@@ -6,6 +6,7 @@ import {
   DappService,
   SignerType,
   StarknetKeyPair,
+  compileSessionSignature,
   declareContract,
   deployAccount,
   deployAccountWithGuardianBackup,
@@ -98,7 +99,6 @@ describe("Hybrid Session Account: execute calls", function () {
       account,
       allowedMethods,
       initialTime + 150n,
-      randomStarknetKeyPair(),
     );
 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
@@ -126,7 +126,6 @@ describe("Hybrid Session Account: execute calls", function () {
       account,
       allowedMethods,
       initialTime + 150n,
-      randomStarknetKeyPair(),
     );
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
@@ -158,7 +157,6 @@ describe("Hybrid Session Account: execute calls", function () {
       account,
       allowedMethods,
       initialTime + 150n,
-      randomStarknetKeyPair(),
     );
 
     const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
@@ -229,7 +227,6 @@ describe("Hybrid Session Account: execute calls", function () {
       account,
       allowedMethods,
       initialTime + 150n,
-      randomStarknetKeyPair(),
     );
 
     await expectRevertWithErrorMessage("session/signer-is-not-guardian", () => accountWithDappSigner.execute(calls));
@@ -238,10 +235,6 @@ describe("Hybrid Session Account: execute calls", function () {
   it("Fail with 'argent/invalid-signature-len' if more than owner + guardian signed session", async function () {
     const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
-    const backendService = new BackendService(guardian as StarknetKeyPair);
-    const dappService = new DappService(backendService);
-    const argentX = new ArgentX(account, backendService);
-
     const allowedMethods: AllowedMethod[] = [
       {
         "Contract Address": mockDappOneContract.address,
@@ -249,23 +242,20 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
-
-    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
-
     const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
 
-    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+    const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(
+      guardian as StarknetKeyPair,
       account,
-      sessionRequest,
-      accountSessionSignature,
+      allowedMethods,
+      initialTime + 150n,
     );
 
     let sessionToken = await dappService.getSessionToken(
       calls,
       accountWithDappSigner,
       sessionRequest,
-      accountSessionSignature,
+      authorizationSignature,
     );
     sessionToken = {
       ...sessionToken,
@@ -273,16 +263,12 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("argent/invalid-signature-len", () =>
-      executeWithCustomSig(accountWithDappSigner, calls, dappService.compileSessionSignature(sessionToken)),
+      executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionToken)),
     );
   });
 
   it("Fail if a different dapp key signed session token", async function () {
     const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
-
-    const backendService = new BackendService(guardian as StarknetKeyPair);
-    const dappService = new DappService(backendService);
-    const argentX = new ArgentX(account, backendService);
 
     const allowedMethods: AllowedMethod[] = [
       {
@@ -291,23 +277,20 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
-
-    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
-
     const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
 
-    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+    const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(
+      guardian as StarknetKeyPair,
       account,
-      sessionRequest,
-      accountSessionSignature,
+      allowedMethods,
+      initialTime + 150n,
     );
 
     const sessionToken = await dappService.getSessionToken(
       calls,
       accountWithDappSigner,
       sessionRequest,
-      accountSessionSignature,
+      authorizationSignature,
     );
     const sessionTokenWrongPub = {
       ...sessionToken,
@@ -319,7 +302,7 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/session-key-mismatch", () =>
-      executeWithCustomSig(accountWithDappSigner, calls, dappService.compileSessionSignature(sessionTokenWrongPub)),
+      executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongPub)),
     );
 
     const sessionTokenWrongSig = {
@@ -332,16 +315,12 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/invalid-session-sig", () =>
-      executeWithCustomSig(accountWithDappSigner, calls, dappService.compileSessionSignature(sessionTokenWrongSig)),
+      executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongSig)),
     );
   });
 
   it("Fail if a different guardian key signed session token", async function () {
     const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
-
-    const backendService = new BackendService(guardian as StarknetKeyPair);
-    const dappService = new DappService(backendService);
-    const argentX = new ArgentX(account, backendService);
 
     const allowedMethods: AllowedMethod[] = [
       {
@@ -350,23 +329,20 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
-
-    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
-
     const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
 
-    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+    const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(
+      guardian as StarknetKeyPair,
       account,
-      sessionRequest,
-      accountSessionSignature,
+      allowedMethods,
+      initialTime + 150n,
     );
 
     const sessionToken = await dappService.getSessionToken(
       calls,
       accountWithDappSigner,
       sessionRequest,
-      accountSessionSignature,
+      authorizationSignature,
     );
     const sessionTokenWrongPub = {
       ...sessionToken,
@@ -378,7 +354,7 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/guardian-key-mismatch", () =>
-      executeWithCustomSig(accountWithDappSigner, calls, dappService.compileSessionSignature(sessionTokenWrongPub)),
+      executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongPub)),
     );
 
     const sessionTokenWrongSig = {
@@ -391,16 +367,12 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/invalid-backend-sig", () =>
-      executeWithCustomSig(accountWithDappSigner, calls, dappService.compileSessionSignature(sessionTokenWrongSig)),
+      executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongSig)),
     );
   });
 
   it("Fail if proofs are misaligned", async function () {
     const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
-
-    const backendService = new BackendService(guardian as StarknetKeyPair);
-    const dappService = new DappService(backendService);
-    const argentX = new ArgentX(account, backendService);
 
     const allowedMethods: AllowedMethod[] = [
       {
@@ -417,10 +389,6 @@ describe("Hybrid Session Account: execute calls", function () {
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
-
-    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
-
     const calls = [
       mockDappOneContract.populateTransaction.set_number_double(2),
       mockDappOneContract.populateTransaction.set_number_double(4),
@@ -428,17 +396,18 @@ describe("Hybrid Session Account: execute calls", function () {
       mockDappOneContract.populateTransaction.increase_number(2),
     ];
 
-    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
+    const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(
+      guardian as StarknetKeyPair,
       account,
-      sessionRequest,
-      accountSessionSignature,
+      allowedMethods,
+      initialTime + 150n,
     );
 
     const sessionToken = await dappService.getSessionToken(
       calls,
       accountWithDappSigner,
       sessionRequest,
-      accountSessionSignature,
+      authorizationSignature,
     );
     const sessionTokenWrongProofs = {
       ...sessionToken,
@@ -446,7 +415,7 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     await expectRevertWithErrorMessage("session/unaligned-proofs", () =>
-      executeWithCustomSig(accountWithDappSigner, calls, dappService.compileSessionSignature(sessionTokenWrongProofs)),
+      executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongProofs)),
     );
   });
 });

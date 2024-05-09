@@ -1,16 +1,13 @@
-import { Contract, num, typedData } from "starknet";
+import { Contract, num } from "starknet";
 import {
   AllowedMethod,
-  ArgentX,
-  BackendService,
-  DappService,
   StarknetKeyPair,
+  compileSessionSignature,
   declareContract,
   deployAccount,
   deployer,
   executeWithCustomSig,
   expectRevertWithErrorMessage,
-  getSessionTypedData,
   loadContract,
   provider,
   randomStarknetKeyPair,
@@ -55,6 +52,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       allowedMethods,
       initialTime + 150n,
       randomStarknetKeyPair(),
+      true,
     );
 
     await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
@@ -77,10 +75,6 @@ describe("Hybrid Session Account: execute session calls with caching", function 
   it("Fail if a large authorization is injected", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
-    const backendService = new BackendService(guardian as StarknetKeyPair);
-    const dappService = new DappService(backendService);
-    const argentX = new ArgentX(account, backendService);
-
     const allowedMethods: AllowedMethod[] = [
       {
         "Contract Address": mockDappOneContract.address,
@@ -88,21 +82,17 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       },
     ];
 
-    const sessionRequest = dappService.createSessionRequest(allowedMethods, initialTime + 150n);
-
-    const accountSessionSignature = await argentX.getOffchainSignature(await getSessionTypedData(sessionRequest));
-
-    const sessionHash = typedData.getMessageHash(await getSessionTypedData(sessionRequest), accountContract.address);
-
     const calls = [mockDappOneContract.populateTransaction.set_number_double(2)];
 
-    const accountWithDappSigner = dappService.getAccountWithSessionSigner(
-      account,
-      sessionRequest,
-      accountSessionSignature,
-      true,
-    );
-
+    const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature, sessionHash } =
+      await setupSession(
+        guardian as StarknetKeyPair,
+        account,
+        allowedMethods,
+        initialTime + 150n,
+        randomStarknetKeyPair(),
+        true,
+      );
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
     await account.waitForTransaction(transaction_hash);
 
@@ -113,7 +103,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       calls,
       accountWithDappSigner,
       sessionRequest,
-      accountSessionSignature,
+      authorizationSignature,
       true,
     );
     sessionToken = {
@@ -123,7 +113,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         .map(() => "1"),
     };
     await expectRevertWithErrorMessage("session/invalid-auth-len", () =>
-      executeWithCustomSig(accountWithDappSigner, calls, dappService.compileSessionSignature(sessionToken)),
+      executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionToken)),
     );
   });
 });

@@ -39,9 +39,8 @@ import {
   signerTypeToCustomEnum,
 } from "..";
 
-const SESSION_MAGIC = shortString.encodeShortString("session-token");
-
 export function compileSessionSignature(sessionToken: SessionToken): string[] {
+  const SESSION_MAGIC = shortString.encodeShortString("session-token");
   return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
 }
 
@@ -176,7 +175,7 @@ export class DappService {
       transactionDetail,
       cacheAuthorization,
     );
-    return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
+    return compileSessionSignature(sessionToken);
   }
 
   private async compileSessionSignatureFromOutside(
@@ -217,7 +216,7 @@ export class DappService {
       accountAddress,
     );
 
-    return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
+    return compileSessionSignature(sessionToken);
   }
 
   private async buildSessionToken(

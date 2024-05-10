@@ -1,15 +1,18 @@
 import { Contract, num } from "starknet";
 import {
   AllowedMethod,
+  SignerType,
   StarknetKeyPair,
   compileSessionSignature,
   deployAccount,
+  deployAccountWithGuardianBackup,
   deployer,
   executeWithCustomSig,
   expectRevertWithErrorMessage,
   manager,
   randomStarknetKeyPair,
   setupSession,
+  signerTypeToCustomEnum,
 } from "../lib";
 
 describe("Hybrid Session Account: execute session calls with caching", function () {
@@ -69,6 +72,205 @@ describe("Hybrid Session Account: execute session calls with caching", function 
     await account.waitForTransaction(tx2);
     await mockDappContract.get_number(accountContract.address).should.eventually.equal(8n);
   });
+
+  for (const useCaching of [false, true]) {
+    it("Fail if guardian backup signed session", async function () {
+      const { account, guardian } = await deployAccountWithGuardianBackup({
+        classHash: sessionAccountClassHash,
+      });
+
+      const allowedMethods: AllowedMethod[] = [
+        {
+          "Contract Address": mockDappContract.address,
+          selector: "set_number_double",
+        },
+      ];
+
+      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+
+      const { accountWithDappSigner } = await setupSession(
+        guardian as StarknetKeyPair,
+        account,
+        allowedMethods,
+        initialTime + 150n,
+        randomStarknetKeyPair(),
+        useCaching,
+      );
+
+      await expectRevertWithErrorMessage("session/signer-is-not-guardian", () => accountWithDappSigner.execute(calls));
+    });
+
+    it("Fail with 'argent/invalid-signature-len' if more than owner + guardian signed session", async function () {
+      const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
+
+      const allowedMethods: AllowedMethod[] = [
+        {
+          "Contract Address": mockDappContract.address,
+          selector: "set_number_double",
+        },
+      ];
+
+      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+
+      const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(
+        guardian as StarknetKeyPair,
+        account,
+        allowedMethods,
+        initialTime + 150n,
+        randomStarknetKeyPair(),
+        useCaching,
+      );
+
+      let sessionToken = await dappService.getSessionToken(
+        calls,
+        accountWithDappSigner,
+        sessionRequest,
+        authorizationSignature,
+      );
+      sessionToken = {
+        ...sessionToken,
+        session_authorization: [...sessionToken.session_authorization, "0x00"],
+      };
+
+      await expectRevertWithErrorMessage("argent/invalid-signature-len", () =>
+        executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionToken)),
+      );
+    });
+
+    it("Expect 'session/guardian-key-mismatch' if the backend signer != guardian", async function () {
+      const { account } = await deployAccount({ classHash: sessionAccountClassHash });
+
+      const allowedMethods: AllowedMethod[] = [
+        {
+          "Contract Address": mockDappContract.address,
+          selector: "set_number_double",
+        },
+      ];
+
+      const { accountWithDappSigner } = await setupSession(
+        randomStarknetKeyPair(),
+        account,
+        allowedMethods,
+        initialTime + 150n,
+        randomStarknetKeyPair(),
+        useCaching,
+      );
+
+      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+
+      await expectRevertWithErrorMessage("session/guardian-key-mismatch", () =>
+        accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
+      );
+    });
+
+    it("Fail if a different dapp key signed session token", async function () {
+      const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
+
+      const allowedMethods: AllowedMethod[] = [
+        {
+          "Contract Address": mockDappContract.address,
+          selector: "set_number_double",
+        },
+      ];
+
+      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+
+      const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(
+        guardian as StarknetKeyPair,
+        account,
+        allowedMethods,
+        initialTime + 150n,
+        randomStarknetKeyPair(),
+        useCaching,
+      );
+
+      const sessionToken = await dappService.getSessionToken(
+        calls,
+        accountWithDappSigner,
+        sessionRequest,
+        authorizationSignature,
+      );
+      const sessionTokenWrongPub = {
+        ...sessionToken,
+        session_signature: signerTypeToCustomEnum(SignerType.Starknet, {
+          pubkey: 100n,
+          r: sessionToken.session_signature.variant.Starknet.r,
+          s: sessionToken.session_signature.variant.Starknet.s,
+        }),
+      };
+
+      await expectRevertWithErrorMessage("session/session-key-mismatch", () =>
+        executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongPub)),
+      );
+
+      const sessionTokenWrongSig = {
+        ...sessionToken,
+        session_signature: signerTypeToCustomEnum(SignerType.Starknet, {
+          pubkey: sessionToken.session_signature.variant.Starknet.pubkey,
+          r: 200n,
+          s: 100n,
+        }),
+      };
+
+      await expectRevertWithErrorMessage("session/invalid-session-sig", () =>
+        executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongSig)),
+      );
+    });
+
+    it("Fail if a different guardian key signed session token", async function () {
+      const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
+
+      const allowedMethods: AllowedMethod[] = [
+        {
+          "Contract Address": mockDappContract.address,
+          selector: "set_number_double",
+        },
+      ];
+
+      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+
+      const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(
+        guardian as StarknetKeyPair,
+        account,
+        allowedMethods,
+        initialTime + 150n,
+        randomStarknetKeyPair(),
+        useCaching,
+      );
+
+      const sessionToken = await dappService.getSessionToken(
+        calls,
+        accountWithDappSigner,
+        sessionRequest,
+        authorizationSignature,
+      );
+      const sessionTokenWrongPub = {
+        ...sessionToken,
+        guardian_signature: signerTypeToCustomEnum(SignerType.Starknet, {
+          pubkey: 100n,
+          r: sessionToken.guardian_signature.variant.Starknet.r,
+          s: sessionToken.guardian_signature.variant.Starknet.s,
+        }),
+      };
+
+      await expectRevertWithErrorMessage("session/guardian-key-mismatch", () =>
+        executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongPub)),
+      );
+
+      const sessionTokenWrongSig = {
+        ...sessionToken,
+        guardian_signature: signerTypeToCustomEnum(SignerType.Starknet, {
+          pubkey: sessionToken.guardian_signature.variant.Starknet.pubkey,
+          r: 200n,
+          s: 100n,
+        }),
+      };
+
+      await expectRevertWithErrorMessage("session/invalid-backend-sig", () =>
+        executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongSig)),
+      );
+    });
+  }
 
   it("Fail if a large authorization is injected", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });

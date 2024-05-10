@@ -56,11 +56,11 @@ describe("ArgentMultisig Recovery", function () {
 
   it(`Shouldn't be possible to call 'execute_escape' when calling 'trigger_escape'`, async function () {
     const { accountContract, guardianAccount, replaceSignerCall, originalAccount } = await buildFixture();
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
     accountContract.connect(guardianAccount);
     await accountContract.trigger_escape(replaceSignerCall);
 
-    await provider.setTime(initialTime + 15);
+    await manager.setTime(initialTime + 15);
     accountContract.connect(originalAccount);
     await expectRevertWithErrorMessage("ReentrancyGuard: reentrant call", () =>
       accountContract.execute_escape(replaceSignerCall),
@@ -69,7 +69,7 @@ describe("ArgentMultisig Recovery", function () {
 
   it(`Shouldn't be possible to call 'execute_escape' when calling 'trigger_escape'`, async function () {
     const { accountContract, guardianAccount } = await buildFixture();
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
     accountContract.connect(guardianAccount);
     const replaceSignerCall = CallData.compile({
       selector: hash.getSelectorFromName("execute_escape"),

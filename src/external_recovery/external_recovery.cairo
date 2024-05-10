@@ -144,7 +144,6 @@ mod external_recovery_component {
                 assert(security_period >= MIN_ESCAPE_PERIOD, 'argent/invalid-security-period');
                 assert(expiry_period >= MIN_ESCAPE_PERIOD, 'argent/invalid-expiry-period');
                 assert(guardian != contract_address_const::<0>(), 'argent/invalid-zero-guardian');
-                assert(guardian != get_contract_address(), 'argent/invalid-guardian');
                 self.escape_enabled.write(EscapeEnabled { is_enabled: true, security_period, expiry_period });
                 self.guardian.write(guardian);
             } else {

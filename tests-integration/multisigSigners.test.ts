@@ -1,10 +1,9 @@
 import { Contract, uint256 } from "starknet";
 import {
   ArgentAccount,
-  declareFixtureContract,
   deployMultisig,
   ensureSuccess,
-  getEthContract,
+  manager,
   randomEip191KeyPair,
   randomEthKeyPair,
   randomSecp256r1KeyPair,
@@ -13,6 +12,7 @@ import {
   sortByGuid,
   waitForTransaction,
 } from "../lib";
+
 interface Account {
   name: string;
   account: ArgentAccount;
@@ -32,8 +32,8 @@ describe("Multisig: Signers types", function () {
   ];
 
   before(async () => {
-    ethContract = await getEthContract();
-    await declareFixtureContract("Sha256Cairo0");
+    ethContract = await manager.tokens.ethContract();
+    await manager.declareFixtureContract("Sha256Cairo0");
 
     for (const { name, keyPair } of keyPairs) {
       const { account: oneSigner } = await deployMultisig({ threshold: 1, keys: [keyPair()] });

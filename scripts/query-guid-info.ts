@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { hash, num, uint256 } from "starknet";
-import { provider } from "../lib";
+import { manager } from "../lib";
 
-const lastBlock = await provider.getBlock("latest");
+const lastBlock = await manager.getBlock("latest");
 const guidToFind = "0x078e6eccfb97cea1b4ca2e0735d0db7cd9e33a316378391e58e7f3ed107062c2";
 const keyFilter = [num.toHex(hash.starknetKeccak("SignerLinked")), guidToFind];
 
@@ -10,7 +10,7 @@ const keyFilter = [num.toHex(hash.starknetKeccak("SignerLinked")), guidToFind];
 // It should be (almost) impossible for 2 guids to collide.
 const MAX_STEP = 100_000;
 const block_number = Math.max(lastBlock.block_number - MAX_STEP, 0);
-const eventsList = await provider.getEvents({
+const eventsList = await manager.getEvents({
   // address: myContractAddress, // If you have the address of the contract, you can fill it in
   from_block: { block_number },
   // to_block: { block_number: lastBlock.block_number }, // Defaults to latest

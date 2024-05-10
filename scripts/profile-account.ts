@@ -8,32 +8,29 @@ import {
   Secp256r1KeyPair,
   StarknetKeyPair,
   WebauthnOwner,
-  clearCache,
-  declareFixtureContract,
   deployAccount,
   deployAccountWithoutGuardian,
   deployOldAccount,
   deployOpenZeppelinAccount,
-  getEthContract,
-  provider,
+  manager,
   setupSession,
 } from "../lib";
 import { newProfiler } from "../lib/gas";
 
-const profiler = newProfiler(provider);
+const profiler = newProfiler(manager);
 const fundingAmount = 2e16;
 
 let privateKey: string;
-if (provider.isDevnet) {
+if (manager.isDevnet) {
   // With the KeyPairs hardcoded, we gotta reset to avoid some issues
-  await provider.restart();
+  await manager.restart();
   privateKey = "0x1";
-  clearCache();
+  manager.clearClassCache();
 } else {
   privateKey = new StarknetKeyPair().privateKey;
 }
 
-const ethContract = await getEthContract();
+const ethContract = await manager.tokens.ethContract();
 const recipient = "0xadbe1";
 const amount = uint256.bnToUint256(1);
 const starknetOwner = new StarknetKeyPair(privateKey);
@@ -104,7 +101,7 @@ const guardian = new StarknetKeyPair(42n);
     fundingAmount,
   });
   const sessionTime = 1710167933n;
-  await provider.setTime(sessionTime);
+  await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
   const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
 
@@ -127,7 +124,7 @@ const guardian = new StarknetKeyPair(42n);
     fundingAmount,
   });
   const sessionTime = 1710167933n;
-  await provider.setTime(sessionTime);
+  await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
   const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
 
@@ -145,7 +142,7 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
-  const classHash = await declareFixtureContract("Sha256Cairo0");
+  const classHash = await manager.declareFixtureContract("Sha256Cairo0");
   assert(BigInt(classHash) === 0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
   const { account } = await deployAccount({
     owner: new WebauthnOwner(privateKey),
@@ -154,7 +151,7 @@ const guardian = new StarknetKeyPair(42n);
     fundingAmount,
   });
   const sessionTime = 1710167933n;
-  await provider.setTime(sessionTime);
+  await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
   const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
 
@@ -243,7 +240,7 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
-  const classHash = await declareFixtureContract("Sha256Cairo0");
+  const classHash = await manager.declareFixtureContract("Sha256Cairo0");
   assert(BigInt(classHash) === 0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
   const { account } = await deployAccount({
     owner: new WebauthnOwner(privateKey),

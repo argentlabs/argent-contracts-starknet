@@ -1,6 +1,5 @@
 import { RawArgs, RpcProvider } from "starknet";
 import { Constructor } from ".";
-import { clearCache } from "./contracts";
 
 export const dumpFolderPath = "./dump";
 export const devnetBaseUrl = "http://127.0.0.1:5050";
@@ -15,13 +14,6 @@ export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
     waitForTransaction(transactionHash: string, options = {}) {
       const retryInterval = this.isDevnet ? 250 : 1000;
       return super.waitForTransaction(transactionHash, { retryInterval, ...options });
-    }
-
-    async restartDevnet() {
-      if (this.isDevnet) {
-        await this.restart();
-        clearCache();
-      }
     }
 
     async mintEth(address: string, amount: number | bigint) {

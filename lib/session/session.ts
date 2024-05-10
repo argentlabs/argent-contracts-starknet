@@ -5,7 +5,7 @@ import {
   BackendService,
   DappService,
   StarknetKeyPair,
-  provider,
+  manager,
   randomStarknetKeyPair,
 } from "..";
 
@@ -65,7 +65,7 @@ export interface SessionToken {
 export async function getSessionDomain(): Promise<typedData.StarkNetDomain> {
   // WARNING! Revision is encoded as a number in the StarkNetDomain type and not as shortstring
   // This is due to a bug in the Braavos implementation, and has been kept for compatibility
-  const chainId = await provider.getChainId();
+  const chainId = await manager.getChainId();
   return {
     name: "SessionAccount.session",
     version: shortString.encodeShortString("1"),

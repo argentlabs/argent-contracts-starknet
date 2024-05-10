@@ -1,12 +1,12 @@
 import { Contract } from "starknet";
-import { deployAccount, deployContract, deployMultisig1_1, expectRevertWithErrorMessage } from "../lib";
+import { deployAccount, deployMultisig1_1, expectRevertWithErrorMessage, manager } from "../lib";
 
 for (const accountType of ["individual", "multisig"]) {
   describe(`TxV3 ${accountType} account`, function () {
     let mockDapp: Contract;
 
     before(async () => {
-      mockDapp = await deployContract("MockDapp");
+      mockDapp = await manager.deployContract("MockDapp");
     });
 
     async function deployAccountType() {

@@ -13,7 +13,7 @@ import {
   transaction,
   typedData,
 } from "starknet";
-import { OffChainSession, OutsideExecution, StarknetKeyPair, getSessionTypedData, getTypedData, provider } from "..";
+import { OffChainSession, OutsideExecution, StarknetKeyPair, getSessionTypedData, getTypedData, manager } from "..";
 
 export class ArgentX {
   constructor(
@@ -91,7 +91,7 @@ export class BackendService {
     cacheAuthorization: boolean,
   ): Promise<bigint[]> {
     // TODO backend must verify, timestamps fees, used tokens nfts...
-    const currentTypedData = getTypedData(outsideExecution, await provider.getChainId(), revision);
+    const currentTypedData = getTypedData(outsideExecution, await manager.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(sessionTokenToSign), accountAddress);
     const sessionWithTxHash = hash.computePoseidonHashOnElements([

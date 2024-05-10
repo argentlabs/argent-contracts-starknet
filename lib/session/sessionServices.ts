@@ -34,8 +34,7 @@ import {
   getSessionTypedData,
   getSignerDetails,
   getTypedData,
-  loadContract,
-  provider,
+  manager,
   randomStarknetKeyPair,
   signerTypeToCustomEnum,
 } from "..";
@@ -140,7 +139,7 @@ export class DappService {
       calls: calls.map((call) => getOutsideCall(call)),
     };
 
-    const currentTypedData = getTypedData(outsideExecution, await provider.getChainId(), revision);
+    const currentTypedData = getTypedData(outsideExecution, await manager.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
     const signature = await this.compileSessionSignatureFromOutside(
       sessionAuthorizationSignature,
@@ -318,7 +317,7 @@ export class DappService {
     guardianSignature: bigint[],
     accountAddress: string,
   ): Promise<SessionToken> {
-    const sessionContract = await loadContract(accountAddress);
+    const sessionContract = await manager.loadContract(accountAddress);
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
     const isSessionCached = await sessionContract.is_session_authorization_cached(sessionMessageHash);
     return {

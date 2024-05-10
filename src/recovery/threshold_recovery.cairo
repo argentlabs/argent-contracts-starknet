@@ -132,13 +132,11 @@ mod threshold_recovery_component {
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
             self.escape.write(Escape { ready_at: 0, target_signers: array![], new_signers: array![] });
-            self
-                .emit(
-                    EscapeCanceled {
-                        target_signers: current_escape.target_signers.span(),
-                        new_signers: current_escape.new_signers.span()
-                    }
-                );
+            if current_escape_status != EscapeStatus::Expired {
+                let target_signers = current_escape.target_signers.span();
+                let new_signers = current_escape.new_signers.span();
+                self.emit(EscapeCanceled { target_signers, new_signers });
+            }
         }
 
         /// @notice Gets the escape configuration.

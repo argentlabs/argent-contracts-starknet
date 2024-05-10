@@ -9,7 +9,7 @@ import {
   num,
   shortString,
 } from "starknet";
-import { provider } from "./provider";
+import { manager } from "./manager";
 import { ensureSuccess } from "./receipts";
 
 export async function expectRevertWithErrorMessage(
@@ -21,7 +21,7 @@ export async function expectRevertWithErrorMessage(
     if (!("transaction_hash" in executionResult)) {
       throw new Error(`No transaction hash found on ${JSON.stringify(executionResult)}`);
     }
-    await provider.waitForTransaction(executionResult["transaction_hash"]);
+    await manager.waitForTransaction(executionResult["transaction_hash"]);
   } catch (e: any) {
     if (!e.toString().includes(shortString.encodeShortString(errorMessage))) {
       const match = e.toString().match(/\[([^\]]+)]/);
@@ -86,7 +86,7 @@ export async function expectEvent(
     ({ transaction_hash: param } = await param());
   }
   if (typeof param === "string") {
-    param = await provider.waitForTransaction(param);
+    param = await manager.waitForTransaction(param);
   }
   let eventName = "";
   if ("eventName" in event) {
@@ -99,7 +99,7 @@ export async function expectEvent(
 export async function waitForTransaction({
   transaction_hash,
 }: InvokeFunctionResponse): Promise<GetTransactionReceiptResponse> {
-  return await provider.waitForTransaction(transaction_hash);
+  return await manager.waitForTransaction(transaction_hash);
 }
 
 export interface EventWithName {

@@ -1,5 +1,5 @@
 import { Call, CallData, hash, num, RawArgs, SignerInterface, typedData } from "starknet";
-import { provider } from "./";
+import { manager } from "./";
 
 const typesRev0 = {
   StarkNetDomain: [
@@ -144,7 +144,7 @@ export async function getOutsideExecutionCall(
   revision: typedData.TypedDataRevision,
   chainId?: string,
 ): Promise<Call> {
-  chainId = chainId ?? (await provider.getChainId());
+  chainId = chainId ?? (await manager.getChainId());
   const currentTypedData = getTypedData(outsideExecution, chainId, revision);
   const signature = await signer.signMessage(currentTypedData, accountAddress);
   return {

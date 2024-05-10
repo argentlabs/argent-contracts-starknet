@@ -4,14 +4,13 @@ import {
   ArgentSigner,
   OutsideExecution,
   deployAccount,
-  deployContract,
   deployer,
   expectExecutionRevert,
   expectRevertWithErrorMessage,
   getOutsideCall,
   getOutsideExecutionCall,
   getTypedDataHash,
-  provider,
+  manager,
   randomStarknetKeyPair,
   waitForTransaction,
 } from "../lib";
@@ -27,13 +26,13 @@ describe("ArgentAccount: outside execution", function () {
   let mockDapp: Contract;
 
   before(async () => {
-    mockDapp = await deployContract("MockDapp");
+    mockDapp = await manager.deployContract("MockDapp");
   });
 
   it("Correct message hash", async function () {
     const { account, accountContract } = await deployAccount();
 
-    const chainId = await provider.getChainId();
+    const chainId = await manager.getChainId();
 
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,
@@ -76,11 +75,11 @@ describe("ArgentAccount: outside execution", function () {
     );
 
     // ensure can't be run too early
-    await provider.setTime(initialTime - 200);
+    await manager.setTime(initialTime - 200);
     await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
 
     // ensure can't be run too late
-    await provider.setTime(initialTime + 200);
+    await manager.setTime(initialTime + 200);
     await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
 
     // ensure the caller is as expected
@@ -95,7 +94,7 @@ describe("ArgentAccount: outside execution", function () {
       ),
     );
 
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
 
     // ensure the account address is checked
     const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", account.signer, legacyRevision);
@@ -146,11 +145,11 @@ describe("ArgentAccount: outside execution", function () {
     );
 
     // ensure can't be run too early
-    await provider.setTime(initialTime - 200);
+    await manager.setTime(initialTime - 200);
     await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
 
     // ensure can't be run too late
-    await provider.setTime(initialTime + 200);
+    await manager.setTime(initialTime + 200);
     await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
 
     // ensure the caller is as expected
@@ -165,7 +164,7 @@ describe("ArgentAccount: outside execution", function () {
       ),
     );
 
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
 
     // ensure the account address is checked
     const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", account.signer, activeRevision);
@@ -237,7 +236,7 @@ describe("ArgentAccount: outside execution", function () {
       legacyRevision,
     );
 
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
 
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
@@ -261,7 +260,7 @@ describe("ArgentAccount: outside execution", function () {
       legacyRevision,
     );
 
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
 
     await waitForTransaction(await deployer.execute(outsideExecutionCall));
     const current_escape = await accountContract.get_escape();
@@ -288,7 +287,7 @@ describe("ArgentAccount: outside execution", function () {
       activeRevision,
     );
 
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
 
     await expectRevertWithErrorMessage("ReentrancyGuard: reentrant call", () => account.execute(outsideExecutionCall));
   });

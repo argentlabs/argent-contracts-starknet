@@ -35,8 +35,11 @@ mod ThresholdRecoveryMock {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
         SignerListEvents: signer_list_component::Event,
+        #[flat]
         MultisigEvents: multisig_component::Event,
+        #[flat]
         EscapeEvents: threshold_recovery_component::Event,
     }
 }
@@ -53,7 +56,6 @@ mod ExternalRecoveryMock {
     component!(path: multisig_component, storage: multisig, event: MultisigEvents);
     #[abi(embed_v0)]
     impl Multisig = multisig_component::MultisigImpl<ContractState>;
-    #[abi(embed_v0)]
     impl MultisigInternal = multisig_component::MultisigInternalImpl<ContractState>;
 
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
@@ -72,8 +74,11 @@ mod ExternalRecoveryMock {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
         SignerListEvents: signer_list_component::Event,
+        #[flat]
         MultisigEvents: multisig_component::Event,
+        #[flat]
         EscapeEvents: external_recovery_component::Event,
     }
 

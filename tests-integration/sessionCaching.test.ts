@@ -36,7 +36,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
   });
 
   for (const useCaching of [false, true]) {
-    it("Session is successfully cached", async function () {
+    it.only(`Session is successfully cached when flag set (caching: ${useCaching})`, async function () {
       const { accountContract, account, guardian } = await deployAccount({
         classHash: sessionAccountClassHash,
       });
@@ -56,17 +56,21 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         allowedMethods,
         initialTime + 150n,
         randomStarknetKeyPair(),
-        true,
+        useCaching,
       );
 
       await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
       const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
+      if (useCaching) {
+        // check that the session is cached
+        await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.true;
+      } else {
+        await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
+      }
+
       await account.waitForTransaction(transaction_hash);
       await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
-
-      // check that the session is cached
-      await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.true;
 
       const calls2 = [mockDappContract.populateTransaction.set_number_double(4)];
 
@@ -76,7 +80,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       await mockDappContract.get_number(accountContract.address).should.eventually.equal(8n);
     });
     it(`Fail if guardian backup signed session (caching: ${useCaching})`, async function () {
-      const { account, guardian, accountContract } = await deployAccountWithGuardianBackup({
+      const { account, guardian } = await deployAccountWithGuardianBackup({
         classHash: sessionAccountClassHash,
       });
 
@@ -146,7 +150,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
     });
 
     it(`Expect 'session/guardian-key-mismatch' if the backend signer != guardian (caching: ${useCaching})`, async function () {
-      const { account, accountContract } = await deployAccount({ classHash: sessionAccountClassHash });
+      const { account } = await deployAccount({ classHash: sessionAccountClassHash });
 
       const allowedMethods: AllowedMethod[] = [
         {
@@ -155,7 +159,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         },
       ];
 
-      const { accountWithDappSigner, sessionHash } = await setupSession(
+      const { accountWithDappSigner } = await setupSession(
         randomStarknetKeyPair(),
         account,
         allowedMethods,

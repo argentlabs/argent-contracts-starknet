@@ -36,7 +36,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
   });
 
   for (const useCaching of [false, true]) {
-    it.only(`Session is successfully cached when flag set (caching: ${useCaching})`, async function () {
+    it(`Session is successfully cached when flag set (caching: ${useCaching})`, async function () {
       const { accountContract, account, guardian } = await deployAccount({
         classHash: sessionAccountClassHash,
       });

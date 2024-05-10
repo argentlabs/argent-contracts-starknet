@@ -2,12 +2,11 @@ import { Contract, uint256 } from "starknet";
 import {
   ArgentAccount,
   ArgentSigner,
-  declareFixtureContract,
   deployAccount,
   deployAccountWithoutGuardian,
   ensureSuccess,
   expectRevertWithErrorMessage,
-  getEthContract,
+  manager,
   randomEip191KeyPair,
   randomEthKeyPair,
   randomSecp256r1KeyPair,
@@ -37,8 +36,8 @@ describe("ArgentAccount: Signers types", function () {
   ];
 
   before(async () => {
-    ethContract = await getEthContract();
-    await declareFixtureContract("Sha256Cairo0");
+    ethContract = await manager.tokens.ethContract();
+    await manager.declareFixtureContract("Sha256Cairo0");
 
     for (const { name, keyPair } of [...starknetKeyPairs, ...nonStarknetKeyPairs]) {
       const { account: withGuardian } = await deployAccount({ owner: keyPair() });

@@ -5,12 +5,10 @@ import {
   BackendService,
   DappService,
   StarknetKeyPair,
-  declareContract,
   deployAccount,
   deployer,
   getSessionTypedData,
-  loadContract,
-  provider,
+  manager,
 } from "../lib";
 
 const initialTime = 1713139200n;
@@ -24,12 +22,12 @@ describe("ArgentAccount: outside execution", function () {
   let mockDapp: Contract;
 
   before(async () => {
-    argentSessionAccountClassHash = await declareContract("ArgentAccount");
-    const mockDappClassHash = await declareContract("MockDapp");
+    argentSessionAccountClassHash = await manager.declareLocalContract("ArgentAccount");
+    const mockDappClassHash = await manager.declareLocalContract("MockDapp");
     const { contract_address } = await deployer.deployContract({
       classHash: mockDappClassHash,
     });
-    mockDapp = await loadContract(contract_address);
+    mockDapp = await manager.loadContract(contract_address);
   });
 
   it("Basics: Revision 0", async function () {
@@ -63,7 +61,7 @@ describe("ArgentAccount: outside execution", function () {
       mockDappAccount.address,
     );
 
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
 
     await mockDappAccount.execute(outsideExecutionCall);
 
@@ -101,7 +99,7 @@ describe("ArgentAccount: outside execution", function () {
       mockDappAccount.address,
     );
 
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
 
     await mockDappAccount.execute(outsideExecutionCall);
 

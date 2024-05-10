@@ -5,14 +5,12 @@ import {
   BackendService,
   DappService,
   StarknetKeyPair,
-  declareContract,
   deployAccount,
   deployAccountWithGuardianBackup,
   deployer,
   expectRevertWithErrorMessage,
   getSessionTypedData,
-  loadContract,
-  provider,
+  manager,
   randomStarknetKeyPair,
   setupSession,
 } from "../lib";
@@ -24,24 +22,24 @@ describe("Hybrid Session Account: execute calls", function () {
   const initialTime = 1710167933n;
 
   before(async () => {
-    sessionAccountClassHash = await declareContract("ArgentAccount");
+    sessionAccountClassHash = await manager.declareLocalContract("ArgentAccount");
 
-    const mockDappClassHash = await declareContract("MockDapp");
+    const mockDappClassHash = await manager.declareLocalContract("MockDapp");
     const deployedmockDappOne = await deployer.deployContract({
       classHash: mockDappClassHash,
       salt: num.toHex(randomStarknetKeyPair().privateKey),
     });
-    const erc20ClassHash = await declareContract("Erc20Mock");
+    const erc20ClassHash = await manager.declareLocalContract("Erc20Mock");
     const deployedErc20 = await deployer.deployContract({
       classHash: erc20ClassHash,
       salt: num.toHex(randomStarknetKeyPair().privateKey),
     });
-    mockErc20Contract = await loadContract(deployedErc20.contract_address);
-    mockDappOneContract = await loadContract(deployedmockDappOne.contract_address);
+    mockErc20Contract = await manager.loadContract(deployedErc20.contract_address);
+    mockDappOneContract = await manager.loadContract(deployedmockDappOne.contract_address);
   });
 
   beforeEach(async function () {
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
   });
 
   it("Call a contract with backend signer", async function () {
@@ -110,12 +108,12 @@ describe("Hybrid Session Account: execute calls", function () {
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
     // non expired session
-    await provider.setTime(expiresAt - 10800n);
+    await manager.setTime(expiresAt - 10800n);
     await account.waitForTransaction(transaction_hash);
     await mockDappOneContract.get_number(accountContract.address).should.eventually.equal(4n);
 
     // Expired session
-    await provider.setTime(expiresAt + 7200n);
+    await manager.setTime(expiresAt + 7200n);
     await expectRevertWithErrorMessage("session/expired", () =>
       accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
     );

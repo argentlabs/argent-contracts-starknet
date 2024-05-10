@@ -77,7 +77,6 @@ fn test_toggle_unauthorized() {
 #[should_panic(expected: ('argent/invalid-guardian',))]
 fn test_toggle_guardian_same_as_account() {
     let (component, _) = setup();
-    // start_prank(CheatTarget::All, component.contract_address);
     component.toggle_escape(true, 10 * 60, 10 * 60, component.contract_address);
 }
 

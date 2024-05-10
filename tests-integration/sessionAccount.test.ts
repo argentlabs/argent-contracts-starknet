@@ -6,6 +6,7 @@ import {
   DappService,
   SignerType,
   StarknetKeyPair,
+  compileSessionSignature,
   deployAccount,
   deployAccountWithGuardianBackup,
   deployer,
@@ -27,17 +28,11 @@ describe("Hybrid Session Account: execute calls", function () {
     sessionAccountClassHash = await manager.declareLocalContract("ArgentAccount");
 
     const mockDappClassHash = await manager.declareLocalContract("MockDapp");
-    const deployedmockDappOne = await deployer.deployContract({
+    const deployedMockDapp = await deployer.deployContract({
       classHash: mockDappClassHash,
       salt: num.toHex(randomStarknetKeyPair().privateKey),
     });
-    const erc20ClassHash = await manager.declareLocalContract("Erc20Mock");
-    const deployedErc20 = await deployer.deployContract({
-      classHash: erc20ClassHash,
-      salt: num.toHex(randomStarknetKeyPair().privateKey),
-    });
-    mockErc20Contract = await manager.loadContract(deployedErc20.contract_address);
-    mockDappOneContract = await manager.loadContract(deployedmockDappOne.contract_address);
+    mockDappContract = await manager.loadContract(deployedMockDapp.contract_address);
   });
 
   beforeEach(async function () {

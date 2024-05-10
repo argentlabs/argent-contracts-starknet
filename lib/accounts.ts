@@ -24,7 +24,7 @@ import {
 import { manager } from "./manager";
 import { ensureSuccess } from "./receipts";
 import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
-import { ArgentSigner, KeyPair, randomStarknetKeyPair } from "./signers/signers";
+import { ArgentSigner, KeyPair, RawSigner, randomStarknetKeyPair } from "./signers/signers";
 import { ethAddress, strkAddress } from "./tokens";
 
 export class ArgentAccount extends Account {
@@ -294,7 +294,7 @@ export async function executeWithCustomSig(
     }
   })();
   const newAccount = new ArgentAccount(
-    provider,
+    manager,
     account.address,
     signer,
     account.cairoVersion,
@@ -306,7 +306,7 @@ export async function executeWithCustomSig(
 
 export async function getSignerDetails(account: ArgentAccount, calls: Call[]): Promise<InvocationsSignerDetails> {
   const newAccount = new ArgentAccount(
-    provider,
+    manager,
     account.address,
     account.signer,
     account.cairoVersion,

@@ -3,13 +3,11 @@ import {
   AllowedMethod,
   StarknetKeyPair,
   compileSessionSignature,
-  declareContract,
   deployAccount,
   deployer,
   executeWithCustomSig,
   expectRevertWithErrorMessage,
-  loadContract,
-  provider,
+  manager,
   randomStarknetKeyPair,
   setupSession,
 } from "../lib";
@@ -20,18 +18,18 @@ describe("Hybrid Session Account: execute session calls with caching", function 
   const initialTime = 1710167933n;
 
   before(async () => {
-    sessionAccountClassHash = await declareContract("ArgentAccount");
+    sessionAccountClassHash = await manager.declareLocalContract("ArgentAccount");
 
-    const mockDappClassHash = await declareContract("MockDapp");
+    const mockDappClassHash = await manager.declareLocalContract("MockDapp");
     const deployedMockDapp = await deployer.deployContract({
       classHash: mockDappClassHash,
       salt: num.toHex(randomStarknetKeyPair().privateKey),
     });
-    mockDappContract = await loadContract(deployedMockDapp.contract_address);
+    mockDappContract = await manager.loadContract(deployedMockDapp.contract_address);
   });
 
   beforeEach(async function () {
-    await provider.setTime(initialTime);
+    await manager.setTime(initialTime);
   });
 
   it("Use Session with caching enabled", async function () {

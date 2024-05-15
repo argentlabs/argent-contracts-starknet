@@ -46,7 +46,7 @@ describe("ArgentAccount", function () {
     const { accountContract: accountContract1 } = await deployAccountWithoutGuardian({ owner });
     const { accountContract: accountContract2 } = await deployAccountWithoutGuardian({ owner });
     const owner1 = await accountContract1.get_owner();
-    const owner2 = await accountContract1.get_owner();
+    const owner2 = await accountContract2.get_owner();
     expect(owner1).to.equal(owner2);
     expect(accountContract1.address != accountContract2.address).to.be.true;
   });

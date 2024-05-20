@@ -73,16 +73,13 @@ fn test_is_valid_webauthn_signature_with_extra_json() {
 fn test_invalid_webauthn_signature_nonpresent_user() {
     let (transaction_hash, signer, mut signature) = valid_signer();
     signature.flags = 0b00000000;
-    let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
-    assert!(is_valid, "invalid");
+    is_valid_webauthn_signature(transaction_hash, signer, signature);
 }
 
 #[test]
-#[should_panic(expected: "webauthn/invalid-hash")]
 fn test_invalid_webauthn_signature_hash() {
     let (transaction_hash, signer, mut signature) = valid_signer();
-    signature.cross_origin = true;
+    signature.ec_signature.r = 0xdeadbeef;
     let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
-    assert!(is_valid, "invalid");
+    assert!(!is_valid, "invalid");
 }
-

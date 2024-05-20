@@ -52,6 +52,7 @@ mod presets {
 
 mod utils {
     mod array_ext;
+    mod array_store;
     mod asserts;
     mod bytes;
     mod calls;

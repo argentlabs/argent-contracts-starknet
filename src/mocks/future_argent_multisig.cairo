@@ -1,9 +1,10 @@
+/// @dev 🚨 This smart contract is a mock implementation and is not meant for actual deployment or use in any live environment. It is solely for testing, educational, or demonstration purposes. Any interactions with this contract will not have real-world consequences or effects on blockchain networks. Please refrain from relying on the functionality of this contract for any production. 🚨
 #[starknet::contract(account)]
 mod MockFutureArgentMultisig {
     use argent::account::interface::{
         IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version
     };
-    use argent::external_recovery::{external_recovery::{external_recovery_component, IExternalRecoveryCallback}};
+    use argent::external_recovery::external_recovery::IExternalRecoveryCallback;
     use argent::introspection::src5::src5_component;
     use argent::multisig::{multisig::multisig_component};
 

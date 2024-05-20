@@ -23,6 +23,7 @@ mod external_recovery_component {
     use argent::signer_storage::signer_list::{signer_list_component, signer_list_component::{SignerListInternalImpl}};
     use argent::utils::asserts::assert_only_self;
     use argent::utils::serialization::serialize;
+    use openzeppelin::security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use starknet::{
         get_block_timestamp, get_contract_address, get_caller_address, ContractAddress, account::Call,
         contract_address::contract_address_const
@@ -49,7 +50,11 @@ mod external_recovery_component {
 
     #[embeddable_as(ExternalRecoveryImpl)]
     impl ExternalRecovery<
-        TContractState, +HasComponent<TContractState>, +IExternalRecoveryCallback<TContractState>, +Drop<TContractState>
+        TContractState,
+        +HasComponent<TContractState>,
+        +IExternalRecoveryCallback<TContractState>,
+        +Drop<TContractState>,
+        impl ReentrancyGuard: ReentrancyGuardComponent::HasComponent<TContractState>
     > of IExternalRecovery<ComponentState<TContractState>> {
         fn trigger_escape(ref self: ComponentState<TContractState>, call: EscapeCall) {
             self.assert_only_guardian();
@@ -78,6 +83,8 @@ mod external_recovery_component {
         }
 
         fn execute_escape(ref self: ComponentState<TContractState>, call: EscapeCall) {
+            let mut reentrancy_component = get_dep_component_mut!(ref self, ReentrancyGuard);
+            reentrancy_component.start();
             let current_escape: Escape = self.escape.read();
             let escape_config = self.escape_enabled.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
@@ -91,6 +98,7 @@ mod external_recovery_component {
             self.emit(EscapeExecuted { call_hash });
             // clear escape
             self.escape.write(Default::default());
+            reentrancy_component.end();
         }
 
         fn cancel_escape(ref self: ComponentState<TContractState>) {

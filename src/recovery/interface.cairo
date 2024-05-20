@@ -1,5 +1,5 @@
 use argent::signer::signer_signature::{Signer, SignerStorageValue, SignerSignature, SignerType};
-use argent::utils::array_ext::StoreFelt252Array;
+use argent::utils::array_store::StoreFelt252Array;
 use starknet::ContractAddress;
 
 #[starknet::interface]

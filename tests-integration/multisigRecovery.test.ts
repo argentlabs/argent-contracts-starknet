@@ -12,7 +12,7 @@ import {
 const initialTime = 100;
 
 async function buildFixture() {
-  const { accountContract, keys: originalKeys } = await deployMultisig1_1();
+  const { accountContract, keys: originalKeys, account: originalAccount } = await deployMultisig1_1();
   const { account: guardianAccount } = await deployMultisig1_1();
   const originalSigner = originalKeys[0];
   const newSigner = randomStarknetKeyPair();
@@ -31,7 +31,7 @@ async function buildFixture() {
       signerToAdd: newSigner.signer,
     }),
   });
-  return { accountContract, originalSigner, newSigner, guardianAccount, replaceSignerCall };
+  return { accountContract, originalSigner, newSigner, guardianAccount, replaceSignerCall, originalAccount };
 }
 
 describe("ArgentMultisig Recovery", function () {
@@ -52,6 +52,32 @@ describe("ArgentMultisig Recovery", function () {
     expect(escape.ready_at).to.equal(0n);
     expect(escape.call_hash).to.equal(0n);
     expect(status.variant.None).to.eql({});
+  });
+
+  it(`Shouldn't be possible to call 'execute_escape' when calling 'trigger_escape'`, async function () {
+    const { accountContract, guardianAccount, replaceSignerCall, originalAccount } = await buildFixture();
+    await manager.setTime(initialTime);
+    accountContract.connect(guardianAccount);
+    await accountContract.trigger_escape(replaceSignerCall);
+
+    await manager.setTime(initialTime + 15);
+    accountContract.connect(originalAccount);
+    await expectRevertWithErrorMessage("ReentrancyGuard: reentrant call", () =>
+      accountContract.execute_escape(replaceSignerCall),
+    );
+  });
+
+  it(`Shouldn't be possible to call 'execute_escape' when calling 'trigger_escape'`, async function () {
+    const { accountContract, guardianAccount } = await buildFixture();
+    await manager.setTime(initialTime);
+    accountContract.connect(guardianAccount);
+    const replaceSignerCall = CallData.compile({
+      selector: hash.getSelectorFromName("execute_escape"),
+      calldata: [],
+    });
+    await expectRevertWithErrorMessage("argent/invalid-selector", () =>
+      accountContract.trigger_escape(replaceSignerCall),
+    );
   });
 
   it(`Escape should fail outside time window`, async function () {

@@ -56,12 +56,12 @@ fn session_precalculated_hash_mainnet() {
 #[test]
 fn outside_execution_precalculated_hash_sepolia() {
     let domain = StarknetDomain {
-        name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id, revision: 1,
+        name: 'Account.execute_from_outside', version: 2, chain_id: get_tx_info().unbox().chain_id, revision: 1,
     };
     let domain_hash = domain.get_struct_hash_rev_1();
     assert_eq!(
         domain_hash,
-        1846363217105511744772004537093892420835749696406530113218718373305116005176,
+        1051717892762963823896080394520401037226570779498494081884365074830163874271,
         "Precalculated domain hash is incorrect"
     );
     let (ch0, ch1, ch2) = hades_permutation('StarkNet Message', domain_hash, 0);
@@ -75,12 +75,12 @@ fn outside_execution_precalculated_hash_sepolia() {
 fn outside_execution_precalculated_hash_mainnet() {
     set_chain_id_foundry('SN_MAIN');
     let domain = StarknetDomain {
-        name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id, revision: 1,
+        name: 'Account.execute_from_outside', version: 2, chain_id: get_tx_info().unbox().chain_id, revision: 1,
     };
     let domain_hash = domain.get_struct_hash_rev_1();
     assert_eq!(
         domain_hash,
-        33781215245670134228908646522746461659628127223637352174002236121260749013,
+        270892730805027368931547576938878097625671597714003823052343939644536693420,
         "Precalculated domain hash is incorrect"
     );
     let (ch0, ch1, ch2) = hades_permutation('StarkNet Message', domain_hash, 0);

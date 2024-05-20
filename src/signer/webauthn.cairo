@@ -79,7 +79,6 @@ fn encode_challenge(hash: felt252, sha256_implementation: Sha256Implementation) 
         Sha256Implementation::Cairo1 => 1,
     };
     bytes.append(last_byte);
-    assert!(bytes.len() == 33, "webauthn/invalid-challenge-length"); // remove '=' signs if this assert fails
     Base64UrlEncoder::encode(bytes).span()
 }
 

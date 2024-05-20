@@ -50,7 +50,7 @@ function getDomain(chainId: string, revision: typedData.TypedDataRevision) {
     // This is due to a bug in the Braavos implementation, and has been kept for compatibility
     return {
       name: "Account.execute_from_outside",
-      version: "1",
+      version: "2",
       chainId: chainId,
       revision: "1",
     };

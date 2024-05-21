@@ -6,9 +6,11 @@ use ecdsa::check_ecdsa_signature;
 use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, PoseidonTrait};
 use starknet::SyscallResultTrait;
-use starknet::secp256_trait::{Secp256PointTrait, Signature as Secp256Signature, recover_public_key};
+use starknet::secp256_trait::{
+    Secp256PointTrait, Secp256Trait, Signature as Secp256Signature, recover_public_key, is_valid_signature
+};
 use starknet::secp256k1::Secp256k1Point;
-use starknet::secp256r1::Secp256r1Point;
+use starknet::secp256r1::{Secp256r1Point, Secp256r1Impl};
 use starknet::{EthAddress, eth_signature::is_eth_signature_valid};
 
 /// All signer type magic values. Used to derive their guid
@@ -18,10 +20,18 @@ const SECP256R1_SIGNER_TYPE: felt252 = 'Secp256r1 Signer';
 const EIP191_SIGNER_TYPE: felt252 = 'Eip191 Signer';
 const WEBAUTHN_SIGNER_TYPE: felt252 = 'Webauthn Signer';
 
+/// @notice Secp256 Signature, the `y_parity` is omitted as it is assumed to be false
+/// If your signature has a different `y_parity` you can convert it to this format by changing `s` to `Curve.N - s`
 #[derive(Copy, Drop, Debug, PartialEq, Serde)]
 struct Secp256SignatureEven {
     r: u256,
     s: u256,
+}
+
+impl Secp256SignatureEvenIntoSecp256Signature of Into<Secp256SignatureEven, Secp256Signature> {
+    fn into(self: Secp256SignatureEven) -> Secp256Signature {
+        Secp256Signature { r: self.r, s: self.s, y_parity: false }
+    }
 }
 
 /// @notice The type of the signer that this version of the accounts supports
@@ -303,20 +313,24 @@ fn is_valid_starknet_signature(hash: felt252, signer: StarknetSigner, signature:
 
 #[inline(always)]
 fn is_valid_secp256k1_signature(hash: u256, signer: Secp256k1Signer, signature: Secp256SignatureEven) -> bool {
-    is_eth_signature_valid(
-        hash, Secp256Signature { r: signature.r, s: signature.s, y_parity: false }, signer.pubkey_hash.into()
-    )
-        .is_ok()
+    is_eth_signature_valid(hash, signature.into(), signer.pubkey_hash.into()).is_ok()
 }
 
 #[inline(always)]
 fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: Secp256SignatureEven) -> bool {
-    let recovered = recover_public_key::<
-        Secp256r1Point
-    >(hash, Secp256Signature { r: signature.r, s: signature.s, y_parity: false })
-        .expect('argent/invalid-sig-format');
+    // let pubkey_point_1 = Secp256r1Impl::secp256_ec_get_point_from_x_syscall(signer.pubkey.into(), false)
+    //             .unwrap_syscall()
+    //             .unwrap();
+    // let pubkey_point_2 = Secp256r1Impl::secp256_ec_get_point_from_x_syscall(signer.pubkey.into(), true)
+    //         .unwrap_syscall()
+    //         .unwrap();
+    // is_valid_signature::<Secp256r1Point>(hash, signature.r, signature.s, pubkey_point_1) ||  is_valid_signature::<Secp256r1Point>(hash, signature.r, signature.s, pubkey_point_2) 
+    let recovered = recover_public_key::<Secp256r1Point>(hash, signature.into()).expect('argent/invalid-sig-format');
     let (recovered_signer, _) = recovered.get_coordinates().expect('argent/invalid-sig-format');
-    recovered_signer == signer.pubkey.into()
+    if (recovered_signer == signer.pubkey.into()) {
+        return true;
+    }
+    (Secp256Trait::<Secp256r1Point>::get_curve_size() - recovered_signer) == signer.pubkey.into()
 }
 
 #[inline(always)]

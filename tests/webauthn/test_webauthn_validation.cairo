@@ -1,7 +1,8 @@
 use argent::signer::signer_signature::{WebauthnSigner, is_valid_webauthn_signature, Secp256SignatureEven};
 use argent::signer::webauthn::{WebauthnSignature, Sha256Implementation};
 use argent::utils::bytes::{ByteArrayExt, SpanU8TryIntoFelt252};
-use starknet::secp256_trait::Signature;
+use starknet::secp256_trait::{Signature, Secp256Trait};
+use starknet::secp256r1::{Secp256r1Point};
 
 fn new_webauthn_signer(origin: ByteArray, rp_id_hash: u256, pubkey: u256) -> WebauthnSigner {
     let origin = origin.into_bytes().span();
@@ -30,7 +31,8 @@ fn test_is_valid_webauthn_signature() {
         sign_count: 0,
         ec_signature: Secp256SignatureEven {
             r: 0x27b78470673308c9e7ef6d9cb4fbf74b892f9e3826b515333d721cb8385cfb72,
-            s: 0x35c7ae175d75e09b1907f4232c88bfd69b7c9d7f32b4b2d392a6a95324a61f21,
+            s: Secp256Trait::<Secp256r1Point>::get_curve_size()
+                - 0x35c7ae175d75e09b1907f4232c88bfd69b7c9d7f32b4b2d392a6a95324a61f21,
         },
         sha256_implementation: Sha256Implementation::Cairo1,
     };

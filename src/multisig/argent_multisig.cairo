@@ -1,13 +1,6 @@
+use argent::library::account::IAccount;
 #[starknet::contract]
 mod ArgentMultisig {
-    trait IAccount<TContractState> {
-        fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
-        fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
-        fn is_valid_signature(
-            self: @TContractState, hash: felt252, signature: Array<felt252>
-        ) -> felt252;
-    }
-
     use argent::multisig::interface::IArgentMultisig; // For some reason (fn colliding with same name) I have to import it here and use super
 
 
@@ -138,7 +131,7 @@ mod ArgentMultisig {
     }
 
     #[external(v0)]
-    impl Account of IAccount<ContractState> {
+    impl Account of super::IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();

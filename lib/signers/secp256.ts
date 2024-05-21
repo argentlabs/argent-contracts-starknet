@@ -1,6 +1,7 @@
 import * as utils from "@noble/curves/abstract/utils";
 import { RecoveredSignatureType } from "@noble/curves/abstract/weierstrass";
 import { p256 as secp256r1 } from "@noble/curves/p256";
+import { secp256k1 } from "@noble/curves/secp256k1";
 import { Signature as EthersSignature, Wallet } from "ethers";
 import { CairoCustomEnum, CallData, Uint256, hash, num, shortString, uint256 } from "starknet";
 import { KeyPair, SignerType, signerTypeToCustomEnum } from "../signers/signers";
@@ -33,10 +34,9 @@ export class EthKeyPair extends KeyPair {
     const ethSigner = new Wallet(this.pk);
     messageHash = "0x" + padTo32Bytes(messageHash);
     const signature = EthersSignature.from(ethSigner.signingKey.sign(messageHash));
-    let s = signature.s;
+    let s = BigInt(signature.s);
     if (signature.yParity == 1) {
-      const curveN = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141");
-      s = num.toHex(curveN - BigInt(signature.s));
+      s = secp256k1.CURVE.n - s;
     }
     return CallData.compile([
       signerTypeToCustomEnum(SignerType.Secp256k1, {
@@ -78,11 +78,15 @@ export class Eip191KeyPair extends KeyPair {
     const ethSigner = new Wallet(this.pk);
     messageHash = "0x" + padTo32Bytes(messageHash);
     const signature = EthersSignature.from(ethSigner.signMessageSync(num.hexToBytes(messageHash)));
+    let s = BigInt(signature.s);
+    if (signature.yParity == 1) {
+      s = secp256k1.CURVE.n - s;
+    }
     return CallData.compile([
       signerTypeToCustomEnum(SignerType.Eip191, {
         ethAddress: this.address,
         r: uint256.bnToUint256(signature.r),
-        s: uint256.bnToUint256(signature.s),
+        s: uint256.bnToUint256(s),
       }),
     ]);
   }
@@ -163,11 +167,15 @@ export class Secp256r1KeyPair extends KeyPair {
 }
 
 function ethereumSignatureType(pubkeyHash: bigint, signature: EthersSignature) {
+  let s = BigInt(signature.s);
+  if (signature.yParity == 1) {
+    s = secp256k1.CURVE.n - s;
+  }
   return CallData.compile([
     signerTypeToCustomEnum(SignerType.Secp256k1, {
       pubkeyHash,
       r: uint256.bnToUint256(signature.r),
-      s: uint256.bnToUint256(signature.s),
+      s: uint256.bnToUint256(s),
     }),
   ]);
 }

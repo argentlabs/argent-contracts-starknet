@@ -13,4 +13,3 @@ trait IAccount<TContractState> {
         self: @TContractState, hash: felt252, signature: Array<felt252>
     ) -> felt252;
 }
-

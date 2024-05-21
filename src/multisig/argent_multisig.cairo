@@ -34,7 +34,6 @@ mod ArgentMultisig {
         syscalls::{SyscallResult, replace_class_syscall}, ClassHash, class_hash_const,
         get_block_timestamp, get_caller_address, get_tx_info, account::Call
     };
-    use traits::Into;
 
     const EXECUTE_AFTER_UPGRADE_SELECTOR: felt252 =
         738349667340360233096752603318170676063569407717437256101137432051386874767; // starknet_keccak('execute_after_upgrade')

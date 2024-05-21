@@ -1,7 +1,7 @@
 use array::SpanTrait;
+use zeroable::Zeroable;
 
 use starknet::{get_contract_address, get_caller_address, ContractAddress, account::Call};
-use zeroable::Zeroable;
 
 const TRANSACTION_VERSION: felt252 = 1;
 const QUERY_VERSION: felt252 =

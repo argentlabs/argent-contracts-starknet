@@ -64,14 +64,16 @@ fn set_escape_security_period_with_expired_escape() {
     account.trigger_escape_guardian(Option::None);
 
     start_warp(CheatTarget::One(account.contract_address), consteval_int!(7 * 24 * 60 * 60 * 2));
-    let (_, status) = account.get_escape_and_status();
+    let (escape, status) = account.get_escape_and_status();
     assert_eq!(status, EscapeStatus::Expired, "Should be EscapeStatus::Expired");
+    assert_ne!(escape.ready_at, 0, "Should not be 0");
     account.set_escape_security_period(4200);
 
     let new_escape_security_period = account.get_escape_security_period();
     assert_eq!(new_escape_security_period, 4200, "New value incorrect");
 
-    let (new_escape, _) = account.get_escape_and_status();
+    let (new_escape, status) = account.get_escape_and_status();
+    assert_eq!(status, EscapeStatus::None, "Should be EscapeStatus::None");
     assert_eq!(new_escape.ready_at, 0, "New escape ready_at should be 0");
 }
 

@@ -508,6 +508,14 @@ mod ArgentAccount {
         fn set_escape_security_period(ref self: ContractState, new_security_period: u64) {
             assert_only_self();
             assert(new_security_period >= MIN_ESCAPE_SECURITY_PERIOD, 'argent/invalid-security-period');
+
+            let current_escape = self._escape.read();
+            let current_escape_status = self.get_escape_status(current_escape.ready_at);
+            match current_escape_status {
+                EscapeStatus::None => {}, // ignore
+                EscapeStatus::NotReady | EscapeStatus::Ready => panic_with_felt252('argent/ongoing-escape'),
+                EscapeStatus::Expired => self.reset_escape(),
+            }
             self.escape_security_period.write(new_security_period);
             self.emit(EscapeSecurityPeriodChanged { escape_security_period: new_security_period });
         }

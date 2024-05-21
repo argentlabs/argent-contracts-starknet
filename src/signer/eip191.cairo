@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{Eip191Signer};
+use argent::signer::signer_signature::{Eip191Signer, Secp256SignatureEven};
 use integer::{u128_byte_reverse, u256_safe_div_rem, u256_as_non_zero};
 use keccak::cairo_keccak;
 use starknet::secp256_trait::{Signature as Secp256Signature};
@@ -6,8 +6,13 @@ use starknet::{EthAddress, eth_signature::is_eth_signature_valid};
 
 #[must_use]
 #[inline(always)]
-fn is_valid_eip191_signature(hash: felt252, signer: Eip191Signer, signature: Secp256Signature) -> bool {
-    is_eth_signature_valid(calculate_eip191_hash(hash), signature, signer.eth_address.into()).is_ok()
+fn is_valid_eip191_signature(hash: felt252, signer: Eip191Signer, signature: Secp256SignatureEven) -> bool {
+    is_eth_signature_valid(
+        calculate_eip191_hash(hash),
+        Secp256Signature { r: signature.r, s: signature.s, y_parity: false },
+        signer.eth_address.into()
+    )
+        .is_ok()
 }
 
 #[must_use]

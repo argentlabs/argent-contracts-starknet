@@ -18,6 +18,12 @@ const SECP256R1_SIGNER_TYPE: felt252 = 'Secp256r1 Signer';
 const EIP191_SIGNER_TYPE: felt252 = 'Eip191 Signer';
 const WEBAUTHN_SIGNER_TYPE: felt252 = 'Webauthn Signer';
 
+#[derive(Copy, Drop, Debug, PartialEq, Serde)]
+struct Secp256SignatureEven {
+    r: u256,
+    s: u256,
+}
+
 /// @notice The type of the signer that this version of the accounts supports
 #[derive(Drop, Copy, PartialEq, Serde, Default)]
 enum SignerType {
@@ -34,9 +40,9 @@ enum SignerType {
 #[derive(Drop, Copy, Serde)]
 enum SignerSignature {
     Starknet: (StarknetSigner, StarknetSignature),
-    Secp256k1: (Secp256k1Signer, Secp256Signature),
-    Secp256r1: (Secp256r1Signer, Secp256Signature),
-    Eip191: (Eip191Signer, Secp256Signature),
+    Secp256k1: (Secp256k1Signer, Secp256SignatureEven),
+    Secp256r1: (Secp256r1Signer, Secp256SignatureEven),
+    Eip191: (Eip191Signer, Secp256SignatureEven),
     Webauthn: (WebauthnSigner, WebauthnSignature),
 }
 
@@ -296,13 +302,19 @@ fn is_valid_starknet_signature(hash: felt252, signer: StarknetSigner, signature:
 }
 
 #[inline(always)]
-fn is_valid_secp256k1_signature(hash: u256, signer: Secp256k1Signer, signature: Secp256Signature) -> bool {
-    is_eth_signature_valid(hash, signature, signer.pubkey_hash.into()).is_ok()
+fn is_valid_secp256k1_signature(hash: u256, signer: Secp256k1Signer, signature: Secp256SignatureEven) -> bool {
+    is_eth_signature_valid(
+        hash, Secp256Signature { r: signature.r, s: signature.s, y_parity: false }, signer.pubkey_hash.into()
+    )
+        .is_ok()
 }
 
 #[inline(always)]
-fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: Secp256Signature) -> bool {
-    let recovered = recover_public_key::<Secp256r1Point>(hash, signature).expect('argent/invalid-sig-format');
+fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: Secp256SignatureEven) -> bool {
+    let recovered = recover_public_key::<
+        Secp256r1Point
+    >(hash, Secp256Signature { r: signature.r, s: signature.s, y_parity: false })
+        .expect('argent/invalid-sig-format');
     let (recovered_signer, _) = recovered.get_coordinates().expect('argent/invalid-sig-format');
     recovered_signer == signer.pubkey.into()
 }

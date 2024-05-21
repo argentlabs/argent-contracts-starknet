@@ -33,7 +33,19 @@ export class EthKeyPair extends KeyPair {
     const ethSigner = new Wallet(this.pk);
     messageHash = "0x" + padTo32Bytes(messageHash);
     const signature = EthersSignature.from(ethSigner.signingKey.sign(messageHash));
-
+    let s = signature.s;
+    if (signature.yParity == 1) {
+      const curveN = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141");
+      s = num.toHex(curveN - BigInt(signature.s));
+    }
+    return CallData.compile([
+      signerTypeToCustomEnum(SignerType.Secp256k1, {
+        pubkeyHash: this.address,
+        r: uint256.bnToUint256(signature.r),
+        s: uint256.bnToUint256(s),
+      }),
+    ]);
+    // const signature2 = EthersSignature.from(ethSigner.signingKey.sign(messageHash));
     return ethereumSignatureType(this.address, signature);
   }
 }
@@ -71,7 +83,6 @@ export class Eip191KeyPair extends KeyPair {
         ethAddress: this.address,
         r: uint256.bnToUint256(signature.r),
         s: uint256.bnToUint256(signature.s),
-        yParity: signature.yParity,
       }),
     ]);
   }
@@ -107,7 +118,6 @@ export class EstimateEip191KeyPair extends KeyPair {
         ethAddress: this.address,
         r: uint256.bnToUint256("0x1556a70d76cc452ae54e83bb167a9041f0d062d000fa0dcb42593f77c544f647"),
         s: uint256.bnToUint256("0x1643d14dbd6a6edc658f4b16699a585181a08dba4f6d16a9273e0e2cbed622da"),
-        yParity: 0,
       }),
     ]);
   }
@@ -158,18 +168,20 @@ function ethereumSignatureType(pubkeyHash: bigint, signature: EthersSignature) {
       pubkeyHash,
       r: uint256.bnToUint256(signature.r),
       s: uint256.bnToUint256(signature.s),
-      y_parity: signature.yParity,
     }),
   ]);
 }
 
 function secp256r1SignatureType(pubkeyHash: Uint256, signature: RecoveredSignatureType) {
+  let s = signature.s;
+  if (signature.recovery) {
+    s = secp256r1.CURVE.n - signature.s;
+  }
   return CallData.compile([
     signerTypeToCustomEnum(SignerType.Secp256r1, {
       pubkeyHash,
       r: uint256.bnToUint256(signature.r),
-      s: uint256.bnToUint256(signature.s),
-      y_parity: signature.recovery,
+      s: uint256.bnToUint256(s),
     }),
   ]);
 }

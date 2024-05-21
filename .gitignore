@@ -22,3 +22,6 @@ tests/fixtures/TestDapp.json
 tests/fixtures/TestDapp.casm
 dump
 package-lock.json
+
+starknet-contract-verifier
+voyager-verify

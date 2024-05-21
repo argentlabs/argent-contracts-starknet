@@ -1,4 +1,4 @@
-use lib::Version;
+use argent::library::version::Version;
 
 #[starknet::interface]
 trait IArgentMultisig<TContractState> {

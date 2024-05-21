@@ -1,8 +1,8 @@
 use array::{ArrayTrait, SpanTrait};
 use box::BoxTrait;
 use hash::pedersen;
-use traits::Into;
 use starknet::{ContractAddress, get_tx_info, get_contract_address, account::Call};
+use traits::Into;
 
 const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID: felt252 =
     0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181;

@@ -1,3 +1,4 @@
+use core::option::OptionTrait;
 use array::{ArrayTrait, SpanTrait};
 use serde::Serde;
 
@@ -16,6 +17,6 @@ fn deserialize_array_signer_signature(
         if serialized.len() == 0 {
             break Option::Some(output.span());
         }
-        output.append(Serde::deserialize(ref serialized)?);
+        output.append(Serde::deserialize(ref serialized).unwrap());
     }
 }

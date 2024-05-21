@@ -1,12 +1,9 @@
-use argent::library::account::IAccount;
+use argent::multisig::interface::IArgentMultisig; // For some reason (fn colliding with same name) I have to import it here and use super
 #[starknet::contract]
 mod ArgentMultisig {
-    use argent::multisig::interface::IArgentMultisig; // For some reason (fn colliding with same name) I have to import it here and use super
-
-
     use argent::library::account::{
         ERC165_ACCOUNT_INTERFACE_ID, ERC165_ACCOUNT_INTERFACE_ID_OLD_1,
-        ERC165_ACCOUNT_INTERFACE_ID_OLD_2
+        ERC165_ACCOUNT_INTERFACE_ID_OLD_2, IAccount
     };
     use argent::library::array_ext::ArrayExtTrait;
     use argent::library::asserts::{
@@ -112,7 +109,7 @@ mod ArgentMultisig {
         let new_signers_count = signers.len();
         assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-        MultisigStorage::add_signers(ref self, signers.span(), last_signer: 0);
+        self.add_signers(signers.span(), last_signer: 0);
         self.threshold.write(new_threshold);
 
         self.emit(ThresholdUpdated { new_threshold });
@@ -131,7 +128,7 @@ mod ArgentMultisig {
     }
 
     #[external(v0)]
-    impl Account of super::IAccount<ContractState> {
+    impl Account of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             assert_caller_is_null();
             let tx_info = get_tx_info().unbox();
@@ -246,7 +243,7 @@ mod ArgentMultisig {
     }
 
     #[external(v0)]
-    impl ArgentMultisigImpl of IArgentMultisig<ContractState> {
+    impl ArgentMultisigImpl of super::IArgentMultisig<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             panic_with_felt252('argent/declare-not-available') // Not implemented yet
         }
@@ -266,13 +263,13 @@ mod ArgentMultisig {
             assert(parsed_signatures.len() == 1, 'argent/invalid-signature-length');
 
             let signer_sig = *parsed_signatures.at(0);
-            let valid_signer_signature = ArgentMultisigImpl::is_valid_signer_signature(
-                self,
-                tx_info.transaction_hash,
-                signer_sig.signer,
-                signer_sig.signature_r,
-                signer_sig.signature_s
-            );
+            let valid_signer_signature = self
+                .is_valid_signer_signature(
+                    tx_info.transaction_hash,
+                    signer_sig.signer,
+                    signer_sig.signature_r,
+                    signer_sig.signature_s
+                );
             assert(valid_signer_signature, 'argent/invalid-signature');
             VALIDATED
         }
@@ -296,7 +293,7 @@ mod ArgentMultisig {
 
             let new_signers_count = signers_len + signers_to_add.len();
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
-            MultisigStorage::add_signers(ref self, signers_to_add.span(), last_signer);
+            self.add_signers(signers_to_add.span(), last_signer);
             self.threshold.write(new_threshold);
 
             if previous_threshold != new_threshold {
@@ -326,7 +323,7 @@ mod ArgentMultisig {
             let new_signers_count = signers_len - signers_to_remove.len();
             assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
-            MultisigStorage::remove_signers(ref self, signers_to_remove.span(), last_signer);
+            self.remove_signers(signers_to_remove.span(), last_signer);
             self.threshold.write(new_threshold);
 
             if previous_threshold != new_threshold {
@@ -352,7 +349,7 @@ mod ArgentMultisig {
             assert_only_self();
             let (new_signers_count, last_signer) = self.load();
 
-            MultisigStorage::replace_signer(ref self, signer_to_remove, signer_to_add, last_signer);
+            self.replace_signer(signer_to_remove, signer_to_add, last_signer);
 
             self.emit(OwnerRemoved { removed_owner_guid: signer_to_remove });
             self.emit(OwnerAdded { new_owner_guid: signer_to_add });
@@ -372,11 +369,11 @@ mod ArgentMultisig {
         }
 
         fn get_signers(self: @ContractState) -> Array<felt252> {
-            MultisigStorage::get_signers(self)
+            self.get_signers()
         }
 
         fn is_signer(self: @ContractState, signer: felt252) -> bool {
-            MultisigStorage::is_signer(self, signer)
+            self.is_signer(signer)
         }
 
         fn is_valid_signer_signature(
@@ -386,7 +383,7 @@ mod ArgentMultisig {
             signature_r: felt252,
             signature_s: felt252
         ) -> bool {
-            Private::is_valid_signer_signature(self, hash, signer, signature_r, signature_s)
+            self.is_valid_signer_signature(hash, signer, signature_r, signature_s)
         }
     }
 
@@ -413,7 +410,7 @@ mod ArgentMultisig {
 
     #[external(v0)]
     impl OldArgentMultisigImpl<
-        impl ArgentMultisig: IArgentMultisig<ContractState>,
+        impl ArgentMultisig: super::IArgentMultisig<ContractState>,
         impl Erc165: IErc165<ContractState>,
         impl Account: IAccount<ContractState>,
     > of IDeprecatedArgentMultisig<ContractState> {
@@ -491,13 +488,13 @@ mod ArgentMultisig {
                         let signer_sig = *signer_sig_ref;
                         let signer_uint: u256 = signer_sig.signer.into();
                         assert(signer_uint > last_signer, 'argent/signatures-not-sorted');
-                        let is_valid = Private::is_valid_signer_signature(
-                            self,
-                            hash,
-                            signer: signer_sig.signer,
-                            signature_r: signer_sig.signature_r,
-                            signature_s: signer_sig.signature_s,
-                        );
+                        let is_valid = self
+                            .is_valid_signer_signature(
+                                hash,
+                                signer: signer_sig.signer,
+                                signature_r: signer_sig.signature_r,
+                                signature_s: signer_sig.signature_s,
+                            );
                         if !is_valid {
                             break false;
                         }
@@ -517,7 +514,7 @@ mod ArgentMultisig {
             signature_r: felt252,
             signature_s: felt252
         ) -> bool {
-            let is_signer = MultisigStorage::is_signer(self, signer);
+            let is_signer = self.is_signer(signer);
             assert(is_signer, 'argent/not-a-signer');
             check_ecdsa_signature(hash, signer, signature_r, signature_s)
         }
@@ -606,7 +603,7 @@ mod ArgentMultisig {
                     // Signers are added at the end of the list
                     self.signer_list.write(last_signer, signer);
 
-                    MultisigStorage::add_signers(ref self, signers_to_add, last_signer: signer);
+                    self.add_signers(signers_to_add, last_signer: signer);
                 },
                 Option::None(()) => (),
             }
@@ -630,13 +627,11 @@ mod ArgentMultisig {
 
                     if next_signer == 0 {
                         // Removing the last item
-                        MultisigStorage::remove_signers(
-                            ref self, signers_to_remove, last_signer: previous_signer
-                        );
+                        self.remove_signers(signers_to_remove, last_signer: previous_signer);
                     } else {
                         // Removing an item in the middle
                         self.signer_list.write(signer, 0);
-                        MultisigStorage::remove_signers(ref self, signers_to_remove, last_signer);
+                        self.remove_signers(signers_to_remove, last_signer);
                     }
                 },
                 Option::None(()) => (),

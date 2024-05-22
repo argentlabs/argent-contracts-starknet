@@ -175,6 +175,7 @@ describe("Hybrid Session Account: execute calls", function () {
       proofs: [["0x2", "0x1"]],
     };
 
+    // happens when the the number of proofs is not equal to the number of calls
     await expectRevertWithErrorMessage("session/unaligned-proofs", () =>
       executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongProofs)),
     );

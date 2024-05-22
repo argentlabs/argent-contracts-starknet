@@ -14,17 +14,17 @@ export function normalizeSecpK1Signature(signature: EthersSignature): Normalized
     s = secp256k1.CURVE.n - s;
     yParity = !yParity;
   }
-  return { r: BigInt(signature.r), s, yParity: yParity };
+  return { r: BigInt(signature.r), s, yParity };
 }
 
 export function normalizeSecpR1Signature(signature: RecoveredSignatureType): NormalizedSecpSignature {
   let s = signature.s;
-  let yParity = signature.recovery != 0;
+  let yParity = signature.recovery !== 0;
   if (s >= secp256k1.CURVE.n / 2n) {
     s = secp256k1.CURVE.n - s;
     yParity = !yParity;
   }
-  return { r: signature.r, s: s, yParity: false };
+  return { r: signature.r, s, yParity };
 }
 
 export class EthKeyPair extends KeyPair {

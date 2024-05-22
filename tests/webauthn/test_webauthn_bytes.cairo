@@ -1,5 +1,5 @@
 use argent::utils::bytes::{
-    SpanU8TryIntoFelt252, SpanU8TryIntoU256, ByteArrayExt, u8s_to_u32s, u32s_to_u8s, u256_to_u8s
+    SpanU8TryIntoFelt252, SpanU8TryIntoU256, ByteArrayExt, u8s_to_u32s_pad_end, u32s_to_u8s, u256_to_u8s
 };
 
 #[test]
@@ -171,9 +171,26 @@ fn convert_bytes_to_max_felt252() {
 }
 
 #[test]
-#[should_panic(expected: "u8s_to_u32s: input must be a multiple of 4 elements long")]
-fn convert_u8s_to_u32s() {
-    u8s_to_u32s("localhost".into_bytes().span());
+fn convert_u8s_to_u32s_pad_end() {
+    let input = "localhost".into_bytes();
+    let output = u8s_to_u32s_pad_end(input.span());
+    let expected = array!['loca', 'lhos', 't\x00\x00\x00'];
+    assert_eq!(output, expected, "invalid");
+
+    let input = "localhost:".into_bytes();
+    let output = u8s_to_u32s_pad_end(input.span());
+    let expected = array!['loca', 'lhos', 't:\x00\x00'];
+    assert_eq!(output, expected, "invalid");
+
+    let input = "localhost:6".into_bytes();
+    let output = u8s_to_u32s_pad_end(input.span());
+    let expected = array!['loca', 'lhos', 't:6\x00'];
+    assert_eq!(output, expected, "invalid");
+
+    let input = "localhost:69".into_bytes();
+    let output = u8s_to_u32s_pad_end(input.span());
+    let expected = array!['loca', 'lhos', 't:69'];
+    assert_eq!(output, expected, "invalid");
 }
 
 #[test]

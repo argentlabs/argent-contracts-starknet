@@ -113,7 +113,7 @@ mod ArgentMultisigAccount {
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             assert(tx_info.account_deployment_data.is_empty(), 'argent/invalid-deployment-data');
             self.assert_valid_calls(calls.span());
-            self.assert_valid_signatures(calls.span(), tx_info.transaction_hash, tx_info.signature);
+            self.assert_valid_signatures(tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
 
@@ -191,7 +191,7 @@ mod ArgentMultisigAccount {
             // validate calls
             self.assert_valid_calls(calls);
             // validate signatures
-            self.assert_valid_signatures(calls, outside_execution_hash, signature);
+            self.assert_valid_signatures(outside_execution_hash, signature);
 
             let retdata = execute_multicall(calls);
             self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
@@ -259,9 +259,7 @@ mod ArgentMultisigAccount {
             }
         }
 
-        fn assert_valid_signatures(
-            self: @ContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
-        ) {
+        fn assert_valid_signatures(self: @ContractState, execution_hash: felt252, signature: Span<felt252>) {
             let valid = self
                 .multisig
                 .is_valid_signature_with_threshold(

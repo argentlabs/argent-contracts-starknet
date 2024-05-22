@@ -820,11 +820,10 @@ mod ArgentAccount {
                         let guardian_signature = self.parse_single_guardian_signature(signatures);
                         let is_valid = self.is_valid_guardian_signature(execution_hash, guardian_signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');
+                        // valid guardian signature also asserts that a guardian is set
                         return; // valid
                     }
                     if selector == selector!("escape_owner") {
-                        self.assert_guardian_set();
-
                         if !is_from_outside {
                             assert_valid_escape_parameters(self.last_guardian_escape_attempt.read());
                             self.last_guardian_escape_attempt.write(get_block_timestamp());
@@ -836,6 +835,7 @@ mod ArgentAccount {
                         let guardian_signature = self.parse_single_guardian_signature(signatures);
                         let is_valid = self.is_valid_guardian_signature(execution_hash, guardian_signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');
+                        // valid guardian signature also asserts that a guardian is set
                         return; // valid
                     }
                     if selector == selector!("trigger_escape_guardian") {
@@ -929,7 +929,7 @@ mod ArgentAccount {
             }
             return SignerSignature::Starknet(
                 (
-                    StarknetSigner { pubkey: self._guardian.read().try_into().expect('argent/zero-pubkey') },
+                    StarknetSigner { pubkey: self._guardian.read().try_into().expect('argent/guardian-not-set') },
                     StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
                 )
             );

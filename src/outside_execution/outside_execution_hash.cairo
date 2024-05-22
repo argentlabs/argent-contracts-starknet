@@ -13,16 +13,16 @@ use starknet::{get_tx_info, get_contract_address, account::Call};
 
 const MAINNET_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
     (
-        466771826862796654720497916898873955545764255168198993180536052682392700659,
-        8304264822580609485631142291553027424455705068469035347025093264477380363,
-        105288646621191754218635047234198033888793063910621244998394884076270002325
+        2727651893633223888261849279042022325174182119102281398572272198960815727249,
+        729016093840936084580216898033636860729342953928695140840860652272753125883,
+        2792630223211151632174198306610141883878913626231408099903852589995722964080
     );
 
 const SEPOLIA_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
     (
-        745540723582226592436632693000411598770476874516739165104583972640400378932,
-        62154301810125581556071585758541948884661504815060895665449539162589631391,
-        3469680712295219559397768335134989296665687247431765753301038002536467417786
+        3580606761507954093996364807837346681513890124685758374532511352257317798951,
+        3431227198346789440159663709265467470274870120429209591243179659934705045436,
+        974062396530052497724701732977002885691473732259823426261944148730229556466
     );
 
 
@@ -140,7 +140,7 @@ impl StructHashOutsideExecutionRev1 of IStructHashRev1<OutsideExecution> {
 
 impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExecution> {
     fn get_message_hash_rev_1(self: @OutsideExecution) -> felt252 {
-        // Version and Revision should be shortstring '1' and not felt 1 for SNIP-9 due to a mistake
+        // Version and Revision should be shortstring '2' and not felt 2 for SNIP-9 due to a mistake
         // in the Braavos contracts and has been copied for compatibility.
         // Revision will also be a number for all SNIP12-rev1 signatures because of the same issue
 
@@ -151,7 +151,7 @@ impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExec
         if chain_id == 'SN_SEPOLIA' {
             return get_message_hash_rev_1_with_precalc(SEPOLIA_FIRST_HADES_PERMUTATION, *self);
         }
-        let domain = StarknetDomain { name: 'Account.execute_from_outside', version: 1, chain_id, revision: 1 };
+        let domain = StarknetDomain { name: 'Account.execute_from_outside', version: 2, chain_id, revision: 1 };
         poseidon_hash_span(
             array![
                 'StarkNet Message',

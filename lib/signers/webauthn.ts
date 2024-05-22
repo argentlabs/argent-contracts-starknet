@@ -44,7 +44,7 @@ interface WebauthnSignature {
   client_data_json_outro: BigNumberish[];
   flags: number;
   sign_count: number;
-  ec_signature: { r: Uint256; s: Uint256 };
+  ec_signature: { r: Uint256; s: Uint256; y_parity: boolean };
   sha256_implementation: CairoCustomEnum;
 }
 
@@ -140,7 +140,11 @@ export class WebauthnOwner extends KeyPair {
       client_data_json_outro: CallData.compile(toCharArray(extraJson)),
       flags: Number(flags),
       sign_count: signCount,
-      ec_signature: { r: uint256.bnToUint256(signature.r), s: uint256.bnToUint256(signature.s) },
+      ec_signature: {
+        r: uint256.bnToUint256(signature.r),
+        s: uint256.bnToUint256(signature.s),
+        y_parity: signature.yParity,
+      },
       sha256_implementation: new CairoCustomEnum({
         Cairo0: sha256Impl ? undefined : {},
         Cairo1: sha256Impl ? {} : undefined,

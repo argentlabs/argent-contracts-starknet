@@ -6,21 +6,25 @@ import { Signature as EthersSignature, Wallet } from "ethers";
 import { CairoCustomEnum, CallData, hash, num, shortString, uint256 } from "starknet";
 import { KeyPair, SignerType, signerTypeToCustomEnum } from "../signers/signers";
 
-export type NormalizedSecpSignature = { r: bigint; s: bigint; y_parity: boolean };
+export type NormalizedSecpSignature = { r: bigint; s: bigint; yParity: boolean };
 export function normalizeSecpK1Signature(signature: EthersSignature): NormalizedSecpSignature {
   let s = BigInt(signature.s);
-  if (signature.yParity == 1) {
+  let yParity = signature.yParity == 1;
+  if (s >= secp256k1.CURVE.n / 2n) {
     s = secp256k1.CURVE.n - s;
+    yParity = !yParity;
   }
-  return { r: BigInt(signature.r), s, y_parity: false };
+  return { r: BigInt(signature.r), s, yParity: yParity };
 }
 
 export function normalizeSecpR1Signature(signature: RecoveredSignatureType): NormalizedSecpSignature {
   let s = signature.s;
-  if (signature.recovery) {
-    s = secp256r1.CURVE.n - s;
+  let yParity = signature.recovery != 0;
+  if (s >= secp256k1.CURVE.n / 2n) {
+    s = secp256k1.CURVE.n - s;
+    yParity = !yParity;
   }
-  return { r: signature.r, s: s, y_parity: false };
+  return { r: signature.r, s: s, yParity: false };
 }
 
 export class EthKeyPair extends KeyPair {
@@ -57,6 +61,7 @@ export class EthKeyPair extends KeyPair {
         pubkeyHash: this.address,
         r: uint256.bnToUint256(signature.r),
         s: uint256.bnToUint256(signature.s),
+        y_parity: signature.yParity,
       }),
     ]);
   }
@@ -98,6 +103,7 @@ export class Eip191KeyPair extends KeyPair {
         ethAddress: this.address,
         r: uint256.bnToUint256(signature.r),
         s: uint256.bnToUint256(signature.s),
+        y_parity: signature.yParity,
       }),
     ]);
   }
@@ -177,6 +183,7 @@ export class Secp256r1KeyPair extends KeyPair {
         pubkey: this.publicKey,
         r: uint256.bnToUint256(signature.r),
         s: uint256.bnToUint256(signature.s),
+        y_parity: signature.yParity,
       }),
     ]);
   }

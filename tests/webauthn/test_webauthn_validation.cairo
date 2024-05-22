@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{WebauthnSigner, is_valid_webauthn_signature, Secp256SignatureEven};
+use argent::signer::signer_signature::{WebauthnSigner, is_valid_webauthn_signature};
 use argent::signer::webauthn::{WebauthnSignature, Sha256Implementation};
 use argent::utils::bytes::{ByteArrayExt, SpanU8TryIntoFelt252};
 use starknet::secp256_trait::{Signature, Secp256Trait};
@@ -27,10 +27,10 @@ fn valid_signer() -> (felt252, WebauthnSigner, WebauthnSignature) {
         client_data_json_outro: array![].span(),
         flags: 0b00000101,
         sign_count: 0,
-        ec_signature: Secp256SignatureEven {
+        ec_signature: Signature {
             r: 0x27b78470673308c9e7ef6d9cb4fbf74b892f9e3826b515333d721cb8385cfb72,
-            s: Secp256Trait::<Secp256r1Point>::get_curve_size()
-                - 0x35c7ae175d75e09b1907f4232c88bfd69b7c9d7f32b4b2d392a6a95324a61f21,
+            s: 0x35c7ae175d75e09b1907f4232c88bfd69b7c9d7f32b4b2d392a6a95324a61f21,
+            y_parity: true,
         },
         sha256_implementation: Sha256Implementation::Cairo1,
     };
@@ -57,9 +57,10 @@ fn test_is_valid_webauthn_signature_with_extra_json() {
         client_data_json_outro: ",\"extraField\":\"random data\"}".into_bytes().span(),
         flags: 0b00010101,
         sign_count: 42,
-        ec_signature: Secp256SignatureEven {
+        ec_signature: Signature {
             r: 0x5cceed8562c156cb79e222afc5fd95b57a3c732795fb9b315582c57e8017f277,
             s: 0x3cedd77bd9069c8b250f6a435cce5a379257b18daf7c81136c5ca3075824b68f,
+            y_parity: false,
         },
         sha256_implementation: Sha256Implementation::Cairo1,
     };

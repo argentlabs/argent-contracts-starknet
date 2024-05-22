@@ -1,9 +1,10 @@
 use alexandria_encoding::base64::Base64UrlEncoder;
 use alexandria_math::sha256::{sha256};
-use argent::signer::signer_signature::{WebauthnSigner, Secp256SignatureEven};
+use argent::signer::signer_signature::{WebauthnSigner};
 use argent::utils::array_ext::ArrayExtTrait;
 use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, u32s_to_u256, u32s_to_u8s, u256_to_u8s};
 use argent::utils::hashing::{sha256_cairo0};
+use starknet::secp256_trait::Signature;
 
 /// @notice The webauthn signature that needs to be validated
 /// @param cross_origin From the client data JSON
@@ -18,7 +19,7 @@ struct WebauthnSignature {
     client_data_json_outro: Span<u8>,
     flags: u8,
     sign_count: u32,
-    ec_signature: Secp256SignatureEven,
+    ec_signature: Signature,
     sha256_implementation: Sha256Implementation,
 }
 

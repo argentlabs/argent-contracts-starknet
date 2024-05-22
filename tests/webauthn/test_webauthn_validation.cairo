@@ -17,10 +17,8 @@ fn localhost_rp() -> (ByteArray, u256) {
     (origin, rp_id_hash)
 }
 
-#[test]
-fn test_is_valid_webauthn_signature() {
+fn valid_signer() -> (felt252, WebauthnSigner, WebauthnSignature) {
     let (origin, rp_id_hash) = localhost_rp();
-
     let transaction_hash = 0x06fd6673287ba2e4d2975ad878dc26c0a989c549259d87a044a8d37bb9168bb4;
     let pubkey = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
@@ -36,7 +34,13 @@ fn test_is_valid_webauthn_signature() {
         },
         sha256_implementation: Sha256Implementation::Cairo1,
     };
+    (transaction_hash, signer, signature)
+}
 
+
+#[test]
+fn test_is_valid_webauthn_signature() {
+    let (transaction_hash, signer, mut signature) = valid_signer();
     let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
     assert!(is_valid, "invalid");
 }
@@ -62,4 +66,20 @@ fn test_is_valid_webauthn_signature_with_extra_json() {
 
     let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
     assert!(is_valid, "invalid");
+}
+
+#[test]
+#[should_panic(expected: "webauthn/nonpresent-user")]
+fn test_invalid_webauthn_signature_nonpresent_user() {
+    let (transaction_hash, signer, mut signature) = valid_signer();
+    signature.flags = 0b00000000;
+    is_valid_webauthn_signature(transaction_hash, signer, signature);
+}
+
+#[test]
+fn test_invalid_webauthn_signature_hash() {
+    let (transaction_hash, signer, mut signature) = valid_signer();
+    signature.ec_signature.r = 0xdeadbeef;
+    let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
+    assert!(!is_valid, "invalid");
 }

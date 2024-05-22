@@ -78,7 +78,7 @@ mod MockFutureArgentMultisig {
     impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
             let tx_info = get_tx_info().unbox();
-            self.assert_valid_signatures(calls.span(), tx_info.transaction_hash, tx_info.signature);
+            self.assert_valid_signatures(tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
 
@@ -151,9 +151,7 @@ mod MockFutureArgentMultisig {
 
     #[generate_trait]
     impl Private of PrivateTrait {
-        fn assert_valid_signatures(
-            self: @ContractState, calls: Span<Call>, execution_hash: felt252, signature: Span<felt252>
-        ) {
+        fn assert_valid_signatures(self: @ContractState, execution_hash: felt252, signature: Span<felt252>) {
             let valid = self
                 .multisig
                 .is_valid_signature_with_threshold(

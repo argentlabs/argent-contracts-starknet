@@ -136,9 +136,11 @@ mod external_recovery_component {
             let escape_config = self.escape_enabled.read();
             let current_escape = self.escape.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
-            assert(
-                current_escape.ready_at == 0 || current_escape_status == EscapeStatus::Expired, 'argent/ongoing-escape'
-            );
+            match current_escape_status {
+                EscapeStatus::None => (), // ignore
+                EscapeStatus::NotReady | EscapeStatus::Ready => panic_with_felt252('argent/ongoing-escape'),
+                EscapeStatus::Expired => self.escape.write(Default::default()),
+            }
 
             if is_enabled {
                 assert(security_period >= MIN_ESCAPE_PERIOD, 'argent/invalid-security-period');

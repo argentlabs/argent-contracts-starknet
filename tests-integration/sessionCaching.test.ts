@@ -331,8 +331,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
     sessionToken = {
       ...sessionToken,
       session_authorization: Array(10)
-        .fill(null)
-        .map(() => "1"),
+        .fill("1"),
     };
     await expectRevertWithErrorMessage("session/invalid-auth-len", () =>
       executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionToken)),

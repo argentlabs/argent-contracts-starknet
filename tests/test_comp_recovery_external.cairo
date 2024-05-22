@@ -112,7 +112,7 @@ fn replace_signer_call(remove: Signer, replace_with: Signer) -> EscapeCall {
 
 #[test]
 #[should_panic(expected: ('argent/ongoing-escape',))]
-fn test_toggle_with_not_ready_escape() {
+fn test_toggle__true_with_not_ready_escape() {
     let (component, _) = setup();
     let contract_address = component.contract_address;
 
@@ -129,7 +129,24 @@ fn test_toggle_with_not_ready_escape() {
 
 #[test]
 #[should_panic(expected: ('argent/ongoing-escape',))]
-fn test_toggle_with_ready_escape() {
+fn test_toggle_false_with_not_ready_escape() {
+    let (component, _) = setup();
+    let contract_address = component.contract_address;
+
+    start_prank(CheatTarget::All, GUARDIAN());
+    let call = replace_signer_call(SIGNER_1(), SIGNER_3());
+    component.trigger_escape(call);
+
+    let (_, escape_status) = component.get_escape();
+    assert_eq!(escape_status, EscapeStatus::NotReady, "should be NotReady");
+
+    start_prank(CheatTarget::One(contract_address), contract_address);
+    component.toggle_escape(false, (10 * 60), (10 * 60), contract_address_const::<42>());
+}
+
+#[test]
+#[should_panic(expected: ('argent/ongoing-escape',))]
+fn test_toggle_true_with_ready_escape() {
     let (component, _) = setup();
     let contract_address = component.contract_address;
 
@@ -146,7 +163,25 @@ fn test_toggle_with_ready_escape() {
 }
 
 #[test]
-fn test_toggle_with_expired_escape() {
+#[should_panic(expected: ('argent/ongoing-escape',))]
+fn test_toggle_false_with_ready_escape() {
+    let (component, _) = setup();
+    let contract_address = component.contract_address;
+
+    start_prank(CheatTarget::All, GUARDIAN());
+    let call = replace_signer_call(SIGNER_1(), SIGNER_3());
+    component.trigger_escape(call);
+
+    start_warp(CheatTarget::All, 10 * 60);
+    let (_, escape_status) = component.get_escape();
+    assert_eq!(escape_status, EscapeStatus::Ready, "should be Ready");
+
+    start_prank(CheatTarget::One(contract_address), contract_address);
+    component.toggle_escape(false, (10 * 60), (10 * 60), contract_address_const::<42>());
+}
+
+#[test]
+fn test_toggle_true_with_expired_escape() {
     let (component, _) = setup();
     let contract_address = component.contract_address;
 
@@ -161,6 +196,28 @@ fn test_toggle_with_expired_escape() {
 
     start_prank(CheatTarget::One(contract_address), contract_address);
     component.toggle_escape(true, (10 * 60), (10 * 60), contract_address_const::<42>());
+
+    let (escape, escape_status) = component.get_escape();
+    assert_eq!(escape_status, EscapeStatus::None, "should be None");
+    assert_eq!(escape.ready_at, 0, "Should be 0");
+}
+
+#[test]
+fn test_toggle_false_with_expired_escape() {
+    let (component, _) = setup();
+    let contract_address = component.contract_address;
+
+    start_prank(CheatTarget::All, GUARDIAN());
+    let call = replace_signer_call(SIGNER_1(), SIGNER_3());
+    component.trigger_escape(call);
+
+    start_warp(CheatTarget::All, 2 * 10 * 60);
+    let (escape, escape_status) = component.get_escape();
+    assert_eq!(escape_status, EscapeStatus::Expired, "should be Expired");
+    assert_ne!(escape.ready_at, 0, "Should not be 0");
+
+    start_prank(CheatTarget::One(contract_address), contract_address);
+    component.toggle_escape(false, 0, 0, contract_address_const::<0>());
 
     let (escape, escape_status) = component.get_escape();
     assert_eq!(escape_status, EscapeStatus::None, "should be None");

@@ -512,9 +512,9 @@ mod ArgentAccount {
             let current_escape = self._escape.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at);
             match current_escape_status {
-                EscapeStatus::None => {}, // ignore
+                EscapeStatus::None => (), // ignore
                 EscapeStatus::NotReady | EscapeStatus::Ready => panic_with_felt252('argent/ongoing-escape'),
-                EscapeStatus::Expired => self.reset_escape(),
+                EscapeStatus::Expired => self._escape.write(Default::default()),
             }
             self.escape_security_period.write(new_security_period);
             self.emit(EscapeSecurityPeriodChanged { escape_security_period: new_security_period });

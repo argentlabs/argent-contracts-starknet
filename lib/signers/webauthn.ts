@@ -11,7 +11,7 @@ import {
   shortString,
   uint256,
 } from "starknet";
-import { KeyPair, SignerType, signerTypeToCustomEnum } from "..";
+import { KeyPair, SignerType, normalizeSecpR1Signature, signerTypeToCustomEnum } from "..";
 
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
   `${prefix ? "0x" : ""}${[...new Uint8Array(buffer)].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
@@ -116,11 +116,8 @@ export class WebauthnOwner extends KeyPair {
 
     const signedHash = sha256(concatBytes(authenticatorData, clientDataHash));
 
-    const signature = secp256r1.sign(signedHash, this.pk);
-    let s = signature.s;
-    if (signature.recovery) {
-      s = secp256r1.CURVE.n - signature.s;
-    }
+    const signature = normalizeSecpR1Signature(secp256r1.sign(signedHash, this.pk));
+
     // console.log(`
     // let transaction_hash = ${transactionHash};
     // let pubkey = ${buf2hex(this.publicKey)};
@@ -143,7 +140,7 @@ export class WebauthnOwner extends KeyPair {
       client_data_json_outro: CallData.compile(toCharArray(extraJson)),
       flags: Number(flags),
       sign_count: signCount,
-      ec_signature: { r: uint256.bnToUint256(signature.r), s: uint256.bnToUint256(s) },
+      ec_signature: { r: uint256.bnToUint256(signature.r), s: uint256.bnToUint256(signature.s) },
       sha256_implementation: new CairoCustomEnum({
         Cairo0: sha256Impl ? undefined : {},
         Cairo1: sha256Impl ? {} : undefined,

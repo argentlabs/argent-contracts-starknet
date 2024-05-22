@@ -3,8 +3,25 @@ import { RecoveredSignatureType } from "@noble/curves/abstract/weierstrass";
 import { p256 as secp256r1 } from "@noble/curves/p256";
 import { secp256k1 } from "@noble/curves/secp256k1";
 import { Signature as EthersSignature, Wallet } from "ethers";
-import { CairoCustomEnum, CallData, Uint256, hash, num, shortString, uint256 } from "starknet";
+import { CairoCustomEnum, CallData, hash, num, shortString, uint256 } from "starknet";
 import { KeyPair, SignerType, signerTypeToCustomEnum } from "../signers/signers";
+
+export type NormalizedSecpSignature = { r: bigint; s: bigint; y_parity: boolean };
+export function normalizeSecpK1Signature(signature: EthersSignature): NormalizedSecpSignature {
+  let s = BigInt(signature.s);
+  if (signature.yParity == 1) {
+    s = secp256k1.CURVE.n - s;
+  }
+  return { r: BigInt(signature.r), s, y_parity: false };
+}
+
+export function normalizeSecpR1Signature(signature: RecoveredSignatureType): NormalizedSecpSignature {
+  let s = signature.s;
+  if (signature.recovery) {
+    s = secp256r1.CURVE.n - s;
+  }
+  return { r: signature.r, s: s, y_parity: false };
+}
 
 export class EthKeyPair extends KeyPair {
   pk: string;
@@ -33,20 +50,15 @@ export class EthKeyPair extends KeyPair {
   public async signRaw(messageHash: string): Promise<string[]> {
     const ethSigner = new Wallet(this.pk);
     messageHash = "0x" + padTo32Bytes(messageHash);
-    const signature = EthersSignature.from(ethSigner.signingKey.sign(messageHash));
-    let s = BigInt(signature.s);
-    if (signature.yParity == 1) {
-      s = secp256k1.CURVE.n - s;
-    }
+    const signature = normalizeSecpK1Signature(EthersSignature.from(ethSigner.signingKey.sign(messageHash)));
+
     return CallData.compile([
       signerTypeToCustomEnum(SignerType.Secp256k1, {
         pubkeyHash: this.address,
         r: uint256.bnToUint256(signature.r),
-        s: uint256.bnToUint256(s),
+        s: uint256.bnToUint256(signature.s),
       }),
     ]);
-    // const signature2 = EthersSignature.from(ethSigner.signingKey.sign(messageHash));
-    return ethereumSignatureType(this.address, signature);
   }
 }
 
@@ -77,16 +89,15 @@ export class Eip191KeyPair extends KeyPair {
   public async signRaw(messageHash: string): Promise<string[]> {
     const ethSigner = new Wallet(this.pk);
     messageHash = "0x" + padTo32Bytes(messageHash);
-    const signature = EthersSignature.from(ethSigner.signMessageSync(num.hexToBytes(messageHash)));
-    let s = BigInt(signature.s);
-    if (signature.yParity == 1) {
-      s = secp256k1.CURVE.n - s;
-    }
+    const signature = normalizeSecpK1Signature(
+      EthersSignature.from(ethSigner.signMessageSync(num.hexToBytes(messageHash))),
+    );
+
     return CallData.compile([
       signerTypeToCustomEnum(SignerType.Eip191, {
         ethAddress: this.address,
         r: uint256.bnToUint256(signature.r),
-        s: uint256.bnToUint256(s),
+        s: uint256.bnToUint256(signature.s),
       }),
     ]);
   }
@@ -160,38 +171,15 @@ export class Secp256r1KeyPair extends KeyPair {
 
   public async signRaw(messageHash: string): Promise<string[]> {
     messageHash = padTo32Bytes(messageHash);
-    const signature = secp256r1.sign(messageHash, this.pk);
-
-    return secp256r1SignatureType(this.publicKey, signature);
+    const signature = normalizeSecpR1Signature(secp256r1.sign(messageHash, this.pk));
+    return CallData.compile([
+      signerTypeToCustomEnum(SignerType.Secp256r1, {
+        pubkey: this.publicKey,
+        r: uint256.bnToUint256(signature.r),
+        s: uint256.bnToUint256(signature.s),
+      }),
+    ]);
   }
-}
-
-function ethereumSignatureType(pubkeyHash: bigint, signature: EthersSignature) {
-  let s = BigInt(signature.s);
-  if (signature.yParity == 1) {
-    s = secp256k1.CURVE.n - s;
-  }
-  return CallData.compile([
-    signerTypeToCustomEnum(SignerType.Secp256k1, {
-      pubkeyHash,
-      r: uint256.bnToUint256(signature.r),
-      s: uint256.bnToUint256(s),
-    }),
-  ]);
-}
-
-function secp256r1SignatureType(pubkeyHash: Uint256, signature: RecoveredSignatureType) {
-  let s = signature.s;
-  if (signature.recovery) {
-    s = secp256r1.CURVE.n - signature.s;
-  }
-  return CallData.compile([
-    signerTypeToCustomEnum(SignerType.Secp256r1, {
-      pubkeyHash,
-      r: uint256.bnToUint256(signature.r),
-      s: uint256.bnToUint256(s),
-    }),
-  ]);
 }
 
 function padTo32Bytes(hexString: string): string {

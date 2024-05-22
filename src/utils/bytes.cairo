@@ -145,8 +145,8 @@ fn u32s_to_u8s(mut words: Span<felt252>) -> Span<u8> {
         };
     output.span()
 }
-
-fn u8s_to_u32s(mut bytes: Span<u8>) -> Array<u32> {
+// Takes an array of u8s and returns an array of u32s, padding the end with 0s if necessary
+fn u8s_to_u32s_pad_end(mut bytes: Span<u8>) -> Array<u32> {
     let mut output = array![];
     while let Option::Some(byte1) = bytes
         .pop_front() {

@@ -39,7 +39,6 @@ struct StarkNetDomain {
 
 const STARKNET_DOMAIN_TYPE_HASH_REV_0: felt252 = selector!("StarkNetDomain(name:felt,version:felt,chainId:felt)");
 
-// impl StructHashStarknetDomain<-IStructHash<StarkNetDomain>> of IStarknetDomainHash<StarkNetDomain>
 impl StructHashStarkNetDomain of IStructHashRev0<StarkNetDomain> {
     fn get_struct_hash_rev_0(self: @StarkNetDomain) -> felt252 {
         PedersenTrait::new(0).update_with(STARKNET_DOMAIN_TYPE_HASH_REV_0).update_with(*self).update_with(4).finalize()

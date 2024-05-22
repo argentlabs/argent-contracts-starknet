@@ -147,13 +147,14 @@ fn u32s_to_u8s(mut words: Span<felt252>) -> Span<u8> {
 }
 
 fn u8s_to_u32s(mut bytes: Span<u8>) -> Array<u32> {
+    assert!(bytes.len() % 4 == 0, "u8s_to_u32s: input must be a multiple of 4 elements long");
     let mut output = array![];
     while let Option::Some(byte1) = bytes
         .pop_front() {
             let byte1 = *byte1;
-            let byte2 = *bytes.pop_front().unwrap_or_default();
-            let byte3 = *bytes.pop_front().unwrap_or_default();
-            let byte4 = *bytes.pop_front().unwrap_or_default();
+            let byte2 = *bytes.pop_front().unwrap();
+            let byte3 = *bytes.pop_front().unwrap();
+            let byte4 = *bytes.pop_front().unwrap();
             output.append(0x100_00_00 * byte1.into() + 0x100_00 * byte2.into() + 0x100 * byte3.into() + byte4.into());
         };
     output

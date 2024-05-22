@@ -69,6 +69,12 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: 
     } else {
         json.append('}');
     }
+    // Append padding to make the length a multiple of 4
+    let mut rest = 4 - json.len() % 4;
+    while rest != 0 {
+        json.append(0);
+        rest -= 1;
+    };
     json.span()
 }
 
@@ -95,6 +101,13 @@ fn get_webauthn_hash_cairo0(hash: felt252, signer: WebauthnSigner, signature: We
     let client_data_hash = u32s_to_u8s(sha256_cairo0(client_data_json)?);
     let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
     message.append_all(client_data_hash);
+
+    // Append padding to make the length a multiple of 4
+    let mut rest = 4 - message.len() % 4;
+    while rest != 0 {
+        message.append(0);
+        rest -= 1;
+    };
     Option::Some(u32s_to_u256(sha256_cairo0(message.span())?))
 }
 

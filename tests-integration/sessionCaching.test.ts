@@ -62,12 +62,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
       const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
-      if (useCaching) {
-        // check that the session is cached
-        await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.true;
-      } else {
-        await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
-      }
+        await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.equal(useCaching);
 
       await account.waitForTransaction(transaction_hash);
       await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);

@@ -9,6 +9,10 @@ fn set_escape_security_period() {
     let account = initialize_account();
     let default_escape_security_period = account.get_escape_security_period();
     assert_eq!(default_escape_security_period, consteval_int!(7 * 24 * 60 * 60), "Default value incorrect");
+
+    let (_, status) = account.get_escape_and_status();
+    assert_eq!(status, EscapeStatus::None, "Should be EscapeStatus::None");
+
     let mut spy = spy_events(SpyOn::One(account.contract_address));
     account.set_escape_security_period(4200);
     let new_escape_security_period = account.get_escape_security_period();
@@ -19,6 +23,51 @@ fn set_escape_security_period() {
     );
     spy.assert_emitted(@array![(account.contract_address, event)]);
     assert_eq!(spy.events.len(), 0, "excess events");
+}
+
+#[test]
+#[should_panic(expected: ('argent/ongoing-escape',))]
+fn set_escape_security_period_with_not_ready_escape() {
+    let account = initialize_account();
+    account.trigger_escape_guardian(Option::None);
+
+    let (_, status) = account.get_escape_and_status();
+    assert_eq!(status, EscapeStatus::NotReady, "Should be EscapeStatus::NotReady");
+
+    account.set_escape_security_period(4200);
+}
+
+
+#[test]
+#[should_panic(expected: ('argent/ongoing-escape',))]
+fn set_escape_security_period_with_ready_escape() {
+    let account = initialize_account();
+    account.trigger_escape_guardian(Option::None);
+
+    start_warp(CheatTarget::One(account.contract_address), consteval_int!(7 * 24 * 60 * 60));
+    let (_, status) = account.get_escape_and_status();
+    assert_eq!(status, EscapeStatus::Ready, "Should be EscapeStatus::Ready");
+
+    account.set_escape_security_period(4200);
+}
+
+#[test]
+fn set_escape_security_period_with_expired_escape() {
+    let account = initialize_account();
+    account.trigger_escape_guardian(Option::None);
+
+    start_warp(CheatTarget::One(account.contract_address), consteval_int!(7 * 24 * 60 * 60 * 2));
+    let (escape, status) = account.get_escape_and_status();
+    assert_eq!(status, EscapeStatus::Expired, "Should be EscapeStatus::Expired");
+    assert_ne!(escape.ready_at, 0, "Should not be 0");
+
+    account.set_escape_security_period(4200);
+
+    let new_escape_security_period = account.get_escape_security_period();
+    assert_eq!(new_escape_security_period, 4200, "Escape security period should be 4200");
+    let (new_escape, status) = account.get_escape_and_status();
+    assert_eq!(status, EscapeStatus::None, "Should be EscapeStatus::None");
+    assert_eq!(new_escape.ready_at, 0, "New escape ready_at should be 0");
 }
 
 #[test]

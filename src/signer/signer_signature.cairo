@@ -7,7 +7,8 @@ use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, PoseidonTrait};
 use starknet::SyscallResultTrait;
 use starknet::secp256_trait::{
-    Secp256PointTrait, Secp256Trait, Signature as Secp256Signature, recover_public_key, is_valid_signature
+    Secp256PointTrait, Secp256Trait, Signature as Secp256Signature, recover_public_key, is_valid_signature,
+    is_signature_entry_valid
 };
 use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::{Secp256r1Point, Secp256r1Impl};
@@ -306,20 +307,18 @@ fn is_valid_secp256k1_signature(hash: u256, signer: Secp256k1Signer, signature: 
 
 #[inline(always)]
 fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: Secp256Signature) -> bool {
+    // `recover_public_key` accepts invalid values for r and s, so we need to check them first
+    assert(is_signature_entry_valid::<Secp256r1Point>(signature.r), 'argent/invalid-r-value');
+    assert(is_signature_entry_valid::<Secp256r1Point>(signature.s), 'argent/invalid-s-value');
+
     assert(signature.s <= Secp256Trait::<Secp256r1Point>::get_curve_size() / 2, 'argent/malleable-signature');
-    // let pubkey_point_1 = Secp256r1Impl::secp256_ec_get_point_from_x_syscall(signer.pubkey.into(), false)
-    //             .unwrap_syscall()
-    //             .unwrap();
-    // let pubkey_point_2 = Secp256r1Impl::secp256_ec_get_point_from_x_syscall(signer.pubkey.into(), true)
-    //         .unwrap_syscall()
-    //         .unwrap();
-    // is_valid_signature::<Secp256r1Point>(hash, signature.r, signature.s, pubkey_point_1) ||  is_valid_signature::<Secp256r1Point>(hash, signature.r, signature.s, pubkey_point_2) 
     let recovered = recover_public_key::<Secp256r1Point>(hash, signature).expect('argent/invalid-sig-format');
     let (recovered_signer, _) = recovered.get_coordinates().expect('argent/invalid-sig-format');
     if (recovered_signer == signer.pubkey.into()) {
         return true;
     }
-    (Secp256Trait::<Secp256r1Point>::get_curve_size() - recovered_signer) == signer.pubkey.into()
+    let recovered_signer_opposite = (Secp256Trait::<Secp256r1Point>::get_curve_size() - recovered_signer);
+    recovered_signer_opposite == signer.pubkey.into()
 }
 
 #[inline(always)]

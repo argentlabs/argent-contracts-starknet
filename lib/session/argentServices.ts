@@ -1,17 +1,13 @@
+import { Account, ArraySignatureType, Call, InvocationsSignerDetails, ec, hash, num, typedData } from "starknet";
 import {
-  Account,
-  ArraySignatureType,
-  Call,
-  InvocationsSignerDetails,
-  RPC,
-  V2InvocationsSignerDetails,
-  ec,
-  hash,
-  num,
-  transaction,
-  typedData,
-} from "starknet";
-import { OffChainSession, OutsideExecution, StarknetKeyPair, getSessionTypedData, getTypedData, manager } from "..";
+  OffChainSession,
+  OutsideExecution,
+  StarknetKeyPair,
+  calculateTransactionHash,
+  getSessionTypedData,
+  getTypedData,
+  manager,
+} from "..";
 
 export class ArgentX {
   constructor(
@@ -31,7 +27,7 @@ export class BackendService {
 
   public async signTxAndSession(
     calls: Call[],
-    transactionsDetail: InvocationsSignerDetails,
+    transactionDetail: InvocationsSignerDetails,
     sessionTokenToSign: OffChainSession,
     cacheAuthorization: boolean,
   ): Promise<bigint[]> {
@@ -49,27 +45,16 @@ export class BackendService {
       throw new Error("Call not allowed by backend");
     }
 
-    const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
-    let msgHash;
-    if (Object.values(RPC.ETransactionVersion2).includes(transactionsDetail.version as any)) {
-      const det = transactionsDetail as V2InvocationsSignerDetails;
-      msgHash = hash.calculateInvokeTransactionHash({
-        ...det,
-        senderAddress: det.walletAddress,
-        compiledCalldata,
-        version: det.version,
-      });
-    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionsDetail.version as any)) {
-      throw Error("not implemented");
-    } else {
-      throw Error("unsupported signTransaction version");
-    }
-
+    const transactionHash = calculateTransactionHash(transactionDetail, calls);
     const sessionMessageHash = typedData.getMessageHash(
       await getSessionTypedData(sessionTokenToSign),
-      transactionsDetail.walletAddress,
+      transactionDetail.walletAddress,
     );
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([msgHash, sessionMessageHash, +cacheAuthorization]);
+    const sessionWithTxHash = hash.computePoseidonHashOnElements([
+      transactionHash,
+      sessionMessageHash,
+      +cacheAuthorization,
+    ]);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
     return [signature.r, signature.s];
   }

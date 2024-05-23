@@ -2,6 +2,7 @@ import {
   Abi,
   Account,
   AllowArray,
+  ArraySignatureType,
   CairoOption,
   CairoOptionVariant,
   Call,
@@ -10,18 +11,24 @@ import {
   DeployAccountContractPayload,
   DeployContractResponse,
   GetTransactionReceiptResponse,
+  InvocationsSignerDetails,
   InvokeFunctionResponse,
   RPC,
   RawCalldata,
+  Signature,
   UniversalDetails,
+  V2InvocationsSignerDetails,
+  V3InvocationsSignerDetails,
   hash,
   num,
+  stark,
+  transaction,
   uint256,
 } from "starknet";
 import { manager } from "./manager";
 import { ensureSuccess } from "./receipts";
 import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
-import { ArgentSigner, KeyPair, randomStarknetKeyPair } from "./signers/signers";
+import { ArgentSigner, KeyPair, RawSigner, randomStarknetKeyPair } from "./signers/signers";
 import { ethAddress, strkAddress } from "./tokens";
 
 export class ArgentAccount extends Account {
@@ -277,6 +284,80 @@ export async function upgradeAccount(
     { maxFee: 1e14 },
   );
   return await ensureSuccess(await manager.waitForTransaction(transaction_hash));
+}
+
+export async function executeWithCustomSig(
+  account: ArgentAccount,
+  transactions: AllowArray<Call>,
+  signature: ArraySignatureType,
+  transactionsDetail: UniversalDetails = {},
+): Promise<InvokeFunctionResponse> {
+  const signer = new (class extends RawSigner {
+    public async signRaw(messageHash: string): Promise<string[]> {
+      return signature;
+    }
+  })();
+  const newAccount = new ArgentAccount(
+    manager,
+    account.address,
+    signer,
+    account.cairoVersion,
+    account.transactionVersion,
+  );
+
+  return await newAccount.execute(transactions, undefined, transactionsDetail);
+}
+
+export async function getSignerDetails(account: ArgentAccount, calls: Call[]): Promise<InvocationsSignerDetails> {
+  const newAccount = new ArgentAccount(
+    manager,
+    account.address,
+    account.signer,
+    account.cairoVersion,
+    account.transactionVersion,
+  );
+  const customSigner = new (class extends RawSigner {
+    public signerDetails?: InvocationsSignerDetails;
+    public async signTransaction(calls: Call[], signerDetails: InvocationsSignerDetails): Promise<Signature> {
+      this.signerDetails = signerDetails;
+      throw Error("Should not execute");
+    }
+    public async signRaw(messageHash: string): Promise<string[]> {
+      throw Error("Not implemented");
+    }
+  })();
+  newAccount.signer = customSigner;
+  try {
+    await newAccount.execute(calls, undefined);
+    throw Error("Should not execute");
+  } catch (customError) {
+    return customSigner.signerDetails!;
+  }
+}
+
+export function calculateTransactionHash(transactionDetail: InvocationsSignerDetails, calls: Call[]): string {
+  const compiledCalldata = transaction.getExecuteCalldata(calls, transactionDetail.cairoVersion);
+  let transactionHash;
+  if (Object.values(RPC.ETransactionVersion2).includes(transactionDetail.version as any)) {
+    const transactionDetailV2 = transactionDetail as V2InvocationsSignerDetails;
+    transactionHash = hash.calculateInvokeTransactionHash({
+      ...transactionDetailV2,
+      senderAddress: transactionDetailV2.walletAddress,
+      compiledCalldata,
+    });
+  } else if (Object.values(RPC.ETransactionVersion3).includes(transactionDetail.version as any)) {
+    const transactionDetailV3 = transactionDetail as V3InvocationsSignerDetails;
+    transactionHash = hash.calculateInvokeTransactionHash({
+      ...transactionDetailV3,
+      senderAddress: transactionDetailV3.walletAddress,
+      compiledCalldata,
+      nonceDataAvailabilityMode: stark.intDAM(transactionDetailV3.nonceDataAvailabilityMode),
+      feeDataAvailabilityMode: stark.intDAM(transactionDetailV3.feeDataAvailabilityMode),
+    });
+  } else {
+    throw Error("unsupported transaction version");
+  }
+  return transactionHash;
 }
 
 export async function fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {

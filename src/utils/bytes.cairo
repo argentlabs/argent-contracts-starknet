@@ -1,3 +1,4 @@
+/// @dev Leading zeros are ignored and the input must be at most 32 bytes long (both [1] and [0, 1] will be casted to 1)
 impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
     fn try_into(mut self: Span<u8>) -> Option<u256> {
         if self.len() < 32 {
@@ -13,6 +14,7 @@ impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
     }
 }
 
+/// @dev Leading zeros are ignored and the input must be at most 32 bytes long (both [1] and [0, 1] will be casted to 1)
 impl SpanU8TryIntoFelt252 of TryInto<Span<u8>, felt252> {
     fn try_into(mut self: Span<u8>) -> Option<felt252> {
         if self.len() < 32 {

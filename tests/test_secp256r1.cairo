@@ -2,26 +2,25 @@ use argent::signer::signer_signature::{
     SignerSignature, SignerSignatureTrait, Secp256r1Signer, Secp256Signature, SECP_256_R1_HALF
 };
 use starknet::secp256_trait::{Secp256PointTrait, Secp256Trait};
-use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
 
-const pubkey: u256 = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
+const pubkey: u256 = 0xbde58cc7c321604ffec0de496616a6eb88481f6438900dec19167a4322d93ec0;
 
 const message_hash_low_even: felt252 = 0x100009c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403000000a;
-const sig_r_low_even: u256 = 0xe5cf7bb34c524a31cba96652d5f7ed6fe10aff551b001a27120fa33f2d388003;
-const sig_s_low_even: u256 = 0x25a09d693f9144bc3de17cc52aa55cbc1f3a45a4541d51c76a534a84c907d5d8;
+const sig_r_low_even: u256 = 0x7b2db604cc84573075d9c05c17b554698fd58b533b36f6ff1caddf0fbb736444;
+const sig_s_low_even: u256 = 0x3d682fa0fe6acc66881b9bee6c3764c9dcf7c63953da5c40df6cf7a73dfb2d68;
 
-const message_hash_low_odd: felt252 = 0x100009c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403000000f;
-const sig_r_low_odd: u256 = 0x30a2cc1195f766d2de35b106d70b78d5b99477c326f070b1abe9095dd0ca4c7f;
-const sig_s_low_odd: u256 = 0x7069099721bc75387ae078a636f6b553a915dff0ea6002d3e1aed697ef08b543;
+const message_hash_low_odd: felt252 = 0x100009c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea954030000002;
+const sig_r_low_odd: u256 = 0x97f999dbe4744facf223aa668cedeb0db43349941e0ddc7329ea2f44a3abf963;
+const sig_s_low_odd: u256 = 0xcf565cf05762c8096fbe373c844cae1923157bf4f17fa034fa22935f1903fb;
 
-const message_hash_high_even: felt252 = 0x100009c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea954030000000;
-const sig_r_high_even: u256 = 0xe87de4fb5143e7c360239db80c4b02bf340669435aec38038d97f47624dcbac2;
-const sig_s_high_even: u256 = 0x6abeb3a0ca4f584bcf43b533b97c8c64c3a779eb869b43897558d85d7d57a56b;
+const message_hash_high_even: felt252 = 0x100009c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea954030000001;
+const sig_r_high_even: u256 = 0x145b7eef58bc8eba4cca59d0f0fef3f1889031ce077b26d9b791e6d80d234ad7;
+const sig_s_high_even: u256 = 0x7ebcd91ea1ad647ecc99b67135f7f136c198eeb13f690c5be91d8142a18a1509;
 
-const message_hash_high_odd: felt252 = 0x100009c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea954030000001;
-const sig_r_high_odd: u256 = 0xd3a644568d134d2d7651b278dd60b85e3a5b59b5d1d0177c23d73ac6e8177a6d;
-const sig_s_high_odd: u256 = 0x35fcf10f3d37fe1b3842e24fe8199f7b592cbe16203ae590d8d5ca78d4335efd;
+const message_hash_high_odd: felt252 = 0x100009c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea954030000005;
+const sig_r_high_odd: u256 = 0x787293332b1d654aaf0d01ffb7969079f317cd60e968e11a485149e2ca0bf981;
+const sig_s_high_odd: u256 = 0x56dfd723ec56c6f85cdaa82be0125a2c2e2bb602a4c61a46e3340db7b2ab76c;
 
 
 fn validateR1Signature(r: u256, s: u256, y_parity: bool, message_hash: felt252) -> bool {
@@ -30,8 +29,6 @@ fn validateR1Signature(r: u256, s: u256, y_parity: bool, message_hash: felt252) 
     );
     sig.is_valid_signature(message_hash)
 }
-
-// (Secp256Trait::<Secp256r1Point>::get_curve_size() - sig_s
 
 #[test]
 fn test_SECP_256_R1_HALF() {

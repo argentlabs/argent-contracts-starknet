@@ -190,7 +190,7 @@ export class Secp256r1KeyPair extends KeyPair {
   }
 }
 
-function padTo32Bytes(hexString: string): string {
+export function padTo32Bytes(hexString: string): string {
   if (hexString.length < 66) {
     hexString = "0".repeat(66 - hexString.length) + hexString.slice(2);
   }

@@ -313,16 +313,10 @@ fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: 
     // `recover_public_key` accepts invalid values for r and s, so we need to check them first
     assert(is_signature_entry_valid::<Secp256r1Point>(signature.r), 'argent/invalid-r-value');
     assert(is_signature_entry_valid::<Secp256r1Point>(signature.s), 'argent/invalid-s-value');
-
     assert(signature.s <= SECP_256_R1_HALF, 'argent/malleable-signature');
     let recovered = recover_public_key::<Secp256r1Point>(hash, signature).expect('argent/invalid-sig-format');
     let (recovered_signer, _) = recovered.get_coordinates().expect('argent/invalid-sig-format');
-    if (recovered_signer == signer.pubkey.into()) {
-        return true;
-    }
-    return false;
-// let recovered_signer_opposite = (Secp256Trait::<Secp256r1Point>::get_curve_size() - recovered_signer);
-// recovered_signer_opposite == signer.pubkey.into()
+    recovered_signer == signer.pubkey.into()
 }
 
 #[inline(always)]

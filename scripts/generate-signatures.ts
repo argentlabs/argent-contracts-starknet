@@ -4,10 +4,10 @@ import { Signature, Wallet, id } from "ethers";
 import { num } from "starknet";
 import { StarknetKeyPair } from "../lib";
 
-const hash = "0x02d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";
-
 async function calculate_account_signature_with_eth() {
   // Ethers requires hash to be pair length
+  const hash = "0x02d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";
+
   const owner = new StarknetKeyPair(1n);
   const ethSigner = new Wallet(id("9n"));
   const [owner_r, owner_s] = await owner.signRaw(hash);
@@ -28,22 +28,49 @@ async function calculate_account_signature_with_eth() {
 
 `);
 }
-async function calculate_r1_signature() {
-  const privateKey = 1n;
 
-  const signature = secp256r1.sign(hash.substring(2), privateKey);
+const r1PrivateKey = 1n;
 
-  const publicKeyArray = secp256r1.getPublicKey(privateKey).slice(1);
+async function calculate_r1_signature(hash: string, expectedLowS: boolean, expectedYParity: boolean) {
+  // const hash = "0x02d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8";
+
+  // const randomBytes = "0x"+ [...Array(256/8)].map(() => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');
+  // const hash = randomBytes;
+
+  const signature = secp256r1.sign(hash.substring(2), r1PrivateKey);
+  let yParity = signature.recovery !== 0;
+  const lowS = signature.s <= secp256r1.CURVE.n / 2n;
+  if (expectedLowS !== lowS) {
+    throw new Error(`Hash didn't produce a lowS=${lowS} signature`);
+  }
+
+  let s = signature.s;
+  if (!lowS) {
+    s = secp256r1.CURVE.n - s;
+    yParity = !yParity;
+  }
+
+  if (expectedYParity !== yParity) {
+    throw new Error(`Hash didn't produce a yParity=${expectedYParity} signature`);
+  }
+
+  const suffix = (lowS ? "low" : "high") + "_" + (yParity ? "even" : "odd");
+
   console.log(`
-    calculate_r1_signature:
-    const message_hash: felt252 = ${num.toHex(hash)};
-    const pubkey: u256 = ${"0x" + utils.bytesToHex(publicKeyArray)};
-    const sig_r: u256 = ${num.toHex(signature.r)};
-    const sig_s: u256 = ${num.toHex(signature.s)};
-    const sig_y_parity: bool = ${signature.recovery !== 0};
-
+    const message_hash_${suffix}: felt252 = ${num.toHex(hash)};
+    const sig_r_${suffix}: u256 = ${num.toHex(signature.r)};
+    const sig_s_${suffix}: u256 = ${num.toHex(s)};
 `);
+
+  // console.log(`lowS: ${lowS}, yParity: ${yParity}, hash: ${hash}`);
 }
 
 await calculate_account_signature_with_eth();
-await calculate_r1_signature();
+console.log(`
+    calculate_r1_signature:
+    const pubkey: u256 = ${"0x" + utils.bytesToHex(secp256r1.getPublicKey(r1PrivateKey).slice(1))};
+`);
+await calculate_r1_signature("0x0100009c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403000000a", true, true);
+await calculate_r1_signature("0x0100009c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403000000f", true, false);
+await calculate_r1_signature("0x0100009c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea954030000000", false, true);
+await calculate_r1_signature("0x0100009c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea954030000001", false, false);

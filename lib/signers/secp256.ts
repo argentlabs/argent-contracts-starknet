@@ -139,6 +139,7 @@ export class EstimateEip191KeyPair extends KeyPair {
         ethAddress: this.address,
         r: uint256.bnToUint256("0x1556a70d76cc452ae54e83bb167a9041f0d062d000fa0dcb42593f77c544f647"),
         s: uint256.bnToUint256("0x1643d14dbd6a6edc658f4b16699a585181a08dba4f6d16a9273e0e2cbed622da"),
+        y_parity: false,
       }),
     ]);
   }

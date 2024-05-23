@@ -301,7 +301,7 @@ fn is_valid_starknet_signature(hash: felt252, signer: StarknetSigner, signature:
 
 #[inline(always)]
 fn is_valid_secp256k1_signature(hash: u256, signer: Secp256k1Signer, signature: Secp256Signature) -> bool {
-    assert(signature.s < Secp256Trait::<Secp256k1Point>::get_curve_size() / 2, 'argent/malleable-signature');
+    assert(signature.s <= Secp256Trait::<Secp256k1Point>::get_curve_size() / 2, 'argent/malleable-signature');
     is_eth_signature_valid(hash, signature, signer.pubkey_hash.into()).is_ok()
 }
 
@@ -317,8 +317,9 @@ fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: 
     if (recovered_signer == signer.pubkey.into()) {
         return true;
     }
-    let recovered_signer_opposite = (Secp256Trait::<Secp256r1Point>::get_curve_size() - recovered_signer);
-    recovered_signer_opposite == signer.pubkey.into()
+    return false;
+// let recovered_signer_opposite = (Secp256Trait::<Secp256r1Point>::get_curve_size() - recovered_signer);
+// recovered_signer_opposite == signer.pubkey.into()
 }
 
 #[inline(always)]

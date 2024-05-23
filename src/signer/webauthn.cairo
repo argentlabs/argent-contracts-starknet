@@ -11,7 +11,7 @@ use starknet::secp256_trait::Signature;
 /// @param client_data_json_outro The rest of the JSON contents coming after the 'crossOrigin' value
 /// @param flags From authenticator data
 /// @param sign_count From authenticator data
-/// @param ec_signature The signature as {r, s} values
+/// @param ec_signature The signature as {r, s, y_parity}
 /// @param sha256_implementation The implementation of the sha256 hash 
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSignature {

@@ -1,6 +1,5 @@
 use argent::signer::eip191::{calculate_eip191_hash, is_valid_eip191_signature};
-use argent::signer::signer_signature::{SignerSignature, SignerSignatureTrait, Eip191Signer};
-use starknet::secp256_trait::{Signature};
+use argent::signer::signer_signature::{SignerSignature, SignerSignatureTrait, Eip191Signer, Secp256Signature};
 use super::setup::constants::{tx_hash};
 
 const eth_address: felt252 = 0x3da5e1F7B6D63E9982A6c26D8eCFd8219654E087;
@@ -19,7 +18,7 @@ fn test_eip_191_verification() {
     let sig = SignerSignature::Eip191(
         (
             Eip191Signer { eth_address: eth_address.try_into().unwrap(), },
-            Signature { r: sig_r, s: sig_s, y_parity: sig_y_parity }
+            Secp256Signature { r: sig_r, s: sig_s, y_parity: sig_y_parity }
         )
     );
     let validation_result = sig.is_valid_signature(tx_hash);

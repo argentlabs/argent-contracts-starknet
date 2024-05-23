@@ -15,6 +15,7 @@ mod test_multisig_remove_signers;
 mod test_multisig_replace_signer;
 mod test_multisig_signing;
 mod test_offchain_hashing;
+mod test_secp256r1;
 mod test_transaction_version;
 
 mod setup {

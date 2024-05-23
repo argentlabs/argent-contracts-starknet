@@ -1,5 +1,8 @@
-use argent::signer::signer_signature::{SignerSignature, SignerSignatureTrait, Secp256r1Signer, Secp256Signature};
+use argent::signer::signer_signature::{
+    SignerSignature, SignerSignatureTrait, Secp256r1Signer, Secp256Signature, SECP_256_R1_HALF
+};
 use starknet::secp256_trait::{Secp256PointTrait, Secp256Trait};
+use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
 
 const message_hash: felt252 = 0x2d6479c0758efbb5aa07d35ed5454d728637fceab7ba544d3ea95403a5630a8;
@@ -14,6 +17,11 @@ fn validateR1Signature(r: u256, s: u256, y_parity: bool) -> bool {
         (Secp256r1Signer { pubkey: pubkey.try_into().unwrap() }, Secp256Signature { r, s, y_parity })
     );
     sig.is_valid_signature(message_hash)
+}
+
+#[test]
+fn test_SECP_256_R1_HALF() {
+    assert!(SECP_256_R1_HALF == Secp256Trait::<Secp256r1Point>::get_curve_size() / 2,);
 }
 
 #[test]

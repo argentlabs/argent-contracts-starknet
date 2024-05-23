@@ -21,6 +21,9 @@ const SECP256R1_SIGNER_TYPE: felt252 = 'Secp256r1 Signer';
 const EIP191_SIGNER_TYPE: felt252 = 'Eip191 Signer';
 const WEBAUTHN_SIGNER_TYPE: felt252 = 'Webauthn Signer';
 
+const SECP_256_R1_HALF: u256 = 115792089210356248762697446949407573529996955224135760342422259061068512044369 / 2;
+const SECP_256_K1_HALF: u256 = 115792089237316195423570985008687907852837564279074904382605163141518161494337 / 2;
+
 
 /// @notice The type of the signer that this version of the accounts supports
 #[derive(Drop, Copy, PartialEq, Serde, Default)]
@@ -242,7 +245,7 @@ impl SignerSignatureImpl of SignerSignatureTrait {
             SignerSignature::Starknet((signer, signature)) => is_valid_starknet_signature(hash, signer, signature),
             SignerSignature::Secp256k1((
                 signer, signature
-            )) => is_valid_secp256k1_signature(hash.into(), signer, signature),
+            )) => is_valid_secp256k1_signature(hash.into(), signer.pubkey_hash.into(), signature),
             SignerSignature::Secp256r1((
                 signer, signature
             )) => is_valid_secp256r1_signature(hash.into(), signer, signature),
@@ -300,9 +303,9 @@ fn is_valid_starknet_signature(hash: felt252, signer: StarknetSigner, signature:
 }
 
 #[inline(always)]
-fn is_valid_secp256k1_signature(hash: u256, signer: Secp256k1Signer, signature: Secp256Signature) -> bool {
-    assert(signature.s <= Secp256Trait::<Secp256k1Point>::get_curve_size() / 2, 'argent/malleable-signature');
-    is_eth_signature_valid(hash, signature, signer.pubkey_hash.into()).is_ok()
+fn is_valid_secp256k1_signature(hash: u256, pubkey_hash: EthAddress, signature: Secp256Signature) -> bool {
+    assert(signature.s <= SECP_256_K1_HALF, 'argent/malleable-signature');
+    is_eth_signature_valid(hash, signature, pubkey_hash).is_ok()
 }
 
 #[inline(always)]
@@ -311,7 +314,7 @@ fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: 
     assert(is_signature_entry_valid::<Secp256r1Point>(signature.r), 'argent/invalid-r-value');
     assert(is_signature_entry_valid::<Secp256r1Point>(signature.s), 'argent/invalid-s-value');
 
-    assert(signature.s <= Secp256Trait::<Secp256r1Point>::get_curve_size() / 2, 'argent/malleable-signature');
+    assert(signature.s <= SECP_256_R1_HALF, 'argent/malleable-signature');
     let recovered = recover_public_key::<Secp256r1Point>(hash, signature).expect('argent/invalid-sig-format');
     let (recovered_signer, _) = recovered.get_coordinates().expect('argent/invalid-sig-format');
     if (recovered_signer == signer.pubkey.into()) {

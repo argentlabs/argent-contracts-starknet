@@ -6,7 +6,9 @@ use ecdsa::check_ecdsa_signature;
 use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, PoseidonTrait};
 use starknet::SyscallResultTrait;
-use starknet::secp256_trait::{Secp256PointTrait, Signature as Secp256Signature, recover_public_key};
+use starknet::secp256_trait::{
+    Secp256PointTrait, Signature as Secp256Signature, recover_public_key, is_signature_entry_valid
+};
 use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
 use starknet::{EthAddress, eth_signature::is_eth_signature_valid};
@@ -302,6 +304,9 @@ fn is_valid_secp256k1_signature(hash: u256, signer: Secp256k1Signer, signature: 
 
 #[inline(always)]
 fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: Secp256Signature) -> bool {
+    // `recover_public_key` accepts invalid values for r and s, so we need to check them first
+    assert(is_signature_entry_valid::<Secp256r1Point>(signature.r), 'argent/invalid-r-value');
+    assert(is_signature_entry_valid::<Secp256r1Point>(signature.s), 'argent/invalid-s-value');
     let recovered = recover_public_key::<Secp256r1Point>(hash, signature).expect('argent/invalid-sig-format');
     let (recovered_signer, _) = recovered.get_coordinates().expect('argent/invalid-sig-format');
     recovered_signer == signer.pubkey.into()

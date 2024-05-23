@@ -306,7 +306,7 @@ fn is_valid_secp256k1_signature(hash: u256, signer: Secp256k1Signer, signature: 
 
 #[inline(always)]
 fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: Secp256Signature) -> bool {
-    assert(signature.s < Secp256Trait::<Secp256r1Point>::get_curve_size() / 2, 'argent/malleable-signature');
+    assert(signature.s <= Secp256Trait::<Secp256r1Point>::get_curve_size() / 2, 'argent/malleable-signature');
     // let pubkey_point_1 = Secp256r1Impl::secp256_ec_get_point_from_x_syscall(signer.pubkey.into(), false)
     //             .unwrap_syscall()
     //             .unwrap();

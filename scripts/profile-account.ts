@@ -105,14 +105,14 @@ const guardian = new StarknetKeyPair(42n);
   const dappKey = new StarknetKeyPair(39n);
   const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
 
-  const sessionAccount = await setupSession(
+  const { accountWithDappSigner } = await setupSession(
     guardian as StarknetKeyPair,
     account,
     allowedMethod,
     sessionTime + 150n,
     dappKey,
   );
-  ethContract.connect(sessionAccount);
+  ethContract.connect(accountWithDappSigner);
   await profiler.profile("Transfer - With Session", await ethContract.transfer(recipient, amount));
 }
 
@@ -128,7 +128,7 @@ const guardian = new StarknetKeyPair(42n);
   const dappKey = new StarknetKeyPair(39n);
   const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
 
-  const sessionAccount = await setupSession(
+  const { accountWithDappSigner } = await setupSession(
     guardian as StarknetKeyPair,
     account,
     allowedMethod,
@@ -136,7 +136,7 @@ const guardian = new StarknetKeyPair(42n);
     dappKey,
     true,
   );
-  ethContract.connect(sessionAccount);
+  ethContract.connect(accountWithDappSigner);
   await profiler.profile("Transfer - With Session - Caching Values (1)", await ethContract.transfer(recipient, amount));
   await profiler.profile("Transfer - With Session - Cached (2)", await ethContract.transfer(recipient, amount));
 }
@@ -155,7 +155,7 @@ const guardian = new StarknetKeyPair(42n);
   const dappKey = new StarknetKeyPair(39n);
   const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
 
-  const sessionAccount = await setupSession(
+  const { accountWithDappSigner } = await setupSession(
     guardian as StarknetKeyPair,
     account,
     allowedMethod,
@@ -163,7 +163,7 @@ const guardian = new StarknetKeyPair(42n);
     dappKey,
     true,
   );
-  ethContract.connect(sessionAccount);
+  ethContract.connect(accountWithDappSigner);
   await profiler.profile(
     "Transfer - With Session (Webauthn owner) - Caching Values (1)",
     await ethContract.transfer(recipient, amount),

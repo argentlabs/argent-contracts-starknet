@@ -4,9 +4,6 @@ import {
   Call,
   CallData,
   InvocationsSignerDetails,
-  RPC,
-  V2InvocationsSignerDetails,
-  V3InvocationsSignerDetails,
   byteArray,
   ec,
   hash,
@@ -14,8 +11,6 @@ import {
   num,
   selector,
   shortString,
-  stark,
-  transaction,
   typedData,
 } from "starknet";
 import {
@@ -30,15 +25,20 @@ import {
   SessionToken,
   SignerType,
   StarknetKeyPair,
+  calculateTransactionHash,
   getOutsideCall,
   getSessionTypedData,
+  getSignerDetails,
   getTypedData,
   manager,
   randomStarknetKeyPair,
   signerTypeToCustomEnum,
 } from "..";
 
-const SESSION_MAGIC = shortString.encodeShortString("session-token");
+export function compileSessionSignature(sessionToken: SessionToken): string[] {
+  const SESSION_MAGIC = shortString.encodeShortString("session-token");
+  return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
+}
 
 export class DappService {
   constructor(
@@ -94,6 +94,26 @@ export class DappService {
     return new ArgentAccount(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
   }
 
+  public async getSessionToken(
+    calls: Call[],
+    account: ArgentAccount,
+    completedSession: OffChainSession,
+    sessionAuthorizationSignature: ArraySignatureType,
+    cacheAuthorization = false,
+  ): Promise<SessionToken> {
+    const transactionDetail = await getSignerDetails(account, calls);
+    const txHash = calculateTransactionHash(transactionDetail, calls);
+    return this.buildSessionToken(
+      sessionAuthorizationSignature,
+      completedSession,
+      txHash,
+      calls,
+      transactionDetail.walletAddress,
+      transactionDetail,
+      cacheAuthorization,
+    );
+  }
+
   public async getOutsideExecutionCall(
     completedSession: OffChainSession,
     sessionAuthorizationSignature: ArraySignatureType,
@@ -138,41 +158,20 @@ export class DappService {
     sessionAuthorizationSignature: ArraySignatureType,
     completedSession: OffChainSession,
     calls: Call[],
-    transactionsDetail: InvocationsSignerDetails,
+    transactionDetail: InvocationsSignerDetails,
     cacheAuthorization: boolean,
   ): Promise<ArraySignatureType> {
-    const compiledCalldata = transaction.getExecuteCalldata(calls, transactionsDetail.cairoVersion);
-    let txHash;
-    if (Object.values(RPC.ETransactionVersion2).includes(transactionsDetail.version as any)) {
-      const det = transactionsDetail as V2InvocationsSignerDetails;
-      txHash = hash.calculateInvokeTransactionHash({
-        ...det,
-        senderAddress: det.walletAddress,
-        compiledCalldata,
-        version: det.version,
-      });
-    } else if (Object.values(RPC.ETransactionVersion3).includes(transactionsDetail.version as any)) {
-      const det = transactionsDetail as V3InvocationsSignerDetails;
-      txHash = hash.calculateInvokeTransactionHash({
-        ...det,
-        senderAddress: det.walletAddress,
-        compiledCalldata,
-        version: det.version,
-        nonceDataAvailabilityMode: stark.intDAM(det.nonceDataAvailabilityMode),
-        feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
-      });
-    } else {
-      throw Error("unsupported signTransaction version");
-    }
-    return this.compileSessionSignature(
+    const txHash = calculateTransactionHash(transactionDetail, calls);
+    const sessionToken = await this.buildSessionToken(
       sessionAuthorizationSignature,
       completedSession,
       txHash,
       calls,
-      transactionsDetail.walletAddress,
-      transactionsDetail,
+      transactionDetail.walletAddress,
+      transactionDetail,
       cacheAuthorization,
     );
+    return compileSessionSignature(sessionToken);
   }
 
   private async compileSessionSignatureFromOutside(
@@ -213,10 +212,10 @@ export class DappService {
       accountAddress,
     );
 
-    return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
+    return compileSessionSignature(sessionToken);
   }
 
-  private async compileSessionSignature(
+  private async buildSessionToken(
     sessionAuthorizationSignature: ArraySignatureType,
     completedSession: OffChainSession,
     transactionHash: string,
@@ -224,7 +223,7 @@ export class DappService {
     accountAddress: string,
     transactionsDetail: InvocationsSignerDetails,
     cacheAuthorization: boolean,
-  ): Promise<ArraySignatureType> {
+  ): Promise<SessionToken> {
     const session = this.compileSessionHelper(completedSession);
 
     const guardianSignature = await this.argentBackend.signTxAndSession(
@@ -239,7 +238,7 @@ export class DappService {
       accountAddress,
       cacheAuthorization,
     );
-    const sessionToken = await this.compileSessionTokenHelper(
+    return await this.compileSessionTokenHelper(
       session,
       completedSession,
       calls,
@@ -249,8 +248,6 @@ export class DappService {
       guardianSignature,
       accountAddress,
     );
-
-    return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
   }
 
   private async signTxAndSession(

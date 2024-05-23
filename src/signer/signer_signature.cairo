@@ -7,10 +7,10 @@ use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, PoseidonTrait};
 use starknet::SyscallResultTrait;
 use starknet::secp256_trait::{
-    Secp256PointTrait, Secp256Trait, Signature as Secp256Signature, recover_public_key, is_signature_entry_valid
+    Secp256PointTrait, Signature as Secp256Signature, recover_public_key, is_signature_entry_valid
 };
 use starknet::secp256k1::Secp256k1Point;
-use starknet::secp256r1::{Secp256r1Point, Secp256r1Impl};
+use starknet::secp256r1::Secp256r1Point;
 use starknet::{EthAddress, eth_signature::is_eth_signature_valid};
 
 /// All signer type magic values. Used to derive their guid

@@ -20,7 +20,7 @@ const SECP256R1_SIGNER_TYPE: felt252 = 'Secp256r1 Signer';
 const EIP191_SIGNER_TYPE: felt252 = 'Eip191 Signer';
 const WEBAUTHN_SIGNER_TYPE: felt252 = 'Webauthn Signer';
 
-const SECP_256_R1_HALF: u256 = 115792089210356248762697446949407573529996955224135760342422259061068512044369 / 2;
+const SECP_256_R1_HALF: u256 = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551 / 2;
 const SECP_256_K1_HALF: u256 = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141 / 2;
 
 

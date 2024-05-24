@@ -98,7 +98,7 @@ struct Eip191Signer {
 }
 
 /// @notice The webauthn signer
-/// @param origin The origin of the request. Cannot be zero
+/// @param origin The origin of the request.
 /// @param rp_id_hash The SHA-256 hash of the Relying Party Identifier. Cannot be zero
 /// @param pubkey the public key as a u256. Cannot be zero
 #[derive(Drop, Copy, Serde, PartialEq)]

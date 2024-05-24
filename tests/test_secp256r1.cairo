@@ -36,6 +36,14 @@ fn test_SECP_256_R1_HALF() {
 }
 
 #[test]
+fn test_successful_invalid_verification() {
+    assert!(
+        !validateR1Signature(sig_r_low_even, 'invalid_s_value'.into(), true, message_hash_low_even),
+        "invalid-verification"
+    );
+}
+
+#[test]
 fn test_successful_verification_low_even() {
     assert!(
         validateR1Signature(sig_r_low_even, sig_s_low_even, true, message_hash_low_even),

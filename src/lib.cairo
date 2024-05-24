@@ -69,6 +69,7 @@ mod mocks {
     mod mock_erc20;
     mod multisig_mocks;
     mod recovery_mocks;
+    mod signature_verifier;
     mod signer_list_mocks;
     mod src5_mocks;
 }

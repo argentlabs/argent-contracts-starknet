@@ -2,7 +2,6 @@ use argent::signer::signer_signature::{Eip191Signer, is_valid_secp256k1_signatur
 use integer::{u128_byte_reverse, u256_safe_div_rem, u256_as_non_zero};
 use keccak::cairo_keccak;
 use starknet::secp256_trait::{Signature as Secp256Signature};
-use starknet::{EthAddress, eth_signature::is_eth_signature_valid};
 
 #[must_use]
 #[inline(always)]

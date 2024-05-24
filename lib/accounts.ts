@@ -21,6 +21,7 @@ import {
   V3InvocationsSignerDetails,
   hash,
   num,
+  shortString,
   stark,
   transaction,
   uint256,
@@ -30,6 +31,8 @@ import { ensureSuccess } from "./receipts";
 import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { ArgentSigner, KeyPair, RawSigner, randomStarknetKeyPair } from "./signers/signers";
 import { ethAddress, strkAddress } from "./tokens";
+
+export const VALID = BigInt(shortString.encodeShortString("VALID"));
 
 export class ArgentAccount extends Account {
   // Increase the gas limit by 30% to avoid failures due to gas estimation being too low with tx v3 and transactions the use escaping

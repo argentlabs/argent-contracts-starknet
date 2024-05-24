@@ -1,11 +1,10 @@
 import { expect } from "chai";
-import { num, shortString } from "starknet";
+import { num } from "starknet";
 import { MultisigSigner, expectRevertWithErrorMessage, randomStarknetKeyPair, sortByGuid } from "../lib";
+import { VALID } from "../lib/accounts";
 import { deployMultisig, deployMultisig1_1 } from "../lib/multisig";
 
 describe("ArgentMultisig: signing", function () {
-  const VALID = BigInt(shortString.encodeShortString("VALID"));
-
   describe("is_valid_signature(hash, signatures)", function () {
     it("Should verify that a multisig owner has signed a message", async function () {
       const messageHash = num.toHex(424242);

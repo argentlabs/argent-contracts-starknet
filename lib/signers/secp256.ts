@@ -1,5 +1,4 @@
 import * as utils from "@noble/curves/abstract/utils";
-import { RecoveredSignatureType } from "@noble/curves/abstract/weierstrass";
 import { p256 as secp256r1 } from "@noble/curves/p256";
 import { secp256k1 } from "@noble/curves/secp256k1";
 import { Signature as EthersSignature, Wallet } from "ethers";
@@ -7,36 +6,55 @@ import { CairoCustomEnum, CallData, hash, num, shortString, uint256 } from "star
 import { KeyPair, SignerType, signerTypeToCustomEnum } from "../signers/signers";
 
 export type NormalizedSecpSignature = { r: bigint; s: bigint; yParity: boolean };
-export function normalizeSecpK1Signature(signature: EthersSignature): NormalizedSecpSignature {
-  let s = BigInt(signature.s);
-  let yParity = signature.yParity == 1;
-  if (s >= secp256k1.CURVE.n / 2n) {
-    s = secp256k1.CURVE.n - s;
-    yParity = !yParity;
-  }
-  return { r: BigInt(signature.r), s, yParity };
+
+export function normalizeSecpR1Signature(signature: {
+  r: bigint;
+  s: bigint;
+  recovery: number;
+}): NormalizedSecpSignature {
+  return normalizeSecpSignature(secp256r1, signature);
 }
 
-export function normalizeSecpR1Signature(signature: RecoveredSignatureType): NormalizedSecpSignature {
+export function normalizeSecpK1Signature(signature: {
+  r: bigint;
+  s: bigint;
+  recovery: number;
+}): NormalizedSecpSignature {
+  return normalizeSecpSignature(secp256k1, signature);
+}
+
+export function normalizeSecpSignature(
+  curve: typeof secp256r1 | typeof secp256k1,
+  signature: { r: bigint; s: bigint; recovery: number },
+): NormalizedSecpSignature {
   let s = signature.s;
   let yParity = signature.recovery !== 0;
-  if (s >= secp256r1.CURVE.n / 2n) {
-    s = secp256r1.CURVE.n - s;
+  if (s > curve.CURVE.n / 2n) {
+    s = curve.CURVE.n - s;
     yParity = !yParity;
   }
   return { r: signature.r, s, yParity };
 }
 
 export class EthKeyPair extends KeyPair {
-  pk: string;
+  pk: bigint;
+  allowLowS?: boolean;
 
-  constructor(pk?: string | bigint) {
+  constructor(pk?: string | bigint, allowLowS?: boolean) {
     super();
-    this.pk = pk ? "0x" + padTo32Bytes(num.toHex(pk)) : Wallet.createRandom().privateKey;
+
+    if (pk == undefined) {
+      pk = Wallet.createRandom().privateKey;
+    }
+    if (typeof pk === "string") {
+      pk = BigInt(pk);
+    }
+    this.pk = pk;
+    this.allowLowS = allowLowS;
   }
 
-  public get address() {
-    return BigInt(new Wallet(this.pk).address);
+  public get address(): bigint {
+    return BigInt(new Wallet("0x" + padTo32Bytes(num.toHex(this.pk))).address);
   }
 
   public get guid(): bigint {
@@ -52,9 +70,9 @@ export class EthKeyPair extends KeyPair {
   }
 
   public async signRaw(messageHash: string): Promise<string[]> {
-    const ethSigner = new Wallet(this.pk);
-    messageHash = "0x" + padTo32Bytes(messageHash);
-    const signature = normalizeSecpK1Signature(EthersSignature.from(ethSigner.signingKey.sign(messageHash)));
+    const signature = normalizeSecpK1Signature(
+      secp256k1.sign(padTo32Bytes(messageHash), this.pk, { lowS: this.allowLowS }),
+    );
 
     return CallData.compile([
       signerTypeToCustomEnum(SignerType.Secp256k1, {
@@ -94,9 +112,13 @@ export class Eip191KeyPair extends KeyPair {
   public async signRaw(messageHash: string): Promise<string[]> {
     const ethSigner = new Wallet(this.pk);
     messageHash = "0x" + padTo32Bytes(messageHash);
-    const signature = normalizeSecpK1Signature(
-      EthersSignature.from(ethSigner.signMessageSync(num.hexToBytes(messageHash))),
-    );
+    const ethersSignature = EthersSignature.from(ethSigner.signMessageSync(num.hexToBytes(messageHash)));
+
+    const signature = normalizeSecpK1Signature({
+      r: BigInt(ethersSignature.r),
+      s: BigInt(ethersSignature.s),
+      recovery: ethersSignature.yParity ? 1 : 0,
+    });
 
     return CallData.compile([
       signerTypeToCustomEnum(SignerType.Eip191, {
@@ -147,10 +169,12 @@ export class EstimateEip191KeyPair extends KeyPair {
 
 export class Secp256r1KeyPair extends KeyPair {
   pk: bigint;
+  private allowLowS?: boolean;
 
-  constructor(pk?: string | bigint) {
+  constructor(pk?: string | bigint, allowLowS?: boolean) {
     super();
     this.pk = BigInt(pk ? `${pk}` : Wallet.createRandom().privateKey);
+    this.allowLowS = allowLowS;
   }
 
   public get publicKey() {
@@ -178,7 +202,7 @@ export class Secp256r1KeyPair extends KeyPair {
 
   public async signRaw(messageHash: string): Promise<string[]> {
     messageHash = padTo32Bytes(messageHash);
-    const signature = normalizeSecpR1Signature(secp256r1.sign(messageHash, this.pk));
+    const signature = normalizeSecpR1Signature(secp256r1.sign(messageHash, this.pk, { lowS: this.allowLowS }));
     return CallData.compile([
       signerTypeToCustomEnum(SignerType.Secp256r1, {
         pubkey: this.publicKey,
@@ -191,8 +215,11 @@ export class Secp256r1KeyPair extends KeyPair {
 }
 
 export function padTo32Bytes(hexString: string): string {
-  if (hexString.length < 66) {
-    hexString = "0".repeat(66 - hexString.length) + hexString.slice(2);
+  if (hexString.startsWith("0x")) {
+    hexString = hexString.slice(2);
+  }
+  if (hexString.length < 64) {
+    hexString = "0".repeat(64 - hexString.length) + hexString;
   }
   return hexString;
 }

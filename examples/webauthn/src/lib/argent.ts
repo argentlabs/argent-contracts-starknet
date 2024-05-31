@@ -37,7 +37,7 @@ export async function createOwners(email: string, rpId: string): Promise<ArgentO
 export async function declareAccount(provider: ProviderType): Promise<string> {
   const deployer = await loadDeployer(provider);
   console.log("deployer is", deployer.address);
-  const { class_hash, transaction_hash } = await deployer.declareIfNot({ casm, contract: sierra });
+  const { class_hash, transaction_hash } = await deployer.declareIfNot({ casm, contract: sierra }, { maxFee: 1e17 });
   if (transaction_hash) {
     await provider.waitForTransaction(transaction_hash);
   }

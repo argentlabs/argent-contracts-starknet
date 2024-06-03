@@ -97,7 +97,7 @@ scarb run format
 ## Release checklist
 
 - Bump version if needed (new deployment in mainnet)
-- Set up your .env file with the deployer info and run `scarb run deploy-account` and ``scarb run deploy-multisig` to declare the accounts
+- Set up your .env file with the deployer info and run `scarb run deploy-account` and `scarb run deploy-multisig` to declare the accounts
 - Verify the contracts if possible
 - Deploy to as many environments as possible: mainnet, sepolia and integration
 - Update the contents of the `deployments` folder with the new addresses

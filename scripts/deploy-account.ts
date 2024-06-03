@@ -7,7 +7,7 @@ const mockDappClassHash = await manager.declareLocalContract("MockDapp", true);
 console.log("MockDapp class hash:", mockDappClassHash);
 
 console.log("Deploying new account");
-const { account } = await deployAccount({ classHash: accountClassHash });
+const { account } = await deployAccount({ classHash: accountClassHash, fundingAmount: 0.0002 * 1e18, useTxV3: false });
 console.log("Account address:", account.address);
 
 console.log("Deploying new test dapp");

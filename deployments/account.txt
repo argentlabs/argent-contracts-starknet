@@ -1,3 +1,4 @@
+0x036078334509b514626504edc9fb252328d1a240e4e948bef8d0c08dff45927f: 0.4.0 (mainnet, sepolia)
 0x29927c8af6bccf3f6fda035981e765a7bdbf18a2dc0d630494f8758aa908e2b: 0.3.1 (mainnet, goerli, sepolia, integration)
 0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003: 0.3.0 (mainnet, goerli-1, goerli-2, integration)
 

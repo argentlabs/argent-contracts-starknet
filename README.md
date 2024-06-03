@@ -4,6 +4,14 @@
 
 See [Argent Account](./docs/argent_account.md) and [Argent Multisig](./docs/multisig.md) for more details.
 
+## Deployments
+
+See deployed class hashes can be found here for the [Argent Account](./deployments/account.txt), and here for the [Argent Multisig](./deployments/multisig.txt)
+
+Other deployment artifacts are located in [/deployments/](./deployments/)
+
+Find the release notes for all versions in [CHANGELOG](./CHANGELOG.md)
+
 ## Development
 
 ### Setup
@@ -89,11 +97,11 @@ scarb run format
 ## Release checklist
 
 - Bump version if needed (new deployment in mainnet)
-- Set up your .env file with the deployer info and run `yarn deploy` to declare the accounts
+- Set up your .env file with the deployer info and run `scarb run deploy-account` and ``scarb run deploy-multisig` to declare the accounts
 - Verify the contracts if possible
-- Deploy to as many environments as possible: mainnet, goerli, sepolia and integration
+- Deploy to as many environments as possible: mainnet, sepolia and integration
 - Update the contents of the `deployments` folder with the new addresses
-- Copy relevant build artifacts from `target/release` to `deployments/artifacts`
+- Copy relevant build artifacts from `target/release` to `deployments/artifacts`, include abi file.
 - Tag the commit used for the release (include the same name as in the `deployments` folder for easy tracking)
 - Create release in GitHub if needed
 - Make this checklist better if you learned something during the process

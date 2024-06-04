@@ -2,36 +2,16 @@ import { Account, CairoOption, CairoOptionVariant, CallData, Contract, hash, uin
 import casm from "./argent_ArgentAccount.compiled_contract_class.json";
 import sierra from "./argent_ArgentAccount.contract_class.json";
 import { buf2hex } from "./bytes";
-import {
-  fundAccount,
-  getEthContract,
-  loadContract,
-  loadDeployer,
-  randomKeyPair,
-  type KeyPair,
-  type ProviderType,
-} from "./starknet";
-import { sha256 } from "./webauthnAssertion";
-import { createWebauthnAttestation } from "./webauthnAttestation";
-import { WebauthnOwner, webauthnSigner } from "./webauthnOwner";
+import { ArgentSigner } from "./signers";
+import { fundAccount, getEthContract, loadContract, loadDeployer, type ProviderType } from "./starknet";
+import { createWebauthnAttestation, requestSignature } from "./webauthnAttestation";
+import { WebauthnOwner } from "./webauthnOwner";
 
-export interface ArgentOwners {
-  starkOwner: KeyPair;
-  webauthnOwner: WebauthnOwner;
-}
-
-export interface ArgentWallet extends ArgentOwners {
-  account: Account;
-  accountContract: Contract;
-}
-
-export async function createOwners(email: string, rpId: string): Promise<ArgentOwners> {
-  const starkOwner = randomKeyPair();
+export async function createOwner(email: string, rpId: string, origin: string): Promise<WebauthnOwner> {
   console.log("creating webauthn key (attestation)...");
-  const attestation = await createWebauthnAttestation(email, rpId);
-  console.log("created webauthn public key X:", buf2hex(attestation.x));
-  const webauthnOwner = new WebauthnOwner(attestation);
-  return { starkOwner, webauthnOwner };
+  const attestation = await createWebauthnAttestation(email, rpId, origin);
+  console.log("created webauthn public key:", buf2hex(attestation.pubKey));
+  return new WebauthnOwner(attestation, requestSignature);
 }
 
 export async function declareAccount(provider: ProviderType): Promise<string> {
@@ -46,14 +26,11 @@ export async function declareAccount(provider: ProviderType): Promise<string> {
 
 export async function deployAccount(
   classHash: string,
-  { starkOwner, webauthnOwner }: ArgentOwners,
-  rpId: string,
+  webauthnOwner: WebauthnOwner,
   provider: ProviderType,
-): Promise<ArgentWallet> {
-  const rpIdHash = await sha256(new TextEncoder().encode(rpId));
-
+): Promise<{ account: Account; accountContract: Contract; webauthnOwner: WebauthnOwner }> {
   const constructorCalldata = CallData.compile({
-    owner: webauthnSigner(location.origin, buf2hex(rpIdHash), buf2hex(webauthnOwner.attestation.x)),
+    owner: webauthnOwner.signer,
     guardian: new CairoOption(CairoOptionVariant.None),
   });
   const addressSalt = 12n;
@@ -61,8 +38,7 @@ export async function deployAccount(
 
   await fundAccount(accountAddress, 1e15, provider);
 
-  // can use either starkOwner or webauthnOwner as signer
-  const account = new Account(provider, accountAddress, webauthnOwner, "1");
+  const account = new Account(provider, accountAddress, new ArgentSigner(webauthnOwner), "1");
 
   console.log("deploying account to address", accountAddress);
   const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt }, { maxFee: 1e15 });
@@ -73,7 +49,7 @@ export async function deployAccount(
   accountContract.connect(account);
   console.log("deployed");
 
-  return { account, accountContract, starkOwner, webauthnOwner };
+  return { account, accountContract, webauthnOwner };
 }
 
 export async function transferDust(account: Account, provider: ProviderType): Promise<string> {

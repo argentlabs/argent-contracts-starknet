@@ -1,26 +1,26 @@
 <script lang="ts">
   import * as env from "$env/static/public";
   import { buf2hex } from "$lib/bytes";
-  import { createOwners, deployAccount, type ArgentOwners, transferDust, declareAccount } from "$lib/argent";
+  import { createOwner, deployAccount, transferDust, declareAccount } from "$lib/poc";
+  import type { WebauthnOwner} from "$lib/webauthnOwner";
   import { Account, RpcProvider } from "starknet";
 
   const rpId = "localhost";
-  // const provider = new SequencerProvider({ baseUrl: "http://127.0.0.1:5050" }); // python devnet
   const provider = new RpcProvider({ nodeUrl: env.PUBLIC_PROVIDER_URL });
 
-  let email = "axel@argent.xyz";
-  let owners: ArgentOwners | undefined;
+  let email = "example@argent.xyz";
+  let owner: WebauthnOwner | undefined;
   let account: Account | undefined;
   let deployPromise: Promise<void>;
   let sendPromise: Promise<void>;
   let transactionHash = "";
 
-  const handleClickCreateOwners = async () => {
-    owners = await createOwners(email, rpId);
+  const handleClickCreateOwner = async () => {
+    owner = await createOwner(email, rpId, window.location.origin);
   };
 
   const handleClickDeployWallet = async (classHash: string) => {
-    ({ account } = await deployAccount(classHash, owners!, rpId, provider));
+    ({ account } = await deployAccount(classHash, owner!, provider));
   };
 
   const handleClickSendTransaction = async () => {
@@ -29,14 +29,13 @@
 </script>
 
 <h1>1. Create keys</h1>
-{#if !owners}
+{#if !owner}
   <input type="email" bind:value={email} />
-  <button on:click={handleClickCreateOwners}>Create</button>
+  <button on:click={handleClickCreateOwner}>Create</button>
 {:else}
-  <div>Email: <small>{owners.webauthnOwner.attestation.email}</small></div>
-  <div>Stark key: <small>0x{owners.starkOwner.publicKey.toString(16)}</small></div>
-  <div>Webauthn public key: <small>{buf2hex(owners.webauthnOwner.attestation.x)}</small></div>
-  <div>Webauthn credential id: <small>{buf2hex(owners.webauthnOwner.attestation.credentialId)}</small></div>
+  <div>Email: <small>{owner.attestation.email}</small></div>
+  <div>Webauthn public key: <small>{buf2hex(owner.attestation.pubKey)}</small></div>
+  <div>Webauthn credential id: <small>{buf2hex(owner.attestation.credentialId)}</small></div>
 
   {#await declareAccount(provider)}
     <p>Declaring...</p>

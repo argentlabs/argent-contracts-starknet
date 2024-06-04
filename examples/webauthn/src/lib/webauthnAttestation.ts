@@ -2,13 +2,17 @@ import { randomBytes } from "./bytes";
 
 export interface WebauthnAttestation {
   email: string;
+  origin: string;
   rpId: string;
   credentialId: Uint8Array;
-  x: Uint8Array;
-  y: Uint8Array;
+  pubKey: Uint8Array;
 }
 
-export const createWebauthnAttestation = async (email: string, rpId: string): Promise<WebauthnAttestation> => {
+export const createWebauthnAttestation = async (
+  email: string,
+  rpId: string,
+  origin: string,
+): Promise<WebauthnAttestation> => {
   const id = randomBytes(32);
   const challenge = randomBytes(32);
   const credential = await navigator.credentials.create({
@@ -41,6 +45,26 @@ export const createWebauthnAttestation = async (email: string, rpId: string): Pr
   const credentialId = new Uint8Array(attestation.rawId);
   const publicKey = new Uint8Array(attestationResponse.getPublicKey()!);
   const x = publicKey.slice(-64, -32);
-  const y = publicKey.slice(-32);
-  return { email, rpId, credentialId, x, y };
+  return { email, rpId, origin, credentialId, pubKey: x };
+};
+
+export const requestSignature = async (
+  attestation: WebauthnAttestation,
+  challenge: Uint8Array,
+): Promise<AuthenticatorAssertionResponse> => {
+  const credential = await navigator.credentials.get({
+    publicKey: {
+      rpId: attestation.rpId,
+      challenge,
+      allowCredentials: [{ id: attestation.credentialId, type: "public-key", transports: ["internal"] }],
+      userVerification: "required",
+      timeout: 60000,
+    },
+  });
+  if (!credential) {
+    throw new Error("No credential");
+  }
+
+  const assertion = credential as PublicKeyCredential;
+  return assertion.response as AuthenticatorAssertionResponse;
 };

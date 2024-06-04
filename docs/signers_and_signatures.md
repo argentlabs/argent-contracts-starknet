@@ -8,7 +8,7 @@ Starting from argent [account](./argent-account.md) v0.4.0 and [multisig](./mult
 - **Eip191**: Leverages Eip191 signatures to sign on Starknet
 - **Webauthn**: Allow to use passkeys as they are widely supported by browsers, and Operating systems
 
-Every time one a new signer is added to the account there will be a `SignerLinked` even emitted, with all the data about the Signer and a GUID, that GUID will uniquely identify that signer in the account. The GUID is a hash of the Signer that will uniquely identify it. The contract won’t always store all the signer data and only the GUID will provided by the contract (there are some exceptions for backwards compatibility)
+Every time a new signer is added to the account there will be a `SignerLinked` event emitted, with all the data about the Signer and a GUID, that GUID will uniquely identify that signer in the account. The GUID is a hash of the Signer that will uniquely identify it. The contract won’t always store all the signer data and only the GUID will provided by the contract (there are some exceptions for backwards compatibility)
 
 At any time it will be possible to get the Signer data linked to a GUID, but querying the account SignerLinked events
 [Example](../scripts/query-guid-info.ts)

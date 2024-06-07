@@ -1,9 +1,9 @@
-import { Account, CairoOption, CairoOptionVariant, CallData, Contract, hash, uint256 } from "starknet";
-import casm from "./argent_ArgentAccount.compiled_contract_class.json";
-import sierra from "./argent_ArgentAccount.contract_class.json";
+import { Account, CairoOption, CairoOptionVariant, CallData, hash, uint256 } from "starknet";
+import accountCasm from "./argent_ArgentAccount.compiled_contract_class.json";
+import accountSierra from "./argent_ArgentAccount.contract_class.json";
 import { buf2hex } from "./bytes";
 import { ArgentSigner } from "./signers";
-import { fundAccount, getEthContract, loadContract, loadDeployer, type ProviderType } from "./starknet";
+import { fundAccount, getEthContract, loadDeployer, type ProviderType } from "./starknet";
 import { createWebauthnAttestation, requestSignature } from "./webauthnAttestation";
 import { WebauthnOwner } from "./webauthnOwner";
 
@@ -16,19 +16,36 @@ export async function createOwner(email: string, rpId: string, origin: string): 
 
 export async function declareAccount(provider: ProviderType): Promise<string> {
   const deployer = await loadDeployer(provider);
-  console.log("deployer is", deployer.address);
-  const { class_hash, transaction_hash } = await deployer.declareIfNot({ casm, contract: sierra }, { maxFee: 1e17 });
-  if (transaction_hash) {
-    await provider.waitForTransaction(transaction_hash);
+
+  // Assert sha256 class hash is declared
+  try {
+    await provider.getClass(0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
+  } catch (e) {
+    throw new Error(
+      "Sha256 class hash not declared, please run `scarb run profile` at the repo root folder to declare it",
+      e,
+    );
   }
-  return class_hash;
+
+  const { class_hash: accountClassHash, transaction_hash: accountTransactionHash } = await deployer.declareIfNot(
+    { casm: accountCasm, contract: accountSierra },
+    { maxFee: 1e17 },
+  );
+
+  if (accountTransactionHash) {
+    const res = await provider.waitForTransaction(accountTransactionHash);
+    console.log("account declare transaction", accountTransactionHash, "completed", res);
+  }
+  console.log("account classHash", accountClassHash);
+
+  return accountClassHash;
 }
 
 export async function deployAccount(
   classHash: string,
   webauthnOwner: WebauthnOwner,
   provider: ProviderType,
-): Promise<{ account: Account; accountContract: Contract; webauthnOwner: WebauthnOwner }> {
+): Promise<Account> {
   const constructorCalldata = CallData.compile({
     owner: webauthnOwner.signer,
     guardian: new CairoOption(CairoOptionVariant.None),
@@ -44,12 +61,8 @@ export async function deployAccount(
   const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt }, { maxFee: 1e15 });
   console.log("waiting for deployment tx", response.transaction_hash);
   await provider.waitForTransaction(response.transaction_hash);
-
-  const accountContract = await loadContract(account.address, provider);
-  accountContract.connect(account);
   console.log("deployed");
-
-  return { account, accountContract, webauthnOwner };
+  return account;
 }
 
 export async function transferDust(account: Account, provider: ProviderType): Promise<string> {

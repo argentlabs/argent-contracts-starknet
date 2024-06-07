@@ -20,7 +20,7 @@
   };
 
   const handleClickDeployWallet = async (classHash: string) => {
-    ({ account } = await deployAccount(classHash, owner!, provider));
+    account = await deployAccount(classHash, owner!, provider);
   };
 
   const handleClickSendTransaction = async () => {

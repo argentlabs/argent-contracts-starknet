@@ -1,35 +1,33 @@
 import "dotenv/config";
-import { declareContract, deployer, deployMultisig, loadContract, provider } from "../tests-integration/lib";
+import { deployer, deployMultisig, manager } from "../lib";
 
-const multisigClassHash = await declareContract("ArgentMultisig", true);
+const multisigClassHash = await manager.declareLocalContract("ArgentMultisigAccount", true);
 console.log("ArgentMultisig class hash:", multisigClassHash);
-const testDappClassHash = await declareContract("TestDapp", true);
-console.log("TestDapp class hash:", testDappClassHash);
+const mockDappClassHash = await manager.declareLocalContract("MockDapp", true);
+console.log("MockDapp class hash:", mockDappClassHash);
 
 console.log("Deploying new multisig");
 
-const { account, keys, signers } = await deployMultisig({
+const { account, keys } = await deployMultisig({
   threshold: 1,
   signersLength: 2,
   classHash: multisigClassHash,
+  fundingAmount: 0.0002 * 1e18,
+  useTxV3: false,
 });
 
 console.log("Account address:", account.address);
-console.log("Account signers:", signers);
-console.log(
-  "Account private keys:",
-  keys.map(({ privateKey }) => privateKey),
-);
+console.log("Account keys:", keys);
 
 console.log("Deploying new test dapp");
-const { contract_address } = await deployer.deployContract({ classHash: testDappClassHash });
-console.log("TestDapp address:", contract_address);
-const testDappContract = await loadContract(contract_address);
+const { contract_address } = await deployer.deployContract({ classHash: mockDappClassHash });
+console.log("MockDapp address:", contract_address);
+const mockDappContract = await manager.loadContract(contract_address);
 
 console.log("Calling test dapp");
-testDappContract.connect(account);
-const response = await testDappContract.set_number(42n);
-await provider.waitForTransaction(response.transaction_hash);
+mockDappContract.connect(account);
+const response = await mockDappContract.set_number(42n);
+await manager.waitForTransaction(response.transaction_hash);
 
-const number = await testDappContract.get_number(account.address);
+const number = await mockDappContract.get_number(account.address);
 console.log(number === 42n ? "Seems good!" : "Something went wrong :(");

@@ -1,29 +1,38 @@
 [package]
 name = "argent"
 version = "0.1.0"
-
-# See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest
+cairo-version = "2.6.3"
 
 [[target.starknet-contract]]
 sierra = true
 casm = true
 allowed-libfuncs-list.name = "audited"
+build-external-contracts = ["openzeppelin::presets::account::AccountUpgradeable"]
 
 [dependencies]
-starknet = "2.4.3"
+starknet = "2.6.3"
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.6.0" }
+alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.6.0" }
+alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", tag="cairo-v2.6.0" }
+snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.20.0" }
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.12.0" }
 
 [tool.fmt]
 max-line-length = 120
 sort-module-level-items = true
 
 [scripts]
+test = "snforge test"
 format = "scarb fmt && yarn prettier --write ."
 lint = "yarn eslint ."
 test-ts = "scarb --profile release build && yarn tsc && yarn mocha tests-integration/*.test.ts"
 test-multisig = "scarb --profile release build && yarn tsc && yarn mocha tests-integration/multisig*.test.ts"
+test-session = "scarb --profile release build && yarn tsc && yarn mocha tests-integration/session*.test.ts"
 test-list = "scarb --profile release build && yarn tsc && yarn mocha --dry-run tests-integration/*.test.ts"
 start-devnet = "./scripts/start-devnet.sh"
 kill-devnet = "lsof -t -i tcp:5050 | xargs kill"
 profile = "scarb --profile release build && node --loader ts-node/esm scripts/profile-account.ts"
-deploy = "scarb --profile release build && node --loader ts-node/esm scripts/deploy-account.ts"
+deploy-account = "scarb --profile release build && node --loader ts-node/esm scripts/deploy-account.ts"
+deploy-multisig = "scarb --profile release build && node --loader ts-node/esm scripts/deploy-multisig.ts"
 generate-signature = "node --loader ts-node/esm ./scripts/generate-signature.ts"
+update-webauthn-dapp = "scarb --profile release build && cp target/release/*ArgentAccount* examples/webauthn/src/lib"

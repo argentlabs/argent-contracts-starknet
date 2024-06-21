@@ -1,108 +1,107 @@
-use argent::multisig::argent_multisig::ArgentMultisig;
-use argent_tests::setup::multisig_test_setup::{
-    initialize_multisig, signer_pubkey_1, signer_pubkey_2, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
-    initialize_multisig_with_one_signer
+use argent::multisig::multisig::{multisig_component};
+use argent::presets::multisig_account::ArgentMultisigAccount;
+use argent::signer::signer_signature::{
+    Signer, StarknetSigner, SignerSignature, SignerTrait, starknet_signer_from_pubkey
 };
-use starknet::deploy_syscall;
+use argent::signer_storage::signer_list::{signer_list_component};
+use snforge_std::{ContractClassTrait, spy_events, SpyOn, EventSpy, EventFetcher, EventAssertions};
+use super::setup::constants::{MULTISIG_OWNER};
+use super::setup::multisig_test_setup::{
+    initialize_multisig, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
+    initialize_multisig_with_one_signer, declare_multisig
+};
 
 #[test]
-#[available_gas(20000000)]
 fn valid_initialize() {
-    let multisig = initialize_multisig_with_one_signer();
-    assert(multisig.get_threshold() == 1, 'threshold not set');
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signers_array = array![signer_1];
+    let multisig = initialize_multisig_with(threshold: 1, signers: signers_array.span());
+    assert_eq!(multisig.get_threshold(), 1, "threshold not set");
     // test if is signer correctly returns true
-    assert(multisig.is_signer(signer_pubkey_1), 'is signer cant find signer');
+    assert!(multisig.is_signer(signer_1), "is signer cant find signer");
 
     // test signers list
-    let signers = multisig.get_signers();
-    assert(signers.len() == 1, 'invalid signers length');
-    assert(*signers[0] == signer_pubkey_1, 'invalid signers result');
+    let signers_guid = multisig.get_signer_guids();
+    assert_eq!(signers_guid.len(), 1, "invalid signers length");
+    assert_eq!(*signers_guid[0], signer_1.into_guid(), "invalid signers result");
 }
 
 #[test]
-#[available_gas(20000000)]
 fn valid_initialize_two_signers() {
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
     let threshold = 1;
-    let signers_array = array![signer_pubkey_1, signer_pubkey_2];
+    let signers_array = array![signer_1, signer_2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
     // test if is signer correctly returns true
-    assert(multisig.is_signer(signer_pubkey_1), 'is signer cant find signer 1');
-    assert(multisig.is_signer(signer_pubkey_2), 'is signer cant find signer 2');
+    assert!(multisig.is_signer(signer_1), "is signer cant find signer 1");
+    assert!(multisig.is_signer(signer_2), "is signer cant find signer 2");
 
     // test signers list
-    let signers = multisig.get_signers();
-    assert(signers.len() == 2, 'invalid signers length');
-    assert(*signers[0] == signer_pubkey_1, 'invalid signers result');
-    assert(*signers[1] == signer_pubkey_2, 'invalid signers result');
+    let signers = multisig.get_signer_guids();
+    assert_eq!(signers.len(), 2, "invalid signers length");
+    assert_eq!(*signers[0], signer_1.into_guid(), "invalid signers result");
+    assert_eq!(*signers[1], signer_2.into_guid(), "invalid signers result");
 }
 
 #[test]
-#[available_gas(20000000)]
 fn invalid_threshold() {
     let threshold = 3;
-    let calldata = array![threshold, 1, signer_pubkey_1];
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let mut calldata = array![];
+    threshold.serialize(ref calldata);
+    array![signer_1].serialize(ref calldata);
 
-    let class_hash = ArgentMultisig::TEST_CLASS_HASH.try_into().unwrap();
-    let mut err = deploy_syscall(class_hash, 0, calldata.span(), true).unwrap_err();
-    assert(@err.pop_front().unwrap() == @'argent/bad-threshold', 'Should be argent/bad-threshold');
+    let argent_class = declare_multisig();
+    argent_class.deploy(@calldata).expect_err('argent/bad-threshold');
 }
 
 #[test]
-#[available_gas(20000000)]
 fn change_threshold() {
     let threshold = 1;
-    let signers_array = array![1, 2];
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
+    let signers_array = array![signer_1, signer_2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
+    let mut spy = spy_events(SpyOn::One(multisig.contract_address));
 
     multisig.change_threshold(2);
-    assert(multisig.get_threshold() == 2, 'new threshold not set');
+    assert_eq!(multisig.get_threshold(), 2, "new threshold not set");
+
+    let event = multisig_component::Event::ThresholdUpdated(multisig_component::ThresholdUpdated { new_threshold: 2 });
+    spy.assert_emitted(@array![(multisig.contract_address, event)]);
+
+    assert_eq!(spy.events.len(), 0, "excess events");
 }
 
 #[test]
-#[available_gas(20000000)]
-fn add_signers() {
-    // init
-    let multisig = initialize_multisig_with_one_signer();
+#[should_panic(expected: ('argent/bad-threshold',))]
+fn change_to_excessive_threshold() {
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1].span());
 
-    // add signer
-    let new_signers = array![signer_pubkey_2];
-    multisig.add_signers(2, new_signers);
-
-    // check 
-    let signers = multisig.get_signers();
-    assert(signers.len() == 2, 'invalid signers length');
-    assert(multisig.get_threshold() == 2, 'new threshold not set');
+    multisig.change_threshold(2);
 }
 
 #[test]
-#[available_gas(20000000)]
-#[should_panic(expected: ('argent/already-a-signer', 'ENTRYPOINT_FAILED'))]
-fn add_signer_already_in_list() {
-    // init
-    let multisig = initialize_multisig_with_one_signer();
+#[should_panic(expected: ('argent/invalid-threshold',))]
+fn change_to_zero_threshold() {
+    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1].span());
 
-    // add signer
-    let new_signers = array![signer_pubkey_1];
-    multisig.add_signers(2, new_signers);
+    multisig.change_threshold(0);
 }
 
 #[test]
-#[available_gas(20000000)]
 fn get_name() {
-    assert(initialize_multisig().get_name() == 'ArgentMultisig', 'Name should be ArgentMultisig');
+    assert_eq!(initialize_multisig().get_name(), 'ArgentMultisig', "Name should be ArgentMultisig");
 }
 
 #[test]
-#[available_gas(20000000)]
 fn get_version() {
     let version = initialize_multisig().get_version();
-    assert(version.major == 0, 'Version major');
-    assert(version.minor == 1, 'Version minor');
-    assert(version.patch == 1, 'Version patch');
+    assert_eq!(version.major, 0, "Version major");
+    assert_eq!(version.minor, 2, "Version minor");
+    assert_eq!(version.patch, 0, "Version patch");
 }
 
-#[test]
-#[available_gas(2000000)]
-fn getVersion() {
-    assert(initialize_multisig().getVersion() == '0.1.1', 'Version should be 0.1.1');
-}

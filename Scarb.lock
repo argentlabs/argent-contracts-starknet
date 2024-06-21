@@ -2,5 +2,60 @@
 version = 1
 
 [[package]]
+name = "alexandria_data_structures"
+version = "0.2.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
+dependencies = [
+ "alexandria_encoding",
+]
+
+[[package]]
+name = "alexandria_encoding"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
+dependencies = [
+ "alexandria_math",
+ "alexandria_numeric",
+]
+
+[[package]]
+name = "alexandria_math"
+version = "0.2.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
+dependencies = [
+ "alexandria_data_structures",
+]
+
+[[package]]
+name = "alexandria_merkle_tree"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?tag=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
+
+[[package]]
+name = "alexandria_numeric"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
+dependencies = [
+ "alexandria_math",
+]
+
+[[package]]
 name = "argent"
 version = "0.1.0"
+dependencies = [
+ "alexandria_encoding",
+ "alexandria_math",
+ "alexandria_merkle_tree",
+ "openzeppelin",
+ "snforge_std",
+]
+
+[[package]]
+name = "openzeppelin"
+version = "0.12.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.12.0#0697004db74502ce49900edef37331dd03531356"
+
+[[package]]
+name = "snforge_std"
+version = "0.20.0"
+source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.20.0#423eecf7847469e353258321274394b9155d24eb"

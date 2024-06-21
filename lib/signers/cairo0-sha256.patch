@@ -1,0 +1,31 @@
+commit d77431b967d84de3a902fbfea5cf8e1ac972f6de
+Author: Yoav Gaziel <yg@braavos.app>
+Date:   Thu Nov 16 11:10:28 2023 +0200
+
+    add external entrypoint in main.cairo
+
+diff --git a/src/main.cairo b/src/main.cairo
+new file mode 100644
+index 0000000..16c4e00
+--- /dev/null
++++ b/src/main.cairo
+@@ -0,0 +1,19 @@
++%lang starknet
++from starkware.cairo.common.alloc import alloc
++from starkware.cairo.common.math import split_int
++from starkware.cairo.common.memcpy import memcpy
++from starkware.cairo.common.cairo_builtins import BitwiseBuiltin, HashBuiltin
++from src.sha256 import sha256, finalize_sha256
++
++@view
++func sha256_cairo0{bitwise_ptr: BitwiseBuiltin*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
++    data_len: felt, data: felt*, data_len_no_padding: felt
++) -> (result_len: felt, result: felt*) {
++    alloc_locals;
++    let (local sha256_ptr_start: felt*) = alloc();
++    let sha256_ptr = sha256_ptr_start;
++    let sha256_ptr_end = sha256_ptr_start;
++    let (hash) = sha256{sha256_ptr=sha256_ptr}(data, data_len_no_padding);
++    finalize_sha256(sha256_ptr_start=sha256_ptr_start, sha256_ptr_end=sha256_ptr_end);
++    return (8, hash);
++}

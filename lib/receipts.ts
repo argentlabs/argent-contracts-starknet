@@ -11,10 +11,10 @@ export async function ensureSuccess(receipt: TransactionReceipt): Promise<Succes
 }
 
 export async function ensureAccepted(
-  receipt: TransactionReceipt | string,
+  receiptOrHash: TransactionReceipt | string,
 ): Promise<SuccessfulTransactionReceiptResponse> {
-  const transactionHash = typeof receipt === "string" ? receipt : receipt.transaction_hash;
-  await manager.waitForTransaction(transactionHash, {
+  const transactionHash = typeof receiptOrHash === "string" ? receiptOrHash : receiptOrHash.transaction_hash;
+  const receipt = await manager.waitForTransaction(transactionHash, {
     successStates: [TransactionFinalityStatus.ACCEPTED_ON_L1, TransactionFinalityStatus.ACCEPTED_ON_L2],
   });
   return receipt as SuccessfulTransactionReceiptResponse;

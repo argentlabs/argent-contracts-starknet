@@ -1,4 +1,14 @@
-import { Account, ArraySignatureType, BigNumberish, CairoCustomEnum, shortString, typedData } from "starknet";
+import {
+  Account,
+  ArraySignatureType,
+  BigNumberish,
+  CairoCustomEnum,
+  StarknetDomain,
+  TypedData,
+  TypedDataRevision,
+  shortString,
+  typedData,
+} from "starknet";
 import {
   ArgentAccount,
   ArgentX,
@@ -28,11 +38,7 @@ export const sessionTypes = {
   ],
 };
 
-export const ALLOWED_METHOD_HASH = typedData.getTypeHash(
-  sessionTypes,
-  "Allowed Method",
-  typedData.TypedDataRevision.Active,
-);
+export const ALLOWED_METHOD_HASH = typedData.getTypeHash(sessionTypes, "Allowed Method", TypedDataRevision.ACTIVE);
 
 export interface AllowedMethod {
   "Contract Address": string;
@@ -62,7 +68,7 @@ export interface SessionToken {
   proofs: string[][];
 }
 
-export async function getSessionDomain(): Promise<typedData.StarkNetDomain> {
+export async function getSessionDomain(): Promise<StarknetDomain> {
   // WARNING! Revision is encoded as a number in the StarkNetDomain type and not as shortstring
   // This is due to a bug in the Braavos implementation, and has been kept for compatibility
   const chainId = await manager.getChainId();
@@ -74,7 +80,7 @@ export async function getSessionDomain(): Promise<typedData.StarkNetDomain> {
   };
 }
 
-export async function getSessionTypedData(sessionRequest: OffChainSession): Promise<typedData.TypedData> {
+export async function getSessionTypedData(sessionRequest: OffChainSession): Promise<TypedData> {
   return {
     types: sessionTypes,
     primaryType: "Session",

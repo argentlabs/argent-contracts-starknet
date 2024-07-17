@@ -10,7 +10,6 @@ import {
   randomStarknetKeyPair,
   randomWebauthnOwner,
   sortByGuid,
-  waitForTransaction,
 } from "../lib";
 
 interface Account {
@@ -56,7 +55,7 @@ describe("Multisig: Signers types", function () {
       for (const { name, account } of accounts) {
         it(`Using "${name}"`, async function () {
           ethContract.connect(account);
-          await ensureSuccess(await waitForTransaction(await ethContract.transfer(recipient, amount)));
+          await ensureSuccess(await ethContract.transfer(recipient, amount));
         });
       }
     });

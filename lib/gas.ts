@@ -1,7 +1,7 @@
 import { exec } from "child_process";
 import fs from "fs";
 import { mapValues, maxBy, sortBy, sum } from "lodash-es";
-import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
+import { InvokeFunctionResponse, RpcProvider, TransactionReceipt, shortString } from "starknet";
 import { ensureAccepted, ensureSuccess } from ".";
 
 const ethUsd = 4000n;
@@ -26,7 +26,7 @@ const l2PayloadsWeights: Record<string, number> = {
 };
 
 async function profileGasUsage(transactionHash: string, provider: RpcProvider, allowFailedTransactions = false) {
-  const receipt = await ensureAccepted(await provider.waitForTransaction(transactionHash));
+  const receipt = await ensureAccepted(transactionHash);
   if (!allowFailedTransactions) {
     await ensureSuccess(receipt);
   }
@@ -62,7 +62,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     ec_op: rawResources.ec_op_builtin_applications ?? 0,
   };
 
-  const blockNumber = receipt.block_number;
+  const blockNumber = (receipt as TransactionReceipt).block_number;
   const blockInfo = await provider.getBlockWithReceipts(blockNumber);
 
   const stateUpdate = await provider.getStateUpdate(blockNumber);

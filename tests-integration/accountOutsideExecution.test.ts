@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Contract, num, shortString, typedData } from "starknet";
+import { Contract, TypedDataRevision, num, shortString } from "starknet";
 import {
   ArgentSigner,
   OutsideExecution,
@@ -15,8 +15,8 @@ import {
   waitForTransaction,
 } from "../lib";
 
-const activeRevision = typedData.TypedDataRevision.Active;
-const legacyRevision = typedData.TypedDataRevision.Legacy;
+const activeRevision = TypedDataRevision.ACTIVE;
+const legacyRevision = TypedDataRevision.LEGACY;
 
 const initialTime = 1713139200;
 describe("ArgentAccount: outside execution", function () {

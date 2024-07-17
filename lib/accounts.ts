@@ -10,12 +10,13 @@ import {
   Contract,
   DeployAccountContractPayload,
   DeployContractResponse,
-  GetTransactionReceiptResponse,
   InvocationsSignerDetails,
   InvokeFunctionResponse,
   RPC,
   RawCalldata,
   Signature,
+  SuccessfulTransactionReceiptResponse,
+  TransactionReceipt,
   UniversalDetails,
   V2InvocationsSignerDetails,
   V3InvocationsSignerDetails,
@@ -49,19 +50,19 @@ export class ArgentAccount extends Account {
 
   override async execute(
     calls: AllowArray<Call>,
-    abis?: Abi[],
-    details: UniversalDetails = {},
+    arg2?: Abi[] | UniversalDetails,
+    transactionsDetail: UniversalDetails = {},
   ): Promise<InvokeFunctionResponse> {
-    details ||= {};
-    if (!details.skipValidate) {
-      details.skipValidate = false;
+    transactionsDetail ||= {};
+    if (!transactionsDetail.skipValidate) {
+      transactionsDetail.skipValidate = false;
     }
-    if (details.resourceBounds) {
-      return super.execute(calls, abis, details);
+    if (transactionsDetail.resourceBounds) {
+      return super.execute(calls, arg2 as Abi[] | undefined, transactionsDetail);
     }
-    const estimate = await this.estimateFee(calls, details);
-    return super.execute(calls, abis, {
-      ...details,
+    const estimate = await this.estimateFee(calls, transactionsDetail);
+    return super.execute(calls, arg2 as Abi[] | undefined, {
+      ...transactionsDetail,
       resourceBounds: {
         ...estimate.resourceBounds,
         l1_gas: {
@@ -113,9 +114,15 @@ export const deployerV3 = setDefaultTransactionVersionV3(deployer);
 export function setDefaultTransactionVersion(account: ArgentAccount, newVersion: boolean): Account {
   const newDefaultVersion = newVersion ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
   if (account.transactionVersion === newDefaultVersion) {
-    return account;
+    return account as Account;
   }
-  return new ArgentAccount(account, account.address, account.signer, account.cairoVersion, newDefaultVersion);
+  return new ArgentAccount(
+    account,
+    account.address,
+    account.signer,
+    account.cairoVersion,
+    newDefaultVersion,
+  ) as Account;
 }
 
 export function setDefaultTransactionVersionV3(account: ArgentAccount): ArgentAccount {
@@ -204,7 +211,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<
   }
 
   await manager.waitForTransaction(transactionHash);
-  return { ...finalParams, account, transactionHash };
+  return { ...finalParams, account: account as Account, transactionHash };
 }
 
 export type DeployAccountParams = {
@@ -276,7 +283,7 @@ export async function upgradeAccount(
   accountToUpgrade: Account,
   newClassHash: string,
   calldata: RawCalldata = [],
-): Promise<GetTransactionReceiptResponse> {
+): Promise<SuccessfulTransactionReceiptResponse> {
   const { transaction_hash } = await accountToUpgrade.execute(
     {
       contractAddress: accountToUpgrade.address,
@@ -286,7 +293,7 @@ export async function upgradeAccount(
     undefined,
     { maxFee: 1e14 },
   );
-  return await ensureSuccess(await manager.waitForTransaction(transaction_hash));
+  return await ensureSuccess((await manager.waitForTransaction(transaction_hash)) as TransactionReceipt);
 }
 
 export async function executeWithCustomSig(

@@ -1,9 +1,9 @@
-import { Contract, typedData } from "starknet";
+import { Contract, TypedDataRevision } from "starknet";
 import { AllowedMethod, StarknetKeyPair, deployAccount, deployer, manager, setupSession } from "../lib";
 
 const initialTime = 1713139200n;
-const legacyRevision = typedData.TypedDataRevision.Legacy;
-const activeRevision = typedData.TypedDataRevision.Active;
+const legacyRevision = TypedDataRevision.LEGACY;
+const activeRevision = TypedDataRevision.ACTIVE;
 describe("ArgentAccount: outside execution", function () {
   // Avoid timeout
   this.timeout(320000);

@@ -1,8 +1,7 @@
 import { expect } from "chai";
-import { CallData, Contract, num, uint256 } from "starknet";
+import { CallData, Contract, TransactionReceipt, num, uint256 } from "starknet";
 import {
   deployAccount,
-  ensureSuccess,
   expectEvent,
   expectRevertWithErrorMessage,
   manager,
@@ -39,7 +38,7 @@ describe("ArgentAccount: multicall", function () {
     await expectEvent(transaction_hash, {
       from_address: account.address,
       eventName: "TransactionExecuted",
-      additionalKeys: [transaction_hash],
+      keys: [transaction_hash],
       data: CallData.compile([[first_retdata]]),
     });
   });
@@ -76,8 +75,8 @@ describe("ArgentAccount: multicall", function () {
 
     const senderInitialBalance = await manager.tokens.ethBalance(account.address);
     const recipient1InitialBalance = await manager.tokens.ethBalance(recipient1);
-    const initalNumber = await mockDappContract.get_number(account.address);
-    expect(initalNumber).to.equal(0n);
+    const initialNumber = await mockDappContract.get_number(account.address);
+    expect(initialNumber).to.equal(0n);
 
     const { transaction_hash: transferTxHash } = await account.execute([
       ethContract.populateTransaction.transfer(recipient1, amount1),
@@ -97,8 +96,8 @@ describe("ArgentAccount: multicall", function () {
   it("Should keep the tx in correct order", async function () {
     const { account } = await deployAccount();
 
-    const initalNumber = await mockDappContract.get_number(account.address);
-    expect(initalNumber).to.equal(0n);
+    const initialNumber = await mockDappContract.get_number(account.address);
+    expect(initialNumber).to.equal(0n);
 
     // Please only use prime number in this test
     const { transaction_hash: transferTxHash } = await account.execute([
@@ -134,7 +133,7 @@ describe("ArgentAccount: multicall", function () {
       mockDappContract.populateTransaction.increase_number(1),
       mockDappContract.populateTransaction.increase_number(10),
     ];
-    const receipt = await ensureSuccess(await waitForTransaction(await account.execute(calls)));
+    const receipt = await waitForTransaction(await account.execute(calls));
 
     const expectedReturnCall1 = [num.toHex(1)];
     const expectedReturnCall2 = [num.toHex(11)];
@@ -148,7 +147,7 @@ describe("ArgentAccount: multicall", function () {
     await expectEvent(receipt, {
       from_address: account.address,
       eventName: "TransactionExecuted",
-      additionalKeys: [receipt.transaction_hash],
+      keys: [(receipt as TransactionReceipt).transaction_hash],
       data: expectedReturnData,
     });
   });

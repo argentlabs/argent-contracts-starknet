@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Contract, num, shortString, typedData } from "starknet";
+import { Contract, TypedDataRevision, num, shortString } from "starknet";
 import {
   OutsideExecution,
   deployer,
@@ -14,8 +14,8 @@ import {
 } from "../lib";
 import { deployMultisig } from "../lib/multisig";
 
-const legacyRevision = typedData.TypedDataRevision.Legacy;
-const activeRevision = typedData.TypedDataRevision.Active;
+const legacyRevision = TypedDataRevision.LEGACY;
+const activeRevision = TypedDataRevision.ACTIVE;
 
 const initialTime = 1713139200;
 describe("ArgentMultisig: outside execution", function () {

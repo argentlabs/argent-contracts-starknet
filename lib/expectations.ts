@@ -13,6 +13,12 @@ import {
 import { manager } from "./manager";
 import { ensureSuccess } from "./receipts";
 
+interface Event {
+  from_address: string;
+  keys: string[];
+  data: string[];
+}
+
 export async function expectRevertWithErrorMessage(
   errorMessage: string,
   execute: () => Promise<DeployContractUDCResponse | InvokeFunctionResponse | GetTransactionReceiptResponse>,
@@ -49,7 +55,7 @@ export async function expectExecutionRevert(errorMessage: string, execute: () =>
   assert.fail("No error detected");
 }
 
-async function expectEventFromReceipt(receipt: TransactionReceipt, event: any, eventName?: string) {
+async function expectEventFromReceipt(receipt: TransactionReceipt, event: Event, eventName?: string) {
   receipt = await ensureSuccess(receipt);
   expect(event.keys.length).to.be.greaterThan(0, "Unsupported: No keys");
   const events = receipt.events ?? [];
@@ -62,7 +68,7 @@ async function expectEventFromReceipt(receipt: TransactionReceipt, event: any, e
   }
 }
 
-function normalizeEvent(event: any) {
+function normalizeEvent(event: Event) {
   return {
     from_address: event.from_address.toLowerCase(),
     keys: event.keys.map(num.toBigInt).map(String),

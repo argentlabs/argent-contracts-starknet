@@ -1,4 +1,4 @@
-import { RPC, TransactionReceipt, num } from "starknet";
+import { RPC, num } from "starknet";
 import {
   ArgentSigner,
   deployAccount,
@@ -91,15 +91,12 @@ describe("Gas griefing", function () {
       },
     };
     // This makes exactly 0x4563918244f40000 = 5e18
-    const tx = (await account.execute(
-      accountContract.populateTransaction.trigger_escape_owner(compiledSigner),
-      undefined,
-      {
+    await ensureSuccess(
+      await account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), undefined, {
         resourceBounds: newResourceBounds,
         tip: 1,
-      },
-    )) as TransactionReceipt;
-    await ensureSuccess(tx);
+      }),
+    );
   });
 
   it("Block high tip TxV3", async function () {

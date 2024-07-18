@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, Contract, TransactionReceipt, num, uint256 } from "starknet";
+import { CallData, Contract, num, uint256 } from "starknet";
 import {
   deployAccount,
   ensureSuccess,
@@ -133,7 +133,7 @@ describe("ArgentAccount: multicall", function () {
       mockDappContract.populateTransaction.increase_number(1),
       mockDappContract.populateTransaction.increase_number(10),
     ];
-    const receipt = await ensureSuccess((await account.execute(calls)) as TransactionReceipt);
+    const receipt = await ensureSuccess(await account.execute(calls));
 
     const expectedReturnCall1 = [num.toHex(1)];
     const expectedReturnCall2 = [num.toHex(11)];
@@ -147,7 +147,7 @@ describe("ArgentAccount: multicall", function () {
     await expectEvent(receipt, {
       from_address: account.address,
       eventName: "TransactionExecuted",
-      keys: [(receipt as TransactionReceipt).transaction_hash],
+      keys: [receipt.transaction_hash],
       data: expectedReturnData,
     });
   });

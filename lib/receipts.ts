@@ -2,12 +2,15 @@ import { assert } from "chai";
 import { TransactionFinalityStatus, TransactionReceipt } from "starknet";
 import { manager } from "./manager";
 
-export async function ensureSuccess(receiptOrHash: TransactionReceipt | string): Promise<TransactionReceipt> {
-  const transactionHash = typeof receiptOrHash === "string" ? receiptOrHash : receiptOrHash.transaction_hash;
-  const tx = await manager.waitForTransaction(transactionHash, {
+export async function ensureSuccess(
+  transactionOrHash: { transaction_hash: string } | string,
+): Promise<TransactionReceipt> {
+  const transaction_hash =
+    typeof transactionOrHash === "string" ? transactionOrHash : transactionOrHash.transaction_hash;
+  const tx = await manager.waitForTransaction(transaction_hash, {
     successStates: [TransactionFinalityStatus.ACCEPTED_ON_L1, TransactionFinalityStatus.ACCEPTED_ON_L2],
   });
-  assert(tx.isSuccess(), `Transaction ${transactionHash} REVERTED`);
+  assert(tx.isSuccess(), `Transaction ${transaction_hash} REVERTED`);
   return tx;
 }
 

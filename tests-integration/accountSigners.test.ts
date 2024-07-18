@@ -1,4 +1,4 @@
-import { Contract, TransactionReceipt, uint256 } from "starknet";
+import { Contract, uint256 } from "starknet";
 import {
   ArgentAccount,
   ArgentSigner,
@@ -12,7 +12,6 @@ import {
   randomSecp256r1KeyPair,
   randomStarknetKeyPair,
   randomWebauthnOwner,
-  waitForTransaction,
 } from "../lib";
 
 interface Account {
@@ -52,9 +51,7 @@ describe("ArgentAccount: Signers types", function () {
       for (const { name, account } of accounts) {
         it(`Using "${name}"`, async function () {
           ethContract.connect(account);
-          await ensureSuccess(
-            (await waitForTransaction(await ethContract.transfer(recipient, amount))) as TransactionReceipt,
-          );
+          await ensureSuccess(await ethContract.transfer(recipient, amount));
         });
       }
     });

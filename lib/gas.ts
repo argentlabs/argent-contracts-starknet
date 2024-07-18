@@ -1,7 +1,7 @@
 import { exec } from "child_process";
 import fs from "fs";
 import { mapValues, maxBy, sortBy, sum } from "lodash-es";
-import { InvokeFunctionResponse, RpcProvider, TransactionReceipt, shortString } from "starknet";
+import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
 import { ensureAccepted, ensureSuccess } from ".";
 
 const ethUsd = 4000n;
@@ -62,7 +62,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
     ec_op: rawResources.ec_op_builtin_applications ?? 0,
   };
 
-  const blockNumber = (receipt as TransactionReceipt).block_number;
+  const blockNumber = receipt.block_number;
   const blockInfo = await provider.getBlockWithReceipts(blockNumber);
 
   const stateUpdate = await provider.getStateUpdate(blockNumber);
@@ -206,7 +206,7 @@ export function newProfiler(provider: RpcProvider) {
       const filename = "gas-report.txt";
       const newFilename = "gas-report-new.txt";
       fs.writeFileSync(newFilename, report);
-      exec(`diff ${filename} ${newFilename}`, (err, stdout) => {
+      exec(`diff ${filename} ${newFilename}`, (_, stdout) => {
         if (stdout) {
           console.log(stdout);
           console.error("⚠️  Changes to gas report detected.\n");

@@ -89,6 +89,7 @@ export async function expectEvent(
   param:
     | string
     | GetTransactionReceiptResponse
+    | TransactionReceipt
     | SuccessfulTransactionReceiptResponse
     | (() => Promise<InvokeFunctionResponse>),
   event: EventWithName,

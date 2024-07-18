@@ -76,7 +76,7 @@ function normalizeEvent(event: Event): Event {
   };
 }
 
-function convertToEvent(eventWithName: EventWithName) {
+function convertToEvent(eventWithName: EventWithName): Event {
   const selector = hash.getSelectorFromName(eventWithName.eventName);
   return {
     from_address: eventWithName.from_address,

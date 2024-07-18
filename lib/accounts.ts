@@ -151,7 +151,7 @@ export async function deployOldAccount(
     contractAddress,
     addressSalt: salt,
   });
-  await manager.waitForTransaction(transaction_hash);
+  await manager.waitToResolveTransaction(transaction_hash);
   const accountContract = await manager.loadContract(account.address);
   accountContract.connect(account);
   return { account, accountContract, owner, guardian };
@@ -194,7 +194,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<
   let transactionHash;
   if (finalParams.selfDeploy) {
     const response = await deployer.execute(calls);
-    await manager.waitForTransaction(response.transaction_hash);
+    await manager.waitToResolveTransaction(response.transaction_hash);
     const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
     transactionHash = transaction_hash;
   } else {
@@ -203,7 +203,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<
     transactionHash = transaction_hash;
   }
 
-  await manager.waitForTransaction(transactionHash);
+  await manager.waitToResolveTransaction(transactionHash);
   return { ...finalParams, account: account, transactionHash };
 }
 
@@ -265,7 +265,7 @@ export async function deployLegacyAccount(classHash: string) {
     constructorCalldata,
     addressSalt: salt,
   });
-  await manager.waitForTransaction(transaction_hash);
+  await manager.waitToResolveTransaction(transaction_hash);
 
   const accountContract = await manager.loadContract(account.address);
   accountContract.connect(account);
@@ -366,7 +366,7 @@ export function calculateTransactionHash(transactionDetail: InvocationsSignerDet
 export async function fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {
   const call = await fundAccountCall(recipient, amount, token);
   const response = await deployer.execute(call ? [call] : []);
-  await manager.waitForTransaction(response.transaction_hash);
+  await manager.waitToResolveTransaction(response.transaction_hash);
 }
 
 export async function fundAccountCall(

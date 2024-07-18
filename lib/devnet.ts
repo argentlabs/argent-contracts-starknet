@@ -1,4 +1,4 @@
-import { RawArgs, RpcProvider } from "starknet";
+import { GetTransactionReceiptResponse, RawArgs, RpcProvider } from "starknet";
 import { Constructor } from ".";
 
 export const dumpFolderPath = "./dump";
@@ -10,8 +10,12 @@ export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
       return this.channel.nodeUrl.startsWith(devnetBaseUrl);
     }
 
-    // Polls quickly for a local network
-    waitForTransaction(transactionHash: string, options = {}) {
+    async waitToResolveTransaction(
+      transactionOrHash: { transaction_hash: string } | string,
+      options = {},
+    ): Promise<GetTransactionReceiptResponse> {
+      const transactionHash =
+        typeof transactionOrHash === "string" ? transactionOrHash : transactionOrHash.transaction_hash;
       const retryInterval = this.isDevnet ? 250 : 1000;
       return super.waitForTransaction(transactionHash, { retryInterval, ...options });
     }

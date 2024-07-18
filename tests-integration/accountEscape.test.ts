@@ -248,11 +248,12 @@ describe("ArgentAccount: escape mechanism", function () {
       account.signer = new LegacyMultisigSigner([guardian]);
 
       await manager.setTime(randomTime);
-      const { transaction_hash } = await account.execute({
-        contractAddress: account.address,
-        entrypoint: "triggerEscapeSigner",
-      });
-      await manager.waitForTransaction(transaction_hash);
+      await manager.waitToResolveTransaction(
+        await account.execute({
+          contractAddress: account.address,
+          entrypoint: "triggerEscapeSigner",
+        }),
+      );
 
       account.signer = new LegacyMultisigSigner([owner, guardian]);
       const upgradeReceipt = await upgradeAccount(account, argentAccountClassHash, ["0"]);
@@ -269,11 +270,12 @@ describe("ArgentAccount: escape mechanism", function () {
       account.signer = new LegacyMultisigSigner([guardian]);
 
       await manager.setTime(randomTime);
-      const { transaction_hash } = await account.execute({
-        contractAddress: account.address,
-        entrypoint: "triggerEscapeSigner",
-      });
-      await manager.waitForTransaction(transaction_hash);
+      await manager.waitToResolveTransaction(
+        await account.execute({
+          contractAddress: account.address,
+          entrypoint: "triggerEscapeSigner",
+        }),
+      );
 
       await manager.setTime(randomTime + ESCAPE_EXPIRY_PERIOD + 1n);
 

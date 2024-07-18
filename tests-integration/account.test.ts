@@ -32,8 +32,7 @@ describe("ArgentAccount", function () {
     const classHash = argentAccountClassHash;
     const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
     const udcCalls = deployer.buildUDCContractPayload({ classHash, salt, constructorCalldata, unique: false });
-    const response = await deployer.execute(udcCalls);
-    const receipt = await manager.waitForTransaction(response.transaction_hash);
+    const receipt = await manager.waitToResolveTransaction(await deployer.execute(udcCalls));
 
     await expectEvent(receipt, {
       from_address: contractAddress,
@@ -83,8 +82,7 @@ describe("ArgentAccount", function () {
       const chainId = await manager.getChainId();
       const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.guid, newOwner, chainId);
 
-      const response = await accountContract.change_owner(starknetSignature);
-      const receipt = await manager.waitForTransaction(response.transaction_hash);
+      const receipt = await manager.waitToResolveTransaction(await accountContract.change_owner(starknetSignature));
 
       await accountContract.get_owner_guid().should.eventually.equal(newOwner.guid);
 
@@ -142,8 +140,9 @@ describe("ArgentAccount", function () {
       const { accountContract } = await deployAccount();
       const newGuardian = randomStarknetKeyPair();
 
-      const response = await accountContract.change_guardian(newGuardian.compiledSignerAsOption);
-      const receipt = await manager.waitForTransaction(response.transaction_hash);
+      const receipt = await manager.waitToResolveTransaction(
+        await accountContract.change_guardian(newGuardian.compiledSignerAsOption),
+      );
 
       expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(newGuardian.guid);
 
@@ -219,8 +218,9 @@ describe("ArgentAccount", function () {
       const { accountContract } = await deployAccountWithGuardianBackup();
       const newGuardianBackup = randomStarknetKeyPair();
 
-      const response = await accountContract.change_guardian_backup(newGuardianBackup.compiledSignerAsOption);
-      const receipt = await manager.waitForTransaction(response.transaction_hash);
+      const receipt = await manager.waitToResolveTransaction(
+        await accountContract.change_guardian_backup(newGuardianBackup.compiledSignerAsOption),
+      );
 
       expect((await accountContract.get_guardian_backup_guid()).unwrap()).to.equal(newGuardianBackup.guid);
 
@@ -282,12 +282,13 @@ describe("ArgentAccount", function () {
   it("Expect 'Entry point X not found' when calling the constructor", async function () {
     const { account } = await deployAccount();
     try {
-      const { transaction_hash } = await account.execute({
-        contractAddress: account.address,
-        entrypoint: "constructor",
-        calldata: CallData.compile({ owner: 12, guardian: 13 }),
-      });
-      await manager.waitForTransaction(transaction_hash);
+      await manager.waitToResolveTransaction(
+        await account.execute({
+          contractAddress: account.address,
+          entrypoint: "constructor",
+          calldata: CallData.compile({ owner: 12, guardian: 13 }),
+        }),
+      );
     } catch (e: any) {
       expect(e.toString()).to.contain(
         `Entry point EntryPointSelector(StarkFelt(\\"0x028ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194\\")) not found in contract`,

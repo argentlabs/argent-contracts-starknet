@@ -18,7 +18,7 @@ const mockDappContract = await manager.loadContract(contract_address);
 console.log("Calling test dapp");
 mockDappContract.connect(account);
 const response = await mockDappContract.set_number(42n);
-await manager.waitForTransaction(response.transaction_hash);
+await manager.waitToResolveTransaction(response.transaction_hash);
 
 const number = await mockDappContract.get_number(account.address);
 console.log(number === 42n ? "Seems good!" : "Something went wrong :(");

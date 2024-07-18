@@ -243,15 +243,14 @@ describe("Hybrid Session Account: execute session calls with caching", function 
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
-      const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature, sessionHash } =
-        await setupSession(
-          guardian as StarknetKeyPair,
-          account,
-          allowedMethods,
-          initialTime + 150n,
-          randomStarknetKeyPair(),
-          useCaching,
-        );
+      const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(
+        guardian as StarknetKeyPair,
+        account,
+        allowedMethods,
+        initialTime + 150n,
+        randomStarknetKeyPair(),
+        useCaching,
+      );
 
       const sessionToken = await dappService.getSessionToken(
         calls,

@@ -42,6 +42,6 @@ console.log("Owner before", num.toHex(await accountContract.get_owner()));
 console.log("Changing to ", num.toHex(newOwnerPublicKey));
 
 const response = await accountContract.change_owner(starknetSignatureType(newOwnerPublicKey, r, s));
-await manager.waitForTransaction(response.transaction_hash);
+await manager.waitToResolveTransaction(response.transaction_hash);
 
 console.log("Owner after ", num.toHex(await accountContract.get_owner()));

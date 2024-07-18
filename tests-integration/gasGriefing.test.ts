@@ -4,8 +4,8 @@ import {
   deployAccount,
   ensureSuccess,
   expectExecutionRevert,
+  manager,
   randomStarknetKeyPair,
-  waitForTransaction,
 } from "../lib";
 
 describe("Gas griefing", function () {
@@ -17,7 +17,9 @@ describe("Gas griefing", function () {
       const { account, guardian, accountContract } = await deployAccount({ useTxV3 });
       account.signer = new ArgentSigner(guardian);
 
-      await waitForTransaction(await accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner));
+      await manager.waitToResolveTransaction(
+        await accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
+      );
       await expectExecutionRevert("argent/last-escape-too-recent", () =>
         accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
       );

@@ -4,7 +4,6 @@ import {
   DeployContractUDCResponse,
   GetTransactionReceiptResponse,
   InvokeFunctionResponse,
-  SuccessfulTransactionReceiptResponse,
   TransactionReceipt,
   hash,
   num,
@@ -86,12 +85,7 @@ function convertToEvent(eventWithName: EventWithName): Event {
 }
 
 export async function expectEvent(
-  param:
-    | string
-    | GetTransactionReceiptResponse
-    | TransactionReceipt
-    | SuccessfulTransactionReceiptResponse
-    | (() => Promise<InvokeFunctionResponse>),
+  param: string | GetTransactionReceiptResponse | TransactionReceipt | (() => Promise<InvokeFunctionResponse>),
   event: EventWithName,
 ) {
   if (typeof param === "function") {

@@ -7,7 +7,7 @@ export async function ensureSuccess(
 ): Promise<TransactionReceipt> {
   const transactionHash =
     typeof transactionOrHash === "string" ? transactionOrHash : transactionOrHash.transaction_hash;
-  const tx = await manager.waitToResolveTransaction(transactionHash, {
+  const tx = await manager.waitForTx(transactionHash, {
     successStates: [TransactionFinalityStatus.ACCEPTED_ON_L1, TransactionFinalityStatus.ACCEPTED_ON_L2],
   });
   assert(tx.isSuccess(), `Transaction ${transactionHash} REVERTED`);
@@ -19,7 +19,7 @@ export async function ensureAccepted(
 ): Promise<TransactionReceipt> {
   const transactionHash =
     typeof transactionOrHash === "string" ? transactionOrHash : transactionOrHash.transaction_hash;
-  const receipt = await manager.waitToResolveTransaction(transactionHash, {
+  const receipt = await manager.waitForTx(transactionHash, {
     successStates: [TransactionFinalityStatus.ACCEPTED_ON_L1, TransactionFinalityStatus.ACCEPTED_ON_L2],
   });
   return receipt as TransactionReceipt;

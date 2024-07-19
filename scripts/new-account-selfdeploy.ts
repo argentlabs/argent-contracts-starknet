@@ -30,4 +30,4 @@ const { transaction_hash } = await deployer.deploySelf(
   { maxFee: ethBalance },
 );
 console.log(`transaction_hash: ${transaction_hash}`);
-await manager.waitToResolveTransaction(transaction_hash);
+await manager.waitForTx(transaction_hash);

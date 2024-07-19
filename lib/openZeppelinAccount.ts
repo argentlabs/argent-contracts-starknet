@@ -40,7 +40,7 @@ export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): 
     ? await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "STRK")
     : await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "ETH");
   const response = await deployer.execute([fundingCall!]);
-  await manager.waitToResolveTransaction(response.transaction_hash);
+  await manager.waitForTx(response.transaction_hash);
 
   const defaultTxVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
   const signer = new LegacyMultisigSigner([finalParams.owner]);
@@ -52,7 +52,7 @@ export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): 
     addressSalt: finalParams.salt,
   });
 
-  await manager.waitToResolveTransaction(deployTxHash);
+  await manager.waitForTx(deployTxHash);
   const accountContract = await manager.loadContract(account.address, classHash);
   accountContract.connect(account);
 

@@ -27,7 +27,7 @@ export async function expectRevertWithErrorMessage(
     if (!("transaction_hash" in executionResult)) {
       throw new Error(`No transaction hash found on ${JSON.stringify(executionResult)}`);
     }
-    await manager.waitToResolveTransaction(executionResult["transaction_hash"]);
+    await manager.waitForTx(executionResult["transaction_hash"]);
   } catch (e: any) {
     if (!e.toString().includes(shortString.encodeShortString(errorMessage))) {
       const match = e.toString().match(/\[([^\]]+)]/);
@@ -45,7 +45,7 @@ export async function expectRevertWithErrorMessage(
 
 export async function expectExecutionRevert(errorMessage: string, execute: () => Promise<InvokeFunctionResponse>) {
   try {
-    await manager.waitToResolveTransaction(await execute());
+    await manager.waitForTx(await execute());
     /* eslint-disable  @typescript-eslint/no-explicit-any */
   } catch (e: any) {
     expect(e.toString()).to.contain(`Failure reason: ${shortString.encodeShortString(errorMessage)}`);
@@ -92,7 +92,7 @@ export async function expectEvent(
     ({ transaction_hash: param } = await param());
   }
   if (typeof param === "string") {
-    param = await manager.waitToResolveTransaction(param);
+    param = await manager.waitForTx(param);
   }
   const eventName = event.eventName;
   const convertedEvent = convertToEvent(event);

@@ -116,7 +116,7 @@ describe("ArgentAccount: outside execution", function () {
 
     // normal scenario
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
-    await manager.waitToResolveTransaction(await deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(await deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
@@ -186,7 +186,7 @@ describe("ArgentAccount: outside execution", function () {
 
     // normal scenario
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
-    await manager.waitToResolveTransaction(await deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(await deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
@@ -214,7 +214,7 @@ describe("ArgentAccount: outside execution", function () {
     );
 
     // ensure the caller is no
-    await manager.waitToResolveTransaction(await deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(await deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 
@@ -237,7 +237,7 @@ describe("ArgentAccount: outside execution", function () {
 
     await manager.setTime(initialTime);
 
-    await manager.waitToResolveTransaction(await deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(await deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 
@@ -261,7 +261,7 @@ describe("ArgentAccount: outside execution", function () {
 
     await manager.setTime(initialTime);
 
-    await manager.waitToResolveTransaction(await deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(await deployer.execute(outsideExecutionCall));
     const current_escape = await accountContract.get_escape();
     expect(current_escape.new_signer.unwrap().stored_value).to.equal(keyPair.storedValue);
   });

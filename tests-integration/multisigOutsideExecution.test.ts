@@ -114,7 +114,7 @@ describe("ArgentMultisig: outside execution", function () {
 
     // normal scenario
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
-    await manager.waitToResolveTransaction(await deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(await deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
@@ -144,7 +144,7 @@ describe("ArgentMultisig: outside execution", function () {
     await manager.setTime(initialTime);
 
     // ensure the caller is not used
-    await manager.waitToResolveTransaction(await deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(await deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 
@@ -209,7 +209,7 @@ describe("ArgentMultisig: outside execution", function () {
 
     // normal scenario
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
-    await manager.waitToResolveTransaction(await deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(await deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
@@ -239,7 +239,7 @@ describe("ArgentMultisig: outside execution", function () {
     await manager.setTime(initialTime);
 
     // ensure the caller is not used
-    await manager.waitToResolveTransaction(await deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(await deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 

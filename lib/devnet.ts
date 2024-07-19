@@ -10,7 +10,7 @@ export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
       return this.channel.nodeUrl.startsWith(devnetBaseUrl);
     }
 
-    async waitToResolveTransaction(
+    async waitForTx(
       transactionOrHash: { transaction_hash: string } | string,
       options = {},
     ): Promise<GetTransactionReceiptResponse> {

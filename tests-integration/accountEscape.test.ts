@@ -248,7 +248,7 @@ describe("ArgentAccount: escape mechanism", function () {
       account.signer = new LegacyMultisigSigner([guardian]);
 
       await manager.setTime(randomTime);
-      await manager.waitToResolveTransaction(
+      await manager.waitForTx(
         await account.execute({
           contractAddress: account.address,
           entrypoint: "triggerEscapeSigner",
@@ -270,7 +270,7 @@ describe("ArgentAccount: escape mechanism", function () {
       account.signer = new LegacyMultisigSigner([guardian]);
 
       await manager.setTime(randomTime);
-      await manager.waitToResolveTransaction(
+      await manager.waitForTx(
         await account.execute({
           contractAddress: account.address,
           entrypoint: "triggerEscapeSigner",

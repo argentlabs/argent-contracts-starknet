@@ -17,7 +17,7 @@ describe("Gas griefing", function () {
       const { account, guardian, accountContract } = await deployAccount({ useTxV3 });
       account.signer = new ArgentSigner(guardian);
 
-      await manager.waitToResolveTransaction(
+      await manager.waitForTx(
         await accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
       );
       await expectExecutionRevert("argent/last-escape-too-recent", () =>

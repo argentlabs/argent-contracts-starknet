@@ -27,7 +27,6 @@ import {
   uint256,
 } from "starknet";
 import { manager } from "./manager";
-import { ensureSuccess } from "./receipts";
 import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { ArgentSigner, KeyPair, RawSigner, randomStarknetKeyPair } from "./signers/signers";
 import { ethAddress, strkAddress } from "./tokens";
@@ -288,7 +287,7 @@ export async function upgradeAccount(
     undefined,
     { maxFee: 1e14 },
   );
-  return await ensureSuccess(transaction_hash);
+  return await manager.ensureSuccess(transaction_hash);
 }
 
 export async function executeWithCustomSig(

@@ -1,4 +1,4 @@
-import { GetTransactionReceiptResponse, RawArgs, RpcProvider } from "starknet";
+import { RawArgs, RpcProvider } from "starknet";
 import { Constructor } from ".";
 
 export const dumpFolderPath = "./dump";
@@ -14,15 +14,6 @@ export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
     waitForTransaction(transactionHash: string, options = {}) {
       const retryInterval = this.isDevnet ? 250 : 1000;
       return super.waitForTransaction(transactionHash, { retryInterval, ...options });
-    }
-
-    async waitForTx(
-      transactionOrHash: { transaction_hash: string } | string,
-      options = {},
-    ): Promise<GetTransactionReceiptResponse> {
-      const transactionHash =
-        typeof transactionOrHash === "string" ? transactionOrHash : transactionOrHash.transaction_hash;
-      return this.waitForTransaction(transactionHash, { ...options });
     }
 
     async mintEth(address: string, amount: number | bigint) {

@@ -2,7 +2,7 @@ import { exec } from "child_process";
 import fs from "fs";
 import { mapValues, maxBy, sortBy, sum } from "lodash-es";
 import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
-import { ensureAccepted, ensureSuccess } from ".";
+import { manager } from ".";
 
 const ethUsd = 4000n;
 const strkUsd = 2n;
@@ -26,9 +26,9 @@ const l2PayloadsWeights: Record<string, number> = {
 };
 
 async function profileGasUsage(transactionHash: string, provider: RpcProvider, allowFailedTransactions = false) {
-  const receipt = await ensureAccepted(transactionHash);
+  const receipt = await manager.ensureAccepted(transactionHash);
   if (!allowFailedTransactions) {
-    await ensureSuccess(receipt);
+    await manager.ensureSuccess(receipt);
   }
   const actualFee = BigInt(receipt.actual_fee.amount);
   const rawResources = receipt.execution_resources!;

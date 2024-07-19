@@ -1,7 +1,7 @@
 import { assert, expect } from "chai";
 import { isEqual } from "lodash-es";
 import { GetTransactionReceiptResponse, InvokeFunctionResponse, TransactionReceipt, hash, num } from "starknet";
-import { ensureSuccess, manager } from ".";
+import { manager } from ".";
 
 interface Event {
   from_address: string;
@@ -14,7 +14,7 @@ export interface EventWithName extends Event {
 }
 
 async function expectEventFromReceipt(receipt: TransactionReceipt, event: Event, eventName?: string) {
-  receipt = await ensureSuccess(receipt);
+  receipt = await manager.ensureSuccess(receipt);
   expect(event.keys?.length).to.be.greaterThan(0, "Unsupported: No keys");
   const events = receipt.events ?? [];
   const normalizedEvent = normalizeEvent(event);

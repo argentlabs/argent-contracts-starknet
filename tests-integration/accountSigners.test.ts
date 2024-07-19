@@ -4,7 +4,6 @@ import {
   ArgentSigner,
   deployAccount,
   deployAccountWithoutGuardian,
-  ensureSuccess,
   expectRevertWithErrorMessage,
   manager,
   randomEip191KeyPair,
@@ -51,7 +50,7 @@ describe("ArgentAccount: Signers types", function () {
       for (const { name, account } of accounts) {
         it(`Using "${name}"`, async function () {
           ethContract.connect(account);
-          await ensureSuccess(await ethContract.transfer(recipient, amount));
+          await manager.ensureSuccess(await ethContract.transfer(recipient, amount));
         });
       }
     });

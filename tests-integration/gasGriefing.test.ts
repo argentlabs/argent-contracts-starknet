@@ -1,12 +1,5 @@
 import { RPC, num } from "starknet";
-import {
-  ArgentSigner,
-  deployAccount,
-  ensureSuccess,
-  expectExecutionRevert,
-  manager,
-  randomStarknetKeyPair,
-} from "../lib";
+import { ArgentSigner, deployAccount, expectExecutionRevert, manager, randomStarknetKeyPair } from "../lib";
 
 describe("Gas griefing", function () {
   this.timeout(320000);
@@ -91,7 +84,7 @@ describe("Gas griefing", function () {
       },
     };
     // This makes exactly 0x4563918244f40000 = 5e18
-    await ensureSuccess(
+    await manager.ensureSuccess(
       await account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), {
         resourceBounds: newResourceBounds,
         tip: 1,

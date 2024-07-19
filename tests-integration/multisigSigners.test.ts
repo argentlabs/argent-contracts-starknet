@@ -2,7 +2,6 @@ import { Contract, uint256 } from "starknet";
 import {
   ArgentAccount,
   deployMultisig,
-  ensureSuccess,
   manager,
   randomEip191KeyPair,
   randomEthKeyPair,
@@ -55,7 +54,7 @@ describe("Multisig: Signers types", function () {
       for (const { name, account } of accounts) {
         it(`Using "${name}"`, async function () {
           ethContract.connect(account);
-          await ensureSuccess(await ethContract.transfer(recipient, amount));
+          await manager.ensureSuccess(await ethContract.transfer(recipient, amount));
         });
       }
     });

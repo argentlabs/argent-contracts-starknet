@@ -10,14 +10,19 @@ export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
       return this.channel.nodeUrl.startsWith(devnetBaseUrl);
     }
 
+    // Polls quickly for a local network
+    waitForTransaction(transactionHash: string, options = {}) {
+      const retryInterval = this.isDevnet ? 250 : 1000;
+      return super.waitForTransaction(transactionHash, { retryInterval, ...options });
+    }
+
     async waitForTx(
       transactionOrHash: { transaction_hash: string } | string,
       options = {},
     ): Promise<GetTransactionReceiptResponse> {
       const transactionHash =
         typeof transactionOrHash === "string" ? transactionOrHash : transactionOrHash.transaction_hash;
-      const retryInterval = this.isDevnet ? 250 : 1000;
-      return super.waitForTransaction(transactionHash, { retryInterval, ...options });
+      return this.waitForTransaction(transactionHash, { ...options });
     }
 
     async mintEth(address: string, amount: number | bigint) {

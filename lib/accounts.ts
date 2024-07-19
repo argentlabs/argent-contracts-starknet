@@ -49,18 +49,20 @@ export class ArgentAccount extends Account {
 
   override async execute(
     calls: AllowArray<Call>,
-    abis?: Abi[] | UniversalDetails,
+    arg2?: Abi[] | UniversalDetails,
     transactionDetail: UniversalDetails = {},
   ): Promise<InvokeFunctionResponse> {
     transactionDetail ||= {};
+    const details = arg2 === undefined || Array.isArray(arg2) ? transactionDetail : arg2;
+    const abi = details as Abi[];
     if (!transactionDetail.skipValidate) {
       transactionDetail.skipValidate = false;
     }
     if (transactionDetail.resourceBounds) {
-      return super.execute(calls, abis as Abi[] | undefined, transactionDetail);
+      return super.execute(calls, abi, transactionDetail);
     }
     const estimate = await this.estimateFee(calls, transactionDetail);
-    return super.execute(calls, abis as Abi[] | undefined, {
+    return super.execute(calls, abi, {
       ...transactionDetail,
       resourceBounds: {
         ...estimate.resourceBounds,
@@ -203,8 +205,8 @@ async function deployAccountInner(params: DeployAccountParams): Promise<
     transactionHash = transaction_hash;
   }
 
-  await manager.waitForTx(transactionHash);
-  return { ...finalParams, account: account, transactionHash };
+  await manager.waitForTransaction(transactionHash);
+  return { ...finalParams, account, transactionHash };
 }
 
 export type DeployAccountParams = {

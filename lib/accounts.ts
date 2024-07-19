@@ -52,9 +52,12 @@ export class ArgentAccount extends Account {
     arg2?: Abi[] | UniversalDetails,
     transactionDetail: UniversalDetails = {},
   ): Promise<InvokeFunctionResponse> {
+    if (arg2 && !Array.isArray(arg2) && transactionDetail) {
+      throw new Error("arg2 cannot be UniversalDetails when transactionDetail is non-null");
+    }
     transactionDetail ||= {};
     const details = arg2 === undefined || Array.isArray(arg2) ? transactionDetail : arg2;
-    const abi = details as Abi[];
+    const abi = Array.isArray(details) ? (details as Abi[]) : undefined;
     if (!transactionDetail.skipValidate) {
       transactionDetail.skipValidate = false;
     }

@@ -53,7 +53,7 @@ export class ArgentAccount extends Account {
     transactionDetail: UniversalDetails = {},
   ): Promise<InvokeFunctionResponse> {
     const isArg2UniversalDetails = arg2 && !Array.isArray(arg2);
-    if (isArg2UniversalDetails && Object.keys(transactionDetail).length === 0) {
+    if (isArg2UniversalDetails && !(Object.keys(transactionDetail).length === 0)) {
       throw new Error("arg2 cannot be UniversalDetails when transactionDetail is non-null");
     }
     const detail = isArg2UniversalDetails ? (arg2 as UniversalDetails) : transactionDetail;

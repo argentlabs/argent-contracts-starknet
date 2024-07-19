@@ -52,21 +52,21 @@ export class ArgentAccount extends Account {
     arg2?: Abi[] | UniversalDetails,
     transactionDetail: UniversalDetails = {},
   ): Promise<InvokeFunctionResponse> {
-    if (arg2 && !Array.isArray(arg2) && transactionDetail) {
+    const isArg2UniversalDetails = arg2 && !Array.isArray(arg2);
+    if (isArg2UniversalDetails && transactionDetail) {
       throw new Error("arg2 cannot be UniversalDetails when transactionDetail is non-null");
     }
-    transactionDetail ||= {};
-    const details = arg2 === undefined || Array.isArray(arg2) ? transactionDetail : arg2;
-    const abi = Array.isArray(details) ? (details as Abi[]) : undefined;
-    if (!transactionDetail.skipValidate) {
-      transactionDetail.skipValidate = false;
+    const detail = isArg2UniversalDetails ? (arg2 as UniversalDetails) : transactionDetail;
+    const abi = Array.isArray(arg2) ? (arg2 as Abi[]) : undefined;
+    if (!detail.skipValidate) {
+      detail.skipValidate = false;
     }
-    if (transactionDetail.resourceBounds) {
-      return super.execute(calls, abi, transactionDetail);
+    if (detail.resourceBounds) {
+      return super.execute(calls, abi, detail);
     }
-    const estimate = await this.estimateFee(calls, transactionDetail);
+    const estimate = await this.estimateFee(calls, detail);
     return super.execute(calls, abi, {
-      ...transactionDetail,
+      ...detail,
       resourceBounds: {
         ...estimate.resourceBounds,
         l1_gas: {

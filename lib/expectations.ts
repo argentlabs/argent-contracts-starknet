@@ -14,8 +14,12 @@ import { ensureSuccess } from "./receipts";
 
 interface Event {
   from_address: string;
-  keys: string[];
-  data: string[];
+  keys?: string[];
+  data?: string[];
+}
+
+export interface EventWithName extends Event {
+  eventName: string;
 }
 
 export async function expectRevertWithErrorMessage(
@@ -56,7 +60,7 @@ export async function expectExecutionRevert(errorMessage: string, execute: () =>
 
 async function expectEventFromReceipt(receipt: TransactionReceipt, event: Event, eventName?: string) {
   receipt = await ensureSuccess(receipt);
-  expect(event.keys.length).to.be.greaterThan(0, "Unsupported: No keys");
+  expect(event.keys?.length).to.be.greaterThan(0, "Unsupported: No keys");
   const events = receipt.events ?? [];
   const normalizedEvent = normalizeEvent(event);
   const matches = events.filter((e) => isEqual(normalizeEvent(e), normalizedEvent)).length;
@@ -70,8 +74,8 @@ async function expectEventFromReceipt(receipt: TransactionReceipt, event: Event,
 function normalizeEvent(event: Event): Event {
   return {
     from_address: event.from_address.toLowerCase(),
-    keys: event.keys.map(num.toBigInt).map(String),
-    data: event.data.map(num.toBigInt).map(String),
+    keys: event.keys?.map(num.toBigInt).map(String),
+    data: event.data?.map(num.toBigInt).map(String),
   };
 }
 
@@ -103,11 +107,4 @@ export async function waitForTransaction({
   transaction_hash,
 }: InvokeFunctionResponse): Promise<GetTransactionReceiptResponse> {
   return await manager.waitForTransaction(transaction_hash);
-}
-
-export interface EventWithName {
-  from_address: string;
-  eventName: string;
-  keys?: Array<string>;
-  data?: Array<string>;
 }

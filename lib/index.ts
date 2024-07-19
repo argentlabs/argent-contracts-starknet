@@ -7,6 +7,7 @@ chai.should();
 export * from "./accounts";
 export * from "./contracts";
 export * from "./devnet";
+export * from "./events";
 export * from "./expectations";
 export * from "./manager";
 export * from "./multisig";

@@ -298,7 +298,7 @@ export async function executeWithCustomSig(
   transactionsDetail: UniversalDetails = {},
 ): Promise<InvokeFunctionResponse> {
   const signer = new (class extends RawSigner {
-    public async signRaw(messageHash: string): Promise<string[]> {
+    public async signRaw(_messageHash: string): Promise<string[]> {
       return signature;
     }
   })();
@@ -323,11 +323,11 @@ export async function getSignerDetails(account: ArgentAccount, calls: Call[]): P
   );
   const customSigner = new (class extends RawSigner {
     public signerDetails?: InvocationsSignerDetails;
-    public async signTransaction(calls: Call[], signerDetails: InvocationsSignerDetails): Promise<Signature> {
+    public async signTransaction(_calls: Call[], signerDetails: InvocationsSignerDetails): Promise<Signature> {
       this.signerDetails = signerDetails;
       throw Error("Should not execute");
     }
-    public async signRaw(messageHash: string): Promise<string[]> {
+    public async signRaw(_messageHash: string): Promise<string[]> {
       throw Error("Not implemented");
     }
   })();

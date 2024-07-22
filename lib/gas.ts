@@ -26,7 +26,11 @@ const l2PayloadsWeights: Record<string, number> = {
 };
 
 async function profileGasUsage(transactionHash: string, provider: RpcProvider, allowFailedTransactions = false) {
-  const receipt = await manager.ensureAccepted(transactionHash);
+  const receipt = await manager.ensureAccepted(async () => {
+    return {
+      transaction_hash: transactionHash,
+    };
+  });
   if (!allowFailedTransactions) {
     await manager.ensureSuccess(async () => receipt);
   }

@@ -1,9 +1,8 @@
 use argent::presets::argent_account::ArgentAccount;
 use argent::signer::signer_signature::{
-    Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait, StarknetSigner,
-    starknet_signer_from_pubkey,
+    Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait, starknet_signer_from_pubkey,
 };
-use snforge_std::{start_prank, CheatTarget};
+use snforge_std::cheat_caller_address_global;
 use starknet::contract_address_const;
 use super::setup::{
     account_test_setup::{
@@ -25,7 +24,7 @@ fn initialize() {
 #[should_panic(expected: ('argent/invalid-tx-version',))]
 fn check_transaction_version_on_execute() {
     let account = initialize_account();
-    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<0>());
+    cheat_caller_address_global(contract_address_const::<0>());
     set_tx_version_foundry(32, account.contract_address);
     account.__execute__(array![]);
 }
@@ -34,7 +33,7 @@ fn check_transaction_version_on_execute() {
 #[should_panic(expected: ('argent/invalid-tx-version',))]
 fn check_transaction_version_on_validate() {
     let account = initialize_account();
-    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<0>());
+    cheat_caller_address_global(contract_address_const::<0>());
     set_tx_version_foundry(32, account.contract_address);
     account.__validate__(array![]);
 }
@@ -85,7 +84,7 @@ fn change_owner() {
 #[should_panic(expected: ('argent/only-self',))]
 fn change_owner_only_self() {
     let account = initialize_account();
-    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
+    cheat_caller_address_global(contract_address_const::<42>());
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
     account.change_owner(signer_signature);
@@ -124,7 +123,7 @@ fn change_guardian() {
 fn change_guardian_only_self() {
     let account = initialize_account();
     let guardian = Option::Some(starknet_signer_from_pubkey(22));
-    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
+    cheat_caller_address_global(contract_address_const::<42>());
     account.change_guardian(guardian);
 }
 
@@ -160,7 +159,7 @@ fn change_guardian_backup() {
 fn change_guardian_backup_only_self() {
     let account = initialize_account();
     let guardian_backup = Option::Some(starknet_signer_from_pubkey(42));
-    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
+    cheat_caller_address_global(contract_address_const::<42>());
     account.change_guardian_backup(guardian_backup);
 }
 
@@ -222,7 +221,7 @@ fn supportsInterface() {
 #[should_panic(expected: ('argent/non-null-caller',))]
 fn cant_call_validate() {
     let account = initialize_account();
-    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
+    cheat_caller_address_global(contract_address_const::<42>());
     account.__validate__(array![]);
 }
 

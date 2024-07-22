@@ -1,4 +1,4 @@
-// mod test_argent_account;
+mod test_argent_account;
 // mod test_argent_account_escape;
 // mod test_argent_account_signatures;
 // mod test_asserts;
@@ -20,7 +20,7 @@
 // mod test_transaction_version;
 
 mod setup {
-    // mod account_test_setup;
+    mod account_test_setup;
     mod constants;
     // mod multisig_test_setup;
     mod utils;

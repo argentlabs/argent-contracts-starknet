@@ -22,8 +22,8 @@
 mod setup {
     // mod account_test_setup;
     mod constants;
-// mod multisig_test_setup;
-// mod utils;
+    // mod multisig_test_setup;
+    mod utils;
 }
 // mod webauthn {
 //     mod test_webauthn_bytes;

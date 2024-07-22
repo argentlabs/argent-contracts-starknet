@@ -1,5 +1,5 @@
 # Use the base image
-FROM shardlabs/starknet-devnet-rs:bab781a018318df51adb20fc60716c8429ee89b0
+FROM shardlabs/starknet-devnet-rs:ff9ba95dfff92de33605d7137b916546825b5906
 
 # Expose port 5050
 EXPOSE 5050

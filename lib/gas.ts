@@ -1,8 +1,8 @@
 import { exec } from "child_process";
 import fs from "fs";
 import { mapValues, maxBy, sortBy, sum } from "lodash-es";
-import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
-import { manager } from ".";
+import { InvokeFunctionResponse, shortString } from "starknet";
+import { type Manager } from "./manager";
 
 const ethUsd = 4000n;
 const strkUsd = 2n;
@@ -25,7 +25,7 @@ const l2PayloadsWeights: Record<string, number> = {
   calldata: 0.128,
 };
 
-async function profileGasUsage(transactionHash: string, provider: RpcProvider, allowFailedTransactions = false) {
+async function profileGasUsage(transactionHash: string, manager: Manager, allowFailedTransactions = false) {
   const receipt = await manager.ensureAccepted(async () => {
     return {
       transaction_hash: transactionHash,
@@ -67,9 +67,9 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   };
 
   const blockNumber = receipt.block_number;
-  const blockInfo = await provider.getBlockWithReceipts(blockNumber);
+  const blockInfo = await manager.getBlockWithReceipts(blockNumber);
 
-  const stateUpdate = await provider.getStateUpdate(blockNumber);
+  const stateUpdate = await manager.getStateUpdate(blockNumber);
   const storageDiffs = stateUpdate.state_diff.storage_diffs;
   const paidInStrk = receipt.actual_fee.unit == "FRI";
   const gasPrice = BigInt(paidInStrk ? blockInfo.l1_gas_price.price_in_fri : blockInfo.l1_gas_price.price_in_wei);
@@ -103,7 +103,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
 
   // L2 payloads
-  const { calldata, signature } = (await provider.getTransaction(receipt.transaction_hash)) as any;
+  const { calldata, signature } = (await manager.getTransaction(receipt.transaction_hash)) as any;
   const calldataGas =
     calldata && signature ? Math.floor((calldata.length + signature.length) * l2PayloadsWeights.calldata) : undefined; // TODO find workaround for deployment transactions
 
@@ -134,7 +134,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
 
 type Profile = Awaited<ReturnType<typeof profileGasUsage>>;
 
-export function newProfiler(provider: RpcProvider) {
+export function newProfiler(manager: Manager) {
   const profiles: Record<string, Profile> = {};
 
   return {
@@ -147,7 +147,7 @@ export function newProfiler(provider: RpcProvider) {
         transactionHash = transactionHash.transaction_hash;
       }
       console.log(`Profiling: ${name} (${transactionHash})`);
-      const profile = await profileGasUsage(transactionHash, provider, allowFailedTransactions);
+      const profile = await profileGasUsage(transactionHash, manager, allowFailedTransactions);
       if (printProfile) {
         console.dir(profile, { depth: null });
       }

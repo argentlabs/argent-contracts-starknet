@@ -1,5 +1,10 @@
-import { assert } from "chai";
-import { GetTransactionReceiptResponse, RpcProvider, TransactionFinalityStatus, TransactionReceipt } from "starknet";
+import {
+  GetTransactionReceiptResponse,
+  RpcProvider,
+  TransactionExecutionStatus,
+  TransactionFinalityStatus,
+  TransactionReceipt,
+} from "starknet";
 import { Constructor } from ".";
 
 const successStates = [TransactionFinalityStatus.ACCEPTED_ON_L1, TransactionFinalityStatus.ACCEPTED_ON_L2];
@@ -22,10 +27,9 @@ export const WithReceipts = <T extends Constructor<RpcProvider>>(Base: T) =>
       }
       const transactionHash = executionResult["transaction_hash"];
       const tx = await this.waitForTx(transactionHash, {
-        successStates,
+        successStates: [TransactionExecutionStatus.SUCCEEDED],
       });
-      assert(tx.isSuccess(), `Transaction ${transactionHash} REVERTED`);
-      return tx;
+      return tx as TransactionReceipt;
     }
 
     async ensureAccepted(execute: () => Promise<{ transaction_hash: string }>): Promise<TransactionReceipt> {

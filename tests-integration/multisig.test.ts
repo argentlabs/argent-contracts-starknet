@@ -22,7 +22,7 @@ describe("ArgentMultisig", function () {
         await expectEvent(receipt, {
           from_address: accountContract.address,
           eventName: "OwnerAddedGuid",
-          additionalKeys: [key.guid.toString()],
+          keys: [key.guid.toString()],
         });
       }
 

@@ -1,4 +1,15 @@
-import { Account, ArraySignatureType, Call, InvocationsSignerDetails, ec, hash, num, typedData } from "starknet";
+import {
+  Account,
+  ArraySignatureType,
+  Call,
+  InvocationsSignerDetails,
+  TypedData,
+  TypedDataRevision,
+  ec,
+  hash,
+  num,
+  typedData,
+} from "starknet";
 import {
   OffChainSession,
   OutsideExecution,
@@ -15,7 +26,7 @@ export class ArgentX {
     public backendService: BackendService,
   ) {}
 
-  public async getOffchainSignature(typedData: typedData.TypedData): Promise<ArraySignatureType> {
+  public async getOffchainSignature(typedData: TypedData): Promise<ArraySignatureType> {
     return (await this.account.signMessage(typedData)) as ArraySignatureType;
   }
 }
@@ -64,7 +75,7 @@ export class BackendService {
     sessionTokenToSign: OffChainSession,
     accountAddress: string,
     outsideExecution: OutsideExecution,
-    revision: typedData.TypedDataRevision,
+    revision: TypedDataRevision,
     cacheAuthorization: boolean,
   ): Promise<bigint[]> {
     // TODO backend must verify, timestamps fees, used tokens nfts...

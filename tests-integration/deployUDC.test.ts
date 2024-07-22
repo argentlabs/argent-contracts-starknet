@@ -14,10 +14,8 @@ describe("Deploy UDC", function () {
       owner: owner.signer,
       guardian: guardian.signerAsOption,
     });
-
     const calculatedAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, callData, 0);
     const udcDeploymentAddress = await deployContractUDC(argentAccountClassHash, salt, callData);
-
     expect(calculatedAddress).to.equal(udcDeploymentAddress);
 
     // note about self deployment: As the address we get from self deployment

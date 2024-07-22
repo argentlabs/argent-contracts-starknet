@@ -38,14 +38,14 @@ describe("ArgentAccount", function () {
     await expectEvent(receipt, {
       from_address: contractAddress,
       eventName: "AccountCreated",
-      additionalKeys: [owner.storedValue.toString()],
+      keys: [owner.storedValue.toString()],
       data: [guardian.storedValue.toString()],
     });
 
     await expectEvent(receipt, {
       from_address: contractAddress,
       eventName: "AccountCreatedGuid",
-      additionalKeys: [owner.guid.toString()],
+      keys: [owner.guid.toString()],
       data: [guardian.guid.toString()],
     });
 

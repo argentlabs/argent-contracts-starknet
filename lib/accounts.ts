@@ -10,12 +10,12 @@ import {
   Contract,
   DeployAccountContractPayload,
   DeployContractResponse,
-  GetTransactionReceiptResponse,
   InvocationsSignerDetails,
   InvokeFunctionResponse,
   RPC,
   RawCalldata,
   Signature,
+  TransactionReceipt,
   UniversalDetails,
   V2InvocationsSignerDetails,
   V3InvocationsSignerDetails,
@@ -49,19 +49,24 @@ export class ArgentAccount extends Account {
 
   override async execute(
     calls: AllowArray<Call>,
-    abis?: Abi[],
-    details: UniversalDetails = {},
+    arg2?: Abi[] | UniversalDetails,
+    transactionDetail: UniversalDetails = {},
   ): Promise<InvokeFunctionResponse> {
-    details ||= {};
-    if (!details.skipValidate) {
-      details.skipValidate = false;
+    const isArg2UniversalDetails = arg2 && !Array.isArray(arg2);
+    if (isArg2UniversalDetails && !(Object.keys(transactionDetail).length === 0)) {
+      throw new Error("arg2 cannot be UniversalDetails when transactionDetail is non-null");
     }
-    if (details.resourceBounds) {
-      return super.execute(calls, abis, details);
+    const detail = isArg2UniversalDetails ? (arg2 as UniversalDetails) : transactionDetail;
+    const abi = Array.isArray(arg2) ? (arg2 as Abi[]) : undefined;
+    if (!detail.skipValidate) {
+      detail.skipValidate = false;
     }
-    const estimate = await this.estimateFee(calls, details);
-    return super.execute(calls, abis, {
-      ...details,
+    if (detail.resourceBounds) {
+      return super.execute(calls, abi, detail);
+    }
+    const estimate = await this.estimateFee(calls, detail);
+    return super.execute(calls, abi, {
+      ...detail,
       resourceBounds: {
         ...estimate.resourceBounds,
         l1_gas: {
@@ -110,7 +115,7 @@ export const deployer = (() => {
 
 export const deployerV3 = setDefaultTransactionVersionV3(deployer);
 
-export function setDefaultTransactionVersion(account: ArgentAccount, newVersion: boolean): Account {
+export function setDefaultTransactionVersion(account: ArgentAccount, newVersion: boolean): ArgentAccount {
   const newDefaultVersion = newVersion ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
   if (account.transactionVersion === newDefaultVersion) {
     return account;
@@ -159,7 +164,7 @@ export async function deployOldAccount(
 
 async function deployAccountInner(params: DeployAccountParams): Promise<
   DeployAccountParams & {
-    account: Account;
+    account: ArgentAccount;
     classHash: string;
     owner: KeyPair;
     guardian?: KeyPair;
@@ -276,7 +281,7 @@ export async function upgradeAccount(
   accountToUpgrade: Account,
   newClassHash: string,
   calldata: RawCalldata = [],
-): Promise<GetTransactionReceiptResponse> {
+): Promise<TransactionReceipt> {
   const { transaction_hash } = await accountToUpgrade.execute(
     {
       contractAddress: accountToUpgrade.address,
@@ -286,7 +291,7 @@ export async function upgradeAccount(
     undefined,
     { maxFee: 1e14 },
   );
-  return await ensureSuccess(await manager.waitForTransaction(transaction_hash));
+  return await ensureSuccess(transaction_hash);
 }
 
 export async function executeWithCustomSig(

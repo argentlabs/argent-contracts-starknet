@@ -1,13 +1,6 @@
 import { expect } from "chai";
 import { CallData, hash } from "starknet";
-import {
-  deployMultisig1_1,
-  ensureSuccess,
-  expectRevertWithErrorMessage,
-  manager,
-  randomStarknetKeyPair,
-  waitForTransaction,
-} from "../lib";
+import { deployMultisig1_1, ensureSuccess, expectRevertWithErrorMessage, manager, randomStarknetKeyPair } from "../lib";
 
 const initialTime = 100;
 
@@ -44,7 +37,7 @@ describe("ArgentMultisig Recovery", function () {
 
     await manager.setTime(initialTime + 10 * 60);
     accountContract.connect(thirdPartyAccount);
-    await ensureSuccess(await waitForTransaction(await accountContract.execute_escape(replaceSignerCall)));
+    await ensureSuccess(await accountContract.execute_escape(replaceSignerCall));
     accountContract.is_signer(originalSigner.compiledSigner).should.eventually.equal(false);
     accountContract.is_signer(newSigner.compiledSigner).should.eventually.equal(true);
 

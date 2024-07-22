@@ -12,7 +12,6 @@ import {
   signerTypeToCustomEnum,
   sortByGuid,
   upgradeAccount,
-  waitForTransaction,
 } from "../lib";
 import { deployMultisig1_1 } from "../lib/multisig";
 
@@ -47,7 +46,7 @@ describe("ArgentMultisig: upgrade", function () {
         await expectEvent(tx, {
           from_address: account.address,
           eventName: "SignerLinked",
-          additionalKeys: [snKeyPair.guid.toString()],
+          keys: [snKeyPair.guid.toString()],
           data: CallData.compile([signerTypeToCustomEnum(SignerType.Starknet, { signer: snKeyPair.publicKey })]),
         });
       }
@@ -68,7 +67,7 @@ describe("ArgentMultisig: upgrade", function () {
       const recipient = "0xabde1";
       const amount = uint256.bnToUint256(1n);
       const transfer = await ethContract.transfer(recipient, amount, { maxFee: 5e14 });
-      await ensureSuccess(await waitForTransaction(transfer));
+      await ensureSuccess(transfer);
     });
   }
 

@@ -32,7 +32,7 @@ describe("ArgentMultisig: Execute", function () {
       await expectEvent(transaction_hash, {
         from_address: account.address,
         eventName: "TransactionExecuted",
-        additionalKeys: [transaction_hash],
+        keys: [transaction_hash],
         data: CallData.compile([[[finalNumber]]]),
       });
     });

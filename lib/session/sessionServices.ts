@@ -4,6 +4,7 @@ import {
   Call,
   CallData,
   InvocationsSignerDetails,
+  TypedDataRevision,
   byteArray,
   ec,
   hash,
@@ -118,7 +119,7 @@ export class DappService {
     completedSession: OffChainSession,
     sessionAuthorizationSignature: ArraySignatureType,
     calls: Call[],
-    revision: typedData.TypedDataRevision,
+    revision: TypedDataRevision,
     accountAddress: string,
     caller = "ANY_CALLER",
     execute_after = 1,
@@ -149,7 +150,7 @@ export class DappService {
 
     return {
       contractAddress: accountAddress,
-      entrypoint: revision == typedData.TypedDataRevision.Active ? "execute_from_outside_v2" : "execute_from_outside",
+      entrypoint: revision == TypedDataRevision.ACTIVE ? "execute_from_outside_v2" : "execute_from_outside",
       calldata: CallData.compile({ ...outsideExecution, signature }),
     };
   }
@@ -180,7 +181,7 @@ export class DappService {
     transactionHash: string,
     calls: Call[],
     accountAddress: string,
-    revision: typedData.TypedDataRevision,
+    revision: TypedDataRevision,
     outsideExecution: OutsideExecution,
     cacheAuthorization: boolean,
   ): Promise<ArraySignatureType> {

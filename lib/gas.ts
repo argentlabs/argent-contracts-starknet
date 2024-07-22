@@ -26,7 +26,7 @@ const l2PayloadsWeights: Record<string, number> = {
 };
 
 async function profileGasUsage(transactionHash: string, provider: RpcProvider, allowFailedTransactions = false) {
-  const receipt = await ensureAccepted(await provider.waitForTransaction(transactionHash));
+  const receipt = await ensureAccepted(transactionHash);
   if (!allowFailedTransactions) {
     await ensureSuccess(receipt);
   }
@@ -206,7 +206,7 @@ export function newProfiler(provider: RpcProvider) {
       const filename = "gas-report.txt";
       const newFilename = "gas-report-new.txt";
       fs.writeFileSync(newFilename, report);
-      exec(`diff ${filename} ${newFilename}`, (err, stdout) => {
+      exec(`diff ${filename} ${newFilename}`, (_, stdout) => {
         if (stdout) {
           console.log(stdout);
           console.error("⚠️  Changes to gas report detected.\n");

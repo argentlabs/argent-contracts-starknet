@@ -11,6 +11,7 @@ import {
   RPC,
   Signature,
   SignerInterface,
+  TypedData,
   V2DeclareSignerDetails,
   V2DeployAccountSignerDetails,
   V2InvocationsSignerDetails,
@@ -38,7 +39,7 @@ export abstract class RawSigner implements SignerInterface {
     throw new Error("This signer allows multiple public keys");
   }
 
-  public async signMessage(typedDataArgument: typedData.TypedData, accountAddress: string): Promise<Signature> {
+  public async signMessage(typedDataArgument: TypedData, accountAddress: string): Promise<Signature> {
     const messageHash = typedData.getMessageHash(typedDataArgument, accountAddress);
     return this.signRaw(messageHash);
   }

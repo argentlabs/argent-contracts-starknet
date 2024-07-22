@@ -7,7 +7,7 @@
   "license": "ISC",
   "dependencies": {
     "ethers": "6.8.1",
-    "starknet": "6.5.0"
+    "starknet": "6.11.0"
   },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.0",

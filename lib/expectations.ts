@@ -4,13 +4,23 @@ import {
   DeployContractUDCResponse,
   GetTransactionReceiptResponse,
   InvokeFunctionResponse,
-  RPC,
+  TransactionReceipt,
   hash,
   num,
   shortString,
 } from "starknet";
 import { manager } from "./manager";
 import { ensureSuccess } from "./receipts";
+
+interface Event {
+  from_address: string;
+  keys?: string[];
+  data?: string[];
+}
+
+export interface EventWithName extends Event {
+  eventName: string;
+}
 
 export async function expectRevertWithErrorMessage(
   errorMessage: string,
@@ -48,9 +58,9 @@ export async function expectExecutionRevert(errorMessage: string, execute: () =>
   assert.fail("No error detected");
 }
 
-async function expectEventFromReceipt(receipt: GetTransactionReceiptResponse, event: RPC.Event, eventName?: string) {
+async function expectEventFromReceipt(receipt: TransactionReceipt, event: Event, eventName?: string) {
   receipt = await ensureSuccess(receipt);
-  expect(event.keys.length).to.be.greaterThan(0, "Unsupported: No keys");
+  expect(event.keys?.length).to.be.greaterThan(0, "Unsupported: No keys");
   const events = receipt.events ?? [];
   const normalizedEvent = normalizeEvent(event);
   const matches = events.filter((e) => isEqual(normalizeEvent(e), normalizedEvent)).length;
@@ -61,26 +71,26 @@ async function expectEventFromReceipt(receipt: GetTransactionReceiptResponse, ev
   }
 }
 
-function normalizeEvent(event: RPC.Event): RPC.Event {
+function normalizeEvent(event: Event): Event {
   return {
     from_address: event.from_address.toLowerCase(),
-    keys: event.keys.map(num.toBigInt).map(String),
-    data: event.data.map(num.toBigInt).map(String),
+    keys: event.keys?.map(num.toBigInt).map(String),
+    data: event.data?.map(num.toBigInt).map(String),
   };
 }
 
-function convertToEvent(eventWithName: EventWithName): RPC.Event {
+function convertToEvent(eventWithName: EventWithName): Event {
   const selector = hash.getSelectorFromName(eventWithName.eventName);
   return {
     from_address: eventWithName.from_address,
-    keys: [selector].concat(eventWithName.additionalKeys ?? []),
+    keys: [selector].concat(eventWithName.keys ?? []),
     data: eventWithName.data ?? [],
   };
 }
 
 export async function expectEvent(
-  param: string | GetTransactionReceiptResponse | (() => Promise<InvokeFunctionResponse>),
-  event: RPC.Event | EventWithName,
+  param: string | GetTransactionReceiptResponse | TransactionReceipt | (() => Promise<InvokeFunctionResponse>),
+  event: EventWithName,
 ) {
   if (typeof param === "function") {
     ({ transaction_hash: param } = await param());
@@ -88,23 +98,13 @@ export async function expectEvent(
   if (typeof param === "string") {
     param = await manager.waitForTransaction(param);
   }
-  let eventName = "";
-  if ("eventName" in event) {
-    eventName = event.eventName;
-    event = convertToEvent(event);
-  }
-  await expectEventFromReceipt(param, event, eventName);
+  const eventName = event.eventName;
+  const convertedEvent = convertToEvent(event);
+  await expectEventFromReceipt(param as TransactionReceipt, convertedEvent, eventName);
 }
 
 export async function waitForTransaction({
   transaction_hash,
 }: InvokeFunctionResponse): Promise<GetTransactionReceiptResponse> {
   return await manager.waitForTransaction(transaction_hash);
-}
-
-export interface EventWithName {
-  from_address: string;
-  eventName: string;
-  additionalKeys?: Array<string>;
-  data?: Array<string>;
 }

@@ -84,8 +84,8 @@ describe("Gas griefing", function () {
       },
     };
     // This makes exactly 0x4563918244f40000 = 5e18
-    await manager.ensureSuccess(
-      await account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), {
+    await manager.ensureSuccess(async () =>
+      account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), {
         resourceBounds: newResourceBounds,
         tip: 1,
       }),

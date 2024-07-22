@@ -281,16 +281,17 @@ export async function upgradeAccount(
   newClassHash: string,
   calldata: RawCalldata = [],
 ): Promise<TransactionReceipt> {
-  const { transaction_hash } = await accountToUpgrade.execute(
-    {
-      contractAddress: accountToUpgrade.address,
-      entrypoint: "upgrade",
-      calldata: CallData.compile({ implementation: newClassHash, calldata }),
-    },
-    undefined,
-    { maxFee: 1e14 },
+  return await manager.ensureSuccess(() =>
+    accountToUpgrade.execute(
+      {
+        contractAddress: accountToUpgrade.address,
+        entrypoint: "upgrade",
+        calldata: CallData.compile({ implementation: newClassHash, calldata }),
+      },
+      undefined,
+      { maxFee: 1e14 },
+    ),
   );
-  return await manager.ensureSuccess(transaction_hash);
 }
 
 export async function executeWithCustomSig(

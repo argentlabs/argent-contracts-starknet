@@ -50,7 +50,7 @@ describe("ArgentAccount: Signers types", function () {
       for (const { name, account } of accounts) {
         it(`Using "${name}"`, async function () {
           ethContract.connect(account);
-          await manager.ensureSuccess(ethContract.transfer(recipient, amount));
+          await manager.ensureSuccess(async () => ethContract.transfer(recipient, amount));
         });
       }
     });

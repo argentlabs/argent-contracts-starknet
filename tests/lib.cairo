@@ -8,7 +8,7 @@ mod test_asserts;
 // mod test_comp_signer_list;
 // mod test_comp_src5;
 // mod test_eip191;
-// mod test_multicall;
+mod test_multicall;
 // mod test_multisig_account;
 // mod test_multisig_add_signers;
 // mod test_multisig_remove_signers;

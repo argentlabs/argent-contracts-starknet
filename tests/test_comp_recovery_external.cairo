@@ -259,10 +259,8 @@ fn test_trigger_escape_can_override() {
             ready_at: 10 * 60, call: replace_signer_call(SIGNER_1(), SIGNER_3())
         }
     );
-    // TODO Correct?
-    assert_eq!(spy.get_events().events.len(), 2, "excess events");
-
     spy.assert_emitted(@array![(component.contract_address, escape_event)]);
+    assert_eq!(spy.get_events().events.len(), 2, "excess events");
 
     let (escape, _) = component.get_escape();
     assert_eq!(escape.call_hash, second_call_hash, "invalid call hash");

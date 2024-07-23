@@ -2,7 +2,6 @@ use argent::utils::calls::execute_multicall;
 use snforge_std::{declare, ContractClassTrait, ContractClass};
 use starknet::account::Call;
 
-// TODO Can we fix this now?
 // failing test for now
 // As execute doesn't return a result, we cannot catch the 'call_contract_syscall' error
 // "While the Cairo test runner propagates errors to the calling 

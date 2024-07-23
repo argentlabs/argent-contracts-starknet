@@ -1,14 +1,14 @@
 use argent::signer::signer_signature::{
     Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait, starknet_signer_from_pubkey,
 };
-use snforge_std::cheat_caller_address_global;
+use snforge_std::{cheat_caller_address_global, cheat_transaction_version_global};
 use starknet::contract_address_const;
 use super::setup::{
     account_test_setup::{
         ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
         initialize_account_without_guardian
     },
-    utils::{set_tx_version_foundry, felt252TryIntoStarknetSigner}, constants::{OWNER, NEW_OWNER, WRONG_OWNER}
+    utils::felt252TryIntoStarknetSigner, constants::{OWNER, NEW_OWNER, WRONG_OWNER}
 };
 
 #[test]
@@ -24,7 +24,7 @@ fn initialize() {
 fn check_transaction_version_on_execute() {
     let account = initialize_account();
     cheat_caller_address_global(contract_address_const::<0>());
-    set_tx_version_foundry(32, account.contract_address);
+    cheat_transaction_version_global(32);
     account.__execute__(array![]);
 }
 
@@ -33,7 +33,7 @@ fn check_transaction_version_on_execute() {
 fn check_transaction_version_on_validate() {
     let account = initialize_account();
     cheat_caller_address_global(contract_address_const::<0>());
-    set_tx_version_foundry(32, account.contract_address);
+    cheat_transaction_version_global(32);
     account.__validate__(array![]);
 }
 

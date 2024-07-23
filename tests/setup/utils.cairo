@@ -29,15 +29,6 @@ fn to_starknet_signatures(arr: Array<KeyAndSig>) -> Array<felt252> {
     serialize(@signatures)
 }
 
-// TODO Remove those two fn and use the cheat directly?
-fn set_tx_version_foundry(version: felt252, address: ContractAddress) {
-    cheat_transaction_version_global(version);
-}
-
-fn set_chain_id_foundry(chain_id: felt252) {
-    cheat_chain_id_global(chain_id);
-}
-
 impl felt252TryIntoStarknetSigner of TryInto<felt252, StarknetSigner> {
     #[inline(always)]
     fn try_into(self: felt252) -> Option<StarknetSigner> {

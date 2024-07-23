@@ -79,7 +79,6 @@ fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAcco
         .expect('Failed to deploy ArgentAccount');
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')
-    // TODO This will prob lead to some issues later down the line?
     cheat_caller_address_global(contract_address);
     ITestArgentAccountDispatcher { contract_address }
 }

@@ -67,7 +67,7 @@ fn replace_signer_start() {
     ];
     spy.assert_emitted(@events);
 
-    assert_eq!(spy.get_events().events.len(), 3, "excess events");
+    assert_eq!(spy.get_events().events.len(), events.len(), "excess events");
 }
 
 #[test]

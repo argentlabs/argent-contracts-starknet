@@ -220,6 +220,7 @@ fn test_cancel_escape() {
         }
     );
     spy.assert_emitted(@array![(component.contract_address, event)]);
+
     assert_eq!(spy.get_events().events.len(), 1, "excess events");
 }
 
@@ -243,6 +244,7 @@ fn test_cancel_escape_expired() {
         }
     );
     spy.assert_not_emitted(@array![(component.contract_address, event)]);
+
     assert_eq!(spy.get_events().events.len(), 0, "excess events");
 }
 

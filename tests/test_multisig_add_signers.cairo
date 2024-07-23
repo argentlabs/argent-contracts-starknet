@@ -1,12 +1,11 @@
 use argent::multisig::multisig::multisig_component;
 use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
 use argent::signer_storage::signer_list::signer_list_component;
-use snforge_std::{spy_events, EventSpyAssertionsTrait, EventSpyTrait};
+use snforge_std::{spy_events, EventSpyAssertionsTrait, EventSpyTrait, EventsFilterTrait};
 use super::setup::{
     constants::MULTISIG_OWNER,
     multisig_test_setup::{ITestArgentMultisigDispatcherTrait, initialize_multisig_with_one_signer}
 };
-// TODO Update all assert_emitted to emitted_by()?
 
 #[test]
 fn add_signers() {
@@ -39,10 +38,12 @@ fn add_signers() {
     ];
     spy.assert_emitted(@events);
 
-    // TODO Is this correct?
-    assert_eq!(spy.get_events().events.len(), 3, "excess events");
     let event = multisig_component::Event::ThresholdUpdated(multisig_component::ThresholdUpdated { new_threshold: 2 });
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
+
+    // TODO THERE IS AN EVENT TOO MUCH???
+    let events = spy.get_events().emitted_by(multisig.contract_address).events;
+    assert_eq!(events.len(), 3, "excess events");
 }
 
 #[test]

@@ -63,9 +63,9 @@ fn change_threshold() {
     multisig.change_threshold(2);
     assert_eq!(multisig.get_threshold(), 2, "new threshold not set");
 
-    assert_eq!(spy.get_events().events.len(), 1, "excess events");
     let event = multisig_component::Event::ThresholdUpdated(multisig_component::ThresholdUpdated { new_threshold: 2 });
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
+    assert_eq!(spy.get_events().events.len(), 1, "excess events");
 }
 
 #[test]

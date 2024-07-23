@@ -20,11 +20,12 @@ fn set_escape_security_period() {
     let new_escape_security_period = account.get_escape_security_period();
     assert_eq!(new_escape_security_period, 4200, "New value incorrect");
 
-    assert_eq!(spy.get_events().events.len(), 1, "excess events");
     let event = ArgentAccount::Event::EscapeSecurityPeriodChanged(
         ArgentAccount::EscapeSecurityPeriodChanged { escape_security_period: 4200 }
     );
     spy.assert_emitted(@array![(account.contract_address, event)]);
+
+    assert_eq!(spy.get_events().events.len(), 1, "excess events");
 }
 
 #[test]

@@ -1,6 +1,6 @@
 use argent::signer::signer_signature::{WebauthnSigner, is_valid_webauthn_signature};
 use argent::signer::webauthn::{WebauthnSignature, Sha256Implementation};
-use argent::utils::bytes::{ByteArrayExt, SpanU8TryIntoFelt252};
+use argent::utils::bytes::ByteArrayExt;
 use starknet::secp256_trait::Signature;
 
 fn new_webauthn_signer(origin: ByteArray, rp_id_hash: u256, pubkey: u256) -> WebauthnSigner {

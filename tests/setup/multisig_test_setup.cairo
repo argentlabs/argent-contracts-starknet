@@ -1,8 +1,8 @@
 use argent::account::interface::Version;
 use argent::presets::multisig_account::ArgentMultisigAccount;
-use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknet_signer_from_pubkey};
+use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
 use snforge_std::{declare, ContractClassTrait, ContractClass, cheat_caller_address_global};
-use starknet::{contract_address_const, syscalls::deploy_syscall, account::Call};
+use starknet::account::Call;
 use super::constants::MULTISIG_OWNER;
 
 #[starknet::interface]

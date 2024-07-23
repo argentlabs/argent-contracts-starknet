@@ -1,9 +1,8 @@
 use argent::account::interface::Version;
-use argent::presets::argent_account::ArgentAccount;
 use argent::recovery::interface::{LegacyEscape, EscapeStatus};
-use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknet_signer_from_pubkey};
-use snforge_std::{declare, ContractClassTrait, ContractClass, cheat_caller_address_global};
-use starknet::{contract_address_const, account::Call};
+use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
+use snforge_std::{declare, ContractClassTrait, cheat_caller_address_global};
+use starknet::account::Call;
 use super::constants::{OWNER, GUARDIAN, ARGENT_ACCOUNT_ADDRESS};
 
 #[starknet::interface]

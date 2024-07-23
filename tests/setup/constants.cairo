@@ -1,9 +1,7 @@
-use argent::signer::signer_signature::{
-    Secp256Signature, SignerTrait, StarknetSigner, StarknetSignature, starknet_signer_from_pubkey
-};
+use argent::signer::signer_signature::{SignerTrait, StarknetSigner, StarknetSignature, starknet_signer_from_pubkey};
 use hash::HashStateTrait;
 use pedersen::PedersenTrait;
-use snforge_std::signature::{KeyPairTrait, stark_curve::{StarkCurveKeyPairImpl, StarkCurveSignerImpl},};
+use snforge_std::signature::{KeyPairTrait, stark_curve::{StarkCurveKeyPairImpl, StarkCurveSignerImpl}};
 
 #[derive(Drop, Serde, Copy)]
 struct KeyAndSig {

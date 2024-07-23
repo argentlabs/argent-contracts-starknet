@@ -1,4 +1,3 @@
-use argent::presets::argent_account::ArgentAccount;
 use argent::signer::signer_signature::{
     Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait, starknet_signer_from_pubkey,
 };

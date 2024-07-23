@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{Signer, SignerSignature, StarknetSignature, StarknetSigner, SignerTrait};
+use argent::signer::signer_signature::{SignerSignature, StarknetSignature, StarknetSigner};
 use argent::utils::serialization::serialize;
 use snforge_std::{cheat_chain_id_global, cheat_transaction_version_global};
 use starknet::ContractAddress;

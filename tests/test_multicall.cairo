@@ -1,6 +1,6 @@
-use argent::utils::{calls::execute_multicall};
+use argent::utils::calls::execute_multicall;
 use snforge_std::{declare, ContractClassTrait, ContractClass};
-use starknet::{contract_address_const, account::Call};
+use starknet::account::Call;
 
 // TODO Can we fix this now?
 // failing test for now

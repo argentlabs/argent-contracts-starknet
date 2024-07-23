@@ -1,11 +1,10 @@
 use argent::multisig::multisig::multisig_component;
-use argent::signer::signer_signature::{Signer, SignerTrait, starknet_signer_from_pubkey};
-use snforge_std::{ContractClassTrait, spy_events, EventSpy, EventSpyAssertionsTrait, EventSpyTrait};
+use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
+use snforge_std::{ContractClassTrait, spy_events, EventSpyAssertionsTrait, EventSpyTrait};
 use super::setup::constants::MULTISIG_OWNER;
 use super::setup::multisig_test_setup::{
     initialize_multisig, ITestArgentMultisigDispatcherTrait, initialize_multisig_with, declare_multisig
 };
-// TODO At the end check imports
 
 #[test]
 fn valid_initialize() {

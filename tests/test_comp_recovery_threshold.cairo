@@ -1,12 +1,13 @@
 use argent::mocks::recovery_mocks::ThresholdRecoveryMock;
 use argent::multisig::interface::{IArgentMultisigDispatcher, IArgentMultisigDispatcherTrait};
 use argent::recovery::interface::{IRecoveryDispatcher, IRecoveryDispatcherTrait, EscapeStatus};
-use argent::recovery::threshold_recovery::{IToggleThresholdRecoveryDispatcher, IToggleThresholdRecoveryDispatcherTrait};
-use argent::recovery::{threshold_recovery::threshold_recovery_component};
-use argent::signer::{signer_signature::{Signer, starknet_signer_from_pubkey, SignerTrait}};
+use argent::recovery::threshold_recovery::{
+    threshold_recovery_component, IToggleThresholdRecoveryDispatcher, IToggleThresholdRecoveryDispatcherTrait
+};
+use argent::signer::signer_signature::{Signer, starknet_signer_from_pubkey, SignerTrait};
 use snforge_std::{
     EventSpyTrait, cheat_caller_address_global, cheat_block_timestamp_global, declare, ContractClassTrait,
-    ContractClass, EventSpyAssertionsTrait, spy_events,
+    EventSpyAssertionsTrait, spy_events,
 };
 use starknet::{ContractAddress, contract_address_const,};
 use super::setup::constants::{MULTISIG_OWNER};

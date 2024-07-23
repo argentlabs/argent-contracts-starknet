@@ -1,11 +1,9 @@
 use argent::mocks::multisig_mocks::MultisigMock;
-use argent::multisig::interface::IArgentMultisig;
-use argent::multisig::interface::IArgentMultisigInternal;
+use argent::multisig::interface::{IArgentMultisigInternal, IArgentMultisig};
 use argent::multisig::multisig::multisig_component;
-use argent::signer::{signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey, SignerTrait}};
-use argent::signer_storage::signer_list::signer_list_component;
+use argent::signer::{signer_signature::{Signer, starknet_signer_from_pubkey, SignerTrait}};
 use snforge_std::{cheat_caller_address_global, test_address};
-use super::setup::constants::{MULTISIG_OWNER};
+use super::setup::constants::MULTISIG_OWNER;
 
 type ComponentState = multisig_component::ComponentState<MultisigMock::ContractState>;
 

@@ -4,15 +4,14 @@ use argent::external_recovery::{
 };
 use argent::mocks::recovery_mocks::ExternalRecoveryMock;
 use argent::multisig::interface::{IArgentMultisigDispatcher, IArgentMultisigDispatcherTrait};
-
-use argent::recovery::interface::{EscapeStatus};
-use argent::signer::{signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey}};
+use argent::recovery::interface::EscapeStatus;
+use argent::signer::{signer_signature::{Signer, starknet_signer_from_pubkey}};
 use argent::utils::serialization::serialize;
 use snforge_std::{
     EventSpyTrait, EventSpyAssertionsTrait, cheat_caller_address_global, cheat_block_timestamp_global, declare,
-    ContractClassTrait, ContractClass, spy_events
+    ContractClassTrait, spy_events
 };
-use starknet::{SyscallResultTrait, deploy_syscall, contract_address_const, ContractAddress};
+use starknet::{contract_address_const, ContractAddress};
 use super::setup::constants::MULTISIG_OWNER;
 
 fn SIGNER_1() -> Signer {

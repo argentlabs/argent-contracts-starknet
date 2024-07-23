@@ -5,7 +5,7 @@ mod test_asserts;
 mod test_comp_multisig;
 // mod test_comp_recovery_external;
 // mod test_comp_recovery_threshold;
-// mod test_comp_signer_list;
+mod test_comp_signer_list;
 mod test_comp_src5;
 mod test_eip191;
 mod test_multicall;

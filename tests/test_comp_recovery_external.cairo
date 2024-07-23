@@ -1,14 +1,12 @@
-use argent::external_recovery::interface::Escape;
 use argent::external_recovery::{
-    interface::{IExternalRecovery, IExternalRecoveryDispatcher, IExternalRecoveryDispatcherTrait,},
+    interface::{IExternalRecoveryDispatcher, IExternalRecoveryDispatcherTrait,},
     external_recovery::{external_recovery_component, EscapeCall, get_escape_call_hash}
 };
 use argent::mocks::recovery_mocks::ExternalRecoveryMock;
-use argent::multisig::interface::IArgentMultisigInternal;
-use argent::multisig::interface::{IArgentMultisig, IArgentMultisigDispatcher, IArgentMultisigDispatcherTrait};
+use argent::multisig::interface::{IArgentMultisigDispatcher, IArgentMultisigDispatcherTrait};
 
 use argent::recovery::interface::{EscapeStatus};
-use argent::signer::{signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey, SignerTrait}};
+use argent::signer::{signer_signature::{Signer, StarknetSigner, starknet_signer_from_pubkey}};
 use argent::utils::serialization::serialize;
 use snforge_std::{
     EventSpyTrait, EventSpyAssertionsTrait, cheat_caller_address_global, cheat_block_timestamp_global, declare,

@@ -1,15 +1,11 @@
-use argent::multisig::multisig::{multisig_component};
-use argent::presets::multisig_account::ArgentMultisigAccount;
-use argent::signer::signer_signature::{
-    Signer, StarknetSigner, SignerSignature, SignerTrait, starknet_signer_from_pubkey
-};
-use argent::signer_storage::signer_list::{signer_list_component};
-use snforge_std::{ContractClassTrait, spy_events, SpyOn, EventSpy, EventFetcher, EventAssertions};
-use super::setup::constants::{MULTISIG_OWNER};
+use argent::multisig::multisig::multisig_component;
+use argent::signer::signer_signature::{Signer, SignerTrait, starknet_signer_from_pubkey};
+use snforge_std::{ContractClassTrait, spy_events, EventSpy, EventSpyAssertionsTrait, EventSpyTrait};
+use super::setup::constants::MULTISIG_OWNER;
 use super::setup::multisig_test_setup::{
-    initialize_multisig, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
-    initialize_multisig_with_one_signer, declare_multisig
+    initialize_multisig, ITestArgentMultisigDispatcherTrait, initialize_multisig_with, declare_multisig
 };
+// TODO At the end check imports
 
 #[test]
 fn valid_initialize() {
@@ -63,15 +59,14 @@ fn change_threshold() {
     let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
     let signers_array = array![signer_1, signer_2];
     let multisig = initialize_multisig_with(threshold, signers_array.span());
-    let mut spy = spy_events(SpyOn::One(multisig.contract_address));
+    let mut spy = spy_events();
 
     multisig.change_threshold(2);
     assert_eq!(multisig.get_threshold(), 2, "new threshold not set");
 
+    assert_eq!(spy.get_events().events.len(), 1, "excess events");
     let event = multisig_component::Event::ThresholdUpdated(multisig_component::ThresholdUpdated { new_threshold: 2 });
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
-
-    assert_eq!(spy.events.len(), 0, "excess events");
 }
 
 #[test]

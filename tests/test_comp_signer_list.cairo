@@ -1,8 +1,7 @@
 use argent::mocks::signer_list_mocks::SignerListMock;
-use argent::signer::signer_signature::{Signer, StarknetSigner, SignerTrait, starknet_signer_from_pubkey};
 use argent::signer_storage::interface::ISignerList;
 use argent::signer_storage::signer_list::signer_list_component;
-use super::setup::constants::{MULTISIG_OWNER};
+use super::setup::constants::MULTISIG_OWNER;
 
 type ComponentState = signer_list_component::ComponentState<SignerListMock::ContractState>;
 

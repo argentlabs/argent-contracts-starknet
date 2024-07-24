@@ -1,16 +1,14 @@
 use argent::account::interface::{
     SRC5_ACCOUNT_INTERFACE_ID, SRC5_ACCOUNT_INTERFACE_ID_OLD_1, SRC5_ACCOUNT_INTERFACE_ID_OLD_2
 };
-use argent::introspection::interface::ISRC5;
-use argent::introspection::interface::ISRC5Legacy;
-use argent::introspection::interface::{SRC5_INTERFACE_ID, SRC5_INTERFACE_ID_OLD};
+use argent::introspection::interface::{SRC5_INTERFACE_ID, ISRC5, ISRC5Legacy, SRC5_INTERFACE_ID_OLD};
 use argent::introspection::src5::src5_component;
 use argent::mocks::src5_mocks::SRC5Mock;
 use argent::outside_execution::interface::{
     ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1
 };
 
-const UNSUPORTED_INTERFACE_ID: felt252 = 0xffffffff;
+const UNSUPPORTED_INTERFACE_ID: felt252 = 0xffffffff;
 
 type ComponentState = src5_component::ComponentState<SRC5Mock::ContractState>;
 
@@ -45,9 +43,9 @@ fn test_introspection_outside_execution_id() {
 }
 
 #[test]
-fn test_unsuported_interface_id() {
+fn test_unsupported_interface_id() {
     let mut component = COMPONENT_STATE();
-    assert!(!component.supports_interface(UNSUPORTED_INTERFACE_ID), "should not support");
+    assert!(!component.supports_interface(UNSUPPORTED_INTERFACE_ID), "should not support");
 }
 
 #[test]
@@ -60,6 +58,6 @@ fn test_introspection_legacy_method() {
     assert_eq!(component.supportsInterface(SRC5_INTERFACE_ID_OLD), 1, "should support src5 old");
     assert_eq!(component.supportsInterface(ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0), 1, "should support");
     assert_eq!(component.supportsInterface(ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1), 1, "should support");
-    assert_eq!(component.supportsInterface(UNSUPORTED_INTERFACE_ID), 0, "should not support");
+    assert_eq!(component.supportsInterface(UNSUPPORTED_INTERFACE_ID), 0, "should not support");
 }
 

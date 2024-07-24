@@ -1,6 +1,6 @@
-use argent::utils::{calls::execute_multicall};
+use argent::utils::calls::execute_multicall;
 use snforge_std::{declare, ContractClassTrait, ContractClass};
-use starknet::{contract_address_const, account::Call};
+use starknet::account::Call;
 
 // failing test for now
 // As execute doesn't return a result, we cannot catch the 'call_contract_syscall' error
@@ -20,9 +20,9 @@ use starknet::{contract_address_const, account::Call};
 #[test]
 #[should_panic(expected: ('argent/multicall-failed', 2, 'test dapp reverted',))]
 fn execute_multicall_at_one() {
-    let class_hash = declare("MockDapp");
+    let class_hash = declare("MockDapp").expect('Failed to declare MockDapp');
     let constructor = array![];
-    let contract_address = class_hash.deploy(@constructor).expect('Failed to deploy contract');
+    let (contract_address, _) = class_hash.deploy(@constructor).expect('Failed to deploy contract');
 
     let call1 = Call {
         to: contract_address,

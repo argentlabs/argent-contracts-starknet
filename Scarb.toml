@@ -14,7 +14,7 @@ starknet = "2.7.0-rc.2"
 alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.6.0" }
 alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.6.0" }
 alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", tag="cairo-v2.6.0" }
-snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.20.0" }
+snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.26.0" }
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", rev = "5f03fba338b4cb321776947fb98b4584a32adece" }
 
 [tool.fmt]

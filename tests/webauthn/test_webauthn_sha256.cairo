@@ -1,7 +1,6 @@
-use alexandria_encoding::base64::Base64UrlDecoder;
 use alexandria_math::sha256::sha256;
 use argent::utils::array_ext::ArrayExtTrait;
-use argent::utils::bytes::{ByteArrayExt, SpanU8TryIntoU256, SpanU8TryIntoFelt252};
+use argent::utils::bytes::{ByteArrayExt, SpanU8TryIntoU256};
 
 #[test]
 fn create_message_hash() {

@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknet_signer_from_pubkey};
+use argent::signer::signer_signature::starknet_signer_from_pubkey;
 use argent::utils::serialization::serialize;
 use starknet::VALIDATED;
 use super::setup::constants::{MULTISIG_OWNER, tx_hash};

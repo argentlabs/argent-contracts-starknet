@@ -4,7 +4,7 @@ import { manager } from "./manager";
 
 export async function expectRevertWithErrorMessage(
   errorMessage: string,
-  execute: Promise<{ transaction_hash: string }> | { transaction_hash: string },
+  execute: Promise<{ transaction_hash: string }>,
 ) {
   try {
     const executionResult = await execute;

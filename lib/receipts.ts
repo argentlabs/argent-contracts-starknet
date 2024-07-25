@@ -20,12 +20,8 @@ export const WithReceipts = <T extends Constructor<RpcProvider>>(Base: T) =>
         transactionHash = execute;
       } else {
         const executionResult = await execute;
-        if (!("transaction_hash" in executionResult)) {
-          throw new Error(`No transaction hash found on ${JSON.stringify(executionResult)}`);
-        }
         transactionHash = executionResult["transaction_hash"];
       }
-
       return this.waitForTransaction(transactionHash, { ...options });
     }
 

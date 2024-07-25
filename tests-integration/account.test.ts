@@ -32,7 +32,7 @@ describe("ArgentAccount", function () {
     const classHash = argentAccountClassHash;
     const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
     const udcCalls = deployer.buildUDCContractPayload({ classHash, salt, constructorCalldata, unique: false });
-    const receipt = await manager.waitForTx(await deployer.execute(udcCalls));
+    const receipt = await manager.waitForTx( deployer.execute(udcCalls));
 
     await expectEvent(receipt, {
       from_address: contractAddress,
@@ -83,7 +83,7 @@ describe("ArgentAccount", function () {
       const chainId = await manager.getChainId();
       const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.guid, newOwner, chainId);
 
-      const receipt = await manager.waitForTx(await accountContract.change_owner(starknetSignature));
+      const receipt = await manager.waitForTx( accountContract.change_owner(starknetSignature));
 
       await accountContract.get_owner_guid().should.eventually.equal(newOwner.guid);
 

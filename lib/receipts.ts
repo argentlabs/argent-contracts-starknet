@@ -12,23 +12,27 @@ const successStates = [TransactionFinalityStatus.ACCEPTED_ON_L1, TransactionFina
 export const WithReceipts = <T extends Constructor<RpcProvider>>(Base: T) =>
   class extends Base {
     async waitForTx(
-      transactionOrHash: { transaction_hash: string } | string,
+      execute: Promise<{ transaction_hash: string }> | { transaction_hash: string } | string,
       options = {},
     ): Promise<GetTransactionReceiptResponse> {
-      const transactionHash =
-        typeof transactionOrHash === "string" ? transactionOrHash : transactionOrHash.transaction_hash;
+      let transactionHash: string;
+      if (typeof execute === "string") {
+        transactionHash = execute;
+      } else {
+        const executionResult = await execute;
+        if (!("transaction_hash" in executionResult)) {
+          throw new Error(`No transaction hash found on ${JSON.stringify(executionResult)}`);
+        }
+        transactionHash = executionResult["transaction_hash"];
+      }
+
       return this.waitForTransaction(transactionHash, { ...options });
     }
 
     async ensureSuccess(
       execute: Promise<{ transaction_hash: string }> | { transaction_hash: string },
     ): Promise<TransactionReceipt> {
-      const executionResult = await execute;
-      if (!("transaction_hash" in executionResult)) {
-        throw new Error(`No transaction hash found on ${JSON.stringify(executionResult)}`);
-      }
-      const transactionHash = executionResult["transaction_hash"];
-      const tx = await this.waitForTx(transactionHash, {
+      const tx = await this.waitForTx(execute, {
         successStates: [TransactionExecutionStatus.SUCCEEDED],
       });
       return tx as TransactionReceipt;
@@ -37,12 +41,7 @@ export const WithReceipts = <T extends Constructor<RpcProvider>>(Base: T) =>
     async ensureAccepted(
       execute: Promise<{ transaction_hash: string }> | { transaction_hash: string },
     ): Promise<TransactionReceipt> {
-      const executionResult = await execute;
-      if (!("transaction_hash" in executionResult)) {
-        throw new Error(`No transaction hash found on ${JSON.stringify(executionResult)}`);
-      }
-      const transactionHash = executionResult["transaction_hash"];
-      const receipt = await this.waitForTx(transactionHash, {
+      const receipt = await this.waitForTx(execute, {
         successStates,
       });
       return receipt as TransactionReceipt;

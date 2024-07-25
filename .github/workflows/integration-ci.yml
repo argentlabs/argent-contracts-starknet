@@ -20,6 +20,9 @@ jobs:
           scarb run start-devnet &
           ./scripts/wait-devnet-ready.sh
 
+      - name: Installing USC
+        run: curl -L https://raw.githubusercontent.com/software-mansion/universal-sierra-compiler/master/scripts/install.sh | sh -s -- v2.2.0-rc.1
+
       - name: Run integration tests
         run: scarb --release build && tsc && yarn mocha tests-integration/*.test.ts --forbid-only --forbid-pending
 
@@ -39,6 +42,9 @@ jobs:
         run: |
           scarb run start-devnet &
           ./scripts/wait-devnet-ready.sh
+
+    - name: Installing USC
+      run: curl -L https://raw.githubusercontent.com/software-mansion/universal-sierra-compiler/master/scripts/install.sh | sh -s -- v2.2.0-rc.1
 
       - name: Gas report
         run: scarb run profile --check

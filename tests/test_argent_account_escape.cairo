@@ -10,7 +10,7 @@ use super::setup::account_test_setup::{ITestArgentAccountDispatcherTrait, initia
 fn set_escape_security_period() {
     let account = initialize_account();
     let default_escape_security_period = account.get_escape_security_period();
-    assert_eq!(default_escape_security_period, consteval_int!(7 * 24 * 60 * 60), "Default value incorrect");
+    assert_eq!(default_escape_security_period, 7 * 24 * 60 * 60, "Default value incorrect");
 
     let (_, status) = account.get_escape_and_status();
     assert_eq!(status, EscapeStatus::None, "Should be EscapeStatus::None");
@@ -47,7 +47,7 @@ fn set_escape_security_period_with_ready_escape() {
     let account = initialize_account();
     account.trigger_escape_guardian(Option::None);
 
-    cheat_block_timestamp_global(consteval_int!(7 * 24 * 60 * 60));
+    cheat_block_timestamp_global(7 * 24 * 60 * 60);
     let (_, status) = account.get_escape_and_status();
     assert_eq!(status, EscapeStatus::Ready, "Should be EscapeStatus::Ready");
 
@@ -59,7 +59,7 @@ fn set_escape_security_period_with_expired_escape() {
     let account = initialize_account();
     account.trigger_escape_guardian(Option::None);
 
-    cheat_block_timestamp_global(consteval_int!(7 * 24 * 60 * 60 * 2));
+    cheat_block_timestamp_global(7 * 24 * 60 * 60 * 2);
     let (escape, status) = account.get_escape_and_status();
     assert_eq!(status, EscapeStatus::Expired, "Should be EscapeStatus::Expired");
     assert_ne!(escape.ready_at, 0, "Should not be 0");
@@ -156,7 +156,7 @@ fn escape_owner_default() {
     let account = initialize_account();
     cheat_block_timestamp_global(100);
     account.trigger_escape_owner(starknet_signer_from_pubkey(12));
-    cheat_block_timestamp_global(100 + consteval_int!(7 * 24 * 60 * 60));
+    cheat_block_timestamp_global(100 + 7 * 24 * 60 * 60);
     account.escape_owner();
     let new_owner = account.get_owner();
     assert_eq!(new_owner, 12, "Wrong new owner");

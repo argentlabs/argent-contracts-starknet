@@ -91,7 +91,7 @@ fn test_change_threshold_same() {
     component.change_threshold(2);
 }
 
-// Add signers 
+// Add signers
 
 #[test]
 fn test_add_1_signer_same_threshold() {

@@ -1,4 +1,6 @@
-/// @dev 🚨 This smart contract is a mock implementation and is not meant for actual deployment or use in any live environment. It is solely for testing, educational, or demonstration purposes. Please refrain from relying on the functionality of this contract for any production. 🚨
+/// @dev 🚨 This smart contract is a mock implementation and is not meant for actual deployment or use in any live
+/// environment. It is solely for testing, educational, or demonstration purposes. Please refrain from relying on the
+/// functionality of this contract for any production. 🚨
 use argent::account::interface::{IAccount, IArgentAccount, Version};
 use argent::signer::{
     signer_signature::{

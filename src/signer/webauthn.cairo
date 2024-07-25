@@ -12,7 +12,7 @@ use starknet::secp256_trait::Signature;
 /// @param flags From authenticator data
 /// @param sign_count From authenticator data
 /// @param ec_signature The signature as {r, s, y_parity}
-/// @param sha256_implementation The implementation of the sha256 hash 
+/// @param sha256_implementation The implementation of the sha256 hash
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSignature {
     cross_origin: bool,
@@ -33,7 +33,7 @@ enum Sha256Implementation {
 /// 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000
 ///   <--------------------------------------------------------------><><------>
 ///                         rpIdHash (32 bytes)                       ^   sign count (4 bytes)
-///                                                    flags (1 byte) | 
+///                                                    flags (1 byte) |
 /// Memory layout: https://www.w3.org/TR/webauthn/#sctn-authenticator-data
 fn verify_authenticator_flags(flags: u8) {
     // rpIdHash is verified with the signature over the authenticator
@@ -41,7 +41,8 @@ fn verify_authenticator_flags(flags: u8) {
     // Verify that the User Present bit of the flags in authData is set.
     assert!((flags & 0b00000001) == 0b00000001, "webauthn/nonpresent-user");
 
-    // If user verification is required for this signature, verify that the User Verified bit of the flags in authData is set.
+    // If user verification is required for this signature, verify that the User Verified bit of the flags in authData
+    // is set.
     assert!((flags & 0b00000100) == 0b00000100, "webauthn/unverified-user");
 
     // Allowing attested credential data and extension data if present

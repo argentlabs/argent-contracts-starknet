@@ -15,7 +15,7 @@ fn replace_signer_1() {
     let signer_to_add = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
     multisig.replace_signer(signer_1, signer_to_add);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1, "signer list changed size");
     assert_eq!(multisig.get_threshold(), 1, "threshold changed");
@@ -36,7 +36,7 @@ fn replace_signer_start() {
     let signer_to_add = starknet_signer_from_pubkey(5);
     multisig.replace_signer(signer_1, signer_to_add);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 3, "signer list changed size");
     assert_eq!(multisig.get_threshold(), 1, "threshold changed");
@@ -82,7 +82,7 @@ fn replace_signer_middle() {
     let signer_to_add = starknet_signer_from_pubkey(5);
     multisig.replace_signer(signer_2, signer_to_add);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 3, "signer list changed size");
     assert_eq!(multisig.get_threshold(), 1, "threshold changed");
@@ -104,7 +104,7 @@ fn replace_signer_end() {
     let signer_to_add = starknet_signer_from_pubkey(5);
     multisig.replace_signer(signer_3, signer_to_add);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 3, "signer list changed size");
     assert_eq!(multisig.get_threshold(), 1, "threshold changed");

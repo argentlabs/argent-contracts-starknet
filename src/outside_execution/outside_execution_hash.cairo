@@ -140,8 +140,10 @@ impl StructHashOutsideExecutionRev1 of IStructHashRev1<OutsideExecution> {
 
 impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExecution> {
     fn get_message_hash_rev_1(self: @OutsideExecution) -> felt252 {
-        // Version is a felt instead of a shortstring in SNIP-9 due to a mistake in the Braavos contracts and has been copied for compatibility.
-        // Revision will also be a felt instead of a shortstring for all SNIP12-rev1 signatures because of the same issue
+        // Version is a felt instead of a shortstring in SNIP-9 due to a mistake in the Braavos contracts and has been
+        // copied for compatibility.
+        // Revision will also be a felt instead of a shortstring for all SNIP12-rev1 signatures because of the same
+        // issue
 
         let chain_id = get_tx_info().unbox().chain_id;
         if chain_id == 'SN_MAIN' {

@@ -39,7 +39,7 @@ fn setup() -> (IRecoveryDispatcher, IToggleThresholdRecoveryDispatcher, IArgentM
     )
 }
 
-// Toggle 
+// Toggle
 
 #[test]
 fn test_toggle_escape() {

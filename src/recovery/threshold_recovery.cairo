@@ -1,4 +1,6 @@
-/// @dev 🚨 Attention: This smart contract has not undergone an audit and is not intended for production use. Use at your own risk. Please exercise caution and conduct your own due diligence before interacting with this contract. 🚨
+/// @dev 🚨 Attention: This smart contract has not undergone an audit and is not intended for production use. Use at
+/// your own risk. Please exercise caution and conduct your own due diligence before interacting with this contract.
+/// 🚨
 use starknet::ContractAddress;
 
 #[starknet::interface]
@@ -15,7 +17,7 @@ trait IThresholdRecoveryInternal<TContractState> {
 
 /// @notice Implements a recovery that can be triggered by threshold - 1 signers.
 /// The recovery can be executed by threshold - 1 signers after the security period.
-/// The recovery can be canceled by threshold signers. 
+/// The recovery can be canceled by threshold signers.
 #[starknet::component]
 mod threshold_recovery_component {
     use argent::recovery::interface::{

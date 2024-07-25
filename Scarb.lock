@@ -52,8 +52,8 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin"
-version = "0.12.0"
-source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.12.0#0697004db74502ce49900edef37331dd03531356"
+version = "0.15.0-rc.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?rev=5f03fba338b4cb321776947fb98b4584a32adece#5f03fba338b4cb321776947fb98b4584a32adece"
 
 [[package]]
 name = "snforge_std"

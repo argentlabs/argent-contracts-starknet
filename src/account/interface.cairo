@@ -19,9 +19,10 @@ trait IAccount<TContractState> {
     fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
 
     /// @notice Checks whether a given signature for a given hash is valid
-    /// @dev Warning: To guarantee the signature cannot be replayed in other accounts or other chains, the data hashed must be unique to the account and the chain.
-    /// This is true today for starknet transaction signatures and for SNIP-12 signatures but might not be true for other types of signatures
-    /// @param hash The hash of the data to sign
+    /// @dev Warning: To guarantee the signature cannot be replayed in other accounts or other chains, the data hashed
+    /// must be unique to the account and the chain.
+    /// This is true today for starknet transaction signatures and for SNIP-12 signatures but might not be true for
+    /// other types of signatures @param hash The hash of the data to sign
     /// @param signature The signature to validate
     /// @return The shortstring 'VALID' when the signature is valid, 0 if the signature doesn't match the hash
     /// @dev it can also panic if the signature is not in a valid format
@@ -60,9 +61,9 @@ trait IArgentUserAccount<TContractState> {
 
     /// @notice Changes the owner
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
-    /// @param signer_signature SignerSignature of the new owner 
+    /// @param signer_signature SignerSignature of the new owner
     /// Required to prevent changing to an address which is not in control of the user
-    /// is the signature of the pedersen hashed array: 
+    /// is the signature of the pedersen hashed array:
     /// [change_owner_selector, chain_id, account_address, old_owner_guid]
     fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
 
@@ -122,7 +123,8 @@ trait IArgentUserAccount<TContractState> {
     fn get_guardian_guid(self: @TContractState) -> Option<felt252>;
     /// @notice Returns `Starknet` if there's a guardian, `None` otherwise
     fn get_guardian_type(self: @TContractState) -> Option<SignerType>;
-    /// @notice Returns `0` if there's no guardian backup, the public key if the requested role is Starknet, Eip191 or Secp256k1 and panic for other types
+    /// @notice Returns `0` if there's no guardian backup, the public key if the requested role is Starknet, Eip191 or
+    /// Secp256k1 and panic for other types
     fn get_guardian_backup(self: @TContractState) -> felt252;
     fn get_guardian_backup_guid(self: @TContractState) -> Option<felt252>;
     /// @notice Returns the backup guardian type if there's any backup guardian

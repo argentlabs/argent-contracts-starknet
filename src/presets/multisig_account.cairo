@@ -218,14 +218,13 @@ mod ArgentMultisigAccount {
             let pubkeys = self.signer_list.get_signers();
             let mut pubkeys_span = pubkeys.span();
             let mut signers_to_add = array![];
-            // Converting storage from public keys to guid 
-            while let Option::Some(pubkey) = pubkeys_span
-                .pop_front() {
-                    let starknet_signer = starknet_signer_from_pubkey(*pubkey);
-                    let signer_guid = starknet_signer.into_guid();
-                    signers_to_add.append(signer_guid);
-                    self.signer_list.emit(signer_list_component::SignerLinked { signer_guid, signer: starknet_signer });
-                };
+            // Converting storage from public keys to guid
+            while let Option::Some(pubkey) = pubkeys_span.pop_front() {
+                let starknet_signer = starknet_signer_from_pubkey(*pubkey);
+                let signer_guid = starknet_signer.into_guid();
+                signers_to_add.append(signer_guid);
+                self.signer_list.emit(signer_list_component::SignerLinked { signer_guid, signer: starknet_signer });
+            };
             assert(data.len() == 0, 'argent/unexpected-data');
             let last_signer = *pubkeys[pubkeys.len() - 1];
             self.signer_list.remove_signers(pubkeys.span(), last_signer);
@@ -253,8 +252,8 @@ mod ArgentMultisigAccount {
                     assert(*call.selector != selector!("perform_upgrade"), 'argent/forbidden-call');
                 }
             } else {
-                // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions
-                // and this restriction will reduce the attack surface
+                // Make sure no call is to the account. We don't have any good reason to perform many calls to the
+                // account in the same transactions and this restriction will reduce the attack surface
                 assert_no_self_call(calls, account_address);
             }
         }

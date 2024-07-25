@@ -1,4 +1,6 @@
-/// @dev 🚨 Attention: This smart contract has not undergone an audit and is not intended for production use. Use at your own risk. Please exercise caution and conduct your own due diligence before interacting with this contract. 🚨
+/// @dev 🚨 Attention: This smart contract has not undergone an audit and is not intended for production use. Use at
+/// your own risk. Please exercise caution and conduct your own due diligence before interacting with this contract.
+/// 🚨
 #[starknet::contract(account)]
 mod ArgentUserAccount {
     use argent::account::interface::{IAccount, IArgentAccount, Version};
@@ -225,8 +227,8 @@ mod ArgentUserAccount {
                     assert(*call.selector != selector!("perform_upgrade"), 'argent/forbidden-call');
                 }
             } else {
-                // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions
-                // and this restriction will reduce the attack surface
+                // Make sure no call is to the account. We don't have any good reason to perform many calls to the
+                // account in the same transactions and this restriction will reduce the attack surface
                 assert_no_self_call(calls, account_address);
             }
         }
@@ -245,13 +247,10 @@ mod ArgentUserAccount {
                     required_signatures, excluded_signer_guid
                 )) => {
                     let mut signature_span = signature_array.span();
-                    while !signature_span
-                        .is_empty() {
-                            let signer_sig = *signature_span.pop_front().unwrap();
-                            assert(
-                                signer_sig.signer().into_guid() != excluded_signer_guid, 'argent/unauthorized-signer'
-                            )
-                        };
+                    while !signature_span.is_empty() {
+                        let signer_sig = *signature_span.pop_front().unwrap();
+                        assert(signer_sig.signer().into_guid() != excluded_signer_guid, 'argent/unauthorized-signer')
+                    };
                     required_signatures
                 },
                 Option::None => threshold

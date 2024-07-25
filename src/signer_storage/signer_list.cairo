@@ -31,7 +31,7 @@ mod signer_list_component {
     }
 
     /// @notice Emitted when a signer is added to link its details with its GUID
-    /// @param signer_guid The signer's GUID 
+    /// @param signer_guid The signer's GUID
     /// @param signer The signer struct
     #[derive(Drop, starknet::Event)]
     struct SignerLinked {
@@ -140,8 +140,9 @@ mod signer_list_component {
             self.signer_list.write(signer_to_add, next_signer);
         }
 
-        // Returns the number of signers and the last signer (or zero if the list is empty). Cost increases with the list size
-        // returns (signers_len, last_signer)
+        // Returns the number of signers and the last signer (or zero if the list is empty). Cost increases with the
+        // list size
+        /// returns (signers_len, last_signer)
         fn load(self: @ComponentState<TContractState>) -> (usize, felt252) {
             let mut current_signer = 0;
             let mut size = 0;
@@ -232,7 +233,7 @@ mod signer_list_component {
             }
         }
 
-        // Returns the signer before `signer_after` or 0 if the signer is the first one. 
+        // Returns the signer before `signer_after` or 0 if the signer is the first one.
         // Reverts if `signer_after` is not found
         // Cost increases with the list size
         fn find_signer_before(self: @ComponentState<TContractState>, signer_after: felt252) -> felt252 {

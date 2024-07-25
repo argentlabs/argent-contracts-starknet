@@ -38,7 +38,8 @@ mod ArgentAccount {
     const VERSION: Version = Version { major: 0, minor: 4, patch: 0 };
     const VERSION_COMPAT: felt252 = '0.4.0';
 
-    /// Time it takes for the escape to become ready after being triggered. Also the escape will be ready and can be completed for this duration
+    /// Time it takes for the escape to become ready after being triggered. Also the escape will be ready and can be
+    /// completed for this duration
     const DEFAULT_ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
 
     /// Limit to one escape every X hours
@@ -52,7 +53,7 @@ mod ArgentAccount {
     /// Minimum time for the escape security period
     const MIN_ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(60 * 10); // 10 minutes;
 
-    // session 
+    // session
     component!(path: session_component, storage: session, event: SessionableEvents);
     #[abi(embed_v0)]
     impl Sessionable = session_component::SessionImpl<ContractState>;
@@ -98,8 +99,9 @@ mod ArgentAccount {
         /// The ongoing escape, if any
         _escape: LegacyEscape,
         /// The following 4 fields are used to limit the number of escapes the account will pay for
-        /// Values are Rounded down to the hour: https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 
-        /// Values are resets when an escape is completed or canceled
+        /// Values are Rounded down to the hour:
+        /// https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 Values are resets when an escape
+        /// is completed or canceled
         last_guardian_trigger_escape_attempt: u64,
         last_owner_trigger_escape_attempt: u64,
         last_guardian_escape_attempt: u64,
@@ -149,7 +151,7 @@ mod ArgentAccount {
         guardian: felt252
     }
 
-    /// @notice Emitted on initialization with the guids of the owner and the guardian (or 0 if none) 
+    /// @notice Emitted on initialization with the guids of the owner and the guardian (or 0 if none)
     /// @dev Emitted exactly once when the account is initialized
     /// @param owner The owner guid
     /// @param guardian The guardian guid or 0 if there's no guardian
@@ -251,10 +253,10 @@ mod ArgentAccount {
         new_guardian_backup_guid: felt252
     }
 
-    /// @notice A new signer was linked 
+    /// @notice A new signer was linked
     /// @dev This is the only way to get the signer struct knowing a only guid
     /// @param signer_guid the guid of the signer derived from the signer
-    /// @param signer the signer being added 
+    /// @param signer the signer being added
     #[derive(Drop, starknet::Event)]
     struct SignerLinked {
         #[key]
@@ -333,7 +335,7 @@ mod ArgentAccount {
             let signature = tx_info.signature;
             if self.session.is_session(signature) {
                 let session_timestamp = *signature[1];
-                // can call unwrap safely as the session has already been deserialized 
+                // can call unwrap safely as the session has already been deserialized
                 let session_timestamp_u64 = session_timestamp.try_into().unwrap();
                 assert(session_timestamp_u64 >= exec_info.block_info.unbox().block_timestamp, 'session/expired');
             }
@@ -1005,11 +1007,13 @@ mod ArgentAccount {
         /// The signature is the result of signing the message hash with the new owner private key
         /// The message hash is the result of hashing the array:
         /// [change_owner selector, chainid, contract address, old_owner_guid]
-        /// as specified here: https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
+        /// as specified here:
+        /// https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
         fn assert_valid_new_owner_signature(self: @ContractState, signer_signature: SignerSignature) {
             let chain_id = get_tx_info().unbox().chain_id;
             let owner_guid = self.read_owner().into_guid();
-            // We now need to hash message_hash with the size of the array: (change_owner selector, chain id, contract address, old_owner_guid)
+            // We now need to hash message_hash with the size of the array: (change_owner selector, chain id, contract
+            // address, old_owner_guid)
             // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
             let message_hash = PedersenTrait::new(0)
                 .update(selector!("change_owner"))

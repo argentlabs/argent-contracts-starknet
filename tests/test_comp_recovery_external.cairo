@@ -45,7 +45,7 @@ fn setup() -> (IExternalRecoveryDispatcher, IArgentMultisigDispatcher) {
     (IExternalRecoveryDispatcher { contract_address }, IArgentMultisigDispatcher { contract_address })
 }
 
-// Toggle 
+// Toggle
 
 #[test]
 fn test_toggle_escape() {

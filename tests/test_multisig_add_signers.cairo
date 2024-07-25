@@ -17,7 +17,7 @@ fn add_signers() {
     let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
     multisig.add_signers(2, array![signer_1]);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 2, "new threshold not set");

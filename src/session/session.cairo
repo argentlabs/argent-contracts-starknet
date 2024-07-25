@@ -151,7 +151,7 @@ mod session_component {
             let parsed_session_authorization = state
                 .parse_and_verify_authorization(session_hash, session_authorization);
 
-            // only owner + guardian signed 
+            // only owner + guardian signed
             assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
             // checks that second signature is the guardian and not the backup guardian
             let guardian_guid_from_sig = (*parsed_session_authorization[1]).signer().into_guid();
@@ -170,12 +170,11 @@ mod session_component {
         let merkle_root = *token.session.allowed_methods_root;
         let mut merkle_tree: MerkleTree<Hasher> = MerkleTreeImpl::new();
         let mut proofs = *token.proofs;
-        while let Option::Some(call) = calls
-            .pop_front() {
-                let leaf = call.get_merkle_leaf();
-                let proof = proofs.pop_front().expect('session/proof-empty');
-                let is_valid = merkle_tree.verify(merkle_root, leaf, *proof);
-                assert(is_valid, 'session/invalid-call');
-            };
+        while let Option::Some(call) = calls.pop_front() {
+            let leaf = call.get_merkle_leaf();
+            let proof = proofs.pop_front().expect('session/proof-empty');
+            let is_valid = merkle_tree.verify(merkle_root, leaf, *proof);
+            assert(is_valid, 'session/invalid-call');
+        };
     }
 }

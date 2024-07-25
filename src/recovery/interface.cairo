@@ -49,7 +49,8 @@ enum EscapeStatus {
     NotReady,
     /// The security period has elapsed and the escape is ready to be completed
     Ready,
-    /// No confirmation happened for `expiry_period` since it became `Ready`. The escape cannot be completed now, only canceled
+    /// No confirmation happened for `expiry_period` since it became `Ready`. The escape cannot be completed now, only
+    /// canceled
     Expired,
 }
 
@@ -128,11 +129,10 @@ impl PackEscape of starknet::StorePacking<Escape, Array<felt252>> {
         let mut target_signers_span = value.target_signers.span();
         let mut new_signers_span = value.new_signers.span();
         assert(target_signers_span.len() == new_signers_span.len(), 'argent/invalid-len');
-        while let Option::Some(target_signer) = target_signers_span
-            .pop_front() {
-                arr.append(*target_signer);
-                arr.append(*new_signers_span.pop_front().expect('argent/invalid-array-len'));
-            };
+        while let Option::Some(target_signer) = target_signers_span.pop_front() {
+            arr.append(*target_signer);
+            arr.append(*new_signers_span.pop_front().expect('argent/invalid-array-len'));
+        };
         arr
     }
 

@@ -8,7 +8,7 @@ trait IExternalRecoveryCallback<TContractState> {
     fn execute_recovery_call(ref self: TContractState, selector: felt252, calldata: Span<felt252>);
 }
 
-/// @notice Implements the recovery by defining a guardian (an external contract/account) 
+/// @notice Implements the recovery by defining a guardian (an external contract/account)
 /// that can trigger the recovery and replace a set of signers
 /// @dev The recovery can be executed by anyone after the security period
 /// @dev The recovery can be canceled by the authorized signers

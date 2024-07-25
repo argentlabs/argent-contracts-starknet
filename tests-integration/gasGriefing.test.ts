@@ -11,7 +11,8 @@ describe("Gas griefing", function () {
       account.signer = new ArgentSigner(guardian);
 
       await manager.waitForTx(await accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner));
-      await expectExecutionRevert("argent/last-escape-too-recent", () =>
+      await expectExecutionRevert(
+        "argent/last-escape-too-recent",
         accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
       );
     });
@@ -23,7 +24,8 @@ describe("Gas griefing", function () {
       fundingAmount: 50000000000000001n,
     });
     account.signer = new ArgentSigner(guardian);
-    await expectExecutionRevert("argent/max-fee-too-high", () =>
+    await expectExecutionRevert(
+      "argent/max-fee-too-high",
       account.execute(
         accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
         undefined,
@@ -56,7 +58,8 @@ describe("Gas griefing", function () {
       },
     };
     // This makes exactly 0x4563918244f40005 = 5e18 + 5
-    await expectExecutionRevert("argent/max-fee-too-high", () =>
+    await expectExecutionRevert(
+      "argent/max-fee-too-high",
       account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), undefined, {
         resourceBounds: newResourceBounds,
         tip: 1,
@@ -114,7 +117,8 @@ describe("Gas griefing", function () {
     };
     const targetTip = maxEscapeTip + 1n;
     const tipInStrkPerL2Gas = targetTip / maxL2GasAmount + 1n; // Add one to make sure it's rounded up
-    await expectExecutionRevert("argent/tip-too-high", () =>
+    await expectExecutionRevert(
+      "argent/tip-too-high",
       account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), undefined, {
         resourceBounds: newResourceBounds,
         tip: tipInStrkPerL2Gas,
@@ -125,7 +129,8 @@ describe("Gas griefing", function () {
   it("Block other DA modes", async function () {
     const { account, accountContract, guardian } = await deployAccount({ useTxV3: true });
     account.signer = new ArgentSigner(guardian);
-    await expectExecutionRevert("argent/invalid-da-mode", () =>
+    await expectExecutionRevert(
+      "argent/invalid-da-mode",
       account.execute(
         accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
         undefined,
@@ -134,7 +139,8 @@ describe("Gas griefing", function () {
         },
       ),
     );
-    await expectExecutionRevert("argent/invalid-da-mode", () =>
+    await expectExecutionRevert(
+      "argent/invalid-da-mode",
       account.execute(
         accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
         undefined,
@@ -148,7 +154,8 @@ describe("Gas griefing", function () {
   it("Block deployment data", async function () {
     const { account, accountContract, guardian } = await deployAccount({ useTxV3: true });
     account.signer = new ArgentSigner(guardian);
-    await expectExecutionRevert("argent/invalid-deployment-data", () =>
+    await expectExecutionRevert(
+      "argent/invalid-deployment-data",
       account.execute(
         accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
         undefined,

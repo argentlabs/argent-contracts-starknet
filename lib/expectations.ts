@@ -27,9 +27,9 @@ export async function expectRevertWithErrorMessage(
   assert.fail("No error detected");
 }
 
-export async function expectExecutionRevert(errorMessage: string, execute: () => Promise<InvokeFunctionResponse>) {
+export async function expectExecutionRevert(errorMessage: string, execute: Promise<InvokeFunctionResponse>) {
   try {
-    await manager.waitForTx(await execute());
+    await manager.waitForTx(await execute);
     /* eslint-disable  @typescript-eslint/no-explicit-any */
   } catch (e: any) {
     expect(e.toString()).to.contain(`Failure reason: ${shortString.encodeShortString(errorMessage)}`);

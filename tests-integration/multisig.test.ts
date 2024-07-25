@@ -39,25 +39,30 @@ describe("ArgentMultisig", function () {
   }
 
   it("Should fail to deploy with invalid signatures", async function () {
-    const { receipt: receipt1 } = await deployMultisig({
-      threshold: 1,
-      signersLength: 2,
-      selfDeploy: true,
-      selfDeploymentIndexes: [],
-    });
-    await expectRevertWithErrorMessage("argent/signature-invalid-length", receipt1 as TransactionReceipt);
+    await expectRevertWithErrorMessage(
+      "argent/signature-invalid-length",
+      deployMultisig({
+        threshold: 1,
+        signersLength: 2,
+        selfDeploy: true,
+        selfDeploymentIndexes: [],
+      }).then(({ receipt }) => receipt as TransactionReceipt),
+    );
 
-    const { receipt: receipt2 } = await deployMultisig({
-      threshold: 1,
-      signersLength: 2,
-      selfDeploy: true,
-      selfDeploymentIndexes: [0, 1],
-    });
-    await expectRevertWithErrorMessage("argent/signature-invalid-length", receipt2 as TransactionReceipt);
+    await expectRevertWithErrorMessage(
+      "argent/signature-invalid-length",
+      deployMultisig({
+        threshold: 1,
+        signersLength: 2,
+        selfDeploy: true,
+        selfDeploymentIndexes: [0, 1],
+      }).then(({ receipt }) => receipt as TransactionReceipt),
+    );
   });
   it("Block deployment data", async function () {
     const { account } = await deployMultisig1_1({ useTxV3: true });
-    await expectExecutionRevert("argent/invalid-deployment-data", () =>
+    await expectExecutionRevert(
+      "argent/invalid-deployment-data",
       account.execute([], undefined, {
         accountDeploymentData: ["0x1"],
       }),

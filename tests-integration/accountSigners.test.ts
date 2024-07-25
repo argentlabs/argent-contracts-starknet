@@ -58,8 +58,10 @@ describe("ArgentAccount: Signers types", function () {
 
   for (const { name, keyPair } of nonStarknetKeyPairs) {
     it(`Expect 'argent/invalid-guardian-type' when deploying with a wrong guardian "${name}"`, async function () {
-      const { transactionHash } = await deployAccount({ guardian: keyPair() });
-      await expectRevertWithErrorMessage("argent/invalid-guardian-type", { transaction_hash: transactionHash });
+      await expectRevertWithErrorMessage(
+        "argent/invalid-guardian-type",
+        deployAccount({ guardian: keyPair() }).then(({ transactionHash }) => ({ transaction_hash: transactionHash })),
+      );
     });
 
     it(`Expect 'argent/invalid-guardian-type' on trigger_escape_guardian with "${name}"`, async function () {

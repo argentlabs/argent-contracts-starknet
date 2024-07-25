@@ -45,7 +45,7 @@ mod external_recovery {
 }
 
 mod presets {
-    // mod argent_account;
+    mod argent_account;
     mod multisig_account;
     mod user_account;
 }

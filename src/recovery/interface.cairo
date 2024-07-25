@@ -96,6 +96,14 @@ struct LegacyEscape {
     new_signer: Option<SignerStorageValue>,
 }
 
+// ??? For some reason I cannot derive Default for LegacyEscape
+impl LegacyEscapeDefault of Default<LegacyEscape> {
+    #[inline(always)]
+    fn default() -> LegacyEscape {
+        LegacyEscape { ready_at: 0, escape_type: Default::default(), new_signer: Option::None }
+    }
+}
+
 const SHIFT_8: felt252 = 0x100;
 const SHIFT_64: felt252 = 0x10000000000000000;
 const SHIFT_128: felt252 = 0x100000000000000000000000000000000;

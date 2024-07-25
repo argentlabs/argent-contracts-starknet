@@ -5,7 +5,7 @@ mod ArgentAccount {
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
-    use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
+    use argent::recovery::interface::{LegacyEscape, LegacyEscapeDefault, LegacyEscapeType, EscapeStatus};
     use argent::session::{
         interface::{SessionToken, ISessionCallback},
         session::{session_component::{Internal, InternalTrait}, session_component,}
@@ -91,7 +91,7 @@ mod ArgentAccount {
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         /// Current account owner
         _signer: felt252,
-        _signer_non_stark: MAX_ESCAPE_MAX_FEE_STRK<felt252, felt252>,
+        _signer_non_stark: Map<felt252, felt252>,
         /// Current account guardian
         _guardian: felt252,
         /// Current account backup guardian

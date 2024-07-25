@@ -1,7 +1,7 @@
 use argent::account::interface::Version;
 use argent::recovery::interface::{LegacyEscape, EscapeStatus};
 use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
-use snforge_std::{declare, ContractClassTrait, cheat_caller_address_global};
+use snforge_std::{declare, ContractClassTrait, start_cheat_caller_address_global};
 use starknet::account::Call;
 use super::constants::{OWNER, GUARDIAN, ARGENT_ACCOUNT_ADDRESS};
 
@@ -79,6 +79,6 @@ fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAcco
         .expect('Failed to deploy ArgentAccount');
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')
-    cheat_caller_address_global(contract_address);
+    start_cheat_caller_address_global(contract_address);
     ITestArgentAccountDispatcher { contract_address }
 }

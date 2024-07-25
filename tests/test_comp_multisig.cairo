@@ -2,7 +2,7 @@ use argent::mocks::multisig_mocks::MultisigMock;
 use argent::multisig::interface::{IArgentMultisigInternal, IArgentMultisig};
 use argent::multisig::multisig::multisig_component;
 use argent::signer::{signer_signature::{Signer, starknet_signer_from_pubkey, SignerTrait}};
-use snforge_std::{cheat_caller_address_global, test_address};
+use snforge_std::{start_cheat_caller_address_global, test_address};
 use super::setup::constants::MULTISIG_OWNER;
 
 type ComponentState = multisig_component::ComponentState<MultisigMock::ContractState>;
@@ -76,7 +76,7 @@ fn test_change_threshold() {
     let mut component = COMPONENT_STATE();
     component.initialize(2, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     assert_eq!(component.get_threshold(), 2, "wrong threshold");
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     component.change_threshold(3);
     assert_eq!(component.get_threshold(), 3, "wrong threshold");
 }
@@ -87,7 +87,7 @@ fn test_change_threshold_same() {
     let mut component = COMPONENT_STATE();
     component.initialize(2, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     assert_eq!(component.get_threshold(), 2, "wrong threshold");
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     component.change_threshold(2);
 }
 
@@ -95,7 +95,7 @@ fn test_change_threshold_same() {
 
 #[test]
 fn test_add_1_signer_same_threshold() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(2, array![SIGNER_1(), SIGNER_2()]);
     assert_eq!(component.get_signer_guids().len(), 2, "wrong signer length");
@@ -107,7 +107,7 @@ fn test_add_1_signer_same_threshold() {
 
 #[test]
 fn test_add_2_signers_same_threshold() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1()]);
     assert_eq!(component.get_signer_guids().len(), 1, "wrong signer length");
@@ -121,7 +121,7 @@ fn test_add_2_signers_same_threshold() {
 #[test]
 #[should_panic(expected: ('argent/bad-threshold',))]
 fn test_add_1_signer_invalid_threshold() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(2, array![SIGNER_1(), SIGNER_2()]);
     component.add_signers(4, array![SIGNER_3()]);
@@ -130,7 +130,7 @@ fn test_add_1_signer_invalid_threshold() {
 #[test]
 #[should_panic(expected: ('argent/already-a-signer',))]
 fn test_initialize_add_duplicate_signer() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1()]);
     component.add_signers(1, array![SIGNER_2(), SIGNER_2()]);
@@ -140,7 +140,7 @@ fn test_initialize_add_duplicate_signer() {
 
 #[test]
 fn test_remove_first_signer() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(1, array![SIGNER_1()]);
@@ -150,7 +150,7 @@ fn test_remove_first_signer() {
 
 #[test]
 fn test_remove_middle_signer() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(1, array![SIGNER_2()]);
@@ -160,7 +160,7 @@ fn test_remove_middle_signer() {
 
 #[test]
 fn test_remove_last_signer() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(1, array![SIGNER_3()]);
@@ -170,7 +170,7 @@ fn test_remove_last_signer() {
 
 #[test]
 fn test_remove_2_signers() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(1, array![SIGNER_3(), SIGNER_1()]);
@@ -182,7 +182,7 @@ fn test_remove_2_signers() {
 #[test]
 #[should_panic(expected: ('argent/bad-threshold',))]
 fn test_remove_signer_invalid_threshold() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(3, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(3, array![SIGNER_3()]);
@@ -191,7 +191,7 @@ fn test_remove_signer_invalid_threshold() {
 #[test]
 #[should_panic(expected: ('argent/invalid-signers-len',))]
 fn test_remove_all_signers() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(3, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
     component.remove_signers(1, array![SIGNER_1(), SIGNER_2(), SIGNER_3()]);
@@ -200,7 +200,7 @@ fn test_remove_all_signers() {
 #[test]
 #[should_panic(expected: ('argent/not-a-signer',))]
 fn test_remove_unknown_signer() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2()]);
     component.remove_signers(1, array![SIGNER_3()]);
@@ -210,7 +210,7 @@ fn test_remove_unknown_signer() {
 
 #[test]
 fn test_replace_first_signer() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2()]);
     component.replace_signer(SIGNER_1(), SIGNER_3());
@@ -221,7 +221,7 @@ fn test_replace_first_signer() {
 
 #[test]
 fn test_replace_last_signer() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2()]);
     component.replace_signer(SIGNER_2(), SIGNER_3());
@@ -233,7 +233,7 @@ fn test_replace_last_signer() {
 #[test]
 #[should_panic(expected: ('argent/not-a-signer',))]
 fn test_replace_unknown_signer() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1()]);
     component.replace_signer(SIGNER_2(), SIGNER_3());
@@ -242,7 +242,7 @@ fn test_replace_unknown_signer() {
 #[test]
 #[should_panic(expected: ('argent/already-a-signer',))]
 fn test_replace_duplicate_signer() {
-    cheat_caller_address_global(test_address());
+    start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_2()]);
     component.replace_signer(SIGNER_2(), SIGNER_1());

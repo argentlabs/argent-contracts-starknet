@@ -8,7 +8,7 @@ use argent::session::session_hash::{
     SEPOLIA_FIRST_HADES_PERMUTATION as SEPOLIA_FIRST_HADES_PERMUTATION_SESSION
 };
 use poseidon::hades_permutation;
-use snforge_std::cheat_chain_id_global;
+use snforge_std::start_cheat_chain_id_global;
 use starknet::get_tx_info;
 
 
@@ -32,7 +32,7 @@ fn session_precalculated_hash_sepolia() {
 
 #[test]
 fn session_precalculated_hash_mainnet() {
-    cheat_chain_id_global('SN_MAIN');
+    start_cheat_chain_id_global('SN_MAIN');
     let domain = StarknetDomain {
         name: 'SessionAccount.session', version: '1', chain_id: get_tx_info().unbox().chain_id, revision: 1,
     };
@@ -70,7 +70,7 @@ fn outside_execution_precalculated_hash_sepolia() {
 
 #[test]
 fn outside_execution_precalculated_hash_mainnet() {
-    cheat_chain_id_global('SN_MAIN');
+    start_cheat_chain_id_global('SN_MAIN');
     let domain = StarknetDomain {
         name: 'Account.execute_from_outside', version: 2, chain_id: get_tx_info().unbox().chain_id, revision: 1,
     };

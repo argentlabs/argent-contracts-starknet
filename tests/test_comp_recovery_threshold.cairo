@@ -6,7 +6,7 @@ use argent::recovery::threshold_recovery::{
 };
 use argent::signer::signer_signature::{Signer, starknet_signer_from_pubkey, SignerTrait};
 use snforge_std::{
-    EventSpyTrait, cheat_caller_address_global, cheat_block_timestamp_global, declare, ContractClassTrait,
+    EventSpyTrait, start_cheat_caller_address_global, start_cheat_block_timestamp_global, declare, ContractClassTrait,
     EventSpyAssertionsTrait, spy_events,
 };
 use starknet::{ContractAddress, contract_address_const,};
@@ -29,7 +29,7 @@ fn setup() -> (IRecoveryDispatcher, IToggleThresholdRecoveryDispatcher, IArgentM
     let constructor = array![];
     let (contract_address, _) = contract_class.deploy(@constructor).expect('Deployment failed');
 
-    cheat_caller_address_global(contract_address);
+    start_cheat_caller_address_global(contract_address);
     IArgentMultisigDispatcher { contract_address }.add_signers(2, array![SIGNER_1(), SIGNER_2()]);
     IToggleThresholdRecoveryDispatcher { contract_address }.toggle_escape(true, 10, 10);
     (
@@ -59,7 +59,7 @@ fn test_toggle_escape() {
 #[should_panic(expected: ('argent/only-self',))]
 fn test_toggle_unauthorized() {
     let (_, toggle_component, _) = setup();
-    cheat_caller_address_global((contract_address_const::<42>()));
+    start_cheat_caller_address_global((contract_address_const::<42>()));
     toggle_component.toggle_escape(false, 0, 0);
 }
 
@@ -150,7 +150,7 @@ fn test_trigger_escape_not_enabled() {
 #[should_panic(expected: ('argent/only-self',))]
 fn test_trigger_escape_unauthorized() {
     let (component, _, _) = setup();
-    cheat_caller_address_global((contract_address_const::<42>()));
+    start_cheat_caller_address_global((contract_address_const::<42>()));
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
 }
 
@@ -160,7 +160,7 @@ fn test_trigger_escape_unauthorized() {
 fn test_execute_escape() {
     let (component, _, multisig_component) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    cheat_block_timestamp_global(11);
+    start_cheat_block_timestamp_global(11);
     component.execute_escape();
     let (escape, status) = component.get_escape();
     assert_eq!(status, EscapeStatus::None, "status should be None");
@@ -175,7 +175,7 @@ fn test_execute_escape() {
 fn test_execute_escape_NotReady() {
     let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    cheat_block_timestamp_global(8);
+    start_cheat_block_timestamp_global(8);
     component.execute_escape();
 }
 
@@ -184,7 +184,7 @@ fn test_execute_escape_NotReady() {
 fn test_execute_escape_Expired() {
     let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    cheat_block_timestamp_global(28);
+    start_cheat_block_timestamp_global(28);
     component.execute_escape();
 }
 
@@ -193,8 +193,8 @@ fn test_execute_escape_Expired() {
 fn test_execute_escape_unauthorized() {
     let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    cheat_block_timestamp_global(11);
-    cheat_caller_address_global((contract_address_const::<42>()));
+    start_cheat_block_timestamp_global(11);
+    start_cheat_caller_address_global((contract_address_const::<42>()));
     component.execute_escape();
 }
 
@@ -204,7 +204,7 @@ fn test_execute_escape_unauthorized() {
 fn test_cancel_escape() {
     let (component, _, multisig_component) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    cheat_block_timestamp_global(11);
+    start_cheat_block_timestamp_global(11);
     let mut spy = spy_events();
     component.cancel_escape();
     let (escape, status) = component.get_escape();
@@ -228,7 +228,7 @@ fn test_cancel_escape() {
 fn test_cancel_escape_expired() {
     let (component, _, multisig_component) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    cheat_block_timestamp_global(21);
+    start_cheat_block_timestamp_global(21);
     let mut spy = spy_events();
     component.cancel_escape();
     let (escape, status) = component.get_escape();
@@ -253,8 +253,8 @@ fn test_cancel_escape_expired() {
 fn test_cancel_escape_unauthorized() {
     let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
-    cheat_block_timestamp_global(11);
-    cheat_caller_address_global((contract_address_const::<42>()));
+    start_cheat_block_timestamp_global(11);
+    start_cheat_caller_address_global((contract_address_const::<42>()));
     component.cancel_escape();
 }
 

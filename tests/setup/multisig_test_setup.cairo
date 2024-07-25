@@ -1,7 +1,7 @@
 use argent::account::interface::Version;
 use argent::presets::multisig_account::ArgentMultisigAccount;
 use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
-use snforge_std::{declare, ContractClassTrait, ContractClass, cheat_caller_address_global};
+use snforge_std::{declare, ContractClassTrait, ContractClass, start_cheat_caller_address_global};
 use starknet::account::Call;
 use super::constants::MULTISIG_OWNER;
 
@@ -74,6 +74,6 @@ fn initialize_multisig_with(threshold: usize, mut signers: Span<Signer>) -> ITes
     let (contract_address, _) = class_hash.deploy(@calldata).expect('Multisig deployment fail');
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')
-    cheat_caller_address_global(contract_address);
+    start_cheat_caller_address_global(contract_address);
     ITestArgentMultisigDispatcher { contract_address }
 }

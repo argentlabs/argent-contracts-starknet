@@ -65,7 +65,7 @@ describe("ArgentMultisig: upgrade", function () {
       ethContract.connect(account);
       const recipient = "0xabde1";
       const amount = uint256.bnToUint256(1n);
-      await manager.ensureSuccess(async () => ethContract.transfer(recipient, amount, { maxFee: 5e14 }));
+      await manager.ensureSuccess(ethContract.transfer(recipient, amount, { maxFee: 5e14 }));
     });
   }
 

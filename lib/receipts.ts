@@ -20,8 +20,10 @@ export const WithReceipts = <T extends Constructor<RpcProvider>>(Base: T) =>
       return this.waitForTransaction(transactionHash, { ...options });
     }
 
-    async ensureSuccess(execute: () => Promise<{ transaction_hash: string }>): Promise<TransactionReceipt> {
-      const executionResult = await execute();
+    async ensureSuccess(
+      execute: Promise<{ transaction_hash: string }> | { transaction_hash: string },
+    ): Promise<TransactionReceipt> {
+      const executionResult = await execute;
       if (!("transaction_hash" in executionResult)) {
         throw new Error(`No transaction hash found on ${JSON.stringify(executionResult)}`);
       }
@@ -32,8 +34,10 @@ export const WithReceipts = <T extends Constructor<RpcProvider>>(Base: T) =>
       return tx as TransactionReceipt;
     }
 
-    async ensureAccepted(execute: () => Promise<{ transaction_hash: string }>): Promise<TransactionReceipt> {
-      const executionResult = await execute();
+    async ensureAccepted(
+      execute: Promise<{ transaction_hash: string }> | { transaction_hash: string },
+    ): Promise<TransactionReceipt> {
+      const executionResult = await execute;
       if (!("transaction_hash" in executionResult)) {
         throw new Error(`No transaction hash found on ${JSON.stringify(executionResult)}`);
       }

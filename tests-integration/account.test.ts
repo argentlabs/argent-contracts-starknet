@@ -247,7 +247,8 @@ describe("ArgentAccount", function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
       accountContract.connect(account);
-      await expectRevertWithErrorMessage("argent/only-self", () =>
+      await expectRevertWithErrorMessage(
+        "argent/only-self",
         accountContract.change_guardian_backup(randomStarknetKeyPair().compiledSignerAsOption),
       );
     });
@@ -255,7 +256,8 @@ describe("ArgentAccount", function () {
     it("Expect 'argent/guardian-required' when guardian == 0 and setting a guardian backup ", async function () {
       const { accountContract } = await deployAccountWithoutGuardian();
       await accountContract.get_guardian().should.eventually.equal(0n);
-      await expectRevertWithErrorMessage("argent/guardian-required", () =>
+      await expectRevertWithErrorMessage(
+        "argent/guardian-required",
         accountContract.change_guardian_backup(randomStarknetKeyPair().compiledSignerAsOption),
       );
     });

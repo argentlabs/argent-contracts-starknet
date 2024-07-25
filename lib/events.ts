@@ -14,7 +14,7 @@ export interface EventWithName extends Event {
 }
 
 async function expectEventFromReceipt(receipt: TransactionReceipt, event: Event, eventName?: string) {
-  receipt = await manager.ensureSuccess(async () => receipt);
+  receipt = await manager.ensureSuccess(receipt);
   expect(event.keys?.length).to.be.greaterThan(0, "Unsupported: No keys");
   const events = receipt.events ?? [];
   const normalizedEvent = normalizeEvent(event);

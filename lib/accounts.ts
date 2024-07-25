@@ -277,7 +277,7 @@ export async function upgradeAccount(
   newClassHash: string,
   calldata: RawCalldata = [],
 ): Promise<TransactionReceipt> {
-  return await manager.ensureSuccess(() =>
+  return await manager.ensureSuccess(
     accountToUpgrade.execute(
       {
         contractAddress: accountToUpgrade.address,

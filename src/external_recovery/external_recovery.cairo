@@ -31,7 +31,7 @@ mod external_recovery_component {
     use super::{IExternalRecoveryCallback, get_escape_call_hash};
 
     /// Minimum time for the escape security period
-    const MIN_ESCAPE_PERIOD: u64 = consteval_int!(60 * 10); // 10 minutes;
+    const MIN_ESCAPE_PERIOD: u64 = 60 * 10; // 10 minutes;
 
     #[storage]
     struct Storage {

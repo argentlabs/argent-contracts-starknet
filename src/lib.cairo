@@ -3,9 +3,9 @@
 //     mod upgrade;
 // }
 
-// mod account {
-//     mod interface;
-// }
+mod account {
+    mod interface;
+}
 
 // mod introspection {
 //     mod interface;
@@ -17,16 +17,16 @@
 //     mod multisig;
 // }
 
-// mod signer {
-//     mod eip191;
-//     mod signer_signature;
-//     mod webauthn;
-// }
+mod signer {
+    mod eip191;
+    mod signer_signature;
+    mod webauthn;
+}
 
-// mod signer_storage {
-//     mod interface;
-//     mod signer_list;
-// }
+mod signer_storage {
+    mod interface;
+    mod signer_list;
+}
 
 // mod outside_execution {
 //     mod interface;
@@ -34,10 +34,10 @@
 //     mod outside_execution_hash;
 // }
 
-// mod recovery {
-//     mod interface;
-//     mod threshold_recovery;
-// }
+mod recovery {
+    mod interface;
+    mod threshold_recovery;
+}
 
 // mod external_recovery {
 //     mod external_recovery;

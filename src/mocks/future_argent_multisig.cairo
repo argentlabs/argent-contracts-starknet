@@ -73,8 +73,8 @@ mod MockFutureArgentMultisig {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, new_threshold: usize, signers: Array<Signer>) {
-        self.multisig.initialize(new_threshold, signers);
+    fn constructor(ref self: ContractState, threshold: usize, signers: Array<Signer>) {
+        self.multisig.initialize(threshold, signers);
     }
 
     #[abi(embed_v0)]

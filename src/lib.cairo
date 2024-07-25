@@ -1,21 +1,21 @@
-// mod upgrade {
-//     mod interface;
-//     mod upgrade;
-// }
+mod upgrade {
+    mod interface;
+    mod upgrade;
+}
 
 mod account {
     mod interface;
 }
 
-// mod introspection {
-//     mod interface;
-//     mod src5;
-// }
+mod introspection {
+    mod interface;
+    mod src5;
+}
 
-// mod multisig {
-//     mod interface;
-//     mod multisig;
-// }
+mod multisig {
+    mod interface;
+    mod multisig;
+}
 
 mod signer {
     mod eip191;
@@ -39,10 +39,10 @@ mod recovery {
     mod threshold_recovery;
 }
 
-// mod external_recovery {
-//     mod external_recovery;
-//     mod interface;
-// }
+mod external_recovery {
+    mod external_recovery;
+    mod interface;
+}
 
 // mod presets {
 //     mod argent_account;
@@ -61,23 +61,24 @@ mod utils {
     mod serialization;
     mod transaction_version;
 }
-// mod mocks {
-//     mod future_argent_account;
-//     mod future_argent_multisig;
-//     mod mock_dapp;
-//     mod mock_erc20;
-//     mod multisig_mocks;
-//     mod recovery_mocks;
-//     mod signature_verifier;
-//     mod signer_list_mocks;
-//     mod src5_mocks;
-// }
 
-// mod session {
-//     mod interface;
-//     mod session;
-//     mod session_hash;
-// }
+mod mocks {
+    mod future_argent_account;
+    mod future_argent_multisig;
+    mod mock_dapp;
+    mod mock_erc20;
+    mod multisig_mocks;
+    mod recovery_mocks;
+    mod signature_verifier;
+    mod signer_list_mocks;
+    mod src5_mocks;
+}
+
+mod session {
+    mod interface;
+    mod session;
+    mod session_hash;
+}
 
 mod offchain_message {
     mod interface;

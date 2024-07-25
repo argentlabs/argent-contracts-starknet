@@ -28,11 +28,11 @@ mod signer_storage {
     mod signer_list;
 }
 
-// mod outside_execution {
-//     mod interface;
-//     mod outside_execution;
-//     mod outside_execution_hash;
-// }
+mod outside_execution {
+    mod interface;
+    mod outside_execution;
+    mod outside_execution_hash;
+}
 
 mod recovery {
     mod interface;
@@ -79,9 +79,8 @@ mod utils {
 //     mod session_hash;
 // }
 
-// mod offchain_message {
-//     mod interface;
-//     mod precalculated_hashing;
-// }
-
+mod offchain_message {
+    mod interface;
+    mod precalculated_hashing;
+}
 

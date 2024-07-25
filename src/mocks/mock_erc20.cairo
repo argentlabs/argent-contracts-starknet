@@ -20,12 +20,12 @@ trait IErc20Mock<TContractState> {
 
 #[starknet::contract]
 mod Erc20Mock {
-    use starknet::{info::{get_caller_address}, ContractAddress};
+    use starknet::{info::{get_caller_address}, ContractAddress, storage::Map};
 
     #[storage]
     struct Storage {
-        balances: LegacyMap<ContractAddress, u256>,
-        allowances: LegacyMap<(ContractAddress, ContractAddress), u256>,
+        balances: Map<ContractAddress, u256>,
+        allowances: Map<(ContractAddress, ContractAddress), u256>,
     }
 
     #[abi(embed_v0)]

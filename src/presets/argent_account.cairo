@@ -29,8 +29,9 @@ mod ArgentAccount {
     use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use pedersen::PedersenTrait;
     use starknet::{
-        ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, replace_class_syscall,
-        account::Call, SyscallResultTrait, get_tx_info, get_execution_info, syscalls::storage_read_syscall,
+        storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED,
+        replace_class_syscall, account::Call, SyscallResultTrait, get_tx_info, get_execution_info,
+        syscalls::storage_read_syscall,
         storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall}
     };
 
@@ -90,12 +91,12 @@ mod ArgentAccount {
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         /// Current account owner
         _signer: felt252,
-        _signer_non_stark: LegacyMap<felt252, felt252>,
+        _signer_non_stark: MAX_ESCAPE_MAX_FEE_STRK<felt252, felt252>,
         /// Current account guardian
         _guardian: felt252,
         /// Current account backup guardian
         _guardian_backup: felt252,
-        _guardian_backup_non_stark: LegacyMap<felt252, felt252>,
+        _guardian_backup_non_stark: Map<felt252, felt252>,
         /// The ongoing escape, if any
         _escape: LegacyEscape,
         /// The following 4 fields are used to limit the number of escapes the account will pay for

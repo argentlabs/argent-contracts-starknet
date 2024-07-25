@@ -9,12 +9,14 @@ mod outside_execution_component {
     use hash::{HashStateTrait, HashStateExTrait};
     use openzeppelin::security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use pedersen::PedersenTrait;
-    use starknet::{get_caller_address, get_contract_address, get_block_timestamp, get_tx_info, account::Call};
+    use starknet::{
+        get_caller_address, get_contract_address, get_block_timestamp, get_tx_info, account::Call, storage::Map
+    };
 
     #[storage]
     struct Storage {
         /// Keeps track of used nonces for outside transactions (`execute_from_outside`)
-        outside_nonces: LegacyMap<felt252, bool>,
+        outside_nonces: Map<felt252, bool>,
     }
 
     #[event]

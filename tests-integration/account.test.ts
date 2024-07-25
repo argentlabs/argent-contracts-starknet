@@ -66,7 +66,8 @@ describe("ArgentAccount", function () {
 
   it("Expect an error when owner is zero", async function () {
     const guardian = new CairoOption(CairoOptionVariant.None);
-    await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
+    await expectRevertWithErrorMessage(
+      "Failed to deserialize param #1",
       deployer.deployContract({
         classHash: argentAccountClassHash,
         constructorCalldata: CallData.compile({ owner: zeroStarknetSignatureType(), guardian }),
@@ -95,21 +96,24 @@ describe("ArgentAccount", function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
       accountContract.connect(account);
-      await expectRevertWithErrorMessage("argent/only-self", () =>
+      await expectRevertWithErrorMessage(
+        "argent/only-self",
         accountContract.change_owner(starknetSignatureType(12, 13, 14)),
       );
     });
 
     it("Expect parsing error when new_owner is zero", async function () {
       const { accountContract } = await deployAccount();
-      await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
+      await expectRevertWithErrorMessage(
+        "Failed to deserialize param #1",
         accountContract.change_owner(starknetSignatureType(0, 13, 14)),
       );
     });
 
     it("Expect 'argent/invalid-owner-sig' when the signature to change owner is invalid", async function () {
       const { accountContract } = await deployAccount();
-      await expectRevertWithErrorMessage("argent/invalid-owner-sig", () =>
+      await expectRevertWithErrorMessage(
+        "argent/invalid-owner-sig",
         accountContract.change_owner(starknetSignatureType(12, 13, 14)),
       );
     });
@@ -162,7 +166,8 @@ describe("ArgentAccount", function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
       accountContract.connect(account);
-      await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
+      await expectRevertWithErrorMessage(
+        "Failed to deserialize param #1",
         accountContract.change_guardian(CallData.compile([zeroStarknetSignatureType()])),
       );
     });
@@ -180,7 +185,8 @@ describe("ArgentAccount", function () {
       const { accountContract } = await deployAccount();
       accountContract.connect(account);
       const newGuardian = randomStarknetKeyPair();
-      await expectRevertWithErrorMessage("argent/only-self", () =>
+      await expectRevertWithErrorMessage(
+        "argent/only-self",
         accountContract.change_guardian(newGuardian.compiledSignerAsOption),
       );
     });
@@ -188,7 +194,8 @@ describe("ArgentAccount", function () {
     it("Expect 'argent/backup-should-be-null' when setting the guardian to 0 if there is a backup", async function () {
       const { accountContract } = await deployAccountWithGuardianBackup();
       await accountContract.get_guardian_backup().should.eventually.not.equal(0n);
-      await expectRevertWithErrorMessage("argent/backup-should-be-null", () =>
+      await expectRevertWithErrorMessage(
+        "argent/backup-should-be-null",
         accountContract.change_guardian(new CairoOption(CairoOptionVariant.None)),
       );
     });

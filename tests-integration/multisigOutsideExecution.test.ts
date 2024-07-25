@@ -261,6 +261,6 @@ describe("ArgentMultisig: outside execution", function () {
 
     await manager.setTime(initialTime);
 
-    await expectRevertWithErrorMessage("ReentrancyGuard: reentrant call", () => account.execute(outsideExecutionCall));
+    await expectRevertWithErrorMessage("ReentrancyGuard: reentrant call", account.execute(outsideExecutionCall));
   });
 });

@@ -1,18 +1,13 @@
 import { assert, expect } from "chai";
-import {
-  DeployContractUDCResponse,
-  GetTransactionReceiptResponse,
-  InvokeFunctionResponse,
-  shortString,
-} from "starknet";
+import { InvokeFunctionResponse, shortString } from "starknet";
 import { manager } from "./manager";
 
 export async function expectRevertWithErrorMessage(
   errorMessage: string,
-  execute: () => Promise<DeployContractUDCResponse | InvokeFunctionResponse | GetTransactionReceiptResponse>,
+  execute: Promise<{ transaction_hash: string }> | { transaction_hash: string },
 ) {
   try {
-    const executionResult = await execute();
+    const executionResult = await execute;
     if (!("transaction_hash" in executionResult)) {
       throw new Error(`No transaction hash found on ${JSON.stringify(executionResult)}`);
     }

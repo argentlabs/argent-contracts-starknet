@@ -112,7 +112,8 @@ describe("ArgentAccount: multicall", function () {
     const amount = uint256.bnToUint256(1000);
     const newOwner = randomStarknetKeyPair();
 
-    await expectRevertWithErrorMessage("argent/no-multicall-to-self", () =>
+    await expectRevertWithErrorMessage(
+      "argent/no-multicall-to-self",
       account.execute([
         ethContract.populateTransaction.transfer(recipient, amount),
         accountContract.populateTransaction.trigger_escape_owner(newOwner.compiledSigner),

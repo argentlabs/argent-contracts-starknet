@@ -37,7 +37,8 @@ describe("ArgentMultisig: signing", function () {
 
       const signatures = await new MultisigSigner(sortByGuid(keys).reverse()).signRaw(messageHash);
 
-      await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
+      await expectRevertWithErrorMessage(
+        "argent/signatures-not-sorted",
         accountContract.is_valid_signature(BigInt(messageHash), signatures),
       );
     });
@@ -49,7 +50,8 @@ describe("ArgentMultisig: signing", function () {
 
       const signatures = await new MultisigSigner([keys[0], keys[0]]).signRaw(messageHash);
 
-      await expectRevertWithErrorMessage("argent/signatures-not-sorted", () =>
+      await expectRevertWithErrorMessage(
+        "argent/signatures-not-sorted",
         accountContract.is_valid_signature(BigInt(messageHash), signatures),
       );
     });
@@ -60,7 +62,8 @@ describe("ArgentMultisig: signing", function () {
 
       const signatures = await new MultisigSigner([keys[0]]).signRaw(messageHash);
 
-      await expectRevertWithErrorMessage("argent/signature-invalid-length", () =>
+      await expectRevertWithErrorMessage(
+        "argent/signature-invalid-length",
         accountContract.is_valid_signature(BigInt(messageHash), signatures),
       );
     });
@@ -72,7 +75,8 @@ describe("ArgentMultisig: signing", function () {
       const invalid = randomStarknetKeyPair();
       const signatures = await new MultisigSigner([invalid]).signRaw(messageHash);
 
-      await expectRevertWithErrorMessage("argent/not-a-signer", () =>
+      await expectRevertWithErrorMessage(
+        "argent/not-a-signer",
         accountContract.is_valid_signature(BigInt(messageHash), signatures),
       );
     });
@@ -84,13 +88,14 @@ describe("ArgentMultisig: signing", function () {
 
       const [publicKey, r] = await keys[0].signRaw(messageHash);
 
-      await expectRevertWithErrorMessage("argent/invalid-signature-format", () =>
-        // Missing S argument
+      await expectRevertWithErrorMessage(
+        "argent/invalid-signature-format", // Missing S argument
         accountContract.is_valid_signature(BigInt(messageHash), [1, 0, publicKey, r]),
       );
 
       // No SignerSignature
-      await expectRevertWithErrorMessage("argent/invalid-signature-format", () =>
+      await expectRevertWithErrorMessage(
+        "argent/invalid-signature-format",
         accountContract.is_valid_signature(BigInt(messageHash), []),
       );
     });

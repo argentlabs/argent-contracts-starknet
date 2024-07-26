@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { CallData, hash } from "starknet";
-import { deployMultisig1_1, ensureSuccess, expectRevertWithErrorMessage, manager, randomStarknetKeyPair } from "../lib";
+import { deployMultisig1_1, expectRevertWithErrorMessage, manager, randomStarknetKeyPair } from "../lib";
 
 const initialTime = 100;
 
@@ -37,7 +37,7 @@ describe("ArgentMultisig Recovery", function () {
 
     await manager.setTime(initialTime + 10 * 60);
     accountContract.connect(thirdPartyAccount);
-    await ensureSuccess(await accountContract.execute_escape(replaceSignerCall));
+    await manager.ensureSuccess(accountContract.execute_escape(replaceSignerCall));
     accountContract.is_signer(originalSigner.compiledSigner).should.eventually.equal(false);
     accountContract.is_signer(newSigner.compiledSigner).should.eventually.equal(true);
 
@@ -55,7 +55,8 @@ describe("ArgentMultisig Recovery", function () {
 
     await manager.setTime(initialTime + 15);
     accountContract.connect(originalAccount);
-    await expectRevertWithErrorMessage("ReentrancyGuard: reentrant call", () =>
+    await expectRevertWithErrorMessage(
+      "ReentrancyGuard: reentrant call",
       accountContract.execute_escape(replaceSignerCall),
     );
   });
@@ -68,9 +69,7 @@ describe("ArgentMultisig Recovery", function () {
       selector: hash.getSelectorFromName("execute_escape"),
       calldata: [],
     });
-    await expectRevertWithErrorMessage("argent/invalid-selector", () =>
-      accountContract.trigger_escape(replaceSignerCall),
-    );
+    await expectRevertWithErrorMessage("argent/invalid-selector", accountContract.trigger_escape(replaceSignerCall));
   });
 
   it(`Escape should fail outside time window`, async function () {
@@ -80,8 +79,6 @@ describe("ArgentMultisig Recovery", function () {
     await accountContract.trigger_escape(replaceSignerCall);
 
     await manager.setTime(initialTime + 1);
-    await expectRevertWithErrorMessage("argent/invalid-escape", () =>
-      accountContract.execute_escape(replaceSignerCall),
-    );
+    await expectRevertWithErrorMessage("argent/invalid-escape", accountContract.execute_escape(replaceSignerCall));
   });
 });

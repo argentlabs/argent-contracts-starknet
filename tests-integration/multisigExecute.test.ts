@@ -84,10 +84,7 @@ describe("ArgentMultisig: Execute", function () {
     const wrongSignerOrder = [keys[1], keys[3], keys[0]];
     account.signer = new MultisigSigner(wrongSignerOrder);
 
-    await expectRevertWithErrorMessage(
-      "argent/signatures-not-sorted",
-      async () => await mockDappContract.set_number(42),
-    );
+    await expectRevertWithErrorMessage("argent/signatures-not-sorted", mockDappContract.set_number(42));
   });
 
   it("Expect 'argent/signatures-not-sorted' when tx is signed by one owner twice (signer_list > 1, threshold > 1)", async function () {
@@ -99,9 +96,6 @@ describe("ArgentMultisig: Execute", function () {
     const repeatedSigners = [keys[0], keys[0], keys[1]];
     account.signer = new MultisigSigner(repeatedSigners);
 
-    await expectRevertWithErrorMessage(
-      "argent/signatures-not-sorted",
-      async () => await mockDappContract.set_number(42),
-    );
+    await expectRevertWithErrorMessage("argent/signatures-not-sorted", mockDappContract.set_number(42));
   });
 });

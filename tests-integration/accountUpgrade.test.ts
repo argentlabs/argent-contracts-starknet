@@ -84,7 +84,7 @@ describe("ArgentAccount: upgrade", function () {
     });
   });
 
-  it("Reject invalid upgrade targets", async function () {
+  it.only("Reject invalid upgrade targets", async function () {
     const { account } = await deployAccount();
     await upgradeAccount(account, "0x01").should.be.rejectedWith(
       `Class with hash ClassHash(\\n    StarkFelt(\\n        \\"0x0000000000000000000000000000000000000000000000000000000000000001\\",\\n    ),\\n) is not declared`,

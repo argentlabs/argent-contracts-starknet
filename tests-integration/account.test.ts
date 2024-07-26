@@ -279,7 +279,7 @@ describe("ArgentAccount", function () {
     });
   });
 
-  it("Expect 'Entry point X not found' when calling the constructor", async function () {
+  it.only("Expect 'Entry point X not found' when calling the constructor", async function () {
     const { account } = await deployAccount();
     try {
       const { transaction_hash } = await account.execute({

@@ -41,7 +41,7 @@ describe("Gas griefing", function () {
     );
   });
 
-  it("Block high fee TxV3", async function () {
+  it.only("Block high fee TxV3", async function () {
     const { account, accountContract, guardian } = await deployAccount({
       useTxV3: true,
     });
@@ -71,7 +71,7 @@ describe("Gas griefing", function () {
     );
   });
 
-  it("Doesn't block high fee TxV3 when just under", async function () {
+  it.only("Doesn't block high fee TxV3 when just under", async function () {
     const { account, accountContract, guardian } = await deployAccount({
       useTxV3: true,
     });

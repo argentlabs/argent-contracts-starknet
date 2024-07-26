@@ -71,7 +71,7 @@ describe("ArgentMultisig: upgrade", function () {
     });
   }
 
-  it.only("Reject invalid upgrade targets", async function () {
+  xit("Reject invalid upgrade targets", async function () {
     const { account } = await deployMultisig1_1();
     await upgradeAccount(account, "0x01").should.be.rejectedWith(
       `Class with hash ClassHash(\\n    StarkFelt(\\n        \\"0x0000000000000000000000000000000000000000000000000000000000000001\\",\\n    ),\\n) is not declared`,

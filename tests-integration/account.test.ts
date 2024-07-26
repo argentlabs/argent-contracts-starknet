@@ -144,9 +144,7 @@ describe("ArgentAccount", function () {
       const { accountContract } = await deployAccount();
       const newGuardian = randomStarknetKeyPair();
 
-      const receipt = await manager.waitForTx(
-        await accountContract.change_guardian(newGuardian.compiledSignerAsOption),
-      );
+      const receipt = await manager.waitForTx(accountContract.change_guardian(newGuardian.compiledSignerAsOption));
 
       expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(newGuardian.guid);
 
@@ -292,7 +290,7 @@ describe("ArgentAccount", function () {
     const { account } = await deployAccount();
     try {
       await manager.waitForTx(
-        await account.execute({
+        account.execute({
           contractAddress: account.address,
           entrypoint: "constructor",
           calldata: CallData.compile({ owner: 12, guardian: 13 }),

@@ -253,7 +253,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
       await manager.setTime(randomTime);
       await manager.waitForTx(
-        await account.execute({
+        account.execute({
           contractAddress: account.address,
           entrypoint: "triggerEscapeSigner",
         }),
@@ -275,7 +275,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
       await manager.setTime(randomTime);
       await manager.waitForTx(
-        await account.execute({
+        account.execute({
           contractAddress: account.address,
           entrypoint: "triggerEscapeSigner",
         }),

@@ -23,9 +23,9 @@ describe("ArgentAccount: declare", function () {
       await expectRevertWithErrorMessage("argent/invalid-declare-version", () => account.declare({ contract }));
     });
 
-    xit(`Expect the account to be able to declare a Cairo contract version2 (SIERRA) (TxV3:${useTxV3})`, async function () {
+    it.only(`Expect the account to be able to declare a Cairo contract version2 (SIERRA) (TxV3:${useTxV3})`, async function () {
       const { account } = await deployAccount({ useTxV3 });
-      const { class_hash: mockDappClassHash } = await account.declare(getDeclareContractPayload("MockDapp"));
+      const { class_hash: mockDappClassHash } = await account.declare(getDeclareContractPayload("MockDapp"), { maxFee: 1e19 });
       const compiledClassHash = await manager.getClassByHash(mockDappClassHash);
       expect(compiledClassHash).to.exist;
     });

@@ -28,6 +28,7 @@ export async function expectExecutionRevert(errorMessage: string, execute: Promi
     await manager.waitForTx(execute);
     /* eslint-disable  @typescript-eslint/no-explicit-any */
   } catch (e: any) {
+    console.log(e);
     expect(e.toString()).to.contain(`Failure reason: ${shortString.encodeShortString(errorMessage)}`);
     return;
   }

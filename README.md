@@ -15,7 +15,9 @@ Find the release notes for all versions in [CHANGELOG](./CHANGELOG.md)
 ## Development
 
 ### Setup
+
 # TODO WE NOW NEED TO INSTALL THE USC, Improve CI + mention how to
+
 We recommend you to install scarb through ASDF. Please refer to [these instructions](https://docs.swmansion.com/scarb/download.html#install-via-asdf).  
 Thanks to the [.tool-versions file](./.tool-versions), you don't need to install a specific scarb or starknet foundry version. The correct one will be automatically downloaded and installed.
 

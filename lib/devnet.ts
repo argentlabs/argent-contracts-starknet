@@ -20,6 +20,10 @@ export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
       await this.handlePost("mint", { address, amount: Number(amount) });
     }
 
+    async mintStrk(address: string, amount: number | bigint) {
+      await this.handlePost("mint", { address, amount: Number(amount), unit: "FRI" });
+    }
+
     async increaseTime(timeInSeconds: number | bigint) {
       await this.handlePost("increase_time", { time: Number(timeInSeconds) });
     }

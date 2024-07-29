@@ -32,8 +32,7 @@ describe("ArgentAccount", function () {
     const classHash = argentAccountClassHash;
     const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
     const udcCalls = deployer.buildUDCContractPayload({ classHash, salt, constructorCalldata, unique: false });
-    const response = await deployer.execute(udcCalls);
-    const receipt = await manager.waitForTransaction(response.transaction_hash);
+    const receipt = await manager.waitForTx(deployer.execute(udcCalls));
 
     await expectEvent(receipt, {
       from_address: contractAddress,
@@ -67,7 +66,8 @@ describe("ArgentAccount", function () {
 
   it("Expect an error when owner is zero", async function () {
     const guardian = new CairoOption(CairoOptionVariant.None);
-    await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
+    await expectRevertWithErrorMessage(
+      "Failed to deserialize param #1",
       deployer.deployContract({
         classHash: argentAccountClassHash,
         constructorCalldata: CallData.compile({ owner: zeroStarknetSignatureType(), guardian }),
@@ -83,8 +83,7 @@ describe("ArgentAccount", function () {
       const chainId = await manager.getChainId();
       const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.guid, newOwner, chainId);
 
-      const response = await accountContract.change_owner(starknetSignature);
-      const receipt = await manager.waitForTransaction(response.transaction_hash);
+      const receipt = await manager.waitForTx(accountContract.change_owner(starknetSignature));
 
       await accountContract.get_owner_guid().should.eventually.equal(newOwner.guid);
 
@@ -97,21 +96,24 @@ describe("ArgentAccount", function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
       accountContract.connect(account);
-      await expectRevertWithErrorMessage("argent/only-self", () =>
+      await expectRevertWithErrorMessage(
+        "argent/only-self",
         accountContract.change_owner(starknetSignatureType(12, 13, 14)),
       );
     });
 
     it("Expect parsing error when new_owner is zero", async function () {
       const { accountContract } = await deployAccount();
-      await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
+      await expectRevertWithErrorMessage(
+        "Failed to deserialize param #1",
         accountContract.change_owner(starknetSignatureType(0, 13, 14)),
       );
     });
 
     it("Expect 'argent/invalid-owner-sig' when the signature to change owner is invalid", async function () {
       const { accountContract } = await deployAccount();
-      await expectRevertWithErrorMessage("argent/invalid-owner-sig", () =>
+      await expectRevertWithErrorMessage(
+        "argent/invalid-owner-sig",
         accountContract.change_owner(starknetSignatureType(12, 13, 14)),
       );
     });
@@ -142,8 +144,7 @@ describe("ArgentAccount", function () {
       const { accountContract } = await deployAccount();
       const newGuardian = randomStarknetKeyPair();
 
-      const response = await accountContract.change_guardian(newGuardian.compiledSignerAsOption);
-      const receipt = await manager.waitForTransaction(response.transaction_hash);
+      const receipt = await manager.waitForTx(accountContract.change_guardian(newGuardian.compiledSignerAsOption));
 
       expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(newGuardian.guid);
 
@@ -163,7 +164,8 @@ describe("ArgentAccount", function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
       accountContract.connect(account);
-      await expectRevertWithErrorMessage("Failed to deserialize param #1", () =>
+      await expectRevertWithErrorMessage(
+        "Failed to deserialize param #1",
         accountContract.change_guardian(CallData.compile([zeroStarknetSignatureType()])),
       );
     });
@@ -181,7 +183,8 @@ describe("ArgentAccount", function () {
       const { accountContract } = await deployAccount();
       accountContract.connect(account);
       const newGuardian = randomStarknetKeyPair();
-      await expectRevertWithErrorMessage("argent/only-self", () =>
+      await expectRevertWithErrorMessage(
+        "argent/only-self",
         accountContract.change_guardian(newGuardian.compiledSignerAsOption),
       );
     });
@@ -189,7 +192,8 @@ describe("ArgentAccount", function () {
     it("Expect 'argent/backup-should-be-null' when setting the guardian to 0 if there is a backup", async function () {
       const { accountContract } = await deployAccountWithGuardianBackup();
       await accountContract.get_guardian_backup().should.eventually.not.equal(0n);
-      await expectRevertWithErrorMessage("argent/backup-should-be-null", () =>
+      await expectRevertWithErrorMessage(
+        "argent/backup-should-be-null",
         accountContract.change_guardian(new CairoOption(CairoOptionVariant.None)),
       );
     });
@@ -219,8 +223,9 @@ describe("ArgentAccount", function () {
       const { accountContract } = await deployAccountWithGuardianBackup();
       const newGuardianBackup = randomStarknetKeyPair();
 
-      const response = await accountContract.change_guardian_backup(newGuardianBackup.compiledSignerAsOption);
-      const receipt = await manager.waitForTransaction(response.transaction_hash);
+      const receipt = await manager.waitForTx(
+        await accountContract.change_guardian_backup(newGuardianBackup.compiledSignerAsOption),
+      );
 
       expect((await accountContract.get_guardian_backup_guid()).unwrap()).to.equal(newGuardianBackup.guid);
 
@@ -247,7 +252,8 @@ describe("ArgentAccount", function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
       accountContract.connect(account);
-      await expectRevertWithErrorMessage("argent/only-self", () =>
+      await expectRevertWithErrorMessage(
+        "argent/only-self",
         accountContract.change_guardian_backup(randomStarknetKeyPair().compiledSignerAsOption),
       );
     });
@@ -255,7 +261,8 @@ describe("ArgentAccount", function () {
     it("Expect 'argent/guardian-required' when guardian == 0 and setting a guardian backup ", async function () {
       const { accountContract } = await deployAccountWithoutGuardian();
       await accountContract.get_guardian().should.eventually.equal(0n);
-      await expectRevertWithErrorMessage("argent/guardian-required", () =>
+      await expectRevertWithErrorMessage(
+        "argent/guardian-required",
         accountContract.change_guardian_backup(randomStarknetKeyPair().compiledSignerAsOption),
       );
     });
@@ -282,12 +289,13 @@ describe("ArgentAccount", function () {
   xit("Expect 'Entry point X not found' when calling the constructor", async function () {
     const { account } = await deployAccount();
     try {
-      const { transaction_hash } = await account.execute({
-        contractAddress: account.address,
-        entrypoint: "constructor",
-        calldata: CallData.compile({ owner: 12, guardian: 13 }),
-      });
-      await manager.waitForTransaction(transaction_hash);
+      await manager.waitForTx(
+        account.execute({
+          contractAddress: account.address,
+          entrypoint: "constructor",
+          calldata: CallData.compile({ owner: 12, guardian: 13 }),
+        }),
+      );
     } catch (e: any) {
       expect(e.toString()).to.contain(
         `Entry point EntryPointSelector(StarkFelt(\\"0x028ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194\\")) not found in contract`,

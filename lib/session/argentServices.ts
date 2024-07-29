@@ -71,7 +71,7 @@ export class BackendService {
   }
 
   public async signOutsideTxAndSession(
-    calls: Call[],
+    _calls: Call[],
     sessionTokenToSign: OffChainSession,
     accountAddress: string,
     outsideExecution: OutsideExecution,
@@ -91,7 +91,7 @@ export class BackendService {
     return [signature.r, signature.s];
   }
 
-  public getBackendKey(accountAddress: string): bigint {
+  public getBackendKey(_accountAddress: string): bigint {
     return this.backendKey.publicKey;
   }
 }

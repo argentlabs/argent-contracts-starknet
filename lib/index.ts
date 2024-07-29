@@ -7,6 +7,7 @@ chai.should();
 export * from "./accounts";
 export * from "./contracts";
 export * from "./devnet";
+export * from "./events";
 export * from "./expectations";
 export * from "./manager";
 export * from "./multisig";
@@ -22,6 +23,7 @@ export * from "./signers/secp256";
 export * from "./signers/signers";
 export * from "./signers/webauthn";
 export * from "./tokens";
+export * from "./transactions";
 export * from "./udc";
 export * from "./upgrade";
 

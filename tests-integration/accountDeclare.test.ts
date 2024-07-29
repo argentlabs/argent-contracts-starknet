@@ -20,7 +20,7 @@ describe("ArgentAccount: declare", function () {
       // Using version 1 will require ETH
       await manager.mintEth(account.address, 1e18);
       const contract: CompiledSierra = readContract(`${fixturesFolder}Proxy.contract_class.json`);
-      await expectRevertWithErrorMessage("argent/invalid-declare-version", () => account.declare({ contract }));
+      await expectRevertWithErrorMessage("argent/invalid-declare-version", account.declare({ contract }));
     });
 
     it.only(`Expect the account to be able to declare a Cairo contract version2 (SIERRA) (TxV3:${useTxV3})`, async function () {

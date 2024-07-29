@@ -4,14 +4,16 @@ import { deployMultisig1_3, expectRevertWithErrorMessage, zeroStarknetSignatureT
 describe("ArgentMultisig: signer storage", function () {
   it("Expect deserialization error when adding a zero signer", async function () {
     const { accountContract, threshold } = await deployMultisig1_3();
-    await expectRevertWithErrorMessage("Failed to deserialize param #2", () =>
+    await expectRevertWithErrorMessage(
+      "Failed to deserialize param #2",
       accountContract.add_signers(CallData.compile([threshold, [zeroStarknetSignatureType()]])),
     );
   });
 
   it("Expect deserialization error when replacing an owner with a zero signer", async function () {
     const { accountContract, keys } = await deployMultisig1_3();
-    await expectRevertWithErrorMessage("Failed to deserialize param #2", () =>
+    await expectRevertWithErrorMessage(
+      "Failed to deserialize param #2",
       accountContract.replace_signer(CallData.compile([keys[0].signer, zeroStarknetSignatureType()])),
     );
   });
@@ -19,7 +21,8 @@ describe("ArgentMultisig: signer storage", function () {
   describe("remove_signers(new_threshold, signers_to_remove)", function () {
     it("Expect deserialization error when removing a 0 signer", async function () {
       const { accountContract, threshold } = await deployMultisig1_3();
-      await expectRevertWithErrorMessage("Failed to deserialize param #2", () =>
+      await expectRevertWithErrorMessage(
+        "Failed to deserialize param #2",
         accountContract.remove_signers(CallData.compile([threshold, [zeroStarknetSignatureType()]])),
       );
     });

@@ -31,11 +31,12 @@ for (const accountType of ["individual", "multisig"]) {
       const { account } = await deployAccountType();
       mockDapp.connect(account);
       const call = mockDapp.populateTransaction.set_number(42n);
-      await expectRevertWithErrorMessage("argent/unsupported-paymaster", () => {
-        return account.execute(call, undefined, {
+      await expectRevertWithErrorMessage(
+        "argent/unsupported-paymaster",
+        account.execute(call, undefined, {
           paymasterData: ["0x1"],
-        });
-      });
+        }),
+      );
     });
   });
 }

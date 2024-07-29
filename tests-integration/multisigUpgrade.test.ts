@@ -6,7 +6,6 @@ import {
   SignerType,
   StarknetKeyPair,
   deployLegacyMultisig,
-  ensureSuccess,
   expectEvent,
   manager,
   signerTypeToCustomEnum,
@@ -66,8 +65,7 @@ describe("ArgentMultisig: upgrade", function () {
       ethContract.connect(account);
       const recipient = "0xabde1";
       const amount = uint256.bnToUint256(1n);
-      const transfer = await ethContract.transfer(recipient, amount, { maxFee: 5e14 });
-      await ensureSuccess(transfer);
+      await manager.ensureSuccess(ethContract.transfer(recipient, amount, { maxFee: 5e14 }));
     });
   }
 

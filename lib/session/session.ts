@@ -1,5 +1,4 @@
 import {
-  Account,
   ArraySignatureType,
   BigNumberish,
   CairoCustomEnum,
@@ -105,7 +104,7 @@ interface SessionSetup {
 }
 export async function setupSession(
   guardian: StarknetKeyPair,
-  account: Account,
+  account: ArgentAccount,
   allowedMethods: AllowedMethod[],
   expiry: bigint = BigInt(Date.now()) + 10000n,
   dappKey: StarknetKeyPair = randomStarknetKeyPair(),

@@ -68,7 +68,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   let transactionHash;
   if (finalParams.selfDeploy) {
     const response = await deployer.execute(calls);
-    await manager.waitForTransaction(response.transaction_hash);
+    await manager.waitForTx(response.transaction_hash);
 
     const selfDeploymentSigner = new MultisigSigner(keys.filter((_, i) => selfDeploymentIndexes.includes(i)));
     const account = new Account(manager, accountAddress, selfDeploymentSigner, "1", transactionVersion);
@@ -81,7 +81,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     transactionHash = transaction_hash;
   }
 
-  const receipt = await manager.waitForTransaction(transactionHash);
+  const receipt = await manager.waitForTx(transactionHash);
   const signer = new MultisigSigner(keys.slice(0, finalParams.threshold));
   const account = new ArgentAccount(manager, accountAddress, signer, "1", transactionVersion);
   const accountContract = await manager.loadContract(account.address);
@@ -116,7 +116,7 @@ export async function deployLegacyMultisig(classHash: string, threshold = 1) {
   const account = new Account(manager, contractAddress, deploySigner, "1");
 
   const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
-  await manager.waitForTransaction(transaction_hash);
+  await manager.waitForTx(transaction_hash);
 
   const signers = new LegacyMultisigSigner(keys);
   account.signer = signers;

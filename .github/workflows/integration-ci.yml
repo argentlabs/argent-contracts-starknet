@@ -16,9 +16,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Start devnet in background
-        run: |
-          scarb run start-devnet &
-          ./scripts/wait-devnet-ready.sh
+        run: scarb run start-devnet
 
       - name: Installing USC
         run: curl -L https://raw.githubusercontent.com/software-mansion/universal-sierra-compiler/master/scripts/install.sh | sh -s -- v2.2.0-rc.1

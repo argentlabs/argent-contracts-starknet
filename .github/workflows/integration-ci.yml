@@ -16,9 +16,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Start devnet in background
-        run: |
-          scarb run start-devnet &
-          ./scripts/wait-devnet-ready.sh
+        run: scarb run start-devnet
 
       - name: Run integration tests
         run: scarb --release build && tsc && yarn mocha tests-integration/*.test.ts --forbid-only --forbid-pending

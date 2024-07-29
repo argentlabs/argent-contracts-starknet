@@ -1,26 +1,45 @@
-import { assert } from "chai";
-import { TransactionFinalityStatus, TransactionReceipt } from "starknet";
-import { manager } from "./manager";
+import {
+  GetTransactionReceiptResponse,
+  RpcProvider,
+  TransactionExecutionStatus,
+  TransactionFinalityStatus,
+  TransactionReceipt,
+} from "starknet";
+import { Constructor } from ".";
 
-export async function ensureSuccess(
-  transactionOrHash: { transaction_hash: string } | string,
-): Promise<TransactionReceipt> {
-  const transactionHash =
-    typeof transactionOrHash === "string" ? transactionOrHash : transactionOrHash.transaction_hash;
-  const tx = await manager.waitForTransaction(transactionHash, {
-    successStates: [TransactionFinalityStatus.ACCEPTED_ON_L1, TransactionFinalityStatus.ACCEPTED_ON_L2],
-  });
-  assert(tx.isSuccess(), `Transaction ${transactionHash} REVERTED`);
-  return tx;
-}
+const successStates = [TransactionFinalityStatus.ACCEPTED_ON_L1, TransactionFinalityStatus.ACCEPTED_ON_L2];
 
-export async function ensureAccepted(
-  transactionOrHash: { transaction_hash: string } | string,
-): Promise<TransactionReceipt> {
-  const transactionHash =
-    typeof transactionOrHash === "string" ? transactionOrHash : transactionOrHash.transaction_hash;
-  const receipt = await manager.waitForTransaction(transactionHash, {
-    successStates: [TransactionFinalityStatus.ACCEPTED_ON_L1, TransactionFinalityStatus.ACCEPTED_ON_L2],
-  });
-  return receipt as TransactionReceipt;
-}
+export const WithReceipts = <T extends Constructor<RpcProvider>>(Base: T) =>
+  class extends Base {
+    async waitForTx(
+      execute: Promise<{ transaction_hash: string }> | { transaction_hash: string } | string,
+      options = {},
+    ): Promise<GetTransactionReceiptResponse> {
+      let transactionHash: string;
+      if (typeof execute === "string") {
+        transactionHash = execute;
+      } else {
+        const executionResult = await execute;
+        transactionHash = executionResult["transaction_hash"];
+      }
+      return this.waitForTransaction(transactionHash, { ...options });
+    }
+
+    async ensureSuccess(
+      execute: Promise<{ transaction_hash: string }> | { transaction_hash: string },
+    ): Promise<TransactionReceipt> {
+      const tx = await this.waitForTx(execute, {
+        successStates: [TransactionExecutionStatus.SUCCEEDED],
+      });
+      return tx as TransactionReceipt;
+    }
+
+    async ensureAccepted(
+      execute: Promise<{ transaction_hash: string }> | { transaction_hash: string },
+    ): Promise<TransactionReceipt> {
+      const receipt = await this.waitForTx(execute, {
+        successStates,
+      });
+      return receipt as TransactionReceipt;
+    }
+  };

@@ -4,7 +4,6 @@ import {
   ArgentSigner,
   deployAccount,
   deployAccountWithoutGuardian,
-  ensureSuccess,
   expectRevertWithErrorMessage,
   manager,
   randomEip191KeyPair,
@@ -51,7 +50,7 @@ describe("ArgentAccount: Signers types", function () {
       for (const { name, account } of accounts) {
         it(`Using "${name}"`, async function () {
           ethContract.connect(account);
-          await ensureSuccess(await ethContract.transfer(recipient, amount));
+          await manager.ensureSuccess(ethContract.transfer(recipient, amount));
         });
       }
     });
@@ -59,16 +58,17 @@ describe("ArgentAccount: Signers types", function () {
 
   for (const { name, keyPair } of nonStarknetKeyPairs) {
     it(`Expect 'argent/invalid-guardian-type' when deploying with a wrong guardian "${name}"`, async function () {
-      await expectRevertWithErrorMessage("argent/invalid-guardian-type", async () => {
-        const { transactionHash } = await deployAccount({ guardian: keyPair() });
-        return { transaction_hash: transactionHash };
-      });
+      await expectRevertWithErrorMessage(
+        "argent/invalid-guardian-type",
+        deployAccount({ guardian: keyPair() }).then(({ transactionHash }) => ({ transaction_hash: transactionHash })),
+      );
     });
 
     it(`Expect 'argent/invalid-guardian-type' on trigger_escape_guardian with "${name}"`, async function () {
       const { accountContract, account, owner } = await deployAccount();
       account.signer = new ArgentSigner(owner);
-      await expectRevertWithErrorMessage("argent/invalid-guardian-type", () =>
+      await expectRevertWithErrorMessage(
+        "argent/invalid-guardian-type",
         accountContract.trigger_escape_guardian(keyPair().compiledSignerAsOption),
       );
     });

@@ -17,17 +17,12 @@ import {
   Signature,
   TransactionReceipt,
   UniversalDetails,
-  V2InvocationsSignerDetails,
-  V3InvocationsSignerDetails,
   hash,
   num,
   shortString,
-  stark,
-  transaction,
   uint256,
 } from "starknet";
 import { manager } from "./manager";
-import { ensureSuccess } from "./receipts";
 import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { ArgentSigner, KeyPair, RawSigner, randomStarknetKeyPair } from "./signers/signers";
 import { ethAddress, strkAddress } from "./tokens";
@@ -156,7 +151,7 @@ export async function deployOldAccount(
     contractAddress,
     addressSalt: salt,
   });
-  await manager.waitForTransaction(transaction_hash);
+  await manager.waitForTx(transaction_hash);
   const accountContract = await manager.loadContract(account.address);
   accountContract.connect(account);
   return { account, accountContract, owner, guardian };
@@ -199,7 +194,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<
   let transactionHash;
   if (finalParams.selfDeploy) {
     const response = await deployer.execute(calls);
-    await manager.waitForTransaction(response.transaction_hash);
+    await manager.waitForTx(response.transaction_hash);
     const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
     transactionHash = transaction_hash;
   } else {
@@ -270,7 +265,7 @@ export async function deployLegacyAccount(classHash: string) {
     constructorCalldata,
     addressSalt: salt,
   });
-  await manager.waitForTransaction(transaction_hash);
+  await manager.waitForTx(transaction_hash);
 
   const accountContract = await manager.loadContract(account.address);
   accountContract.connect(account);
@@ -282,16 +277,17 @@ export async function upgradeAccount(
   newClassHash: string,
   calldata: RawCalldata = [],
 ): Promise<TransactionReceipt> {
-  const { transaction_hash } = await accountToUpgrade.execute(
-    {
-      contractAddress: accountToUpgrade.address,
-      entrypoint: "upgrade",
-      calldata: CallData.compile({ implementation: newClassHash, calldata }),
-    },
-    undefined,
-    { maxFee: 1e14 },
+  return await manager.ensureSuccess(
+    accountToUpgrade.execute(
+      {
+        contractAddress: accountToUpgrade.address,
+        entrypoint: "upgrade",
+        calldata: CallData.compile({ implementation: newClassHash, calldata }),
+      },
+      undefined,
+      { maxFee: 1e14 },
+    ),
   );
-  return await ensureSuccess(transaction_hash);
 }
 
 export async function executeWithCustomSig(
@@ -301,7 +297,7 @@ export async function executeWithCustomSig(
   transactionsDetail: UniversalDetails = {},
 ): Promise<InvokeFunctionResponse> {
   const signer = new (class extends RawSigner {
-    public async signRaw(messageHash: string): Promise<string[]> {
+    public async signRaw(_messageHash: string): Promise<string[]> {
       return signature;
     }
   })();
@@ -326,11 +322,11 @@ export async function getSignerDetails(account: ArgentAccount, calls: Call[]): P
   );
   const customSigner = new (class extends RawSigner {
     public signerDetails?: InvocationsSignerDetails;
-    public async signTransaction(calls: Call[], signerDetails: InvocationsSignerDetails): Promise<Signature> {
+    public async signTransaction(_calls: Call[], signerDetails: InvocationsSignerDetails): Promise<Signature> {
       this.signerDetails = signerDetails;
       throw Error("Should not execute");
     }
-    public async signRaw(messageHash: string): Promise<string[]> {
+    public async signRaw(_messageHash: string): Promise<string[]> {
       throw Error("Not implemented");
     }
   })();
@@ -343,35 +339,10 @@ export async function getSignerDetails(account: ArgentAccount, calls: Call[]): P
   }
 }
 
-export function calculateTransactionHash(transactionDetail: InvocationsSignerDetails, calls: Call[]): string {
-  const compiledCalldata = transaction.getExecuteCalldata(calls, transactionDetail.cairoVersion);
-  let transactionHash;
-  if (Object.values(RPC.ETransactionVersion2).includes(transactionDetail.version as any)) {
-    const transactionDetailV2 = transactionDetail as V2InvocationsSignerDetails;
-    transactionHash = hash.calculateInvokeTransactionHash({
-      ...transactionDetailV2,
-      senderAddress: transactionDetailV2.walletAddress,
-      compiledCalldata,
-    });
-  } else if (Object.values(RPC.ETransactionVersion3).includes(transactionDetail.version as any)) {
-    const transactionDetailV3 = transactionDetail as V3InvocationsSignerDetails;
-    transactionHash = hash.calculateInvokeTransactionHash({
-      ...transactionDetailV3,
-      senderAddress: transactionDetailV3.walletAddress,
-      compiledCalldata,
-      nonceDataAvailabilityMode: stark.intDAM(transactionDetailV3.nonceDataAvailabilityMode),
-      feeDataAvailabilityMode: stark.intDAM(transactionDetailV3.feeDataAvailabilityMode),
-    });
-  } else {
-    throw Error("unsupported transaction version");
-  }
-  return transactionHash;
-}
-
 export async function fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {
   const call = await fundAccountCall(recipient, amount, token);
   const response = await deployer.execute(call ? [call] : []);
-  await manager.waitForTransaction(response.transaction_hash);
+  await manager.waitForTx(response.transaction_hash);
 }
 
 export async function fundAccountCall(

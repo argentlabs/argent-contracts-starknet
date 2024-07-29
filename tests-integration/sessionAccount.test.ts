@@ -91,7 +91,8 @@ describe("Hybrid Session Account: execute calls", function () {
 
     // Expired session
     await manager.setTime(expiresAt + 7200n);
-    await expectRevertWithErrorMessage("session/expired", () =>
+    await expectRevertWithErrorMessage(
+      "session/expired",
       accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
     );
     await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
@@ -124,12 +125,13 @@ describe("Hybrid Session Account: execute calls", function () {
     // Revoke Session
     await accountContract.revoke_session(sessionHash);
     await accountContract.is_session_revoked(sessionHash).should.eventually.be.true;
-    await expectRevertWithErrorMessage("session/revoked", () =>
+    await expectRevertWithErrorMessage(
+      "session/revoked",
       accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
     );
     await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
 
-    await expectRevertWithErrorMessage("session/already-revoked", () => accountContract.revoke_session(sessionHash));
+    await expectRevertWithErrorMessage("session/already-revoked", accountContract.revoke_session(sessionHash));
   });
 
   it("Fail if proofs are misaligned", async function () {
@@ -176,7 +178,8 @@ describe("Hybrid Session Account: execute calls", function () {
     };
 
     // happens when the the number of proofs is not equal to the number of calls
-    await expectRevertWithErrorMessage("session/unaligned-proofs", () =>
+    await expectRevertWithErrorMessage(
+      "session/unaligned-proofs",
       executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongProofs)),
     );
   });

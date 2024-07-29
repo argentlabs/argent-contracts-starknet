@@ -36,7 +36,8 @@ describe("Estimates", function () {
         const call = (await manager.tokens.feeTokenContract(useTxV3)).populateTransaction.transfer(recipient, amount);
 
         const estimate = await estimateAccount.estimateFee(call, { skipValidate: false });
-        await expectRevertWithErrorMessage("argent/invalid-owner-sig", () =>
+        await expectRevertWithErrorMessage(
+          "argent/invalid-owner-sig",
           estimateAccount.execute(call, undefined, { ...estimate }),
         );
         await account.execute(call, undefined, { ...estimate });
@@ -58,7 +59,8 @@ describe("Estimates", function () {
         );
         const call = (await manager.tokens.feeTokenContract(useTxV3)).populateTransaction.transfer(recipient, amount);
         const estimate = await estimateAccount.estimateFee(call, { skipValidate: false });
-        await expectRevertWithErrorMessage("argent/invalid-owner-sig", () =>
+        await expectRevertWithErrorMessage(
+          "argent/invalid-owner-sig",
           estimateAccount.execute(call, undefined, { ...estimate }),
         );
         await account.execute(call, undefined, { ...estimate });
@@ -82,7 +84,8 @@ describe("Estimates", function () {
         const call = (await manager.tokens.feeTokenContract(useTxV3)).populateTransaction.transfer(recipient, amount);
 
         const estimate = await estimateAccount.estimateFee(call, { skipValidate: false });
-        await expectRevertWithErrorMessage("argent/invalid-signature", () =>
+        await expectRevertWithErrorMessage(
+          "argent/invalid-signature",
           estimateAccount.execute(call, undefined, { ...estimate }),
         );
         await account.execute(call, undefined, { ...estimate });
@@ -101,7 +104,8 @@ describe("Estimates", function () {
         );
         const call = (await manager.tokens.feeTokenContract(useTxV3)).populateTransaction.transfer(recipient, amount);
         const estimate = await estimateAccount.estimateFee(call, { skipValidate: false });
-        await expectRevertWithErrorMessage("argent/invalid-signature", () =>
+        await expectRevertWithErrorMessage(
+          "argent/invalid-signature",
           estimateAccount.execute(call, undefined, { ...estimate }),
         );
         await account.execute(call, undefined, { ...estimate });

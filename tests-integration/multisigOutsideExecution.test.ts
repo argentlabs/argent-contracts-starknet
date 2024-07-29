@@ -10,7 +10,6 @@ import {
   getTypedDataHash,
   manager,
   randomStarknetKeyPair,
-  waitForTransaction,
 } from "../lib";
 import { deployMultisig } from "../lib/multisig";
 
@@ -74,14 +73,15 @@ describe("ArgentMultisig: outside execution", function () {
 
     // ensure can't be run too early
     await manager.setTime(initialTime - 200);
-    await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/invalid-timestamp", deployer.execute(outsideExecutionCall));
 
     // ensure can't be run too late
     await manager.setTime(initialTime + 200);
-    await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/invalid-timestamp", deployer.execute(outsideExecutionCall));
 
     // ensure the caller is as expected
-    await expectExecutionRevert("argent/invalid-caller", async () =>
+    await expectExecutionRevert(
+      "argent/invalid-caller",
       deployer.execute(
         await getOutsideExecutionCall(
           { ...outsideExecution, caller: "0x123" },
@@ -96,12 +96,14 @@ describe("ArgentMultisig: outside execution", function () {
 
     // ensure the account address is checked
     const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", account.signer, legacyRevision);
-    await expectExecutionRevert("argent/invalid-signature", () =>
+    await expectExecutionRevert(
+      "argent/invalid-signature",
       deployer.execute({ ...wrongAccountCall, contractAddress: account.address }),
     );
 
     // ensure the chain id is checked
-    await expectExecutionRevert("argent/invalid-signature", async () =>
+    await expectExecutionRevert(
+      "argent/invalid-signature",
       deployer.execute(
         await getOutsideExecutionCall(
           outsideExecution,
@@ -115,12 +117,12 @@ describe("ArgentMultisig: outside execution", function () {
 
     // normal scenario
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
-    await waitForTransaction(await deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
     // ensure a transaction can't be replayed
-    await expectExecutionRevert("argent/duplicated-outside-nonce", () => deployer.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/duplicated-outside-nonce", deployer.execute(outsideExecutionCall));
   });
 
   it("Avoid caller check if it caller is ANY_CALLER", async function () {
@@ -145,7 +147,7 @@ describe("ArgentMultisig: outside execution", function () {
     await manager.setTime(initialTime);
 
     // ensure the caller is not used
-    await waitForTransaction(await deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 
@@ -169,14 +171,15 @@ describe("ArgentMultisig: outside execution", function () {
 
     // ensure can't be run too early
     await manager.setTime(initialTime - 200);
-    await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/invalid-timestamp", deployer.execute(outsideExecutionCall));
 
     // ensure can't be run too late
     await manager.setTime(initialTime + 200);
-    await expectExecutionRevert("argent/invalid-timestamp", () => deployer.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/invalid-timestamp", deployer.execute(outsideExecutionCall));
 
     // ensure the caller is as expected
-    await expectExecutionRevert("argent/invalid-caller", async () =>
+    await expectExecutionRevert(
+      "argent/invalid-caller",
       deployer.execute(
         await getOutsideExecutionCall(
           { ...outsideExecution, caller: "0x123" },
@@ -191,12 +194,14 @@ describe("ArgentMultisig: outside execution", function () {
 
     // ensure the account address is checked
     const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", account.signer, legacyRevision);
-    await expectExecutionRevert("argent/invalid-signature", () =>
+    await expectExecutionRevert(
+      "argent/invalid-signature",
       deployer.execute({ ...wrongAccountCall, contractAddress: account.address }),
     );
 
     // ensure the chain id is checked
-    await expectExecutionRevert("argent/invalid-signature", async () =>
+    await expectExecutionRevert(
+      "argent/invalid-signature",
       deployer.execute(
         await getOutsideExecutionCall(
           outsideExecution,
@@ -210,12 +215,12 @@ describe("ArgentMultisig: outside execution", function () {
 
     // normal scenario
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
-    await waitForTransaction(await deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
     // ensure a transaction can't be replayed
-    await expectExecutionRevert("argent/duplicated-outside-nonce", () => deployer.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/duplicated-outside-nonce", deployer.execute(outsideExecutionCall));
   });
 
   it("Avoid caller check if it caller is ANY_CALLER", async function () {
@@ -240,7 +245,7 @@ describe("ArgentMultisig: outside execution", function () {
     await manager.setTime(initialTime);
 
     // ensure the caller is not used
-    await waitForTransaction(await deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(deployer.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 
@@ -262,6 +267,6 @@ describe("ArgentMultisig: outside execution", function () {
 
     await manager.setTime(initialTime);
 
-    await expectRevertWithErrorMessage("ReentrancyGuard: reentrant call", () => account.execute(outsideExecutionCall));
+    await expectRevertWithErrorMessage("ReentrancyGuard: reentrant call", account.execute(outsideExecutionCall));
   });
 });

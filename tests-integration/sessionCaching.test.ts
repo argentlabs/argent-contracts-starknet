@@ -97,7 +97,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         useCaching,
       );
 
-      await expectRevertWithErrorMessage("session/signer-is-not-guardian", () => accountWithDappSigner.execute(calls));
+      await expectRevertWithErrorMessage("session/signer-is-not-guardian", accountWithDappSigner.execute(calls));
     });
 
     it(`Fail with 'argent/invalid-signature-len' if more than owner + guardian signed session (caching: ${useCaching})`, async function () {
@@ -139,7 +139,8 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.true;
       }
 
-      await expectRevertWithErrorMessage("argent/invalid-signature-len", () =>
+      await expectRevertWithErrorMessage(
+        "argent/invalid-signature-len",
         executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionToken)),
       );
     });
@@ -165,7 +166,8 @@ describe("Hybrid Session Account: execute session calls with caching", function 
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
-      await expectRevertWithErrorMessage("session/guardian-key-mismatch", () =>
+      await expectRevertWithErrorMessage(
+        "session/guardian-key-mismatch",
         accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
       );
     });
@@ -213,7 +215,8 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.true;
       }
 
-      await expectRevertWithErrorMessage("session/session-key-mismatch", () =>
+      await expectRevertWithErrorMessage(
+        "session/session-key-mismatch",
         executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongPub)),
       );
 
@@ -226,7 +229,8 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         }),
       };
 
-      await expectRevertWithErrorMessage("session/invalid-session-sig", () =>
+      await expectRevertWithErrorMessage(
+        "session/invalid-session-sig",
         executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongSig)),
       );
     });
@@ -243,15 +247,14 @@ describe("Hybrid Session Account: execute session calls with caching", function 
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
-      const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature, sessionHash } =
-        await setupSession(
-          guardian as StarknetKeyPair,
-          account,
-          allowedMethods,
-          initialTime + 150n,
-          randomStarknetKeyPair(),
-          useCaching,
-        );
+      const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(
+        guardian as StarknetKeyPair,
+        account,
+        allowedMethods,
+        initialTime + 150n,
+        randomStarknetKeyPair(),
+        useCaching,
+      );
 
       const sessionToken = await dappService.getSessionToken(
         calls,
@@ -268,7 +271,8 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         }),
       };
 
-      await expectRevertWithErrorMessage("session/guardian-key-mismatch", () =>
+      await expectRevertWithErrorMessage(
+        "session/guardian-key-mismatch",
         executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongPub)),
       );
 
@@ -281,7 +285,8 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         }),
       };
 
-      await expectRevertWithErrorMessage("session/invalid-backend-sig", () =>
+      await expectRevertWithErrorMessage(
+        "session/invalid-backend-sig",
         executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongSig)),
       );
     });
@@ -327,7 +332,8 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       ...sessionToken,
       session_authorization: Array(10).fill("1"),
     };
-    await expectRevertWithErrorMessage("session/invalid-auth-len", () =>
+    await expectRevertWithErrorMessage(
+      "session/invalid-auth-len",
       executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionToken)),
     );
   });

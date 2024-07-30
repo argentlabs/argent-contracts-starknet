@@ -1,6 +1,7 @@
 use alexandria_encoding::base64::Base64UrlEncoder;
 use alexandria_math::sha256::{sha256};
 use argent::signer::signer_signature::{WebauthnSigner};
+use argent::signer::webauthn_byte_array::get_webauthn_hash_syscall;
 use argent::utils::array_ext::ArrayExtTrait;
 use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, u32s_to_u256, u32s_to_u8s, u256_to_u8s};
 use argent::utils::hashing::{sha256_cairo0};
@@ -27,6 +28,7 @@ struct WebauthnSignature {
 enum Sha256Implementation {
     Cairo0,
     Cairo1,
+    Syscall,
 }
 
 /// Example data:
@@ -78,6 +80,7 @@ fn encode_challenge(hash: felt252, sha256_implementation: Sha256Implementation) 
     let last_byte = match sha256_implementation {
         Sha256Implementation::Cairo0 => 0,
         Sha256Implementation::Cairo1 => 1,
+        Sha256Implementation::Syscall => panic!("Nope"),
     };
     bytes.append(last_byte);
     assert!(bytes.len() == 33, "webauthn/invalid-challenge-length"); // remove '=' signs if this assert fails
@@ -112,6 +115,7 @@ fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnS
         Sha256Implementation::Cairo0 => get_webauthn_hash_cairo0(hash, signer, signature)
             .expect('webauthn/sha256-cairo0-failed'),
         Sha256Implementation::Cairo1 => get_webauthn_hash_cairo1(hash, signer, signature),
+        Sha256Implementation::Syscall => get_webauthn_hash_syscall(hash, signer, signature),
     }
 }
 

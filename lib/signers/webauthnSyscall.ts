@@ -104,7 +104,10 @@ export class WebauthnOwnerSyscall extends KeyPair {
   public async signHash(transactionHash: string): Promise<WebauthnSignature> {
     const flags = "0b00000101"; // present and verified
     const signCount = 0;
-    const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([0,0,0,Number(flags), 0, 0, 0, signCount]));
+    const authenticatorData = concatBytes(
+      sha256(this.rpId),
+      new Uint8Array([0, 0, 0, Number(flags), 0, 0, 0, signCount]),
+    );
 
     const sha256Impl = 2;
     // TODO Can we put anything in the challenge or is this a specific format?

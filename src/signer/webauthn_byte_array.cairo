@@ -23,12 +23,13 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut orig
         origin_as_byte_array.append_byte(*byte);
     };
 
-    let mut assert_as_byte_array = "";
+    // This must still be tested
+    let mut json_outro = "";
     if !signature.client_data_json_outro.is_empty() {
-        assert!(*signature.client_data_json_outro.at(0) == ',', "webauthn/invalid-json-outro");
+        assert!(*signature.client_data_json_outro[0] == ',', "webauthn/invalid-json-outro");
         let mut client_data_json_outro = signature.client_data_json_outro;
         while let Option::Some(byte) = client_data_json_outro.pop_front() {
-            assert_as_byte_array.append_byte(*byte);
+            json_outro.append_byte(*byte);
         };
         signature.client_data_json_outro;
     }
@@ -38,7 +39,7 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut orig
         hash,
         origin_as_byte_array,
         signature.cross_origin,
-        assert_as_byte_array
+        json_outro
     )
 }
 

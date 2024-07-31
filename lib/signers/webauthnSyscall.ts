@@ -104,6 +104,7 @@ export class WebauthnOwnerSyscall extends KeyPair {
   public async signHash(transactionHash: string): Promise<WebauthnSignature> {
     const flags = "0b00000101"; // present and verified
     const signCount = 0;
+    // This might not be correct, I had to add the `0` to make it work
     const authenticatorData = concatBytes(
       sha256(this.rpId),
       new Uint8Array([0, 0, 0, Number(flags), 0, 0, 0, signCount]),

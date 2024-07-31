@@ -3,7 +3,6 @@ import {
   ArgentAccount,
   ArgentSigner,
   deployAccount,
-  deployAccountWithoutGuardian,
   expectRevertWithErrorMessage,
   manager,
   randomWebauthnOwnerSyscall,

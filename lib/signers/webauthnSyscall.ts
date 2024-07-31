@@ -92,7 +92,7 @@ export class WebauthnOwnerSyscall extends KeyPair {
       rp_id_hash: this.rpIdHash,
       pubkey: uint256.bnToUint256(buf2hex(this.publicKey)),
     };
-    return signerTypeToCustomEnum(SignerType.Webauthn,signer);
+    return signerTypeToCustomEnum(SignerType.Webauthn, signer);
   }
 
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {

@@ -7,7 +7,6 @@ import {
   LegacyStarknetKeyPair,
   Secp256r1KeyPair,
   StarknetKeyPair,
-  WebauthnOwner,
   WebauthnOwnerSyscall,
   deployAccount,
   deployAccountWithoutGuardian,

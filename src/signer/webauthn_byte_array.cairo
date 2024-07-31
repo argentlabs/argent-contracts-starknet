@@ -19,12 +19,17 @@ fn get_webauthn_hash_syscall(hash: felt252, signer: WebauthnSigner, signature: W
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
 /// Encoding spec: https://www.w3.org/TR/webauthn/#clientdatajson-verification
-fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: Span<u8>) -> @ByteArray {
-    let res = format!(
-        "{{\"type\":\"webauthn.get\",\"challenge\":\"{}02\",\"origin\":\"http://localhost:5173\",\"crossOrigin\":false}}",
-        hash
-    );
-    @res
+fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut origin: Span<u8>) -> @ByteArray {
+    let mut origin_as_byte_array = "";
+    while let Option::Some(byte) = origin.pop_front() {
+        origin_as_byte_array.append_byte(*byte);
+    };
+    @format!(
+        "{{\"type\":\"webauthn.get\",\"challenge\":\"{}02\",\"origin\":\"{}\",\"crossOrigin\":{}}}",
+        hash,
+        origin_as_byte_array,
+        signature.cross_origin
+    )
 }
 
 // fn encode_challenge(hash: felt252, sha256_implementation: Sha256Implementation) -> @ByteArray {

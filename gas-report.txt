@@ -19,7 +19,7 @@ Summary:
 │               Transfer - Eth sig with guardian                │ '21.564.000.000.192' │ 0.0862  │ 21564000000000 │      599       │       596       │     2     │      2       │        'range_check'         │       3       │  192   │ 'BLOB'  │
 │              Transfer - Secp256r1 with guardian               │ '41.400.000.000.192' │ 0.1656  │ 41400000000000 │      1150      │      1147       │     2     │      2       │        'range_check'         │       3       │  192   │ 'BLOB'  │
 │                Transfer - Eip161 with guardian                │ '21.816.000.000.192' │ 0.0872  │ 21816000000000 │      606       │       603       │     2     │      2       │        'range_check'         │       3       │  192   │ 'BLOB'  │
-│                Transfer - Webauthn no guardian                │ '50.472.000.000.192' │ 0.2018  │ 50472000000000 │      1402      │      1395       │     2     │      6       │        'range_check'         │       3       │  192   │ 'BLOB'  │
+│                Transfer - Webauthn no guardian                │ '50.508.000.000.192' │  0.202  │ 50508000000000 │      1403      │      1396       │     2     │      6       │        'range_check'         │       3       │  192   │ 'BLOB'  │
 └───────────────────────────────────────────────────────────────┴──────────────────────┴─────────┴────────────────┴────────────────┴─────────────────┴───────────┴──────────────┴──────────────────────────────┴───────────────┴────────┴─────────┘
 Resources:
 ┌───────────────────────────────────────────────────────────────┬─────────┬───────┬───────┬────────┬──────────┬──────────┬─────────────┬────────┐
@@ -34,13 +34,13 @@ Resources:
 │                    Transfer - With Session                    │    0    │  12   │   0   │   0    │    26    │    16    │     343     │ 11989  │
 │         Transfer - With Session - Caching Values (1)          │    0    │  12   │   0   │   0    │    32    │    18    │     389     │ 12654  │
 │             Transfer - With Session - Cached (2)              │    0    │   6   │   0   │   0    │    29    │    16    │     331     │ 11023  │
-│ Transfer - With Session (Webauthn owner) - Caching Values (1) │  5577   │   9   │   0   │   0    │    35    │    31    │    34981    │ 312552 │
+│ Transfer - With Session (Webauthn owner) - Caching Values (1) │  5577   │   9   │   0   │   0    │    35    │    31    │    34991    │ 313650 │
 │     Transfer - With Session (Webauthn owner) - Cached (2)     │    0    │   6   │   0   │   0    │    31    │    15    │     341     │ 11319  │
 │               Transfer - No guardian (Old Sig)                │    0    │   3   │   0   │   0    │    25    │    4     │     276     │  9133  │
 │              Transfer - With guardian (Old Sig)               │    0    │   6   │   0   │   0    │    25    │    4     │     285     │  9632  │
 │                     Transfer - OZ account                     │    0    │   3   │   0   │   0    │    25    │    4     │     269     │  8187  │
-│               Transfer - Eth sig with guardian                │   30    │   3   │   0   │   1    │    26    │    4     │    14887    │ 166186 │
-│              Transfer - Secp256r1 with guardian               │    0    │   3   │   0   │   0    │    26    │    6     │    28665    │ 263335 │
-│                Transfer - Eip161 with guardian                │   64    │   3   │   0   │   2    │    26    │    4     │    15062    │ 167367 │
-│                Transfer - Webauthn no guardian                │  5577   │   3   │   0   │   0    │    26    │    18    │    34867    │ 309248 │
+│               Transfer - Eth sig with guardian                │   30    │   3   │   0   │   1    │    26    │    4     │    14887    │ 166185 │
+│              Transfer - Secp256r1 with guardian               │    0    │   3   │   0   │   0    │    26    │    6     │    28665    │ 263334 │
+│                Transfer - Eip161 with guardian                │   64    │   3   │   0   │   2    │    26    │    4     │    15062    │ 167368 │
+│                Transfer - Webauthn no guardian                │  5577   │   3   │   0   │   0    │    26    │    18    │    34877    │ 310345 │
 └───────────────────────────────────────────────────────────────┴─────────┴───────┴───────┴────────┴──────────┴──────────┴─────────────┴────────┘

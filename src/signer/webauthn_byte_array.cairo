@@ -1,4 +1,3 @@
-use alexandria_encoding::base64::Base64UrlEncoder;
 use argent::signer::signer_signature::{WebauthnSigner};
 use argent::signer::webauthn::{WebauthnSignature, Sha256Implementation, u256_to_u8s};
 use argent::utils::array_ext::ArrayExtTrait;
@@ -24,21 +23,20 @@ fn get_webauthn_hash_syscall(hash: felt252, signer: WebauthnSigner, signature: W
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
 /// Encoding spec: https://www.w3.org/TR/webauthn/#clientdatajson-verification
 fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: Span<u8>) -> @ByteArray {
-    let challenge = encode_challenge(hash, signature.sha256_implementation);
     let res = format!(
-        "{{\"type\":\"webauthn.get\",\"challenge\":\"{}\",\"origin\":\"http://localhost:5173\",\"crossOrigin\":false}}",
-        challenge
+        "{{\"type\":\"webauthn.get\",\"challenge\":\"{}02\",\"origin\":\"http://localhost:5173\",\"crossOrigin\":false}}",
+        hash
     );
     @res
 }
 
-fn encode_challenge(hash: felt252, sha256_implementation: Sha256Implementation) -> @ByteArray {
-    let mut bytes: ByteArray = format!("{}02", hash);
-    // assert!(
-    //     bytes.len() == 78, "webauthn2/invalid-challenge-length {}", bytes.len()
-    // ); // remove '=' signs if this assert fails
-    @bytes
-}
+// fn encode_challenge(hash: felt252, sha256_implementation: Sha256Implementation) -> @ByteArray {
+//     let mut bytes: ByteArray = format!("{}02", hash);
+//     // assert!(
+//     //     bytes.len() == 78, "webauthn2/invalid-challenge-length {}", bytes.len()
+//     // ); // remove '=' signs if this assert fails
+//     @bytes
+// }
 
 fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> Array<u8> {
     let mut bytes = u256_to_u8s(rp_id_hash);

@@ -84,18 +84,3 @@ fn u32s_to_u256(arr: Span<u32>) -> u256 {
     let high = high.try_into().expect('u32s_to_u2562:overflow-high');
     u256 { high, low }
 }
-
-fn u32s_to_u8s(mut words: Span<u32>) -> Span<u8> {
-    let mut output = array![];
-    while let Option::Some(word) = words.pop_front() {
-        let word: u32 = (*word).try_into().unwrap();
-        let (rest, byte_4) = integer::u32_safe_divmod(word, 0x100);
-        let (rest, byte_3) = integer::u32_safe_divmod(rest, 0x100);
-        let (byte_1, byte_2) = integer::u32_safe_divmod(rest, 0x100);
-        output.append(byte_1.try_into().unwrap());
-        output.append(byte_2.try_into().unwrap());
-        output.append(byte_3.try_into().unwrap());
-        output.append(byte_4.try_into().unwrap());
-    };
-    output.span()
-}

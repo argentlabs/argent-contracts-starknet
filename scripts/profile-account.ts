@@ -8,6 +8,7 @@ import {
   Secp256r1KeyPair,
   StarknetKeyPair,
   WebauthnOwner,
+  WebauthnOwnerSyscall,
   deployAccount,
   deployAccountWithoutGuardian,
   deployOldAccount,
@@ -145,7 +146,7 @@ const guardian = new StarknetKeyPair(42n);
   const classHash = await manager.declareFixtureContract("Sha256Cairo0");
   assert(BigInt(classHash) === 0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
   const { account } = await deployAccount({
-    owner: new WebauthnOwner(privateKey),
+    owner: new WebauthnOwnerSyscall(privateKey),
     guardian,
     salt: "0x42",
     fundingAmount,
@@ -243,7 +244,7 @@ const guardian = new StarknetKeyPair(42n);
   const classHash = await manager.declareFixtureContract("Sha256Cairo0");
   assert(BigInt(classHash) === 0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
   const { account } = await deployAccount({
-    owner: new WebauthnOwner(privateKey),
+    owner: new WebauthnOwnerSyscall(privateKey),
     guardian,
     salt: "0x7",
     fundingAmount,

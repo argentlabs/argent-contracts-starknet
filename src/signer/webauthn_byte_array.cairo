@@ -4,11 +4,9 @@ use argent::utils::array_ext::ArrayExtTrait;
 use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252};
 use core::sha256::{compute_sha256_byte_array, compute_sha256_u32_array};
 
-// TODO Also try with compute_sha256_u32_array()
 fn get_webauthn_hash_syscall(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
     let client_data_hash = compute_sha256_byte_array(client_data_json).span();
-
     let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
     message.append_all(client_data_hash);
     let x: Span<u32> = compute_sha256_u32_array(message, 0, 0).span();
@@ -24,21 +22,25 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut orig
     while let Option::Some(byte) = origin.pop_front() {
         origin_as_byte_array.append_byte(*byte);
     };
+
+    let mut assert_as_byte_array = "";
+    if !signature.client_data_json_outro.is_empty() {
+        assert!(*signature.client_data_json_outro.at(0) == ',', "webauthn/invalid-json-outro");
+        let mut client_data_json_outro = signature.client_data_json_outro;
+        while let Option::Some(byte) = client_data_json_outro.pop_front() {
+            assert_as_byte_array.append_byte(*byte);
+        };
+        signature.client_data_json_outro;
+    }
+
     @format!(
-        "{{\"type\":\"webauthn.get\",\"challenge\":\"{}02\",\"origin\":\"{}\",\"crossOrigin\":{}}}",
+        "{{\"type\":\"webauthn.get\",\"challenge\":\"{}02\",\"origin\":\"{}\",\"crossOrigin\":{}{}}}",
         hash,
         origin_as_byte_array,
-        signature.cross_origin
+        signature.cross_origin,
+        assert_as_byte_array
     )
 }
-
-// fn encode_challenge(hash: felt252, sha256_implementation: Sha256Implementation) -> @ByteArray {
-//     let mut bytes: ByteArray = format!("{}02", hash);
-//     // assert!(
-//     //     bytes.len() == 78, "webauthn2/invalid-challenge-length {}", bytes.len()
-//     // ); // remove '=' signs if this assert fails
-//     @bytes
-// }
 
 fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> Array<u32> {
     let mut bytes = u256_to_u32s(rp_id_hash);

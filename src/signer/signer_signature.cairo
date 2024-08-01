@@ -324,6 +324,11 @@ fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, signature:
 
     let signed_hash = get_webauthn_hash(hash, signer, signature);
     // Ignoring next line (so not doing the whole sig verification) makes the fee going from 0.2136 to 0.1296
+    // Range check 36919 => 8593 and the new limit hit is bitwise.
+    // Thus, to reduce the cost, we should limit as much as possible the range checks
+    // https://github.com/starkware-libs/blockifier/blob/d12978e60619a303385cc5b20b262a04a130e395/crates/blockifier/resources/versioned_constants.json#L29
+    // One secp256r1_mul_gas_cost is 13.961 range checks and we do 2 per 'recover_public_key' call
+    // Then bitwise is all from sha256 syscalls applications (1115 * 5) = 5575 (5 is the number of blocks (# of bytes))
     is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, signature.ec_signature)
 }
 

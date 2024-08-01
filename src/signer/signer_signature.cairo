@@ -323,6 +323,7 @@ fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, signature:
     verify_authenticator_flags(signature.flags);
 
     let signed_hash = get_webauthn_hash(hash, signer, signature);
+    // Ignoring next line (so not doing the whole sig verification) makes the fee going from 0.2136 to 0.1296
     is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, signature.ec_signature)
 }
 

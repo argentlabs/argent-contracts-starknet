@@ -13,17 +13,17 @@ import {
 } from "starknet";
 import { KeyPair, SignerType, normalizeSecpR1Signature, signerTypeToCustomEnum } from "..";
 
-const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
+export const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
   `${prefix ? "0x" : ""}${[...new Uint8Array(buffer)].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 
-const normalizeTransactionHash = (transactionHash: string) => transactionHash.replace(/^0x/, "").padStart(64, "0");
+export const normalizeTransactionHash = (transactionHash: string) => transactionHash.replace(/^0x/, "").padStart(64, "0");
 
 const buf2base64url = (buffer: ArrayBuffer) =>
   buf2base64(buffer).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 
-const buf2base64 = (buffer: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buffer)));
+export const buf2base64 = (buffer: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
-const hex2buf = (hex: string) =>
+export const hex2buf = (hex: string) =>
   Uint8Array.from(
     hex
       .replace(/^0x/, "")
@@ -31,15 +31,15 @@ const hex2buf = (hex: string) =>
       .map((byte) => parseInt(byte, 16)),
   );
 
-const toCharArray = (value: string) => CallData.compile(value.split("").map(shortString.encodeShortString));
+export const toCharArray = (value: string) => CallData.compile(value.split("").map(shortString.encodeShortString));
 
-interface WebauthnSigner {
+export interface WebauthnSigner {
   origin: BigNumberish[];
   rp_id_hash: Uint256;
   pubkey: Uint256;
 }
 
-interface WebauthnSignature {
+export interface WebauthnSignature {
   cross_origin: boolean;
   client_data_json_outro: BigNumberish[];
   flags: number;
@@ -153,7 +153,7 @@ export class WebauthnOwner extends KeyPair {
   }
 }
 
-function sha256(message: BinaryLike) {
+export function sha256(message: BinaryLike) {
   return createHash("sha256").update(message).digest();
 }
 

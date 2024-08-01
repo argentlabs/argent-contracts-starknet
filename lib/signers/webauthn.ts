@@ -16,7 +16,8 @@ import { KeyPair, SignerType, normalizeSecpR1Signature, signerTypeToCustomEnum }
 export const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
   `${prefix ? "0x" : ""}${[...new Uint8Array(buffer)].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 
-export const normalizeTransactionHash = (transactionHash: string) => transactionHash.replace(/^0x/, "").padStart(64, "0");
+export const normalizeTransactionHash = (transactionHash: string) =>
+  transactionHash.replace(/^0x/, "").padStart(64, "0");
 
 const buf2base64url = (buffer: ArrayBuffer) =>
   buf2base64(buffer).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");

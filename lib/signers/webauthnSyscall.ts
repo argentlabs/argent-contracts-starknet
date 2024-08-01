@@ -1,16 +1,16 @@
 import { concatBytes } from "@noble/curves/abstract/utils";
 import { p256 as secp256r1 } from "@noble/curves/p256";
-import {
-  ArraySignatureType,
-  CairoCustomEnum,
-  CallData,
-  Uint256,
-  hash,
-  shortString,
-  uint256,
-} from "starknet";
+import { ArraySignatureType, CairoCustomEnum, CallData, Uint256, hash, shortString, uint256 } from "starknet";
 import { KeyPair, SignerType, normalizeSecpR1Signature, signerTypeToCustomEnum } from "..";
-import { buf2hex, hex2buf, normalizeTransactionHash, sha256, toCharArray, WebauthnSignature, WebauthnSigner } from "./webauthn";
+import {
+  WebauthnSignature,
+  WebauthnSigner,
+  buf2hex,
+  hex2buf,
+  normalizeTransactionHash,
+  sha256,
+  toCharArray,
+} from "./webauthn";
 
 export class WebauthnOwnerSyscall extends KeyPair {
   pk: Uint8Array;
@@ -68,10 +68,7 @@ export class WebauthnOwnerSyscall extends KeyPair {
   public async signHash(transactionHash: string): Promise<WebauthnSignature> {
     const flags = "0b00000101"; // present and verified
     const signCount = 0;
-    const authenticatorData = concatBytes(
-      sha256(this.rpId),
-      new Uint8Array([Number(flags), 0, 0, 0, signCount]),
-    );
+    const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([Number(flags), 0, 0, 0, signCount]));
 
     const sha256Impl = 2;
     // Challenge can be anything

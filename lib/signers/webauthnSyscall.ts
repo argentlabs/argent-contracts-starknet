@@ -1,70 +1,11 @@
 import { concatBytes } from "@noble/curves/abstract/utils";
 import { p256 as secp256r1 } from "@noble/curves/p256";
-import { ArraySignatureType, CairoCustomEnum, CallData, Uint256, hash, shortString, uint256 } from "starknet";
-import { KeyPair, SignerType, normalizeSecpR1Signature, signerTypeToCustomEnum } from "..";
-import {
-  WebauthnSignature,
-  WebauthnSigner,
-  buf2hex,
-  hex2buf,
-  normalizeTransactionHash,
-  sha256,
-  toCharArray,
-} from "./webauthn";
+import { CairoCustomEnum, CallData, uint256 } from "starknet";
+import { normalizeSecpR1Signature } from "..";
+import { WebauthnOwner, WebauthnSignature, normalizeTransactionHash, sha256, toCharArray } from "./webauthn";
 
-export class WebauthnOwnerSyscall extends KeyPair {
-  pk: Uint8Array;
-  rpIdHash: Uint256;
-
-  constructor(
-    pk?: string,
-    public rpId = "localhost",
-    public origin = "http://localhost:5173",
-  ) {
-    super();
-    this.pk = pk ? hex2buf(normalizeTransactionHash(pk)) : secp256r1.utils.randomPrivateKey();
-    this.rpIdHash = uint256.bnToUint256(buf2hex(sha256(rpId)));
-  }
-
-  public get publicKey() {
-    return secp256r1.getPublicKey(this.pk).slice(1);
-  }
-
-  public get guid(): bigint {
-    const rpIdHashAsU256 = this.rpIdHash;
-    const publicKeyAsU256 = uint256.bnToUint256(buf2hex(this.publicKey));
-    const originBytes = toCharArray(this.origin);
-    const elements = [
-      shortString.encodeShortString("Webauthn Signer"),
-      originBytes.length,
-      ...originBytes,
-      rpIdHashAsU256.low,
-      rpIdHashAsU256.high,
-      publicKeyAsU256.low,
-      publicKeyAsU256.high,
-    ];
-    return BigInt(hash.computePoseidonHashOnElements(elements));
-  }
-
-  public get storedValue(): bigint {
-    throw new Error("Not implemented yet");
-  }
-
-  public get signer(): CairoCustomEnum {
-    const signer: WebauthnSigner = {
-      origin: toCharArray(this.origin),
-      rp_id_hash: this.rpIdHash,
-      pubkey: uint256.bnToUint256(buf2hex(this.publicKey)),
-    };
-    return signerTypeToCustomEnum(SignerType.Webauthn, signer);
-  }
-
-  public async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    const webauthnSigner = this.signer.variant.Webauthn;
-    const webauthnSignature = await this.signHash(messageHash);
-    return CallData.compile([signerTypeToCustomEnum(SignerType.Webauthn, { webauthnSigner, webauthnSignature })]);
-  }
-
+// There should be a common webauthn, interface to implement just the move parts
+export class WebauthnOwnerSyscall extends WebauthnOwner {
   public async signHash(transactionHash: string): Promise<WebauthnSignature> {
     const flags = "0b00000101"; // present and verified
     const signCount = 0;

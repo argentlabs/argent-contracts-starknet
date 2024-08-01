@@ -36,7 +36,7 @@ export class WebauthnOwnerSyscall extends WebauthnOwner {
       sha256_implementation: new CairoCustomEnum({
         Cairo0: undefined,
         Cairo1: undefined,
-        Syscall: sha256Impl == 2 ? {} : undefined,
+        Syscall: {},
       }),
     };
   }

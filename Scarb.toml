@@ -1,7 +1,7 @@
 [package]
 name = "argent"
 version = "0.1.0"
-cairo-version = "2.7.0-rc.3"
+cairo-version = "2.7.0"
 
 [[target.starknet-contract]]
 sierra = true
@@ -10,11 +10,12 @@ allowed-libfuncs-list.name = "audited"
 build-external-contracts = ["openzeppelin::presets::account::AccountUpgradeable"]
 
 # TODO Revert once alexandria is merged
+# Use scarb cargo crate scarb.xyz
 [dependencies]
-starknet = "2.7.0-rc.3"
-alexandria_math = { git = "https://github.com/gaetbout/quaireaux.git", rev = "a0b724cdfdb004c2669b5058bcef01e99bf9ebeb" }
-alexandria_encoding = { git = "https://github.com/gaetbout/quaireaux.git", rev = "a0b724cdfdb004c2669b5058bcef01e99bf9ebeb" }
-alexandria_merkle_tree = { git = "https://github.com/gaetbout/quaireaux.git", rev="a0b724cdfdb004c2669b5058bcef01e99bf9ebeb" }
+starknet = "2.7.0"
+alexandria_math = { git = "https://github.com/gaetbout/quaireaux.git", rev = "2daed18f4680a497ea71e3c08761ec1b8f4cee60" }
+alexandria_encoding = { git = "https://github.com/gaetbout/quaireaux.git", rev = "2daed18f4680a497ea71e3c08761ec1b8f4cee60" }
+alexandria_merkle_tree = { git = "https://github.com/gaetbout/quaireaux.git", rev="2daed18f4680a497ea71e3c08761ec1b8f4cee60" }
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.27.0" }
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", rev = "5f03fba338b4cb321776947fb98b4584a32adece" }
 

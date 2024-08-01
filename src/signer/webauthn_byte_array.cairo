@@ -8,18 +8,12 @@ use core::traits::TryInto;
 fn get_webauthn_hash_syscall(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
     let client_data_hash = compute_sha256_byte_array(client_data_json).span();
-
     let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
-    let mut authenticator_data = "";
-    while let Option::Some(byte) = message.pop_front() {
-        authenticator_data.append_byte(byte);
-    };
-
     let mut client_data = u32s_to_u8s(client_data_hash);
     while let Option::Some(byte) = client_data.pop_front() {
-        authenticator_data.append_byte(*byte);
+        message.append_byte(*byte);
     };
-    u32s_to_u256(compute_sha256_byte_array(@authenticator_data).span())
+    u32s_to_u256(compute_sha256_byte_array(@message).span())
 }
 
 /// Example JSON:
@@ -52,35 +46,20 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut orig
     )
 }
 
-fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> Array<u8> {
+fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> ByteArray {
+    // This could maybe return a ByteArray instead of a Vec<u8>
     let mut bytes = u256_to_u8s(rp_id_hash);
-    bytes.append(signature.flags);
-    bytes.append(0);
-    bytes.append(0);
-    bytes.append(0);
-    bytes.append(signature.sign_count.try_into().unwrap());
-    bytes
+    let mut authenticator_data = "";
+    while let Option::Some(byte) = bytes.pop_front() {
+        authenticator_data.append_byte(byte);
+    };
+    authenticator_data.append_byte(signature.flags);
+    authenticator_data.append_byte(0);
+    authenticator_data.append_byte(0);
+    authenticator_data.append_byte(0);
+    authenticator_data.append_byte(signature.sign_count.try_into().unwrap());
+    authenticator_data
 }
-
-fn u256_to_u32s(word: u256) -> Array<u32> {
-    let (rest, part_8) = integer::u128_safe_divmod(word.low, 0x1_0000_0000);
-    let (rest, part_7) = integer::u128_safe_divmod(rest, 0x1_0000_0000);
-    let (part_5, part_6) = integer::u128_safe_divmod(rest, 0x1_0000_0000);
-    let (rest, part_4) = integer::u128_safe_divmod(word.high, 0x1_0000_0000);
-    let (rest, part_3) = integer::u128_safe_divmod(rest, 0x1_0000_0000);
-    let (part_1, part_2) = integer::u128_safe_divmod(rest, 0x1_0000_0000);
-    array![
-        part_1.try_into().unwrap(),
-        part_2.try_into().unwrap(),
-        part_3.try_into().unwrap(),
-        part_4.try_into().unwrap(),
-        part_5.try_into().unwrap(),
-        part_6.try_into().unwrap(),
-        part_7.try_into().unwrap(),
-        part_8.try_into().unwrap(),
-    ]
-}
-
 
 fn u32s_to_u256(arr: Span<u32>) -> u256 {
     assert!(arr.len() == 8, "u32s_to_u2562: input must be 8 elements long");

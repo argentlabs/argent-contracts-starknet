@@ -74,10 +74,10 @@ export class WebauthnOwnerSyscall extends KeyPair {
     );
 
     const sha256Impl = 2;
-    // TODO Challenge can be anything
+    // Challenge can be anything
     const challenge = BigInt(`0x${normalizeTransactionHash(transactionHash)}`) + `0${sha256Impl}`;
     const crossOrigin = false;
-    const extraJson = ""; // = `,"extraField":"random data"}`;
+    const extraJson = ""; //`,"extraField":"random data"}`;
     const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin, crossOrigin });
     const clientDataJson = extraJson ? clientData.replace(/}$/, extraJson) : clientData;
     const clientDataHash = sha256(new TextEncoder().encode(clientDataJson));

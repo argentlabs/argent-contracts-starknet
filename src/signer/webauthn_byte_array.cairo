@@ -2,6 +2,7 @@ use argent::signer::signer_signature::{WebauthnSigner};
 use argent::signer::webauthn::{WebauthnSignature, Sha256Implementation, u256_to_u8s};
 use argent::utils::array_ext::ArrayExtTrait;
 use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252};
+use core::byte_array::ByteArrayTrait;
 use core::sha256::{compute_sha256_byte_array, compute_sha256_u32_array};
 use core::traits::TryInto;
 
@@ -26,7 +27,6 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut orig
         origin_as_byte_array.append_byte(*byte);
     };
 
-    // This must still be tested
     let mut json_outro = "";
     if !signature.client_data_json_outro.is_empty() {
         assert!(*signature.client_data_json_outro[0] == ',', "webauthn/invalid-json-outro");
@@ -35,10 +35,11 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut orig
             json_outro.append_byte(*byte);
         };
         signature.client_data_json_outro;
+    } else {
+        json_outro.append_byte('}');
     }
-
     @format!(
-        "{{\"type\":\"webauthn.get\",\"challenge\":\"{}02\",\"origin\":\"{}\",\"crossOrigin\":{}{}}}",
+        "{{\"type\":\"webauthn.get\",\"challenge\":\"{}02\",\"origin\":\"{}\",\"crossOrigin\":{}{}",
         hash,
         origin_as_byte_array,
         signature.cross_origin,

@@ -49,7 +49,7 @@ export interface WebauthnSignature {
   sha256_implementation: CairoCustomEnum;
 }
 
-export class WebauthnOwner extends KeyPair {
+export abstract class WebauthnOwner extends KeyPair {
   pk: Uint8Array;
   rpIdHash: Uint256;
 
@@ -96,6 +96,9 @@ export class WebauthnOwner extends KeyPair {
     return signerTypeToCustomEnum(SignerType.Webauthn, signer);
   }
 
+  abstract sha256Impl(): number;
+  abstract challenge(transactionHash: string): string;
+
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
     const webauthnSigner = this.signer.variant.Webauthn;
     const webauthnSignature = await this.signHash(messageHash);
@@ -107,14 +110,12 @@ export class WebauthnOwner extends KeyPair {
     const signCount = 0;
     const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([Number(flags), 0, 0, 0, signCount]));
 
-    const sha256Impl = 0;
-    const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0${sha256Impl}`));
+    const challenge = this.challenge(transactionHash); //
     const crossOrigin = false;
     const extraJson = ""; // = `,"extraField":"random data"}`;
     const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin, crossOrigin });
     const clientDataJson = extraJson ? clientData.replace(/}$/, extraJson) : clientData;
     const clientDataHash = sha256(new TextEncoder().encode(clientDataJson));
-
     const signedHash = sha256(concatBytes(authenticatorData, clientDataHash));
 
     const signature = normalizeSecpR1Signature(secp256r1.sign(signedHash, this.pk));
@@ -147,8 +148,9 @@ export class WebauthnOwner extends KeyPair {
         y_parity: signature.yParity,
       },
       sha256_implementation: new CairoCustomEnum({
-        Cairo0: sha256Impl ? undefined : {},
-        Cairo1: sha256Impl ? {} : undefined,
+        Cairo0: this.sha256Impl() == 0 ? {} : undefined,
+        Cairo1: this.sha256Impl() == 1 ? {} : undefined,
+        Syscall: this.sha256Impl() == 2 ? {} : undefined,
       }),
     };
   }
@@ -158,4 +160,25 @@ export function sha256(message: BinaryLike) {
   return createHash("sha256").update(message).digest();
 }
 
-export const randomWebauthnOwner = () => new WebauthnOwner();
+export class Cairo0WebauthnOwner extends WebauthnOwner {
+  public sha256Impl(): number {
+    return 0;
+  }
+
+  public challenge(transactionHash: string): string {
+    return buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0${this.sha256Impl()}`));
+  }
+}
+
+export class WebauthnOwnerSyscall extends WebauthnOwner {
+  public sha256Impl(): number {
+    return 2;
+  }
+
+  public challenge(transactionHash: string): string {
+    return BigInt(`0x${normalizeTransactionHash(transactionHash)}`) + `0${this.sha256Impl()}`;
+  }
+}
+
+export const randomWebauthnOwnerSyscall = () => new WebauthnOwnerSyscall();
+export const randomWebauthnOwner = () => new Cairo0WebauthnOwner();

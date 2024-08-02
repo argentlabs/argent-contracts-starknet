@@ -22,7 +22,6 @@ export * from "./signers/legacy";
 export * from "./signers/secp256";
 export * from "./signers/signers";
 export * from "./signers/webauthn";
-export * from "./signers/webauthnSyscall";
 export * from "./tokens";
 export * from "./transactions";
 export * from "./udc";

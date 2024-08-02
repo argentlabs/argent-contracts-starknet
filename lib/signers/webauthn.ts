@@ -109,7 +109,7 @@ abstract class WebauthnOwner extends KeyPair {
     const signCount = 0;
     const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([Number(flags), 0, 0, 0, signCount]));
 
-    const challenge = this.challenge(transactionHash); //
+    const challenge = this.challenge(transactionHash);
     const crossOrigin = false;
     const extraJson = ""; // = `,"extraField":"random data"}`;
     const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin, crossOrigin });

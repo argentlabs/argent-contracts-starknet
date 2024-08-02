@@ -3,8 +3,14 @@ import {
   ArgentAccount,
   ArgentSigner,
   deployAccount,
+  deployAccountWithoutGuardian,
   expectRevertWithErrorMessage,
   manager,
+  randomEip191KeyPair,
+  randomEthKeyPair,
+  randomSecp256r1KeyPair,
+  randomStarknetKeyPair,
+  randomWebauthnOwner,
   randomWebauthnOwnerSyscall,
 } from "../lib";
 
@@ -19,13 +25,13 @@ describe("ArgentAccount: Signers types", function () {
   let ethContract: Contract;
 
   const accounts: Account[] = [];
-  // const starknetKeyPairs = [{ name: "Starknet signature", keyPair: randomStarknetKeyPair }];
+  const starknetKeyPairs = [{ name: "Starknet signature", keyPair: randomStarknetKeyPair }];
 
   const nonStarknetKeyPairs = [
-    // { name: "Ethereum signature", keyPair: randomEthKeyPair },
-    // { name: "Secp256r1 signature", keyPair: randomSecp256r1KeyPair },
-    // { name: "Eip191 signature", keyPair: randomEip191KeyPair },
-    // { name: "Webauthn signature", keyPair: randomWebauthnOwner },
+    { name: "Ethereum signature", keyPair: randomEthKeyPair },
+    { name: "Secp256r1 signature", keyPair: randomSecp256r1KeyPair },
+    { name: "Eip191 signature", keyPair: randomEip191KeyPair },
+    { name: "Webauthn signature", keyPair: randomWebauthnOwner },
     { name: "Webauthn syscall signature", keyPair: randomWebauthnOwnerSyscall },
   ];
 
@@ -33,15 +39,15 @@ describe("ArgentAccount: Signers types", function () {
     ethContract = await manager.tokens.ethContract();
     await manager.declareFixtureContract("Sha256Cairo0");
 
-    for (const { name, keyPair } of [...nonStarknetKeyPairs]) {
+    for (const { name, keyPair } of [...starknetKeyPairs, ...nonStarknetKeyPairs]) {
       const { account: withGuardian } = await deployAccount({ owner: keyPair() });
       accounts.push({ name, account: withGuardian });
-      // const { account: withoutGuardian } = await deployAccountWithoutGuardian({ owner: keyPair() });
-      // accounts.push({ name: name + " (without guardian)", account: withoutGuardian });
+      const { account: withoutGuardian } = await deployAccountWithoutGuardian({ owner: keyPair() });
+      accounts.push({ name: name + " (without guardian)", account: withoutGuardian });
     }
   });
 
-  it.only("Waiting accounts to be filled", function () {
+  it("Waiting accounts to be filled", function () {
     describe("Simple transfer", function () {
       for (const { name, account } of accounts) {
         it(`Using "${name}"`, async function () {

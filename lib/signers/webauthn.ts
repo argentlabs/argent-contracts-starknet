@@ -13,18 +13,18 @@ import {
 } from "starknet";
 import { KeyPair, SignerType, normalizeSecpR1Signature, signerTypeToCustomEnum } from "..";
 
-export const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
+const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
   `${prefix ? "0x" : ""}${[...new Uint8Array(buffer)].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 
-export const normalizeTransactionHash = (transactionHash: string) =>
+const normalizeTransactionHash = (transactionHash: string) =>
   transactionHash.replace(/^0x/, "").padStart(64, "0");
 
 const buf2base64url = (buffer: ArrayBuffer) =>
   buf2base64(buffer).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 
-export const buf2base64 = (buffer: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buffer)));
+const buf2base64 = (buffer: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
-export const hex2buf = (hex: string) =>
+const hex2buf = (hex: string) =>
   Uint8Array.from(
     hex
       .replace(/^0x/, "")
@@ -32,15 +32,15 @@ export const hex2buf = (hex: string) =>
       .map((byte) => parseInt(byte, 16)),
   );
 
-export const toCharArray = (value: string) => CallData.compile(value.split("").map(shortString.encodeShortString));
+const toCharArray = (value: string) => CallData.compile(value.split("").map(shortString.encodeShortString));
 
-export interface WebauthnSigner {
+interface WebauthnSigner {
   origin: BigNumberish[];
   rp_id_hash: Uint256;
   pubkey: Uint256;
 }
 
-export interface WebauthnSignature {
+interface WebauthnSignature {
   cross_origin: boolean;
   client_data_json_outro: BigNumberish[];
   flags: number;
@@ -49,7 +49,7 @@ export interface WebauthnSignature {
   sha256_implementation: CairoCustomEnum;
 }
 
-export abstract class WebauthnOwner extends KeyPair {
+abstract class WebauthnOwner extends KeyPair {
   pk: Uint8Array;
   rpIdHash: Uint256;
 
@@ -156,7 +156,8 @@ export abstract class WebauthnOwner extends KeyPair {
   }
 }
 
-export function sha256(message: BinaryLike) {
+// We have "this sha256" twice...
+function sha256(message: BinaryLike) {
   return createHash("sha256").update(message).digest();
 }
 

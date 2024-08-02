@@ -1,7 +1,5 @@
 use argent::signer::signer_signature::{WebauthnSigner};
-use argent::signer::webauthn::{WebauthnSignature, Sha256Implementation, u256_to_u8s};
-use argent::utils::array_ext::ArrayExtTrait;
-use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252};
+use argent::signer::webauthn::{WebauthnSignature, u256_to_u8s};
 use core::byte_array::ByteArrayTrait;
 use core::sha256::{compute_sha256_byte_array, compute_sha256_u32_array};
 use core::traits::TryInto;
@@ -48,7 +46,6 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut orig
 }
 
 fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> ByteArray {
-    // This could maybe return a ByteArray instead of a Vec<u8>
     let mut bytes = u256_to_u8s(rp_id_hash);
     let mut authenticator_data = "";
     while let Option::Some(byte) = bytes.pop_front() {
@@ -80,7 +77,7 @@ fn u32s_to_u256(arr: Span<u32>) -> u256 {
 fn u32s_to_u8s(mut words: Span<u32>) -> Span<u8> {
     let mut output = array![];
     while let Option::Some(word) = words.pop_front() {
-        let word: u32 = (*word).try_into().unwrap();
+        let word: u32 = *word;
         let (rest, byte_4) = integer::u32_safe_divmod(word, 0x100);
         let (rest, byte_3) = integer::u32_safe_divmod(rest, 0x100);
         let (byte_1, byte_2) = integer::u32_safe_divmod(rest, 0x100);

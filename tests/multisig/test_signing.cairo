@@ -15,7 +15,7 @@ fn test_signature() {
     let multisig = initialize_multisig_with_one_signer();
 
     let signature = to_starknet_signatures(array![MULTISIG_OWNER(1)]);
-    assert_eq!(multisig.is_valid_signature(tx_hash, signature));
+    assert_eq!(multisig.is_valid_signature(tx_hash, signature), VALIDATED);
 }
 
 #[test]
@@ -27,7 +27,7 @@ fn test_double_signature() {
     let multisig = initialize_multisig_with(threshold, array![signer_1, signer_2].span());
 
     let signature = to_starknet_signatures(array![MULTISIG_OWNER(2), MULTISIG_OWNER(1)]);
-    assert_eq!(multisig.is_valid_signature(tx_hash, signature));
+    assert_eq!(multisig.is_valid_signature(tx_hash, signature), VALIDATED);
 }
 
 #[test]

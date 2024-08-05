@@ -52,19 +52,19 @@ fn test_toggle_escape() {
     let (component, _) = setup();
     let mut config = component.get_escape_enabled();
     assert!(config.is_enabled, "should be enabled");
-    assert_eq!(config.security_period, 10 * 60, "should be 600");
-    assert_eq!(config.expiry_period, 10 * 60, "should be 600");
-    assert_eq!(component.get_guardian(), GUARDIAN(), "should be guardian");
+    assert_eq!(config.security_period, 10 * 60);
+    assert_eq!(config.expiry_period, 10 * 60);
+    assert_eq!(component.get_guardian(), GUARDIAN());
 
     let (_, escape_status) = component.get_escape();
-    assert_eq!(escape_status, EscapeStatus::None, "should be None");
+    assert_eq!(escape_status, EscapeStatus::None);
 
     component.toggle_escape(false, 0, 0, contract_address_const::<0>());
     config = component.get_escape_enabled();
-    assert_eq!(config.is_enabled, false, "should not be enabled");
-    assert_eq!(config.security_period, 0, "should be 0");
-    assert_eq!(config.expiry_period, 0, "should be 0");
-    assert_eq!(component.get_guardian(), contract_address_const::<0>(), "guardian should be 0");
+    assert_eq!(config.is_enabled, false);
+    assert_eq!(config.security_period, 0);
+    assert_eq!(config.expiry_period, 0);
+    assert_eq!(component.get_guardian(), contract_address_const::<0>());
 }
 
 #[test]
@@ -119,7 +119,7 @@ fn test_toggle__true_with_not_ready_escape() {
     component.trigger_escape(call);
 
     let (_, escape_status) = component.get_escape();
-    assert_eq!(escape_status, EscapeStatus::NotReady, "should be NotReady");
+    assert_eq!(escape_status, EscapeStatus::NotReady);
 
     start_cheat_caller_address_global(contract_address);
     component.toggle_escape(true, (10 * 60), (10 * 60), contract_address_const::<42>());
@@ -136,7 +136,7 @@ fn test_toggle_false_with_not_ready_escape() {
     component.trigger_escape(call);
 
     let (_, escape_status) = component.get_escape();
-    assert_eq!(escape_status, EscapeStatus::NotReady, "should be NotReady");
+    assert_eq!(escape_status, EscapeStatus::NotReady);
 
     start_cheat_caller_address_global(contract_address);
     component.toggle_escape(false, (10 * 60), (10 * 60), contract_address_const::<42>());
@@ -154,7 +154,7 @@ fn test_toggle_true_with_ready_escape() {
 
     start_cheat_block_timestamp_global(10 * 60);
     let (_, escape_status) = component.get_escape();
-    assert_eq!(escape_status, EscapeStatus::Ready, "should be Ready");
+    assert_eq!(escape_status, EscapeStatus::Ready);
 
     start_cheat_caller_address_global(contract_address);
     component.toggle_escape(true, (10 * 60), (10 * 60), contract_address_const::<42>());
@@ -172,7 +172,7 @@ fn test_toggle_false_with_ready_escape() {
 
     start_cheat_block_timestamp_global(10 * 60);
     let (_, escape_status) = component.get_escape();
-    assert_eq!(escape_status, EscapeStatus::Ready, "should be Ready");
+    assert_eq!(escape_status, EscapeStatus::Ready);
 
     start_cheat_caller_address_global(contract_address);
     component.toggle_escape(false, (10 * 60), (10 * 60), contract_address_const::<42>());
@@ -189,15 +189,15 @@ fn test_toggle_true_with_expired_escape() {
 
     start_cheat_block_timestamp_global(2 * 10 * 60);
     let (escape, escape_status) = component.get_escape();
-    assert_eq!(escape_status, EscapeStatus::Expired, "should be Expired");
+    assert_eq!(escape_status, EscapeStatus::Expired);
     assert_ne!(escape.ready_at, 0, "Should not be 0");
 
     start_cheat_caller_address_global(contract_address);
     component.toggle_escape(true, (10 * 60), (10 * 60), contract_address_const::<42>());
 
     let (escape, escape_status) = component.get_escape();
-    assert_eq!(escape_status, EscapeStatus::None, "should be None");
-    assert_eq!(escape.ready_at, 0, "Should be 0");
+    assert_eq!(escape_status, EscapeStatus::None);
+    assert_eq!(escape.ready_at, 0);
 }
 
 #[test]
@@ -211,15 +211,15 @@ fn test_toggle_false_with_expired_escape() {
 
     start_cheat_block_timestamp_global(2 * 10 * 60);
     let (escape, escape_status) = component.get_escape();
-    assert_eq!(escape_status, EscapeStatus::Expired, "should be Expired");
+    assert_eq!(escape_status, EscapeStatus::Expired);
     assert_ne!(escape.ready_at, 0, "Should not be 0");
 
     start_cheat_caller_address_global(contract_address);
     component.toggle_escape(false, 0, 0, contract_address_const::<0>());
 
     let (escape, escape_status) = component.get_escape();
-    assert_eq!(escape_status, EscapeStatus::None, "should be None");
-    assert_eq!(escape.ready_at, 0, "Should be 0");
+    assert_eq!(escape_status, EscapeStatus::None);
+    assert_eq!(escape.ready_at, 0);
 }
 
 // Trigger
@@ -232,9 +232,9 @@ fn test_trigger_escape_replace_signer() {
     let call_hash = get_escape_call_hash(@call);
     component.trigger_escape(call);
     let (escape, status) = component.get_escape();
-    assert_eq!(escape.call_hash, call_hash, "invalid call hash");
-    assert_eq!(escape.ready_at, 10 * 60, "should be 600");
-    assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
+    assert_eq!(escape.call_hash, call_hash);
+    assert_eq!(escape.ready_at, 10 * 60);
+    assert_eq!(status, EscapeStatus::NotReady);
 }
 
 #[test]
@@ -260,10 +260,10 @@ fn test_trigger_escape_can_override() {
         }
     );
     spy.assert_emitted(@array![(component.contract_address, escape_event)]);
-    assert_eq!(spy.get_events().events.len(), 2, "excess events");
+    assert_eq!(spy.get_events().events.len(), 2);
 
     let (escape, _) = component.get_escape();
-    assert_eq!(escape.call_hash, second_call_hash, "invalid call hash");
+    assert_eq!(escape.call_hash, second_call_hash);
 }
 
 #[test]
@@ -317,14 +317,14 @@ fn test_cancel_escape() {
     let mut spy = spy_events();
     component.cancel_escape();
     let (escape, status) = component.get_escape();
-    assert_eq!(status, EscapeStatus::None, "status should be None");
-    assert_eq!(escape.ready_at, 0, "should be no recovery");
+    assert_eq!(status, EscapeStatus::None);
+    assert_eq!(escape.ready_at, 0);
     assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
     assert!(multisig_component.is_signer(SIGNER_2()), "should be signer 2");
     assert!(!multisig_component.is_signer(SIGNER_3()), "should not be signer 3");
 
     let call_hash = get_escape_call_hash(@replace_signer_call(SIGNER_2(), SIGNER_3()));
-    assert_eq!(spy.get_events().events.len(), 1, "excess events");
+    assert_eq!(spy.get_events().events.len(), 1);
     let event = external_recovery_component::Event::EscapeCanceled(
         external_recovery_component::EscapeCanceled { call_hash }
     );
@@ -341,14 +341,14 @@ fn test_cancel_escape_expired() {
     let mut spy = spy_events();
     component.cancel_escape();
     let (escape, status) = component.get_escape();
-    assert_eq!(status, EscapeStatus::None, "status should be None");
-    assert_eq!(escape.ready_at, 0, "should be no recovery");
+    assert_eq!(status, EscapeStatus::None);
+    assert_eq!(escape.ready_at, 0);
     assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
     assert!(multisig_component.is_signer(SIGNER_2()), "should be signer 2");
     assert!(!multisig_component.is_signer(SIGNER_3()), "should not be signer 3");
 
     let call_hash = get_escape_call_hash(@replace_signer_call(SIGNER_2(), SIGNER_3()));
-    assert_eq!(spy.get_events().events.len(), 0, "excess events");
+    assert_eq!(spy.get_events().events.len(), 0);
     let event = external_recovery_component::Event::EscapeCanceled(
         external_recovery_component::EscapeCanceled { call_hash: call_hash }
     );

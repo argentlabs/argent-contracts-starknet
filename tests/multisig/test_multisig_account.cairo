@@ -11,14 +11,14 @@ fn valid_initialize() {
     let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
     let signers_array = array![signer_1];
     let multisig = initialize_multisig_with(threshold: 1, signers: signers_array.span());
-    assert_eq!(multisig.get_threshold(), 1, "threshold not set");
+    assert_eq!(multisig.get_threshold(), 1);
     // test if is signer correctly returns true
     assert!(multisig.is_signer(signer_1), "is signer cant find signer");
 
     // test signers list
     let signers_guid = multisig.get_signer_guids();
-    assert_eq!(signers_guid.len(), 1, "invalid signers length");
-    assert_eq!(*signers_guid[0], signer_1.into_guid(), "invalid signers result");
+    assert_eq!(signers_guid.len(), 1);
+    assert_eq!(*signers_guid[0], signer_1.into_guid());
 }
 
 #[test]
@@ -34,9 +34,9 @@ fn valid_initialize_two_signers() {
 
     // test signers list
     let signers = multisig.get_signer_guids();
-    assert_eq!(signers.len(), 2, "invalid signers length");
-    assert_eq!(*signers[0], signer_1.into_guid(), "invalid signers result");
-    assert_eq!(*signers[1], signer_2.into_guid(), "invalid signers result");
+    assert_eq!(signers.len(), 2);
+    assert_eq!(*signers[0], signer_1.into_guid());
+    assert_eq!(*signers[1], signer_2.into_guid());
 }
 
 #[test]
@@ -61,11 +61,11 @@ fn change_threshold() {
     let mut spy = spy_events();
 
     multisig.change_threshold(2);
-    assert_eq!(multisig.get_threshold(), 2, "new threshold not set");
+    assert_eq!(multisig.get_threshold(), 2);
 
     let event = multisig_component::Event::ThresholdUpdated(multisig_component::ThresholdUpdated { new_threshold: 2 });
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
-    assert_eq!(spy.get_events().events.len(), 1, "excess events");
+    assert_eq!(spy.get_events().events.len(), 1);
 }
 
 #[test]
@@ -88,14 +88,14 @@ fn change_to_zero_threshold() {
 
 #[test]
 fn get_name() {
-    assert_eq!(initialize_multisig().get_name(), 'ArgentMultisig', "Name should be ArgentMultisig");
+    assert_eq!(initialize_multisig().get_name(), 'ArgentMultisig');
 }
 
 #[test]
 fn get_version() {
     let version = initialize_multisig().get_version();
-    assert_eq!(version.major, 0, "Version major");
-    assert_eq!(version.minor, 2, "Version minor");
-    assert_eq!(version.patch, 0, "Version patch");
+    assert_eq!(version.major, 0);
+    assert_eq!(version.minor, 2);
+    assert_eq!(version.patch, 0);
 }
 

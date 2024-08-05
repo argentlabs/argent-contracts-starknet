@@ -14,8 +14,8 @@ use super::super::setup::{
 #[test]
 fn initialize() {
     let account = initialize_account_with(1, 2);
-    assert_eq!(account.get_owner_guid(), starknet_signer_from_pubkey(1).into_guid(), "value should be 1");
-    assert_eq!(account.get_guardian_guid().unwrap(), starknet_signer_from_pubkey(2).into_guid(), "value should be 2");
+    assert_eq!(account.get_owner_guid(), starknet_signer_from_pubkey(1).into_guid());
+    assert_eq!(account.get_guardian_guid().unwrap(), starknet_signer_from_pubkey(2).into_guid());
     assert!(account.get_guardian_backup_guid().is_none(), "value should be 0");
 }
 
@@ -40,7 +40,7 @@ fn check_transaction_version_on_validate() {
 #[test]
 fn initialized_no_guardian_no_backup() {
     let account = initialize_account_with(1, 0);
-    assert_eq!(account.get_owner_guid(), starknet_signer_from_pubkey(1).into_guid(), "value should be 1");
+    assert_eq!(account.get_owner_guid(), starknet_signer_from_pubkey(1).into_guid());
     assert!(account.get_guardian_guid().is_none(), "guardian should be zero");
     assert!(account.get_guardian_backup_guid().is_none(), "guardian backup should be zero");
 }
@@ -61,7 +61,7 @@ fn change_owner() {
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
     account.change_owner(signer_signature);
-    assert_eq!(account.get_owner_guid(), signer_signature.signer().into_guid(), "value should be new owner pub");
+    assert_eq!(account.get_owner_guid(), signer_signature.signer().into_guid());
 }
 
 #[test]
@@ -99,7 +99,7 @@ fn change_guardian() {
     let account = initialize_account();
     let guardian = starknet_signer_from_pubkey(22);
     account.change_guardian(Option::Some(guardian));
-    assert_eq!(account.get_guardian(), 22, "value should be 22");
+    assert_eq!(account.get_guardian(), 22);
 }
 
 #[test]
@@ -133,9 +133,9 @@ fn change_guardian_to_zero_without_guardian_backup() {
 fn change_guardian_backup() {
     let account = initialize_account();
     let guardian_backup = starknet_signer_from_pubkey(33);
-    assert_eq!(account.get_guardian_backup(), 0, "value should be 0");
+    assert_eq!(account.get_guardian_backup(), 0);
     account.change_guardian_backup(Option::Some(guardian_backup));
-    assert_eq!(account.get_guardian_backup(), 33, "value should be 33");
+    assert_eq!(account.get_guardian_backup(), 33);
 }
 
 #[test]
@@ -152,7 +152,7 @@ fn change_guardian_backup_to_zero() {
     let account = initialize_account();
     let guardian_backup: Option<Signer> = Option::None;
     account.change_guardian_backup(guardian_backup);
-    assert_eq!(account.get_guardian_backup(), 0, "value should be 0");
+    assert_eq!(account.get_guardian_backup(), 0);
 }
 
 #[test]
@@ -166,44 +166,44 @@ fn change_invalid_guardian_backup() {
 #[test]
 fn get_version() {
     let version = initialize_account().get_version();
-    assert_eq!(version.major, 0, "Version major = 0");
-    assert_eq!(version.minor, 4, "Version minor = 4");
-    assert_eq!(version.patch, 0, "Version patch = 0");
+    assert_eq!(version.major, 0);
+    assert_eq!(version.minor, 4);
+    assert_eq!(version.patch, 0);
 }
 
 #[test]
 fn getVersion() {
-    assert_eq!(initialize_account().getVersion(), '0.4.0', "Version should be 0.4.0");
+    assert_eq!(initialize_account().getVersion(), '0.4.0');
 }
 
 #[test]
 fn get_name() {
-    assert_eq!(initialize_account().get_name(), 'ArgentAccount', "Name should be ArgentAccount");
+    assert_eq!(initialize_account().get_name(), 'ArgentAccount');
 }
 
 #[test]
 fn getName() {
-    assert_eq!(initialize_account().getName(), 'ArgentAccount', "Name should be ArgentAccount");
+    assert_eq!(initialize_account().getName(), 'ArgentAccount');
 }
 
 #[test]
 fn unsupported_supportsInterface() {
     let account = initialize_account();
-    assert_eq!(account.supportsInterface(0), 0, "value should be false");
-    assert_eq!(account.supportsInterface(0xffffffff), 0, "Should not support 0xffffffff");
+    assert_eq!(account.supportsInterface(0), 0);
+    assert_eq!(account.supportsInterface(0xffffffff), 0);
 }
 
 #[test]
 fn supportsInterface() {
     let account = initialize_account();
-    assert_eq!(account.supportsInterface(0x01ffc9a7), 1, "SRC5_INTERFACE_ID_OLD");
+    assert_eq!(account.supportsInterface(0x01ffc9a7), 1);
     assert_eq!(
         account.supportsInterface(0x3f918d17e5ee77373b56385708f855659a07f75997f365cf87748628532a055),
         1,
         "SRC5_INTERFACE_ID"
     );
-    assert_eq!(account.supportsInterface(0xa66bd575), 1, "SRC5_ACCOUNT_INTERFACE_ID_OLD_1");
-    assert_eq!(account.supportsInterface(0x3943f10f), 1, "SRC5_ACCOUNT_INTERFACE_ID_OLD_2");
+    assert_eq!(account.supportsInterface(0xa66bd575), 1);
+    assert_eq!(account.supportsInterface(0x3943f10f), 1);
     assert_eq!(
         account.supportsInterface(0x2ceccef7f994940b3962a6c67e0ba4fcd37df7d131417c604f91e03caecc1cd),
         1,

@@ -51,13 +51,13 @@ fn test_unsupported_interface_id() {
 #[test]
 fn test_introspection_legacy_method() {
     let mut component = COMPONENT_STATE();
-    assert_eq!(component.supportsInterface(SRC5_ACCOUNT_INTERFACE_ID), 1, "should support account");
-    assert_eq!(component.supportsInterface(SRC5_ACCOUNT_INTERFACE_ID_OLD_1), 1, "should support account old 1");
-    assert_eq!(component.supportsInterface(SRC5_ACCOUNT_INTERFACE_ID_OLD_2), 1, "should support account old 2");
-    assert_eq!(component.supportsInterface(SRC5_INTERFACE_ID), 1, "should support src5");
-    assert_eq!(component.supportsInterface(SRC5_INTERFACE_ID_OLD), 1, "should support src5 old");
-    assert_eq!(component.supportsInterface(ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0), 1, "should support");
-    assert_eq!(component.supportsInterface(ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1), 1, "should support");
-    assert_eq!(component.supportsInterface(UNSUPPORTED_INTERFACE_ID), 0, "should not support");
+    assert_eq!(component.supportsInterface(SRC5_ACCOUNT_INTERFACE_ID), 1);
+    assert_eq!(component.supportsInterface(SRC5_ACCOUNT_INTERFACE_ID_OLD_1), 1);
+    assert_eq!(component.supportsInterface(SRC5_ACCOUNT_INTERFACE_ID_OLD_2), 1);
+    assert_eq!(component.supportsInterface(SRC5_INTERFACE_ID), 1);
+    assert_eq!(component.supportsInterface(SRC5_INTERFACE_ID_OLD), 1);
+    assert_eq!(component.supportsInterface(ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0), 1);
+    assert_eq!(component.supportsInterface(ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1), 1);
+    assert_eq!(component.supportsInterface(UNSUPPORTED_INTERFACE_ID), 0);
 }
 

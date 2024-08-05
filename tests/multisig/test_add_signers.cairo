@@ -19,8 +19,8 @@ fn add_signers() {
 
     // check 
     let signers = multisig.get_signer_guids();
-    assert_eq!(signers.len(), 2, "invalid signers length");
-    assert_eq!(multisig.get_threshold(), 2, "new threshold not set");
+    assert_eq!(signers.len(), 2);
+    assert_eq!(multisig.get_threshold(), 2);
 
     let events = array![
         (
@@ -41,7 +41,7 @@ fn add_signers() {
     let event = multisig_component::Event::ThresholdUpdated(multisig_component::ThresholdUpdated { new_threshold: 2 });
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
 
-    assert_eq!(spy.get_events().events.len(), 3, "excess events");
+    assert_eq!(spy.get_events().events.len(), 3);
 }
 
 #[test]

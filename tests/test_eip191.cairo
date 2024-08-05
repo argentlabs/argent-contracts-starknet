@@ -21,5 +21,5 @@ fn test_eip_191_verification() {
         )
     );
     let validation_result = sig.is_valid_signature(tx_hash);
-    assert!(validation_result, "invalid-verification");
+    assert!(validation_result);
 }

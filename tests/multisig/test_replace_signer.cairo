@@ -19,8 +19,8 @@ fn replace_signer_1() {
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(signer_1), "signer 1 was not removed");
-    assert!(multisig.is_signer(signer_to_add), "new was not added");
+    assert!(!multisig.is_signer(signer_1));
+    assert!(multisig.is_signer(signer_to_add));
 }
 
 #[test]
@@ -40,10 +40,10 @@ fn replace_signer_start() {
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 3);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(signer_1), "signer 1 was not removed");
-    assert!(multisig.is_signer(signer_to_add), "new was not added");
-    assert!(multisig.is_signer(signer_2), "signer 2 was removed");
-    assert!(multisig.is_signer(signer_3), "signer 3 was removed");
+    assert!(!multisig.is_signer(signer_1));
+    assert!(multisig.is_signer(signer_to_add));
+    assert!(multisig.is_signer(signer_2));
+    assert!(multisig.is_signer(signer_3));
 
     let events = array![
         (
@@ -86,10 +86,10 @@ fn replace_signer_middle() {
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 3);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(signer_2), "signer 2 was not removed");
-    assert!(multisig.is_signer(signer_to_add), "new was not added");
-    assert!(multisig.is_signer(signer_1), "signer 1 was removed");
-    assert!(multisig.is_signer(signer_3), "signer 3 was removed");
+    assert!(!multisig.is_signer(signer_2));
+    assert!(multisig.is_signer(signer_to_add));
+    assert!(multisig.is_signer(signer_1));
+    assert!(multisig.is_signer(signer_3));
 }
 
 #[test]
@@ -108,10 +108,10 @@ fn replace_signer_end() {
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 3);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(signer_3), "signer 3 was not removed");
-    assert!(multisig.is_signer(signer_to_add), "new was not added");
-    assert!(multisig.is_signer(signer_1), "signer 1 was removed");
-    assert!(multisig.is_signer(signer_2), "signer 2 was removed");
+    assert!(!multisig.is_signer(signer_3));
+    assert!(multisig.is_signer(signer_to_add));
+    assert!(multisig.is_signer(signer_1));
+    assert!(multisig.is_signer(signer_2));
 }
 
 #[test]

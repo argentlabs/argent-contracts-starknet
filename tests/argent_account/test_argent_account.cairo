@@ -16,7 +16,7 @@ fn initialize() {
     let account = initialize_account_with(1, 2);
     assert_eq!(account.get_owner_guid(), starknet_signer_from_pubkey(1).into_guid());
     assert_eq!(account.get_guardian_guid().unwrap(), starknet_signer_from_pubkey(2).into_guid());
-    assert!(account.get_guardian_backup_guid().is_none(), "value should be 0");
+    assert!(account.get_guardian_backup_guid().is_none());
 }
 
 #[test]
@@ -41,15 +41,15 @@ fn check_transaction_version_on_validate() {
 fn initialized_no_guardian_no_backup() {
     let account = initialize_account_with(1, 0);
     assert_eq!(account.get_owner_guid(), starknet_signer_from_pubkey(1).into_guid());
-    assert!(account.get_guardian_guid().is_none(), "guardian should be zero");
-    assert!(account.get_guardian_backup_guid().is_none(), "guardian backup should be zero");
+    assert!(account.get_guardian_guid().is_none());
+    assert!(account.get_guardian_backup_guid().is_none());
 }
 
 #[test]
 fn erc165_unsupported_interfaces() {
     let account = initialize_account();
-    assert!(!account.supports_interface(0), "Should not support 0");
-    assert!(!account.supports_interface(0xffffffff), "Should not support 0xffffffff");
+    assert!(!account.supports_interface(0));
+    assert!(!account.supports_interface(0xffffffff));
 }
 
 #[test]
@@ -126,7 +126,7 @@ fn change_guardian_to_zero_without_guardian_backup() {
     let account = initialize_account();
     let guardian: Option<Signer> = Option::None;
     account.change_guardian(guardian);
-    assert!(account.get_guardian().is_zero(), "value should be 0");
+    assert!(account.get_guardian().is_zero());
 }
 
 #[test]

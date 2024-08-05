@@ -51,7 +51,7 @@ fn setup() -> (IExternalRecoveryDispatcher, IArgentMultisigDispatcher) {
 fn test_toggle_escape() {
     let (component, _) = setup();
     let mut config = component.get_escape_enabled();
-    assert!(config.is_enabled, "should be enabled");
+    assert!(config.is_enabled);
     assert_eq!(config.security_period, 10 * 60);
     assert_eq!(config.expiry_period, 10 * 60);
     assert_eq!(component.get_guardian(), GUARDIAN());
@@ -319,9 +319,9 @@ fn test_cancel_escape() {
     let (escape, status) = component.get_escape();
     assert_eq!(status, EscapeStatus::None);
     assert_eq!(escape.ready_at, 0);
-    assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
-    assert!(multisig_component.is_signer(SIGNER_2()), "should be signer 2");
-    assert!(!multisig_component.is_signer(SIGNER_3()), "should not be signer 3");
+    assert!(multisig_component.is_signer(SIGNER_1()));
+    assert!(multisig_component.is_signer(SIGNER_2()));
+    assert!(!multisig_component.is_signer(SIGNER_3()));
 
     let call_hash = get_escape_call_hash(@replace_signer_call(SIGNER_2(), SIGNER_3()));
     assert_eq!(spy.get_events().events.len(), 1);
@@ -343,9 +343,9 @@ fn test_cancel_escape_expired() {
     let (escape, status) = component.get_escape();
     assert_eq!(status, EscapeStatus::None);
     assert_eq!(escape.ready_at, 0);
-    assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
-    assert!(multisig_component.is_signer(SIGNER_2()), "should be signer 2");
-    assert!(!multisig_component.is_signer(SIGNER_3()), "should not be signer 3");
+    assert!(multisig_component.is_signer(SIGNER_1()));
+    assert!(multisig_component.is_signer(SIGNER_2()));
+    assert!(!multisig_component.is_signer(SIGNER_3()));
 
     let call_hash = get_escape_call_hash(@replace_signer_call(SIGNER_2(), SIGNER_3()));
     assert_eq!(spy.get_events().events.len(), 0);

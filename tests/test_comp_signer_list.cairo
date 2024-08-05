@@ -17,7 +17,7 @@ fn test_add_signer() {
     component.add_signer(MULTISIG_OWNER(1).pubkey, 0);
     assert_eq!(component.get_signers_len(), 1);
     assert_eq!(*component.get_signers().at(0), MULTISIG_OWNER(1).pubkey);
-    assert!(component.is_signer_in_list(MULTISIG_OWNER(1).pubkey), "should be signer");
+    assert!(component.is_signer_in_list(MULTISIG_OWNER(1).pubkey));
 }
 
 #[test]

@@ -16,7 +16,7 @@ fn initialize() {
     let account = initialize_account_with(1, 2);
     assert_eq!(account.get_owner_guid(), starknet_signer_from_pubkey(1).into_guid(), "value should be 1");
     assert_eq!(account.get_guardian_guid().unwrap(), starknet_signer_from_pubkey(2).into_guid(), "value should be 2");
-    assert(account.get_guardian_backup_guid().is_none(), 'value should be 0');
+    assert!(account.get_guardian_backup_guid().is_none(), "value should be 0");
 }
 
 #[test]
@@ -41,8 +41,8 @@ fn check_transaction_version_on_validate() {
 fn initialized_no_guardian_no_backup() {
     let account = initialize_account_with(1, 0);
     assert_eq!(account.get_owner_guid(), starknet_signer_from_pubkey(1).into_guid(), "value should be 1");
-    assert(account.get_guardian_guid().is_none(), 'guardian should be zero');
-    assert(account.get_guardian_backup_guid().is_none(), 'guardian backup should be zero');
+    assert!(account.get_guardian_guid().is_none(), "guardian should be zero");
+    assert!(account.get_guardian_backup_guid().is_none(), "guardian backup should be zero");
 }
 
 #[test]
@@ -50,21 +50,6 @@ fn erc165_unsupported_interfaces() {
     let account = initialize_account();
     assert!(!account.supports_interface(0), "Should not support 0");
     assert!(!account.supports_interface(0xffffffff), "Should not support 0xffffffff");
-}
-
-#[test]
-fn erc165_supported_interfaces() {
-    let account = initialize_account();
-    assert!(account.supports_interface(0x3f918d17e5ee77373b56385708f855659a07f75997f365cf87748628532a055), "IERC165");
-    assert!(account.supports_interface(0x01ffc9a7), "IERC165_OLD");
-    assert!(account.supports_interface(0x2ceccef7f994940b3962a6c67e0ba4fcd37df7d131417c604f91e03caecc1cd), "IACCOUNT");
-    assert!(account.supports_interface(0xa66bd575), "IACCOUNT_OLD_1");
-    assert!(account.supports_interface(0x3943f10f), "IACCOUNT_OLD_2");
-
-    assert!(
-        account.supports_interface(0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181),
-        "OUTSIDE_EXECUTION"
-    );
 }
 
 #[test]
@@ -211,9 +196,30 @@ fn unsupported_supportsInterface() {
 #[test]
 fn supportsInterface() {
     let account = initialize_account();
-    assert_eq!(account.supportsInterface(0x01ffc9a7), 1, "ERC165_IERC165_INTERFACE_ID");
-    assert_eq!(account.supportsInterface(0xa66bd575), 1, "ERC165_ACCOUNT_INTERFACE_ID");
-    assert_eq!(account.supportsInterface(0x3943f10f), 1, "ERC165_OLD_ACCOUNT_INTERFACE_ID");
+    assert_eq!(account.supportsInterface(0x01ffc9a7), 1, "SRC5_INTERFACE_ID_OLD");
+    assert_eq!(
+        account.supportsInterface(0x3f918d17e5ee77373b56385708f855659a07f75997f365cf87748628532a055),
+        1,
+        "SRC5_INTERFACE_ID"
+    );
+    assert_eq!(account.supportsInterface(0xa66bd575), 1, "SRC5_ACCOUNT_INTERFACE_ID_OLD_1");
+    assert_eq!(account.supportsInterface(0x3943f10f), 1, "SRC5_ACCOUNT_INTERFACE_ID_OLD_2");
+    assert_eq!(
+        account.supportsInterface(0x2ceccef7f994940b3962a6c67e0ba4fcd37df7d131417c604f91e03caecc1cd),
+        1,
+        "SRC5_ACCOUNT_INTERFACE_ID"
+    );
+
+    assert_eq!(
+        account.supportsInterface(0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181),
+        1,
+        "ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0"
+    );
+    assert_eq!(
+        account.supportsInterface(0x1d1144bb2138366ff28d8e9ab57456b1d332ac42196230c3a602003c89872),
+        1,
+        "ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1"
+    );
 }
 
 #[test]

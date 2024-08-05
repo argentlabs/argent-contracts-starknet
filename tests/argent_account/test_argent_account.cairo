@@ -3,7 +3,7 @@ use argent::signer::signer_signature::{
 };
 use snforge_std::{start_cheat_caller_address_global, start_cheat_transaction_version_global};
 use starknet::contract_address_const;
-use super::setup::{
+use super::super::setup::{
     account_test_setup::{
         ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
         initialize_account_without_guardian

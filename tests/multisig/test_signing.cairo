@@ -1,8 +1,8 @@
 use argent::signer::signer_signature::starknet_signer_from_pubkey;
 use argent::utils::serialization::serialize;
 use starknet::VALIDATED;
-use super::setup::constants::{MULTISIG_OWNER, tx_hash};
-use super::setup::{
+use super::super::setup::{
+    constants::{MULTISIG_OWNER, tx_hash},
     multisig_test_setup::{
         initialize_multisig_with, ITestArgentMultisigDispatcherTrait, initialize_multisig_with_one_signer
     },

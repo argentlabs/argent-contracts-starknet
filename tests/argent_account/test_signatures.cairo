@@ -1,6 +1,6 @@
 use argent::signer::signer_signature::starknet_signer_from_pubkey;
 use starknet::VALIDATED;
-use super::setup::{
+use super::super::setup::{
     utils::{to_starknet_signatures, to_starknet_signer_signatures},
     constants::{GUARDIAN, OWNER, GUARDIAN_BACKUP, WRONG_OWNER, WRONG_GUARDIAN, tx_hash},
     account_test_setup::{

@@ -2,8 +2,8 @@ use argent::multisig::multisig::multisig_component;
 use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
 use argent::signer_storage::signer_list::signer_list_component;
 use snforge_std::{spy_events, EventSpyAssertionsTrait, EventSpyTrait};
-use super::setup::constants::MULTISIG_OWNER;
-use super::setup::multisig_test_setup::{
+use super::super::setup::constants::MULTISIG_OWNER;
+use super::super::setup::multisig_test_setup::{
     initialize_multisig, initialize_multisig_with, ITestArgentMultisigDispatcherTrait
 };
 

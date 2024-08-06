@@ -15,7 +15,7 @@ use starknet::secp256_trait::Signature;
 /// @param sha256_implementation The implementation of the sha256 hash 
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSignature {
-    cross_origin: bool,
+    cross_origin: Option<bool>,
     client_data_json_outro: Span<u8>,
     flags: u8,
     sign_count: u32,
@@ -57,11 +57,13 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: 
     json.append_all(encode_challenge(hash, signature.sha256_implementation));
     json.append_all(array!['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
     json.append_all(origin);
-    json.append_all(array!['"', ',', '"', 'c', 'r', 'o', 's', 's', 'O', 'r', 'i', 'g', 'i', 'n', '"', ':'].span());
-    if signature.cross_origin {
-        json.append_all(array!['t', 'r', 'u', 'e'].span());
-    } else {
-        json.append_all(array!['f', 'a', 'l', 's', 'e'].span());
+    if let Option::Some(cross_origin) = signature.cross_origin {
+        json.append_all(array!['"', ',', '"', 'c', 'r', 'o', 's', 's', 'O', 'r', 'i', 'g', 'i', 'n', '"', ':'].span());
+        if cross_origin {
+            json.append_all(array!['t', 'r', 'u', 'e'].span());
+        } else {
+            json.append_all(array!['f', 'a', 'l', 's', 'e'].span());
+        }
     }
     if !signature.client_data_json_outro.is_empty() {
         assert!(*signature.client_data_json_outro.at(0) == ',', "webauthn/invalid-json-outro");

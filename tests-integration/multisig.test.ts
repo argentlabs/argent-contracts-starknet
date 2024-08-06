@@ -59,6 +59,7 @@ describe("ArgentMultisig", function () {
       }).then(({ receipt }) => receipt as TransactionReceipt),
     );
   });
+  
   it("Block deployment data", async function () {
     const { account } = await deployMultisig1_1({ useTxV3: true });
     await expectExecutionRevert(

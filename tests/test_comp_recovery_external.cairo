@@ -12,7 +12,7 @@ use snforge_std::{
     declare, ContractClassTrait, spy_events
 };
 use starknet::{contract_address_const, ContractAddress};
-use super::setup::constants::MULTISIG_OWNER;
+use super::MULTISIG_OWNER;
 
 fn SIGNER_1() -> Signer {
     starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)

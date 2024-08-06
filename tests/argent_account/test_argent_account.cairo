@@ -7,12 +7,9 @@ use snforge_std::{
     ContractClassTrait, spy_events
 };
 use starknet::contract_address_const;
-use super::super::setup::{
-    account_test_setup::{
-        ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
-        initialize_account_without_guardian
-    },
-    utils::felt252TryIntoStarknetSigner, constants::{OWNER, NEW_OWNER, WRONG_OWNER}
+use super::super::{
+    ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account, initialize_account_without_guardian,
+    felt252TryIntoStarknetSigner, OWNER, NEW_OWNER, WRONG_OWNER
 };
 
 #[test]

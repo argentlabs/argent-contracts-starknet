@@ -11,6 +11,23 @@ mod test_secp256k1;
 mod test_secp256r1;
 mod test_transaction_version;
 
+// Re-export the test setup functions to have them all available in one place
+use setup::{
+    account_test_setup::{
+        ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
+        initialize_account_without_guardian
+    },
+    utils::{to_starknet_signatures, to_starknet_signer_signatures, felt252TryIntoStarknetSigner},
+    constants::{
+        ARGENT_ACCOUNT_ADDRESS, KeyAndSig, GUARDIAN, OWNER, NEW_OWNER, GUARDIAN_BACKUP, MULTISIG_OWNER, WRONG_OWNER,
+        WRONG_GUARDIAN, tx_hash
+    },
+    multisig_test_setup::{
+        ITestArgentMultisigDispatcherTrait, initialize_multisig_with_one_signer, initialize_multisig_with,
+        initialize_multisig, declare_multisig
+    }
+};
+
 mod argent_account {
     mod test_argent_account;
     mod test_escape;

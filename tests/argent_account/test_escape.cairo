@@ -5,7 +5,7 @@ use snforge_std::{
     spy_events, EventSpyAssertionsTrait, EventSpyTrait, start_cheat_block_timestamp_global,
     start_cheat_caller_address_global
 };
-use super::super::setup::account_test_setup::{ITestArgentAccountDispatcherTrait, initialize_account};
+use super::super::{ITestArgentAccountDispatcherTrait, initialize_account};
 
 #[test]
 fn set_escape_security_period() {

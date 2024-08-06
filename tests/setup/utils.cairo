@@ -1,7 +1,7 @@
 use argent::signer::signer_signature::{SignerSignature, StarknetSignature, StarknetSigner};
 use argent::utils::serialization::serialize;
 use starknet::ContractAddress;
-use super::constants::KeyAndSig;
+use super::super::KeyAndSig;
 
 fn to_starknet_signer_signatures(arr: Array<felt252>) -> Array<felt252> {
     let mut signatures = array![];

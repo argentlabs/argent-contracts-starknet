@@ -1,12 +1,9 @@
 use argent::signer::signer_signature::starknet_signer_from_pubkey;
 use starknet::VALIDATED;
-use super::super::setup::{
-    utils::{to_starknet_signatures, to_starknet_signer_signatures},
-    constants::{GUARDIAN, OWNER, GUARDIAN_BACKUP, WRONG_OWNER, WRONG_GUARDIAN, tx_hash},
-    account_test_setup::{
-        ITestArgentAccountDispatcherTrait, initialize_account, initialize_account_without_guardian,
-        initialize_account_with
-    }
+use super::super::{
+    to_starknet_signatures, to_starknet_signer_signatures, GUARDIAN, OWNER, GUARDIAN_BACKUP, WRONG_OWNER,
+    WRONG_GUARDIAN, tx_hash, ITestArgentAccountDispatcherTrait, initialize_account, initialize_account_without_guardian,
+    initialize_account_with
 };
 
 #[test]

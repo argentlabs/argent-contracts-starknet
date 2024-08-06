@@ -3,7 +3,7 @@ use argent::presets::multisig_account::ArgentMultisigAccount;
 use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
 use snforge_std::{declare, ContractClassTrait, ContractClass, start_cheat_caller_address_global};
 use starknet::account::Call;
-use super::constants::MULTISIG_OWNER;
+use super::super::MULTISIG_OWNER;
 
 #[starknet::interface]
 trait ITestArgentMultisig<TContractState> {

@@ -57,8 +57,9 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: 
     json.append_all(encode_challenge(hash, signature.sha256_implementation));
     json.append_all(array!['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
     json.append_all(origin);
+    json.append('"');
     if let Option::Some(cross_origin) = signature.cross_origin {
-        json.append_all(array!['"', ',', '"', 'c', 'r', 'o', 's', 's', 'O', 'r', 'i', 'g', 'i', 'n', '"', ':'].span());
+        json.append_all(array![',', '"', 'c', 'r', 'o', 's', 's', 'O', 'r', 'i', 'g', 'i', 'n', '"', ':'].span());
         if cross_origin {
             json.append_all(array!['t', 'r', 'u', 'e'].span());
         } else {

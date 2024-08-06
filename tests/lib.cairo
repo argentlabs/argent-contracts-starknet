@@ -19,7 +19,7 @@ use setup::{
     },
     utils::{to_starknet_signatures, to_starknet_signer_signatures, felt252TryIntoStarknetSigner},
     constants::{
-        ARGENT_ACCOUNT_ADDRESS, KeyAndSig, GUARDIAN, OWNER, NEW_OWNER, GUARDIAN_BACKUP, MULTISIG_OWNER, WRONG_OWNER,
+        ARGENT_ACCOUNT_ADDRESS, KeyAndSig, GUARDIAN, OWNER, GUARDIAN_BACKUP, MULTISIG_OWNER, WRONG_OWNER,
         WRONG_GUARDIAN, tx_hash
     },
     multisig_test_setup::{

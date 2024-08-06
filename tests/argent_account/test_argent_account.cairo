@@ -1,16 +1,38 @@
 use argent::presets::argent_account::ArgentAccount;
 use argent::signer::signer_signature::{
-    Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait, starknet_signer_from_pubkey,
+    StarknetSigner, Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait,
+    starknet_signer_from_pubkey,
 };
+use hash::HashStateTrait;
+use pedersen::PedersenTrait;
 use snforge_std::{
+    signature::{KeyPairTrait, stark_curve::{StarkCurveKeyPairImpl, StarkCurveSignerImpl}},
     start_cheat_caller_address_global, start_cheat_transaction_version_global, EventSpyTrait, EventSpyAssertionsTrait,
     ContractClassTrait, spy_events
 };
 use starknet::contract_address_const;
 use super::super::{
-    ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account, initialize_account_without_guardian,
-    felt252TryIntoStarknetSigner, OWNER, NEW_OWNER, WRONG_OWNER
+    ARGENT_ACCOUNT_ADDRESS, ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
+    initialize_account_without_guardian, felt252TryIntoStarknetSigner, OWNER, WRONG_OWNER
 };
+
+fn NEW_OWNER() -> (StarknetSigner, StarknetSignature) {
+    let new_owner = KeyPairTrait::from_secret_key('NEW_OWNER');
+    let pubkey = new_owner.public_key.try_into().expect('argent/zero-pubkey');
+    let (r, s): (felt252, felt252) = new_owner.sign(new_owner_message_hash()).unwrap();
+    (StarknetSigner { pubkey }, StarknetSignature { r, s })
+}
+
+fn new_owner_message_hash() -> felt252 {
+    PedersenTrait::new(0)
+        .update(selector!("change_owner"))
+        .update('SN_SEPOLIA')
+        .update(ARGENT_ACCOUNT_ADDRESS)
+        .update(starknet_signer_from_pubkey(OWNER().pubkey).into_guid())
+        .update(4)
+        .finalize()
+}
+
 
 #[test]
 fn initialize() {

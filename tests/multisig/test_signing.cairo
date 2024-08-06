@@ -9,7 +9,6 @@ use super::super::setup::{
     utils::{to_starknet_signatures, to_starknet_signer_signatures}
 };
 
-// This is the same as "multisigSigning.test.ts"
 #[test]
 fn test_signature() {
     let multisig = initialize_multisig_with_one_signer();

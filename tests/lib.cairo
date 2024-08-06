@@ -17,7 +17,7 @@ use setup::{
         ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
         initialize_account_without_guardian
     },
-    utils::{to_starknet_signatures, to_starknet_signer_signatures, felt252TryIntoStarknetSigner},
+    utils::{to_starknet_signatures, to_starknet_signer_signatures, Felt252TryIntoStarknetSigner},
     constants::{
         ARGENT_ACCOUNT_ADDRESS, KeyAndSig, GUARDIAN, OWNER, GUARDIAN_BACKUP, MULTISIG_OWNER, WRONG_OWNER,
         WRONG_GUARDIAN, tx_hash

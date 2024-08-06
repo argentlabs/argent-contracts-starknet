@@ -13,7 +13,7 @@ use snforge_std::{
 use starknet::contract_address_const;
 use super::super::{
     ARGENT_ACCOUNT_ADDRESS, ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
-    initialize_account_without_guardian, felt252TryIntoStarknetSigner, OWNER, WRONG_OWNER
+    initialize_account_without_guardian, Felt252TryIntoStarknetSigner, OWNER, WRONG_OWNER
 };
 
 fn NEW_OWNER() -> (StarknetSigner, StarknetSignature) {

@@ -28,7 +28,7 @@ fn to_starknet_signatures(arr: Array<KeyAndSig>) -> Array<felt252> {
     serialize(@signatures)
 }
 
-impl felt252TryIntoStarknetSigner of TryInto<felt252, StarknetSigner> {
+impl Felt252TryIntoStarknetSigner of TryInto<felt252, StarknetSigner> {
     #[inline(always)]
     fn try_into(self: felt252) -> Option<StarknetSigner> {
         Option::Some(StarknetSigner { pubkey: self.try_into().expect('Cant create starknet signer') })

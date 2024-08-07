@@ -2,29 +2,28 @@ use argent::multisig::multisig::multisig_component;
 use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
 use argent::signer_storage::signer_list::signer_list_component;
 use snforge_std::{spy_events, EventSpyAssertionsTrait, EventSpyTrait};
-use super::super::{MULTISIG_OWNER, initialize_multisig, initialize_multisig_with, ITestArgentMultisigDispatcherTrait};
+use super::super::{
+    SIGNER_1, SIGNER_2, SIGNER_3, initialize_multisig, initialize_multisig_with, ITestArgentMultisigDispatcherTrait
+};
 
 #[test]
 fn remove_signers_first() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
-    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
     let mut spy = spy_events();
 
     // remove signer
-    multisig.remove_signers(2, array![signer_1]);
+    multisig.remove_signers(2, array![SIGNER_1()]);
 
     // check 
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2);
     assert_eq!(multisig.get_threshold(), 2);
-    assert!(!multisig.is_signer(signer_1));
-    assert!(multisig.is_signer(signer_2));
-    assert!(multisig.is_signer(signer_3));
+    assert!(!multisig.is_signer(SIGNER_1()));
+    assert!(multisig.is_signer(SIGNER_2()));
+    assert!(multisig.is_signer(SIGNER_3()));
 
-    let removed_owner_guid = signer_1.into_guid();
+    let removed_owner_guid = SIGNER_1().into_guid();
     let event = signer_list_component::Event::OwnerRemovedGuid(
         signer_list_component::OwnerRemovedGuid { removed_owner_guid }
     );
@@ -39,169 +38,145 @@ fn remove_signers_first() {
 #[test]
 fn remove_signers_center() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
-    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
 
     // remove signer
-    let signer_to_remove = array![signer_2];
+    let signer_to_remove = array![SIGNER_2()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(signer_2));
-    assert!(multisig.is_signer(signer_1));
-    assert!(multisig.is_signer(signer_3));
+    assert!(!multisig.is_signer(SIGNER_2()));
+    assert!(multisig.is_signer(SIGNER_1()));
+    assert!(multisig.is_signer(SIGNER_3()));
 }
 
 #[test]
 fn remove_signers_last() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
-    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
 
     // remove signer
-    let signer_to_remove = array![signer_3];
+    let signer_to_remove = array![SIGNER_3()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(signer_3));
-    assert!(multisig.is_signer(signer_1));
-    assert!(multisig.is_signer(signer_2));
+    assert!(!multisig.is_signer(SIGNER_3()));
+    assert!(multisig.is_signer(SIGNER_1()));
+    assert!(multisig.is_signer(SIGNER_2()));
 }
 
 #[test]
 fn remove_1_and_2() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
-    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
 
     // remove signer
-    let signer_to_remove = array![signer_1, signer_2];
+    let signer_to_remove = array![SIGNER_1(), SIGNER_2()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(signer_1));
-    assert!(!multisig.is_signer(signer_2));
-    assert!(multisig.is_signer(signer_3));
+    assert!(!multisig.is_signer(SIGNER_1()));
+    assert!(!multisig.is_signer(SIGNER_2()));
+    assert!(multisig.is_signer(SIGNER_3()));
 }
 
 #[test]
 fn remove_1_and_3() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
-    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
 
     // remove signer
-    let signer_to_remove = array![signer_1, signer_3];
+    let signer_to_remove = array![SIGNER_1(), SIGNER_3()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(signer_1));
-    assert!(!multisig.is_signer(signer_3));
-    assert!(multisig.is_signer(signer_2));
+    assert!(!multisig.is_signer(SIGNER_1()));
+    assert!(!multisig.is_signer(SIGNER_3()));
+    assert!(multisig.is_signer(SIGNER_2()));
 }
 
 #[test]
 fn remove_2_and_3() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
-    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
 
     // remove signer
-    let signer_to_remove = array![signer_2, signer_3];
+    let signer_to_remove = array![SIGNER_2(), SIGNER_3()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(signer_2));
-    assert!(!multisig.is_signer(signer_3));
-    assert!(multisig.is_signer(signer_1));
+    assert!(!multisig.is_signer(SIGNER_2()));
+    assert!(!multisig.is_signer(SIGNER_3()));
+    assert!(multisig.is_signer(SIGNER_1()));
 }
 
 #[test]
 fn remove_2_and_1() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
-    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
 
     // remove signer
-    let signer_to_remove = array![signer_2, signer_1];
+    let signer_to_remove = array![SIGNER_2(), SIGNER_1()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(signer_2));
-    assert!(!multisig.is_signer(signer_1));
-    assert!(multisig.is_signer(signer_3));
+    assert!(!multisig.is_signer(SIGNER_2()));
+    assert!(!multisig.is_signer(SIGNER_1()));
+    assert!(multisig.is_signer(SIGNER_3()));
 }
 
 #[test]
 fn remove_3_and_1() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
-    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
 
     // remove signer
-    let signer_to_remove = array![signer_3, signer_1];
+    let signer_to_remove = array![SIGNER_3(), SIGNER_1()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(signer_3));
-    assert!(!multisig.is_signer(signer_1));
-    assert!(multisig.is_signer(signer_2));
+    assert!(!multisig.is_signer(SIGNER_3()));
+    assert!(!multisig.is_signer(SIGNER_1()));
+    assert!(multisig.is_signer(SIGNER_2()));
 }
 
 #[test]
 fn remove_3_and_2() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
-    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
 
     // remove signer
-    let signer_to_remove = array![signer_2, signer_3];
+    let signer_to_remove = array![SIGNER_2(), SIGNER_3()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check 
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(signer_3));
-    assert!(!multisig.is_signer(signer_2));
-    assert!(multisig.is_signer(signer_1));
+    assert!(!multisig.is_signer(SIGNER_3()));
+    assert!(!multisig.is_signer(SIGNER_2()));
+    assert!(multisig.is_signer(SIGNER_1()));
 }
 
 #[test]
@@ -222,21 +197,17 @@ fn remove_same_signer_twice() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
-    multisig.remove_signers(1, array![signer_2, signer_2]);
+    multisig.remove_signers(1, array![SIGNER_2(), SIGNER_2()]);
 }
 
 #[test]
 #[should_panic(expected: ('argent/bad-threshold',))]
 fn remove_signers_invalid_threshold() {
     // init
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
-    let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
-    let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
 
     // remove signer
-    let signer_to_remove = array![signer_1, signer_2];
+    let signer_to_remove = array![SIGNER_1(), SIGNER_2()];
     multisig.remove_signers(2, signer_to_remove);
 }
 
@@ -247,6 +218,5 @@ fn remove_signers_zero_threshold() {
     let multisig = initialize_multisig();
 
     // remove signer
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
-    multisig.remove_signers(0, array![signer_1]);
+    multisig.remove_signers(0, array![SIGNER_1()]);
 }

@@ -12,7 +12,7 @@ use snforge_std::{
     declare, ContractClassTrait, spy_events
 };
 use starknet::{contract_address_const, ContractAddress};
-use super::{MULTISIG_OWNER, SIGNER_1, SIGNER_2, SIGNER_3, SIGNER_4};
+use super::{SIGNER_1, SIGNER_2, SIGNER_3, SIGNER_4};
 
 fn GUARDIAN() -> ContractAddress {
     contract_address_const::<'guardian'>()

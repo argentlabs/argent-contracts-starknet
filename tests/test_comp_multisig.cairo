@@ -3,7 +3,7 @@ use argent::multisig::interface::{IArgentMultisigInternal, IArgentMultisig};
 use argent::multisig::multisig::multisig_component;
 use argent::signer::signer_signature::SignerTrait;
 use snforge_std::{start_cheat_caller_address_global, test_address};
-use super::{MULTISIG_OWNER, SIGNER_1, SIGNER_2, SIGNER_3};
+use super::{SIGNER_1, SIGNER_2, SIGNER_3};
 
 type ComponentState = multisig_component::ComponentState<MultisigMock::ContractState>;
 

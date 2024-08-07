@@ -13,9 +13,9 @@ build-external-contracts = ["openzeppelin::presets::account::AccountUpgradeable"
 # Use scarb cargo crate scarb.xyz
 [dependencies]
 starknet = "2.7.0"
-alexandria_math = { git = "https://github.com/gaetbout/quaireaux.git", rev = "2daed18f4680a497ea71e3c08761ec1b8f4cee60" }
-alexandria_encoding = { git = "https://github.com/gaetbout/quaireaux.git", rev = "2daed18f4680a497ea71e3c08761ec1b8f4cee60" }
-alexandria_merkle_tree = { git = "https://github.com/gaetbout/quaireaux.git", rev="2daed18f4680a497ea71e3c08761ec1b8f4cee60" }
+alexandria_math = { git = "https://github.com/gaetbout/quaireaux.git", rev = "2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a" }
+alexandria_encoding = { git = "https://github.com/gaetbout/quaireaux.git", rev = "2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a" }
+alexandria_merkle_tree = { git = "https://github.com/gaetbout/quaireaux.git", rev="2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a" }
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.27.0" }
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", rev = "5f03fba338b4cb321776947fb98b4584a32adece" }
 

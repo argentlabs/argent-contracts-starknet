@@ -1,26 +1,14 @@
 use argent::mocks::multisig_mocks::MultisigMock;
 use argent::multisig::interface::{IArgentMultisigInternal, IArgentMultisig};
 use argent::multisig::multisig::multisig_component;
-use argent::signer::{signer_signature::{Signer, starknet_signer_from_pubkey, SignerTrait}};
+use argent::signer::signer_signature::SignerTrait;
 use snforge_std::{start_cheat_caller_address_global, test_address};
-use super::MULTISIG_OWNER;
+use super::{MULTISIG_OWNER, SIGNER_1, SIGNER_2, SIGNER_3};
 
 type ComponentState = multisig_component::ComponentState<MultisigMock::ContractState>;
 
 fn COMPONENT_STATE() -> ComponentState {
     multisig_component::component_state_for_testing()
-}
-
-fn SIGNER_1() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)
-}
-
-fn SIGNER_2() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey)
-}
-
-fn SIGNER_3() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey)
 }
 
 // Initialize

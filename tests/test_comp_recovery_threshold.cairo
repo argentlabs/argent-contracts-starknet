@@ -10,19 +10,7 @@ use snforge_std::{
     EventSpyAssertionsTrait, spy_events,
 };
 use starknet::{ContractAddress, contract_address_const,};
-use super::{MULTISIG_OWNER};
-
-fn SIGNER_1() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)
-}
-
-fn SIGNER_2() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey)
-}
-
-fn SIGNER_3() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey)
-}
+use super::{MULTISIG_OWNER, SIGNER_1, SIGNER_2, SIGNER_3};
 
 fn setup() -> (IRecoveryDispatcher, IToggleThresholdRecoveryDispatcher, IArgentMultisigDispatcher) {
     let contract_class = declare("ThresholdRecoveryMock").expect('Failed ThresholdRecoveryMock');

@@ -20,7 +20,7 @@ use setup::{
     utils::{to_starknet_signatures, to_starknet_signer_signatures, Felt252TryIntoStarknetSigner},
     constants::{
         ARGENT_ACCOUNT_ADDRESS, KeyAndSig, GUARDIAN, OWNER, GUARDIAN_BACKUP, MULTISIG_OWNER, WRONG_OWNER,
-        WRONG_GUARDIAN, tx_hash
+        WRONG_GUARDIAN, tx_hash, SIGNER_1, SIGNER_2, SIGNER_3, SIGNER_4
     },
     multisig_test_setup::{
         ITestArgentMultisigDispatcherTrait, initialize_multisig_with_one_signer, initialize_multisig_with,

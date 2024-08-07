@@ -5,30 +5,14 @@ use argent::external_recovery::{
 use argent::mocks::recovery_mocks::ExternalRecoveryMock;
 use argent::multisig::interface::{IArgentMultisigDispatcher, IArgentMultisigDispatcherTrait};
 use argent::recovery::interface::EscapeStatus;
-use argent::signer::{signer_signature::{Signer, starknet_signer_from_pubkey}};
+use argent::signer::signer_signature::Signer;
 use argent::utils::serialization::serialize;
 use snforge_std::{
     EventSpyTrait, EventSpyAssertionsTrait, start_cheat_caller_address_global, start_cheat_block_timestamp_global,
     declare, ContractClassTrait, spy_events
 };
 use starknet::{contract_address_const, ContractAddress};
-use super::MULTISIG_OWNER;
-
-fn SIGNER_1() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)
-}
-
-fn SIGNER_2() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey)
-}
-
-fn SIGNER_3() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey)
-}
-
-fn SIGNER_4() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(4).pubkey)
-}
+use super::{MULTISIG_OWNER, SIGNER_1, SIGNER_2, SIGNER_3, SIGNER_4};
 
 fn GUARDIAN() -> ContractAddress {
     contract_address_const::<'guardian'>()

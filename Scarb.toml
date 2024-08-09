@@ -13,11 +13,11 @@ build-external-contracts = ["openzeppelin::presets::account::AccountUpgradeable"
 # Use scarb cargo crate scarb.xyz
 [dependencies]
 starknet = "2.7.0"
-alexandria_math = { git = "https://github.com/gaetbout/quaireaux.git", rev = "846621a1b731590cf316f9bec20e75cfe39b88a4" }
-alexandria_encoding = { git = "https://github.com/gaetbout/quaireaux.git", rev = "846621a1b731590cf316f9bec20e75cfe39b88a4" }
-alexandria_merkle_tree = { git = "https://github.com/gaetbout/quaireaux.git", rev="846621a1b731590cf316f9bec20e75cfe39b88a4" }
+alexandria_math = { git = "https://github.com/gaetbout/quaireaux.git", rev = "bb609a0" }
+alexandria_encoding = { git = "https://github.com/gaetbout/quaireaux.git", rev = "bb609a0" }
+alexandria_merkle_tree = { git = "https://github.com/gaetbout/quaireaux.git", rev="bb609a0" }
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.27.0" }
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", rev = "5f03fba338b4cb321776947fb98b4584a32adece" }
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.15.0" }
 
 [tool.fmt]
 max-line-length = 120

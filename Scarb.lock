@@ -4,7 +4,7 @@ version = 1
 [[package]]
 name = "alexandria_bytes"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a#2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a"
+source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
 dependencies = [
  "alexandria_data_structures",
  "alexandria_math",
@@ -13,7 +13,7 @@ dependencies = [
 [[package]]
 name = "alexandria_data_structures"
 version = "0.2.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a#2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a"
+source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
 dependencies = [
  "alexandria_encoding",
 ]
@@ -21,7 +21,7 @@ dependencies = [
 [[package]]
 name = "alexandria_encoding"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a#2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a"
+source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
 dependencies = [
  "alexandria_bytes",
  "alexandria_math",
@@ -31,7 +31,7 @@ dependencies = [
 [[package]]
 name = "alexandria_math"
 version = "0.2.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a#2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a"
+source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
 dependencies = [
  "alexandria_data_structures",
 ]
@@ -39,12 +39,12 @@ dependencies = [
 [[package]]
 name = "alexandria_merkle_tree"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a#2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a"
+source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
 
 [[package]]
 name = "alexandria_numeric"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a#2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a"
+source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
 dependencies = [
  "alexandria_math",
  "alexandria_searching",
@@ -53,7 +53,7 @@ dependencies = [
 [[package]]
 name = "alexandria_searching"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a#2a4f6b8293bde8b78a159a7e73ae753aa6c6e74a"
+source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
 dependencies = [
  "alexandria_data_structures",
 ]
@@ -71,8 +71,89 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin"
-version = "0.15.0-rc.0"
-source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?rev=5f03fba338b4cb321776947fb98b4584a32adece#5f03fba338b4cb321776947fb98b4584a32adece"
+version = "0.15.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.15.0#f57642960f1c8cffafefb88bfff418eca8510634"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_account",
+ "openzeppelin_governance",
+ "openzeppelin_introspection",
+ "openzeppelin_presets",
+ "openzeppelin_security",
+ "openzeppelin_token",
+ "openzeppelin_upgrades",
+ "openzeppelin_utils",
+]
+
+[[package]]
+name = "openzeppelin_access"
+version = "0.15.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.15.0#f57642960f1c8cffafefb88bfff418eca8510634"
+dependencies = [
+ "openzeppelin_introspection",
+ "openzeppelin_utils",
+]
+
+[[package]]
+name = "openzeppelin_account"
+version = "0.15.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.15.0#f57642960f1c8cffafefb88bfff418eca8510634"
+dependencies = [
+ "openzeppelin_introspection",
+ "openzeppelin_token",
+ "openzeppelin_utils",
+]
+
+[[package]]
+name = "openzeppelin_governance"
+version = "0.15.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.15.0#f57642960f1c8cffafefb88bfff418eca8510634"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_introspection",
+]
+
+[[package]]
+name = "openzeppelin_introspection"
+version = "0.15.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.15.0#f57642960f1c8cffafefb88bfff418eca8510634"
+
+[[package]]
+name = "openzeppelin_presets"
+version = "0.15.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.15.0#f57642960f1c8cffafefb88bfff418eca8510634"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_account",
+ "openzeppelin_introspection",
+ "openzeppelin_token",
+ "openzeppelin_upgrades",
+]
+
+[[package]]
+name = "openzeppelin_security"
+version = "0.15.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.15.0#f57642960f1c8cffafefb88bfff418eca8510634"
+
+[[package]]
+name = "openzeppelin_token"
+version = "0.15.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.15.0#f57642960f1c8cffafefb88bfff418eca8510634"
+dependencies = [
+ "openzeppelin_account",
+ "openzeppelin_governance",
+ "openzeppelin_introspection",
+]
+
+[[package]]
+name = "openzeppelin_upgrades"
+version = "0.15.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.15.0#f57642960f1c8cffafefb88bfff418eca8510634"
+
+[[package]]
+name = "openzeppelin_utils"
+version = "0.15.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.15.0#f57642960f1c8cffafefb88bfff418eca8510634"
 
 [[package]]
 name = "snforge_std"

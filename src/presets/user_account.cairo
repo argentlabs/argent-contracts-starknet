@@ -118,8 +118,8 @@ mod ArgentUserAccount {
     #[abi(embed_v0)]
     impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
-            let exec_info = get_execution_info().unbox();
-            let tx_info = exec_info.tx_info.unbox();
+            let exec_info = get_execution_info();
+            let tx_info = exec_info.tx_info;
             assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
@@ -130,8 +130,8 @@ mod ArgentUserAccount {
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
             self.reentrancy_guard.start();
-            let exec_info = get_execution_info().unbox();
-            let tx_info = exec_info.tx_info.unbox();
+            let exec_info = get_execution_info();
+            let tx_info = exec_info.tx_info;
             assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
 
@@ -170,7 +170,7 @@ mod ArgentUserAccount {
             threshold: usize,
             signers: Array<Signer>
         ) -> felt252 {
-            let tx_info = get_tx_info().unbox();
+            let tx_info = get_tx_info();
             assert_correct_deploy_account_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             // only 1 signer needed to deploy

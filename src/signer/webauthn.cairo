@@ -1,6 +1,8 @@
 use argent::signer::signer_signature::WebauthnSigner;
 use argent::utils::bytes::{u256_to_u8s, u8s_to_u32s_pad_end};
 use core::byte_array::ByteArrayTrait;
+
+use core::debug::PrintTrait;
 use core::sha256::{compute_sha256_byte_array, compute_sha256_u32_array};
 use starknet::secp256_trait::Signature;
 
@@ -30,7 +32,7 @@ fn verify_authenticator_flags(flags: u8) {
     // rpIdHash is verified with the signature over the authenticator
 
     // Verify that the User Present bit of the flags in authData is set.
-    assert!((flags & 0b00000001) == 0b00000001, "webauthn/nonpresent-user");
+    assert!((flags & 0b00000001) == 0b00000001, "webauthn/missing-user-bit");
 
     // If user verification is required for this signature, verify that the User Verified bit of the flags in authData
     // is set.
@@ -44,29 +46,34 @@ fn verify_authenticator_flags(flags: u8) {
 /// Encoding spec: https://www.w3.org/TR/webauthn/#clientdatajson-verification
 //  Try origin as ByteArray ==> Cost is marginal to pass origin as ByteArray
 fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut origin: Span<u8>) -> @ByteArray {
-    let mut origin_as_byte_array = "";
-    while let Option::Some(byte) = origin.pop_front() {
-        origin_as_byte_array.append_byte(*byte);
-    };
+    let mut x: ByteArray = format!("{{\"type\":\"webauthn.get\",\"challenge\":\"{}", hash);
+    x += "\",\"origin\":\"";
 
-    let mut json_outro = "";
+    while let Option::Some(byte) = origin.pop_front() {
+        x.append_byte(*byte);
+    };
+    x += "\",\"crossOrigin\":";
+    if signature.cross_origin {
+        x += "true";
+    } else {
+        x += "false";
+    }
+
     if !signature.client_data_json_outro.is_empty() {
         assert!(*signature.client_data_json_outro[0] == ',', "webauthn/invalid-json-outro");
         let mut client_data_json_outro = signature.client_data_json_outro;
         while let Option::Some(byte) = client_data_json_outro.pop_front() {
-            json_outro.append_byte(*byte);
+            x.append_byte(*byte);
         };
-        signature.client_data_json_outro;
+        let mut a = signature.client_data_json_outro;
+        while let Option::Some(byte) = a.pop_front() {
+            x.append_byte(*byte);
+        };
     } else {
-        json_outro.append_byte('}');
+        x.append_byte('}');
     }
-    @format!(
-        "{{\"type\":\"webauthn.get\",\"challenge\":\"{}02\",\"origin\":\"{}\",\"crossOrigin\":{}{}",
-        hash,
-        origin_as_byte_array,
-        signature.cross_origin,
-        json_outro
-    )
+    // assert!(false, "x: {}", x);
+    @x
 }
 
 fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> Array<u8> {

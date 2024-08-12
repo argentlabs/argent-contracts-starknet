@@ -42,8 +42,7 @@ fn verify_authenticator_flags(flags: u8) {
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
 /// Encoding spec: https://www.w3.org/TR/webauthn/#clientdatajson-verification
-// TODO Try all optimize no format!
-// TODO Try origin as ByteArray
+//  Try origin as ByteArray ==> Cost is marginal to pass origin as ByteArray
 fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut origin: Span<u8>) -> @ByteArray {
     let mut origin_as_byte_array = "";
     while let Option::Some(byte) = origin.pop_front() {

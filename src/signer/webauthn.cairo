@@ -38,19 +38,6 @@ fn verify_authenticator_flags(flags: u8) {
     // Allowing attested credential data and extension data if present
 }
 
-
-fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
-    let client_data_json = encode_client_data_json(hash, signature, signer.origin);
-    let client_data_hash = compute_sha256_byte_array(client_data_json).span();
-    let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
-    let mut client_data = u32s_to_u8s(client_data_hash);
-    while let Option::Some(byte) = client_data.pop_front() {
-        message.append_byte(*byte);
-    };
-    u32s_to_u256(compute_sha256_byte_array(@message).span())
-}
-
-
 /// Example JSON:
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
@@ -93,6 +80,17 @@ fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> 
     authenticator_data.append_byte(0);
     authenticator_data.append_byte(signature.sign_count.try_into().unwrap());
     authenticator_data
+}
+
+fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
+    let client_data_json = encode_client_data_json(hash, signature, signer.origin);
+    let client_data_hash = compute_sha256_byte_array(client_data_json).span();
+    let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
+    let mut client_data = u32s_to_u8s(client_data_hash);
+    while let Option::Some(byte) = client_data.pop_front() {
+        message.append_byte(*byte);
+    };
+    u32s_to_u256(compute_sha256_byte_array(@message).span())
 }
 
 fn u32s_to_u256(arr: Span<u32>) -> u256 {

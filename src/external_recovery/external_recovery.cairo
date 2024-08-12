@@ -23,7 +23,7 @@ mod external_recovery_component {
     use argent::signer_storage::signer_list::{signer_list_component, signer_list_component::{SignerListInternalImpl}};
     use argent::utils::asserts::assert_only_self;
     use argent::utils::serialization::serialize;
-    use openzeppelin::security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
+    use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use starknet::{
         get_block_timestamp, get_contract_address, get_caller_address, ContractAddress, account::Call,
         contract_address::contract_address_const

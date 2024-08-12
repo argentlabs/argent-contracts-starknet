@@ -65,24 +65,9 @@ dependencies = [
  "alexandria_encoding",
  "alexandria_math",
  "alexandria_merkle_tree",
- "openzeppelin",
- "snforge_std",
-]
-
-[[package]]
-name = "openzeppelin"
-version = "0.15.0"
-source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.15.0#f57642960f1c8cffafefb88bfff418eca8510634"
-dependencies = [
- "openzeppelin_access",
- "openzeppelin_account",
- "openzeppelin_governance",
- "openzeppelin_introspection",
  "openzeppelin_presets",
  "openzeppelin_security",
- "openzeppelin_token",
- "openzeppelin_upgrades",
- "openzeppelin_utils",
+ "snforge_std",
 ]
 
 [[package]]

@@ -94,7 +94,7 @@ impl StructHashCallRev0 of IStructHashRev0<Call> {
 impl OffChainMessageOutsideExecutionRev0 of IOffChainMessageHashRev0<OutsideExecution> {
     fn get_message_hash_rev_0(self: @OutsideExecution) -> felt252 {
         let domain = StarkNetDomain {
-            name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().unbox().chain_id,
+            name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().chain_id,
         };
 
         PedersenTrait::new(0)
@@ -145,7 +145,7 @@ impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExec
         // Revision will also be a felt instead of a shortstring for all SNIP12-rev1 signatures because of the same
         // issue
 
-        let chain_id = get_tx_info().unbox().chain_id;
+        let chain_id = get_tx_info().chain_id;
         if chain_id == 'SN_MAIN' {
             return get_message_hash_rev_1_with_precalc(MAINNET_FIRST_HADES_PERMUTATION, *self);
         }

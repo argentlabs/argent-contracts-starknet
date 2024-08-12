@@ -7,7 +7,7 @@ mod outside_execution_component {
         interface::{OutsideExecution, IOutsideExecutionCallback, IOutsideExecution}
     };
     use hash::{HashStateTrait, HashStateExTrait};
-    use openzeppelin::security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
+    use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use pedersen::PedersenTrait;
     use starknet::{
         get_caller_address, get_contract_address, get_block_timestamp, get_tx_info, account::Call, storage::Map

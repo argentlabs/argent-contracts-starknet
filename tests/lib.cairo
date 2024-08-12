@@ -28,7 +28,6 @@ mod setup {
 
 mod webauthn {
     mod test_webauthn_bytes;
-    mod test_webauthn_sha256;
     mod test_webauthn_validation;
 }
 // TODO shouldn't we have a folder for argent_account and one for multisig_account?

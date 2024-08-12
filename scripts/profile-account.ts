@@ -1,14 +1,13 @@
 import assert from "assert";
 import { uint256 } from "starknet";
 import {
-  Cairo0WebauthnOwner,
   Eip191KeyPair,
   EthKeyPair,
   LegacyArgentSigner,
   LegacyStarknetKeyPair,
   Secp256r1KeyPair,
   StarknetKeyPair,
-  WebauthnOwnerSyscall,
+  WebauthnOwner,
   deployAccount,
   deployAccountWithoutGuardian,
   deployOldAccount,
@@ -146,7 +145,7 @@ const guardian = new StarknetKeyPair(42n);
   const classHash = await manager.declareFixtureContract("Sha256Cairo0");
   assert(BigInt(classHash) === 0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
   const { account } = await deployAccount({
-    owner: new Cairo0WebauthnOwner(privateKey),
+    owner: new WebauthnOwner(privateKey),
     guardian,
     salt: "0x42",
     fundingAmount,
@@ -244,24 +243,13 @@ const guardian = new StarknetKeyPair(42n);
   const classHash = await manager.declareFixtureContract("Sha256Cairo0");
   assert(BigInt(classHash) === 0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
   const { account } = await deployAccount({
-    owner: new Cairo0WebauthnOwner(privateKey),
+    owner: new WebauthnOwner(privateKey),
     guardian,
     salt: "0x7",
     fundingAmount,
   });
   ethContract.connect(account);
   await profiler.profile("Transfer - Webauthn no guardian", await ethContract.transfer(recipient, amount));
-}
-
-{
-  const { account } = await deployAccount({
-    owner: new WebauthnOwnerSyscall(privateKey),
-    guardian,
-    salt: "0x8",
-    fundingAmount,
-  });
-  ethContract.connect(account);
-  await profiler.profile("Transfer - Webauthn (syscall) no guardian", await ethContract.transfer(recipient, amount));
 }
 
 profiler.printSummary();

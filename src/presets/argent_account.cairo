@@ -26,7 +26,7 @@ mod ArgentAccount {
         }
     };
     use hash::HashStateTrait;
-    use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
+    use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
     use pedersen::PedersenTrait;
     use starknet::{
         storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED,
@@ -307,8 +307,8 @@ mod ArgentAccount {
     #[abi(embed_v0)]
     impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
-            let exec_info = get_execution_info().unbox();
-            let tx_info = exec_info.tx_info.unbox();
+            let exec_info = get_execution_info();
+            let tx_info = exec_info.tx_info;
             assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
@@ -329,8 +329,8 @@ mod ArgentAccount {
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
             self.reentrancy_guard.start();
-            let exec_info = get_execution_info().unbox();
-            let tx_info = exec_info.tx_info.unbox();
+            let exec_info = get_execution_info();
+            let tx_info = exec_info.tx_info;
             assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
             let signature = tx_info.signature;
@@ -338,7 +338,7 @@ mod ArgentAccount {
                 let session_timestamp = *signature[1];
                 // can call unwrap safely as the session has already been deserialized
                 let session_timestamp_u64 = session_timestamp.try_into().unwrap();
-                assert(session_timestamp_u64 >= exec_info.block_info.unbox().block_timestamp, 'session/expired');
+                assert(session_timestamp_u64 >= exec_info.block_info.block_timestamp, 'session/expired');
             }
 
             let retdata = execute_multicall(calls.span());
@@ -481,7 +481,7 @@ mod ArgentAccount {
     #[abi(embed_v0)]
     impl ArgentUserAccountImpl of IArgentUserAccount<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
-            let tx_info = get_tx_info().unbox();
+            let tx_info = get_tx_info();
             assert_correct_declare_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             self
@@ -498,7 +498,7 @@ mod ArgentAccount {
             owner: Signer,
             guardian: Option<Signer>
         ) -> felt252 {
-            let tx_info = get_tx_info().unbox();
+            let tx_info = get_tx_info();
             assert_correct_deploy_account_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             self
@@ -1011,7 +1011,7 @@ mod ArgentAccount {
         /// as specified here:
         /// https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
         fn assert_valid_new_owner_signature(self: @ContractState, signer_signature: SignerSignature) {
-            let chain_id = get_tx_info().unbox().chain_id;
+            let chain_id = get_tx_info().chain_id;
             let owner_guid = self.read_owner().into_guid();
             // We now need to hash message_hash with the size of the array: (change_owner selector, chain id, contract
             // address, old_owner_guid)

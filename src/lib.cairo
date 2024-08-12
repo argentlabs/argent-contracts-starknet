@@ -21,7 +21,6 @@ mod signer {
     mod eip191;
     mod signer_signature;
     mod webauthn;
-    mod webauthn_byte_array;
 }
 
 mod signer_storage {

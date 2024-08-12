@@ -45,10 +45,9 @@ interface WebauthnSignature {
   flags: number;
   sign_count: number;
   ec_signature: { r: Uint256; s: Uint256; y_parity: boolean };
-  sha256_implementation: CairoCustomEnum;
 }
 
-abstract class WebauthnOwner extends KeyPair {
+export class WebauthnOwner extends KeyPair {
   pk: Uint8Array;
   rpIdHash: Uint256;
 
@@ -95,9 +94,6 @@ abstract class WebauthnOwner extends KeyPair {
     return signerTypeToCustomEnum(SignerType.Webauthn, signer);
   }
 
-  abstract sha256Impl(): number;
-  abstract challenge(transactionHash: string): string;
-
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
     const webauthnSigner = this.signer.variant.Webauthn;
     const webauthnSignature = await this.signHash(messageHash);
@@ -109,7 +105,7 @@ abstract class WebauthnOwner extends KeyPair {
     const signCount = 0;
     const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([Number(flags), 0, 0, 0, signCount]));
 
-    const challenge = this.challenge(transactionHash);
+    const challenge = BigInt(`0x${normalizeTransactionHash(transactionHash)}`) + `02`;
     const crossOrigin = false;
     const extraJson = ""; // = `,"extraField":"random data"}`;
     const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin, crossOrigin });
@@ -146,11 +142,6 @@ abstract class WebauthnOwner extends KeyPair {
         s: uint256.bnToUint256(signature.s),
         y_parity: signature.yParity,
       },
-      sha256_implementation: new CairoCustomEnum({
-        Cairo0: this.sha256Impl() == 0 ? {} : undefined,
-        Cairo1: this.sha256Impl() == 1 ? {} : undefined,
-        Syscall: this.sha256Impl() == 2 ? {} : undefined,
-      }),
     };
   }
 }
@@ -160,25 +151,4 @@ function sha256(message: BinaryLike) {
   return createHash("sha256").update(message).digest();
 }
 
-export class Cairo0WebauthnOwner extends WebauthnOwner {
-  public sha256Impl(): number {
-    return 0;
-  }
-
-  public challenge(transactionHash: string): string {
-    return buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0${this.sha256Impl()}`));
-  }
-}
-
-export class WebauthnOwnerSyscall extends WebauthnOwner {
-  public sha256Impl(): number {
-    return 2;
-  }
-
-  public challenge(transactionHash: string): string {
-    return BigInt(`0x${normalizeTransactionHash(transactionHash)}`) + `0${this.sha256Impl()}`;
-  }
-}
-
-export const randomWebauthnOwnerSyscall = () => new WebauthnOwnerSyscall();
-export const randomWebauthnOwner = () => new Cairo0WebauthnOwner();
+export const randomWebauthnOwner = () => new WebauthnOwner();

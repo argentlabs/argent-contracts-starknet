@@ -1,5 +1,5 @@
 use argent::signer::signer_signature::{WebauthnSigner, is_valid_webauthn_signature};
-use argent::signer::webauthn::{WebauthnSignature, Sha256Implementation};
+use argent::signer::webauthn::{WebauthnSignature};
 use argent::utils::bytes::ByteArrayExt;
 use starknet::secp256_trait::Signature;
 
@@ -31,7 +31,6 @@ fn valid_signer() -> (felt252, WebauthnSigner, WebauthnSignature) {
             s: 0x35c7ae175d75e09b1907f4232c88bfd69b7c9d7f32b4b2d392a6a95324a61f21,
             y_parity: true,
         },
-        sha256_implementation: Sha256Implementation::Cairo1,
     };
     (transaction_hash, signer, signature)
 }
@@ -61,7 +60,6 @@ fn test_is_valid_webauthn_signature_with_extra_json() {
             s: 0x3cedd77bd9069c8b250f6a435cce5a379257b18daf7c81136c5ca3075824b68f,
             y_parity: false,
         },
-        sha256_implementation: Sha256Implementation::Cairo1,
     };
 
     let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);

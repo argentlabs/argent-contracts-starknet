@@ -72,29 +72,6 @@ The [fixtures folder](./tests-integration/fixtures/) contains pre-compiled contr
 For compatibility reasons we support legacy interface IDs. But new interface IDs will follow [SNIP-5](https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-5.md#how-interfaces-are-identified)
 Tool to calculate interface IDs: https://github.com/ericnordelo/src5-rs
 
-### Cairo Zero SHA256 contract
-
-The Webauthn signer is designed to work with multiple possible SHA256 implementations. The Cairo Zero variant is implemented at class hash specified as constant in the signer's source code, which can be reproduced using:
-
-```shell
-git clone https://github.com/cartridge-gg/cairo-sha256
-cd cairo-sha256
-git checkout 8d2ae51
-git apply ../lib/signers/cairo0-sha256.patch
-
-python3.9 -m venv ./venv
-source ./venv/bin/activate
-pip install cairo-lang==0.12.1
-
-starknet-compile-deprecated --no_debug_info src/main.cairo > ../tests-integration/fixtures/argent_Sha256Cairo0.contract_class.json
-
-# cleanup and clear whitespace diffs:
-deactivate
-cd ..
-rm -rf cairo-sha256
-scarb run format
-```
-
 ## Release checklist
 
 - Bump version if needed (new deployment in mainnet)

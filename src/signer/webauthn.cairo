@@ -1,5 +1,5 @@
 use argent::signer::signer_signature::WebauthnSigner;
-use argent::utils::bytes::u256_to_u8s;
+use argent::utils::bytes::{u256_to_u8s, u8s_to_u32s_pad_end};
 use core::byte_array::ByteArrayTrait;
 use core::sha256::{compute_sha256_byte_array, compute_sha256_u32_array};
 use starknet::secp256_trait::Signature;
@@ -42,6 +42,8 @@ fn verify_authenticator_flags(flags: u8) {
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
 /// Encoding spec: https://www.w3.org/TR/webauthn/#clientdatajson-verification
+// TODO Try all optimize no format!
+// TODO Try origin as ByteArray
 fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut origin: Span<u8>) -> @ByteArray {
     let mut origin_as_byte_array = "";
     while let Option::Some(byte) = origin.pop_front() {
@@ -68,29 +70,57 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut orig
     )
 }
 
-fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> ByteArray {
+fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> Array<u8> {
+    // let mut bytes = u256_to_u8s(rp_id_hash);
+    // let mut authenticator_data = "";
+    // while let Option::Some(byte) = bytes.pop_front() {
+    //     authenticator_data.append_byte(byte);
+    // };
+    // authenticator_data.append_byte(signature.flags);
+    // authenticator_data.append_byte(0);
+    // authenticator_data.append_byte(0);
+    // authenticator_data.append_byte(0);
+    // authenticator_data.append_byte(signature.sign_count.try_into().unwrap());
+    // authenticator_data
     let mut bytes = u256_to_u8s(rp_id_hash);
-    let mut authenticator_data = "";
-    while let Option::Some(byte) = bytes.pop_front() {
-        authenticator_data.append_byte(byte);
-    };
-    authenticator_data.append_byte(signature.flags);
-    authenticator_data.append_byte(0);
-    authenticator_data.append_byte(0);
-    authenticator_data.append_byte(0);
-    authenticator_data.append_byte(signature.sign_count.try_into().unwrap());
-    authenticator_data
+    bytes.append(signature.flags);
+    bytes.append(0);
+    bytes.append(0);
+    bytes.append(0);
+    bytes.append(signature.sign_count.try_into().unwrap());
+    bytes
 }
 
 fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
-    let client_data_hash = compute_sha256_byte_array(client_data_json).span();
-    let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
-    let mut client_data = u32s_to_u8s(client_data_hash);
+    let mut client_data = u32s_to_u8s(compute_sha256_byte_array(client_data_json).span());
+
+    let mut arr = encode_authenticator_data(signature, signer.rp_id_hash.into());
     while let Option::Some(byte) = client_data.pop_front() {
-        message.append_byte(*byte);
+        arr.append(*byte);
     };
-    u32s_to_u256(compute_sha256_byte_array(@message).span())
+
+    let mut word_arr: Array<u32> = array![];
+    let len = arr.len();
+    let rem = len % 4;
+    let mut index = 0;
+    let rounded_len = len - rem;
+    while index != rounded_len {
+        let word = (*arr.at(index + 3)).into()
+            + (*arr.at(index + 2)).into() * 0x100
+            + (*arr.at(index + 1)).into() * 0x10000
+            + (*arr.at(index)).into() * 0x1000000;
+        word_arr.append(word);
+        index = index + 4;
+    };
+    let last = match rem {
+        0 => 0_u32,
+        1 => (*arr.at(len - 1)).into(),
+        2 => (*arr.at(len - 1)).into() + (*arr.at(len - 2)).into() * 0x100,
+        _ => (*arr.at(len - 1)).into() + (*arr.at(len - 2)).into() * 0x100 + (*arr.at(len - 3)).into() * 0x10000,
+    };
+
+    u32s_to_u256(compute_sha256_u32_array(word_arr, last, rem).span())
 }
 
 fn u32s_to_u256(arr: Span<u32>) -> u256 {

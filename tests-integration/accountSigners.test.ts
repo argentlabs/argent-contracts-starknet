@@ -11,7 +11,6 @@ import {
   randomSecp256r1KeyPair,
   randomStarknetKeyPair,
   randomWebauthnOwner,
-  randomWebauthnOwner,
 } from "../lib";
 
 interface Account {

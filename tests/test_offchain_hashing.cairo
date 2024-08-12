@@ -15,7 +15,7 @@ use starknet::get_tx_info;
 #[test]
 fn session_precalculated_hash_sepolia() {
     let domain = StarknetDomain {
-        name: 'SessionAccount.session', version: '1', chain_id: get_tx_info().unbox().chain_id, revision: 1,
+        name: 'SessionAccount.session', version: '1', chain_id: get_tx_info().chain_id, revision: 1,
     };
     let domain_hash = domain.get_struct_hash_rev_1();
     assert_eq!(
@@ -34,7 +34,7 @@ fn session_precalculated_hash_sepolia() {
 fn session_precalculated_hash_mainnet() {
     start_cheat_chain_id_global('SN_MAIN');
     let domain = StarknetDomain {
-        name: 'SessionAccount.session', version: '1', chain_id: get_tx_info().unbox().chain_id, revision: 1,
+        name: 'SessionAccount.session', version: '1', chain_id: get_tx_info().chain_id, revision: 1,
     };
 
     let domain_hash = domain.get_struct_hash_rev_1();
@@ -53,7 +53,7 @@ fn session_precalculated_hash_mainnet() {
 #[test]
 fn outside_execution_precalculated_hash_sepolia() {
     let domain = StarknetDomain {
-        name: 'Account.execute_from_outside', version: 2, chain_id: get_tx_info().unbox().chain_id, revision: 1,
+        name: 'Account.execute_from_outside', version: 2, chain_id: get_tx_info().chain_id, revision: 1,
     };
     let domain_hash = domain.get_struct_hash_rev_1();
     assert_eq!(
@@ -72,7 +72,7 @@ fn outside_execution_precalculated_hash_sepolia() {
 fn outside_execution_precalculated_hash_mainnet() {
     start_cheat_chain_id_global('SN_MAIN');
     let domain = StarknetDomain {
-        name: 'Account.execute_from_outside', version: 2, chain_id: get_tx_info().unbox().chain_id, revision: 1,
+        name: 'Account.execute_from_outside', version: 2, chain_id: get_tx_info().chain_id, revision: 1,
     };
     let domain_hash = domain.get_struct_hash_rev_1();
     assert_eq!(

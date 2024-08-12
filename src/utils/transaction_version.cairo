@@ -41,5 +41,5 @@ fn is_estimate_version(tx_version: felt252) -> bool {
 
 #[inline(always)]
 fn is_estimate_transaction() -> bool {
-    get_caller_address().is_zero() && is_estimate_version(get_tx_info().unbox().version)
+    get_caller_address().is_zero() && is_estimate_version(get_tx_info().version)
 }

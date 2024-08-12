@@ -80,7 +80,7 @@ mod MockFutureArgentMultisig {
     #[abi(embed_v0)]
     impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
-            let tx_info = get_tx_info().unbox();
+            let tx_info = get_tx_info();
             self.assert_valid_signatures(tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }

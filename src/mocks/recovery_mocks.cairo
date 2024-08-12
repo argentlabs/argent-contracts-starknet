@@ -52,7 +52,7 @@ mod ExternalRecoveryMock {
     use argent::multisig::multisig::multisig_component;
     use argent::signer_storage::signer_list::signer_list_component;
     use argent::utils::calls::execute_multicall;
-    use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
+    use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
     component!(path: external_recovery_component, storage: escape, event: EscapeEvents);
     #[abi(embed_v0)]
     impl ExternalRecovery = external_recovery_component::ExternalRecoveryImpl<ContractState>;

@@ -1,8 +1,5 @@
-use alexandria_encoding::base64::Base64UrlEncoder;
-use argent::signer::signer_signature::{WebauthnSigner};
-use argent::utils::array_ext::ArrayExtTrait;
-use argent::utils::bytes::{SpanU8TryIntoU256, SpanU8TryIntoFelt252, u256_to_u8s};
-use argent::utils::hashing::{sha256_cairo0};
+use argent::signer::signer_signature::WebauthnSigner;
+use argent::utils::bytes::u256_to_u8s;
 use core::byte_array::ByteArrayTrait;
 use core::sha256::{compute_sha256_byte_array, compute_sha256_u32_array};
 use starknet::secp256_trait::Signature;

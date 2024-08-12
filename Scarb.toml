@@ -14,8 +14,6 @@ build-external-contracts = ["openzeppelin_presets::account::AccountUpgradeable"]
 [dependencies]
 starknet = "2.7.0"
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.27.0" }
-alexandria_math = { git = "https://github.com/gaetbout/quaireaux.git", rev = "bb609a0" }
-alexandria_encoding = { git = "https://github.com/gaetbout/quaireaux.git", rev = "bb609a0" }
 alexandria_merkle_tree = { git = "https://github.com/gaetbout/quaireaux.git", rev="bb609a0" }
 openzeppelin_security = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.15.0" }
 openzeppelin_presets = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.15.0" }

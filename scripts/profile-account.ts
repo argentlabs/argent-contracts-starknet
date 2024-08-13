@@ -1,4 +1,3 @@
-import assert from "assert";
 import { uint256 } from "starknet";
 import {
   Eip191KeyPair,

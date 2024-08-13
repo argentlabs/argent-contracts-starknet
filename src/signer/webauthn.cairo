@@ -1,7 +1,7 @@
 use alexandria_encoding::base64::Base64UrlEncoder;
 use argent::signer::signer_signature::WebauthnSigner;
 use argent::utils::array_ext::ArrayExt;
-use argent::utils::bytes::{u256_to_u8s, u32s_to_u8s, u32s_to_u256};
+use argent::utils::bytes::{u256_to_u8s, u32s_to_u8s, u32s_to_u256, u8s_to_u32s};
 use core::sha256::compute_sha256_u32_array;
 use starknet::secp256_trait::Signature;
 
@@ -61,14 +61,14 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut orig
     } else {
         json.append('}');
     }
-    json
+    json // TODO Could this return valid u32 directly?
 }
 
 fn encode_challenge(hash: felt252) -> Span<u8> {
     let mut bytes = u256_to_u8s(hash.into());
-    bytes.append(0);
+    bytes.append(0); // TODO Check if necessary 
     assert!(bytes.len() == 33, "webauthn/invalid-challenge-length"); // remove '=' signs if this assert fails
-    Base64UrlEncoder::encode(bytes).span()
+    Base64UrlEncoder::encode(bytes).span() // TODO Do we need to encode?
 }
 
 fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> Array<u8> {
@@ -83,7 +83,7 @@ fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> 
 
 fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
-    let (word_arr, last, rem) = fac(client_data_json.span());
+    let (word_arr, last, rem) = u8s_to_u32s(client_data_json.span());
     let mut client_data = u32s_to_u8s(compute_sha256_u32_array(word_arr, last, rem).span());
 
     let mut arr = encode_authenticator_data(signature, signer.rp_id_hash.into());
@@ -91,33 +91,9 @@ fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnS
         arr.append(*byte);
     };
 
-    let (word_arr, last, rem) = fac(arr.span());
+    let (word_arr, last, rem) = u8s_to_u32s(arr.span());
 
     u32s_to_u256(compute_sha256_u32_array(word_arr, last, rem).span())
-}
-
-fn fac(arr: Span<u8>) -> (Array<u32>, u32, u32) {
-    let mut word_arr: Array<u32> = array![];
-    let len = arr.len();
-    let rem = len % 4;
-    let mut index = 0;
-    let rounded_len = len - rem;
-    while index != rounded_len {
-        let word = (*arr.at(index + 3)).into()
-            + (*arr.at(index + 2)).into() * 0x100
-            + (*arr.at(index + 1)).into() * 0x10000
-            + (*arr.at(index)).into() * 0x1000000;
-        word_arr.append(word);
-        index = index + 4;
-    };
-
-    let last = match rem {
-        0 => 0_u32,
-        1 => (*arr.at(len - 1)).into(),
-        2 => (*arr.at(len - 1)).into() + (*arr.at(len - 2)).into() * 0x100,
-        _ => (*arr.at(len - 1)).into() + (*arr.at(len - 2)).into() * 0x100 + (*arr.at(len - 3)).into() * 0x10000,
-    };
-    (word_arr, last, rem)
 }
 
 fn client_data_json_intro() -> Array<u8> {

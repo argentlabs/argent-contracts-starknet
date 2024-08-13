@@ -156,3 +156,27 @@ fn u8s_to_u32s_pad_end(mut bytes: Span<u8>) -> Array<u32> {
     };
     output
 }
+
+// Takes an array of u8s and returns an array of u32s not padding the end
+fn u8s_to_u32s(mut arr: Span<u8>) -> (Array<u32>, u32, u32) {
+    let mut word_arr: Array<u32> = array![];
+    let len = arr.len();
+    let rem = len % 4;
+    let mut index = 0;
+    let rounded_len = len - rem;
+    while index != rounded_len {
+        let word = (*arr.at(index + 3)).into()
+            + (*arr.at(index + 2)).into() * 0x100
+            + (*arr.at(index + 1)).into() * 0x10000
+            + (*arr.at(index)).into() * 0x1000000;
+        word_arr.append(word);
+        index = index + 4;
+    };
+    let last = match rem {
+        0 => 0_u32,
+        1 => (*arr.at(len - 1)).into(),
+        2 => (*arr.at(len - 1)).into() + (*arr.at(len - 2)).into() * 0x100,
+        _ => (*arr.at(len - 1)).into() + (*arr.at(len - 2)).into() * 0x100 + (*arr.at(len - 3)).into() * 0x10000,
+    };
+    (word_arr, last, rem)
+}

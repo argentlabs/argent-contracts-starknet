@@ -11,7 +11,6 @@ use starknet::secp256_trait::Signature;
 /// @param flags From authenticator data
 /// @param sign_count From authenticator data
 /// @param ec_signature The signature as {r, s, y_parity}
-/// @param sha256_implementation The implementation of the sha256 hash
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSignature {
     cross_origin: bool,

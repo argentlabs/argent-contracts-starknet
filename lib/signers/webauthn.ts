@@ -105,7 +105,7 @@ export class WebauthnOwner extends KeyPair {
     const signCount = 0;
     const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([Number(flags), 0, 0, 0, signCount]));
 
-    const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}00`));
+    const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0`));
     const crossOrigin = false;
     const extraJson = ""; // = `,"extraField":"random data"}`;
     const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin, crossOrigin });

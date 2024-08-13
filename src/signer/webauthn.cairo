@@ -106,6 +106,12 @@ fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnS
         arr.append(*byte);
     };
 
+    let (word_arr, last, rem) = fac(arr.span());
+
+    u32s_to_u256(compute_sha256_u32_array(word_arr, last, rem).span())
+}
+
+fn fac(arr: Span<u8>) -> (Array<u32>, u32, u32) {
     let mut word_arr: Array<u32> = array![];
     let len = arr.len();
     let rem = len % 4;
@@ -125,8 +131,7 @@ fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnS
         2 => (*arr.at(len - 1)).into() + (*arr.at(len - 2)).into() * 0x100,
         _ => (*arr.at(len - 1)).into() + (*arr.at(len - 2)).into() * 0x100 + (*arr.at(len - 3)).into() * 0x10000,
     };
-
-    u32s_to_u256(compute_sha256_u32_array(word_arr, last, rem).span())
+    (word_arr, last, rem)
 }
 
 fn u32s_to_u256(arr: Span<u32>) -> u256 {

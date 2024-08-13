@@ -2,14 +2,67 @@
 version = 1
 
 [[package]]
+name = "alexandria_bytes"
+version = "0.1.0"
+source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
+dependencies = [
+ "alexandria_data_structures",
+ "alexandria_math",
+]
+
+[[package]]
+name = "alexandria_data_structures"
+version = "0.2.0"
+source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
+dependencies = [
+ "alexandria_encoding",
+]
+
+[[package]]
+name = "alexandria_encoding"
+version = "0.1.0"
+source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
+dependencies = [
+ "alexandria_bytes",
+ "alexandria_math",
+ "alexandria_numeric",
+]
+
+[[package]]
+name = "alexandria_math"
+version = "0.2.0"
+source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
+dependencies = [
+ "alexandria_data_structures",
+]
+
+[[package]]
 name = "alexandria_merkle_tree"
 version = "0.1.0"
 source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
 
 [[package]]
+name = "alexandria_numeric"
+version = "0.1.0"
+source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
+dependencies = [
+ "alexandria_math",
+ "alexandria_searching",
+]
+
+[[package]]
+name = "alexandria_searching"
+version = "0.1.0"
+source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
+dependencies = [
+ "alexandria_data_structures",
+]
+
+[[package]]
 name = "argent"
 version = "0.1.0"
 dependencies = [
+ "alexandria_encoding",
  "alexandria_merkle_tree",
  "openzeppelin_presets",
  "openzeppelin_security",

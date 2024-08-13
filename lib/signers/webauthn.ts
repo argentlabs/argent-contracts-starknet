@@ -105,27 +105,28 @@ export class WebauthnOwner extends KeyPair {
     const signCount = 0;
     const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([Number(flags), 0, 0, 0, signCount]));
 
-    const challenge = BigInt(`0x${normalizeTransactionHash(transactionHash)}`).toString();
+    const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}00`));
     const crossOrigin = false;
     const extraJson = ""; // = `,"extraField":"random data"}`;
     const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin, crossOrigin });
     const clientDataJson = extraJson ? clientData.replace(/}$/, extraJson) : clientData;
     const clientDataHash = sha256(new TextEncoder().encode(clientDataJson));
+
     const signedHash = sha256(concatBytes(authenticatorData, clientDataHash));
 
     const signature = normalizeSecpR1Signature(secp256r1.sign(signedHash, this.pk));
 
-    console.log(`
-    let transaction_hash = ${transactionHash};
-    let pubkey = ${buf2hex(this.publicKey)};
-    let challenge = ${challenge};
-    let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
-    let signature = WebauthnSignature {
-        cross_origin: ${crossOrigin},
-        client_data_json_outro: ${extraJson ? `${JSON.stringify(extraJson)}.into_bytes()` : "array![]"}.span(),
-        flags: ${flags},
-        sign_count: ${signCount}
-    };`);
+    // console.log(`
+    // let transaction_hash = ${transactionHash};
+    // let pubkey = ${buf2hex(this.publicKey)};
+    // let challenge = ${challenge};
+    // let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
+    // let signature = WebauthnSignature {
+    //     cross_origin: ${crossOrigin},
+    //     client_data_json_outro: ${extraJson ? `${JSON.stringify(extraJson)}.into_bytes()` : "array![]"}.span(),
+    //     flags: ${flags},
+    //     sign_count: ${signCount}
+    // };`);
 
     return {
       cross_origin: crossOrigin,

@@ -1,9 +1,8 @@
+use alexandria_encoding::base64::Base64UrlEncoder;
 use argent::signer::signer_signature::WebauthnSigner;
-use argent::utils::bytes::{u256_to_u8s, u8s_to_u32s_pad_end};
-use core::byte_array::ByteArrayTrait;
-
-use core::debug::PrintTrait;
-use core::sha256::{compute_sha256_byte_array, compute_sha256_u32_array};
+use argent::utils::array_ext::ArrayExt;
+use argent::utils::bytes::{u256_to_u8s, u32s_to_u8s, u32s_to_u256};
+use core::sha256::compute_sha256_u32_array;
 use starknet::secp256_trait::Signature;
 
 /// @notice The webauthn signature that needs to be validated
@@ -45,49 +44,34 @@ fn verify_authenticator_flags(flags: u8) {
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
 /// Encoding spec: https://www.w3.org/TR/webauthn/#clientdatajson-verification
 //  Try origin as ByteArray ==> Cost is marginal to pass origin as ByteArray
-fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut origin: Span<u8>) -> @ByteArray {
-    let mut x: ByteArray = format!("{{\"type\":\"webauthn.get\",\"challenge\":\"{}", hash);
-    x += "\",\"origin\":\"";
-
-    while let Option::Some(byte) = origin.pop_front() {
-        x.append_byte(*byte);
-    };
-    x += "\",\"crossOrigin\":";
+fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut origin: Span<u8>) -> Array<u8> {
+    let mut json = client_data_json_intro();
+    json.append_all(encode_challenge(hash));
+    json.append_all(array!['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
+    json.append_all(origin);
+    json.append_all(array!['"', ',', '"', 'c', 'r', 'o', 's', 's', 'O', 'r', 'i', 'g', 'i', 'n', '"', ':'].span());
     if signature.cross_origin {
-        x += "true";
+        json.append_all(array!['t', 'r', 'u', 'e'].span());
     } else {
-        x += "false";
+        json.append_all(array!['f', 'a', 'l', 's', 'e'].span());
     }
-
     if !signature.client_data_json_outro.is_empty() {
-        assert!(*signature.client_data_json_outro[0] == ',', "webauthn/invalid-json-outro");
-        let mut client_data_json_outro = signature.client_data_json_outro;
-        while let Option::Some(byte) = client_data_json_outro.pop_front() {
-            x.append_byte(*byte);
-        };
-        let mut a = signature.client_data_json_outro;
-        while let Option::Some(byte) = a.pop_front() {
-            x.append_byte(*byte);
-        };
+        assert!(*signature.client_data_json_outro.at(0) == ',', "webauthn/invalid-json-outro");
+        json.append_all(signature.client_data_json_outro);
     } else {
-        x.append_byte('}');
+        json.append('}');
     }
-    // assert!(false, "x: {}", x);
-    @x
+    json
+}
+
+fn encode_challenge(hash: felt252) -> Span<u8> {
+    let mut bytes = u256_to_u8s(hash.into());
+    bytes.append(0);
+    assert!(bytes.len() == 33, "webauthn/invalid-challenge-length"); // remove '=' signs if this assert fails
+    Base64UrlEncoder::encode(bytes).span()
 }
 
 fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> Array<u8> {
-    // let mut bytes = u256_to_u8s(rp_id_hash);
-    // let mut authenticator_data = "";
-    // while let Option::Some(byte) = bytes.pop_front() {
-    //     authenticator_data.append_byte(byte);
-    // };
-    // authenticator_data.append_byte(signature.flags);
-    // authenticator_data.append_byte(0);
-    // authenticator_data.append_byte(0);
-    // authenticator_data.append_byte(0);
-    // authenticator_data.append_byte(signature.sign_count.try_into().unwrap());
-    // authenticator_data
     let mut bytes = u256_to_u8s(rp_id_hash);
     bytes.append(signature.flags);
     bytes.append(0);
@@ -99,7 +83,8 @@ fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> 
 
 fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
-    let mut client_data = u32s_to_u8s(compute_sha256_byte_array(client_data_json).span());
+    let (word_arr, last, rem) = fac(client_data_json.span());
+    let mut client_data = u32s_to_u8s(compute_sha256_u32_array(word_arr, last, rem).span());
 
     let mut arr = encode_authenticator_data(signature, signer.rp_id_hash.into());
     while let Option::Some(byte) = client_data.pop_front() {
@@ -125,6 +110,7 @@ fn fac(arr: Span<u8>) -> (Array<u32>, u32, u32) {
         word_arr.append(word);
         index = index + 4;
     };
+
     let last = match rem {
         0 => 0_u32,
         1 => (*arr.at(len - 1)).into(),
@@ -134,32 +120,43 @@ fn fac(arr: Span<u8>) -> (Array<u32>, u32, u32) {
     (word_arr, last, rem)
 }
 
-fn u32s_to_u256(arr: Span<u32>) -> u256 {
-    assert!(arr.len() == 8, "u32s_to_u2562: input must be 8 elements long");
-    let low: u128 = (*arr[7]).into()
-        + (*arr[6]).into() * 0x1_0000_0000
-        + (*arr[5]).into() * 0x1_0000_0000_0000_0000
-        + (*arr[4]).into() * 0x1_0000_0000_0000_0000_0000_0000;
-    let low = low.try_into().expect('u32s_to_u2562:overflow-low');
-    let high = (*arr[3]).into()
-        + (*arr[2]).into() * 0x1_0000_0000
-        + (*arr[1]).into() * 0x1_0000_0000_0000_0000
-        + (*arr[0]).into() * 0x1_0000_0000_0000_0000_0000_0000;
-    let high = high.try_into().expect('u32s_to_u2562:overflow-high');
-    u256 { high, low }
-}
-
-fn u32s_to_u8s(mut words: Span<u32>) -> Span<u8> {
-    let mut output = array![];
-    while let Option::Some(word) = words.pop_front() {
-        let word: u32 = *word;
-        let (rest, byte_4) = integer::u32_safe_divmod(word, 0x100);
-        let (rest, byte_3) = integer::u32_safe_divmod(rest, 0x100);
-        let (byte_1, byte_2) = integer::u32_safe_divmod(rest, 0x100);
-        output.append(byte_1.try_into().unwrap());
-        output.append(byte_2.try_into().unwrap());
-        output.append(byte_3.try_into().unwrap());
-        output.append(byte_4.try_into().unwrap());
-    };
-    output.span()
+fn client_data_json_intro() -> Array<u8> {
+    array![
+        '{',
+        '"',
+        't',
+        'y',
+        'p',
+        'e',
+        '"',
+        ':',
+        '"',
+        'w',
+        'e',
+        'b',
+        'a',
+        'u',
+        't',
+        'h',
+        'n',
+        '.',
+        'g',
+        'e',
+        't',
+        '"',
+        ',',
+        '"',
+        'c',
+        'h',
+        'a',
+        'l',
+        'l',
+        'e',
+        'n',
+        'g',
+        'e',
+        '"',
+        ':',
+        '"'
+    ]
 }

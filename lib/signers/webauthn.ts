@@ -105,7 +105,9 @@ export class WebauthnOwner extends KeyPair {
     const signCount = 0;
     const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([Number(flags), 0, 0, 0, signCount]));
 
-    const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0`));
+    // TODO fix this '=' also, notice that challenge NEEDS to be 32 bytes lengths, but a felt (transactionHash) is 31 bytes
+    let challenge = buf2base64url(hex2buf(`0x${normalizeTransactionHash(transactionHash)}`));
+    challenge += "=";
     const crossOrigin = false;
     const extraJson = ""; // = `,"extraField":"random data"}`;
     const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin, crossOrigin });

@@ -46,13 +46,13 @@ fn verify_authenticator_flags(flags: u8) {
 fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut origin: Span<u8>) -> Array<u8> {
     let mut json = client_data_json_intro();
     json.append_all(encode_challenge(hash));
-    json.append_all(array!['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
+    json.append_all(['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
     json.append_all(origin);
-    json.append_all(array!['"', ',', '"', 'c', 'r', 'o', 's', 's', 'O', 'r', 'i', 'g', 'i', 'n', '"', ':'].span());
+    json.append_all(['"', ',', '"', 'c', 'r', 'o', 's', 's', 'O', 'r', 'i', 'g', 'i', 'n', '"', ':'].span());
     if signature.cross_origin {
-        json.append_all(array!['t', 'r', 'u', 'e'].span());
+        json.append_all(['t', 'r', 'u', 'e'].span());
     } else {
-        json.append_all(array!['f', 'a', 'l', 's', 'e'].span());
+        json.append_all(['f', 'a', 'l', 's', 'e'].span());
     }
     if !signature.client_data_json_outro.is_empty() {
         assert!(*signature.client_data_json_outro.at(0) == ',', "webauthn/invalid-json-outro");

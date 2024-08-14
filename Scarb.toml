@@ -9,13 +9,12 @@ casm = true
 allowed-libfuncs-list.name = "audited"
 build-external-contracts = ["openzeppelin_presets::account::AccountUpgradeable"]
 
-# TODO Revert once alexandria is merged
 # Use scarb cargo crate scarb.xyz
 [dependencies]
 starknet = "2.7.0"
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.27.0" }
-alexandria_encoding = { git = "https://github.com/gaetbout/quaireaux.git", rev = "bb609a0" }
-alexandria_merkle_tree = { git = "https://github.com/gaetbout/quaireaux.git", rev="bb609a0" }
+alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b0805" }
+alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev="e1b0805" }
 openzeppelin_security = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.15.0" }
 openzeppelin_presets = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.15.0" }
 

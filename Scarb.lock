@@ -4,7 +4,7 @@ version = 1
 [[package]]
 name = "alexandria_bytes"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=e1b0805#e1b080577aaa6889116fc8be5dde72b2fd21e397"
 dependencies = [
  "alexandria_data_structures",
  "alexandria_math",
@@ -13,7 +13,7 @@ dependencies = [
 [[package]]
 name = "alexandria_data_structures"
 version = "0.2.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=e1b0805#e1b080577aaa6889116fc8be5dde72b2fd21e397"
 dependencies = [
  "alexandria_encoding",
 ]
@@ -21,7 +21,7 @@ dependencies = [
 [[package]]
 name = "alexandria_encoding"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=e1b0805#e1b080577aaa6889116fc8be5dde72b2fd21e397"
 dependencies = [
  "alexandria_bytes",
  "alexandria_math",
@@ -31,7 +31,7 @@ dependencies = [
 [[package]]
 name = "alexandria_math"
 version = "0.2.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=e1b0805#e1b080577aaa6889116fc8be5dde72b2fd21e397"
 dependencies = [
  "alexandria_data_structures",
 ]
@@ -39,12 +39,12 @@ dependencies = [
 [[package]]
 name = "alexandria_merkle_tree"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=e1b0805#e1b080577aaa6889116fc8be5dde72b2fd21e397"
 
 [[package]]
 name = "alexandria_numeric"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=e1b0805#e1b080577aaa6889116fc8be5dde72b2fd21e397"
 dependencies = [
  "alexandria_math",
  "alexandria_searching",
@@ -53,7 +53,7 @@ dependencies = [
 [[package]]
 name = "alexandria_searching"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=bb609a0#bb609a0b904155860c921e43a272e922824744ae"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=e1b0805#e1b080577aaa6889116fc8be5dde72b2fd21e397"
 dependencies = [
  "alexandria_data_structures",
 ]

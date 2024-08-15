@@ -12,7 +12,8 @@ fn new_webauthn_signer(origin: ByteArray, rp_id_hash: u256, pubkey: u256) -> Web
 
 fn localhost_rp() -> (ByteArray, u256) {
     let origin = "http://localhost:5173";
-    let rp_id_hash = 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763; // sha256("localhost")
+    let rp_id_hash =
+        0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763; // sha256("localhost")
     (origin, rp_id_hash)
 }
 
@@ -23,6 +24,7 @@ fn valid_signer() -> (felt252, WebauthnSigner, WebauthnSignature) {
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
         cross_origin: Option::Some(false),
+        top_origin: array![].span(),
         client_data_json_outro: array![].span(),
         flags: 0b00000101,
         sign_count: 0,
@@ -53,6 +55,7 @@ fn test_is_valid_webauthn_signature_with_extra_json() {
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
         cross_origin: Option::Some(true),
+        top_origin: array![].span(),
         client_data_json_outro: ",\"extraField\":\"random data\"}".into_bytes().span(),
         flags: 0b00010101,
         sign_count: 42,

@@ -19,7 +19,7 @@ use starknet::secp256_trait::Signature;
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSignature {
     cross_origin: Option<bool>,
-    top_origin: Span<u8>,
+    top_origin: Option<Span<u8>>,
     client_data_json_outro: Span<u8>,
     flags: u8,
     sign_count: u32,
@@ -64,12 +64,12 @@ fn encode_client_data_json(
     json.append_all(array!['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
     json.append_all(origin);
     json.append('"');
-    if signature.top_origin.len() > 0 {
+    if let Option::Some(top_origin) = signature.top_origin {
         json
             .append_all(
                 array![',', '"', 't', 'o', 'p', 'O', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span()
             );
-        json.append_all(signature.top_origin);
+        json.append_all(top_origin);
         json.append('"');
     }
     if let Option::Some(cross_origin) = signature.cross_origin {

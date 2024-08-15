@@ -24,7 +24,7 @@ fn valid_signer() -> (felt252, WebauthnSigner, WebauthnSignature) {
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
         cross_origin: Option::Some(false),
-        top_origin: array![].span(),
+        top_origin: Option::None,
         client_data_json_outro: array![].span(),
         flags: 0b00000101,
         sign_count: 0,
@@ -55,7 +55,7 @@ fn test_is_valid_webauthn_signature_with_extra_json() {
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
         cross_origin: Option::Some(true),
-        top_origin: array![].span(),
+        top_origin: Option::Some(array![].span()),
         client_data_json_outro: ",\"extraField\":\"random data\"}".into_bytes().span(),
         flags: 0b00010101,
         sign_count: 42,

@@ -1,19 +1,5 @@
 import { uint256 } from "starknet";
-import {
-  Eip191KeyPair,
-  EthKeyPair,
-  LegacyArgentSigner,
-  LegacyStarknetKeyPair,
-  Secp256r1KeyPair,
-  StarknetKeyPair,
-  WebauthnOwner,
-  deployAccount,
-  deployAccountWithoutGuardian,
-  deployOldAccount,
-  deployOpenZeppelinAccount,
-  manager,
-  setupSession,
-} from "../lib";
+import { StarknetKeyPair, WebauthnOwner, deployAccount, manager } from "../lib";
 import { newProfiler } from "../lib/gas";
 
 const profiler = newProfiler(manager);

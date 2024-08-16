@@ -143,7 +143,7 @@ fn u32s_to_u8s(mut words: Span<u32>) -> Span<u8> {
     };
     output.span()
 }
-
+// TODO Can be removed?
 // Takes an array of u8s and returns an array of u32s, padding the end with 0s if necessary
 fn u8s_to_u32s_pad_end(mut bytes: Span<u8>) -> Array<u32> {
     let mut output = array![];

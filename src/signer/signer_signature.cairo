@@ -336,8 +336,7 @@ fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, signature:
     // Goes from  │ bitwise │ ec_op │ ecdsa │ keccak │ pedersen │ poseidon │ range_check │ steps  │
     // With r1    │  3413   │   3   │   0   │   0    │    26    │    18    │    1856     │ 25946  │
     // Without r1 │  5643   │   3   │   0   │   0    │    26    │    18    │    30364    │ 283349 │
-    is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, signature.ec_signature);
-    true
+    is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, signature.ec_signature)
 }
 
 trait SignerSpanTrait {

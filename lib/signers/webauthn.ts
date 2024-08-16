@@ -144,7 +144,6 @@ export class WebauthnOwner extends KeyPair {
   }
 }
 
-// We have 2 fn called `sha256`
 function sha256(message: BinaryLike) {
   return createHash("sha256").update(message).digest();
 }

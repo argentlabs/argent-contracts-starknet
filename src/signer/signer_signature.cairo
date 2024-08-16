@@ -297,17 +297,20 @@ impl U256TryIntoSignerType of TryInto<u256, SignerType> {
 }
 
 #[inline(always)]
+#[must_use]
 fn is_valid_starknet_signature(hash: felt252, signer: StarknetSigner, signature: StarknetSignature) -> bool {
     check_ecdsa_signature(hash, signer.pubkey.into(), signature.r, signature.s)
 }
 
 #[inline(always)]
+#[must_use]
 fn is_valid_secp256k1_signature(hash: u256, pubkey_hash: EthAddress, signature: Secp256Signature) -> bool {
     assert(signature.s <= SECP_256_K1_HALF, 'argent/malleable-signature');
     is_eth_signature_valid(hash, signature, pubkey_hash).is_ok()
 }
 
 #[inline(always)]
+#[must_use]
 fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: Secp256Signature) -> bool {
     // `recover_public_key` accepts invalid values for r and s, so we need to check them first
     assert(is_signature_entry_valid::<Secp256r1Point>(signature.r), 'argent/invalid-r-value');
@@ -319,6 +322,7 @@ fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: 
 }
 
 #[inline(always)]
+#[must_use]
 fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> bool {
     verify_authenticator_flags(signature.flags);
 
@@ -329,7 +333,11 @@ fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, signature:
     // https://github.com/starkware-libs/blockifier/blob/d12978e60619a303385cc5b20b262a04a130e395/crates/blockifier/resources/versioned_constants.json#L29
     // One secp256r1_mul_gas_cost is 13.961 range checks and we do 2 per 'recover_public_key' call
     // Then bitwise is all from sha256 syscalls applications (1115 * 5) = 5575 (5 is the number of blocks (# of bytes))
-    is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, signature.ec_signature)
+    // Goes from  │ bitwise │ ec_op │ ecdsa │ keccak │ pedersen │ poseidon │ range_check │ steps  │
+    // With r1    │  3413   │   3   │   0   │   0    │    26    │    18    │    1856     │ 25946  │
+    // Without r1 │  5643   │   3   │   0   │   0    │    26    │    18    │    30364    │ 283349 │
+    is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, signature.ec_signature);
+    true
 }
 
 trait SignerSpanTrait {

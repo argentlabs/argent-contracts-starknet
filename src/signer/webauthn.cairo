@@ -60,12 +60,12 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut orig
     } else {
         json.append('}');
     }
-    json // TODO Could this return valid u32 directly?
+    json
 }
 
 fn encode_challenge(hash: felt252) -> Span<u8> {
     let mut bytes = u256_to_u8s(hash.into());
-    assert!(bytes.len() == 32, "webauthn/invalid-challenge-length"); // remove '=' signs if this assert fails
+    assert!(bytes.len() == 32, "webauthn/invalid-challenge-length");
     Base64UrlEncoder::encode(bytes).span()
 }
 

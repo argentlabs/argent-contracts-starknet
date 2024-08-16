@@ -299,4 +299,3 @@ export function sortByGuid(keys: KeyPair[]) {
 }
 
 export const randomStarknetKeyPair = () => new StarknetKeyPair();
-export const randomStarknetKeyPairs = (length: number) => Array.from({ length }, randomStarknetKeyPair);

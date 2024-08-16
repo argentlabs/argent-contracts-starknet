@@ -101,13 +101,11 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public async signHash(transactionHash: string): Promise<WebauthnSignature> {
-    const flags = "0b00000101"; // present and verified
+    const flags = Number("0b00000101"); // present and verified
     const signCount = 0;
-    const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([Number(flags), 0, 0, 0, signCount]));
+    const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([flags, 0, 0, 0, signCount]));
 
-    // TODO fix this '=' also, notice that challenge NEEDS to be 32 bytes lengths, but a felt (transactionHash) is 31 bytes
-    let challenge = buf2base64url(hex2buf(`0x${normalizeTransactionHash(transactionHash)}`));
-    challenge += "=";
+    const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0`));
     const crossOrigin = false;
     const extraJson = ""; // = `,"extraField":"random data"}`;
     const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin, crossOrigin });
@@ -133,7 +131,7 @@ export class WebauthnOwner extends KeyPair {
     return {
       cross_origin: crossOrigin,
       client_data_json_outro: CallData.compile(toCharArray(extraJson)),
-      flags: Number(flags),
+      flags,
       sign_count: signCount,
       ec_signature: {
         r: uint256.bnToUint256(signature.r),

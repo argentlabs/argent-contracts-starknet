@@ -60,7 +60,6 @@ interface WebauthnSignature {
   flags: number;
   sign_count: number;
   ec_signature: { r: Uint256; s: Uint256; y_parity: boolean };
-  sha256_implementation: CairoCustomEnum;
 }
 
 export class WebauthnOwner extends KeyPair {
@@ -118,12 +117,18 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    const challenge = hex2buf(`${normalizeTransactionHash(messageHash)}00`);
+    const webauthnSigner = this.signer.variant.Webauthn;
+    const webauthnSignature = await this.signHash(messageHash);
+    return CallData.compile([signerTypeToCustomEnum(SignerType.Webauthn, { webauthnSigner, webauthnSignature })]);
+  }
+
+  public async signHash(messageHash: string): Promise<WebauthnSignature> {
+    const challenge = hex2buf(`${normalizeTransactionHash(messageHash)}0`);
     const assertionResponse = await this.requestSignature(this.attestation, challenge);
     const authenticatorData = new Uint8Array(assertionResponse.authenticatorData);
     const clientDataJson = new Uint8Array(assertionResponse.clientDataJSON);
-    const flags = authenticatorData[32];
-    const signCount = Number(BigInt(buf2hex(authenticatorData.slice(33, 37))));
+    const flags = Number("0b00000101"); // present and verified
+    const signCount = 0;
     console.log("clientDataJson", new TextDecoder().decode(clientDataJson));
     console.log("flags", flags);
     console.log("signCount", signCount);
@@ -145,7 +150,7 @@ export class WebauthnOwner extends KeyPair {
 
     const signature: WebauthnSignature = {
       cross_origin: this.crossOrigin,
-      client_data_json_outro: Array.from(clientDataJsonOutro),
+      client_data_json_outro: CallData.compile(Array.from(clientDataJsonOutro)),
       flags,
       sign_count: signCount,
       ec_signature: {
@@ -153,16 +158,10 @@ export class WebauthnOwner extends KeyPair {
         s: uint256.bnToUint256(s),
         y_parity: yParity,
       },
-      sha256_implementation: new CairoCustomEnum({
-        Cairo0: {},
-        Cairo1: undefined,
-      }),
     };
 
     console.log("WebauthnOwner signed, signature is:", signature);
-    return CallData.compile([
-      signerTypeToCustomEnum(SignerType.Webauthn, { signer: this.signer.variant.Webauthn, signature }),
-    ]);
+    return signature;
   }
 }
 

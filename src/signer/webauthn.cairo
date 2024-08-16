@@ -66,6 +66,7 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut orig
 fn encode_challenge(hash: felt252) -> Span<u8> {
     let mut bytes = u256_to_u8s(hash.into());
     assert!(bytes.len() == 32, "webauthn/invalid-challenge-length");
+    bytes.append(0);
     Base64UrlEncoder::encode(bytes).span()
 }
 

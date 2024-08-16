@@ -18,7 +18,7 @@
     "@peculiar/asn1-schema": "^2.3.6",
     "elliptic": "^6.5.4",
     "js-sha256": "^0.11.0",
-    "starknet": "6.5.0"
+    "starknet": "6.11.0"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^2.0.0",

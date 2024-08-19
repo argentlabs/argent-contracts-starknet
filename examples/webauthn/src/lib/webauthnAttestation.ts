@@ -20,9 +20,8 @@ export const createWebauthnAttestation = async (
       rp: { id: rpId, name: "Argent" },
       user: { id, name: email, displayName: email },
       challenge,
-      pubKeyCredParams: [
-        { type: "public-key", alg: -7 }, // -7 means secp256r1 with SHA-256 (ES256). RS256 not supported on purpose.
-      ],
+      // -7 means secp256r1 with SHA-256 (ES256). RS256 not supported on purpose.
+      pubKeyCredParams: [{ type: "public-key", alg: -7 }],
       authenticatorSelection: {
         authenticatorAttachment: "platform",
         residentKey: "preferred",

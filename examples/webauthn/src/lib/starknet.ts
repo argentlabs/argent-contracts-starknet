@@ -198,7 +198,7 @@ export async function feeToken(provider: ProviderType): Promise<{ symbol: string
 }
 
 export async function mintEth(address: string, provider: ProviderType) {
-  await handlePost(provider, "mint", { address, amount: 1e18, lite: true });
+  await handlePost(provider, "mint", { address, amount: 1e18 });
 }
 
 async function handleGet(provider: any, path: string, args?: string) {

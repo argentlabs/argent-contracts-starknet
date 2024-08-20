@@ -6,6 +6,8 @@ import {
   ArraySignatureType,
   BigNumberish,
   CairoCustomEnum,
+  CairoOption,
+  CairoOptionVariant,
   CallData,
   Uint256,
   hash,
@@ -55,7 +57,7 @@ export function normalizeSecpSignature(
 const toCharArray = (value: string) => CallData.compile(value.split("").map(shortString.encodeShortString));
 
 interface WebauthnSignature {
-  cross_origin: boolean;
+  cross_origin: CairoOption<boolean>;
   client_data_json_outro: BigNumberish[];
   flags: number;
   sign_count: number;
@@ -127,15 +129,21 @@ export class WebauthnOwner extends KeyPair {
     const assertionResponse = await this.requestSignature(this.attestation, challenge);
     const authenticatorData = new Uint8Array(assertionResponse.authenticatorData);
     const clientDataJson = new Uint8Array(assertionResponse.clientDataJSON);
-    const flags = Number("0b00000101"); // present and verified
     const signCount = 0;
     console.log("clientDataJson", new TextDecoder().decode(clientDataJson));
-    console.log("flags", flags);
     console.log("signCount", signCount);
 
-    const crossOriginText = new TextEncoder().encode(`"crossOrigin":${this.crossOrigin}`);
-    const crossOriginIndex = findInArray(crossOriginText, clientDataJson);
-    let clientDataJsonOutro = clientDataJson.slice(crossOriginIndex + crossOriginText.length);
+    let crossOriginText = new TextEncoder().encode(`"crossOrigin":${this.crossOrigin}`);
+    let hasCrossOrigin = true;
+    let jsonOutroStartIndex = findInArray(crossOriginText, clientDataJson);
+    // Firefox doesn't use this. It doesn't even is in the clientDataJson
+    if (jsonOutroStartIndex === -1) {
+      crossOriginText = new TextEncoder().encode(`"origin":"${this.attestation.origin}"`);
+      jsonOutroStartIndex = findInArray(crossOriginText, clientDataJson);
+      hasCrossOrigin = false;
+    }
+
+    let clientDataJsonOutro = clientDataJson.slice(jsonOutroStartIndex + crossOriginText.length);
     if (clientDataJsonOutro.length == 1) {
       clientDataJsonOutro = new Uint8Array();
     }
@@ -143,13 +151,24 @@ export class WebauthnOwner extends KeyPair {
     let { r, s } = parseASN1Signature(assertionResponse.signature);
     let yParity = getYParity(getMessageHash(authenticatorData, clientDataJson), this.publicKey, r, s);
 
+    console.log("clientDataJson");
+    console.log(clientDataJson);
+    console.log("authenticatorData");
+    console.log(authenticatorData);
+    console.log("getMessageHash");
+    console.log(getMessageHash(authenticatorData, clientDataJson));
+    // Flags is the fifth byte from the end of the authenticatorData
+    // const flags = Number("0b00000101"); // present and verified
+    const flags = authenticatorData[authenticatorData.length - 5];
     const normalizedSignature = normalizeSecpR1Signature({ r, s, recovery: yParity ? 1 : 0 });
     r = normalizedSignature.r;
     s = normalizedSignature.s;
     yParity = normalizedSignature.yParity;
 
     const signature: WebauthnSignature = {
-      cross_origin: this.crossOrigin,
+      cross_origin: hasCrossOrigin
+        ? new CairoOption(CairoOptionVariant.Some, this.crossOrigin)
+        : new CairoOption(CairoOptionVariant.None),
       client_data_json_outro: CallData.compile(Array.from(clientDataJsonOutro)),
       flags,
       sign_count: signCount,

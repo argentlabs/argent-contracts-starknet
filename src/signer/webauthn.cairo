@@ -13,7 +13,7 @@ use starknet::secp256_trait::Signature;
 /// @param ec_signature The signature as {r, s, y_parity}
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSignature {
-    cross_origin: bool,
+    cross_origin: Option<bool>,
     client_data_json_outro: Span<u8>,
     flags: u8,
     sign_count: u32,
@@ -48,12 +48,15 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut orig
     json.append_all(encode_challenge(hash));
     json.append_all(['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
     json.append_all(origin);
-    json.append_all(['"', ',', '"', 'c', 'r', 'o', 's', 's', 'O', 'r', 'i', 'g', 'i', 'n', '"', ':'].span());
-    if signature.cross_origin {
-        json.append_all(['t', 'r', 'u', 'e'].span());
-    } else {
-        json.append_all(['f', 'a', 'l', 's', 'e'].span());
-    }
+    json.append('"');
+    if let Option::Some(cross_origin) = signature.cross_origin {
+        json.append_all([',', '"', 'c', 'r', 'o', 's', 's', 'O', 'r', 'i', 'g', 'i', 'n', '"', ':'].span());
+        if cross_origin {
+            json.append_all(['t', 'r', 'u', 'e'].span());
+        } else {
+            json.append_all(['f', 'a', 'l', 's', 'e'].span());
+        }
+    };
     if !signature.client_data_json_outro.is_empty() {
         assert!(*signature.client_data_json_outro.at(0) == ',', "webauthn/invalid-json-outro");
         json.append_all(signature.client_data_json_outro);
@@ -92,6 +95,14 @@ fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnS
 
     let (word_arr, last, rem) = u8s_to_u32s(arr.span());
 
+    // assert!(
+    //     false,
+    //     "client_data_json: {:?} _________________ encode_authenticator_data: {:?} _________________  arr: {:?}
+    //     _________________ sha: {:?} _________________ ", client_data_json.span(),
+    //     encode_authenticator_data(signature, signer.rp_id_hash.into()),
+    //     arr.span(),
+    //     u32s_to_u8s(compute_sha256_u32_array(word_arr, last, rem).span())
+    // );
     u32s_to_u256(compute_sha256_u32_array(word_arr, last, rem).span())
 }
 

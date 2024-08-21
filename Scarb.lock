@@ -4,7 +4,7 @@ version = 1
 [[package]]
 name = "alexandria_bytes"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=846621a#846621a1b731590cf316f9bec20e75cfe39b88a4"
+source = "git+https://github.com/piniom/quaireaux.git?rev=b51ccc3#b51ccc3045b87d521ce4ec0ff28775c3a94468c4"
 dependencies = [
  "alexandria_data_structures",
  "alexandria_math",
@@ -13,7 +13,7 @@ dependencies = [
 [[package]]
 name = "alexandria_data_structures"
 version = "0.2.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=846621a#846621a1b731590cf316f9bec20e75cfe39b88a4"
+source = "git+https://github.com/piniom/quaireaux.git?rev=b51ccc3#b51ccc3045b87d521ce4ec0ff28775c3a94468c4"
 dependencies = [
  "alexandria_encoding",
 ]
@@ -21,7 +21,7 @@ dependencies = [
 [[package]]
 name = "alexandria_encoding"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=846621a#846621a1b731590cf316f9bec20e75cfe39b88a4"
+source = "git+https://github.com/piniom/quaireaux.git?rev=b51ccc3#b51ccc3045b87d521ce4ec0ff28775c3a94468c4"
 dependencies = [
  "alexandria_bytes",
  "alexandria_math",
@@ -31,7 +31,7 @@ dependencies = [
 [[package]]
 name = "alexandria_math"
 version = "0.2.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=846621a#846621a1b731590cf316f9bec20e75cfe39b88a4"
+source = "git+https://github.com/piniom/quaireaux.git?rev=b51ccc3#b51ccc3045b87d521ce4ec0ff28775c3a94468c4"
 dependencies = [
  "alexandria_data_structures",
 ]
@@ -39,12 +39,12 @@ dependencies = [
 [[package]]
 name = "alexandria_merkle_tree"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=846621a#846621a1b731590cf316f9bec20e75cfe39b88a4"
+source = "git+https://github.com/piniom/quaireaux.git?rev=b51ccc3#b51ccc3045b87d521ce4ec0ff28775c3a94468c4"
 
 [[package]]
 name = "alexandria_numeric"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=846621a#846621a1b731590cf316f9bec20e75cfe39b88a4"
+source = "git+https://github.com/piniom/quaireaux.git?rev=b51ccc3#b51ccc3045b87d521ce4ec0ff28775c3a94468c4"
 dependencies = [
  "alexandria_math",
  "alexandria_searching",
@@ -53,7 +53,7 @@ dependencies = [
 [[package]]
 name = "alexandria_searching"
 version = "0.1.0"
-source = "git+https://github.com/gaetbout/quaireaux.git?rev=846621a#846621a1b731590cf316f9bec20e75cfe39b88a4"
+source = "git+https://github.com/piniom/quaireaux.git?rev=b51ccc3#b51ccc3045b87d521ce4ec0ff28775c3a94468c4"
 dependencies = [
  "alexandria_data_structures",
 ]
@@ -62,6 +62,7 @@ dependencies = [
 name = "argent"
 version = "0.1.0"
 dependencies = [
+ "alexandria_data_structures",
  "alexandria_encoding",
  "alexandria_math",
  "alexandria_merkle_tree",

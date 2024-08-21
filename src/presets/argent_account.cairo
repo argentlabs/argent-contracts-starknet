@@ -40,10 +40,10 @@ mod ArgentAccount {
     const VERSION_COMPAT: felt252 = '0.4.0';
 
     /// Time it takes for the escape to become ready after being triggered. Also the escape will be ready and can be completed for this duration
-    const DEFAULT_ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
+    const DEFAULT_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
     /// Limit to one escape every X hours
-    const TIME_BETWEEN_TWO_ESCAPES: u64 = consteval_int!(12 * 60 * 60); // 12 hours;
+    const TIME_BETWEEN_TWO_ESCAPES: u64 = 12 * 60 * 60; // 12 hours;
 
     /// Limits fee in escapes
     const MAX_ESCAPE_MAX_FEE_ETH: u128 = 5000000000000000; // 0.005 ETH
@@ -51,7 +51,7 @@ mod ArgentAccount {
     const MAX_ESCAPE_TIP_STRK: u128 = 1_000000000000000000; // 1 STRK
 
     /// Minimum time for the escape security period
-    const MIN_ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(60 * 10); // 10 minutes;
+    const MIN_ESCAPE_SECURITY_PERIOD: u64 = 60 * 10; // 10 minutes;
 
     // session 
     component!(path: session_component, storage: session, event: SessionableEvents);

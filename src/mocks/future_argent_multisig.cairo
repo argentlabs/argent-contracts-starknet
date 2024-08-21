@@ -111,7 +111,7 @@ mod MockFutureArgentMultisig {
             self: @ContractState,
             class_hash: felt252,
             contract_address_salt: felt252,
-            threshold: usize,
+            new_threshold: usize,
             signers: Array<Signer>
         ) -> felt252 {
             panic_with_felt252('argent/deploy-not-available')

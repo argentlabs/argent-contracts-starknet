@@ -25,13 +25,6 @@ struct WebauthnSignature {
     flags: u8,
     sign_count: u32,
     ec_signature: Signature,
-    sha256_implementation: Sha256Implementation,
-}
-
-#[derive(Drop, Copy, Serde, PartialEq)]
-enum Sha256Implementation {
-    Cairo0,
-    Cairo1,
 }
 
 /// Example data:
@@ -62,7 +55,7 @@ fn encode_client_data_json(
     hash: felt252, signature: WebauthnSignature, origin: Span<u8>
 ) -> Span<u8> {
     let mut json = client_data_json_intro();
-    json.append_all(encode_challenge(hash, signature.sha256_implementation));
+    json.append_all(encode_challenge(hash));
     json.append_all(array!['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
     json.append_all(origin);
     json.append('"');
@@ -95,17 +88,14 @@ fn encode_client_data_json(
     json.span()
 }
 
-fn encode_challenge(hash: felt252, sha256_implementation: Sha256Implementation) -> Span<u8> {
+fn encode_challenge(hash: felt252) -> Span<u8> {
     let mut bytes = u256_to_u8s(hash.into());
-    let last_byte = match sha256_implementation {
-        Sha256Implementation::Cairo0 => 0,
-        Sha256Implementation::Cairo1 => 1,
-    };
-    bytes.append(last_byte);
-    assert!(
-        bytes.len() == 33, "webauthn/invalid-challenge-length"
-    ); // remove '=' signs if this assert fails
-    Base64UrlEncoder::encode(bytes).span()
+    assert!(bytes.len() == 32, "webauthn/invalid-challenge-length");
+    let result = Base64UrlEncoder::encode(bytes).span();
+    // The trailing '=' are ommited as specified in:
+    // https://www.w3.org/TR/webauthn-2/#sctn-dependencies
+    assert!(result.len() == 44, "webauthn/invalid-challenge-encoding");
+    result.slice(0, 43)
 }
 
 fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> ByteArray {
@@ -115,21 +105,12 @@ fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> 
     bytes
 }
 
-fn get_webauthn_hash_cairo1(
-    hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature
-) -> u256 {
+fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
     let client_data_hash = compute_sha256_byte_array(@client_data_json.into_byte_array()).span();
     let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
     message.append(@u32s_to_byte_array(client_data_hash));
     u32s_typed_to_u256(@compute_sha256_byte_array(@message))
-}
-
-fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
-    match signature.sha256_implementation {
-        Sha256Implementation::Cairo0 => panic!("webauthn/unsupported-cairo0-sha256"),
-        Sha256Implementation::Cairo1 => get_webauthn_hash_cairo1(hash, signer, signature),
-    }
 }
 
 fn client_data_json_intro() -> Array<u8> {

@@ -2,10 +2,11 @@
 mod signer_list_component {
     use argent::signer::signer_signature::Signer;
     use argent::signer_storage::interface::ISignerList;
+    use starknet::storage::Map;
 
     #[storage]
     struct Storage {
-        signer_list: LegacyMap<felt252, felt252>,
+        signer_list: Map<felt252, felt252>,
     }
 
     #[event]

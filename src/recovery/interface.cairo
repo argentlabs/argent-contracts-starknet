@@ -57,7 +57,7 @@ enum EscapeStatus {
 /// @param ready_at when the escape can be completed
 /// @param target_signers the signers to escape
 /// @param new_signers the new signers to be set after the security period
-#[derive(Drop, Serde, starknet::StorePacking)]
+#[derive(Drop, Serde)]
 struct Escape {
     ready_at: u64,
     target_signers: Array<felt252>,
@@ -68,7 +68,7 @@ struct Escape {
 /// @param is_enabled The escape is enabled
 /// @param security_period Time it takes for the escape to become ready after being triggered
 /// @param expiry_period The escape will be ready and can be completed for this duration
-#[derive(Drop, Copy, Serde, starknet::StorePacking)]
+#[derive(Drop, Copy, Serde)]
 struct EscapeEnabled {
     is_enabled: bool,
     security_period: u64,
@@ -216,12 +216,5 @@ impl U256TryIntoLegacyEscapeType of TryInto<u256, LegacyEscapeType> {
         } else {
             Option::None
         }
-    }
-}
-
-impl OptionDefault<T> of Default<Option<T>> {
-    #[inline(always)]
-    fn default() -> Option<T> {
-        Option::None
     }
 }

@@ -5,6 +5,8 @@ import {
   ArraySignatureType,
   BigNumberish,
   CairoCustomEnum,
+  CairoOption,
+  CairoOptionVariant,
   CallData,
   Uint256,
   hash,
@@ -40,7 +42,7 @@ interface WebauthnSigner {
 }
 
 interface WebauthnSignature {
-  cross_origin: boolean;
+  cross_origin: CairoOption<boolean>;
   client_data_json_outro: BigNumberish[];
   flags: number;
   sign_count: number;
@@ -129,7 +131,7 @@ export class WebauthnOwner extends KeyPair {
     // };`);
 
     return {
-      cross_origin: crossOrigin,
+      cross_origin: new CairoOption(CairoOptionVariant.Some, crossOrigin),
       client_data_json_outro: CallData.compile(toCharArray(extraJson)),
       flags,
       sign_count: signCount,

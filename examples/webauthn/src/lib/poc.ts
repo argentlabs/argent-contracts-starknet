@@ -43,12 +43,12 @@ export async function deployAccount(
   const addressSalt = 12n;
   const accountAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
 
-  await fundAccount(accountAddress, 2e14, provider);
+  await fundAccount(accountAddress, 5e14, provider);
 
   const account = new Account(provider, accountAddress, new ArgentSigner(webauthnOwner), "1");
 
   console.log("deploying account to address", accountAddress);
-  const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt }, { maxFee: 1e14 });
+  const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt }, { maxFee: 4e14 });
   console.log("waiting for deployment tx", response.transaction_hash);
   await provider.waitForTransaction(response.transaction_hash);
   console.log("deployed");

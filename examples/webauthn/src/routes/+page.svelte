@@ -5,7 +5,7 @@
   import type { WebauthnOwner} from "$lib/webauthnOwner";
   import { Account, RpcProvider } from "starknet";
 
-  const rpId = "localhost";
+  const rpId = "d2aa-81-245-44-224.ngrok-free.app";
   const provider = new RpcProvider({ nodeUrl: env.PUBLIC_PROVIDER_URL });
 
   let email = "example@argent.xyz";

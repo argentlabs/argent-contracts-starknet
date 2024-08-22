@@ -143,6 +143,13 @@ export class WebauthnOwner extends KeyPair {
       hasCrossOrigin = false;
     }
 
+    // V dirty fix to check something
+    if (jsonOutroStartIndex === -1) {
+      let origin = this.attestation.origin.slice(-5);
+      crossOriginText = new TextEncoder().encode(`${origin}"`);
+      jsonOutroStartIndex = findInArray(crossOriginText, clientDataJson);
+    }
+
     let clientDataJsonOutro = clientDataJson.slice(jsonOutroStartIndex + crossOriginText.length);
     if (clientDataJsonOutro.length == 1) {
       clientDataJsonOutro = new Uint8Array();

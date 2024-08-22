@@ -36,4 +36,4 @@ profile = "scarb --profile release build && node --loader ts-node/esm scripts/pr
 deploy-account = "scarb --profile release build && node --loader ts-node/esm scripts/deploy-account.ts"
 deploy-multisig = "scarb --profile release build && node --loader ts-node/esm scripts/deploy-multisig.ts"
 generate-signature = "node --loader ts-node/esm ./scripts/generate-signature.ts"
-update-webauthn-dapp = "scarb --profile release build && cp target/release/*ArgentAccount* examples/webauthn/src/lib && scarb run format"
+update-webauthn-dapp = "scarb --profile release build && cp target/release/*_ArgentAccount* examples/webauthn/src/lib && scarb run format"

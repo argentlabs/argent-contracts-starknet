@@ -125,35 +125,26 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public async signHash(messageHash: string): Promise<WebauthnSignature> {
-    const challenge = hex2buf(`${normalizeTransactionHash(messageHash)}0`);
-    const assertionResponse = await this.requestSignature(this.attestation, challenge);
+    const normalizedChallenge = hex2buf(`${normalizeTransactionHash(messageHash)}0`);
+    const assertionResponse = await this.requestSignature(this.attestation, normalizedChallenge);
     const authenticatorData = new Uint8Array(assertionResponse.authenticatorData);
     const clientDataJson = new Uint8Array(assertionResponse.clientDataJSON);
     const signCount = 0;
     console.log("clientDataJson", new TextDecoder().decode(clientDataJson));
     console.log("signCount", signCount);
 
-    let crossOriginText = new TextEncoder().encode(`"crossOrigin":${this.crossOrigin}`);
-    let hasCrossOrigin = true;
-    let jsonOutroStartIndex = findInArray(crossOriginText, clientDataJson);
-    // Firefox doesn't use this. It doesn't even is in the clientDataJson
-    if (jsonOutroStartIndex === -1) {
-      crossOriginText = new TextEncoder().encode(`"origin":"${this.attestation.origin}"`);
-      jsonOutroStartIndex = findInArray(crossOriginText, clientDataJson);
-      hasCrossOrigin = false;
-    }
-
-    // V dirty fix to check something
-    if (jsonOutroStartIndex === -1) {
-      let origin = this.attestation.origin.slice(-5);
-      crossOriginText = new TextEncoder().encode(`${origin}"`);
-      jsonOutroStartIndex = findInArray(crossOriginText, clientDataJson);
-    }
-
-    let clientDataJsonOutro = clientDataJson.slice(jsonOutroStartIndex + crossOriginText.length);
-    if (clientDataJsonOutro.length == 1) {
-      clientDataJsonOutro = new Uint8Array();
-    }
+    const jsonString = new TextDecoder().decode(clientDataJson);
+    const parsedData = JSON.parse(jsonString);
+    const { crossOrigin, challenge, origin, type, ...rest } = parsedData;
+    const crossOriginOption =
+      crossOrigin !== undefined
+        ? new CairoOption(CairoOptionVariant.Some, crossOrigin)
+        : new CairoOption<boolean>(CairoOptionVariant.None);
+    const remainingString = JSON.stringify(rest).slice(1, -1); // Remove the curly braces
+    const clientDataJsonOutro =
+      remainingString.length > 0
+        ? new Uint8Array(new TextEncoder().encode("," + remainingString + "}"))
+        : new Uint8Array();
 
     let { r, s } = parseASN1Signature(assertionResponse.signature);
     let yParity = getYParity(getMessageHash(authenticatorData, clientDataJson), this.publicKey, r, s);
@@ -173,9 +164,7 @@ export class WebauthnOwner extends KeyPair {
     yParity = normalizedSignature.yParity;
 
     const signature: WebauthnSignature = {
-      cross_origin: hasCrossOrigin
-        ? new CairoOption(CairoOptionVariant.Some, this.crossOrigin)
-        : new CairoOption(CairoOptionVariant.None),
+      cross_origin: crossOriginOption,
       client_data_json_outro: CallData.compile(Array.from(clientDataJsonOutro)),
       flags,
       sign_count: signCount,

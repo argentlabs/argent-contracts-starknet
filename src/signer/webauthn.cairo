@@ -97,10 +97,11 @@ fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnS
 
     // assert!(
     //     false,
-    //     "client_data_json: {:?} _________________ encode_authenticator_data: {:?} _________________  arr: {:?}
-    //     _________________ sha: {:?} _________________ ", client_data_json.span(),
+    //     "client_data_json: {:?} _________________
+    //     encode_authenticator_data: {:?} _________________
+    //     sha: {:?}",
+    //     client_data_json.span(),
     //     encode_authenticator_data(signature, signer.rp_id_hash.into()),
-    //     arr.span(),
     //     u32s_to_u8s(compute_sha256_u32_array(word_arr, last, rem).span())
     // );
     u32s_to_u256(compute_sha256_u32_array(word_arr, last, rem).span())

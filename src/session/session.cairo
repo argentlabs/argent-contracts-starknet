@@ -12,15 +12,15 @@ mod session_component {
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
     use hash::{HashStateExTrait, HashStateTrait};
     use poseidon::PoseidonTrait;
-    use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp};
+    use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp, storage::Map};
 
 
     #[storage]
     struct Storage {
         /// A map of session hashes to a boolean indicating if the session has been revoked.
-        revoked_session: LegacyMap<felt252, bool>,
+        revoked_session: Map<felt252, bool>,
         /// A map of (owner_guid, guardian_guid, session_hash) to a len of authorization signature
-        valid_session_cache: LegacyMap<(felt252, felt252, felt252), u32>,
+        valid_session_cache: Map<(felt252, felt252, felt252), u32>,
     }
 
     const SESSION_MAGIC: felt252 = 'session-token';

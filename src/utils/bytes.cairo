@@ -101,6 +101,75 @@ fn u256_to_u8s(word: u256) -> Array<u8> {
     ]
 }
 
+fn u256_to_byte_array(word: u256) -> ByteArray {
+    let (rest, byte_32) = integer::u128_safe_divmod(word.low, 0x100);
+    let (rest, byte_31) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_30) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_29) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_28) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_27) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_26) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_25) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_24) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_23) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_22) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_21) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_20) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_19) = integer::u128_safe_divmod(rest, 0x100);
+    let (byte_17, byte_18) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_16) = integer::u128_safe_divmod(word.high, 0x100);
+    let (rest, byte_15) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_14) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_13) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_12) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_11) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_10) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_9) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_8) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_7) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_6) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_5) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_4) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_3) = integer::u128_safe_divmod(rest, 0x100);
+    let (byte_1, byte_2) = integer::u128_safe_divmod(rest, 0x100);
+    let mut output: ByteArray = "";
+    
+    output.append_byte(byte_1.try_into().unwrap());
+    output.append_byte(byte_2.try_into().unwrap());
+    output.append_byte(byte_3.try_into().unwrap());
+    output.append_byte(byte_4.try_into().unwrap());
+    output.append_byte(byte_5.try_into().unwrap());
+    output.append_byte(byte_6.try_into().unwrap());
+    output.append_byte(byte_7.try_into().unwrap());
+    output.append_byte(byte_8.try_into().unwrap());
+    output.append_byte(byte_9.try_into().unwrap());
+    output.append_byte(byte_10.try_into().unwrap());
+    output.append_byte(byte_11.try_into().unwrap());
+    output.append_byte(byte_12.try_into().unwrap());
+    output.append_byte(byte_13.try_into().unwrap());
+    output.append_byte(byte_14.try_into().unwrap());
+    output.append_byte(byte_15.try_into().unwrap());
+    output.append_byte(byte_16.try_into().unwrap());
+    output.append_byte(byte_17.try_into().unwrap());
+    output.append_byte(byte_18.try_into().unwrap());
+    output.append_byte(byte_19.try_into().unwrap());
+    output.append_byte(byte_20.try_into().unwrap());
+    output.append_byte(byte_21.try_into().unwrap());
+    output.append_byte(byte_22.try_into().unwrap());
+    output.append_byte(byte_23.try_into().unwrap());
+    output.append_byte(byte_24.try_into().unwrap());
+    output.append_byte(byte_25.try_into().unwrap());
+    output.append_byte(byte_26.try_into().unwrap());
+    output.append_byte(byte_27.try_into().unwrap());
+    output.append_byte(byte_28.try_into().unwrap());
+    output.append_byte(byte_29.try_into().unwrap());
+    output.append_byte(byte_30.try_into().unwrap());
+    output.append_byte(byte_31.try_into().unwrap());
+    output.append_byte(byte_32.try_into().unwrap());
+    
+    output
+}
+
 #[generate_trait]
 impl ByteArrayExt of ByteArrayExtTrait {
     fn into_bytes(self: ByteArray) -> Array<u8> {
@@ -109,6 +178,20 @@ impl ByteArrayExt of ByteArrayExtTrait {
         let mut i = 0;
         while i != len {
             output.append(self[i]);
+            i += 1;
+        };
+        output
+    }
+}
+
+#[generate_trait]
+impl ArrayU8Ext of ArrayU8ExtTrait {
+    fn into_byte_array(self: Span<u8>) -> ByteArray {
+        let mut output: ByteArray = "";
+        let len = self.len();
+        let mut i = 0;
+        while i != len {
+            output.append_byte(*self[i]);
             i += 1;
         };
         output
@@ -131,6 +214,21 @@ fn u32s_to_u256(arr: Span<felt252>) -> u256 {
     u256 { high, low }
 }
 
+fn u32s_typed_to_u256(arr: @[u32; 8]) -> u256 {
+    let [arr0, arr1, arr2, arr3, arr4, arr5, arr6, arr7] = arr;
+    let arr: Array<felt252> = array![
+        (*arr0).into(),
+        (*arr1).into(),
+        (*arr2).into(),
+        (*arr3).into(),
+        (*arr4).into(),
+        (*arr5).into(),
+        (*arr6).into(),
+        (*arr7).into(),
+    ];
+    u32s_to_u256(arr.span())
+}
+
 // Accepts felt252 for efficiency as it's the type of retdata but all values are expected to fit u32
 fn u32s_to_u8s(mut words: Span<felt252>) -> Span<u8> {
     let mut output = array![];
@@ -147,6 +245,22 @@ fn u32s_to_u8s(mut words: Span<felt252>) -> Span<u8> {
         };
     output.span()
 }
+fn u32s_to_byte_array(mut words: Span<u32>) -> ByteArray {
+    let mut output: ByteArray = "";
+    while let Option::Some(word) = words
+        .pop_front() {
+            let word: u32 = (*word).try_into().unwrap();
+            let (rest, byte_4) = integer::u32_safe_divmod(word, 0x100);
+            let (rest, byte_3) = integer::u32_safe_divmod(rest, 0x100);
+            let (byte_1, byte_2) = integer::u32_safe_divmod(rest, 0x100);
+            output.append_byte(byte_1.try_into().unwrap());
+            output.append_byte(byte_2.try_into().unwrap());
+            output.append_byte(byte_3.try_into().unwrap());
+            output.append_byte(byte_4.try_into().unwrap());
+        };
+    output
+}
+
 // Takes an array of u8s and returns an array of u32s, padding the end with 0s if necessary
 fn u8s_to_u32s_pad_end(mut bytes: Span<u8>) -> Array<u32> {
     let mut output = array![];

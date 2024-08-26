@@ -2,9 +2,18 @@
 version = 1
 
 [[package]]
+name = "alexandria_bytes"
+version = "0.1.0"
+source = "git+https://github.com/piniom/quaireaux.git?rev=b51ccc3#b51ccc3045b87d521ce4ec0ff28775c3a94468c4"
+dependencies = [
+ "alexandria_data_structures",
+ "alexandria_math",
+]
+
+[[package]]
 name = "alexandria_data_structures"
 version = "0.2.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
+source = "git+https://github.com/piniom/quaireaux.git?rev=b51ccc3#b51ccc3045b87d521ce4ec0ff28775c3a94468c4"
 dependencies = [
  "alexandria_encoding",
 ]
@@ -12,8 +21,9 @@ dependencies = [
 [[package]]
 name = "alexandria_encoding"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
+source = "git+https://github.com/piniom/quaireaux.git?rev=b51ccc3#b51ccc3045b87d521ce4ec0ff28775c3a94468c4"
 dependencies = [
+ "alexandria_bytes",
  "alexandria_math",
  "alexandria_numeric",
 ]
@@ -21,7 +31,7 @@ dependencies = [
 [[package]]
 name = "alexandria_math"
 version = "0.2.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
+source = "git+https://github.com/piniom/quaireaux.git?rev=b51ccc3#b51ccc3045b87d521ce4ec0ff28775c3a94468c4"
 dependencies = [
  "alexandria_data_structures",
 ]
@@ -29,20 +39,30 @@ dependencies = [
 [[package]]
 name = "alexandria_merkle_tree"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?tag=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
+source = "git+https://github.com/piniom/quaireaux.git?rev=b51ccc3#b51ccc3045b87d521ce4ec0ff28775c3a94468c4"
 
 [[package]]
 name = "alexandria_numeric"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=cairo-v2.6.0#946e6e2f9d390ad9f345882a352c0dd6f02ef3ad"
+source = "git+https://github.com/piniom/quaireaux.git?rev=b51ccc3#b51ccc3045b87d521ce4ec0ff28775c3a94468c4"
 dependencies = [
  "alexandria_math",
+ "alexandria_searching",
+]
+
+[[package]]
+name = "alexandria_searching"
+version = "0.1.0"
+source = "git+https://github.com/piniom/quaireaux.git?rev=b51ccc3#b51ccc3045b87d521ce4ec0ff28775c3a94468c4"
+dependencies = [
+ "alexandria_data_structures",
 ]
 
 [[package]]
 name = "argent"
 version = "0.1.0"
 dependencies = [
+ "alexandria_data_structures",
  "alexandria_encoding",
  "alexandria_math",
  "alexandria_merkle_tree",
@@ -52,10 +72,91 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin"
-version = "0.12.0"
-source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.12.0#0697004db74502ce49900edef37331dd03531356"
+version = "0.15.0-rc.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?rev=a13bae3#a13bae3390a7114a8c14c0352c6898eff5f4f5d7"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_account",
+ "openzeppelin_governance",
+ "openzeppelin_introspection",
+ "openzeppelin_presets",
+ "openzeppelin_security",
+ "openzeppelin_token",
+ "openzeppelin_upgrades",
+ "openzeppelin_utils",
+]
+
+[[package]]
+name = "openzeppelin_access"
+version = "0.15.0-rc.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?rev=a13bae3#a13bae3390a7114a8c14c0352c6898eff5f4f5d7"
+dependencies = [
+ "openzeppelin_introspection",
+ "openzeppelin_utils",
+]
+
+[[package]]
+name = "openzeppelin_account"
+version = "0.15.0-rc.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?rev=a13bae3#a13bae3390a7114a8c14c0352c6898eff5f4f5d7"
+dependencies = [
+ "openzeppelin_introspection",
+ "openzeppelin_token",
+ "openzeppelin_utils",
+]
+
+[[package]]
+name = "openzeppelin_governance"
+version = "0.15.0-rc.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?rev=a13bae3#a13bae3390a7114a8c14c0352c6898eff5f4f5d7"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_introspection",
+]
+
+[[package]]
+name = "openzeppelin_introspection"
+version = "0.15.0-rc.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?rev=a13bae3#a13bae3390a7114a8c14c0352c6898eff5f4f5d7"
+
+[[package]]
+name = "openzeppelin_presets"
+version = "0.15.0-rc.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?rev=a13bae3#a13bae3390a7114a8c14c0352c6898eff5f4f5d7"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_account",
+ "openzeppelin_introspection",
+ "openzeppelin_token",
+ "openzeppelin_upgrades",
+]
+
+[[package]]
+name = "openzeppelin_security"
+version = "0.15.0-rc.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?rev=a13bae3#a13bae3390a7114a8c14c0352c6898eff5f4f5d7"
+
+[[package]]
+name = "openzeppelin_token"
+version = "0.15.0-rc.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?rev=a13bae3#a13bae3390a7114a8c14c0352c6898eff5f4f5d7"
+dependencies = [
+ "openzeppelin_account",
+ "openzeppelin_governance",
+ "openzeppelin_introspection",
+]
+
+[[package]]
+name = "openzeppelin_upgrades"
+version = "0.15.0-rc.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?rev=a13bae3#a13bae3390a7114a8c14c0352c6898eff5f4f5d7"
+
+[[package]]
+name = "openzeppelin_utils"
+version = "0.15.0-rc.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?rev=a13bae3#a13bae3390a7114a8c14c0352c6898eff5f4f5d7"
 
 [[package]]
 name = "snforge_std"
-version = "0.20.0"
-source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.20.0#423eecf7847469e353258321274394b9155d24eb"
+version = "0.27.0"
+source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.27.0#2d99b7c00678ef0363881ee0273550c44a9263de"

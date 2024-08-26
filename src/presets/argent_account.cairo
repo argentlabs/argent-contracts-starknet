@@ -31,7 +31,8 @@ mod ArgentAccount {
     use starknet::{
         ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, replace_class_syscall,
         account::Call, SyscallResultTrait, get_tx_info, get_execution_info, syscalls::storage_read_syscall,
-        storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall}
+        storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall},
+        storage::Map
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -39,10 +40,10 @@ mod ArgentAccount {
     const VERSION_COMPAT: felt252 = '0.4.0';
 
     /// Time it takes for the escape to become ready after being triggered. Also the escape will be ready and can be completed for this duration
-    const DEFAULT_ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
+    const DEFAULT_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
     /// Limit to one escape every X hours
-    const TIME_BETWEEN_TWO_ESCAPES: u64 = consteval_int!(12 * 60 * 60); // 12 hours;
+    const TIME_BETWEEN_TWO_ESCAPES: u64 = 12 * 60 * 60; // 12 hours;
 
     /// Limits fee in escapes
     const MAX_ESCAPE_MAX_FEE_ETH: u128 = 5000000000000000; // 0.005 ETH
@@ -50,7 +51,7 @@ mod ArgentAccount {
     const MAX_ESCAPE_TIP_STRK: u128 = 1_000000000000000000; // 1 STRK
 
     /// Minimum time for the escape security period
-    const MIN_ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(60 * 10); // 10 minutes;
+    const MIN_ESCAPE_SECURITY_PERIOD: u64 = 60 * 10; // 10 minutes;
 
     // session 
     component!(path: session_component, storage: session, event: SessionableEvents);
@@ -89,12 +90,12 @@ mod ArgentAccount {
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         /// Current account owner
         _signer: felt252,
-        _signer_non_stark: LegacyMap<felt252, felt252>,
+        _signer_non_stark: Map<felt252, felt252>,
         /// Current account guardian
         _guardian: felt252,
         /// Current account backup guardian
         _guardian_backup: felt252,
-        _guardian_backup_non_stark: LegacyMap<felt252, felt252>,
+        _guardian_backup_non_stark: Map<felt252, felt252>,
         /// The ongoing escape, if any
         _escape: LegacyEscape,
         /// The following 4 fields are used to limit the number of escapes the account will pay for

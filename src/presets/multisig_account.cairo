@@ -17,7 +17,6 @@ mod ArgentMultisigAccount {
     };
     use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use starknet::{get_tx_info, get_execution_info, get_contract_address, VALIDATED, account::Call, ClassHash};
-
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION: Version = Version { major: 0, minor: 2, patch: 0 };
 
@@ -148,7 +147,7 @@ mod ArgentMultisigAccount {
     }
 
     #[abi(embed_v0)]
-    impl ArgentAccountImpl of IArgentAccount<ContractState> {
+    impl ArgentMultisigAccountImpl of IArgentAccount<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             panic_with_felt252('argent/declare-not-available') // Not implemented yet
         }
@@ -157,7 +156,7 @@ mod ArgentMultisigAccount {
             self: @ContractState,
             class_hash: felt252,
             contract_address_salt: felt252,
-            threshold: usize,
+            new_threshold: usize, 
             signers: Array<Signer>
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();

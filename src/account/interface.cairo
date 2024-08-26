@@ -35,7 +35,7 @@ trait IArgentAccount<TContractState> {
         self: @TContractState,
         class_hash: felt252,
         contract_address_salt: felt252,
-        threshold: usize,
+        new_threshold: usize,
         signers: Array<Signer>
     ) -> felt252;
     fn get_name(self: @TContractState) -> felt252;

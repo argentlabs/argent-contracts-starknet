@@ -1,16 +1,29 @@
 import { Account, CairoOption, CairoOptionVariant, CallData, hash, uint256 } from "starknet";
 import accountCasm from "./argent_ArgentAccount.compiled_contract_class.json";
 import accountSierra from "./argent_ArgentAccount.contract_class.json";
-import { buf2hex } from "./bytes";
+import { buf2hex, hex2buf } from "./bytes";
 import { ArgentSigner } from "./signers";
 import { fundAccount, getEthContract, loadDeployer, type ProviderType } from "./starknet";
 import { createWebauthnAttestation, requestSignature } from "./webauthnAttestation";
 import { WebauthnOwner } from "./webauthnOwner";
 
 export async function createOwner(email: string, rpId: string, origin: string): Promise<WebauthnOwner> {
-  console.log("creating webauthn key (attestation)...");
-  const attestation = await createWebauthnAttestation(email, rpId, origin);
-  console.log("created webauthn public key:", buf2hex(attestation.pubKey));
+  let attestation;
+
+  // Retrieve the attestation from local storage if it exists, otherwise create a new one
+  const rawIdBase64 = localStorage.getItem("credentialRawId");
+  if (rawIdBase64) {
+    console.log("retrieving webauthn key (attestation)...");
+    let res = JSON.parse(rawIdBase64);
+    res.pubKey = hex2buf(res.encodedX);
+    res.credentialId = hex2buf(res.encodedCredentialId);
+    attestation = res;
+  } else {
+    console.log("creating webauthn key (attestation)...");
+    attestation = await createWebauthnAttestation(email, rpId, origin);
+  }
+
+  console.log("webauthn public key:", buf2hex(attestation.pubKey));
   return new WebauthnOwner(attestation, requestSignature);
 }
 

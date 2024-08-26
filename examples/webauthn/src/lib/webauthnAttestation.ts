@@ -1,4 +1,4 @@
-import { randomBytes } from "./bytes";
+import { buf2hex, randomBytes } from "./bytes";
 
 export interface WebauthnAttestation {
   email: string;
@@ -48,6 +48,12 @@ export const createWebauthnAttestation = async (
   // On Android you gotta do this
   // const encodedOrigin = origin.replace(/\//g, "\\/");
   // return { email, rpId, origin:encodedOrigin, credentialId, pubKey: x };
+
+  const encodedCredentialId = buf2hex(credentialId);
+  const encodedX = buf2hex(x);
+  let res = { email, rpId, origin, encodedX, encodedCredentialId };
+  localStorage.setItem("credentialRawId", JSON.stringify(res));
+
   return { email, rpId, origin, credentialId, pubKey: x };
 };
 

@@ -7,23 +7,30 @@ import { fundAccount, getEthContract, loadDeployer, type ProviderType } from "./
 import { createWebauthnAttestation, requestSignature } from "./webauthnAttestation";
 import { WebauthnOwner } from "./webauthnOwner";
 
-export async function createOwner(email: string, rpId: string, origin: string): Promise<WebauthnOwner> {
-  let attestation;
+export async function cleanLocalStorage() {
+  localStorage.removeItem("credentialRawId");
+}
 
+export async function retrieveOwner(): Promise<WebauthnOwner | undefined> {
   // Retrieve the attestation from local storage if it exists, otherwise create a new one
   const rawIdBase64 = localStorage.getItem("credentialRawId");
-  if (rawIdBase64) {
-    console.log("retrieving webauthn key (attestation)...");
-    let res = JSON.parse(rawIdBase64);
-    res.pubKey = hex2buf(res.encodedX);
-    res.credentialId = hex2buf(res.encodedCredentialId);
-    attestation = res;
-  } else {
-    console.log("creating webauthn key (attestation)...");
-    attestation = await createWebauthnAttestation(email, rpId, origin);
+  console.log("retrieving webauthn key (attestation)...");
+  if (!rawIdBase64) {
+    return undefined;
   }
 
-  console.log("webauthn public key:", buf2hex(attestation.pubKey));
+  const attestation = JSON.parse(rawIdBase64);
+  attestation.pubKey = hex2buf(attestation.encodedX);
+  attestation.credentialId = hex2buf(attestation.encodedCredentialId);
+
+  console.log("retrieved webauthn public key:", buf2hex(attestation.pubKey));
+  return new WebauthnOwner(attestation, requestSignature);
+}
+
+export async function createOwner(email: string, rpId: string, origin: string): Promise<WebauthnOwner> {
+  console.log("creating webauthn key (attestation)...");
+  const attestation = await createWebauthnAttestation(email, rpId, origin);
+  console.log("created webauthn public key:", buf2hex(attestation.pubKey));
   return new WebauthnOwner(attestation, requestSignature);
 }
 
@@ -42,6 +49,23 @@ export async function declareAccount(provider: ProviderType): Promise<string> {
   console.log("account classHash", accountClassHash);
 
   return accountClassHash;
+}
+
+export async function retrieveAccount(
+  classHash: string,
+  webauthnOwner: WebauthnOwner,
+  provider: ProviderType,
+): Promise<Account | undefined> {
+  const constructorCalldata = CallData.compile({
+    owner: webauthnOwner.signer,
+    guardian: new CairoOption(CairoOptionVariant.None),
+  });
+  const addressSalt = 12n;
+  const accountAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
+  const account = new Account(provider, accountAddress, new ArgentSigner(webauthnOwner), "1");
+  // This fails silently if the account does not exist, which is good enough
+  await account.getNonce();
+  return account;
 }
 
 export async function deployAccount(

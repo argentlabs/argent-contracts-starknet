@@ -132,8 +132,7 @@ fn u32s_to_u256(arr: Span<u32>) -> u256 {
 fn u32s_to_u8s(mut words: Span<u32>) -> Span<u8> {
     let mut output = array![];
     while let Option::Some(word) = words.pop_front() {
-        let word: u32 = *word;
-        let (rest, byte_4) = integer::u32_safe_divmod(word, 0x100);
+        let (rest, byte_4) = integer::u32_safe_divmod(*word, 0x100);
         let (rest, byte_3) = integer::u32_safe_divmod(rest, 0x100);
         let (byte_1, byte_2) = integer::u32_safe_divmod(rest, 0x100);
         output.append(byte_1.try_into().unwrap());
@@ -143,21 +142,9 @@ fn u32s_to_u8s(mut words: Span<u32>) -> Span<u8> {
     };
     output.span()
 }
-// TODO Can be removed?
-// Takes an array of u8s and returns an array of u32s, padding the end with 0s if necessary
-fn u8s_to_u32s_pad_end(mut bytes: Span<u8>) -> Array<u32> {
-    let mut output = array![];
-    while let Option::Some(byte1) = bytes.pop_front() {
-        let byte1 = *byte1;
-        let byte2 = *bytes.pop_front().unwrap_or_default();
-        let byte3 = *bytes.pop_front().unwrap_or_default();
-        let byte4 = *bytes.pop_front().unwrap_or_default();
-        output.append(0x100_00_00 * byte1.into() + 0x100_00 * byte2.into() + 0x100 * byte3.into() + byte4.into());
-    };
-    output
-}
 
 // Takes an array of u8s and returns an array of u32s not padding the end
+// Inspired from https://github.com/starkware-libs/cairo/blob/main/corelib/src/sha256.cairo
 fn u8s_to_u32s(mut arr: Span<u8>) -> (Array<u32>, u32, u32) {
     let mut word_arr: Array<u32> = array![];
     let len = arr.len();

@@ -31,7 +31,6 @@ describe("ArgentAccount: Signers types", function () {
     { name: "Secp256r1 signature", keyPair: randomSecp256r1KeyPair },
     { name: "Eip191 signature", keyPair: randomEip191KeyPair },
     { name: "Webauthn signature", keyPair: randomWebauthnOwner },
-    { name: "Webauthn syscall signature", keyPair: randomWebauthnOwner },
   ];
 
   before(async () => {

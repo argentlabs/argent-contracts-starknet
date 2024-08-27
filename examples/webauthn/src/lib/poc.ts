@@ -7,13 +7,15 @@ import { fundAccount, getEthContract, loadDeployer, type ProviderType } from "./
 import { createWebauthnAttestation, requestSignature } from "./webauthnAttestation";
 import { WebauthnOwner } from "./webauthnOwner";
 
+export const storageKey = "webauthnAttestation";
+
 export async function cleanLocalStorage() {
-  localStorage.removeItem("credentialRawId");
+  localStorage.removeItem(storageKey);
 }
 
 export async function retrieveOwner(): Promise<WebauthnOwner | undefined> {
   // Retrieve the attestation from local storage if it exists, otherwise create a new one
-  const rawIdBase64 = localStorage.getItem("credentialRawId");
+  const rawIdBase64 = localStorage.getItem(storageKey);
   console.log("retrieving webauthn key (attestation)...");
   if (!rawIdBase64) {
     return undefined;

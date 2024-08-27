@@ -9,10 +9,11 @@
   const provider = new RpcProvider({ nodeUrl: env.PUBLIC_PROVIDER_URL });
 
   let email = "example@argent.xyz";
+  let recipient = "0x69";
   let owner: WebauthnOwner | undefined;
   let account: Account | undefined;
-  let deployPromise: Promise<void>;
-  let sendPromise: Promise<void>;
+  let deployPromise: Promise<void> | undefined;
+  let sendPromise: Promise<void> | undefined;;
   let transactionHash = "";
 
   const handleClickCreateOwner = async () => {
@@ -39,10 +40,12 @@
     await cleanLocalStorage();
     owner = undefined;
     account = undefined;
+    transactionHash = "";
+    deployPromise = undefined;
+    sendPromise = undefined;
   };
 </script>
 
-<button on:click={() => (sendPromise = handleCleanLocalStorage())}>Clear local storage</button>
 {#await retrieveOwnerOnLoad()}
   <p>Retrieving...</p>
 {:then}
@@ -51,6 +54,9 @@
   <input type="email" bind:value={email} />
   <button on:click={handleClickCreateOwner}>Create</button>
   {:else}
+    <button on:click={handleCleanLocalStorage}>Remove account</button>
+    <br />
+    <br />
     <div>Email: <small>{owner.attestation.email}</small></div>
     <div>Webauthn public key: <small>{buf2hex(owner.attestation.pubKey)}</small></div>
     <div>Webauthn credential id: <small>{buf2hex(owner.attestation.credentialId)}</small></div>
@@ -77,10 +83,13 @@
       {:else}
         <div>Account address: <small>{account.address}</small></div>
         <h1>3. Send transaction</h1>
-        <p>Transfer 1 wei to address 69:</p>
+        <p>Transfer 1 wei to address {recipient}:</p>
+        <input type="text" bind:value={recipient} />
+        <br />
+        <br />
         {#if !transactionHash}
           {#if !sendPromise}
-            <button on:click={() => (sendPromise = handleClickSendTransaction())}>Sign & broadcast</button>
+            <button on:click={() => (sendPromise = handleClickSendTransaction())}>Send</button>
           {/if}
           {#await sendPromise}
             <p>Confirming...</p>

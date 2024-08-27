@@ -1,4 +1,5 @@
 import { buf2hex, randomBytes } from "./bytes";
+import { storageKey } from "./poc";
 
 export interface WebauthnAttestation {
   email: string;
@@ -45,14 +46,15 @@ export const createWebauthnAttestation = async (
   const publicKey = new Uint8Array(attestationResponse.getPublicKey()!);
   const x = publicKey.slice(-64, -32);
 
+  const encodedCredentialId = buf2hex(credentialId);
+  const encodedX = buf2hex(x);
+  let res = { email, rpId, origin, encodedX, encodedCredentialId };
+  localStorage.setItem(storageKey, JSON.stringify(res));
+
   // On Android you gotta do this
   // const encodedOrigin = origin.replace(/\//g, "\\/");
   // return { email, rpId, origin:encodedOrigin, credentialId, pubKey: x };
 
-  const encodedCredentialId = buf2hex(credentialId);
-  const encodedX = buf2hex(x);
-  let res = { email, rpId, origin, encodedX, encodedCredentialId };
-  localStorage.setItem("credentialRawId", JSON.stringify(res));
 
   return { email, rpId, origin, credentialId, pubKey: x };
 };

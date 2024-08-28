@@ -33,10 +33,6 @@ export async function createOwner(email: string, rpId: string, origin: string): 
   console.log("creating webauthn key (attestation)...");
   const attestation = await createWebauthnAttestation(email, rpId, origin);
 
-  const encodedCredentialId = buf2hex(attestation.credentialId);
-  const encodedX = buf2hex(attestation.pubKey);
-  localStorage.setItem(storageKey, JSON.stringify({ email, rpId, origin, encodedX, encodedCredentialId }));
-
   console.log("created webauthn public key:", buf2hex(attestation.pubKey));
   return new WebauthnOwner(attestation, requestSignature);
 }

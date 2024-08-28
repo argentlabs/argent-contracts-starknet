@@ -57,7 +57,7 @@ export const requestSignature = async (
 ): Promise<AuthenticatorAssertionResponse> => {
   const credential = await navigator.credentials.get({
     publicKey: {
-      rpId: attestation.rpId,
+      // rpId: attestation.rpId,
       challenge,
       allowCredentials: [{ id: attestation.credentialId, type: "public-key", transports: ["internal"] }],
       userVerification: "required",

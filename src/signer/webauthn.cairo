@@ -57,11 +57,11 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut orig
             json.append_all(['f', 'a', 'l', 's', 'e'].span());
         }
     };
-    if !signature.client_data_json_outro.is_empty() {
+    if signature.client_data_json_outro.is_empty() {
+        json.append('}');
+    } else {
         assert!(*signature.client_data_json_outro.at(0) == ',', "webauthn/invalid-json-outro");
         json.append_all(signature.client_data_json_outro);
-    } else {
-        json.append('}');
     }
     json
 }
@@ -95,15 +95,6 @@ fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnS
 
     let (word_arr, last, rem) = u8s_to_u32s(arr.span());
 
-    // assert!(
-    //     false,
-    //     "client_data_json: {:?} _________________
-    //     encode_authenticator_data: {:?} _________________
-    //     sha: {:?}",
-    //     client_data_json.span(),
-    //     encode_authenticator_data(signature, signer.rp_id_hash.into()),
-    //     u32s_to_u8s(compute_sha256_u32_array(word_arr, last, rem).span())
-    // );
     u32s_to_u256(compute_sha256_u32_array(word_arr, last, rem).span())
 }
 

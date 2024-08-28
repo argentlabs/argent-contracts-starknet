@@ -18,7 +18,7 @@ fn localhost_rp() -> (ByteArray, u256) {
 
 fn valid_signer() -> (felt252, WebauthnSigner, WebauthnSignature) {
     let (origin, rp_id_hash) = localhost_rp();
-    let transaction_hash = 0x06fd6673287ba2e4d2975ad878dc26c0a989c549259d87a044a8d37bb9168bb4;
+    let transaction_hash = 0x712f08b474e11487440bfec6e63c1eb789271a56e78d0fad789cc858e56dd74;
     let pubkey = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
@@ -27,53 +27,74 @@ fn valid_signer() -> (felt252, WebauthnSigner, WebauthnSignature) {
         flags: 0b00000101,
         sign_count: 0,
         ec_signature: Signature {
-            r: 0x27b78470673308c9e7ef6d9cb4fbf74b892f9e3826b515333d721cb8385cfb72,
-            s: 0x35c7ae175d75e09b1907f4232c88bfd69b7c9d7f32b4b2d392a6a95324a61f21,
-            y_parity: true,
+            r: 62165181786056207695203164583396665139812149407667633969577140813177092451787,
+            s: 18605387797315088936067001631414996583299145786676774688642855838935314927861,
+            y_parity: false,
         },
     };
     (transaction_hash, signer, signature)
 }
 
 
-// #[test]
-// fn test_is_valid_webauthn_signature() {
-//     let (transaction_hash, signer, mut signature) = valid_signer();
-//     let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
-//     assert!(is_valid, "invalid");
-// }
+#[test]
+fn test_is_valid_webauthn_signature() {
+    let (transaction_hash, signer, mut signature) = valid_signer();
+    let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
+    assert!(is_valid);
+}
 
-// #[test]
-// fn test_is_valid_webauthn_signature_with_extra_json() {
-//     let (origin, rp_id_hash) = localhost_rp();
+#[test]
+fn test_is_valid_webauthn_signature_with_extra_json() {
+    let (origin, rp_id_hash) = localhost_rp();
 
-//     let transaction_hash = 0x5f7154b851dc016f851672905d64360fb098c8fd7417d1dd1e83aa46eb6d363;
-//     let pubkey = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
-//     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
-//     let signature = WebauthnSignature {
-//         cross_origin: Option::Some(true),
-//         client_data_json_outro: ",\"extraField\":\"random data\"}".into_bytes().span(),
-//         flags: 0b00010101,
-//         sign_count: 42,
-//         ec_signature: Signature {
-//             r: 0x5cceed8562c156cb79e222afc5fd95b57a3c732795fb9b315582c57e8017f277,
-//             s: 0x3cedd77bd9069c8b250f6a435cce5a379257b18daf7c81136c5ca3075824b68f,
-//             y_parity: false,
-//         },
-//     };
+    let transaction_hash = 0x3ce2bf63571491fd65c8e53e33b0c2ecc7e487f9dba295339db38d689e3b5ca;
+    let pubkey = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
+    let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
+    let signature = WebauthnSignature {
+        cross_origin: Option::Some(true),
+        client_data_json_outro: ",\"extraField\":\"random data\"}".into_bytes().span(),
+        flags: 0b00010101,
+        sign_count: 42,
+        ec_signature: Signature {
+            r: 25293950270749865875261361828151587310036144493631465878711959357418326035198,
+            s: 32204010901783871760488054423475015897475980626194169668640828734933933005405,
+            y_parity: true,
+        },
+    };
 
-//     let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
-//     assert!(is_valid, "invalid");
-// }
+    let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
+    assert!(is_valid);
+}
 
-// Do a test with cross_origin = Option::None
+#[test]
+fn test_is_valid_webauthn_signature_with_cross_origin_none() {
+    let (origin, rp_id_hash) = localhost_rp();
+
+    let transaction_hash = 0x48a14cd24aae2d3a4011ae01249efee7b38a623d3a690c156ddb456213993e4;
+    let pubkey = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
+    let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
+    let signature = WebauthnSignature {
+        cross_origin: Option::None,
+        client_data_json_outro: array![].span(),
+        flags: 0b00010101,
+        sign_count: 42,
+        ec_signature: Signature {
+            r: 86355542119903718425399464977228783179424105137305434309441087583578891109274,
+            s: 47907691063703130173044052464744718057219140251481677102916922869716643734432,
+            y_parity: false,
+        },
+    };
+
+    let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
+    assert!(is_valid);
+}
 
 #[test]
 #[should_panic(expected: "webauthn/missing-user-bit")]
 fn test_invalid_webauthn_signature_nonpresent_user() {
     let (transaction_hash, signer, mut signature) = valid_signer();
     signature.flags = 0b00000000;
-    is_valid_webauthn_signature(transaction_hash, signer, signature);
+    let _ = is_valid_webauthn_signature(transaction_hash, signer, signature);
 }
 
 #[test]
@@ -81,5 +102,5 @@ fn test_invalid_webauthn_signature_hash() {
     let (transaction_hash, signer, mut signature) = valid_signer();
     signature.ec_signature.r = 0xdeadbeef;
     let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
-    assert!(!is_valid, "invalid");
+    assert!(!is_valid);
 }

@@ -103,13 +103,18 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public async signHash(transactionHash: string): Promise<WebauthnSignature> {
-    const flags = Number("0b00000101"); // present and verified
-    const signCount = 0;
+    console.log("transactionHash");
+    console.log(transactionHash);
+    console.log("pubKey");
+    console.log(buf2hex(this.publicKey));
+    const flags = Number("0b00010101"); // present and verified
+    const signCount = 42;
     const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([flags, 0, 0, 0, signCount]));
 
     const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0`));
     const crossOrigin = false;
-    const extraJson = ""; // = `,"extraField":"random data"}`;
+    // const extraJson = "";
+    const extraJson = `,"extraField":"random data"}`;
     const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin, crossOrigin });
     const clientDataJson = extraJson ? clientData.replace(/}$/, extraJson) : clientData;
     const clientDataHash = sha256(new TextEncoder().encode(clientDataJson));
@@ -130,6 +135,10 @@ export class WebauthnOwner extends KeyPair {
     //     sign_count: ${signCount}
     // };`);
 
+    console.log("signature");
+    console.log(signature.r);
+    console.log(signature.s);
+    console.log(signature.yParity);
     return {
       cross_origin: new CairoOption(CairoOptionVariant.Some, crossOrigin),
       client_data_json_outro: CallData.compile(toCharArray(extraJson)),

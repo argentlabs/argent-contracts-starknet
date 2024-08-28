@@ -1,9 +1,9 @@
 use argent::account::interface::Version;
 use argent::presets::multisig_account::ArgentMultisigAccount;
-use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
+use argent::signer::signer_signature::{Signer, SignerSignature};
 use snforge_std::{declare, ContractClassTrait, ContractClass, start_cheat_caller_address_global};
 use starknet::account::Call;
-use super::constants::MULTISIG_OWNER;
+use super::super::{SIGNER_1, SIGNER_2, SIGNER_3};
 
 #[starknet::interface]
 trait ITestArgentMultisig<TContractState> {
@@ -51,17 +51,13 @@ fn declare_multisig() -> ContractClass {
 
 fn initialize_multisig() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
-    let signers_array = array![
-        starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey),
-    ];
+    let signers_array = array![SIGNER_1(), SIGNER_2(), SIGNER_3(),];
     initialize_multisig_with(threshold, signers_array.span())
 }
 
 fn initialize_multisig_with_one_signer() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
-    let signers_array = array![starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)];
+    let signers_array = array![SIGNER_1()];
     initialize_multisig_with(threshold, signers_array.span())
 }
 

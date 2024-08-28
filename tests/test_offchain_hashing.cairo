@@ -25,9 +25,9 @@ fn session_precalculated_hash_sepolia() {
     );
     let (ch0, ch1, ch2) = hades_permutation('StarkNet Message', domain_hash, 0);
     let (pch0, pch1, pch2) = SEPOLIA_FIRST_HADES_PERMUTATION_SESSION;
-    assert_eq!(ch0, pch0, "Precalculated hash is incorrect");
-    assert_eq!(ch1, pch1, "Precalculated hash is incorrect");
-    assert_eq!(ch2, pch2, "Precalculated hash is incorrect");
+    assert_eq!(ch0, pch0);
+    assert_eq!(ch1, pch1);
+    assert_eq!(ch2, pch2);
 }
 
 #[test]
@@ -45,9 +45,9 @@ fn session_precalculated_hash_mainnet() {
     );
     let (ch0, ch1, ch2) = hades_permutation('StarkNet Message', domain_hash, 0);
     let (pch0, pch1, pch2) = MAINNET_FIRST_HADES_PERMUTATION_SESSION;
-    assert_eq!(ch0, pch0, "Precalculated hash is incorrect");
-    assert_eq!(ch1, pch1, "Precalculated hash is incorrect");
-    assert_eq!(ch2, pch2, "Precalculated hash is incorrect");
+    assert_eq!(ch0, pch0);
+    assert_eq!(ch1, pch1);
+    assert_eq!(ch2, pch2);
 }
 
 #[test]
@@ -63,9 +63,9 @@ fn outside_execution_precalculated_hash_sepolia() {
     );
     let (ch0, ch1, ch2) = hades_permutation('StarkNet Message', domain_hash, 0);
     let (pch0, pch1, pch2) = SEPOLIA_FIRST_HADES_PERMUTATION_OE;
-    assert_eq!(ch0, pch0, "Precalculated hash is incorrect");
-    assert_eq!(ch1, pch1, "Precalculated hash is incorrect");
-    assert_eq!(ch2, pch2, "Precalculated hash is incorrect");
+    assert_eq!(ch0, pch0);
+    assert_eq!(ch1, pch1);
+    assert_eq!(ch2, pch2);
 }
 
 #[test]
@@ -82,7 +82,7 @@ fn outside_execution_precalculated_hash_mainnet() {
     );
     let (ch0, ch1, ch2) = hades_permutation('StarkNet Message', domain_hash, 0);
     let (pch0, pch1, pch2) = MAINNET_FIRST_HADES_PERMUTATION_OE;
-    assert_eq!(ch0, pch0, "Precalculated hash is incorrect");
-    assert_eq!(ch1, pch1, "Precalculated hash is incorrect");
-    assert_eq!(ch2, pch2, "Precalculated hash is incorrect");
+    assert_eq!(ch0, pch0);
+    assert_eq!(ch1, pch1);
+    assert_eq!(ch2, pch2);
 }

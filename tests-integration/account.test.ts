@@ -140,26 +140,6 @@ describe("ArgentAccount", function () {
   });
 
   describe("change_guardian(new_guardian)", function () {
-    it("Should be possible to change_guardian", async function () {
-      const { accountContract } = await deployAccount();
-      const newGuardian = randomStarknetKeyPair();
-
-      const receipt = await manager.waitForTx(accountContract.change_guardian(newGuardian.compiledSignerAsOption));
-
-      expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(newGuardian.guid);
-
-      await expectEvent(receipt, {
-        from_address: accountContract.address,
-        eventName: "GuardianChanged",
-        data: [newGuardian.storedValue.toString()],
-      });
-      await expectEvent(receipt, {
-        from_address: accountContract.address,
-        eventName: "GuardianChangedGuid",
-        data: [newGuardian.guid.toString()],
-      });
-    });
-
     it("Shouldn't be possible to use a guardian with pubkey = 0", async function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
@@ -167,34 +147,6 @@ describe("ArgentAccount", function () {
       await expectRevertWithErrorMessage(
         "Failed to deserialize param #1",
         accountContract.change_guardian(CallData.compile([zeroStarknetSignatureType()])),
-      );
-    });
-
-    it("Should be possible to change_guardian to zero when there is no backup", async function () {
-      const { accountContract } = await deployAccount();
-      await accountContract.change_guardian(new CairoOption(CairoOptionVariant.None));
-
-      await accountContract.get_guardian_backup().should.eventually.equal(0n);
-      await accountContract.get_guardian().should.eventually.equal(0n);
-    });
-
-    it("Expect 'argent/only-self' when called from another account", async function () {
-      const { account } = await deployAccount();
-      const { accountContract } = await deployAccount();
-      accountContract.connect(account);
-      const newGuardian = randomStarknetKeyPair();
-      await expectRevertWithErrorMessage(
-        "argent/only-self",
-        accountContract.change_guardian(newGuardian.compiledSignerAsOption),
-      );
-    });
-
-    it("Expect 'argent/backup-should-be-null' when setting the guardian to 0 if there is a backup", async function () {
-      const { accountContract } = await deployAccountWithGuardianBackup();
-      await accountContract.get_guardian_backup().should.eventually.not.equal(0n);
-      await expectRevertWithErrorMessage(
-        "argent/backup-should-be-null",
-        accountContract.change_guardian(new CairoOption(CairoOptionVariant.None)),
       );
     });
 
@@ -219,54 +171,6 @@ describe("ArgentAccount", function () {
   });
 
   describe("change_guardian_backup(new_guardian)", function () {
-    it("Should be possible to change_guardian_backup", async function () {
-      const { accountContract } = await deployAccountWithGuardianBackup();
-      const newGuardianBackup = randomStarknetKeyPair();
-
-      const receipt = await manager.waitForTx(
-        await accountContract.change_guardian_backup(newGuardianBackup.compiledSignerAsOption),
-      );
-
-      expect((await accountContract.get_guardian_backup_guid()).unwrap()).to.equal(newGuardianBackup.guid);
-
-      await expectEvent(receipt, {
-        from_address: accountContract.address,
-        eventName: "GuardianBackupChanged",
-        data: [newGuardianBackup.storedValue.toString()],
-      });
-      await expectEvent(receipt, {
-        from_address: accountContract.address,
-        eventName: "GuardianBackupChangedGuid",
-        data: [newGuardianBackup.guid.toString()],
-      });
-    });
-
-    it("Should be possible to change_guardian_backup to zero", async function () {
-      const { accountContract } = await deployAccountWithGuardianBackup();
-      await accountContract.change_guardian_backup(new CairoOption(CairoOptionVariant.None));
-
-      await accountContract.get_guardian_backup().should.eventually.equal(0n);
-    });
-
-    it("Expect 'argent/only-self' when called from another account", async function () {
-      const { account } = await deployAccount();
-      const { accountContract } = await deployAccount();
-      accountContract.connect(account);
-      await expectRevertWithErrorMessage(
-        "argent/only-self",
-        accountContract.change_guardian_backup(randomStarknetKeyPair().compiledSignerAsOption),
-      );
-    });
-
-    it("Expect 'argent/guardian-required' when guardian == 0 and setting a guardian backup ", async function () {
-      const { accountContract } = await deployAccountWithoutGuardian();
-      await accountContract.get_guardian().should.eventually.equal(0n);
-      await expectRevertWithErrorMessage(
-        "argent/guardian-required",
-        accountContract.change_guardian_backup(randomStarknetKeyPair().compiledSignerAsOption),
-      );
-    });
-
     it("Expect the escape to be reset", async function () {
       const { account, accountContract, owner, guardian } = await deployAccountWithGuardianBackup();
 

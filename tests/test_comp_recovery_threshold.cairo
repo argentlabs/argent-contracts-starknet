@@ -4,25 +4,13 @@ use argent::recovery::interface::{IRecoveryDispatcher, IRecoveryDispatcherTrait,
 use argent::recovery::threshold_recovery::{
     threshold_recovery_component, IToggleThresholdRecoveryDispatcher, IToggleThresholdRecoveryDispatcherTrait
 };
-use argent::signer::signer_signature::{Signer, starknet_signer_from_pubkey, SignerTrait};
+use argent::signer::signer_signature::{Signer, SignerTrait};
 use snforge_std::{
     EventSpyTrait, start_cheat_caller_address_global, start_cheat_block_timestamp_global, declare, ContractClassTrait,
     EventSpyAssertionsTrait, spy_events, DeclareResultTrait,
 };
 use starknet::{ContractAddress, contract_address_const,};
-use super::setup::constants::{MULTISIG_OWNER};
-
-fn SIGNER_1() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)
-}
-
-fn SIGNER_2() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey)
-}
-
-fn SIGNER_3() -> Signer {
-    starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey)
-}
+use super::{SIGNER_1, SIGNER_2, SIGNER_3};
 
 fn setup() -> (IRecoveryDispatcher, IToggleThresholdRecoveryDispatcher, IArgentMultisigDispatcher) {
     let contract_class = declare("ThresholdRecoveryMock").expect('Failed ThresholdRecoveryMock').contract_class();
@@ -45,14 +33,14 @@ fn setup() -> (IRecoveryDispatcher, IToggleThresholdRecoveryDispatcher, IArgentM
 fn test_toggle_escape() {
     let (component, toggle_component, _) = setup();
     let mut config = component.get_escape_enabled();
-    assert_eq!(config.is_enabled, true, "should be enabled");
-    assert_eq!(config.security_period, 10, "should be 10");
-    assert_eq!(config.expiry_period, 10, "should be 10");
+    assert_eq!(config.is_enabled, true);
+    assert_eq!(config.security_period, 10);
+    assert_eq!(config.expiry_period, 10);
     toggle_component.toggle_escape(false, 0, 0);
     config = component.get_escape_enabled();
-    assert_eq!(config.is_enabled, false, "should not be enabled");
-    assert_eq!(config.security_period, 0, "should be 0");
-    assert_eq!(config.expiry_period, 0, "should be 0");
+    assert_eq!(config.is_enabled, false);
+    assert_eq!(config.security_period, 0);
+    assert_eq!(config.expiry_period, 0);
 }
 
 #[test]
@@ -70,19 +58,11 @@ fn test_trigger_escape_first_signer() {
     let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_1()], array![SIGNER_3()]);
     let (escape, status) = component.get_escape();
-    assert_eq!(
-        *escape.target_signers.at(0),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey).into_guid(),
-        "should be signer 1"
-    );
-    assert_eq!(
-        *escape.new_signers.at(0),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
-        "should be signer 3"
-    );
+    assert_eq!(*escape.target_signers.at(0), SIGNER_1().into_guid(), "should be signer 1");
+    assert_eq!(*escape.new_signers.at(0), SIGNER_3().into_guid(), "should be signer 3");
 
-    assert_eq!(escape.ready_at, 10, "should be 10");
-    assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
+    assert_eq!(escape.ready_at, 10);
+    assert_eq!(status, EscapeStatus::NotReady);
 }
 
 #[test]
@@ -90,19 +70,11 @@ fn test_trigger_escape_last_signer() {
     let (component, _, _) = setup();
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     let (escape, status) = component.get_escape();
-    assert_eq!(
-        *escape.target_signers.at(0),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey).into_guid(),
-        "should be signer 2"
-    );
-    assert_eq!(
-        *escape.new_signers.at(0),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey).into_guid(),
-        "should be signer 3"
-    );
+    assert_eq!(*escape.target_signers.at(0), SIGNER_2().into_guid(), "should be signer 2");
+    assert_eq!(*escape.new_signers.at(0), SIGNER_3().into_guid(), "should be signer 3");
 
-    assert_eq!(escape.ready_at, 10, "should be 10");
-    assert_eq!(status, EscapeStatus::NotReady, "should be NotReady");
+    assert_eq!(escape.ready_at, 10);
+    assert_eq!(status, EscapeStatus::NotReady);
 }
 
 #[test]
@@ -111,16 +83,8 @@ fn test_trigger_escape_can_override() {
     component.trigger_escape(array![SIGNER_1()], array![SIGNER_3()]);
     component.trigger_escape(array![SIGNER_2()], array![SIGNER_3()]);
     let (escape, _) = component.get_escape();
-    assert_eq!(
-        *escape.target_signers.at(0),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey,).into_guid(),
-        "should be signer 2"
-    );
-    assert_eq!(
-        *escape.new_signers.at(0),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey,).into_guid(),
-        "should be signer 3"
-    );
+    assert_eq!(*escape.target_signers.at(0), SIGNER_2().into_guid(), "should be signer 2");
+    assert_eq!(*escape.new_signers.at(0), SIGNER_3().into_guid(), "should be signer 3");
 }
 
 #[test]
@@ -163,11 +127,11 @@ fn test_execute_escape() {
     start_cheat_block_timestamp_global(11);
     component.execute_escape();
     let (escape, status) = component.get_escape();
-    assert_eq!(status, EscapeStatus::None, "status should be None");
-    assert_eq!(escape.ready_at, 0, "should be no recovery");
-    assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
-    assert!(multisig_component.is_signer(SIGNER_3()), "should be signer 3");
-    assert!(!multisig_component.is_signer(SIGNER_2()), "should not be signer 2");
+    assert_eq!(status, EscapeStatus::None);
+    assert_eq!(escape.ready_at, 0);
+    assert!(multisig_component.is_signer(SIGNER_1()));
+    assert!(multisig_component.is_signer(SIGNER_3()));
+    assert!(!multisig_component.is_signer(SIGNER_2()));
 }
 
 #[test]
@@ -208,11 +172,11 @@ fn test_cancel_escape() {
     let mut spy = spy_events();
     component.cancel_escape();
     let (escape, status) = component.get_escape();
-    assert_eq!(status, EscapeStatus::None, "status should be None");
-    assert_eq!(escape.ready_at, 0, "should be no recovery");
-    assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
-    assert!(multisig_component.is_signer(SIGNER_2()), "should be signer 2");
-    assert!(!multisig_component.is_signer(SIGNER_3()), "should not be signer 3");
+    assert_eq!(status, EscapeStatus::None);
+    assert_eq!(escape.ready_at, 0);
+    assert!(multisig_component.is_signer(SIGNER_1()));
+    assert!(multisig_component.is_signer(SIGNER_2()));
+    assert!(!multisig_component.is_signer(SIGNER_3()));
 
     let event = threshold_recovery_component::Event::EscapeCanceled(
         threshold_recovery_component::EscapeCanceled {
@@ -221,7 +185,7 @@ fn test_cancel_escape() {
     );
     spy.assert_emitted(@array![(component.contract_address, event)]);
 
-    assert_eq!(spy.get_events().events.len(), 1, "excess events");
+    assert_eq!(spy.get_events().events.len(), 1);
 }
 
 #[test]
@@ -232,11 +196,11 @@ fn test_cancel_escape_expired() {
     let mut spy = spy_events();
     component.cancel_escape();
     let (escape, status) = component.get_escape();
-    assert_eq!(status, EscapeStatus::None, "status should be None");
-    assert_eq!(escape.ready_at, 0, "should be no recovery");
-    assert!(multisig_component.is_signer(SIGNER_1()), "should be signer 1");
-    assert!(multisig_component.is_signer(SIGNER_2()), "should be signer 2");
-    assert!(!multisig_component.is_signer(SIGNER_3()), "should not be signer 3");
+    assert_eq!(status, EscapeStatus::None);
+    assert_eq!(escape.ready_at, 0);
+    assert!(multisig_component.is_signer(SIGNER_1()));
+    assert!(multisig_component.is_signer(SIGNER_2()));
+    assert!(!multisig_component.is_signer(SIGNER_3()));
 
     let event = threshold_recovery_component::Event::EscapeCanceled(
         threshold_recovery_component::EscapeCanceled {
@@ -245,7 +209,7 @@ fn test_cancel_escape_expired() {
     );
     spy.assert_not_emitted(@array![(component.contract_address, event)]);
 
-    assert_eq!(spy.get_events().events.len(), 0, "excess events");
+    assert_eq!(spy.get_events().events.len(), 0);
 }
 
 #[test]

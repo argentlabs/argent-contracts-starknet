@@ -32,7 +32,7 @@ fn validateK1Signature(r: u256, s: u256, y_parity: bool, message_hash: felt252) 
 
 #[test]
 fn test_SECP_256_K1_HALF() {
-    assert_eq!(SECP_256_K1_HALF, Secp256Trait::<Secp256k1Point>::get_curve_size() / 2,);
+    assert_eq!(SECP_256_K1_HALF, Secp256Trait::<Secp256k1Point>::get_curve_size() / 2);
 }
 
 #[test]

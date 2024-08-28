@@ -1,11 +1,8 @@
 use argent::multisig::multisig::multisig_component;
-use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
+use argent::signer::signer_signature::{SignerTrait};
 use argent::signer_storage::signer_list::signer_list_component;
 use snforge_std::{spy_events, EventSpyAssertionsTrait, EventSpyTrait};
-use super::setup::{
-    constants::MULTISIG_OWNER,
-    multisig_test_setup::{ITestArgentMultisigDispatcherTrait, initialize_multisig_with_one_signer}
-};
+use super::super::{SIGNER_1, SIGNER_2, ITestArgentMultisigDispatcherTrait, initialize_multisig_with_one_signer};
 
 #[test]
 fn add_signers() {
@@ -14,13 +11,13 @@ fn add_signers() {
     let mut spy = spy_events();
 
     // add signer
-    let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
+    let signer_1 = SIGNER_2();
     multisig.add_signers(2, array![signer_1]);
 
     // check
     let signers = multisig.get_signer_guids();
-    assert_eq!(signers.len(), 2, "invalid signers length");
-    assert_eq!(multisig.get_threshold(), 2, "new threshold not set");
+    assert_eq!(signers.len(), 2);
+    assert_eq!(multisig.get_threshold(), 2);
 
     let events = array![
         (
@@ -41,7 +38,7 @@ fn add_signers() {
     let event = multisig_component::Event::ThresholdUpdated(multisig_component::ThresholdUpdated { new_threshold: 2 });
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
 
-    assert_eq!(spy.get_events().events.len(), 3, "excess events");
+    assert_eq!(spy.get_events().events.len(), 3);
 }
 
 #[test]
@@ -51,7 +48,7 @@ fn add_signer_already_in_list() {
     let multisig = initialize_multisig_with_one_signer();
 
     // add signer
-    let new_signers = array![starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)];
+    let new_signers = array![SIGNER_1()];
     multisig.add_signers(2, new_signers);
 }
 
@@ -62,7 +59,7 @@ fn add_signer_zero_threshold() {
     let multisig = initialize_multisig_with_one_signer();
 
     // add signer
-    let new_signers = array![starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey)];
+    let new_signers = array![SIGNER_2()];
     multisig.add_signers(0, new_signers);
 }
 
@@ -73,6 +70,6 @@ fn add_signer_excessive_threshold() {
     let multisig = initialize_multisig_with_one_signer();
 
     // add signer
-    let new_signers = array![starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey)];
+    let new_signers = array![SIGNER_2()];
     multisig.add_signers(3, new_signers);
 }

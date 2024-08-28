@@ -61,6 +61,8 @@
     <div>Webauthn public key: <small>{buf2hex(owner.attestation.pubKey)}</small></div>
     <div>Webauthn credential id: <small>{buf2hex(owner.attestation.credentialId)}</small></div>
 
+    <!-- TODO SHOULD DECLARE TOP LEVEL -->
+    <!-- This is blocking and can be annoying, fix would be to send it to a web worker to avoid that -->
     {#await declareAccount(provider)}
       <p>Declaring...</p>
     {:then classHash}

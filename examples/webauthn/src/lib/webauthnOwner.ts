@@ -25,12 +25,6 @@ function sha256(message: Message): Uint8Array {
 }
 
 const normalizeTransactionHash = (transactionHash: string) => transactionHash.replace(/^0x/, "").padStart(64, "0");
-const findInArray = (dataToFind: Uint8Array, arrayToIterate: Uint8Array) => {
-  return arrayToIterate.findIndex((element, i) => {
-    const slice = arrayToIterate.slice(i, i + dataToFind.length);
-    return dataToFind.toString() === slice.toString();
-  });
-};
 export type NormalizedSecpSignature = { r: bigint; s: bigint; yParity: boolean };
 
 export function normalizeSecpR1Signature(signature: {
@@ -129,7 +123,7 @@ export class WebauthnOwner extends KeyPair {
     const assertionResponse = await this.requestSignature(this.attestation, normalizedChallenge);
     const authenticatorData = new Uint8Array(assertionResponse.authenticatorData);
     const clientDataJson = new Uint8Array(assertionResponse.clientDataJSON);
-    const signCount = 0;
+    const signCount = Number(BigInt(buf2hex(authenticatorData.slice(33, 37))));
     console.log("clientDataJson", new TextDecoder().decode(clientDataJson));
     console.log("signCount", signCount);
 
@@ -149,12 +143,6 @@ export class WebauthnOwner extends KeyPair {
     let { r, s } = parseASN1Signature(assertionResponse.signature);
     let yParity = getYParity(getMessageHash(authenticatorData, clientDataJson), this.publicKey, r, s);
 
-    console.log("clientDataJson");
-    console.log(clientDataJson);
-    console.log("authenticatorData");
-    console.log(authenticatorData);
-    console.log("getMessageHash");
-    console.log(getMessageHash(authenticatorData, clientDataJson));
     // Flags is the fifth byte from the end of the authenticatorData
     // const flags = Number("0b00000101"); // present and verified
     const flags = authenticatorData[authenticatorData.length - 5];

@@ -12,7 +12,8 @@ build-external-contracts = ["openzeppelin_presets::account::AccountUpgradeable"]
 # Use scarb cargo crate scarb.xyz
 [dependencies]
 starknet = "2.7.0"
-snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.27.0" }
+snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.28.0" }
+assert_macros = "0.1.0"
 alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b0805" }
 alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b0805" }
 alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev="e1b0805" }

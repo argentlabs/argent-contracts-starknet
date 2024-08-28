@@ -56,9 +56,9 @@ fn test_is_valid_webauthn_signature_with_extra_json() {
         flags: 0b00010101,
         sign_count: 42,
         ec_signature: Signature {
-            r: 25293950270749865875261361828151587310036144493631465878711959357418326035198,
-            s: 32204010901783871760488054423475015897475980626194169668640828734933933005405,
-            y_parity: true,
+            r: 19670870023840550315885474235507956766557476217277073407643822104794216096240,
+            s: 5663432275202665149057612808730096627589839396996609159142560785302022469931,
+            y_parity: false,
         },
     };
 
@@ -91,7 +91,7 @@ fn test_is_valid_webauthn_signature_with_cross_origin_none() {
 
 #[test]
 #[should_panic(expected: "webauthn/missing-user-bit")]
-fn test_invalid_webauthn_signature_nonpresent_user() {
+fn test_invalid_webauthn_signature_missing_user_bit() {
     let (transaction_hash, signer, mut signature) = valid_signer();
     signature.flags = 0b00000000;
     let _ = is_valid_webauthn_signature(transaction_hash, signer, signature);

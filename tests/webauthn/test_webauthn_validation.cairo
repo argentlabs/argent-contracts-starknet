@@ -1,6 +1,6 @@
 use argent::signer::signer_signature::{WebauthnSigner, is_valid_webauthn_signature};
 use argent::signer::webauthn::{WebauthnSignature, Sha256Implementation};
-use argent::utils::bytes::{ByteArrayExt, SpanU8TryIntoFelt252};
+use argent::utils::bytes::ByteArrayExt;
 use starknet::secp256_trait::Signature;
 
 fn new_webauthn_signer(origin: ByteArray, rp_id_hash: u256, pubkey: u256) -> WebauthnSigner {
@@ -41,7 +41,7 @@ fn valid_signer() -> (felt252, WebauthnSigner, WebauthnSignature) {
 fn test_is_valid_webauthn_signature() {
     let (transaction_hash, signer, mut signature) = valid_signer();
     let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
-    assert!(is_valid, "invalid");
+    assert!(is_valid);
 }
 
 #[test]
@@ -65,7 +65,7 @@ fn test_is_valid_webauthn_signature_with_extra_json() {
     };
 
     let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
-    assert!(is_valid, "invalid");
+    assert!(is_valid);
 }
 
 #[test]
@@ -81,5 +81,5 @@ fn test_invalid_webauthn_signature_hash() {
     let (transaction_hash, signer, mut signature) = valid_signer();
     signature.ec_signature.r = 0xdeadbeef;
     let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
-    assert!(!is_valid, "invalid");
+    assert!(!is_valid);
 }

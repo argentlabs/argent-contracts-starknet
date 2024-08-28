@@ -1,10 +1,9 @@
 use argent::account::interface::Version;
-use argent::presets::argent_account::ArgentAccount;
 use argent::recovery::interface::{LegacyEscape, EscapeStatus};
-use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknet_signer_from_pubkey};
-use snforge_std::{declare, ContractClassTrait, ContractClass, RevertedTransaction, start_prank, CheatTarget};
-use starknet::{contract_address_const, account::Call};
-use super::constants::{OWNER, GUARDIAN, ARGENT_ACCOUNT_ADDRESS};
+use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
+use snforge_std::{declare, ContractClassTrait, start_cheat_caller_address_global};
+use starknet::account::Call;
+use super::super::{OWNER, GUARDIAN, ARGENT_ACCOUNT_ADDRESS};
 
 #[starknet::interface]
 trait ITestArgentAccount<TContractState> {
@@ -74,12 +73,12 @@ fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAcco
     };
     guardian_signer.serialize(ref calldata);
 
-    let contract = declare("ArgentAccount");
-    let contract_address = contract
+    let contract = declare("ArgentAccount").expect('Failed to declare ArgentAccount');
+    let (contract_address, _) = contract
         .deploy_at(@calldata, ARGENT_ACCOUNT_ADDRESS.try_into().unwrap())
         .expect('Failed to deploy ArgentAccount');
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')
-    start_prank(CheatTarget::One(contract_address), contract_address);
+    start_cheat_caller_address_global(contract_address);
     ITestArgentAccountDispatcher { contract_address }
 }

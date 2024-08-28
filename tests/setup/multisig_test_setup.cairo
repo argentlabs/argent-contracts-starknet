@@ -1,9 +1,9 @@
 use argent::account::interface::Version;
 use argent::presets::multisig_account::ArgentMultisigAccount;
-use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknet_signer_from_pubkey};
-use snforge_std::{declare, ContractClassTrait, ContractClass, RevertedTransaction, start_prank, CheatTarget};
-use starknet::{contract_address_const, syscalls::deploy_syscall, account::Call};
-use super::constants::MULTISIG_OWNER;
+use argent::signer::signer_signature::{Signer, SignerSignature};
+use snforge_std::{declare, ContractClassTrait, ContractClass, start_cheat_caller_address_global};
+use starknet::account::Call;
+use super::super::{SIGNER_1, SIGNER_2, SIGNER_3};
 
 #[starknet::interface]
 trait ITestArgentMultisig<TContractState> {
@@ -46,22 +46,18 @@ trait ITestArgentMultisig<TContractState> {
 }
 
 fn declare_multisig() -> ContractClass {
-    declare("ArgentMultisigAccount")
+    declare("ArgentMultisigAccount").expect('Fail decl ArgentMultisigAccount')
 }
 
 fn initialize_multisig() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
-    let signers_array = array![
-        starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey),
-        starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey),
-    ];
+    let signers_array = array![SIGNER_1(), SIGNER_2(), SIGNER_3(),];
     initialize_multisig_with(threshold, signers_array.span())
 }
 
 fn initialize_multisig_with_one_signer() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
-    let signers_array = array![starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey)];
+    let signers_array = array![SIGNER_1()];
     initialize_multisig_with(threshold, signers_array.span())
 }
 
@@ -71,9 +67,9 @@ fn initialize_multisig_with(threshold: usize, mut signers: Span<Signer>) -> ITes
     threshold.serialize(ref calldata);
     signers.serialize(ref calldata);
 
-    let contract_address = class_hash.deploy(@calldata).expect('Multisig deployment fail');
+    let (contract_address, _) = class_hash.deploy(@calldata).expect('Multisig deployment fail');
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')
-    start_prank(CheatTarget::One(contract_address), contract_address);
+    start_cheat_caller_address_global(contract_address);
     ITestArgentMultisigDispatcher { contract_address }
 }

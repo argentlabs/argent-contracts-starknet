@@ -20,6 +20,7 @@
     owner = await createOwner(email, rpId, window.location.origin);
   };
 
+  // https://www.reddit.com/r/Passkeys/comments/1aov4m6/whats_the_point_of_google_chrome_creating_synced/
   const retrieveOwnerOnLoad = async () => {
     owner = await retrieveOwner();
   };

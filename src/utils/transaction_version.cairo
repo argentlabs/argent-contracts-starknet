@@ -1,11 +1,11 @@
 use starknet::{SyscallResultTrait, get_execution_info, get_tx_info, get_caller_address};
 
 const TX_V1: felt252 = 1; // INVOKE
-const TX_V1_ESTIMATE: felt252 = consteval_int!(0x100000000000000000000000000000000 + 1); // 2**128 + TX_V1
+const TX_V1_ESTIMATE: felt252 = 0x100000000000000000000000000000000 + 1; // 2**128 + TX_V1
 const TX_V2: felt252 = 2; // DECLARE           
-const TX_V2_ESTIMATE: felt252 = consteval_int!(0x100000000000000000000000000000000 + 2); // 2**128 + TX_V2
+const TX_V2_ESTIMATE: felt252 = 0x100000000000000000000000000000000 + 2; // 2**128 + TX_V2
 const TX_V3: felt252 = 3;
-const TX_V3_ESTIMATE: felt252 = consteval_int!(0x100000000000000000000000000000000 + 3); // 2**128 + TX_V3
+const TX_V3_ESTIMATE: felt252 = 0x100000000000000000000000000000000 + 3; // 2**128 + TX_V3
 
 const DA_MODE_L1: u32 = 0;
 const DA_MODE_L2: u32 = 1;
@@ -41,5 +41,5 @@ fn is_estimate_version(tx_version: felt252) -> bool {
 
 #[inline(always)]
 fn is_estimate_transaction() -> bool {
-    get_caller_address().is_zero() && is_estimate_version(get_tx_info().unbox().version)
+    get_caller_address().is_zero() && is_estimate_version(get_tx_info().version)
 }

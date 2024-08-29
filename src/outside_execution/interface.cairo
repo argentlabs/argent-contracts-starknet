@@ -33,15 +33,16 @@ struct OutsideExecution {
 /// @notice get_outside_execution_message_hash_rev_* is not part of the standard interface
 #[starknet::interface]
 trait IOutsideExecution<TContractState> {
-    /// @notice This function allows anyone to submit a transaction on behalf of the account as long as they have the relevant signatures
-    /// @param outside_execution The parameters of the transaction to execute
+    /// @notice This function allows anyone to submit a transaction on behalf of the account as long as they have the
+    /// relevant signatures @param outside_execution The parameters of the transaction to execute
     /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
-    /// @notice This function does not allow reentrancy. A call to `__execute__` or `execute_from_outside` cannot trigger another nested transaction to `execute_from_outside`.
+    /// @notice This function does not allow reentrancy. A call to `__execute__` or `execute_from_outside` cannot
+    /// trigger another nested transaction to `execute_from_outside`.
     fn execute_from_outside(
         ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>
     ) -> Array<Span<felt252>>;
 
-    /// @notice Outside execution using SNIP-12 Rev 1 
+    /// @notice Outside execution using SNIP-12 Rev 1
     fn execute_from_outside_v2(
         ref self: TContractState, outside_execution: OutsideExecution, signature: Span<felt252>
     ) -> Array<Span<felt252>>;
@@ -49,18 +50,21 @@ trait IOutsideExecution<TContractState> {
     /// Get the status of a given nonce, true if the nonce is available to use
     fn is_valid_outside_execution_nonce(self: @TContractState, nonce: felt252) -> bool;
 
-    /// Get the message hash for some `OutsideExecution` rev 0 following Eip712. Can be used to know what needs to be signed
+    /// Get the message hash for some `OutsideExecution` rev 0 following Eip712. Can be used to know what needs to be
+    /// signed
     fn get_outside_execution_message_hash_rev_0(self: @TContractState, outside_execution: OutsideExecution) -> felt252;
 
-    /// Get the message hash for some `OutsideExecution` rev 1 following Eip712. Can be used to know what needs to be signed
+    /// Get the message hash for some `OutsideExecution` rev 1 following Eip712. Can be used to know what needs to be
+    /// signed
     fn get_outside_execution_message_hash_rev_1(self: @TContractState, outside_execution: OutsideExecution) -> felt252;
 }
 
-/// This trait must be implemented when using the component `outside_execution_component` (This is enforced by the compiler)
+/// This trait must be implemented when using the component `outside_execution_component` (This is enforced by the
+/// compiler)
 trait IOutsideExecutionCallback<TContractState> {
     /// @notice Callback performed after checking the OutsideExecution is valid
     /// @dev Make the correct access control checks in this callback
-    /// @param calls The calls to be performed 
+    /// @param calls The calls to be performed
     /// @param outside_execution_hash The hash of OutsideExecution
     /// @param signature The signature that the user gave for this transaction
     #[inline(always)]

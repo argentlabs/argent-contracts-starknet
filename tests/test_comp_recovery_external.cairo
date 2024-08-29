@@ -9,7 +9,7 @@ use argent::signer::signer_signature::Signer;
 use argent::utils::serialization::serialize;
 use snforge_std::{
     EventSpyTrait, EventSpyAssertionsTrait, start_cheat_caller_address_global, start_cheat_block_timestamp_global,
-    declare, ContractClassTrait, spy_events
+    declare, ContractClassTrait, DeclareResultTrait, spy_events
 };
 use starknet::{contract_address_const, ContractAddress};
 use super::{SIGNER_1, SIGNER_2, SIGNER_3, SIGNER_4};
@@ -21,6 +21,7 @@ fn GUARDIAN() -> ContractAddress {
 fn setup() -> (IExternalRecoveryDispatcher, IArgentMultisigDispatcher) {
     let (contract_address, _) = declare("ExternalRecoveryMock")
         .expect('Fail depl ExternalRecoveryMock')
+        .contract_class()
         .deploy(@array![])
         .expect('Deployment failed');
     start_cheat_caller_address_global(contract_address);
@@ -29,7 +30,7 @@ fn setup() -> (IExternalRecoveryDispatcher, IArgentMultisigDispatcher) {
     (IExternalRecoveryDispatcher { contract_address }, IArgentMultisigDispatcher { contract_address })
 }
 
-// Toggle 
+// Toggle
 
 #[test]
 fn test_toggle_escape() {

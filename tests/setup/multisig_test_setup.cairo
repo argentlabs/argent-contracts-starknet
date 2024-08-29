@@ -1,7 +1,7 @@
 use argent::account::interface::Version;
 use argent::presets::multisig_account::ArgentMultisigAccount;
 use argent::signer::signer_signature::{Signer, SignerSignature};
-use snforge_std::{declare, ContractClassTrait, ContractClass, start_cheat_caller_address_global};
+use snforge_std::{declare, ContractClassTrait, ContractClass, start_cheat_caller_address_global, DeclareResultTrait};
 use starknet::account::Call;
 use super::super::{SIGNER_1, SIGNER_2, SIGNER_3};
 
@@ -46,7 +46,7 @@ trait ITestArgentMultisig<TContractState> {
 }
 
 fn declare_multisig() -> ContractClass {
-    declare("ArgentMultisigAccount").expect('Fail decl ArgentMultisigAccount')
+    *declare("ArgentMultisigAccount").expect('Fail decl ArgentMultisigAccount').contract_class()
 }
 
 fn initialize_multisig() -> ITestArgentMultisigDispatcher {

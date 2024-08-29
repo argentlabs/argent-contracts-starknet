@@ -14,7 +14,7 @@ fn add_signers() {
     let signer_1 = SIGNER_2();
     multisig.add_signers(2, array![signer_1]);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2);
     assert_eq!(multisig.get_threshold(), 2);

@@ -7,13 +7,13 @@ use argent::recovery::threshold_recovery::{
 use argent::signer::signer_signature::{Signer, SignerTrait};
 use snforge_std::{
     EventSpyTrait, start_cheat_caller_address_global, start_cheat_block_timestamp_global, declare, ContractClassTrait,
-    EventSpyAssertionsTrait, spy_events,
+    EventSpyAssertionsTrait, spy_events, DeclareResultTrait,
 };
 use starknet::{ContractAddress, contract_address_const,};
 use super::{SIGNER_1, SIGNER_2, SIGNER_3};
 
 fn setup() -> (IRecoveryDispatcher, IToggleThresholdRecoveryDispatcher, IArgentMultisigDispatcher) {
-    let contract_class = declare("ThresholdRecoveryMock").expect('Failed ThresholdRecoveryMock');
+    let contract_class = declare("ThresholdRecoveryMock").expect('Failed ThresholdRecoveryMock').contract_class();
     let constructor = array![];
     let (contract_address, _) = contract_class.deploy(@constructor).expect('Deployment failed');
 
@@ -27,7 +27,7 @@ fn setup() -> (IRecoveryDispatcher, IToggleThresholdRecoveryDispatcher, IArgentM
     )
 }
 
-// Toggle 
+// Toggle
 
 #[test]
 fn test_toggle_escape() {

@@ -5,7 +5,7 @@ mod ArgentAccount {
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
-    use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
+    use argent::recovery::interface::{LegacyEscape, LegacyEscapeDefault, LegacyEscapeType, EscapeStatus};
     use argent::session::{
         interface::{SessionToken, ISessionCallback},
         session::{session_component::{Internal, InternalTrait}, session_component,}
@@ -26,11 +26,12 @@ mod ArgentAccount {
         }
     };
     use hash::HashStateTrait;
-    use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
+    use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
     use pedersen::PedersenTrait;
     use starknet::{
-        ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, replace_class_syscall,
-        account::Call, SyscallResultTrait, get_tx_info, get_execution_info, syscalls::storage_read_syscall,
+        storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED,
+        replace_class_syscall, account::Call, SyscallResultTrait, get_tx_info, get_execution_info,
+        syscalls::storage_read_syscall,
         storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall}
     };
 
@@ -38,11 +39,12 @@ mod ArgentAccount {
     const VERSION: Version = Version { major: 0, minor: 4, patch: 0 };
     const VERSION_COMPAT: felt252 = '0.4.0';
 
-    /// Time it takes for the escape to become ready after being triggered. Also the escape will be ready and can be completed for this duration
-    const DEFAULT_ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(7 * 24 * 60 * 60); // 7 days
+    /// Time it takes for the escape to become ready after being triggered. Also the escape will be ready and can be
+    /// completed for this duration
+    const DEFAULT_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
     /// Limit to one escape every X hours
-    const TIME_BETWEEN_TWO_ESCAPES: u64 = consteval_int!(12 * 60 * 60); // 12 hours;
+    const TIME_BETWEEN_TWO_ESCAPES: u64 = 12 * 60 * 60; // 12 hours;
 
     /// Limits fee in escapes
     const MAX_ESCAPE_MAX_FEE_ETH: u128 = 5000000000000000; // 0.005 ETH
@@ -50,9 +52,9 @@ mod ArgentAccount {
     const MAX_ESCAPE_TIP_STRK: u128 = 1_000000000000000000; // 1 STRK
 
     /// Minimum time for the escape security period
-    const MIN_ESCAPE_SECURITY_PERIOD: u64 = consteval_int!(60 * 10); // 10 minutes;
+    const MIN_ESCAPE_SECURITY_PERIOD: u64 = 60 * 10; // 10 minutes;
 
-    // session 
+    // session
     component!(path: session_component, storage: session, event: SessionableEvents);
     #[abi(embed_v0)]
     impl Sessionable = session_component::SessionImpl<ContractState>;
@@ -89,17 +91,18 @@ mod ArgentAccount {
         _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         /// Current account owner
         _signer: felt252,
-        _signer_non_stark: LegacyMap<felt252, felt252>,
+        _signer_non_stark: Map<felt252, felt252>,
         /// Current account guardian
         _guardian: felt252,
         /// Current account backup guardian
         _guardian_backup: felt252,
-        _guardian_backup_non_stark: LegacyMap<felt252, felt252>,
+        _guardian_backup_non_stark: Map<felt252, felt252>,
         /// The ongoing escape, if any
         _escape: LegacyEscape,
         /// The following 4 fields are used to limit the number of escapes the account will pay for
-        /// Values are Rounded down to the hour: https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 
-        /// Values are resets when an escape is completed or canceled
+        /// Values are Rounded down to the hour:
+        /// https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 Values are resets when an escape
+        /// is completed or canceled
         last_guardian_trigger_escape_attempt: u64,
         last_owner_trigger_escape_attempt: u64,
         last_guardian_escape_attempt: u64,
@@ -149,7 +152,7 @@ mod ArgentAccount {
         guardian: felt252
     }
 
-    /// @notice Emitted on initialization with the guids of the owner and the guardian (or 0 if none) 
+    /// @notice Emitted on initialization with the guids of the owner and the guardian (or 0 if none)
     /// @dev Emitted exactly once when the account is initialized
     /// @param owner The owner guid
     /// @param guardian The guardian guid or 0 if there's no guardian
@@ -251,10 +254,10 @@ mod ArgentAccount {
         new_guardian_backup_guid: felt252
     }
 
-    /// @notice A new signer was linked 
+    /// @notice A new signer was linked
     /// @dev This is the only way to get the signer struct knowing a only guid
     /// @param signer_guid the guid of the signer derived from the signer
-    /// @param signer the signer being added 
+    /// @param signer the signer being added
     #[derive(Drop, starknet::Event)]
     struct SignerLinked {
         #[key]
@@ -304,8 +307,8 @@ mod ArgentAccount {
     #[abi(embed_v0)]
     impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
-            let exec_info = get_execution_info().unbox();
-            let tx_info = exec_info.tx_info.unbox();
+            let exec_info = get_execution_info();
+            let tx_info = exec_info.tx_info;
             assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
@@ -326,16 +329,16 @@ mod ArgentAccount {
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
             self.reentrancy_guard.start();
-            let exec_info = get_execution_info().unbox();
-            let tx_info = exec_info.tx_info.unbox();
+            let exec_info = get_execution_info();
+            let tx_info = exec_info.tx_info;
             assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
             let signature = tx_info.signature;
             if self.session.is_session(signature) {
                 let session_timestamp = *signature[1];
-                // can call unwrap safely as the session has already been deserialized 
+                // can call unwrap safely as the session has already been deserialized
                 let session_timestamp_u64 = session_timestamp.try_into().unwrap();
-                assert(session_timestamp_u64 >= exec_info.block_info.unbox().block_timestamp, 'session/expired');
+                assert(session_timestamp_u64 >= exec_info.block_info.block_timestamp, 'session/expired');
             }
 
             let retdata = execute_multicall(calls.span());
@@ -478,7 +481,7 @@ mod ArgentAccount {
     #[abi(embed_v0)]
     impl ArgentUserAccountImpl of IArgentUserAccount<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
-            let tx_info = get_tx_info().unbox();
+            let tx_info = get_tx_info();
             assert_correct_declare_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             self
@@ -495,7 +498,7 @@ mod ArgentAccount {
             owner: Signer,
             guardian: Option<Signer>
         ) -> felt252 {
-            let tx_info = get_tx_info().unbox();
+            let tx_info = get_tx_info();
             assert_correct_deploy_account_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             self
@@ -1005,11 +1008,13 @@ mod ArgentAccount {
         /// The signature is the result of signing the message hash with the new owner private key
         /// The message hash is the result of hashing the array:
         /// [change_owner selector, chainid, contract address, old_owner_guid]
-        /// as specified here: https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
+        /// as specified here:
+        /// https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
         fn assert_valid_new_owner_signature(self: @ContractState, signer_signature: SignerSignature) {
-            let chain_id = get_tx_info().unbox().chain_id;
+            let chain_id = get_tx_info().chain_id;
             let owner_guid = self.read_owner().into_guid();
-            // We now need to hash message_hash with the size of the array: (change_owner selector, chain id, contract address, old_owner_guid)
+            // We now need to hash message_hash with the size of the array: (change_owner selector, chain id, contract
+            // address, old_owner_guid)
             // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
             let message_hash = PedersenTrait::new(0)
                 .update(selector!("change_owner"))

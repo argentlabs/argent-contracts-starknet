@@ -1,21 +1,24 @@
 [package]
 name = "argent"
 version = "0.1.0"
-cairo-version = "2.6.3"
+cairo-version = "2.7.0"
 
 [[target.starknet-contract]]
 sierra = true
 casm = true
 allowed-libfuncs-list.name = "audited"
-build-external-contracts = ["openzeppelin::presets::account::AccountUpgradeable"]
+build-external-contracts = ["openzeppelin_presets::account::AccountUpgradeable"]
 
+# Use scarb cargo crate scarb.xyz
 [dependencies]
-starknet = "2.6.3"
-alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.6.0" }
-alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "cairo-v2.6.0" }
-alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", tag="cairo-v2.6.0" }
-snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.27.0" }
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.12.0" }
+starknet = "2.7.0"
+snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.28.0" }
+assert_macros = "0.1.0"
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b0805" }
+alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b0805" }
+alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev="e1b0805" }
+openzeppelin_security = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.15.0" }
+openzeppelin_presets = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.15.0" }
 
 [tool.fmt]
 max-line-length = 120

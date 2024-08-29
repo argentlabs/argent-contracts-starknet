@@ -15,7 +15,7 @@ mod ArgentMultisigAccount {
         serialization::full_deserialize,
         transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
     };
-    use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
+    use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
     use starknet::{get_tx_info, get_execution_info, get_contract_address, VALIDATED, account::Call, ClassHash};
 
     const NAME: felt252 = 'ArgentMultisig';
@@ -99,15 +99,15 @@ mod ArgentMultisigAccount {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, new_threshold: usize, signers: Array<Signer>) {
-        self.multisig.initialize(new_threshold, signers);
+    fn constructor(ref self: ContractState, threshold: usize, signers: Array<Signer>) {
+        self.multisig.initialize(threshold, signers);
     }
 
     #[abi(embed_v0)]
     impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
-            let exec_info = get_execution_info().unbox();
-            let tx_info = exec_info.tx_info.unbox();
+            let exec_info = get_execution_info();
+            let tx_info = exec_info.tx_info;
             assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
@@ -119,8 +119,8 @@ mod ArgentMultisigAccount {
 
         fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
             self.reentrancy_guard.start();
-            let exec_info = get_execution_info().unbox();
-            let tx_info = exec_info.tx_info.unbox();
+            let exec_info = get_execution_info();
+            let tx_info = exec_info.tx_info;
             assert_only_protocol(exec_info.caller_address);
             assert_correct_invoke_version(tx_info.version);
 
@@ -160,7 +160,7 @@ mod ArgentMultisigAccount {
             threshold: usize,
             signers: Array<Signer>
         ) -> felt252 {
-            let tx_info = get_tx_info().unbox();
+            let tx_info = get_tx_info();
             assert_correct_deploy_account_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             // only 1 signer needed to deploy
@@ -205,7 +205,7 @@ mod ArgentMultisigAccount {
             let calls = array![Call { to: get_contract_address(), selector, calldata }].span();
             self.assert_valid_calls(calls);
             let retdata = execute_multicall(calls);
-            self.emit(TransactionExecuted { hash: get_tx_info().unbox().transaction_hash, response: retdata.span() });
+            self.emit(TransactionExecuted { hash: get_tx_info().transaction_hash, response: retdata.span() });
         }
     }
 
@@ -218,14 +218,13 @@ mod ArgentMultisigAccount {
             let pubkeys = self.signer_list.get_signers();
             let mut pubkeys_span = pubkeys.span();
             let mut signers_to_add = array![];
-            // Converting storage from public keys to guid 
-            while let Option::Some(pubkey) = pubkeys_span
-                .pop_front() {
-                    let starknet_signer = starknet_signer_from_pubkey(*pubkey);
-                    let signer_guid = starknet_signer.into_guid();
-                    signers_to_add.append(signer_guid);
-                    self.signer_list.emit(signer_list_component::SignerLinked { signer_guid, signer: starknet_signer });
-                };
+            // Converting storage from public keys to guid
+            while let Option::Some(pubkey) = pubkeys_span.pop_front() {
+                let starknet_signer = starknet_signer_from_pubkey(*pubkey);
+                let signer_guid = starknet_signer.into_guid();
+                signers_to_add.append(signer_guid);
+                self.signer_list.emit(signer_list_component::SignerLinked { signer_guid, signer: starknet_signer });
+            };
             assert(data.len() == 0, 'argent/unexpected-data');
             let last_signer = *pubkeys[pubkeys.len() - 1];
             self.signer_list.remove_signers(pubkeys.span(), last_signer);
@@ -253,8 +252,8 @@ mod ArgentMultisigAccount {
                     assert(*call.selector != selector!("perform_upgrade"), 'argent/forbidden-call');
                 }
             } else {
-                // Make sure no call is to the account. We don't have any good reason to perform many calls to the account in the same transactions
-                // and this restriction will reduce the attack surface
+                // Make sure no call is to the account. We don't have any good reason to perform many calls to the
+                // account in the same transactions and this restriction will reduce the attack surface
                 assert_no_self_call(calls, account_address);
             }
         }

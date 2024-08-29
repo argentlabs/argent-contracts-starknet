@@ -19,7 +19,7 @@ trait IArgentMultisig<TContractState> {
     /// @dev Will revert if any of the signers isn't in the multisig's list of signers
     /// @dev will revert if invalid threshold
     /// @param new_threshold New threshold
-    /// @param signers_to_remove All the signers to remove 
+    /// @param signers_to_remove All the signers to remove
     fn remove_signers(ref self: TContractState, new_threshold: usize, signers_to_remove: Array<Signer>);
 
     /// @notice Replace one signer with a different one

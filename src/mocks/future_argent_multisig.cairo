@@ -1,4 +1,7 @@
-/// @dev 🚨 This smart contract is a mock implementation and is not meant for actual deployment or use in any live environment. It is solely for testing, educational, or demonstration purposes. Any interactions with this contract will not have real-world consequences or effects on blockchain networks. Please refrain from relying on the functionality of this contract for any production. 🚨
+/// @dev 🚨 This smart contract is a mock implementation and is not meant for actual deployment or use in any live
+/// environment. It is solely for testing, educational, or demonstration purposes. Any interactions with this contract
+/// will not have real-world consequences or effects on blockchain networks. Please refrain from relying on the
+/// functionality of this contract for any production. 🚨
 #[starknet::contract(account)]
 mod MockFutureArgentMultisig {
     use argent::account::interface::{
@@ -70,14 +73,14 @@ mod MockFutureArgentMultisig {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, new_threshold: usize, signers: Array<Signer>) {
-        self.multisig.initialize(new_threshold, signers);
+    fn constructor(ref self: ContractState, threshold: usize, signers: Array<Signer>) {
+        self.multisig.initialize(threshold, signers);
     }
 
     #[abi(embed_v0)]
     impl AccountImpl of IAccount<ContractState> {
         fn __validate__(ref self: ContractState, calls: Array<Call>) -> felt252 {
-            let tx_info = get_tx_info().unbox();
+            let tx_info = get_tx_info();
             self.assert_valid_signatures(tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }

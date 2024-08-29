@@ -192,18 +192,16 @@ describe("ArgentAccount", function () {
 
   it("Expect 'Entry point X not found' when calling the constructor", async function () {
     const { account } = await deployAccount();
-    try {
-      await manager.waitForTx(
+    await manager
+      .waitForTx(
         account.execute({
           contractAddress: account.address,
           entrypoint: "constructor",
           calldata: CallData.compile({ owner: 12, guardian: 13 }),
         }),
+      )
+      .should.be.rejectedWith(
+        "Entry point EntryPointSelector(0x28ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194) not found in contract.",
       );
-    } catch (e: any) {
-      expect(e.toString()).to.contain(
-        `Entry point EntryPointSelector(StarkFelt(\\"0x028ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194\\")) not found in contract`,
-      );
-    }
   });
 });

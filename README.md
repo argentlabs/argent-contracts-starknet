@@ -17,7 +17,8 @@ Find the release notes for all versions in [CHANGELOG](./CHANGELOG.md)
 ### Setup
 
 We recommend you to install scarb through ASDF. Please refer to [these instructions](https://docs.swmansion.com/scarb/download.html#install-via-asdf).  
-Thanks to the [.tool-versions file](./.tool-versions), you don't need to install a specific scarb or starknet foundry version. The correct one will be automatically downloaded and installed.
+Thanks to the [.tool-versions file](./.tool-versions), you don't need to install a specific scarb or starknet foundry version. The correct one will be automatically downloaded and installed.  
+You need also to install the Universal-Sierra-Compiler (USC) please refer to [these instructions](https://github.com/software-mansion/universal-sierra-compiler).
 
 ## Test the contracts (Cairo)
 

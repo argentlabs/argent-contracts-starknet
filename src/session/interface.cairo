@@ -4,7 +4,7 @@ use starknet::account::Call;
 use starknet::{get_tx_info, get_contract_address, ContractAddress};
 
 /// @notice Session struct that the owner and guardian has to sign to initiate a session
-/// @dev The hash of the session is also signed by the guardian (backend) and 
+/// @dev The hash of the session is also signed by the guardian (backend) and
 /// the dapp (session key) for every session tx (which may include multiple calls)
 /// @param expires_at Expiry timestamp of the session (seconds)
 /// @param allowed_methods_root The root of the merkle tree of the allowed methods
@@ -54,7 +54,7 @@ trait ISessionable<TContractState> {
     /// @param session_hash Hash of the session token
     fn revoke_session(ref self: TContractState, session_hash: felt252);
 
-    /// @notice View function to see if a session is revoked, returns a boolean 
+    /// @notice View function to see if a session is revoked, returns a boolean
     fn is_session_revoked(self: @TContractState, session_hash: felt252) -> bool;
 
     /// @notice View function to see if a session authorization is cached

@@ -12,15 +12,15 @@ mod session_component {
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
     use hash::{HashStateExTrait, HashStateTrait};
     use poseidon::PoseidonTrait;
-    use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp};
+    use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp, storage::Map};
 
 
     #[storage]
     struct Storage {
         /// A map of session hashes to a boolean indicating if the session has been revoked.
-        revoked_session: LegacyMap<felt252, bool>,
+        revoked_session: Map<felt252, bool>,
         /// A map of (owner_guid, guardian_guid, session_hash) to a len of authorization signature
-        valid_session_cache: LegacyMap<(felt252, felt252, felt252), u32>,
+        valid_session_cache: Map<(felt252, felt252, felt252), u32>,
     }
 
     const SESSION_MAGIC: felt252 = 'session-token';
@@ -151,7 +151,7 @@ mod session_component {
             let parsed_session_authorization = state
                 .parse_and_verify_authorization(session_hash, session_authorization);
 
-            // only owner + guardian signed 
+            // only owner + guardian signed
             assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
             // checks that second signature is the guardian and not the backup guardian
             let guardian_guid_from_sig = (*parsed_session_authorization[1]).signer().into_guid();
@@ -170,12 +170,11 @@ mod session_component {
         let merkle_root = *token.session.allowed_methods_root;
         let mut merkle_tree: MerkleTree<Hasher> = MerkleTreeImpl::new();
         let mut proofs = *token.proofs;
-        while let Option::Some(call) = calls
-            .pop_front() {
-                let leaf = call.get_merkle_leaf();
-                let proof = proofs.pop_front().expect('session/proof-empty');
-                let is_valid = merkle_tree.verify(merkle_root, leaf, *proof);
-                assert(is_valid, 'session/invalid-call');
-            };
+        while let Option::Some(call) = calls.pop_front() {
+            let leaf = call.get_merkle_leaf();
+            let proof = proofs.pop_front().expect('session/proof-empty');
+            let is_valid = merkle_tree.verify(merkle_root, leaf, *proof);
+            assert(is_valid, 'session/invalid-call');
+        };
     }
 }

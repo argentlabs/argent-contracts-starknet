@@ -8,7 +8,7 @@ trait IExternalRecoveryCallback<TContractState> {
     fn execute_recovery_call(ref self: TContractState, selector: felt252, calldata: Span<felt252>);
 }
 
-/// @notice Implements the recovery by defining a guardian (an external contract/account) 
+/// @notice Implements the recovery by defining a guardian (an external contract/account)
 /// that can trigger the recovery and replace a set of signers
 /// @dev The recovery can be executed by anyone after the security period
 /// @dev The recovery can be canceled by the authorized signers
@@ -23,7 +23,7 @@ mod external_recovery_component {
     use argent::signer_storage::signer_list::{signer_list_component, signer_list_component::{SignerListInternalImpl}};
     use argent::utils::asserts::assert_only_self;
     use argent::utils::serialization::serialize;
-    use openzeppelin::security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
+    use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use starknet::{
         get_block_timestamp, get_contract_address, get_caller_address, ContractAddress, account::Call,
         contract_address::contract_address_const
@@ -31,7 +31,7 @@ mod external_recovery_component {
     use super::{IExternalRecoveryCallback, get_escape_call_hash};
 
     /// Minimum time for the escape security period
-    const MIN_ESCAPE_PERIOD: u64 = consteval_int!(60 * 10); // 10 minutes;
+    const MIN_ESCAPE_PERIOD: u64 = 60 * 10; // 10 minutes;
 
     #[storage]
     struct Storage {

@@ -15,7 +15,7 @@ fn remove_signers_first() {
     // remove signer
     multisig.remove_signers(2, array![SIGNER_1()]);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2);
     assert_eq!(multisig.get_threshold(), 2);
@@ -44,7 +44,7 @@ fn remove_signers_center() {
     let signer_to_remove = array![SIGNER_2()];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2);
     assert_eq!(multisig.get_threshold(), 1);
@@ -62,7 +62,7 @@ fn remove_signers_last() {
     let signer_to_remove = array![SIGNER_3()];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2);
     assert_eq!(multisig.get_threshold(), 1);
@@ -80,7 +80,7 @@ fn remove_1_and_2() {
     let signer_to_remove = array![SIGNER_1(), SIGNER_2()];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
@@ -98,7 +98,7 @@ fn remove_1_and_3() {
     let signer_to_remove = array![SIGNER_1(), SIGNER_3()];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
@@ -116,7 +116,7 @@ fn remove_2_and_3() {
     let signer_to_remove = array![SIGNER_2(), SIGNER_3()];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
@@ -134,7 +134,7 @@ fn remove_2_and_1() {
     let signer_to_remove = array![SIGNER_2(), SIGNER_1()];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
@@ -152,7 +152,7 @@ fn remove_3_and_1() {
     let signer_to_remove = array![SIGNER_3(), SIGNER_1()];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
@@ -170,7 +170,7 @@ fn remove_3_and_2() {
     let signer_to_remove = array![SIGNER_2(), SIGNER_3()];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);

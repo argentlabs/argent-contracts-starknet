@@ -1,13 +1,13 @@
 use argent::utils::calls::execute_multicall;
-use snforge_std::{declare, ContractClassTrait, ContractClass};
+use snforge_std::{declare, ContractClassTrait, ContractClass, DeclareResultTrait};
 use starknet::account::Call;
 
 // failing test for now
 // As execute doesn't return a result, we cannot catch the 'call_contract_syscall' error
-// "While the Cairo test runner propagates errors to the calling 
-// contract when safe dispatchers are used, the non-panicking behavior 
-// will not be observed on Starknet itself! The production systems (Starknet Testnet or Mainnet) 
-// do not yet support graceful failure in internal calls. If an inner call panics, the entire 
+// "While the Cairo test runner propagates errors to the calling
+// contract when safe dispatchers are used, the non-panicking behavior
+// will not be observed on Starknet itself! The production systems (Starknet Testnet or Mainnet)
+// do not yet support graceful failure in internal calls. If an inner call panics, the entire
 // transaction immediately reverts. This will change in the future,"
 // #[test]
 // #[should_panic(expected: ('argent/multicall-failed', 0, 'CONTRACT_NOT_DEPLOYED'))]
@@ -20,7 +20,7 @@ use starknet::account::Call;
 #[test]
 #[should_panic(expected: ('argent/multicall-failed', 2, 'test dapp reverted',))]
 fn execute_multicall_at_one() {
-    let class_hash = declare("MockDapp").expect('Failed to declare MockDapp');
+    let class_hash = declare("MockDapp").expect('Failed to declare MockDapp').contract_class();
     let constructor = array![];
     let (contract_address, _) = class_hash.deploy(@constructor).expect('Failed to deploy contract');
 

@@ -55,7 +55,7 @@ impl StructHashSession of IStructHashRev1<Session> {
 
 impl OffChainMessageHashSessionRev1 of IOffChainMessageHashRev1<Session> {
     fn get_message_hash_rev_1(self: @Session) -> felt252 {
-        let chain_id = get_tx_info().unbox().chain_id;
+        let chain_id = get_tx_info().chain_id;
         if chain_id == 'SN_MAIN' {
             return get_message_hash_rev_1_with_precalc(MAINNET_FIRST_HADES_PERMUTATION, *self);
         }

@@ -12,7 +12,9 @@ jobs:
         uses: software-mansion/setup-scarb@v1.3.2
       - name: Step 3 - Setting up snfoundry
         uses: foundry-rs/setup-snfoundry@v3
-      - name: Step 4 - Running tests
+      - name: Step 4 - Installing USC
+        run: curl -L https://raw.githubusercontent.com/software-mansion/universal-sierra-compiler/master/scripts/install.sh | sh -s -- v2.2.0
+      - name: Step 5 - Running tests
         run: scarb test
   
   format:

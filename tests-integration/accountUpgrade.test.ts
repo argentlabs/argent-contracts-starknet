@@ -86,11 +86,13 @@ describe("ArgentAccount: upgrade", function () {
 
   it("Reject invalid upgrade targets", async function () {
     const { account } = await deployAccount();
-    await upgradeAccount(account, "0x01").should.be.rejectedWith(
-      `Class with hash ClassHash(\\n    StarkFelt(\\n        \\"0x0000000000000000000000000000000000000000000000000000000000000001\\",\\n    ),\\n) is not declared`,
+
+    await upgradeAccount(account, "0x1").should.be.rejectedWith(
+      "Class with hash 0x0000000000000000000000000000000000000000000000000000000000000001 is not declared.",
     );
+
     await upgradeAccount(account, mockDapp.classHash).should.be.rejectedWith(
-      `EntryPointSelector(StarkFelt(\\"0x00fe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283\\")) not found in contract`,
+      "Entry point EntryPointSelector(0xfe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283) not found in contract.",
     );
   });
 

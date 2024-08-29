@@ -43,26 +43,25 @@ describe("Gas griefing", function () {
     account.signer = new ArgentSigner(guardian);
 
     const { compiledSigner } = randomStarknetKeyPair();
-    const estimate = await accountContract.estimateFee.trigger_escape_owner(compiledSigner);
+    await manager.mintStrk(account.address, 6e18);
 
-    const l1_gas = BigInt(
-      estimate.resourceBounds.l1_gas.max_amount * estimate.resourceBounds.l1_gas.max_price_per_unit,
-    );
+    // At the moment we should only use l1_gas, this simplifies the calculation
     const newResourceBounds = {
-      ...estimate.resourceBounds,
+      l1_gas: {
+        // Need (max_amount * max_price_per_unit) > 5e18
+        max_amount: num.toHexString(5000000000000000000n / 36000000000n + 1n), // we can't use 1e18, not enough precision
+        max_price_per_unit: num.toHexString(36000000000n),
+      },
       l2_gas: {
-        ...estimate.resourceBounds.l2_gas,
-        // Need (max_amount * max_price_per_unit) + (tip * max_amount) + l1_gas > 5e18
-        max_amount: num.toHexString(1000000000000000000n - l1_gas / 5n + 1n), // we can't use 1e18, not enough precision
-        max_price_per_unit: num.toHexString(4),
+        max_amount: "0x0",
+        max_price_per_unit: "0x0",
       },
     };
-    // This makes exactly 0x4563918244f40005 = 5e18 + 5
+
     await expectExecutionRevert(
       "argent/max-fee-too-high",
       account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), undefined, {
         resourceBounds: newResourceBounds,
-        tip: 1,
       }),
     );
   });
@@ -74,23 +73,23 @@ describe("Gas griefing", function () {
     account.signer = new ArgentSigner(guardian);
 
     const { compiledSigner } = randomStarknetKeyPair();
-    const estimate = await accountContract.estimateFee.trigger_escape_owner(compiledSigner);
+    await manager.mintStrk(account.address, 6e18);
 
-    const l1_gas = estimate.resourceBounds.l1_gas.max_amount * estimate.resourceBounds.l1_gas.max_price_per_unit;
     const newResourceBounds = {
-      ...estimate.resourceBounds,
+      l1_gas: {
+        // Need (max_amount * max_price_per_unit) <= 5e18
+        max_amount: num.toHexString(5000000000000000000n / 36000000000n - 1n), // we can't use 1e18, not enough precision
+        max_price_per_unit: num.toHexString(36000000000n),
+      },
       l2_gas: {
-        ...estimate.resourceBounds.l2_gas,
-        // Need (max_amount * max_price_per_unit) + (tip * max_amount) + l1_gas <= 5e18
-        max_amount: num.toHexString(1e18 - l1_gas / 5), // Here precision is just good enough
-        max_price_per_unit: num.toHexString(4),
+        max_amount: "0x0",
+        max_price_per_unit: "0x0",
       },
     };
     // This makes exactly 0x4563918244f40000 = 5e18
     await manager.ensureSuccess(
       account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), {
         resourceBounds: newResourceBounds,
-        tip: 1,
       }),
     );
   });

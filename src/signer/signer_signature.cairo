@@ -63,7 +63,7 @@ enum Signer {
     Webauthn: WebauthnSigner,
 }
 
-#[derive(Drop, Copy, Serde, Default, PartialEq)]
+#[derive(Drop, Copy, Serde, PartialEq)]
 struct SignerStorageValue {
     stored_value: felt252,
     signer_type: SignerType,

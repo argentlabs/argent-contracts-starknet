@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::SignerSignature;
+use argent::signer::signer_signature::{Signer,SignerSignature};
 use poseidon::poseidon_hash_span;
 use starknet::account::Call;
 use starknet::{get_tx_info, get_contract_address, ContractAddress};
@@ -46,6 +46,9 @@ trait ISessionCallback<TContractState> {
     fn parse_and_verify_authorization(
         self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>
     ) -> Array<SignerSignature>;
+    fn get_guardian_guid_callback(self: @TContractState) -> Option<felt252>;
+    fn get_owner_guid_callback(self: @TContractState) -> felt252;
+    fn is_guardian_callback(self: @TContractState, guardian: Signer) -> bool;
 }
 
 #[starknet::interface]

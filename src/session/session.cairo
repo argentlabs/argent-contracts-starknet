@@ -3,7 +3,7 @@ mod session_component {
     use alexandria_merkle_tree::merkle_tree::{
         Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,
     };
-    use argent::account::interface::{IAccount, IArgentUserAccount};
+    use argent::account::interface::{IAccount};
     use argent::session::{
         session_hash::{OffChainMessageHashSessionRev1, MerkleLeafHash},
         interface::{ISessionable, SessionToken, Session, ISessionCallback},
@@ -38,7 +38,7 @@ mod session_component {
 
     #[embeddable_as(SessionImpl)]
     impl Sessionable<
-        TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +IArgentUserAccount<TContractState>,
+        TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +ISessionCallback<TContractState>,
     > of ISessionable<ComponentState<TContractState>> {
         fn revoke_session(ref self: ComponentState<TContractState>, session_hash: felt252) {
             assert_only_self();
@@ -55,8 +55,8 @@ mod session_component {
         #[inline(always)]
         fn is_session_authorization_cached(self: @ComponentState<TContractState>, session_hash: felt252) -> bool {
             let state = self.get_contract();
-            if let Option::Some(guardian_guid) = state.get_guardian_guid() {
-                let owner_guid = state.get_owner_guid();
+            if let Option::Some(guardian_guid) = state.get_guardian_guid_callback() {
+                let owner_guid = state.get_owner_guid_callback();
                 self.valid_session_cache.read((owner_guid, guardian_guid, session_hash)).is_non_zero()
             } else {
                 false
@@ -69,7 +69,6 @@ mod session_component {
         TContractState,
         +HasComponent<TContractState>,
         +IAccount<TContractState>,
-        +IArgentUserAccount<TContractState>,
         +ISessionCallback<TContractState>,
     > of InternalTrait<TContractState> {
         #[inline(always)]
@@ -118,7 +117,7 @@ mod session_component {
             assert(token.session_signature.is_valid_signature(message_hash), 'session/invalid-session-sig');
 
             // checks that its the account guardian that signed the session
-            assert(state.is_guardian(token.guardian_signature.signer()), 'session/guardian-key-mismatch');
+            assert(state.is_guardian_callback(token.guardian_signature.signer()), 'session/guardian-key-mismatch');
             assert(token.guardian_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');
 
             assert_valid_session_calls(@token, calls);
@@ -132,9 +131,9 @@ mod session_component {
             use_cache: bool,
             session_hash: felt252,
         ) {
-            let guardian_guid = state.get_guardian_guid().expect('session/no-guardian');
+            let guardian_guid = state.get_guardian_guid_callback().expect('session/no-guardian');
             let owner_guid_for_cache = if use_cache {
-                state.get_owner_guid()
+                state.get_owner_guid_callback()
             } else {
                 0
             };

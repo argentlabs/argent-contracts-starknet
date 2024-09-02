@@ -50,6 +50,12 @@ mod presets {
     mod user_account;
 }
 
+mod multiowner_account {
+    mod account_interface;
+    mod multiowner_account;
+    mod owner_manager;
+}
+
 mod utils {
     mod array_ext;
     mod array_store;

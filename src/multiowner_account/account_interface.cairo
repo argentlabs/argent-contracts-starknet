@@ -1,6 +1,6 @@
+use argent::account::interface::Version;
 use argent::recovery::interface::{LegacyEscape, EscapeStatus};
 use argent::signer::signer_signature::{Signer, SignerType, SignerSignature};
-use argent::account::interface::Version;
 
 #[starknet::interface]
 trait IArgentMultiOwnerAccount<TContractState> {

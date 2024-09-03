@@ -465,24 +465,19 @@ mod ArgentAccount {
 
 
     impl SessionCallbackImpl of ISessionCallback<ContractState> {
-        fn parse_and_verify_authorization(
-            self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>
-        ) -> Array<SignerSignature> {
-            let parsed_session_authorization = self.parse_signature_array(authorization_signature);
-            assert(
-                self.is_valid_span_signature(session_hash, parsed_session_authorization.span()),
-                'session/invalid-account-sig'
-            );
-            return parsed_session_authorization;
+        fn parse_authorization(self: @ContractState, authorization_signature: Span<felt252>) -> Array<SignerSignature> {
+            self.parse_signature_array(authorization_signature)
+        }
+        fn verify_authorization(
+            self: @ContractState, session_hash: felt252, authorization_signature: Span<SignerSignature>
+        ) {
+            assert(self.is_valid_span_signature(session_hash, authorization_signature), 'session/invalid-account-sig')
+        }
+        fn is_owner_guid(self: @ContractState, owner_guid: felt252) -> bool {
+            self.get_owner_guid() == owner_guid
         }
         fn get_guardian_guid_callback(self: @ContractState) -> Option<felt252> {
             self.get_guardian_guid()
-        }
-        fn get_owner_guid_callback(self: @ContractState) -> felt252 {
-            self.get_owner_guid()
-        }
-        fn is_guardian_callback(self: @ContractState, guardian: Signer) -> bool {
-            self.is_guardian(guardian)
         }
     }
 

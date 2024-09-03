@@ -53,11 +53,19 @@ mod session_component {
         }
 
         #[inline(always)]
-        fn is_session_authorization_cached(self: @ComponentState<TContractState>, session_hash: felt252) -> bool {
+        fn is_session_authorization_cached(
+            self: @ComponentState<TContractState>, session_hash: felt252, session_authorization: Span<felt252>
+        ) -> bool {
             let state = self.get_contract();
             if let Option::Some(guardian_guid) = state.get_guardian_guid_callback() {
-                let owner_guid = state.get_owner_guid_callback();
-                self.valid_session_cache.read((owner_guid, guardian_guid, session_hash)).is_non_zero()
+                let parsed_session_authorization = state.parse_authorization(session_authorization);
+                // only owner + guardian signed
+                assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
+                let signature_owner_guid = (*parsed_session_authorization[0]).signer().into_guid();
+                if (!state.is_owner_guid(signature_owner_guid)) {
+                    return false;
+                }
+                self.valid_session_cache.read((signature_owner_guid, guardian_guid, session_hash)).is_non_zero()
             } else {
                 false
             }
@@ -66,10 +74,7 @@ mod session_component {
 
     #[generate_trait]
     impl Internal<
-        TContractState,
-        +HasComponent<TContractState>,
-        +IAccount<TContractState>,
-        +ISessionCallback<TContractState>,
+        TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +ISessionCallback<TContractState>,
     > of InternalTrait<TContractState> {
         #[inline(always)]
         fn is_session(self: @ComponentState<TContractState>, signature: Span<felt252>) -> bool {
@@ -117,7 +122,10 @@ mod session_component {
             assert(token.session_signature.is_valid_signature(message_hash), 'session/invalid-session-sig');
 
             // checks that its the account guardian that signed the session
-            assert(state.is_guardian_callback(token.guardian_signature.signer()), 'session/guardian-key-mismatch');
+            let current_guardian_guid = state.get_guardian_guid_callback().expect('session/no-guardian');
+            assert(
+                current_guardian_guid == token.guardian_signature.signer().into_guid(), 'session/guardian-key-mismatch'
+            );
             assert(token.guardian_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');
 
             assert_valid_session_calls(@token, calls);
@@ -131,12 +139,22 @@ mod session_component {
             use_cache: bool,
             session_hash: felt252,
         ) {
-            let guardian_guid = state.get_guardian_guid_callback().expect('session/no-guardian');
+            let parsed_session_authorization = state.parse_authorization(session_authorization);
+            // only owner + guardian signed
+            assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
+
             let owner_guid_for_cache = if use_cache {
-                state.get_owner_guid_callback()
+                let signature_owner_guid = (*parsed_session_authorization[0]).signer().into_guid();
+                assert(state.is_owner_guid(signature_owner_guid), 'session/signer-is-not-owner');
+                signature_owner_guid
             } else {
                 0
             };
+            // checks that second signature is the guardian and not the backup guardian
+            let guardian_guid = state.get_guardian_guid_callback().expect('session/no-guardian');
+            let guardian_guid_from_sig = (*parsed_session_authorization[1]).signer().into_guid();
+            assert(guardian_guid_from_sig == guardian_guid, 'session/signer-is-not-guardian');
+
             if use_cache {
                 let cached_sig_len = self.valid_session_cache.read((owner_guid_for_cache, guardian_guid, session_hash));
                 if cached_sig_len != 0 {
@@ -146,15 +164,7 @@ mod session_component {
                     return;
                 }
             }
-
-            let parsed_session_authorization = state
-                .parse_and_verify_authorization(session_hash, session_authorization);
-
-            // only owner + guardian signed
-            assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
-            // checks that second signature is the guardian and not the backup guardian
-            let guardian_guid_from_sig = (*parsed_session_authorization[1]).signer().into_guid();
-            assert(guardian_guid_from_sig == guardian_guid, 'session/signer-is-not-guardian');
+            state.verify_authorization(session_hash, parsed_session_authorization.span());
 
             if use_cache {
                 self

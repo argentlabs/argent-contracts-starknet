@@ -1,7 +1,5 @@
 #[starknet::contract(account)]
 mod MultiOwnerAccount {
-    use super::super::account_interface::{IArgentMultiOwnerAccount, SignerLinked};
-    use super::super::owner_manager::owner_manager_component;
     use argent::account::interface::{IAccount, IArgentAccount, IDeprecatedArgentAccount, Version};
     use argent::introspection::src5::src5_component;
     use argent::outside_execution::{
@@ -36,13 +34,15 @@ mod MultiOwnerAccount {
         syscalls::storage_read_syscall,
         storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall}
     };
+    use super::super::account_interface::{IArgentMultiOwnerAccount, SignerLinked};
+    use super::super::owner_manager::{IOwnerManager, owner_manager_component};
 
     const NAME: felt252 = 'ArgentAccount';
     const VERSION: Version = Version { major: 0, minor: 5, patch: 0 };
     const VERSION_COMPAT: felt252 = '0.5.0';
 
-    /// Time it takes for the escape to become ready after being triggered. Also the escape will be ready and can be
-    /// completed for this duration
+    /// Time it takes for the escape to become ready after being triggered. Also the escape will be
+    /// ready and can be completed for this duration
     const DEFAULT_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
     /// Limit to one escape every X hours
@@ -108,8 +108,8 @@ mod MultiOwnerAccount {
         _escape: LegacyEscape,
         /// The following 4 fields are used to limit the number of escapes the account will pay for
         /// Values are Rounded down to the hour:
-        /// https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 Values are resets when an escape
-        /// is completed or canceled
+        /// https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 Values are
+        /// resets when an escape is completed or canceled
         last_guardian_trigger_escape_attempt: u64,
         last_owner_trigger_escape_attempt: u64,
         last_guardian_escape_attempt: u64,
@@ -150,8 +150,8 @@ mod MultiOwnerAccount {
         EscapeSecurityPeriodChanged: EscapeSecurityPeriodChanged,
     }
 
-    /// @notice Deprecated. This is only emitted for the owner and then guardian when they of type SignerType::Starknet
-    /// @dev Emitted exactly once when the account is initialized
+    /// @notice Deprecated. This is only emitted for the owner and then guardian when they of type
+    /// SignerType::Starknet @dev Emitted exactly once when the account is initialized
     /// @param owner The owner starknet pubkey
     /// @param guardian The guardian starknet pubkey or 0 if there's no guardian
     #[derive(Drop, starknet::Event)]
@@ -161,7 +161,8 @@ mod MultiOwnerAccount {
         guardian: felt252
     }
 
-    /// @notice Emitted on initialization with the guids of the owner and the guardian (or 0 if none)
+    /// @notice Emitted on initialization with the guids of the owner and the guardian (or 0 if
+    /// none)
     /// @dev Emitted exactly once when the account is initialized
     /// @param owner The owner guid
     /// @param guardian The guardian guid or 0 if there's no guardian
@@ -193,7 +194,8 @@ mod MultiOwnerAccount {
 
     /// @notice Guardian escape was triggered by the owner
     /// @param ready_at when the escape can be completed
-    /// @param new_guardian_guid to be set after the security period. O if the guardian will be removed
+    /// @param new_guardian_guid to be set after the security period. O if the guardian will be
+    /// removed
     #[derive(Drop, starknet::Event)]
     struct EscapeGuardianTriggeredGuid {
         ready_at: u64,
@@ -233,8 +235,8 @@ mod MultiOwnerAccount {
         new_owner_guid: felt252
     }
 
-    /// @notice Deprecated from v0.4.0. This is only emitted if the new guardian is empty or a starknet key
-    /// @notice The account guardian was changed or removed
+    /// @notice Deprecated from v0.4.0. This is only emitted if the new guardian is empty or a
+    /// starknet key @notice The account guardian was changed or removed
     /// @param new_guardian address of the new guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
     struct GuardianChanged {
@@ -248,8 +250,8 @@ mod MultiOwnerAccount {
         new_guardian_guid: felt252
     }
 
-    /// @notice Deprecated from v0.4.0. This is only emitted if the new guardian backup is empty or a starknet key
-    /// @notice The account backup guardian was changed or removed
+    /// @notice Deprecated from v0.4.0. This is only emitted if the new guardian backup is empty or
+    /// a starknet key @notice The account backup guardian was changed or removed
     /// @param new_guardian_backup address of the backup guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
     struct GuardianBackupChanged {
@@ -262,7 +264,6 @@ mod MultiOwnerAccount {
     struct GuardianBackupChangedGuid {
         new_guardian_backup_guid: felt252
     }
-
 
 
     /// @notice The security period for the escape was update
@@ -346,8 +347,8 @@ mod MultiOwnerAccount {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
-            // As the storage layout for the escape is changing, if there is an ongoing escape it should revert
-            // Expired escapes will be cleared
+            // As the storage layout for the escape is changing, if there is an ongoing escape it
+            // should revert Expired escapes will be cleared
             let base = storage_base_address_from_felt252(selector!("_escape"));
             let escape_ready_at = storage_read_syscall(0, storage_address_from_base_and_offset(base, 0))
                 .unwrap_syscall();
@@ -387,7 +388,8 @@ mod MultiOwnerAccount {
             //     self.emit(SignerLinked { signer_guid: guardian.into_guid(), signer: guardian });
             //     if guardian_backup_key != 0 {
             //         let guardian_backup = starknet_signer_from_pubkey(guardian_backup_key);
-            //         self.emit(SignerLinked { signer_guid: guardian_backup.into_guid(), signer: guardian_backup });
+            //         self.emit(SignerLinked { signer_guid: guardian_backup.into_guid(), signer:
+            //         guardian_backup });
             //     }
             // }
             // let owner = starknet_signer_from_pubkey(owner_key);
@@ -446,25 +448,19 @@ mod MultiOwnerAccount {
 
 
     impl SessionCallbackImpl of ISessionCallback<ContractState> {
-        fn parse_and_verify_authorization(
-            self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>
-        ) -> Array<SignerSignature> {
-            let parsed_session_authorization = self.parse_signature_array(authorization_signature);
-            assert(
-                self.is_valid_span_signature(session_hash, parsed_session_authorization.span()),
-                'session/invalid-account-sig'
-            );
-            return parsed_session_authorization;
+        fn parse_authorization(self: @ContractState, authorization_signature: Span<felt252>) -> Array<SignerSignature> {
+            self.parse_signature_array(authorization_signature)
+        }
+        fn verify_authorization(
+            self: @ContractState, session_hash: felt252, authorization_signature: Span<SignerSignature>
+        ) {
+            assert(self.is_valid_span_signature(session_hash, authorization_signature), 'session/invalid-account-sig')
         }
         fn get_guardian_guid_callback(self: @ContractState) -> Option<felt252> {
             self.get_guardian_guid()
         }
-        fn get_owner_guid_callback(self: @ContractState) -> felt252 {
-            // TODO only supports one owner
-            self.get_owner_guid()
-        }
-        fn is_guardian_callback(self: @ContractState, guardian: Signer) -> bool {
-            self.is_guardian(guardian)
+        fn is_owner_guid(self: @ContractState, owner_guid: felt252) -> bool {
+            self.owner_manager.is_owner_guid(owner_guid)
         }
     }
 
@@ -532,17 +528,18 @@ mod MultiOwnerAccount {
             // self.assert_valid_new_owner_signature(signer_signature);
 
             // let new_owner_storage_value = new_owner.storage_value();
-            // self.write_owner(new_owner_storage_value);
+        // self.write_owner(new_owner_storage_value);
 
-            // if let Option::Some(new_owner_pubkey) = new_owner_storage_value.starknet_pubkey_or_none() {
-            //     self.emit(OwnerChanged { new_owner: new_owner_pubkey });
-            // };
-            // let new_owner_guid = new_owner_storage_value.into_guid();
-            // self.emit(OwnerChangedGuid { new_owner_guid });
-            // self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
+            // if let Option::Some(new_owner_pubkey) =
+        // new_owner_storage_value.starknet_pubkey_or_none() {
+        //     self.emit(OwnerChanged { new_owner: new_owner_pubkey });
+        // };
+        // let new_owner_guid = new_owner_storage_value.into_guid();
+        // self.emit(OwnerChangedGuid { new_owner_guid });
+        // self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
 
             // self.reset_escape();
-            // self.reset_escape_timestamps();
+        // self.reset_escape_timestamps();
         }
 
         fn change_guardian(ref self: ContractState, new_guardian: Option<Signer>) {
@@ -637,20 +634,20 @@ mod MultiOwnerAccount {
         fn escape_owner(ref self: ContractState) {
             assert_only_self();
             // TODO
-            // let current_escape = self._escape.read();
+        // let current_escape = self._escape.read();
 
             // let current_escape_status = self.get_escape_status(current_escape.ready_at);
-            // assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
+        // assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
             // self.reset_escape_timestamps();
 
             // // update owner
-            // let new_owner = current_escape.new_signer.unwrap();
-            // self.write_owner(new_owner);
-            // self.emit(OwnerEscapedGuid { new_owner_guid: new_owner.into_guid() });
+        // let new_owner = current_escape.new_signer.unwrap();
+        // self.write_owner(new_owner);
+        // self.emit(OwnerEscapedGuid { new_owner_guid: new_owner.into_guid() });
 
             // // clear escape
-            // self._escape.write(Default::default());
+        // self._escape.write(Default::default());
         }
 
         fn escape_guardian(ref self: ContractState) {
@@ -875,8 +872,7 @@ mod MultiOwnerAccount {
 
                         assert(current_escape.escape_type == LegacyEscapeType::Guardian, 'argent/invalid-escape');
 
-                        let owner_signature = self.
-                        parse_single_owner_signature(signatures);
+                        let owner_signature = self.parse_single_owner_signature(signatures);
                         let is_valid = self.is_valid_owner_signature(execution_hash, owner_signature);
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return; // valid
@@ -896,7 +892,8 @@ mod MultiOwnerAccount {
         fn parse_signature_array(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
             // Check if it's a legacy signature array (there's no support for guardian backup)
             // Legacy signatures are always 2 or 4 items long
-            // Shortest signature in modern format is at least 5 items [array_len, signer_type, signer_pubkey, r, s]
+            // Shortest signature in modern format is at least 5 items [array_len, signer_type,
+            // signer_pubkey, r, s]
             if signatures.len() != 2 && signatures.len() != 4 {
                 // manual inlining instead of calling full_deserialize for performance
                 let deserialized: Array<SignerSignature> = Serde::deserialize(ref signatures)
@@ -905,7 +902,10 @@ mod MultiOwnerAccount {
                 return deserialized;
             }
 
-            let single_stark_owner = self.owner_manager.get_single_stark_owner_pubkey().expect('argent/no-single-stark-owner');
+            let single_stark_owner = self
+                .owner_manager
+                .get_single_stark_owner_pubkey()
+                .expect('argent/no-single-stark-owner');
             let owner_signature = SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: single_stark_owner.try_into().expect('argent/zero-pubkey') },
@@ -926,16 +926,17 @@ mod MultiOwnerAccount {
         }
 
         /// Parses the signature when its expected to be a single owner signature
-        fn parse_single_owner_signature(
-            self: @ContractState, mut signatures: Span<felt252>
-        ) -> SignerSignature {
+        fn parse_single_owner_signature(self: @ContractState, mut signatures: Span<felt252>) -> SignerSignature {
             if signatures.len() != 2 {
                 let signature_array: Array<SignerSignature> = full_deserialize(signatures)
                     .expect('argent/invalid-signature-format');
                 assert(signature_array.len() == 1, 'argent/invalid-signature-length');
                 return *signature_array.at(0);
             }
-            let single_stark_owner = self.owner_manager.get_single_stark_owner_pubkey().expect('argent/no-single-stark-owner');
+            let single_stark_owner = self
+                .owner_manager
+                .get_single_stark_owner_pubkey()
+                .expect('argent/no-single-stark-owner');
             SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: single_stark_owner.try_into().expect('argent/zero-pubkey') },
@@ -999,23 +1000,23 @@ mod MultiOwnerAccount {
         /// [change_owner selector, chainid, contract address, old_owner_guid]
         /// as specified here:
         /// https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
-        fn assert_valid_new_owner_signature(self: @ContractState, signer_signature: SignerSignature) {
-            // TODO
-            // let chain_id = get_tx_info().chain_id;
-            // let owner_guid = self.read_owner().into_guid();
-            // // We now need to hash message_hash with the size of the array: (change_owner selector, chain id, contract
-            // // address, old_owner_guid)
-            // // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
-            // let message_hash = PedersenTrait::new(0)
-            //     .update(selector!("change_owner"))
-            //     .update(chain_id)
-            //     .update(get_contract_address().into())
-            //     .update(owner_guid)
-            //     .update(4)
-            //     .finalize();
+        fn assert_valid_new_owner_signature(self: @ContractState, signer_signature: SignerSignature) { // TODO
+        // let chain_id = get_tx_info().chain_id;
+        // let owner_guid = self.read_owner().into_guid();
+        // // We now need to hash message_hash with the size of the array: (change_owner selector,
+        // chain id, contract // address, old_owner_guid)
+        // //
+        // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
+        // let message_hash = PedersenTrait::new(0)
+        //     .update(selector!("change_owner"))
+        //     .update(chain_id)
+        //     .update(get_contract_address().into())
+        //     .update(owner_guid)
+        //     .update(4)
+        //     .finalize();
 
-            // let is_valid = signer_signature.is_valid_signature(message_hash);
-            // assert(is_valid, 'argent/invalid-owner-sig');
+        // let is_valid = signer_signature.is_valid_signature(message_hash);
+        // assert(is_valid, 'argent/invalid-owner-sig');
         }
 
         fn get_escape_status(self: @ContractState, escape_ready_at: u64) -> EscapeStatus {

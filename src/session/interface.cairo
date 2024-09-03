@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{Signer,SignerSignature};
+use argent::signer::signer_signature::{Signer, SignerSignature};
 use poseidon::poseidon_hash_span;
 use starknet::account::Call;
 use starknet::{get_tx_info, get_contract_address, ContractAddress};
@@ -39,16 +39,20 @@ struct SessionToken {
 /// This trait has to be implemented when using the component `session_component` (This is enforced by the compiler)
 #[starknet::interface]
 trait ISessionCallback<TContractState> {
-    /// @notice Callback performed to parse and validate account signature
+    /// @notice Callback performed to parse the account signature
+    /// @param authorization_signature The owner + guardian signature of the session
+    /// @return The parsed array of SignerSignature
+    fn parse_authorization(self: @TContractState, authorization_signature: Span<felt252>) -> Array<SignerSignature>;
+
+    /// @notice Callback performed validate the account signature
     /// @param session_hash The hash of session
     /// @param authorization_signature The owner + guardian signature of the session
     /// @return The parsed array of SignerSignature
-    fn parse_and_verify_authorization(
-        self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>
-    ) -> Array<SignerSignature>;
+    fn verify_authorization(
+        self: @TContractState, session_hash: felt252, authorization_signature: Span<SignerSignature>
+    );
     fn get_guardian_guid_callback(self: @TContractState) -> Option<felt252>;
-    fn get_owner_guid_callback(self: @TContractState) -> felt252;
-    fn is_guardian_callback(self: @TContractState, guardian: Signer) -> bool;
+    fn is_owner_guid(self: @TContractState, owner_guid: felt252) -> bool;
 }
 
 #[starknet::interface]
@@ -63,5 +67,7 @@ trait ISessionable<TContractState> {
     /// @notice View function to see if a session authorization is cached
     /// @param session_hash Hash of the session token
     /// @return Whether the session is cached
-    fn is_session_authorization_cached(self: @TContractState, session_hash: felt252) -> bool;
+    fn is_session_authorization_cached(
+        self: @TContractState, session_hash: felt252, session_authorization: Span<felt252>
+    ) -> bool;
 }

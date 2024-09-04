@@ -52,6 +52,7 @@ mod presets {
 
 mod multiowner_account {
     mod account_interface;
+    mod events;
     mod linked_set;
     mod multiowner_account;
     mod owner_manager;

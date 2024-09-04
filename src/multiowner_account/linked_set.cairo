@@ -24,7 +24,6 @@ pub struct LinkedSetMut<T> {
     pub storage: StorageBase<Mutable<Map<felt252, T>>>,
 }
 
-
 pub trait LinkedSetTrait<T> {
     fn len(self: LinkedSet<T>) -> usize;
     fn is_empty(self: LinkedSet<T>) -> bool;
@@ -43,7 +42,6 @@ pub trait LinkedSetTraitMut<T> {
     fn remove(self: LinkedSetMut<T>, remove_id: felt252);
     fn add_item(self: LinkedSetMut<T>, item: T);
 }
-
 
 pub impl LinkedSetImpl<T, +SetItem<T>, +Store<T>, +Copy<T>, +Drop<T>> of LinkedSetTrait<T> {
     fn is_empty(self: LinkedSet<T>) -> bool {
@@ -162,7 +160,8 @@ pub impl LinkedSetMutImpl<T, +SetItem<T>, +Store<T>, +Copy<T>, +Drop<T>, +Defaul
 
     fn add_item(self: LinkedSetMut<T>, item: T) {
         assert(item.is_valid_item(), 'linked-set/invalid-item');
-        let is_duplicate = self.read().is_in(item);
+        let item_id = item.id();
+        let is_duplicate = self.read().is_in_id(item_id);
         assert(!is_duplicate, 'linked-set/already-in-set');
         let last_item_id = self.read().find_last_id();
         self.storage.entry(last_item_id).write(item);

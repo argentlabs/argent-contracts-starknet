@@ -101,15 +101,3 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// Reads the current security period used for escapes
     fn get_escape_security_period(self: @TContractState) -> u64;
 }
-
-
-/// @notice A new signer was linked
-/// @dev This is the only way to get the signer struct knowing a only guid
-/// @param signer_guid the guid of the signer derived from the signer
-/// @param signer the signer being added
-#[derive(Drop, starknet::Event)]
-struct SignerLinked {
-    #[key]
-    signer_guid: felt252,
-    signer: Signer,
-}

@@ -407,27 +407,33 @@ mod MultiOwnerAccount {
             }
         }
 
-        fn change_owner(ref self: ContractState, signer_signature: SignerSignature) {
+        fn add_owners(ref self: ContractState, new_owners: Array<Signer>) {
             assert_only_self();
+            self.owner_manager.add_owners(new_owners);
+            self.reset_escape();
+            self.reset_escape_timestamps();
+        }
+
+        fn remove_owners(ref self: ContractState, owner_guids_to_remove: Array<felt252>) {
+            assert_only_self();
+            // during __validate__ we assert that the owner is not removing itself and therefore that you can't remove
+            // all owners
+            self.owner_manager.remove_owners(owner_guids_to_remove);
+            // Reset the escape as we have signatures from both the owner and the guardian
+            self.reset_escape();
+            self.reset_escape_timestamps();
+        }
+
+        fn replace_all_owners_with_one(ref self: ContractState, new_single_owner: SignerSignature) {
+            assert_only_self();
+            let new_owner = new_single_owner.signer();
             // TODO
-
-            // let new_owner = signer_signature.signer();
-
             // self.assert_valid_new_owner_signature(signer_signature);
+            self.owner_manager.replace_all_owners_with_one(new_owner.storage_value());
+            self.emit(SignerLinked { signer_guid: new_owner.into_guid(), signer: new_owner });
 
-            // let new_owner_storage_value = new_owner.storage_value();
-        // self.write_owner(new_owner_storage_value);
-
-            // if let Option::Some(new_owner_pubkey) =
-        // new_owner_storage_value.starknet_pubkey_or_none() {
-        //     self.emit(OwnerChanged { new_owner: new_owner_pubkey });
-        // };
-        // let new_owner_guid = new_owner_storage_value.into_guid();
-        // self.emit(OwnerChangedGuid { new_owner_guid });
-        // self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
-
-            // self.reset_escape();
-        // self.reset_escape_timestamps();
+            self.reset_escape();
+            self.reset_escape_timestamps();
         }
 
         fn change_guardian(ref self: ContractState, new_guardian: Option<Signer>) {
@@ -521,21 +527,21 @@ mod MultiOwnerAccount {
 
         fn escape_owner(ref self: ContractState) {
             assert_only_self();
-            // TODO
-        // let current_escape = self._escape.read();
 
-            // let current_escape_status = self.get_escape_status(current_escape.ready_at);
-        // assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
+            let current_escape = self._escape.read();
 
-            // self.reset_escape_timestamps();
+            let current_escape_status = self.get_escape_status(current_escape.ready_at);
+            assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
-            // // update owner
-        // let new_owner = current_escape.new_signer.unwrap();
-        // self.write_owner(new_owner);
-        // self.emit(OwnerEscapedGuid { new_owner_guid: new_owner.into_guid() });
+            self.reset_escape_timestamps();
 
-            // // clear escape
-        // self._escape.write(Default::default());
+            // update owner
+            let new_owner = current_escape.new_signer.unwrap();
+            self.owner_manager.replace_all_owners_with_one(new_owner);
+            self.emit(OwnerEscapedGuid { new_owner_guid: new_owner.into_guid() });
+
+            // clear escape
+            self._escape.write(Default::default());
         }
 
         fn escape_guardian(ref self: ContractState) {
@@ -704,7 +710,8 @@ mod MultiOwnerAccount {
                             self.last_guardian_trigger_escape_attempt.write(get_block_timestamp());
                         }
 
-                        full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
+                        let new_signer = full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
+                        self.owner_manager.is_valid_owners_replacement(new_signer);
                         let guardian_signature = self.parse_single_guardian_signature(signatures);
                         let is_valid = self.is_valid_guardian_signature(execution_hash, guardian_signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');
@@ -763,6 +770,20 @@ mod MultiOwnerAccount {
                         let owner_signature = self.parse_single_owner_signature(signatures);
                         let is_valid = self.is_valid_owner_signature(execution_hash, owner_signature);
                         assert(is_valid, 'argent/invalid-owner-sig');
+                        return; // valid
+                    }
+
+                    if selector == selector!("remove_owners") {
+                        // guarantees that the owner is not removing itself and therefore that you can't remove all
+                        // owners
+                        let owner_guids_to_remove: Array<felt252> = full_deserialize(*call.calldata)
+                            .expect('argent/invalid-calldata');
+                        let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
+                        self.assert_valid_span_signature(execution_hash, signer_signatures.span());
+                        let signature_owner_guid = (*signer_signatures[0]).signer().into_guid();
+                        for owner_guid_to_remove in owner_guids_to_remove {
+                            assert(owner_guid_to_remove != signature_owner_guid, 'argent/cant-remove-self');
+                        };
                         return; // valid
                     }
                     assert(selector != selector!("execute_after_upgrade"), 'argent/forbidden-call');
@@ -883,12 +904,13 @@ mod MultiOwnerAccount {
             return signer_signature.is_valid_signature(hash) || is_estimate_transaction();
         }
 
+        // TODO
         /// The signature is the result of signing the message hash with the new owner private key
         /// The message hash is the result of hashing the array:
         /// [change_owner selector, chainid, contract address, old_owner_guid]
         /// as specified here:
         /// https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
-        fn assert_valid_new_owner_signature(self: @ContractState, signer_signature: SignerSignature) { // TODO
+        // fn assert_valid_new_owner_signature(self: @ContractState, signer_signature: SignerSignature) {
         // let chain_id = get_tx_info().chain_id;
         // let owner_guid = self.read_owner().into_guid();
         // // We now need to hash message_hash with the size of the array: (change_owner selector,
@@ -905,7 +927,7 @@ mod MultiOwnerAccount {
 
         // let is_valid = signer_signature.is_valid_signature(message_hash);
         // assert(is_valid, 'argent/invalid-owner-sig');
-        }
+        // }
 
         fn get_escape_status(self: @ContractState, escape_ready_at: u64) -> EscapeStatus {
             if escape_ready_at == 0 {

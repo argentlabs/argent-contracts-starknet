@@ -26,19 +26,6 @@ trait IOwnerManagerCallback<TContractState> {
 
 #[starknet::interface]
 pub trait IOwnerManager<TContractState> {
-    /// @notice Adds new owners to the account
-    /// @dev will revert when trying to add a signer is already an owner
-    /// @param owners_to_add An array with all the signers to add
-    fn add_owners(ref self: TContractState, owners_to_add: Array<Signer>);
-
-    /// @notice Removes owners
-    /// @dev Will revert if any of the signers is not an owner
-    /// @param owners_to_remove All the signers to remove
-    // TODO can't remove self or provide signature
-    fn remove_owners(ref self: TContractState, owners_to_remove: Array<Signer>);
-
-    fn replace_all_owners(ref self: TContractState, new_single_owner: Signer);
-
     /// @notice Returns the guid of all the owners
     fn get_owner_guids(self: @TContractState) -> Array<felt252>;
     fn is_owner(self: @TContractState, owner: Signer) -> bool;
@@ -54,6 +41,18 @@ pub trait IOwnerManager<TContractState> {
 #[starknet::interface]
 trait IOwnerManagerInternal<TContractState> {
     fn initialize(ref self: TContractState, owners: Array<Signer>);
+    /// @notice Adds new owners to the account
+    /// @dev will revert when trying to add a signer is already an owner
+    /// @param owners_to_add An array with all the signers to add
+    fn add_owners(ref self: TContractState, owners_to_add: Array<Signer>);
+
+    /// @notice Removes owners
+    /// @dev Will revert if any of the signers is not an owner
+    /// @param owners_to_remove All the signers to remove
+    // TODO can't remove self or provide signature
+    fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>);
+    fn is_valid_owners_replacement(self: @TContractState, new_single_owner: Signer) -> bool;
+    fn replace_all_owners_with_one(ref self: TContractState, new_single_owner: SignerStorageValue);
     fn assert_valid_storage(self: @TContractState);
     fn get_single_stark_owner_pubkey(self: @TContractState) -> Option<felt252>;
     fn get_single_owner(self: @TContractState) -> Option<SignerStorageValue>;
@@ -98,48 +97,6 @@ mod owner_manager_component {
     impl OwnerManager<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>, +IOwnerManagerCallback<TContractState>
     > of IOwnerManager<ComponentState<TContractState>> {
-        fn add_owners(ref self: ComponentState<TContractState>, owners_to_add: Array<Signer>) {
-            assert_only_self();
-            let new_owner_count = self.owners_storage().len() + owners_to_add.len();
-            self.assert_valid_owner_count(new_owner_count);
-            for owner in owners_to_add {
-                let signer_storage = owner.storage_value();
-                let guid = signer_storage.into_guid();
-                // TODO optimize insertions
-                self.owners_storage_mut().add_item(signer_storage);
-                self.emit_owner_added(guid);
-                self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: owner });
-            };
-        }
-
-        fn remove_owners(ref self: ComponentState<TContractState>, owners_to_remove: Array<Signer>) {
-            // TODO assert account not bricked, specially if there's not guardian
-            assert_only_self();
-
-            let new_owner_count = self.owners_storage().len() - owners_to_remove.len();
-            self.assert_valid_owner_count(new_owner_count);
-
-            for owner in owners_to_remove {
-                let guid = owner.into_guid();
-                self.owners_storage_mut().remove(guid);
-                self.emit_owner_removed(guid);
-            };
-        }
-        fn replace_all_owners(ref self: ComponentState<TContractState>, new_single_owner: Signer) {
-            // TODO assert account not bricked, specially if there's not guardian
-            assert_only_self();
-            let new_owner_guid = new_single_owner.into_guid();
-            let current_owners = self.owners_storage().get_all_ids();
-            for current_owner_guid in current_owners {
-                assert(current_owner_guid != new_owner_guid, 'argent/already-an-owner');
-                self.owners_storage_mut().remove(current_owner_guid);
-                self.emit_owner_removed(current_owner_guid);
-            };
-            self.owners_storage_mut().add_item(new_single_owner.storage_value());
-            self.emit_owner_added(new_owner_guid);
-            self.emit_signer_linked_event(SignerLinked { signer_guid: new_owner_guid, signer: new_single_owner });
-        }
-
         fn get_owner_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
             self.owners_storage().get_all_ids()
         }
@@ -172,6 +129,33 @@ mod owner_manager_component {
             self.add_owners(owners);
         }
 
+        fn add_owners(ref self: ComponentState<TContractState>, owners_to_add: Array<Signer>) {
+            assert_only_self();
+            let new_owner_count = self.owners_storage().len() + owners_to_add.len();
+            self.assert_valid_owner_count(new_owner_count);
+            for owner in owners_to_add {
+                let signer_storage = owner.storage_value();
+                let guid = signer_storage.into_guid();
+                // TODO optimize insertions
+                self.owners_storage_mut().add_item(signer_storage);
+                self.emit_owner_added(guid);
+                self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: owner });
+            };
+        }
+
+        fn remove_owners(ref self: ComponentState<TContractState>, owner_guids_to_remove: Array<felt252>) {
+            // TODO assert account not bricked, specially if there's not guardian
+            assert_only_self();
+
+            let new_owner_count = self.owners_storage().len() - owner_guids_to_remove.len();
+            self.assert_valid_owner_count(new_owner_count);
+
+            for guid in owner_guids_to_remove {
+                self.owners_storage_mut().remove(guid);
+                self.emit_owner_removed(guid);
+            };
+        }
+
         fn assert_valid_storage(self: @ComponentState<TContractState>) {
             self.assert_valid_owner_count(self.owners_storage().len());
         }
@@ -182,6 +166,21 @@ mod owner_manager_component {
 
         fn get_single_stark_owner_pubkey(self: @ComponentState<TContractState>) -> Option<felt252> {
             self.get_single_owner()?.starknet_pubkey_or_none()
+        }
+        fn is_valid_owners_replacement(self: @ComponentState<TContractState>, new_single_owner: Signer) -> bool {
+            !self.owners_storage().is_in_id(new_single_owner.into_guid())
+        }
+
+        fn replace_all_owners_with_one(ref self: ComponentState<TContractState>, new_single_owner: SignerStorageValue) {
+            let new_owner_guid = new_single_owner.into_guid();
+            let current_owners = self.owners_storage().get_all_ids();
+            for current_owner_guid in current_owners {
+                assert(current_owner_guid != new_owner_guid, 'argent/already-an-owner');
+                self.owners_storage_mut().remove(current_owner_guid);
+                self.emit_owner_removed(current_owner_guid);
+            };
+            self.owners_storage_mut().add_item(new_single_owner);
+            self.emit_owner_added(new_owner_guid);
         }
     }
 

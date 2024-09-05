@@ -18,13 +18,30 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @param new_security_period new delay in seconds before the escape can be completed. Must be >= 10 minutes
     fn set_escape_security_period(ref self: TContractState, new_security_period: u64);
 
-    /// @notice Changes the owner
+    // /// @notice Changes the owner
+    // /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
+    // /// @param signer_signature SignerSignature of the new owner
+    // /// Required to prevent changing to an address which is not in control of the user
+    // /// is the signature of the pedersen hashed array:
+    // /// [change_owner_selector, chain_id, account_address, old_owner_guid]
+    // fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
+
+    /// @notice Adds new owners to this account
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
-    /// @param signer_signature SignerSignature of the new owner
+    /// @dev It will cancel any existing escape
+    fn add_owners(ref self: TContractState, new_owners: Array<Signer>);
+
+    /// @notice Removes owners from this account
+    /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
+    /// @dev It will cancel any existing escape
+    fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>);
+
+    /// @notice Removes all owners from this account and adds a new one
     /// Required to prevent changing to an address which is not in control of the user
     /// is the signature of the pedersen hashed array:
-    /// [change_owner_selector, chain_id, account_address, old_owner_guid]
-    fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
+    /// [change_owner_selector, chain_id, account_address, old_owner_guid] // TODO check this, add timestamp
+    /// @dev It will cancel any existing escape
+    fn replace_all_owners_with_one(ref self: TContractState, new_single_owner: SignerSignature);
 
     /// @notice Changes the guardian
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
@@ -39,7 +56,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
 
     /// @notice Triggers the escape of the owner when it is lost or compromised
     /// @dev Must be called by the account and authorized by just a guardian
-    /// @dev This function assumes that there is a guardian, and that `new_owner` is not 0
+    /// @dev This function assumes that there is a guardian
     /// @dev Cannot override an ongoing escape of the guardian
     /// @param new_owner The new account owner if the escape completes
     /// This must be guaranteed before calling this method, usually when validating the transaction

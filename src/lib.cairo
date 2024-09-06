@@ -1,3 +1,4 @@
+mod linked_set;
 mod upgrade {
     mod interface;
     mod upgrade;
@@ -53,7 +54,6 @@ mod presets {
 mod multiowner_account {
     mod account_interface;
     mod events;
-    mod linked_set;
     mod multiowner_account;
     mod owner_manager;
 }

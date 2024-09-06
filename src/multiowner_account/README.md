@@ -35,7 +35,7 @@ might need more: replace_signer to rotate key?
 Guardian recovering lost account: In this case the escape will remove all owners and add a new one. Notice that if any of the owners was still valid, we wouldn't need recovery at all. So we keep the same interface as before, but now it removes ALL owners before adding a new one
 
 - Sessions
-  `is_session_authorization_cached` needs to know which owner was used for in the authorization, so this function now needs to receive either the authorization or the owner_guid
+  `is_session_authorization_cached` needs to know which owner was used for in the authorization, so this function now needs to receive either the authorization or the owner_guid used. Caching also uses more storage because it needs to save the owner_guid used. There are other alternatives but they are less backwards
 
 - Edge case
   In the unlikely event where one owner is malicious and the guardian is not responsive, we could improve escaping so

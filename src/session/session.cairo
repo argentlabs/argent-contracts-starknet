@@ -19,8 +19,11 @@ mod session_component {
     struct Storage {
         /// A map of session hashes to a boolean indicating if the session has been revoked.
         revoked_session: Map<felt252, bool>,
-        /// A map of (owner_guid, guardian_guid, session_hash) to a len of authorization signature
-        valid_session_cache: Map<(felt252, felt252, felt252), u32>,
+        // TODO remove if no backwards compatibility is needed
+        // /// A map of (owner_guid, guardian_guid, session_hash) to a len of authorization signature
+        // valid_session_cache: Map<(felt252, felt252, felt252), u32>,
+        /// A map of (guardian_guid, session_hash) to a (owner_guid, len of authorization signature)
+        valid_session_cache_v2: Map<(felt252, felt252), (felt252, u32)>,
     }
 
     const SESSION_MAGIC: felt252 = 'session-token';
@@ -57,18 +60,26 @@ mod session_component {
             self: @ComponentState<TContractState>, session_hash: felt252, session_authorization: Span<felt252>
         ) -> bool {
             let state = self.get_contract();
-            if let Option::Some(guardian_guid) = state.get_guardian_guid_callback() {
-                let parsed_session_authorization = state.parse_authorization(session_authorization);
-                // only owner + guardian signed
-                assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
-                let signature_owner_guid = (*parsed_session_authorization[0]).signer().into_guid();
-                if (!state.is_owner_guid(signature_owner_guid)) {
-                    return false;
-                }
-                self.valid_session_cache.read((signature_owner_guid, guardian_guid, session_hash)).is_non_zero()
+
+            let guardian_guid = if let Option::Some(guardian_guid) = state.get_guardian_guid_callback() {
+                guardian_guid
             } else {
-                false
+                // No guardian, can't be cached
+                return false;
+            };
+
+            let parsed_session_authorization = state.parse_authorization(session_authorization);
+            // owner + guardian signed
+            assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
+            let signature_owner_guid = (*parsed_session_authorization[0]).signer().into_guid();
+
+            // self.valid_session_cache.read((signature_owner_guid, guardian_guid, session_hash)).is_non_zero()
+            let (cached_owner_guid, cached_sig_len) = self.valid_session_cache_v2.read((guardian_guid, session_hash));
+            if (cached_sig_len == 0) {
+                return false;
             }
+            assert(cached_owner_guid == signature_owner_guid, 'session/cached-owner-mismatch');
+            state.is_owner_guid(signature_owner_guid)
         }
     }
 
@@ -139,37 +150,38 @@ mod session_component {
             use_cache: bool,
             session_hash: felt252,
         ) {
-            let parsed_session_authorization = state.parse_authorization(session_authorization);
-            // only owner + guardian signed
-            assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
-
-            let owner_guid_for_cache = if use_cache {
-                let signature_owner_guid = (*parsed_session_authorization[0]).signer().into_guid();
-                assert(state.is_owner_guid(signature_owner_guid), 'session/signer-is-not-owner');
-                signature_owner_guid
-            } else {
-                0
-            };
-            // checks that second signature is the guardian and not the backup guardian
-            let guardian_guid = state.get_guardian_guid_callback().expect('session/no-guardian');
-            let guardian_guid_from_sig = (*parsed_session_authorization[1]).signer().into_guid();
-            assert(guardian_guid_from_sig == guardian_guid, 'session/signer-is-not-guardian');
+            let current_guardian_guid = state.get_guardian_guid_callback().expect('session/no-guardian');
 
             if use_cache {
-                let cached_sig_len = self.valid_session_cache.read((owner_guid_for_cache, guardian_guid, session_hash));
+                // Check if cached
+                let (cached_owner_guid, cached_sig_len) = self
+                    .valid_session_cache_v2
+                    .read((current_guardian_guid, session_hash));
+                // check in the old cache too? TODO
                 if cached_sig_len != 0 {
-                    // authorization is cached, we can skip the signature verification
+                    // assert owner is still valid
+                    assert(state.is_owner_guid(cached_owner_guid), 'session/signer-is-not-owner');
                     // prevents a DoS attack where authorization can be replaced by a bigger one
                     assert(session_authorization.len() <= cached_sig_len, 'session/invalid-auth-len');
+                    // authorization is cached, we can skip the signature verification
                     return;
                 }
             }
+            // not cached, continue to verification
+
+            let parsed_session_authorization = state.parse_authorization(session_authorization);
             state.verify_authorization(session_hash, parsed_session_authorization.span());
+            // owner + guardian signed
+            assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
+            let owner_guid_from_sig = (*parsed_session_authorization[0]).signer().into_guid();
+            let guardian_guid_from_sig = (*parsed_session_authorization[1]).signer().into_guid();
+            // checks that second signature is the guardian and not the backup guardian
+            assert(guardian_guid_from_sig == current_guardian_guid, 'session/signer-is-not-guardian');
 
             if use_cache {
                 self
-                    .valid_session_cache
-                    .write((owner_guid_for_cache, guardian_guid, session_hash), session_authorization.len());
+                    .valid_session_cache_v2
+                    .write((current_guardian_guid, session_hash), (owner_guid_from_sig, session_authorization.len()));
             }
         }
     }

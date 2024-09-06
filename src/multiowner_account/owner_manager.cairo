@@ -1,3 +1,4 @@
+use argent::linked_set::SetItem;
 use argent::signer::{
     signer_signature::{
         Signer, SignerTrait, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerSignatureTrait,
@@ -5,7 +6,6 @@ use argent::signer::{
     },
 };
 use super::events::SignerLinked;
-use super::linked_set::SetItem;
 
 impl SignerStorageValueSetItem of SetItem<SignerStorageValue> {
     fn is_valid_item(self: @SignerStorageValue) -> bool {
@@ -16,7 +16,6 @@ impl SignerStorageValueSetItem of SetItem<SignerStorageValue> {
         (*self).into_guid()
     }
 }
-
 
 #[starknet::interface]
 trait IOwnerManagerCallback<TContractState> {
@@ -61,6 +60,9 @@ trait IOwnerManagerInternal<TContractState> {
 /// Managing the list of owners of the account
 #[starknet::component]
 mod owner_manager_component {
+    use argent::linked_set::{
+        LinkedSetMut, LinkedSetTraitMut, LinkedSetMutImpl, LinkedSet, LinkedSetTrait, LinkedSetImpl
+    };
     use argent::signer::{
         signer_signature::{
             Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
@@ -72,10 +74,6 @@ mod owner_manager_component {
         Vec, StoragePointerReadAccess, StoragePointerWriteAccess, MutableVecTrait, StoragePathEntry, Map
     };
     use super::super::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
-
-    use super::super::linked_set::{
-        LinkedSetMut, LinkedSetTraitMut, LinkedSetMutImpl, LinkedSet, LinkedSetTrait, LinkedSetImpl
-    };
     use super::{IOwnerManager, IOwnerManagerInternal};
     use super::{SignerStorageValueSetItem, IOwnerManagerCallback};
     /// Too many owners could make the account unable to process transactions if we reach a limit
@@ -202,11 +200,9 @@ mod owner_manager_component {
             let mut contract = self.get_contract_mut();
             contract.emit_signer_linked_event(event);
         }
-
         fn emit_owner_added(ref self: ComponentState<TContractState>, new_owner_guid: felt252) {
             self.emit(OwnerAddedGuid { new_owner_guid });
         }
-
         fn emit_owner_removed(ref self: ComponentState<TContractState>, removed_owner_guid: felt252) {
             self.emit(OwnerRemovedGuid { removed_owner_guid });
         }

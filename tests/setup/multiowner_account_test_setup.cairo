@@ -1,0 +1,75 @@
+use argent::account::interface::Version;
+use argent::recovery::interface::{LegacyEscape, EscapeStatus};
+use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
+use argent::utils::serialization::serialize;
+use snforge_std::{declare, ContractClassTrait, start_cheat_caller_address_global, DeclareResultTrait};
+use starknet::account::Call;
+use super::super::{OWNER, GUARDIAN, ARGENT_ACCOUNT_ADDRESS};
+
+#[starknet::interface]
+trait ITestMultiOwnerAccount<TContractState> {
+    // IAccount
+    fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
+    fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
+    fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
+    fn is_valid_signature(self: @TContractState, hash: felt252, signature: Array<felt252>) -> felt252;
+
+    // External
+    fn change_guardian(ref self: TContractState, new_guardian: Option<Signer>);
+    fn change_guardian_backup(ref self: TContractState, new_guardian_backup: Option<Signer>);
+    fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);
+    fn trigger_escape_guardian(ref self: TContractState, new_guardian: Option<Signer>);
+    fn escape_owner(ref self: TContractState);
+    fn escape_guardian(ref self: TContractState);
+    fn cancel_escape(ref self: TContractState);
+    fn set_escape_security_period(ref self: TContractState, new_security_period: u64);
+    // Views
+    fn get_owner(self: @TContractState) -> felt252;
+    fn get_guardian(self: @TContractState) -> felt252;
+    fn get_guardian_backup(self: @TContractState) -> felt252;
+    fn get_owner_guid(self: @TContractState) -> felt252;
+    fn get_guardian_guid(self: @TContractState) -> Option<felt252>;
+    fn get_guardian_backup_guid(self: @TContractState) -> Option<felt252>;
+    fn get_escape(self: @TContractState) -> LegacyEscape;
+    fn get_version(self: @TContractState) -> Version;
+    fn get_name(self: @TContractState) -> felt252;
+    fn get_last_owner_escape_attempt(self: @TContractState) -> u64;
+    fn get_last_guardian_escape_attempt(self: @TContractState) -> u64;
+    fn get_escape_and_status(self: @TContractState) -> (LegacyEscape, EscapeStatus);
+    fn get_escape_security_period(self: @TContractState) -> u64;
+
+    // IErc165
+    fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
+
+    // IDeprecatedArgentAccount
+    fn getVersion(self: @TContractState) -> felt252;
+    fn getName(self: @TContractState) -> felt252;
+    fn supportsInterface(self: @TContractState, interface_id: felt252) -> felt252;
+    fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
+}
+
+fn initialize_mo_account() -> ITestMultiOwnerAccountDispatcher {
+    initialize_mo_account_with(OWNER().pubkey, GUARDIAN().pubkey)
+}
+
+fn initialize_mo_account_without_guardian() -> ITestMultiOwnerAccountDispatcher {
+    initialize_mo_account_with(OWNER().pubkey, 0)
+}
+
+fn initialize_mo_account_with(owner: felt252, guardian: felt252) -> ITestMultiOwnerAccountDispatcher {
+    let owners = array![starknet_signer_from_pubkey(owner)];
+    let guardian_signer: Option<Signer> = match guardian {
+        0 => Option::None,
+        _ => Option::Some(starknet_signer_from_pubkey(guardian)),
+    };
+    let constructor_args = (owners, guardian_signer);
+
+    let contract = declare("MultiOwnerAccount").expect('Failed to declare MOAccount').contract_class();
+    let (contract_address, _) = contract
+        .deploy_at(@serialize(@constructor_args), ARGENT_ACCOUNT_ADDRESS.try_into().unwrap())
+        .expect('Failed to deploy MOAccount');
+
+    // This will set the caller for subsequent calls (avoid 'argent/only-self')
+    start_cheat_caller_address_global(contract_address);
+    ITestMultiOwnerAccountDispatcher { contract_address }
+}

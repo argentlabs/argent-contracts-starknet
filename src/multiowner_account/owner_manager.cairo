@@ -128,7 +128,6 @@ mod owner_manager_component {
         }
 
         fn add_owners(ref self: ComponentState<TContractState>, owners_to_add: Array<Signer>) {
-            assert_only_self();
             let new_owner_count = self.owners_storage().len() + owners_to_add.len();
             self.assert_valid_owner_count(new_owner_count);
             for owner in owners_to_add {
@@ -143,8 +142,6 @@ mod owner_manager_component {
 
         fn remove_owners(ref self: ComponentState<TContractState>, owner_guids_to_remove: Array<felt252>) {
             // TODO assert account not bricked, specially if there's not guardian
-            assert_only_self();
-
             let new_owner_count = self.owners_storage().len() - owner_guids_to_remove.len();
             self.assert_valid_owner_count(new_owner_count);
 

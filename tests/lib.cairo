@@ -16,6 +16,10 @@ use setup::{
         ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
         initialize_account_without_guardian
     },
+    multiowner_account_test_setup::{
+        ITestMultiOwnerAccountDispatcherTrait, initialize_mo_account_with, initialize_mo_account,
+        initialize_mo_account_without_guardian
+    },
     utils::{to_starknet_signatures, to_starknet_signer_signatures, Felt252TryIntoStarknetSigner},
     constants::{
         ARGENT_ACCOUNT_ADDRESS, KeyAndSig, GUARDIAN, OWNER, GUARDIAN_BACKUP, MULTISIG_OWNER, WRONG_OWNER,
@@ -33,6 +37,10 @@ mod argent_account {
     mod test_signatures;
 }
 
+mod multi_owner_account {
+    mod test_multi_owner_account;
+}
+
 mod multisig {
     mod test_add_signers;
     mod test_multisig_account;
@@ -44,6 +52,7 @@ mod multisig {
 mod setup {
     mod account_test_setup;
     mod constants;
+    mod multiowner_account_test_setup;
     mod multisig_test_setup;
     mod utils;
 }

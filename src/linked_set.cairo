@@ -71,7 +71,7 @@ pub impl LinkedSetImpl<T, +SetItem<T>, +Store<T>, +Copy<T>, +Drop<T>> of LinkedS
         self.find_last_id() == item_id
     }
 
-    // Return the last item id or zero. Cost increases with the list size
+    // Return the last item id or zero when the list is empty. Cost increases with the list size
     fn find_last_id(self: LinkedSet<T>) -> felt252 {
         let mut current_item = self.storage.entry(0).read();
         if !current_item.is_valid_item() {
@@ -80,7 +80,7 @@ pub impl LinkedSetImpl<T, +SetItem<T>, +Store<T>, +Copy<T>, +Drop<T>> of LinkedS
         loop {
             let current_item_id = current_item.id();
             let next_item = self.storage.entry(current_item_id).read();
-            if !current_item.is_valid_item() {
+            if !next_item.is_valid_item() {
                 break current_item_id;
             }
             current_item = next_item;

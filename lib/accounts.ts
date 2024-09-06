@@ -207,6 +207,56 @@ async function deployAccountInner(params: DeployAccountParams): Promise<
   return { ...finalParams, account, transactionHash };
 }
 
+async function deployMoAccountInner(params: DeployAccountParams): Promise<
+  DeployAccountParams & {
+    account: ArgentAccount;
+    classHash: string;
+    owner: KeyPair;
+    guardian?: KeyPair;
+    salt: string;
+    transactionHash: string;
+  }
+> {
+  const finalParams = {
+    ...params,
+    classHash: params.classHash ?? (await manager.declareLocalContract("MultiOwnerAccount")),
+    salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
+    owner: params.owner ?? randomStarknetKeyPair(),
+    useTxV3: params.useTxV3 ?? false,
+    selfDeploy: params.selfDeploy ?? false,
+  };
+  const guardian = finalParams.guardian
+    ? finalParams.guardian.signerAsOption
+    : new CairoOption(CairoOptionVariant.None);
+  const constructorCalldata = CallData.compile({ owners: [finalParams.owner.signer], guardian });
+
+  const { classHash, salt } = finalParams;
+  const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
+  const fundingCall = finalParams.useTxV3
+    ? await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK") // 0.01 STRK
+    : await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "ETH"); // 1 ETH
+  const calls = fundingCall ? [fundingCall] : [];
+
+  const transactionVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
+  const signer = new ArgentSigner(finalParams.owner, finalParams.guardian);
+  const account = new ArgentAccount(manager, contractAddress, signer, "1", transactionVersion);
+
+  let transactionHash;
+  if (finalParams.selfDeploy) {
+    const response = await deployer.execute(calls);
+    await manager.waitForTx(response.transaction_hash);
+    const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
+    transactionHash = transaction_hash;
+  } else {
+    const udcCalls = deployer.buildUDCContractPayload({ classHash, salt, constructorCalldata, unique: false });
+    const { transaction_hash } = await deployer.execute([...calls, ...udcCalls]);
+    transactionHash = transaction_hash;
+  }
+
+  await manager.waitForTransaction(transactionHash);
+  return { ...finalParams, account, transactionHash };
+}
+
 export type DeployAccountParams = {
   useTxV3?: boolean;
   classHash?: string;
@@ -237,6 +287,39 @@ export async function deployAccountWithoutGuardian(
 }
 
 export async function deployAccountWithGuardianBackup(
+  params: DeployAccountParams & { guardianBackup?: KeyPair } = {},
+): Promise<ArgentWalletWithGuardianAndBackup> {
+  const guardianBackup = params.guardianBackup ?? randomStarknetKeyPair();
+
+  const wallet = (await deployAccount(params)) as ArgentWalletWithGuardianAndBackup & { transactionHash: string };
+  await wallet.accountContract.change_guardian_backup(guardianBackup.compiledSignerAsOption);
+
+  wallet.account.signer = new ArgentSigner(wallet.owner, guardianBackup);
+  wallet.guardianBackup = guardianBackup;
+  wallet.accountContract.connect(wallet.account);
+  return wallet;
+}
+
+export async function deployMoAccount(
+  params: DeployAccountParams = {},
+): Promise<ArgentWalletWithGuardian & { transactionHash: string }> {
+  params.guardian ||= randomStarknetKeyPair();
+  const { account, owner, transactionHash } = await deployMoAccountInner(params);
+  const accountContract = await manager.loadContract(account.address);
+  accountContract.connect(account);
+  return { account, accountContract, owner, guardian: params.guardian, transactionHash };
+}
+
+export async function deployMoAccountWithoutGuardian(
+  params: Omit<DeployAccountParams, "guardian"> = {},
+): Promise<ArgentWallet & { transactionHash: string }> {
+  const { account, owner, transactionHash } = await deployMoAccountInner(params);
+  const accountContract = await manager.loadContract(account.address);
+  accountContract.connect(account);
+  return { account, accountContract, owner, transactionHash };
+}
+
+export async function deployMoAccountWithGuardianBackup(
   params: DeployAccountParams & { guardianBackup?: KeyPair } = {},
 ): Promise<ArgentWalletWithGuardianAndBackup> {
   const guardianBackup = params.guardianBackup ?? randomStarknetKeyPair();

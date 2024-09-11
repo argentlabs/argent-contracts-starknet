@@ -45,6 +45,8 @@ describe("Owner Manager Tests", function () {
     });
   });
   describe("Remove Owners Tests", function () {
-    it("", async function () {});
+    it("Remove 1 Owner", async function () {
+      const { accountContract, owners } = await deployMoAccountWithoutGuardian();
+    });
   });
 });

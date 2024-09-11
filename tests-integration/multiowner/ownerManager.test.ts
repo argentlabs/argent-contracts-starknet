@@ -44,4 +44,7 @@ describe("Owner Manager Tests", function () {
       await expectRevertWithErrorMessage("linked-set/already-in-set", accountContract.add_owners(arrayOfSigner));
     });
   });
+  describe("Remove Owners Tests", function () {
+    it("", async function () {});
+  });
 });

@@ -132,7 +132,7 @@ pub impl LinkedSetImpl<T, +SetItem<T>, +Store<T>, +Copy<T>, +Drop<T>> of LinkedS
         let mut current_item_id = 0;
         loop {
             let next_item = self.storage.entry(current_item_id).read();
-            assert(next_item.is_valid_item(), 'linked-set/cant-find-item-bef');
+            assert(next_item.is_valid_item(), 'linked-set/item-not-found');
             let next_item_id = next_item.id();
             if next_item_id == item_after_id {
                 break current_item_id;

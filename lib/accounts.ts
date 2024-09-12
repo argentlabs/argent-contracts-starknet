@@ -228,7 +228,7 @@ async function deployMoAccountInner(params: DeployAccountParams): Promise<
   const guardian = finalParams.guardian
     ? finalParams.guardian.signerAsOption
     : new CairoOption(CairoOptionVariant.None);
-  const constructorCalldata = CallData.compile({ owners: [finalParams.owner.signer], guardian });
+  const constructorCalldata = CallData.compile({ owner: finalParams.owner.signer, guardian });
 
   const { classHash, salt } = finalParams;
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);

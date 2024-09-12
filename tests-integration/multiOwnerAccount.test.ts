@@ -13,7 +13,7 @@ import {
   zeroStarknetSignatureType,
 } from "../lib";
 
-describe.only("MutiOwnerAccount", function () {
+describe("MutiOwnerAccount", function () {
   let accountClassHash: string;
 
   before(async () => {
@@ -23,7 +23,7 @@ describe.only("MutiOwnerAccount", function () {
   it("Deploy externally", async function () {
     const owner = randomStarknetKeyPair();
     const guardian = randomStarknetKeyPair();
-    const constructorCalldata = CallData.compile({ owners: [owner.signer], guardian: guardian.signerAsOption });
+    const constructorCalldata = CallData.compile({ owner: owner.signer, guardian: guardian.signerAsOption });
 
     const salt = "123";
     const classHash = accountClassHash;
@@ -69,7 +69,7 @@ describe.only("MutiOwnerAccount", function () {
       "Failed to deserialize param #1",
       deployer.deployContract({
         classHash: accountClassHash,
-        constructorCalldata: CallData.compile({ owners: [zeroStarknetSignatureType()], guardian }),
+        constructorCalldata: CallData.compile({ owner: zeroStarknetSignatureType(), guardian }),
       }),
     );
   });

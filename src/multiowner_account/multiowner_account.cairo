@@ -157,8 +157,8 @@ mod MultiOwnerAccount {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owners: Array<Signer>, guardian: Option<Signer>) {
-        self.owner_manager.initialize(owners);
+    fn constructor(ref self: ContractState, owner: Signer, guardian: Option<Signer>) {
+        self.owner_manager.initialize(array![owner]);
         if let Option::Some(guardian) = guardian {
             let guardian_storage_value = guardian.storage_value();
             assert(guardian_storage_value.signer_type == SignerType::Starknet, 'argent/invalid-guardian-type');
@@ -370,7 +370,7 @@ mod MultiOwnerAccount {
             self: @ContractState,
             class_hash: felt252,
             contract_address_salt: felt252,
-            owners: Array<Signer>,
+            owner: Signer,
             guardian: Option<Signer>
         ) -> felt252 {
             let tx_info = get_tx_info();

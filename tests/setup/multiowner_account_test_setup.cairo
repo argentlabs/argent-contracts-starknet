@@ -57,12 +57,12 @@ fn initialize_mo_account_without_guardian() -> ITestMultiOwnerAccountDispatcher 
 }
 
 fn initialize_mo_account_with(owner: felt252, guardian: felt252) -> ITestMultiOwnerAccountDispatcher {
-    let owners = array![starknet_signer_from_pubkey(owner)];
+    let owner = starknet_signer_from_pubkey(owner);
     let guardian_signer: Option<Signer> = match guardian {
         0 => Option::None,
         _ => Option::Some(starknet_signer_from_pubkey(guardian)),
     };
-    let constructor_args = (owners, guardian_signer);
+    let constructor_args = (owner, guardian_signer);
 
     let contract = declare("MultiOwnerAccount").expect('Failed to declare MOAccount').contract_class();
     let (contract_address, _) = contract

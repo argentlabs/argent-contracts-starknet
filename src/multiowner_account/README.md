@@ -1,10 +1,5 @@
 Breaking changes:
 
-- Constructor
-  fn constructor(owner: Signer, guardian: Option<Signer>)
-  into
-  fn constructor(owners: Array<Signer>, guardian: Option<Signer>)
-
 - Get owner methods:
   backwards compatibility if single owner, but will error otherwise
   fn get_owner() -> felt252;
@@ -25,7 +20,7 @@ fn get_owner_data(owner_guid: felt252) -> SignerStorageValue;
 
 added  
 fn add_owners(owners_to_add: Array<Signer>);
-fn remove_owners(owners_to_remove: Array<Signer>); // cant remove last one, can't remove self??
+fn remove_owners(owner_guids_to_remove: Array<felt252>) // can't remove self
 fn replace_all_owners_with_one(new_owner: SignerSignature); // signature needed to avoid bricking account
 might need more: replace_signer to rotate key?
 
@@ -35,17 +30,12 @@ might need more: replace_signer to rotate key?
 Guardian recovering lost account: In this case the escape will remove all owners and add a new one. Notice that if any of the owners was still valid, we wouldn't need recovery at all. So we keep the same interface as before, but now it removes ALL owners before adding a new one
 
 - Sessions
-  `is_session_authorization_cached` needs to know which owner was used for in the authorization, so this function now needs to receive either the authorization or the owner_guid used. Caching also uses more storage because it needs to save the owner_guid used. There are other alternatives but they are less backwards
+  `is_session_authorization_cached` needs to know which owner was used for in the authorization, so this function now needs to receive either the authorization or the owner_guid used. Caching also uses more storage because it needs to save the owner_guid used. There are other alternatives but they are less backwards compatible
 
 - Edge case
   In the unlikely event where one owner is malicious and the guardian is not responsive, we could improve escaping so
   2 owners can override a guardian escape triggered by 1 owner
   ????? what about gas griefing with bad owner?
-
-- Events
-  AccountCreated { owner: felt252, guardian: felt252 }
-  AccountCreatedGuid { owner_guid: felt252, guardian_guid: felt252 }
-  This surely needs a change, TBD with other teams
 
 OwnerChanged { new_owner: felt252 }
 OwnerChangedGuid { new_owner_guid: felt252 }

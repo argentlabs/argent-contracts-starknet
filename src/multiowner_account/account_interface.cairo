@@ -9,7 +9,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
         self: @TContractState,
         class_hash: felt252,
         contract_address_salt: felt252,
-        owners: Array<Signer>,
+        owner: Signer,
         guardian: Option<Signer>
     ) -> felt252;
 

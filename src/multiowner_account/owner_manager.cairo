@@ -39,7 +39,7 @@ pub trait IOwnerManager<TContractState> {
 
 #[starknet::interface]
 trait IOwnerManagerInternal<TContractState> {
-    fn initialize(ref self: TContractState, owners: Array<Signer>);
+    fn initialize(ref self: TContractState, owner: Signer);
     /// @notice Adds new owners to the account
     /// @dev will revert when trying to add a signer is already an owner
     /// @param owners_to_add An array with all the signers to add
@@ -122,9 +122,9 @@ mod owner_manager_component {
     impl OwnerManagerInternal<
         TContractState, +HasComponent<TContractState>, +IOwnerManagerCallback<TContractState>, +Drop<TContractState>
     > of IOwnerManagerInternal<ComponentState<TContractState>> {
-        fn initialize(ref self: ComponentState<TContractState>, mut owners: Array<Signer>) {
+        fn initialize(ref self: ComponentState<TContractState>, owner: Signer) {
             // TODO later we probably want to optimize this function instead of just delegating to add_owners
-            self.add_owners(owners);
+            self.add_owners(array![owner]);
         }
 
         fn add_owners(ref self: ComponentState<TContractState>, owners_to_add: Array<Signer>) {

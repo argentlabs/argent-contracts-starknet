@@ -58,6 +58,13 @@ mod multiowner_account {
     mod owner_manager;
 }
 
+mod multiowner_account_t {
+    mod account_interface;
+    mod events;
+    mod multiowner_account_t;
+    mod owner_manager;
+}
+
 mod utils {
     mod array_ext;
     mod array_store;

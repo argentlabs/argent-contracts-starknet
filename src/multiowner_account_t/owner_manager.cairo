@@ -25,6 +25,7 @@ trait IOwnerManagerCallback<TContractState> {
 
 #[starknet::interface]
 pub trait IOwnerManager<TContractState> {
+    fn get_threshold(self: @TContractState) -> usize;
     /// @notice Returns the guid of all the owners
     fn get_owner_guids(self: @TContractState) -> Array<felt252>;
     fn is_owner(self: @TContractState, owner: Signer) -> bool;
@@ -39,18 +40,21 @@ pub trait IOwnerManager<TContractState> {
 
 #[starknet::interface]
 trait IOwnerManagerInternal<TContractState> {
-    fn initialize(ref self: TContractState, owners: Array<Signer>);
+    fn initialize(ref self: TContractState, owners: Array<Signer>, threshold: usize);
     /// @notice Adds new owners to the account
     /// @dev will revert when trying to add a signer is already an owner
     /// @param owners_to_add An array with all the signers to add
-    fn add_owners(ref self: TContractState, owners_to_add: Array<Signer>);
+    fn add_owners(ref self: TContractState, owners_to_add: Array<Signer>, new_threshold: usize);
 
     /// @notice Removes owners
     /// @dev Will revert if any of the signers is not an owner
     /// @param owners_to_remove All the signers to remove
     // TODO can't remove self or provide signature
-    fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>);
+    fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>, new_threshold: usize);
+    fn change_threshold(ref self: TContractState, new_threshold: usize);
+
     fn is_valid_owners_replacement(self: @TContractState, new_single_owner: Signer) -> bool;
+    /// @notice Removes all owners and sets a new one, resetting the threshold to 1
     fn replace_all_owners_with_one(ref self: TContractState, new_single_owner: SignerStorageValue);
     fn assert_valid_storage(self: @TContractState);
     fn get_single_stark_owner_pubkey(self: @TContractState) -> Option<felt252>;
@@ -81,6 +85,7 @@ mod owner_manager_component {
 
     #[storage]
     struct Storage {
+        owners_threshold: usize,
         owners_storage: Map<felt252, SignerStorageValue>
     }
 
@@ -107,6 +112,14 @@ mod owner_manager_component {
             self.owners_storage().is_in_id(owner_guid)
         }
 
+        fn get_threshold(self: @ComponentState<TContractState>) -> usize {
+            let raw_threshold = self.owners_threshold.read();
+            if raw_threshold == 0 {
+                return 1;
+            }
+            raw_threshold
+        }
+
         #[must_use]
         fn is_valid_owner_signature(
             self: @ComponentState<TContractState>, hash: felt252, owner_signature: SignerSignature
@@ -122,14 +135,13 @@ mod owner_manager_component {
     impl OwnerManagerInternal<
         TContractState, +HasComponent<TContractState>, +IOwnerManagerCallback<TContractState>, +Drop<TContractState>
     > of IOwnerManagerInternal<ComponentState<TContractState>> {
-        fn initialize(ref self: ComponentState<TContractState>, mut owners: Array<Signer>) {
-            // TODO later we probably want to optimize this function instead of just delegating to add_owners
-            self.add_owners(owners);
+        fn initialize(ref self: ComponentState<TContractState>, mut owners: Array<Signer>, threshold: usize) {
+            self.add_owners(owners, threshold);
         }
 
-        fn add_owners(ref self: ComponentState<TContractState>, owners_to_add: Array<Signer>) {
+        fn add_owners(ref self: ComponentState<TContractState>, owners_to_add: Array<Signer>, new_threshold: usize) {
             let new_owner_count = self.owners_storage().len() + owners_to_add.len();
-            self.assert_valid_owner_count(new_owner_count);
+            self.assert_valid_owner_count(new_owner_count, new_threshold);
             for owner in owners_to_add {
                 let signer_storage = owner.storage_value();
                 let guid = signer_storage.into_guid();
@@ -138,21 +150,35 @@ mod owner_manager_component {
                 self.emit_owner_added(guid);
                 self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: owner });
             };
+            // TODO threshold events
+            self.update_threshold_storage(new_threshold);
         }
 
-        fn remove_owners(ref self: ComponentState<TContractState>, owner_guids_to_remove: Array<felt252>) {
+        fn remove_owners(
+            ref self: ComponentState<TContractState>, owner_guids_to_remove: Array<felt252>, new_threshold: usize
+        ) {
             // TODO assert account not bricked, specially if there's not guardian
             let new_owner_count = self.owners_storage().len() - owner_guids_to_remove.len();
-            self.assert_valid_owner_count(new_owner_count);
+            self.assert_valid_owner_count(new_owner_count, new_threshold);
 
             for guid in owner_guids_to_remove {
                 self.owners_storage_mut().remove(guid);
                 self.emit_owner_removed(guid);
             };
+            self.update_threshold_storage(new_threshold);
+        }
+
+        fn change_threshold(ref self: ComponentState<TContractState>, new_threshold: usize) {
+            assert(new_threshold != self.get_threshold(), 'argent/same-threshold');
+            let owners_count = self.owners_storage().len();
+
+            self.assert_valid_owner_count(owners_count, new_threshold);
+            self.update_threshold_storage(new_threshold);
+            // self.emit(ThresholdUpdated { new_threshold });
         }
 
         fn assert_valid_storage(self: @ComponentState<TContractState>) {
-            self.assert_valid_owner_count(self.owners_storage().len());
+            self.assert_valid_owner_count(self.owners_storage().len(), self.get_threshold());
         }
 
         fn get_single_owner(self: @ComponentState<TContractState>) -> Option<SignerStorageValue> {
@@ -162,6 +188,7 @@ mod owner_manager_component {
         fn get_single_stark_owner_pubkey(self: @ComponentState<TContractState>) -> Option<felt252> {
             self.get_single_owner()?.starknet_pubkey_or_none()
         }
+
         fn is_valid_owners_replacement(self: @ComponentState<TContractState>, new_single_owner: Signer) -> bool {
             !self.owners_storage().is_in_id(new_single_owner.into_guid())
         }
@@ -176,6 +203,7 @@ mod owner_manager_component {
             };
             self.owners_storage_mut().add_item(new_single_owner);
             self.emit_owner_added(new_owner_guid);
+            self.update_threshold_storage(1);
         }
     }
 
@@ -189,9 +217,11 @@ mod owner_manager_component {
         fn owners_storage(self: @ComponentState<TContractState>) -> LinkedSet<SignerStorageValue> {
             LinkedSet { storage: self.owners_storage }
         }
-        fn assert_valid_owner_count(self: @ComponentState<TContractState>, signers_len: usize) {
+        fn assert_valid_owner_count(self: @ComponentState<TContractState>, signers_len: usize, threshold: usize) {
             assert(signers_len != 0, 'argent/invalid-signers-len');
             assert(signers_len <= MAX_SIGNERS_COUNT, 'argent/invalid-signers-len');
+            assert(threshold != 0, 'argent/invalid-threshold');
+            assert(threshold <= signers_len, 'argent/bad-threshold');
         }
         fn emit_signer_linked_event(ref self: ComponentState<TContractState>, event: SignerLinked) {
             let mut contract = self.get_contract_mut();
@@ -202,6 +232,13 @@ mod owner_manager_component {
         }
         fn emit_owner_removed(ref self: ComponentState<TContractState>, removed_owner_guid: felt252) {
             self.emit(OwnerRemovedGuid { removed_owner_guid });
+        }
+        fn update_threshold_storage(ref self: ComponentState<TContractState>, new_threshold: usize) {
+            self.owners_threshold.write(if new_threshold == 1 {
+                0
+            } else {
+                new_threshold
+            });
         }
     }
 }

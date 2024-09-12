@@ -1,19 +1,20 @@
 import { expect } from "chai";
 import { CallData } from "starknet";
 import {
+  ArgentSigner,
   deployMoAccountWithoutGuardian,
   expectRevertWithErrorMessage,
   manager,
   randomStarknetKeyPair,
 } from "../../lib";
-describe("Owner Manager Tests", function () {
+describe.only("Owner Manager Tests", function () {
   let accountClassHash: string;
 
   before(async () => {
     accountClassHash = await manager.declareLocalContract("MultiOwnerAccount");
   });
 
-  describe.only("Add Owners", function () {
+  describe("Add Owners", function () {
     it("Add 1 Owner", async function () {
       const { accountContract, owner } = await deployMoAccountWithoutGuardian();
 
@@ -46,9 +47,49 @@ describe("Owner Manager Tests", function () {
   });
   describe("Remove Owners Tests", function () {
     it("Remove 1 Owner", async function () {
-      const owner1 = randomStarknetKeyPair();
-      const owner2 = randomStarknetKeyPair();
-      const { accountContract, owners } = await deployMoAccountWithoutGuardian({ owners: [owner1, owner2] });
+      const { accountContract, owner } = await deployMoAccountWithoutGuardian();
+      const newOwner = randomStarknetKeyPair();
+      const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
+      await accountContract.add_owners(arrayOfSigner);
+
+      await accountContract.remove_owners([newOwner.guid]);
+      const newOwnersAfterRemove = await accountContract.get_owner_guids();
+      expect(newOwnersAfterRemove).to.deep.equal([owner.guid]);
+    });
+    it("Remove 2 Owners", async function () {
+      const { accountContract, owner } = await deployMoAccountWithoutGuardian();
+      const newOwner1 = randomStarknetKeyPair();
+      const newOwner2 = randomStarknetKeyPair();
+      const arrayOfSigner = CallData.compile({ new_owners: [newOwner1.signer, newOwner2.signer] });
+      await accountContract.add_owners(arrayOfSigner);
+
+      await accountContract.remove_owners([newOwner1.guid, newOwner2.guid]);
+      const newOwnersAfterRemove = await accountContract.get_owner_guids();
+      expect(newOwnersAfterRemove).to.deep.equal([owner.guid]);
+    });
+    it("Remove Owner not in the List", async function () {
+      const { accountContract } = await deployMoAccountWithoutGuardian();
+      const newOwner = randomStarknetKeyPair();
+      const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
+      await accountContract.add_owners(arrayOfSigner);
+      await expectRevertWithErrorMessage("linked-set/cant-find-item-bef", accountContract.remove_owners([1n]));
+    });
+    it("Remove Owner /w 1 Owner", async function () {
+      const { accountContract, owner } = await deployMoAccountWithoutGuardian();
+      await expectRevertWithErrorMessage("argent/cant-remove-self", accountContract.remove_owners([owner.guid]));
+    });
+    it("Cant remove self even with multiple owners", async function () {
+      const { accountContract, owner, account } = await deployMoAccountWithoutGuardian();
+      const newOwner1 = randomStarknetKeyPair();
+      const arrayOfSigner = CallData.compile({ new_owners: [newOwner1.signer] });
+      await accountContract.add_owners(arrayOfSigner);
+      account.signer = new ArgentSigner(owner, undefined);
+      await expectRevertWithErrorMessage("argent/cant-remove-self", accountContract.remove_owners([owner.guid]));
+
+      account.signer = new ArgentSigner(newOwner1, undefined);
+      await accountContract.remove_owners([owner.guid]);
+      const newOwnersAfterRemove = await accountContract.get_owner_guids();
+      expect(newOwnersAfterRemove).to.deep.equal([newOwner1.guid]);
     });
   });
 });

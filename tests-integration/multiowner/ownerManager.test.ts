@@ -72,7 +72,7 @@ describe.only("Owner Manager Tests", function () {
       const newOwner = randomStarknetKeyPair();
       const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
       await accountContract.add_owners(arrayOfSigner);
-      await expectRevertWithErrorMessage("linked-set/cant-find-item-bef", accountContract.remove_owners([1n]));
+      await expectRevertWithErrorMessage("linked-set/item-not-found", accountContract.remove_owners([1n]));
     });
     it("Remove Owner /w 1 Owner", async function () {
       const { accountContract, owner } = await deployMoAccountWithoutGuardian();

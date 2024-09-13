@@ -81,6 +81,7 @@ mod mocks {
     mod future_argent_multisig;
     mod mock_dapp;
     mod mock_erc20;
+    mod multiowner_mock;
     mod multisig_mocks;
     mod recovery_mocks;
     mod signature_verifier;

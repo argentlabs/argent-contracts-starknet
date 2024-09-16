@@ -232,6 +232,69 @@ fn test_remove() {
     assert!(linked_set.is_in(signer_storage2), "Non-removed item should still be in set");
 }
 
+fn setup_three_owners() -> (ComponentState, Array<SignerStorageValue>) {
+    let mut component = COMPONENT_STATE();
+    let mut linked_set_mut = component.owners_storage_mut();
+
+    let owner1 = starknet_signer_from_pubkey(1);
+    let signer_storage1 = owner1.storage_value();
+    linked_set_mut.add_item(signer_storage1);
+
+    let owner2 = starknet_signer_from_pubkey(2);
+    let signer_storage2 = owner2.storage_value();
+    linked_set_mut.add_item(signer_storage2);
+
+    let owner3 = starknet_signer_from_pubkey(3);
+    let signer_storage3 = owner3.storage_value();
+    linked_set_mut.add_item(signer_storage3);
+
+    (component, array![signer_storage1, signer_storage2, signer_storage3])
+}
+
+#[test]
+fn test_remove_0_1() {
+    let (mut component, owners) = setup_three_owners();
+
+    component.remove_owners(array![owners[0].id(), owners[1].id()]);
+
+    let remaining_owners = component.owners_storage().get_all_ids();
+    assert_eq!(remaining_owners.len(), 1);
+    assert_eq!(*remaining_owners[0], owners[2].id());
+}
+
+#[test]
+fn test_remove_0_2() {
+    let (mut component, owners) = setup_three_owners();
+
+    component.remove_owners(array![owners[0].id(), owners[2].id()]);
+
+    let remaining_owners = component.owners_storage().get_all_ids();
+    assert_eq!(remaining_owners.len(), 1);
+    assert_eq!(*remaining_owners[0], owners[1].id());
+}
+
+#[test]
+fn test_remove_1_2() {
+    let (mut component, owners) = setup_three_owners();
+
+    component.remove_owners(array![owners[1].id(), owners[2].id()]);
+
+    let remaining_owners = component.owners_storage().get_all_ids();
+    assert_eq!(remaining_owners.len(), 1);
+    assert_eq!(*remaining_owners[0], owners[0].id());
+}
+
+#[test]
+#[should_panic(expected: ('argent/invalid-signers-len',))]
+fn test_remove_0_1_2() {
+    let (mut component, owners) = setup_three_owners();
+
+    component.remove_owners(array![owners[0].id(), owners[1].id(), owners[2].id()]);
+
+    let remaining_owners = component.owners_storage().get_all_ids();
+    assert_eq!(remaining_owners.len(), 0);
+}
+
 
 #[test]
 #[should_panic(expected: ('linked-set/invalid-item',))]

@@ -17,7 +17,7 @@ This iterates on the multiowner account to add a configurable threshold for the 
   - pass the owner guids as part of the signature: breaking change, makes the sessions more dependent on the account, less SNIPable
 
 - MultiOwner Recovery problem
-  Increasing the threshold doesn't increase the security. For instance let's focus on an account with 2 owners and a threshold of 2
+  Increasing the threshold doesn't strictly increase the security. For instance let's focus on an account with 2 owners and a threshold of 2
 
 Losing one of the 2 owners means the only way to get hold of the account again is thought recovery. But that means the guardian can take over the account by recovering to the wrong owners and there is nothing the legitimate owner can do about it. In a way this is worse than having a threshold of 1 where losing 1 owner was meaningless.
 

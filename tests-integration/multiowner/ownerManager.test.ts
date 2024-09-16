@@ -7,7 +7,7 @@ import {
   manager,
   randomStarknetKeyPair,
 } from "../../lib";
-describe.only("Owner Manager Tests", function () {
+describe("Owner Manager Tests", function () {
   let accountClassHash: string;
 
   before(async () => {

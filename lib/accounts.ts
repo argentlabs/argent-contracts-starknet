@@ -324,7 +324,7 @@ export async function deployMoAccountWithGuardianBackup(
 ): Promise<ArgentWalletWithGuardianAndBackup> {
   const guardianBackup = params.guardianBackup ?? randomStarknetKeyPair();
 
-  const wallet = (await deployAccount(params)) as ArgentWalletWithGuardianAndBackup & { transactionHash: string };
+  const wallet = (await deployMoAccount(params)) as ArgentWalletWithGuardianAndBackup & { transactionHash: string };
   await wallet.accountContract.change_guardian_backup(guardianBackup.compiledSignerAsOption);
 
   wallet.account.signer = new ArgentSigner(wallet.owner, guardianBackup);

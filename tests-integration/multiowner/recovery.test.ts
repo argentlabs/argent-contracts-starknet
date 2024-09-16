@@ -30,7 +30,7 @@ import {
   zeroStarknetSignatureType,
 } from "../../lib";
 
-describe.only("MultiOwnerAccount: escape mechanism", function () {
+describe("MultiOwnerAccount: escape mechanism", function () {
   let moAccountClassHash: string;
   let newKeyPair: KeyPair;
   let randomTime: bigint;

@@ -100,25 +100,6 @@ fn u256_to_u8s(word: u256) -> Array<u8> {
     ]
 }
 
-fn u256_to_u32s(word: u256) -> Array<u32> {
-    let (rest, byte_8) = integer::u128_safe_divmod(word.low, 0x100000000);
-    let (rest, byte_7) = integer::u128_safe_divmod(rest, 0x100000000);
-    let (byte_5, byte_6) = integer::u128_safe_divmod(rest, 0x100000000);
-    let (rest, byte_4) = integer::u128_safe_divmod(word.high, 0x100000000);
-    let (rest, byte_3) = integer::u128_safe_divmod(rest, 0x100000000);
-    let (byte_1, byte_2) = integer::u128_safe_divmod(rest, 0x100000000);
-    array![
-        byte_1.try_into().unwrap(),
-        byte_2.try_into().unwrap(),
-        byte_3.try_into().unwrap(),
-        byte_4.try_into().unwrap(),
-        byte_5.try_into().unwrap(),
-        byte_6.try_into().unwrap(),
-        byte_7.try_into().unwrap(),
-        byte_8.try_into().unwrap()
-    ]
-}
-
 #[generate_trait]
 impl ByteArrayExt of ByteArrayExtTrait {
     fn into_bytes(self: ByteArray) -> Array<u8> {

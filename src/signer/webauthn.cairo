@@ -1,7 +1,7 @@
 use alexandria_encoding::base64::Base64UrlEncoder;
 use argent::signer::signer_signature::WebauthnSigner;
 use argent::utils::array_ext::ArrayExt;
-use argent::utils::bytes::{u256_to_u8s, u32s_to_u8s, u256_to_u32s, u32s_to_u256, u8s_to_u32s};
+use argent::utils::bytes::{u256_to_u8s, u32s_to_u8s, u32s_to_u256, u8s_to_u32s};
 use core::sha256::compute_sha256_u32_array;
 use starknet::secp256_trait::Signature;
 
@@ -73,9 +73,13 @@ fn encode_challenge(hash: felt252) -> Span<u8> {
     Base64UrlEncoder::encode(bytes).span()
 }
 
-fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> Array<u32> {
-    let mut bytes = u256_to_u32s(rp_id_hash);
-    bytes.append(signature.flags.into() * 0x1000000);
+fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> Array<u8> {
+    let mut bytes = u256_to_u8s(rp_id_hash);
+    bytes.append(signature.flags);
+    bytes.append(0);
+    bytes.append(0);
+    bytes.append(0);
+    bytes.append(signature.sign_count.try_into().unwrap());
     bytes
 }
 
@@ -85,30 +89,13 @@ fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnS
     let mut client_data = u32s_to_u8s(compute_sha256_u32_array(word_arr, last, rem).span());
 
     let mut arr = encode_authenticator_data(signature, signer.rp_id_hash.into());
-    let byte_3 = *client_data.pop_front().unwrap();
-    let byte_2 = *client_data.pop_front().unwrap();
-    let byte_1 = *client_data.pop_front().unwrap();
-    arr.append(signature.sign_count * 0x1000000 + byte_3.into() * 0x10000 + byte_2.into() * 0x100 + byte_1.into());
-    while client_data.len() >= 4 {
-        let byte_4 = *client_data.pop_front().unwrap();
-        let byte_3 = *client_data.pop_front().unwrap();
-        let byte_2 = *client_data.pop_front().unwrap();
-        let byte_1 = *client_data.pop_front().unwrap();
-        arr.append(byte_4.into() * 0x1000000 + byte_3.into() * 0x10000 + byte_2.into() * 0x100 + byte_1.into());
-    };
-    let rem = client_data.len();
-    let last = match rem {
-        0 => 0_u32,
-        1 => (*client_data.pop_front().unwrap()).into(),
-        2 => (*client_data.pop_front().unwrap()).into() + (*client_data.pop_front().unwrap()).into() * 0x100,
-        _ => (*client_data.pop_front().unwrap()).into()
-            + (*client_data.pop_front().unwrap()).into() * 0x100
-            + (*client_data.pop_front().unwrap()).into() * 0x10000,
+    while let Option::Some(byte) = client_data.pop_front() {
+        arr.append(*byte);
     };
 
-    // let (word_arr, last, rem) = u8s_to_u32s(arr.span());
+    let (word_arr, last, rem) = u8s_to_u32s(arr.span());
 
-    u32s_to_u256(compute_sha256_u32_array(arr, last, rem).span())
+    u32s_to_u256(compute_sha256_u32_array(word_arr, last, rem).span())
 }
 
 fn client_data_json_intro() -> Array<u8> {

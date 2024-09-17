@@ -42,7 +42,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
   async function buildAccount(guardianType: string): Promise<ArgentWalletWithOther> {
     if (guardianType == "guardian (no backup)") {
-      const { account, accountContract, owner, guardian } = await deployAccountWithGuardianBackup();
+      const { account, accountContract, owner, guardian } = await deployAccount();
       return { account, accountContract, owner, other: guardian };
     } else if (guardianType == "backup guardian") {
       const { account, accountContract, owner, guardianBackup } = await deployAccountWithGuardianBackup();

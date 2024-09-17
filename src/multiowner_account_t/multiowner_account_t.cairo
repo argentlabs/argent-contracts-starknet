@@ -759,8 +759,8 @@ mod MultiOwnerAccountT {
                             assert(self.read_guardian_backup().is_none(), 'argent/backup-should-be-null');
                         }
 
-                        let owner_signature = self.parse_single_owner_signature(signatures);
-                        let is_valid = self.is_valid_owner_signature(execution_hash, owner_signature);
+                        let owners_signature = self.parse_owners_only_signature(signatures);
+                        let is_valid = self.are_valid_owner_signatures(execution_hash, owners_signature.span());
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return; // valid
                     }
@@ -776,8 +776,8 @@ mod MultiOwnerAccountT {
 
                         assert(current_escape.escape_type == LegacyEscapeType::Guardian, 'argent/invalid-escape');
 
-                        let owner_signature = self.parse_single_owner_signature(signatures);
-                        let is_valid = self.is_valid_owner_signature(execution_hash, owner_signature);
+                        let owners_signature = self.parse_owners_only_signature(signatures);
+                        let is_valid = self.are_valid_owner_signatures(execution_hash, owners_signature.span());
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return; // valid
                     }
@@ -829,24 +829,23 @@ mod MultiOwnerAccountT {
             return array![owner_signature, guardian_signature];
         }
 
-        /// Parses the signature when its expected to be a single owner signature
-        fn parse_single_owner_signature(self: @ContractState, mut signatures: Span<felt252>) -> SignerSignature {
+        /// Parses the signature when its expected to be a owners only
+        fn parse_owners_only_signature(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
             if signatures.len() != 2 {
-                let signature_array: Array<SignerSignature> = full_deserialize(signatures)
-                    .expect('argent/invalid-signature-format');
-                assert(signature_array.len() == 1, 'argent/invalid-signature-length');
-                return *signature_array.at(0);
+                return full_deserialize(signatures).expect('argent/invalid-signature-format');
             }
             let single_stark_owner = self
                 .owner_manager
                 .get_single_stark_owner_pubkey()
                 .expect('argent/no-single-stark-owner');
-            SignerSignature::Starknet(
-                (
-                    StarknetSigner { pubkey: single_stark_owner.try_into().expect('argent/zero-pubkey') },
-                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
+            array![
+                SignerSignature::Starknet(
+                    (
+                        StarknetSigner { pubkey: single_stark_owner.try_into().expect('argent/zero-pubkey') },
+                        StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
+                    )
                 )
-            )
+            ]
         }
 
         /// Parses the signature when its expected to be a single guardian signature
@@ -870,24 +869,28 @@ mod MultiOwnerAccountT {
             self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>
         ) -> bool {
             if self.has_guardian() {
-                assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
-                self.is_valid_owner_signature(hash, *signer_signatures.at(0))
-                    && self.is_valid_guardian_signature(hash, *signer_signatures.at(1))
+                assert(signer_signatures.len() >= 2, 'argent/invalid-signature-length');
+                self.are_valid_owner_signatures(hash, signer_signatures.slice(0, signer_signatures.len() - 1))
+                    && self.is_valid_guardian_signature(hash, *signer_signatures.at(signer_signatures.len() - 1))
             } else {
-                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
-                self.is_valid_owner_signature(hash, *signer_signatures.at(0))
+                self.are_valid_owner_signatures(hash, signer_signatures)
             }
         }
 
         fn assert_valid_span_signature(self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>) {
             // TODO check that we have the right number of owner signatures
             if self.has_guardian() {
-                assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
-                assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
-                assert(self.is_valid_guardian_signature(hash, *signer_signatures.at(1)), 'argent/invalid-guardian-sig');
+                assert(signer_signatures.len() >= 2, 'argent/invalid-signature-length');
+                assert(
+                    self.are_valid_owner_signatures(hash, signer_signatures.slice(0, signer_signatures.len() - 1)),
+                    'argent/invalid-owners-sig'
+                );
+                assert(
+                    self.is_valid_guardian_signature(hash, *signer_signatures.at(signer_signatures.len() - 1)),
+                    'argent/invalid-guardian-sig'
+                );
             } else {
-                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
-                assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
+                assert(self.are_valid_owner_signatures(hash, signer_signatures), 'argent/invalid-owners-sig');
             }
         }
 

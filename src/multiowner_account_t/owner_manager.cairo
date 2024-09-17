@@ -36,6 +36,14 @@ pub trait IOwnerManager<TContractState> {
     /// @param owner_signature Signature to be verified
     #[must_use]
     fn is_valid_owner_signature(self: @TContractState, hash: felt252, owner_signature: SignerSignature) -> bool;
+
+    /// @notice Verifies whether a provided owner signatures are valid and meet the threshold.
+    /// @param hash Hash of the message being signed
+    /// @param owner_signature Signature to be verified
+    #[must_use]
+    fn are_valid_owner_signatures(
+        self: @TContractState, hash: felt252, owner_signatures: Span<SignerSignature>
+    ) -> bool;
 }
 
 #[starknet::interface]
@@ -128,6 +136,28 @@ mod owner_manager_component {
                 return false;
             }
             return owner_signature.is_valid_signature(hash) || is_estimate_transaction();
+        }
+
+        #[must_use]
+        fn are_valid_owner_signatures(
+            self: @ComponentState<TContractState>, hash: felt252, mut owner_signatures: Span<SignerSignature>
+        ) -> bool {
+            assert(owner_signatures.len() == self.get_threshold(), 'argent/owner-sigs-invalid-len');
+            let mut last_signer: u256 = 0;
+            loop {
+                let owner_sig = match owner_signatures.pop_front() {
+                    Option::Some(owner_sig) => *owner_sig,
+                    Option::None => { break true; }
+                };
+                let owner_guid = owner_sig.signer().into_guid();
+                assert(self.is_owner_guid(owner_guid), 'argent/not-an-owner');
+                let owner_guid_uint: u256 = owner_guid.into();
+                assert(owner_guid_uint > last_signer, 'argent/signatures-not-sorted');
+                last_signer = owner_guid_uint;
+                if !owner_sig.is_valid_signature(hash) && !is_estimate_transaction() {
+                    break false;
+                }
+            }
         }
     }
 

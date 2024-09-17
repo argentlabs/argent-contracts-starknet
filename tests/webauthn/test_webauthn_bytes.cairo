@@ -4,7 +4,7 @@ use argent::utils::bytes::{SpanU8TryIntoFelt252, SpanU8TryIntoU256, ByteArrayExt
 fn convert_bytes_to_u256_fit_128() {
     let bytes = array![84, 153, 96, 222, 88, 128, 232, 198, 135, 67, 65, 112];
     let value = bytes.span().try_into().unwrap();
-    assert_eq!(value, 0x549960de5880e8c687434170_u256, "invalid");
+    assert_eq!(value, 0x549960de5880e8c687434170_u256);
 }
 
 #[test]
@@ -44,7 +44,7 @@ fn convert_bytes_to_u256_fit_256() {
         99,
     ];
     let value = bytes.span().try_into().unwrap(); // sha256("localhost")
-    assert_eq!(value, 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763_u256, "invalid");
+    assert_eq!(value, 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763_u256);
 }
 
 #[test]
@@ -84,14 +84,14 @@ fn convert_bytes_to_felt252_overflow() {
         99,
     ];
     let output: Option<felt252> = bytes.span().try_into(); // sha256("localhost")
-    assert!(output.is_none(), "invalid");
+    assert!(output.is_none());
 }
 
 #[test]
 fn convert_bytes_to_felt252() {
     let bytes = array![222, 173, 190, 239,];
     let value: felt252 = bytes.span().try_into().unwrap();
-    assert_eq!(value, 0xdeadbeef, "invalid");
+    assert_eq!(value, 0xdeadbeef);
 
     let bytes = array![
         222,
@@ -124,7 +124,7 @@ fn convert_bytes_to_felt252() {
         239,
     ];
     let value: felt252 = bytes.span().try_into().unwrap();
-    assert_eq!(value, 0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef, "invalid");
+    assert_eq!(value, 0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef);
 }
 
 #[test]
@@ -165,7 +165,7 @@ fn convert_bytes_to_max_felt252() {
         0x00,
     ];
     let value: felt252 = bytes.span().try_into().unwrap();
-    assert_eq!(value, -1, "invalid");
+    assert_eq!(value, -1);
 }
 
 #[test]
@@ -173,7 +173,7 @@ fn convert_u32s_to_u8s() {
     let input = array![0x6a09e667, 0xbb67ae85].span();
     let output = u32s_to_u8s(input);
     let expected = array![0x6a, 0x09, 0xe6, 0x67, 0xbb, 0x67, 0xae, 0x85].span();
-    assert_eq!(output, expected, "invalid");
+    assert_eq!(output, expected);
 }
 
 #[test]
@@ -214,5 +214,5 @@ fn convert_u256_to_u8s() {
         0x8b,
         0xb4,
     ];
-    assert_eq!(output, expected, "invalid");
+    assert_eq!(output, expected);
 }

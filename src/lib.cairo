@@ -57,7 +57,6 @@ mod utils {
     mod bytes;
     mod calls;
     mod hashing;
-    mod multicall;
     mod serialization;
     mod transaction_version;
 }

@@ -89,19 +89,11 @@ enum LegacyEscapeType {
 /// @param ready_at when the escape can be completed
 /// @param escape_type The type of the escape telling who is about to be escaped
 /// @param new_signer The new signer (new owner or new guardian address) or zero if guardian removed
-#[derive(Drop, Copy, Serde)]
+#[derive(Drop, Copy, Serde, Default)]
 struct LegacyEscape {
     ready_at: u64,
     escape_type: LegacyEscapeType,
     new_signer: Option<SignerStorageValue>,
-}
-
-// ??? For some reason I cannot derive Default for LegacyEscape
-impl LegacyEscapeDefault of Default<LegacyEscape> {
-    #[inline(always)]
-    fn default() -> LegacyEscape {
-        LegacyEscape { ready_at: 0, escape_type: Default::default(), new_signer: Option::None }
-    }
 }
 
 const SHIFT_8: felt252 = 0x100;
@@ -224,12 +216,5 @@ impl U256TryIntoLegacyEscapeType of TryInto<u256, LegacyEscapeType> {
         } else {
             Option::None
         }
-    }
-}
-
-impl OptionDefault<T> of Default<Option<T>> {
-    #[inline(always)]
-    fn default() -> Option<T> {
-        Option::None
     }
 }

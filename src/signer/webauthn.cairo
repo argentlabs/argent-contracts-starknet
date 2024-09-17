@@ -6,7 +6,7 @@ use core::sha256::compute_sha256_u32_array;
 use starknet::secp256_trait::Signature;
 
 /// @notice The webauthn signature that needs to be validated
-/// @param cross_origin From the client data JSON
+/// @param cross_origin From the client data JSON, some browser don't include this field, so it's optional
 /// @param client_data_json_outro The rest of the JSON contents coming after the 'crossOrigin' value
 /// @param flags From authenticator data
 /// @param sign_count From authenticator data
@@ -43,7 +43,7 @@ fn verify_authenticator_flags(flags: u8) {
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
 /// Encoding spec: https://www.w3.org/TR/webauthn/#clientdatajson-verification
 //  Try origin as ByteArray ==> Cost is marginal to pass origin as ByteArray
-fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut origin: Span<u8>) -> Array<u8> {
+fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: Span<u8>) -> Array<u8> {
     let mut json = client_data_json_intro();
     json.append_all(encode_challenge(hash));
     json.append_all(['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
@@ -68,8 +68,8 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, mut orig
 
 fn encode_challenge(hash: felt252) -> Span<u8> {
     let mut bytes = u256_to_u8s(hash.into());
-    assert!(bytes.len() == 32, "webauthn/invalid-challenge-length");
     bytes.append(0);
+    assert!(bytes.len() == 33, "webauthn/invalid-challenge-length"); // remove '=' signs if this assert fails
     Base64UrlEncoder::encode(bytes).span()
 }
 

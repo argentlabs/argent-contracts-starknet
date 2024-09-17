@@ -42,7 +42,6 @@ fn verify_authenticator_flags(flags: u8) {
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
 /// Encoding spec: https://www.w3.org/TR/webauthn/#clientdatajson-verification
-//  Try origin as ByteArray ==> Cost is marginal to pass origin as ByteArray
 fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: Span<u8>) -> Array<u8> {
     let mut json = client_data_json_intro();
     json.append_all(encode_challenge(hash));

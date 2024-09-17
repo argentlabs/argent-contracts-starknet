@@ -16,7 +16,7 @@ struct WebauthnSignature {
     cross_origin: Option<bool>,
     client_data_json_outro: Span<u8>,
     flags: u8,
-    sign_count: u32, // This could/should be u8 to avoid 1 try_into
+    sign_count: u32,
     ec_signature: Signature,
 }
 
@@ -82,7 +82,6 @@ fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> 
 fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
     let (word_arr, last, rem) = u8s_to_u32s(client_data_json.span());
-    // As we know the return type, we could use a more efficient implementation
     let mut client_data = u32s_to_u8s(compute_sha256_u32_array(word_arr, last, rem).span());
 
     let mut arr = encode_authenticator_data(signature, signer.rp_id_hash.into());

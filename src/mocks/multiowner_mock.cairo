@@ -27,7 +27,7 @@ mod MultiownerMock {
     enum Event {
         #[flat]
         OwnerManagerEvents: owner_manager_component::Event,
-        gnerLinked: SignerLinked,
+        SignerLinked: SignerLinked,
     }
 
     // Required Callbacks

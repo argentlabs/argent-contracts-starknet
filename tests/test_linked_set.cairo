@@ -12,17 +12,34 @@ use argent::signer::signer_signature::{
 
 type ComponentState = owner_manager_component::ComponentState<MultiownerMock::ContractState>;
 
-
-fn COMPONENT_STATE() -> ComponentState {
-    owner_manager_component::component_state_for_testing()
-}
-
-#[test]
-fn test_len() {
-    let mut component = COMPONENT_STATE();
+fn setup_linked_set() -> (LinkedSetMut<SignerStorageValue>, LinkedSet<SignerStorageValue>) {
+    let mut component: ComponentState = owner_manager_component::component_state_for_testing();
     let linked_set_mut = component.owners_storage_mut();
     let linked_set: LinkedSet<SignerStorageValue> = component.owners_storage();
+    (linked_set_mut, linked_set)
+}
 
+fn setup_three_owners() -> (ComponentState, Array<SignerStorageValue>) {
+    let mut component = owner_manager_component::component_state_for_testing();
+    let mut linked_set_mut = component.owners_storage_mut();
+
+    let owner1 = starknet_signer_from_pubkey(1);
+    let signer_storage1 = owner1.storage_value();
+    linked_set_mut.add_item(signer_storage1);
+
+    let owner2 = starknet_signer_from_pubkey(2);
+    let signer_storage2 = owner2.storage_value();
+    linked_set_mut.add_item(signer_storage2);
+
+    let owner3 = starknet_signer_from_pubkey(3);
+    let signer_storage3 = owner3.storage_value();
+    linked_set_mut.add_item(signer_storage3);
+
+    (component, array![signer_storage1, signer_storage2, signer_storage3])
+}
+#[test]
+fn test_len() {
+    let (linked_set_mut, linked_set) = setup_linked_set();
     assert_eq!(linked_set.len(), 0);
 
     let owner1 = starknet_signer_from_pubkey(1);
@@ -40,9 +57,7 @@ fn test_len() {
 
 #[test]
 fn test_is_empty() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
-    let linked_set: LinkedSet<SignerStorageValue> = component.owners_storage();
+    let (linked_set_mut, linked_set) = setup_linked_set();
 
     assert(linked_set.is_empty(), 'Set should be empty initially');
 
@@ -55,9 +70,7 @@ fn test_is_empty() {
 
 #[test]
 fn test_is_in() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
-    let linked_set: LinkedSet<SignerStorageValue> = component.owners_storage();
+    let (linked_set_mut, linked_set) = setup_linked_set();
 
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
@@ -72,9 +85,7 @@ fn test_is_in() {
 
 #[test]
 fn test_is_in_id() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
-    let linked_set: LinkedSet<SignerStorageValue> = component.owners_storage();
+    let (linked_set_mut, linked_set) = setup_linked_set();
 
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
@@ -86,9 +97,7 @@ fn test_is_in_id() {
 
 #[test]
 fn test_find_last_id() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
-    let linked_set: LinkedSet<SignerStorageValue> = component.owners_storage();
+    let (linked_set_mut, linked_set) = setup_linked_set();
 
     assert_eq!(linked_set.find_last_id(), 0);
 
@@ -108,9 +117,7 @@ fn test_find_last_id() {
 
 #[test]
 fn test_first() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
-    let linked_set: LinkedSet<SignerStorageValue> = component.owners_storage();
+    let (linked_set_mut, linked_set) = setup_linked_set();
 
     assert!(linked_set.first().is_none(), "First item should be None for empty set");
 
@@ -124,9 +131,7 @@ fn test_first() {
 
 #[test]
 fn test_next() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
-    let linked_set: LinkedSet<SignerStorageValue> = component.owners_storage();
+    let (linked_set_mut, linked_set) = setup_linked_set();
 
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
@@ -144,9 +149,7 @@ fn test_next() {
 
 #[test]
 fn test_item_id_before() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
-    let linked_set: LinkedSet<SignerStorageValue> = component.owners_storage();
+    let (linked_set_mut, linked_set) = setup_linked_set();
 
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
@@ -162,9 +165,7 @@ fn test_item_id_before() {
 
 #[test]
 fn test_load() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
-    let linked_set: LinkedSet<SignerStorageValue> = component.owners_storage();
+    let (linked_set_mut, linked_set) = setup_linked_set();
 
     let (len, last_id) = linked_set.load();
     assert_eq!(len, 0);
@@ -181,9 +182,7 @@ fn test_load() {
 
 #[test]
 fn test_get_all_ids() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
-    let linked_set: LinkedSet<SignerStorageValue> = component.owners_storage();
+    let (linked_set_mut, linked_set) = setup_linked_set();
 
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
@@ -201,8 +200,7 @@ fn test_get_all_ids() {
 
 #[test]
 fn test_read() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
+    let (linked_set_mut, _) = setup_linked_set();
 
     let owner = starknet_signer_from_pubkey(1);
     let signer_storage = owner.storage_value();
@@ -214,8 +212,7 @@ fn test_read() {
 
 #[test]
 fn test_remove() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
+    let (linked_set_mut, _) = setup_linked_set();
 
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
@@ -232,24 +229,6 @@ fn test_remove() {
     assert!(linked_set.is_in(signer_storage2), "Non-removed item should still be in set");
 }
 
-fn setup_three_owners() -> (ComponentState, Array<SignerStorageValue>) {
-    let mut component = COMPONENT_STATE();
-    let mut linked_set_mut = component.owners_storage_mut();
-
-    let owner1 = starknet_signer_from_pubkey(1);
-    let signer_storage1 = owner1.storage_value();
-    linked_set_mut.add_item(signer_storage1);
-
-    let owner2 = starknet_signer_from_pubkey(2);
-    let signer_storage2 = owner2.storage_value();
-    linked_set_mut.add_item(signer_storage2);
-
-    let owner3 = starknet_signer_from_pubkey(3);
-    let signer_storage3 = owner3.storage_value();
-    linked_set_mut.add_item(signer_storage3);
-
-    (component, array![signer_storage1, signer_storage2, signer_storage3])
-}
 
 #[test]
 fn test_remove_0_1() {
@@ -299,9 +278,7 @@ fn test_remove_0_1_2() {
 #[test]
 #[should_panic(expected: ('linked-set/invalid-item',))]
 fn test_add_invalid_item() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
-
+    let (linked_set_mut, _) = setup_linked_set();
     let invalid_signer = SignerStorageValue { stored_value: 0, signer_type: SignerType::Starknet };
     linked_set_mut.add_item(invalid_signer);
 }
@@ -309,9 +286,7 @@ fn test_add_invalid_item() {
 #[test]
 #[should_panic(expected: ('linked-set/already-in-set',))]
 fn test_add_duplicate_item() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
-
+    let (linked_set_mut, _) = setup_linked_set();
     let owner = starknet_signer_from_pubkey(1);
     let signer_storage = owner.storage_value();
     linked_set_mut.add_item(signer_storage);
@@ -321,8 +296,7 @@ fn test_add_duplicate_item() {
 #[test]
 #[should_panic(expected: ('linked-set/invalid-id-to-remove',))]
 fn test_remove_invalid_id() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
+    let (linked_set_mut, _) = setup_linked_set();
 
     linked_set_mut.remove(0);
 }
@@ -330,8 +304,7 @@ fn test_remove_invalid_id() {
 #[test]
 #[should_panic(expected: ('linked-set/item-not-found',))]
 fn test_remove_non_existent_item() {
-    let mut component = COMPONENT_STATE();
-    let linked_set_mut = component.owners_storage_mut();
+    let (linked_set_mut, _) = setup_linked_set();
 
     let owner = starknet_signer_from_pubkey(1);
     let signer_storage = owner.storage_value();
@@ -343,8 +316,7 @@ fn test_remove_non_existent_item() {
 #[test]
 #[should_panic(expected: ('linked-set/item-after-id',))]
 fn test_item_id_before_zero() {
-    let mut component = COMPONENT_STATE();
-    let linked_set = component.owners_storage();
+    let (_, linked_set) = setup_linked_set();
 
     linked_set.item_id_before(0);
 }

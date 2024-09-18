@@ -8,10 +8,8 @@ import {
   randomStarknetKeyPair,
 } from "../../lib";
 describe("Owner Manager Tests", function () {
-  let accountClassHash: string;
-
   before(async () => {
-    accountClassHash = await manager.declareLocalContract("MultiOwnerAccount");
+    await manager.declareLocalContract("MultiOwnerAccount");
   });
 
   describe("Add Owners", function () {

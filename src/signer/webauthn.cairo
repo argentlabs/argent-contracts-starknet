@@ -6,14 +6,12 @@ use core::sha256::compute_sha256_u32_array;
 use starknet::secp256_trait::Signature;
 
 /// @notice The webauthn signature that needs to be validated
-/// @param cross_origin From the client data JSON, some browser don't include this field, so it's optional
 /// @param client_data_json_outro The rest of the JSON contents coming after the 'crossOrigin' value
 /// @param flags From authenticator data
 /// @param sign_count From authenticator data
 /// @param ec_signature The signature as {r, s, y_parity}
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSignature {
-    cross_origin: Option<bool>,
     client_data_json_outro: Span<u8>,
     flags: u8,
     sign_count: u32, // This could/should be u8 to avoid 1 try_into
@@ -42,33 +40,32 @@ fn verify_authenticator_flags(flags: u8) {
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
 /// Encoding spec: https://www.w3.org/TR/webauthn/#clientdatajson-verification
+// TODO cheaper if returns a span?
 fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: Span<u8>) -> Array<u8> {
     let mut json = client_data_json_intro();
     json.append_all(encode_challenge(hash));
     json.append_all(['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
     json.append_all(origin);
     json.append('"');
-    if let Option::Some(cross_origin) = signature.cross_origin {
-        json.append_all([',', '"', 'c', 'r', 'o', 's', 's', 'O', 'r', 'i', 'g', 'i', 'n', '"', ':'].span());
-        if cross_origin {
-            json.append_all(['t', 'r', 'u', 'e'].span());
-        } else {
-            json.append_all(['f', 'a', 'l', 's', 'e'].span());
-        }
-    };
-    if signature.client_data_json_outro.is_empty() {
-        json.append('}');
-    } else {
+    if !signature.client_data_json_outro.is_empty() {
         assert!(*signature.client_data_json_outro.at(0) == ',', "webauthn/invalid-json-outro");
         json.append_all(signature.client_data_json_outro);
+    } else {
+        json.append('}');
     }
     json
 }
 
 fn encode_challenge(hash: felt252) -> Span<u8> {
     let mut bytes = u256_to_u8s(hash.into());
+    // remove '=' signs if this assert fails
+    assert!(bytes.len() == 32, "webauthn/invalid-challenge-length");
+    // let encoded_bytes = Base64UrlEncoder::encode(bytes).span();
     bytes.append(0);
-    assert!(bytes.len() == 33, "webauthn/invalid-challenge-length"); // remove '=' signs if this assert fails
+    // // The trailing '=' are omitted as specified in:
+    // // https://www.w3.org/TR/webauthn-2/#sctn-dependencies
+    // assert!(encoded_bytes.len() == 44, "webauthn/invalid-challenge-encoding");
+    // encoded_bytes.slice(0, 43)
     Base64UrlEncoder::encode(bytes).span()
 }
 

@@ -5,8 +5,6 @@ import {
   ArraySignatureType,
   BigNumberish,
   CairoCustomEnum,
-  CairoOption,
-  CairoOptionVariant,
   CallData,
   Uint256,
   hash,
@@ -42,7 +40,6 @@ interface WebauthnSigner {
 }
 
 interface WebauthnSignature {
-  cross_origin: CairoOption<boolean>;
   client_data_json_outro: BigNumberish[];
   flags: number;
   sign_count: number;
@@ -108,11 +105,12 @@ export class WebauthnOwner extends KeyPair {
     const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([flags, 0, 0, 0, signCount]));
 
     const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0`));
+    const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin });
+    
     const crossOrigin = false;
-    const extraJson = "";
-    // const extraJson = `,"extraField":"random data"}`;
-    const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin, crossOrigin });
-    const clientDataJson = extraJson ? clientData.replace(/}$/, extraJson) : clientData;
+    const extraJson = `,"crossOrigin":${crossOrigin}}`;
+    // const extraJson = `,"crossOrigin":${crossOrigin},"extraField":"random data"}`;
+    const clientDataJson = clientData.replace(/}$/, extraJson);
     const clientDataHash = sha256(new TextEncoder().encode(clientDataJson));
 
     const signedHash = sha256(concatBytes(authenticatorData, clientDataHash));
@@ -125,7 +123,6 @@ export class WebauthnOwner extends KeyPair {
     // let challenge = ${challenge};
     // let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     // let signature = WebauthnSignature {
-    //     cross_origin: ${crossOrigin},
     //     client_data_json_outro: ${extraJson ? `${JSON.stringify(extraJson)}.into_bytes()` : "array![]"}.span(),
     //     flags: ${flags},
     //     sign_count: ${signCount},
@@ -137,7 +134,6 @@ export class WebauthnOwner extends KeyPair {
     // };`);
 
     return {
-      cross_origin: new CairoOption(CairoOptionVariant.Some, crossOrigin),
       client_data_json_outro: CallData.compile(toCharArray(extraJson)),
       flags,
       sign_count: signCount,

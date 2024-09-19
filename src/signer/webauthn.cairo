@@ -59,13 +59,11 @@ fn encode_challenge(hash: felt252) -> Span<u8> {
     let mut bytes = u256_to_u8s(hash.into());
     // remove '=' signs if this assert fails
     assert!(bytes.len() == 32, "webauthn/invalid-challenge-length");
-    // let encoded_bytes = Base64UrlEncoder::encode(bytes).span();
-    bytes.append(0);
-    // // The trailing '=' are omitted as specified in:
-    // // https://www.w3.org/TR/webauthn-2/#sctn-dependencies
-    // assert!(encoded_bytes.len() == 44, "webauthn/invalid-challenge-encoding");
-    // encoded_bytes.slice(0, 43)
-    Base64UrlEncoder::encode(bytes).span()
+    let encoded_bytes = Base64UrlEncoder::encode(bytes).span();
+    // The trailing '=' are omitted as specified in the spec:
+    // https://www.w3.org/TR/webauthn-2/#sctn-dependencies
+    assert!(encoded_bytes.len() == 44, "webauthn/invalid-challenge-encoding");
+    encoded_bytes.slice(0, 43)
 }
 
 fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> Array<u8> {

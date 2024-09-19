@@ -40,8 +40,7 @@ fn verify_authenticator_flags(flags: u8) {
 /// {"type":"webauthn.get","challenge":"3q2-7_8","origin":"http://localhost:5173","crossOrigin":false}
 /// Spec: https://www.w3.org/TR/webauthn/#dictdef-collectedclientdata
 /// Encoding spec: https://www.w3.org/TR/webauthn/#clientdatajson-verification
-// TODO cheaper if returns a span?
-fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: Span<u8>) -> Array<u8> {
+fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: Span<u8>) -> Span<u8> {
     let mut json = client_data_json_intro();
     json.append_all(encode_challenge(hash));
     json.append_all(['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
@@ -53,7 +52,7 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: 
     } else {
         json.append('}');
     }
-    json
+    json.span()
 }
 
 fn encode_challenge(hash: felt252) -> Span<u8> {
@@ -81,7 +80,7 @@ fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> 
 
 fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
-    let (word_arr, last, rem) = u8s_to_u32s(client_data_json.span());
+    let (word_arr, last, rem) = u8s_to_u32s(client_data_json);
     // As we know the return type is fixed ([u32; 8]), we could use a more efficient implementation
     let mut client_data = u32s_to_u8s(compute_sha256_u32_array(word_arr, last, rem).span());
 

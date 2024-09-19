@@ -65,7 +65,7 @@ export class WebauthnOwner extends KeyPair {
     challenge: Uint8Array,
   ) => Promise<AuthenticatorAssertionResponse>;
   rpIdHash: Uint256;
-  crossOrigin = false;
+  crossOrigin = false; // TODO remove all ref to crossOrigin
 
   constructor(
     attestation: WebauthnAttestation,

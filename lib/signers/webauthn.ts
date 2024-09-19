@@ -107,31 +107,30 @@ export class WebauthnOwner extends KeyPair {
     const challenge = buf2base64url(hex2buf(normalizeTransactionHash(transactionHash)));
     const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin });
 
-    const crossOrigin = false;
-    const extraJson = `,"crossOrigin":${crossOrigin}}`;
-    // const extraJson = `,"crossOrigin":${crossOrigin},"extraField":"random data"}`;
-    const clientDataJson = clientData.replace(/}$/, extraJson);
+    const extraJson = "";
+    // const extraJson = `,"crossOrigin":false,"extraField":"random data"}`;
+    const clientDataJson = extraJson ? clientData.replace(/}$/, extraJson) : clientData;
     const clientDataHash = sha256(new TextEncoder().encode(clientDataJson));
 
     const signedHash = sha256(concatBytes(authenticatorData, clientDataHash));
 
     const signature = normalizeSecpR1Signature(secp256r1.sign(signedHash, this.pk));
 
-    // console.log(`
-    // let transaction_hash = ${transactionHash};
-    // let pubkey = ${buf2hex(this.publicKey)};
-    // let challenge = ${challenge};
-    // let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
-    // let signature = WebauthnSignature {
-    //     client_data_json_outro: ${extraJson ? `${JSON.stringify(extraJson)}.into_bytes()` : "array![]"}.span(),
-    //     flags: ${flags},
-    //     sign_count: ${signCount},
-    //     ec_signature: Signature {
-    //         r: 0x${r.toString(16)},
-    //         s: 0x${s.toString(16)},
-    //         y_parity: ${recovery !== 0},
-    //     },
-    // };`);
+    console.log(`
+    let transaction_hash = ${transactionHash};
+    let pubkey = ${buf2hex(this.publicKey)};
+    let challenge = ${challenge};
+    let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
+    let signature = WebauthnSignature {
+        client_data_json_outro: ${extraJson ? `${JSON.stringify(extraJson)}.into_bytes()` : "array![]"}.span(),
+        flags: ${flags},
+        sign_count: ${signCount},
+        ec_signature: Signature {
+            r: 0x${signature.r.toString(16)},
+            s: 0x${signature.s.toString(16)},
+            y_parity: ${signature.yParity},
+        },
+    };`);
 
     return {
       client_data_json_outro: CallData.compile(toCharArray(extraJson)),

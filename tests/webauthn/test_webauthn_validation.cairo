@@ -18,17 +18,17 @@ fn localhost_rp() -> (ByteArray, u256) {
 
 fn valid_signer() -> (felt252, WebauthnSigner, WebauthnSignature) {
     let (origin, rp_id_hash) = localhost_rp();
-    let transaction_hash = 0x712f08b474e11487440bfec6e63c1eb789271a56e78d0fad789cc858e56dd74;
+    let transaction_hash = 0x6dbf8822f809eee3d1f7d5abd33e32b0380196fc1ccedbb771b480038130fb1;
     let pubkey = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
-        client_data_json_outro: ",\"crossOrigin\":false}".into_bytes().span(),
+        client_data_json_outro: array![].span(),
         flags: 0b00000101,
         sign_count: 0,
         ec_signature: Signature {
-            r: 62165181786056207695203164583396665139812149407667633969577140813177092451787,
-            s: 18605387797315088936067001631414996583299145786676774688642855838935314927861,
-            y_parity: false,
+            r: 0x623acaf39fee66be3483de2b14edb79dc11e574631c7c37e9f2a8cd8d3ae604d,
+            s: 0x73727597187ca2425593f2909de9186217247fe4a53341e26fcdec5aaa5fa060,
+            y_parity: true,
         },
     };
     (transaction_hash, signer, signature)
@@ -46,16 +46,38 @@ fn test_is_valid_webauthn_signature() {
 fn test_is_valid_webauthn_signature_with_extra_json() {
     let (origin, rp_id_hash) = localhost_rp();
 
-    let transaction_hash = 0x3ce2bf63571491fd65c8e53e33b0c2ecc7e487f9dba295339db38d689e3b5ca;
+    let transaction_hash = 0x6dbf8822f809eee3d1f7d5abd33e32b0380196fc1ccedbb771b480038130fb1;
     let pubkey = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
-        client_data_json_outro: ",\"crossOrigin\":true,\"extraField\":\"random data\"}".into_bytes().span(),
-        flags: 0b00010101,
+        client_data_json_outro: ",\"crossOrigin\":false,\"extraField\":\"random data\"}".into_bytes().span(),
+        flags: 0b00000101,
+        sign_count: 0,
+        ec_signature: Signature {
+            r: 0xa0924ebc244ed2921e2a217ae51abee4995f291e48f7be5d5d0186df5fdbd704,
+            s: 0x292e29871323cc78d404d737bf8f9f4b34e541d27e0dda5e0fcc471ae53e6ecf,
+            y_parity: true,
+        },
+    };
+
+    let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
+    assert!(is_valid);
+}
+
+#[test]
+fn test_is_valid_webauthn_signature_sign_count() {
+    let (origin, rp_id_hash) = localhost_rp();
+
+    let transaction_hash = 0x6dbf8822f809eee3d1f7d5abd33e32b0380196fc1ccedbb771b480038130fb1;
+    let pubkey = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
+    let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
+    let signature = WebauthnSignature {
+        client_data_json_outro: array![].span(),
+        flags: 0b00000101,
         sign_count: 42,
         ec_signature: Signature {
-            r: 19670870023840550315885474235507956766557476217277073407643822104794216096240,
-            s: 5663432275202665149057612808730096627589839396996609159142560785302022469931,
+            r: 0xe82c6bb7ff7ad43fd4b7ffe8ec7eead60cd1632b22c5bc61528c1bcbae9cbd6d,
+            s: 0x31785e4243ed76930c8b2da00f46889c2918f8627b050456eb62d48e6c0ccc26,
             y_parity: false,
         },
     };
@@ -65,20 +87,20 @@ fn test_is_valid_webauthn_signature_with_extra_json() {
 }
 
 #[test]
-fn test_is_valid_webauthn_signature_with_cross_origin_none() {
+fn test_is_valid_webauthn_signature_flags() {
     let (origin, rp_id_hash) = localhost_rp();
 
-    let transaction_hash = 0x48a14cd24aae2d3a4011ae01249efee7b38a623d3a690c156ddb456213993e4;
+    let transaction_hash = 0x6dbf8822f809eee3d1f7d5abd33e32b0380196fc1ccedbb771b480038130fb1;
     let pubkey = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
         client_data_json_outro: array![].span(),
         flags: 0b00010101,
-        sign_count: 42,
+        sign_count: 0,
         ec_signature: Signature {
-            r: 86355542119903718425399464977228783179424105137305434309441087583578891109274,
-            s: 47907691063703130173044052464744718057219140251481677102916922869716643734432,
-            y_parity: false,
+            r: 0x90bf87412855adcc72a80c5cd8d6bd0e5324967bfb3f9e5527474b70774e6198,
+            s: 0x3f6c70fb8ba58537a403bbe7df6402c6ef339e71fa5f494055f63567114522fb,
+            y_parity: true,
         },
     };
 

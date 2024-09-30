@@ -8,12 +8,12 @@ use starknet::storage::{
     StoragePathUpdateTrait, StoragePointerReadAccess, StoragePointerWriteAccess, StorageBase, Map
 };
 
-trait SetItem<T> {
+pub trait SetItem<T> {
     // TODO rename? this is needed mostly to check if the result of reading storage is valid, but also to ensure we
-    // don't store invalid itens
+    // don't store invalid items
     fn is_valid_item(self: @T) -> bool;
     // can't be zero unless it's an invalid item, actually it should never be called on an invalid item, maybe can
-    // return NonZero<felt252>? also add a nothe that the ids must be unique
+    // return NonZero<felt252>? also add a note that the ids must be unique
     fn id(self: @T) -> felt252;
 }
 

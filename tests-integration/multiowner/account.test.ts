@@ -11,7 +11,7 @@ import {
   manager,
   randomStarknetKeyPair,
   zeroStarknetSignatureType,
-} from "../lib";
+} from "../../lib";
 
 describe("MutiOwnerAccount", function () {
   let accountClassHash: string;

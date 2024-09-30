@@ -1,5 +1,5 @@
 #[starknet::contract(account)]
-mod MultiOwnerAccount {
+mod ArgentAccount {
     use argent::account::interface::{IAccount, IArgentAccount, IDeprecatedArgentAccount, Version};
     use argent::introspection::src5::src5_component;
     use argent::outside_execution::{

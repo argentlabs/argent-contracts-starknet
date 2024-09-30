@@ -1,10 +1,10 @@
-use argent::linked_set::SetItem;
 use argent::signer::{
     signer_signature::{
         Signer, SignerTrait, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerSignatureTrait,
         SignerSpanTrait
     },
 };
+use argent::utils::linked_set::SetItem;
 use super::events::SignerLinked;
 
 impl SignerStorageValueSetItem of SetItem<SignerStorageValue> {
@@ -60,14 +60,14 @@ trait IOwnerManagerInternal<TContractState> {
 /// Managing the list of owners of the account
 #[starknet::component]
 mod owner_manager_component {
-    use argent::linked_set::{
-        LinkedSetMut, LinkedSetTraitMut, LinkedSetMutImpl, LinkedSet, LinkedSetTrait, LinkedSetImpl
-    };
     use argent::signer::{
         signer_signature::{
             Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
             SignerStorageTrait
         },
+    };
+    use argent::utils::linked_set::{
+        LinkedSetMut, LinkedSetTraitMut, LinkedSetMutImpl, LinkedSet, LinkedSetTrait, LinkedSetImpl
     };
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
     use starknet::storage::{

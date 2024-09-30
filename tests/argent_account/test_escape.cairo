@@ -1,17 +1,20 @@
-use argent::presets::argent_account::ArgentAccount;
+use argent::multiowner_account::multiowner_account::MultiOwnerAccount;
 use argent::recovery::interface::EscapeStatus;
 use argent::signer::signer_signature::starknet_signer_from_pubkey;
 use snforge_std::{
     spy_events, EventSpyAssertionsTrait, EventSpyTrait, start_cheat_block_timestamp_global,
     start_cheat_caller_address_global
 };
-use super::super::{ITestArgentAccountDispatcherTrait, initialize_account};
+use super::super::{
+    ARGENT_ACCOUNT_ADDRESS, ITestMultiOwnerAccountDispatcherTrait, initialize_account_with, initialize_account,
+    initialize_account_without_guardian, Felt252TryIntoStarknetSigner, OWNER, WRONG_OWNER
+};
 
 #[test]
 fn set_escape_security_period() {
     let account = initialize_account();
     let default_escape_security_period = account.get_escape_security_period();
-    assert_eq!(default_escape_security_period, consteval_int!(7 * 24 * 60 * 60));
+    assert_eq!(default_escape_security_period, 7 * 24 * 60 * 60);
 
     let (_, status) = account.get_escape_and_status();
     assert_eq!(status, EscapeStatus::None);
@@ -21,8 +24,8 @@ fn set_escape_security_period() {
     let new_escape_security_period = account.get_escape_security_period();
     assert_eq!(new_escape_security_period, 4200);
 
-    let event = ArgentAccount::Event::EscapeSecurityPeriodChanged(
-        ArgentAccount::EscapeSecurityPeriodChanged { escape_security_period: 4200 }
+    let event = MultiOwnerAccount::Event::EscapeSecurityPeriodChanged(
+        MultiOwnerAccount::EscapeSecurityPeriodChanged { escape_security_period: 4200 }
     );
     spy.assert_emitted(@array![(account.contract_address, event)]);
 
@@ -48,7 +51,7 @@ fn set_escape_security_period_with_ready_escape() {
     let account = initialize_account();
     account.trigger_escape_guardian(Option::None);
 
-    start_cheat_block_timestamp_global(consteval_int!(7 * 24 * 60 * 60));
+    start_cheat_block_timestamp_global(7 * 24 * 60 * 60);
     let (_, status) = account.get_escape_and_status();
     assert_eq!(status, EscapeStatus::Ready);
 
@@ -60,7 +63,7 @@ fn set_escape_security_period_with_expired_escape() {
     let account = initialize_account();
     account.trigger_escape_guardian(Option::None);
 
-    start_cheat_block_timestamp_global(consteval_int!(7 * 24 * 60 * 60 * 2));
+    start_cheat_block_timestamp_global(7 * 24 * 60 * 60 * 2);
     let (escape, status) = account.get_escape_and_status();
     assert_eq!(status, EscapeStatus::Expired);
     assert_ne!(escape.ready_at, 0, "Should not be 0");
@@ -157,7 +160,7 @@ fn escape_owner_default() {
     let account = initialize_account();
     start_cheat_block_timestamp_global(100);
     account.trigger_escape_owner(starknet_signer_from_pubkey(12));
-    start_cheat_block_timestamp_global(100 + consteval_int!(7 * 24 * 60 * 60));
+    start_cheat_block_timestamp_global(100 + 7 * 24 * 60 * 60);
     account.escape_owner();
     let new_owner = account.get_owner();
     assert_eq!(new_owner, 12);

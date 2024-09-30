@@ -1,4 +1,4 @@
-use argent::presets::argent_account::ArgentAccount;
+use argent::multiowner_account::multiowner_account::MultiOwnerAccount;
 use argent::signer::signer_signature::{
     StarknetSigner, Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait,
     starknet_signer_from_pubkey,
@@ -12,7 +12,7 @@ use snforge_std::{
 };
 use starknet::contract_address_const;
 use super::super::{
-    ARGENT_ACCOUNT_ADDRESS, ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
+    ARGENT_ACCOUNT_ADDRESS, ITestMultiOwnerAccountDispatcherTrait, initialize_account_with, initialize_account,
     initialize_account_without_guardian, Felt252TryIntoStarknetSigner, OWNER, WRONG_OWNER
 };
 
@@ -75,47 +75,49 @@ fn erc165_unsupported_interfaces() {
     assert!(!account.supports_interface(0xffffffff));
 }
 
-#[test]
-fn change_owner() {
-    let account = initialize_account();
-    assert_eq!(
-        account.get_owner_guid(), starknet_signer_from_pubkey(OWNER().pubkey).into_guid(), "owner not correctly set"
-    );
-    let (signer, signature) = NEW_OWNER();
-    let signer_signature = SignerSignature::Starknet((signer, signature));
-    account.change_owner(signer_signature);
-    assert_eq!(account.get_owner_guid(), signer_signature.signer().into_guid());
-}
-
-#[test]
-#[should_panic(expected: ('argent/only-self',))]
-fn change_owner_only_self() {
-    let account = initialize_account();
-    start_cheat_caller_address_global(contract_address_const::<42>());
-    let (signer, signature) = NEW_OWNER();
-    let signer_signature = SignerSignature::Starknet((signer, signature));
-    account.change_owner(signer_signature);
-}
-
-#[test]
-#[should_panic(expected: ('argent/invalid-owner-sig',))]
-fn change_owner_invalid_message() {
-    let account = initialize_account();
-    let (signer, _) = NEW_OWNER();
-    let signer_signature = SignerSignature::Starknet(
-        (signer, StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s })
-    );
-    account.change_owner(signer_signature);
-}
-
-#[test]
-#[should_panic(expected: ('argent/invalid-owner-sig',))]
-fn change_owner_wrong_pub_key() {
-    let account = initialize_account();
-    let (_, signature) = NEW_OWNER();
-    let signer_signature = SignerSignature::Starknet((WRONG_OWNER().pubkey.try_into().unwrap(), signature));
-    account.change_owner(signer_signature);
-}
+// TODO: Implement these tests once change owner has been implemented in the multiowner account contract
+//
+// #[test]
+// fn change_owner() {
+//     let account = initialize_account();
+//     assert_eq!(
+//         account.get_owner_guid(), starknet_signer_from_pubkey(OWNER().pubkey).into_guid(), "owner not correctly set"
+//     );
+//     let (signer, signature) = NEW_OWNER();
+//     let signer_signature = SignerSignature::Starknet((signer, signature));
+//     account.change_owner(signer_signature);
+//     assert_eq!(account.get_owner_guid(), signer_signature.signer().into_guid());
+// }
+//
+// #[test]
+// #[should_panic(expected: ('argent/only-self',))]
+// fn change_owner_only_self() {
+//     let account = initialize_account();
+//     start_cheat_caller_address_global(contract_address_const::<42>());
+//     let (signer, signature) = NEW_OWNER();
+//     let signer_signature = SignerSignature::Starknet((signer, signature));
+//     account.change_owner(signer_signature);
+// }
+//
+// #[test]
+// #[should_panic(expected: ('argent/invalid-owner-sig',))]
+// fn change_owner_invalid_message() {
+//     let account = initialize_account();
+//     let (signer, _) = NEW_OWNER();
+//     let signer_signature = SignerSignature::Starknet(
+//         (signer, StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s })
+//     );
+//     account.change_owner(signer_signature);
+// }
+//
+// #[test]
+// #[should_panic(expected: ('argent/invalid-owner-sig',))]
+// fn change_owner_wrong_pub_key() {
+//     let account = initialize_account();
+//     let (_, signature) = NEW_OWNER();
+//     let signer_signature = SignerSignature::Starknet((WRONG_OWNER().pubkey.try_into().unwrap(), signature));
+//     account.change_owner(signer_signature);
+// }
 
 #[test]
 fn change_guardian() {
@@ -127,12 +129,14 @@ fn change_guardian() {
     assert_eq!(account.get_guardian(), 22);
 
     assert_eq!(spy.get_events().events.len(), 3);
-    let changed_event = ArgentAccount::Event::GuardianChanged(ArgentAccount::GuardianChanged { new_guardian: 22 });
-    let guid_changed_event = ArgentAccount::Event::GuardianChangedGuid(
-        ArgentAccount::GuardianChangedGuid { new_guardian_guid: guardian.into_guid() }
+    let changed_event = MultiOwnerAccount::Event::GuardianChanged(
+        MultiOwnerAccount::GuardianChanged { new_guardian: 22 }
     );
-    let signer_link_event = ArgentAccount::Event::SignerLinked(
-        ArgentAccount::SignerLinked { signer_guid: guardian.into_guid(), signer: guardian }
+    let guid_changed_event = MultiOwnerAccount::Event::GuardianChangedGuid(
+        MultiOwnerAccount::GuardianChangedGuid { new_guardian_guid: guardian.into_guid() }
+    );
+    let signer_link_event = MultiOwnerAccount::Event::SignerLinked(
+        MultiOwnerAccount::SignerLinked { signer_guid: guardian.into_guid(), signer: guardian }
     );
 
     spy
@@ -186,14 +190,14 @@ fn change_guardian_backup() {
     assert_eq!(account.get_guardian_backup(), 33);
 
     assert_eq!(spy.get_events().events.len(), 3);
-    let changed_event = ArgentAccount::Event::GuardianBackupChanged(
-        ArgentAccount::GuardianBackupChanged { new_guardian_backup: 33 }
+    let changed_event = MultiOwnerAccount::Event::GuardianBackupChanged(
+        MultiOwnerAccount::GuardianBackupChanged { new_guardian_backup: 33 }
     );
-    let guid_changed_event = ArgentAccount::Event::GuardianBackupChangedGuid(
-        ArgentAccount::GuardianBackupChangedGuid { new_guardian_backup_guid: guardian_backup.into_guid() }
+    let guid_changed_event = MultiOwnerAccount::Event::GuardianBackupChangedGuid(
+        MultiOwnerAccount::GuardianBackupChangedGuid { new_guardian_backup_guid: guardian_backup.into_guid() }
     );
-    let signer_link_event = ArgentAccount::Event::SignerLinked(
-        ArgentAccount::SignerLinked { signer_guid: guardian_backup.into_guid(), signer: guardian_backup }
+    let signer_link_event = MultiOwnerAccount::Event::SignerLinked(
+        MultiOwnerAccount::SignerLinked { signer_guid: guardian_backup.into_guid(), signer: guardian_backup }
     );
 
     spy
@@ -236,13 +240,13 @@ fn change_guardian_backup_invalid_guardian_backup() {
 fn get_version() {
     let version = initialize_account().get_version();
     assert_eq!(version.major, 0);
-    assert_eq!(version.minor, 4);
+    assert_eq!(version.minor, 5);
     assert_eq!(version.patch, 0);
 }
 
 #[test]
 fn getVersion() {
-    assert_eq!(initialize_account().getVersion(), '0.4.0');
+    assert_eq!(initialize_account().getVersion(), '0.5.0');
 }
 
 #[test]

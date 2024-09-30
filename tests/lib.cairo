@@ -12,13 +12,9 @@ mod test_transaction_version;
 
 // Re-export the test setup functions to have them all available in one place
 use setup::{
-    account_test_setup::{
-        ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
+    multiowner_account_setup::{
+        ITestMultiOwnerAccountDispatcherTrait, initialize_account_with, initialize_account,
         initialize_account_without_guardian
-    },
-    multiowner_account_test_setup::{
-        ITestMultiOwnerAccountDispatcherTrait, initialize_mo_account_with, initialize_mo_account,
-        initialize_mo_account_without_guardian
     },
     utils::{to_starknet_signatures, to_starknet_signer_signatures, Felt252TryIntoStarknetSigner},
     constants::{
@@ -50,9 +46,8 @@ mod multisig {
 }
 
 mod setup {
-    mod account_test_setup;
     mod constants;
-    mod multiowner_account_test_setup;
+    mod multiowner_account_setup;
     mod multisig_test_setup;
     mod utils;
 }

@@ -1,28 +1,20 @@
 use argent::account::interface::Version;
 use argent::recovery::interface::{LegacyEscape, EscapeStatus};
 use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
+use argent::utils::serialization::serialize;
 use snforge_std::{declare, ContractClassTrait, start_cheat_caller_address_global, DeclareResultTrait};
 use starknet::account::Call;
 use super::super::{OWNER, GUARDIAN, ARGENT_ACCOUNT_ADDRESS};
 
 #[starknet::interface]
-trait ITestArgentAccount<TContractState> {
+trait ITestMultiOwnerAccount<TContractState> {
     // IAccount
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
     fn is_valid_signature(self: @TContractState, hash: felt252, signature: Array<felt252>) -> felt252;
 
-    // IArgentAccount
-    fn __validate_deploy__(
-        self: @TContractState,
-        class_hash: felt252,
-        contract_address_salt: felt252,
-        owner: Signer,
-        guardian: Option<Signer>
-    ) -> felt252;
     // External
-    fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
     fn change_guardian(ref self: TContractState, new_guardian: Option<Signer>);
     fn change_guardian_backup(ref self: TContractState, new_guardian_backup: Option<Signer>);
     fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);
@@ -56,29 +48,28 @@ trait ITestArgentAccount<TContractState> {
     fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }
 
-fn initialize_account() -> ITestArgentAccountDispatcher {
+fn initialize_account() -> ITestMultiOwnerAccountDispatcher {
     initialize_account_with(OWNER().pubkey, GUARDIAN().pubkey)
 }
 
-fn initialize_account_without_guardian() -> ITestArgentAccountDispatcher {
+fn initialize_account_without_guardian() -> ITestMultiOwnerAccountDispatcher {
     initialize_account_with(OWNER().pubkey, 0)
 }
 
-fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAccountDispatcher {
-    let mut calldata = array![];
-    starknet_signer_from_pubkey(owner).serialize(ref calldata);
+fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestMultiOwnerAccountDispatcher {
+    let owner = starknet_signer_from_pubkey(owner);
     let guardian_signer: Option<Signer> = match guardian {
         0 => Option::None,
         _ => Option::Some(starknet_signer_from_pubkey(guardian)),
     };
-    guardian_signer.serialize(ref calldata);
+    let constructor_args = (owner, guardian_signer);
 
-    let contract = declare("ArgentAccount").expect('Failed to declare ArgentAccount').contract_class();
+    let contract = declare("MultiOwnerAccount").expect('Failed to declare MOAccount').contract_class();
     let (contract_address, _) = contract
-        .deploy_at(@calldata, ARGENT_ACCOUNT_ADDRESS.try_into().unwrap())
-        .expect('Failed to deploy ArgentAccount');
+        .deploy_at(@serialize(@constructor_args), ARGENT_ACCOUNT_ADDRESS.try_into().unwrap())
+        .expect('Failed to deploy MOAccount');
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')
     start_cheat_caller_address_global(contract_address);
-    ITestArgentAccountDispatcher { contract_address }
+    ITestMultiOwnerAccountDispatcher { contract_address }
 }

@@ -16,9 +16,10 @@ fn localhost_rp() -> (ByteArray, u256) {
     (origin, rp_id_hash)
 }
 
+// Do we need Cairo0 test?
 fn valid_signer() -> (felt252, WebauthnSigner, WebauthnSignature) {
     let (origin, rp_id_hash) = localhost_rp();
-    let transaction_hash = 0x6dbf8822f809eee3d1f7d5abd33e32b0380196fc1ccedbb771b480038130fb1;
+    let transaction_hash = 0x39af7d31aef39f23ef1a85c6fe9afe12721dfcc631d67e35cd84e7228b69351;
     let pubkey = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
@@ -26,8 +27,8 @@ fn valid_signer() -> (felt252, WebauthnSigner, WebauthnSignature) {
         flags: 0b00000101,
         sign_count: 0,
         ec_signature: Signature {
-            r: 0x623acaf39fee66be3483de2b14edb79dc11e574631c7c37e9f2a8cd8d3ae604d,
-            s: 0x73727597187ca2425593f2909de9186217247fe4a53341e26fcdec5aaa5fa060,
+            r: 0x1613705b475a0962ccf245fe0025a969eb202a25a4a534d3fdca804ccc682e5,
+            s: 0x4d9f083d5af539ffd77752d27d14478a2381c40ab7a1d5579642ef506d5634e5,
             y_parity: true,
         },
         sha256_implementation: Sha256Implementation::Cairo1,
@@ -47,7 +48,7 @@ fn test_is_valid_webauthn_signature() {
 fn test_is_valid_webauthn_signature_with_extra_json() {
     let (origin, rp_id_hash) = localhost_rp();
 
-    let transaction_hash = 0x6dbf8822f809eee3d1f7d5abd33e32b0380196fc1ccedbb771b480038130fb1;
+    let transaction_hash = 0x39af7d31aef39f23ef1a85c6fe9afe12721dfcc631d67e35cd84e7228b69351;
     let pubkey = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
@@ -55,9 +56,9 @@ fn test_is_valid_webauthn_signature_with_extra_json() {
         flags: 0b00000101,
         sign_count: 0,
         ec_signature: Signature {
-            r: 0xa0924ebc244ed2921e2a217ae51abee4995f291e48f7be5d5d0186df5fdbd704,
-            s: 0x292e29871323cc78d404d737bf8f9f4b34e541d27e0dda5e0fcc471ae53e6ecf,
-            y_parity: true,
+            r: 0xf490b9f47ade1c8afc3e717539dd4283a1e70e352d70a419c013d2d1476657df,
+            s: 0x5c199f5dfd34fcc0a50885e04f866652e840e659dbeaa6ff061dba632b66811c,
+            y_parity: false,
         },
         sha256_implementation: Sha256Implementation::Cairo1,
     };
@@ -70,7 +71,7 @@ fn test_is_valid_webauthn_signature_with_extra_json() {
 fn test_is_valid_webauthn_signature_sign_count() {
     let (origin, rp_id_hash) = localhost_rp();
 
-    let transaction_hash = 0x6dbf8822f809eee3d1f7d5abd33e32b0380196fc1ccedbb771b480038130fb1;
+    let transaction_hash = 0x39af7d31aef39f23ef1a85c6fe9afe12721dfcc631d67e35cd84e7228b69351;
     let pubkey = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
@@ -78,9 +79,9 @@ fn test_is_valid_webauthn_signature_sign_count() {
         flags: 0b00000101,
         sign_count: 42,
         ec_signature: Signature {
-            r: 0xe82c6bb7ff7ad43fd4b7ffe8ec7eead60cd1632b22c5bc61528c1bcbae9cbd6d,
-            s: 0x31785e4243ed76930c8b2da00f46889c2918f8627b050456eb62d48e6c0ccc26,
-            y_parity: false,
+            r: 0x2a6d6328d71fc63d965b086807fac5cc2c1dec107842af9e647dcffe015fe95b,
+            s: 0x21210e7fe1fb13c5113a12a852129720fdf7442903fac9f680e05b3471815c9a,
+            y_parity: true,
         },
         sha256_implementation: Sha256Implementation::Cairo1,
     };
@@ -93,7 +94,7 @@ fn test_is_valid_webauthn_signature_sign_count() {
 fn test_is_valid_webauthn_signature_flags() {
     let (origin, rp_id_hash) = localhost_rp();
 
-    let transaction_hash = 0x6dbf8822f809eee3d1f7d5abd33e32b0380196fc1ccedbb771b480038130fb1;
+    let transaction_hash = 0x39af7d31aef39f23ef1a85c6fe9afe12721dfcc631d67e35cd84e7228b69351;
     let pubkey = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296;
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
@@ -101,8 +102,8 @@ fn test_is_valid_webauthn_signature_flags() {
         flags: 0b00010101,
         sign_count: 0,
         ec_signature: Signature {
-            r: 0x90bf87412855adcc72a80c5cd8d6bd0e5324967bfb3f9e5527474b70774e6198,
-            s: 0x3f6c70fb8ba58537a403bbe7df6402c6ef339e71fa5f494055f63567114522fb,
+            r: 0x998c76cc9384d7ae62f6033d60b8bae4c3f51dcde891bde3cfd6c2550b520db8,
+            s: 0x47f25bc61533e0928c69fa4d907e8af6849db19ec86c43f6faa64584c80afd3a,
             y_parity: true,
         },
         sha256_implementation: Sha256Implementation::Cairo1,

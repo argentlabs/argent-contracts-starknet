@@ -1,6 +1,5 @@
-use argent::linked_set::{LinkedSetMut, LinkedSetTraitMut, LinkedSetMutImpl, LinkedSet, LinkedSetTrait};
 use argent::mocks::multiowner_mock::MultiownerMock;
-use argent::multiowner_account::multiowner_account;
+use argent::multiowner_account::argent_account::ArgentAccount;
 use argent::multiowner_account::owner_manager::{
     SignerStorageValueSetItem, owner_manager_component, owner_manager_component::PrivateTrait, IOwnerManager,
     IOwnerManagerInternal
@@ -9,6 +8,7 @@ use argent::signer::signer_signature::{
     SignerTrait, SignerStorageValue, SignerSignatureTrait, SignerSpanTrait, Signer, SignerSignature,
     starknet_signer_from_pubkey, SignerType
 };
+use argent::utils::linked_set::{LinkedSetMut, LinkedSetTraitMut, LinkedSetMutImpl, LinkedSet, LinkedSetTrait};
 
 type ComponentState = owner_manager_component::ComponentState<MultiownerMock::ContractState>;
 

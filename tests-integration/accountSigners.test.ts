@@ -35,6 +35,7 @@ describe("ArgentAccount: Signers types", function () {
 
   before(async () => {
     ethContract = await manager.tokens.ethContract();
+    await manager.declareFixtureContract("Sha256Cairo0");
 
     for (const { name, keyPair } of [...starknetKeyPairs, ...nonStarknetKeyPairs]) {
       const { account: withGuardian } = await deployAccount({ owner: keyPair() });

@@ -1,7 +1,8 @@
 use alexandria_encoding::base64::Base64UrlEncoder;
 use argent::signer::signer_signature::WebauthnSigner;
 use argent::utils::array_ext::ArrayExt;
-use argent::utils::bytes::{u256_to_u8s, u32s_to_u8s, u32s_to_u256, u8s_to_u32s};
+use argent::utils::bytes::{u256_to_u8s, u32s_to_u8s, u32felts_to_u8s, u32felts_to_u256, u32s_to_u256, u8s_to_u32s};
+use argent::utils::hashing::sha256_cairo0;
 use core::sha256::compute_sha256_u32_array;
 use starknet::secp256_trait::Signature;
 
@@ -16,6 +17,13 @@ struct WebauthnSignature {
     flags: u8,
     sign_count: u32, // This could/should be u8 to avoid 1 try_into
     ec_signature: Signature,
+    sha256_implementation: Sha256Implementation,
+}
+
+#[derive(Drop, Copy, Serde, PartialEq)]
+enum Sha256Implementation {
+    Cairo0,
+    Cairo1,
 }
 
 /// Example data:
@@ -42,7 +50,7 @@ fn verify_authenticator_flags(flags: u8) {
 /// Encoding spec: https://www.w3.org/TR/webauthn/#clientdatajson-verification
 fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: Span<u8>) -> Span<u8> {
     let mut json = client_data_json_intro();
-    json.append_all(encode_challenge(hash));
+    json.append_all(encode_challenge(hash, signature.sha256_implementation));
     json.append_all(['"', ',', '"', 'o', 'r', 'i', 'g', 'i', 'n', '"', ':', '"'].span());
     json.append_all(origin);
     json.append('"');
@@ -55,10 +63,16 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: 
     json.span()
 }
 
-fn encode_challenge(hash: felt252) -> Span<u8> {
+fn encode_challenge(hash: felt252, sha256_implementation: Sha256Implementation) -> Span<u8> {
     let mut bytes = u256_to_u8s(hash.into());
     // remove '=' signs if this assert fails
     assert!(bytes.len() == 32, "webauthn/invalid-challenge-length");
+
+    let last_byte = match sha256_implementation {
+        Sha256Implementation::Cairo0 => 0,
+        Sha256Implementation::Cairo1 => 1,
+    };
+    bytes.append(last_byte);
     let encoded_bytes = Base64UrlEncoder::encode(bytes).span();
     // The trailing '=' are omitted as specified in the spec:
     // https://www.w3.org/TR/webauthn-2/#sctn-dependencies
@@ -76,7 +90,15 @@ fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> 
     bytes
 }
 
-fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
+fn get_webauthn_hash_cairo0(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> Option<u256> {
+    let client_data_json = encode_client_data_json(hash, signature, signer.origin);
+    let client_data_hash = u32felts_to_u8s(sha256_cairo0(client_data_json)?);
+    let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
+    message.append_all(client_data_hash);
+    Option::Some(u32felts_to_u256(sha256_cairo0(message.span())?))
+}
+
+fn get_webauthn_hash_cairo1(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
     let (word_arr, last, rem) = u8s_to_u32s(client_data_json);
     // As we know the return type is fixed ([u32; 8]), we could use a more efficient implementation
@@ -90,6 +112,14 @@ fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnS
     let (word_arr, last, rem) = u8s_to_u32s(arr.span());
 
     u32s_to_u256(compute_sha256_u32_array(word_arr, last, rem).span())
+}
+
+fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
+    match signature.sha256_implementation {
+        Sha256Implementation::Cairo0 => get_webauthn_hash_cairo0(hash, signer, signature)
+            .expect('webauthn/sha256-cairo0-failed'),
+        Sha256Implementation::Cairo1 => get_webauthn_hash_cairo1(hash, signer, signature),
+    }
 }
 
 fn client_data_json_intro() -> Array<u8> {

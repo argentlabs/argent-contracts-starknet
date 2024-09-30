@@ -31,6 +31,7 @@ describe("Multisig: Signers types", function () {
 
   before(async () => {
     ethContract = await manager.tokens.ethContract();
+    await manager.declareFixtureContract("Sha256Cairo0");
 
     for (const { name, keyPair } of keyPairs) {
       const { account: oneSigner } = await deployMultisig({ threshold: 1, keys: [keyPair()] });

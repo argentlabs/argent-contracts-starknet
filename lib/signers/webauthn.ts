@@ -44,6 +44,7 @@ interface WebauthnSignature {
   flags: number;
   sign_count: number;
   ec_signature: { r: Uint256; s: Uint256; y_parity: boolean };
+  sha256_implementation: CairoCustomEnum;
 }
 
 export class WebauthnOwner extends KeyPair {
@@ -54,6 +55,7 @@ export class WebauthnOwner extends KeyPair {
     pk?: string,
     public rpId = "localhost",
     public origin = "http://localhost:5173",
+    public useCairo0Sha256 = false,
   ) {
     super();
     this.pk = pk ? hex2buf(normalizeTransactionHash(pk)) : secp256r1.utils.randomPrivateKey();
@@ -104,7 +106,8 @@ export class WebauthnOwner extends KeyPair {
     const signCount = 0;
     const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([flags, 0, 0, 0, signCount]));
 
-    const challenge = buf2base64url(hex2buf(normalizeTransactionHash(transactionHash)));
+    const sha256Impl = this.useCairo0Sha256 ? "0" : "1";
+    const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0${sha256Impl}`));
     const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin });
 
     const extraJson = "";
@@ -130,6 +133,7 @@ export class WebauthnOwner extends KeyPair {
     //         s: 0x${signature.s.toString(16)},
     //         y_parity: ${signature.yParity},
     //     },
+    //     sha256_implementation: Sha256Implementation::Cairo${sha256Impl},
     // };`);
 
     return {
@@ -141,6 +145,10 @@ export class WebauthnOwner extends KeyPair {
         s: uint256.bnToUint256(signature.s),
         y_parity: signature.yParity,
       },
+      sha256_implementation: new CairoCustomEnum({
+        Cairo0: this.useCairo0Sha256 ? {} : undefined,
+        Cairo1: this.useCairo0Sha256 ? undefined : {},
+      }),
     };
   }
 }

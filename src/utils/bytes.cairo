@@ -114,6 +114,22 @@ impl ByteArrayExt of ByteArrayExtTrait {
     }
 }
 
+// Accepts felt252 for efficiency as it's the type of retdata but all values are expected to fit u32
+fn u32felts_to_u256(arr: Span<felt252>) -> u256 {
+    assert!(arr.len() == 8, "u32s_to_u256: input must be 8 elements long");
+    let low = *arr.at(7)
+        + *arr.at(6) * 0x1_0000_0000
+        + *arr.at(5) * 0x1_0000_0000_0000_0000
+        + *arr.at(4) * 0x1_0000_0000_0000_0000_0000_0000;
+    let low = low.try_into().expect('u32s_to_u256:overflow-low');
+    let high = *arr.at(3)
+        + *arr.at(2) * 0x1_0000_0000
+        + *arr.at(1) * 0x1_0000_0000_0000_0000
+        + *arr.at(0) * 0x1_0000_0000_0000_0000_0000_0000;
+    let high = high.try_into().expect('u32s_to_u256:overflow-high');
+    u256 { high, low }
+}
+
 fn u32s_to_u256(arr: Span<u32>) -> u256 {
     assert!(arr.len() == 8, "u32s_to_u2562: input must be 8 elements long");
     let low: u128 = (*arr[7]).into()
@@ -127,6 +143,22 @@ fn u32s_to_u256(arr: Span<u32>) -> u256 {
         + (*arr[0]).into() * 0x1_0000_0000_0000_0000_0000_0000;
     let high = high.try_into().expect('u32s_to_u2562:overflow-high');
     u256 { high, low }
+}
+
+// Accepts felt252 for efficiency as it's the type of retdata but all values are expected to fit u32
+fn u32felts_to_u8s(mut words: Span<felt252>) -> Span<u8> {
+    let mut output = array![];
+    while let Option::Some(word) = words.pop_front() {
+        let word: u32 = (*word).try_into().unwrap();
+        let (rest, byte_4) = integer::u32_safe_divmod(word, 0x100);
+        let (rest, byte_3) = integer::u32_safe_divmod(rest, 0x100);
+        let (byte_1, byte_2) = integer::u32_safe_divmod(rest, 0x100);
+        output.append(byte_1.try_into().unwrap());
+        output.append(byte_2.try_into().unwrap());
+        output.append(byte_3.try_into().unwrap());
+        output.append(byte_4.try_into().unwrap());
+    };
+    output.span()
 }
 
 fn u32s_to_u8s(mut words: Span<u32>) -> Span<u8> {
@@ -166,4 +198,17 @@ fn u8s_to_u32s(mut arr: Span<u8>) -> (Array<u32>, u32, u32) {
         _ => (*arr.at(len - 1)).into() + (*arr.at(len - 2)).into() * 0x100 + (*arr.at(len - 3)).into() * 0x10000,
     };
     (word_arr, last, rem)
+}
+
+// Takes an array of u8s and returns an array of u32s, padding the end with 0s if necessary
+fn u8s_to_u32s_pad_end(mut bytes: Span<u8>) -> Array<u32> {
+    let mut output = array![];
+    while let Option::Some(byte1) = bytes.pop_front() {
+        let byte1 = *byte1;
+        let byte2 = *bytes.pop_front().unwrap_or_default();
+        let byte3 = *bytes.pop_front().unwrap_or_default();
+        let byte4 = *bytes.pop_front().unwrap_or_default();
+        output.append(0x100_00_00 * byte1.into() + 0x100_00 * byte2.into() + 0x100 * byte3.into() + byte4.into());
+    };
+    output
 }

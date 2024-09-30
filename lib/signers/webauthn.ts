@@ -158,3 +158,4 @@ function sha256(message: BinaryLike) {
 }
 
 export const randomWebauthnOwner = () => new WebauthnOwner();
+export const randomWebauthnCairo0Owner = () => new WebauthnOwner(undefined, undefined, undefined, true);

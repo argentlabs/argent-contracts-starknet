@@ -11,6 +11,7 @@ use starknet::secp256_trait::Signature;
 /// @param flags From authenticator data
 /// @param sign_count From authenticator data
 /// @param ec_signature The signature as {r, s, y_parity}
+/// @param sha256_implementation The implementation of the sha256 hash
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct WebauthnSignature {
     client_data_json_outro: Span<u8>,
@@ -77,7 +78,7 @@ fn encode_challenge(hash: felt252, sha256_implementation: Sha256Implementation) 
     // The trailing '=' are omitted as specified in the spec:
     // https://www.w3.org/TR/webauthn-2/#sctn-dependencies
     assert!(encoded_bytes.len() == 44, "webauthn/invalid-challenge-encoding");
-    encoded_bytes.slice(0, 43)
+    encoded_bytes
 }
 
 fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> Array<u8> {

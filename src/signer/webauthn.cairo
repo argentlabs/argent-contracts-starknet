@@ -1,7 +1,7 @@
 use alexandria_encoding::base64::Base64UrlEncoder;
 use argent::signer::signer_signature::WebauthnSigner;
 use argent::utils::array_ext::ArrayExt;
-use argent::utils::bytes::{u256_to_u8s, u32s_to_u8s, u32felts_to_u8s, u32felts_to_u256, u32s_to_u256, u8s_to_u32s};
+use argent::utils::bytes::{u256_to_u8s, u32s_to_u8s, u32s_to_u256, u8s_to_u32s};
 use argent::utils::hashing::sha256_cairo0;
 use core::sha256::compute_sha256_u32_array;
 use starknet::secp256_trait::Signature;
@@ -93,10 +93,10 @@ fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> 
 
 fn get_webauthn_hash_cairo0(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> Option<u256> {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
-    let client_data_hash = u32felts_to_u8s(sha256_cairo0(client_data_json)?);
+    let client_data_hash = u32s_to_u8s(sha256_cairo0(client_data_json)?);
     let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
     message.append_all(client_data_hash);
-    Option::Some(u32felts_to_u256(sha256_cairo0(message.span())?))
+    Option::Some(u32s_to_u256(sha256_cairo0(message.span())?))
 }
 
 fn get_webauthn_hash_cairo1(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {

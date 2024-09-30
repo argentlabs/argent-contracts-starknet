@@ -114,57 +114,28 @@ impl ByteArrayExt of ByteArrayExtTrait {
     }
 }
 
-// Accepts felt252 for efficiency as it's the type of retdata but all values are expected to fit u32
-fn u32felts_to_u256(arr: Span<felt252>) -> u256 {
-    assert!(arr.len() == 8, "u32s_to_u256: input must be 8 elements long");
-    let low = *arr.at(7)
-        + *arr.at(6) * 0x1_0000_0000
-        + *arr.at(5) * 0x1_0000_0000_0000_0000
-        + *arr.at(4) * 0x1_0000_0000_0000_0000_0000_0000;
-    let low = low.try_into().expect('u32s_to_u256:overflow-low');
-    let high = *arr.at(3)
-        + *arr.at(2) * 0x1_0000_0000
-        + *arr.at(1) * 0x1_0000_0000_0000_0000
-        + *arr.at(0) * 0x1_0000_0000_0000_0000_0000_0000;
-    let high = high.try_into().expect('u32s_to_u256:overflow-high');
-    u256 { high, low }
-}
-
-fn u32s_to_u256(arr: Span<u32>) -> u256 {
+// Needs a renaming and some docs
+fn u32s_to_u256<T, +Copy<T>, +Into<T, felt252>>(arr: Span<T>) -> u256 {
     assert!(arr.len() == 8, "u32s_to_u2562: input must be 8 elements long");
-    let low: u128 = (*arr[7]).into()
+    let low: felt252 = (*arr[7]).into()
         + (*arr[6]).into() * 0x1_0000_0000
         + (*arr[5]).into() * 0x1_0000_0000_0000_0000
         + (*arr[4]).into() * 0x1_0000_0000_0000_0000_0000_0000;
-    let low = low.try_into().expect('u32s_to_u2562:overflow-low');
-    let high = (*arr[3]).into()
+    let low: u128 = low.try_into().expect('u32s_to_u2562:overflow-low');
+    let high: felt252 = (*arr[3]).into()
         + (*arr[2]).into() * 0x1_0000_0000
         + (*arr[1]).into() * 0x1_0000_0000_0000_0000
         + (*arr[0]).into() * 0x1_0000_0000_0000_0000_0000_0000;
-    let high = high.try_into().expect('u32s_to_u2562:overflow-high');
+    let high: u128 = high.try_into().expect('u32s_to_u2562:overflow-high');
     u256 { high, low }
 }
 
-// Accepts felt252 for efficiency as it's the type of retdata but all values are expected to fit u32
-fn u32felts_to_u8s(mut words: Span<felt252>) -> Span<u8> {
+// Needs a renaming and some docs
+fn u32s_to_u8s<T, +Copy<T>, +TryInto<T, u32>>(mut words: Span<T>) -> Span<u8> {
     let mut output = array![];
     while let Option::Some(word) = words.pop_front() {
         let word: u32 = (*word).try_into().unwrap();
         let (rest, byte_4) = integer::u32_safe_divmod(word, 0x100);
-        let (rest, byte_3) = integer::u32_safe_divmod(rest, 0x100);
-        let (byte_1, byte_2) = integer::u32_safe_divmod(rest, 0x100);
-        output.append(byte_1.try_into().unwrap());
-        output.append(byte_2.try_into().unwrap());
-        output.append(byte_3.try_into().unwrap());
-        output.append(byte_4.try_into().unwrap());
-    };
-    output.span()
-}
-
-fn u32s_to_u8s(mut words: Span<u32>) -> Span<u8> {
-    let mut output = array![];
-    while let Option::Some(word) = words.pop_front() {
-        let (rest, byte_4) = integer::u32_safe_divmod(*word, 0x100);
         let (rest, byte_3) = integer::u32_safe_divmod(rest, 0x100);
         let (byte_1, byte_2) = integer::u32_safe_divmod(rest, 0x100);
         output.append(byte_1.try_into().unwrap());

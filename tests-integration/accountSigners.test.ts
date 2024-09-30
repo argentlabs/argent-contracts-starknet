@@ -10,8 +10,8 @@ import {
   randomEthKeyPair,
   randomSecp256r1KeyPair,
   randomStarknetKeyPair,
-  randomWebauthnOwner,
   randomWebauthnCairo0Owner,
+  randomWebauthnOwner,
 } from "../lib";
 
 interface Account {

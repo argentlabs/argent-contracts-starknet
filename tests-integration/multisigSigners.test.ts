@@ -7,8 +7,8 @@ import {
   randomEthKeyPair,
   randomSecp256r1KeyPair,
   randomStarknetKeyPair,
-  randomWebauthnOwner,
   randomWebauthnCairo0Owner,
+  randomWebauthnOwner,
   sortByGuid,
 } from "../lib";
 

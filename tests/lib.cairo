@@ -12,8 +12,8 @@ mod test_transaction_version;
 
 // Re-export the test setup functions to have them all available in one place
 use setup::{
-    multiowner_account_setup::{
-        ITestMultiOwnerAccountDispatcherTrait, initialize_account_with, initialize_account,
+    argent_account_setup::{
+        ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
         initialize_account_without_guardian
     },
     utils::{to_starknet_signatures, to_starknet_signer_signatures, Felt252TryIntoStarknetSigner},
@@ -33,10 +33,6 @@ mod argent_account {
     mod test_signatures;
 }
 
-mod multi_owner_account {
-    mod test_multi_owner_account;
-}
-
 mod multisig {
     mod test_add_signers;
     mod test_multisig_account;
@@ -46,8 +42,8 @@ mod multisig {
 }
 
 mod setup {
+    mod argent_account_setup;
     mod constants;
-    mod multiowner_account_setup;
     mod multisig_test_setup;
     mod utils;
 }

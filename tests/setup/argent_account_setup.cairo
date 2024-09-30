@@ -7,7 +7,7 @@ use starknet::account::Call;
 use super::super::{OWNER, GUARDIAN, ARGENT_ACCOUNT_ADDRESS};
 
 #[starknet::interface]
-trait ITestMultiOwnerAccount<TContractState> {
+trait ITestArgentAccount<TContractState> {
     // IAccount
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
@@ -48,15 +48,15 @@ trait ITestMultiOwnerAccount<TContractState> {
     fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }
 
-fn initialize_account() -> ITestMultiOwnerAccountDispatcher {
+fn initialize_account() -> ITestArgentAccountDispatcher {
     initialize_account_with(OWNER().pubkey, GUARDIAN().pubkey)
 }
 
-fn initialize_account_without_guardian() -> ITestMultiOwnerAccountDispatcher {
+fn initialize_account_without_guardian() -> ITestArgentAccountDispatcher {
     initialize_account_with(OWNER().pubkey, 0)
 }
 
-fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestMultiOwnerAccountDispatcher {
+fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAccountDispatcher {
     let owner = starknet_signer_from_pubkey(owner);
     let guardian_signer: Option<Signer> = match guardian {
         0 => Option::None,
@@ -64,12 +64,12 @@ fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestMultiOwner
     };
     let constructor_args = (owner, guardian_signer);
 
-    let contract = declare("MultiOwnerAccount").expect('Failed to declare MOAccount').contract_class();
+    let contract = declare("ArgentAccount").expect('Failed to declare ArgentAccount').contract_class();
     let (contract_address, _) = contract
         .deploy_at(@serialize(@constructor_args), ARGENT_ACCOUNT_ADDRESS.try_into().unwrap())
-        .expect('Failed to deploy MOAccount');
+        .expect('Failed to deploy ArgentAccount');
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')
     start_cheat_caller_address_global(contract_address);
-    ITestMultiOwnerAccountDispatcher { contract_address }
+    ITestArgentAccountDispatcher { contract_address }
 }

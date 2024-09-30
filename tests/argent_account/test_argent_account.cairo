@@ -1,4 +1,4 @@
-use argent::multiowner_account::multiowner_account::MultiOwnerAccount;
+use argent::multiowner_account::argent_account::ArgentAccount;
 use argent::signer::signer_signature::{
     StarknetSigner, Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait,
     starknet_signer_from_pubkey,
@@ -12,7 +12,7 @@ use snforge_std::{
 };
 use starknet::contract_address_const;
 use super::super::{
-    ARGENT_ACCOUNT_ADDRESS, ITestMultiOwnerAccountDispatcherTrait, initialize_account_with, initialize_account,
+    ARGENT_ACCOUNT_ADDRESS, ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
     initialize_account_without_guardian, Felt252TryIntoStarknetSigner, OWNER, WRONG_OWNER
 };
 
@@ -129,14 +129,12 @@ fn change_guardian() {
     assert_eq!(account.get_guardian(), 22);
 
     assert_eq!(spy.get_events().events.len(), 3);
-    let changed_event = MultiOwnerAccount::Event::GuardianChanged(
-        MultiOwnerAccount::GuardianChanged { new_guardian: 22 }
+    let changed_event = ArgentAccount::Event::GuardianChanged(ArgentAccount::GuardianChanged { new_guardian: 22 });
+    let guid_changed_event = ArgentAccount::Event::GuardianChangedGuid(
+        ArgentAccount::GuardianChangedGuid { new_guardian_guid: guardian.into_guid() }
     );
-    let guid_changed_event = MultiOwnerAccount::Event::GuardianChangedGuid(
-        MultiOwnerAccount::GuardianChangedGuid { new_guardian_guid: guardian.into_guid() }
-    );
-    let signer_link_event = MultiOwnerAccount::Event::SignerLinked(
-        MultiOwnerAccount::SignerLinked { signer_guid: guardian.into_guid(), signer: guardian }
+    let signer_link_event = ArgentAccount::Event::SignerLinked(
+        ArgentAccount::SignerLinked { signer_guid: guardian.into_guid(), signer: guardian }
     );
 
     spy
@@ -190,14 +188,14 @@ fn change_guardian_backup() {
     assert_eq!(account.get_guardian_backup(), 33);
 
     assert_eq!(spy.get_events().events.len(), 3);
-    let changed_event = MultiOwnerAccount::Event::GuardianBackupChanged(
-        MultiOwnerAccount::GuardianBackupChanged { new_guardian_backup: 33 }
+    let changed_event = ArgentAccount::Event::GuardianBackupChanged(
+        ArgentAccount::GuardianBackupChanged { new_guardian_backup: 33 }
     );
-    let guid_changed_event = MultiOwnerAccount::Event::GuardianBackupChangedGuid(
-        MultiOwnerAccount::GuardianBackupChangedGuid { new_guardian_backup_guid: guardian_backup.into_guid() }
+    let guid_changed_event = ArgentAccount::Event::GuardianBackupChangedGuid(
+        ArgentAccount::GuardianBackupChangedGuid { new_guardian_backup_guid: guardian_backup.into_guid() }
     );
-    let signer_link_event = MultiOwnerAccount::Event::SignerLinked(
-        MultiOwnerAccount::SignerLinked { signer_guid: guardian_backup.into_guid(), signer: guardian_backup }
+    let signer_link_event = ArgentAccount::Event::SignerLinked(
+        ArgentAccount::SignerLinked { signer_guid: guardian_backup.into_guid(), signer: guardian_backup }
     );
 
     spy

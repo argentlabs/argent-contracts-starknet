@@ -1,8 +1,8 @@
-use argent::multiowner_account::multiowner_account::MultiOwnerAccount;
+use argent::multiowner_account::argent_account::ArgentAccount;
 use argent::signer::signer_signature::starknet_signer_from_pubkey;
 use starknet::VALIDATED;
 use super::super::{
-    ARGENT_ACCOUNT_ADDRESS, ITestMultiOwnerAccountDispatcherTrait, initialize_account_with, initialize_account,
+    ARGENT_ACCOUNT_ADDRESS, ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
     initialize_account_without_guardian, Felt252TryIntoStarknetSigner, tx_hash, GUARDIAN, OWNER, WRONG_OWNER,
     to_starknet_signer_signatures, WRONG_GUARDIAN, GUARDIAN_BACKUP, to_starknet_signatures,
 };

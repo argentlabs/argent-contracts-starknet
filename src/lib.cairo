@@ -50,8 +50,8 @@ mod presets {
 
 mod multiowner_account {
     mod account_interface;
+    mod argent_account;
     mod events;
-    mod multiowner_account;
     mod owner_manager;
 }
 

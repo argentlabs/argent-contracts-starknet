@@ -1,4 +1,3 @@
-mod linked_set;
 mod upgrade {
     mod interface;
     mod upgrade;
@@ -46,24 +45,16 @@ mod external_recovery {
 }
 
 mod presets {
-    mod argent_account;
     mod multisig_account;
-    mod user_account;
 }
 
 mod multiowner_account {
     mod account_interface;
+    mod argent_account;
     mod events;
-    mod multiowner_account;
     mod owner_manager;
 }
 
-mod multiowner_account_t {
-    mod account_interface;
-    mod events;
-    mod multiowner_account_t;
-    mod owner_manager;
-}
 
 mod utils {
     mod array_ext;
@@ -72,6 +63,7 @@ mod utils {
     mod bytes;
     mod calls;
     mod hashing;
+    mod linked_set;
     mod serialization;
     mod transaction_version;
 }

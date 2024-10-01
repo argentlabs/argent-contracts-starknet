@@ -39,3 +39,6 @@ deploy-account = "scarb --profile release build && node --loader ts-node/esm scr
 deploy-multisig = "scarb --profile release build && node --loader ts-node/esm scripts/deploy-multisig.ts"
 generate-signature = "node --loader ts-node/esm ./scripts/generate-signature.ts"
 update-webauthn-dapp = "scarb --profile release build && cp target/release/*ArgentAccount* examples/webauthn/src/lib"
+
+# Allows to use the repository as dependency in other projects
+[lib]

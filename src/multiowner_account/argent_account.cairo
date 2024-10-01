@@ -166,7 +166,7 @@ mod ArgentAccount {
             let guardian_guid = guardian_storage_value.into_guid();
             self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
         };
-        // TODO AccountCreated events
+        // TODO: AccountCreated events
     }
 
     #[abi(embed_v0)]

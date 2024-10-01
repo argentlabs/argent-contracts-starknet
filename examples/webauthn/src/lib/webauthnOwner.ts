@@ -6,8 +6,6 @@ import {
   ArraySignatureType,
   BigNumberish,
   CairoCustomEnum,
-  CairoOption,
-  CairoOptionVariant,
   CallData,
   Uint256,
   hash,
@@ -51,11 +49,11 @@ export function normalizeSecpSignature(
 const toCharArray = (value: string) => CallData.compile(value.split("").map(shortString.encodeShortString));
 
 interface WebauthnSignature {
-  cross_origin: CairoOption<boolean>;
   client_data_json_outro: BigNumberish[];
   flags: number;
   sign_count: number;
   ec_signature: { r: Uint256; s: Uint256; y_parity: boolean };
+  sha256_implementation: CairoCustomEnum;
 }
 
 export class WebauthnOwner extends KeyPair {
@@ -65,7 +63,6 @@ export class WebauthnOwner extends KeyPair {
     challenge: Uint8Array,
   ) => Promise<AuthenticatorAssertionResponse>;
   rpIdHash: Uint256;
-  crossOrigin = false; // TODO remove all ref to crossOrigin
 
   constructor(
     attestation: WebauthnAttestation,
@@ -119,21 +116,15 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public async signHash(messageHash: string): Promise<WebauthnSignature> {
-    const normalizedChallenge = hex2buf(`${normalizeTransactionHash(messageHash)}0`);
+    const cairoVersion = 1;
+    const normalizedChallenge = hex2buf(`${normalizeTransactionHash(messageHash)}${cairoVersion}`);
     const assertionResponse = await this.requestSignature(this.attestation, normalizedChallenge);
     const authenticatorData = new Uint8Array(assertionResponse.authenticatorData);
     const clientDataJson = new Uint8Array(assertionResponse.clientDataJSON);
     const signCount = Number(BigInt(buf2hex(authenticatorData.slice(33, 37))));
-    console.log("clientDataJson", new TextDecoder().decode(clientDataJson));
-    console.log("signCount", signCount);
-
     const jsonString = new TextDecoder().decode(clientDataJson);
     const parsedData = JSON.parse(jsonString);
-    const { crossOrigin, challenge, origin, type, ...rest } = parsedData;
-    const crossOriginOption =
-      crossOrigin !== undefined
-        ? new CairoOption(CairoOptionVariant.Some, crossOrigin)
-        : new CairoOption<boolean>(CairoOptionVariant.None);
+    const { challenge, origin, type, ...rest } = parsedData;
     const remainingString = JSON.stringify(rest).slice(1, -1); // Remove the curly braces
     const clientDataJsonOutro =
       remainingString.length > 0
@@ -144,15 +135,13 @@ export class WebauthnOwner extends KeyPair {
     let yParity = getYParity(getMessageHash(authenticatorData, clientDataJson), this.publicKey, r, s);
 
     // Flags is the fifth byte from the end of the authenticatorData
-    // const flags = Number("0b00000101"); // present and verified
-    const flags = authenticatorData[authenticatorData.length - 5];
+    const flags = authenticatorData[authenticatorData.length - 5]; // Number("0b00000101"); // present and verified
     const normalizedSignature = normalizeSecpR1Signature({ r, s, recovery: yParity ? 1 : 0 });
     r = normalizedSignature.r;
     s = normalizedSignature.s;
     yParity = normalizedSignature.yParity;
 
     const signature: WebauthnSignature = {
-      cross_origin: crossOriginOption,
       client_data_json_outro: CallData.compile(Array.from(clientDataJsonOutro)),
       flags,
       sign_count: signCount,
@@ -161,6 +150,10 @@ export class WebauthnOwner extends KeyPair {
         s: uint256.bnToUint256(s),
         y_parity: yParity,
       },
+      sha256_implementation: new CairoCustomEnum({
+        Cairo0: cairoVersion ? undefined : {},
+        Cairo1: cairoVersion ? {} : undefined,
+      }),
     };
 
     console.log("WebauthnOwner signed, signature is:", signature);

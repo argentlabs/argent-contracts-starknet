@@ -16,6 +16,25 @@ yarn && yarn dev
 
 Open the displayed url in Chrome or Safari.
 
+## Testing
+
+Part of this can't be automated and some manual tests need to be performed.  
+Here is the list of everything that needs to be tested (please add more if you find any missing case):
+
+- Test every on every major browser
+  - [ ] Chrome
+  - [ ] Safari
+  - [ ] IE (just kidding, Edge)
+  - [ ] Firefox
+  - [ ] Opera
+- Test using every password manager
+  - [ ] One password
+  - [ ] Chrome integrated password
+  - [ ] Apple Keychain
+- Test using every device
+  - [ ] Apple
+  - [ ] Android
+
 ## Pointers
 
 This demo dapp will:

@@ -26,12 +26,16 @@ describe("ArgentAccount", function () {
     const constructorCalldata = CallData.compile({ owner: owner.signer, guardian: guardian.signerAsOption });
 
     const salt = "123";
-    const classHash = argentAccountClassHash;
-    const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
-    const udcCalls = deployer.buildUDCContractPayload({ classHash, salt, constructorCalldata, unique: false });
+    const contractAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, constructorCalldata, 0);
+    const udcCalls = deployer.buildUDCContractPayload({
+      classHash: argentAccountClassHash,
+      salt,
+      constructorCalldata,
+      unique: false,
+    });
     const receipt = await manager.waitForTx(deployer.execute(udcCalls));
 
-    // TODO: Add this back when we have implemented the event
+    // TODO: Add this back once the event is implemented
     // await expectEvent(receipt, {
     //   from_address: contractAddress,
     //   eventName: "AccountCreated",
@@ -48,6 +52,8 @@ describe("ArgentAccount", function () {
 
     const accountContract = await manager.loadContract(contractAddress);
     await accountContract.get_owner_guid().should.eventually.equal(owner.guid);
+    await accountContract.is_owner_guid(owner.guid).should.eventually.equal(true);
+
     expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(guardian.guid);
     await accountContract.get_guardian_backup().should.eventually.equal(0n);
   });

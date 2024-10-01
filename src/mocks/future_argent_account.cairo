@@ -117,7 +117,7 @@ mod MockFutureArgentAccount {
             assert_only_self();
             let current_version = IFutureArgentUserAccountDispatcher { contract_address: get_contract_address() }
                 .get_version();
-            assert(current_version.major == 0 && current_version.minor == 5, 'argent/invalid-from-version');
+            assert(current_version.major == 0 && current_version.minor >= 4, 'argent/invalid-from-version');
             self.upgrade.complete_upgrade(new_implementation);
             if data.is_empty() {
                 return;

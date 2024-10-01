@@ -36,7 +36,6 @@ mod outside_execution {
 
 mod recovery {
     mod interface;
-    mod threshold_recovery;
 }
 
 mod external_recovery {
@@ -55,10 +54,8 @@ mod multiowner_account {
     mod owner_manager;
 }
 
-
 mod utils {
     mod array_ext;
-    mod array_store;
     mod asserts;
     mod bytes;
     mod calls;

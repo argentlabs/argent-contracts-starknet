@@ -77,6 +77,47 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       await account.waitForTransaction(tx2);
       await mockDappContract.get_number(accountContract.address).should.eventually.equal(8n);
     });
+    it.only("Caching is unaffected between contract upgrades", async function () {
+      const { accountContract, account, guardian } = await deployAccount({
+        classHash: sessionAccountClassHash,
+      });
+
+      const allowedMethods: AllowedMethod[] = [
+        {
+          "Contract Address": mockDappContract.address,
+          selector: "set_number_double",
+        },
+      ];
+
+      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+
+      const { accountWithDappSigner, sessionHash, authorizationSignature } = await setupSession(
+        guardian as StarknetKeyPair,
+        account,
+        allowedMethods,
+        initialTime + 150n,
+        randomStarknetKeyPair(),
+        useCaching,
+      );
+
+      await accountContract.is_session_authorization_cached(sessionHash, authorizationSignature).should.eventually.be
+        .false;
+      const { transaction_hash } = await accountWithDappSigner.execute(calls);
+
+      await accountContract
+        .is_session_authorization_cached(sessionHash, authorizationSignature)
+        .should.eventually.be.equal(useCaching);
+
+      await account.waitForTransaction(transaction_hash);
+      await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
+
+      const calls2 = [mockDappContract.populateTransaction.set_number_double(4)];
+
+      const { transaction_hash: tx2 } = await accountWithDappSigner.execute(calls2);
+
+      await account.waitForTransaction(tx2);
+      await mockDappContract.get_number(accountContract.address).should.eventually.equal(8n);
+    });
     it(`Fail if guardian backup signed session (caching: ${useCaching})`, async function () {
       const { account, guardian } = await deployAccountWithGuardianBackup({
         classHash: sessionAccountClassHash,

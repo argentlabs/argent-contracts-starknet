@@ -801,7 +801,7 @@ mod ArgentAccount {
         fn parse_signature_array(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
             // Check if it's a legacy signature array (there's no support for guardian backup)
             // Legacy signatures are always 2 or 4 items long
-            // Shortest signature in modern format is at least 5 items 
+            // Shortest signature in modern format is at least 5 items
             //  [array_len, signer_type, signer_pubkey, r, s]
             if signatures.len() != 2 && signatures.len() != 4 {
                 // manual inlining instead of calling full_deserialize for performance

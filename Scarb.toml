@@ -13,7 +13,7 @@ build-external-contracts = ["openzeppelin_presets::account::AccountUpgradeable"]
 [dependencies]
 starknet = "2.8.2"
 assert_macros = "2.8.2"
-snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.31.0" }
+snforge_std = "0.31.0"
 alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b0805" }
 alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b0805" }
 alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev="e1b0805" }

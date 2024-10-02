@@ -18,14 +18,15 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @param new_security_period new delay in seconds before the escape can be completed. Must be >= 10 minutes
     fn set_escape_security_period(ref self: TContractState, new_security_period: u64);
 
-    // /// @notice Changes the owner
-    // /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
-    // /// @param signer_signature SignerSignature of the new owner
-    // /// Required to prevent changing to an address which is not in control of the user
-    // /// is the signature of the pedersen hashed array:
-    // /// [change_owner_selector, chain_id, account_address, old_owner_guid]
+    // TODO same as replace_all_owners_with_one, do we need backwards compat?
+    /// @notice Changes the owner
+    /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
+    /// @param signer_signature SignerSignature of the new owner
+    /// Required to prevent changing to an address which is not in control of the user
+    /// is the signature of the pedersen hashed array:
+    /// [change_owner_selector, chain_id, account_address, old_owner_guid]
     // fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
-
+scab
     /// @notice Adds new owners to this account
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     /// @dev It will cancel any existing escape

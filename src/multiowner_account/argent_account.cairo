@@ -339,7 +339,7 @@ mod ArgentAccount {
         fn parse_authorization(self: @ContractState, authorization_signature: Span<felt252>) -> Array<SignerSignature> {
             self.parse_signature_array(authorization_signature)
         }
-        fn verify_authorization(
+        fn assert_valid_authorization(
             self: @ContractState, session_hash: felt252, authorization_signature: Span<SignerSignature>
         ) {
             assert(self.is_valid_span_signature(session_hash, authorization_signature), 'session/invalid-account-sig')
@@ -779,11 +779,11 @@ mod ArgentAccount {
                         let owner_guids_to_remove: Array<felt252> = full_deserialize(*call.calldata)
                             .expect('argent/invalid-calldata');
                         let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
-                        self.assert_valid_span_signature(execution_hash, signer_signatures.span());
                         let signature_owner_guid = (*signer_signatures[0]).signer().into_guid();
                         for owner_guid_to_remove in owner_guids_to_remove {
                             assert(owner_guid_to_remove != signature_owner_guid, 'argent/cant-remove-self');
                         };
+                        self.assert_valid_span_signature(execution_hash, signer_signatures.span());
                         return; // valid
                     }
                     assert(selector != selector!("execute_after_upgrade"), 'argent/forbidden-call');
@@ -801,8 +801,8 @@ mod ArgentAccount {
         fn parse_signature_array(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
             // Check if it's a legacy signature array (there's no support for guardian backup)
             // Legacy signatures are always 2 or 4 items long
-            // Shortest signature in modern format is at least 5 items [array_len, signer_type,
-            // signer_pubkey, r, s]
+            // Shortest signature in modern format is at least 5 items 
+            //  [array_len, signer_type, signer_pubkey, r, s]
             if signatures.len() != 2 && signatures.len() != 4 {
                 // manual inlining instead of calling full_deserialize for performance
                 let deserialized: Array<SignerSignature> = Serde::deserialize(ref signatures)

@@ -51,11 +51,13 @@ mod session_component {
         }
 
         #[inline(always)]
+        #[must_use]
         fn is_session_revoked(self: @ComponentState<TContractState>, session_hash: felt252) -> bool {
             self.revoked_session.read(session_hash)
         }
 
         #[inline(always)]
+        #[must_use]
         fn is_session_authorization_cached(
             self: @ComponentState<TContractState>, session_hash: felt252, session_authorization: Span<felt252>
         ) -> bool {
@@ -170,7 +172,7 @@ mod session_component {
             // not cached, continue to verification
 
             let parsed_session_authorization = state.parse_authorization(session_authorization);
-            state.verify_authorization(session_hash, parsed_session_authorization.span());
+            state.assert_valid_authorization(session_hash, parsed_session_authorization.span());
             // owner + guardian signed
             assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
             let owner_guid_from_sig = (*parsed_session_authorization[0]).signer().into_guid();

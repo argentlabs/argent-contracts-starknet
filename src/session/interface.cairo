@@ -48,7 +48,7 @@ trait ISessionCallback<TContractState> {
     /// @param session_hash The hash of session
     /// @param authorization_signature The owner + guardian signature of the session
     /// @return The parsed array of SignerSignature
-    fn verify_authorization(
+    fn assert_valid_authorization(
         self: @TContractState, session_hash: felt252, authorization_signature: Span<SignerSignature>
     );
     fn get_guardian_guid_callback(self: @TContractState) -> Option<felt252>;

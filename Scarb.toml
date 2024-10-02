@@ -17,8 +17,8 @@ snforge_std = "0.31.0"
 alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b0805" }
 alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b0805" }
 alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev="e1b0805" }
-openzeppelin_security = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.15.0" }
-openzeppelin_presets = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.15.0" }
+openzeppelin_security = "0.15.0"
+openzeppelin_presets = "0.15.0"
 
 [tool.fmt]
 max-line-length = 120

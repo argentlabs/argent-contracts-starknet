@@ -26,7 +26,6 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// is the signature of the pedersen hashed array:
     /// [change_owner_selector, chain_id, account_address, old_owner_guid]
     // fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
-scab
     /// @notice Adds new owners to this account
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     /// @dev It will cancel any existing escape

@@ -45,9 +45,6 @@ export const createWebauthnAttestation = async (
   const publicKey = new Uint8Array(attestationResponse.getPublicKey()!);
   const x = publicKey.slice(-64, -32);
 
-  // On Android you gotta do this
-  // const encodedOrigin = origin.replace(/\//g, "\\/");
-  // return { email, rpId, origin:encodedOrigin, credentialId, pubKey: x };
   return { email, rpId, origin, credentialId, pubKey: x };
 };
 

@@ -10,7 +10,7 @@ import {
   manager,
   randomStarknetKeyPair,
   setupSession,
-} from "../lib";
+} from "../../lib";
 
 describe("Hybrid Session Account: execute calls", function () {
   let sessionAccountClassHash: string;

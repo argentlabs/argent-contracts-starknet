@@ -13,7 +13,7 @@ import {
   randomStarknetKeyPair,
   setupSession,
   signerTypeToCustomEnum,
-} from "../lib";
+} from "../../lib";
 
 describe("Hybrid Session Account: execute session calls with caching", function () {
   let sessionAccountClassHash: string;

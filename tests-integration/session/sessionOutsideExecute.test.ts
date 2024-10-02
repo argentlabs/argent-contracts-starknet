@@ -1,5 +1,5 @@
 import { Contract, TypedDataRevision } from "starknet";
-import { AllowedMethod, StarknetKeyPair, deployAccount, deployer, manager, setupSession } from "../lib";
+import { AllowedMethod, StarknetKeyPair, deployAccount, deployer, manager, setupSession } from "../../lib";
 
 const initialTime = 1713139200n;
 const legacyRevision = TypedDataRevision.LEGACY;

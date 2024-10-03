@@ -1,3 +1,4 @@
+import { expect } from "chai";
 import { Contract, num } from "starknet";
 import {
   AllowedMethod,
@@ -13,6 +14,7 @@ import {
   randomStarknetKeyPair,
   setupSession,
   signerTypeToCustomEnum,
+  upgradeAccount,
 } from "../../lib";
 
 describe("Hybrid Session Account: execute session calls with caching", function () {
@@ -319,29 +321,16 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       useCaching,
     );
 
-    await accountContract.is_session_authorization_cached(sessionHash, authorizationSignature).should.eventually.be
-      .false;
-    // await accountWithDappSigner.execute(calls);
-    // await accountContract
-    //   .is_session_authorization_cached(sessionHash, authorizationSignature)
-    //   .should.eventually.be.equal(useCaching);
+    await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
+    await accountWithDappSigner.execute(calls);
+    await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.equal(useCaching);
 
-    // await upgradeAccount(account, argentAccountClassHash);
-    // expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+    await upgradeAccount(account, argentAccountClassHash);
+    expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
 
-    // const { accountContract, account, guardian } = await deployAccount({
-    //   classHash: argentAccountClassHash,
-    // });
-    //
-    // await account.waitForTransaction(transaction_hash);
-    // await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
-    //
-    // const calls2 = [mockDappContract.populateTransaction.set_number_double(4)];
-    //
-    // const { transaction_hash: tx2 } = await accountWithDappSigner.execute(calls2);
-    //
-    // await account.waitForTransaction(tx2);
-    // await mockDappContract.get_number(accountContract.address).should.eventually.equal(8n);
+    await accountContract
+      .is_session_authorization_cached(sessionHash, authorizationSignature)
+      .should.eventually.be.equal(useCaching);
   });
 
   it("Fail if a large authorization is injected", async function () {

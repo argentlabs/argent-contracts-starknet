@@ -127,12 +127,14 @@ describe("Hybrid Session Account: execute session calls with caching", function 
           useCaching,
         );
 
-      let sessionToken = await dappService.getSessionToken(
+      let sessionToken = await dappService.getSessionToken({
         calls,
-        accountWithDappSigner,
-        sessionRequest,
-        authorizationSignature,
-      );
+        account: accountWithDappSigner,
+        completedSession: sessionRequest,
+        sessionAuthorizationSignature: authorizationSignature,
+        cacheAuthorization: useCaching,
+        is_legacy_account: false,
+      });
       sessionToken = {
         ...sessionToken,
         session_authorization: [...sessionToken.session_authorization, "0x00"],
@@ -200,12 +202,14 @@ describe("Hybrid Session Account: execute session calls with caching", function 
           useCaching,
         );
 
-      const sessionToken = await dappService.getSessionToken(
+      const sessionToken = await dappService.getSessionToken({
         calls,
-        accountWithDappSigner,
-        sessionRequest,
-        authorizationSignature,
-      );
+        account: accountWithDappSigner,
+        completedSession: sessionRequest,
+        sessionAuthorizationSignature: authorizationSignature,
+        cacheAuthorization: useCaching,
+        is_legacy_account: false,
+      });
       const sessionTokenWrongPub = {
         ...sessionToken,
         session_signature: signerTypeToCustomEnum(SignerType.Starknet, {
@@ -263,12 +267,14 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         useCaching,
       );
 
-      const sessionToken = await dappService.getSessionToken(
+      const sessionToken = await dappService.getSessionToken({
         calls,
-        accountWithDappSigner,
-        sessionRequest,
-        authorizationSignature,
-      );
+        account: accountWithDappSigner,
+        completedSession: sessionRequest,
+        sessionAuthorizationSignature: authorizationSignature,
+        cacheAuthorization: useCaching,
+        is_legacy_account: false,
+      });
       const sessionTokenWrongPub = {
         ...sessionToken,
         guardian_signature: signerTypeToCustomEnum(SignerType.Starknet, {
@@ -303,6 +309,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       classHash: await manager.declareFixtureContract("ArgentAccount-0.4.0"),
     });
     const useCaching = true;
+    const isLegacyAccount = true;
     const allowedMethods: AllowedMethod[] = [
       {
         "Contract Address": mockDappContract.address,
@@ -319,8 +326,8 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       initialTime + 150n,
       randomStarknetKeyPair(),
       useCaching,
+      isLegacyAccount,
     );
-
     await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
     await accountWithDappSigner.execute(calls);
     await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.equal(useCaching);
@@ -363,13 +370,14 @@ describe("Hybrid Session Account: execute session calls with caching", function 
     await accountContract.is_session_authorization_cached(sessionHash, authorizationSignature).should.eventually.be
       .true;
 
-    let sessionToken = await dappService.getSessionToken(
+    let sessionToken = await dappService.getSessionToken({
       calls,
-      accountWithDappSigner,
-      sessionRequest,
-      authorizationSignature,
-      true,
-    );
+      account: accountWithDappSigner,
+      completedSession: sessionRequest,
+      sessionAuthorizationSignature: authorizationSignature,
+      cacheAuthorization: true,
+      is_legacy_account: false,
+    });
     sessionToken = {
       ...sessionToken,
       session_authorization: Array(10).fill("1"),

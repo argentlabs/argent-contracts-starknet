@@ -62,6 +62,7 @@ export class DappService {
     completedSession: OffChainSession,
     sessionAuthorizationSignature: ArraySignatureType,
     cacheAuthorization = false,
+    is_legacy_account = false,
   ) {
     const sessionSigner = new (class extends RawSigner {
       constructor(
@@ -83,36 +84,41 @@ export class DappService {
       ): Promise<ArraySignatureType> {
         return this.signTransactionCallback(calls, transactionsDetail);
       }
-    })((calls: Call[], transactionsDetail: InvocationsSignerDetails) => {
-      return this.signRegularTransaction(
+    })((calls: Call[], transactionDetail: InvocationsSignerDetails) => {
+      return this.signRegularTransaction({
         sessionAuthorizationSignature,
         completedSession,
         calls,
-        transactionsDetail,
+        transactionDetail,
         cacheAuthorization,
-      );
+        is_legacy_account,
+      });
     });
     return new ArgentAccount(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
   }
 
-  public async getSessionToken(
-    calls: Call[],
-    account: ArgentAccount,
-    completedSession: OffChainSession,
-    sessionAuthorizationSignature: ArraySignatureType,
-    cacheAuthorization = false,
-  ): Promise<SessionToken> {
+  public async getSessionToken(arg: {
+    calls: Call[];
+    account: ArgentAccount;
+    completedSession: OffChainSession;
+    sessionAuthorizationSignature: ArraySignatureType;
+    cacheAuthorization: boolean;
+    is_legacy_account: boolean;
+  }): Promise<SessionToken> {
+    const { calls, account, completedSession, sessionAuthorizationSignature, cacheAuthorization, is_legacy_account } =
+      arg;
     const transactionDetail = await getSignerDetails(account, calls);
     const txHash = calculateTransactionHash(transactionDetail, calls);
-    return this.buildSessionToken(
+    return this.buildSessionToken({
       sessionAuthorizationSignature,
       completedSession,
-      txHash,
+      transactionHash: txHash,
       calls,
-      transactionDetail.walletAddress,
+      accountAddress: transactionDetail.walletAddress,
       transactionDetail,
       cacheAuthorization,
-    );
+      is_legacy_account,
+    });
   }
 
   public async getOutsideExecutionCall(
@@ -126,6 +132,7 @@ export class DappService {
     execute_before = 999999999999999,
     nonce = randomStarknetKeyPair().publicKey,
     cacheAuthorization = false,
+    is_legacy_account = false,
   ): Promise<Call> {
     const outsideExecution = {
       caller,
@@ -137,16 +144,17 @@ export class DappService {
 
     const currentTypedData = getTypedData(outsideExecution, await manager.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
-    const signature = await this.compileSessionSignatureFromOutside(
+    const signature = await this.compileSessionSignatureFromOutside({
       sessionAuthorizationSignature,
       completedSession,
-      messageHash,
+      transactionHash: messageHash,
       calls,
       accountAddress,
       revision,
       outsideExecution,
       cacheAuthorization,
-    );
+      is_legacy_account,
+    });
 
     return {
       contractAddress: accountAddress,
@@ -155,36 +163,58 @@ export class DappService {
     };
   }
 
-  private async signRegularTransaction(
-    sessionAuthorizationSignature: ArraySignatureType,
-    completedSession: OffChainSession,
-    calls: Call[],
-    transactionDetail: InvocationsSignerDetails,
-    cacheAuthorization: boolean,
-  ): Promise<ArraySignatureType> {
-    const txHash = calculateTransactionHash(transactionDetail, calls);
-    const sessionToken = await this.buildSessionToken(
+  private async signRegularTransaction(args: {
+    sessionAuthorizationSignature: ArraySignatureType;
+    completedSession: OffChainSession;
+    calls: Call[];
+    transactionDetail: InvocationsSignerDetails;
+    cacheAuthorization: boolean;
+    is_legacy_account: boolean;
+  }): Promise<ArraySignatureType> {
+    const {
       sessionAuthorizationSignature,
       completedSession,
-      txHash,
       calls,
-      transactionDetail.walletAddress,
       transactionDetail,
       cacheAuthorization,
-    );
+      is_legacy_account,
+    } = args;
+    const txHash = calculateTransactionHash(transactionDetail, calls);
+    const sessionToken = await this.buildSessionToken({
+      sessionAuthorizationSignature,
+      completedSession,
+      transactionHash: txHash,
+      calls,
+      accountAddress: transactionDetail.walletAddress,
+      transactionDetail,
+      cacheAuthorization,
+      is_legacy_account,
+    });
     return compileSessionSignature(sessionToken);
   }
 
-  private async compileSessionSignatureFromOutside(
-    sessionAuthorizationSignature: ArraySignatureType,
-    completedSession: OffChainSession,
-    transactionHash: string,
-    calls: Call[],
-    accountAddress: string,
-    revision: TypedDataRevision,
-    outsideExecution: OutsideExecution,
-    cacheAuthorization: boolean,
-  ): Promise<ArraySignatureType> {
+  private async compileSessionSignatureFromOutside(args: {
+    sessionAuthorizationSignature: ArraySignatureType;
+    completedSession: OffChainSession;
+    transactionHash: string;
+    calls: Call[];
+    accountAddress: string;
+    revision: TypedDataRevision;
+    outsideExecution: OutsideExecution;
+    cacheAuthorization: boolean;
+    is_legacy_account: boolean;
+  }): Promise<ArraySignatureType> {
+    const {
+      sessionAuthorizationSignature,
+      completedSession,
+      transactionHash,
+      calls,
+      accountAddress,
+      revision,
+      outsideExecution,
+      cacheAuthorization,
+      is_legacy_account,
+    } = args;
     const session = this.compileSessionHelper(completedSession);
 
     const guardianSignature = await this.argentBackend.signOutsideTxAndSession(
@@ -202,34 +232,46 @@ export class DappService {
       accountAddress,
       cacheAuthorization,
     );
-    const sessionToken = await this.compileSessionTokenHelper(
+    const sessionToken = await this.compileSessionTokenHelper({
       session,
       completedSession,
       calls,
       sessionSignature,
-      cacheAuthorization,
-      sessionAuthorizationSignature,
+      cache_authorization: cacheAuthorization,
+      is_legacy_account,
+      session_authorization: sessionAuthorizationSignature,
       guardianSignature,
       accountAddress,
-    );
+    });
 
     return compileSessionSignature(sessionToken);
   }
 
-  private async buildSessionToken(
-    sessionAuthorizationSignature: ArraySignatureType,
-    completedSession: OffChainSession,
-    transactionHash: string,
-    calls: Call[],
-    accountAddress: string,
-    transactionsDetail: InvocationsSignerDetails,
-    cacheAuthorization: boolean,
-  ): Promise<SessionToken> {
+  private async buildSessionToken(args: {
+    sessionAuthorizationSignature: ArraySignatureType;
+    completedSession: OffChainSession;
+    transactionHash: string;
+    calls: Call[];
+    accountAddress: string;
+    transactionDetail: InvocationsSignerDetails;
+    cacheAuthorization: boolean;
+    is_legacy_account: boolean;
+  }): Promise<SessionToken> {
+    const {
+      sessionAuthorizationSignature,
+      completedSession,
+      transactionHash,
+      calls,
+      accountAddress,
+      transactionDetail,
+      cacheAuthorization,
+      is_legacy_account,
+    } = args;
     const session = this.compileSessionHelper(completedSession);
 
     const guardianSignature = await this.argentBackend.signTxAndSession(
       calls,
-      transactionsDetail,
+      transactionDetail,
       completedSession,
       cacheAuthorization,
     );
@@ -239,16 +281,17 @@ export class DappService {
       accountAddress,
       cacheAuthorization,
     );
-    return await this.compileSessionTokenHelper(
+    return await this.compileSessionTokenHelper({
       session,
       completedSession,
       calls,
-      session_signature,
-      cacheAuthorization,
-      sessionAuthorizationSignature,
+      sessionSignature: session_signature,
+      is_legacy_account,
+      cache_authorization: cacheAuthorization,
+      session_authorization: sessionAuthorizationSignature,
       guardianSignature,
       accountAddress,
-    );
+    });
   }
 
   private async signTxAndSession(
@@ -303,22 +346,33 @@ export class DappService {
     return session;
   }
 
-  private async compileSessionTokenHelper(
-    session: OnChainSession,
-    completedSession: OffChainSession,
-    calls: Call[],
-    sessionSignature: bigint[],
-    cache_authorization: boolean,
-    session_authorization: string[],
-    guardianSignature: bigint[],
-    accountAddress: string,
-  ): Promise<SessionToken> {
+  private async compileSessionTokenHelper(args: {
+    session: OnChainSession;
+    completedSession: OffChainSession;
+    calls: Call[];
+    sessionSignature: bigint[];
+    cache_authorization: boolean;
+    is_legacy_account: boolean;
+    session_authorization: string[];
+    guardianSignature: bigint[];
+    accountAddress: string;
+  }): Promise<SessionToken> {
+    const {
+      session,
+      completedSession,
+      calls,
+      sessionSignature,
+      cache_authorization,
+      is_legacy_account,
+      session_authorization,
+      guardianSignature,
+      accountAddress,
+    } = args;
     const sessionContract = await manager.loadContract(accountAddress);
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
-    const isSessionCached = await sessionContract.is_session_authorization_cached(
-      sessionMessageHash,
-      session_authorization,
-    );
+    const isSessionCached = is_legacy_account
+      ? await sessionContract.is_session_authorization_cached(sessionMessageHash)
+      : await sessionContract.is_session_authorization_cached(sessionMessageHash, session_authorization);
     return {
       session,
       cache_authorization,

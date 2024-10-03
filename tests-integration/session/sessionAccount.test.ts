@@ -166,12 +166,14 @@ describe("Hybrid Session Account: execute calls", function () {
       initialTime + 150n,
     );
 
-    const sessionToken = await dappService.getSessionToken(
+    const sessionToken = await dappService.getSessionToken({
       calls,
-      accountWithDappSigner,
-      sessionRequest,
-      authorizationSignature,
-    );
+      account: accountWithDappSigner,
+      completedSession: sessionRequest,
+      sessionAuthorizationSignature: authorizationSignature,
+      is_legacy_account: false,
+      cacheAuthorization: false,
+    });
     const sessionTokenWrongProofs = {
       ...sessionToken,
       proofs: [["0x2", "0x1"]],

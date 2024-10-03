@@ -18,6 +18,7 @@ export async function retrieveOwner(): Promise<WebauthnOwner | undefined> {
   const rawIdBase64 = localStorage.getItem(storageKey);
   console.log("retrieving webauthn key (attestation)...");
   if (!rawIdBase64) {
+    console.log("no webauthn key found in local storage");
     return undefined;
   }
 

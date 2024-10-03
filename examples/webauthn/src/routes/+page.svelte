@@ -1,11 +1,13 @@
 <script lang="ts">
   import * as env from "$env/static/public";
+  import { onMount } from 'svelte';
   import { buf2hex } from "$lib/bytes";
   import { createOwner, retrieveOwner, cleanLocalStorage, deployAccount, retrieveAccount, transferDust, declareAccount } from "$lib/poc";
   import type { WebauthnOwner} from "$lib/webauthnOwner";
   import { Account, RpcProvider } from "starknet";
 
-  const rpId = "localhost";
+  let rpId = "";
+  onMount(() => rpId = window.location.hostname);
   const provider = new RpcProvider({ nodeUrl: env.PUBLIC_PROVIDER_URL });
 
   let email = "example@argent.xyz";

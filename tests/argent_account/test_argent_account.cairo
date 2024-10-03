@@ -1,4 +1,4 @@
-use argent::presets::argent_account::ArgentAccount;
+use argent::multiowner_account::argent_account::ArgentAccount;
 use argent::signer::signer_signature::{
     StarknetSigner, Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait,
     starknet_signer_from_pubkey,
@@ -75,47 +75,49 @@ fn erc165_unsupported_interfaces() {
     assert!(!account.supports_interface(0xffffffff));
 }
 
-#[test]
-fn change_owner() {
-    let account = initialize_account();
-    assert_eq!(
-        account.get_owner_guid(), starknet_signer_from_pubkey(OWNER().pubkey).into_guid(), "owner not correctly set"
-    );
-    let (signer, signature) = NEW_OWNER();
-    let signer_signature = SignerSignature::Starknet((signer, signature));
-    account.change_owner(signer_signature);
-    assert_eq!(account.get_owner_guid(), signer_signature.signer().into_guid());
-}
-
-#[test]
-#[should_panic(expected: ('argent/only-self',))]
-fn change_owner_only_self() {
-    let account = initialize_account();
-    start_cheat_caller_address_global(contract_address_const::<42>());
-    let (signer, signature) = NEW_OWNER();
-    let signer_signature = SignerSignature::Starknet((signer, signature));
-    account.change_owner(signer_signature);
-}
-
-#[test]
-#[should_panic(expected: ('argent/invalid-owner-sig',))]
-fn change_owner_invalid_message() {
-    let account = initialize_account();
-    let (signer, _) = NEW_OWNER();
-    let signer_signature = SignerSignature::Starknet(
-        (signer, StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s })
-    );
-    account.change_owner(signer_signature);
-}
-
-#[test]
-#[should_panic(expected: ('argent/invalid-owner-sig',))]
-fn change_owner_wrong_pub_key() {
-    let account = initialize_account();
-    let (_, signature) = NEW_OWNER();
-    let signer_signature = SignerSignature::Starknet((WRONG_OWNER().pubkey.try_into().unwrap(), signature));
-    account.change_owner(signer_signature);
-}
+// TODO: Implement these tests once change owner has been implemented in the multiowner account contract
+//
+// #[test]
+// fn change_owner() {
+//     let account = initialize_account();
+//     assert_eq!(
+//         account.get_owner_guid(), starknet_signer_from_pubkey(OWNER().pubkey).into_guid(), "owner not correctly set"
+//     );
+//     let (signer, signature) = NEW_OWNER();
+//     let signer_signature = SignerSignature::Starknet((signer, signature));
+//     account.change_owner(signer_signature);
+//     assert_eq!(account.get_owner_guid(), signer_signature.signer().into_guid());
+// }
+//
+// #[test]
+// #[should_panic(expected: ('argent/only-self',))]
+// fn change_owner_only_self() {
+//     let account = initialize_account();
+//     start_cheat_caller_address_global(contract_address_const::<42>());
+//     let (signer, signature) = NEW_OWNER();
+//     let signer_signature = SignerSignature::Starknet((signer, signature));
+//     account.change_owner(signer_signature);
+// }
+//
+// #[test]
+// #[should_panic(expected: ('argent/invalid-owner-sig',))]
+// fn change_owner_invalid_message() {
+//     let account = initialize_account();
+//     let (signer, _) = NEW_OWNER();
+//     let signer_signature = SignerSignature::Starknet(
+//         (signer, StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s })
+//     );
+//     account.change_owner(signer_signature);
+// }
+//
+// #[test]
+// #[should_panic(expected: ('argent/invalid-owner-sig',))]
+// fn change_owner_wrong_pub_key() {
+//     let account = initialize_account();
+//     let (_, signature) = NEW_OWNER();
+//     let signer_signature = SignerSignature::Starknet((WRONG_OWNER().pubkey.try_into().unwrap(), signature));
+//     account.change_owner(signer_signature);
+// }
 
 #[test]
 fn change_guardian() {
@@ -236,13 +238,13 @@ fn change_guardian_backup_invalid_guardian_backup() {
 fn get_version() {
     let version = initialize_account().get_version();
     assert_eq!(version.major, 0);
-    assert_eq!(version.minor, 4);
+    assert_eq!(version.minor, 5);
     assert_eq!(version.patch, 0);
 }
 
 #[test]
 fn getVersion() {
-    assert_eq!(initialize_account().getVersion(), '0.4.0');
+    assert_eq!(initialize_account().getVersion(), '0.5.0');
 }
 
 #[test]

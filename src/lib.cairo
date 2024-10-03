@@ -36,7 +36,6 @@ mod outside_execution {
 
 mod recovery {
     mod interface;
-    mod threshold_recovery;
 }
 
 mod external_recovery {
@@ -45,18 +44,23 @@ mod external_recovery {
 }
 
 mod presets {
-    mod argent_account;
     mod multisig_account;
-    mod user_account;
+}
+
+mod multiowner_account {
+    mod account_interface;
+    mod argent_account;
+    mod events;
+    mod owner_manager;
 }
 
 mod utils {
     mod array_ext;
-    mod array_store;
     mod asserts;
     mod bytes;
     mod calls;
     mod hashing;
+    mod linked_set;
     mod serialization;
     mod transaction_version;
 }
@@ -66,6 +70,7 @@ mod mocks {
     mod future_argent_multisig;
     mod mock_dapp;
     mod mock_erc20;
+    mod multiowner_mock;
     mod multisig_mocks;
     mod recovery_mocks;
     mod signature_verifier;

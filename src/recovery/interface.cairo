@@ -1,15 +1,6 @@
 use argent::signer::signer_signature::{Signer, SignerStorageValue, SignerSignature, SignerType};
-use argent::utils::array_store::StoreFelt252Array;
 use starknet::ContractAddress;
 
-#[starknet::interface]
-trait IRecovery<TContractState> {
-    fn trigger_escape(ref self: TContractState, target_signers: Array<Signer>, new_signers: Array<Signer>);
-    fn execute_escape(ref self: TContractState);
-    fn cancel_escape(ref self: TContractState);
-    fn get_escape_enabled(self: @TContractState) -> EscapeEnabled;
-    fn get_escape(self: @TContractState) -> (Escape, EscapeStatus);
-}
 
 /// @notice Escape was triggered
 /// @param ready_at when the escape can be completed

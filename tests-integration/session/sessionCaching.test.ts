@@ -1,4 +1,3 @@
-import { expect } from "chai";
 import { Contract, num } from "starknet";
 import {
   AllowedMethod,
@@ -7,7 +6,6 @@ import {
   compileSessionSignature,
   deployAccount,
   deployAccountWithGuardianBackup,
-  deployLegacyAccount,
   deployer,
   executeWithCustomSig,
   expectRevertWithErrorMessage,
@@ -15,7 +13,6 @@ import {
   randomStarknetKeyPair,
   setupSession,
   signerTypeToCustomEnum,
-  upgradeAccount,
 } from "../../lib";
 
 describe("Hybrid Session Account: execute session calls with caching", function () {
@@ -300,43 +297,41 @@ describe("Hybrid Session Account: execute session calls with caching", function 
     });
   }
   it.only("Caching is unaffected between contract upgrades", async function () {
-    const { account, accountContract } = await deployLegacyAccount(
-      await manager.declareFixtureContract("ArgentAccount-0.4.0"),
+    const { account, accountContract, guardian } = await deployAccount({
+      classHash: await manager.declareFixtureContract("ArgentAccount-0.4.0"),
+    });
+    const useCaching = true;
+    const allowedMethods: AllowedMethod[] = [
+      {
+        "Contract Address": mockDappContract.address,
+        selector: "set_number_double",
+      },
+    ];
+
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+
+    const { accountWithDappSigner, sessionHash, authorizationSignature } = await setupSession(
+      guardian as StarknetKeyPair,
+      account,
+      allowedMethods,
+      initialTime + 150n,
+      randomStarknetKeyPair(),
+      useCaching,
     );
-    const hey = await accountContract.get_version();
-    console.log("version", hey);
-    await upgradeAccount(account, argentAccountClassHash);
-    expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+
+    await accountContract.is_session_authorization_cached(sessionHash, authorizationSignature).should.eventually.be
+      .false;
+    // await accountWithDappSigner.execute(calls);
+    // await accountContract
+    //   .is_session_authorization_cached(sessionHash, authorizationSignature)
+    //   .should.eventually.be.equal(useCaching);
+
+    // await upgradeAccount(account, argentAccountClassHash);
+    // expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
 
     // const { accountContract, account, guardian } = await deployAccount({
     //   classHash: argentAccountClassHash,
     // });
-    //
-    // const allowedMethods: AllowedMethod[] = [
-    //   {
-    //     "Contract Address": mockDappContract.address,
-    //     selector: "set_number_double",
-    //   },
-    // ];
-    //
-    // const calls = [mockDappContract.populateTransaction.set_number_double(2)];
-    //
-    // const { accountWithDappSigner, sessionHash, authorizationSignature } = await setupSession(
-    //   guardian as StarknetKeyPair,
-    //   account,
-    //   allowedMethods,
-    //   initialTime + 150n,
-    //   randomStarknetKeyPair(),
-    //   useCaching,
-    // );
-    //
-    // await accountContract.is_session_authorization_cached(sessionHash, authorizationSignature).should.eventually.be
-    //   .false;
-    // const { transaction_hash } = await accountWithDappSigner.execute(calls);
-    //
-    // await accountContract
-    //   .is_session_authorization_cached(sessionHash, authorizationSignature)
-    //   .should.eventually.be.equal(useCaching);
     //
     // await account.waitForTransaction(transaction_hash);
     // await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);

@@ -8,7 +8,7 @@ export default defineConfig({
       "/rpc": {
         target: "http://localhost:5050",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/rpc/, ''),
+        rewrite: (path) => path.replace(/^\/rpc/, ""),
         // Allows better debugging of the proxy requests
         configure: (proxy, _options) => {
           proxy.on("error", (err, _req, _res) => {

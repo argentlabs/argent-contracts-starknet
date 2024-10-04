@@ -210,6 +210,7 @@ export class StarknetKeyPair extends KeyPair {
   }
 }
 
+// TODO CAN REMOVE SOME STUFF HERE
 export class EstimateStarknetKeyPair extends KeyPair {
   readonly pubKey: bigint;
 

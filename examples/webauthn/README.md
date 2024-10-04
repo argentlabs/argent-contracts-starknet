@@ -1,6 +1,6 @@
 # Argent Webauthn POC
 
-This account is a 1-of-2 multisig account where the signers are a stark key and a webauthn device.
+This account is using the ArgentAccount without a guardian. The signature follows the WebAuthn standard.
 
 ## Setup for testnet
 
@@ -14,47 +14,49 @@ Fill the values in the `.env` file. The deployer account needs at least 0.001 ET
 yarn && yarn dev
 ```
 
-Open the displayed url in Chrome or Safari.
+Open the displayed url.
 
 ## Setup for website with devnet
 
-First start by installing a service allowing to expose localhost to the world (e.g.: ngrok, localtunnel, ...).  
-Please note that this service MUST provide an HTTPS connection otherwise webauthn won't work.
+Start by installing a service that allows you to expose your localhost to the internet (e.g., Ngrok, Localtunnel, etc.).  
+Important: This service must provide an HTTPS connection; otherwise, WebAuthn will not function properly.
 
+un the following command to start the devnet:
 
-Start the devnet using 
 ```bash
 scarb run start-devnet
 ```
 
-Start your tunneling service exposing port 5173.  
-Now take the link given by your service and edit the .env file of the dapp adding `/rpc` at the end:
+Start your tunneling service and configure it to expose port `5173`.  
+Copy the URL provided by your tunneling service, append /rpc to the end, and update the .env file of the dApp with this value:
+
 ```
 PUBLIC_PROVIDER_URL="[YOU_LINK]/rpc"
 ```
 
-You can now start the dapp using `yarn dev`. You should now be able to access the dapp using the link provided by the tunneling service.
+Now, you can start the dApp by running `yarn dev`. You should be able to access the dApp through the link provided by the tunneling service.
 
 ## Testing
 
-Part of this can't be automated and some manual tests need to be performed.  
+Some parts of the testing process cannot be automated, so manual testing is required.
+Below is a list of scenarios that need to be tested. Please add any additional cases if you find them missing:
 Here is the list of everything that needs to be tested (please add more if you find any missing case):
 
-- Test every on every major browser (sorted )
+- Test every on every major browser (sorted by most used)
   - [ ] Chrome
   - [ ] Safari
   - [ ] IE (just kidding, Edge)
   - [ ] Firefox
   - [ ] Opera
 - Test using every password manager
-  - [ ] One password
+  - [ ] 1Password
   - [ ] Chrome integrated password
   - [ ] Apple Keychain
-- Test using every device
-  - [ ] Apple
+- Test the dApp on different device platforms
+  - [ ] Apple (iPhone)
   - [ ] Android
 
-Make sure to test every combination of each.
+Make sure to test various combinations of browsers, password managers, and devices to ensure compatibility across all configurations.
 
 ## Pointers
 
@@ -68,5 +70,5 @@ This demo dapp will:
 Other notes:
 
 - The passkey is created [here](./src/lib/webauthnAttestation.ts#L12).
-- Transaction hashes are signed by the passkey [here](./src/lib/webauthnAssertion.ts#L24).
+- Transaction hashes are signed by the passkey [here](./src/lib/webauthnOwner.ts#L112).
 - A high level starknet.js `Signer` implementation is proposed [here](./src/lib/webauthnOwner.ts).

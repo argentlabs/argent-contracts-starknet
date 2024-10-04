@@ -4,8 +4,8 @@ import { mapValues, maxBy, sortBy, sum } from "lodash-es";
 import { InvokeFunctionResponse, shortString } from "starknet";
 import { type Manager } from "./manager";
 
-const ethUsd = 4000n;
-const strkUsd = 2n;
+const ethUsd = 2400;
+const strkUsd = 0.4;
 
 // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
 const gasWeights: Record<string, number> = {
@@ -154,7 +154,7 @@ export function newProfiler(manager: Manager) {
     },
     summarizeCost(profile: Profile) {
       const usdVal = profile.paidInStrk ? strkUsd : ethUsd;
-      const feeUsd = Number((10000n * profile.actualFee * usdVal) / 10n ** 18n) / 10000;
+      const feeUsd = Number((profile.actualFee * BigInt(10000 * usdVal)) / 10n ** 18n) / 10000;
       return {
         "Actual fee": Number(profile.actualFee).toLocaleString("de-DE"),
         "Fee usd": Number(feeUsd.toFixed(4)),

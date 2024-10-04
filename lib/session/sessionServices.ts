@@ -62,7 +62,7 @@ export class DappService {
     completedSession: OffChainSession,
     sessionAuthorizationSignature: ArraySignatureType,
     cacheAuthorization = false,
-    is_legacy_account = false,
+    isLegacyAccount = false,
   ) {
     const sessionSigner = new (class extends RawSigner {
       constructor(
@@ -91,7 +91,7 @@ export class DappService {
         calls,
         transactionDetail,
         cacheAuthorization,
-        is_legacy_account,
+        isLegacyAccount,
       });
     });
     return new ArgentAccount(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
@@ -103,9 +103,9 @@ export class DappService {
     completedSession: OffChainSession;
     sessionAuthorizationSignature: ArraySignatureType;
     cacheAuthorization: boolean;
-    is_legacy_account: boolean;
+    isLegacyAccount: boolean;
   }): Promise<SessionToken> {
-    const { calls, account, completedSession, sessionAuthorizationSignature, cacheAuthorization, is_legacy_account } =
+    const { calls, account, completedSession, sessionAuthorizationSignature, cacheAuthorization, isLegacyAccount } =
       arg;
     const transactionDetail = await getSignerDetails(account, calls);
     const txHash = calculateTransactionHash(transactionDetail, calls);
@@ -117,7 +117,7 @@ export class DappService {
       accountAddress: transactionDetail.walletAddress,
       transactionDetail,
       cacheAuthorization,
-      is_legacy_account,
+      isLegacyAccount,
     });
   }
 
@@ -132,7 +132,7 @@ export class DappService {
     execute_before = 999999999999999,
     nonce = randomStarknetKeyPair().publicKey,
     cacheAuthorization = false,
-    is_legacy_account = false,
+    isLegacyAccount = false,
   ): Promise<Call> {
     const outsideExecution = {
       caller,
@@ -153,7 +153,7 @@ export class DappService {
       revision,
       outsideExecution,
       cacheAuthorization,
-      is_legacy_account,
+      isLegacyAccount,
     });
 
     return {
@@ -169,7 +169,7 @@ export class DappService {
     calls: Call[];
     transactionDetail: InvocationsSignerDetails;
     cacheAuthorization: boolean;
-    is_legacy_account: boolean;
+    isLegacyAccount: boolean;
   }): Promise<ArraySignatureType> {
     const {
       sessionAuthorizationSignature,
@@ -177,7 +177,7 @@ export class DappService {
       calls,
       transactionDetail,
       cacheAuthorization,
-      is_legacy_account,
+      isLegacyAccount,
     } = args;
     const txHash = calculateTransactionHash(transactionDetail, calls);
     const sessionToken = await this.buildSessionToken({
@@ -188,7 +188,7 @@ export class DappService {
       accountAddress: transactionDetail.walletAddress,
       transactionDetail,
       cacheAuthorization,
-      is_legacy_account,
+      isLegacyAccount,
     });
     return compileSessionSignature(sessionToken);
   }
@@ -202,7 +202,7 @@ export class DappService {
     revision: TypedDataRevision;
     outsideExecution: OutsideExecution;
     cacheAuthorization: boolean;
-    is_legacy_account: boolean;
+    isLegacyAccount: boolean;
   }): Promise<ArraySignatureType> {
     const {
       sessionAuthorizationSignature,
@@ -213,7 +213,7 @@ export class DappService {
       revision,
       outsideExecution,
       cacheAuthorization,
-      is_legacy_account,
+      isLegacyAccount,
     } = args;
     const session = this.compileSessionHelper(completedSession);
 
@@ -238,7 +238,7 @@ export class DappService {
       calls,
       sessionSignature,
       cache_authorization: cacheAuthorization,
-      is_legacy_account,
+      isLegacyAccount,
       session_authorization: sessionAuthorizationSignature,
       guardianSignature,
       accountAddress,
@@ -255,7 +255,7 @@ export class DappService {
     accountAddress: string;
     transactionDetail: InvocationsSignerDetails;
     cacheAuthorization: boolean;
-    is_legacy_account: boolean;
+    isLegacyAccount: boolean;
   }): Promise<SessionToken> {
     const {
       sessionAuthorizationSignature,
@@ -265,7 +265,7 @@ export class DappService {
       accountAddress,
       transactionDetail,
       cacheAuthorization,
-      is_legacy_account,
+      isLegacyAccount,
     } = args;
     const session = this.compileSessionHelper(completedSession);
 
@@ -286,7 +286,7 @@ export class DappService {
       completedSession,
       calls,
       sessionSignature: session_signature,
-      is_legacy_account,
+      isLegacyAccount,
       cache_authorization: cacheAuthorization,
       session_authorization: sessionAuthorizationSignature,
       guardianSignature,
@@ -352,7 +352,7 @@ export class DappService {
     calls: Call[];
     sessionSignature: bigint[];
     cache_authorization: boolean;
-    is_legacy_account: boolean;
+    isLegacyAccount: boolean;
     session_authorization: string[];
     guardianSignature: bigint[];
     accountAddress: string;
@@ -363,14 +363,14 @@ export class DappService {
       calls,
       sessionSignature,
       cache_authorization,
-      is_legacy_account,
+      isLegacyAccount,
       session_authorization,
       guardianSignature,
       accountAddress,
     } = args;
     const sessionContract = await manager.loadContract(accountAddress);
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
-    const isSessionCached = is_legacy_account
+    const isSessionCached = isLegacyAccount
       ? await sessionContract.is_session_authorization_cached(sessionMessageHash)
       : await sessionContract.is_session_authorization_cached(sessionMessageHash, session_authorization);
     return {

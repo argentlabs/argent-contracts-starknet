@@ -171,7 +171,7 @@ describe("Hybrid Session Account: execute calls", function () {
       account: accountWithDappSigner,
       completedSession: sessionRequest,
       sessionAuthorizationSignature: authorizationSignature,
-      is_legacy_account: false,
+      isLegacyAccount: false,
       cacheAuthorization: false,
     });
     const sessionTokenWrongProofs = {

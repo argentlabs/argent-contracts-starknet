@@ -109,7 +109,7 @@ export async function setupSession(
   expiry: bigint = BigInt(Date.now()) + 10000n,
   dappKey: StarknetKeyPair = randomStarknetKeyPair(),
   cacheAuthorization = false,
-  is_legacy_account = false,
+  isLegacyAccount = false,
 ): Promise<SessionSetup> {
   const backendService = new BackendService(guardian);
   const dappService = new DappService(backendService, dappKey);
@@ -124,7 +124,7 @@ export async function setupSession(
       sessionRequest,
       authorizationSignature,
       cacheAuthorization,
-      is_legacy_account,
+      isLegacyAccount,
     ),
     sessionHash: typedData.getMessageHash(await getSessionTypedData(sessionRequest), account.address),
     sessionRequest,

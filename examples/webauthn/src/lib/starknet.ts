@@ -1,10 +1,8 @@
-import * as env from "$env/static/public";
 import {
   Account,
   CallData,
   Contract,
   ProviderInterface,
-  RPC,
   RpcProvider,
   Signer,
   SignerInterface,
@@ -202,7 +200,7 @@ export async function mintEth(address: string, provider: ProviderType) {
 }
 
 async function handleGet(provider: any, path: string, args?: string) {
-  const origin = providerUrl(provider).replace("/rpc", "");
+  const origin = providerUrl(provider);
   const response = await fetch(`${origin}/${path}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
@@ -211,7 +209,7 @@ async function handleGet(provider: any, path: string, args?: string) {
 }
 
 async function handlePost(provider: ProviderInterface, path: string, payload?: RawArgs) {
-  const origin = providerUrl(provider).replace("/rpc", "");
+  const origin = providerUrl(provider);
   const response = await fetch(`${origin}/${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

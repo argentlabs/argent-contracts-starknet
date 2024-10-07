@@ -183,7 +183,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<
   const { classHash, salt } = finalParams;
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
   const fundingCall = finalParams.useTxV3
-    ? await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "STRK") // 0.01 STRK
+    ? await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 100e18, "STRK") // 100 STRK
     : await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "ETH"); // 1 ETH
   const calls = fundingCall ? [fundingCall] : [];
 

@@ -1,6 +1,8 @@
 import { RPC, num } from "starknet";
 import { ArgentSigner, deployAccount, expectExecutionRevert, manager, randomStarknetKeyPair } from "../lib";
 
+const gasPriceInStrk = 35000000000000n;
+
 describe("Gas griefing", function () {
   this.timeout(320000);
 
@@ -49,8 +51,8 @@ describe("Gas griefing", function () {
     const newResourceBounds = {
       l1_gas: {
         // Need (max_amount * max_price_per_unit) > 5e18
-        max_amount: num.toHexString(5000000000000000000n / 36000000000n + 1n), // we can't use 1e18, not enough precision
-        max_price_per_unit: num.toHexString(36000000000n),
+        max_amount: num.toHexString(5000000000000000000n / gasPriceInStrk + 1n), // we can't use 1e18, not enough precision
+        max_price_per_unit: num.toHexString(gasPriceInStrk),
       },
       l2_gas: {
         max_amount: "0x0",
@@ -78,8 +80,8 @@ describe("Gas griefing", function () {
     const newResourceBounds = {
       l1_gas: {
         // Need (max_amount * max_price_per_unit) <= 5e18
-        max_amount: num.toHexString(5000000000000000000n / 36000000000n - 1n), // we can't use 1e18, not enough precision
-        max_price_per_unit: num.toHexString(36000000000n),
+        max_amount: num.toHexString(5000000000000000000n / gasPriceInStrk - 1n), // we can't use 1e18, not enough precision
+        max_price_per_unit: num.toHexString(gasPriceInStrk),
       },
       l2_gas: {
         max_amount: "0x0",

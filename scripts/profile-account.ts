@@ -117,7 +117,7 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
-  const { account } = await deployAccount({
+  const { account, owner } = await deployAccount({
     owner: starknetOwner,
     guardian,
     salt: "0x41",
@@ -134,7 +134,7 @@ const guardian = new StarknetKeyPair(42n);
     allowedMethod,
     sessionTime + 150n,
     dappKey,
-    true,
+    owner.guid,
   );
   ethContract.connect(accountWithDappSigner);
   await profiler.profile("Transfer - With Session - Caching Values (1)", await ethContract.transfer(recipient, amount));
@@ -144,7 +144,7 @@ const guardian = new StarknetKeyPair(42n);
 {
   const classHash = await manager.declareFixtureContract("Sha256Cairo0");
   assert(BigInt(classHash) === 0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
-  const { account } = await deployAccount({
+  const { account, owner } = await deployAccount({
     owner: new WebauthnOwner(privateKey),
     guardian,
     salt: "0x42",
@@ -161,7 +161,7 @@ const guardian = new StarknetKeyPair(42n);
     allowedMethod,
     sessionTime + 150n,
     dappKey,
-    true,
+    owner.guid,
   );
   ethContract.connect(accountWithDappSigner);
   await profiler.profile(

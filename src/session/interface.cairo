@@ -28,7 +28,7 @@ struct Session {
 #[derive(Drop, Serde, Copy)]
 struct SessionToken {
     session: Session,
-    cache_authorization: bool,
+    cache_owner_guid: felt252,
     session_authorization: Span<felt252>,
     session_signature: SignerSignature,
     guardian_signature: SignerSignature,
@@ -67,7 +67,5 @@ trait ISessionable<TContractState> {
     /// @notice View function to see if a session authorization is cached
     /// @param session_hash Hash of the session token
     /// @return Whether the session is cached
-    fn is_session_authorization_cached(
-        self: @TContractState, session_hash: felt252, session_authorization: Span<felt252>
-    ) -> bool;
+    fn is_session_authorization_cached(self: @TContractState, session_hash: felt252, owner_guid: felt252) -> bool;
 }

@@ -60,7 +60,7 @@ export interface OnChainSession {
 
 export interface SessionToken {
   session: OnChainSession;
-  cache_authorization: boolean;
+  cache_owner_guid: BigNumberish;
   session_authorization: string[];
   session_signature: CairoCustomEnum;
   guardian_signature: CairoCustomEnum;
@@ -108,7 +108,7 @@ export async function setupSession(
   allowedMethods: AllowedMethod[],
   expiry: bigint = BigInt(Date.now()) + 10000n,
   dappKey: StarknetKeyPair = randomStarknetKeyPair(),
-  cacheAuthorization = false,
+  cacheOwnerGuid = 0n,
   isLegacyAccount = false,
 ): Promise<SessionSetup> {
   const backendService = new BackendService(guardian);
@@ -123,7 +123,7 @@ export async function setupSession(
       account,
       sessionRequest,
       authorizationSignature,
-      cacheAuthorization,
+      cacheOwnerGuid,
       isLegacyAccount,
     ),
     sessionHash: typedData.getMessageHash(await getSessionTypedData(sessionRequest), account.address),

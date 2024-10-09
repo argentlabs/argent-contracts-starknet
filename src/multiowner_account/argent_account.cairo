@@ -34,7 +34,9 @@ mod ArgentAccount {
         syscalls::storage_read_syscall,
         storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall}
     };
-    use super::super::account_interface::{IArgentMultiOwnerAccount,};
+    use super::super::account_interface::{
+        IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait
+    };
     use super::super::events::{
         SignerLinked, TransactionExecuted, AccountCreated, AccountCreatedGuid, EscapeOwnerTriggeredGuid,
         EscapeGuardianTriggeredGuid, OwnerEscapedGuid, GuardianEscapedGuid, EscapeCanceled, OwnerChanged,
@@ -83,9 +85,10 @@ mod ArgentAccount {
     #[abi(embed_v0)]
     impl SRC5Legacy = src5_component::SRC5LegacyImpl<ContractState>;
     // Upgrade
-    component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
+    impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
+    component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     // Reentrancy guard
     component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
     impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
@@ -307,7 +310,17 @@ mod ArgentAccount {
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
         // Called when coming from account 0.4.0+
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
-            panic_with_felt252('argent/downgrade-not-allowed');
+            assert_only_self();
+            let current_version = IArgentMultiOwnerAccountDispatcher { contract_address: get_contract_address() }
+                .get_version();
+            assert(current_version.major == 0 && current_version.minor >= 4, 'argent/invalid-from-version');
+            self.upgrade.complete_upgrade(new_implementation);
+            if data.is_empty() {
+                return;
+            }
+            let calls: Array<Call> = full_deserialize(data).expect('argent/invalid-calls');
+            assert_no_self_call(calls.span(), get_contract_address());
+            execute_multicall(calls.span());
         }
     }
 

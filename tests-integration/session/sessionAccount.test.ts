@@ -172,7 +172,7 @@ describe("Hybrid Session Account: execute calls", function () {
       completedSession: sessionRequest,
       sessionAuthorizationSignature: authorizationSignature,
       isLegacyAccount: false,
-      cacheAuthorization: false,
+      cacheOwnerGuid: 0n,
     });
     const sessionTokenWrongProofs = {
       ...sessionToken,

@@ -13,6 +13,10 @@ export const createWebauthnAttestation = async (
   rpId: string,
   origin: string,
 ): Promise<WebauthnAttestation> => {
+  if (!browserSupportsWebAuthn()) {
+    throw new Error("WebAuthn is not supported in this browser");
+  }
+
   const id = randomBytes(32);
   const challenge = randomBytes(32);
   const credential = await navigator.credentials.create({
@@ -67,3 +71,8 @@ export const requestSignature = async (
   const assertion = credential as PublicKeyCredential;
   return assertion.response as AuthenticatorAssertionResponse;
 };
+
+// https://github.com/MasterKale/SimpleWebAuthn/blob/5e3e5718f6b97ee3df09468a4400d3c7770a3f31/packages/browser/src/helpers/browserSupportsWebAuthn.ts
+function browserSupportsWebAuthn(): boolean {
+  return window?.PublicKeyCredential !== undefined && typeof window.PublicKeyCredential === "function";
+}

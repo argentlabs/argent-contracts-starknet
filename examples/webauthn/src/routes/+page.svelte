@@ -5,6 +5,7 @@
   import { createOwner, retrieveOwner, cleanLocalStorage, deployAccount, retrieveAccount, transferDust, declareAccount } from "$lib/poc";
   import type { WebauthnOwner} from "$lib/webauthnOwner";
   import { Account, RpcProvider } from "starknet";
+    import { get } from "http";
 
   let rpId = "";
   onMount(() => rpId = window.location.hostname);
@@ -19,7 +20,8 @@
   let transactionHash = "";
 
   const handleClickCreateOwner = async () => {
-    owner = await createOwner(email, rpId, window.location.origin);
+    await createOwner(email, rpId, window.location.origin);
+    await retrieveOwnerOnLoad();
   };
 
   // https://www.reddit.com/r/Passkeys/comments/1aov4m6/whats_the_point_of_google_chrome_creating_synced/
@@ -50,12 +52,15 @@
 </script>
 
 {#await retrieveOwnerOnLoad()}
+<!-- TODO Add button to re-use existing passkey that would use navigator.CredentialsContainer.get()-->
   <p>Retrieving...</p>
 {:then}
   <h1>1. Create keys</h1>
   {#if !owner}
-  <input type="email" bind:value={email} />
-  <button on:click={handleClickCreateOwner}>Create</button>
+  <form>
+    <input type="text" id="1password" bind:value={email} />
+    <button on:click={handleClickCreateOwner}>Create</button>
+  </form>
   {:else}
     <button on:click={handleCleanLocalStorage}>Remove account</button>
     <br />

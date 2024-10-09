@@ -19,6 +19,18 @@ export async function retrieveOwner(): Promise<WebauthnOwner | undefined> {
   console.log("retrieving webauthn key (attestation)...");
   if (!rawIdBase64) {
     console.log("no webauthn key found in local storage");
+    const webAuthnResponse = await navigator.credentials.get({
+      mediation: "required",
+      publicKey: {
+        challenge: new Uint8Array(32),
+        // see note about userVerification below
+        userVerification: "preferred",
+      },
+    });
+    console.log("retrieved webauthn response:", webAuthnResponse);
+    if (webAuthnResponse) {
+      new WebauthnOwner(webAuthnResponse, requestSignature);
+    }
     return undefined;
   }
 
@@ -30,16 +42,14 @@ export async function retrieveOwner(): Promise<WebauthnOwner | undefined> {
   return new WebauthnOwner(attestation, requestSignature);
 }
 
-export async function createOwner(email: string, rpId: string, origin: string): Promise<WebauthnOwner> {
+export async function createOwner(email: string, rpId: string, origin: string): Promise<undefined> {
   console.log("creating webauthn key (attestation)...");
   const attestation = await createWebauthnAttestation(email, rpId, origin);
 
   const encodedCredentialId = buf2hex(attestation.credentialId);
   const encodedX = buf2hex(attestation.pubKey);
   localStorage.setItem(storageKey, JSON.stringify({ email, rpId, origin, encodedX, encodedCredentialId }));
-
   console.log("created webauthn public key:", buf2hex(attestation.pubKey));
-  return new WebauthnOwner(attestation, requestSignature);
 }
 
 export async function declareAccount(provider: ProviderType): Promise<string> {

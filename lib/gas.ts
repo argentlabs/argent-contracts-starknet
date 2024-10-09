@@ -154,10 +154,10 @@ export function newProfiler(manager: Manager) {
     },
     summarizeCost(profile: Profile) {
       const usdVal = profile.paidInStrk ? strkUsd : ethUsd;
-      const feeUsd = Number((profile.actualFee * BigInt(10000 * usdVal)) / 10n ** 18n) / 10000;
+      const feeUsd = Number((profile.actualFee * BigInt(100000 * usdVal)) / 10n ** 18n) / 100000;
       return {
         "Actual fee": Number(profile.actualFee).toLocaleString("de-DE"),
-        "Fee usd": Number(feeUsd.toFixed(4)),
+        "Fee usd": Number(feeUsd.toFixed(5)),
         "Fee without DA": Number(profile.feeWithoutDa),
         "Gas without DA": Number(profile.gasWithoutDa),
         "Computation gas": Number(profile.computationGas),

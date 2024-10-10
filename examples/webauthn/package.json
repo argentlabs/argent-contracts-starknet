@@ -9,7 +9,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --plugin-search-dir . --check .",
-    "format": "prettier --plugin-search-dir . --write ."
+    "format": "prettier --write ."
   },
   "type": "module",
   "dependencies": {
@@ -23,6 +23,8 @@
   "devDependencies": {
     "@sveltejs/adapter-auto": "^2.0.0",
     "@sveltejs/kit": "^1.20.4",
+    "prettier": "^3.3.3",
+    "prettier-plugin-svelte": "^3.2.7",
     "svelte": "^4.0.5",
     "svelte-check": "^3.4.3",
     "tslib": "^2.4.1",

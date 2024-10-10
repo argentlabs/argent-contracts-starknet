@@ -31,7 +31,7 @@ export async function retrieveOwner(): Promise<WebauthnOwner | undefined> {
 }
 
 export async function retrievePasskey(
-  username: string,
+  email: string,
   rpId: string,
   origin: string,
   pubKey: string,
@@ -39,7 +39,7 @@ export async function retrievePasskey(
   try {
     // Retrieve challenge from backend
     const challenge = new Uint8Array(32);
-    // Backend provide pubKey from username
+    // Backend provide pubKey from email
     const credential = await navigator.credentials.get({
       mediation: "required",
       publicKey: {
@@ -54,7 +54,13 @@ export async function retrievePasskey(
 
     const credentialId = new Uint8Array(attestation.rawId);
     return new WebauthnOwner(
-      { username, rpId, origin, credentialId, pubKey: hexStringToUint8Array(pubKey) },
+      {
+        email,
+        rpId,
+        origin,
+        credentialId,
+        pubKey: hexStringToUint8Array(pubKey),
+      },
       requestSignature,
     );
   } catch (err) {

@@ -25,7 +25,6 @@ sort-module-level-items = true
 
 [scripts]
 test = "snforge test"
-# TODO For some reason .svelte files aren't being formatted
 format = "scarb fmt && yarn prettier --write ."
 lint = "yarn eslint ."
 test-ts = "scarb --profile release build && yarn tsc && yarn mocha tests-integration/*.test.ts"

@@ -1,31 +1,40 @@
 <script lang="ts">
   import * as env from "$env/static/public";
-  import { onMount } from 'svelte';
+  import { onMount } from "svelte";
   import { buf2hex } from "$lib/bytes";
-  import { createOwner, retrieveOwner, cleanLocalStorage, deployAccount, retrievePasskey, retrieveAccount, transferDust, declareAccount } from "$lib/poc";
-  import type { WebauthnOwner} from "$lib/webauthnOwner";
+  import {
+    createOwner,
+    retrieveOwner,
+    cleanLocalStorage,
+    deployAccount,
+    retrievePasskey,
+    retrieveAccount,
+    transferDust,
+    declareAccount,
+  } from "$lib/poc";
+  import type { WebauthnOwner } from "$lib/webauthnOwner";
   import { Account, RpcProvider } from "starknet";
 
   let rpId = "";
-  onMount(() => rpId = window.location.hostname);
+  onMount(() => (rpId = window.location.hostname));
   const provider = new RpcProvider({ nodeUrl: env.PUBLIC_PROVIDER_URL });
 
-  let username = "myUsername";
+  let email = "example@argent.xyz";
   let pubKey = "";
   let recipient = "0x69";
   let owner: WebauthnOwner | undefined;
   let account: Account | undefined;
   let deployPromise: Promise<void> | undefined;
-  let sendPromise: Promise<void> | undefined;;
+  let sendPromise: Promise<void> | undefined;
   let transactionHash = "";
 
   const handleClickCreateOwner = async () => {
-    await createOwner(username, rpId, window.location.origin);
+    await createOwner(email, rpId, window.location.origin);
     await retrieveOwnerOnLoad();
   };
 
   const handleClickReuseOwner = async () => {
-    owner = await retrievePasskey(username, rpId, window.location.origin, pubKey);
+    owner = await retrievePasskey(email, rpId, window.location.origin, pubKey);
   };
 
   // https://www.reddit.com/r/Passkeys/comments/1aov4m6/whats_the_point_of_google_chrome_creating_synced/
@@ -54,27 +63,32 @@
     sendPromise = undefined;
   };
 </script>
+
 <div class="centered-element">
   {#await retrieveOwnerOnLoad()}
     <p>Retrieving...</p>
   {:then}
-  <h1>1. Create keys</h1>
-  {#if !owner}
-    <input type="text" bind:value={pubKey} autocomplete="username webauthn"/>
-    <button on:click={handleClickReuseOwner}>Re-use passkey</button>
-    <br />
-    <br />
-    <form>
-      <input type="text" bind:value={username}/>
-      <button on:click={handleClickCreateOwner} type="submit">Register</button>
-    </form>
+    <h1>1. Create keys</h1>
+    {#if !owner}
+      <input type="text" bind:value={pubKey} autocomplete="email webauthn" />
+      <button on:click={handleClickReuseOwner}>Re-use passkey</button>
+      <br />
+      <br />
+      <form>
+        <input type="text" bind:value={email} />
+        <button on:click={handleClickCreateOwner} type="submit">Register</button>
+      </form>
     {:else}
       <button on:click={handleCleanLocalStorage}>Remove account</button>
       <br />
       <br />
-      <div>Username: <small>{owner.attestation.username}</small></div>
-      <div>Webauthn public key: <small>{buf2hex(owner.attestation.pubKey)}</small></div>
-      <div>Webauthn credential id: <small>{buf2hex(owner.attestation.credentialId)}</small></div>
+      <div>Email: <small>{owner.attestation.email}</small></div>
+      <div>
+        Webauthn public key: <small>{buf2hex(owner.attestation.pubKey)}</small>
+      </div>
+      <div>
+        Webauthn credential id: <small>{buf2hex(owner.attestation.credentialId)}</small>
+      </div>
 
       <!-- TODO SHOULD DECLARE TOP LEVEL -->
       <!-- This is blocking and can be annoying, fix would be to send it to a web worker to avoid that -->
@@ -111,7 +125,9 @@
             {#await sendPromise}
               <p>Confirming...</p>
             {:catch error}
-              <p style="color: red">Couldn't send transaction: {error.message}</p>
+              <p style="color: red">
+                Couldn't send transaction: {error.message}
+              </p>
             {/await}
           {:else}
             <div>Transaction hash: <small>{transactionHash}</small></div>
@@ -123,6 +139,7 @@
     {/if}
   {/await}
 </div>
+
 <style>
   :global(body) {
     text-align: left;
@@ -132,10 +149,10 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-.centered-element{
+  .centered-element {
     margin-left: auto;
     margin-right: auto;
     padding: 15px;
     width: 700px;
-}
+  }
 </style>

@@ -23,7 +23,11 @@ function sha256(message: Message): Uint8Array {
 }
 
 const normalizeTransactionHash = (transactionHash: string) => transactionHash.replace(/^0x/, "").padStart(64, "0");
-export type NormalizedSecpSignature = { r: bigint; s: bigint; yParity: boolean };
+export type NormalizedSecpSignature = {
+  r: bigint;
+  s: bigint;
+  yParity: boolean;
+};
 
 export function normalizeSecpR1Signature(signature: {
   r: bigint;
@@ -112,7 +116,12 @@ export class WebauthnOwner extends KeyPair {
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
     const webauthnSigner = this.signer.variant.Webauthn;
     const webauthnSignature = await this.signHash(messageHash);
-    return CallData.compile([signerTypeToCustomEnum(SignerType.Webauthn, { webauthnSigner, webauthnSignature })]);
+    return CallData.compile([
+      signerTypeToCustomEnum(SignerType.Webauthn, {
+        webauthnSigner,
+        webauthnSignature,
+      }),
+    ]);
   }
 
   public async signHash(messageHash: string): Promise<WebauthnSignature> {
@@ -136,7 +145,11 @@ export class WebauthnOwner extends KeyPair {
 
     // Flags is the fifth byte from the end of the authenticatorData
     const flags = authenticatorData[authenticatorData.length - 5]; // Number("0b00000101"); // present and verified
-    const normalizedSignature = normalizeSecpR1Signature({ r, s, recovery: yParity ? 1 : 0 });
+    const normalizedSignature = normalizeSecpR1Signature({
+      r,
+      s,
+      recovery: yParity ? 1 : 0,
+    });
     r = normalizedSignature.r;
     s = normalizedSignature.s;
     yParity = normalizedSignature.yParity;

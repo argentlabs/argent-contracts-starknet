@@ -36,7 +36,7 @@ import {
   signerTypeToCustomEnum,
 } from "..";
 
-export function compileSessionSignature(sessionToken: SessionToken): string[] {
+export function compileSessionSignature(sessionToken: any): string[] {
   const SESSION_MAGIC = shortString.encodeShortString("session-token");
   return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
 }
@@ -230,6 +230,7 @@ export class DappService {
       transactionHash,
       accountAddress,
       cacheOwnerGuid,
+      isLegacyAccount,
     );
     const sessionToken = await this.compileSessionTokenHelper({
       session,
@@ -273,12 +274,14 @@ export class DappService {
       transactionDetail,
       completedSession,
       cacheOwnerGuid,
+      isLegacyAccount,
     );
     const session_signature = await this.signTxAndSession(
       completedSession,
       transactionHash,
       accountAddress,
       cacheOwnerGuid,
+      isLegacyAccount,
     );
     return await this.compileSessionTokenHelper({
       session,
@@ -298,9 +301,14 @@ export class DappService {
     transactionHash: string,
     accountAddress: string,
     cacheOwnerGuid: bigint,
+    isLegacyAccount: boolean,
   ): Promise<bigint[]> {
     const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([transactionHash, sessionMessageHash, cacheOwnerGuid]);
+    const sessionWithTxHash = hash.computePoseidonHashOnElements([
+      transactionHash,
+      sessionMessageHash,
+      isLegacyAccount ? +(cacheOwnerGuid !== 0n) : cacheOwnerGuid,
+    ]);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));
     return [signature.r, signature.s];
   }

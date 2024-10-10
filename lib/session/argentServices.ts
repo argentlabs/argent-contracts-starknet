@@ -41,6 +41,7 @@ export class BackendService {
     transactionDetail: InvocationsSignerDetails,
     sessionTokenToSign: OffChainSession,
     cacheOwnerGuid: bigint,
+    isLegacyAccount: boolean,
   ): Promise<bigint[]> {
     // verify session param correct
     // extremely simplified version of the backend verification
@@ -61,7 +62,11 @@ export class BackendService {
       await getSessionTypedData(sessionTokenToSign),
       transactionDetail.walletAddress,
     );
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([transactionHash, sessionMessageHash, cacheOwnerGuid]);
+    const sessionWithTxHash = hash.computePoseidonHashOnElements([
+      transactionHash,
+      sessionMessageHash,
+      isLegacyAccount ? +(cacheOwnerGuid !== 0n) : cacheOwnerGuid,
+    ]);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
     return [signature.r, signature.s];
   }

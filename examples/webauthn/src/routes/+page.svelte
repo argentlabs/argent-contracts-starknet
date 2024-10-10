@@ -2,16 +2,16 @@
   import * as env from "$env/static/public";
   import { onMount } from 'svelte';
   import { buf2hex } from "$lib/bytes";
-  import { createOwner, retrieveOwner, cleanLocalStorage, deployAccount, retrieveAccount, transferDust, declareAccount } from "$lib/poc";
+  import { createOwner, retrieveOwner, cleanLocalStorage, deployAccount, retrievePasskey, retrieveAccount, transferDust, declareAccount } from "$lib/poc";
   import type { WebauthnOwner} from "$lib/webauthnOwner";
   import { Account, RpcProvider } from "starknet";
-    import { get } from "http";
 
   let rpId = "";
   onMount(() => rpId = window.location.hostname);
   const provider = new RpcProvider({ nodeUrl: env.PUBLIC_PROVIDER_URL });
 
   let email = "example@argent.xyz";
+  let pubKey = "";
   let recipient = "0x69";
   let owner: WebauthnOwner | undefined;
   let account: Account | undefined;
@@ -22,6 +22,10 @@
   const handleClickCreateOwner = async () => {
     await createOwner(email, rpId, window.location.origin);
     await retrieveOwnerOnLoad();
+  };
+
+  const handleClickReuseOwner = async () => {
+    owner = await retrievePasskey(email, rpId, window.location.origin, pubKey);
   };
 
   // https://www.reddit.com/r/Passkeys/comments/1aov4m6/whats_the_point_of_google_chrome_creating_synced/
@@ -52,13 +56,16 @@
 </script>
 
 {#await retrieveOwnerOnLoad()}
-<!-- TODO Add button to re-use existing passkey that would use navigator.CredentialsContainer.get()-->
   <p>Retrieving...</p>
 {:then}
-  <h1>1. Create keys</h1>
-  {#if !owner}
+<h1>1. Create keys</h1>
+{#if !owner}
+  <input type="text" bind:value={pubKey} />
+  <button on:click={handleClickReuseOwner}>Re-use passkey</button>
+  <br />
+  <br />
   <form>
-    <input type="text" id="1password" bind:value={email} />
+    <input type="text" bind:value={email} />
     <button on:click={handleClickCreateOwner}>Create</button>
   </form>
   {:else}

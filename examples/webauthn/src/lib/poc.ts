@@ -1,7 +1,7 @@
 import { Account, CairoOption, CairoOptionVariant, CallData, hash, uint256 } from "starknet";
 import accountCasm from "./argent_ArgentAccount.compiled_contract_class.json";
 import accountSierra from "./argent_ArgentAccount.contract_class.json";
-import { buf2hex, hex2buf } from "./bytes";
+import { buf2hex, hex2buf, hexStringToUint8Array } from "./bytes";
 import { ArgentSigner } from "./signers";
 import { fundAccount, getEthContract, loadDeployer, type ProviderType } from "./starknet";
 import { createWebauthnAttestation, requestSignature } from "./webauthnAttestation";
@@ -19,18 +19,6 @@ export async function retrieveOwner(): Promise<WebauthnOwner | undefined> {
   console.log("retrieving webauthn key (attestation)...");
   if (!rawIdBase64) {
     console.log("no webauthn key found in local storage");
-    const webAuthnResponse = await navigator.credentials.get({
-      mediation: "required",
-      publicKey: {
-        challenge: new Uint8Array(32),
-        // see note about userVerification below
-        userVerification: "preferred",
-      },
-    });
-    console.log("retrieved webauthn response:", webAuthnResponse);
-    if (webAuthnResponse) {
-      new WebauthnOwner(webAuthnResponse, requestSignature);
-    }
     return undefined;
   }
 
@@ -40,6 +28,37 @@ export async function retrieveOwner(): Promise<WebauthnOwner | undefined> {
 
   console.log("retrieved webauthn public key:", buf2hex(attestation.pubKey));
   return new WebauthnOwner(attestation, requestSignature);
+}
+
+export async function retrievePasskey(
+  email: string,
+  rpId: string,
+  origin: string,
+  pubKey: string,
+): Promise<WebauthnOwner | undefined> {
+  try {
+    // Retrieve challenge from server
+    const challenge = new Uint8Array(32);
+    const credential = await navigator.credentials.get({
+      mediation: "required",
+      publicKey: {
+        challenge,
+        userVerification: "preferred",
+      },
+    });
+    if (!credential) {
+      return undefined;
+    }
+    const attestation = credential as PublicKeyCredential;
+
+    const credentialId = new Uint8Array(attestation.rawId);
+    return new WebauthnOwner(
+      { email, rpId, origin, credentialId, pubKey: hexStringToUint8Array(pubKey) },
+      requestSignature,
+    );
+  } catch (err) {
+    return undefined;
+  }
 }
 
 export async function createOwner(email: string, rpId: string, origin: string): Promise<undefined> {

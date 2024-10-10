@@ -1,7 +1,7 @@
 import { randomBytes } from "./bytes";
 
 export interface WebauthnAttestation {
-  email: string;
+  username: string;
   origin: string;
   rpId: string;
   credentialId: Uint8Array;
@@ -9,7 +9,7 @@ export interface WebauthnAttestation {
 }
 
 export const createWebauthnAttestation = async (
-  email: string,
+  username: string,
   rpId: string,
   origin: string,
 ): Promise<WebauthnAttestation> => {
@@ -22,7 +22,7 @@ export const createWebauthnAttestation = async (
   const credential = await navigator.credentials.create({
     publicKey: {
       rp: { id: rpId, name: "Argent" },
-      user: { id, name: email, displayName: email },
+      user: { id, name: username, displayName: username },
       challenge,
       // -7 means secp256r1 with SHA-256 (ES256). RS256 not supported on purpose.
       pubKeyCredParams: [{ type: "public-key", alg: -7 }],
@@ -49,7 +49,7 @@ export const createWebauthnAttestation = async (
   const publicKey = new Uint8Array(attestationResponse.getPublicKey()!);
   const x = publicKey.slice(-64, -32);
 
-  return { email, rpId, origin, credentialId, pubKey: x };
+  return { username, rpId, origin, credentialId, pubKey: x };
 };
 
 export const requestSignature = async (

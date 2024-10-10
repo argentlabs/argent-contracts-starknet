@@ -10,7 +10,7 @@
   onMount(() => rpId = window.location.hostname);
   const provider = new RpcProvider({ nodeUrl: env.PUBLIC_PROVIDER_URL });
 
-  let email = "example@argent.xyz";
+  let username = "myUsername";
   let pubKey = "";
   let recipient = "0x69";
   let owner: WebauthnOwner | undefined;
@@ -20,12 +20,12 @@
   let transactionHash = "";
 
   const handleClickCreateOwner = async () => {
-    await createOwner(email, rpId, window.location.origin);
+    await createOwner(username, rpId, window.location.origin);
     await retrieveOwnerOnLoad();
   };
 
   const handleClickReuseOwner = async () => {
-    owner = await retrievePasskey(email, rpId, window.location.origin, pubKey);
+    owner = await retrievePasskey(username, rpId, window.location.origin, pubKey);
   };
 
   // https://www.reddit.com/r/Passkeys/comments/1aov4m6/whats_the_point_of_google_chrome_creating_synced/
@@ -60,19 +60,19 @@
 {:then}
 <h1>1. Create keys</h1>
 {#if !owner}
-  <input type="text" bind:value={pubKey} />
+  <input type="text" bind:value={pubKey} autocomplete="username webauthn"/>
   <button on:click={handleClickReuseOwner}>Re-use passkey</button>
   <br />
   <br />
   <form>
-    <input type="text" bind:value={email} />
-    <button on:click={handleClickCreateOwner}>Create</button>
+    <input type="text" bind:value={username}/>
+    <button on:click={handleClickCreateOwner} type="submit">Register</button>
   </form>
   {:else}
     <button on:click={handleCleanLocalStorage}>Remove account</button>
     <br />
     <br />
-    <div>Email: <small>{owner.attestation.email}</small></div>
+    <div>Username: <small>{owner.attestation.username}</small></div>
     <div>Webauthn public key: <small>{buf2hex(owner.attestation.pubKey)}</small></div>
     <div>Webauthn credential id: <small>{buf2hex(owner.attestation.credentialId)}</small></div>
 

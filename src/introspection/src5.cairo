@@ -5,23 +5,23 @@ mod src5_component {
     };
     use argent::introspection::interface::{ISRC5, ISRC5Legacy};
     use argent::introspection::interface::{SRC5_INTERFACE_ID, SRC5_INTERFACE_ID_OLD};
-    use argent::outside_execution::interface::{
-        ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1
-    };
+    use argent::outside_execution::interface::{ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_2};
 
     #[storage]
     struct Storage {}
 
     #[embeddable_as(SRC5Impl)]
-    impl SRC5<TContractState, +HasComponent<TContractState>> of ISRC5<ComponentState<TContractState>> {
-        fn supports_interface(self: @ComponentState<TContractState>, interface_id: felt252) -> bool {
+    impl SRC5<
+        TContractState, +HasComponent<TContractState>
+    > of ISRC5<ComponentState<TContractState>> {
+        fn supports_interface(
+            self: @ComponentState<TContractState>, interface_id: felt252
+        ) -> bool {
             if interface_id == SRC5_INTERFACE_ID {
                 true
             } else if interface_id == SRC5_ACCOUNT_INTERFACE_ID {
                 true
-            } else if interface_id == ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0 {
-                true
-            } else if interface_id == ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1 {
+            } else if interface_id == ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_2 {
                 true
             } else if interface_id == SRC5_INTERFACE_ID_OLD {
                 true
@@ -36,8 +36,12 @@ mod src5_component {
     }
 
     #[embeddable_as(SRC5LegacyImpl)]
-    impl SRC5Legacy<TContractState, +HasComponent<TContractState>> of ISRC5Legacy<ComponentState<TContractState>> {
-        fn supportsInterface(self: @ComponentState<TContractState>, interfaceId: felt252) -> felt252 {
+    impl SRC5Legacy<
+        TContractState, +HasComponent<TContractState>
+    > of ISRC5Legacy<ComponentState<TContractState>> {
+        fn supportsInterface(
+            self: @ComponentState<TContractState>, interfaceId: felt252
+        ) -> felt252 {
             if self.supports_interface(interfaceId) {
                 1
             } else {

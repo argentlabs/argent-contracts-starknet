@@ -54,83 +54,88 @@
     sendPromise = undefined;
   };
 </script>
-
-{#await retrieveOwnerOnLoad()}
-  <p>Retrieving...</p>
-{:then}
-<h1>1. Create keys</h1>
-{#if !owner}
-  <input type="text" bind:value={pubKey} autocomplete="username webauthn"/>
-  <button on:click={handleClickReuseOwner}>Re-use passkey</button>
-  <br />
-  <br />
-  <form>
-    <input type="text" bind:value={username}/>
-    <button on:click={handleClickCreateOwner} type="submit">Register</button>
-  </form>
-  {:else}
-    <button on:click={handleCleanLocalStorage}>Remove account</button>
+<div class="centered-element">
+  {#await retrieveOwnerOnLoad()}
+    <p>Retrieving...</p>
+  {:then}
+  <h1>1. Create keys</h1>
+  {#if !owner}
+    <input type="text" bind:value={pubKey} autocomplete="username webauthn"/>
+    <button on:click={handleClickReuseOwner}>Re-use passkey</button>
     <br />
     <br />
-    <div>Username: <small>{owner.attestation.username}</small></div>
-    <div>Webauthn public key: <small>{buf2hex(owner.attestation.pubKey)}</small></div>
-    <div>Webauthn credential id: <small>{buf2hex(owner.attestation.credentialId)}</small></div>
+    <form>
+      <input type="text" bind:value={username}/>
+      <button on:click={handleClickCreateOwner} type="submit">Register</button>
+    </form>
+    {:else}
+      <button on:click={handleCleanLocalStorage}>Remove account</button>
+      <br />
+      <br />
+      <div>Username: <small>{owner.attestation.username}</small></div>
+      <div>Webauthn public key: <small>{buf2hex(owner.attestation.pubKey)}</small></div>
+      <div>Webauthn credential id: <small>{buf2hex(owner.attestation.credentialId)}</small></div>
 
-    <!-- TODO SHOULD DECLARE TOP LEVEL -->
-    <!-- This is blocking and can be annoying, fix would be to send it to a web worker to avoid that -->
-    {#await declareAccount(provider)}
-      <p>Declaring...</p>
-    {:then classHash}
-      <p />
-      <h1>2. Deploy account</h1>
-      <div>Class hash: <small>{classHash}</small></div>
-      {#if !account}
+      <!-- TODO SHOULD DECLARE TOP LEVEL -->
+      <!-- This is blocking and can be annoying, fix would be to send it to a web worker to avoid that -->
+      {#await declareAccount(provider)}
+        <p>Declaring...</p>
+      {:then classHash}
         <p />
-        {#await retrieveAccountOnLoad(classHash)}
-          <p>Retrieving...</p>
-        {/await}
-        {#if !deployPromise}
-          <button on:click={() => (deployPromise = handleClickDeployWallet(classHash))}>Deploy</button>
-        {/if}
-        {#await deployPromise}
-          <p>Deploying...</p>
-        {:catch error}
-          <p style="color: red">Couldn't deploy account: {error.message}</p>
-        {/await}
-      {:else}
-        <div>Account address: <small>{account.address}</small></div>
-        <h1>3. Send transaction</h1>
-        <p>Transfer 1 wei to address {recipient}:</p>
-        <input type="text" bind:value={recipient} />
-        <br />
-        <br />
-        {#if !transactionHash}
-          {#if !sendPromise}
-            <button on:click={() => (sendPromise = handleClickSendTransaction())}>Send</button>
+        <h1>2. Deploy account</h1>
+        <div>Class hash: <small>{classHash}</small></div>
+        {#if !account}
+          <p />
+          {#await retrieveAccountOnLoad(classHash)}
+            <p>Retrieving...</p>
+          {/await}
+          {#if !deployPromise}
+            <button on:click={() => (deployPromise = handleClickDeployWallet(classHash))}>Deploy</button>
           {/if}
-          {#await sendPromise}
-            <p>Confirming...</p>
+          {#await deployPromise}
+            <p>Deploying...</p>
           {:catch error}
-            <p style="color: red">Couldn't send transaction: {error.message}</p>
+            <p style="color: red">Couldn't deploy account: {error.message}</p>
           {/await}
         {:else}
-          <div>Transaction hash: <small>{transactionHash}</small></div>
+          <div>Account address: <small>{account.address}</small></div>
+          <h1>3. Send transaction</h1>
+          <p>Transfer 1 wei to address {recipient}:</p>
+          <input type="text" bind:value={recipient} />
+          <br />
+          <br />
+          {#if !transactionHash}
+            {#if !sendPromise}
+              <button on:click={() => (sendPromise = handleClickSendTransaction())}>Send</button>
+            {/if}
+            {#await sendPromise}
+              <p>Confirming...</p>
+            {:catch error}
+              <p style="color: red">Couldn't send transaction: {error.message}</p>
+            {/await}
+          {:else}
+            <div>Transaction hash: <small>{transactionHash}</small></div>
+          {/if}
         {/if}
-      {/if}
-    {:catch error}
-      <p style="color: red">Couldn't declare account: {error.message}</p>
-    {/await}
-  {/if}
-{/await}
-
+      {:catch error}
+        <p style="color: red">Couldn't declare account: {error.message}</p>
+      {/await}
+    {/if}
+  {/await}
+</div>
 <style>
   :global(body) {
-    margin: 0;
-    padding-bottom: 50px;
-    text-align: center;
+    text-align: left;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
       "Droid Sans", "Helvetica Neue", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+.centered-element{
+    margin-left: auto;
+    margin-right: auto;
+    padding: 15px;
+    width: 700px;
+}
 </style>

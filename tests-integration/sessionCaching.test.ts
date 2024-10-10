@@ -50,7 +50,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
-      const { accountWithDappSigner, sessionHash } = await setupSession(
+      const { accountWithDappSigner, sessionHash, authorizationSignature } = await setupSession(
         guardian as StarknetKeyPair,
         account,
         allowedMethods,
@@ -59,10 +59,13 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         useCaching,
       );
 
-      await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
+      await accountContract.is_session_authorization_cached(sessionHash, authorizationSignature).should.eventually.be
+        .false;
       const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
-      await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.equal(useCaching);
+      await accountContract
+        .is_session_authorization_cached(sessionHash, authorizationSignature)
+        .should.eventually.be.equal(useCaching);
 
       await account.waitForTransaction(transaction_hash);
       await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
@@ -136,7 +139,8 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       if (useCaching) {
         const { transaction_hash } = await accountWithDappSigner.execute(calls);
         await account.waitForTransaction(transaction_hash);
-        await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.true;
+        await accountContract.is_session_authorization_cached(sessionHash, authorizationSignature).should.eventually.be
+          .true;
       }
 
       await expectRevertWithErrorMessage(
@@ -212,7 +216,8 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       if (useCaching) {
         const { transaction_hash } = await accountWithDappSigner.execute(calls);
         await account.waitForTransaction(transaction_hash);
-        await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.true;
+        await accountContract.is_session_authorization_cached(sessionHash, authorizationSignature).should.eventually.be
+          .true;
       }
 
       await expectRevertWithErrorMessage(
@@ -319,7 +324,8 @@ describe("Hybrid Session Account: execute session calls with caching", function 
     await account.waitForTransaction(transaction_hash);
 
     // check that the session is cached
-    await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.true;
+    await accountContract.is_session_authorization_cached(sessionHash, authorizationSignature).should.eventually.be
+      .true;
 
     let sessionToken = await dappService.getSessionToken(
       calls,

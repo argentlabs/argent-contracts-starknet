@@ -25,7 +25,7 @@ const SECP_256_K1_HALF: u256 = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03
 
 
 /// @notice The type of the signer that this version of the accounts supports
-#[derive(Drop, Copy, PartialEq, Serde, Default)]
+#[derive(Drop, Copy, PartialEq, Serde, Default, starknet::Store)]
 enum SignerType {
     #[default]
     Starknet,
@@ -63,7 +63,7 @@ enum Signer {
     Webauthn: WebauthnSigner,
 }
 
-#[derive(Drop, Copy, Serde, PartialEq)]
+#[derive(Drop, Copy, Serde, PartialEq, starknet::Store, Default)]
 struct SignerStorageValue {
     stored_value: felt252,
     signer_type: SignerType,

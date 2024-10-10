@@ -1,10 +1,10 @@
 mod test_asserts;
 mod test_comp_multisig;
 mod test_comp_recovery_external;
-mod test_comp_recovery_threshold;
 mod test_comp_signer_list;
 mod test_comp_src5;
 mod test_eip191;
+mod test_linked_set;
 mod test_offchain_hashing;
 mod test_secp256k1;
 mod test_secp256r1;
@@ -12,7 +12,7 @@ mod test_transaction_version;
 
 // Re-export the test setup functions to have them all available in one place
 use setup::{
-    account_test_setup::{
+    argent_account_setup::{
         ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
         initialize_account_without_guardian
     },
@@ -42,7 +42,7 @@ mod multisig {
 }
 
 mod setup {
-    mod account_test_setup;
+    mod argent_account_setup;
     mod constants;
     mod multisig_test_setup;
     mod utils;

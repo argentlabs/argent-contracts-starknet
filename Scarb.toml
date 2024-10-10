@@ -13,11 +13,12 @@ build-external-contracts = ["openzeppelin_presets::account::AccountUpgradeable"]
 [dependencies]
 starknet = "2.8.2"
 assert_macros = "2.8.2"
-snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.31.0" }
+snforge_std = "0.31.0"
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b0805" }
 alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b0805" }
 alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev="e1b0805" }
-openzeppelin_security = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.15.0" }
-openzeppelin_presets = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.15.0" }
+openzeppelin_security = "0.15.0"
+openzeppelin_presets = "0.15.0"
 
 [tool.fmt]
 max-line-length = 120
@@ -30,6 +31,7 @@ lint = "yarn eslint ."
 test-ts = "scarb --profile release build && yarn tsc && yarn mocha tests-integration/*.test.ts"
 test-multisig = "scarb --profile release build && yarn tsc && yarn mocha tests-integration/multisig*.test.ts"
 test-session = "scarb --profile release build && yarn tsc && yarn mocha tests-integration/session*.test.ts"
+test-multiowner = "scarb --profile release build && yarn tsc && yarn mocha tests-integration/multiowner/*.test.ts"
 test-list = "scarb --profile release build && yarn tsc && yarn mocha --dry-run tests-integration/*.test.ts"
 start-devnet = "docker build -t devnet . && docker run -d -p 127.0.0.1:5050:5050 devnet"
 kill-devnet = "docker ps -q --filter 'ancestor=devnet' | xargs docker stop"
@@ -38,3 +40,6 @@ deploy-account = "scarb --profile release build && node --loader ts-node/esm scr
 deploy-multisig = "scarb --profile release build && node --loader ts-node/esm scripts/deploy-multisig.ts"
 generate-signature = "node --loader ts-node/esm ./scripts/generate-signature.ts"
 update-webauthn-dapp = "scarb --profile release build && cp target/release/*_ArgentAccount* examples/webauthn/src/lib && scarb run format"
+
+# Allows to use the repository as dependency in other projects
+[lib]

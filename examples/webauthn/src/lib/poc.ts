@@ -4,39 +4,53 @@ import accountSierra from "./argent_ArgentAccount.contract_class.json";
 import { buf2hex, hex2buf, hexStringToUint8Array } from "./bytes";
 import { ArgentSigner } from "./signers";
 import { fundAccount, getEthContract, loadDeployer, type ProviderType } from "./starknet";
-import { createWebauthnAttestation, requestSignature } from "./webauthnAttestation";
+import { WebauthnAttestation, createWebauthnAttestation, requestSignature } from "./webauthnAttestation";
 import { WebauthnOwner } from "./webauthnOwner";
 
-export const storageKey = "webauthnAttestation";
+const storageKey = "webauthnAttestation";
 
 export async function cleanLocalStorage() {
   localStorage.removeItem(storageKey);
 }
 
-export async function retrieveOwnerFromLocalStorage(): Promise<WebauthnOwner | undefined> {
-  // Retrieve the attestation from local storage if it exists, otherwise create a new one
-  const rawIdBase64 = localStorage.getItem(storageKey);
-  console.log("retrieving webauthn key (attestation)...");
-  if (!rawIdBase64) {
-    console.log("no webauthn key found in local storage");
-    return undefined;
+export function printLocalStorage() {
+  console.log(getStoredAttestations());
+}
+
+function getStoredAttestations(): WebauthnAttestation[] {
+  let storedArray = localStorage.getItem(storageKey);
+  if (!storedArray) {
+    storedArray = "[]";
   }
-
-  const attestation = JSON.parse(rawIdBase64);
-  attestation.pubKey = hex2buf(attestation.encodedX);
-  attestation.credentialId = hex2buf(attestation.encodedCredentialId);
-
-  console.log("retrieved webauthn public key:", buf2hex(attestation.pubKey));
-  return new WebauthnOwner(attestation, requestSignature);
+  const unparsedArray = JSON.parse(storedArray);
+  return unparsedArray.map((attestation: any) => {
+    attestation.pubKey = hex2buf(attestation.encodedX);
+    attestation.credentialId = hex2buf(attestation.encodedCredentialId);
+    return attestation;
+  });
 }
 
 export async function retrievePasskey(
   email: string,
   rpId: string,
   origin: string,
-  pubKey: string,
+  pubKey: string | undefined,
 ): Promise<WebauthnOwner | undefined> {
-  try { 
+  console.log("retrieving webauthn key for email", email);
+  console.log(getStoredAttestations());
+  let attestation = getStoredAttestations().find((attestation) => {
+    return attestation.email == email;
+  });
+
+  if (!attestation) {
+    attestation!.email = email;
+    attestation!.origin = origin;
+    attestation!.rpId = rpId;
+    // TODO assert there is a pubkey
+    attestation!.pubKey = hexStringToUint8Array(pubKey!);
+  }
+
+  try {
     // Backend should provide pubkey
     const credential = await navigator.credentials.get({
       mediation: "optional",
@@ -48,33 +62,25 @@ export async function retrievePasskey(
     if (!credential) {
       return undefined;
     }
-    const attestation = credential as PublicKeyCredential;
-    console.log(credential);
-
-    const credentialId = new Uint8Array(attestation.rawId);
-    return new WebauthnOwner(
-      {
-        email,
-        rpId,
-        origin,
-        credentialId,
-        pubKey: hexStringToUint8Array(pubKey),
-      },
-      requestSignature,
-    );
+    // TODO Do some checks against retrieved credential
+    return new WebauthnOwner(attestation!, requestSignature);
   } catch (err) {
     return undefined;
   }
 }
 
-export async function createOwner(email: string, rpId: string, origin: string): Promise<undefined> {
+export async function createOwner(email: string, rpId: string, origin: string): Promise<WebauthnOwner> {
   console.log("creating webauthn key (attestation)...");
   const attestation = await createWebauthnAttestation(email, rpId, origin);
 
   const encodedCredentialId = buf2hex(attestation.credentialId);
   const encodedX = buf2hex(attestation.pubKey);
-  localStorage.setItem(storageKey, JSON.stringify({ email, rpId, origin, encodedX, encodedCredentialId }));
+  const storedArray = localStorage.getItem(storageKey) || "[]";
+  const storedAttestations = JSON.parse(storedArray);
+  storedAttestations.push({ email, rpId, origin, encodedX, encodedCredentialId });
+  localStorage.setItem(storageKey, JSON.stringify(storedAttestations));
   console.log("created webauthn public key:", buf2hex(attestation.pubKey));
+  return new WebauthnOwner(attestation, requestSignature);
 }
 
 export async function declareAccount(provider: ProviderType): Promise<string> {

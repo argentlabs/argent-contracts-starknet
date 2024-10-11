@@ -25,7 +25,9 @@ function getStoredAttestations(): WebauthnAttestation[] {
   const unparsedArray = JSON.parse(storedArray);
   return unparsedArray.map((attestation: any) => {
     attestation.pubKey = hex2buf(attestation.encodedX);
+    delete attestation.encodedX;
     attestation.credentialId = hex2buf(attestation.encodedCredentialId);
+    delete attestation.encodedCredentialId;
     return attestation;
   });
 }

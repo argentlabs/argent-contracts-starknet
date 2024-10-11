@@ -47,6 +47,7 @@ export const createWebauthnAttestation = async (
 
   const credentialId = new Uint8Array(attestation.rawId);
   const publicKey = new Uint8Array(attestationResponse.getPublicKey()!);
+  // This public key needs to be stored on the backend
   const x = publicKey.slice(-64, -32);
 
   return { email, rpId, origin, credentialId, pubKey: x };

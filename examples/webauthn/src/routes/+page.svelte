@@ -31,7 +31,7 @@
   const handleClickCreateOwner = async () => {
     await createOwner(email, rpId, window.location.origin);
     // For some reason need to wait for 1password to work
-    await setTimeout(() =>  retrieveOwnerOnLoad(), 500);
+    await setTimeout(() =>  retrieveOwnerOnLoad(), 400);
   };
 
   const handleClickReuseOwner = async () => {

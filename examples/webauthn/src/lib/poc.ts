@@ -13,7 +13,7 @@ export async function cleanLocalStorage() {
   localStorage.removeItem(storageKey);
 }
 
-export async function retrieveOwner(): Promise<WebauthnOwner | undefined> {
+export async function retrieveOwnerFromLocalStorage(): Promise<WebauthnOwner | undefined> {
   // Retrieve the attestation from local storage if it exists, otherwise create a new one
   const rawIdBase64 = localStorage.getItem(storageKey);
   console.log("retrieving webauthn key (attestation)...");

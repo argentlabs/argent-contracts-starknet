@@ -4,7 +4,7 @@
   import { buf2hex } from "$lib/bytes";
   import {
     createOwner,
-    retrieveOwner,
+    retrieveOwnerFromLocalStorage,
     cleanLocalStorage,
     deployAccount,
     retrievePasskey,
@@ -30,7 +30,8 @@
 
   const handleClickCreateOwner = async () => {
     await createOwner(email, rpId, window.location.origin);
-    await retrieveOwnerOnLoad();
+    // For some reason need to wait for 1password to work
+    await setTimeout(() =>  retrieveOwnerOnLoad(), 500);
   };
 
   const handleClickReuseOwner = async () => {
@@ -39,7 +40,7 @@
 
   // https://www.reddit.com/r/Passkeys/comments/1aov4m6/whats_the_point_of_google_chrome_creating_synced/
   const retrieveOwnerOnLoad = async () => {
-    owner = await retrieveOwner();
+    owner = await retrieveOwnerFromLocalStorage();
   };
 
   const handleClickDeployWallet = async (classHash: string) => {

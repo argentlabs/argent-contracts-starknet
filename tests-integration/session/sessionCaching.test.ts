@@ -4,7 +4,6 @@ import {
   AllowedMethod,
   SignerType,
   StarknetKeyPair,
-  compileSessionSignature,
   deployAccount,
   deployAccountWithGuardianBackup,
   deployer,
@@ -52,7 +51,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
-      const { accountWithDappSigner, sessionHash, authorizationSignature } = await setupSession(
+      const { accountWithDappSigner, sessionHash } = await setupSession(
         guardian as StarknetKeyPair,
         account,
         allowedMethods,
@@ -134,23 +133,20 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         cacheOwnerGuid: useCaching ? owner.guid : 0n,
         isLegacyAccount: false,
       });
-      sessionToken = {
-        ...sessionToken,
-        session_authorization: [...sessionToken.session_authorization, "0x00"],
-      };
+      sessionToken.session_authorization = [...sessionToken.session_authorization, "0x00"];
       if (useCaching) {
         const { transaction_hash } = await accountWithDappSigner.execute(calls);
         await account.waitForTransaction(transaction_hash);
         await accountContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.true;
         await expectRevertWithErrorMessage(
           "session/invalid-auth-len",
-          executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionToken)),
+          executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
         );
       }
 
       await expectRevertWithErrorMessage(
         "argent/invalid-signature-len",
-        executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionToken)),
+        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
       );
     });
 
@@ -219,6 +215,11 @@ describe("Hybrid Session Account: execute session calls with caching", function 
           s: sessionToken.session_signature.variant.Starknet.s,
         }),
       };
+      sessionToken.session_signature = signerTypeToCustomEnum(SignerType.Starknet, {
+        pubkey: 100n,
+        r: sessionToken.session_signature.variant.Starknet.r,
+        s: sessionToken.session_signature.variant.Starknet.s,
+      });
 
       if (useCaching) {
         const { transaction_hash } = await accountWithDappSigner.execute(calls);
@@ -228,21 +229,18 @@ describe("Hybrid Session Account: execute session calls with caching", function 
 
       await expectRevertWithErrorMessage(
         "session/session-key-mismatch",
-        executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongPub)),
+        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
       );
 
-      const sessionTokenWrongSig = {
-        ...sessionToken,
-        session_signature: signerTypeToCustomEnum(SignerType.Starknet, {
-          pubkey: sessionToken.session_signature.variant.Starknet.pubkey,
-          r: 200n,
-          s: 100n,
-        }),
-      };
+      sessionToken.session_signature = signerTypeToCustomEnum(SignerType.Starknet, {
+        pubkey: sessionToken.session_signature.variant.Starknet.pubkey,
+        r: 200n,
+        s: 100n,
+      });
 
       await expectRevertWithErrorMessage(
         "session/invalid-session-sig",
-        executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongSig)),
+        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
       );
     });
 
@@ -275,32 +273,26 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         cacheOwnerGuid: useCaching ? owner.guid : 0n,
         isLegacyAccount: false,
       });
-      const sessionTokenWrongPub = {
-        ...sessionToken,
-        guardian_signature: signerTypeToCustomEnum(SignerType.Starknet, {
-          pubkey: 100n,
-          r: sessionToken.guardian_signature.variant.Starknet.r,
-          s: sessionToken.guardian_signature.variant.Starknet.s,
-        }),
-      };
 
+      sessionToken.guardian_signature = signerTypeToCustomEnum(SignerType.Starknet, {
+        pubkey: 100n,
+        r: sessionToken.guardian_signature.variant.Starknet.r,
+        s: sessionToken.guardian_signature.variant.Starknet.s,
+      });
       await expectRevertWithErrorMessage(
         "session/guardian-key-mismatch",
-        executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongPub)),
+        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
       );
 
-      const sessionTokenWrongSig = {
-        ...sessionToken,
-        guardian_signature: signerTypeToCustomEnum(SignerType.Starknet, {
-          pubkey: sessionToken.guardian_signature.variant.Starknet.pubkey,
-          r: 200n,
-          s: 100n,
-        }),
-      };
+      sessionToken.guardian_signature = signerTypeToCustomEnum(SignerType.Starknet, {
+        pubkey: sessionToken.guardian_signature.variant.Starknet.pubkey,
+        r: 200n,
+        s: 100n,
+      });
 
       await expectRevertWithErrorMessage(
         "session/invalid-backend-sig",
-        executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongSig)),
+        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
       );
     });
   }
@@ -342,13 +334,10 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       cacheOwnerGuid: owner.guid,
       isLegacyAccount: false,
     });
-    sessionToken = {
-      ...sessionToken,
-      session_authorization: Array(10).fill("1"),
-    };
+    sessionToken.session_authorization = Array(10).fill("1");
     await expectRevertWithErrorMessage(
       "session/invalid-auth-len",
-      executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionToken)),
+      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
     );
   });
   describe("Session caching with legacy account", function () {
@@ -384,7 +373,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       const newContract = await manager.loadContract(account.address, argentAccountClassHash);
       await newContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.equal(useCaching);
     });
-    it.only("Caching is unaffected between contract upgrades and if you add more owners", async function () {
+    it("Caching is unaffected between contract upgrades and if you add more owners", async function () {
       const { account, accountContract, guardian, owner } = await deployAccount({
         classHash: await manager.declareFixtureContract("ArgentAccount-0.4.0"),
       });

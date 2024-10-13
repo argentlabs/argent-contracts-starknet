@@ -5,30 +5,23 @@ import {
   CallData,
   InvocationsSignerDetails,
   TypedDataRevision,
-  byteArray,
   ec,
   hash,
-  merkle,
   num,
-  selector,
-  shortString,
   typedData,
 } from "starknet";
 import {
-  ALLOWED_METHOD_HASH,
   AllowedMethod,
   ArgentAccount,
   BackendService,
-  OffChainSession,
-  OnChainSession,
   OutsideExecution,
   RawSigner,
+  Session,
   SessionToken,
   SignerType,
   StarknetKeyPair,
   calculateTransactionHash,
   getOutsideCall,
-  getSessionTypedData,
   getSignerDetails,
   getTypedData,
   manager,
@@ -36,30 +29,20 @@ import {
   signerTypeToCustomEnum,
 } from "..";
 
-export function compileSessionSignature(sessionToken: any): string[] {
-  const SESSION_MAGIC = shortString.encodeShortString("session-token");
-  return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
-}
-
 export class DappService {
   constructor(
     private argentBackend: BackendService,
     public sessionKey: StarknetKeyPair = randomStarknetKeyPair(),
   ) {}
 
-  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: bigint): OffChainSession {
+  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: bigint): Session {
     const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
-    return {
-      expires_at: Number(expires_at),
-      allowed_methods,
-      metadata,
-      session_key_guid: this.sessionKey.guid,
-    };
+    return new Session(expires_at, allowed_methods, metadata, this.sessionKey.guid);
   }
 
   public getAccountWithSessionSigner(
     account: ArgentAccount,
-    completedSession: OffChainSession,
+    completedSession: Session,
     sessionAuthorizationSignature: ArraySignatureType,
     cacheOwnerGuid = 0n,
     isLegacyAccount = false,
@@ -100,7 +83,7 @@ export class DappService {
   public async getSessionToken(arg: {
     calls: Call[];
     account: ArgentAccount;
-    completedSession: OffChainSession;
+    completedSession: Session;
     sessionAuthorizationSignature: ArraySignatureType;
     cacheOwnerGuid: bigint;
     isLegacyAccount: boolean;
@@ -121,7 +104,7 @@ export class DappService {
   }
 
   public async getOutsideExecutionCall(
-    completedSession: OffChainSession,
+    completedSession: Session,
     sessionAuthorizationSignature: ArraySignatureType,
     calls: Call[],
     revision: TypedDataRevision,
@@ -164,7 +147,7 @@ export class DappService {
 
   private async signRegularTransaction(args: {
     sessionAuthorizationSignature: ArraySignatureType;
-    completedSession: OffChainSession;
+    completedSession: Session;
     calls: Call[];
     transactionDetail: InvocationsSignerDetails;
     cacheOwnerGuid: bigint;
@@ -189,12 +172,12 @@ export class DappService {
       cacheOwnerGuid,
       isLegacyAccount,
     });
-    return compileSessionSignature(sessionToken);
+    return sessionToken.compileSignature();
   }
 
   private async compileSessionSignatureFromOutside(args: {
     sessionAuthorizationSignature: ArraySignatureType;
-    completedSession: OffChainSession;
+    completedSession: Session;
     transactionHash: string;
     calls: Call[];
     accountAddress: string;
@@ -214,7 +197,6 @@ export class DappService {
       cacheOwnerGuid,
       isLegacyAccount,
     } = args;
-    const session = this.compileSessionHelper(completedSession);
 
     const guardianSignature = await this.argentBackend.signOutsideTxAndSession(
       calls,
@@ -233,7 +215,6 @@ export class DappService {
       isLegacyAccount,
     );
     const sessionToken = await this.compileSessionTokenHelper({
-      session,
       completedSession,
       calls,
       sessionSignature,
@@ -244,12 +225,12 @@ export class DappService {
       accountAddress,
     });
 
-    return compileSessionSignature(sessionToken);
+    return sessionToken.compileSignature();
   }
 
   private async buildSessionToken(args: {
     sessionAuthorizationSignature: ArraySignatureType;
-    completedSession: OffChainSession;
+    completedSession: Session;
     transactionHash: string;
     calls: Call[];
     accountAddress: string;
@@ -267,8 +248,6 @@ export class DappService {
       cacheOwnerGuid,
       isLegacyAccount,
     } = args;
-    const session = this.compileSessionHelper(completedSession);
-
     const guardianSignature = await this.argentBackend.signTxAndSession(
       calls,
       transactionDetail,
@@ -284,7 +263,6 @@ export class DappService {
       isLegacyAccount,
     );
     return await this.compileSessionTokenHelper({
-      session,
       completedSession,
       calls,
       sessionSignature: session_signature,
@@ -297,13 +275,13 @@ export class DappService {
   }
 
   private async signTxAndSession(
-    completedSession: OffChainSession,
+    completedSession: Session,
     transactionHash: string,
     accountAddress: string,
     cacheOwnerGuid: bigint,
     isLegacyAccount: boolean,
   ): Promise<bigint[]> {
-    const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
+    const sessionMessageHash = typedData.getMessageHash(await completedSession.getTypedData(), accountAddress);
     const sessionWithTxHash = hash.computePoseidonHashOnElements([
       transactionHash,
       sessionMessageHash,
@@ -313,45 +291,8 @@ export class DappService {
     return [signature.r, signature.s];
   }
 
-  private buildMerkleTree(completedSession: OffChainSession): merkle.MerkleTree {
-    const leaves = completedSession.allowed_methods.map((method) =>
-      hash.computePoseidonHashOnElements([
-        ALLOWED_METHOD_HASH,
-        method["Contract Address"],
-        selector.getSelectorFromName(method.selector),
-      ]),
-    );
-    return new merkle.MerkleTree(leaves, hash.computePoseidonHash);
-  }
-
-  private getSessionProofs(completedSession: OffChainSession, calls: Call[]): string[][] {
-    const tree = this.buildMerkleTree(completedSession);
-
-    return calls.map((call) => {
-      const allowedIndex = completedSession.allowed_methods.findIndex((allowedMethod) => {
-        return allowedMethod["Contract Address"] == call.contractAddress && allowedMethod.selector == call.entrypoint;
-      });
-      return tree.getProof(tree.leaves[allowedIndex], tree.leaves);
-    });
-  }
-
-  private compileSessionHelper(completedSession: OffChainSession): OnChainSession {
-    const bArray = byteArray.byteArrayFromString(completedSession.metadata as string);
-    const elements = [bArray.data.length, ...bArray.data, bArray.pending_word, bArray.pending_word_len];
-    const metadataHash = hash.computePoseidonHashOnElements(elements);
-
-    const session = {
-      expires_at: completedSession.expires_at,
-      allowed_methods_root: this.buildMerkleTree(completedSession).root.toString(),
-      metadata_hash: metadataHash,
-      session_key_guid: completedSession.session_key_guid,
-    };
-    return session;
-  }
-
   private async compileSessionTokenHelper(args: {
-    session: OnChainSession;
-    completedSession: OffChainSession;
+    completedSession: Session;
     calls: Call[];
     sessionSignature: bigint[];
     cache_owner_guid: bigint;
@@ -361,7 +302,6 @@ export class DappService {
     accountAddress: string;
   }): Promise<SessionToken> {
     const {
-      session,
       completedSession,
       calls,
       sessionSignature,
@@ -372,21 +312,19 @@ export class DappService {
       accountAddress,
     } = args;
     const sessionContract = await manager.loadContract(accountAddress);
-    const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
+    const sessionMessageHash = typedData.getMessageHash(await completedSession.getTypedData(), accountAddress);
     const isSessionCached = isLegacyAccount
       ? await sessionContract.is_session_authorization_cached(sessionMessageHash)
       : await sessionContract.is_session_authorization_cached(sessionMessageHash, cache_owner_guid);
-    return {
-      session,
+    return SessionToken.build(
+      completedSession,
       cache_owner_guid,
-      session_authorization: isSessionCached ? [] : session_authorization,
-      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
-      guardian_signature: this.getStarknetSignatureType(
-        this.argentBackend.getBackendKey(accountAddress),
-        guardianSignature,
-      ),
-      proofs: this.getSessionProofs(completedSession, calls),
-    };
+      isSessionCached ? [] : session_authorization,
+      this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
+      this.getStarknetSignatureType(this.argentBackend.getBackendKey(accountAddress), guardianSignature),
+      calls,
+      isLegacyAccount,
+    );
   }
 
   // function needed as starknetSignatureType in signer.ts is already compiled

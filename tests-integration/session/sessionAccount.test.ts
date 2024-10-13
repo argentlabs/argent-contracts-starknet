@@ -2,7 +2,6 @@ import { Contract, num } from "starknet";
 import {
   AllowedMethod,
   StarknetKeyPair,
-  compileSessionSignature,
   deployAccount,
   deployer,
   executeWithCustomSig,
@@ -174,15 +173,12 @@ describe("Hybrid Session Account: execute calls", function () {
       isLegacyAccount: false,
       cacheOwnerGuid: 0n,
     });
-    const sessionTokenWrongProofs = {
-      ...sessionToken,
-      proofs: [["0x2", "0x1"]],
-    };
+    sessionToken.proofs = [["0x1", "0x2"]];
 
     // happens when the the number of proofs is not equal to the number of calls
     await expectRevertWithErrorMessage(
       "session/unaligned-proofs",
-      executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongProofs)),
+      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
     );
   });
 });

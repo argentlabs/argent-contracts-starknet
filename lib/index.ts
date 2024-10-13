@@ -17,7 +17,6 @@ export * from "./receipts";
 export * from "./recovery";
 export * from "./session/argentServices";
 export * from "./session/session";
-export * from "./session/sessionClass";
 export * from "./session/sessionServices";
 export * from "./signers/legacy";
 export * from "./signers/secp256";

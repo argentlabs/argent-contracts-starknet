@@ -43,7 +43,7 @@ export class DappService {
   public getAccountWithSessionSigner(
     account: ArgentAccount,
     completedSession: Session,
-    sessionAuthorizationSignature: ArraySignatureType,
+    authorizationSignature: ArraySignatureType,
     cacheOwnerGuid = 0n,
     isLegacyAccount = false,
   ) {
@@ -69,7 +69,7 @@ export class DappService {
       }
     })((calls: Call[], transactionDetail: InvocationsSignerDetails) => {
       return this.signRegularTransaction({
-        sessionAuthorizationSignature,
+        authorizationSignature,
         completedSession,
         calls,
         transactionDetail,
@@ -84,15 +84,15 @@ export class DappService {
     calls: Call[];
     account: ArgentAccount;
     completedSession: Session;
-    sessionAuthorizationSignature: ArraySignatureType;
+    authorizationSignature: ArraySignatureType;
     cacheOwnerGuid: bigint;
     isLegacyAccount: boolean;
   }): Promise<SessionToken> {
-    const { calls, account, completedSession, sessionAuthorizationSignature, cacheOwnerGuid, isLegacyAccount } = arg;
+    const { calls, account, completedSession, authorizationSignature, cacheOwnerGuid, isLegacyAccount } = arg;
     const transactionDetail = await getSignerDetails(account, calls);
     const txHash = calculateTransactionHash(transactionDetail, calls);
     return this.buildSessionToken({
-      sessionAuthorizationSignature,
+      authorizationSignature,
       completedSession,
       transactionHash: txHash,
       calls,
@@ -105,7 +105,7 @@ export class DappService {
 
   public async getOutsideExecutionCall(
     completedSession: Session,
-    sessionAuthorizationSignature: ArraySignatureType,
+    authorizationSignature: ArraySignatureType,
     calls: Call[],
     revision: TypedDataRevision,
     accountAddress: string,
@@ -127,7 +127,7 @@ export class DappService {
     const currentTypedData = getTypedData(outsideExecution, await manager.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
     const signature = await this.compileSessionSignatureFromOutside({
-      sessionAuthorizationSignature,
+      authorizationSignature,
       completedSession,
       transactionHash: messageHash,
       calls,
@@ -146,24 +146,18 @@ export class DappService {
   }
 
   private async signRegularTransaction(args: {
-    sessionAuthorizationSignature: ArraySignatureType;
+    authorizationSignature: ArraySignatureType;
     completedSession: Session;
     calls: Call[];
     transactionDetail: InvocationsSignerDetails;
     cacheOwnerGuid: bigint;
     isLegacyAccount: boolean;
   }): Promise<ArraySignatureType> {
-    const {
-      sessionAuthorizationSignature,
-      completedSession,
-      calls,
-      transactionDetail,
-      cacheOwnerGuid,
-      isLegacyAccount,
-    } = args;
+    const { authorizationSignature, completedSession, calls, transactionDetail, cacheOwnerGuid, isLegacyAccount } =
+      args;
     const txHash = calculateTransactionHash(transactionDetail, calls);
     const sessionToken = await this.buildSessionToken({
-      sessionAuthorizationSignature,
+      authorizationSignature,
       completedSession,
       transactionHash: txHash,
       calls,
@@ -176,7 +170,7 @@ export class DappService {
   }
 
   private async compileSessionSignatureFromOutside(args: {
-    sessionAuthorizationSignature: ArraySignatureType;
+    authorizationSignature: ArraySignatureType;
     completedSession: Session;
     transactionHash: string;
     calls: Call[];
@@ -187,7 +181,7 @@ export class DappService {
     isLegacyAccount: boolean;
   }): Promise<ArraySignatureType> {
     const {
-      sessionAuthorizationSignature,
+      authorizationSignature,
       completedSession,
       transactionHash,
       calls,
@@ -214,22 +208,25 @@ export class DappService {
       cacheOwnerGuid,
       isLegacyAccount,
     );
-    const sessionToken = await this.compileSessionTokenHelper({
-      completedSession,
-      calls,
-      sessionSignature,
+
+    const sessionToken = await SessionToken.build({
+      session: completedSession,
       cache_owner_guid: cacheOwnerGuid,
+      session_authorization: authorizationSignature,
+      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
+      guardian_signature: this.getStarknetSignatureType(
+        this.argentBackend.getBackendKey(accountAddress),
+        guardianSignature,
+      ),
+      calls,
       isLegacyAccount,
-      session_authorization: sessionAuthorizationSignature,
-      guardianSignature,
-      accountAddress,
     });
 
     return sessionToken.compileSignature();
   }
 
   private async buildSessionToken(args: {
-    sessionAuthorizationSignature: ArraySignatureType;
+    authorizationSignature: ArraySignatureType;
     completedSession: Session;
     transactionHash: string;
     calls: Call[];
@@ -239,7 +236,7 @@ export class DappService {
     isLegacyAccount: boolean;
   }): Promise<SessionToken> {
     const {
-      sessionAuthorizationSignature,
+      authorizationSignature,
       completedSession,
       transactionHash,
       calls,
@@ -255,22 +252,25 @@ export class DappService {
       cacheOwnerGuid,
       isLegacyAccount,
     );
-    const session_signature = await this.signTxAndSession(
+    const sessionSignature = await this.signTxAndSession(
       completedSession,
       transactionHash,
       accountAddress,
       cacheOwnerGuid,
       isLegacyAccount,
     );
-    return await this.compileSessionTokenHelper({
-      completedSession,
-      calls,
-      sessionSignature: session_signature,
-      isLegacyAccount,
+    const isSessionCached = await completedSession.isSessionCached(accountAddress, cacheOwnerGuid, isLegacyAccount);
+    return await SessionToken.build({
+      session: completedSession,
       cache_owner_guid: cacheOwnerGuid,
-      session_authorization: sessionAuthorizationSignature,
-      guardianSignature,
-      accountAddress,
+      session_authorization: isSessionCached ? [] : authorizationSignature,
+      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
+      guardian_signature: this.getStarknetSignatureType(
+        this.argentBackend.getBackendKey(accountAddress),
+        guardianSignature,
+      ),
+      calls,
+      isLegacyAccount,
     });
   }
 
@@ -290,43 +290,6 @@ export class DappService {
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));
     return [signature.r, signature.s];
   }
-
-  private async compileSessionTokenHelper(args: {
-    completedSession: Session;
-    calls: Call[];
-    sessionSignature: bigint[];
-    cache_owner_guid: bigint;
-    isLegacyAccount: boolean;
-    session_authorization: string[];
-    guardianSignature: bigint[];
-    accountAddress: string;
-  }): Promise<SessionToken> {
-    const {
-      completedSession,
-      calls,
-      sessionSignature,
-      cache_owner_guid,
-      isLegacyAccount,
-      session_authorization,
-      guardianSignature,
-      accountAddress,
-    } = args;
-    const sessionContract = await manager.loadContract(accountAddress);
-    const sessionMessageHash = typedData.getMessageHash(await completedSession.getTypedData(), accountAddress);
-    const isSessionCached = isLegacyAccount
-      ? await sessionContract.is_session_authorization_cached(sessionMessageHash)
-      : await sessionContract.is_session_authorization_cached(sessionMessageHash, cache_owner_guid);
-    return SessionToken.build(
-      completedSession,
-      cache_owner_guid,
-      isSessionCached ? [] : session_authorization,
-      this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
-      this.getStarknetSignatureType(this.argentBackend.getBackendKey(accountAddress), guardianSignature),
-      calls,
-      isLegacyAccount,
-    );
-  }
-
   // function needed as starknetSignatureType in signer.ts is already compiled
   private getStarknetSignatureType(pubkey: BigNumberish, signature: bigint[]) {
     return signerTypeToCustomEnum(SignerType.Starknet, { pubkey, r: signature[0], s: signature[1] });

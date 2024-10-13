@@ -87,15 +87,25 @@ export class SessionToken {
     this.legacyMode = isLegacyAccount;
   }
 
-  public static async build(
-    session: Session,
-    cache_owner_guid: BigNumberish,
-    session_authorization: string[],
-    session_signature: CairoCustomEnum,
-    guardian_signature: CairoCustomEnum,
-    calls: Call[],
-    isLegacyFormat: boolean,
-  ): Promise<SessionToken> {
+  public static async build(args: {
+    session: Session;
+    cache_owner_guid: BigNumberish;
+    session_authorization: string[];
+    session_signature: CairoCustomEnum;
+    guardian_signature: CairoCustomEnum;
+    calls: Call[];
+    isLegacyAccount: boolean;
+  }): Promise<SessionToken> {
+    const {
+      session,
+      cache_owner_guid,
+      session_authorization,
+      session_signature,
+      guardian_signature,
+      calls,
+      isLegacyAccount: isLegacyFormat,
+    } = args;
+
     const onChainSession = session.toOnChainSession();
     const proofs = session.getProofs(calls);
 
@@ -112,33 +122,18 @@ export class SessionToken {
 
   public compileSignature(): string[] {
     const SESSION_MAGIC = shortString.encodeShortString("session-token");
-    if (this.legacyMode) {
-      return [SESSION_MAGIC, ...CallData.compile(this.toLegacyFormat())];
-    } else {
-      return [SESSION_MAGIC, ...CallData.compile(this.toCurrentFormat())];
-    }
-  }
-
-  private toLegacyFormat() {
-    return {
+    const tokenData = {
       session: this.session,
-      cache_authorization: this.cache_owner_guid !== 0n,
       session_authorization: this.session_authorization,
       session_signature: this.session_signature,
       guardian_signature: this.guardian_signature,
       proofs: this.proofs,
+      ...(this.legacyMode
+        ? { cache_authorization: this.cache_owner_guid !== 0n }
+        : { cache_owner_guid: this.cache_owner_guid }),
     };
-  }
 
-  private toCurrentFormat() {
-    return {
-      session: this.session,
-      cache_owner_guid: this.cache_owner_guid,
-      session_authorization: this.session_authorization,
-      session_signature: this.session_signature,
-      guardian_signature: this.guardian_signature,
-      proofs: this.proofs,
-    };
+    return [SESSION_MAGIC, ...CallData.compile(tokenData)];
   }
 }
 
@@ -179,6 +174,19 @@ export class Session {
       });
       return this.merkleTree.getProof(this.merkleTree.leaves[allowedIndex], this.merkleTree.leaves);
     });
+  }
+
+  public async isSessionCached(
+    accountAddress: string,
+    cache_owner_guid: bigint,
+    isLegacyAccount: boolean,
+  ): Promise<boolean> {
+    const sessionContract = await manager.loadContract(accountAddress);
+    const sessionMessageHash = typedData.getMessageHash(await this.getTypedData(), accountAddress);
+    const isSessionCached = isLegacyAccount
+      ? await sessionContract.is_session_authorization_cached(sessionMessageHash)
+      : await sessionContract.is_session_authorization_cached(sessionMessageHash, cache_owner_guid);
+    return isSessionCached;
   }
 
   public async getTypedData(): Promise<TypedData> {

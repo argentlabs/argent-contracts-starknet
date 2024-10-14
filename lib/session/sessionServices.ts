@@ -68,13 +68,22 @@ export class DappService {
         return this.signTransactionCallback(calls, transactionsDetail);
       }
     })((calls: Call[], transactionDetail: InvocationsSignerDetails) => {
-      return this.signRegularTransaction({
-        authorizationSignature,
-        completedSession,
-        calls,
-        transactionDetail,
-        cacheOwnerGuid,
-        isLegacyAccount,
+      return new Promise(async (resolve, reject) => {
+        try {
+          const sessionToken = await this.getSessionToken({
+            calls,
+            account,
+            completedSession,
+            authorizationSignature,
+            cacheOwnerGuid,
+            isLegacyAccount,
+            transactionDetail,
+          });
+          const signature = sessionToken.compileSignature();
+          resolve(signature);
+        } catch (error) {
+          reject(error);
+        }
       });
     });
     return new ArgentAccount(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
@@ -87,18 +96,50 @@ export class DappService {
     authorizationSignature: ArraySignatureType;
     cacheOwnerGuid: bigint;
     isLegacyAccount: boolean;
+    transactionDetail?: InvocationsSignerDetails;
   }): Promise<SessionToken> {
-    const { calls, account, completedSession, authorizationSignature, cacheOwnerGuid, isLegacyAccount } = arg;
-    const transactionDetail = await getSignerDetails(account, calls);
-    const txHash = calculateTransactionHash(transactionDetail, calls);
-    return this.buildSessionToken({
-      authorizationSignature,
-      completedSession,
-      transactionHash: txHash,
+    const {
       calls,
-      accountAddress: transactionDetail.walletAddress,
-      transactionDetail,
+      account,
+      completedSession,
+      authorizationSignature,
       cacheOwnerGuid,
+      isLegacyAccount,
+      transactionDetail: providedTransactionDetail,
+    } = arg;
+
+    let transactionDetail: InvocationsSignerDetails;
+    if (providedTransactionDetail) {
+      transactionDetail = providedTransactionDetail;
+    } else {
+      transactionDetail = await getSignerDetails(account, calls);
+    }
+
+    const transactionHash = calculateTransactionHash(transactionDetail, calls);
+    const accountAddress = transactionDetail.walletAddress;
+
+    const { sessionSignature, guardianSignature } = await this.generateSessionSignatures({
+      completedSession,
+      transactionHash,
+      calls,
+      accountAddress,
+      cacheOwnerGuid,
+      isLegacyAccount,
+      transactionDetail,
+    });
+
+    const isSessionCached = await completedSession.isSessionCached(accountAddress, cacheOwnerGuid, isLegacyAccount);
+
+    return new SessionToken({
+      session: completedSession,
+      cache_owner_guid: cacheOwnerGuid,
+      session_authorization: isSessionCached ? [] : authorizationSignature,
+      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
+      guardian_signature: this.getStarknetSignatureType(
+        this.argentBackend.getBackendKey(accountAddress),
+        guardianSignature,
+      ),
+      calls,
       isLegacyAccount,
     });
   }
@@ -126,89 +167,17 @@ export class DappService {
 
     const currentTypedData = getTypedData(outsideExecution, await manager.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
-    const signature = await this.compileSessionSignatureFromOutside({
-      authorizationSignature,
+
+    const { sessionSignature, guardianSignature } = await this.generateSessionSignatures({
       completedSession,
       transactionHash: messageHash,
       calls,
       accountAddress,
-      revision,
+      cacheOwnerGuid,
+      isLegacyAccount,
       outsideExecution,
-      cacheOwnerGuid,
-      isLegacyAccount,
-    });
-
-    return {
-      contractAddress: accountAddress,
-      entrypoint: revision == TypedDataRevision.ACTIVE ? "execute_from_outside_v2" : "execute_from_outside",
-      calldata: CallData.compile({ ...outsideExecution, signature }),
-    };
-  }
-
-  private async signRegularTransaction(args: {
-    authorizationSignature: ArraySignatureType;
-    completedSession: Session;
-    calls: Call[];
-    transactionDetail: InvocationsSignerDetails;
-    cacheOwnerGuid: bigint;
-    isLegacyAccount: boolean;
-  }): Promise<ArraySignatureType> {
-    const { authorizationSignature, completedSession, calls, transactionDetail, cacheOwnerGuid, isLegacyAccount } =
-      args;
-    const txHash = calculateTransactionHash(transactionDetail, calls);
-    const sessionToken = await this.buildSessionToken({
-      authorizationSignature,
-      completedSession,
-      transactionHash: txHash,
-      calls,
-      accountAddress: transactionDetail.walletAddress,
-      transactionDetail,
-      cacheOwnerGuid,
-      isLegacyAccount,
-    });
-    return sessionToken.compileSignature();
-  }
-
-  private async compileSessionSignatureFromOutside(args: {
-    authorizationSignature: ArraySignatureType;
-    completedSession: Session;
-    transactionHash: string;
-    calls: Call[];
-    accountAddress: string;
-    revision: TypedDataRevision;
-    outsideExecution: OutsideExecution;
-    cacheOwnerGuid: bigint;
-    isLegacyAccount: boolean;
-  }): Promise<ArraySignatureType> {
-    const {
-      authorizationSignature,
-      completedSession,
-      transactionHash,
-      calls,
-      accountAddress,
       revision,
-      outsideExecution,
-      cacheOwnerGuid,
-      isLegacyAccount,
-    } = args;
-
-    const guardianSignature = await this.argentBackend.signOutsideTxAndSession(
-      calls,
-      completedSession,
-      accountAddress,
-      outsideExecution as OutsideExecution,
-      revision,
-      cacheOwnerGuid,
-    );
-
-    const sessionSignature = await this.signTxAndSession(
-      completedSession,
-      transactionHash,
-      accountAddress,
-      cacheOwnerGuid,
-      isLegacyAccount,
-    );
-
+    });
     const sessionToken = new SessionToken({
       session: completedSession,
       cache_owner_guid: cacheOwnerGuid,
@@ -222,36 +191,63 @@ export class DappService {
       isLegacyAccount,
     });
 
-    return sessionToken.compileSignature();
+    const compiledSignature = sessionToken.compileSignature();
+    return {
+      contractAddress: accountAddress,
+      entrypoint: revision == TypedDataRevision.ACTIVE ? "execute_from_outside_v2" : "execute_from_outside",
+      calldata: CallData.compile({ ...outsideExecution, compiledSignature }),
+    };
   }
 
-  private async buildSessionToken(args: {
-    authorizationSignature: ArraySignatureType;
+  private async generateSessionSignatures(args: {
     completedSession: Session;
     transactionHash: string;
     calls: Call[];
     accountAddress: string;
-    transactionDetail: InvocationsSignerDetails;
     cacheOwnerGuid: bigint;
     isLegacyAccount: boolean;
-  }): Promise<SessionToken> {
+    transactionDetail?: InvocationsSignerDetails;
+    outsideExecution?: OutsideExecution;
+    revision?: TypedDataRevision;
+  }): Promise<{
+    sessionSignature: bigint[];
+    guardianSignature: bigint[];
+  }> {
     const {
-      authorizationSignature,
       completedSession,
       transactionHash,
       calls,
       accountAddress,
-      transactionDetail,
       cacheOwnerGuid,
       isLegacyAccount,
+      transactionDetail,
+      outsideExecution,
+      revision,
     } = args;
-    const guardianSignature = await this.argentBackend.signTxAndSession(
-      calls,
-      transactionDetail,
-      completedSession,
-      cacheOwnerGuid,
-      isLegacyAccount,
-    );
+
+    let guardianSignature: bigint[];
+
+    if (outsideExecution && revision) {
+      guardianSignature = await this.argentBackend.signOutsideTxAndSession(
+        calls,
+        completedSession,
+        accountAddress,
+        outsideExecution,
+        revision,
+        cacheOwnerGuid,
+      );
+    } else if (transactionDetail) {
+      guardianSignature = await this.argentBackend.signTxAndSession(
+        calls,
+        transactionDetail,
+        completedSession,
+        cacheOwnerGuid,
+        isLegacyAccount,
+      );
+    } else {
+      throw new Error("Invalid arguments: either outsideExecution and revision, or transactionDetail must be provided");
+    }
+
     const sessionSignature = await this.signTxAndSession(
       completedSession,
       transactionHash,
@@ -259,19 +255,11 @@ export class DappService {
       cacheOwnerGuid,
       isLegacyAccount,
     );
-    const isSessionCached = await completedSession.isSessionCached(accountAddress, cacheOwnerGuid, isLegacyAccount);
-    return new SessionToken({
-      session: completedSession,
-      cache_owner_guid: cacheOwnerGuid,
-      session_authorization: isSessionCached ? [] : authorizationSignature,
-      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
-      guardian_signature: this.getStarknetSignatureType(
-        this.argentBackend.getBackendKey(accountAddress),
-        guardianSignature,
-      ),
-      calls,
-      isLegacyAccount,
-    });
+
+    return {
+      sessionSignature,
+      guardianSignature,
+    };
   }
 
   private async signTxAndSession(

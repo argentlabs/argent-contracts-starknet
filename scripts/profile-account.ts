@@ -247,7 +247,7 @@ const guardian = new StarknetKeyPair(42n);
     fundingAmount,
   });
   ethContract.connect(account);
-  await profiler.profile("Transfer (cairo0) - Webauthn no guardian", await ethContract.transfer(recipient, amount));
+  await profiler.profile("Transfer 0 - Webauthn no guardian", await ethContract.transfer(recipient, amount));
 }
 
 {

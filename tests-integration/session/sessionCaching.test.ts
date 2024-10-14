@@ -147,12 +147,12 @@ describe("Hybrid Session Account: execute session calls with caching", function 
           "session/invalid-auth-len",
           executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionToken)),
         );
+      } else {
+        await expectRevertWithErrorMessage(
+          "argent/invalid-signature-len",
+          executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionToken)),
+        );
       }
-
-      await expectRevertWithErrorMessage(
-        "argent/invalid-signature-len",
-        executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionToken)),
-      );
     });
 
     it(`Expect 'session/guardian-key-mismatch' if the backend signer != guardian (caching: ${useCaching})`, async function () {

@@ -103,10 +103,10 @@ fn get_webauthn_hash_cairo1(hash: felt252, signer: WebauthnSigner, signature: We
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
     let (word_arr, last, rem) = u8s_to_u32s(client_data_json);
     // As we know the return type is fixed ([u32; 8]), we could use a more efficient implementation
-    let mut client_data = u32s_to_u8s(compute_sha256_u32_array(word_arr, last, rem).span());
+    let mut client_data_hash = u32s_to_u8s(compute_sha256_u32_array(word_arr, last, rem).span());
 
     let mut arr = encode_authenticator_data(signature, signer.rp_id_hash.into());
-    while let Option::Some(byte) = client_data.pop_front() {
+    while let Option::Some(byte) = client_data_hash.pop_front() {
         arr.append(*byte);
     };
 

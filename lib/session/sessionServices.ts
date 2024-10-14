@@ -34,11 +34,7 @@ export class DappService {
     public sessionKey: StarknetKeyPair = randomStarknetKeyPair(),
   ) {}
 
-  public createSessionRequest(
-    allowed_methods: AllowedMethod[],
-    expires_at: bigint,
-    isLegacyAccount = false,
-  ): Session {
+  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: bigint, isLegacyAccount = false): Session {
     const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
     return new Session(expires_at, allowed_methods, metadata, this.sessionKey.guid, isLegacyAccount);
   }

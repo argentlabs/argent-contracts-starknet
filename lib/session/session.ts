@@ -124,12 +124,14 @@ export class SessionToken {
 export class Session {
   public offChainSession: OffChainSession;
   private merkleTree: merkle.MerkleTree;
+  private legacyMode: boolean;
 
   constructor(
     public expires_at: BigNumberish,
     public allowed_methods: AllowedMethod[],
     public metadata: string,
     public session_key_guid: BigNumberish,
+    isLegacyAccount: boolean = false,
   ) {
     this.offChainSession = {
       expires_at,
@@ -138,6 +140,7 @@ export class Session {
       session_key_guid,
     };
     this.merkleTree = this.buildMerkleTree();
+    this.legacyMode = isLegacyAccount;
   }
 
   private buildMerkleTree(): merkle.MerkleTree {
@@ -171,6 +174,20 @@ export class Session {
       ? await sessionContract.is_session_authorization_cached(sessionMessageHash)
       : await sessionContract.is_session_authorization_cached(sessionMessageHash, cache_owner_guid);
     return isSessionCached;
+  }
+
+  public async hashWithTransaction(
+    transactionHash: string,
+    accountAddress: string,
+    cacheOwnerGuid: bigint,
+  ): Promise<string> {
+    const sessionMessageHash = typedData.getMessageHash(await this.getTypedData(), accountAddress);
+    const sessionWithTxHash = hash.computePoseidonHashOnElements([
+      transactionHash,
+      sessionMessageHash,
+      this.legacyMode ? +(cacheOwnerGuid !== 0n) : cacheOwnerGuid,
+    ]);
+    return sessionWithTxHash;
   }
 
   public async getTypedData(): Promise<TypedData> {
@@ -235,7 +252,7 @@ export async function setupSession(
   const dappService = new DappService(backendService, dappKey);
   const argentX = new ArgentX(account, backendService);
 
-  const sessionRequest = dappService.createSessionRequest(allowedMethods, expiry);
+  const sessionRequest = dappService.createSessionRequest(allowedMethods, expiry, isLegacyAccount);
 
   const sessionTypedData = await sessionRequest.getTypedData();
   const authorizationSignature = await argentX.getOffchainSignature(sessionTypedData);

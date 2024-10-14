@@ -6,7 +6,6 @@ import {
   InvocationsSignerDetails,
   TypedDataRevision,
   ec,
-  hash,
   num,
   typedData,
 } from "starknet";
@@ -35,9 +34,9 @@ export class DappService {
     public sessionKey: StarknetKeyPair = randomStarknetKeyPair(),
   ) {}
 
-  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: bigint): Session {
+  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: bigint, isLegacyAccount: boolean): Session {
     const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
-    return new Session(expires_at, allowed_methods, metadata, this.sessionKey.guid);
+    return new Session(expires_at, allowed_methods, metadata, this.sessionKey.guid, isLegacyAccount);
   }
 
   public getAccountWithSessionSigner(
@@ -124,7 +123,6 @@ export class DappService {
       calls,
       accountAddress,
       cacheOwnerGuid,
-      isLegacyAccount,
       transactionDetail,
     });
 
@@ -174,7 +172,6 @@ export class DappService {
       calls,
       accountAddress,
       cacheOwnerGuid,
-      isLegacyAccount,
       outsideExecution,
       revision,
     });
@@ -205,7 +202,6 @@ export class DappService {
     calls: Call[];
     accountAddress: string;
     cacheOwnerGuid: bigint;
-    isLegacyAccount: boolean;
     transactionDetail?: InvocationsSignerDetails;
     outsideExecution?: OutsideExecution;
     revision?: TypedDataRevision;
@@ -219,7 +215,6 @@ export class DappService {
       calls,
       accountAddress,
       cacheOwnerGuid,
-      isLegacyAccount,
       transactionDetail,
       outsideExecution,
       revision,
@@ -242,7 +237,6 @@ export class DappService {
         transactionDetail,
         completedSession,
         cacheOwnerGuid,
-        isLegacyAccount,
       );
     } else {
       throw new Error("Invalid arguments: either outsideExecution and revision, or transactionDetail must be provided");
@@ -253,7 +247,6 @@ export class DappService {
       transactionHash,
       accountAddress,
       cacheOwnerGuid,
-      isLegacyAccount,
     );
 
     return {
@@ -267,14 +260,12 @@ export class DappService {
     transactionHash: string,
     accountAddress: string,
     cacheOwnerGuid: bigint,
-    isLegacyAccount: boolean,
   ): Promise<bigint[]> {
-    const sessionMessageHash = typedData.getMessageHash(await completedSession.getTypedData(), accountAddress);
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([
+    const sessionWithTxHash = await completedSession.hashWithTransaction(
       transactionHash,
-      sessionMessageHash,
-      isLegacyAccount ? +(cacheOwnerGuid !== 0n) : cacheOwnerGuid,
-    ]);
+      accountAddress,
+      cacheOwnerGuid,
+    );
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));
     return [signature.r, signature.s];
   }

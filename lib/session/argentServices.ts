@@ -6,7 +6,6 @@ import {
   TypedData,
   TypedDataRevision,
   ec,
-  hash,
   num,
   typedData,
 } from "starknet";
@@ -33,7 +32,6 @@ export class BackendService {
     transactionDetail: InvocationsSignerDetails,
     sessionTokenToSign: Session,
     cacheOwnerGuid: bigint,
-    isLegacyAccount: boolean,
   ): Promise<bigint[]> {
     // verify session param correct
     // extremely simplified version of the backend verification
@@ -50,15 +48,11 @@ export class BackendService {
     }
 
     const transactionHash = calculateTransactionHash(transactionDetail, calls);
-    const sessionMessageHash = typedData.getMessageHash(
-      await sessionTokenToSign.getTypedData(),
-      transactionDetail.walletAddress,
-    );
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([
+    const sessionWithTxHash = await sessionTokenToSign.hashWithTransaction(
       transactionHash,
-      sessionMessageHash,
-      isLegacyAccount ? +(cacheOwnerGuid !== 0n) : cacheOwnerGuid,
-    ]);
+      transactionDetail.walletAddress,
+      cacheOwnerGuid,
+    );
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
     return [signature.r, signature.s];
   }
@@ -74,8 +68,7 @@ export class BackendService {
     // TODO backend must verify, timestamps fees, used tokens nfts...
     const currentTypedData = getTypedData(outsideExecution, await manager.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
-    const sessionMessageHash = typedData.getMessageHash(await sessionTokenToSign.getTypedData(), accountAddress);
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([messageHash, sessionMessageHash, cacheOwnerGuid]);
+    const sessionWithTxHash = await sessionTokenToSign.hashWithTransaction(messageHash, accountAddress, cacheOwnerGuid);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
     return [signature.r, signature.s];
   }

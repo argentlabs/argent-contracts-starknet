@@ -28,7 +28,7 @@ const SEPOLIA_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
 
 const OUTSIDE_EXECUTION_TYPE_HASH_REV_2: felt252 =
     selector!(
-        "\"OutsideExecution\"(\"Caller\":\"ContractAddress\",\"Nonce\":\"(felt, felt)\",\"Execute After\":\"u128\",\"Execute Before\":\"u128\",\"Calls\":\"Call*\")\"Call\"(\"To\":\"ContractAddress\",\"Selector\":\"selector\",\"Calldata\":\"felt*\")"
+        "\"OutsideExecution\"(\"Caller\":\"ContractAddress\",\"Nonce\":\"(felt,felt)\",\"Execute After\":\"u128\",\"Execute Before\":\"u128\",\"Calls\":\"Call*\")\"Call\"(\"To\":\"ContractAddress\",\"Selector\":\"selector\",\"Calldata\":\"felt*\")"
     );
 
 const CALL_TYPE_HASH_REV_2: felt252 =

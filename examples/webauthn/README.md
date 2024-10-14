@@ -58,6 +58,8 @@ Here is the list of everything that needs to be tested (please add more if you f
 
 Make sure to test various combinations of browsers, password managers, and devices to ensure compatibility across all configurations.
 
+To test the cross-platform part, as the public keys are stored locally (LocalStorage), please fill in the username and the public key field.
+
 ## Pointers
 
 This demo dapp will:

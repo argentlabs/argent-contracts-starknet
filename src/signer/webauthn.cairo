@@ -101,18 +101,19 @@ fn get_webauthn_hash_cairo0(hash: felt252, signer: WebauthnSigner, signature: We
 
 fn get_webauthn_hash_cairo1(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
-    let (word_arr, last, rem) = u8s_to_u32s(client_data_json);
     // As we know the return type is fixed ([u32; 8]), we could use a more efficient implementation
-    let mut client_data_hash = u32s_to_u8s(compute_sha256_u32_array(word_arr, last, rem).span());
+    let mut client_data_hash = u32s_to_u8s(sha256_u8s(client_data_json));
 
-    let mut arr = encode_authenticator_data(signature, signer.rp_id_hash.into());
-    while let Option::Some(byte) = client_data_hash.pop_front() {
-        arr.append(*byte);
-    };
+    let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
+    message.append_all(client_data_hash);
 
-    let (word_arr, last, rem) = u8s_to_u32s(arr.span());
+    u32s_to_u256(sha256_u8s(message.span()))
+}
 
-    u32s_to_u256(compute_sha256_u32_array(word_arr, last, rem).span())
+#[inline(always)]
+fn sha256_u8s(arr: Span<u8>) -> Span<u32> {
+    let (word_arr, last, rem) = u8s_to_u32s(arr);
+    compute_sha256_u32_array(word_arr, last, rem).span()
 }
 
 fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {

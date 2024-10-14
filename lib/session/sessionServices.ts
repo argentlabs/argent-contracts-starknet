@@ -37,7 +37,7 @@ export class DappService {
   public createSessionRequest(
     allowed_methods: AllowedMethod[],
     expires_at: bigint,
-    isLegacyAccount: boolean = false,
+    isLegacyAccount = false,
   ): Session {
     const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
     return new Session(expires_at, allowed_methods, metadata, this.sessionKey.guid, isLegacyAccount);

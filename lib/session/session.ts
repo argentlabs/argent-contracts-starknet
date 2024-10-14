@@ -131,7 +131,7 @@ export class Session {
     public allowed_methods: AllowedMethod[],
     public metadata: string,
     public session_key_guid: BigNumberish,
-    isLegacyAccount: boolean = false,
+    isLegacyAccount = false,
   ) {
     this.offChainSession = {
       expires_at,

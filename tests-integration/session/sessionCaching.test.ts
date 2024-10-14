@@ -125,7 +125,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
           useCaching ? owner.guid : 0n,
         );
 
-      let sessionToken = await dappService.getSessionToken({
+      const sessionToken = await dappService.getSessionToken({
         calls,
         account: accountWithDappSigner,
         completedSession: sessionRequest,
@@ -321,7 +321,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
     // check that the session is cached
     await accountContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.true;
 
-    let sessionToken = await dappService.getSessionToken({
+    const sessionToken = await dappService.getSessionToken({
       calls,
       account: accountWithDappSigner,
       completedSession: sessionRequest,

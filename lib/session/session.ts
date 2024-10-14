@@ -73,21 +73,11 @@ export interface SessionToken {
 }
 
 export class SessionToken {
+  public session: OnChainSession;
+  public proofs: string[][];
   private legacyMode: boolean;
 
-  constructor(
-    public session: OnChainSession,
-    public cache_owner_guid: BigNumberish,
-    public session_authorization: string[],
-    public session_signature: CairoCustomEnum,
-    public guardian_signature: CairoCustomEnum,
-    public proofs: string[][],
-    isLegacyAccount: boolean,
-  ) {
-    this.legacyMode = isLegacyAccount;
-  }
-
-  public static async build(args: {
+  constructor(args: {
     session: Session;
     cache_owner_guid: BigNumberish;
     session_authorization: string[];
@@ -95,7 +85,7 @@ export class SessionToken {
     guardian_signature: CairoCustomEnum;
     calls: Call[];
     isLegacyAccount: boolean;
-  }): Promise<SessionToken> {
+  }) {
     const {
       session,
       cache_owner_guid,
@@ -103,36 +93,30 @@ export class SessionToken {
       session_signature,
       guardian_signature,
       calls,
-      isLegacyAccount: isLegacyFormat,
+      isLegacyAccount,
     } = args;
 
-    const onChainSession = session.toOnChainSession();
-    const proofs = session.getProofs(calls);
-
-    return new SessionToken(
-      onChainSession,
-      cache_owner_guid,
-      session_authorization,
-      session_signature,
-      guardian_signature,
-      proofs,
-      isLegacyFormat,
-    );
+    this.session = session.toOnChainSession();
+    this.proofs = session.getProofs(calls);
+    this.cache_owner_guid = cache_owner_guid;
+    this.session_authorization = session_authorization;
+    this.session_signature = session_signature;
+    this.guardian_signature = guardian_signature;
+    this.legacyMode = isLegacyAccount;
   }
 
   public compileSignature(): string[] {
     const SESSION_MAGIC = shortString.encodeShortString("session-token");
     const tokenData = {
       session: this.session,
+      ...(this.legacyMode
+        ? { cache_authorization: this.cache_owner_guid !== 0n }
+        : { cache_owner_guid: this.cache_owner_guid }),
       session_authorization: this.session_authorization,
       session_signature: this.session_signature,
       guardian_signature: this.guardian_signature,
       proofs: this.proofs,
-      ...(this.legacyMode
-        ? { cache_authorization: this.cache_owner_guid !== 0n }
-        : { cache_owner_guid: this.cache_owner_guid }),
     };
-
     return [SESSION_MAGIC, ...CallData.compile(tokenData)];
   }
 }

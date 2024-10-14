@@ -209,7 +209,7 @@ export class DappService {
       isLegacyAccount,
     );
 
-    const sessionToken = await SessionToken.build({
+    const sessionToken = new SessionToken({
       session: completedSession,
       cache_owner_guid: cacheOwnerGuid,
       session_authorization: authorizationSignature,
@@ -260,7 +260,7 @@ export class DappService {
       isLegacyAccount,
     );
     const isSessionCached = await completedSession.isSessionCached(accountAddress, cacheOwnerGuid, isLegacyAccount);
-    return await SessionToken.build({
+    return new SessionToken({
       session: completedSession,
       cache_owner_guid: cacheOwnerGuid,
       session_authorization: isSessionCached ? [] : authorizationSignature,

@@ -169,7 +169,7 @@ describe("Hybrid Session Account: execute calls", function () {
       calls,
       account: accountWithDappSigner,
       completedSession: sessionRequest,
-      sessionAuthorizationSignature: authorizationSignature,
+      authorizationSignature,
       isLegacyAccount: false,
       cacheOwnerGuid: 0n,
     });

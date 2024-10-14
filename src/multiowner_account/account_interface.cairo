@@ -45,13 +45,13 @@ trait IArgentMultiOwnerAccount<TContractState> {
 
     /// @notice Changes the guardian
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
-    /// @dev can only be set to 0 if there is no guardian backup set
-    /// @param new_guardian The address of the new guardian, or 0 to disable the guardian
+    /// @dev can only be removed (set to None) if there is no guardian backup set
+    /// @param new_guardian The address of the new guardian, or None to disable the guardian
     fn change_guardian(ref self: TContractState, new_guardian: Option<Signer>);
 
     /// @notice Changes the backup guardian
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
-    /// @param new_guardian_backup The address of the new backup guardian, or 0 to disable the backup guardian
+    /// @param new_guardian_backup The address of the new backup guardian, or None to disable the backup guardian
     fn change_guardian_backup(ref self: TContractState, new_guardian_backup: Option<Signer>);
 
     /// @notice Triggers the escape of the owner when it is lost or compromised

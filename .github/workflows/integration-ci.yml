@@ -30,6 +30,15 @@ jobs:
       - name: Check out main branch
         uses: actions/checkout@v4
 
+      - name: Read .nvmrc
+        run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_OUTPUT
+        id: nvm
+
+      - name: Use correct node version
+        uses: actions/setup-node@v3
+        with:
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
+
       - name: Setup Scarb
         uses: software-mansion/setup-scarb@v1.3.2
           

@@ -30,8 +30,14 @@ jobs:
       - name: Check out main branch
         uses: actions/checkout@v3
 
+      - name: Read .nvmrc
+        run: echo ::set-output name=NVMRC::$(cat .nvmrc)
+        id: nvm
+
       - name: Use correct node version
-        run: nvm use
+        uses: actions/setup-node@v3
+        with:
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
       - name: Setup Scarb
         uses: software-mansion/setup-scarb@v1.3.2

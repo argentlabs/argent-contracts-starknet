@@ -1,4 +1,4 @@
-import { Contract, num } from "starknet";
+import { CallData, Contract, num } from "starknet";
 import {
   AllowedMethod,
   StarknetKeyPair,
@@ -61,6 +61,38 @@ describe("Hybrid Session Account: execute calls", function () {
       await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
     });
   }
+
+  it(`Execute basic session when there a multiple owners`, async function () {
+    const { accountContract, account, guardian } = await deployAccount({
+      classHash: sessionAccountClassHash,
+    });
+
+    const newOwner1 = randomStarknetKeyPair();
+    const newOwner2 = randomStarknetKeyPair();
+    const arrayOfSigner = CallData.compile({ new_owners: [newOwner1.signer, newOwner2.signer] });
+    await accountContract.add_owners(arrayOfSigner);
+
+    const allowedMethods: AllowedMethod[] = [
+      {
+        "Contract Address": mockDappContract.address,
+        selector: "set_number_double",
+      },
+    ];
+
+    const { accountWithDappSigner } = await setupSession(
+      guardian as StarknetKeyPair,
+      account,
+      allowedMethods,
+      initialTime + 150n,
+    );
+
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+
+    const { transaction_hash } = await accountWithDappSigner.execute(calls);
+
+    await account.waitForTransaction(transaction_hash);
+    await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
+  });
 
   it("Only execute tx if session not expired", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });

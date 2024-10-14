@@ -32,6 +32,7 @@ jobs:
 
       - name: Read .nvmrc
         run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_OUTPUT
+        id: nvm
 
       - name: Use correct node version
         uses: actions/setup-node@v3

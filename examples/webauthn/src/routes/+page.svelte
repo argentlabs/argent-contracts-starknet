@@ -96,14 +96,14 @@
       Webauthn credential id: <small>{buf2hex(owner.attestation.credentialId)}</small>
     </div>
 
-    <!-- TODO SHOULD DECLARE TOP LEVEL -->
+    <!-- TODO Could declare top level -->
     <!-- This is blocking and can be annoying, fix would be to send it to a web worker to avoid that -->
     {#if !classHash}
       {#await handleClassHash()}
         <p>Declaring...</p>
-        {:catch error}
-          <p style="color: red">Couldn't declare account: {error.message}</p>
-        {/await}
+      {:catch error}
+        <p style="color: red">Couldn't declare account: {error.message}</p>
+      {/await}
     {:else}
       <p />
       <h1>2. Deploy account</h1>

@@ -21,6 +21,7 @@
 
   let email = "example@argent.xyz";
   let pubKey = "";
+  let classHash = "";
   let recipient = "0x69";
   let owner: WebauthnOwner | undefined;
   let account: Account | undefined;
@@ -36,7 +37,11 @@
 
   const handleClickReuseOwner = async () => {
     owner = await retrievePasskey(email,rpId, origin, pubKey);
-};
+  };
+
+  const handleClassHash = async () => {
+    classHash = await declareAccount(provider);
+  };
 
   // https://www.reddit.com/r/Passkeys/comments/1aov4m6/whats_the_point_of_google_chrome_creating_synced/
   const handleClickDeployWallet = async (classHash: string) => {
@@ -93,9 +98,13 @@
 
     <!-- TODO SHOULD DECLARE TOP LEVEL -->
     <!-- This is blocking and can be annoying, fix would be to send it to a web worker to avoid that -->
-    {#await declareAccount(provider)}
-      <p>Declaring...</p>
-    {:then classHash}
+    {#if !classHash}
+      {#await handleClassHash()}
+        <p>Declaring...</p>
+        {:catch error}
+          <p style="color: red">Couldn't declare account: {error.message}</p>
+        {/await}
+    {:else}
       <p />
       <h1>2. Deploy account</h1>
       <div>Class hash: <small>{classHash}</small></div>
@@ -134,9 +143,7 @@
           <div>Transaction hash: <small>{transactionHash}</small></div>
         {/if}
       {/if}
-    {:catch error}
-      <p style="color: red">Couldn't declare account: {error.message}</p>
-    {/await}
+    {/if}
   {/if}
 </div>
 

@@ -38,8 +38,6 @@ export async function retrievePasskey(
   origin: string,
   pubKey: string | undefined,
 ): Promise<WebauthnOwner | undefined> {
-  console.log("retrieving webauthn key for email", email);
-  console.log(getStoredAttestations());
   let attestation = getStoredAttestations().find((attestation) => {
     return attestation.email == email;
   });

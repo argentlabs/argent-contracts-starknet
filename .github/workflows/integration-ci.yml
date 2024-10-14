@@ -2,6 +2,8 @@ name: Integration CI
 
 on: push
 
+run: nvmrc=$(cat .nvmrc)
+
 jobs:
   integration-tests:
     runs-on: ubuntu-latest
@@ -30,10 +32,10 @@ jobs:
       - name: Check out main branch
         uses: actions/checkout@v3
 
-      - name: Use Node.js 18.17.x
+      - name: Use correct node version
         uses: actions/setup-node@v3
         with:
-          node-version: 18.17.x
+          node-version: $nvmrc
 
       - name: Setup Scarb
         uses: software-mansion/setup-scarb@v1.3.2

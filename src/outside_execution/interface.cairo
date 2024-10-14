@@ -2,16 +2,11 @@ use hash::{HashStateExTrait, HashStateTrait};
 use pedersen::PedersenTrait;
 use starknet::{ContractAddress, get_contract_address, get_tx_info, account::Call};
 
-// Interface ID for revision 0 of the OutsideExecute interface
-// see https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-9.md
-const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0: felt252 =
-    0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181;
-
-// Interface ID for revision 1 of the OutsideExecute interface
+// Interface ID for revision 2 of the OutsideExecute interface
 // see https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-9.md
 // calculated using https://github.com/ericnordelo/src5-rs
-const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1: felt252 =
-    0x1d1144bb2138366ff28d8e9ab57456b1d332ac42196230c3a602003c89872;
+const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_2: felt252 =
+    0x11807fbf461e989e437c2a77b6683f3e5d886f83ba27dade7b341aeb5b1def1;
 
 /// @notice As defined in SNIP-9 https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-9.md
 /// @param caller Only the address specified here will be allowed to call `execute_from_outside`
@@ -24,7 +19,7 @@ const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1: felt252 =
 #[derive(Copy, Drop, Serde)]
 struct OutsideExecution {
     caller: ContractAddress,
-    nonce: felt252,
+    nonce: (felt252, felt252),
     execute_after: u64,
     execute_before: u64,
     calls: Span<Call>
@@ -37,23 +32,19 @@ trait IOutsideExecution<TContractState> {
     /// @param outside_execution The parameters of the transaction to execute
     /// @param signature A valid signature on the Eip712 message encoding of `outside_execution`
     /// @notice This function does not allow reentrancy. A call to `__execute__` or `execute_from_outside` cannot trigger another nested transaction to `execute_from_outside`.
-    fn execute_from_outside(
-        ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>
-    ) -> Array<Span<felt252>>;
-
-    /// @notice Outside execution using SNIP-12 Rev 1 
-    fn execute_from_outside_v2(
+    fn execute_from_outside_v3(
         ref self: TContractState, outside_execution: OutsideExecution, signature: Span<felt252>
     ) -> Array<Span<felt252>>;
 
     /// Get the status of a given nonce, true if the nonce is available to use
-    fn is_valid_outside_execution_nonce(self: @TContractState, nonce: felt252) -> bool;
+    fn is_valid_outside_execution_v3_nonce(
+        self: @TContractState, nonce: (felt252, felt252)
+    ) -> bool;
 
-    /// Get the message hash for some `OutsideExecution` rev 0 following Eip712. Can be used to know what needs to be signed
-    fn get_outside_execution_message_hash_rev_0(self: @TContractState, outside_execution: OutsideExecution) -> felt252;
-
-    /// Get the message hash for some `OutsideExecution` rev 1 following Eip712. Can be used to know what needs to be signed
-    fn get_outside_execution_message_hash_rev_1(self: @TContractState, outside_execution: OutsideExecution) -> felt252;
+    /// Get the message hash for some `OutsideExecution` rev 2 following Eip712. Can be used to know what needs to be signed
+    fn get_outside_execution_message_hash_rev_2(
+        self: @TContractState, outside_execution: OutsideExecution
+    ) -> felt252;
 }
 
 /// This trait must be implemented when using the component `outside_execution_component` (This is enforced by the compiler)
@@ -65,6 +56,9 @@ trait IOutsideExecutionCallback<TContractState> {
     /// @param signature The signature that the user gave for this transaction
     #[inline(always)]
     fn execute_from_outside_callback(
-        ref self: TContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
+        ref self: TContractState,
+        calls: Span<Call>,
+        outside_execution_hash: felt252,
+        signature: Span<felt252>,
     ) -> Array<Span<felt252>>;
 }

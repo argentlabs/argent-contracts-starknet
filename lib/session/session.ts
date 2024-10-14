@@ -163,14 +163,10 @@ export class Session {
     });
   }
 
-  public async isSessionCached(
-    accountAddress: string,
-    cache_owner_guid: bigint,
-    isLegacyAccount: boolean,
-  ): Promise<boolean> {
+  public async isSessionCached(accountAddress: string, cache_owner_guid: bigint): Promise<boolean> {
     const sessionContract = await manager.loadContract(accountAddress);
     const sessionMessageHash = typedData.getMessageHash(await this.getTypedData(), accountAddress);
-    const isSessionCached = isLegacyAccount
+    const isSessionCached = this.legacyMode
       ? await sessionContract.is_session_authorization_cached(sessionMessageHash)
       : await sessionContract.is_session_authorization_cached(sessionMessageHash, cache_owner_guid);
     return isSessionCached;

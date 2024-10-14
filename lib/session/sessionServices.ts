@@ -34,7 +34,11 @@ export class DappService {
     public sessionKey: StarknetKeyPair = randomStarknetKeyPair(),
   ) {}
 
-  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: bigint, isLegacyAccount: boolean): Session {
+  public createSessionRequest(
+    allowed_methods: AllowedMethod[],
+    expires_at: bigint,
+    isLegacyAccount: boolean = false,
+  ): Session {
     const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
     return new Session(expires_at, allowed_methods, metadata, this.sessionKey.guid, isLegacyAccount);
   }
@@ -67,6 +71,7 @@ export class DappService {
         return this.signTransactionCallback(calls, transactionsDetail);
       }
     })((calls: Call[], transactionDetail: InvocationsSignerDetails) => {
+      // needs to return a promise otherwise it will fail
       return new Promise(async (resolve, reject) => {
         try {
           const sessionToken = await this.getSessionToken({
@@ -126,7 +131,7 @@ export class DappService {
       transactionDetail,
     });
 
-    const isSessionCached = await completedSession.isSessionCached(accountAddress, cacheOwnerGuid, isLegacyAccount);
+    const isSessionCached = await completedSession.isSessionCached(accountAddress, cacheOwnerGuid);
 
     return new SessionToken({
       session: completedSession,

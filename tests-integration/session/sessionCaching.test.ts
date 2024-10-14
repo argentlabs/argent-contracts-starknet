@@ -1,7 +1,8 @@
 import { expect } from "chai";
-import { Contract, num } from "starknet";
+import { CallData, Contract, num } from "starknet";
 import {
   AllowedMethod,
+  ArgentSigner,
   SignerType,
   StarknetKeyPair,
   deployAccount,
@@ -292,6 +293,46 @@ describe("Hybrid Session Account: execute session calls with caching", function 
     });
   }
 
+  it("Invalidate Cache if owner that signed session is removed", async function () {
+    const { account, guardian, owner, accountContract } = await deployAccount({ classHash: argentAccountClassHash });
+
+    const newOwner = randomStarknetKeyPair();
+    const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
+    await accountContract.add_owners(arrayOfSigner);
+
+    const allowedMethods: AllowedMethod[] = [
+      {
+        "Contract Address": mockDappContract.address,
+        selector: "set_number_double",
+      },
+    ];
+
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+
+    const { accountWithDappSigner, sessionHash } = await setupSession(
+      guardian as StarknetKeyPair,
+      account,
+      allowedMethods,
+      initialTime + 150n,
+      randomStarknetKeyPair(),
+      owner.guid,
+    );
+
+    await accountContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.false;
+    const { transaction_hash } = await accountWithDappSigner.execute(calls);
+    await account.waitForTransaction(transaction_hash);
+
+    await accountContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.equal(true);
+
+    const signer = new ArgentSigner(newOwner, guardian);
+    account.signer = signer;
+    await accountContract.remove_owners([owner.guid]);
+    await accountContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.false;
+
+    const calls2 = [mockDappContract.populateTransaction.set_number_double(4)];
+
+    await expectRevertWithErrorMessage("session/signer-is-not-owner", accountWithDappSigner.execute(calls2));
+  });
   it("Fail if a large authorization is injected", async function () {
     const { accountContract, account, guardian, owner } = await deployAccount({
       classHash: argentAccountClassHash,
@@ -400,13 +441,11 @@ describe("Hybrid Session Account: execute session calls with caching", function 
 
       const newContract = await manager.loadContract(account.address, argentAccountClassHash);
 
-      // newContract.connect(account);
-      const getowners = await newContract.get_owner_guids();
-      console.log("owner", getowners);
-      // const newOwner = randomStarknetKeyPair();
-      // const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
-      // await newContract.add_owners(arrayOfSigner);
-      // await newContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.equal(useCaching);
+      newContract.connect(account);
+      const newOwner = randomStarknetKeyPair();
+      const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
+      await newContract.add_owners(arrayOfSigner);
+      await newContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.equal(useCaching);
     });
   });
 });

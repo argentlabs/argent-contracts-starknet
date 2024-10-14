@@ -55,6 +55,12 @@ mod outside_execution_component {
             let (channel, index) = nonce;
             self.outside_nonces.read(channel) == index
         }
+
+        fn get_outside_execution_v3_channel_nonce(
+            self: @ComponentState<TContractState>, channel: felt252
+        ) -> felt252 {
+            self.outside_nonces.read(channel)
+        }
     }
 
     #[generate_trait]

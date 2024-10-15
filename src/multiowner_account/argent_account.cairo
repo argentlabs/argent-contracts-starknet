@@ -310,25 +310,15 @@ mod ArgentAccount {
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
         // Called when coming from account 0.4.0+
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
+            // TODO: Change this to a proper implementation
             // WARNING: THIS IS FOR TESTING PURPOSES ONLY AND IS NOT THE FINAL VERSION
             assert_only_self();
-            let current_version = IArgentMultiOwnerAccountDispatcher { contract_address: get_contract_address() }
-                .get_version();
-            assert(current_version.major == 0 && current_version.minor >= 4, 'argent/invalid-from-version');
-            // move ownership to the new implementation
             let base = storage_base_address_from_felt252(selector!("_signer"));
             let owner = storage_read_syscall(0, storage_address_from_base_and_offset(base, 0)).unwrap_syscall();
             let owner_signer = starknet_signer_from_pubkey(owner);
-            // let ownerSigner
+
             self.upgrade.complete_upgrade(new_implementation);
             self.owner_manager.add_owners(array![owner_signer]);
-            if data.is_empty() {
-                return;
-            }
-            let calls: Array<Call> = full_deserialize(data).expect('argent/invalid-calls');
-            assert_no_self_call(calls.span(), get_contract_address());
-
-            execute_multicall(calls.span());
         }
     }
 

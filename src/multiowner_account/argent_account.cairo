@@ -85,10 +85,10 @@ mod ArgentAccount {
     #[abi(embed_v0)]
     impl SRC5Legacy = src5_component::SRC5LegacyImpl<ContractState>;
     // Upgrade
+    component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
     impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
-    component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     // Reentrancy guard
     component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
     impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;

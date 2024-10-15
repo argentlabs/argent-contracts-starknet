@@ -63,18 +63,13 @@ export interface OnChainSession {
   session_key_guid: BigNumberish;
 }
 
-export interface SessionToken {
-  session: OnChainSession;
-  cache_owner_guid: BigNumberish;
-  session_authorization: string[];
-  session_signature: CairoCustomEnum;
-  guardian_signature: CairoCustomEnum;
-  proofs: string[][];
-}
-
 export class SessionToken {
   public session: OnChainSession;
   public proofs: string[][];
+  public cache_owner_guid: BigNumberish;
+  public session_authorization: string[];
+  public session_signature: CairoCustomEnum;
+  public guardian_signature: CairoCustomEnum;
   private legacyMode: boolean;
 
   constructor(args: {

@@ -34,7 +34,7 @@ mod ArgentAccount {
         syscalls::storage_read_syscall,
         storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall}
     };
-    use super::super::account_interface::{
+    use crate::multiowner_account::account_interface::{
         IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait
     };
     use super::super::events::{

@@ -35,7 +35,10 @@ mod ArgentAccount {
         storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED,
         replace_class_syscall, account::Call, SyscallResultTrait, get_tx_info, get_execution_info,
         syscalls::storage_read_syscall,
-        storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall}
+        storage_access::{
+            storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall,
+            storage_address_from_base
+        }
     };
     use super::super::events::{
         SignerLinked, TransactionExecuted, AccountCreated, AccountCreatedGuid, EscapeOwnerTriggeredGuid,
@@ -314,7 +317,7 @@ mod ArgentAccount {
             // WARNING: THIS IS FOR TESTING PURPOSES ONLY AND IS NOT THE FINAL VERSION
             assert_only_self();
             let base = storage_base_address_from_felt252(selector!("_signer"));
-            let owner = storage_read_syscall(0, storage_address_from_base_and_offset(base, 0)).unwrap_syscall();
+            let owner = storage_read_syscall(0, storage_address_from_base(base)).unwrap_syscall();
             let owner_signer = starknet_signer_from_pubkey(owner);
 
             self.upgrade.complete_upgrade(new_implementation);

@@ -103,15 +103,15 @@ const guardian = new StarknetKeyPair(42n);
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
-  const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
+  const allowedMethods = [{ "Contract Address": ethContract.address, selector: "transfer" }];
 
-  const { accountWithDappSigner } = await setupSession(
-    guardian as StarknetKeyPair,
-    account,
-    allowedMethod,
-    sessionTime + 150n,
+  const { accountWithDappSigner } = await setupSession({
+    guardian: guardian as StarknetKeyPair,
     dappKey,
-  );
+    account,
+    allowedMethods,
+    expiry: sessionTime + 150n,
+  });
   ethContract.connect(accountWithDappSigner);
   await profiler.profile("Transfer - With Session", await ethContract.transfer(recipient, amount));
 }
@@ -126,16 +126,16 @@ const guardian = new StarknetKeyPair(42n);
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
-  const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
+  const allowedMethods = [{ "Contract Address": ethContract.address, selector: "transfer" }];
 
-  const { accountWithDappSigner } = await setupSession(
-    guardian as StarknetKeyPair,
-    account,
-    allowedMethod,
-    sessionTime + 150n,
+  const { accountWithDappSigner } = await setupSession({
+    guardian: guardian as StarknetKeyPair,
     dappKey,
-    owner.guid,
-  );
+    account,
+    allowedMethods,
+    expiry: sessionTime + 150n,
+    cacheOwnerGuid: owner.guid,
+  });
   ethContract.connect(accountWithDappSigner);
   await profiler.profile("Transfer - With Session - Caching Values (1)", await ethContract.transfer(recipient, amount));
   await profiler.profile("Transfer - With Session - Cached (2)", await ethContract.transfer(recipient, amount));
@@ -153,16 +153,16 @@ const guardian = new StarknetKeyPair(42n);
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
-  const allowedMethod = [{ "Contract Address": ethContract.address, selector: "transfer" }];
+  const allowedMethods = [{ "Contract Address": ethContract.address, selector: "transfer" }];
 
-  const { accountWithDappSigner } = await setupSession(
-    guardian as StarknetKeyPair,
-    account,
-    allowedMethod,
-    sessionTime + 150n,
+  const { accountWithDappSigner } = await setupSession({
+    guardian: guardian as StarknetKeyPair,
     dappKey,
-    owner.guid,
-  );
+    account,
+    allowedMethods,
+    expiry: sessionTime + 150n,
+    cacheOwnerGuid: owner.guid,
+  });
   ethContract.connect(accountWithDappSigner);
   await profiler.profile(
     "Transfer - With Session (Webauthn owner) - Caching Values (1)",

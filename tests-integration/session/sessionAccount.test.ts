@@ -38,19 +38,12 @@ describe("Hybrid Session Account: execute calls", function () {
         classHash: sessionAccountClassHash,
       });
 
-      const allowedMethods: AllowedMethod[] = [
-        {
-          "Contract Address": mockDappContract.address,
-          selector: "set_number_double",
-        },
-      ];
-
-      const { accountWithDappSigner } = await setupSession(
-        guardian as StarknetKeyPair,
+      const { accountWithDappSigner } = await setupSession({
+        guardian: guardian as StarknetKeyPair,
         account,
-        allowedMethods,
-        initialTime + 150n,
-      );
+        expiry: initialTime + 150n,
+        mockDappContractAddress: mockDappContract.address,
+      });
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
@@ -71,19 +64,12 @@ describe("Hybrid Session Account: execute calls", function () {
     const arrayOfSigner = CallData.compile({ new_owners: [newOwner1.signer, newOwner2.signer] });
     await accountContract.add_owners(arrayOfSigner);
 
-    const allowedMethods: AllowedMethod[] = [
-      {
-        "Contract Address": mockDappContract.address,
-        selector: "set_number_double",
-      },
-    ];
-
-    const { accountWithDappSigner } = await setupSession(
-      guardian as StarknetKeyPair,
+    const { accountWithDappSigner } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
       account,
-      allowedMethods,
-      initialTime + 150n,
-    );
+      expiry: initialTime + 150n,
+      mockDappContractAddress: mockDappContract.address,
+    });
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
@@ -98,21 +84,14 @@ describe("Hybrid Session Account: execute calls", function () {
 
     const expiresAt = initialTime + 60n * 24n;
 
-    const allowedMethods: AllowedMethod[] = [
-      {
-        "Contract Address": mockDappContract.address,
-        selector: "set_number_double",
-      },
-    ];
+    const { accountWithDappSigner } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
+      account,
+      expiry: initialTime + 150n,
+      mockDappContractAddress: mockDappContract.address,
+    });
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];
-
-    const { accountWithDappSigner } = await setupSession(
-      guardian as StarknetKeyPair,
-      account,
-      allowedMethods,
-      initialTime + 150n,
-    );
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
     // non expired session
@@ -132,19 +111,12 @@ describe("Hybrid Session Account: execute calls", function () {
   it("Revoke a session", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
-    const allowedMethods: AllowedMethod[] = [
-      {
-        "Contract Address": mockDappContract.address,
-        selector: "set_number_double",
-      },
-    ];
-
-    const { accountWithDappSigner, sessionHash } = await setupSession(
-      guardian as StarknetKeyPair,
+    const { accountWithDappSigner, sessionHash } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
       account,
-      allowedMethods,
-      initialTime + 150n,
-    );
+      expiry: initialTime + 150n,
+      mockDappContractAddress: mockDappContract.address,
+    });
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
@@ -190,12 +162,12 @@ describe("Hybrid Session Account: execute calls", function () {
       mockDappContract.populateTransaction.increase_number(2),
     ];
 
-    const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(
-      guardian as StarknetKeyPair,
+    const { sessionRequest, authorizationSignature, dappService, accountWithDappSigner } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
       account,
+      expiry: initialTime + 150n,
       allowedMethods,
-      initialTime + 150n,
-    );
+    });
 
     const sessionToken = await dappService.getSessionToken({
       calls,

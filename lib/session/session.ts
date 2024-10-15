@@ -229,29 +229,51 @@ export class Session {
 interface SessionSetup {
   accountWithDappSigner: ArgentAccount;
   sessionHash: string;
+  allowedMethods: AllowedMethod[];
   sessionRequest: Session;
   authorizationSignature: ArraySignatureType;
   backendService: BackendService;
   dappService: DappService;
   argentX: ArgentX;
 }
-export async function setupSession(
-  guardian: StarknetKeyPair,
-  account: ArgentAccount,
-  allowedMethods: AllowedMethod[],
-  expiry: bigint = BigInt(Date.now()) + 10000n,
-  dappKey: StarknetKeyPair = randomStarknetKeyPair(),
+
+export async function setupSession({
+  guardian,
+  account,
+  mockDappContractAddress,
+  allowedMethods,
+  expiry = BigInt(Date.now()) + 10000n,
+  dappKey = randomStarknetKeyPair(),
   cacheOwnerGuid = 0n,
   isLegacyAccount = false,
-): Promise<SessionSetup> {
+}: {
+  guardian: StarknetKeyPair;
+  account: ArgentAccount;
+  mockDappContractAddress?: string;
+  allowedMethods?: AllowedMethod[];
+  expiry?: bigint;
+  dappKey?: StarknetKeyPair;
+  cacheOwnerGuid?: bigint;
+  isLegacyAccount?: boolean;
+}): Promise<SessionSetup> {
+  const allowedMethodsList =
+    allowedMethods ??
+    (mockDappContractAddress
+      ? [
+          {
+            "Contract Address": mockDappContractAddress,
+            selector: "set_number_double",
+          },
+        ]
+      : []);
+
   const backendService = new BackendService(guardian);
   const dappService = new DappService(backendService, dappKey);
   const argentX = new ArgentX(account, backendService);
-
-  const sessionRequest = dappService.createSessionRequest(allowedMethods, expiry, isLegacyAccount);
-
+  const sessionRequest = dappService.createSessionRequest(allowedMethodsList, expiry, isLegacyAccount);
   const sessionTypedData = await sessionRequest.getTypedData();
   const authorizationSignature = await argentX.getOffchainSignature(sessionTypedData);
+
   return {
     accountWithDappSigner: dappService.getAccountWithSessionSigner(
       account,
@@ -261,6 +283,7 @@ export async function setupSession(
       isLegacyAccount,
     ),
     sessionHash: typedData.getMessageHash(sessionTypedData, account.address),
+    allowedMethods: allowedMethodsList,
     sessionRequest,
     authorizationSignature,
     backendService,

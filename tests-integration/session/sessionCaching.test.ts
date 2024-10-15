@@ -376,7 +376,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
     );
   });
-  describe.skip("Session caching with legacy account", function () {
+  describe("Session caching with legacy account", function () {
     it("Caching is unaffected between contract upgrades", async function () {
       const { account, accountContract, guardian, owner } = await deployAccount({
         classHash: await manager.declareFixtureContract("ArgentAccount-0.4.0"),

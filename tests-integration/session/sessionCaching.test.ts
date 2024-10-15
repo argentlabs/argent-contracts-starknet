@@ -134,7 +134,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         cacheOwnerGuid: useCaching ? owner.guid : 0n,
         isLegacyAccount: false,
       });
-      sessionToken.session_authorization = [...sessionToken.session_authorization, "0x00"];
+      sessionToken.session_authorization = [...sessionToken.session_authorization, "0x0"];
       if (useCaching) {
         const { transaction_hash } = await accountWithDappSigner.execute(calls);
         await account.waitForTransaction(transaction_hash);

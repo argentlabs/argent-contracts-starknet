@@ -6,19 +6,10 @@ import {
   TypedData,
   TypedDataRevision,
   ec,
-  hash,
   num,
   typedData,
 } from "starknet";
-import {
-  OffChainSession,
-  OutsideExecution,
-  StarknetKeyPair,
-  calculateTransactionHash,
-  getSessionTypedData,
-  getTypedData,
-  manager,
-} from "..";
+import { OutsideExecution, Session, StarknetKeyPair, calculateTransactionHash, getTypedData, manager } from "..";
 
 export class ArgentX {
   constructor(
@@ -39,9 +30,8 @@ export class BackendService {
   public async signTxAndSession(
     calls: Call[],
     transactionDetail: InvocationsSignerDetails,
-    sessionTokenToSign: OffChainSession,
+    sessionTokenToSign: Session,
     cacheOwnerGuid: bigint,
-    isLegacyAccount: boolean,
   ): Promise<bigint[]> {
     // verify session param correct
     // extremely simplified version of the backend verification
@@ -58,22 +48,18 @@ export class BackendService {
     }
 
     const transactionHash = calculateTransactionHash(transactionDetail, calls);
-    const sessionMessageHash = typedData.getMessageHash(
-      await getSessionTypedData(sessionTokenToSign),
-      transactionDetail.walletAddress,
-    );
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([
+    const sessionWithTxHash = await sessionTokenToSign.hashWithTransaction(
       transactionHash,
-      sessionMessageHash,
-      isLegacyAccount ? +(cacheOwnerGuid !== 0n) : cacheOwnerGuid,
-    ]);
+      transactionDetail.walletAddress,
+      cacheOwnerGuid,
+    );
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
     return [signature.r, signature.s];
   }
 
   public async signOutsideTxAndSession(
     _calls: Call[],
-    sessionTokenToSign: OffChainSession,
+    sessionTokenToSign: Session,
     accountAddress: string,
     outsideExecution: OutsideExecution,
     revision: TypedDataRevision,
@@ -82,8 +68,7 @@ export class BackendService {
     // TODO backend must verify, timestamps fees, used tokens nfts...
     const currentTypedData = getTypedData(outsideExecution, await manager.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
-    const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(sessionTokenToSign), accountAddress);
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([messageHash, sessionMessageHash, cacheOwnerGuid]);
+    const sessionWithTxHash = await sessionTokenToSign.hashWithTransaction(messageHash, accountAddress, cacheOwnerGuid);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
     return [signature.r, signature.s];
   }

@@ -5,30 +5,22 @@ import {
   CallData,
   InvocationsSignerDetails,
   TypedDataRevision,
-  byteArray,
   ec,
-  hash,
-  merkle,
   num,
-  selector,
-  shortString,
   typedData,
 } from "starknet";
 import {
-  ALLOWED_METHOD_HASH,
   AllowedMethod,
   ArgentAccount,
   BackendService,
-  OffChainSession,
-  OnChainSession,
   OutsideExecution,
   RawSigner,
+  Session,
   SessionToken,
   SignerType,
   StarknetKeyPair,
   calculateTransactionHash,
   getOutsideCall,
-  getSessionTypedData,
   getSignerDetails,
   getTypedData,
   manager,
@@ -36,31 +28,21 @@ import {
   signerTypeToCustomEnum,
 } from "..";
 
-export function compileSessionSignature(sessionToken: any): string[] {
-  const SESSION_MAGIC = shortString.encodeShortString("session-token");
-  return [SESSION_MAGIC, ...CallData.compile({ sessionToken })];
-}
-
 export class DappService {
   constructor(
     private argentBackend: BackendService,
     public sessionKey: StarknetKeyPair = randomStarknetKeyPair(),
   ) {}
 
-  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: bigint): OffChainSession {
+  public createSessionRequest(allowed_methods: AllowedMethod[], expires_at: bigint, isLegacyAccount = false): Session {
     const metadata = JSON.stringify({ metadata: "metadata", max_fee: 0 });
-    return {
-      expires_at: Number(expires_at),
-      allowed_methods,
-      metadata,
-      session_key_guid: this.sessionKey.guid,
-    };
+    return new Session(expires_at, allowed_methods, metadata, this.sessionKey.guid, isLegacyAccount);
   }
 
   public getAccountWithSessionSigner(
     account: ArgentAccount,
-    completedSession: OffChainSession,
-    sessionAuthorizationSignature: ArraySignatureType,
+    completedSession: Session,
+    authorizationSignature: ArraySignatureType,
     cacheOwnerGuid = 0n,
     isLegacyAccount = false,
   ) {
@@ -85,13 +67,23 @@ export class DappService {
         return this.signTransactionCallback(calls, transactionsDetail);
       }
     })((calls: Call[], transactionDetail: InvocationsSignerDetails) => {
-      return this.signRegularTransaction({
-        sessionAuthorizationSignature,
-        completedSession,
-        calls,
-        transactionDetail,
-        cacheOwnerGuid,
-        isLegacyAccount,
+      // needs to return a promise otherwise it will fail
+      return new Promise(async (resolve, reject) => {
+        try {
+          const sessionToken = await this.getSessionToken({
+            calls,
+            account,
+            completedSession,
+            authorizationSignature,
+            cacheOwnerGuid,
+            isLegacyAccount,
+            transactionDetail,
+          });
+          const signature = sessionToken.compileSignature();
+          resolve(signature);
+        } catch (error) {
+          reject(error);
+        }
       });
     });
     return new ArgentAccount(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
@@ -100,29 +92,60 @@ export class DappService {
   public async getSessionToken(arg: {
     calls: Call[];
     account: ArgentAccount;
-    completedSession: OffChainSession;
-    sessionAuthorizationSignature: ArraySignatureType;
+    completedSession: Session;
+    authorizationSignature: ArraySignatureType;
     cacheOwnerGuid: bigint;
     isLegacyAccount: boolean;
+    transactionDetail?: InvocationsSignerDetails;
   }): Promise<SessionToken> {
-    const { calls, account, completedSession, sessionAuthorizationSignature, cacheOwnerGuid, isLegacyAccount } = arg;
-    const transactionDetail = await getSignerDetails(account, calls);
-    const txHash = calculateTransactionHash(transactionDetail, calls);
-    return this.buildSessionToken({
-      sessionAuthorizationSignature,
-      completedSession,
-      transactionHash: txHash,
+    const {
       calls,
-      accountAddress: transactionDetail.walletAddress,
-      transactionDetail,
+      account,
+      completedSession,
+      authorizationSignature,
       cacheOwnerGuid,
+      isLegacyAccount,
+      transactionDetail: providedTransactionDetail,
+    } = arg;
+
+    let transactionDetail: InvocationsSignerDetails;
+    if (providedTransactionDetail) {
+      transactionDetail = providedTransactionDetail;
+    } else {
+      transactionDetail = await getSignerDetails(account, calls);
+    }
+
+    const transactionHash = calculateTransactionHash(transactionDetail, calls);
+    const accountAddress = transactionDetail.walletAddress;
+
+    const { sessionSignature, guardianSignature } = await this.generateSessionSignatures({
+      completedSession,
+      transactionHash,
+      calls,
+      accountAddress,
+      cacheOwnerGuid,
+      transactionDetail,
+    });
+
+    const isSessionCached = await completedSession.isSessionCached(accountAddress, cacheOwnerGuid);
+
+    return new SessionToken({
+      session: completedSession,
+      cache_owner_guid: cacheOwnerGuid,
+      session_authorization: isSessionCached ? [] : authorizationSignature,
+      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
+      guardian_signature: this.getStarknetSignatureType(
+        this.argentBackend.getBackendKey(accountAddress),
+        guardianSignature,
+      ),
+      calls,
       isLegacyAccount,
     });
   }
 
   public async getOutsideExecutionCall(
-    completedSession: OffChainSession,
-    sessionAuthorizationSignature: ArraySignatureType,
+    completedSession: Session,
+    authorizationSignature: ArraySignatureType,
     calls: Call[],
     revision: TypedDataRevision,
     accountAddress: string,
@@ -143,252 +166,110 @@ export class DappService {
 
     const currentTypedData = getTypedData(outsideExecution, await manager.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
-    const signature = await this.compileSessionSignatureFromOutside({
-      sessionAuthorizationSignature,
+
+    const { sessionSignature, guardianSignature } = await this.generateSessionSignatures({
       completedSession,
       transactionHash: messageHash,
       calls,
       accountAddress,
-      revision,
-      outsideExecution,
       cacheOwnerGuid,
+      outsideExecution,
+      revision,
+    });
+    const sessionToken = new SessionToken({
+      session: completedSession,
+      cache_owner_guid: cacheOwnerGuid,
+      session_authorization: authorizationSignature,
+      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
+      guardian_signature: this.getStarknetSignatureType(
+        this.argentBackend.getBackendKey(accountAddress),
+        guardianSignature,
+      ),
+      calls,
       isLegacyAccount,
     });
 
+    const compiledSignature = sessionToken.compileSignature();
     return {
       contractAddress: accountAddress,
       entrypoint: revision == TypedDataRevision.ACTIVE ? "execute_from_outside_v2" : "execute_from_outside",
-      calldata: CallData.compile({ ...outsideExecution, signature }),
+      calldata: CallData.compile({ ...outsideExecution, compiledSignature }),
     };
   }
 
-  private async signRegularTransaction(args: {
-    sessionAuthorizationSignature: ArraySignatureType;
-    completedSession: OffChainSession;
-    calls: Call[];
-    transactionDetail: InvocationsSignerDetails;
-    cacheOwnerGuid: bigint;
-    isLegacyAccount: boolean;
-  }): Promise<ArraySignatureType> {
-    const {
-      sessionAuthorizationSignature,
-      completedSession,
-      calls,
-      transactionDetail,
-      cacheOwnerGuid,
-      isLegacyAccount,
-    } = args;
-    const txHash = calculateTransactionHash(transactionDetail, calls);
-    const sessionToken = await this.buildSessionToken({
-      sessionAuthorizationSignature,
-      completedSession,
-      transactionHash: txHash,
-      calls,
-      accountAddress: transactionDetail.walletAddress,
-      transactionDetail,
-      cacheOwnerGuid,
-      isLegacyAccount,
-    });
-    return compileSessionSignature(sessionToken);
-  }
-
-  private async compileSessionSignatureFromOutside(args: {
-    sessionAuthorizationSignature: ArraySignatureType;
-    completedSession: OffChainSession;
+  private async generateSessionSignatures(args: {
+    completedSession: Session;
     transactionHash: string;
     calls: Call[];
     accountAddress: string;
-    revision: TypedDataRevision;
-    outsideExecution: OutsideExecution;
     cacheOwnerGuid: bigint;
-    isLegacyAccount: boolean;
-  }): Promise<ArraySignatureType> {
+    transactionDetail?: InvocationsSignerDetails;
+    outsideExecution?: OutsideExecution;
+    revision?: TypedDataRevision;
+  }): Promise<{
+    sessionSignature: bigint[];
+    guardianSignature: bigint[];
+  }> {
     const {
-      sessionAuthorizationSignature,
       completedSession,
       transactionHash,
       calls,
       accountAddress,
-      revision,
+      cacheOwnerGuid,
+      transactionDetail,
       outsideExecution,
-      cacheOwnerGuid,
-      isLegacyAccount,
-    } = args;
-    const session = this.compileSessionHelper(completedSession);
-
-    const guardianSignature = await this.argentBackend.signOutsideTxAndSession(
-      calls,
-      completedSession,
-      accountAddress,
-      outsideExecution as OutsideExecution,
       revision,
-      cacheOwnerGuid,
-    );
+    } = args;
+
+    let guardianSignature: bigint[];
+
+    if (outsideExecution && revision) {
+      guardianSignature = await this.argentBackend.signOutsideTxAndSession(
+        calls,
+        completedSession,
+        accountAddress,
+        outsideExecution,
+        revision,
+        cacheOwnerGuid,
+      );
+    } else if (transactionDetail) {
+      guardianSignature = await this.argentBackend.signTxAndSession(
+        calls,
+        transactionDetail,
+        completedSession,
+        cacheOwnerGuid,
+      );
+    } else {
+      throw new Error("Invalid arguments: either outsideExecution and revision, or transactionDetail must be provided");
+    }
 
     const sessionSignature = await this.signTxAndSession(
       completedSession,
       transactionHash,
       accountAddress,
       cacheOwnerGuid,
-      isLegacyAccount,
     );
-    const sessionToken = await this.compileSessionTokenHelper({
-      session,
-      completedSession,
-      calls,
+
+    return {
       sessionSignature,
-      cache_owner_guid: cacheOwnerGuid,
-      isLegacyAccount,
-      session_authorization: sessionAuthorizationSignature,
       guardianSignature,
-      accountAddress,
-    });
-
-    return compileSessionSignature(sessionToken);
-  }
-
-  private async buildSessionToken(args: {
-    sessionAuthorizationSignature: ArraySignatureType;
-    completedSession: OffChainSession;
-    transactionHash: string;
-    calls: Call[];
-    accountAddress: string;
-    transactionDetail: InvocationsSignerDetails;
-    cacheOwnerGuid: bigint;
-    isLegacyAccount: boolean;
-  }): Promise<SessionToken> {
-    const {
-      sessionAuthorizationSignature,
-      completedSession,
-      transactionHash,
-      calls,
-      accountAddress,
-      transactionDetail,
-      cacheOwnerGuid,
-      isLegacyAccount,
-    } = args;
-    const session = this.compileSessionHelper(completedSession);
-
-    const guardianSignature = await this.argentBackend.signTxAndSession(
-      calls,
-      transactionDetail,
-      completedSession,
-      cacheOwnerGuid,
-      isLegacyAccount,
-    );
-    const session_signature = await this.signTxAndSession(
-      completedSession,
-      transactionHash,
-      accountAddress,
-      cacheOwnerGuid,
-      isLegacyAccount,
-    );
-    return await this.compileSessionTokenHelper({
-      session,
-      completedSession,
-      calls,
-      sessionSignature: session_signature,
-      isLegacyAccount,
-      cache_owner_guid: cacheOwnerGuid,
-      session_authorization: sessionAuthorizationSignature,
-      guardianSignature,
-      accountAddress,
-    });
+    };
   }
 
   private async signTxAndSession(
-    completedSession: OffChainSession,
+    completedSession: Session,
     transactionHash: string,
     accountAddress: string,
     cacheOwnerGuid: bigint,
-    isLegacyAccount: boolean,
   ): Promise<bigint[]> {
-    const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([
+    const sessionWithTxHash = await completedSession.hashWithTransaction(
       transactionHash,
-      sessionMessageHash,
-      isLegacyAccount ? +(cacheOwnerGuid !== 0n) : cacheOwnerGuid,
-    ]);
+      accountAddress,
+      cacheOwnerGuid,
+    );
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));
     return [signature.r, signature.s];
   }
-
-  private buildMerkleTree(completedSession: OffChainSession): merkle.MerkleTree {
-    const leaves = completedSession.allowed_methods.map((method) =>
-      hash.computePoseidonHashOnElements([
-        ALLOWED_METHOD_HASH,
-        method["Contract Address"],
-        selector.getSelectorFromName(method.selector),
-      ]),
-    );
-    return new merkle.MerkleTree(leaves, hash.computePoseidonHash);
-  }
-
-  private getSessionProofs(completedSession: OffChainSession, calls: Call[]): string[][] {
-    const tree = this.buildMerkleTree(completedSession);
-
-    return calls.map((call) => {
-      const allowedIndex = completedSession.allowed_methods.findIndex((allowedMethod) => {
-        return allowedMethod["Contract Address"] == call.contractAddress && allowedMethod.selector == call.entrypoint;
-      });
-      return tree.getProof(tree.leaves[allowedIndex], tree.leaves);
-    });
-  }
-
-  private compileSessionHelper(completedSession: OffChainSession): OnChainSession {
-    const bArray = byteArray.byteArrayFromString(completedSession.metadata as string);
-    const elements = [bArray.data.length, ...bArray.data, bArray.pending_word, bArray.pending_word_len];
-    const metadataHash = hash.computePoseidonHashOnElements(elements);
-
-    const session = {
-      expires_at: completedSession.expires_at,
-      allowed_methods_root: this.buildMerkleTree(completedSession).root.toString(),
-      metadata_hash: metadataHash,
-      session_key_guid: completedSession.session_key_guid,
-    };
-    return session;
-  }
-
-  private async compileSessionTokenHelper(args: {
-    session: OnChainSession;
-    completedSession: OffChainSession;
-    calls: Call[];
-    sessionSignature: bigint[];
-    cache_owner_guid: bigint;
-    isLegacyAccount: boolean;
-    session_authorization: string[];
-    guardianSignature: bigint[];
-    accountAddress: string;
-  }): Promise<SessionToken> {
-    const {
-      session,
-      completedSession,
-      calls,
-      sessionSignature,
-      cache_owner_guid,
-      isLegacyAccount,
-      session_authorization,
-      guardianSignature,
-      accountAddress,
-    } = args;
-    const sessionContract = await manager.loadContract(accountAddress);
-    const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(completedSession), accountAddress);
-    const isSessionCached = isLegacyAccount
-      ? await sessionContract.is_session_authorization_cached(sessionMessageHash)
-      : await sessionContract.is_session_authorization_cached(sessionMessageHash, cache_owner_guid);
-    return {
-      session,
-      cache_owner_guid,
-      session_authorization: isSessionCached ? [] : session_authorization,
-      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
-      guardian_signature: this.getStarknetSignatureType(
-        this.argentBackend.getBackendKey(accountAddress),
-        guardianSignature,
-      ),
-      proofs: this.getSessionProofs(completedSession, calls),
-    };
-  }
-
   // function needed as starknetSignatureType in signer.ts is already compiled
   private getStarknetSignatureType(pubkey: BigNumberish, signature: bigint[]) {
     return signerTypeToCustomEnum(SignerType.Starknet, { pubkey, r: signature[0], s: signature[1] });

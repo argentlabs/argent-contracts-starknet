@@ -67,6 +67,7 @@ trait ISessionable<TContractState> {
 
     /// @notice View function to see if a session authorization is cached
     /// @param session_hash Hash of the session token
+    /// @param owner_guid Guid of the owner used in the authorization
     /// @return Whether the session is cached
     fn is_session_authorization_cached(self: @TContractState, session_hash: felt252, owner_guid: felt252) -> bool;
 }

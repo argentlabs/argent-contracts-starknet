@@ -93,9 +93,9 @@ export class DappService {
     calls: Call[];
     account: ArgentAccount;
     completedSession: Session;
-    authorizationSignature: ArraySignatureType;
+    authorizationSignature?: ArraySignatureType;
     cacheOwnerGuid?: bigint;
-    isLegacyAccount: boolean;
+    isLegacyAccount?: boolean;
     transactionDetail?: InvocationsSignerDetails;
   }): Promise<SessionToken> {
     const {
@@ -104,16 +104,12 @@ export class DappService {
       completedSession,
       authorizationSignature,
       cacheOwnerGuid,
-      isLegacyAccount,
+      isLegacyAccount: isLegacyAccountArg,
       transactionDetail: providedTransactionDetail,
     } = arg;
-
-    let transactionDetail: InvocationsSignerDetails;
-    if (providedTransactionDetail) {
-      transactionDetail = providedTransactionDetail;
-    } else {
-      transactionDetail = await getSignerDetails(account, calls);
-    }
+    const isLegacyAccount = isLegacyAccountArg ?? false;
+    const transactionDetail: InvocationsSignerDetails =
+      providedTransactionDetail ?? (await getSignerDetails(account, calls));
 
     const transactionHash = calculateTransactionHash(transactionDetail, calls);
     const accountAddress = transactionDetail.walletAddress;

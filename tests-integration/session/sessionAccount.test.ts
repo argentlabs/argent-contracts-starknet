@@ -175,8 +175,6 @@ describe("ArgentAccount: session basics", function () {
       account: accountWithDappSigner,
       completedSession: sessionRequest,
       authorizationSignature,
-      isLegacyAccount: false,
-      cacheOwnerGuid: 0n,
     });
     sessionToken.proofs = [["0x1", "0x2"]];
 

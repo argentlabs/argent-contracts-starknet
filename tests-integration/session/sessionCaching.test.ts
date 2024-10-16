@@ -109,9 +109,8 @@ describe("Session Account: execute caching", function () {
         completedSession: sessionRequest,
         authorizationSignature,
         cacheOwnerGuid: useCaching ? owner.guid : undefined,
-        isLegacyAccount: false,
       });
-      sessionToken.sessionAuthorization = [...(sessionToken.sessionAuthorization ?? []), "0x0"];
+      sessionToken.sessionAuthorization = [...authorizationSignature, "0x0"];
       if (useCaching) {
         const { transaction_hash } = await accountWithDappSigner.execute(calls);
         await account.waitForTransaction(transaction_hash);
@@ -168,7 +167,6 @@ describe("Session Account: execute caching", function () {
         completedSession: sessionRequest,
         authorizationSignature,
         cacheOwnerGuid: useCaching ? owner.guid : undefined,
-        isLegacyAccount: false,
       });
 
       const originalSessionSignature = sessionToken.sessionSignature;
@@ -220,7 +218,6 @@ describe("Session Account: execute caching", function () {
         completedSession: sessionRequest,
         authorizationSignature,
         cacheOwnerGuid: useCaching ? owner.guid : undefined,
-        isLegacyAccount: false,
       });
       const originalGuardianSignature = sessionToken.guardianSignature;
 
@@ -308,9 +305,8 @@ describe("Session Account: execute caching", function () {
       calls,
       account: accountWithDappSigner,
       completedSession: sessionRequest,
-      authorizationSignature,
+      authorizationSignature: undefined,
       cacheOwnerGuid: owner.guid,
-      isLegacyAccount: false,
     });
     sessionToken.sessionAuthorization = Array(10).fill("1");
     await expectRevertWithErrorMessage(

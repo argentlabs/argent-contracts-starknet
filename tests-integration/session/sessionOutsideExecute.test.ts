@@ -5,7 +5,7 @@ import { singleMethodAllowList } from "./sessionTestHelpers";
 const initialTime = 1713139200n;
 const legacyRevision = TypedDataRevision.LEGACY;
 const activeRevision = TypedDataRevision.ACTIVE;
-describe("ArgentAccount: outside execution", function () {
+describe("ArgentAccount: session outside execution", function () {
   // Avoid timeout
   this.timeout(320000);
 
@@ -52,6 +52,7 @@ describe("ArgentAccount: outside execution", function () {
   });
 
   it("Basics: Revision 1", async function () {
+    throw new Error("testing CI");
     const { account, guardian } = await deployAccount({ classHash: argentSessionAccountClassHash });
 
     const { account: mockDappAccount } = await deployAccount();

@@ -31,7 +31,7 @@ export class BackendService {
     calls: Call[],
     transactionDetail: InvocationsSignerDetails,
     sessionTokenToSign: Session,
-    cacheOwnerGuid: bigint,
+    cacheOwnerGuid?: bigint,
   ): Promise<bigint[]> {
     // verify session param correct
     // extremely simplified version of the backend verification
@@ -63,7 +63,7 @@ export class BackendService {
     accountAddress: string,
     outsideExecution: OutsideExecution,
     revision: TypedDataRevision,
-    cacheOwnerGuid: bigint,
+    cacheOwnerGuid?: bigint,
   ): Promise<bigint[]> {
     // TODO backend must verify, timestamps fees, used tokens nfts...
     const currentTypedData = getTypedData(outsideExecution, await manager.getChainId(), revision);

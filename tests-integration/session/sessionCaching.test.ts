@@ -16,7 +16,7 @@ import {
   upgradeAccount,
 } from "../../lib";
 
-describe("Hybrid Session Account: execute session calls with caching", function () {
+describe("Session Account: execute session calls with caching", function () {
   let argentAccountClassHash: string;
   let mockDappContract: Contract;
   const initialTime = 1710167933n;
@@ -47,8 +47,13 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         account,
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
-        cacheOwnerGuid: useCaching ? owner.guid : 0n,
-        mockDappContractAddress: mockDappContract.address,
+        cacheOwnerGuid: useCaching ? owner.guid : undefined,
+        allowedMethods: [
+          {
+            "Contract Address": mockDappContract.address,
+            selector: "set_number_double",
+          },
+        ],
       });
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
@@ -79,8 +84,13 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         account,
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
-        cacheOwnerGuid: useCaching ? owner.guid : 0n,
-        mockDappContractAddress: mockDappContract.address,
+        cacheOwnerGuid: useCaching ? owner.guid : undefined,
+        allowedMethods: [
+          {
+            "Contract Address": mockDappContract.address,
+            selector: "set_number_double",
+          },
+        ],
       });
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
@@ -96,8 +106,13 @@ describe("Hybrid Session Account: execute session calls with caching", function 
           account,
           expiry: initialTime + 150n,
           dappKey: randomStarknetKeyPair(),
-          cacheOwnerGuid: useCaching ? owner.guid : 0n,
-          mockDappContractAddress: mockDappContract.address,
+          cacheOwnerGuid: useCaching ? owner.guid : undefined,
+          allowedMethods: [
+            {
+              "Contract Address": mockDappContract.address,
+              selector: "set_number_double",
+            },
+          ],
         });
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
@@ -107,7 +122,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         account: accountWithDappSigner,
         completedSession: sessionRequest,
         authorizationSignature,
-        cacheOwnerGuid: useCaching ? owner.guid : 0n,
+        cacheOwnerGuid: useCaching ? owner.guid : undefined,
         isLegacyAccount: false,
       });
       sessionToken.session_authorization = [...sessionToken.session_authorization, "0x0"];
@@ -137,7 +152,12 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: owner.guid,
 
-        mockDappContractAddress: mockDappContract.address,
+        allowedMethods: [
+          {
+            "Contract Address": mockDappContract.address,
+            selector: "set_number_double",
+          },
+        ],
       });
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
@@ -158,7 +178,12 @@ describe("Hybrid Session Account: execute session calls with caching", function 
           expiry: initialTime + 150n,
           dappKey: randomStarknetKeyPair(),
           cacheOwnerGuid: owner.guid,
-          mockDappContractAddress: mockDappContract.address,
+          allowedMethods: [
+            {
+              "Contract Address": mockDappContract.address,
+              selector: "set_number_double",
+            },
+          ],
         });
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
@@ -167,7 +192,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         account: accountWithDappSigner,
         completedSession: sessionRequest,
         authorizationSignature,
-        cacheOwnerGuid: useCaching ? owner.guid : 0n,
+        cacheOwnerGuid: useCaching ? owner.guid : undefined,
         isLegacyAccount: false,
       });
 
@@ -210,7 +235,12 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: owner.guid,
-        mockDappContractAddress: mockDappContract.address,
+        allowedMethods: [
+          {
+            "Contract Address": mockDappContract.address,
+            selector: "set_number_double",
+          },
+        ],
       });
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
@@ -219,7 +249,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         account: accountWithDappSigner,
         completedSession: sessionRequest,
         authorizationSignature,
-        cacheOwnerGuid: useCaching ? owner.guid : 0n,
+        cacheOwnerGuid: useCaching ? owner.guid : undefined,
         isLegacyAccount: false,
       });
       const originalGuardianSignature = sessionToken.guardian_signature;
@@ -263,7 +293,12 @@ describe("Hybrid Session Account: execute session calls with caching", function 
       expiry: initialTime + 150n,
       dappKey: randomStarknetKeyPair(),
       cacheOwnerGuid: owner.guid,
-      mockDappContractAddress: mockDappContract.address,
+      allowedMethods: [
+        {
+          "Contract Address": mockDappContract.address,
+          selector: "set_number_double",
+        },
+      ],
     });
 
     await accountContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.false;
@@ -295,6 +330,7 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: owner.guid,
+        allowedMethods: [],
       });
 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
@@ -332,8 +368,9 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         account,
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
-        cacheOwnerGuid: useCaching ? owner.guid : 0n,
+        cacheOwnerGuid: useCaching ? owner.guid : undefined,
         isLegacyAccount,
+        allowedMethods: [],
       });
 
       await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
@@ -357,8 +394,9 @@ describe("Hybrid Session Account: execute session calls with caching", function 
         account,
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
-        cacheOwnerGuid: useCaching ? owner.guid : 0n,
+        cacheOwnerGuid: useCaching ? owner.guid : undefined,
         isLegacyAccount,
+        allowedMethods: [],
       });
       await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
       await accountWithDappSigner.execute(calls);

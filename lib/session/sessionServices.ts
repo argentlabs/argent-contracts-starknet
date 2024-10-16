@@ -94,7 +94,7 @@ export class DappService {
     account: ArgentAccount;
     completedSession: Session;
     authorizationSignature: ArraySignatureType;
-    cacheOwnerGuid: bigint;
+    cacheOwnerGuid?: bigint;
     isLegacyAccount: boolean;
     transactionDetail?: InvocationsSignerDetails;
   }): Promise<SessionToken> {
@@ -153,7 +153,7 @@ export class DappService {
     execute_after = 1,
     execute_before = 999999999999999,
     nonce = randomStarknetKeyPair().publicKey,
-    cacheOwnerGuid = 0n,
+    cacheOwnerGuid = undefined,
     isLegacyAccount = false,
   ): Promise<Call> {
     const outsideExecution = {
@@ -202,7 +202,7 @@ export class DappService {
     transactionHash: string;
     calls: Call[];
     accountAddress: string;
-    cacheOwnerGuid: bigint;
+    cacheOwnerGuid?: bigint;
     transactionDetail?: InvocationsSignerDetails;
     outsideExecution?: OutsideExecution;
     revision?: TypedDataRevision;
@@ -260,7 +260,7 @@ export class DappService {
     completedSession: Session,
     transactionHash: string,
     accountAddress: string,
-    cacheOwnerGuid: bigint,
+    cacheOwnerGuid?: bigint,
   ): Promise<bigint[]> {
     const sessionWithTxHash = await completedSession.hashWithTransaction(
       transactionHash,

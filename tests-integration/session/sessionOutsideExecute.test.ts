@@ -29,7 +29,12 @@ describe("ArgentAccount: outside execution", function () {
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      mockDappContractAddress: mockDapp.address,
+      allowedMethods: [
+        {
+          "Contract Address": mockDapp.address,
+          selector: "set_number",
+        },
+      ],
     });
 
     const calls = [mockDapp.populateTransaction.set_number(42n)];
@@ -61,7 +66,12 @@ describe("ArgentAccount: outside execution", function () {
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      mockDappContractAddress: mockDapp.address,
+      allowedMethods: [
+        {
+          "Contract Address": mockDapp.address,
+          selector: "set_number",
+        },
+      ],
     });
 
     const outsideExecutionCall = await dappService.getOutsideExecutionCall(

@@ -11,7 +11,7 @@ import {
   setupSession,
 } from "../../lib";
 
-describe("Hybrid Session Account: execute calls", function () {
+describe("Session Account: execute calls", function () {
   let sessionAccountClassHash: string;
   let mockDappContract: Contract;
   const initialTime = 1710167933n;
@@ -42,7 +42,12 @@ describe("Hybrid Session Account: execute calls", function () {
         guardian: guardian as StarknetKeyPair,
         account,
         expiry: initialTime + 150n,
-        mockDappContractAddress: mockDappContract.address,
+        allowedMethods: [
+          {
+            "Contract Address": mockDappContract.address,
+            selector: "set_number_double",
+          },
+        ],
       });
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
@@ -68,7 +73,12 @@ describe("Hybrid Session Account: execute calls", function () {
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      mockDappContractAddress: mockDappContract.address,
+      allowedMethods: [
+        {
+          "Contract Address": mockDappContract.address,
+          selector: "set_number_double",
+        },
+      ],
     });
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];
@@ -88,7 +98,12 @@ describe("Hybrid Session Account: execute calls", function () {
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      mockDappContractAddress: mockDappContract.address,
+      allowedMethods: [
+        {
+          "Contract Address": mockDappContract.address,
+          selector: "set_number_double",
+        },
+      ],
     });
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];
@@ -115,7 +130,12 @@ describe("Hybrid Session Account: execute calls", function () {
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      mockDappContractAddress: mockDappContract.address,
+      allowedMethods: [
+        {
+          "Contract Address": mockDappContract.address,
+          selector: "set_number_double",
+        },
+      ],
     });
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];

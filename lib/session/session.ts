@@ -66,7 +66,7 @@ export interface OnChainSession {
 export class SessionToken {
   public session: OnChainSession;
   public proofs: string[][];
-  public cache_owner_guid: BigNumberish;
+  public cache_owner_guid?: BigNumberish;
   public session_authorization: string[];
   public session_signature: CairoCustomEnum;
   public guardian_signature: CairoCustomEnum;
@@ -74,7 +74,7 @@ export class SessionToken {
 
   constructor(args: {
     session: Session;
-    cache_owner_guid: BigNumberish;
+    cache_owner_guid?: BigNumberish;
     session_authorization: string[];
     session_signature: CairoCustomEnum;
     guardian_signature: CairoCustomEnum;
@@ -105,8 +105,8 @@ export class SessionToken {
     const tokenData = {
       session: this.session,
       ...(this.legacyMode
-        ? { cache_authorization: this.cache_owner_guid !== 0n }
-        : { cache_owner_guid: this.cache_owner_guid }),
+        ? { cache_authorization: this.cache_owner_guid !== undefined }
+        : { cache_owner_guid: this.cache_owner_guid ?? 0 }),
       session_authorization: this.session_authorization,
       session_signature: this.session_signature,
       guardian_signature: this.guardian_signature,
@@ -158,7 +158,8 @@ export class Session {
     });
   }
 
-  public async isSessionCached(accountAddress: string, cache_owner_guid: bigint): Promise<boolean> {
+  public async isSessionCached(accountAddress: string, cache_owner_guid?: bigint): Promise<boolean> {
+    if (!cache_owner_guid) return false;
     const sessionContract = await manager.loadContract(accountAddress);
     const sessionMessageHash = typedData.getMessageHash(await this.getTypedData(), accountAddress);
     const isSessionCached = this.legacyMode
@@ -170,13 +171,13 @@ export class Session {
   public async hashWithTransaction(
     transactionHash: string,
     accountAddress: string,
-    cacheOwnerGuid: bigint,
+    cacheOwnerGuid?: bigint,
   ): Promise<string> {
     const sessionMessageHash = typedData.getMessageHash(await this.getTypedData(), accountAddress);
     const sessionWithTxHash = hash.computePoseidonHashOnElements([
       transactionHash,
       sessionMessageHash,
-      this.legacyMode ? +(cacheOwnerGuid !== 0n) : cacheOwnerGuid,
+      this.legacyMode ? +(cacheOwnerGuid != undefined) : cacheOwnerGuid ?? 0,
     ]);
     return sessionWithTxHash;
   }
@@ -235,37 +236,25 @@ interface SessionSetup {
 export async function setupSession({
   guardian,
   account,
-  mockDappContractAddress,
   allowedMethods,
   expiry = BigInt(Date.now()) + 10000n,
   dappKey = randomStarknetKeyPair(),
-  cacheOwnerGuid = 0n,
+  cacheOwnerGuid = undefined,
   isLegacyAccount = false,
 }: {
   guardian: StarknetKeyPair;
   account: ArgentAccount;
   mockDappContractAddress?: string;
-  allowedMethods?: AllowedMethod[];
+  allowedMethods: AllowedMethod[];
   expiry?: bigint;
   dappKey?: StarknetKeyPair;
   cacheOwnerGuid?: bigint;
   isLegacyAccount?: boolean;
 }): Promise<SessionSetup> {
-  const allowedMethodsList =
-    allowedMethods ??
-    (mockDappContractAddress
-      ? [
-          {
-            "Contract Address": mockDappContractAddress,
-            selector: "set_number_double",
-          },
-        ]
-      : []);
-
   const backendService = new BackendService(guardian);
   const dappService = new DappService(backendService, dappKey);
   const argentX = new ArgentX(account, backendService);
-  const sessionRequest = dappService.createSessionRequest(allowedMethodsList, expiry, isLegacyAccount);
+  const sessionRequest = dappService.createSessionRequest(allowedMethods, expiry, isLegacyAccount);
   const sessionTypedData = await sessionRequest.getTypedData();
   const authorizationSignature = await argentX.getOffchainSignature(sessionTypedData);
 
@@ -278,7 +267,7 @@ export async function setupSession({
       isLegacyAccount,
     ),
     sessionHash: typedData.getMessageHash(sessionTypedData, account.address),
-    allowedMethods: allowedMethodsList,
+    allowedMethods,
     sessionRequest,
     authorizationSignature,
     backendService,

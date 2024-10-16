@@ -52,7 +52,6 @@ describe("ArgentAccount: session outside execution", function () {
   });
 
   it("Basics: Revision 1", async function () {
-    throw new Error("testing CI"); // TODO CI should fail but it doesn't!!!
     const { account, guardian } = await deployAccount({ classHash: argentSessionAccountClassHash });
 
     const { account: mockDappAccount } = await deployAccount();

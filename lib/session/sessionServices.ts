@@ -131,10 +131,10 @@ export class DappService {
 
     return new SessionToken({
       session: completedSession,
-      cache_owner_guid: cacheOwnerGuid,
-      session_authorization: isSessionCached ? [] : authorizationSignature,
-      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
-      guardian_signature: this.getStarknetSignatureType(
+      cacheOwnerGuid,
+      sessionAuthorization: isSessionCached ? undefined : authorizationSignature,
+      sessionSignature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
+      guardianSignature: this.getStarknetSignatureType(
         this.argentBackend.getBackendKey(accountAddress),
         guardianSignature,
       ),
@@ -178,10 +178,10 @@ export class DappService {
     });
     const sessionToken = new SessionToken({
       session: completedSession,
-      cache_owner_guid: cacheOwnerGuid,
-      session_authorization: authorizationSignature,
-      session_signature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
-      guardian_signature: this.getStarknetSignatureType(
+      cacheOwnerGuid,
+      sessionAuthorization: authorizationSignature,
+      sessionSignature: this.getStarknetSignatureType(this.sessionKey.publicKey, sessionSignature),
+      guardianSignature: this.getStarknetSignatureType(
         this.argentBackend.getBackendKey(accountAddress),
         guardianSignature,
       ),

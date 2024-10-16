@@ -15,6 +15,7 @@ import {
   signerTypeToCustomEnum,
   upgradeAccount,
 } from "../../lib";
+import { singleMethodAllowList } from "./sessionTestHelpers";
 
 describe("Session Account: execute session calls with caching", function () {
   let argentAccountClassHash: string;
@@ -48,12 +49,7 @@ describe("Session Account: execute session calls with caching", function () {
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: useCaching ? owner.guid : undefined,
-        allowedMethods: [
-          {
-            "Contract Address": mockDappContract.address,
-            selector: "set_number_double",
-          },
-        ],
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
       });
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
@@ -85,12 +81,7 @@ describe("Session Account: execute session calls with caching", function () {
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: useCaching ? owner.guid : undefined,
-        allowedMethods: [
-          {
-            "Contract Address": mockDappContract.address,
-            selector: "set_number_double",
-          },
-        ],
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
       });
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
@@ -107,12 +98,7 @@ describe("Session Account: execute session calls with caching", function () {
           expiry: initialTime + 150n,
           dappKey: randomStarknetKeyPair(),
           cacheOwnerGuid: useCaching ? owner.guid : undefined,
-          allowedMethods: [
-            {
-              "Contract Address": mockDappContract.address,
-              selector: "set_number_double",
-            },
-          ],
+          allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
         });
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
@@ -125,7 +111,7 @@ describe("Session Account: execute session calls with caching", function () {
         cacheOwnerGuid: useCaching ? owner.guid : undefined,
         isLegacyAccount: false,
       });
-      sessionToken.session_authorization = [...sessionToken.session_authorization, "0x0"];
+      sessionToken.sessionAuthorization = [...(sessionToken.sessionAuthorization ?? []), "0x0"];
       if (useCaching) {
         const { transaction_hash } = await accountWithDappSigner.execute(calls);
         await account.waitForTransaction(transaction_hash);
@@ -151,13 +137,7 @@ describe("Session Account: execute session calls with caching", function () {
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: owner.guid,
-
-        allowedMethods: [
-          {
-            "Contract Address": mockDappContract.address,
-            selector: "set_number_double",
-          },
-        ],
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
       });
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
@@ -178,12 +158,7 @@ describe("Session Account: execute session calls with caching", function () {
           expiry: initialTime + 150n,
           dappKey: randomStarknetKeyPair(),
           cacheOwnerGuid: owner.guid,
-          allowedMethods: [
-            {
-              "Contract Address": mockDappContract.address,
-              selector: "set_number_double",
-            },
-          ],
+          allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
         });
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
@@ -196,8 +171,8 @@ describe("Session Account: execute session calls with caching", function () {
         isLegacyAccount: false,
       });
 
-      const originalSessionSignature = sessionToken.session_signature;
-      sessionToken.session_signature = signerTypeToCustomEnum(SignerType.Starknet, {
+      const originalSessionSignature = sessionToken.sessionSignature;
+      sessionToken.sessionSignature = signerTypeToCustomEnum(SignerType.Starknet, {
         pubkey: 100n,
         r: originalSessionSignature.variant.Starknet.r,
         s: originalSessionSignature.variant.Starknet.s,
@@ -214,7 +189,7 @@ describe("Session Account: execute session calls with caching", function () {
         executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
       );
 
-      sessionToken.session_signature = signerTypeToCustomEnum(SignerType.Starknet, {
+      sessionToken.sessionSignature = signerTypeToCustomEnum(SignerType.Starknet, {
         pubkey: originalSessionSignature.variant.Starknet.pubkey,
         r: 200n,
         s: 100n,
@@ -235,12 +210,7 @@ describe("Session Account: execute session calls with caching", function () {
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: owner.guid,
-        allowedMethods: [
-          {
-            "Contract Address": mockDappContract.address,
-            selector: "set_number_double",
-          },
-        ],
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
       });
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
@@ -252,9 +222,9 @@ describe("Session Account: execute session calls with caching", function () {
         cacheOwnerGuid: useCaching ? owner.guid : undefined,
         isLegacyAccount: false,
       });
-      const originalGuardianSignature = sessionToken.guardian_signature;
+      const originalGuardianSignature = sessionToken.guardianSignature;
 
-      sessionToken.guardian_signature = signerTypeToCustomEnum(SignerType.Starknet, {
+      sessionToken.guardianSignature = signerTypeToCustomEnum(SignerType.Starknet, {
         pubkey: 100n,
         r: originalGuardianSignature.variant.Starknet.r,
         s: originalGuardianSignature.variant.Starknet.s,
@@ -265,7 +235,7 @@ describe("Session Account: execute session calls with caching", function () {
         executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
       );
 
-      sessionToken.guardian_signature = signerTypeToCustomEnum(SignerType.Starknet, {
+      sessionToken.guardianSignature = signerTypeToCustomEnum(SignerType.Starknet, {
         pubkey: originalGuardianSignature.variant.Starknet.pubkey,
         r: 200n,
         s: 100n,
@@ -293,12 +263,7 @@ describe("Session Account: execute session calls with caching", function () {
       expiry: initialTime + 150n,
       dappKey: randomStarknetKeyPair(),
       cacheOwnerGuid: owner.guid,
-      allowedMethods: [
-        {
-          "Contract Address": mockDappContract.address,
-          selector: "set_number_double",
-        },
-      ],
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
     });
 
     await accountContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.false;
@@ -330,7 +295,7 @@ describe("Session Account: execute session calls with caching", function () {
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: owner.guid,
-        allowedMethods: [],
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
       });
 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
@@ -347,7 +312,7 @@ describe("Session Account: execute session calls with caching", function () {
       cacheOwnerGuid: owner.guid,
       isLegacyAccount: false,
     });
-    sessionToken.session_authorization = Array(10).fill("1");
+    sessionToken.sessionAuthorization = Array(10).fill("1");
     await expectRevertWithErrorMessage(
       "session/invalid-auth-len",
       executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
@@ -370,7 +335,7 @@ describe("Session Account: execute session calls with caching", function () {
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: useCaching ? owner.guid : undefined,
         isLegacyAccount,
-        allowedMethods: [],
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
       });
 
       await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
@@ -396,7 +361,7 @@ describe("Session Account: execute session calls with caching", function () {
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: useCaching ? owner.guid : undefined,
         isLegacyAccount,
-        allowedMethods: [],
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
       });
       await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
       await accountWithDappSigner.execute(calls);

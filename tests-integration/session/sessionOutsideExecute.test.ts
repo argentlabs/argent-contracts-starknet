@@ -1,5 +1,6 @@
 import { Contract, TypedDataRevision } from "starknet";
 import { StarknetKeyPair, deployAccount, deployer, manager, setupSession } from "../../lib";
+import { singleMethodAllowList } from "./sessionTestHelpers";
 
 const initialTime = 1713139200n;
 const legacyRevision = TypedDataRevision.LEGACY;
@@ -29,12 +30,7 @@ describe("ArgentAccount: outside execution", function () {
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      allowedMethods: [
-        {
-          "Contract Address": mockDapp.address,
-          selector: "set_number",
-        },
-      ],
+      allowedMethods: singleMethodAllowList(mockDapp, "set_number"),
     });
 
     const calls = [mockDapp.populateTransaction.set_number(42n)];
@@ -66,12 +62,7 @@ describe("ArgentAccount: outside execution", function () {
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      allowedMethods: [
-        {
-          "Contract Address": mockDapp.address,
-          selector: "set_number",
-        },
-      ],
+      allowedMethods: singleMethodAllowList(mockDapp, "set_number"),
     });
 
     const outsideExecutionCall = await dappService.getOutsideExecutionCall(

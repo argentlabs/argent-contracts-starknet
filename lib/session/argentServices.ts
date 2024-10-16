@@ -36,7 +36,7 @@ export class BackendService {
     // verify session param correct
     // extremely simplified version of the backend verification
     // backend must check, timestamps fees, used tokens nfts...
-    const allowed_methods = sessionTokenToSign.allowed_methods;
+    const allowed_methods = sessionTokenToSign.allowedMethods;
     if (
       !calls.every((call) => {
         return allowed_methods.some(

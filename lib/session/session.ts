@@ -1,6 +1,5 @@
 import {
   ArraySignatureType,
-  BigNumberish,
   CairoCustomEnum,
   Call,
   CallData,
@@ -49,67 +48,61 @@ export interface AllowedMethod {
   "Contract Address": string;
   selector: string;
 }
-export interface OffChainSession {
-  expires_at: BigNumberish;
-  allowed_methods: AllowedMethod[];
-  metadata: string;
-  session_key_guid: BigNumberish;
-}
 
 export interface OnChainSession {
-  expires_at: BigNumberish;
+  expires_at: bigint;
   allowed_methods_root: string;
   metadata_hash: string;
-  session_key_guid: BigNumberish;
+  session_key_guid: bigint;
 }
 
 export class SessionToken {
-  public session: OnChainSession;
+  public session: Session;
   public proofs: string[][];
-  public cache_owner_guid?: BigNumberish;
-  public session_authorization: string[];
-  public session_signature: CairoCustomEnum;
-  public guardian_signature: CairoCustomEnum;
+  public cacheOwnerGuid?: bigint;
+  public sessionAuthorization?: string[];
+  public sessionSignature: CairoCustomEnum;
+  public guardianSignature: CairoCustomEnum;
   private legacyMode: boolean;
 
   constructor(args: {
     session: Session;
-    cache_owner_guid?: BigNumberish;
-    session_authorization: string[];
-    session_signature: CairoCustomEnum;
-    guardian_signature: CairoCustomEnum;
+    cacheOwnerGuid?: bigint;
+    sessionAuthorization?: string[];
+    sessionSignature: CairoCustomEnum;
+    guardianSignature: CairoCustomEnum;
     calls: Call[];
     isLegacyAccount: boolean;
   }) {
     const {
       session,
-      cache_owner_guid,
-      session_authorization,
-      session_signature,
-      guardian_signature,
+      cacheOwnerGuid,
+      sessionAuthorization,
+      sessionSignature,
+      guardianSignature,
       calls,
       isLegacyAccount,
     } = args;
 
-    this.session = session.toOnChainSession();
+    this.session = session;
     this.proofs = session.getProofs(calls);
-    this.cache_owner_guid = cache_owner_guid;
-    this.session_authorization = session_authorization;
-    this.session_signature = session_signature;
-    this.guardian_signature = guardian_signature;
+    this.cacheOwnerGuid = cacheOwnerGuid;
+    this.sessionAuthorization = sessionAuthorization;
+    this.sessionSignature = sessionSignature;
+    this.guardianSignature = guardianSignature;
     this.legacyMode = isLegacyAccount;
   }
 
   public compileSignature(): string[] {
     const SESSION_MAGIC = shortString.encodeShortString("session-token");
     const tokenData = {
-      session: this.session,
+      session: this.session.toOnChainSession(),
       ...(this.legacyMode
-        ? { cache_authorization: this.cache_owner_guid !== undefined }
-        : { cache_owner_guid: this.cache_owner_guid ?? 0 }),
-      session_authorization: this.session_authorization,
-      session_signature: this.session_signature,
-      guardian_signature: this.guardian_signature,
+        ? { cache_authorization: this.cacheOwnerGuid !== undefined }
+        : { cache_owner_guid: this.cacheOwnerGuid ?? 0 }),
+      session_authorization: this.sessionAuthorization ?? [],
+      session_signature: this.sessionSignature,
+      guardian_signature: this.guardianSignature,
       proofs: this.proofs,
     };
     return [SESSION_MAGIC, ...CallData.compile(tokenData)];
@@ -117,29 +110,16 @@ export class SessionToken {
 }
 
 export class Session {
-  public offChainSession: OffChainSession;
-  private merkleTree: merkle.MerkleTree;
-  private legacyMode: boolean;
-
   constructor(
-    public expires_at: BigNumberish,
-    public allowed_methods: AllowedMethod[],
+    public expiresAt: bigint,
+    public allowedMethods: AllowedMethod[],
     public metadata: string,
-    public session_key_guid: BigNumberish,
-    isLegacyAccount = false,
-  ) {
-    this.offChainSession = {
-      expires_at,
-      allowed_methods,
-      metadata,
-      session_key_guid,
-    };
-    this.merkleTree = this.buildMerkleTree();
-    this.legacyMode = isLegacyAccount;
-  }
+    public sessionKeyGuid?: bigint,
+    private legacyMode = false,
+  ) {}
 
   private buildMerkleTree(): merkle.MerkleTree {
-    const leaves = this.allowed_methods.map((method) =>
+    const leaves = this.allowedMethods.map((method) =>
       hash.computePoseidonHashOnElements([
         ALLOWED_METHOD_HASH,
         method["Contract Address"],
@@ -150,21 +130,22 @@ export class Session {
   }
 
   public getProofs(calls: Call[]): string[][] {
+    const merkleTree = this.buildMerkleTree();
     return calls.map((call) => {
-      const allowedIndex = this.allowed_methods.findIndex((allowedMethod) => {
+      const allowedIndex = this.allowedMethods.findIndex((allowedMethod) => {
         return allowedMethod["Contract Address"] == call.contractAddress && allowedMethod.selector == call.entrypoint;
       });
-      return this.merkleTree.getProof(this.merkleTree.leaves[allowedIndex], this.merkleTree.leaves);
+      return merkleTree.getProof(merkleTree.leaves[allowedIndex], merkleTree.leaves);
     });
   }
 
-  public async isSessionCached(accountAddress: string, cache_owner_guid?: bigint): Promise<boolean> {
-    if (!cache_owner_guid) return false;
+  public async isSessionCached(accountAddress: string, cacheOwnerGuid?: bigint): Promise<boolean> {
+    if (!cacheOwnerGuid) return false;
     const sessionContract = await manager.loadContract(accountAddress);
     const sessionMessageHash = typedData.getMessageHash(await this.getTypedData(), accountAddress);
     const isSessionCached = this.legacyMode
       ? await sessionContract.is_session_authorization_cached(sessionMessageHash)
-      : await sessionContract.is_session_authorization_cached(sessionMessageHash, cache_owner_guid);
+      : await sessionContract.is_session_authorization_cached(sessionMessageHash, cacheOwnerGuid);
     return isSessionCached;
   }
 
@@ -188,10 +169,10 @@ export class Session {
       primaryType: "Session",
       domain: await this.getSessionDomain(),
       message: {
-        "Expires At": this.expires_at,
-        "Allowed Methods": this.allowed_methods,
+        "Expires At": this.expiresAt,
+        "Allowed Methods": this.allowedMethods,
         Metadata: this.metadata,
-        "Session Key": this.session_key_guid,
+        "Session Key": this.sessionKeyGuid,
       },
     };
   }
@@ -210,14 +191,13 @@ export class Session {
 
   public toOnChainSession(): OnChainSession {
     const bArray = byteArray.byteArrayFromString(this.metadata);
-    const elements = [bArray.data.length, ...bArray.data, bArray.pending_word, bArray.pending_word_len];
-    const metadataHash = hash.computePoseidonHashOnElements(elements);
+    const metadataHash = hash.computePoseidonHashOnElements(CallData.compile(bArray));
 
     return {
-      expires_at: this.expires_at,
-      allowed_methods_root: this.merkleTree.root.toString(),
+      expires_at: this.expiresAt,
+      allowed_methods_root: this.buildMerkleTree().root.toString(),
       metadata_hash: metadataHash,
-      session_key_guid: this.session_key_guid,
+      session_key_guid: this.sessionKeyGuid ?? 0n,
     };
   }
 }

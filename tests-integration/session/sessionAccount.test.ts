@@ -10,6 +10,7 @@ import {
   randomStarknetKeyPair,
   setupSession,
 } from "../../lib";
+import { singleMethodAllowList } from "./sessionTestHelpers";
 
 describe("Session Account: execute calls", function () {
   let sessionAccountClassHash: string;
@@ -42,12 +43,7 @@ describe("Session Account: execute calls", function () {
         guardian: guardian as StarknetKeyPair,
         account,
         expiry: initialTime + 150n,
-        allowedMethods: [
-          {
-            "Contract Address": mockDappContract.address,
-            selector: "set_number_double",
-          },
-        ],
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
       });
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
@@ -73,12 +69,7 @@ describe("Session Account: execute calls", function () {
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      allowedMethods: [
-        {
-          "Contract Address": mockDappContract.address,
-          selector: "set_number_double",
-        },
-      ],
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
     });
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];
@@ -98,12 +89,7 @@ describe("Session Account: execute calls", function () {
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      allowedMethods: [
-        {
-          "Contract Address": mockDappContract.address,
-          selector: "set_number_double",
-        },
-      ],
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
     });
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];
@@ -130,12 +116,7 @@ describe("Session Account: execute calls", function () {
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      allowedMethods: [
-        {
-          "Contract Address": mockDappContract.address,
-          selector: "set_number_double",
-        },
-      ],
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
     });
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];

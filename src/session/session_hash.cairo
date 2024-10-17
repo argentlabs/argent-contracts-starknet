@@ -46,7 +46,8 @@ impl StructHashSession of IStructHashRev1<Session> {
                 self.expires_at.into(),
                 self.allowed_methods_root,
                 self.metadata_hash,
-                self.session_key_guid
+                self.session_key_guid,
+                self.guardian_key_guid
             ]
                 .span()
         )

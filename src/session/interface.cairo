@@ -10,12 +10,14 @@ use starknet::{get_tx_info, get_contract_address, ContractAddress};
 /// @param allowed_methods_root The root of the merkle tree of the allowed methods
 /// @param metadata_hash The hash of the metadata JSON string of the session
 /// @param session_key_guid The GUID of the session key
+/// @param guardian_key_guid The GUID of the session key
 #[derive(Drop, Serde, Copy)]
 struct Session {
     expires_at: u64,
     allowed_methods_root: felt252,
     metadata_hash: felt252,
     session_key_guid: felt252,
+    guardian_key_guid: felt252,
 }
 
 /// @notice Session Token struct contains the session struct, relevant signatures and merkle proofs

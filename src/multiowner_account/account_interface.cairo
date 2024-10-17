@@ -37,11 +37,12 @@ trait IArgentMultiOwnerAccount<TContractState> {
     fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>);
 
     /// @notice Removes all owners from this account and adds a new one
-    /// Required to prevent changing to an address which is not in control of the user
+    /// @param new_single_owner Required to prevent changing to an address which is not in control of the user
     /// is the signature of the pedersen hashed array:
-    /// [change_owner_selector, chain_id, account_address, old_owner_guid] // TODO check this, add timestamp
+    /// [change_owner_selector, chain_id, account_address, old_owner_guid, timestamp]
+    /// @param max_timestamp Maximum timestamp for the signature
     /// @dev It will cancel any existing escape
-    fn replace_all_owners_with_one(ref self: TContractState, new_single_owner: SignerSignature);
+    fn replace_all_owners_with_one(ref self: TContractState, new_single_owner: SignerSignature, max_timestamp: u64);
 
     /// @notice Changes the guardian
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)

@@ -25,9 +25,10 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, DA_MODE_L1, is_estimate_transaction
         }
     };
+    use hash::HashStateExTrait;
     use hash::HashStateTrait;
     use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
-    use pedersen::PedersenTrait;
+    use poseidon::PoseidonTrait;
     use starknet::{
         storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED,
         replace_class_syscall, account::Call, SyscallResultTrait, get_tx_info, get_execution_info,
@@ -424,11 +425,10 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
         }
 
-        fn replace_all_owners_with_one(ref self: ContractState, new_single_owner: SignerSignature) {
+        fn replace_all_owners_with_one(ref self: ContractState, new_single_owner: SignerSignature, max_timestamp: u64) {
             assert_only_self();
             let new_owner = new_single_owner.signer();
-            // TODO
-            // self.assert_valid_new_owner_signature(signer_signature);
+            self.assert_valid_new_owner_signature(new_single_owner, max_timestamp);
             self.owner_manager.replace_all_owners_with_one(new_owner.storage_value());
             self.emit(SignerLinked { signer_guid: new_owner.into_guid(), signer: new_owner });
 
@@ -904,30 +904,31 @@ mod ArgentAccount {
             return signer_signature.is_valid_signature(hash) || is_estimate_transaction();
         }
 
-        // TODO
         /// The signature is the result of signing the message hash with the new owner private key
         /// The message hash is the result of hashing the array:
-        /// [change_owner selector, chainid, contract address, old_owner_guid]
+        /// [replace_all_owners_with_one selector, chainid, contract address, old_owner_guid, timestamp]
         /// as specified here:
         /// https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
-        // fn assert_valid_new_owner_signature(self: @ContractState, signer_signature: SignerSignature) {
-        // let chain_id = get_tx_info().chain_id;
-        // let owner_guid = self.read_owner().into_guid();
-        // // We now need to hash message_hash with the size of the array: (change_owner selector,
-        // chain id, contract // address, old_owner_guid)
-        // //
-        // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
-        // let message_hash = PedersenTrait::new(0)
-        //     .update(selector!("change_owner"))
-        //     .update(chain_id)
-        //     .update(get_contract_address().into())
-        //     .update(owner_guid)
-        //     .update(4)
-        //     .finalize();
+        fn assert_valid_new_owner_signature(
+            self: @ContractState, new_single_owner: SignerSignature, max_timestamp: u64
+        ) {
+            let exec_info = get_execution_info();
+            let tx_info = exec_info.tx_info;
+            let chain_id = tx_info.chain_id;
+            let signer_signatures: Array<SignerSignature> = self.parse_signature_array(tx_info.signature);
+            let old_owner_guid = (*signer_signatures[0]).signer().into_guid();
+            assert(max_timestamp >= get_block_timestamp(), 'argent/invalid-max-timestamp');
+            let message_hash = PoseidonTrait::new()
+                .update_with(selector!("replace_all_owners_with_one"))
+                .update_with(chain_id)
+                .update_with(get_contract_address())
+                .update_with(old_owner_guid)
+                .update_with(max_timestamp)
+                .finalize();
 
-        // let is_valid = signer_signature.is_valid_signature(message_hash);
-        // assert(is_valid, 'argent/invalid-owner-sig');
-        // }
+            let is_valid = new_single_owner.is_valid_signature(message_hash);
+            assert(is_valid, 'argent/invalid-owner-sig');
+        }
 
         fn get_escape_status(self: @ContractState, escape_ready_at: u64) -> EscapeStatus {
             if escape_ready_at == 0 {

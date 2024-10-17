@@ -34,13 +34,13 @@ Resources:
 │                    Transfer - With Session                    │    0    │  12   │   0   │   0    │    29    │    21    │     362     │ 12759  │
 │         Transfer - With Session - Caching Values (1)          │    0    │  12   │   0   │   0    │    33    │    23    │     442     │ 13649  │
 │             Transfer - With Session - Cached (2)              │    0    │   6   │   0   │   0    │    31    │    18    │     349     │ 11766  │
-│ Transfer - With Session (Webauthn owner) - Caching Values (1) │   68    │   9   │   0   │   0    │    33    │    48    │    30354    │ 286900 │
+│ Transfer - With Session (Webauthn owner) - Caching Values (1) │   68    │   9   │   0   │   0    │    33    │    48    │    30354    │ 286901 │
 │     Transfer - With Session (Webauthn owner) - Cached (2)     │    0    │   6   │   0   │   0    │    31    │    17    │     349     │ 11769  │
 │               Transfer - No guardian (Old Sig)                │    0    │   3   │   0   │   0    │    29    │    6     │     299     │  9996  │
 │              Transfer - With guardian (Old Sig)               │    0    │   6   │   0   │   0    │    29    │    6     │     308     │ 10495  │
 │                     Transfer - OZ account                     │    0    │   3   │   0   │   0    │    25    │    4     │     269     │  8186  │
 │               Transfer - Eth sig with guardian                │   30    │   3   │   0   │   1    │    28    │    6     │    14894    │ 166813 │
-│              Transfer - Secp256r1 with guardian               │    0    │   3   │   0   │   0    │    28    │    6     │    28674    │ 263939 │
-│                Transfer - Eip161 with guardian                │   64    │   3   │   0   │   2    │    28    │    6     │    15067    │ 167989 │
-│                Transfer - Webauthn no guardian                │   68    │   3   │   0   │   0    │    28    │    18    │    30194    │ 282681 │
+│              Transfer - Secp256r1 with guardian               │    0    │   3   │   0   │   0    │    28    │    6     │    28675    │ 263946 │
+│                Transfer - Eip161 with guardian                │   64    │   3   │   0   │   2    │    28    │    6     │    15067    │ 167990 │
+│                Transfer - Webauthn no guardian                │   68    │   3   │   0   │   0    │    28    │    18    │    30195    │ 282686 │
 └───────────────────────────────────────────────────────────────┴─────────┴───────┴───────┴────────┴──────────┴──────────┴─────────────┴────────┘

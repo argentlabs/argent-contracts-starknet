@@ -25,8 +25,7 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, DA_MODE_L1, is_estimate_transaction
         }
     };
-    use hash::HashStateExTrait;
-    use hash::HashStateTrait;
+    use hash::{HashStateTrait, HashStateExTrait};
     use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
     use poseidon::PoseidonTrait;
     use starknet::{
@@ -912,16 +911,17 @@ mod ArgentAccount {
         fn assert_valid_new_owner_signature(
             self: @ContractState, new_single_owner: SignerSignature, max_timestamp: u64
         ) {
-            let exec_info = get_execution_info();
-            let tx_info = exec_info.tx_info;
+            assert(max_timestamp >= get_block_timestamp(), 'argent/expired-signature');
+            let tx_info = get_execution_info().tx_info;
             let signer_signatures: Array<SignerSignature> = self.parse_signature_array(tx_info.signature);
             let old_owner_guid = (*signer_signatures[0]).signer().into_guid();
-            assert(max_timestamp >= get_block_timestamp(), 'argent/invalid-max-timestamp');
             let message_hash = PoseidonTrait::new()
                 .update_with(selector!("replace_all_owners_with_one"))
                 .update_with(tx_info.chain_id)
                 .update_with(get_contract_address())
                 .update_with(old_owner_guid)
+                // Should this be hashed? it is parts of the args and thus is already part of the tx relates stuff
+                // If you want to misbehave you can just ask with timestamp super far and thus nullifies that check?
                 .update_with(max_timestamp)
                 .finalize();
 

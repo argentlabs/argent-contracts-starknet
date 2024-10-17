@@ -3,9 +3,10 @@ use argent::signer::signer_signature::{
     StarknetSigner, Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait,
     starknet_signer_from_pubkey,
 };
-use hash::HashStateTrait;
-use pedersen::PedersenTrait;
+use hash::{HashStateTrait, HashStateExTrait};
+use poseidon::PoseidonTrait;
 use snforge_std::{
+    start_cheat_block_timestamp_global, start_cheat_signature_global,
     signature::{KeyPairTrait, stark_curve::{StarkCurveKeyPairImpl, StarkCurveSignerImpl}},
     start_cheat_caller_address_global, start_cheat_transaction_version_global, EventSpyTrait, EventSpyAssertionsTrait,
     ContractClassTrait, spy_events
@@ -24,12 +25,12 @@ fn NEW_OWNER() -> (StarknetSigner, StarknetSignature) {
 }
 
 fn new_owner_message_hash() -> felt252 {
-    PedersenTrait::new(0)
-        .update(selector!("change_owner"))
-        .update('SN_SEPOLIA')
-        .update(ARGENT_ACCOUNT_ADDRESS)
-        .update(starknet_signer_from_pubkey(OWNER().pubkey).into_guid())
-        .update(4)
+    PoseidonTrait::new()
+        .update_with(selector!("replace_all_owners_with_one"))
+        .update_with('SN_SEPOLIA')
+        .update_with(ARGENT_ACCOUNT_ADDRESS)
+        .update_with(starknet_signer_from_pubkey(OWNER().pubkey).into_guid())
+        .update_with(1100)
         .finalize()
 }
 
@@ -75,49 +76,64 @@ fn erc165_unsupported_interfaces() {
     assert!(!account.supports_interface(0xffffffff));
 }
 
-// TODO: Implement these tests once change owner has been implemented in the multiowner account contract
-//
-// #[test]
-// fn change_owner() {
-//     let account = initialize_account();
-//     assert_eq!(
-//         account.get_owner_guid(), starknet_signer_from_pubkey(OWNER().pubkey).into_guid(), "owner not correctly set"
-//     );
-//     let (signer, signature) = NEW_OWNER();
-//     let signer_signature = SignerSignature::Starknet((signer, signature));
-//     account.change_owner(signer_signature);
-//     assert_eq!(account.get_owner_guid(), signer_signature.signer().into_guid());
-// }
-//
-// #[test]
-// #[should_panic(expected: ('argent/only-self',))]
-// fn change_owner_only_self() {
-//     let account = initialize_account();
-//     start_cheat_caller_address_global(contract_address_const::<42>());
-//     let (signer, signature) = NEW_OWNER();
-//     let signer_signature = SignerSignature::Starknet((signer, signature));
-//     account.change_owner(signer_signature);
-// }
-//
-// #[test]
-// #[should_panic(expected: ('argent/invalid-owner-sig',))]
-// fn change_owner_invalid_message() {
-//     let account = initialize_account();
-//     let (signer, _) = NEW_OWNER();
-//     let signer_signature = SignerSignature::Starknet(
-//         (signer, StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s })
-//     );
-//     account.change_owner(signer_signature);
-// }
-//
-// #[test]
-// #[should_panic(expected: ('argent/invalid-owner-sig',))]
-// fn change_owner_wrong_pub_key() {
-//     let account = initialize_account();
-//     let (_, signature) = NEW_OWNER();
-//     let signer_signature = SignerSignature::Starknet((WRONG_OWNER().pubkey.try_into().unwrap(), signature));
-//     account.change_owner(signer_signature);
-// }
+#[test]
+fn replace_all_owners_with_one() {
+    let account = initialize_account();
+    assert_eq!(
+        account.get_owner_guid(), starknet_signer_from_pubkey(OWNER().pubkey).into_guid(), "owner not correctly set"
+    );
+    let (signer, signature) = NEW_OWNER();
+    let signer_signature = SignerSignature::Starknet((signer, signature));
+    start_cheat_signature_global(array![signature.r, signature.s].span());
+    account.replace_all_owners_with_one(signer_signature, 1100);
+    assert_eq!(account.get_owner_guid(), signer_signature.signer().into_guid());
+}
+
+#[test]
+#[should_panic(expected: ('argent/only-self',))]
+fn replace_all_owners_with_one_only_self() {
+    let account = initialize_account();
+    start_cheat_caller_address_global(contract_address_const::<42>());
+    let (signer, signature) = NEW_OWNER();
+    let signer_signature = SignerSignature::Starknet((signer, signature));
+    account.replace_all_owners_with_one(signer_signature, 1100);
+}
+
+#[test]
+#[should_panic(expected: ('argent/expired-signature',))]
+fn replace_all_owners_with_one_timestamp_expired() {
+    let account = initialize_account();
+    assert_eq!(
+        account.get_owner_guid(), starknet_signer_from_pubkey(OWNER().pubkey).into_guid(), "owner not correctly set"
+    );
+    let (signer, signature) = NEW_OWNER();
+    let signer_signature = SignerSignature::Starknet((signer, signature));
+    start_cheat_signature_global(array![signature.r, signature.s].span());
+    start_cheat_block_timestamp_global(1000);
+    account.replace_all_owners_with_one(signer_signature, 999);
+}
+
+#[test]
+#[should_panic(expected: ('argent/invalid-owner-sig',))]
+fn replace_all_owners_with_one_invalid_message() {
+    let account = initialize_account();
+    let (signer, signature) = NEW_OWNER();
+    let signer_signature = SignerSignature::Starknet(
+        (signer, StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s })
+    );
+    start_cheat_signature_global(array![signature.r, signature.s].span());
+    account.replace_all_owners_with_one(signer_signature, 1100);
+}
+
+#[test]
+#[should_panic(expected: ('argent/invalid-owner-sig',))]
+fn replace_all_owners_with_one_wrong_pub_key() {
+    let account = initialize_account();
+    let (_, signature) = NEW_OWNER();
+    let signer_signature = SignerSignature::Starknet((WRONG_OWNER().pubkey.try_into().unwrap(), signature));
+    start_cheat_signature_global(array![signature.r, signature.s].span());
+    account.replace_all_owners_with_one(signer_signature, 1100);
+}
 
 #[test]
 fn change_guardian() {

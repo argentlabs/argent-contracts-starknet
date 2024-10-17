@@ -914,13 +914,12 @@ mod ArgentAccount {
         ) {
             let exec_info = get_execution_info();
             let tx_info = exec_info.tx_info;
-            let chain_id = tx_info.chain_id;
             let signer_signatures: Array<SignerSignature> = self.parse_signature_array(tx_info.signature);
             let old_owner_guid = (*signer_signatures[0]).signer().into_guid();
             assert(max_timestamp >= get_block_timestamp(), 'argent/invalid-max-timestamp');
             let message_hash = PoseidonTrait::new()
                 .update_with(selector!("replace_all_owners_with_one"))
-                .update_with(chain_id)
+                .update_with(tx_info.chain_id)
                 .update_with(get_contract_address())
                 .update_with(old_owner_guid)
                 .update_with(max_timestamp)

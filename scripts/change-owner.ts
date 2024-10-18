@@ -33,10 +33,7 @@ if (owner !== ownerSigner.publicKey) {
 
 // remote signing:
 // TODO Fix here
-console.log(
-  "messageHash:",
-  await getChangeOwnerMessageHash(accountContract.address, chainId, ownerSigner.guid, 11000),
-); // share to backend
+console.log("messageHash:", await getChangeOwnerMessageHash(accountContract.address, chainId, ownerSigner.guid, 11000)); // share to backend
 const [r, s] = [1, 2]; // fill with values from backend
 
 console.log("r:", r);

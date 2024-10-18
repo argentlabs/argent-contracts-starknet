@@ -6,7 +6,6 @@ import {
   deployAccountWithGuardianBackup,
   deployAccountWithoutGuardian,
   deployer,
-  expectEvent,
   expectRevertWithErrorMessage,
   hasOngoingEscape,
   manager,
@@ -89,7 +88,12 @@ describe("ArgentAccount", function () {
       const chainId = await manager.getChainId();
       const latestBlockTimestamp = (await manager.getBlock("latest")).timestamp;
       const futureTimestamp = latestBlockTimestamp + 1000;
-      const starknetSignature = await signChangeOwnerMessage(accountContract.address, newOwner, chainId, futureTimestamp);
+      const starknetSignature = await signChangeOwnerMessage(
+        accountContract.address,
+        newOwner,
+        chainId,
+        futureTimestamp,
+      );
       // Wtf??? For some reason I have to push to array instead of passing as last arg??? There is def a bug here
       starknetSignature.push(`0x${futureTimestamp.toString(16)}`);
       const receipt = await manager.waitForTx(await accountContract.replace_all_owners_with_one(starknetSignature));

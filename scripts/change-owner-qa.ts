@@ -16,9 +16,9 @@ import "dotenv/config";
 import { num, shortString } from "starknet";
 import { StarknetKeyPair, manager, signChangeOwnerMessage } from "../lib";
 const chainId = await manager.getChainId();
-const currentOwnerGuid = await (await manager.loadContract(accountAddress)).get_owner();
 const newOwnerKeyPair = new StarknetKeyPair();
-const [r, s] = await signChangeOwnerMessage(accountAddress, currentOwnerGuid, newOwnerKeyPair, chainId);
+// TODO Fix here
+const [r, s] = await signChangeOwnerMessage(accountAddress, newOwnerKeyPair, chainId, 1000);
 console.log("account:", accountAddress);
 console.log("chainId:", shortString.decodeShortString(chainId));
 console.log("Parameters to change_owner:");

@@ -32,7 +32,11 @@ if (owner !== ownerSigner.publicKey) {
 // const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner, newOwner, provider);
 
 // remote signing:
-console.log("messageHash:", await getChangeOwnerMessageHash(accountContract.address, owner, chainId)); // share to backend
+// TODO Fix here
+console.log(
+  "messageHash:",
+  await getChangeOwnerMessageHash(accountContract.address, chainId, ownerSigner.guid, 11000),
+); // share to backend
 const [r, s] = [1, 2]; // fill with values from backend
 
 console.log("r:", r);

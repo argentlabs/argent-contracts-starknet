@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { CairoCustomEnum, Contract, hash } from "starknet";
-import { RawSigner } from ".";
+import { KeyPair } from ".";
 
 export const ESCAPE_SECURITY_PERIOD = 7n * 24n * 60n * 60n; // 7 days
 export const ESCAPE_EXPIRY_PERIOD = 2n * 7n * 24n * 60n * 60n; // 14 days
@@ -33,17 +33,22 @@ export const ESCAPE_TYPE_OWNER = new CairoCustomEnum({
 
 export const signChangeOwnerMessage = async (
   accountAddress: string,
-  currentOwnerGuid: bigint,
-  newOwner: RawSigner,
+  newOwner: KeyPair,
   chainId: string,
+  maxTimestamp: number,
 ) => {
-  const messageHash = await getChangeOwnerMessageHash(accountAddress, currentOwnerGuid, chainId);
+  const messageHash = await getChangeOwnerMessageHash(accountAddress, chainId, newOwner.guid, maxTimestamp);
   return newOwner.signRaw(messageHash);
 };
 
-export const getChangeOwnerMessageHash = async (accountAddress: string, currentOwnerGuid: bigint, chainId: string) => {
-  const changeOwnerSelector = hash.getSelectorFromName("change_owner");
-  return hash.computeHashOnElements([changeOwnerSelector, chainId, accountAddress, currentOwnerGuid]);
+export const getChangeOwnerMessageHash = async (
+  accountAddress: string,
+  chainId: string,
+  newOwnerGuid: bigint,
+  maxTimestamp: number,
+) => {
+  const changeOwnerSelector = hash.getSelectorFromName("replace_all_owners_with_one");
+  return hash.computeHashOnElements([changeOwnerSelector, chainId, accountAddress, newOwnerGuid, maxTimestamp]);
 };
 
 export async function hasOngoingEscape(accountContract: Contract): Promise<boolean> {

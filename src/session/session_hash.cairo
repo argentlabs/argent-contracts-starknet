@@ -1,8 +1,11 @@
 use argent::offchain_message::{
-    interface::{StarknetDomain, StructHashStarknetDomain, IMerkleLeafHash, IStructHashRev1, IOffChainMessageHashRev1,},
+    interface::{
+        StarknetDomain, StructHashStarknetDomain, IMerkleLeafHash, IStructHashRev1,
+        IOffChainMessageHashRev1,
+    },
     precalculated_hashing::get_message_hash_rev_1_with_precalc
 };
-use argent::session::interface::Session;
+use argent::session::interface::{Session, TypedData, Policy};
 use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, poseidon_hash_span, HashState};
 use starknet::{get_contract_address, get_tx_info, account::Call};
@@ -27,13 +30,36 @@ const SESSION_TYPE_HASH_REV_1: felt252 =
     selector!(
         "\"Session\"(\"Expires At\":\"timestamp\",\"Allowed Methods\":\"merkletree\",\"Metadata\":\"string\",\"Session Key\":\"felt\")"
     );
+const DATA_TYPE_HASH_REV_1: felt252 =
+    selector!("\"Allowed Type\"(\"Type Hash\":\"felt\", \"Typed Data Hash\":\"felt\")");
 
 const ALLOWED_METHOD_HASH_REV_1: felt252 =
-    selector!("\"Allowed Method\"(\"Contract Address\":\"ContractAddress\",\"selector\":\"selector\")");
+    selector!(
+        "\"Allowed Method\"(\"Contract Address\":\"ContractAddress\",\"selector\":\"selector\")"
+    );
+
+const ALLOWED_DATA_TYPE_HASH_REV_1: felt252 = selector!("\"Allowed Type\"(\"Type Hash\":\"felt\")");
 
 impl MerkleLeafHash of IMerkleLeafHash<Call> {
     fn get_merkle_leaf(self: @Call) -> felt252 {
-        poseidon_hash_span(array![ALLOWED_METHOD_HASH_REV_1, (*self.to).into(), *self.selector].span())
+        poseidon_hash_span(
+            array![ALLOWED_METHOD_HASH_REV_1, (*self.to).into(), *self.selector].span()
+        )
+    }
+}
+
+impl MerkleLeafHashTypedData of IMerkleLeafHash<TypedData> {
+    fn get_merkle_leaf(self: @TypedData) -> felt252 {
+        poseidon_hash_span(array![ALLOWED_DATA_TYPE_HASH_REV_1, *self.type_hash].span())
+    }
+}
+
+impl MerkleLeafHashPolicy of IMerkleLeafHash<Policy> {
+    fn get_merkle_leaf(self: @Policy) -> felt252 {
+        match self {
+            Policy::Call(call) => call.get_merkle_leaf(),
+            Policy::TypedData(typed_data) => typed_data.get_merkle_leaf(),
+        }
     }
 }
 
@@ -44,12 +70,22 @@ impl StructHashSession of IStructHashRev1<Session> {
             array![
                 SESSION_TYPE_HASH_REV_1,
                 self.expires_at.into(),
-                self.allowed_methods_root,
+                self.allowed_policies_root,
                 self.metadata_hash,
                 self.session_key_guid,
                 self.guardian_key_guid
             ]
                 .span()
+        )
+    }
+}
+
+
+impl StructHashTypedData of IStructHashRev1<TypedData> {
+    fn get_struct_hash_rev_1(self: @TypedData) -> felt252 {
+        let self = *self;
+        poseidon_hash_span(
+            array![DATA_TYPE_HASH_REV_1, self.type_hash, self.typed_data_hash].span()
         )
     }
 }
@@ -63,7 +99,9 @@ impl OffChainMessageHashSessionRev1 of IOffChainMessageHashRev1<Session> {
         if chain_id == 'SN_SEPOLIA' {
             return get_message_hash_rev_1_with_precalc(SEPOLIA_FIRST_HADES_PERMUTATION, *self);
         }
-        let domain = StarknetDomain { name: 'SessionAccount.session', version: '1', chain_id, revision: 1, };
+        let domain = StarknetDomain {
+            name: 'SessionAccount.session', version: '1', chain_id, revision: 1,
+        };
         poseidon_hash_span(
             array![
                 'StarkNet Message',

@@ -14,11 +14,13 @@ use starknet::{get_tx_info, get_contract_address, ContractAddress};
 #[derive(Drop, Serde, Copy)]
 struct Session {
     expires_at: u64,
-    allowed_methods_root: felt252,
+    allowed_policies_root: felt252,
     metadata_hash: felt252,
     session_key_guid: felt252,
     guardian_key_guid: felt252,
 }
+
+
 
 /// @notice Session Token struct contains the session struct, relevant signatures and merkle proofs
 /// @param session The session struct
@@ -35,6 +37,18 @@ struct SessionToken {
     session_signature: SignerSignature,
     guardian_signature: SignerSignature,
     proofs: Span<Span<felt252>>,
+}
+
+#[derive(Drop, Serde, Copy)]
+struct TypedData {
+    type_hash: felt252,
+    typed_data_hash: felt252,
+}
+
+#[derive(Drop, Serde, Copy)]
+enum Policy {
+    Call: Call,
+    TypedData: TypedData,
 }
 
 

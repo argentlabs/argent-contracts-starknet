@@ -167,7 +167,7 @@ mod session_component {
 
     fn assert_valid_session_calls(token: @SessionToken, mut calls: Span<Call>) {
         assert((*token.proofs).len() == calls.len(), 'session/unaligned-proofs');
-        let merkle_root = *token.session.allowed_methods_root;
+        let merkle_root = *token.session.allowed_policies_root;
         let mut merkle_tree: MerkleTree<Hasher> = MerkleTreeImpl::new();
         let mut proofs = *token.proofs;
         while let Option::Some(call) = calls

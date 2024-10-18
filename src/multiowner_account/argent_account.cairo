@@ -27,7 +27,7 @@ mod ArgentAccount {
     };
     use hash::{HashStateTrait, HashStateExTrait};
     use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
-    use poseidon::PoseidonTrait;
+    use pedersen::PedersenTrait;
     use starknet::{
         storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED,
         replace_class_syscall, account::Call, SyscallResultTrait, get_tx_info, get_execution_info,
@@ -61,6 +61,7 @@ mod ArgentAccount {
 
     /// Minimum time for the escape security period
     const MIN_ESCAPE_SECURITY_PERIOD: u64 = 60 * 10; // 10 minutes;
+    const ONE_DAY: u64 = 60 * 24;
 
 
     // Owner management
@@ -912,21 +913,25 @@ mod ArgentAccount {
             self: @ContractState, new_single_owner: SignerSignature, max_timestamp: u64
         ) {
             assert(max_timestamp >= get_block_timestamp(), 'argent/expired-signature');
+            // TODO Put a max timestamp limit
+            // assert(max_timestamp - get_block_timestamp() <= ONE_DAY, 'argent/max-timestamp-too-big');
             let tx_info = get_execution_info().tx_info;
-            let signer_signatures: Array<SignerSignature> = self.parse_signature_array(tx_info.signature);
-            let old_owner_guid = (*signer_signatures[0]).signer().into_guid();
-            let message_hash = PoseidonTrait::new()
+            let new_owner_guid = new_single_owner.signer().into_guid();
+            // Should we use Poseidon?
+            let message_hash = PedersenTrait::new(0)
                 .update_with(selector!("replace_all_owners_with_one"))
                 .update_with(tx_info.chain_id)
                 .update_with(get_contract_address())
-                .update_with(old_owner_guid)
-                // Should this be hashed? it is parts of the args and thus is already part of the tx relates stuff
+                .update_with(new_owner_guid)
+                // Should this be hashed? it is parts of the args hashed by the old owner, thus already hashed
+                // Should the "new signer" sign it too?
                 // If you want to misbehave you can just ask with timestamp super far and thus nullifies that check?
                 .update_with(max_timestamp)
+                .update_with(5)
                 .finalize();
 
             let is_valid = new_single_owner.is_valid_signature(message_hash);
-            assert(is_valid, 'argent/invalid-owner-sig');
+            assert(is_valid, 'argent/invalid-new-owner-sig');
         }
 
         fn get_escape_status(self: @ContractState, escape_ready_at: u64) -> EscapeStatus {

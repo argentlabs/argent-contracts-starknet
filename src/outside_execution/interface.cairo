@@ -19,7 +19,7 @@ const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_2: felt252 =
 #[derive(Copy, Drop, Serde)]
 struct OutsideExecution {
     caller: ContractAddress,
-    nonce: (felt252, felt252),
+    nonce: (felt252, u128),
     execute_after: u64,
     execute_before: u64,
     calls: Span<Call>
@@ -39,9 +39,7 @@ trait IOutsideExecution<TContractState> {
     ) -> Array<Span<felt252>>;
 
     /// Get the status of a given nonce, true if the nonce is available to use
-    fn is_valid_outside_execution_v3_nonce(
-        self: @TContractState, nonce: (felt252, felt252)
-    ) -> bool;
+    fn is_valid_outside_execution_v3_nonce(self: @TContractState, nonce: (felt252, u128)) -> bool;
 
     /// Get the message hash for some `OutsideExecution` rev 2 following Eip712. Can be used to know
     /// what needs to be signed
@@ -49,7 +47,7 @@ trait IOutsideExecution<TContractState> {
         self: @TContractState, outside_execution: OutsideExecution
     ) -> felt252;
 
-    fn get_outside_execution_v3_channel_nonce(self: @TContractState, channel: felt252) -> felt252;
+    fn get_outside_execution_v3_channel_nonce(self: @TContractState, channel: felt252) -> u128;
 }
 
 /// This trait must be implemented when using the component `outside_execution_component` (This is

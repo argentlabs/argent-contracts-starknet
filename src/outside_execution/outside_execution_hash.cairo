@@ -27,7 +27,7 @@ const SEPOLIA_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
 
 const OUTSIDE_EXECUTION_TYPE_HASH_REV_2: felt252 =
     selector!(
-        "\"OutsideExecution\"(\"Caller\":\"ContractAddress\",\"Nonce\":\"(felt,felt)\",\"Execute After\":\"u128\",\"Execute Before\":\"u128\",\"Calls\":\"Call*\")\"Call\"(\"To\":\"ContractAddress\",\"Selector\":\"selector\",\"Calldata\":\"felt*\")"
+        "\"OutsideExecution\"(\"Caller\":\"ContractAddress\",\"Nonce\":\"(felt,u128)\",\"Execute After\":\"u128\",\"Execute Before\":\"u128\",\"Calls\":\"Call*\")\"Call\"(\"To\":\"ContractAddress\",\"Selector\":\"selector\",\"Calldata\":\"felt*\")"
     );
 
 const CALL_TYPE_HASH_REV_2: felt252 =
@@ -59,14 +59,14 @@ impl StructHashOutsideExecutionRev2 of IStructHashRev1<OutsideExecution> {
             hashed_calls.append(call.get_struct_hash_rev_1());
         };
 
-        let (nonce_channel, nonce_index) = self.nonce;
+        let (nonce_channel, nonce_mask) = self.nonce;
 
         poseidon_hash_span(
             array![
                 OUTSIDE_EXECUTION_TYPE_HASH_REV_2,
                 self.caller.into(),
                 nonce_channel,
-                nonce_index,
+                nonce_mask.into(),
                 self.execute_after.into(),
                 self.execute_before.into(),
                 poseidon_hash_span(hashed_calls.span()),

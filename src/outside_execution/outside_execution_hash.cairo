@@ -13,18 +13,17 @@ use starknet::{get_tx_info, get_contract_address, account::Call};
 
 const MAINNET_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
     (
-        2727651893633223888261849279042022325174182119102281398572272198960815727249,
-        729016093840936084580216898033636860729342953928695140840860652272753125883,
-        2792630223211151632174198306610141883878913626231408099903852589995722964080
+        996915192477314844232397706210079185628598843828924621070706959145689833980,
+        2154834376955455672602400038844399406202405733270731961376124532261347854986,
+        1129673910579930509220015777859527444962253764479830284363060876794734318472,
     );
 
 const SEPOLIA_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
     (
-        3580606761507954093996364807837346681513890124685758374532511352257317798951,
-        3431227198346789440159663709265467470274870120429209591243179659934705045436,
-        974062396530052497724701732977002885691473732259823426261944148730229556466
+        2648373253270285159769360603517540536782489473878572730211506916518063798474,
+        604219299452944139991089465374505793098487122536238208890268251872611859633,
+        2075519913841617027120337084019352091900417009471098949739064814802390776233,
     );
-
 
 const OUTSIDE_EXECUTION_TYPE_HASH_REV_2: felt252 =
     selector!(
@@ -56,10 +55,9 @@ impl StructHashOutsideExecutionRev2 of IStructHashRev1<OutsideExecution> {
         let mut calls_span = self.calls;
         let mut hashed_calls = array![];
 
-        while let Option::Some(call) = calls_span
-            .pop_front() {
-                hashed_calls.append(call.get_struct_hash_rev_1());
-            };
+        while let Option::Some(call) = calls_span.pop_front() {
+            hashed_calls.append(call.get_struct_hash_rev_1());
+        };
 
         let (nonce_channel, nonce_index) = self.nonce;
 
@@ -80,8 +78,10 @@ impl StructHashOutsideExecutionRev2 of IStructHashRev1<OutsideExecution> {
 
 impl OffChainMessageOutsideExecutionRev2 of IOffChainMessageHashRev1<OutsideExecution> {
     fn get_message_hash_rev_1(self: @OutsideExecution) -> felt252 {
-        // Version is a felt instead of a shortstring in SNIP-9 due to a mistake in the Braavos contracts and has been copied for compatibility.
-        // Revision will also be a felt instead of a shortstring for all SNIP22-rev2 signatures because of the same issue
+        // Version is a felt instead of a shortstring in SNIP-9 due to a mistake in the Braavos
+        // contracts and has been copied for compatibility.
+        // Revision will also be a felt instead of a shortstring for all SNIP22-rev2 signatures
+        // because of the same issue
 
         let chain_id = get_tx_info().unbox().chain_id;
         if chain_id == 'SN_MAIN' {

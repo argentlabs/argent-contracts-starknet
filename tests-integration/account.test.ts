@@ -11,6 +11,7 @@ import {
   manager,
   randomStarknetKeyPair,
   signChangeOwnerMessage,
+  starknetSignatureType,
   zeroStarknetSignatureType,
 } from "../lib";
 
@@ -80,7 +81,7 @@ describe("ArgentAccount", function () {
     );
   });
 
-  describe.only("change_owner(new_owner, signature_r, signature_s)", function () {
+  describe("change_owner(new_owner, signature_r, signature_s)", function () {
     it("Should be possible to change_owner", async function () {
       const { accountContract } = await deployAccount();
       const newOwner = randomStarknetKeyPair();
@@ -104,31 +105,13 @@ describe("ArgentAccount", function () {
       // await expectEvent(receipt, { from_address, eventName: "OwnerChangedGuid", data: [newOwner.guid.toString()] });
     });
 
-    // it("Expect 'argent/only-self' when called from another account", async function () {
-    //   const { account } = await deployAccount();
-    //   const { accountContract } = await deployAccount();
-    //   accountContract.connect(account);
-    //   await expectRevertWithErrorMessage(
-    //     "argent/only-self",
-    //     accountContract.change_owner(starknetSignatureType(12, 13, 14)),
-    //   );
-    // });
-
-    // it("Expect parsing error when new_owner is zero", async function () {
-    //   const { accountContract } = await deployAccount();
-    //   await expectRevertWithErrorMessage(
-    //     "Failed to deserialize param #1",
-    //     accountContract.change_owner(starknetSignatureType(0, 13, 14)),
-    //   );
-    // });
-
-    // it("Expect 'argent/invalid-owner-sig' when the signature to change owner is invalid", async function () {
-    //   const { accountContract } = await deployAccount();
-    //   await expectRevertWithErrorMessage(
-    //     "argent/invalid-owner-sig",
-    //     accountContract.change_owner(starknetSignatureType(12, 13, 14)),
-    //   );
-    // });
+    it("Expect parsing error when new_owner is zero", async function () {
+      const { accountContract } = await deployAccount();
+      await expectRevertWithErrorMessage(
+        "Failed to deserialize param #1",
+        accountContract.replace_all_owners_with_one(starknetSignatureType(0, 13, 14), 1),
+      );
+    });
 
     // it("Expect the escape to be reset", async function () {
     //   const { account, accountContract, owner, guardian } = await deployAccount();

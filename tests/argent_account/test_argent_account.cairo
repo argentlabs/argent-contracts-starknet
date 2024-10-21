@@ -1,8 +1,10 @@
 use argent::multiowner_account::argent_account::ArgentAccount;
+use argent::recovery::interface::EscapeStatus;
 use argent::signer::signer_signature::{
     StarknetSigner, Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait,
     starknet_signer_from_pubkey,
 };
+
 use hash::{HashStateTrait, HashStateExTrait};
 use pedersen::PedersenTrait;
 use snforge_std::{
@@ -89,6 +91,23 @@ fn replace_all_owners_with_one() {
     let signer_signature = SignerSignature::Starknet((signer, signature));
     account.replace_all_owners_with_one(signer_signature, 1100);
     assert_eq!(account.get_owner_guid(), signer_signature.signer().into_guid());
+}
+
+
+#[test]
+fn replace_all_owners_with_one_reset_escape() {
+    let account = initialize_account();
+
+    account.trigger_escape_owner(starknet_signer_from_pubkey(12));
+    let (_, not_ready) = account.get_escape_and_status();
+    assert_eq!(not_ready, EscapeStatus::NotReady);
+
+    let (signer, signature) = NEW_OWNER();
+    let signer_signature = SignerSignature::Starknet((signer, signature));
+    account.replace_all_owners_with_one(signer_signature, 1100);
+
+    let (_, none) = account.get_escape_and_status();
+    assert_eq!(none, EscapeStatus::None);
 }
 
 #[test]

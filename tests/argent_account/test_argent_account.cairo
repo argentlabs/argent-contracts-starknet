@@ -93,6 +93,19 @@ fn replace_all_owners_with_one() {
 }
 
 #[test]
+#[should_panic(expected: ('argent/timestamp-too-far-future',))]
+fn replace_all_owners_with_one_too_far_future() {
+    let account = initialize_account();
+    let old_owner = OWNER();
+    assert_eq!(
+        account.get_owner_guid(), starknet_signer_from_pubkey(old_owner.pubkey).into_guid(), "owner not correctly set"
+    );
+    let (signer, signature) = NEW_OWNER();
+    let signer_signature = SignerSignature::Starknet((signer, signature));
+    account.replace_all_owners_with_one(signer_signature, (60 * 24) + 1);
+}
+
+#[test]
 #[should_panic(expected: ('argent/only-self',))]
 fn replace_all_owners_with_one_only_self() {
     let account = initialize_account();

@@ -906,15 +906,17 @@ mod ArgentAccount {
 
         /// The signature is the result of signing the message hash with the new owner private key
         /// The message hash is the result of hashing the array:
-        /// [replace_all_owners_with_one selector, chainid, contract address, old_owner_guid, timestamp]
+        /// [replace_all_owners_with_one selector, chain id, contract address, new owner guid, timestamp]
         /// as specified here:
         /// https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
         fn assert_valid_new_owner_signature(
             self: @ContractState, new_single_owner: SignerSignature, max_timestamp: u64
         ) {
+            // Should we move some checks to validation?
+            // I'd argue we shouldn't, as we want to keep the validation as simple as possible
+            // This function is rarely used, the checks are cheap
             assert(max_timestamp >= get_block_timestamp(), 'argent/expired-signature');
-            // TODO Put a max timestamp limit
-            // assert(max_timestamp - get_block_timestamp() <= ONE_DAY, 'argent/max-timestamp-too-big');
+            assert(max_timestamp - get_block_timestamp() <= ONE_DAY, 'argent/timestamp-too-far-future');
             let tx_info = get_execution_info().tx_info;
             let new_owner_guid = new_single_owner.signer().into_guid();
             // Should we use Poseidon?
@@ -923,9 +925,6 @@ mod ArgentAccount {
                 .update_with(tx_info.chain_id)
                 .update_with(get_contract_address())
                 .update_with(new_owner_guid)
-                // Should this be hashed? it is parts of the args hashed by the old owner, thus already hashed
-                // Should the "new signer" sign it too?
-                // If you want to misbehave you can just ask with timestamp super far and thus nullifies that check?
                 .update_with(max_timestamp)
                 .update_with(5)
                 .finalize();

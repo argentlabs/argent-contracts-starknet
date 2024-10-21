@@ -17,7 +17,7 @@ import { num, shortString } from "starknet";
 import { StarknetKeyPair, manager, signChangeOwnerMessage } from "../lib";
 const chainId = await manager.getChainId();
 const newOwnerKeyPair = new StarknetKeyPair();
-const validUntil = await manager.getCurrentTimestamp() + 1000;
+const validUntil = (await manager.getCurrentTimestamp()) + 1000;
 const [r, s] = await signChangeOwnerMessage(accountAddress, newOwnerKeyPair, chainId, validUntil);
 console.log("account:", accountAddress);
 console.log("chainId:", shortString.decodeShortString(chainId));

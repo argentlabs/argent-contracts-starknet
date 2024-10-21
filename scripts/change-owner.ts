@@ -18,7 +18,7 @@ const owner: bigint = await accountContract.get_owner();
 const account = new Account(manager, accountAddress, ownerSigner, "1");
 accountContract.connect(account);
 const chainId = await manager.getChainId();
-const validUntil = await manager.getCurrentTimestamp() + 1000;
+const validUntil = (await manager.getCurrentTimestamp()) + 1000;
 
 if (owner !== ownerSigner.publicKey) {
   throw new Error(`onchain owner ${owner} not the same as expected ${ownerSigner.publicKey}`);
@@ -33,7 +33,11 @@ if (owner !== ownerSigner.publicKey) {
 // const starknetSignature = await signChangeOwnerMessage(accountContract.address, newOwner, chainId, validUntil);
 
 // remote signing:
-console.log("messageHash:", await getChangeOwnerMessageHash(accountContract.address, chainId, ownerSigner.guid, validUntil)); // share to backend
+// share to backend
+console.log(
+  "messageHash:",
+  await getChangeOwnerMessageHash(accountContract.address, chainId, ownerSigner.guid, validUntil),
+);
 const [r, s] = [1, 2]; // fill with values from backend
 
 console.log("r:", r);

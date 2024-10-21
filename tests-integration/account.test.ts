@@ -6,6 +6,7 @@ import {
   deployAccountWithGuardianBackup,
   deployAccountWithoutGuardian,
   deployer,
+  expectEvent,
   expectRevertWithErrorMessage,
   hasOngoingEscape,
   manager,
@@ -89,20 +90,19 @@ describe("ArgentAccount", function () {
       const chainId = await manager.getChainId();
       const latestBlockTimestamp = await manager.getCurrentTimestamp();
       const futureTimestamp = latestBlockTimestamp + 1000;
-      const starknetSignature = await signChangeOwnerMessage(
-        accountContract.address,
-        newOwner,
-        chainId,
-        futureTimestamp,
+      const calldata = await signChangeOwnerMessage(accountContract.address, newOwner, chainId, futureTimestamp);
+      calldata.push(futureTimestamp.toString());
+      // Can't just do account.replace_all_owners_with_one(x, y) because parsing goes wrong...
+      const receipt = await manager.ensureSuccess(
+        await accountContract.invoke("replace_all_owners_with_one", calldata),
       );
-      // Wtf??? For some reason I have to push to array instead of passing as last arg??? There is def a bug here
-      starknetSignature.push(`0x${futureTimestamp.toString(16)}`);
-      const receipt = await manager.waitForTx(await accountContract.replace_all_owners_with_one(starknetSignature));
       await accountContract.get_owner_guid().should.eventually.equal(newOwner.guid);
-      // TODO bring this back
-      // const from_address = accountContract.address;
-      // await expectEvent(receipt, { from_address, eventName: "OwnerChanged", data: [newOwner.storedValue.toString()] });
-      // await expectEvent(receipt, { from_address, eventName: "OwnerChangedGuid", data: [newOwner.guid.toString()] });
+      await expectEvent(receipt, {
+        from_address: accountContract.address,
+        eventName: "SignerLinked",
+        keys: [newOwner.guid.toString()],
+        data: CallData.compile([newOwner.signer]),
+      });
     });
 
     it("Expect parsing error when new_owner is zero", async function () {

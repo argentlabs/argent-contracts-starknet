@@ -427,6 +427,7 @@ mod ArgentAccount {
 
         fn replace_all_owners_with_one(ref self: ContractState, new_single_owner: SignerSignature, max_timestamp: u64) {
             assert_only_self();
+            // Todo compare with old "change_owner" function
             let new_owner = new_single_owner.signer();
             self.assert_valid_new_owner_signature(new_single_owner, max_timestamp);
             self.owner_manager.replace_all_owners_with_one(new_owner.storage_value());

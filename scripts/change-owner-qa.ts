@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 // This script will generate the parameters needed to change the owner of an Argent account.
-// Note the the account will be bricked after the owner change.
+// Note the the account will be bricked after the owner change. ==> WTF DOES THAT MEAN???
 // Instructions:
 // - Setup `.env` file with the RPC_URL variable according the network you want to use.
 //   For instance for goerli network you can use this:
@@ -11,18 +11,19 @@ const accountAddress = "0x064645274c31f18081e1a6b6748cfa513e59deda120a308e705cc6
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 // No need to change anything below this
-
+// Rename this script?
 import "dotenv/config";
 import { num, shortString } from "starknet";
 import { StarknetKeyPair, manager, signChangeOwnerMessage } from "../lib";
 const chainId = await manager.getChainId();
 const newOwnerKeyPair = new StarknetKeyPair();
-// TODO Fix here
-const [r, s] = await signChangeOwnerMessage(accountAddress, newOwnerKeyPair, chainId, 1000);
+const validUntil = await manager.getCurrentTimestamp() + 1000;
+const [r, s] = await signChangeOwnerMessage(accountAddress, newOwnerKeyPair, chainId, validUntil);
 console.log("account:", accountAddress);
 console.log("chainId:", shortString.decodeShortString(chainId));
-console.log("Parameters to change_owner:");
+console.log("Parameters to replace_all_owners_with_one:");
 console.log("  new_owner:  ", num.toHex(newOwnerKeyPair.publicKey));
 console.log("  signature_r:", num.toHex(r));
 console.log("  signature_s:", num.toHex(s));
+console.log("  max_timestamp:", validUntil);
 console.log("Warning: Using this parameters will make you account unrecoverable.");

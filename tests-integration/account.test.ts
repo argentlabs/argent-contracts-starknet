@@ -87,8 +87,8 @@ describe("ArgentAccount", function () {
       const newOwner = randomStarknetKeyPair();
 
       const chainId = await manager.getChainId();
-      const latestBlockTimestamp = await manager.getCurrentTimestamp();
-      const futureTimestamp = latestBlockTimestamp + 1000;
+      const currentTimestamp = await manager.getCurrentTimestamp();
+      const futureTimestamp = currentTimestamp + 1000;
       const calldata = await signChangeOwnerMessage(accountContract.address, newOwner, chainId, futureTimestamp);
       calldata.push(futureTimestamp.toString());
       // Can't just do account.replace_all_owners_with_one(x, y) because parsing goes wrong...

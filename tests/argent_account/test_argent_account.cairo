@@ -84,15 +84,23 @@ fn erc165_unsupported_interfaces() {
 #[test]
 fn replace_all_owners_with_one() {
     let account = initialize_account();
-    let new_owner_guid = starknet_signer_from_pubkey(OWNER().pubkey).into_guid();
-    assert_eq!(account.get_owner_guid(), new_owner_guid);
+    let mut spy = spy_events();
+
+    let old_owner_guid = starknet_signer_from_pubkey(OWNER().pubkey).into_guid();
+    assert_eq!(account.get_owner_guid(), old_owner_guid);
 
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
     account.replace_all_owners_with_one(signer_signature, 1100);
-    assert_eq!(account.get_owner_guid(), signer_signature.signer().into_guid());
-}
 
+    let new_owner_guid = signer_signature.signer().into_guid();
+    assert_eq!(account.get_owner_guid(), new_owner_guid);
+
+    let signer_link_event = ArgentAccount::Event::SignerLinked(
+        ArgentAccount::SignerLinked { signer_guid: new_owner_guid, signer: signer_signature.signer() }
+    );
+    spy.assert_emitted(@array![(account.contract_address, signer_link_event)]);
+}
 
 #[test]
 fn replace_all_owners_with_one_reset_escape() {

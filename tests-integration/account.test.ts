@@ -6,7 +6,6 @@ import {
   deployAccountWithGuardianBackup,
   deployAccountWithoutGuardian,
   deployer,
-  expectEvent,
   expectRevertWithErrorMessage,
   hasOngoingEscape,
   manager,
@@ -93,16 +92,8 @@ describe("ArgentAccount", function () {
       const calldata = await signChangeOwnerMessage(accountContract.address, newOwner, chainId, futureTimestamp);
       calldata.push(futureTimestamp.toString());
       // Can't just do account.replace_all_owners_with_one(x, y) because parsing goes wrong...
-      const receipt = await manager.ensureSuccess(
-        await accountContract.invoke("replace_all_owners_with_one", calldata),
-      );
+      await manager.ensureSuccess(await accountContract.invoke("replace_all_owners_with_one", calldata));
       await accountContract.get_owner_guid().should.eventually.equal(newOwner.guid);
-      await expectEvent(receipt, {
-        from_address: accountContract.address,
-        eventName: "SignerLinked",
-        keys: [newOwner.guid.toString()],
-        data: CallData.compile([newOwner.signer]),
-      });
     });
 
     it("Expect parsing error when new_owner is zero", async function () {

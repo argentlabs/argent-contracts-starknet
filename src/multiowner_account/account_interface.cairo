@@ -42,8 +42,10 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @param new_single_owner Required to prevent changing to an address which is not in control of the user
     /// is the signature of the pedersen hashed array:
     /// [change_owner_selector, chain_id, account_address, old_owner_guid, timestamp]
-    /// @param max_timestamp Maximum timestamp for the signature
-    /// @dev It will cancel any existing escape
+    /// @param max_timestamp Maximum timestamp for the signature to be valid
+    /// cannot be in the past (before current timestamp)
+    /// cannot be too far in the future (current timestamp + 1 day)
+    /// future @dev It will cancel any existing escape
     fn replace_all_owners_with_one(ref self: TContractState, new_single_owner: SignerSignature, max_timestamp: u64);
 
     /// @notice Changes the guardian

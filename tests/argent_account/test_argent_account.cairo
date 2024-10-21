@@ -82,10 +82,9 @@ fn erc165_unsupported_interfaces() {
 #[test]
 fn replace_all_owners_with_one() {
     let account = initialize_account();
-    let old_owner = OWNER();
-    assert_eq!(
-        account.get_owner_guid(), starknet_signer_from_pubkey(old_owner.pubkey).into_guid(), "owner not correctly set"
-    );
+    let new_owner_guid = starknet_signer_from_pubkey(OWNER().pubkey).into_guid();
+    assert_eq!(account.get_owner_guid(), new_owner_guid);
+
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
     account.replace_all_owners_with_one(signer_signature, 1100);
@@ -96,19 +95,17 @@ fn replace_all_owners_with_one() {
 #[should_panic(expected: ('argent/timestamp-too-far-future',))]
 fn replace_all_owners_with_one_too_far_future() {
     let account = initialize_account();
-    let old_owner = OWNER();
-    assert_eq!(
-        account.get_owner_guid(), starknet_signer_from_pubkey(old_owner.pubkey).into_guid(), "owner not correctly set"
-    );
+
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
-    account.replace_all_owners_with_one(signer_signature, (60 * 24) + 1);
+    account.replace_all_owners_with_one(signer_signature, (60 * 60 * 24) + 1);
 }
 
 #[test]
 #[should_panic(expected: ('argent/only-self',))]
 fn replace_all_owners_with_one_only_self() {
     let account = initialize_account();
+
     start_cheat_caller_address_global(contract_address_const::<42>());
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
@@ -119,9 +116,7 @@ fn replace_all_owners_with_one_only_self() {
 #[should_panic(expected: ('argent/expired-signature',))]
 fn replace_all_owners_with_one_timestamp_expired() {
     let account = initialize_account();
-    assert_eq!(
-        account.get_owner_guid(), starknet_signer_from_pubkey(OWNER().pubkey).into_guid(), "owner not correctly set"
-    );
+
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
     start_cheat_block_timestamp_global(1000);

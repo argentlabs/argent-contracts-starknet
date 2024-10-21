@@ -61,7 +61,7 @@ mod ArgentAccount {
 
     /// Minimum time for the escape security period
     const MIN_ESCAPE_SECURITY_PERIOD: u64 = 60 * 10; // 10 minutes;
-    const ONE_DAY: u64 = 60 * 24;
+    const ONE_DAY: u64 = 60 * 60 * 24;
 
 
     // Owner management

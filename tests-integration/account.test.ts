@@ -81,13 +81,13 @@ describe("ArgentAccount", function () {
     );
   });
 
-  describe("change_owner(new_owner, signature_r, signature_s)", function () {
-    it("Should be possible to change_owner", async function () {
+  describe("replace_all_owners_with_one(...)", function () {
+    it("Should be possible to replace_all_owners_with_one", async function () {
       const { accountContract } = await deployAccount();
       const newOwner = randomStarknetKeyPair();
 
       const chainId = await manager.getChainId();
-      const latestBlockTimestamp = (await manager.getBlock("latest")).timestamp;
+      const latestBlockTimestamp = await manager.getCurrentTimestamp();
       const futureTimestamp = latestBlockTimestamp + 1000;
       const starknetSignature = await signChangeOwnerMessage(
         accountContract.address,
@@ -112,26 +112,6 @@ describe("ArgentAccount", function () {
         accountContract.replace_all_owners_with_one(starknetSignatureType(0, 13, 14), 1),
       );
     });
-
-    // it("Expect the escape to be reset", async function () {
-    //   const { account, accountContract, owner, guardian } = await deployAccount();
-
-    //   const newOwner = randomStarknetKeyPair();
-    //   account.signer = new ArgentSigner(guardian);
-
-    //   await accountContract.trigger_escape_owner(newOwner.compiledSigner);
-    //   await hasOngoingEscape(accountContract).should.eventually.be.true;
-    //   await manager.increaseTime(10);
-
-    //   account.signer = new ArgentSigner(owner, guardian);
-    //   const chainId = await manager.getChainId();
-    //   const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.guid, newOwner, chainId);
-
-    //   await accountContract.change_owner(starknetSignature);
-
-    //   await accountContract.get_owner_guid().should.eventually.equal(newOwner.guid);
-    //   await hasOngoingEscape(accountContract).should.eventually.be.false;
-    // });
   });
 
   describe("change_guardian(new_guardian)", function () {

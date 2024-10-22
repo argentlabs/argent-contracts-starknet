@@ -427,11 +427,17 @@ mod ArgentAccount {
 
         fn replace_all_owners_with_one(ref self: ContractState, new_single_owner: SignerSignature, max_timestamp: u64) {
             assert_only_self();
-            // Todo compare with old "change_owner" function
             let new_owner = new_single_owner.signer();
             self.assert_valid_new_owner_signature(new_single_owner, max_timestamp);
+            // This already emits OwnerRemovedGuid & OwnerAddedGuid events
             self.owner_manager.replace_all_owners_with_one(new_owner.storage_value());
-            self.emit(SignerLinked { signer_guid: new_owner.into_guid(), signer: new_owner });
+
+            if let Option::Some(new_owner_pubkey) = new_owner.storage_value().starknet_pubkey_or_none() {
+                self.emit(OwnerChanged { new_owner: new_owner_pubkey });
+            };
+            let new_owner_guid = new_owner.into_guid();
+            self.emit(OwnerChangedGuid { new_owner_guid });
+            self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
 
             self.reset_escape();
             self.reset_escape_timestamps();

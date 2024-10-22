@@ -1,4 +1,6 @@
-use argent::multiowner_account::argent_account::ArgentAccount;
+use argent::multiowner_account::{
+    events::{OwnerAddedGuid, OwnerRemovedGuid}, owner_manager::owner_manager_component, argent_account::ArgentAccount
+};
 use argent::recovery::interface::EscapeStatus;
 use argent::signer::signer_signature::{
     StarknetSigner, Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait,
@@ -98,10 +100,36 @@ fn replace_all_owners_with_one() {
     let new_owner_guid = signer_signature.signer().into_guid();
     assert_eq!(account.get_owner_guid(), new_owner_guid);
 
+    assert_eq!(spy.get_events().events.len(), 5);
+
+    // owner_manager events
+    let guid_removed_event = owner_manager_component::Event::OwnerRemovedGuid(
+        owner_manager_component::OwnerRemovedGuid { removed_owner_guid: old_owner_guid }
+    );
+    let guid_added_event = owner_manager_component::Event::OwnerAddedGuid(
+        owner_manager_component::OwnerAddedGuid { new_owner_guid }
+    );
+    spy
+        .assert_emitted(
+            @array![(account.contract_address, guid_removed_event), (account.contract_address, guid_added_event),]
+        );
+
+    // ArgentAccount events
+    let owner_changed_event = ArgentAccount::Event::OwnerChanged(
+        ArgentAccount::OwnerChanged { new_owner: signer.pubkey.try_into().unwrap() }
+    );
+    let guid_changed_event = ArgentAccount::Event::OwnerChangedGuid(ArgentAccount::OwnerChangedGuid { new_owner_guid });
     let signer_link_event = ArgentAccount::Event::SignerLinked(
         ArgentAccount::SignerLinked { signer_guid: new_owner_guid, signer: signer_signature.signer() }
     );
-    spy.assert_emitted(@array![(account.contract_address, signer_link_event)]);
+    spy
+        .assert_emitted(
+            @array![
+                (account.contract_address, owner_changed_event),
+                (account.contract_address, guid_changed_event),
+                (account.contract_address, signer_link_event)
+            ]
+        );
 }
 
 #[test]

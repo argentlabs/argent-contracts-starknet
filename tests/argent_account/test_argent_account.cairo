@@ -19,6 +19,8 @@ use super::super::{
     initialize_account_without_guardian, Felt252TryIntoStarknetSigner, OWNER, WRONG_OWNER
 };
 
+const VALID_UNTIL: u64 = 1100;
+
 fn NEW_OWNER() -> (StarknetSigner, StarknetSignature) {
     let new_owner = KeyPairTrait::from_secret_key('NEW_OWNER');
     let pubkey = new_owner.public_key;
@@ -34,7 +36,7 @@ fn new_owner_message_hash(new_owner_guid: felt252) -> felt252 {
         .update_with('SN_SEPOLIA')
         .update_with(ARGENT_ACCOUNT_ADDRESS)
         .update_with(new_owner_guid)
-        .update_with(1100)
+        .update_with(VALID_UNTIL)
         .update_with(5)
         .finalize()
 }
@@ -91,7 +93,7 @@ fn replace_all_owners_with_one() {
 
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
-    account.replace_all_owners_with_one(signer_signature, 1100);
+    account.replace_all_owners_with_one(signer_signature, VALID_UNTIL);
 
     let new_owner_guid = signer_signature.signer().into_guid();
     assert_eq!(account.get_owner_guid(), new_owner_guid);
@@ -112,7 +114,7 @@ fn replace_all_owners_with_one_reset_escape() {
 
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
-    account.replace_all_owners_with_one(signer_signature, 1100);
+    account.replace_all_owners_with_one(signer_signature, VALID_UNTIL);
 
     let (_, none) = account.get_escape_and_status();
     assert_eq!(none, EscapeStatus::None);
@@ -136,7 +138,7 @@ fn replace_all_owners_with_one_only_self() {
     start_cheat_caller_address_global(contract_address_const::<42>());
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
-    account.replace_all_owners_with_one(signer_signature, 1100);
+    account.replace_all_owners_with_one(signer_signature, VALID_UNTIL);
 }
 
 #[test]
@@ -146,8 +148,8 @@ fn replace_all_owners_with_one_timestamp_expired() {
 
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
-    start_cheat_block_timestamp_global(1000);
-    account.replace_all_owners_with_one(signer_signature, 999);
+    start_cheat_block_timestamp_global(VALID_UNTIL);
+    account.replace_all_owners_with_one(signer_signature, VALID_UNTIL - 1);
 }
 
 #[test]
@@ -158,7 +160,7 @@ fn replace_all_owners_with_one_invalid_message() {
     let signer_signature = SignerSignature::Starknet(
         (signer, StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s })
     );
-    account.replace_all_owners_with_one(signer_signature, 1100);
+    account.replace_all_owners_with_one(signer_signature, VALID_UNTIL);
 }
 
 #[test]
@@ -167,7 +169,7 @@ fn replace_all_owners_with_one_wrong_pub_key() {
     let account = initialize_account();
     let (_, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((WRONG_OWNER().pubkey.try_into().unwrap(), signature));
-    account.replace_all_owners_with_one(signer_signature, 1100);
+    account.replace_all_owners_with_one(signer_signature, VALID_UNTIL);
 }
 
 #[test]

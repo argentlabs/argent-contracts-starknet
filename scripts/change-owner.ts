@@ -18,7 +18,7 @@ const owner: bigint = await accountContract.get_owner();
 const account = new Account(manager, accountAddress, ownerSigner, "1");
 accountContract.connect(account);
 const chainId = await manager.getChainId();
-const validUntil = (await manager.getCurrentTimestamp()) + 1000;
+const validUntil = (await manager.getCurrentTimestamp()) + 60 * 60; // Valid 1h
 
 if (owner !== ownerSigner.publicKey) {
   throw new Error(`onchain owner ${owner} not the same as expected ${ownerSigner.publicKey}`);

@@ -123,8 +123,10 @@ mod owner_manager_component {
         TContractState, +HasComponent<TContractState>, +IOwnerManagerCallback<TContractState>, +Drop<TContractState>
     > of IOwnerManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, owner: Signer) {
-            // TODO later we probably want to optimize this function instead of just delegating to add_owners
-            self.add_owners(array![owner]);
+            // We prob don't want to emit any events in this case
+            assert(self.get_single_owner().is_none(), 'argent/already-initialized');
+            let signer_storage = owner.storage_value();
+            self.owners_storage_mut().add_item(signer_storage);
         }
 
         fn add_owners(ref self: ComponentState<TContractState>, owners_to_add: Array<Signer>) {
@@ -156,12 +158,14 @@ mod owner_manager_component {
         }
 
         fn get_single_owner(self: @ComponentState<TContractState>) -> Option<SignerStorageValue> {
+            // This does NOT ensure there is only one owner, name is misleading
             self.owners_storage().first()
         }
 
         fn get_single_stark_owner_pubkey(self: @ComponentState<TContractState>) -> Option<felt252> {
             self.get_single_owner()?.starknet_pubkey_or_none()
         }
+
         fn is_valid_owners_replacement(self: @ComponentState<TContractState>, new_single_owner: Signer) -> bool {
             !self.owners_storage().is_in_id(new_single_owner.into_guid())
         }

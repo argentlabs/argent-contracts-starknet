@@ -9,7 +9,7 @@ mod ArgentMultisigAccount {
     };
     use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey, SignerTrait};
     use argent::signer_storage::signer_list::signer_list_component;
-    use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
+    use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
         serialization::full_deserialize,
@@ -210,30 +210,6 @@ mod ArgentMultisigAccount {
     }
 
     #[abi(embed_v0)]
-    impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
-        fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
-            assert_only_self();
-            // Check basic invariants
-            self.multisig.assert_valid_storage();
-            let pubkeys = self.signer_list.get_signers();
-            let mut pubkeys_span = pubkeys.span();
-            let mut signers_to_add = array![];
-            // Converting storage from public keys to guid
-            while let Option::Some(pubkey) = pubkeys_span.pop_front() {
-                let starknet_signer = starknet_signer_from_pubkey(*pubkey);
-                let signer_guid = starknet_signer.into_guid();
-                signers_to_add.append(signer_guid);
-                self.signer_list.emit(signer_list_component::SignerLinked { signer_guid, signer: starknet_signer });
-            };
-            assert(data.len() == 0, 'argent/unexpected-data');
-            let last_signer = *pubkeys[pubkeys.len() - 1];
-            self.signer_list.remove_signers(pubkeys.span(), last_signer);
-            self.signer_list.add_signers(signers_to_add.span(), 0);
-            array![]
-        }
-    }
-
-    #[abi(embed_v0)]
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
             panic_with_felt252('argent/downgrade-not-allowed');
@@ -248,7 +224,6 @@ mod ArgentMultisigAccount {
                 let call = calls.at(0);
                 if *call.to == account_address {
                     // This should only be called after an upgrade, never directly
-                    assert(*call.selector != selector!("execute_after_upgrade"), 'argent/forbidden-call');
                     assert(*call.selector != selector!("perform_upgrade"), 'argent/forbidden-call');
                 }
             } else {

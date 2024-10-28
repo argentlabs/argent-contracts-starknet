@@ -244,19 +244,18 @@ mod ArgentAccount {
 
             // Check should we update MAX_ESCAPE_TIP_STRK and the 2 others?
 
+            // let owner_key = self._signer.read();
             // Should we do anything with '_signer_non_stark' ?
             let base = storage_base_address_from_felt252(selector!("_signer"));
             let signer_to_migrate = storage_read_syscall(0, storage_address_from_base_and_offset(base, 0))
                 .unwrap_syscall();
             // This ensures signer != 0
             let stark_signer = starknet_signer_from_pubkey(signer_to_migrate);
+            // At this point we are sure that the owner is not 0
             self.owner_manager.initialize(stark_signer);
             // Reset _signer storage
             storage_write_syscall(0, storage_address_from_base_and_offset(base, 0), 0).unwrap_syscall();
 
-            // let owner_key = self._signer.read();
-            self.owner_manager.get_single_owner().expect('argent/no-single-owner');
-            // At this point we are sure that the owner is not 0
             let guardian_key = self._guardian.read();
             let guardian_backup_key = self._guardian_backup.read();
             if guardian_key == 0 {

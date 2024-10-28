@@ -15,6 +15,7 @@ mod introspection {
 mod multisig {
     mod interface;
     mod multisig;
+    mod multisig_account;
 }
 
 mod signer {
@@ -41,10 +42,6 @@ mod recovery {
 mod external_recovery {
     mod external_recovery;
     mod interface;
-}
-
-mod presets {
-    mod multisig_account;
 }
 
 mod multiowner_account {

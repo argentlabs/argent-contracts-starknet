@@ -243,6 +243,7 @@ mod ArgentAccount {
             );
 
             // Check should we update MAX_ESCAPE_TIP_STRK and the 2 others?
+            // Should we allow paymaster? I believe not since this was delayed?
 
             // let owner_key = self._signer.read();
             // Should we do anything with '_signer_non_stark' ?

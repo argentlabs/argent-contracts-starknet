@@ -19,8 +19,9 @@ struct Session {
 }
 
 /// @notice Session Token struct contains the session struct, relevant signatures and merkle proofs
+/// @dev In order to cache the session the owner guid must be passed, otherwise leave as zero
 /// @param session The session struct
-/// @param cache_authorization Flag indicating whether to cache the authorization signature for the session
+/// @param cache_owner_guid The guid of the owner that signed the `session_authorization`, or 0 if no caching is desired
 /// @param session_authorization A valid account signature over the Session
 /// @param session_signature Session signature of the poseidon H(tx_hash, session hash)
 /// @param guardian_signature Guardian signature of the poseidon H(tx_hash, session hash)
@@ -28,7 +29,7 @@ struct Session {
 #[derive(Drop, Serde, Copy)]
 struct SessionToken {
     session: Session,
-    cache_authorization: bool,
+    cache_owner_guid: felt252,
     session_authorization: Span<felt252>,
     session_signature: SignerSignature,
     guardian_signature: SignerSignature,
@@ -66,8 +67,7 @@ trait ISessionable<TContractState> {
 
     /// @notice View function to see if a session authorization is cached
     /// @param session_hash Hash of the session token
+    /// @param owner_guid Guid of the owner used in the authorization
     /// @return Whether the session is cached
-    fn is_session_authorization_cached(
-        self: @TContractState, session_hash: felt252, session_authorization: Span<felt252>
-    ) -> bool;
+    fn is_session_authorization_cached(self: @TContractState, session_hash: felt252, owner_guid: felt252) -> bool;
 }

@@ -25,6 +25,9 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, DA_MODE_L1, is_estimate_transaction
         }
     };
+    use crate::multiowner_account::account_interface::{
+        IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait
+    };
     use hash::HashStateTrait;
     use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
     use pedersen::PedersenTrait;
@@ -32,9 +35,11 @@ mod ArgentAccount {
         storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED,
         replace_class_syscall, account::Call, SyscallResultTrait, get_tx_info, get_execution_info,
         syscalls::storage_read_syscall,
-        storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall}
+        storage_access::{
+            storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall,
+            storage_address_from_base
+        }
     };
-    use super::super::account_interface::{IArgentMultiOwnerAccount,};
     use super::super::events::{
         SignerLinked, TransactionExecuted, AccountCreated, AccountCreatedGuid, EscapeOwnerTriggeredGuid,
         EscapeGuardianTriggeredGuid, OwnerEscapedGuid, GuardianEscapedGuid, EscapeCanceled, OwnerChanged,
@@ -86,6 +91,7 @@ mod ArgentAccount {
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
+    impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
     // Reentrancy guard
     component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
     impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
@@ -307,7 +313,15 @@ mod ArgentAccount {
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
         // Called when coming from account 0.4.0+
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
-            panic_with_felt252('argent/downgrade-not-allowed');
+            // TODO: Change this to a proper implementation
+            // WARNING: THIS IS FOR TESTING PURPOSES ONLY AND IS NOT THE FINAL VERSION
+            assert_only_self();
+            let base = storage_base_address_from_felt252(selector!("_signer"));
+            let owner = storage_read_syscall(0, storage_address_from_base(base)).unwrap_syscall();
+            let owner_signer = starknet_signer_from_pubkey(owner);
+
+            self.upgrade.complete_upgrade(new_implementation);
+            self.owner_manager.add_owners(array![owner_signer]);
         }
     }
 

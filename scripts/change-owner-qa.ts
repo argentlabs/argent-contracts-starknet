@@ -26,5 +26,5 @@ console.log("Parameters to replace_all_owners_with_one:");
 console.log("  new_owner:  ", num.toHex(newOwnerKeyPair.publicKey));
 console.log("  signature_r:", num.toHex(r));
 console.log("  signature_s:", num.toHex(s));
-console.log("  max_timestamp:", validUntil);
+console.log("  signature_expiration:", validUntil);
 console.log("Warning: Using this parameters will make you account unrecoverable.");

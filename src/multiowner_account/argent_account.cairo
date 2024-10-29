@@ -425,10 +425,12 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
         }
 
-        fn replace_all_owners_with_one(ref self: ContractState, new_single_owner: SignerSignature, max_timestamp: u64) {
+        fn replace_all_owners_with_one(
+            ref self: ContractState, new_single_owner: SignerSignature, signature_expiration: u64
+        ) {
             assert_only_self();
             let new_owner = new_single_owner.signer();
-            self.assert_valid_new_owner_signature(new_single_owner, max_timestamp);
+            self.assert_valid_new_owner_signature(new_single_owner, signature_expiration);
             // This already emits OwnerRemovedGuid & OwnerAddedGuid events
             self.owner_manager.replace_all_owners_with_one(new_owner.storage_value());
 
@@ -917,13 +919,10 @@ mod ArgentAccount {
         /// as specified here:
         /// https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
         fn assert_valid_new_owner_signature(
-            self: @ContractState, new_single_owner: SignerSignature, max_timestamp: u64
+            self: @ContractState, new_single_owner: SignerSignature, signature_expiration: u64
         ) {
-            // Should we move some checks to validation?
-            // I'd argue we shouldn't, as we want to keep the validation as simple as possible
-            // This function is rarely used, the checks are cheap
-            assert(max_timestamp >= get_block_timestamp(), 'argent/expired-signature');
-            assert(max_timestamp - get_block_timestamp() <= ONE_DAY, 'argent/timestamp-too-far-future');
+            assert(signature_expiration >= get_block_timestamp(), 'argent/expired-signature');
+            assert(signature_expiration - get_block_timestamp() <= ONE_DAY, 'argent/timestamp-too-far-future');
             let tx_info = get_execution_info().tx_info;
             let new_owner_guid = new_single_owner.signer().into_guid();
             // Should we use Poseidon?
@@ -932,7 +931,7 @@ mod ArgentAccount {
                 .update_with(tx_info.chain_id)
                 .update_with(get_contract_address())
                 .update_with(new_owner_guid)
-                .update_with(max_timestamp)
+                .update_with(signature_expiration)
                 .update_with(5)
                 .finalize();
 

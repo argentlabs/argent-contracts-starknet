@@ -2,6 +2,7 @@
 mod ArgentAccount {
     use argent::account::interface::{IAccount, IArgentAccount, IDeprecatedArgentAccount, Version};
     use argent::introspection::src5::src5_component;
+    use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
@@ -41,6 +42,7 @@ mod ArgentAccount {
         OwnerChangedGuid, GuardianChanged, GuardianChangedGuid, GuardianBackupChanged, GuardianBackupChangedGuid,
         EscapeSecurityPeriodChanged,
     };
+    use super::super::hash_rename::ReplaceOwnersWithOne;
     use super::super::owner_manager::{IOwnerManager, IOwnerManagerCallback, owner_manager_component};
 
     const NAME: felt252 = 'ArgentAccount';
@@ -923,18 +925,8 @@ mod ArgentAccount {
         ) {
             assert(signature_expiration >= get_block_timestamp(), 'argent/expired-signature');
             assert(signature_expiration - get_block_timestamp() <= ONE_DAY, 'argent/timestamp-too-far-future');
-            let tx_info = get_execution_info().tx_info;
             let new_owner_guid = new_single_owner.signer().into_guid();
-            // Should we use Poseidon?
-            let message_hash = PedersenTrait::new(0)
-                .update_with(selector!("replace_all_owners_with_one"))
-                .update_with(tx_info.chain_id)
-                .update_with(get_contract_address())
-                .update_with(new_owner_guid)
-                .update_with(signature_expiration)
-                .update_with(5)
-                .finalize();
-
+            let message_hash = ReplaceOwnersWithOne { new_owner_guid, signature_expiration }.get_message_hash_rev_1();
             let is_valid = new_single_owner.is_valid_signature(message_hash);
             assert(is_valid, 'argent/invalid-new-owner-sig');
         }

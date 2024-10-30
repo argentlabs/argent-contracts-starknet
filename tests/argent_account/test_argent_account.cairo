@@ -1,6 +1,8 @@
+use argent::multiowner_account::hash_rename::ReplaceOwnersWithOne;
 use argent::multiowner_account::{
     events::{OwnerAddedGuid, OwnerRemovedGuid}, owner_manager::owner_manager_component, argent_account::ArgentAccount
 };
+use argent::offchain_message::interface::IOffChainMessageHashRev1;
 use argent::recovery::interface::EscapeStatus;
 use argent::signer::signer_signature::{
     StarknetSigner, Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait,
@@ -33,14 +35,15 @@ fn NEW_OWNER() -> (StarknetSigner, StarknetSignature) {
 }
 
 fn new_owner_message_hash(new_owner_guid: felt252) -> felt252 {
-    PedersenTrait::new(0)
-        .update_with(selector!("replace_all_owners_with_one"))
-        .update_with('SN_SEPOLIA')
-        .update_with(ARGENT_ACCOUNT_ADDRESS)
-        .update_with(new_owner_guid)
-        .update_with(VALID_UNTIL)
-        .update_with(5)
-        .finalize()
+    ReplaceOwnersWithOne { new_owner_guid, signature_expiration: VALID_UNTIL }.get_message_hash_rev_1()
+    // PedersenTrait::new(0)
+//     .update_with(selector!("replace_all_owners_with_one"))
+//     .update_with('SN_SEPOLIA')
+//     .update_with(ARGENT_ACCOUNT_ADDRESS)
+//     .update_with(new_owner_guid)
+//     .update_with(VALID_UNTIL)
+//     .update_with(5)
+//     .finalize()
 }
 
 

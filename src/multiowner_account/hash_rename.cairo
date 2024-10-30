@@ -9,7 +9,7 @@ use starknet::{get_tx_info, get_caller_address};
 
 
 const SIMPLE_STRUCT_TYPE_HASH: felt252 =
-    selector!("\"ReplaceOwnersWithOne\"(\"new_owner_guid\":\"felt\",\"signature_expiration\":\"u64\")");
+    selector!("\"ReplaceOwnersWithOne\"(\"new_owner_guid\":\"felt\",\"signature_expiration\":\"u128\")");
 
 #[derive(Drop, Copy, Hash)]
 struct ReplaceOwnersWithOne {
@@ -36,7 +36,7 @@ impl OffChainMessageReplaceOwnersWithOneRev1 of IOffChainMessageHashRev1<Replace
         // issue
         let chain_id = get_tx_info().chain_id;
         // name: Account.replace_all_owners_with_one is too long
-        let domain = StarknetDomain { name: 'replace_all_owners_with_one', version: 2, chain_id, revision: 1 };
+        let domain = StarknetDomain { name: 'replace_all_owners_with_one', version: 1, chain_id, revision: 1 };
         poseidon_hash_span(
             array![
                 'StarkNet Message',

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CairoCustomEnum, Contract, hash } from "starknet";
+import { CairoCustomEnum, Contract, hash, StarknetDomain, TypedData, typedData, TypedDataRevision } from "starknet";
 import { KeyPair } from ".";
 
 export const ESCAPE_SECURITY_PERIOD = 7n * 24n * 60n * 60n; // 7 days
@@ -37,9 +37,57 @@ export const signChangeOwnerMessage = async (
   chainId: string,
   maxTimestamp: number,
 ) => {
-  const messageHash = await getChangeOwnerMessageHash(accountAddress, chainId, newOwner.guid, maxTimestamp);
+  const ReplaceOwnersWithOne: ReplaceOwnersWithOne = {
+    new_owner_guid: newOwner.guid.toString(),
+    signature_expiration: maxTimestamp.toString(),
+  };
+
+  const messageHash = getTypedDataHash(ReplaceOwnersWithOne, chainId, BigInt(accountAddress));
+  // const messageHash = await getChangeOwnerMessageHash(accountAddress, chainId, newOwner.guid, maxTimestamp);
   return newOwner.signRaw(messageHash);
 };
+
+const types = {
+  StarknetDomain: [
+    { name: "name", type: "shortstring" },
+    { name: "version", type: "shortstring" },
+    { name: "chainId", type: "shortstring" },
+    { name: "revision", type: "shortstring" },
+  ],
+  ReplaceOwnersWithOne: [
+    { name: "new_owner_guid", type: "felt" },
+    { name: "signature_expiration", type: "u128" },
+  ],
+};
+
+interface ReplaceOwnersWithOne {
+  new_owner_guid: string;
+  signature_expiration: string;
+}
+
+function getDomain(chainId: string): StarknetDomain {
+  return {
+    name: "replace_all_owners_with_one",
+    version: "1",
+    chainId,
+    revision: TypedDataRevision.ACTIVE,
+  };
+}
+
+function getTypedDataHash(myStruct: ReplaceOwnersWithOne, chainId: string, owner: bigint): string {
+  return typedData.getMessageHash(getTypedData(myStruct, chainId), owner);
+}
+
+// Needed to reproduce the same structure as:
+// https://github.com/0xs34n/starknet.js/blob/1a63522ef71eed2ff70f82a886e503adc32d4df9/__mocks__/typedDataStructArrayExample.json
+function getTypedData(myStruct: ReplaceOwnersWithOne, chainId: string): TypedData {
+  return {
+    types,
+    primaryType: "ReplaceOwnersWithOne",
+    domain: getDomain(chainId),
+    message: { ...myStruct },
+  };
+}
 
 export const getChangeOwnerMessageHash = async (
   accountAddress: string,

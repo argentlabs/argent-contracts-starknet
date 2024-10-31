@@ -5,7 +5,7 @@ use argent::offchain_message::{
 
 use hash::{HashStateTrait, HashStateExTrait};
 use poseidon::{poseidon_hash_span, PoseidonTrait, hades_permutation, HashState};
-use starknet::{get_tx_info, get_caller_address};
+use starknet::{get_tx_info, get_contract_address};
 
 
 const SIMPLE_STRUCT_TYPE_HASH: felt252 =
@@ -36,7 +36,7 @@ impl OffChainMessageReplaceOwnersWithOneRev1 of IOffChainMessageHashRev1<Replace
         PoseidonTrait::new()
             .update_with('StarkNet Message')
             .update_with(domain.get_struct_hash_rev_1())
-            .update_with(get_caller_address())
+            .update_with(get_contract_address())
             .update_with((*self).get_struct_hash_rev_1())
             .finalize()
     }

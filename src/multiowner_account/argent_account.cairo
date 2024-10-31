@@ -29,10 +29,9 @@ mod ArgentAccount {
     use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
     use pedersen::PedersenTrait;
     use starknet::{
-        storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED,
-        replace_class_syscall, account::Call, SyscallResultTrait, get_tx_info, get_execution_info,
-        syscalls::storage_read_syscall,
-        storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall}
+        storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, account::Call,
+        SyscallResultTrait, get_tx_info, get_execution_info,
+        storage_access::{StorageAddress, storage_read_syscall, storage_write_syscall}
     };
     use super::super::account_interface::{IArgentMultiOwnerAccount,};
     use super::super::events::{
@@ -233,7 +232,6 @@ mod ArgentAccount {
         // Called when coming from account 0.4.0+
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
             assert_only_self();
-            // Check correct version?
 
             // Should revert if ongoing escape
             let current_escape = self._escape.read();
@@ -242,20 +240,13 @@ mod ArgentAccount {
                 escape_status == EscapeStatus::None || escape_status == EscapeStatus::Expired, 'argent/ongoing-escape'
             );
 
-            // Check should we update MAX_ESCAPE_TIP_STRK and the 2 others?
-            // Should we allow paymaster? I believe not since this was delayed?
-
-            // let owner_key = self._signer.read();
-            // Should we do anything with '_signer_non_stark' ?
-            let base = storage_base_address_from_felt252(selector!("_signer"));
-            let signer_to_migrate = storage_read_syscall(0, storage_address_from_base_and_offset(base, 0))
-                .unwrap_syscall();
+            let signer_storage_address: StorageAddress = selector!("_signer").try_into().unwrap();
+            let signer_to_migrate = storage_read_syscall(0, signer_storage_address).unwrap_syscall();
             // This ensures signer != 0
             let stark_signer = starknet_signer_from_pubkey(signer_to_migrate);
-            // At this point we are sure that the owner is not 0
             self.owner_manager.initialize(stark_signer);
             // Reset _signer storage
-            storage_write_syscall(0, storage_address_from_base_and_offset(base, 0), 0).unwrap_syscall();
+            storage_write_syscall(0, signer_storage_address, 0).unwrap_syscall();
 
             let guardian_key = self._guardian.read();
             let guardian_backup_key = self._guardian_backup.read();
@@ -263,12 +254,8 @@ mod ArgentAccount {
                 assert(guardian_backup_key == 0, 'argent/backup-should-be-null');
             }
 
-            // Not sure about this as we don't want to force passage
-            // assert(self.get_version() == VERSION, 'argent/invalid-pre-version');
-            // When should we call this?
             // Is it normal that this is in the "Internal Trait"?
             self.upgrade.complete_upgrade(new_implementation);
-            // assert(self.get_version() == Version { major: 0, minor: 5, patch: 0 }, 'argent/invalid-post-version');
 
             if data.is_empty() {
                 return;

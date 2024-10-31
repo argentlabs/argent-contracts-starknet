@@ -81,6 +81,7 @@ fn erc165_unsupported_interfaces() {
 }
 
 // TODO Revert to ts tests get_contract_address creating issues in mocking
+// Report error to snfoudry
 // #[test]
 // fn replace_all_owners_with_one() {
 //     let account = initialize_account();

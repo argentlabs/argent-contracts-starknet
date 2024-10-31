@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CairoCustomEnum, Contract, StarknetDomain, TypedData, typedData, TypedDataRevision } from "starknet";
+import { CairoCustomEnum, Contract, shortString, StarknetDomain, TypedData, typedData, TypedDataRevision } from "starknet";
 import { KeyPair } from ".";
 
 export const ESCAPE_SECURITY_PERIOD = 7n * 24n * 60n * 60n; // 7 days
@@ -49,8 +49,8 @@ const types = {
     { name: "revision", type: "shortstring" },
   ],
   ReplaceOwnersWithOne: [
-    { name: "new_owner_guid", type: "felt" },
-    { name: "signature_expiration", type: "u128" },
+    { name: "New owner GUID", type: "felt" },
+    { name: "Signature expiration", type: "timestamp" },
   ],
 };
 
@@ -61,8 +61,8 @@ interface ReplaceOwnersWithOne {
 
 function getDomain(chainId: string): StarknetDomain {
   return {
-    name: "replace_all_owners_with_one",
-    version: "1",
+    name: "Replace all owners with one",
+    version: shortString.encodeShortString("1"),
     chainId,
     revision: TypedDataRevision.ACTIVE,
   };
@@ -73,7 +73,10 @@ function getTypedData(myStruct: ReplaceOwnersWithOne, chainId: string): TypedDat
     types,
     primaryType: "ReplaceOwnersWithOne",
     domain: getDomain(chainId),
-    message: { ...myStruct },
+    message: { 
+      "New owner GUID": myStruct.new_owner_guid,
+      "Signature expiration": myStruct.signature_expiration,
+     },
   };
 }
 

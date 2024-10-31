@@ -42,8 +42,8 @@ mod ArgentAccount {
         OwnerChangedGuid, GuardianChanged, GuardianChangedGuid, GuardianBackupChanged, GuardianBackupChangedGuid,
         EscapeSecurityPeriodChanged,
     };
-    use super::super::hash_rename::ReplaceOwnersWithOne;
     use super::super::owner_manager::{IOwnerManager, IOwnerManagerCallback, owner_manager_component};
+    use super::super::replace_hash::ReplaceOwnersWithOne;
 
     const NAME: felt252 = 'ArgentAccount';
     const VERSION: Version = Version { major: 0, minor: 5, patch: 0 };
@@ -915,11 +915,7 @@ mod ArgentAccount {
             return signer_signature.is_valid_signature(hash) || is_estimate_transaction();
         }
 
-        /// The signature is the result of signing the message hash with the new owner private key
-        /// The message hash is the result of hashing the array:
-        /// [replace_all_owners_with_one selector, chain id, contract address, new owner guid, timestamp]
-        /// as specified here:
-        /// https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
+        /// The message hash is the result of hashing the SNIP-12 compliant object ReplaceOwnersWithOne
         fn assert_valid_new_owner_signature(
             self: @ContractState, new_single_owner: SignerSignature, signature_expiration: u64
         ) {

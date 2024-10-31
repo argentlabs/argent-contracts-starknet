@@ -22,8 +22,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @dev Must be called by the account and authorized by 1 owner and a guardian (if guardian is set)
     /// @param new_single_owner SignerSignature of the new owner
     /// Required to prevent changing to a signer which is not in control of the user
-    /// It is the signature of the pedersen hashed array:
-    /// [change_owner_selector, chain_id, account_address, new_owner_guid, signature_expiration]
+    /// It is the signature of the SNIP-12 compliant object ReplaceOwnersWithOne
     /// @param signature_expiration Signature expiration timestamp
     /// cannot be in the past: before current timestamp
     /// cannot be too far in the future: current timestamp + 1 DAY (60 * 60 * 24)

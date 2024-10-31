@@ -1,4 +1,4 @@
-use argent::multiowner_account::hash_rename::ReplaceOwnersWithOne;
+use argent::multiowner_account::replace_hash::ReplaceOwnersWithOne;
 use argent::multiowner_account::{
     events::{OwnerAddedGuid, OwnerRemovedGuid}, owner_manager::owner_manager_component, argent_account::ArgentAccount
 };

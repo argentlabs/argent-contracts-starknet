@@ -51,8 +51,8 @@ mod multiowner_account {
     mod account_interface;
     mod argent_account;
     mod events;
-    mod hash_rename;
     mod owner_manager;
+    mod replace_hash;
 }
 
 mod utils {

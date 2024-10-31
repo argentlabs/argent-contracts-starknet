@@ -22,7 +22,7 @@ jobs:
         run: curl -L https://raw.githubusercontent.com/software-mansion/universal-sierra-compiler/master/scripts/install.sh | sh -s -- v2.2.0
 
       - name: Run integration tests
-        run: scarb --release build && tsc && yarn mocha tests-integration/*.test.ts --forbid-only --forbid-pending
+        run: scarb --release build && tsc && yarn mocha --recursive tests-integration/ --extension .test.ts --forbid-only --forbid-pending
 
   gas-report:
     runs-on: ubuntu-latest

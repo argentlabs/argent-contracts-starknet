@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CairoCustomEnum, Contract, hash, StarknetDomain, TypedData, typedData, TypedDataRevision } from "starknet";
+import { CairoCustomEnum, Contract, StarknetDomain, TypedData, typedData, TypedDataRevision } from "starknet";
 import { KeyPair } from ".";
 
 export const ESCAPE_SECURITY_PERIOD = 7n * 24n * 60n * 60n; // 7 days
@@ -37,13 +37,7 @@ export const signChangeOwnerMessage = async (
   chainId: string,
   maxTimestamp: number,
 ) => {
-  const ReplaceOwnersWithOne: ReplaceOwnersWithOne = {
-    new_owner_guid: newOwner.guid.toString(),
-    signature_expiration: maxTimestamp.toString(),
-  };
-
-  const messageHash = getTypedDataHash(ReplaceOwnersWithOne, chainId, BigInt(accountAddress));
-  // const messageHash = await getChangeOwnerMessageHash(accountAddress, chainId, newOwner.guid, maxTimestamp);
+  const messageHash = await getChangeOwnerMessageHash(accountAddress, chainId, newOwner.guid, maxTimestamp);
   return newOwner.signRaw(messageHash);
 };
 
@@ -74,12 +68,6 @@ function getDomain(chainId: string): StarknetDomain {
   };
 }
 
-function getTypedDataHash(myStruct: ReplaceOwnersWithOne, chainId: string, owner: bigint): string {
-  return typedData.getMessageHash(getTypedData(myStruct, chainId), owner);
-}
-
-// Needed to reproduce the same structure as:
-// https://github.com/0xs34n/starknet.js/blob/1a63522ef71eed2ff70f82a886e503adc32d4df9/__mocks__/typedDataStructArrayExample.json
 function getTypedData(myStruct: ReplaceOwnersWithOne, chainId: string): TypedData {
   return {
     types,
@@ -95,8 +83,11 @@ export const getChangeOwnerMessageHash = async (
   newOwnerGuid: bigint,
   maxTimestamp: number,
 ) => {
-  const changeOwnerSelector = hash.getSelectorFromName("replace_all_owners_with_one");
-  return hash.computeHashOnElements([changeOwnerSelector, chainId, accountAddress, newOwnerGuid, maxTimestamp]);
+  const replaceOwnersWithOne: ReplaceOwnersWithOne = {
+    new_owner_guid: newOwnerGuid.toString(),
+    signature_expiration: maxTimestamp.toString(),
+  };
+  return typedData.getMessageHash(getTypedData(replaceOwnersWithOne, chainId), accountAddress);
 };
 
 export async function hasOngoingEscape(accountContract: Contract): Promise<boolean> {

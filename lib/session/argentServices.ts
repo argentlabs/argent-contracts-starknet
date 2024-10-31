@@ -6,19 +6,10 @@ import {
   TypedData,
   TypedDataRevision,
   ec,
-  hash,
   num,
   typedData,
 } from "starknet";
-import {
-  OffChainSession,
-  OutsideExecution,
-  StarknetKeyPair,
-  calculateTransactionHash,
-  getSessionTypedData,
-  getTypedData,
-  manager,
-} from "..";
+import { OutsideExecution, Session, StarknetKeyPair, calculateTransactionHash, getTypedData, manager } from "..";
 
 export class ArgentX {
   constructor(
@@ -39,16 +30,16 @@ export class BackendService {
   public async signTxAndSession(
     calls: Call[],
     transactionDetail: InvocationsSignerDetails,
-    sessionTokenToSign: OffChainSession,
-    cacheAuthorization: boolean,
+    sessionTokenToSign: Session,
+    cacheOwnerGuid?: bigint,
   ): Promise<bigint[]> {
     // verify session param correct
     // extremely simplified version of the backend verification
     // backend must check, timestamps fees, used tokens nfts...
-    const allowed_methods = sessionTokenToSign.allowed_methods;
+    const allowedMethods = sessionTokenToSign.allowedMethods;
     if (
       !calls.every((call) => {
-        return allowed_methods.some(
+        return allowedMethods.some(
           (method) => method["Contract Address"] === call.contractAddress && method.selector === call.entrypoint,
         );
       })
@@ -57,36 +48,27 @@ export class BackendService {
     }
 
     const transactionHash = calculateTransactionHash(transactionDetail, calls);
-    const sessionMessageHash = typedData.getMessageHash(
-      await getSessionTypedData(sessionTokenToSign),
-      transactionDetail.walletAddress,
-    );
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([
+    const sessionWithTxHash = await sessionTokenToSign.hashWithTransaction(
       transactionHash,
-      sessionMessageHash,
-      +cacheAuthorization,
-    ]);
+      transactionDetail.walletAddress,
+      cacheOwnerGuid,
+    );
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
     return [signature.r, signature.s];
   }
 
   public async signOutsideTxAndSession(
     _calls: Call[],
-    sessionTokenToSign: OffChainSession,
+    sessionTokenToSign: Session,
     accountAddress: string,
     outsideExecution: OutsideExecution,
     revision: TypedDataRevision,
-    cacheAuthorization: boolean,
+    cacheOwnerGuid?: bigint,
   ): Promise<bigint[]> {
     // TODO backend must verify, timestamps fees, used tokens nfts...
     const currentTypedData = getTypedData(outsideExecution, await manager.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
-    const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(sessionTokenToSign), accountAddress);
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([
-      messageHash,
-      sessionMessageHash,
-      +cacheAuthorization,
-    ]);
+    const sessionWithTxHash = await sessionTokenToSign.hashWithTransaction(messageHash, accountAddress, cacheOwnerGuid);
     const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
     return [signature.r, signature.s];
   }

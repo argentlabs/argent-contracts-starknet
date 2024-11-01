@@ -114,24 +114,37 @@ impl ByteArrayExt of ByteArrayExtTrait {
     }
 }
 
-// Needs a renaming and some docs
-fn u32s_to_u256<T, +Copy<T>, +Into<T, felt252>>(arr: Span<T>) -> u256 {
-    assert!(arr.len() == 8, "u32s_to_u2562: input must be 8 elements long");
+/// @notice Converts a span of 8 elements of type `T` into a u256
+/// @param arr A span containing exactly 8 elements of type `T`, where each element
+///     represents a 32-bit segment of the resulting 256-bit integer.
+/// @return u256 A 256-bit unsigned integer constructed from the provided 8-element span,
+///     with each element contributing 32 bits to the final value.
+/// @dev This function expects the input span to contain exactly 8 elements. Each element
+///     represents a segment of the 256-bit integer, arranged from the most significant
+///     (highest index) to the least significant (lowest index). If the span does not contain 8
+///     elements, or if an overflow occurs during the conversion, the function will panic.
+fn span_to_u256<T, +Copy<T>, +Into<T, felt252>>(arr: Span<T>) -> u256 {
+    assert!(arr.len() == 8, "span_to_u256: input must be 8 elements long");
     let low: felt252 = (*arr[7]).into()
         + (*arr[6]).into() * 0x1_0000_0000
         + (*arr[5]).into() * 0x1_0000_0000_0000_0000
         + (*arr[4]).into() * 0x1_0000_0000_0000_0000_0000_0000;
-    let low: u128 = low.try_into().expect('u32s_to_u2562:overflow-low');
+    let low: u128 = low.try_into().expect('span_to_u256:overflow-low');
     let high: felt252 = (*arr[3]).into()
         + (*arr[2]).into() * 0x1_0000_0000
         + (*arr[1]).into() * 0x1_0000_0000_0000_0000
         + (*arr[0]).into() * 0x1_0000_0000_0000_0000_0000_0000;
-    let high: u128 = high.try_into().expect('u32s_to_u2562:overflow-high');
+    let high: u128 = high.try_into().expect('span_to_u256:overflow-high');
     u256 { high, low }
 }
 
-// Needs a renaming and some docs
-fn u32s_to_u8s<T, +Copy<T>, +TryInto<T, u32>>(mut words: Span<T>) -> Span<u8> {
+/// @notice Converts a span of 32-bit words into a span of 8-bit bytes.
+/// @param words A span of elements of type `T`, where each element can be converted
+///     into a `u32`, representing a 32-bit segment that will be decomposed into
+///     four 8-bit bytes.
+/// @return Span<u8> A span of `u8` values, where each 32-bit word from the input
+///     span is expanded into four 8-bit bytes, ordered from most significant to least.
+fn words_to_bytes<T, +Copy<T>, +TryInto<T, u32>>(mut words: Span<T>) -> Span<u8> {
     let mut output = array![];
     while let Option::Some(word) = words.pop_front() {
         let word: u32 = (*word).try_into().unwrap();

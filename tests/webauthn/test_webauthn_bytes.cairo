@@ -1,5 +1,5 @@
 use argent::utils::bytes::{
-    SpanU8TryIntoFelt252, SpanU8TryIntoU256, ByteArrayExt, u8s_to_u32s_pad_end, u32s_to_u8s, u256_to_u8s
+    SpanU8TryIntoFelt252, SpanU8TryIntoU256, ByteArrayExt, u8s_to_u32s_pad_end, words_to_bytes, u256_to_u8s
 };
 
 #[test]
@@ -194,9 +194,9 @@ fn convert_u8s_to_u32s_pad_end() {
 }
 
 #[test]
-fn convert_u32s_to_u8s() {
+fn convert_words_to_bytes() {
     let input = array![0x6a09e667, 0xbb67ae85].span();
-    let output = u32s_to_u8s(input);
+    let output = words_to_bytes(input);
     let expected = array![0x6a, 0x09, 0xe6, 0x67, 0xbb, 0x67, 0xae, 0x85].span();
     assert_eq!(output, expected);
 }

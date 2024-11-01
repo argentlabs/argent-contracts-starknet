@@ -114,7 +114,7 @@ fn test_is_valid_webauthn_signature_flags() {
 }
 
 #[test]
-#[should_panic(expected: "webauthn/missing-user-bit")]
+#[should_panic(expected: "webauthn/nonpresent-user")]
 fn test_invalid_webauthn_signature_missing_user_bit() {
     let (transaction_hash, signer, mut signature) = valid_signer();
     signature.flags = 0b00000000;

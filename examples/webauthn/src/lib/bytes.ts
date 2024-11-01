@@ -41,6 +41,9 @@ export function hexStringToUint8Array(hexString: string): Uint8Array {
   // Remove any leading 0x, if present
   hexString = hexString.replace(/^0x/, "");
 
+  // Remove leading zeros
+  hexString = hexString.replace(/^0+/, "");
+
   // Ensure the string has an even number of characters (two hex digits per byte)
   if (hexString.length % 2 !== 0) {
     throw new Error("Invalid hex string");
@@ -51,7 +54,7 @@ export function hexStringToUint8Array(hexString: string): Uint8Array {
 
   // Convert each pair of hex characters into a byte
   for (let i = 0; i < hexString.length; i += 2) {
-    byteArray[i / 2] = parseInt(hexString.substr(i, 2), 16);
+    byteArray[i / 2] = parseInt(hexString.substring(i, i + 2), 16);
   }
 
   return byteArray;

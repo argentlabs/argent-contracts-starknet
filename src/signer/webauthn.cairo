@@ -16,7 +16,7 @@ use starknet::secp256_trait::Signature;
 struct WebauthnSignature {
     client_data_json_outro: Span<u8>,
     flags: u8,
-    sign_count: u32, // This could/should be u8 to avoid 1 try_into
+    sign_count: u8,
     ec_signature: Signature,
     sha256_implementation: Sha256Implementation,
 }
@@ -37,7 +37,7 @@ fn verify_authenticator_flags(flags: u8) {
     // rpIdHash is verified with the signature over the authenticator
 
     // Verify that the User Present bit of the flags in authData is set.
-    assert!((flags & 0b00000001) == 0b00000001, "webauthn/missing-user-bit");
+    assert!((flags & 0b00000001) == 0b00000001, "webauthn/nonpresent-user");
 
     // If user verification is required for this signature, verify that the User Verified bit of the flags in authData
     // is set.
@@ -87,7 +87,7 @@ fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> 
     bytes.append(0);
     bytes.append(0);
     bytes.append(0);
-    bytes.append(signature.sign_count.try_into().unwrap());
+    bytes.append(signature.sign_count);
     bytes
 }
 

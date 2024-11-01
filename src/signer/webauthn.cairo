@@ -1,7 +1,7 @@
 use alexandria_encoding::base64::Base64UrlEncoder;
 use argent::signer::signer_signature::WebauthnSigner;
 use argent::utils::array_ext::ArrayExt;
-use argent::utils::bytes::{u256_to_u8s, words_to_bytes, span_to_u256, u8s_to_u32s};
+use argent::utils::bytes::{u256_to_u8s, words_to_bytes, span_to_u256, bytes_to_u32s};
 use argent::utils::hashing::sha256_cairo0;
 use core::sha256::compute_sha256_u32_array;
 use starknet::secp256_trait::Signature;
@@ -112,7 +112,7 @@ fn get_webauthn_hash_cairo1(hash: felt252, signer: WebauthnSigner, signature: We
 
 #[inline(always)]
 fn sha256_u8s(arr: Span<u8>) -> Span<u32> {
-    let (word_arr, last, rem) = u8s_to_u32s(arr);
+    let (word_arr, last, rem) = bytes_to_u32s(arr);
     compute_sha256_u32_array(word_arr, last, rem).span()
 }
 

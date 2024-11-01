@@ -159,9 +159,18 @@ fn words_to_bytes<T, +Copy<T>, +TryInto<T, u32>>(mut words: Span<T>) -> Span<u8>
     output.span()
 }
 
-// Takes an array of u8s and returns an array of u32s not padding the end
+/// @notice Converts a span of 8-bit bytes into an array of u32
+/// @param arr A span of `u8` bytes, where each group of 4 bytes is combined into a single `u32` value.
+/// @return (Array<u32>, u32, u32) Returns a tuple with three values:
+///     - An array of `u32` values, each derived from a group of 4 bytes in the input.
+///     - A `u32` representing any remaining bytes that couldn’t form a full 32-bit word.
+///     - A `u32` remainder count, indicating the number of bytes left ungrouped.
+///
+/// @dev This function takes each set of 4 bytes from `arr` and combines them, from most significant
+///     to least significant, into a `u32`. If the length of `arr` is not a multiple of 4, the final
+///     `u32` and remainder count represent any leftover bytes.
 // Inspired from https://github.com/starkware-libs/cairo/blob/main/corelib/src/sha256.cairo
-fn u8s_to_u32s(mut arr: Span<u8>) -> (Array<u32>, u32, u32) {
+fn bytes_to_u32s(mut arr: Span<u8>) -> (Array<u32>, u32, u32) {
     let mut word_arr: Array<u32> = array![];
     let len = arr.len();
     let rem = len % 4;

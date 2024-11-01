@@ -15,7 +15,7 @@ mod MockFutureArgentMultisig {
     use argent::signer_storage::{
         interface::ISignerList, signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
     };
-    use argent::upgrade::{upgrade::upgrade_component, interface::IUpgradableCallback};
+    use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
         serialization::full_deserialize,
@@ -127,6 +127,15 @@ mod MockFutureArgentMultisig {
         /// Semantic version of this contract
         fn get_version(self: @ContractState) -> Version {
             Version { major: VERSION_MAJOR, minor: VERSION_MINOR, patch: VERSION_PATCH }
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
+        // Called when coming from account < 0.2.0
+        fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
+            panic_with_felt252('argent/no-direct-upgrade');
+            array![]
         }
     }
 

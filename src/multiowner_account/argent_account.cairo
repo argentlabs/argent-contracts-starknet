@@ -16,7 +16,9 @@ mod ArgentAccount {
             SignerSignature, SignerSignatureTrait, starknet_signer_from_pubkey
         }
     };
-    use argent::upgrade::{upgrade::{IUpgradeInternal, upgrade_component}, interface::IUpgradableCallback};
+    use argent::upgrade::{
+        upgrade::{IUpgradeInternal, upgrade_component}, interface::{IUpgradableCallback, IUpgradableCallbackOld}
+    };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self, assert_only_protocol}, calls::execute_multicall,
         serialization::full_deserialize,
@@ -227,6 +229,15 @@ mod ArgentAccount {
         }
     }
 
+
+    #[abi(embed_v0)]
+    impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
+        // Called when coming from account 0.3.1 or older
+        fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
+            assert_only_self();
+            array![]
+        }
+    }
     #[abi(embed_v0)]
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
         // Called when coming from account 0.4.0+

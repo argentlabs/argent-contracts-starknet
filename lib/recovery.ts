@@ -1,5 +1,13 @@
 import { expect } from "chai";
-import { CairoCustomEnum, Contract, shortString, StarknetDomain, TypedData, typedData, TypedDataRevision } from "starknet";
+import {
+  CairoCustomEnum,
+  Contract,
+  shortString,
+  StarknetDomain,
+  TypedData,
+  typedData,
+  TypedDataRevision,
+} from "starknet";
 import { KeyPair } from ".";
 
 export const ESCAPE_SECURITY_PERIOD = 7n * 24n * 60n * 60n; // 7 days
@@ -73,10 +81,10 @@ function getTypedData(myStruct: ReplaceOwnersWithOne, chainId: string): TypedDat
     types,
     primaryType: "ReplaceOwnersWithOne",
     domain: getDomain(chainId),
-    message: { 
+    message: {
       "New owner GUID": myStruct.new_owner_guid,
       "Signature expiration": myStruct.signature_expiration,
-     },
+    },
   };
 }
 

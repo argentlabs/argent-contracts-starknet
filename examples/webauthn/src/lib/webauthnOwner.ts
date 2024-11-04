@@ -125,7 +125,8 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public async signHash(messageHash: string): Promise<WebauthnSignature> {
-    const cairoVersion = 1; // TODO Add button to configure it from UI?
+    // TODO Add button to configure it from UI
+    const cairoVersion = 0;
     const normalizedChallenge = hex2buf(`${normalizeTransactionHash(messageHash)}${cairoVersion}`);
     const assertionResponse = await this.requestSignature(this.attestation, normalizedChallenge);
     const authenticatorData = new Uint8Array(assertionResponse.authenticatorData);

@@ -68,7 +68,7 @@ export async function retrievePasskey(
     return new WebauthnOwner(attestation!, requestSignature);
   } catch (err) {
     console.log(err);
-    throw new Error("Error while retrieving credential");
+    throw new Error("Error while retrieving credential", { cause: err });
   }
 }
 
@@ -89,6 +89,16 @@ export async function createOwner(email: string, rpId: string, origin: string): 
 export async function declareAccount(provider: ProviderType): Promise<string> {
   const deployer = await loadDeployer(provider);
 
+  // Assert sha256 class hash is declared
+  try {
+    await provider.getClass(0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
+  } catch (e) {
+    throw new Error(
+      "Sha256 class hash not declared, please run `scarb run profile` at the repo root folder to declare it",
+      e,
+    );
+  }
+
   const { class_hash: accountClassHash, transaction_hash: accountTransactionHash } = await deployer.declareIfNot(
     { casm: accountCasm, contract: accountSierra },
     { maxFee: 1e17 },
@@ -105,7 +115,7 @@ export async function retrieveAccount(
   classHash: string,
   webauthnOwner: WebauthnOwner,
   provider: ProviderType,
-): Promise<Account | undefined> {
+): Promise<Account> {
   const constructorCalldata = CallData.compile({
     owner: webauthnOwner.signer,
     guardian: new CairoOption(CairoOptionVariant.None),

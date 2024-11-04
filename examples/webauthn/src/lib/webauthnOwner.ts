@@ -12,7 +12,7 @@ import {
   shortString,
   uint256,
 } from "starknet";
-import { buf2hex, hex2buf } from "./bytes";
+import { buf2base64url, buf2hex, hex2buf } from "./bytes";
 import { KeyPair, SignerType, signerTypeToCustomEnum } from "./signers";
 import type { WebauthnAttestation } from "./webauthnAttestation";
 
@@ -132,13 +132,30 @@ export class WebauthnOwner extends KeyPair {
     const clientDataJson = new Uint8Array(assertionResponse.clientDataJSON);
     const signCount = Number(BigInt(buf2hex(authenticatorData.slice(33, 37))));
     const jsonString = new TextDecoder().decode(clientDataJson);
-    const parsedData = JSON.parse(jsonString);
-    const { challenge, origin, type, ...rest } = parsedData;
-    const remainingString = JSON.stringify(rest).slice(1, -1); // Remove the curly braces
-    const clientDataJsonOutro =
-      remainingString.length > 0
-        ? new Uint8Array(new TextEncoder().encode("," + remainingString + "}"))
-        : new Uint8Array();
+    const startJsonString = `{"type":"webauthn.get","challenge":"${buf2base64url(normalizedChallenge)}","origin":"${this.attestation.origin}"`;
+    if (!jsonString.startsWith(startJsonString)) {
+      console.log("Should start with: ", startJsonString);
+      console.log("But got: ", jsonString);
+      throw new Error("Invalid clientDataJSON: does not start with expected string");
+    }
+    const endJsonString = jsonString.replace(startJsonString, "");
+    let clientDataJsonOutro = new Uint8Array();
+    if (endJsonString.length == 0) {
+      throw new Error("Invalid clientDataJSON: invalid JSON");
+    } else if (endJsonString.length == 1) {
+      if (endJsonString[0] !== "}") {
+        throw new Error("Invalid clientDataJSON: does not end with '}'");
+      }
+    } else {
+      console.log("WebauthnOwner signed, endJsonString is:", endJsonString);
+      if (endJsonString[endJsonString.length - 1] !== "}") {
+        throw new Error("Invalid extra data: does not end with '}'");
+      }
+      if (endJsonString[0] !== ",") {
+        throw new Error("Invalid extra data: does not start with ','");
+      }
+      clientDataJsonOutro = new Uint8Array(new TextEncoder().encode(endJsonString));
+    }
 
     let { r, s } = parseASN1Signature(assertionResponse.signature);
     let yParity = getYParity(getMessageHash(authenticatorData, clientDataJson), this.publicKey, r, s);

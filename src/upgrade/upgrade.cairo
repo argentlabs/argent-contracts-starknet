@@ -60,7 +60,6 @@ mod upgrade_component {
         fn complete_upgrade(ref self: ComponentState<TContractState>, new_implementation: ClassHash) {
             replace_class_syscall(new_implementation).expect('argent/invalid-upgrade');
             self.emit(AccountUpgraded { new_implementation });
-            // Should we add a callback to force some code afterwards?
         }
     }
 }

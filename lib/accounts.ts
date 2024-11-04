@@ -124,6 +124,7 @@ export function setDefaultTransactionVersionV3(account: ArgentAccount): ArgentAc
 
 console.log("Deployer:", deployer.address);
 
+// Should we rename this to deployOldAccountWithProxy?
 export async function deployOldAccount(
   owner = new LegacyStarknetKeyPair(),
   guardian = new LegacyStarknetKeyPair(),

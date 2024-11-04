@@ -32,8 +32,8 @@ mod ArgentAccount {
     use pedersen::PedersenTrait;
     use starknet::{
         storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, account::Call,
-        SyscallResultTrait, get_tx_info, get_execution_info,
-        storage_access::{StorageAddress, storage_read_syscall, storage_write_syscall}
+        SyscallResultTrait, get_tx_info, get_execution_info, replace_class_syscall,
+        storage_access::{storage_read_syscall, storage_write_syscall,}
     };
     use super::super::account_interface::{IArgentMultiOwnerAccount,};
     use super::super::events::{
@@ -229,41 +229,44 @@ mod ArgentAccount {
         }
     }
 
-
     #[abi(embed_v0)]
     impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
-        // Called when coming from account 0.3.1 or older
+        // Called when coming from account 0.3.1 < X < 0.4.0
+        // Wrong, also called when coming from 0.2.3, but maybe we never shipped that one?
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
-            array![]
+            self.do_stuff();
+
+            let implementation_storage_address = selector!("_implementation").try_into().unwrap();
+            let implementation = storage_read_syscall(0, implementation_storage_address).unwrap_syscall();
+
+            if implementation != Zeroable::zero() {
+                assert(data.len() >= 1, data.len().into());
+                let new_implementation = (*data[0]).try_into().unwrap();
+                replace_class_syscall(new_implementation).expect('argent/invalid-after-upgrade');
+                storage_write_syscall(0, implementation_storage_address, 0).unwrap_syscall();
+            }
+
+            if data.is_empty() {
+                return array![];
+            }
+
+            let calls: Array<Call> = full_deserialize(data.span()).expect('argent/invalid-calls');
+            assert_no_self_call(calls.span(), get_contract_address());
+
+            let multicall_return = execute_multicall(calls.span());
+            let mut output = array![];
+            multicall_return.serialize(ref output);
+            output
         }
     }
+
     #[abi(embed_v0)]
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
         // Called when coming from account 0.4.0+
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
             assert_only_self();
-
-            // Should revert if ongoing escape
-            let current_escape = self._escape.read();
-            let escape_status = self.get_escape_status(current_escape.ready_at);
-            assert(
-                escape_status == EscapeStatus::None || escape_status == EscapeStatus::Expired, 'argent/ongoing-escape'
-            );
-
-            let signer_storage_address: StorageAddress = selector!("_signer").try_into().unwrap();
-            let signer_to_migrate = storage_read_syscall(0, signer_storage_address).unwrap_syscall();
-            // This ensures signer != 0
-            let stark_signer = starknet_signer_from_pubkey(signer_to_migrate);
-            self.owner_manager.initialize(stark_signer);
-            // Reset _signer storage
-            storage_write_syscall(0, signer_storage_address, 0).unwrap_syscall();
-
-            let guardian_key = self._guardian.read();
-            let guardian_backup_key = self._guardian_backup.read();
-            if guardian_key == 0 {
-                assert(guardian_backup_key == 0, 'argent/backup-should-be-null');
-            }
+            self.do_stuff();
 
             // Is it normal that this is in the "Internal Trait"?
             self.upgrade.complete_upgrade(new_implementation);
@@ -753,6 +756,7 @@ mod ArgentAccount {
                         self.assert_valid_span_signature(execution_hash, signer_signatures.span());
                         return; // valid
                     }
+                    assert(selector != selector!("execute_after_upgrade"), 'argent/forbidden-call');
                     assert(selector != selector!("perform_upgrade"), 'argent/forbidden-call');
                 }
             } else {
@@ -761,6 +765,26 @@ mod ArgentAccount {
             }
             let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
             self.assert_valid_span_signature(execution_hash, signer_signatures.span());
+        }
+
+        fn do_stuff(ref self: ContractState) {
+            // TODO double check: Not sure this is 100% correct
+            self.reset_escape();
+            self.reset_escape_timestamps();
+
+            let signer_storage_address = selector!("_signer").try_into().unwrap();
+            let signer_to_migrate = storage_read_syscall(0, signer_storage_address).unwrap_syscall();
+            // This ensures signer != 0
+            let stark_signer = starknet_signer_from_pubkey(signer_to_migrate);
+            self.owner_manager.initialize(stark_signer);
+            // Reset _signer storage
+            storage_write_syscall(0, signer_storage_address, 0).unwrap_syscall();
+
+            let guardian_key = self._guardian.read();
+            let guardian_backup_key = self._guardian_backup.read();
+            if guardian_key == 0 {
+                assert(guardian_backup_key == 0, 'argent/backup-should-be-null');
+            }
         }
 
         #[inline(always)]

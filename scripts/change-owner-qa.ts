@@ -1,7 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 // This script will generate the parameters needed to change the owner of an Argent account.
 // Note the the account will be bricked after the owner change.
-// ==> What does this mean?  ^^^^^^^^^^
 // Instructions:
 // - Setup `.env` file with the RPC_URL variable according the network you want to use.
 //   For instance for goerli network you can use this:

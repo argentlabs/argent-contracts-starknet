@@ -52,7 +52,7 @@ mod multiowner_account {
     mod argent_account;
     mod events;
     mod owner_manager;
-    mod replace_hash;
+    mod replace_owners_message;
 }
 
 mod utils {

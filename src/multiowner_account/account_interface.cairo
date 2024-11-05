@@ -22,10 +22,10 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @dev Must be called by the account and authorized by 1 owner and a guardian (if guardian is set)
     /// @param new_single_owner SignerSignature of the new owner
     /// Required to prevent changing to a signer which is not in control of the user
-    /// It is the signature of the SNIP-12 compliant object ReplaceOwnersWithOne
+    /// It is the signature of the SNIP-12 V1 compliant object ReplaceOwnersWithOne
     /// @param signature_expiration Signature expiration timestamp
     /// cannot be in the past: before current timestamp
-    /// cannot be too far in the future: current timestamp + 1 DAY (60 * 60 * 24)
+    /// cannot be too far in the future: current timestamp + 1 DAY in seconds
     /// @dev It will cancel any existing escape
     fn replace_all_owners_with_one(
         ref self: TContractState, new_single_owner: SignerSignature, signature_expiration: u64

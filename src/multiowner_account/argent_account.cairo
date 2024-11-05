@@ -48,7 +48,7 @@ mod ArgentAccount {
         EscapeSecurityPeriodChanged,
     };
     use super::super::owner_manager::{IOwnerManager, IOwnerManagerCallback, owner_manager_component};
-    use super::super::replace_hash::ReplaceOwnersWithOne;
+    use super::super::replace_owners_message::ReplaceOwnersWithOne;
 
     const NAME: felt252 = 'ArgentAccount';
     const VERSION: Version = Version { major: 0, minor: 5, patch: 0 };

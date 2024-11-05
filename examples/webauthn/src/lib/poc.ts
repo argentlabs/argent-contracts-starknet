@@ -88,10 +88,10 @@ export async function declareAccount(provider: ProviderType): Promise<string> {
   // Assert sha256 class hash is declared
   try {
     await provider.getClass(0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
-  } catch (e) {
+  } catch (err) {
     throw new Error(
       "Sha256 class hash not declared, please run `scarb run profile` at the repo root folder to declare it",
-      e,
+      { cause: err },
     );
   }
 

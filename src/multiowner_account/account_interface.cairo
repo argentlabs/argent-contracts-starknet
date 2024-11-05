@@ -26,7 +26,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @param signature_expiration Signature expiration timestamp
     /// cannot be in the past: before current timestamp
     /// cannot be too far in the future: current timestamp + 1 DAY (60 * 60 * 24)
-    /// future @dev It will cancel any existing escape
+    /// @dev It will cancel any existing escape
     fn replace_all_owners_with_one(
         ref self: TContractState, new_single_owner: SignerSignature, signature_expiration: u64
     );

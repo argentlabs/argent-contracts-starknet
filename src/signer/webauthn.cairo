@@ -1,7 +1,7 @@
 use alexandria_encoding::base64::Base64UrlEncoder;
 use argent::signer::signer_signature::WebauthnSigner;
 use argent::utils::array_ext::ArrayExt;
-use argent::utils::bytes::{u256_to_u8s, words_to_bytes, span_to_u256, bytes_to_u32s};
+use argent::utils::bytes::{u256_to_u8s, eight_words_to_bytes, eight_words_to_u256, bytes_to_u32s};
 use argent::utils::hashing::sha256_cairo0;
 use core::sha256::compute_sha256_u32_array;
 use starknet::secp256_trait::Signature;
@@ -93,27 +93,26 @@ fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> 
 
 fn get_webauthn_hash_cairo0(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> Option<u256> {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
-    let client_data_hash = words_to_bytes(sha256_cairo0(client_data_json)?);
+    let client_data_hash = eight_words_to_bytes(sha256_cairo0(client_data_json)?);
     let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
-    message.append_all(client_data_hash);
-    Option::Some(span_to_u256(sha256_cairo0(message.span())?))
+    message.append_all(client_data_hash.span());
+    Option::Some(eight_words_to_u256(sha256_cairo0(message.span())?))
 }
 
 fn get_webauthn_hash_cairo1(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
-    // As we know the return type is fixed ([u32; 8]), we could use a more efficient implementation
-    let mut client_data_hash = words_to_bytes(sha256_u8s(client_data_json));
+    let mut client_data_hash = eight_words_to_bytes(sha256_u8s(client_data_json));
 
     let mut message = encode_authenticator_data(signature, signer.rp_id_hash.into());
-    message.append_all(client_data_hash);
+    message.append_all(client_data_hash.span());
 
-    span_to_u256(sha256_u8s(message.span()))
+    eight_words_to_u256(sha256_u8s(message.span()))
 }
 
 #[inline(always)]
-fn sha256_u8s(arr: Span<u8>) -> Span<u32> {
+fn sha256_u8s(arr: Span<u8>) -> [u32; 8] {
     let (word_arr, last, rem) = bytes_to_u32s(arr);
-    compute_sha256_u32_array(word_arr, last, rem).span()
+    compute_sha256_u32_array(word_arr, last, rem)
 }
 
 fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {

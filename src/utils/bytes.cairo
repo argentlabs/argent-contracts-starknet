@@ -114,49 +114,88 @@ impl ByteArrayExt of ByteArrayExtTrait {
     }
 }
 
-/// @notice Converts a span of 8 elements of type `T` into a u256
-/// @param arr A span containing exactly 8 elements of type `T`, where each element
-///     represents a 32-bit segment of the resulting 256-bit integer.
-/// @return u256 A 256-bit unsigned integer constructed from the provided 8-element span,
-///     with each element contributing 32 bits to the final value.
-/// @dev This function expects the input span to contain exactly 8 elements. Each element
-///     represents a segment of the 256-bit integer, arranged from the most significant
-///     (highest index) to the least significant (lowest index). If the span does not contain 8
-///     elements, or if an overflow occurs during the conversion, the function will panic.
-fn span_to_u256<T, +Copy<T>, +Into<T, felt252>>(arr: Span<T>) -> u256 {
-    assert!(arr.len() == 8, "span_to_u256: input must be 8 elements long");
-    let low: felt252 = (*arr[7]).into()
-        + (*arr[6]).into() * 0x1_0000_0000
-        + (*arr[5]).into() * 0x1_0000_0000_0000_0000
-        + (*arr[4]).into() * 0x1_0000_0000_0000_0000_0000_0000;
-    let low: u128 = low.try_into().expect('span_to_u256:overflow-low');
-    let high: felt252 = (*arr[3]).into()
-        + (*arr[2]).into() * 0x1_0000_0000
-        + (*arr[1]).into() * 0x1_0000_0000_0000_0000
-        + (*arr[0]).into() * 0x1_0000_0000_0000_0000_0000_0000;
+/// @notice Converts of 8 u32s into a u256
+/// @param words 8 words sorted from most significant to least significant
+/// @return u256 A 256-bit unsigned integer
+fn eight_words_to_u256(words: [u32; 8]) -> u256 {
+    let [word_0, word_1, word_2, word_3, word_4, word_5, word_6, word_7] = words;
+    let high: felt252 = word_3.into()
+        + word_2.into() * 0x1_0000_0000
+        + word_1.into() * 0x1_0000_0000_0000_0000
+        + word_0.into() * 0x1_0000_0000_0000_0000_0000_0000;
     let high: u128 = high.try_into().expect('span_to_u256:overflow-high');
+    let low: felt252 = word_7.into()
+        + word_6.into() * 0x1_0000_0000
+        + word_5.into() * 0x1_0000_0000_0000_0000
+        + word_4.into() * 0x1_0000_0000_0000_0000_0000_0000;
+    let low: u128 = low.try_into().expect('span_to_u256:overflow-low');
+
     u256 { high, low }
 }
 
-/// @notice Converts a span of 32-bit words into a span of 8-bit bytes.
-/// @param words A span of elements of type `T`, where each element can be converted
-///     into a `u32`, representing a 32-bit segment that will be decomposed into
-///     four 8-bit bytes.
-/// @return Span<u8> A span of `u8` values, where each 32-bit word from the input
-///     span is expanded into four 8-bit bytes, ordered from most significant to least.
-fn words_to_bytes<T, +Copy<T>, +TryInto<T, u32>>(mut words: Span<T>) -> Span<u8> {
-    let mut output = array![];
-    while let Option::Some(word) = words.pop_front() {
-        let word: u32 = (*word).try_into().unwrap();
-        let (rest, byte_4) = integer::u32_safe_divmod(word, 0x100);
-        let (rest, byte_3) = integer::u32_safe_divmod(rest, 0x100);
-        let (byte_1, byte_2) = integer::u32_safe_divmod(rest, 0x100);
-        output.append(byte_1.try_into().unwrap());
-        output.append(byte_2.try_into().unwrap());
-        output.append(byte_3.try_into().unwrap());
-        output.append(byte_4.try_into().unwrap());
-    };
-    output.span()
+/// @notice Converts 8 32-bit words into 32 bytes.
+/// @param words The 8 32-bit words to convert, ordered from most significant to least.
+/// @return The individual `u8` bytes ordered from most significant to least.
+fn eight_words_to_bytes(words: [u32; 8]) -> [u8; 32] {
+    let [word_0, word_1, word_2, word_3, word_4, word_5, word_6, word_7] = words;
+    let (rest, byte_0_4) = integer::u32_safe_divmod(word_0, 0x100);
+    let (rest, byte_0_3) = integer::u32_safe_divmod(rest, 0x100);
+    let (byte_0_1, byte_0_2) = integer::u32_safe_divmod(rest, 0x100);
+    let (rest, byte_1_4) = integer::u32_safe_divmod(word_1, 0x100);
+    let (rest, byte_1_3) = integer::u32_safe_divmod(rest, 0x100);
+    let (byte_1_1, byte_1_2) = integer::u32_safe_divmod(rest, 0x100);
+    let (rest, byte_2_4) = integer::u32_safe_divmod(word_2, 0x100);
+    let (rest, byte_2_3) = integer::u32_safe_divmod(rest, 0x100);
+    let (byte_2_1, byte_2_2) = integer::u32_safe_divmod(rest, 0x100);
+    let (rest, byte_3_4) = integer::u32_safe_divmod(word_3, 0x100);
+    let (rest, byte_3_3) = integer::u32_safe_divmod(rest, 0x100);
+    let (byte_3_1, byte_3_2) = integer::u32_safe_divmod(rest, 0x100);
+    let (rest, byte_4_4) = integer::u32_safe_divmod(word_4, 0x100);
+    let (rest, byte_4_3) = integer::u32_safe_divmod(rest, 0x100);
+    let (byte_4_1, byte_4_2) = integer::u32_safe_divmod(rest, 0x100);
+    let (rest, byte_5_4) = integer::u32_safe_divmod(word_5, 0x100);
+    let (rest, byte_5_3) = integer::u32_safe_divmod(rest, 0x100);
+    let (byte_5_1, byte_5_2) = integer::u32_safe_divmod(rest, 0x100);
+    let (rest, byte_6_4) = integer::u32_safe_divmod(word_6, 0x100);
+    let (rest, byte_6_3) = integer::u32_safe_divmod(rest, 0x100);
+    let (byte_6_1, byte_6_2) = integer::u32_safe_divmod(rest, 0x100);
+    let (rest, byte_7_4) = integer::u32_safe_divmod(word_7, 0x100);
+    let (rest, byte_7_3) = integer::u32_safe_divmod(rest, 0x100);
+    let (byte_7_1, byte_7_2) = integer::u32_safe_divmod(rest, 0x100);
+    [
+        byte_0_1.try_into().unwrap(),
+        byte_0_2.try_into().unwrap(),
+        byte_0_3.try_into().unwrap(),
+        byte_0_4.try_into().unwrap(),
+        byte_1_1.try_into().unwrap(),
+        byte_1_2.try_into().unwrap(),
+        byte_1_3.try_into().unwrap(),
+        byte_1_4.try_into().unwrap(),
+        byte_2_1.try_into().unwrap(),
+        byte_2_2.try_into().unwrap(),
+        byte_2_3.try_into().unwrap(),
+        byte_2_4.try_into().unwrap(),
+        byte_3_1.try_into().unwrap(),
+        byte_3_2.try_into().unwrap(),
+        byte_3_3.try_into().unwrap(),
+        byte_3_4.try_into().unwrap(),
+        byte_4_1.try_into().unwrap(),
+        byte_4_2.try_into().unwrap(),
+        byte_4_3.try_into().unwrap(),
+        byte_4_4.try_into().unwrap(),
+        byte_5_1.try_into().unwrap(),
+        byte_5_2.try_into().unwrap(),
+        byte_5_3.try_into().unwrap(),
+        byte_5_4.try_into().unwrap(),
+        byte_6_1.try_into().unwrap(),
+        byte_6_2.try_into().unwrap(),
+        byte_6_3.try_into().unwrap(),
+        byte_6_4.try_into().unwrap(),
+        byte_7_1.try_into().unwrap(),
+        byte_7_2.try_into().unwrap(),
+        byte_7_3.try_into().unwrap(),
+        byte_7_4.try_into().unwrap(),
+    ]
 }
 
 /// @notice Converts a span of 8-bit bytes into an array of u32

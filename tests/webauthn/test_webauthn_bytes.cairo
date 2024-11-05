@@ -1,5 +1,6 @@
 use argent::utils::bytes::{
-    SpanU8TryIntoFelt252, SpanU8TryIntoU256, ByteArrayExt, u8s_to_u32s_pad_end, eight_words_to_bytes, u256_to_u8s
+    SpanU8TryIntoFelt252, SpanU8TryIntoU256, ByteArrayExt, u8s_to_u32s_pad_end, eight_words_to_bytes, u256_to_u8s,
+    bytes_to_u32s
 };
 
 #[test]
@@ -273,4 +274,72 @@ fn convert_u256_to_u8s() {
         0xb4,
     ];
     assert_eq!(output, expected);
+}
+
+
+#[test]
+fn test_bytes_to_u32s() {
+    let input = array!['a'];
+    let (output, last, rem) = bytes_to_u32s(input.span());
+    assert_eq!(output, array![]);
+    assert_eq!(last, 'a');
+    assert_eq!(rem, 1);
+
+    let input = array!['a', 'b'];
+    let (output, last, rem) = bytes_to_u32s(input.span());
+    assert_eq!(output, array![]);
+    assert_eq!(last, 'ab');
+    assert_eq!(rem, 2);
+
+    let input = array!['a', 'b', 'c'];
+    let (output, last, rem) = bytes_to_u32s(input.span());
+    assert_eq!(output, array![]);
+    assert_eq!(last, 'abc');
+    assert_eq!(rem, 3);
+
+    let input = array!['a', 'b', 'c', 'd'];
+    let (output, last, rem) = bytes_to_u32s(input.span());
+    assert_eq!(output, array![1633837924]);
+    assert_eq!(last, 0);
+    assert_eq!(rem, 0);
+
+    let input = array!['a', 'b', 'c', 'd', 'e'];
+    let (output, last, rem) = bytes_to_u32s(input.span());
+    assert_eq!(output, array!['abcd']);
+    assert_eq!(last, 'e');
+    assert_eq!(rem, 1);
+
+    // Array of each letter until z
+    let input = array![
+        'a',
+        'b',
+        'c',
+        'd',
+        'e',
+        'f',
+        'g',
+        'h',
+        'i',
+        'j',
+        'k',
+        'l',
+        'm',
+        'n',
+        'o',
+        'p',
+        'q',
+        'r',
+        's',
+        't',
+        'u',
+        'v',
+        'w',
+        'x',
+        'y',
+        'z'
+    ];
+    let (output, last, rem) = bytes_to_u32s(input.span());
+    assert_eq!(output, array!['abcd', 'efgh', 'ijkl', 'mnop', 'qrst', 'uvwx']);
+    assert_eq!(last, 'yz');
+    assert_eq!(rem, 2);
 }

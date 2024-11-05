@@ -38,18 +38,13 @@ export async function retrievePasskey(
   origin: string,
   pubKey: string | undefined,
 ): Promise<WebauthnOwner> {
-  let attestation = getStoredAttestations().find((attestation) => {
-    return attestation.email == email;
-  });
+  let attestation = getStoredAttestations().find((attestation) => attestation.email == email);
 
   if (!attestation) {
-    attestation!.email = email;
-    attestation!.origin = origin;
-    attestation!.rpId = rpId;
     if (!pubKey) {
       throw new Error("pubKey is required when attestation is not stored");
     }
-    attestation!.pubKey = hexStringToUint8Array(pubKey!);
+    attestation = { email, origin, rpId, pubKey: hexStringToUint8Array(pubKey!), credentialId: new Uint8Array() };
   }
 
   try {
@@ -64,7 +59,8 @@ export async function retrievePasskey(
     if (!credential) {
       throw new Error("Error while retrieving credential: no credential (probably user cancelled)");
     }
-    // TODO Do some checks against retrieved credential
+    attestation.credentialId = new Uint8Array((credential as PublicKeyCredential).rawId);
+    // TODO Do some checks against retrieved credential from user (check the user selected the one we expect, etc ...)
     return new WebauthnOwner(attestation!, requestSignature);
   } catch (err) {
     console.log(err);

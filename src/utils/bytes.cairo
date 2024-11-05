@@ -1,3 +1,5 @@
+use integer::{u128_safe_divmod, u32_safe_divmod};
+
 /// @dev Leading zeros are ignored and the input must be at most 32 bytes long (both [1] and [0, 1] will be casted to 1)
 impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
     fn try_into(mut self: Span<u8>) -> Option<u256> {
@@ -34,36 +36,36 @@ impl SpanU8TryIntoFelt252 of TryInto<Span<u8>, felt252> {
 }
 
 fn u256_to_u8s(word: u256) -> Array<u8> {
-    let (rest, byte_32) = integer::u128_safe_divmod(word.low, 0x100);
-    let (rest, byte_31) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_30) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_29) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_28) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_27) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_26) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_25) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_24) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_23) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_22) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_21) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_20) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_19) = integer::u128_safe_divmod(rest, 0x100);
-    let (byte_17, byte_18) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_16) = integer::u128_safe_divmod(word.high, 0x100);
-    let (rest, byte_15) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_14) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_13) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_12) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_11) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_10) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_9) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_8) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_7) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_6) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_5) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_4) = integer::u128_safe_divmod(rest, 0x100);
-    let (rest, byte_3) = integer::u128_safe_divmod(rest, 0x100);
-    let (byte_1, byte_2) = integer::u128_safe_divmod(rest, 0x100);
+    let (rest, byte_32) = u128_safe_divmod(word.low, 0x100);
+    let (rest, byte_31) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_30) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_29) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_28) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_27) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_26) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_25) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_24) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_23) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_22) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_21) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_20) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_19) = u128_safe_divmod(rest, 0x100);
+    let (byte_17, byte_18) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_16) = u128_safe_divmod(word.high, 0x100);
+    let (rest, byte_15) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_14) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_13) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_12) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_11) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_10) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_9) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_8) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_7) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_6) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_5) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_4) = u128_safe_divmod(rest, 0x100);
+    let (rest, byte_3) = u128_safe_divmod(rest, 0x100);
+    let (byte_1, byte_2) = u128_safe_divmod(rest, 0x100);
     array![
         byte_1.try_into().unwrap(),
         byte_2.try_into().unwrap(),
@@ -123,12 +125,12 @@ fn eight_words_to_u256(words: [u32; 8]) -> u256 {
         + word_2.into() * 0x1_0000_0000
         + word_1.into() * 0x1_0000_0000_0000_0000
         + word_0.into() * 0x1_0000_0000_0000_0000_0000_0000;
-    let high: u128 = high.try_into().expect('span_to_u256:overflow-high');
+    let high: u128 = high.try_into().expect('eight_words_to_u256:overflow-hi');
     let low: felt252 = word_7.into()
         + word_6.into() * 0x1_0000_0000
         + word_5.into() * 0x1_0000_0000_0000_0000
         + word_4.into() * 0x1_0000_0000_0000_0000_0000_0000;
-    let low: u128 = low.try_into().expect('span_to_u256:overflow-low');
+    let low: u128 = low.try_into().expect('eight_words_to_u256:overflow-lo');
 
     u256 { high, low }
 }
@@ -138,30 +140,30 @@ fn eight_words_to_u256(words: [u32; 8]) -> u256 {
 /// @return The individual `u8` bytes ordered from most significant to least.
 fn eight_words_to_bytes(words: [u32; 8]) -> [u8; 32] {
     let [word_0, word_1, word_2, word_3, word_4, word_5, word_6, word_7] = words;
-    let (rest, byte_0_4) = integer::u32_safe_divmod(word_0, 0x100);
-    let (rest, byte_0_3) = integer::u32_safe_divmod(rest, 0x100);
-    let (byte_0_1, byte_0_2) = integer::u32_safe_divmod(rest, 0x100);
-    let (rest, byte_1_4) = integer::u32_safe_divmod(word_1, 0x100);
-    let (rest, byte_1_3) = integer::u32_safe_divmod(rest, 0x100);
-    let (byte_1_1, byte_1_2) = integer::u32_safe_divmod(rest, 0x100);
-    let (rest, byte_2_4) = integer::u32_safe_divmod(word_2, 0x100);
-    let (rest, byte_2_3) = integer::u32_safe_divmod(rest, 0x100);
-    let (byte_2_1, byte_2_2) = integer::u32_safe_divmod(rest, 0x100);
-    let (rest, byte_3_4) = integer::u32_safe_divmod(word_3, 0x100);
-    let (rest, byte_3_3) = integer::u32_safe_divmod(rest, 0x100);
-    let (byte_3_1, byte_3_2) = integer::u32_safe_divmod(rest, 0x100);
-    let (rest, byte_4_4) = integer::u32_safe_divmod(word_4, 0x100);
-    let (rest, byte_4_3) = integer::u32_safe_divmod(rest, 0x100);
-    let (byte_4_1, byte_4_2) = integer::u32_safe_divmod(rest, 0x100);
-    let (rest, byte_5_4) = integer::u32_safe_divmod(word_5, 0x100);
-    let (rest, byte_5_3) = integer::u32_safe_divmod(rest, 0x100);
-    let (byte_5_1, byte_5_2) = integer::u32_safe_divmod(rest, 0x100);
-    let (rest, byte_6_4) = integer::u32_safe_divmod(word_6, 0x100);
-    let (rest, byte_6_3) = integer::u32_safe_divmod(rest, 0x100);
-    let (byte_6_1, byte_6_2) = integer::u32_safe_divmod(rest, 0x100);
-    let (rest, byte_7_4) = integer::u32_safe_divmod(word_7, 0x100);
-    let (rest, byte_7_3) = integer::u32_safe_divmod(rest, 0x100);
-    let (byte_7_1, byte_7_2) = integer::u32_safe_divmod(rest, 0x100);
+    let (rest, byte_0_4) = u32_safe_divmod(word_0, 0x100);
+    let (rest, byte_0_3) = u32_safe_divmod(rest, 0x100);
+    let (byte_0_1, byte_0_2) = u32_safe_divmod(rest, 0x100);
+    let (rest, byte_1_4) = u32_safe_divmod(word_1, 0x100);
+    let (rest, byte_1_3) = u32_safe_divmod(rest, 0x100);
+    let (byte_1_1, byte_1_2) = u32_safe_divmod(rest, 0x100);
+    let (rest, byte_2_4) = u32_safe_divmod(word_2, 0x100);
+    let (rest, byte_2_3) = u32_safe_divmod(rest, 0x100);
+    let (byte_2_1, byte_2_2) = u32_safe_divmod(rest, 0x100);
+    let (rest, byte_3_4) = u32_safe_divmod(word_3, 0x100);
+    let (rest, byte_3_3) = u32_safe_divmod(rest, 0x100);
+    let (byte_3_1, byte_3_2) = u32_safe_divmod(rest, 0x100);
+    let (rest, byte_4_4) = u32_safe_divmod(word_4, 0x100);
+    let (rest, byte_4_3) = u32_safe_divmod(rest, 0x100);
+    let (byte_4_1, byte_4_2) = u32_safe_divmod(rest, 0x100);
+    let (rest, byte_5_4) = u32_safe_divmod(word_5, 0x100);
+    let (rest, byte_5_3) = u32_safe_divmod(rest, 0x100);
+    let (byte_5_1, byte_5_2) = u32_safe_divmod(rest, 0x100);
+    let (rest, byte_6_4) = u32_safe_divmod(word_6, 0x100);
+    let (rest, byte_6_3) = u32_safe_divmod(rest, 0x100);
+    let (byte_6_1, byte_6_2) = u32_safe_divmod(rest, 0x100);
+    let (rest, byte_7_4) = u32_safe_divmod(word_7, 0x100);
+    let (rest, byte_7_3) = u32_safe_divmod(rest, 0x100);
+    let (byte_7_1, byte_7_2) = u32_safe_divmod(rest, 0x100);
     [
         byte_0_1.try_into().unwrap(),
         byte_0_2.try_into().unwrap(),

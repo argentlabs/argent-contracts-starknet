@@ -60,7 +60,7 @@ export async function retrievePasskey(
       throw new Error("Error while retrieving credential: no credential (probably user cancelled)");
     }
     attestation.credentialId = new Uint8Array((credential as PublicKeyCredential).rawId);
-    // TODO Do some checks against retrieved credential from user (check the user selected the one we expect, etc ...)
+    // TODO Do some checks against retrieved credential from user (check the credential selected is the one we expect, etc ...)
     return new WebauthnOwner(attestation!, requestSignature);
   } catch (err) {
     console.log(err);

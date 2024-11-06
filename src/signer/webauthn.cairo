@@ -66,17 +66,18 @@ fn encode_client_data_json(hash: felt252, signature: WebauthnSignature, origin: 
 
 fn encode_challenge(hash: felt252, sha256_implementation: Sha256Implementation) -> Span<u8> {
     let mut bytes = u256_to_u8s(hash.into());
-    // remove '=' signs if this assert fails
-    assert!(bytes.len() == 32, "webauthn/invalid-challenge-length");
-
     let last_byte = match sha256_implementation {
         Sha256Implementation::Cairo0 => 0,
         Sha256Implementation::Cairo1 => 1,
     };
     bytes.append(last_byte);
-    let encoded_bytes = Base64UrlEncoder::encode(bytes).span();
+
+    assert!(bytes.len() == 33, "webauthn/invalid-challenge-length");
+    // Base64 encodes takes every 3bytes and encodes them as 4bytes.
+    // Since we are encoding 33bytes. ((33 / 3) * 4) = 44bytes exactly.
     // The trailing '=' are omitted as specified in the spec:
     // https://www.w3.org/TR/webauthn-2/#sctn-dependencies
+    let encoded_bytes = Base64UrlEncoder::encode(bytes).span();
     assert!(encoded_bytes.len() == 44, "webauthn/invalid-challenge-encoding");
     encoded_bytes
 }

@@ -6,7 +6,6 @@ import {
   deployLegacyAccount,
   deployOldAccount,
   expectEvent,
-  expectRevertWithErrorMessage,
   getUpgradeDataLegacy,
   manager,
   upgradeAccount,
@@ -97,8 +96,8 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   // TODO: Remove skipped tests once upgrade is implemented
-  it.skip("Shouldn't upgrade from current version to itself", async function () {
-    const { account } = await deployAccount();
-    await expectRevertWithErrorMessage("argent/downgrade-not-allowed", upgradeAccount(account, argentAccountClassHash));
-  });
+  // it.skip("Shouldn't upgrade from current version to itself", async function () {
+  //   const { account } = await deployAccount();
+  //   await expectRevertWithErrorMessage("argent/downgrade-not-allowed", upgradeAccount(account, argentAccountClassHash));
+  // });
 });

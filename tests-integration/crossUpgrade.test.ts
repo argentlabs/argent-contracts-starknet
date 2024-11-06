@@ -1,5 +1,4 @@
 import { deployAccount, expectRevertWithErrorMessage, manager, upgradeAccount } from "../lib";
-import { deployMultisig1_1 } from "../lib/multisig";
 
 describe("Upgrades to a different account type", function () {
   it("Upgrade Account to Multisig should fail", async function () {
@@ -11,11 +10,11 @@ describe("Upgrades to a different account type", function () {
   });
 
   //TODO: Remove skip once upgrade is implemented
-  it.skip("Upgrade Multisig to Account should fail", async function () {
-    const { account } = await deployMultisig1_1();
-    await expectRevertWithErrorMessage(
-      "argent/downgrade-not-allowed",
-      upgradeAccount(account, await manager.declareLocalContract("ArgentAccount")),
-    );
-  });
+  // it.skip("Upgrade Multisig to Account should fail", async function () {
+  //   const { account } = await deployMultisig1_1();
+  //   await expectRevertWithErrorMessage(
+  //     "argent/downgrade-not-allowed",
+  //     upgradeAccount(account, await manager.declareLocalContract("ArgentAccount")),
+  //   );
+  // });
 });

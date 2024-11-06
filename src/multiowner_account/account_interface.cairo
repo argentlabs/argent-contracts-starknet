@@ -18,7 +18,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @param new_security_period new delay in seconds before the escape can be completed. Must be >= 10 minutes
     fn set_escape_security_period(ref self: TContractState, new_security_period: u64);
 
-    /// @notice Removes all owners (signers) from this account and adds a new one
+    /// @notice Removes all owners from this account and adds a new one
     /// @dev Must be called by the account and authorized by 1 owner and a guardian (if guardian is set)
     /// @param new_single_owner SignerSignature of the new owner
     /// Required to prevent changing to a signer which is not in control of the user

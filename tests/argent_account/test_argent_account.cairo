@@ -1,4 +1,3 @@
-use argent::mocks::owner_manager_mock::{TestInterfaceDispatcher, TestInterfaceDispatcherTrait};
 use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
 use argent::multiowner_account::{
     events::{OwnerAddedGuid, OwnerRemovedGuid}, owner_manager::owner_manager_component, argent_account::ArgentAccount
@@ -15,7 +14,7 @@ use snforge_std::{
     start_cheat_block_timestamp_global,
     signature::{KeyPairTrait, stark_curve::{StarkCurveKeyPairImpl, StarkCurveSignerImpl}},
     start_cheat_caller_address_global, start_cheat_transaction_version_global, EventSpyTrait, EventSpyAssertionsTrait,
-    ContractClassTrait, spy_events, declare, DeclareResultTrait
+    spy_events
 };
 use starknet::contract_address_const;
 use super::super::{
@@ -28,19 +27,16 @@ const VALID_UNTIL: u64 = 1100;
 fn NEW_OWNER() -> (StarknetSigner, StarknetSignature) {
     let new_owner = KeyPairTrait::from_secret_key('NEW_OWNER');
     let pubkey = new_owner.public_key;
-    let new_owner_guid = starknet_signer_from_pubkey(pubkey).into_guid();
-    let (r, s) = new_owner.sign(new_owner_message_hash(new_owner_guid)).unwrap();
+    let (r, s) = new_owner.sign(new_owner_message_hash()).unwrap();
     let pubkey = pubkey.try_into().expect('argent/zero-pubkey');
     (StarknetSigner { pubkey }, StarknetSignature { r, s })
 }
 
-fn new_owner_message_hash(new_owner_guid: felt252) -> felt252 {
-    let class_hash = *declare("ReplaceOwnersWithOneWrapper").expect('Declare ReplaceOwners failed').contract_class();
-    let (contract_address, _) = class_hash
-        .deploy_at(@array![], ARGENT_ACCOUNT_ADDRESS.try_into().unwrap())
-        .expect('Deploy ReplaceOwners failed');
-    let contract = TestInterfaceDispatcher { contract_address };
-    contract.test(ReplaceOwnersWithOne { new_owner_guid, signature_expiration: VALID_UNTIL })
+fn new_owner_message_hash() -> felt252 {
+    // Hardcoded hash of the message because get_message_hash_rev_1 uses get_contract_address() and we can't mock it
+    // To update it go to src/multiowner_account/replace_owners_message.cairo and print the hash with
+    // hardcoded get_contract_address() to ARGENT_ACCOUNT_ADDRESS
+    764072799120191316019353293043619478399628197068789679357607976020308362696
 }
 
 
@@ -85,22 +81,16 @@ fn erc165_unsupported_interfaces() {
     assert!(!account.supports_interface(0xffffffff));
 }
 
-// TODO Revert to ts tests get_contract_address creating issues in mocking
-// Report error to snfoudry
 #[test]
-fn replace_all_owners_with_onee() {
+fn replace_all_owners_with_one() {
     let account = initialize_account();
     let mut spy = spy_events();
 
     let old_owner_guid = starknet_signer_from_pubkey(OWNER().pubkey).into_guid();
     assert_eq!(account.get_owner_guid(), old_owner_guid);
 
-    start_cheat_caller_address_global(account.contract_address);
-    println!("LAMA");
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
-    println!("LAMazeA");
-    start_cheat_caller_address_global(account.contract_address);
     account.replace_all_owners_with_one(signer_signature, VALID_UNTIL);
 
     let new_owner_guid = signer_signature.signer().into_guid();

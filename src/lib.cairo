@@ -73,7 +73,6 @@ mod mocks {
     mod mock_erc20;
     mod multiowner_mock;
     mod multisig_mocks;
-    mod owner_manager_mock;
     mod recovery_mocks;
     mod signature_verifier;
     mod signer_list_mocks;

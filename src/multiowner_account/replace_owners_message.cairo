@@ -31,8 +31,6 @@ impl StructHashReplaceOwnersWithOneRev1 of IStructHashRev1<ReplaceOwnersWithOne>
 impl OffChainMessageReplaceOwnersWithOneRev1 of IOffChainMessageHashRev1<ReplaceOwnersWithOne> {
     fn get_message_hash_rev_1(self: @ReplaceOwnersWithOne) -> felt252 {
         let chain_id = get_tx_info().chain_id;
-        let x: felt252 = get_contract_address().try_into().unwrap();
-        println!("get_contract_address: {}", x);
         let domain = StarknetDomain { name: 'Replace all owners with one', version: '1', chain_id, revision: 1 };
         PoseidonTrait::new()
             .update_with('StarkNet Message')

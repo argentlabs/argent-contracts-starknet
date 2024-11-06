@@ -157,5 +157,5 @@ function sha256(message: BinaryLike) {
   return createHash("sha256").update(message).digest();
 }
 
-export const randomWebauthnOwner = () => new WebauthnOwner();
+export const randomWebauthnOwner = () => new WebauthnOwner(undefined, undefined, undefined, false);
 export const randomWebauthnCairo0Owner = () => new WebauthnOwner(undefined, undefined, undefined, true);

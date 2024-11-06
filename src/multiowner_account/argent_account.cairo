@@ -453,6 +453,7 @@ mod ArgentAccount {
             if let Option::Some(new_owner_pubkey) = new_owner.storage_value().starknet_pubkey_or_none() {
                 self.emit(OwnerChanged { new_owner: new_owner_pubkey });
             };
+            // TODO Check events w/ backend
             let new_owner_guid = new_owner.into_guid();
             self.emit(OwnerChangedGuid { new_owner_guid });
             self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });

@@ -63,8 +63,8 @@ const types = {
 };
 
 interface ReplaceOwnersWithOne {
-  new_owner_guid: string;
-  signature_expiration: string;
+  newOwnerGuid: bigint;
+  signatureExpiration: number;
 }
 
 function getDomain(chainId: string): StarknetDomain {
@@ -82,8 +82,8 @@ function getTypedData(myStruct: ReplaceOwnersWithOne, chainId: string): TypedDat
     primaryType: "ReplaceOwnersWithOne",
     domain: getDomain(chainId),
     message: {
-      "New owner GUID": myStruct.new_owner_guid,
-      "Signature expiration": myStruct.signature_expiration,
+      "New owner GUID": myStruct.newOwnerGuid,
+      "Signature expiration": myStruct.signatureExpiration,
     },
   };
 }
@@ -92,13 +92,9 @@ export const getChangeOwnerMessageHash = async (
   accountAddress: string,
   chainId: string,
   newOwnerGuid: bigint,
-  maxTimestamp: number,
+  signatureExpiration: number,
 ) => {
-  const replaceOwnersWithOne: ReplaceOwnersWithOne = {
-    new_owner_guid: newOwnerGuid.toString(),
-    signature_expiration: maxTimestamp.toString(),
-  };
-  return typedData.getMessageHash(getTypedData(replaceOwnersWithOne, chainId), accountAddress);
+  return typedData.getMessageHash(getTypedData({ newOwnerGuid, signatureExpiration }, chainId), accountAddress);
 };
 
 export async function hasOngoingEscape(accountContract: Contract): Promise<boolean> {

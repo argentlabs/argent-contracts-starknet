@@ -2,14 +2,24 @@
 mod ArgentAccount {
     use argent::account::interface::{IAccount, IArgentAccount, IDeprecatedArgentAccount, Version};
     use argent::introspection::src5::src5_component;
+    use argent::multiowner_account::account_interface::{
+        IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait
+    };
+    use argent::multiowner_account::events::{
+        SignerLinked, TransactionExecuted, AccountCreated, AccountCreatedGuid, EscapeOwnerTriggeredGuid,
+        EscapeGuardianTriggeredGuid, OwnerEscapedGuid, GuardianEscapedGuid, EscapeCanceled, OwnerChanged,
+        OwnerChangedGuid, GuardianChanged, GuardianChangedGuid, GuardianBackupChanged, GuardianBackupChangedGuid,
+        EscapeSecurityPeriodChanged,
+    };
+    use argent::multiowner_account::owner_manager::{IOwnerManager, IOwnerManagerCallback, owner_manager_component};
+    use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
     use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
     use argent::recovery::interface::{LegacyEscape, LegacyEscapeDefault, LegacyEscapeType, EscapeStatus};
     use argent::session::{
-        interface::{SessionToken, ISessionCallback},
-        session::{session_component::{Internal, InternalTrait}, session_component,}
+        interface::ISessionCallback, session::{session_component::{Internal, InternalTrait}, session_component}
     };
     use argent::signer::{
         signer_signature::{
@@ -26,9 +36,6 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, DA_MODE_L1, is_estimate_transaction
         }
     };
-    use crate::multiowner_account::account_interface::{
-        IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait
-    };
     use hash::{HashStateTrait, HashStateExTrait};
     use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
     use pedersen::PedersenTrait;
@@ -41,14 +48,6 @@ mod ArgentAccount {
             storage_address_from_base
         }
     };
-    use super::super::events::{
-        SignerLinked, TransactionExecuted, AccountCreated, AccountCreatedGuid, EscapeOwnerTriggeredGuid,
-        EscapeGuardianTriggeredGuid, OwnerEscapedGuid, GuardianEscapedGuid, EscapeCanceled, OwnerChanged,
-        OwnerChangedGuid, GuardianChanged, GuardianChangedGuid, GuardianBackupChanged, GuardianBackupChangedGuid,
-        EscapeSecurityPeriodChanged,
-    };
-    use super::super::owner_manager::{IOwnerManager, IOwnerManagerCallback, owner_manager_component};
-    use super::super::replace_owners_message::ReplaceOwnersWithOne;
 
     const NAME: felt252 = 'ArgentAccount';
     const VERSION: Version = Version { major: 0, minor: 5, patch: 0 };

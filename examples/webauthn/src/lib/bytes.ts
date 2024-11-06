@@ -41,12 +41,9 @@ export function hexStringToUint8Array(hexString: string): Uint8Array {
   // Remove any leading 0x, if present
   hexString = hexString.replace(/^0x/, "");
 
-  // Remove leading zeros
-  hexString = hexString.replace(/^0+/, "");
-
   // Ensure the string has an even number of characters (two hex digits per byte)
   if (hexString.length % 2 !== 0) {
-    throw new Error("Invalid hex string");
+    hexString = "0" + hexString;
   }
 
   // Create a Uint8Array with the necessary length

@@ -26,9 +26,8 @@ const VALID_UNTIL: u64 = 1100;
 
 fn NEW_OWNER() -> (StarknetSigner, StarknetSignature) {
     let new_owner = KeyPairTrait::from_secret_key('NEW_OWNER');
-    let pubkey = new_owner.public_key;
     let (r, s) = new_owner.sign(new_owner_message_hash()).unwrap();
-    let pubkey = pubkey.try_into().expect('argent/zero-pubkey');
+    let pubkey = new_owner.public_key.try_into().expect('argent/zero-pubkey');
     (StarknetSigner { pubkey }, StarknetSignature { r, s })
 }
 

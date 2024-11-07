@@ -110,7 +110,8 @@ export class WebauthnOwner extends KeyPair {
     const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0${sha256Impl}`));
     const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin });
 
-    const extraJson = "";
+    // const extraJson = "";
+    const extraJson = `,"crossOrigin":false}`;
     // const extraJson = `,"crossOrigin":false,"extraField":"random data"}`;
     const clientDataJson = extraJson ? clientData.replace(/}$/, extraJson) : clientData;
     const clientDataHash = sha256(new TextEncoder().encode(clientDataJson));

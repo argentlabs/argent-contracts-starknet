@@ -1,4 +1,3 @@
-import { expect } from "chai";
 import {
   CairoCustomEnum,
   Contract,
@@ -103,11 +102,6 @@ export async function hasOngoingEscape(accountContract: Contract): Promise<boole
 }
 
 export async function getEscapeStatus(accountContract: Contract): Promise<EscapeStatus> {
-  // StarknetJs parsing is broken so we do it manually
-  const result = (await accountContract.call("get_escape_and_status", undefined, { parseResponse: false })) as string[];
-  const result_len = result.length;
-  expect(result_len).to.be.oneOf([4, 6]);
-  const status = Number(result[result_len - 1]);
-  expect(status).to.be.lessThan(4, `Unknown status ${status}`);
-  return status;
+  const result = await accountContract.get_escape_and_status();
+  return EscapeStatus[result[1].activeVariant() as keyof typeof EscapeStatus];
 }

@@ -16,26 +16,6 @@ yarn && yarn dev
 
 Open the displayed url.
 
-## Setup for website with devnet
-
-Start by installing a service that allows you to expose your localhost to the internet (e.g., [Ngrok](https://ngrok.com/docs/getting-started/), Localtunnel, etc.).  
-Important: This service must provide an HTTPS connection; otherwise, WebAuthn will not work.
-
-Run the following command to start the devnet:
-
-```bash
-scarb run start-devnet
-```
-
-Start your tunneling service and configure it to expose port `5173`.  
-Copy the URL provided by your tunneling service, append /rpc to the end, and update the .env file of the dApp with this value:
-
-```
-PUBLIC_PROVIDER_URL="[YOU_LINK]/rpc"
-```
-
-Now, you can start the dApp by running `yarn dev`. You should be able to access the dApp through the link provided by the tunneling service.
-
 ## Testing
 
 Some parts of the testing process cannot be automated, so manual testing is required.
@@ -58,6 +38,26 @@ Below is a list of scenarios that need to be tested. Please add any additional c
 Make sure to test various combinations of browsers, password managers, and devices to ensure compatibility across all configurations.
 
 To test the cross-platform part, as the public keys are stored locally (LocalStorage), please fill in the username and the public key field.
+
+### Setup for website with devnet
+
+Start by installing a service that allows you to expose your localhost to the internet (e.g., [Ngrok](https://ngrok.com/docs/getting-started/), Localtunnel, etc.).  
+Important: This service must provide an HTTPS connection; otherwise, WebAuthn will not work.
+
+Run the following command to start the devnet:
+
+```bash
+scarb run start-devnet
+```
+
+Start your tunneling service and configure it to expose port `5173`.  
+Copy the URL provided by your tunneling service, append /rpc to the end, and update the .env file of the dApp with this value:
+
+```
+PUBLIC_PROVIDER_URL="[YOU_LINK]/rpc"
+```
+
+Now, you can start the dApp by running `yarn dev`. You should be able to access the dApp through the link provided by the tunneling service.
 
 ## Pointers
 

@@ -139,7 +139,7 @@ fn test_single() {
     linked_set_mut.add_item(owner1.storage_value());
     let single = linked_set.single().unwrap();
     assert_eq!(single.id(), owner1.storage_value().id());
-    
+
     linked_set_mut.add_item(starknet_signer_from_pubkey(2).storage_value());
     assert!(linked_set.single().is_none(), "Single item should be None if there are multiple elements");
 }

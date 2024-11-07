@@ -53,5 +53,4 @@ export async function hasOngoingEscape(accountContract: Contract): Promise<boole
 export async function getEscapeStatus(accountContract: Contract): Promise<EscapeStatus> {
   const result = await accountContract.get_escape_and_status();
   return EscapeStatus[result[1].activeVariant() as keyof typeof EscapeStatus];
-
 }

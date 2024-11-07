@@ -27,15 +27,17 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, DA_MODE_L1, is_estimate_transaction
         }
     };
+    use crate::multiowner_account::account_interface::{
+        IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait
+    };
     use hash::HashStateTrait;
     use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
     use pedersen::PedersenTrait;
     use starknet::{
         storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, account::Call,
         SyscallResultTrait, get_tx_info, get_execution_info, replace_class_syscall,
-        storage_access::{storage_read_syscall, storage_write_syscall,}
+        storage_access::{storage_read_syscall, storage_write_syscall}
     };
-    use super::super::account_interface::{IArgentMultiOwnerAccount,};
     use super::super::events::{
         SignerLinked, TransactionExecuted, AccountCreated, AccountCreatedGuid, EscapeOwnerTriggeredGuid,
         EscapeGuardianTriggeredGuid, OwnerEscapedGuid, GuardianEscapedGuid, EscapeCanceled, OwnerChanged,
@@ -87,6 +89,7 @@ mod ArgentAccount {
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
+    impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
     // Reentrancy guard
     component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
     impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;

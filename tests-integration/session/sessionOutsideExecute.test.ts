@@ -1,10 +1,11 @@
 import { Contract, TypedDataRevision } from "starknet";
-import { AllowedMethod, StarknetKeyPair, deployAccount, deployer, manager, setupSession } from "../lib";
+import { StarknetKeyPair, deployAccount, deployer, manager, setupSession } from "../../lib";
+import { singleMethodAllowList } from "./sessionTestHelpers";
 
 const initialTime = 1713139200n;
 const legacyRevision = TypedDataRevision.LEGACY;
 const activeRevision = TypedDataRevision.ACTIVE;
-describe("ArgentAccount: outside execution", function () {
+describe("ArgentAccount: session outside execution", function () {
   // Avoid timeout
   this.timeout(320000);
 
@@ -25,19 +26,12 @@ describe("ArgentAccount: outside execution", function () {
 
     const { account: mockDappAccount } = await deployAccount();
 
-    const allowedMethods: AllowedMethod[] = [
-      {
-        "Contract Address": mockDapp.address,
-        selector: "set_number",
-      },
-    ];
-
-    const { dappService, sessionRequest, authorizationSignature } = await setupSession(
-      guardian as StarknetKeyPair,
+    const { sessionRequest, authorizationSignature, dappService } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
       account,
-      allowedMethods,
-      initialTime + 150n,
-    );
+      expiry: initialTime + 150n,
+      allowedMethods: singleMethodAllowList(mockDapp, "set_number"),
+    });
 
     const calls = [mockDapp.populateTransaction.set_number(42n)];
 
@@ -62,21 +56,14 @@ describe("ArgentAccount: outside execution", function () {
 
     const { account: mockDappAccount } = await deployAccount();
 
-    const allowedMethods: AllowedMethod[] = [
-      {
-        "Contract Address": mockDapp.address,
-        selector: "set_number",
-      },
-    ];
-
     const calls = [mockDapp.populateTransaction.set_number(42n)];
 
-    const { dappService, sessionRequest, authorizationSignature } = await setupSession(
-      guardian as StarknetKeyPair,
+    const { sessionRequest, authorizationSignature, dappService } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
       account,
-      allowedMethods,
-      initialTime + 150n,
-    );
+      expiry: initialTime + 150n,
+      allowedMethods: singleMethodAllowList(mockDapp, "set_number"),
+    });
 
     const outsideExecutionCall = await dappService.getOutsideExecutionCall(
       sessionRequest,

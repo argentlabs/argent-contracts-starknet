@@ -1,8 +1,7 @@
-import { Contract, num } from "starknet";
+import { CallData, Contract, num } from "starknet";
 import {
   AllowedMethod,
   StarknetKeyPair,
-  compileSessionSignature,
   deployAccount,
   deployer,
   executeWithCustomSig,
@@ -10,9 +9,10 @@ import {
   manager,
   randomStarknetKeyPair,
   setupSession,
-} from "../lib";
+} from "../../lib";
+import { singleMethodAllowList } from "./sessionTestHelpers";
 
-describe("Hybrid Session Account: execute calls", function () {
+describe("ArgentAccount: session basics", function () {
   let sessionAccountClassHash: string;
   let mockDappContract: Contract;
   const initialTime = 1710167933n;
@@ -39,19 +39,12 @@ describe("Hybrid Session Account: execute calls", function () {
         classHash: sessionAccountClassHash,
       });
 
-      const allowedMethods: AllowedMethod[] = [
-        {
-          "Contract Address": mockDappContract.address,
-          selector: "set_number_double",
-        },
-      ];
-
-      const { accountWithDappSigner } = await setupSession(
-        guardian as StarknetKeyPair,
+      const { accountWithDappSigner } = await setupSession({
+        guardian: guardian as StarknetKeyPair,
         account,
-        allowedMethods,
-        initialTime + 150n,
-      );
+        expiry: initialTime + 150n,
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+      });
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
@@ -62,26 +55,44 @@ describe("Hybrid Session Account: execute calls", function () {
     });
   }
 
+  it(`Execute basic session when there a multiple owners`, async function () {
+    const { accountContract, account, guardian } = await deployAccount({
+      classHash: sessionAccountClassHash,
+    });
+
+    const newOwner1 = randomStarknetKeyPair();
+    const newOwner2 = randomStarknetKeyPair();
+    const arrayOfSigner = CallData.compile({ new_owners: [newOwner1.signer, newOwner2.signer] });
+    await accountContract.add_owners(arrayOfSigner);
+
+    const { accountWithDappSigner } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
+      account,
+      expiry: initialTime + 150n,
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+    });
+
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+
+    const { transaction_hash } = await accountWithDappSigner.execute(calls);
+
+    await account.waitForTransaction(transaction_hash);
+    await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
+  });
+
   it("Only execute tx if session not expired", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const expiresAt = initialTime + 60n * 24n;
 
-    const allowedMethods: AllowedMethod[] = [
-      {
-        "Contract Address": mockDappContract.address,
-        selector: "set_number_double",
-      },
-    ];
+    const { accountWithDappSigner } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
+      account,
+      expiry: initialTime + 150n,
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+    });
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];
-
-    const { accountWithDappSigner } = await setupSession(
-      guardian as StarknetKeyPair,
-      account,
-      allowedMethods,
-      initialTime + 150n,
-    );
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
     // non expired session
@@ -101,19 +112,12 @@ describe("Hybrid Session Account: execute calls", function () {
   it("Revoke a session", async function () {
     const { accountContract, account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
-    const allowedMethods: AllowedMethod[] = [
-      {
-        "Contract Address": mockDappContract.address,
-        selector: "set_number_double",
-      },
-    ];
-
-    const { accountWithDappSigner, sessionHash } = await setupSession(
-      guardian as StarknetKeyPair,
+    const { accountWithDappSigner, sessionHash } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
       account,
-      allowedMethods,
-      initialTime + 150n,
-    );
+      expiry: initialTime + 150n,
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+    });
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
@@ -159,28 +163,25 @@ describe("Hybrid Session Account: execute calls", function () {
       mockDappContract.populateTransaction.increase_number(2),
     ];
 
-    const { accountWithDappSigner, dappService, sessionRequest, authorizationSignature } = await setupSession(
-      guardian as StarknetKeyPair,
+    const { sessionRequest, authorizationSignature, dappService, accountWithDappSigner } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
       account,
+      expiry: initialTime + 150n,
       allowedMethods,
-      initialTime + 150n,
-    );
+    });
 
-    const sessionToken = await dappService.getSessionToken(
+    const sessionToken = await dappService.getSessionToken({
       calls,
-      accountWithDappSigner,
-      sessionRequest,
+      account: accountWithDappSigner,
+      completedSession: sessionRequest,
       authorizationSignature,
-    );
-    const sessionTokenWrongProofs = {
-      ...sessionToken,
-      proofs: [["0x2", "0x1"]],
-    };
+    });
+    sessionToken.proofs = [["0x1", "0x2"]];
 
     // happens when the the number of proofs is not equal to the number of calls
     await expectRevertWithErrorMessage(
       "session/unaligned-proofs",
-      executeWithCustomSig(accountWithDappSigner, calls, compileSessionSignature(sessionTokenWrongProofs)),
+      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
     );
   });
 });

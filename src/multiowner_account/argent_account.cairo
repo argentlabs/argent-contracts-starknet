@@ -234,9 +234,10 @@ mod ArgentAccount {
 
     #[abi(embed_v0)]
     impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
-        // Called when coming from account 0.3.1 < X < 0.4.0
-        // Wrong, also called when coming from 0.2.3, but maybe we never shipped that one?
-        fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
+        // Called when coming from account 0.2.3 < X < 0.4.0
+        // Also called when coming from 0.2.3, but maybe we never shipped that one?
+        fn execute_after_upgrade(ref self: ContractState, mut data: Array<felt252>) -> Array<felt252> {
+            // If we reach this place we are in the new version
             assert_only_self();
             self.do_stuff();
 
@@ -244,9 +245,7 @@ mod ArgentAccount {
             let implementation = storage_read_syscall(0, implementation_storage_address).unwrap_syscall();
 
             if implementation != Zeroable::zero() {
-                assert(data.len() >= 1, data.len().into());
-                let new_implementation = (*data[0]).try_into().unwrap();
-                replace_class_syscall(new_implementation).expect('argent/invalid-after-upgrade');
+                replace_class_syscall(implementation.try_into().unwrap()).expect('argent/invalid-after-upgrade');
                 storage_write_syscall(0, implementation_storage_address, 0).unwrap_syscall();
             }
 
@@ -777,7 +776,9 @@ mod ArgentAccount {
 
             let signer_storage_address = selector!("_signer").try_into().unwrap();
             let signer_to_migrate = storage_read_syscall(0, signer_storage_address).unwrap_syscall();
-            // This ensures signer != 0
+            // As we come from a version that has a _signer slot
+            // If it is 0, it means we are migrating from an account that is already at the current version
+            assert(signer_to_migrate != 0, 'argent/downgrade-not-allowed');
             let stark_signer = starknet_signer_from_pubkey(signer_to_migrate);
             self.owner_manager.initialize(stark_signer);
             // Reset _signer storage

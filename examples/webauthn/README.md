@@ -40,7 +40,6 @@ Now, you can start the dApp by running `yarn dev`. You should be able to access 
 
 Some parts of the testing process cannot be automated, so manual testing is required.
 Below is a list of scenarios that need to be tested. Please add any additional cases if you find them missing:
-Here is the list of everything that needs to be tested (please add more if you find any missing case):
 
 - Test every on every major browser (sorted by most used)
   - [ ] Chrome

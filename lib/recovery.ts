@@ -53,7 +53,6 @@ export async function hasOngoingEscape(accountContract: Contract): Promise<boole
 
 export async function getEscapeStatus(accountContract: Contract): Promise<EscapeStatus> {
   // StarknetJs parsing is broken so we do it manually
-  // TODO Parsing still broken?
   const result = (await accountContract.call("get_escape_and_status", undefined, { parseResponse: false })) as string[];
   const result_len = result.length;
   expect(result_len).to.be.oneOf([4, 6]);

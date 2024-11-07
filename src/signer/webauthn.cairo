@@ -7,7 +7,7 @@ use core::sha256::compute_sha256_u32_array;
 use starknet::secp256_trait::Signature;
 
 /// @notice The webauthn signature that needs to be validated
-/// @param client_data_json_outro The rest of the JSON contents
+/// @param client_data_json_outro The rest of the JSON contents coming after the 'origin' value
 /// @param flags From authenticator data
 /// @param sign_count From authenticator data
 /// @param ec_signature The signature as {r, s, y_parity}

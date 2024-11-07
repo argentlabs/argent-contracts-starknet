@@ -16,6 +16,24 @@ yarn && yarn dev
 
 Open the displayed url.
 
+## Setup with devnet
+
+Run the following command to start the devnet:
+
+```bash
+scarb run start-devnet
+```
+
+Update the `.env`file accordingly. If you use the defaults value it should be `PUBLIC_PROVIDER_URL="http://localhost:5050"`.  
+
+Start the service:
+```bash
+yarn && yarn dev
+```
+
+Open the displayed url.
+
+
 ## Testing
 
 Some parts of the testing process cannot be automated, so manual testing is required.
@@ -39,16 +57,10 @@ Make sure to test various combinations of browsers, password managers, and devic
 
 To test the cross-platform part, as the public keys are stored locally (LocalStorage), please fill in the username and the public key field.
 
-### Setup for website with devnet
+### Exposing the dapp
 
 Start by installing a service that allows you to expose your localhost to the internet (e.g., [Ngrok](https://ngrok.com/docs/getting-started/), Localtunnel, etc.).  
 Important: This service must provide an HTTPS connection; otherwise, WebAuthn will not work.
-
-Run the following command to start the devnet:
-
-```bash
-scarb run start-devnet
-```
 
 Start your tunneling service and configure it to expose port `5173`.  
 Copy the URL provided by your tunneling service, append /rpc to the end, and update the .env file of the dApp with this value:

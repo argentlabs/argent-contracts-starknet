@@ -24,15 +24,15 @@ Run the following command to start the devnet:
 scarb run start-devnet
 ```
 
-Update the `.env`file accordingly. If you use the defaults value it should be `PUBLIC_PROVIDER_URL="http://localhost:5050"`.  
+Update the `.env`file accordingly. If you use the defaults value it should be `PUBLIC_PROVIDER_URL="http://localhost:5050"`.
 
 Start the service:
+
 ```bash
 yarn && yarn dev
 ```
 
 Open the displayed url.
-
 
 ## Testing
 

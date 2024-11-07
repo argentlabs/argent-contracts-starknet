@@ -8,7 +8,7 @@ use starknet::{get_tx_info, get_contract_address};
 const SIMPLE_STRUCT_TYPE_HASH: felt252 =
     selector!("\"ReplaceOwnersWithOne\"(\"New owner GUID\":\"felt\",\"Signature expiration\":\"timestamp\")");
 
-#[derive(Drop, Copy, Hash, Serde)]
+#[derive(Drop, Copy, Hash)]
 struct ReplaceOwnersWithOne {
     new_owner_guid: felt252,
     signature_expiration: u64,

@@ -308,9 +308,7 @@ describe("ArgentAccount: escape mechanism", function () {
             expect(escape.new_signer.isNone()).to.be.true;
             await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.None);
 
-            const owner = await accountContract.get_owner_guid();
-            expect(owner).to.equal(newKeyPair.guid);
-
+            await accountContract.get_owner_guids().should.eventually.deep.equal([newKeyPair.guid]);
             await expectEvent(response.transaction_hash, {
               from_address: account.address,
               eventName: "OwnerEscapedGuid",
@@ -336,8 +334,7 @@ describe("ArgentAccount: escape mechanism", function () {
             expect(escape.new_signer.isNone()).to.be.true;
             await getEscapeStatus(accountContract).should.eventually.equal(EscapeStatus.None);
 
-            const owner = await accountContract.get_owner_guid();
-            expect(owner).to.equal(newKeyPair.guid);
+            await accountContract.get_owner_guids().should.eventually.deep.equal([newKeyPair.guid]);
           });
 
           it("Expect 'argent/invalid-escape' when escape status == NotReady", async function () {

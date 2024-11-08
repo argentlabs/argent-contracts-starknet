@@ -67,6 +67,7 @@ mod ArgentAccount {
 
     /// Minimum time for the escape security period
     const MIN_ESCAPE_SECURITY_PERIOD: u64 = 60 * 10; // 10 minutes;
+    /// Maximum time the change owner message should be valid for
     const ONE_DAY: u64 = 60 * 60 * 24;
 
 

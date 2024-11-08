@@ -87,14 +87,14 @@ function getTypedData(myStruct: ReplaceOwnersWithOne, chainId: string): TypedDat
   };
 }
 
-export const getChangeOwnerMessageHash = async (
+export async function getChangeOwnerMessageHash(
   accountAddress: string,
   chainId: string,
   newOwnerGuid: bigint,
   signatureExpiration: number,
-) => {
+) {
   return typedData.getMessageHash(getTypedData({ newOwnerGuid, signatureExpiration }, chainId), accountAddress);
-};
+}
 
 export async function hasOngoingEscape(accountContract: Contract): Promise<boolean> {
   const escape = await accountContract.get_escape();

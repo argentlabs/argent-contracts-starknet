@@ -1,7 +1,8 @@
 import { expect } from "chai";
+import { CairoOption, CairoOptionVariant } from "starknet";
 import {
+  ArgentSigner,
   ContractWithClass,
-  LegacyArgentSigner,
   deployAccount,
   deployLegacyAccount,
   deployOldAccount,
@@ -9,6 +10,7 @@ import {
   expectRevertWithErrorMessage,
   getUpgradeDataLegacy,
   manager,
+  randomStarknetKeyPair,
   upgradeAccount,
 } from "../lib";
 
@@ -16,36 +18,31 @@ describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let mockDapp: ContractWithClass;
 
-  // TODO check if fixtures folder still useful?
-  // Should the discovery be automated by reading all folders names?
-  const accountsToUpgradeFrom = [
-    "/account-0.3.0-0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003/ArgentAccount",
-    "/account-0.3.1-0x29927c8af6bccf3f6fda035981e765a7bdbf18a2dc0d630494f8758aa908e2b/ArgentAccount",
-    // Doesn't work yet for this, gotta adapt the deploy logic
-    // "/account-0.4.0-0x036078334509b514626504edc9fb252328d1a240e4e948bef8d0c08dff45927f/ArgentAccount",
-  ];
+  // TODO check what fixture is still useful
 
-  const x: any[] = [];
+  const data: any[] = [];
   before(async () => {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
     mockDapp = await manager.deployContract("MockDapp");
     const ca1 = await manager.declareArtifactContract(
       "/account-0.3.0-0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003/ArgentAccount",
     );
-    const deploy1 = async () => deployLegacyAccount(ca1);
-    x.push({ classHash: ca1, deployFn: deploy1 });
+    data.push({ deployFn: async () => deployLegacyAccount(ca1), newOwner: 12, newGuardian: 12, signerFn: (x: any) => x });
 
     const ca2 = await manager.declareArtifactContract(
-      "/account-0.3.0-0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003/ArgentAccount",
+      "/account-0.3.1-0x29927c8af6bccf3f6fda035981e765a7bdbf18a2dc0d630494f8758aa908e2b/ArgentAccount",
     );
-    const deploy2 = async () => deployLegacyAccount(ca2);
-    x.push({ classHash: ca2, deployFn: deploy2 });
+    data.push({ deployFn: async () => deployLegacyAccount(ca2), newOwner: 12, newGuardian: 12, signerFn: (x: any) => x });
 
     const ca3 = await manager.declareArtifactContract(
-      "/account-0.3.0-0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003/ArgentAccount",
+      "/account-0.4.0-0x036078334509b514626504edc9fb252328d1a240e4e948bef8d0c08dff45927f/ArgentAccount",
     );
-    const deploy3 = async () => deployAccount({ classHash: ca3 });
-    x.push({ classHash: ca3, deployFn: deploy3 });
+    data.push({
+      deployFn: async () => deployAccount({ classHash: ca3 }),
+      newOwner: randomStarknetKeyPair().compiledSigner,
+      newGuardian: new CairoOption(CairoOptionVariant.None),
+      signerFn: (x: any) => new ArgentSigner(x),
+    });
   });
 
   it("Upgrade cairo 0 to current version", async function () {
@@ -66,23 +63,25 @@ describe("ArgentAccount: upgrade", function () {
     await mockDapp.get_number(account.address).should.eventually.equal(42n);
   });
 
-  it.only("Waiting accounts to be filled", function () {
+  it("Waiting data to be filled", function () {
     describe("Upgrade to latest version", function () {
-      for (const { deployFn } of x) {
-        describe(`For $`, function () {
+      for (const { deployFn, newOwner, newGuardian, signerFn } of data) {
+        describe(`Upgrading`, function () {
           it("Should be possible to upgrade", async function () {
             const { account } = await deployFn();
             await upgradeAccount(account, argentAccountClassHash);
             expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
           });
 
+          // For the added complexity it probably isn't worth to test this for each upgrade
           it("Should be possible to upgrade if an owner escape is ongoing", async function () {
-            const { account, accountContract, owner, guardian } = await deployFn();
+            const { account, accountContract, guardian } = await deployFn();
 
-            account.signer = guardian;
-            await accountContract.trigger_escape_owner(12);
+            const oldSigner = account.signer;
+            account.signer = signerFn(guardian);
+            await accountContract.trigger_escape_owner(newOwner);
 
-            account.signer = new LegacyArgentSigner(owner, guardian);
+            account.signer = oldSigner;
             await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
               from_address: account.address,
               eventName: "EscapeCanceled",
@@ -90,12 +89,14 @@ describe("ArgentAccount: upgrade", function () {
           });
 
           it("Should be possible to upgrade if a guardian escape is ongoing", async function () {
-            const { account, accountContract, owner, guardian } = await deployFn();
+            const { account, accountContract, owner } = await deployFn();
 
-            account.signer = owner;
-            await accountContract.trigger_escape_guardian(12);
+            const oldSigner = account.signer;
+            account.signer = signerFn(owner);
 
-            account.signer = new LegacyArgentSigner(owner, guardian);
+            await accountContract.trigger_escape_guardian(newGuardian);
+
+            account.signer = oldSigner;
             await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
               from_address: account.address,
               eventName: "EscapeCanceled",

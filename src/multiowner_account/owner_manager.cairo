@@ -158,8 +158,6 @@ mod owner_manager_component {
         }
 
         fn get_single_owner(self: @ComponentState<TContractState>) -> Option<SignerStorageValue> {
-            // This does NOT ensure there is only one owner, name is misleading
-            // Should we fix the name or the implementation?
             self.owners_storage().first()
         }
 

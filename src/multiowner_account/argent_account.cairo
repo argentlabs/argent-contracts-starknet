@@ -235,11 +235,9 @@ mod ArgentAccount {
     #[abi(embed_v0)]
     impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
         // Called when coming from account 0.2.3 < X < 0.4.0
-        // Also called when coming from 0.2.3, but maybe we never shipped that one?
         fn execute_after_upgrade(ref self: ContractState, mut data: Array<felt252>) -> Array<felt252> {
-            // If we reach this place we are in the new version
             assert_only_self();
-            self.do_stuff();
+            self.upgrade_storage();
 
             let implementation_storage_address = selector!("_implementation").try_into().unwrap();
             let implementation = storage_read_syscall(0, implementation_storage_address).unwrap_syscall();
@@ -268,7 +266,7 @@ mod ArgentAccount {
         // Called when coming from account 0.4.0+
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
             assert_only_self();
-            self.do_stuff();
+            self.upgrade_storage();
 
             // Is it normal that this is in the "Internal Trait"?
             self.upgrade.complete_upgrade(new_implementation);
@@ -769,11 +767,7 @@ mod ArgentAccount {
             self.assert_valid_span_signature(execution_hash, signer_signatures.span());
         }
 
-        fn do_stuff(ref self: ContractState) {
-            // TODO double check: Not sure this is 100% correct
-            self.reset_escape();
-            self.reset_escape_timestamps();
-
+        fn upgrade_storage(ref self: ContractState) {
             let signer_storage_address = selector!("_signer").try_into().unwrap();
             let signer_to_migrate = storage_read_syscall(0, signer_storage_address).unwrap_syscall();
             // As we come from a version that has a _signer slot
@@ -789,6 +783,9 @@ mod ArgentAccount {
             if guardian_key == 0 {
                 assert(guardian_backup_key == 0, 'argent/backup-should-be-null');
             }
+
+            self.reset_escape();
+            self.reset_escape_timestamps();
         }
 
         #[inline(always)]

@@ -44,12 +44,6 @@ mod upgrade_component {
             assert(supports_interface, 'argent/invalid-implementation');
             IUpgradableCallbackLibraryDispatcher { class_hash: new_implementation }
                 .perform_upgrade(new_implementation, data.span());
-            // TODO Wouldn't this be the same?
-        // Plus, we can remove complete_upgrade(...)
-        // replace_class_syscall(new_implementation).expect('argent/invalid-upgrade');
-        // self.emit(AccountUpgraded { new_implementation });
-        // IUpgradableCallbackLibraryDispatcher { class_hash: new_implementation }
-        //     .perform_after_upgrade(new_implementation, data.span());
         }
     }
 

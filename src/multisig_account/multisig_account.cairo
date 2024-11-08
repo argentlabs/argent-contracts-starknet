@@ -1,14 +1,18 @@
 #[starknet::contract(account)]
 mod ArgentMultisigAccount {
     use argent::account::interface::{IAccount, IArgentAccount, Version};
-    use argent::external_recovery::{external_recovery::{external_recovery_component, IExternalRecoveryCallback}};
     use argent::introspection::src5::src5_component;
-    use argent::multisig::{multisig::{multisig_component, multisig_component::MultisigInternalImpl}};
+    use argent::multisig_account::external_recovery::{
+        external_recovery::{external_recovery_component, IExternalRecoveryCallback}
+    };
+    use argent::multisig_account::signer_manager::{
+        signer_manager::{signer_manager_component, signer_manager_component::SignerManagerInternalImpl}
+    };
+    use argent::multisig_account::signer_storage::signer_list::signer_list_component;
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
     use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey, SignerTrait};
-    use argent::signer_storage::signer_list::signer_list_component;
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
@@ -24,10 +28,10 @@ mod ArgentMultisigAccount {
     // Signer storage
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
     impl SignerListInternal = signer_list_component::SignerListInternalImpl<ContractState>;
-    // Multisig management
-    component!(path: multisig_component, storage: multisig, event: MultisigEvents);
+    // Signer Management
+    component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
     #[abi(embed_v0)]
-    impl Multisig = multisig_component::MultisigImpl<ContractState>;
+    impl SignerManager = signer_manager_component::SignerManagerImpl<ContractState>;
     // Execute from outside
     component!(path: outside_execution_component, storage: execute_from_outside, event: ExecuteFromOutsideEvents);
     #[abi(embed_v0)]
@@ -55,7 +59,7 @@ mod ArgentMultisigAccount {
         #[substorage(v0)]
         signer_list: signer_list_component::Storage,
         #[substorage(v0)]
-        multisig: multisig_component::Storage,
+        signer_manager: signer_manager_component::Storage,
         #[substorage(v0)]
         execute_from_outside: outside_execution_component::Storage,
         #[substorage(v0)]
@@ -74,7 +78,7 @@ mod ArgentMultisigAccount {
         #[flat]
         SignerListEvents: signer_list_component::Event,
         #[flat]
-        MultisigEvents: multisig_component::Event,
+        SignerManagerEvents: signer_manager_component::Event,
         #[flat]
         ExecuteFromOutsideEvents: outside_execution_component::Event,
         #[flat]
@@ -100,7 +104,7 @@ mod ArgentMultisigAccount {
 
     #[constructor]
     fn constructor(ref self: ContractState, threshold: usize, signers: Array<Signer>) {
-        self.multisig.initialize(threshold, signers);
+        self.signer_manager.initialize(threshold, signers);
     }
 
     #[abi(embed_v0)]
@@ -136,9 +140,11 @@ mod ArgentMultisigAccount {
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
             if self
-                .multisig
+                .signer_manager
                 .is_valid_signature_with_threshold(
-                    hash, self.multisig.threshold.read(), signer_signatures: parse_signature_array(signature.span())
+                    hash,
+                    self.signer_manager.threshold.read(),
+                    signer_signatures: parse_signature_array(signature.span())
                 ) {
                 VALIDATED
             } else {
@@ -165,7 +171,7 @@ mod ArgentMultisigAccount {
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             // only 1 signer needed to deploy
             let is_valid = self
-                .multisig
+                .signer_manager
                 .is_valid_signature_with_threshold(
                     tx_info.transaction_hash, threshold: 1, signer_signatures: parse_signature_array(tx_info.signature)
                 );
@@ -214,7 +220,7 @@ mod ArgentMultisigAccount {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
             // Check basic invariants
-            self.multisig.assert_valid_storage();
+            self.signer_manager.assert_valid_storage();
             let pubkeys = self.signer_list.get_signers();
             let mut pubkeys_span = pubkeys.span();
             let mut signers_to_add = array![];
@@ -260,9 +266,11 @@ mod ArgentMultisigAccount {
 
         fn assert_valid_signatures(self: @ContractState, execution_hash: felt252, signature: Span<felt252>) {
             let valid = self
-                .multisig
+                .signer_manager
                 .is_valid_signature_with_threshold(
-                    execution_hash, self.multisig.threshold.read(), signer_signatures: parse_signature_array(signature)
+                    execution_hash,
+                    self.signer_manager.threshold.read(),
+                    signer_signatures: parse_signature_array(signature)
                 );
             assert(valid, 'argent/invalid-signature');
         }

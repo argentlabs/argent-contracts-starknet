@@ -1,7 +1,7 @@
 #[starknet::component]
 mod signer_list_component {
+    use argent::multisig_account::signer_storage::interface::ISignerList;
     use argent::signer::signer_signature::Signer;
-    use argent::signer_storage::interface::ISignerList;
     use starknet::storage::Map;
 
     #[storage]

@@ -1,4 +1,3 @@
-use argent::recovery::interface::{LegacyEscape, EscapeStatus};
 use argent::signer::signer_signature::{Signer, SignerType, SignerSignature};
 use starknet::account::Call;
 

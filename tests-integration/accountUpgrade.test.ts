@@ -27,12 +27,22 @@ describe("ArgentAccount: upgrade", function () {
     const ca1 = await manager.declareArtifactContract(
       "/account-0.3.0-0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003/ArgentAccount",
     );
-    data.push({ deployFn: async () => deployLegacyAccount(ca1), newOwner: 12, newGuardian: 12, signerFn: (x: any) => x });
+    data.push({
+      deployFn: async () => deployLegacyAccount(ca1),
+      newOwner: 12,
+      newGuardian: 12,
+      signerFn: (x: any) => x,
+    });
 
     const ca2 = await manager.declareArtifactContract(
       "/account-0.3.1-0x29927c8af6bccf3f6fda035981e765a7bdbf18a2dc0d630494f8758aa908e2b/ArgentAccount",
     );
-    data.push({ deployFn: async () => deployLegacyAccount(ca2), newOwner: 12, newGuardian: 12, signerFn: (x: any) => x });
+    data.push({
+      deployFn: async () => deployLegacyAccount(ca2),
+      newOwner: 12,
+      newGuardian: 12,
+      signerFn: (x: any) => x,
+    });
 
     const ca3 = await manager.declareArtifactContract(
       "/account-0.4.0-0x036078334509b514626504edc9fb252328d1a240e4e948bef8d0c08dff45927f/ArgentAccount",

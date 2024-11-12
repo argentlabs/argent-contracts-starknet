@@ -1,6 +1,4 @@
-use argent::signer::signer_signature::{Signer, SignerStorageValue, SignerSignature, SignerType};
-use starknet::ContractAddress;
-
+use argent::signer::signer_signature::SignerStorageValue;
 
 /// @notice The type of the escape telling who is about to be escaped
 #[derive(Drop, Copy, Serde, PartialEq, Default)]

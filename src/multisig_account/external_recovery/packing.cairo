@@ -1,6 +1,4 @@
-use argent::multisig_account::external_recovery::interface::{EscapeEnabled, Escape};
-use argent::signer::signer_signature::{Signer, SignerStorageValue, SignerSignature, SignerType};
-use starknet::ContractAddress;
+use argent::multisig_account::external_recovery::interface::EscapeEnabled;
 
 const SHIFT_8: felt252 = 0x100;
 const SHIFT_64: felt252 = 0x10000000000000000;

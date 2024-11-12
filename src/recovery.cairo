@@ -1,7 +1,3 @@
-use argent::signer::signer_signature::{Signer, SignerStorageValue, SignerSignature, SignerType};
-use starknet::ContractAddress;
-
-
 /// @notice The status of the Escape
 #[derive(Drop, Copy, Serde, PartialEq, Debug)]
 enum EscapeStatus {

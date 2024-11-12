@@ -75,6 +75,7 @@ struct EscapeExecuted {
 struct EscapeCanceled {
     call_hash: felt252
 }
+
 impl DefaultEscape of Default<Escape> {
     fn default() -> Escape {
         Escape { ready_at: 0, call_hash: 0 }

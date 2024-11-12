@@ -1,4 +1,4 @@
-use argent::multisig_account::external_recovery::interface::{EscapeCall, Escape, EscapeEnabled, EscapeStatus};
+use argent::multisig_account::external_recovery::interface::EscapeCall;
 use argent::utils::serialization::serialize;
 
 /// This trait must be implemented when using the component `external_recovery`

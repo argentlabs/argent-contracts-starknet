@@ -5,7 +5,7 @@ use starknet::ContractAddress;
 /// @notice Escape represent a call that will be performed on the account when the escape is ready
 /// @param ready_at when the escape can be completed
 /// @param call_hash the hash of the EscapeCall to be performed
-#[derive(Drop, Serde, Copy, starknet::Store)]
+#[derive(Drop, Serde, Copy, Default, starknet::Store)]
 struct Escape {
     ready_at: u64,
     call_hash: felt252
@@ -75,10 +75,3 @@ struct EscapeExecuted {
 struct EscapeCanceled {
     call_hash: felt252
 }
-
-impl DefaultEscape of Default<Escape> {
-    fn default() -> Escape {
-        Escape { ready_at: 0, call_hash: 0 }
-    }
-}
-

@@ -346,12 +346,3 @@ impl SignerSpanTraitImpl of SignerSpanTrait {
         guids
     }
 }
-
-fn assert_sorted_guids(mut guids: Span<felt252>, error_message: felt252) {
-    let mut last_guid: u256 = 0;
-    while let Option::Some(guid) = guids.pop_front() {
-        let guid_u256: u256 = (*guid).into();
-        assert(guid_u256 > last_guid, error_message);
-        last_guid = guid_u256;
-    };
-}

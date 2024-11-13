@@ -1,6 +1,6 @@
 use argent::mocks::signer_list_mocks::SignerListMock;
-use argent::signer_storage::interface::ISignerList;
-use argent::signer_storage::signer_list::signer_list_component;
+use argent::multisig_account::signer_storage::interface::ISignerList;
+use argent::multisig_account::signer_storage::signer_list::signer_list_component;
 use super::MULTISIG_OWNER;
 
 type ComponentState = signer_list_component::ComponentState<SignerListMock::ContractState>;

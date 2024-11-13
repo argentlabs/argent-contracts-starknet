@@ -1,5 +1,4 @@
-use argent::external_recovery::interface::{EscapeCall, Escape};
-use argent::recovery::interface::{EscapeEnabled, EscapeStatus};
+use argent::multisig_account::external_recovery::interface::EscapeCall;
 use argent::utils::serialization::serialize;
 
 /// This trait must be implemented when using the component `external_recovery`
@@ -14,13 +13,15 @@ trait IExternalRecoveryCallback<TContractState> {
 /// @dev The recovery can be canceled by the authorized signers
 #[starknet::component]
 mod external_recovery_component {
-    use argent::external_recovery::interface::{
-        IExternalRecovery, EscapeCall, Escape, EscapeTriggered, EscapeExecuted, EscapeCanceled,
+    use argent::multisig_account::external_recovery::interface::{
+        IExternalRecovery, EscapeCall, Escape, EscapeTriggered, EscapeExecuted, EscapeCanceled, EscapeEnabled
     };
-    use argent::recovery::interface::{EscapeEnabled, EscapeStatus};
+    use argent::multisig_account::signer_storage::interface::ISignerList;
+    use argent::multisig_account::signer_storage::signer_list::{
+        signer_list_component, signer_list_component::{SignerListInternalImpl}
+    };
+    use argent::recovery::EscapeStatus;
     use argent::signer::signer_signature::{Signer, SignerTrait};
-    use argent::signer_storage::interface::ISignerList;
-    use argent::signer_storage::signer_list::{signer_list_component, signer_list_component::{SignerListInternalImpl}};
     use argent::utils::asserts::assert_only_self;
     use argent::utils::serialization::serialize;
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};

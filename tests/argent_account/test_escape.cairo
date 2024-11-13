@@ -1,5 +1,5 @@
 use argent::multiowner_account::argent_account::ArgentAccount;
-use argent::recovery::interface::EscapeStatus;
+use argent::recovery::EscapeStatus;
 use argent::signer::signer_signature::starknet_signer_from_pubkey;
 use snforge_std::{
     spy_events, EventSpyAssertionsTrait, EventSpyTrait, start_cheat_block_timestamp_global,

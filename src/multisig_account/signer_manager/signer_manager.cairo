@@ -1,17 +1,17 @@
 /// @notice Implements the methods of a multisig such as
 /// adding or removing signers, changing the threshold, etc
 #[starknet::component]
-mod multisig_component {
-    use argent::multisig::interface::{IArgentMultisig, IArgentMultisigInternal};
-    use argent::signer::{
-        signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait},
-    };
-    use argent::signer_storage::{
+mod signer_manager_component {
+    use argent::multisig_account::signer_manager::interface::{ISignerManager, ISignerManagerInternal};
+    use argent::multisig_account::signer_storage::{
         interface::ISignerList,
         signer_list::{
             signer_list_component,
             signer_list_component::{OwnerAddedGuid, OwnerRemovedGuid, SignerLinked, SignerListInternalImpl}
         }
+    };
+    use argent::signer::{
+        signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait},
     };
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
 
@@ -36,13 +36,13 @@ mod multisig_component {
         new_threshold: usize,
     }
 
-    #[embeddable_as(MultisigImpl)]
-    impl MultiSig<
+    #[embeddable_as(SignerManagerImpl)]
+    impl SignerManager<
         TContractState,
         +HasComponent<TContractState>,
         impl SignerList: signer_list_component::HasComponent<TContractState>,
         +Drop<TContractState>
-    > of IArgentMultisig<ComponentState<TContractState>> {
+    > of ISignerManager<ComponentState<TContractState>> {
         fn change_threshold(ref self: ComponentState<TContractState>, new_threshold: usize) {
             assert_only_self();
             assert(new_threshold != self.threshold.read(), 'argent/same-threshold');
@@ -140,13 +140,13 @@ mod multisig_component {
         }
     }
 
-    #[embeddable_as(MultisigInternalImpl)]
-    impl MultiSigInternal<
+    #[embeddable_as(SignerManagerInternalImpl)]
+    impl SignerManagerInternal<
         TContractState,
         +HasComponent<TContractState>,
         impl SignerList: signer_list_component::HasComponent<TContractState>,
         +Drop<TContractState>
-    > of IArgentMultisigInternal<ComponentState<TContractState>> {
+    > of ISignerManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, threshold: usize, mut signers: Array<Signer>) {
             assert(self.threshold.read() == 0, 'argent/already-initialized');
 

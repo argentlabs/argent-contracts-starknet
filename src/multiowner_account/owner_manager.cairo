@@ -69,10 +69,7 @@ mod owner_manager_component {
     use argent::utils::linked_set::{LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl};
 
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
-    use starknet::storage::{
-        Vec, StoragePointerReadAccess, StoragePointerWriteAccess, MutableVecTrait, StoragePathEntry, Map,
-        storage_base::StorageBaseAsPath, storage_base::StorageBaseDeref
-    };
+
     use super::super::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
     use super::{IOwnerManager, IOwnerManagerInternal};
     use super::{SignerStorageValueSetItem, IOwnerManagerCallback};

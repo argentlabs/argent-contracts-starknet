@@ -297,17 +297,20 @@ impl U256TryIntoSignerType of TryInto<u256, SignerType> {
 }
 
 #[inline(always)]
+#[must_use]
 fn is_valid_starknet_signature(hash: felt252, signer: StarknetSigner, signature: StarknetSignature) -> bool {
     check_ecdsa_signature(hash, signer.pubkey.into(), signature.r, signature.s)
 }
 
 #[inline(always)]
+#[must_use]
 fn is_valid_secp256k1_signature(hash: u256, pubkey_hash: EthAddress, signature: Secp256Signature) -> bool {
     assert(signature.s <= SECP_256_K1_HALF, 'argent/malleable-signature');
     is_eth_signature_valid(hash, signature, pubkey_hash).is_ok()
 }
 
 #[inline(always)]
+#[must_use]
 fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: Secp256Signature) -> bool {
     // `recover_public_key` accepts invalid values for r and s, so we need to check them first
     assert(is_signature_entry_valid::<Secp256r1Point>(signature.r), 'argent/invalid-r-value');
@@ -319,6 +322,7 @@ fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: 
 }
 
 #[inline(always)]
+#[must_use]
 fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> bool {
     verify_authenticator_flags(signature.flags);
 

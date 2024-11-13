@@ -10,6 +10,8 @@ import {
   hasOngoingEscape,
   manager,
   randomStarknetKeyPair,
+  signChangeOwnerMessage,
+  starknetSignatureType,
   zeroStarknetSignatureType,
 } from "../lib";
 
@@ -51,7 +53,7 @@ describe("ArgentAccount", function () {
     // });
 
     const accountContract = await manager.loadContract(contractAddress);
-    await accountContract.get_owner_guid().should.eventually.equal(owner.guid);
+    await accountContract.get_owner_guids().should.eventually.deep.equal([owner.guid]);
     await accountContract.is_owner_guid(owner.guid).should.eventually.equal(true);
 
     expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(guardian.guid);
@@ -62,7 +64,7 @@ describe("ArgentAccount", function () {
     it(`Self deployment (TxV3: ${useTxV3})`, async function () {
       const { accountContract, owner } = await deployAccountWithoutGuardian({ useTxV3, selfDeploy: true });
 
-      await accountContract.get_owner_guid().should.eventually.equal(owner.guid);
+      await accountContract.get_owner_guids().should.eventually.deep.equal([owner.guid]);
       await accountContract.get_guardian().should.eventually.equal(0n);
       await accountContract.get_guardian_backup().should.eventually.equal(0n);
     });
@@ -79,70 +81,29 @@ describe("ArgentAccount", function () {
     );
   });
 
-  // TODO: Add this back once change_owner is implemented
-  // describe("change_owner(new_owner, signature_r, signature_s)", function () {
-  //   it("Should be possible to change_owner", async function () {
-  //     const { accountContract, owner } = await deployAccount();
-  //     const newOwner = randomStarknetKeyPair();
-  //
-  //     const chainId = await manager.getChainId();
-  //     const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.guid, newOwner, chainId);
-  //
-  //     const receipt = await manager.waitForTx(accountContract.change_owner(starknetSignature));
-  //
-  //     await accountContract.get_owner_guid().should.eventually.equal(newOwner.guid);
-  //
-  //     const from_address = accountContract.address;
-  //     await expectEvent(receipt, { from_address, eventName: "OwnerChanged", data: [newOwner.storedValue.toString()] });
-  //     await expectEvent(receipt, { from_address, eventName: "OwnerChangedGuid", data: [newOwner.guid.toString()] });
-  //   });
-  //
-  //   it("Expect 'argent/only-self' when called from another account", async function () {
-  //     const { account } = await deployAccount();
-  //     const { accountContract } = await deployAccount();
-  //     accountContract.connect(account);
-  //     await expectRevertWithErrorMessage(
-  //       "argent/only-self",
-  //       accountContract.change_owner(starknetSignatureType(12, 13, 14)),
-  //     );
-  //   });
-  //
-  //   it("Expect parsing error when new_owner is zero", async function () {
-  //     const { accountContract } = await deployAccount();
-  //     await expectRevertWithErrorMessage(
-  //       "Failed to deserialize param #1",
-  //       accountContract.change_owner(starknetSignatureType(0, 13, 14)),
-  //     );
-  //   });
-  //
-  //   it("Expect 'argent/invalid-owner-sig' when the signature to change owner is invalid", async function () {
-  //     const { accountContract } = await deployAccount();
-  //     await expectRevertWithErrorMessage(
-  //       "argent/invalid-owner-sig",
-  //       accountContract.change_owner(starknetSignatureType(12, 13, 14)),
-  //     );
-  //   });
-  //
-  //   it("Expect the escape to be reset", async function () {
-  //     const { account, accountContract, owner, guardian } = await deployAccount();
-  //
-  //     const newOwner = randomStarknetKeyPair();
-  //     account.signer = new ArgentSigner(guardian);
-  //
-  //     await accountContract.trigger_escape_owner(newOwner.compiledSigner);
-  //     await hasOngoingEscape(accountContract).should.eventually.be.true;
-  //     await manager.increaseTime(10);
-  //
-  //     account.signer = new ArgentSigner(owner, guardian);
-  //     const chainId = await manager.getChainId();
-  //     const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner.guid, newOwner, chainId);
-  //
-  //     await accountContract.change_owner(starknetSignature);
-  //
-  //     await accountContract.get_owner_guid().should.eventually.equal(newOwner.guid);
-  //     await hasOngoingEscape(accountContract).should.eventually.be.false;
-  //   });
-  // });
+  describe("replace_all_owners_with_one(...)", function () {
+    it("Should be possible to replace_all_owners_with_one", async function () {
+      const { accountContract } = await deployAccount();
+      const newOwner = randomStarknetKeyPair();
+
+      const chainId = await manager.getChainId();
+      const currentTimestamp = await manager.getCurrentTimestamp();
+      const futureTimestamp = currentTimestamp + 1000;
+      const calldata = await signChangeOwnerMessage(accountContract.address, newOwner, chainId, futureTimestamp);
+      calldata.push(futureTimestamp.toString());
+      // Can't just do account.replace_all_owners_with_one(x, y) because parsing goes wrong...
+      await manager.ensureSuccess(await accountContract.invoke("replace_all_owners_with_one", calldata));
+      await accountContract.get_owner_guids().should.eventually.deep.equal([newOwner.guid]);
+    });
+
+    it("Expect parsing error when new_owner is zero", async function () {
+      const { accountContract } = await deployAccount();
+      await expectRevertWithErrorMessage(
+        "Failed to deserialize param #1",
+        accountContract.replace_all_owners_with_one(starknetSignatureType(0, 13, 14), 1),
+      );
+    });
+  });
 
   describe("change_guardian(new_guardian)", function () {
     it("Shouldn't be possible to use a guardian with pubkey = 0", async function () {

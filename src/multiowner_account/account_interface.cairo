@@ -18,14 +18,19 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @param new_security_period new delay in seconds before the escape can be completed. Must be >= 10 minutes
     fn set_escape_security_period(ref self: TContractState, new_security_period: u64);
 
-    // TODO same as replace_all_owners_with_one, do we need backwards compat?
-    /// @notice Changes the owner
-    /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
-    /// @param signer_signature SignerSignature of the new owner
-    /// Required to prevent changing to an address which is not in control of the user
-    /// is the signature of the pedersen hashed array:
-    /// [change_owner_selector, chain_id, account_address, old_owner_guid]
-    // fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
+    /// @notice Removes all owners from this account and adds a new one
+    /// @dev Must be called by the account and authorized by 1 owner and a guardian (if guardian is set)
+    /// @param new_single_owner SignerSignature of the new owner
+    /// Required to prevent changing to a signer which is not in control of the user
+    /// It is the signature of the SNIP-12 V1 compliant object ReplaceOwnersWithOne
+    /// @param signature_expiration Signature expiration timestamp
+    /// cannot be in the past: before current timestamp
+    /// cannot be too far in the future: current timestamp + 1 DAY in seconds
+    /// @dev It will cancel any existing escape
+    fn replace_all_owners_with_one(
+        ref self: TContractState, new_single_owner: SignerSignature, signature_expiration: u64
+    );
+
     /// @notice Adds new owners to this account
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     /// @dev It will cancel any existing escape
@@ -36,12 +41,6 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @dev It will cancel any existing escape
     fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>);
 
-    /// @notice Removes all owners from this account and adds a new one
-    /// Required to prevent changing to an address which is not in control of the user
-    /// is the signature of the pedersen hashed array:
-    /// [change_owner_selector, chain_id, account_address, old_owner_guid] // TODO check this, add timestamp
-    /// @dev It will cancel any existing escape
-    fn replace_all_owners_with_one(ref self: TContractState, new_single_owner: SignerSignature);
 
     /// @notice Changes the guardian
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)

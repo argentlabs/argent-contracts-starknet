@@ -66,12 +66,12 @@ mod owner_manager_component {
             SignerStorageTrait
         },
     };
-    use argent::utils::linked_set::{
-        LinkedSetMut, LinkedSetTraitMut, LinkedSetMutImpl, LinkedSet, LinkedSetTrait, LinkedSetImpl
-    };
+    use argent::utils::linked_set::{LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl};
+
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
     use starknet::storage::{
-        Vec, StoragePointerReadAccess, StoragePointerWriteAccess, MutableVecTrait, StoragePathEntry, Map
+        Vec, StoragePointerReadAccess, StoragePointerWriteAccess, MutableVecTrait, StoragePathEntry, Map,
+        storage_base::StorageBaseAsPath, storage_base::StorageBaseDeref
     };
     use super::super::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
     use super::{IOwnerManager, IOwnerManagerInternal};
@@ -81,7 +81,7 @@ mod owner_manager_component {
 
     #[storage]
     struct Storage {
-        owners_storage: Map<felt252, SignerStorageValue>
+        owners_storage: LinkedSet<SignerStorageValue>
     }
 
     #[event]
@@ -96,15 +96,15 @@ mod owner_manager_component {
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>, +IOwnerManagerCallback<TContractState>
     > of IOwnerManager<ComponentState<TContractState>> {
         fn get_owner_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
-            self.owners_storage().get_all_ids()
+            self.owners_storage.get_all_ids()
         }
 
         fn is_owner(self: @ComponentState<TContractState>, owner: Signer) -> bool {
-            self.owners_storage().is_in_id(owner.into_guid())
+            self.owners_storage.is_in_id(owner.into_guid())
         }
 
         fn is_owner_guid(self: @ComponentState<TContractState>, owner_guid: felt252) -> bool {
-            self.owners_storage().is_in_id(owner_guid)
+            self.owners_storage.is_in_id(owner_guid)
         }
 
         #[must_use]
@@ -128,13 +128,13 @@ mod owner_manager_component {
         }
 
         fn add_owners(ref self: ComponentState<TContractState>, owners_to_add: Array<Signer>) {
-            let new_owner_count = self.owners_storage().len() + owners_to_add.len();
+            let new_owner_count = self.owners_storage.len() + owners_to_add.len();
             self.assert_valid_owner_count(new_owner_count);
             for owner in owners_to_add {
                 let signer_storage = owner.storage_value();
                 let guid = signer_storage.into_guid();
                 // TODO optimize insertions
-                self.owners_storage_mut().add_item(signer_storage);
+                self.owners_storage.add_item(signer_storage);
                 self.emit_owner_added(guid);
                 self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: owner });
             };
@@ -142,39 +142,39 @@ mod owner_manager_component {
 
         fn remove_owners(ref self: ComponentState<TContractState>, owner_guids_to_remove: Array<felt252>) {
             // TODO assert account not bricked, specially if there's not guardian
-            let new_owner_count = self.owners_storage().len() - owner_guids_to_remove.len();
+            let new_owner_count = self.owners_storage.len() - owner_guids_to_remove.len();
             self.assert_valid_owner_count(new_owner_count);
 
             for guid in owner_guids_to_remove {
-                self.owners_storage_mut().remove(guid);
+                self.owners_storage.remove(guid);
                 self.emit_owner_removed(guid);
             };
         }
 
         fn assert_valid_storage(self: @ComponentState<TContractState>) {
-            self.assert_valid_owner_count(self.owners_storage().len());
+            self.assert_valid_owner_count(self.owners_storage.len());
         }
 
         fn get_single_owner(self: @ComponentState<TContractState>) -> Option<SignerStorageValue> {
-            self.owners_storage().single()
+            self.owners_storage.single()
         }
 
         fn get_single_stark_owner_pubkey(self: @ComponentState<TContractState>) -> Option<felt252> {
             self.get_single_owner()?.starknet_pubkey_or_none()
         }
         fn is_valid_owners_replacement(self: @ComponentState<TContractState>, new_single_owner: Signer) -> bool {
-            !self.owners_storage().is_in_id(new_single_owner.into_guid())
+            !self.owners_storage.is_in_id(new_single_owner.into_guid())
         }
 
         fn replace_all_owners_with_one(ref self: ComponentState<TContractState>, new_single_owner: SignerStorageValue) {
             let new_owner_guid = new_single_owner.into_guid();
-            let current_owners = self.owners_storage().get_all_ids();
+            let current_owners = self.owners_storage.get_all_ids();
             for current_owner_guid in current_owners {
                 assert(current_owner_guid != new_owner_guid, 'argent/already-an-owner');
-                self.owners_storage_mut().remove(current_owner_guid);
+                self.owners_storage.remove(current_owner_guid);
                 self.emit_owner_removed(current_owner_guid);
             };
-            self.owners_storage_mut().add_item(new_single_owner);
+            self.owners_storage.add_item(new_single_owner);
             self.emit_owner_added(new_owner_guid);
         }
     }
@@ -183,12 +183,6 @@ mod owner_manager_component {
     impl Private<
         TContractState, +HasComponent<TContractState>, +IOwnerManagerCallback<TContractState>, +Drop<TContractState>
     > of PrivateTrait<TContractState> {
-        fn owners_storage_mut(ref self: ComponentState<TContractState>) -> LinkedSetMut<SignerStorageValue> {
-            LinkedSetMut { storage: self.owners_storage }
-        }
-        fn owners_storage(self: @ComponentState<TContractState>) -> LinkedSet<SignerStorageValue> {
-            LinkedSet { storage: self.owners_storage }
-        }
         fn assert_valid_owner_count(self: @ComponentState<TContractState>, signers_len: usize) {
             assert(signers_len != 0, 'argent/invalid-signers-len');
             assert(signers_len <= MAX_SIGNERS_COUNT, 'argent/invalid-signers-len');

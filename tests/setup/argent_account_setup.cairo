@@ -1,5 +1,7 @@
 use argent::account::interface::Version;
-use argent::recovery::interface::{LegacyEscape, EscapeStatus};
+use argent::multiowner_account::recovery::{LegacyEscape};
+use argent::recovery::{EscapeStatus};
+
 use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
 use argent::utils::serialization::serialize;
 use snforge_std::{declare, ContractClassTrait, start_cheat_caller_address_global, DeclareResultTrait};

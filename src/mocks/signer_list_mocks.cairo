@@ -4,7 +4,7 @@
 /// functionality of this contract for any production. 🚨
 #[starknet::contract]
 mod SignerListMock {
-    use argent::signer_storage::signer_list::signer_list_component;
+    use argent::multisig_account::signer_storage::signer_list::signer_list_component;
 
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
     #[abi(embed_v0)]

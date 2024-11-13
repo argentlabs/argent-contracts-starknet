@@ -1,10 +1,11 @@
-use argent::recovery::interface::{EscapeEnabled, EscapeStatus};
+use argent::multisig_account::external_recovery::packing::{PackEscapeEnabled};
+use argent::recovery::EscapeStatus;
 use starknet::ContractAddress;
 
 /// @notice Escape represent a call that will be performed on the account when the escape is ready
 /// @param ready_at when the escape can be completed
 /// @param call_hash the hash of the EscapeCall to be performed
-#[derive(Drop, Serde, Copy, starknet::Store)]
+#[derive(Drop, Serde, Copy, Default, starknet::Store)]
 struct Escape {
     ready_at: u64,
     call_hash: felt252
@@ -16,6 +17,18 @@ struct EscapeCall {
     selector: felt252,
     calldata: Array<felt252>
 }
+
+/// @notice Information relative to whether the escape is enabled
+/// @param is_enabled The escape is enabled
+/// @param security_period Time it takes for the escape to become ready after being triggered
+/// @param expiry_period The escape will be ready and can be completed for this duration
+#[derive(Drop, Copy, Serde)]
+struct EscapeEnabled {
+    is_enabled: bool,
+    security_period: u64,
+    expiry_period: u64,
+}
+
 
 #[starknet::interface]
 trait IExternalRecovery<TContractState> {
@@ -61,10 +74,4 @@ struct EscapeExecuted {
 #[derive(Drop, starknet::Event)]
 struct EscapeCanceled {
     call_hash: felt252
-}
-
-impl DefaultEscape of Default<Escape> {
-    fn default() -> Escape {
-        Escape { ready_at: 0, call_hash: 0 }
-    }
 }

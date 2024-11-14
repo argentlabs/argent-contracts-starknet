@@ -382,7 +382,6 @@ fn cant_call_validate() {
 fn test_signer_secp256k1_wrong_pubkey_hash() {
     let account = initialize_account();
 
-    start_cheat_block_timestamp_global(100);
     let x = Signer::Secp256k1(Secp256k1Signer { pubkey_hash: 0.try_into().unwrap() });
     account.trigger_escape_owner(x);
 }
@@ -393,7 +392,6 @@ fn test_signer_secp256k1_wrong_pubkey_hash() {
 fn test_signer_eip191Signer_wrong_pubkey_hash() {
     let account = initialize_account();
 
-    start_cheat_block_timestamp_global(100);
     let x = Signer::Eip191(Eip191Signer { eth_address: 0.try_into().unwrap() });
     account.trigger_escape_owner(x);
 }

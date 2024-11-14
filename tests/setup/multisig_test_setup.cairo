@@ -1,5 +1,5 @@
 use argent::account::interface::Version;
-use argent::multisig::multisig_account::ArgentMultisigAccount;
+use argent::presets::multisig_account::ArgentMultisigAccount;
 use argent::signer::signer_signature::{Signer, SignerSignature};
 use snforge_std::{declare, ContractClassTrait, ContractClass, start_cheat_caller_address_global, DeclareResultTrait};
 use starknet::account::Call;

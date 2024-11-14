@@ -15,7 +15,6 @@ mod introspection {
 mod multisig {
     mod interface;
     mod multisig;
-    mod multisig_account;
 }
 
 mod signer {
@@ -33,6 +32,10 @@ mod outside_execution {
     mod interface;
     mod outside_execution;
     mod outside_execution_hash;
+}
+
+mod presets {
+    mod multisig_account;
 }
 
 mod recovery {

@@ -18,8 +18,6 @@ describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let mockDapp: ContractWithClass;
 
-  // TODO check what fixture is still useful
-
   const upgradeData: any[] = [];
   before(async () => {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");

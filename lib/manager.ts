@@ -14,6 +14,10 @@ export class Manager extends WithReceipts(WithContracts(WithDevnet(RpcProvider))
     super({ nodeUrl });
     this.tokens = new TokenManager(this);
   }
+
+  async getCurrentTimestamp(): Promise<number> {
+    return (await this.getBlock("latest")).timestamp;
+  }
 }
 export const manager = new Manager(process.env.RPC_URL || `${devnetBaseUrl}`);
 

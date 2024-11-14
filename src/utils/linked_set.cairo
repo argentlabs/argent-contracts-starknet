@@ -34,6 +34,8 @@ pub trait LinkedSetTrait<T> {
     fn is_in_id(self: LinkedSet<T>, item_id: felt252) -> bool;
     fn find_last_id(self: LinkedSet<T>) -> felt252;
     fn first(self: LinkedSet<T>) -> Option<T>;
+    // Returns the first item if there is one item in the list, otherwise returns None
+    fn single(self: LinkedSet<T>) -> Option<T>;
     fn next(self: LinkedSet<T>, item: T) -> Option<T>;
     fn item_id_before(self: LinkedSet<T>, item_after_id: felt252) -> felt252;
     fn load(self: LinkedSet<T>) -> (usize, felt252);
@@ -115,6 +117,16 @@ pub impl LinkedSetImpl<T, +SetItem<T>, +Store<T>, +Copy<T>, +Drop<T>> of LinkedS
         } else {
             Option::Some(first_item)
         }
+    }
+
+    fn single(self: LinkedSet<T>) -> Option<T> {
+        let first_item = self.first()?;
+        let second_item = self.storage.entry(first_item.id()).read();
+        if second_item.is_valid_item() {
+            // More than one item in the list
+            return Option::None;
+        }
+        Option::Some(first_item)
     }
 
     fn next(self: LinkedSet<T>, item: T) -> Option<T> {

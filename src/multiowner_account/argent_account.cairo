@@ -2,13 +2,24 @@
 mod ArgentAccount {
     use argent::account::interface::{IAccount, IArgentAccount, IDeprecatedArgentAccount, Version};
     use argent::introspection::src5::src5_component;
+    use argent::multiowner_account::account_interface::{
+        IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait
+    };
+    use argent::multiowner_account::events::{
+        SignerLinked, TransactionExecuted, AccountCreated, AccountCreatedGuid, EscapeOwnerTriggeredGuid,
+        EscapeGuardianTriggeredGuid, OwnerEscapedGuid, GuardianEscapedGuid, EscapeCanceled, OwnerChanged,
+        OwnerChangedGuid, GuardianChanged, GuardianChangedGuid, GuardianBackupChanged, GuardianBackupChangedGuid,
+        EscapeSecurityPeriodChanged,
+    };
+    use argent::multiowner_account::owner_manager::{IOwnerManager, IOwnerManagerCallback, owner_manager_component};
+    use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
+    use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
     use argent::recovery::interface::{LegacyEscape, LegacyEscapeDefault, LegacyEscapeType, EscapeStatus};
     use argent::session::{
-        interface::{SessionToken, ISessionCallback},
-        session::{session_component::{Internal, InternalTrait}, session_component,}
+        interface::ISessionCallback, session::{session_component::{Internal, InternalTrait}, session_component}
     };
     use argent::signer::{
         signer_signature::{
@@ -27,10 +38,7 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, DA_MODE_L1, is_estimate_transaction
         }
     };
-    use crate::multiowner_account::account_interface::{
-        IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait
-    };
-    use hash::HashStateTrait;
+    use hash::{HashStateTrait, HashStateExTrait};
     use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
     use pedersen::PedersenTrait;
     use starknet::{
@@ -38,13 +46,6 @@ mod ArgentAccount {
         SyscallResultTrait, get_tx_info, get_execution_info, replace_class_syscall,
         storage_access::{storage_read_syscall, storage_write_syscall}
     };
-    use super::super::events::{
-        SignerLinked, TransactionExecuted, AccountCreated, AccountCreatedGuid, EscapeOwnerTriggeredGuid,
-        EscapeGuardianTriggeredGuid, OwnerEscapedGuid, GuardianEscapedGuid, EscapeCanceled, OwnerChanged,
-        OwnerChangedGuid, GuardianChanged, GuardianChangedGuid, GuardianBackupChanged, GuardianBackupChangedGuid,
-        EscapeSecurityPeriodChanged,
-    };
-    use super::super::owner_manager::{IOwnerManager, IOwnerManagerCallback, owner_manager_component};
 
     const NAME: felt252 = 'ArgentAccount';
     const VERSION: Version = Version { major: 0, minor: 5, patch: 0 };
@@ -64,6 +65,8 @@ mod ArgentAccount {
 
     /// Minimum time for the escape security period
     const MIN_ESCAPE_SECURITY_PERIOD: u64 = 60 * 10; // 10 minutes;
+    /// Maximum time the change owner message should be valid for
+    const ONE_DAY: u64 = 60 * 60 * 24;
 
 
     // Owner management
@@ -394,13 +397,22 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
         }
 
-        fn replace_all_owners_with_one(ref self: ContractState, new_single_owner: SignerSignature) {
+        fn replace_all_owners_with_one(
+            ref self: ContractState, new_single_owner: SignerSignature, signature_expiration: u64
+        ) {
             assert_only_self();
             let new_owner = new_single_owner.signer();
-            // TODO
-            // self.assert_valid_new_owner_signature(signer_signature);
+            self.assert_valid_new_owner_signature(new_single_owner, signature_expiration);
+            // This already emits OwnerRemovedGuid & OwnerAddedGuid events
             self.owner_manager.replace_all_owners_with_one(new_owner.storage_value());
-            self.emit(SignerLinked { signer_guid: new_owner.into_guid(), signer: new_owner });
+
+            if let Option::Some(new_owner_pubkey) = new_owner.storage_value().starknet_pubkey_or_none() {
+                self.emit(OwnerChanged { new_owner: new_owner_pubkey });
+            };
+            // TODO Check events w/ backend
+            let new_owner_guid = new_owner.into_guid();
+            self.emit(OwnerChangedGuid { new_owner_guid });
+            self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
 
             self.reset_escape();
             self.reset_escape_timestamps();
@@ -895,30 +907,17 @@ mod ArgentAccount {
             return signer_signature.is_valid_signature(hash) || is_estimate_transaction();
         }
 
-        // TODO
-        /// The signature is the result of signing the message hash with the new owner private key
-        /// The message hash is the result of hashing the array:
-        /// [change_owner selector, chainid, contract address, old_owner_guid]
-        /// as specified here:
-        /// https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
-        // fn assert_valid_new_owner_signature(self: @ContractState, signer_signature: SignerSignature) {
-        // let chain_id = get_tx_info().chain_id;
-        // let owner_guid = self.read_owner().into_guid();
-        // // We now need to hash message_hash with the size of the array: (change_owner selector,
-        // chain id, contract // address, old_owner_guid)
-        // //
-        // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
-        // let message_hash = PedersenTrait::new(0)
-        //     .update(selector!("change_owner"))
-        //     .update(chain_id)
-        //     .update(get_contract_address().into())
-        //     .update(owner_guid)
-        //     .update(4)
-        //     .finalize();
-
-        // let is_valid = signer_signature.is_valid_signature(message_hash);
-        // assert(is_valid, 'argent/invalid-owner-sig');
-        // }
+        /// The message hash is the result of hashing the SNIP-12 compliant object ReplaceOwnersWithOne
+        fn assert_valid_new_owner_signature(
+            self: @ContractState, new_single_owner: SignerSignature, signature_expiration: u64
+        ) {
+            assert(signature_expiration >= get_block_timestamp(), 'argent/expired-signature');
+            assert(signature_expiration - get_block_timestamp() <= ONE_DAY, 'argent/timestamp-too-far-future');
+            let new_owner_guid = new_single_owner.signer().into_guid();
+            let message_hash = ReplaceOwnersWithOne { new_owner_guid, signature_expiration }.get_message_hash_rev_1();
+            let is_valid = new_single_owner.is_valid_signature(message_hash);
+            assert(is_valid, 'argent/invalid-new-owner-sig');
+        }
 
         fn get_escape_status(self: @ContractState, escape_ready_at: u64) -> EscapeStatus {
             if escape_ready_at == 0 {

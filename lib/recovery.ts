@@ -1,5 +1,13 @@
-import { CairoCustomEnum, Contract, hash } from "starknet";
-import { RawSigner } from ".";
+import {
+  CairoCustomEnum,
+  Contract,
+  shortString,
+  StarknetDomain,
+  TypedData,
+  typedData,
+  TypedDataRevision,
+} from "starknet";
+import { KeyPair } from ".";
 
 export const ESCAPE_SECURITY_PERIOD = 7n * 24n * 60n * 60n; // 7 days
 export const ESCAPE_EXPIRY_PERIOD = 2n * 7n * 24n * 60n * 60n; // 14 days
@@ -32,18 +40,61 @@ export const ESCAPE_TYPE_OWNER = new CairoCustomEnum({
 
 export const signChangeOwnerMessage = async (
   accountAddress: string,
-  currentOwnerGuid: bigint,
-  newOwner: RawSigner,
+  newOwner: KeyPair,
   chainId: string,
+  maxTimestamp: number,
 ) => {
-  const messageHash = await getChangeOwnerMessageHash(accountAddress, currentOwnerGuid, chainId);
+  const messageHash = await getChangeOwnerMessageHash(accountAddress, chainId, newOwner.guid, maxTimestamp);
   return newOwner.signRaw(messageHash);
 };
 
-export const getChangeOwnerMessageHash = async (accountAddress: string, currentOwnerGuid: bigint, chainId: string) => {
-  const changeOwnerSelector = hash.getSelectorFromName("change_owner");
-  return hash.computeHashOnElements([changeOwnerSelector, chainId, accountAddress, currentOwnerGuid]);
+const types = {
+  StarknetDomain: [
+    { name: "name", type: "shortstring" },
+    { name: "version", type: "shortstring" },
+    { name: "chainId", type: "shortstring" },
+    { name: "revision", type: "shortstring" },
+  ],
+  ReplaceOwnersWithOne: [
+    { name: "New owner GUID", type: "felt" },
+    { name: "Signature expiration", type: "timestamp" },
+  ],
 };
+
+interface ReplaceOwnersWithOne {
+  newOwnerGuid: bigint;
+  signatureExpiration: number;
+}
+
+function getDomain(chainId: string): StarknetDomain {
+  return {
+    name: "Replace all owners with one",
+    version: shortString.encodeShortString("1"),
+    chainId,
+    revision: TypedDataRevision.ACTIVE,
+  };
+}
+
+function getTypedData(myStruct: ReplaceOwnersWithOne, chainId: string): TypedData {
+  return {
+    types,
+    primaryType: "ReplaceOwnersWithOne",
+    domain: getDomain(chainId),
+    message: {
+      "New owner GUID": myStruct.newOwnerGuid,
+      "Signature expiration": myStruct.signatureExpiration,
+    },
+  };
+}
+
+export async function getChangeOwnerMessageHash(
+  accountAddress: string,
+  chainId: string,
+  newOwnerGuid: bigint,
+  signatureExpiration: number,
+) {
+  return typedData.getMessageHash(getTypedData({ newOwnerGuid, signatureExpiration }, chainId), accountAddress);
+}
 
 export async function hasOngoingEscape(accountContract: Contract): Promise<boolean> {
   const escape = await accountContract.get_escape();

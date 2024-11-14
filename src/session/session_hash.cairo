@@ -1,6 +1,6 @@
 use argent::offchain_message::{
-    precalculated_hashing::get_message_hash_rev_1_with_precalc,
-    interface::{StarknetDomain, StructHashStarknetDomain, IMerkleLeafHash, IStructHashRev1, IOffChainMessageHashRev1},
+    interface::{StarknetDomain, StructHashStarknetDomain, IMerkleLeafHash, IStructHashRev1, IOffChainMessageHashRev1,},
+    precalculated_hashing::get_message_hash_rev_1_with_precalc
 };
 use argent::session::interface::Session;
 use hash::{HashStateExTrait, HashStateTrait};

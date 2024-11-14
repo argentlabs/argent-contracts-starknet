@@ -273,7 +273,6 @@ mod ArgentAccount {
             assert_only_self();
             self.upgrade_storage();
 
-            // Is it normal that this is in the "Internal Trait"?
             self.upgrade.complete_upgrade(new_implementation);
 
             if data.is_empty() {

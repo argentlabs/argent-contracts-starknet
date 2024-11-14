@@ -18,7 +18,7 @@ import {
   deployAccount,
   deployAccountWithGuardianBackup,
   deployAccountWithoutGuardian,
-  deployOldAccount,
+  deployOldAccountWithProxy,
   expectEvent,
   expectRevertWithErrorMessage,
   getEscapeStatus,
@@ -248,7 +248,7 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     it("Cancel escape when upgrading", async function () {
-      const { account, owner, guardian } = await deployOldAccount();
+      const { account, owner, guardian } = await deployOldAccountWithProxy();
       account.signer = new LegacyMultisigSigner([guardian]);
 
       await manager.setTime(randomTime);
@@ -270,7 +270,7 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     it("Clear expired escape when upgrading", async function () {
-      const { account, owner, guardian } = await deployOldAccount();
+      const { account, owner, guardian } = await deployOldAccountWithProxy();
       account.signer = new LegacyMultisigSigner([guardian]);
 
       await manager.setTime(randomTime);

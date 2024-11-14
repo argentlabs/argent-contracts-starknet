@@ -245,14 +245,6 @@ mod ArgentAccount {
             assert_only_self();
             self.upgrade_storage();
 
-            let implementation_storage_address = selector!("_implementation").try_into().unwrap();
-            let implementation = storage_read_syscall(0, implementation_storage_address).unwrap_syscall();
-
-            if implementation != Zeroable::zero() {
-                replace_class_syscall(implementation.try_into().unwrap()).expect('argent/invalid-after-upgrade');
-                storage_write_syscall(0, implementation_storage_address, 0).unwrap_syscall();
-            }
-
             if data.is_empty() {
                 return array![];
             }
@@ -782,6 +774,14 @@ mod ArgentAccount {
         }
 
         fn upgrade_storage(ref self: ContractState) {
+            let implementation_storage_address = selector!("_implementation").try_into().unwrap();
+            let implementation = storage_read_syscall(0, implementation_storage_address).unwrap_syscall();
+
+            if implementation != Zeroable::zero() {
+                replace_class_syscall(implementation.try_into().unwrap()).expect('argent/invalid-after-upgrade');
+                storage_write_syscall(0, implementation_storage_address, 0).unwrap_syscall();
+            }
+
             let signer_storage_address = selector!("_signer").try_into().unwrap();
             let signer_to_migrate = storage_read_syscall(0, signer_storage_address).unwrap_syscall();
             // As we come from a version that has a _signer slot

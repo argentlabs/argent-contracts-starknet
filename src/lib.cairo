@@ -34,10 +34,6 @@ mod outside_execution {
     mod outside_execution_hash;
 }
 
-mod presets {
-    mod multisig_account;
-}
-
 mod recovery {
     mod interface;
 }
@@ -45,6 +41,10 @@ mod recovery {
 mod external_recovery {
     mod external_recovery;
     mod interface;
+}
+
+mod presets {
+    mod multisig_account;
 }
 
 mod multiowner_account {

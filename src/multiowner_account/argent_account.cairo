@@ -240,7 +240,7 @@ mod ArgentAccount {
     #[abi(embed_v0)]
     impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
         // Called when coming from account 0.2.3 < X < 0.4.0
-        fn execute_after_upgrade(ref self: ContractState, mut data: Array<felt252>) -> Array<felt252> {
+        fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
             self.upgrade_storage();
 

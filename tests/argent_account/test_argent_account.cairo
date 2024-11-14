@@ -5,7 +5,7 @@ use argent::multiowner_account::{
 use argent::recovery::EscapeStatus;
 use argent::signer::signer_signature::{
     StarknetSigner, Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait,
-    starknet_signer_from_pubkey,
+    starknet_signer_from_pubkey, Secp256k1Signer, Eip191Signer
 };
 
 use hash::{HashStateTrait, HashStateExTrait};
@@ -377,3 +377,21 @@ fn cant_call_validate() {
     account.__validate__(array![]);
 }
 
+#[test]
+#[should_panic(expected: ('argent/zero-pubkey-hash',))]
+fn test_signer_secp256k1_wrong_pubkey_hash() {
+    let account = initialize_account();
+
+    let x = Signer::Secp256k1(Secp256k1Signer { pubkey_hash: 0.try_into().unwrap() });
+    account.trigger_escape_owner(x);
+}
+
+
+#[test]
+#[should_panic(expected: ('argent/zero-eth-EthAddress',))]
+fn test_signer_eip191Signer_wrong_pubkey_hash() {
+    let account = initialize_account();
+
+    let x = Signer::Eip191(Eip191Signer { eth_address: 0.try_into().unwrap() });
+    account.trigger_escape_owner(x);
+}

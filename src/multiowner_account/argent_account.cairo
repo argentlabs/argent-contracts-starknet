@@ -782,6 +782,12 @@ mod ArgentAccount {
                 storage_write_syscall(0, implementation_storage_address, 0).unwrap_syscall();
             }
 
+            let owner_escape_attempts_storage_address = selector!("owner_escape_attempts").try_into().unwrap();
+            storage_write_syscall(0, owner_escape_attempts_storage_address, 0).unwrap_syscall();
+
+            let guardian_escape_attempts_storage_address = selector!("guardian_escape_attempts").try_into().unwrap();
+            storage_write_syscall(0, guardian_escape_attempts_storage_address, 0).unwrap_syscall();
+
             let signer_storage_address = selector!("_signer").try_into().unwrap();
             let signer_to_migrate = storage_read_syscall(0, signer_storage_address).unwrap_syscall();
             // As we come from a version that has a _signer slot

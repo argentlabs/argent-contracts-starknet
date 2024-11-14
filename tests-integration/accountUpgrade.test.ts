@@ -20,38 +20,38 @@ describe("ArgentAccount: upgrade", function () {
 
   // TODO check what fixture is still useful
 
-  const data: any[] = [];
+  const upgradeData: any[] = [];
   before(async () => {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
     mockDapp = await manager.deployContract("MockDapp");
     const ca1 = await manager.declareArtifactContract(
       "/account-0.3.0-0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003/ArgentAccount",
     );
-    data.push({
-      deployFn: async () => deployLegacyAccount(ca1),
+    upgradeData.push({
+      deployAccount: async () => deployLegacyAccount(ca1),
       newOwner: 12,
       newGuardian: 12,
-      signerFn: (x: any) => x,
+      toSigner: (x: any) => x,
     });
 
     const ca2 = await manager.declareArtifactContract(
       "/account-0.3.1-0x29927c8af6bccf3f6fda035981e765a7bdbf18a2dc0d630494f8758aa908e2b/ArgentAccount",
     );
-    data.push({
-      deployFn: async () => deployLegacyAccount(ca2),
+    upgradeData.push({
+      deployAccount: async () => deployLegacyAccount(ca2),
       newOwner: 12,
       newGuardian: 12,
-      signerFn: (x: any) => x,
+      toSigner: (x: any) => x,
     });
 
     const ca3 = await manager.declareArtifactContract(
       "/account-0.4.0-0x036078334509b514626504edc9fb252328d1a240e4e948bef8d0c08dff45927f/ArgentAccount",
     );
-    data.push({
-      deployFn: async () => deployAccount({ classHash: ca3 }),
+    upgradeData.push({
+      deployAccount: async () => deployAccount({ classHash: ca3 }),
       newOwner: randomStarknetKeyPair().compiledSigner,
       newGuardian: new CairoOption(CairoOptionVariant.None),
-      signerFn: (x: any) => new ArgentSigner(x),
+      toSigner: (x: any) => new ArgentSigner(x),
     });
   });
 
@@ -75,20 +75,19 @@ describe("ArgentAccount: upgrade", function () {
 
   it("Waiting data to be filled", function () {
     describe("Upgrade to latest version", function () {
-      for (const { deployFn, newOwner, newGuardian, signerFn } of data) {
+      for (const { deployAccount, newOwner, newGuardian, toSigner } of upgradeData) {
         describe(`Upgrading`, function () {
           it("Should be possible to upgrade", async function () {
-            const { account } = await deployFn();
+            const { account } = await deployAccount();
             await upgradeAccount(account, argentAccountClassHash);
             expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
           });
 
-          // For the added complexity it probably isn't worth to test this for each upgrade
           it("Should be possible to upgrade if an owner escape is ongoing", async function () {
-            const { account, accountContract, guardian } = await deployFn();
+            const { account, accountContract, guardian } = await deployAccount();
 
             const oldSigner = account.signer;
-            account.signer = signerFn(guardian);
+            account.signer = toSigner(guardian);
             await accountContract.trigger_escape_owner(newOwner);
 
             account.signer = oldSigner;
@@ -99,10 +98,10 @@ describe("ArgentAccount: upgrade", function () {
           });
 
           it("Should be possible to upgrade if a guardian escape is ongoing", async function () {
-            const { account, accountContract, owner } = await deployFn();
+            const { account, accountContract, owner } = await deployAccount();
 
             const oldSigner = account.signer;
-            account.signer = signerFn(owner);
+            account.signer = toSigner(owner);
 
             await accountContract.trigger_escape_guardian(newGuardian);
 

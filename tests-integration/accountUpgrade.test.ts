@@ -71,43 +71,41 @@ describe("ArgentAccount: upgrade", function () {
     await mockDapp.get_number(account.address).should.eventually.equal(42n);
   });
 
-  it("Waiting data to be filled", function () {
+  it("Waiting for upgradeData to be filled", function () {
     describe("Upgrade to latest version", function () {
       for (const { deployAccount, newOwner, newGuardian, toSigner } of upgradeData) {
-        describe(`Upgrading`, function () {
-          it("Should be possible to upgrade", async function () {
-            const { account } = await deployAccount();
-            await upgradeAccount(account, argentAccountClassHash);
-            expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+        it("Should be possible to upgrade", async function () {
+          const { account } = await deployAccount();
+          await upgradeAccount(account, argentAccountClassHash);
+          expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+        });
+
+        it("Should be possible to upgrade if an owner escape is ongoing", async function () {
+          const { account, accountContract, guardian } = await deployAccount();
+
+          const oldSigner = account.signer;
+          account.signer = toSigner(guardian);
+          await accountContract.trigger_escape_owner(newOwner);
+
+          account.signer = oldSigner;
+          await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
+            from_address: account.address,
+            eventName: "EscapeCanceled",
           });
+        });
 
-          it("Should be possible to upgrade if an owner escape is ongoing", async function () {
-            const { account, accountContract, guardian } = await deployAccount();
+        it("Should be possible to upgrade if a guardian escape is ongoing", async function () {
+          const { account, accountContract, owner } = await deployAccount();
 
-            const oldSigner = account.signer;
-            account.signer = toSigner(guardian);
-            await accountContract.trigger_escape_owner(newOwner);
+          const oldSigner = account.signer;
+          account.signer = toSigner(owner);
 
-            account.signer = oldSigner;
-            await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
-              from_address: account.address,
-              eventName: "EscapeCanceled",
-            });
-          });
+          await accountContract.trigger_escape_guardian(newGuardian);
 
-          it("Should be possible to upgrade if a guardian escape is ongoing", async function () {
-            const { account, accountContract, owner } = await deployAccount();
-
-            const oldSigner = account.signer;
-            account.signer = toSigner(owner);
-
-            await accountContract.trigger_escape_guardian(newGuardian);
-
-            account.signer = oldSigner;
-            await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
-              from_address: account.address,
-              eventName: "EscapeCanceled",
-            });
+          account.signer = oldSigner;
+          await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
+            from_address: account.address,
+            eventName: "EscapeCanceled",
           });
         });
       }

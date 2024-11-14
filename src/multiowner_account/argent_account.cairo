@@ -46,7 +46,10 @@ mod ArgentAccount {
     use starknet::{
         storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, account::Call,
         SyscallResultTrait, get_tx_info, get_execution_info, replace_class_syscall,
-        storage_access::{storage_read_syscall, storage_write_syscall}
+        storage_access::{
+            storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,
+            storage_write_syscall
+        }
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -787,6 +790,36 @@ mod ArgentAccount {
 
             let guardian_escape_attempts_storage_address = selector!("guardian_escape_attempts").try_into().unwrap();
             storage_write_syscall(0, guardian_escape_attempts_storage_address, 0).unwrap_syscall();
+
+            // TODO Decide should this be here or in the "old path"?
+            // As the storage layout for the escape is changing, if there is an ongoing escape it should revert
+            // Expired escapes will be cleared
+            let old_escape_storage_base_address = storage_base_address_from_felt252(selector!("_escape"));
+            let escape_ready_at = storage_read_syscall(
+                0, storage_address_from_base_and_offset(old_escape_storage_base_address, 0)
+            )
+                .unwrap_syscall();
+
+            if escape_ready_at == 0 {
+                let escape_type = storage_read_syscall(
+                    0, storage_address_from_base_and_offset(old_escape_storage_base_address, 1)
+                )
+                    .unwrap_syscall();
+                let escape_new_signer = storage_read_syscall(
+                    0, storage_address_from_base_and_offset(old_escape_storage_base_address, 2)
+                )
+                    .unwrap_syscall();
+                assert(escape_type.is_zero(), 'argent/esc-type-not-null');
+                assert(escape_new_signer.is_zero(), 'argent/esc-new-signer-not-null');
+            } else {
+                let escape_ready_at: u64 = escape_ready_at.try_into().unwrap();
+                if get_block_timestamp() < escape_ready_at + DEFAULT_ESCAPE_SECURITY_PERIOD {
+                    // Not expired. Automatically cancelling the escape when upgrading
+                    self.emit(EscapeCanceled {});
+                }
+                // Clear the escape
+                self._escape.write(Default::default());
+            }
 
             let signer_storage_address = selector!("_signer").try_into().unwrap();
             let signer_to_migrate = storage_read_syscall(0, signer_storage_address).unwrap_syscall();

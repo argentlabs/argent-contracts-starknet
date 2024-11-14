@@ -7,14 +7,13 @@ mod MockFutureArgentMultisig {
     use argent::account::interface::{
         IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version
     };
-    use argent::external_recovery::external_recovery::IExternalRecoveryCallback;
     use argent::introspection::src5::src5_component;
-    use argent::multisig::{multisig::multisig_component};
-
-    use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait}};
-    use argent::signer_storage::{
+    use argent::multisig_account::external_recovery::external_recovery::IExternalRecoveryCallback;
+    use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
+    use argent::multisig_account::signer_storage::{
         interface::ISignerList, signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
     };
+    use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait}};
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
@@ -32,11 +31,11 @@ mod MockFutureArgentMultisig {
     // Signer storage
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
     impl SignerListInternal = signer_list_component::SignerListInternalImpl<ContractState>;
-    // Multisig management
-    component!(path: multisig_component, storage: multisig, event: MultisigEvents);
+    // Signer management
+    component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
     #[abi(embed_v0)]
-    impl Multisig = multisig_component::MultisigImpl<ContractState>;
-    impl MultisigInternal = multisig_component::MultisigInternalImpl<ContractState>;
+    impl SignerManager = signer_manager_component::SignerManagerImpl<ContractState>;
+    impl SignerManagerInternal = signer_manager_component::SignerManagerInternalImpl<ContractState>;
     // Introspection
     component!(path: src5_component, storage: src5, event: SRC5Events);
     #[abi(embed_v0)]
@@ -52,7 +51,7 @@ mod MockFutureArgentMultisig {
         #[substorage(v0)]
         signer_list: signer_list_component::Storage,
         #[substorage(v0)]
-        multisig: multisig_component::Storage,
+        signer_manager: signer_manager_component::Storage,
         #[substorage(v0)]
         src5: src5_component::Storage,
         #[substorage(v0)]
@@ -65,7 +64,7 @@ mod MockFutureArgentMultisig {
         #[flat]
         SignerListEvents: signer_list_component::Event,
         #[flat]
-        MultisigEvents: multisig_component::Event,
+        SignerManagerEvents: signer_manager_component::Event,
         #[flat]
         SRC5Events: src5_component::Event,
         #[flat]
@@ -74,7 +73,7 @@ mod MockFutureArgentMultisig {
 
     #[constructor]
     fn constructor(ref self: ContractState, threshold: usize, signers: Array<Signer>) {
-        self.multisig.initialize(threshold, signers);
+        self.signer_manager.initialize(threshold, signers);
     }
 
     #[abi(embed_v0)]
@@ -91,10 +90,10 @@ mod MockFutureArgentMultisig {
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
             if self
-                .multisig
+                .signer_manager
                 .is_valid_signature_with_threshold(
                     hash: hash,
-                    threshold: self.multisig.threshold.read(),
+                    threshold: self.signer_manager.threshold.read(),
                     signer_signatures: parse_signature_array(signature.span())
                 ) {
                 VALIDATED
@@ -148,7 +147,7 @@ mod MockFutureArgentMultisig {
             assert(current_version.major == 0 && current_version.minor == 2, 'argent/invalid-from-version');
             assert(data.len() == 0, 'argent/unexpected-data');
             self.upgrade.complete_upgrade(new_implementation);
-            self.multisig.assert_valid_storage();
+            self.signer_manager.assert_valid_storage();
         }
     }
 
@@ -156,10 +155,10 @@ mod MockFutureArgentMultisig {
     impl Private of PrivateTrait {
         fn assert_valid_signatures(self: @ContractState, execution_hash: felt252, signature: Span<felt252>) {
             let valid = self
-                .multisig
+                .signer_manager
                 .is_valid_signature_with_threshold(
                     hash: execution_hash,
-                    threshold: self.multisig.threshold.read(),
+                    threshold: self.signer_manager.threshold.read(),
                     signer_signatures: parse_signature_array(signature)
                 );
             assert(valid, 'argent/invalid-signature');

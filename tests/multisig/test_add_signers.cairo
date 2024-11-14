@@ -1,6 +1,6 @@
-use argent::multisig::multisig::multisig_component;
+use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
+use argent::multisig_account::signer_storage::signer_list::signer_list_component;
 use argent::signer::signer_signature::{SignerTrait};
-use argent::signer_storage::signer_list::signer_list_component;
 use snforge_std::{spy_events, EventSpyAssertionsTrait, EventSpyTrait};
 use super::super::{SIGNER_1, SIGNER_2, ITestArgentMultisigDispatcherTrait, initialize_multisig_with_one_signer};
 
@@ -35,7 +35,9 @@ fn add_signers() {
     ];
     spy.assert_emitted(@events);
 
-    let event = multisig_component::Event::ThresholdUpdated(multisig_component::ThresholdUpdated { new_threshold: 2 });
+    let event = signer_manager_component::Event::ThresholdUpdated(
+        signer_manager_component::ThresholdUpdated { new_threshold: 2 }
+    );
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
 
     assert_eq!(spy.get_events().events.len(), 3);

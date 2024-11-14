@@ -1,10 +1,10 @@
-use argent::external_recovery::{
+use argent::mocks::recovery_mocks::ExternalRecoveryMock;
+use argent::multisig_account::external_recovery::{
     interface::{IExternalRecoveryDispatcher, IExternalRecoveryDispatcherTrait,},
     external_recovery::{external_recovery_component, EscapeCall, get_escape_call_hash}
 };
-use argent::mocks::recovery_mocks::ExternalRecoveryMock;
-use argent::multisig::interface::{IArgentMultisigDispatcher, IArgentMultisigDispatcherTrait};
-use argent::recovery::interface::EscapeStatus;
+use argent::multisig_account::signer_manager::interface::{ISignerManagerDispatcher, ISignerManagerDispatcherTrait};
+use argent::recovery::EscapeStatus;
 use argent::signer::signer_signature::Signer;
 use argent::utils::serialization::serialize;
 use snforge_std::{
@@ -18,16 +18,16 @@ fn GUARDIAN() -> ContractAddress {
     contract_address_const::<'guardian'>()
 }
 
-fn setup() -> (IExternalRecoveryDispatcher, IArgentMultisigDispatcher) {
+fn setup() -> (IExternalRecoveryDispatcher, ISignerManagerDispatcher) {
     let (contract_address, _) = declare("ExternalRecoveryMock")
         .expect('Fail depl ExternalRecoveryMock')
         .contract_class()
         .deploy(@array![])
         .expect('Deployment failed');
     start_cheat_caller_address_global(contract_address);
-    IArgentMultisigDispatcher { contract_address }.add_signers(2, array![SIGNER_1(), SIGNER_2()]);
+    ISignerManagerDispatcher { contract_address }.add_signers(2, array![SIGNER_1(), SIGNER_2()]);
     IExternalRecoveryDispatcher { contract_address }.toggle_escape(true, (10 * 60), (10 * 60), GUARDIAN());
-    (IExternalRecoveryDispatcher { contract_address }, IArgentMultisigDispatcher { contract_address })
+    (IExternalRecoveryDispatcher { contract_address }, ISignerManagerDispatcher { contract_address })
 }
 
 // Toggle

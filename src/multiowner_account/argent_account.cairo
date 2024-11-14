@@ -12,12 +12,14 @@ mod ArgentAccount {
         EscapeSecurityPeriodChanged,
     };
     use argent::multiowner_account::owner_manager::{IOwnerManager, IOwnerManagerCallback, owner_manager_component};
+    use argent::multiowner_account::recovery::{LegacyEscape, LegacyEscapeType};
     use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
     use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
     };
-    use argent::recovery::interface::{LegacyEscape, LegacyEscapeDefault, LegacyEscapeType, EscapeStatus};
+    use argent::recovery::EscapeStatus;
+
     use argent::session::{
         interface::ISessionCallback, session::{session_component::{Internal, InternalTrait}, session_component}
     };

@@ -1,5 +1,6 @@
 use argent::account::interface::Version;
-use argent::recovery::interface::{LegacyEscape, EscapeStatus};
+use argent::multiowner_account::recovery::{LegacyEscape};
+use argent::recovery::{EscapeStatus};
 use argent::signer::signer_signature::{Signer, SignerType, SignerSignature};
 
 #[starknet::interface]

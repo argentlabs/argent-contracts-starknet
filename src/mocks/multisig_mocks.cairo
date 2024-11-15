@@ -4,14 +4,14 @@
 /// functionality of this contract for any production. 🚨
 #[starknet::contract]
 mod MultisigMock {
-    use argent::multisig::multisig::multisig_component;
-    use argent::signer_storage::signer_list::signer_list_component;
+    use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
+    use argent::multisig_account::signer_storage::signer_list::signer_list_component;
 
-    component!(path: multisig_component, storage: multisig, event: MultisigEvents);
+    component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
     #[abi(embed_v0)]
-    impl Multisig = multisig_component::MultisigImpl<ContractState>;
+    impl SignerManager = signer_manager_component::SignerManagerImpl<ContractState>;
     #[abi(embed_v0)]
-    impl MultisigInternal = multisig_component::MultisigInternalImpl<ContractState>;
+    impl SignerManagerInternal = signer_manager_component::SignerManagerInternalImpl<ContractState>;
 
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
     impl SignerListInternal = signer_list_component::SignerListInternalImpl<ContractState>;
@@ -21,13 +21,13 @@ mod MultisigMock {
         #[substorage(v0)]
         signer_list: signer_list_component::Storage,
         #[substorage(v0)]
-        multisig: multisig_component::Storage,
+        signer_manager: signer_manager_component::Storage,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
         SignerListEvents: signer_list_component::Event,
-        MultisigEvents: multisig_component::Event,
+        SignerManagerEvents: signer_manager_component::Event,
     }
 }

@@ -1,5 +1,7 @@
 use argent::account::interface::Version;
-use argent::recovery::interface::{LegacyEscape, EscapeStatus};
+use argent::multiowner_account::recovery::{LegacyEscape};
+use argent::recovery::{EscapeStatus};
+
 use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
 use argent::utils::serialization::serialize;
 use snforge_std::{declare, ContractClassTrait, start_cheat_caller_address_global, DeclareResultTrait};
@@ -15,6 +17,9 @@ trait ITestArgentAccount<TContractState> {
     fn is_valid_signature(self: @TContractState, hash: felt252, signature: Array<felt252>) -> felt252;
 
     // External
+    fn replace_all_owners_with_one(
+        ref self: TContractState, new_single_owner: SignerSignature, signature_expiration: u64
+    );
     fn change_guardian(ref self: TContractState, new_guardian: Option<Signer>);
     fn change_guardian_backup(ref self: TContractState, new_guardian_backup: Option<Signer>);
     fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);

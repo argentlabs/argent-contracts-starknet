@@ -4,19 +4,22 @@
 /// functionality of this contract for any production. 🚨
 #[starknet::contract]
 mod ExternalRecoveryMock {
-    use argent::external_recovery::{external_recovery::{external_recovery_component, IExternalRecoveryCallback}};
-    use argent::multisig::multisig::multisig_component;
-    use argent::signer_storage::signer_list::signer_list_component;
+    use argent::multisig_account::external_recovery::{
+        external_recovery::{external_recovery_component, IExternalRecoveryCallback}
+    };
+    use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
+    use argent::multisig_account::signer_storage::signer_list::signer_list_component;
     use argent::utils::calls::execute_multicall;
     use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
     component!(path: external_recovery_component, storage: escape, event: EscapeEvents);
     #[abi(embed_v0)]
     impl ExternalRecovery = external_recovery_component::ExternalRecoveryImpl<ContractState>;
 
-    component!(path: multisig_component, storage: multisig, event: MultisigEvents);
+    // Signer management
+    component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
     #[abi(embed_v0)]
-    impl Multisig = multisig_component::MultisigImpl<ContractState>;
-    impl MultisigInternal = multisig_component::MultisigInternalImpl<ContractState>;
+    impl SignerManager = signer_manager_component::SignerManagerImpl<ContractState>;
+    impl SignerManagerInternal = signer_manager_component::SignerManagerInternalImpl<ContractState>;
 
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
     impl SignerListInternal = signer_list_component::SignerListInternalImpl<ContractState>;
@@ -30,7 +33,7 @@ mod ExternalRecoveryMock {
         #[substorage(v0)]
         signer_list: signer_list_component::Storage,
         #[substorage(v0)]
-        multisig: multisig_component::Storage,
+        signer_manager: signer_manager_component::Storage,
         #[substorage(v0)]
         escape: external_recovery_component::Storage,
         #[substorage(v0)]
@@ -43,7 +46,7 @@ mod ExternalRecoveryMock {
         #[flat]
         SignerListEvents: signer_list_component::Event,
         #[flat]
-        MultisigEvents: multisig_component::Event,
+        SignerManagerEvents: signer_manager_component::Event,
         #[flat]
         EscapeEvents: external_recovery_component::Event,
         #[flat]

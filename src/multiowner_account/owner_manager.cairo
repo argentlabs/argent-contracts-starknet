@@ -123,7 +123,7 @@ mod owner_manager_component {
         TContractState, +HasComponent<TContractState>, +IOwnerManagerCallback<TContractState>, +Drop<TContractState>
     > of IOwnerManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, owner: Signer) {
-            // We prob don't want to emit any events in this case
+            // We don't want to emit any events in this case
             assert(self.get_single_owner().is_none(), 'argent/already-initialized');
             let signer_storage = owner.storage_value();
             self.owners_storage_mut().add_item(signer_storage);
@@ -158,7 +158,7 @@ mod owner_manager_component {
         }
 
         fn get_single_owner(self: @ComponentState<TContractState>) -> Option<SignerStorageValue> {
-            self.owners_storage().first()
+            self.owners_storage().single()
         }
 
         fn get_single_stark_owner_pubkey(self: @ComponentState<TContractState>) -> Option<felt252> {

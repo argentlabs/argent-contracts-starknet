@@ -40,7 +40,6 @@ interface WebauthnSigner {
 }
 
 interface WebauthnSignature {
-  cross_origin: boolean;
   client_data_json_outro: BigNumberish[];
   flags: number;
   sign_count: number;
@@ -56,6 +55,7 @@ export class WebauthnOwner extends KeyPair {
     pk?: string,
     public rpId = "localhost",
     public origin = "http://localhost:5173",
+    public useCairo0Sha256 = false,
   ) {
     super();
     this.pk = pk ? hex2buf(normalizeTransactionHash(pk)) : secp256r1.utils.randomPrivateKey();
@@ -102,15 +102,17 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public async signHash(transactionHash: string): Promise<WebauthnSignature> {
-    const flags = "0b00000101"; // present and verified
+    const flags = Number("0b00000101"); // present and verified
     const signCount = 0;
-    const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([Number(flags), 0, 0, 0, signCount]));
+    const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([flags, 0, 0, 0, signCount]));
 
-    const sha256Impl = 0;
+    const sha256Impl = this.useCairo0Sha256 ? "0" : "1";
     const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0${sha256Impl}`));
-    const crossOrigin = false;
-    const extraJson = ""; // = `,"extraField":"random data"}`;
-    const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin, crossOrigin });
+    const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin });
+
+    // const extraJson = "";
+    const extraJson = `,"crossOrigin":false}`;
+    // const extraJson = `,"crossOrigin":false,"extraField":"random data"}`;
     const clientDataJson = extraJson ? clientData.replace(/}$/, extraJson) : clientData;
     const clientDataHash = sha256(new TextEncoder().encode(clientDataJson));
 
@@ -121,24 +123,23 @@ export class WebauthnOwner extends KeyPair {
     // console.log(`
     // let transaction_hash = ${transactionHash};
     // let pubkey = ${buf2hex(this.publicKey)};
+    // let challenge = ${challenge};
     // let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     // let signature = WebauthnSignature {
-    //     cross_origin: ${crossOrigin},
     //     client_data_json_outro: ${extraJson ? `${JSON.stringify(extraJson)}.into_bytes()` : "array![]"}.span(),
     //     flags: ${flags},
     //     sign_count: ${signCount},
     //     ec_signature: Signature {
-    //         r: 0x${r.toString(16)},
-    //         s: 0x${s.toString(16)},
-    //         y_parity: ${recovery !== 0},
+    //         r: 0x${signature.r.toString(16)},
+    //         s: 0x${signature.s.toString(16)},
+    //         y_parity: ${signature.yParity},
     //     },
     //     sha256_implementation: Sha256Implementation::Cairo${sha256Impl},
     // };`);
 
     return {
-      cross_origin: crossOrigin,
       client_data_json_outro: CallData.compile(toCharArray(extraJson)),
-      flags: Number(flags),
+      flags,
       sign_count: signCount,
       ec_signature: {
         r: uint256.bnToUint256(signature.r),
@@ -146,8 +147,8 @@ export class WebauthnOwner extends KeyPair {
         y_parity: signature.yParity,
       },
       sha256_implementation: new CairoCustomEnum({
-        Cairo0: sha256Impl ? undefined : {},
-        Cairo1: sha256Impl ? {} : undefined,
+        Cairo0: this.useCairo0Sha256 ? {} : undefined,
+        Cairo1: this.useCairo0Sha256 ? undefined : {},
       }),
     };
   }
@@ -157,4 +158,5 @@ function sha256(message: BinaryLike) {
   return createHash("sha256").update(message).digest();
 }
 
-export const randomWebauthnOwner = () => new WebauthnOwner();
+export const randomWebauthnOwner = () => new WebauthnOwner(undefined, undefined, undefined, false);
+export const randomWebauthnCairo0Owner = () => new WebauthnOwner(undefined, undefined, undefined, true);

@@ -1,5 +1,4 @@
-use argent::recovery::interface::{LegacyEscape, EscapeStatus};
-use argent::signer::signer_signature::{Signer, SignerType, SignerSignature};
+use argent::signer::signer_signature::Signer;
 use starknet::account::Call;
 
 const SRC5_ACCOUNT_INTERFACE_ID: felt252 = 0x2ceccef7f994940b3962a6c67e0ba4fcd37df7d131417c604f91e03caecc1cd;

@@ -1,3 +1,4 @@
+mod recovery;
 mod upgrade {
     mod interface;
     mod upgrade;
@@ -12,21 +13,11 @@ mod introspection {
     mod src5;
 }
 
-mod multisig {
-    mod interface;
-    mod multisig;
-    mod multisig_account;
-}
 
 mod signer {
     mod eip191;
     mod signer_signature;
     mod webauthn;
-}
-
-mod signer_storage {
-    mod interface;
-    mod signer_list;
 }
 
 mod outside_execution {
@@ -35,13 +26,22 @@ mod outside_execution {
     mod outside_execution_hash;
 }
 
-mod recovery {
-    mod interface;
-}
 
-mod external_recovery {
-    mod external_recovery;
-    mod interface;
+mod multisig_account {
+    mod multisig_account;
+    mod external_recovery {
+        mod external_recovery;
+        mod interface;
+        mod packing;
+    }
+    mod signer_manager {
+        mod interface;
+        mod signer_manager;
+    }
+    mod signer_storage {
+        mod interface;
+        mod signer_list;
+    }
 }
 
 mod multiowner_account {
@@ -49,6 +49,8 @@ mod multiowner_account {
     mod argent_account;
     mod events;
     mod owner_manager;
+    mod recovery;
+    mod replace_owners_message;
 }
 
 mod utils {

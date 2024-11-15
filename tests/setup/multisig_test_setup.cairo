@@ -1,5 +1,5 @@
 use argent::account::interface::Version;
-use argent::multisig::multisig_account::ArgentMultisigAccount;
+use argent::multisig_account::multisig_account::ArgentMultisigAccount;
 use argent::signer::signer_signature::{Signer, SignerSignature};
 use snforge_std::{declare, ContractClassTrait, ContractClass, start_cheat_caller_address_global, DeclareResultTrait};
 use starknet::account::Call;
@@ -7,12 +7,11 @@ use super::super::{SIGNER_1, SIGNER_2, SIGNER_3};
 
 #[starknet::interface]
 trait ITestArgentMultisig<TContractState> {
-    // IAccount
+    // IAccount & IArgentAccount
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
     fn is_valid_signature(self: @TContractState, hash: felt252, signature: Array<felt252>) -> felt252;
-    // IArgentMultisig
     fn __validate_deploy__(
         self: @TContractState,
         class_hash: felt252,

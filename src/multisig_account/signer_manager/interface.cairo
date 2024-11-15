@@ -2,7 +2,7 @@ use argent::signer::signer_signature::{Signer, SignerSignature};
 use starknet::{ContractAddress, account::Call};
 
 #[starknet::interface]
-trait IArgentMultisig<TContractState> {
+trait ISignerManager<TContractState> {
     /// @notice Change threshold
     /// @dev will revert if invalid threshold
     /// @param new_threshold New threshold
@@ -43,7 +43,7 @@ trait IArgentMultisig<TContractState> {
 }
 
 #[starknet::interface]
-trait IArgentMultisigInternal<TContractState> {
+trait ISignerManagerInternal<TContractState> {
     fn initialize(ref self: TContractState, threshold: usize, signers: Array<Signer>);
     fn assert_valid_threshold_and_signers_count(self: @TContractState, threshold: usize, signers_len: usize);
     fn assert_valid_storage(self: @TContractState);

@@ -5,7 +5,7 @@ import {
   ContractWithClass,
   deployAccount,
   deployLegacyAccount,
-  deployOldAccount,
+  deployOldAccountWithProxy,
   expectEvent,
   expectRevertWithErrorMessage,
   getUpgradeDataLegacy,
@@ -54,14 +54,14 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Upgrade cairo 0 to current version", async function () {
-    const { account } = await deployOldAccount();
+    const { account } = await deployOldAccountWithProxy();
     await upgradeAccount(account, argentAccountClassHash, ["0"]);
     const newClashHash = await manager.getClassHashAt(account.address);
     expect(BigInt(newClashHash)).to.equal(BigInt(argentAccountClassHash));
   });
 
   it("Upgrade cairo 0 to cairo 1 with multicall", async function () {
-    const { account } = await deployOldAccount();
+    const { account } = await deployOldAccountWithProxy();
     await upgradeAccount(
       account,
       argentAccountClassHash,

@@ -10,6 +10,7 @@ import {
   randomEthKeyPair,
   randomSecp256r1KeyPair,
   randomStarknetKeyPair,
+  randomWebauthnCairo0Owner,
   randomWebauthnOwner,
 } from "../lib";
 
@@ -31,6 +32,7 @@ describe("ArgentAccount: Signers types", function () {
     { name: "Secp256r1 signature", keyPair: randomSecp256r1KeyPair },
     { name: "Eip191 signature", keyPair: randomEip191KeyPair },
     { name: "Webauthn signature", keyPair: randomWebauthnOwner },
+    { name: "Webauthn signature (cairo0)", keyPair: randomWebauthnCairo0Owner },
   ];
 
   before(async () => {

@@ -248,7 +248,7 @@ mod ArgentAccount {
         // But v0.3.0+ is guaranteed to call it
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
-            self.upgrade_storage();
+            self.migrate_from_before_0_4_0();
 
             if data.is_empty() {
                 return array![];
@@ -269,7 +269,7 @@ mod ArgentAccount {
         // Called when coming from account 0.4.0+
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
             assert_only_self();
-            self.upgrade_storage();
+            self.migrate_from_0_4_0();
 
             self.upgrade.complete_upgrade(new_implementation);
 
@@ -324,6 +324,13 @@ mod ArgentAccount {
         }
     }
 
+    fn lama() {
+        let boxed_1 = BoxTrait::new(1);
+        let boxed_2 = BoxTrait::new(2);
+        let mut arr = array![boxed_1, boxed_2];
+
+        arr[0].unbox();
+    }
 
     #[abi(embed_v0)]
     impl ArgentMultiOwnerAccountImpl of IArgentMultiOwnerAccount<ContractState> {
@@ -778,38 +785,17 @@ mod ArgentAccount {
             self.assert_valid_span_signature(execution_hash, signer_signatures.span());
         }
 
-        fn upgrade_storage(ref self: ContractState) {
-            let implementation_storage_address = selector!("_implementation").try_into().unwrap();
-            let implementation = storage_read_syscall(0, implementation_storage_address).unwrap_syscall();
-
-            if implementation != Zeroable::zero() {
-                replace_class_syscall(implementation.try_into().unwrap()).expect('argent/invalid-after-upgrade');
-                storage_write_syscall(0, implementation_storage_address, 0).unwrap_syscall();
-            }
-
-            let owner_escape_attempts_storage_address = selector!("owner_escape_attempts").try_into().unwrap();
-            storage_write_syscall(0, owner_escape_attempts_storage_address, 0).unwrap_syscall();
-
-            let guardian_escape_attempts_storage_address = selector!("guardian_escape_attempts").try_into().unwrap();
-            storage_write_syscall(0, guardian_escape_attempts_storage_address, 0).unwrap_syscall();
-
-            // TODO Decide should this be here or in the "old path"?
+        fn migrate_from_before_0_4_0(ref self: ContractState) {
             // As the storage layout for the escape is changing, if there is an ongoing escape it should revert
             // Expired escapes will be cleared
-            let old_escape_storage_base_address = storage_base_address_from_felt252(selector!("_escape"));
-            let escape_ready_at = storage_read_syscall(
-                0, storage_address_from_base_and_offset(old_escape_storage_base_address, 0)
-            )
+            let escape_base = storage_base_address_from_felt252(selector!("_escape"));
+            let escape_ready_at = storage_read_syscall(0, storage_address_from_base_and_offset(escape_base, 0))
                 .unwrap_syscall();
 
             if escape_ready_at == 0 {
-                let escape_type = storage_read_syscall(
-                    0, storage_address_from_base_and_offset(old_escape_storage_base_address, 1)
-                )
+                let escape_type = storage_read_syscall(0, storage_address_from_base_and_offset(escape_base, 1))
                     .unwrap_syscall();
-                let escape_new_signer = storage_read_syscall(
-                    0, storage_address_from_base_and_offset(old_escape_storage_base_address, 2)
-                )
+                let escape_new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(escape_base, 2))
                     .unwrap_syscall();
                 assert(escape_type.is_zero(), 'argent/esc-type-not-null');
                 assert(escape_new_signer.is_zero(), 'argent/esc-new-signer-not-null');
@@ -823,6 +809,45 @@ mod ArgentAccount {
                 self._escape.write(Default::default());
             }
 
+            // Cleaning attempts storage as the escape was cleared
+            let guardian_escape_attempts_storage_address = selector!("guardian_escape_attempts").try_into().unwrap();
+            storage_write_syscall(0, guardian_escape_attempts_storage_address, 0).unwrap_syscall();
+            let owner_escape_attempts_storage_address = selector!("owner_escape_attempts").try_into().unwrap();
+            storage_write_syscall(0, owner_escape_attempts_storage_address, 0).unwrap_syscall();
+
+            // Check basic invariants and emit missing events
+            let owner_key_storage_address = selector!("_signer").try_into().unwrap();
+            let owner_key = storage_read_syscall(0, owner_key_storage_address).unwrap_syscall();
+            let guardian_key = self._guardian.read();
+            let guardian_backup_key = self._guardian_backup.read();
+            assert(owner_key != 0, 'argent/null-owner');
+            if guardian_key == 0 {
+                assert(guardian_backup_key == 0, 'argent/backup-should-be-null');
+            } else {
+                let guardian = starknet_signer_from_pubkey(guardian_key);
+                self.emit(SignerLinked { signer_guid: guardian.into_guid(), signer: guardian });
+                if guardian_backup_key != 0 {
+                    let guardian_backup = starknet_signer_from_pubkey(guardian_backup_key);
+                    self.emit(SignerLinked { signer_guid: guardian_backup.into_guid(), signer: guardian_backup });
+                }
+            }
+
+            let owner = starknet_signer_from_pubkey(owner_key);
+            self.emit(SignerLinked { signer_guid: owner.into_guid(), signer: owner });
+
+            let implementation_storage_address = selector!("_implementation").try_into().unwrap();
+            let implementation = storage_read_syscall(0, implementation_storage_address).unwrap_syscall();
+
+            if implementation != Zeroable::zero() {
+                replace_class_syscall(implementation.try_into().unwrap()).expect('argent/invalid-after-upgrade');
+                storage_write_syscall(0, implementation_storage_address, 0).unwrap_syscall();
+            }
+
+            self.migrate_from_0_4_0();
+        }
+
+        fn migrate_from_0_4_0(ref self: ContractState) {
+            // TODO remove proxy slots?
             let signer_storage_address = selector!("_signer").try_into().unwrap();
             let signer_to_migrate = storage_read_syscall(0, signer_storage_address).unwrap_syscall();
             // As we come from a version that has a _signer slot
@@ -833,6 +858,8 @@ mod ArgentAccount {
             // Reset _signer storage
             storage_write_syscall(0, signer_storage_address, 0).unwrap_syscall();
 
+            // Health check
+            // Should we check if _signer_non_stark is empty?
             let guardian_key = self._guardian.read();
             let guardian_backup_key = self._guardian_backup.read();
             if guardian_key == 0 {

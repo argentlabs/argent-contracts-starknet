@@ -156,10 +156,10 @@ fn test_next() {
     let signer_storage2 = owner2.storage_value();
     linked_set.add_item(signer_storage2);
 
-    let next = linked_set.next(signer_storage1).unwrap();
+    let next = linked_set.next(signer_storage1.id()).unwrap();
     assert_eq!(next.id(), signer_storage2.id());
 
-    assert!(linked_set.next(signer_storage2).is_none(), "Next of last item should be None");
+    assert!(linked_set.next(signer_storage2.id()).is_none(), "Next of last item should be None");
 }
 
 #[test]

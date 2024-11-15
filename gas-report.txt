@@ -2,22 +2,22 @@ Summary:
 ┌───────────────────────────────────────────────────────────────┬─────────────────────┬─────────┬────────────────┬────────────────┬─────────────────┬───────────┬──────────────┬──────────────────────────────┬───────────────┬────────┬─────────┐
 │                            (index)                            │     Actual fee      │ Fee usd │ Fee without DA │ Gas without DA │ Computation gas │ Event gas │ Calldata gas │ Max computation per Category │ Storage diffs │ DA fee │ DA mode │
 ├───────────────────────────────────────────────────────────────┼─────────────────────┼─────────┼────────────────┼────────────────┼─────────────────┼───────────┼──────────────┼──────────────────────────────┼───────────────┼────────┼─────────┤
-│                     Deploy - No guardian                      │  '144.000.000.224'  │ 0.00034 │  144000000000  │       24       │       22        │     2     │     NaN      │           'steps'            │       3       │  224   │ 'BLOB'  │
-│                    Deploy - With guardian                     │  '168.000.000.288'  │ 0.0004  │  168000000000  │       28       │       25        │     3     │     NaN      │           'steps'            │       4       │  288   │ 'BLOB'  │
+│                     Deploy - No guardian                      │  '126.000.000.224'  │ 0.0003  │  126000000000  │       21       │       20        │     1     │     NaN      │           'steps'            │       3       │  224   │ 'BLOB'  │
+│                    Deploy - With guardian                     │  '150.000.000.288'  │ 0.00036 │  150000000000  │       25       │       22        │     2     │     NaN      │           'steps'            │       4       │  288   │ 'BLOB'  │
 │                          Deploy - OZ                          │  '90.000.000.288'   │ 0.00021 │  90000000000   │       15       │       15        │     1     │     NaN      │           'steps'            │       4       │  288   │ 'BLOB'  │
 │             Transfer - Old account with guardian              │  '168.000.000.192'  │ 0.0004  │  168000000000  │       28       │       26        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
-│                    Transfer - No guardian                     │  '162.000.000.192'  │ 0.00038 │  162000000000  │       27       │       25        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
-│                   Transfer - With guardian                    │  '180.000.000.192'  │ 0.00043 │  180000000000  │       30       │       26        │     2     │      2       │           'steps'            │       3       │  192   │ 'BLOB'  │
-│                    Transfer - With Session                    │  '228.000.000.192'  │ 0.00054 │  228000000000  │       38       │       32        │     2     │      4       │           'steps'            │       3       │  192   │ 'BLOB'  │
+│                    Transfer - No guardian                     │  '168.000.000.192'  │ 0.0004  │  168000000000  │       28       │       25        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
+│                   Transfer - With guardian                    │  '180.000.000.192'  │ 0.00043 │  180000000000  │       30       │       27        │     2     │      2       │           'steps'            │       3       │  192   │ 'BLOB'  │
+│                    Transfer - With Session                    │  '228.000.000.192'  │ 0.00054 │  228000000000  │       38       │       33        │     2     │      4       │           'steps'            │       3       │  192   │ 'BLOB'  │
 │         Transfer - With Session - Caching Values (1)          │  '234.000.000.256'  │ 0.00056 │  234000000000  │       39       │       34        │     2     │      4       │           'steps'            │       4       │  256   │ 'BLOB'  │
 │             Transfer - With Session - Cached (2)              │  '204.000.000.192'  │ 0.00048 │  204000000000  │       34       │       30        │     2     │      3       │           'steps'            │       3       │  192   │ 'BLOB'  │
 │ Transfer - With Session (Webauthn owner) - Caching Values (1) │ '7.488.000.000.256' │ 0.01797 │ 7488000000000  │      1248      │      1236       │     2     │      11      │        'range_check'         │       4       │  256   │ 'BLOB'  │
 │     Transfer - With Session (Webauthn owner) - Cached (2)     │  '204.000.000.192'  │ 0.00048 │  204000000000  │       34       │       30        │     2     │      3       │           'steps'            │       3       │  192   │ 'BLOB'  │
 │               Transfer - No guardian (Old Sig)                │  '174.000.000.192'  │ 0.00041 │  174000000000  │       29       │       26        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
-│              Transfer - With guardian (Old Sig)               │  '180.000.000.192'  │ 0.00043 │  180000000000  │       30       │       27        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
+│              Transfer - With guardian (Old Sig)               │  '180.000.000.192'  │ 0.00043 │  180000000000  │       30       │       28        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
 │                     Transfer - OZ account                     │  '138.000.000.192'  │ 0.00033 │  138000000000  │       23       │       21        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
 │               Transfer - Eth sig with guardian                │ '3.594.000.000.192' │ 0.00862 │ 3594000000000  │      599       │       596       │     2     │      2       │        'range_check'         │       3       │  192   │ 'BLOB'  │
-│              Transfer - Secp256r1 with guardian               │ '6.900.000.000.192' │ 0.01656 │ 6900000000000  │      1150      │      1147       │     2     │      2       │        'range_check'         │       3       │  192   │ 'BLOB'  │
+│              Transfer - Secp256r1 with guardian               │ '6.906.000.000.192' │ 0.01657 │ 6906000000000  │      1151      │      1148       │     2     │      2       │        'range_check'         │       3       │  192   │ 'BLOB'  │
 │                Transfer - Eip161 with guardian                │ '3.636.000.000.192' │ 0.00872 │ 3636000000000  │      606       │       603       │     2     │      2       │        'range_check'         │       3       │  192   │ 'BLOB'  │
 │           Transfer (cairo0) - Webauthn no guardian            │ '7.314.000.000.192' │ 0.01755 │ 7314000000000  │      1219      │      1210       │     2     │      8       │        'range_check'         │       3       │  192   │ 'BLOB'  │
 │                Transfer - Webauthn no guardian                │ '7.440.000.000.192' │ 0.01785 │ 7440000000000  │      1240      │      1231       │     2     │      8       │        'range_check'         │       3       │  192   │ 'BLOB'  │
@@ -26,23 +26,23 @@ Resources:
 ┌───────────────────────────────────────────────────────────────┬─────────┬───────┬───────┬────────┬──────────┬──────────┬─────────────┬────────┐
 │                            (index)                            │ bitwise │ ec_op │ ecdsa │ keccak │ pedersen │ poseidon │ range_check │ steps  │
 ├───────────────────────────────────────────────────────────────┼─────────┼───────┼───────┼────────┼──────────┼──────────┼─────────────┼────────┤
-│                     Deploy - No guardian                      │    0    │   3   │   0   │   0    │    37    │    8     │     261     │  8525  │
-│                    Deploy - With guardian                     │    0    │   6   │   0   │   0    │    41    │    10    │     306     │  9672  │
+│                     Deploy - No guardian                      │    0    │   3   │   0   │   0    │    34    │    7     │     238     │  7604  │
+│                    Deploy - With guardian                     │    0    │   6   │   0   │   0    │    38    │    9     │     283     │  8751  │
 │                          Deploy - OZ                          │    0    │   3   │   0   │   0    │    26    │    5     │     245     │  5938  │
 │             Transfer - Old account with guardian              │    0    │   3   │   1   │   0    │    27    │    4     │     268     │ 10249  │
-│                    Transfer - No guardian                     │    0    │   3   │   0   │   0    │    28    │    6     │     295     │  9853  │
-│                   Transfer - With guardian                    │    0    │   6   │   0   │   0    │    28    │    6     │     304     │ 10338  │
-│                    Transfer - With Session                    │    0    │  12   │   0   │   0    │    29    │    21    │     362     │ 12737  │
-│         Transfer - With Session - Caching Values (1)          │    0    │  12   │   0   │   0    │    35    │    22    │     406     │ 13228  │
-│             Transfer - With Session - Cached (2)              │    0    │   6   │   0   │   0    │    32    │    18    │     348     │ 11653  │
-│ Transfer - With Session (Webauthn owner) - Caching Values (1) │  5643   │   9   │   0   │   0    │    35    │    47    │    30883    │ 291335 │
-│     Transfer - With Session (Webauthn owner) - Cached (2)     │    0    │   6   │   0   │   0    │    32    │    17    │     348     │ 11656  │
-│               Transfer - No guardian (Old Sig)                │    0    │   3   │   0   │   0    │    30    │    7     │     305     │ 10263  │
-│              Transfer - With guardian (Old Sig)               │    0    │   6   │   0   │   0    │    30    │    7     │     314     │ 10759  │
+│                    Transfer - No guardian                     │    0    │   3   │   0   │   0    │    28    │    6     │     296     │  9931  │
+│                   Transfer - With guardian                    │    0    │   6   │   0   │   0    │    28    │    6     │     305     │ 10416  │
+│                    Transfer - With Session                    │    0    │  12   │   0   │   0    │    29    │    21    │     363     │ 12815  │
+│         Transfer - With Session - Caching Values (1)          │    0    │  12   │   0   │   0    │    35    │    22    │     407     │ 13306  │
+│             Transfer - With Session - Cached (2)              │    0    │   6   │   0   │   0    │    32    │    18    │     349     │ 11731  │
+│ Transfer - With Session (Webauthn owner) - Caching Values (1) │  5643   │   9   │   0   │   0    │    35    │    47    │    30883    │ 291407 │
+│     Transfer - With Session (Webauthn owner) - Cached (2)     │    0    │   6   │   0   │   0    │    32    │    17    │     349     │ 11734  │
+│               Transfer - No guardian (Old Sig)                │    0    │   3   │   0   │   0    │    30    │    7     │     306     │ 10372  │
+│              Transfer - With guardian (Old Sig)               │    0    │   6   │   0   │   0    │    30    │    7     │     315     │ 10868  │
 │                     Transfer - OZ account                     │    0    │   3   │   0   │   0    │    25    │    4     │     269     │  8186  │
-│               Transfer - Eth sig with guardian                │   30    │   3   │   0   │   1    │    28    │    6     │    14894    │ 166806 │
-│              Transfer - Secp256r1 with guardian               │    0    │   3   │   0   │   0    │    28    │    6     │    28674    │ 263933 │
-│                Transfer - Eip161 with guardian                │   64    │   3   │   0   │   2    │    28    │    6     │    15067    │ 167983 │
-│           Transfer (cairo0) - Webauthn no guardian            │   68    │   3   │   0   │   0    │    28    │    18    │    30248    │ 282839 │
-│                Transfer - Webauthn no guardian                │  5643   │   3   │   0   │   0    │    28    │    18    │    30759    │ 287529 │
+│               Transfer - Eth sig with guardian                │   30    │   3   │   0   │   1    │    28    │    6     │    14895    │ 166884 │
+│              Transfer - Secp256r1 with guardian               │    0    │   3   │   0   │   0    │    28    │    6     │    28676    │ 264016 │
+│                Transfer - Eip161 with guardian                │   64    │   3   │   0   │   2    │    28    │    6     │    15069    │ 168067 │
+│           Transfer (cairo0) - Webauthn no guardian            │   68    │   3   │   0   │   0    │    28    │    18    │    30249    │ 282917 │
+│                Transfer - Webauthn no guardian                │  5643   │   3   │   0   │   0    │    28    │    18    │    30760    │ 287607 │
 └───────────────────────────────────────────────────────────────┴─────────┴───────┴───────┴────────┴──────────┴──────────┴─────────────┴────────┘

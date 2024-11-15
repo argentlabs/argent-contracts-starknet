@@ -126,7 +126,7 @@ fn replace_already_signer() {
 }
 
 #[test]
-#[should_panic(expected: ('linked-set/same-item',))]
+#[should_panic(expected: ('linked-set/already-in-set',))]
 fn replace_already_same_signer() {
     // init
     let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());

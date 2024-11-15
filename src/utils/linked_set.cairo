@@ -92,8 +92,18 @@ impl LinkedSetReadImpl<T, +Drop<T>, +starknet::Store<T>, +SetItem<T>> of LinkedS
         if self.next(item_id).is_some() {
             return true;
         }
-        // check if its the latest
-        item_id != 0 && self.find_last_id() == item_id
+        // check if its the latest. This is a bit better than calling find_last_id
+        let mut current_item_id = 0;
+        loop {
+            if let Option::Some(next_item) = self.next(current_item_id) {
+                current_item_id = next_item.id();
+                if current_item_id == item_id {
+                    break true;
+                }
+            } else {
+                break false;
+            }
+        }
     }
 
     fn is_in_id_using_last(self: StorageBase<LinkedSet<T>>, item_id: felt252, last_item_id: felt252) -> bool {
@@ -104,7 +114,7 @@ impl LinkedSetReadImpl<T, +Drop<T>, +starknet::Store<T>, +SetItem<T>> of LinkedS
             return true;
         }
         // check if its the latest
-        last_item_id != 0 && self.find_last_id() == item_id
+        self.find_last_id() == item_id
     }
 
     // Return the last item id or zero when the list is empty. Cost increases with the list size

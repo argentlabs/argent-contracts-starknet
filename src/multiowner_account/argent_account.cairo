@@ -170,6 +170,8 @@ mod ArgentAccount {
     #[constructor]
     fn constructor(ref self: ContractState, owner: Signer, guardian: Option<Signer>) {
         self.owner_manager.initialize(owner);
+        let owner_guid = owner.into_guid();
+        self.emit(SignerLinked { signer_guid: owner_guid, signer: owner });
         if let Option::Some(guardian) = guardian {
             let guardian_storage_value = guardian.storage_value();
             assert(guardian_storage_value.signer_type == SignerType::Starknet, 'argent/invalid-guardian-type');

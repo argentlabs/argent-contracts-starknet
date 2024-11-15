@@ -38,10 +38,6 @@ mod multisig_account {
         mod interface;
         mod signer_manager;
     }
-    mod signer_storage {
-        mod interface;
-        mod signer_list;
-    }
 }
 
 mod multiowner_account {
@@ -73,7 +69,6 @@ mod mocks {
     mod multisig_mocks;
     mod recovery_mocks;
     mod signature_verifier;
-    mod signer_list_mocks;
     mod src5_mocks;
 }
 

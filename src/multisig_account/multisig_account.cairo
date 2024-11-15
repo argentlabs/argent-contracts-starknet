@@ -8,7 +8,6 @@ mod ArgentMultisigAccount {
     use argent::multisig_account::signer_manager::{
         signer_manager::{signer_manager_component, signer_manager_component::SignerManagerInternalImpl}
     };
-    use argent::multisig_account::signer_storage::signer_list::signer_list_component;
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
@@ -25,9 +24,6 @@ mod ArgentMultisigAccount {
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION: Version = Version { major: 0, minor: 2, patch: 0 };
 
-    // Signer storage
-    component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
-    impl SignerListInternal = signer_list_component::SignerListInternalImpl<ContractState>;
     // Signer Management
     component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
     #[abi(embed_v0)]
@@ -57,8 +53,6 @@ mod ArgentMultisigAccount {
     #[storage]
     struct Storage {
         #[substorage(v0)]
-        signer_list: signer_list_component::Storage,
-        #[substorage(v0)]
         signer_manager: signer_manager_component::Storage,
         #[substorage(v0)]
         execute_from_outside: outside_execution_component::Storage,
@@ -75,8 +69,6 @@ mod ArgentMultisigAccount {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        #[flat]
-        SignerListEvents: signer_list_component::Event,
         #[flat]
         SignerManagerEvents: signer_manager_component::Event,
         #[flat]
@@ -219,22 +211,8 @@ mod ArgentMultisigAccount {
     impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
-            // Check basic invariants
-            self.signer_manager.assert_valid_storage();
-            let pubkeys = self.signer_list.get_signers();
-            let mut pubkeys_span = pubkeys.span();
-            let mut signers_to_add = array![];
-            // Converting storage from public keys to guid
-            while let Option::Some(pubkey) = pubkeys_span.pop_front() {
-                let starknet_signer = starknet_signer_from_pubkey(*pubkey);
-                let signer_guid = starknet_signer.into_guid();
-                signers_to_add.append(signer_guid);
-                self.signer_list.emit(signer_list_component::SignerLinked { signer_guid, signer: starknet_signer });
-            };
+            self.signer_manager.migrate_from_pubkeys_to_guids();
             assert(data.len() == 0, 'argent/unexpected-data');
-            let last_signer = *pubkeys[pubkeys.len() - 1];
-            self.signer_list.remove_signers(pubkeys.span(), last_signer);
-            self.signer_list.add_signers(signers_to_add.span(), 0);
             array![]
         }
     }

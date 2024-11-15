@@ -43,6 +43,7 @@ pub trait LinkedSetRead<TMemberState> {
     fn single(self: TMemberState) -> Option<Self::Value>;
     fn next(self: TMemberState, item: Self::Value) -> Option<Self::Value>;
     fn item_id_before(self: TMemberState, item_after_id: felt252) -> felt252;
+    // Returns the set size and the last item id (or zero if empty)
     fn load(self: TMemberState) -> (usize, felt252);
     fn get_all_ids(self: TMemberState) -> Array<felt252>;
 }
@@ -52,8 +53,16 @@ pub trait LinkedSetWrite<TMemberState> {
     type Value;
     fn remove(self: TMemberState, remove_id: felt252);
     fn add_item(self: TMemberState, item: Self::Value);
-}
+    fn add_items(self: TMemberState, items_to_add: Span<Self::Value>, last_item_id: felt252);
+    fn remove_items(self: TMemberState, items_to_remove: Span<Self::Value>, last_item_id: felt252);
 
+    /// @notice Replace one item with a different one
+    /// @dev Will revert when trying to remove an item that isn't in the list
+    /// @dev Will revert when trying to add an item that is in the list or if the item is invalid
+    /// @param item_to_remove Item to remove
+    /// @param item_to_add Item to add
+    fn replace_item(self: TMemberState, item_to_remove: Self::Value, item_to_add: Self::Value);
+}
 
 impl LinkedSetReadImpl<T, +Drop<T>, +starknet::Store<T>, +SetItem<T>> of LinkedSetRead<StorageBase<LinkedSet<T>>> {
     type Value = T;
@@ -178,7 +187,7 @@ impl LinkedSetReadImpl<T, +Drop<T>, +starknet::Store<T>, +SetItem<T>> of LinkedS
 }
 
 impl LinkedSetWriteImpl<
-    T, +Drop<T>, +Store<T>, +SetItem<T>, +Default<T>
+    T, +Drop<T>, +Copy<T>, +Store<T>, +SetItem<T>, +Default<T>
 > of LinkedSetWrite<StorageBase<Mutable<LinkedSet<T>>>> {
     type Value = T;
 
@@ -189,6 +198,32 @@ impl LinkedSetWriteImpl<
         assert(!is_duplicate, 'linked-set/already-in-set');
         let last_item_id = self.find_last_id();
         self.entry(last_item_id).write(item);
+    }
+
+
+    fn add_items(self: StorageBase<Mutable<LinkedSet<T>>>, mut items_to_add: Span<T>, last_item_id: felt252) {
+        // TODO optimize
+        for item_ref in items_to_add {
+            self.add_item(*item_ref);
+        };
+    }
+
+    fn remove_items(self: StorageBase<Mutable<LinkedSet<T>>>, mut items_to_remove: Span<T>, last_item_id: felt252) {
+        // TODO optimize
+        for item_ref in items_to_remove {
+            let item = *item_ref;
+            assert(item.is_valid_item(), 'linked-set/invalid-item');
+            self.remove(item.id());
+        };
+    }
+
+    fn replace_item(self: StorageBase<Mutable<LinkedSet<T>>>, item_to_remove: T, item_to_add: T) {
+        // TODO optimize
+        assert(item_to_remove.is_valid_item(), 'linked-set/invalid-item');
+        let item_to_remove_id = item_to_remove.id();
+        assert(item_to_remove_id != item_to_add.id(), 'linked-set/same-item');
+        self.remove(item_to_remove_id);
+        self.add_item(item_to_add);
     }
 
     fn remove(self: StorageBase<Mutable<LinkedSet<T>>>, remove_id: felt252) {

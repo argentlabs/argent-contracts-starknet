@@ -1,5 +1,4 @@
 use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
-use argent::multisig_account::signer_storage::signer_list::signer_list_component;
 use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
 use snforge_std::{spy_events, EventSpyAssertionsTrait, EventSpyTrait};
 use super::super::{SIGNER_1, SIGNER_2, SIGNER_3, initialize_multisig_with, ITestArgentMultisigDispatcherTrait};
@@ -43,20 +42,20 @@ fn replace_signer_start() {
     let events = array![
         (
             multisig.contract_address,
-            signer_list_component::Event::OwnerRemovedGuid(
-                signer_list_component::OwnerRemovedGuid { removed_owner_guid: SIGNER_1().into_guid() }
+            signer_manager_component::Event::OwnerRemovedGuid(
+                signer_manager_component::OwnerRemovedGuid { removed_owner_guid: SIGNER_1().into_guid() }
             )
         ),
         (
             multisig.contract_address,
-            signer_list_component::Event::OwnerAddedGuid(
-                signer_list_component::OwnerAddedGuid { new_owner_guid: signer_to_add.into_guid() }
+            signer_manager_component::Event::OwnerAddedGuid(
+                signer_manager_component::OwnerAddedGuid { new_owner_guid: signer_to_add.into_guid() }
             )
         ),
         (
             multisig.contract_address,
-            signer_list_component::Event::SignerLinked(
-                signer_list_component::SignerLinked { signer_guid: signer_to_add.into_guid(), signer: signer_to_add }
+            signer_manager_component::Event::SignerLinked(
+                signer_manager_component::SignerLinked { signer_guid: signer_to_add.into_guid(), signer: signer_to_add }
             )
         )
     ];
@@ -104,7 +103,7 @@ fn replace_signer_end() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/not-a-signer',))]
+#[should_panic(expected: ('linked-set/item-not-found',))]
 fn replace_invalid_signer() {
     // init
     let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
@@ -117,7 +116,7 @@ fn replace_invalid_signer() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/already-a-signer',))]
+#[should_panic(expected: ('linked-set/already-in-set',))]
 fn replace_already_signer() {
     // init
     let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
@@ -127,7 +126,7 @@ fn replace_already_signer() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/already-a-signer',))]
+#[should_panic(expected: ('linked-set/same-item',))]
 fn replace_already_same_signer() {
     // init
     let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());

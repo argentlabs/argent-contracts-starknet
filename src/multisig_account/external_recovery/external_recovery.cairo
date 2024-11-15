@@ -16,10 +16,6 @@ mod external_recovery_component {
     use argent::multisig_account::external_recovery::interface::{
         IExternalRecovery, EscapeCall, Escape, EscapeTriggered, EscapeExecuted, EscapeCanceled, EscapeEnabled
     };
-    use argent::multisig_account::signer_storage::interface::ISignerList;
-    use argent::multisig_account::signer_storage::signer_list::{
-        signer_list_component, signer_list_component::{SignerListInternalImpl}
-    };
     use argent::recovery::EscapeStatus;
     use argent::signer::signer_signature::{Signer, SignerTrait};
     use argent::utils::asserts::assert_only_self;

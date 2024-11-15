@@ -10,9 +10,6 @@ mod MockFutureArgentMultisig {
     use argent::introspection::src5::src5_component;
     use argent::multisig_account::external_recovery::external_recovery::IExternalRecoveryCallback;
     use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
-    use argent::multisig_account::signer_storage::{
-        interface::ISignerList, signer_list::{signer_list_component, signer_list_component::SignerListInternalImpl}
-    };
     use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait}};
     use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
     use argent::utils::{
@@ -28,9 +25,6 @@ mod MockFutureArgentMultisig {
     const VERSION_MINOR: u8 = 3;
     const VERSION_PATCH: u8 = 0;
 
-    // Signer storage
-    component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
-    impl SignerListInternal = signer_list_component::SignerListInternalImpl<ContractState>;
     // Signer management
     component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
     #[abi(embed_v0)]
@@ -49,8 +43,6 @@ mod MockFutureArgentMultisig {
     #[storage]
     struct Storage {
         #[substorage(v0)]
-        signer_list: signer_list_component::Storage,
-        #[substorage(v0)]
         signer_manager: signer_manager_component::Storage,
         #[substorage(v0)]
         src5: src5_component::Storage,
@@ -61,8 +53,6 @@ mod MockFutureArgentMultisig {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        #[flat]
-        SignerListEvents: signer_list_component::Event,
         #[flat]
         SignerManagerEvents: signer_manager_component::Event,
         #[flat]

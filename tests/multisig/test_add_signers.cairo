@@ -1,5 +1,4 @@
 use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
-use argent::multisig_account::signer_storage::signer_list::signer_list_component;
 use argent::signer::signer_signature::{SignerTrait};
 use snforge_std::{spy_events, EventSpyAssertionsTrait, EventSpyTrait};
 use super::super::{SIGNER_1, SIGNER_2, ITestArgentMultisigDispatcherTrait, initialize_multisig_with_one_signer};
@@ -22,14 +21,14 @@ fn add_signers() {
     let events = array![
         (
             multisig.contract_address,
-            signer_list_component::Event::OwnerAddedGuid(
-                signer_list_component::OwnerAddedGuid { new_owner_guid: signer_1.into_guid() }
+            signer_manager_component::Event::OwnerAddedGuid(
+                signer_manager_component::OwnerAddedGuid { new_owner_guid: signer_1.into_guid() }
             )
         ),
         (
             multisig.contract_address,
-            signer_list_component::Event::SignerLinked(
-                signer_list_component::SignerLinked { signer_guid: signer_1.into_guid(), signer: signer_1 }
+            signer_manager_component::Event::SignerLinked(
+                signer_manager_component::SignerLinked { signer_guid: signer_1.into_guid(), signer: signer_1 }
             )
         )
     ];
@@ -44,7 +43,7 @@ fn add_signers() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/already-a-signer',))]
+#[should_panic(expected: ('linked-set/already-in-set',))]
 fn add_signer_already_in_list() {
     // init
     let multisig = initialize_multisig_with_one_signer();

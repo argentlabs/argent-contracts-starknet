@@ -208,7 +208,7 @@ fn remove_3_and_2() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/not-a-signer',))]
+#[should_panic(expected: ('linked-set/item-not-found',))]
 fn remove_invalid_signers() {
     // init
     let multisig = initialize_multisig();

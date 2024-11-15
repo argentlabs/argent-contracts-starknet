@@ -5,7 +5,6 @@
 #[starknet::contract]
 mod MultisigMock {
     use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
-    use argent::multisig_account::signer_storage::signer_list::signer_list_component;
 
     component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
     #[abi(embed_v0)]
@@ -13,13 +12,9 @@ mod MultisigMock {
     #[abi(embed_v0)]
     impl SignerManagerInternal = signer_manager_component::SignerManagerInternalImpl<ContractState>;
 
-    component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
-    impl SignerListInternal = signer_list_component::SignerListInternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
-        #[substorage(v0)]
-        signer_list: signer_list_component::Storage,
         #[substorage(v0)]
         signer_manager: signer_manager_component::Storage,
     }
@@ -27,7 +22,6 @@ mod MultisigMock {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        SignerListEvents: signer_list_component::Event,
         SignerManagerEvents: signer_manager_component::Event,
     }
 }

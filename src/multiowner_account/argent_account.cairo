@@ -324,14 +324,6 @@ mod ArgentAccount {
         }
     }
 
-    fn lama() {
-        let boxed_1 = BoxTrait::new(1);
-        let boxed_2 = BoxTrait::new(2);
-        let mut arr = array![boxed_1, boxed_2];
-
-        arr[0].unbox();
-    }
-
     #[abi(embed_v0)]
     impl ArgentMultiOwnerAccountImpl of IArgentMultiOwnerAccount<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {

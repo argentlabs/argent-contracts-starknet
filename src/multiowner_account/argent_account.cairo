@@ -849,17 +849,24 @@ mod ArgentAccount {
             }
 
             let signer_storage_address = selector!("_signer").try_into().unwrap();
-            let signer_to_migrate = storage_read_syscall(0, signer_storage_address).unwrap_syscall();
+            let mut signer_to_migrate = storage_read_syscall(0, signer_storage_address).unwrap_syscall();
             // As we come from a version that has a _signer slot
             // If it is 0, it means we are migrating from an account that is already at the current version
-            assert(signer_to_migrate != 0, 'argent/downgrade-not-allowed');
-            let stark_signer = starknet_signer_from_pubkey(signer_to_migrate);
-            self.owner_manager.initialize(stark_signer);
+            if (signer_to_migrate == 0) {
+                let signer_non_stark_storage_address = selector!("_signer_non_stark").try_into().unwrap();
+                // TODO Gotta read at idx 1,2 ,3 and 4 and depending on that create a SignerStorage to pass to init
+                signer_to_migrate = storage_read_syscall(0, signer_non_stark_storage_address).unwrap_syscall();
+                assert(signer_to_migrate != 0, 'argent/downgrade-not-allowed');
+                storage_write_syscall(0, signer_non_stark_storage_address, 0).unwrap_syscall();
+                // self.owner_manager.initialize(signer_to_migrate);
+            } else {
+                let stark_signer = starknet_signer_from_pubkey(signer_to_migrate);
+                self.owner_manager.initialize(stark_signer);
+                storage_write_syscall(0, signer_storage_address, 0).unwrap_syscall();
+            }
             // Reset _signer storage
-            storage_write_syscall(0, signer_storage_address, 0).unwrap_syscall();
 
             // Health check
-            // Should we check if _signer_non_stark is empty?
             let guardian_key = self._guardian.read();
             let guardian_backup_key = self._guardian_backup.read();
             if guardian_key == 0 {

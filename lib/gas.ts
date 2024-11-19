@@ -162,7 +162,7 @@ export function newProfiler(manager: Manager) {
         "Gas without DA": Number(profile.gasWithoutDa),
         "Computation gas": Number(profile.computationGas),
         "Event gas": Number(profile.eventGas),
-        "Calldata gas": Number(profile.calldataGas),
+        "Calldata gas": Number(profile.calldataGas || 0),
         "Max computation per Category": profile.maxComputationCategory,
         "Storage diffs": sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         "DA fee": Number(profile.daFee),

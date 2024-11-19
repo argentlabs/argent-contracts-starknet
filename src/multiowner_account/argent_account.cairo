@@ -3,7 +3,8 @@ mod ArgentAccount {
     use argent::account::interface::{IAccount, IArgentAccount, IDeprecatedArgentAccount, Version};
     use argent::introspection::src5::src5_component;
     use argent::multiowner_account::account_interface::{
-        IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait
+        IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait,
+        IArgentMultiOwnerAccountLibraryDispatcher
     };
     use argent::multiowner_account::events::{
         SignerLinked, TransactionExecuted, AccountCreated, AccountCreatedGuid, EscapeOwnerTriggeredGuid,
@@ -268,6 +269,22 @@ mod ArgentAccount {
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
             assert_only_self();
             self.migrate_from_0_4_0();
+
+            // Downgrade check
+            let current_version = self.get_version();
+            // Doing lib call, this dangerous?
+            /// Could I just call again get_version() after calling complete_upgrade?
+            let next_version = IArgentMultiOwnerAccountLibraryDispatcher { class_hash: new_implementation }
+                .get_version();
+            if next_version.major == current_version.major {
+                if (next_version.minor == current_version.minor) {
+                    assert(next_version.patch > current_version.patch, 'argent/downgrade-not-allowed');
+                } else {
+                    assert(next_version.minor > current_version.minor, 'argent/downgrade-not-allowed');
+                }
+            } else {
+                assert(next_version.major > current_version.major, 'argent/downgrade-not-allowed');
+            }
 
             self.upgrade.complete_upgrade(new_implementation);
 
@@ -837,9 +854,6 @@ mod ArgentAccount {
         }
 
         fn migrate_from_0_4_0(ref self: ContractState) {
-            // TODO Downgrade check
-            // assert(self.owner_manager.get_single_stark_owner_pubkey().is_no
-
             // Reset proxy slot as the replace_class_syscall is done in the upgrade callback
             let implementation_storage_address = selector!("_implementation").try_into().unwrap();
             let implementation = storage_read_syscall(0, implementation_storage_address).unwrap_syscall();
@@ -869,6 +883,7 @@ mod ArgentAccount {
             // We are kinda forced to go through each slot to make sure everything is fine.
             // This will revert if 2 slots are used when calling initialize_from_upgrade(..)
             // EITHER loop [1; 5[
+            // TODO TS test each
             for offset in 1_u8
                 ..5 {
                     let storage_address = storage_address_from_base_and_offset(signer_non_stark_base, offset);

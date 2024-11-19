@@ -170,8 +170,6 @@ mod ArgentAccount {
     #[constructor]
     fn constructor(ref self: ContractState, owner: Signer, guardian: Option<Signer>) {
         self.owner_manager.initialize(owner);
-        let owner_guid = owner.into_guid();
-        self.emit(SignerLinked { signer_guid: owner_guid, signer: owner });
         if let Option::Some(guardian) = guardian {
             let guardian_storage_value = guardian.storage_value();
             assert(guardian_storage_value.signer_type == SignerType::Starknet, 'argent/invalid-guardian-type');
@@ -839,6 +837,9 @@ mod ArgentAccount {
         }
 
         fn migrate_from_0_4_0(ref self: ContractState) {
+            // TODO Downgrade check
+            // assert(self.owner_manager.get_single_stark_owner_pubkey().is_no
+
             // Reset proxy slot as the replace_class_syscall is done in the upgrade callback
             let implementation_storage_address = selector!("_implementation").try_into().unwrap();
             let implementation = storage_read_syscall(0, implementation_storage_address).unwrap_syscall();
@@ -851,19 +852,86 @@ mod ArgentAccount {
             let mut signer_to_migrate = storage_read_syscall(0, signer_storage_address).unwrap_syscall();
             // As we come from a version that has a _signer slot
             // If it is 0, it means we are migrating from an account that is already at the current version
-            if (signer_to_migrate == 0) {
-                let signer_non_stark_storage_address = selector!("_signer_non_stark").try_into().unwrap();
-                // TODO Gotta read at idx 1,2 ,3 and 4 and depending on that create a SignerStorage to pass to init
-                signer_to_migrate = storage_read_syscall(0, signer_non_stark_storage_address).unwrap_syscall();
-                assert(signer_to_migrate != 0, 'argent/downgrade-not-allowed');
-                storage_write_syscall(0, signer_non_stark_storage_address, 0).unwrap_syscall();
-                // self.owner_manager.initialize(signer_to_migrate);
-            } else {
-                let stark_signer = starknet_signer_from_pubkey(signer_to_migrate);
-                self.owner_manager.initialize(stark_signer);
+            if (signer_to_migrate != 0) {
+                let stark_signer = starknet_signer_from_pubkey(signer_to_migrate).storage_value();
+                self.owner_manager.initialize_from_upgrade(stark_signer);
                 storage_write_syscall(0, signer_storage_address, 0).unwrap_syscall();
             }
-            // Reset _signer storage
+
+            let signer_non_stark_base = storage_base_address_from_felt252(selector!("_signer_non_stark"));
+            let signer_non_stark_0 = storage_read_syscall(
+                0, storage_address_from_base_and_offset(signer_non_stark_base, 0)
+            )
+                .unwrap_syscall();
+            // This shouldn't be possible as we are migrating from a version that has a _signer slot
+            assert(signer_non_stark_0 == 0, 'argent/non-stark-signer-error');
+
+            // We are kinda forced to go through each slot to make sure everything is fine.
+            // This will revert if 2 slots are used when calling initialize_from_upgrade(..)
+            // EITHER loop [1; 5[
+            for offset in 1_u8
+                ..5 {
+                    let storage_address = storage_address_from_base_and_offset(signer_non_stark_base, offset);
+                    let stored_value = storage_read_syscall(0, storage_address).unwrap_syscall();
+
+                    // Can unwrap as we are bound by the loop range
+                    let signer_type: u256 = offset.into();
+                    let signer_type = signer_type.try_into().unwrap();
+
+                    if (stored_value != 0) {
+                        let signer_storage_value = SignerStorageValue { signer_type, stored_value };
+                        self.owner_manager.initialize_from_upgrade(signer_storage_value);
+                        storage_write_syscall(0, storage_address, 0).unwrap_syscall();
+                    }
+                };
+            // OR can do that way:
+            // let signer_non_stark_1 = storage_read_syscall(0,
+            // storage_address_from_base_and_offset(signer_non_stark_base, 1))
+            //     .unwrap_syscall();
+            // if (signer_non_stark_1 != 0) {
+            //     let signer_storage_value = SignerStorageValue {
+            //         signer_type: SignerType::Secp256k1, stored_value: signer_non_stark_1
+            //     };
+            //     self.owner_manager.initialize_from_upgrade(signer_storage_value);
+            //     storage_write_syscall(0, storage_address_from_base_and_offset(signer_non_stark_base, 1),
+            //     0).unwrap_syscall();
+            // }
+
+            // let signer_non_stark_2 = storage_read_syscall(0,
+            // storage_address_from_base_and_offset(signer_non_stark_base, 2))
+            //     .unwrap_syscall();
+            // if (signer_non_stark_2 != 0) {
+            //     let signer_storage_value = SignerStorageValue {
+            //         signer_type: SignerType::Secp256r1, stored_value: signer_non_stark_2
+            //     };
+            //     self.owner_manager.initialize_from_upgrade(signer_storage_value);
+            //     storage_write_syscall(0, storage_address_from_base_and_offset(signer_non_stark_base, 2),
+            //     0).unwrap_syscall();
+            // }
+
+            // let signer_non_stark_3 = storage_read_syscall(0,
+            // storage_address_from_base_and_offset(signer_non_stark_base, 3))
+            //     .unwrap_syscall();
+            // if (signer_non_stark_3 != 0) {
+            //     let signer_storage_value = SignerStorageValue {
+            //         signer_type: SignerType::Eip191, stored_value: signer_non_stark_2
+            //     };
+            //     self.owner_manager.initialize_from_upgrade(signer_storage_value);
+            //     storage_write_syscall(0, storage_address_from_base_and_offset(signer_non_stark_base, 3),
+            //     0).unwrap_syscall();
+            // }
+
+            // let signer_non_stark_4 = storage_read_syscall(0,
+            // storage_address_from_base_and_offset(signer_non_stark_base, 4))
+            //     .unwrap_syscall();
+            // if (signer_non_stark_4 != 0) {
+            //     let signer_storage_value = SignerStorageValue {
+            //         signer_type: SignerType::Webauthn, stored_value: signer_non_stark_2
+            //     };
+            //     self.owner_manager.initialize_from_upgrade(signer_storage_value);
+            //     storage_write_syscall(0, storage_address_from_base_and_offset(signer_non_stark_base, 4),
+            //     0).unwrap_syscall();
+            // }
 
             // Health check
             let guardian_key = self._guardian.read();

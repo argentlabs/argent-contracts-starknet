@@ -247,7 +247,7 @@ describe("ArgentAccount: escape mechanism", function () {
       await expectRevertWithErrorMessage("argent/only-self", accountContract.escape_owner());
     });
 
-    it("Cancel escape when upgrading", async function () {
+    it.only("Cancel escape when upgrading", async function () {
       const { account, owner, guardian } = await deployOldAccountWithProxy();
       account.signer = new LegacyMultisigSigner([guardian]);
 

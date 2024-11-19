@@ -40,6 +40,7 @@ pub trait IOwnerManager<TContractState> {
 #[starknet::interface]
 trait IOwnerManagerInternal<TContractState> {
     fn initialize(ref self: TContractState, owner: Signer);
+    fn initialize_from_upgrade(ref self: TContractState, signer_storage: SignerStorageValue);
     /// @notice Adds new owners to the account
     /// @dev will revert when trying to add a signer is already an owner
     /// @param owners_to_add An array with all the signers to add
@@ -123,9 +124,13 @@ mod owner_manager_component {
         TContractState, +HasComponent<TContractState>, +IOwnerManagerCallback<TContractState>, +Drop<TContractState>
     > of IOwnerManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, owner: Signer) {
+            // TODO later we probably want to optimize this function instead of just delegating to add_owners
+            self.add_owners(array![owner]);
+        }
+
+        fn initialize_from_upgrade(ref self: ComponentState<TContractState>, signer_storage: SignerStorageValue) {
             // We don't want to emit any events in this case
             assert(self.get_single_owner().is_none(), 'argent/already-initialized');
-            let signer_storage = owner.storage_value();
             self.owners_storage_mut().add_item(signer_storage);
         }
 

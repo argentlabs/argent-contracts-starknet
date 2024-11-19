@@ -273,18 +273,25 @@ mod ArgentAccount {
             // Downgrade check
             let current_version = self.get_version();
             // Doing lib call, this dangerous?
-            /// Could I just call again get_version() after calling complete_upgrade?
+            // Could I just call again get_version() after calling complete_upgrade?
             let next_version = IArgentMultiOwnerAccountLibraryDispatcher { class_hash: new_implementation }
                 .get_version();
-            if next_version.major == current_version.major {
-                if (next_version.minor == current_version.minor) {
-                    assert(next_version.patch > current_version.patch, 'argent/downgrade-not-allowed');
-                } else {
-                    assert(next_version.minor > current_version.minor, 'argent/downgrade-not-allowed');
-                }
-            } else {
-                assert(next_version.major > current_version.major, 'argent/downgrade-not-allowed');
-            }
+            // if next_version.major == current_version.major {
+            //     if (next_version.minor == current_version.minor) {
+            //         assert(next_version.patch > current_version.patch, 'argent/downgrade-not-allowed');
+            //     } else {
+            //         assert(next_version.minor > current_version.minor, 'argent/downgrade-not-allowed');
+            //     }
+            // } else {
+            //     assert(next_version.major > current_version.major, 'argent/downgrade-not-allowed');
+            // }
+            let current_version_as_number: u128 = current_version.major.into() * 10000
+                + current_version.minor.into() * 100
+                + current_version.patch.into();
+            let next_version_as_number: u128 = next_version.major.into() * 10000
+                + next_version.minor.into() * 100
+                + next_version.patch.into();
+            assert(next_version_as_number > current_version_as_number, 'argent/downgrade-not-allowed');
 
             self.upgrade.complete_upgrade(new_implementation);
 

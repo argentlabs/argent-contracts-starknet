@@ -835,7 +835,6 @@ mod ArgentAccount {
                 storage_write_syscall(0, implementation_storage_address, 0).unwrap_syscall();
             }
 
-            // TODO Check abt migrating/resetting escape attempts
             self.migrate_from_0_4_0();
         }
 

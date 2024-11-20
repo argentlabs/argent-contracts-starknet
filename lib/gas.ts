@@ -99,9 +99,10 @@ async function profileGasUsage(transactionHash: string, manager: Manager, allowF
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
 
   // L2 payloads
-  const { calldata, signature } = (await manager.getTransaction(receipt.transaction_hash)) as any;
-  const calldataGas =
-    calldata && signature ? Math.floor((calldata.length + signature.length) * l2PayloadsWeights.calldata) : undefined; // TODO find workaround for deployment transactions
+  const tx = (await manager.getTransaction(receipt.transaction_hash)) as any;
+  const calldata_len = tx.calldata?.length || 0;
+  const signature_len= tx.signature?.length || 0;
+  const calldataGas = Math.floor((calldata_len + signature_len) * l2PayloadsWeights.calldata);
 
   const eventGas = Math.floor(
     receipt.events.reduce(
@@ -162,7 +163,7 @@ export function newProfiler(manager: Manager) {
         "Gas without DA": Number(profile.gasWithoutDa),
         "Computation gas": Number(profile.computationGas),
         "Event gas": Number(profile.eventGas),
-        "Calldata gas": Number(profile.calldataGas || 0),
+        "Calldata gas": Number(profile.calldataGas),
         "Max computation per Category": profile.maxComputationCategory,
         "Storage diffs": sum(profile.storageDiffs.map(({ storage_entries }) => storage_entries.length)),
         "DA fee": Number(profile.daFee),

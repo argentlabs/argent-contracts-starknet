@@ -101,7 +101,7 @@ async function profileGasUsage(transactionHash: string, manager: Manager, allowF
   // L2 payloads
   const tx = (await manager.getTransaction(receipt.transaction_hash)) as any;
   const calldata_len = tx.calldata?.length || 0;
-  const signature_len= tx.signature?.length || 0;
+  const signature_len = tx.signature?.length || 0;
   const calldataGas = Math.floor((calldata_len + signature_len) * l2PayloadsWeights.calldata);
 
   const eventGas = Math.floor(

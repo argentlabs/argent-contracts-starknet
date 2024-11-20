@@ -251,10 +251,18 @@ export async function deployAccountWithGuardianBackup(
 }
 
 export async function deployLegacyAccount(classHash: string) {
-  const owner = new LegacyStarknetKeyPair();
   const guardian = new LegacyStarknetKeyPair();
+  return deployLegacyAccountInner(classHash, guardian);
+}
+
+export async function deployLegacyAccountWithoutGuardian(classHash: string) {
+  return deployLegacyAccountInner(classHash);
+}
+
+async function deployLegacyAccountInner(classHash: string, guardian?: LegacyStarknetKeyPair) {
+  const owner = new LegacyStarknetKeyPair();
   const salt = num.toHex(owner.privateKey);
-  const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian.publicKey });
+  const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian?.publicKey || 0 });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
   await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
   const account = new Account(manager, contractAddress, owner, "1");

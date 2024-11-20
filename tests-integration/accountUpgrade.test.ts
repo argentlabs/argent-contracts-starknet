@@ -4,7 +4,9 @@ import {
   ArgentSigner,
   ContractWithClass,
   deployAccount,
+  deployAccountWithoutGuardian,
   deployLegacyAccount,
+  deployLegacyAccountWithoutGuardian,
   deployOldAccountWithProxy,
   expectEvent,
   expectRevertWithErrorMessage,
@@ -26,7 +28,9 @@ describe("ArgentAccount: upgrade", function () {
       "/account-0.3.0-0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003/ArgentAccount",
     );
     upgradeData.push({
+      name: "0.3.0",
       deployAccount: async () => deployLegacyAccount(classHashV030),
+      deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV030),
       newOwner: 12,
       newGuardian: 12,
       toSigner: (x: any) => x,
@@ -36,7 +40,9 @@ describe("ArgentAccount: upgrade", function () {
       "/account-0.3.1-0x29927c8af6bccf3f6fda035981e765a7bdbf18a2dc0d630494f8758aa908e2b/ArgentAccount",
     );
     upgradeData.push({
+      name: "0.3.1",
       deployAccount: async () => deployLegacyAccount(classHashV031),
+      deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV031),
       newOwner: 12,
       newGuardian: 12,
       toSigner: (x: any) => x,
@@ -46,7 +52,9 @@ describe("ArgentAccount: upgrade", function () {
       "/account-0.4.0-0x036078334509b514626504edc9fb252328d1a240e4e948bef8d0c08dff45927f/ArgentAccount",
     );
     upgradeData.push({
+      name: "0.4.0",
       deployAccount: async () => deployAccount({ classHash: classHashV040 }),
+      deployAccountWithoutGuardian: async () => deployAccountWithoutGuardian({ classHash: classHashV040 }),
       newOwner: randomStarknetKeyPair().compiledSigner,
       newGuardian: new CairoOption(CairoOptionVariant.None),
       toSigner: (x: any) => new ArgentSigner(x),
@@ -73,14 +81,27 @@ describe("ArgentAccount: upgrade", function () {
 
   it("Waiting for upgradeData to be filled", function () {
     describe("Upgrade to latest version", function () {
-      for (const { deployAccount, newOwner, newGuardian, toSigner } of upgradeData) {
-        it("Should be possible to upgrade", async function () {
+      for (const {
+        name,
+        deployAccount,
+        newOwner,
+        newGuardian,
+        toSigner,
+        deployAccountWithoutGuardian,
+      } of upgradeData) {
+        it(`Should be possible to upgrade from ${name}`, async function () {
           const { account } = await deployAccount();
           await upgradeAccount(account, argentAccountClassHash);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
         });
 
-        it("Should be possible to upgrade if an owner escape is ongoing", async function () {
+        it(`Should be possible to upgrade without guardian from ${name}`, async function () {
+          const { account } = await deployAccountWithoutGuardian();
+          await upgradeAccount(account, argentAccountClassHash);
+          expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+        });
+
+        it(`Should be possible to upgrade if an owner escape is ongoing from ${name}`, async function () {
           const { account, accountContract, guardian } = await deployAccount();
 
           const oldSigner = account.signer;
@@ -94,7 +115,7 @@ describe("ArgentAccount: upgrade", function () {
           });
         });
 
-        it("Should be possible to upgrade if a guardian escape is ongoing", async function () {
+        it(`Should be possible to upgrade if a guardian escape is ongoing from ${name}`, async function () {
           const { account, accountContract, owner } = await deployAccount();
 
           const oldSigner = account.signer;

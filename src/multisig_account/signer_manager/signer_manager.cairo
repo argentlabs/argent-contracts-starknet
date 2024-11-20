@@ -1,4 +1,5 @@
 use argent::utils::linked_set::SetItem;
+use starknet::storage::{StoragePathEntry, StoragePath};
 
 impl FeltValueSetItem of SetItem<felt252> {
     fn is_valid_item(self: @felt252) -> bool {
@@ -7,6 +8,19 @@ impl FeltValueSetItem of SetItem<felt252> {
 
     fn id(self: @felt252) -> felt252 {
         *self
+    }
+
+    fn read_value(path: StoragePath<felt252>) -> Option<felt252> {
+        let value = path.read();
+        if value == 0 {
+            Option::None
+        } else {
+            Option::Some(value)
+        }
+    }
+
+    fn has_value(path: StoragePath<felt252>) -> bool {
+        path.read() != 0
     }
 }
 

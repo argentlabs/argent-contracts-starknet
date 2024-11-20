@@ -5,6 +5,7 @@ use argent::signer::{
     },
 };
 use argent::utils::linked_set::SetItem;
+use starknet::storage::{StoragePathEntry, StoragePath,};
 use super::events::SignerLinked;
 
 impl SignerStorageValueSetItem of SetItem<SignerStorageValue> {
@@ -14,6 +15,18 @@ impl SignerStorageValueSetItem of SetItem<SignerStorageValue> {
 
     fn id(self: @SignerStorageValue) -> felt252 {
         (*self).into_guid()
+    }
+    fn read_value(path: StoragePath<SignerStorageValue>) -> Option<SignerStorageValue> {
+        let stored_value = path.stored_value.read();
+        if stored_value == 0 {
+            return Option::None;
+        }
+        let signer_type = path.signer_type.read();
+        Option::Some(SignerStorageValue { stored_value, signer_type })
+    }
+
+    fn has_value(path: StoragePath<SignerStorageValue>) -> bool {
+        path.stored_value.read() != 0
     }
 }
 
@@ -97,7 +110,7 @@ mod owner_manager_component {
         }
 
         fn is_owner(self: @ComponentState<TContractState>, owner: Signer) -> bool {
-            self.owners_storage.is_in_id(owner.into_guid())
+            self.owners_storage.is_in(owner.storage_value())
         }
 
         fn is_owner_guid(self: @ComponentState<TContractState>, owner_guid: felt252) -> bool {

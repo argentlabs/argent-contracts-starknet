@@ -285,7 +285,7 @@ export async function upgradeAccount(
         calldata: CallData.compile({ implementation: newClassHash, calldata }),
       },
       undefined,
-      { maxFee: 1e14 },
+      { maxFee: 1e14, skipValidate: true },
     ),
   );
 }

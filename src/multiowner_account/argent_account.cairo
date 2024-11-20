@@ -271,11 +271,14 @@ mod ArgentAccount {
             self.migrate_from_0_4_0();
 
             // Downgrade check
-            let current_version = self.get_version();
+            // let prev_version = self.get_version();
+            // assert(prev_version.major == 0, 'argent/invalid-major-version');
+            // assert(prev_version.minor == 4, 'argent/invalid-minor-version');
+            // assert(prev_version.patch == 0, 'argent/invalid-patch-version');
             // Doing lib call, this dangerous?
             // Could I just call again get_version() after calling complete_upgrade?
-            let next_version = IArgentMultiOwnerAccountLibraryDispatcher { class_hash: new_implementation }
-                .get_version();
+            // let next_version = IArgentMultiOwnerAccountLibraryDispatcher { class_hash: new_implementation }
+            //     .get_version();
             // if next_version.major == current_version.major {
             //     if (next_version.minor == current_version.minor) {
             //         assert(next_version.patch > current_version.patch, 'argent/downgrade-not-allowed');
@@ -285,15 +288,17 @@ mod ArgentAccount {
             // } else {
             //     assert(next_version.major > current_version.major, 'argent/downgrade-not-allowed');
             // }
-            let current_version_as_number: u128 = current_version.major.into() * 10000
-                + current_version.minor.into() * 100
-                + current_version.patch.into();
-            let next_version_as_number: u128 = next_version.major.into() * 10000
-                + next_version.minor.into() * 100
-                + next_version.patch.into();
-            assert(next_version_as_number > current_version_as_number, 'argent/downgrade-not-allowed');
 
             self.upgrade.complete_upgrade(new_implementation);
+
+            // let next_version = self.get_version();
+            // let prev_version_as_number: u128 = prev_version.major.into() * 10000
+            //     + prev_version.minor.into() * 100
+            //     + prev_version.patch.into();
+            // let next_version_as_number: u128 = next_version.major.into() * 10000
+            //     + next_version.minor.into() * 100
+            //     + next_version.patch.into();
+            // assert(next_version_as_number > prev_version_as_number, prev_version_as_number.into());
 
             if data.is_empty() {
                 return;
@@ -877,84 +882,27 @@ mod ArgentAccount {
                 let stark_signer = starknet_signer_from_pubkey(signer_to_migrate).storage_value();
                 self.owner_manager.initialize_from_upgrade(stark_signer);
                 storage_write_syscall(0, signer_storage_address, 0).unwrap_syscall();
+            } else {
+                let signer_non_stark_base = storage_base_address_from_felt252(selector!("_signer_non_stark"));
+                // TODO TS test each
+                for offset in 1_u8
+                    ..5 {
+                        let storage_address = storage_address_from_base_and_offset(signer_non_stark_base, offset);
+                        let stored_value = storage_read_syscall(0, storage_address).unwrap_syscall();
+
+                        // Can unwrap as we are bound by the loop range
+                        let signer_type: u256 = offset.into();
+                        let signer_type = signer_type.try_into().unwrap();
+
+                        if (stored_value != 0) {
+                            let signer_storage_value = SignerStorageValue { signer_type, stored_value };
+                            self.owner_manager.initialize_from_upgrade(signer_storage_value);
+                            storage_write_syscall(0, storage_address, 0).unwrap_syscall();
+                            break;
+                        }
+                    };
             }
-
-            let signer_non_stark_base = storage_base_address_from_felt252(selector!("_signer_non_stark"));
-            let signer_non_stark_0 = storage_read_syscall(
-                0, storage_address_from_base_and_offset(signer_non_stark_base, 0)
-            )
-                .unwrap_syscall();
-            // This shouldn't be possible as we are migrating from a version that has a _signer slot
-            assert(signer_non_stark_0 == 0, 'argent/non-stark-signer-error');
-
-            // We are kinda forced to go through each slot to make sure everything is fine.
-            // This will revert if 2 slots are used when calling initialize_from_upgrade(..)
-            // EITHER loop [1; 5[
-            // TODO TS test each
-            for offset in 1_u8
-                ..5 {
-                    let storage_address = storage_address_from_base_and_offset(signer_non_stark_base, offset);
-                    let stored_value = storage_read_syscall(0, storage_address).unwrap_syscall();
-
-                    // Can unwrap as we are bound by the loop range
-                    let signer_type: u256 = offset.into();
-                    let signer_type = signer_type.try_into().unwrap();
-
-                    if (stored_value != 0) {
-                        let signer_storage_value = SignerStorageValue { signer_type, stored_value };
-                        self.owner_manager.initialize_from_upgrade(signer_storage_value);
-                        storage_write_syscall(0, storage_address, 0).unwrap_syscall();
-                    }
-                };
-            // OR can do that way:
-            // let signer_non_stark_1 = storage_read_syscall(0,
-            // storage_address_from_base_and_offset(signer_non_stark_base, 1))
-            //     .unwrap_syscall();
-            // if (signer_non_stark_1 != 0) {
-            //     let signer_storage_value = SignerStorageValue {
-            //         signer_type: SignerType::Secp256k1, stored_value: signer_non_stark_1
-            //     };
-            //     self.owner_manager.initialize_from_upgrade(signer_storage_value);
-            //     storage_write_syscall(0, storage_address_from_base_and_offset(signer_non_stark_base, 1),
-            //     0).unwrap_syscall();
-            // }
-
-            // let signer_non_stark_2 = storage_read_syscall(0,
-            // storage_address_from_base_and_offset(signer_non_stark_base, 2))
-            //     .unwrap_syscall();
-            // if (signer_non_stark_2 != 0) {
-            //     let signer_storage_value = SignerStorageValue {
-            //         signer_type: SignerType::Secp256r1, stored_value: signer_non_stark_2
-            //     };
-            //     self.owner_manager.initialize_from_upgrade(signer_storage_value);
-            //     storage_write_syscall(0, storage_address_from_base_and_offset(signer_non_stark_base, 2),
-            //     0).unwrap_syscall();
-            // }
-
-            // let signer_non_stark_3 = storage_read_syscall(0,
-            // storage_address_from_base_and_offset(signer_non_stark_base, 3))
-            //     .unwrap_syscall();
-            // if (signer_non_stark_3 != 0) {
-            //     let signer_storage_value = SignerStorageValue {
-            //         signer_type: SignerType::Eip191, stored_value: signer_non_stark_2
-            //     };
-            //     self.owner_manager.initialize_from_upgrade(signer_storage_value);
-            //     storage_write_syscall(0, storage_address_from_base_and_offset(signer_non_stark_base, 3),
-            //     0).unwrap_syscall();
-            // }
-
-            // let signer_non_stark_4 = storage_read_syscall(0,
-            // storage_address_from_base_and_offset(signer_non_stark_base, 4))
-            //     .unwrap_syscall();
-            // if (signer_non_stark_4 != 0) {
-            //     let signer_storage_value = SignerStorageValue {
-            //         signer_type: SignerType::Webauthn, stored_value: signer_non_stark_2
-            //     };
-            //     self.owner_manager.initialize_from_upgrade(signer_storage_value);
-            //     storage_write_syscall(0, storage_address_from_base_and_offset(signer_non_stark_base, 4),
-            //     0).unwrap_syscall();
-            // }
-
+            // TODO Check there is at least 1 signer at the end
             // Health check
             let guardian_key = self._guardian.read();
             let guardian_backup_key = self._guardian_backup.read();

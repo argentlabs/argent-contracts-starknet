@@ -27,6 +27,15 @@ describe.only("ArgentAccount: upgrade", function () {
   before(async () => {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
     mockDapp = await manager.deployContract("MockDapp");
+
+    upgradeData.push({
+      name: "Legacy (with proxy)",
+      deployAccount: async () => await deployOldAccountWithProxy(),
+      deployAccountWithoutGuardian: async () => await deployOldAccountWithProxy(), // TODO
+      triggerEscapeOwner: async (accountContract: Contract) => accountContract.triggerEscapeOwner(12),
+      triggerEscapeGuardian: async (accountContract: Contract) => accountContract.triggerEscapeGuardian(12),
+    });
+
     const v030 = "0.3.0";
     const classHashV030 = await manager.declareArtifactAccountContract(v030);
     upgradeData.push({

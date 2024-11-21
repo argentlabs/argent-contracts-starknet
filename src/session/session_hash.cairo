@@ -31,14 +31,15 @@ const SESSION_TYPE_HASH_REV_1: felt252 =
         "\"Session\"(\"Expires At\":\"timestamp\",\"Allowed Methods\":\"merkletree\",\"Metadata\":\"string\",\"Session Key\":\"felt\")"
     );
 const DATA_TYPE_HASH_REV_1: felt252 =
-    selector!("\"Allowed Type\"(\"Type Hash\":\"felt\", \"Typed Data Hash\":\"felt\")");
+    selector!("\"Allowed Type\"(\"Scope Hash\":\"felt\",\"Typed Data Hash\":\"felt\")");
 
 const ALLOWED_METHOD_HASH_REV_1: felt252 =
     selector!(
         "\"Allowed Method\"(\"Contract Address\":\"ContractAddress\",\"selector\":\"selector\")"
     );
 
-const ALLOWED_DATA_TYPE_HASH_REV_1: felt252 = selector!("\"Allowed Type\"(\"Type Hash\":\"felt\")");
+const ALLOWED_DATA_TYPE_HASH_REV_1: felt252 =
+    selector!("\"Allowed Type\"(\"Scope Hash\":\"felt\")");
 
 impl MerkleLeafHash of IMerkleLeafHash<Call> {
     fn get_merkle_leaf(self: @Call) -> felt252 {
@@ -50,7 +51,7 @@ impl MerkleLeafHash of IMerkleLeafHash<Call> {
 
 impl MerkleLeafHashTypedData of IMerkleLeafHash<TypedData> {
     fn get_merkle_leaf(self: @TypedData) -> felt252 {
-        poseidon_hash_span(array![ALLOWED_DATA_TYPE_HASH_REV_1, *self.type_hash].span())
+        poseidon_hash_span(array![ALLOWED_DATA_TYPE_HASH_REV_1, *self.scope_hash].span())
     }
 }
 
@@ -85,7 +86,7 @@ impl StructHashTypedData of IStructHashRev1<TypedData> {
     fn get_struct_hash_rev_1(self: @TypedData) -> felt252 {
         let self = *self;
         poseidon_hash_span(
-            array![DATA_TYPE_HASH_REV_1, self.type_hash, self.typed_data_hash].span()
+            array![DATA_TYPE_HASH_REV_1, self.scope_hash, self.typed_data_hash].span()
         )
     }
 }

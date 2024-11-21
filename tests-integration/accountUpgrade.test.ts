@@ -1,27 +1,68 @@
 import { expect } from "chai";
+import { CairoOption, CairoOptionVariant } from "starknet";
 import {
+  ArgentSigner,
   ContractWithClass,
-  LegacyArgentSigner,
+  LegacyStarknetKeyPair,
+  RawSigner,
+  StarknetKeyPair,
   deployAccount,
+  deployAccountWithoutGuardian,
   deployLegacyAccount,
+  deployLegacyAccountWithoutGuardian,
   deployOldAccountWithProxy,
   expectEvent,
   expectRevertWithErrorMessage,
   getUpgradeDataLegacy,
   manager,
+  randomStarknetKeyPair,
   upgradeAccount,
 } from "../lib";
 
 describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let mockDapp: ContractWithClass;
+  const upgradeData: any[] = [];
 
   before(async () => {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
     mockDapp = await manager.deployContract("MockDapp");
+    const classHashV030 = await manager.declareArtifactContract(
+      "/account-0.3.0-0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003/ArgentAccount",
+    );
+    upgradeData.push({
+      name: "0.3.0",
+      deployAccount: async () => deployLegacyAccount(classHashV030),
+      deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV030),
+      newOwner: 12,
+      newGuardian: 12,
+    });
+
+    const classHashV031 = await manager.declareArtifactContract(
+      "/account-0.3.1-0x29927c8af6bccf3f6fda035981e765a7bdbf18a2dc0d630494f8758aa908e2b/ArgentAccount",
+    );
+    upgradeData.push({
+      name: "0.3.1",
+      deployAccount: async () => deployLegacyAccount(classHashV031),
+      deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV031),
+      newOwner: 12,
+      newGuardian: 12,
+    });
+
+    const classHashV040 = await manager.declareArtifactContract(
+      "/account-0.4.0-0x036078334509b514626504edc9fb252328d1a240e4e948bef8d0c08dff45927f/ArgentAccount",
+    );
+    upgradeData.push({
+      name: "0.4.0",
+      deployAccount: async () => deployAccount({ classHash: classHashV040 }),
+      deployAccountWithoutGuardian: async () => deployAccountWithoutGuardian({ classHash: classHashV040 }),
+      newOwner: randomStarknetKeyPair().compiledSigner,
+      newGuardian: new CairoOption(CairoOptionVariant.None),
+    });
   });
 
   it("Upgrade cairo 0 to current version", async function () {
+    // TODO Try to incorporate old account with proxy in the upgradeData array
     const { account } = await deployOldAccountWithProxy();
     await upgradeAccount(account, argentAccountClassHash, ["0"]);
     const newClashHash = await manager.getClassHashAt(account.address);
@@ -39,10 +80,52 @@ describe("ArgentAccount: upgrade", function () {
     await mockDapp.get_number(account.address).should.eventually.equal(42n);
   });
 
-  it("Upgrade from 0.3.0 to Current Version", async function () {
-    const { account } = await deployLegacyAccount(await manager.declareFixtureContract("ArgentAccount-0.3.0"));
-    await upgradeAccount(account, argentAccountClassHash);
-    expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+  it("Waiting for upgradeData to be filled", function () {
+    describe("Upgrade to latest version", function () {
+      for (const { name, deployAccount, newOwner, newGuardian, deployAccountWithoutGuardian } of upgradeData) {
+        it(`Should be possible to upgrade from ${name}`, async function () {
+          const { account } = await deployAccount();
+          await upgradeAccount(account, argentAccountClassHash);
+          expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+        });
+
+        it(`Should be possible to upgrade without guardian from ${name}`, async function () {
+          const { account } = await deployAccountWithoutGuardian();
+          await upgradeAccount(account, argentAccountClassHash);
+          expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+        });
+
+        it(`Should be possible to upgrade if an owner escape is ongoing from ${name}`, async function () {
+          const { account, accountContract, guardian } = await deployAccount();
+
+          const oldSigner = account.signer;
+
+          account.signer = toSigner(guardian);
+          await accountContract.trigger_escape_owner(newOwner);
+
+          account.signer = oldSigner;
+          await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
+            from_address: account.address,
+            eventName: "EscapeCanceled",
+          });
+        });
+
+        it(`Should be possible to upgrade if a guardian escape is ongoing from ${name}`, async function () {
+          const { account, accountContract, owner } = await deployAccount();
+
+          const oldSigner = account.signer;
+          account.signer = toSigner(owner);
+
+          await accountContract.trigger_escape_guardian(newGuardian);
+
+          account.signer = oldSigner;
+          await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
+            from_address: account.address,
+            eventName: "EscapeCanceled",
+          });
+        });
+      }
+    });
   });
 
   it("Upgrade from current version FutureVersion", async function () {
@@ -54,34 +137,6 @@ describe("ArgentAccount: upgrade", function () {
 
     const data = [argentAccountFutureClassHash];
     await expectEvent(response, { from_address: account.address, eventName: "AccountUpgraded", data });
-  });
-
-  it("Should be possible to upgrade if an owner escape is ongoing", async function () {
-    const classHash = await manager.declareFixtureContract("ArgentAccount-0.3.0");
-    const { account, accountContract, owner, guardian } = await deployLegacyAccount(classHash);
-
-    account.signer = guardian;
-    await accountContract.trigger_escape_owner(12);
-
-    account.signer = new LegacyArgentSigner(owner, guardian);
-    await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
-      from_address: account.address,
-      eventName: "EscapeCanceled",
-    });
-  });
-
-  it("Should be possible to upgrade if a guardian escape is ongoing", async function () {
-    const classHash = await manager.declareFixtureContract("ArgentAccount-0.3.0");
-    const { account, accountContract, owner, guardian } = await deployLegacyAccount(classHash);
-
-    account.signer = owner;
-    await accountContract.trigger_escape_guardian(12);
-
-    account.signer = new LegacyArgentSigner(owner, guardian);
-    await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
-      from_address: account.address,
-      eventName: "EscapeCanceled",
-    });
   });
 
   it("Reject invalid upgrade targets", async function () {
@@ -101,3 +156,13 @@ describe("ArgentAccount: upgrade", function () {
     await expectRevertWithErrorMessage("argent/downgrade-not-allowed", upgradeAccount(account, argentAccountClassHash));
   });
 });
+
+function toSigner(signer: RawSigner): RawSigner {
+  if (signer instanceof LegacyStarknetKeyPair) {
+    return signer;
+  } else if (signer instanceof StarknetKeyPair) {
+    return new ArgentSigner(signer);
+  } else {
+    throw new Error("unsupported Signer type");
+  }
+}

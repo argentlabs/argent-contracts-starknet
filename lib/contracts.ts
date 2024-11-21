@@ -15,6 +15,7 @@ import { WithDevnet } from "./devnet";
 
 export const contractsFolder = "./target/release/argent_";
 export const fixturesFolder = "./tests-integration/fixtures/argent_";
+export const artifactsFolder = "./deployments/artifacts";
 
 export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) =>
   class extends Base {
@@ -60,6 +61,10 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
 
     async declareFixtureContract(contractName: string, wait = true): Promise<string> {
       return await this.declareLocalContract(contractName, wait, fixturesFolder);
+    }
+
+    async declareArtifactContract(contractName: string, wait = true): Promise<string> {
+      return await this.declareLocalContract(contractName, wait, artifactsFolder);
     }
 
     async loadContract(contractAddress: string, classHash?: string): Promise<ContractWithClass> {

@@ -39,10 +39,19 @@ struct SessionToken {
     proofs: Span<Span<felt252>>,
 }
 
+/// @param scope_hash Commitment computed as `poseidon(domain_separator_hash, type_hash)`
+/// @param typed_data_hash Encoded data for the primary type as a single `felt252`
 #[derive(Drop, Serde, Copy)]
 struct TypedData {
-    type_hash: felt252,
+    scope_hash: felt252,
     typed_data_hash: felt252,
+}
+
+#[derive(Drop, Serde, Copy)]
+struct DetailedTypedData {
+    domain_hash: felt252,
+    type_hash: felt252,
+    params: Span<felt252>,
 }
 
 #[derive(Drop, Serde, Copy)]

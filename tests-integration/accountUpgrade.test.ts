@@ -19,7 +19,7 @@ import {
   upgradeAccount,
 } from "../lib";
 
-describe.only("ArgentAccount: upgrade", function () {
+describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let mockDapp: ContractWithClass;
   const upgradeData: any[] = [];

@@ -271,15 +271,15 @@ mod ArgentAccount {
             self.migrate_from_0_4_0();
 
             // Downgrade check
-            let prev_version = self.get_version();
-            assert(prev_version.major == 0, 'argent/invalid-major-version');
-            assert(prev_version.minor == 4, 'argent/invalid-minor-version');
-            assert(prev_version.patch == 0, 'argent/invalid-patch-version');
+            // let current_version = self.get_version();
+            // assert(prev_version.major == 0, 'argent/invalid-major-version');
+            // assert(prev_version.minor == 4, 'argent/invalid-minor-version');
+            // assert(prev_version.patch == 0, 'argent/invalid-patch-version');
             // Doing lib call, this dangerous?
             // Could I just call again get_version() after calling complete_upgrade?
             // let next_version = IArgentMultiOwnerAccountLibraryDispatcher { class_hash: new_implementation }
             //     .get_version();
-            // if next_version.major == current_version.major {
+            // if next_version.major == next_version.major {
             //     if (next_version.minor == current_version.minor) {
             //         assert(next_version.patch > current_version.patch, 'argent/downgrade-not-allowed');
             //     } else {
@@ -291,14 +291,14 @@ mod ArgentAccount {
 
             self.upgrade.complete_upgrade(new_implementation);
 
-            let next_version = self.get_version();
-            let prev_version_as_number: u128 = prev_version.major.into() * 10000
-                + prev_version.minor.into() * 100
-                + prev_version.patch.into();
-            let next_version_as_number: u128 = next_version.major.into() * 10000
-                + next_version.minor.into() * 100
-                + next_version.patch.into();
-            assert(next_version_as_number > prev_version_as_number, 'argent/downgrade-not-allowed');
+            // let next_version = self.get_version();
+            // let prev_version_as_number: u128 = prev_version.major.into() * 10000
+            //     + prev_version.minor.into() * 100
+            //     + prev_version.patch.into();
+            // let next_version_as_number: u128 = next_version.major.into() * 10000
+            //     + next_version.minor.into() * 100
+            //     + next_version.patch.into();
+            // assert(next_version_as_number > prev_version_as_number, 'argent/downgrade-not-allowed');
 
             if data.is_empty() {
                 return;

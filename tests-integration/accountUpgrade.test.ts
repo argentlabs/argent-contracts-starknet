@@ -3,6 +3,9 @@ import { CairoOption, CairoOptionVariant } from "starknet";
 import {
   ArgentSigner,
   ContractWithClass,
+  LegacyStarknetKeyPair,
+  RawSigner,
+  StarknetKeyPair,
   deployAccount,
   deployAccountWithoutGuardian,
   deployLegacyAccount,
@@ -20,6 +23,15 @@ describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let mockDapp: ContractWithClass;
 
+  function toSigner(signer: RawSigner): RawSigner {
+    if (signer instanceof LegacyStarknetKeyPair) {
+      return signer;
+    } else if (signer instanceof StarknetKeyPair) {
+      return new ArgentSigner(signer);
+    } else {
+      throw new Error("unsupported Signer type");
+    }
+  }
   const upgradeData: any[] = [];
   before(async () => {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
@@ -33,7 +45,6 @@ describe("ArgentAccount: upgrade", function () {
       deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV030),
       newOwner: 12,
       newGuardian: 12,
-      toSigner: (x: any) => x,
     });
 
     const classHashV031 = await manager.declareArtifactContract(
@@ -45,7 +56,6 @@ describe("ArgentAccount: upgrade", function () {
       deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV031),
       newOwner: 12,
       newGuardian: 12,
-      toSigner: (x: any) => x,
     });
 
     const classHashV040 = await manager.declareArtifactContract(
@@ -57,7 +67,6 @@ describe("ArgentAccount: upgrade", function () {
       deployAccountWithoutGuardian: async () => deployAccountWithoutGuardian({ classHash: classHashV040 }),
       newOwner: randomStarknetKeyPair().compiledSigner,
       newGuardian: new CairoOption(CairoOptionVariant.None),
-      toSigner: (x: any) => new ArgentSigner(x),
     });
   });
 
@@ -81,14 +90,7 @@ describe("ArgentAccount: upgrade", function () {
 
   it("Waiting for upgradeData to be filled", function () {
     describe("Upgrade to latest version", function () {
-      for (const {
-        name,
-        deployAccount,
-        newOwner,
-        newGuardian,
-        toSigner,
-        deployAccountWithoutGuardian,
-      } of upgradeData) {
+      for (const { name, deployAccount, newOwner, newGuardian, deployAccountWithoutGuardian } of upgradeData) {
         it(`Should be possible to upgrade from ${name}`, async function () {
           const { account } = await deployAccount();
           await upgradeAccount(account, argentAccountClassHash);
@@ -105,6 +107,7 @@ describe("ArgentAccount: upgrade", function () {
           const { account, accountContract, guardian } = await deployAccount();
 
           const oldSigner = account.signer;
+
           account.signer = toSigner(guardian);
           await accountContract.trigger_escape_owner(newOwner);
 

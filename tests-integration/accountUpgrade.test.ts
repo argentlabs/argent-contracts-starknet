@@ -62,6 +62,7 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   it("Upgrade cairo 0 to current version", async function () {
+    // TODO Try to incorporate old account with proxy in the upgradeData array
     const { account } = await deployOldAccountWithProxy();
     await upgradeAccount(account, argentAccountClassHash, ["0"]);
     const newClashHash = await manager.getClassHashAt(account.address);

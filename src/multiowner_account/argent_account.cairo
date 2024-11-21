@@ -902,8 +902,8 @@ mod ArgentAccount {
                         }
                     };
             }
-            // TODO Check there is at least 1 signer at the end
             // Health check
+            self.owner_manager.assert_valid_storage();
             let guardian_key = self._guardian.read();
             let guardian_backup_key = self._guardian_backup.read();
             if guardian_key == 0 {

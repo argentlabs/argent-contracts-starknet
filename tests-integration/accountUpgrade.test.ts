@@ -27,33 +27,30 @@ describe("ArgentAccount: upgrade", function () {
   before(async () => {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
     mockDapp = await manager.deployContract("MockDapp");
-    const classHashV030 = await manager.declareArtifactContract(
-      "/account-0.3.0-0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003/ArgentAccount",
-    );
+    const v030 = "0.3.0";
+    const classHashV030 = await manager.declareArtifactAccountContract(v030);
     upgradeData.push({
-      name: "0.3.0",
+      name: v030,
       deployAccount: async () => deployLegacyAccount(classHashV030),
       deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV030),
       newOwner: 12,
       newGuardian: 12,
     });
 
-    const classHashV031 = await manager.declareArtifactContract(
-      "/account-0.3.1-0x29927c8af6bccf3f6fda035981e765a7bdbf18a2dc0d630494f8758aa908e2b/ArgentAccount",
-    );
+    const v031 = "0.3.1";
+    const classHashV031 = await manager.declareArtifactAccountContract(v031);
     upgradeData.push({
-      name: "0.3.1",
+      name: v031,
       deployAccount: async () => deployLegacyAccount(classHashV031),
       deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV031),
       newOwner: 12,
       newGuardian: 12,
     });
 
-    const classHashV040 = await manager.declareArtifactContract(
-      "/account-0.4.0-0x036078334509b514626504edc9fb252328d1a240e4e948bef8d0c08dff45927f/ArgentAccount",
-    );
+    const v040 = "0.4.0";
+    const classHashV040 = await manager.declareArtifactAccountContract(v040);
     upgradeData.push({
-      name: "0.4.0",
+      name: v040,
       deployAccount: async () => deployAccount({ classHash: classHashV040 }),
       deployAccountWithoutGuardian: async () => deployAccountWithoutGuardian({ classHash: classHashV040 }),
       newOwner: randomStarknetKeyPair().compiledSigner,

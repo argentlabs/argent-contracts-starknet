@@ -1,4 +1,5 @@
-import { readFileSync } from "fs";
+import { readFileSync, readdirSync } from "fs";
+import { resolve } from "path";
 import {
   Abi,
   AccountInterface,
@@ -63,7 +64,14 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       return await this.declareLocalContract(contractName, wait, fixturesFolder);
     }
 
-    async declareArtifactContract(contractName: string, wait = true): Promise<string> {
+    async declareArtifactAccountContract(contractVersion: string, wait = true): Promise<string> {
+      const allArtifactsFolders = getSubfolders(artifactsFolder);
+      let contractName = allArtifactsFolders.find((folder) => folder.startsWith(`account-${contractVersion}`));
+      if (!contractName) {
+        throw new Error(`No contract found for version ${contractVersion}`);
+      }
+      contractName = "/" + contractName + "/ArgentAccount";
+      console.log(`\t${contractName} declared`);
       return await this.declareLocalContract(contractName, wait, artifactsFolder);
     }
 
@@ -109,4 +117,26 @@ export function getDeclareContractPayload(contractName: string, folder = contrac
 
 export function readContract(path: string) {
   return json.parse(readFileSync(path).toString("ascii"));
+}
+
+/**
+ * Get all subfolders in a directory.
+ * @param dirPath The directory path to search.
+ * @returns An array of subfolder names.
+ */
+function getSubfolders(dirPath: string): string[] {
+  try {
+    // Resolve the directory path to an absolute path
+    const absolutePath = resolve(dirPath);
+
+    // Read all items in the directory
+    const items = readdirSync(absolutePath, { withFileTypes: true });
+
+    // Filter for directories and map to their names
+    const folders = items.filter((item) => item.isDirectory()).map((folder) => folder.name);
+
+    return folders;
+  } catch (err) {
+    throw new Error(`Error reading the directory at ${dirPath}`);
+  }
 }

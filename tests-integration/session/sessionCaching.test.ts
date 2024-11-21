@@ -342,7 +342,7 @@ describe("Session Account: execute caching", function () {
       const newContract = await manager.loadContract(account.address, argentAccountClassHash);
       await newContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.equal(useCaching);
     });
-    
+
     it("Caching is unaffected between contract upgrades and if you add more owners", async function () {
       const { account, accountContract, guardian, owner } = await deployAccount({
         classHash: await manager.declareFixtureContract("ArgentAccount-0.4.0"),

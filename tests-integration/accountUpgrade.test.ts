@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CairoOption, CairoOptionVariant } from "starknet";
+import { CairoOption, CairoOptionVariant, Contract } from "starknet";
 import {
   ArgentSigner,
   ContractWithClass,
@@ -19,7 +19,7 @@ import {
   upgradeAccount,
 } from "../lib";
 
-describe("ArgentAccount: upgrade", function () {
+describe.only("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let mockDapp: ContractWithClass;
   const upgradeData: any[] = [];
@@ -33,8 +33,8 @@ describe("ArgentAccount: upgrade", function () {
       name: v030,
       deployAccount: async () => deployLegacyAccount(classHashV030),
       deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV030),
-      newOwner: 12,
-      newGuardian: 12,
+      triggerEscapeOwner: async (accountContract: Contract) => accountContract.trigger_escape_owner(12),
+      triggerEscapeGuardian: async (accountContract: Contract) => accountContract.trigger_escape_guardian(12),
     });
 
     const v031 = "0.3.1";
@@ -43,8 +43,8 @@ describe("ArgentAccount: upgrade", function () {
       name: v031,
       deployAccount: async () => deployLegacyAccount(classHashV031),
       deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV031),
-      newOwner: 12,
-      newGuardian: 12,
+      triggerEscapeOwner: async (accountContract: Contract) => accountContract.trigger_escape_owner(12),
+      triggerEscapeGuardian: async (accountContract: Contract) => accountContract.trigger_escape_guardian(12),
     });
 
     const v040 = "0.4.0";
@@ -53,8 +53,8 @@ describe("ArgentAccount: upgrade", function () {
       name: v040,
       deployAccount: async () => deployAccount({ classHash: classHashV040 }),
       deployAccountWithoutGuardian: async () => deployAccountWithoutGuardian({ classHash: classHashV040 }),
-      newOwner: randomStarknetKeyPair().compiledSigner,
-      newGuardian: new CairoOption(CairoOptionVariant.None),
+      triggerEscapeOwner: async (accountContract: Contract) => accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
+      triggerEscapeGuardian: async (accountContract: Contract) => accountContract.trigger_escape_guardian(new CairoOption(CairoOptionVariant.None)),
     });
   });
 
@@ -79,7 +79,7 @@ describe("ArgentAccount: upgrade", function () {
 
   it("Waiting for upgradeData to be filled", function () {
     describe("Upgrade to latest version", function () {
-      for (const { name, deployAccount, newOwner, newGuardian, deployAccountWithoutGuardian } of upgradeData) {
+      for (const { name, deployAccount, triggerEscapeOwner, triggerEscapeGuardian, deployAccountWithoutGuardian } of upgradeData) {
         it(`Should be possible to upgrade from ${name}`, async function () {
           const { account } = await deployAccount();
           await upgradeAccount(account, argentAccountClassHash);
@@ -98,7 +98,7 @@ describe("ArgentAccount: upgrade", function () {
           const oldSigner = account.signer;
 
           account.signer = toSigner(guardian);
-          await accountContract.trigger_escape_owner(newOwner);
+          await triggerEscapeOwner(accountContract);
 
           account.signer = oldSigner;
           await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
@@ -113,7 +113,7 @@ describe("ArgentAccount: upgrade", function () {
           const oldSigner = account.signer;
           account.signer = toSigner(owner);
 
-          await accountContract.trigger_escape_guardian(newGuardian);
+          await triggerEscapeGuardian(accountContract);
 
           account.signer = oldSigner;
           await expectEvent(await upgradeAccount(account, argentAccountClassHash), {

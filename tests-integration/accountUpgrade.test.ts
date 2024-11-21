@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CairoOption, CairoOptionVariant, Contract } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData } from "starknet";
 import {
   ArgentSigner,
   ContractWithClass,
@@ -29,21 +29,25 @@ describe.only("ArgentAccount: upgrade", function () {
     mockDapp = await manager.deployContract("MockDapp");
 
     upgradeData.push({
-      name: "Legacy (with proxy)",
+      name: "Legacy",
       deployAccount: async () => await deployOldAccountWithProxy(),
-      deployAccountWithoutGuardian: async () => await deployOldAccountWithProxy(), // TODO
-      triggerEscapeOwner: async (accountContract: Contract) => accountContract.triggerEscapeOwner(12),
-      triggerEscapeGuardian: async (accountContract: Contract) => accountContract.triggerEscapeGuardian(12),
+      extraCalldata: ["0"],
+      deployAccountWithoutGuardian: async () => await deployOldAccountWithProxy(), // TODO ?
+      // Gotta call like that as the entrypoint is not found on the contract for legacy versions
+      triggerEscapeOwner: { entrypoint: "triggerEscapeSigner" },
+      triggerEscapeGuardian: { entrypoint: "triggerEscapeGuardian" },
     });
 
     const v030 = "0.3.0";
     const classHashV030 = await manager.declareArtifactAccountContract(v030);
+    const triggerEscapeOwnerV03 = { entrypoint: "trigger_escape_owner", calldata: [12] };
+    const triggerEscapeGuardianV03 = { entrypoint: "trigger_escape_guardian", calldata: [12] };
     upgradeData.push({
       name: v030,
       deployAccount: async () => deployLegacyAccount(classHashV030),
       deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV030),
-      triggerEscapeOwner: async (accountContract: Contract) => accountContract.trigger_escape_owner(12),
-      triggerEscapeGuardian: async (accountContract: Contract) => accountContract.trigger_escape_guardian(12),
+      triggerEscapeOwner: triggerEscapeOwnerV03,
+      triggerEscapeGuardian: triggerEscapeGuardianV03,
     });
 
     const v031 = "0.3.1";
@@ -52,31 +56,30 @@ describe.only("ArgentAccount: upgrade", function () {
       name: v031,
       deployAccount: async () => deployLegacyAccount(classHashV031),
       deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV031),
-      triggerEscapeOwner: async (accountContract: Contract) => accountContract.trigger_escape_owner(12),
-      triggerEscapeGuardian: async (accountContract: Contract) => accountContract.trigger_escape_guardian(12),
+      triggerEscapeOwner: triggerEscapeOwnerV03,
+      triggerEscapeGuardian: triggerEscapeGuardianV03,
     });
 
     const v040 = "0.4.0";
     const classHashV040 = await manager.declareArtifactAccountContract(v040);
+    const triggerEscapeOwnerV04 = {
+      entrypoint: "trigger_escape_owner",
+      calldata: CallData.compile(randomStarknetKeyPair().compiledSigner),
+    };
+    const triggerEscapeGuardianV04 = {
+      entrypoint: "trigger_escape_guardian",
+      calldata: CallData.compile([new CairoOption(CairoOptionVariant.None)]),
+    };
     upgradeData.push({
       name: v040,
       deployAccount: async () => deployAccount({ classHash: classHashV040 }),
       deployAccountWithoutGuardian: async () => deployAccountWithoutGuardian({ classHash: classHashV040 }),
-      triggerEscapeOwner: async (accountContract: Contract) =>
-        accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
-      triggerEscapeGuardian: async (accountContract: Contract) =>
-        accountContract.trigger_escape_guardian(new CairoOption(CairoOptionVariant.None)),
+      triggerEscapeOwner: triggerEscapeOwnerV04,
+      triggerEscapeGuardian: triggerEscapeGuardianV04,
     });
   });
 
-  it("Upgrade cairo 0 to current version", async function () {
-    // TODO Try to incorporate old account with proxy in the upgradeData array
-    const { account } = await deployOldAccountWithProxy();
-    await upgradeAccount(account, argentAccountClassHash, ["0"]);
-    const newClashHash = await manager.getClassHashAt(account.address);
-    expect(BigInt(newClashHash)).to.equal(BigInt(argentAccountClassHash));
-  });
-
+  // TODO Should we move and adapt this test loop ?
   it("Upgrade cairo 0 to cairo 1 with multicall", async function () {
     const { account } = await deployOldAccountWithProxy();
     await upgradeAccount(
@@ -96,44 +99,62 @@ describe.only("ArgentAccount: upgrade", function () {
         triggerEscapeOwner,
         triggerEscapeGuardian,
         deployAccountWithoutGuardian,
+        extraCalldata,
       } of upgradeData) {
         it(`Should be possible to upgrade from ${name}`, async function () {
           const { account } = await deployAccount();
-          await upgradeAccount(account, argentAccountClassHash);
+          await upgradeAccount(account, argentAccountClassHash, extraCalldata);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+          mockDapp.connect(account);
+          // This will work as long as we support the "old" signature format [r1, s1, r2, s2]
+          account.cairoVersion = "1";
+          await manager.ensureSuccess(mockDapp.set_number(42));
         });
 
         it(`Should be possible to upgrade without guardian from ${name}`, async function () {
           const { account } = await deployAccountWithoutGuardian();
-          await upgradeAccount(account, argentAccountClassHash);
+          await upgradeAccount(account, argentAccountClassHash, extraCalldata);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+          account.cairoVersion = "1";
+          await manager.ensureSuccess(mockDapp.set_number(42));
         });
 
         it(`Should be possible to upgrade if an owner escape is ongoing from ${name}`, async function () {
-          const { account, accountContract, guardian } = await deployAccount();
+          const { account, guardian } = await deployAccount();
 
           const oldSigner = account.signer;
 
           account.signer = toSigner(guardian);
-          await triggerEscapeOwner(accountContract);
+          await manager.ensureSuccess(
+            account.execute({
+              contractAddress: account.address,
+              ...triggerEscapeOwner,
+            }),
+          );
+          // await accountContract.triggerEscapeSigner();
 
           account.signer = oldSigner;
-          await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
+          await expectEvent(await upgradeAccount(account, argentAccountClassHash, extraCalldata), {
             from_address: account.address,
             eventName: "EscapeCanceled",
           });
         });
 
         it(`Should be possible to upgrade if a guardian escape is ongoing from ${name}`, async function () {
-          const { account, accountContract, owner } = await deployAccount();
+          const { account, owner } = await deployAccount();
 
           const oldSigner = account.signer;
           account.signer = toSigner(owner);
 
-          await triggerEscapeGuardian(accountContract);
+          await manager.ensureSuccess(
+            account.execute({
+              contractAddress: account.address,
+              ...triggerEscapeGuardian,
+            }),
+          );
 
           account.signer = oldSigner;
-          await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
+          await expectEvent(await upgradeAccount(account, argentAccountClassHash, extraCalldata), {
             from_address: account.address,
             eventName: "EscapeCanceled",
           });

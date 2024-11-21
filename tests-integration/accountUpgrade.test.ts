@@ -53,8 +53,10 @@ describe.only("ArgentAccount: upgrade", function () {
       name: v040,
       deployAccount: async () => deployAccount({ classHash: classHashV040 }),
       deployAccountWithoutGuardian: async () => deployAccountWithoutGuardian({ classHash: classHashV040 }),
-      triggerEscapeOwner: async (accountContract: Contract) => accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
-      triggerEscapeGuardian: async (accountContract: Contract) => accountContract.trigger_escape_guardian(new CairoOption(CairoOptionVariant.None)),
+      triggerEscapeOwner: async (accountContract: Contract) =>
+        accountContract.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
+      triggerEscapeGuardian: async (accountContract: Contract) =>
+        accountContract.trigger_escape_guardian(new CairoOption(CairoOptionVariant.None)),
     });
   });
 
@@ -79,7 +81,13 @@ describe.only("ArgentAccount: upgrade", function () {
 
   it("Waiting for upgradeData to be filled", function () {
     describe("Upgrade to latest version", function () {
-      for (const { name, deployAccount, triggerEscapeOwner, triggerEscapeGuardian, deployAccountWithoutGuardian } of upgradeData) {
+      for (const {
+        name,
+        deployAccount,
+        triggerEscapeOwner,
+        triggerEscapeGuardian,
+        deployAccountWithoutGuardian,
+      } of upgradeData) {
         it(`Should be possible to upgrade from ${name}`, async function () {
           const { account } = await deployAccount();
           await upgradeAccount(account, argentAccountClassHash);

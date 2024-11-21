@@ -61,15 +61,14 @@ trait IOwnerManagerInternal<TContractState> {
 /// Managing the list of owners of the account
 #[starknet::component]
 mod owner_manager_component {
-    use argent::signer::{
-        signer_signature::{
-            Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
-            SignerStorageTrait
-        },
+    use argent::signer::signer_signature::{
+        Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
+        SignerStorageTrait
     };
-    use argent::utils::linked_set::{LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl};
-
-    use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
+    use argent::utils::{
+        linked_set::{LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl},
+        transaction_version::is_estimate_transaction, asserts::assert_only_self
+    };
 
     use super::super::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
     use super::{IOwnerManager, IOwnerManagerInternal};

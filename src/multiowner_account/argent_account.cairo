@@ -124,6 +124,7 @@ mod ArgentAccount {
         _guardian_backup_non_stark: Map<felt252, felt252>,
         /// The ongoing escape, if any
         _escape: LegacyEscape,
+        _signer_non_stark: LegacyMap<felt252, felt252>,
         /// The following 4 fields are used to limit the number of escapes the account will pay for
         /// Values are Rounded down to the hour:
         /// https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 Values are
@@ -883,12 +884,13 @@ mod ArgentAccount {
                 self.owner_manager.initialize_from_upgrade(stark_signer);
                 storage_write_syscall(0, signer_storage_address, 0).unwrap_syscall();
             } else {
-                let signer_non_stark_base = storage_base_address_from_felt252(selector!("_signer_non_stark"));
-                // TODO TS test each
+                // TODO Why this ain't working???
+                // let signer_non_stark_base = storage_base_address_from_felt252(selector!("_signer_non_stark"));
                 for offset in 1_u8
                     ..5 {
-                        let storage_address = storage_address_from_base_and_offset(signer_non_stark_base, offset);
-                        let stored_value = storage_read_syscall(0, storage_address).unwrap_syscall();
+                        // let storage_address = storage_address_from_base_and_offset(signer_non_stark_base, offset);
+                        // let stored_value = storage_read_syscall(0, storage_address).unwrap_syscall();
+                        let stored_value = self._signer_non_stark.read(offset.into());
 
                         // Can unwrap as we are bound by the loop range
                         let signer_type: u256 = offset.into();
@@ -897,7 +899,8 @@ mod ArgentAccount {
                         if (stored_value != 0) {
                             let signer_storage_value = SignerStorageValue { signer_type, stored_value };
                             self.owner_manager.initialize_from_upgrade(signer_storage_value);
-                            storage_write_syscall(0, storage_address, 0).unwrap_syscall();
+                            self._signer_non_stark.write(offset.into(), 0);
+                            // storage_write_syscall(0, storage_address, 0).unwrap_syscall();
                             break;
                         }
                     };

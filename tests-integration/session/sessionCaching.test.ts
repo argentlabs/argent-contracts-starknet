@@ -275,22 +275,21 @@ describe("Session Account: execute caching", function () {
 
     await expectRevertWithErrorMessage("session/signer-is-not-owner", accountWithDappSigner.execute(calls2));
   });
-  
+
   it("Fail if a large authorization is injected", async function () {
     const { accountContract, account, guardian, owner } = await deployAccount();
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
     // Test refers to large authorization but uses authorizationSignature: undefined???
-    const { accountWithDappSigner, sessionHash, sessionRequest, dappService } =
-      await setupSession({
-        guardian: guardian as StarknetKeyPair,
-        account,
-        expiry: initialTime + 150n,
-        dappKey: randomStarknetKeyPair(),
-        cacheOwnerGuid: owner.guid,
-        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
-      });
+    const { accountWithDappSigner, sessionHash, sessionRequest, dappService } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
+      account,
+      expiry: initialTime + 150n,
+      dappKey: randomStarknetKeyPair(),
+      cacheOwnerGuid: owner.guid,
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+    });
 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
     await account.waitForTransaction(transaction_hash);

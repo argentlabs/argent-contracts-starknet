@@ -22,17 +22,8 @@ import {
 describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let mockDapp: ContractWithClass;
-
-  function toSigner(signer: RawSigner): RawSigner {
-    if (signer instanceof LegacyStarknetKeyPair) {
-      return signer;
-    } else if (signer instanceof StarknetKeyPair) {
-      return new ArgentSigner(signer);
-    } else {
-      throw new Error("unsupported Signer type");
-    }
-  }
   const upgradeData: any[] = [];
+
   before(async () => {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
     mockDapp = await manager.deployContract("MockDapp");
@@ -164,3 +155,13 @@ describe("ArgentAccount: upgrade", function () {
     await expectRevertWithErrorMessage("argent/downgrade-not-allowed", upgradeAccount(account, argentAccountClassHash));
   });
 });
+
+function toSigner(signer: RawSigner): RawSigner {
+  if (signer instanceof LegacyStarknetKeyPair) {
+    return signer;
+  } else if (signer instanceof StarknetKeyPair) {
+    return new ArgentSigner(signer);
+  } else {
+    throw new Error("unsupported Signer type");
+  }
+}

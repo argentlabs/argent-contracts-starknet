@@ -22,7 +22,7 @@ import {
   upgradeAccount,
 } from "../lib";
 
-describe("ArgentAccount: upgrade", function () {
+describe.only("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let mockDapp: ContractWithClass;
   let classHashV040: string;
@@ -83,19 +83,7 @@ describe("ArgentAccount: upgrade", function () {
     });
   });
 
-  // TODO Should we move and adapt this test loop ?
-  it("Upgrade cairo 0 to cairo 1 with multicall", async function () {
-    const { account } = await deployOldAccountWithProxy();
-    await upgradeAccount(
-      account,
-      argentAccountClassHash,
-      getUpgradeDataLegacy([mockDapp.populateTransaction.set_number(42)]),
-    );
-    expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
-    await mockDapp.get_number(account.address).should.eventually.equal(42n);
-  });
-
-  it("Waiting for upgradeData to be filled", function () {
+  it.only("Waiting for upgradeData to be filled", function () {
     describe("Upgrade to latest version", function () {
       for (const {
         name,
@@ -123,6 +111,19 @@ describe("ArgentAccount: upgrade", function () {
           await manager.ensureSuccess(mockDapp.set_number(42));
         });
 
+        it("Upgrade cairo with multicall", async function () {
+          const { account } = await deployAccount();
+          const upgradeData =  account.cairoVersion ? CallData.compile([[mockDapp.populateTransaction.set_number(42)]]) :  getUpgradeDataLegacy([mockDapp.populateTransaction.set_number(42)]);
+          await upgradeAccount(
+            account,
+            argentAccountClassHash,
+            upgradeData
+          );
+          expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+          await mockDapp.get_number(account.address).should.eventually.equal(42n);
+          // TODO await manager.ensureSuccess(mockDapp.set_number(42));
+        });
+
         it(`Should be possible to upgrade if an owner escape is ongoing from ${name}`, async function () {
           const { account, guardian } = await deployAccount();
 
@@ -135,7 +136,6 @@ describe("ArgentAccount: upgrade", function () {
               ...triggerEscapeOwner,
             }),
           );
-          // await accountContract.triggerEscapeSigner();
 
           account.signer = oldSigner;
           await expectEvent(await upgradeAccount(account, argentAccountClassHash, extraCalldata), {

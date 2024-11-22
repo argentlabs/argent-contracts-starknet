@@ -6,6 +6,9 @@ import {
   RawSigner,
   StarknetKeyPair,
   deployAccount,
+  deployAccountWithoutGuardian,
+  deployLegacyAccount,
+  deployLegacyAccountWithoutGuardian,
   deployOldAccountWithProxy,
   expectEvent,
   expectRevertWithErrorMessage,
@@ -14,10 +17,10 @@ import {
   randomEip191KeyPair,
   randomEthKeyPair,
   randomSecp256r1KeyPair,
-  randomWebauthnCairo0Owner,
-  randomWebauthnOwner,
+  randomStarknetKeyPair,
   upgradeAccount,
 } from "../lib";
+import { CairoOption, CairoOptionVariant, CallData } from "starknet";
 
 describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
@@ -29,55 +32,55 @@ describe("ArgentAccount: upgrade", function () {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
     mockDapp = await manager.deployContract("MockDapp");
 
-    // upgradeData.push({
-    //   name: "Legacy",
-    //   deployAccount: async () => await deployOldAccountWithProxy(),
-    //   extraCalldata: ["0"],
-    //   deployAccountWithoutGuardian: async () => await deployOldAccountWithProxy(), // TODO ?
-    //   // Gotta call like that as the entrypoint is not found on the contract for legacy versions
-    //   triggerEscapeOwner: { entrypoint: "triggerEscapeSigner" },
-    //   triggerEscapeGuardian: { entrypoint: "triggerEscapeGuardian" },
-    // });
+    upgradeData.push({
+      name: "Legacy",
+      deployAccount: async () => await deployOldAccountWithProxy(),
+      extraCalldata: ["0"],
+      deployAccountWithoutGuardian: async () => await deployOldAccountWithProxy(), // TODO ?
+      // Gotta call like that as the entrypoint is not found on the contract for legacy versions
+      triggerEscapeOwner: { entrypoint: "triggerEscapeSigner" },
+      triggerEscapeGuardian: { entrypoint: "triggerEscapeGuardian" },
+    });
 
-    // const v030 = "0.3.0";
-    // const classHashV030 = await manager.declareArtifactAccountContract(v030);
-    // const triggerEscapeOwnerV03 = { entrypoint: "trigger_escape_owner", calldata: [12] };
-    // const triggerEscapeGuardianV03 = { entrypoint: "trigger_escape_guardian", calldata: [12] };
-    // upgradeData.push({
-    //   name: v030,
-    //   deployAccount: async () => deployLegacyAccount(classHashV030),
-    //   deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV030),
-    //   triggerEscapeOwner: triggerEscapeOwnerV03,
-    //   triggerEscapeGuardian: triggerEscapeGuardianV03,
-    // });
+    const v030 = "0.3.0";
+    const classHashV030 = await manager.declareArtifactAccountContract(v030);
+    const triggerEscapeOwnerV03 = { entrypoint: "trigger_escape_owner", calldata: [12] };
+    const triggerEscapeGuardianV03 = { entrypoint: "trigger_escape_guardian", calldata: [12] };
+    upgradeData.push({
+      name: v030,
+      deployAccount: async () => deployLegacyAccount(classHashV030),
+      deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV030),
+      triggerEscapeOwner: triggerEscapeOwnerV03,
+      triggerEscapeGuardian: triggerEscapeGuardianV03,
+    });
 
-    // const v031 = "0.3.1";
-    // const classHashV031 = await manager.declareArtifactAccountContract(v031);
-    // upgradeData.push({
-    //   name: v031,
-    //   deployAccount: async () => deployLegacyAccount(classHashV031),
-    //   deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV031),
-    //   triggerEscapeOwner: triggerEscapeOwnerV03,
-    //   triggerEscapeGuardian: triggerEscapeGuardianV03,
-    // });
+    const v031 = "0.3.1";
+    const classHashV031 = await manager.declareArtifactAccountContract(v031);
+    upgradeData.push({
+      name: v031,
+      deployAccount: async () => deployLegacyAccount(classHashV031),
+      deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV031),
+      triggerEscapeOwner: triggerEscapeOwnerV03,
+      triggerEscapeGuardian: triggerEscapeGuardianV03,
+    });
 
     const v040 = "0.4.0";
     classHashV040 = await manager.declareArtifactAccountContract(v040);
-    // const triggerEscapeOwnerV04 = {
-    //   entrypoint: "trigger_escape_owner",
-    //   calldata: CallData.compile(randomStarknetKeyPair().compiledSigner),
-    // };
-    // const triggerEscapeGuardianV04 = {
-    //   entrypoint: "trigger_escape_guardian",
-    //   calldata: CallData.compile([new CairoOption(CairoOptionVariant.None)]),
-    // };
-    // upgradeData.push({
-    //   name: v040,
-    //   deployAccount: async () => deployAccount({ classHash: classHashV040 }),
-    //   deployAccountWithoutGuardian: async () => deployAccountWithoutGuardian({ classHash: classHashV040 }),
-    //   triggerEscapeOwner: triggerEscapeOwnerV04,
-    //   triggerEscapeGuardian: triggerEscapeGuardianV04,
-    // });
+    const triggerEscapeOwnerV04 = {
+      entrypoint: "trigger_escape_owner",
+      calldata: CallData.compile(randomStarknetKeyPair().compiledSigner),
+    };
+    const triggerEscapeGuardianV04 = {
+      entrypoint: "trigger_escape_guardian",
+      calldata: CallData.compile([new CairoOption(CairoOptionVariant.None)]),
+    };
+    upgradeData.push({
+      name: v040,
+      deployAccount: async () => deployAccount({ classHash: classHashV040 }),
+      deployAccountWithoutGuardian: async () => deployAccountWithoutGuardian({ classHash: classHashV040 }),
+      triggerEscapeOwner: triggerEscapeOwnerV04,
+      triggerEscapeGuardian: triggerEscapeGuardianV04,
+    });
   });
 
   // TODO Should we move and adapt this test loop ?
@@ -107,7 +110,7 @@ describe("ArgentAccount: upgrade", function () {
           await upgradeAccount(account, argentAccountClassHash, extraCalldata);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
           mockDapp.connect(account);
-          // This will work as long as we support the "old" signature format [r1, s1, r2, s2]
+          // This should work as long as we support the "old" signature format [r1, s1, r2, s2]
           account.cairoVersion = "1";
           await manager.ensureSuccess(mockDapp.set_number(42));
         });
@@ -192,14 +195,15 @@ describe("ArgentAccount: upgrade", function () {
     await expectRevertWithErrorMessage("argent/downgrade-not-allowed", upgradeAccount(account, argentAccountClassHash));
   });
 
-  describe.only("Testing upgrade version 0.4.0 with every signer type", function () {
+  describe("Testing upgrade version 0.4.0 with every signer type", function () {
     // Same as in accountSigners.test.ts
     const nonStarknetKeyPairs = [
       { name: "Ethereum signature", keyPair: randomEthKeyPair },
       { name: "Secp256r1 signature", keyPair: randomSecp256r1KeyPair },
       { name: "Eip191 signature", keyPair: randomEip191KeyPair },
-      { name: "Webauthn signature", keyPair: randomWebauthnOwner },
-      { name: "Webauthn signature (cairo0)", keyPair: randomWebauthnCairo0Owner },
+      // Those two can't be done unless we provide an "old" version of the webauthn signer, we run into an invalid signature format error
+      // { name: "Webauthn signature", keyPair: randomWebauthnOwner },
+      // { name: "Webauthn signature (cairo0)", keyPair: randomWebauthnCairo0Owner },
     ];
 
     for (const { name, keyPair } of nonStarknetKeyPairs) {

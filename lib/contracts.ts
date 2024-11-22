@@ -70,8 +70,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       if (!contractName) {
         throw new Error(`No contract found for version ${contractVersion}`);
       }
-      contractName = "/" + contractName + "/ArgentAccount";
-      console.log(`\t${contractName} declared`);
+      contractName = `/${contractName}/ArgentAccount`;
       return await this.declareLocalContract(contractName, wait, artifactsFolder);
     }
 

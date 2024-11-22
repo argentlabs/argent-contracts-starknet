@@ -269,26 +269,14 @@ mod ArgentAccount {
         // Called when coming from account 0.4.0+
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
             assert_only_self();
-            self.migrate_from_0_4_0();
 
             // Downgrade check
+            assert(self.owner_manager.get_owner_guids().len() == 0, 'argent/downgrade-not-allowed');
+
+            self.migrate_from_0_4_0();
+
+            // Since we are doing a library call calling get_version() will return the new version
             // let current_version = self.get_version();
-            // assert(prev_version.major == 0, 'argent/invalid-major-version');
-            // assert(prev_version.minor == 4, 'argent/invalid-minor-version');
-            // assert(prev_version.patch == 0, 'argent/invalid-patch-version');
-            // Doing lib call, this dangerous?
-            // Could I just call again get_version() after calling complete_upgrade?
-            // let next_version = IArgentMultiOwnerAccountLibraryDispatcher { class_hash: new_implementation }
-            //     .get_version();
-            // if next_version.major == next_version.major {
-            //     if (next_version.minor == current_version.minor) {
-            //         assert(next_version.patch > current_version.patch, 'argent/downgrade-not-allowed');
-            //     } else {
-            //         assert(next_version.minor > current_version.minor, 'argent/downgrade-not-allowed');
-            //     }
-            // } else {
-            //     assert(next_version.major > current_version.major, 'argent/downgrade-not-allowed');
-            // }
 
             self.upgrade.complete_upgrade(new_implementation);
 

@@ -22,7 +22,7 @@ import {
   upgradeAccount,
 } from "../lib";
 
-describe.only("ArgentAccount: upgrade", function () {
+describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let mockDapp: ContractWithClass;
   let classHashV040: string;
@@ -83,7 +83,7 @@ describe.only("ArgentAccount: upgrade", function () {
     });
   });
 
-  it.only("Waiting for upgradeData to be filled", function () {
+  it("Waiting for upgradeData to be filled", function () {
     describe("Upgrade to latest version", function () {
       for (const {
         name,
@@ -93,7 +93,7 @@ describe.only("ArgentAccount: upgrade", function () {
         deployAccountWithoutGuardian,
         extraCalldata,
       } of upgradeData) {
-        it(`Should be possible to upgrade from ${name}`, async function () {
+        it(`[${name}] Should be possible to upgrade `, async function () {
           const { account } = await deployAccount();
           await upgradeAccount(account, argentAccountClassHash, extraCalldata);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
@@ -103,7 +103,7 @@ describe.only("ArgentAccount: upgrade", function () {
           await manager.ensureSuccess(mockDapp.set_number(42));
         });
 
-        it(`Should be possible to upgrade without guardian from ${name}`, async function () {
+        it(`[${name}] Should be possible to upgrade without guardian from ${name}`, async function () {
           const { account } = await deployAccountWithoutGuardian();
           await upgradeAccount(account, argentAccountClassHash, extraCalldata);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
@@ -111,20 +111,20 @@ describe.only("ArgentAccount: upgrade", function () {
           await manager.ensureSuccess(mockDapp.set_number(42));
         });
 
-        it("Upgrade cairo with multicall", async function () {
+        it(`[${name}] Upgrade cairo with multicall`, async function () {
+          const random = randomStarknetKeyPair().publicKey
           const { account } = await deployAccount();
-          const upgradeData =  account.cairoVersion ? CallData.compile([[mockDapp.populateTransaction.set_number(42)]]) :  getUpgradeDataLegacy([mockDapp.populateTransaction.set_number(42)]);
-          await upgradeAccount(
-            account,
-            argentAccountClassHash,
-            upgradeData
-          );
+          const upgradeData = account.cairoVersion
+            ? CallData.compile([[mockDapp.populateTransaction.set_number(random)]])
+            : getUpgradeDataLegacy([mockDapp.populateTransaction.set_number(random)]);
+          await upgradeAccount(account, argentAccountClassHash, upgradeData);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
-          await mockDapp.get_number(account.address).should.eventually.equal(42n);
-          // TODO await manager.ensureSuccess(mockDapp.set_number(42));
+          await mockDapp.get_number(account.address).should.eventually.equal(random);
+          // We don't really care about the value here, just that it is successful
+          await manager.ensureSuccess(mockDapp.set_number(random));
         });
 
-        it(`Should be possible to upgrade if an owner escape is ongoing from ${name}`, async function () {
+        it(`[${name}] Should be possible to upgrade if an owner escape is ongoing`, async function () {
           const { account, guardian } = await deployAccount();
 
           const oldSigner = account.signer;
@@ -144,7 +144,7 @@ describe.only("ArgentAccount: upgrade", function () {
           });
         });
 
-        it(`Should be possible to upgrade if a guardian escape is ongoing from ${name}`, async function () {
+        it(`[${name}] Should be possible to upgrade if a guardian escape is ongoing`, async function () {
           const { account, owner } = await deployAccount();
 
           const oldSigner = account.signer;

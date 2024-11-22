@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import { CairoOption, CairoOptionVariant, CallData } from "starknet";
 import {
   ArgentSigner,
   ContractWithClass,
@@ -20,7 +21,6 @@ import {
   randomStarknetKeyPair,
   upgradeAccount,
 } from "../lib";
-import { CairoOption, CairoOptionVariant, CallData } from "starknet";
 
 describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;

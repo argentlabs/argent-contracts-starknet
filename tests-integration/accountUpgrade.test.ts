@@ -112,7 +112,7 @@ describe("ArgentAccount: upgrade", function () {
         });
 
         it(`[${name}] Upgrade cairo with multicall`, async function () {
-          const random = randomStarknetKeyPair().publicKey
+          const random = randomStarknetKeyPair().publicKey;
           const { account } = await deployAccount();
           const upgradeData = account.cairoVersion
             ? CallData.compile([[mockDapp.populateTransaction.set_number(random)]])

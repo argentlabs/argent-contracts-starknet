@@ -281,7 +281,6 @@ describe("Session Account: execute caching", function () {
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
-    // Test refers to large authorization but uses authorizationSignature: undefined???
     const { accountWithDappSigner, sessionHash, sessionRequest, dappService } = await setupSession({
       guardian: guardian as StarknetKeyPair,
       account,

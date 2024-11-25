@@ -45,11 +45,7 @@ mod ArgentAccount {
     use pedersen::PedersenTrait;
     use starknet::{
         storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, account::Call,
-        SyscallResultTrait, get_tx_info, get_execution_info, replace_class_syscall,
-        storage_access::{
-            storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,
-            storage_write_syscall
-        }
+        SyscallResultTrait, get_tx_info, get_execution_info,
     };
 
     const NAME: felt252 = 'ArgentAccount';

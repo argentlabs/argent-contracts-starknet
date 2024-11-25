@@ -126,7 +126,7 @@ mod owner_manager_component {
 
         fn initialize_from_upgrade(ref self: ComponentState<TContractState>, signer_storage: SignerStorageValue) {
             // We don't want to emit any events in this case
-            assert(self.get_single_owner().is_none(), 'argent/already-initialized');
+            assert(self.owners_storage.len() == 0, 'argent/already-initialized');
             self.owners_storage.add_item(signer_storage);
         }
 

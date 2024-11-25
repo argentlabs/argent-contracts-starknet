@@ -109,12 +109,11 @@ mod upgrade_migration_component {
             let owner = starknet_signer_from_pubkey(owner_key);
             self.emit_signer_linked_event(SignerLinked { signer_guid: owner.into_guid(), signer: owner });
 
-            let implementation_storage_address = selector!("_implementation").try_into().unwrap();
-            let implementation = storage_read_syscall(0, implementation_storage_address).unwrap_syscall();
+            let implementation = self._implementation.read();
 
             if implementation != Zeroable::zero() {
                 replace_class_syscall(implementation.try_into().unwrap()).expect('argent/invalid-after-upgrade');
-                storage_write_syscall(0, implementation_storage_address, 0).unwrap_syscall();
+                self._implementation.write(Zeroable::zero());
             }
 
             self.migrate_from_0_4_0();
@@ -122,11 +121,10 @@ mod upgrade_migration_component {
 
         fn migrate_from_0_4_0(ref self: ComponentState<TContractState>) {
             // Reset proxy slot as the replace_class_syscall is done in the upgrade callback
-            let implementation_storage_address = selector!("_implementation").try_into().unwrap();
-            let implementation = storage_read_syscall(0, implementation_storage_address).unwrap_syscall();
+            let implementation = self._implementation.read();
 
             if implementation != Zeroable::zero() {
-                storage_write_syscall(0, implementation_storage_address, 0).unwrap_syscall();
+                self._implementation.write(Zeroable::zero());
             }
 
             let signer_storage_address = selector!("_signer").try_into().unwrap();

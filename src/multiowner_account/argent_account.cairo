@@ -102,6 +102,7 @@ mod ArgentAccount {
     impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
 
     #[storage]
+    #[feature("deprecated_legacy_map")]
     struct Storage {
         #[substorage(v0)]
         owner_manager: owner_manager_component::Storage,

@@ -21,7 +21,7 @@ mod upgrade_migration_component {
     use argent::signer::signer_signature::{SignerStorageValue, Signer, starknet_signer_from_pubkey, SignerTrait};
     use argent::upgrade::interface::{IUpgradableCallback, IUpgradeable, IUpgradableCallbackDispatcherTrait};
     use starknet::{
-        syscalls::replace_class_syscall, SyscallResultTrait, get_block_timestamp,
+        syscalls::replace_class_syscall, SyscallResultTrait, get_block_timestamp, storage::Map,
         storage_access::{storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,}
     };
     use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback};
@@ -40,8 +40,7 @@ mod upgrade_migration_component {
         guardian_escape_attempts: felt252,
         owner_escape_attempts: felt252,
         // 0.4.0
-        #[deprecated(feature: "deprecated_legacy_map")]
-        _signer_non_stark: LegacyMap<felt252, felt252>,
+        _signer_non_stark: Map<felt252, felt252>,
     }
 
     #[event]

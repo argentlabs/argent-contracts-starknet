@@ -22,10 +22,7 @@ mod upgrade_migration_component {
     use argent::upgrade::interface::{IUpgradableCallback, IUpgradeable, IUpgradableCallbackDispatcherTrait};
     use starknet::{
         syscalls::replace_class_syscall, SyscallResultTrait, get_block_timestamp,
-        storage_access::{
-            storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,
-            storage_write_syscall
-        }
+        storage_access::{storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,}
     };
     use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback};
 
@@ -38,7 +35,10 @@ mod upgrade_migration_component {
         _guardian_backup: felt252,
         _escape: LegacyEscape,
         // Legacy storage
+        _signer: felt252,
         _implementation: felt252,
+        guardian_escape_attempts: felt252,
+        owner_escape_attempts: felt252,
         // 0.4.0
         #[deprecated(feature: "deprecated_legacy_map")]
         _signer_non_stark: LegacyMap<felt252, felt252>,
@@ -81,14 +81,11 @@ mod upgrade_migration_component {
             }
 
             // Cleaning attempts storage as the escape was cleared
-            let guardian_escape_attempts_storage_address = selector!("guardian_escape_attempts").try_into().unwrap();
-            storage_write_syscall(0, guardian_escape_attempts_storage_address, 0).unwrap_syscall();
-            let owner_escape_attempts_storage_address = selector!("owner_escape_attempts").try_into().unwrap();
-            storage_write_syscall(0, owner_escape_attempts_storage_address, 0).unwrap_syscall();
+            self.owner_escape_attempts.write(0);
+            self.guardian_escape_attempts.write(0);
 
             // Check basic invariants and emit missing events
-            let owner_key_storage_address = selector!("_signer").try_into().unwrap();
-            let owner_key = storage_read_syscall(0, owner_key_storage_address).unwrap_syscall();
+            let owner_key = self._signer.read();
             let guardian_key = self._guardian.read();
             let guardian_backup_key = self._guardian_backup.read();
             assert(owner_key != 0, 'argent/null-owner');
@@ -127,12 +124,11 @@ mod upgrade_migration_component {
                 self._implementation.write(Zeroable::zero());
             }
 
-            let signer_storage_address = selector!("_signer").try_into().unwrap();
-            let mut signer_to_migrate = storage_read_syscall(0, signer_storage_address).unwrap_syscall();
+            let mut signer_to_migrate = self._signer.read();
             if (signer_to_migrate != 0) {
                 let stark_signer = starknet_signer_from_pubkey(signer_to_migrate).storage_value();
                 self.initialize_from_upgrade(stark_signer);
-                storage_write_syscall(0, signer_storage_address, 0).unwrap_syscall();
+                self._signer.write(0);
             } else {
                 for offset in 1_u8
                     ..5 {

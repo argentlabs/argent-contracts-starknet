@@ -35,14 +35,14 @@ Resources:
 │                    Transfer - With Session                    │    0    │  12   │   0   │   0    │    29    │    21    │     362     │ 12737  │
 │         Transfer - With Session - Caching Values (1)          │    0    │  12   │   0   │   0    │    35    │    22    │     406     │ 13228  │
 │             Transfer - With Session - Cached (2)              │    0    │   6   │   0   │   0    │    32    │    18    │     348     │ 11653  │
-│ Transfer - With Session (Webauthn owner) - Caching Values (1) │  5643   │   9   │   0   │   0    │    35    │    47    │    30882    │ 291329 │
+│ Transfer - With Session (Webauthn owner) - Caching Values (1) │  5643   │   9   │   0   │   0    │    35    │    47    │    30883    │ 291335 │
 │     Transfer - With Session (Webauthn owner) - Cached (2)     │    0    │   6   │   0   │   0    │    32    │    17    │     348     │ 11656  │
 │               Transfer - No guardian (Old Sig)                │    0    │   3   │   0   │   0    │    30    │    7     │     305     │ 10263  │
 │              Transfer - With guardian (Old Sig)               │    0    │   6   │   0   │   0    │    30    │    7     │     314     │ 10759  │
 │                     Transfer - OZ account                     │    0    │   3   │   0   │   0    │    25    │    4     │     269     │  8186  │
-│               Transfer - Eth sig with guardian                │   30    │   3   │   0   │   1    │    28    │    6     │    14895    │ 166812 │
+│               Transfer - Eth sig with guardian                │   30    │   3   │   0   │   1    │    28    │    6     │    14894    │ 166806 │
 │              Transfer - Secp256r1 with guardian               │    0    │   3   │   0   │   0    │    28    │    6     │    28674    │ 263932 │
-│                Transfer - Eip161 with guardian                │   64    │   3   │   0   │   2    │    28    │    6     │    15067    │ 167982 │
+│                Transfer - Eip161 with guardian                │   64    │   3   │   0   │   2    │    28    │    6     │    15068    │ 167988 │
 │           Transfer (cairo0) - Webauthn no guardian            │   68    │   3   │   0   │   0    │    28    │    18    │    30248    │ 282840 │
-│                Transfer - Webauthn no guardian                │  5643   │   3   │   0   │   0    │    28    │    18    │    30758    │ 287523 │
+│                Transfer - Webauthn no guardian                │  5643   │   3   │   0   │   0    │    28    │    18    │    30758    │ 287522 │
 └───────────────────────────────────────────────────────────────┴─────────┴───────┴───────┴────────┴──────────┴──────────┴─────────────┴────────┘

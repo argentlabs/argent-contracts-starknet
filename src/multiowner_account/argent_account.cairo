@@ -24,13 +24,12 @@ mod ArgentAccount {
     use argent::session::{
         interface::ISessionCallback, session::{session_component::{Internal, InternalTrait}, session_component}
     };
-    use argent::signer::{
-        signer_signature::{
-            Signer, SignerStorageValue, SignerType, StarknetSigner, StarknetSignature, SignerTrait, SignerStorageTrait,
-            SignerSignature, SignerSignatureTrait, starknet_signer_from_pubkey
-        }
+    use argent::signer::signer_signature::{
+        Signer, SignerStorageValue, SignerType, StarknetSigner, StarknetSignature, SignerTrait, SignerStorageTrait,
+        SignerSignature, SignerSignatureTrait, starknet_signer_from_pubkey
     };
     use argent::upgrade::{
+        upgrade_migration::{IUpgradeMigrationInternal, upgrade_migration_component, IUpgradeMigrationCallback},
         upgrade::{IUpgradeInternal, upgrade_component}, interface::{IUpgradableCallback, IUpgradableCallbackOld}
     };
     use argent::utils::{
@@ -99,6 +98,9 @@ mod ArgentAccount {
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
     impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
+    // Upgrade migration
+    component!(path: upgrade_migration_component, storage: upgrade_migration, event: UpgradeMigrationEvents);
+    impl UpgradableMigrationInternal = upgrade_migration_component::UpgradableMigrationInternal<ContractState>;
     // Reentrancy guard
     component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
     impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
@@ -114,6 +116,8 @@ mod ArgentAccount {
         #[substorage(v0)]
         upgrade: upgrade_component::Storage,
         #[substorage(v0)]
+        upgrade_migration: upgrade_migration_component::Storage,
+        #[substorage(v0)]
         session: session_component::Storage,
         #[substorage(v0)]
         reentrancy_guard: ReentrancyGuardComponent::Storage,
@@ -124,7 +128,6 @@ mod ArgentAccount {
         _guardian_backup_non_stark: Map<felt252, felt252>,
         /// The ongoing escape, if any
         _escape: LegacyEscape,
-        _signer_non_stark: LegacyMap<felt252, felt252>,
         /// The following 4 fields are used to limit the number of escapes the account will pay for
         /// Values are Rounded down to the hour:
         /// https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 Values are
@@ -147,6 +150,8 @@ mod ArgentAccount {
         SRC5Events: src5_component::Event,
         #[flat]
         UpgradeEvents: upgrade_component::Event,
+        #[flat]
+        UpgradeMigrationEvents: upgrade_migration_component::Event,
         #[flat]
         SessionableEvents: session_component::Event,
         #[flat]
@@ -238,6 +243,7 @@ mod ArgentAccount {
     // Required Callbacks
     impl OwnerManagerCallbackImpl of IOwnerManagerCallback<ContractState> {
         fn emit_signer_linked_event(ref self: ContractState, event: SignerLinked) {
+            // TODO check if possible to emit events using generics
             self.emit(event);
         }
     }
@@ -248,7 +254,8 @@ mod ArgentAccount {
         // But v0.3.0+ is guaranteed to call it
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
-            self.migrate_from_before_0_4_0();
+
+            self.upgrade_migration.migrate_from_before_0_4_0();
 
             if data.is_empty() {
                 return array![];
@@ -277,7 +284,8 @@ mod ArgentAccount {
             assert(previous_version < current_version, 'argent/downgrade-not-allowed');
 
             self.upgrade.complete_upgrade(new_implementation);
-            self.migrate_from_0_4_0();
+
+            self.upgrade_migration.migrate_from_0_4_0();
 
             if data.is_empty() {
                 return;
@@ -286,6 +294,29 @@ mod ArgentAccount {
             let calls: Array<Call> = full_deserialize(data).expect('argent/invalid-calls');
             assert_no_self_call(calls.span(), get_contract_address());
             execute_multicall(calls.span());
+        }
+    }
+
+    impl UpgradeMigrationCallbackImpl of IUpgradeMigrationCallback<ContractState> {
+        fn perform_health_check(ref self: ContractState) {
+            self.owner_manager.assert_valid_storage();
+            let guardian_key = self._guardian.read();
+            let guardian_backup_key = self._guardian_backup.read();
+            if guardian_key == 0 {
+                assert(guardian_backup_key == 0, 'argent/backup-should-be-null');
+            }
+
+            self.reset_escape();
+            self.reset_escape_timestamps();
+        }
+
+        // TODO Do we need to have the event passed as it is empty? if not, we can remove it + remove SERDE on it
+        fn emit_escape_canceled_event(ref self: ContractState, event: EscapeCanceled) {
+            self.emit(event);
+        }
+
+        fn initialize_from_upgrade(ref self: ContractState, signer_storage_value: SignerStorageValue) {
+            self.owner_manager.initialize_from_upgrade(signer_storage_value);
         }
     }
 
@@ -781,118 +812,6 @@ mod ArgentAccount {
             }
             let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
             self.assert_valid_span_signature(execution_hash, signer_signatures.span());
-        }
-
-        fn migrate_from_before_0_4_0(ref self: ContractState) {
-            // As the storage layout for the escape is changing, if there is an ongoing escape it should revert
-            // Expired escapes will be cleared
-            let escape_base = storage_base_address_from_felt252(selector!("_escape"));
-            let escape_ready_at = storage_read_syscall(0, storage_address_from_base_and_offset(escape_base, 0))
-                .unwrap_syscall();
-
-            if escape_ready_at == 0 {
-                let escape_type = storage_read_syscall(0, storage_address_from_base_and_offset(escape_base, 1))
-                    .unwrap_syscall();
-                let escape_new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(escape_base, 2))
-                    .unwrap_syscall();
-                assert(escape_type.is_zero(), 'argent/esc-type-not-null');
-                assert(escape_new_signer.is_zero(), 'argent/esc-new-signer-not-null');
-            } else {
-                let escape_ready_at: u64 = escape_ready_at.try_into().unwrap();
-                if get_block_timestamp() < escape_ready_at + DEFAULT_ESCAPE_SECURITY_PERIOD {
-                    // Not expired. Automatically cancelling the escape when upgrading
-                    self.emit(EscapeCanceled {});
-                }
-                // Clear the escape
-                self._escape.write(Default::default());
-            }
-
-            // Cleaning attempts storage as the escape was cleared
-            let guardian_escape_attempts_storage_address = selector!("guardian_escape_attempts").try_into().unwrap();
-            storage_write_syscall(0, guardian_escape_attempts_storage_address, 0).unwrap_syscall();
-            let owner_escape_attempts_storage_address = selector!("owner_escape_attempts").try_into().unwrap();
-            storage_write_syscall(0, owner_escape_attempts_storage_address, 0).unwrap_syscall();
-
-            // Check basic invariants and emit missing events
-            let owner_key_storage_address = selector!("_signer").try_into().unwrap();
-            let owner_key = storage_read_syscall(0, owner_key_storage_address).unwrap_syscall();
-            let guardian_key = self._guardian.read();
-            let guardian_backup_key = self._guardian_backup.read();
-            assert(owner_key != 0, 'argent/null-owner');
-            if guardian_key == 0 {
-                assert(guardian_backup_key == 0, 'argent/backup-should-be-null');
-            } else {
-                let guardian = starknet_signer_from_pubkey(guardian_key);
-                self.emit(SignerLinked { signer_guid: guardian.into_guid(), signer: guardian });
-                if guardian_backup_key != 0 {
-                    let guardian_backup = starknet_signer_from_pubkey(guardian_backup_key);
-                    self.emit(SignerLinked { signer_guid: guardian_backup.into_guid(), signer: guardian_backup });
-                }
-            }
-
-            let owner = starknet_signer_from_pubkey(owner_key);
-            self.emit(SignerLinked { signer_guid: owner.into_guid(), signer: owner });
-
-            let implementation_storage_address = selector!("_implementation").try_into().unwrap();
-            let implementation = storage_read_syscall(0, implementation_storage_address).unwrap_syscall();
-
-            if implementation != Zeroable::zero() {
-                replace_class_syscall(implementation.try_into().unwrap()).expect('argent/invalid-after-upgrade');
-                storage_write_syscall(0, implementation_storage_address, 0).unwrap_syscall();
-            }
-
-            self.migrate_from_0_4_0();
-        }
-
-        fn migrate_from_0_4_0(ref self: ContractState) {
-            // Reset proxy slot as the replace_class_syscall is done in the upgrade callback
-            let implementation_storage_address = selector!("_implementation").try_into().unwrap();
-            let implementation = storage_read_syscall(0, implementation_storage_address).unwrap_syscall();
-
-            if implementation != Zeroable::zero() {
-                storage_write_syscall(0, implementation_storage_address, 0).unwrap_syscall();
-            }
-
-            let signer_storage_address = selector!("_signer").try_into().unwrap();
-            let mut signer_to_migrate = storage_read_syscall(0, signer_storage_address).unwrap_syscall();
-            // As we come from a version that has a _signer slot
-            // If it is 0, it means we are migrating from an account that is already at the current version
-            if (signer_to_migrate != 0) {
-                let stark_signer = starknet_signer_from_pubkey(signer_to_migrate).storage_value();
-                self.owner_manager.initialize_from_upgrade(stark_signer);
-                storage_write_syscall(0, signer_storage_address, 0).unwrap_syscall();
-            } else {
-                // TODO Why this ain't working???
-                // let signer_non_stark_base = storage_base_address_from_felt252(selector!("_signer_non_stark"));
-                for offset in 1_u8
-                    ..5 {
-                        // let storage_address = storage_address_from_base_and_offset(signer_non_stark_base, offset);
-                        // let stored_value = storage_read_syscall(0, storage_address).unwrap_syscall();
-                        let stored_value = self._signer_non_stark.read(offset.into());
-
-                        // Can unwrap as we are bound by the loop range
-                        let signer_type: u256 = offset.into();
-                        let signer_type = signer_type.try_into().unwrap();
-
-                        if (stored_value != 0) {
-                            let signer_storage_value = SignerStorageValue { signer_type, stored_value };
-                            self.owner_manager.initialize_from_upgrade(signer_storage_value);
-                            self._signer_non_stark.write(offset.into(), 0);
-                            // storage_write_syscall(0, storage_address, 0).unwrap_syscall();
-                            break;
-                        }
-                    };
-            }
-            // Health check
-            self.owner_manager.assert_valid_storage();
-            let guardian_key = self._guardian.read();
-            let guardian_backup_key = self._guardian_backup.read();
-            if guardian_key == 0 {
-                assert(guardian_backup_key == 0, 'argent/backup-should-be-null');
-            }
-
-            self.reset_escape();
-            self.reset_escape_timestamps();
         }
 
         #[inline(always)]

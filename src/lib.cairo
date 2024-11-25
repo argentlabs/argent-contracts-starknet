@@ -2,6 +2,7 @@ mod recovery;
 mod upgrade {
     mod interface;
     mod upgrade;
+    mod upgrade_migration;
 }
 
 mod account {

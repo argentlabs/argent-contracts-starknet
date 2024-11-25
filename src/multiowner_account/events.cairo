@@ -94,7 +94,7 @@ struct GuardianEscapedGuid {
 }
 
 /// @notice An ongoing escape was canceled
-#[derive(Drop, starknet::Event)]
+#[derive(Drop, starknet::Event, Serde)]
 struct EscapeCanceled {}
 
 /// @notice Deprecated from v0.4.0. This is only emitted if the new owner is a starknet key

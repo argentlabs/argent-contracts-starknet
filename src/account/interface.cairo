@@ -50,3 +50,17 @@ trait IDeprecatedArgentAccount<TContractState> {
     /// For compatibility reasons this function returns 1 when the signature is valid, and panics otherwise
     fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }
+
+impl VersionPartialOrd of PartialOrd<Version> {
+    fn lt(lhs: Version, rhs: Version) -> bool {
+        if lhs.major == rhs.major {
+            if (lhs.minor == rhs.minor) {
+                lhs.patch < rhs.patch
+            } else {
+                lhs.minor < rhs.minor
+            }
+        } else {
+            lhs.major < rhs.major
+        }
+    }
+}

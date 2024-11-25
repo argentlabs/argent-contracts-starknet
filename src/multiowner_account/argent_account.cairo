@@ -271,23 +271,13 @@ mod ArgentAccount {
             assert_only_self();
 
             // Downgrade check
-            assert(self.owner_manager.get_owner_guids().len() == 0, 'argent/downgrade-not-allowed');
-
-            self.migrate_from_0_4_0();
-
-            // Since we are doing a library call calling get_version() will return the new version
-            // let current_version = self.get_version();
+            let previous_version = IArgentMultiOwnerAccountDispatcher { contract_address: get_contract_address() }
+                .get_version();
+            let current_version = self.get_version();
+            assert(previous_version < current_version, 'argent/downgrade-not-allowed');
 
             self.upgrade.complete_upgrade(new_implementation);
-
-            // let next_version = self.get_version();
-            // let prev_version_as_number: u128 = prev_version.major.into() * 10000
-            //     + prev_version.minor.into() * 100
-            //     + prev_version.patch.into();
-            // let next_version_as_number: u128 = next_version.major.into() * 10000
-            //     + next_version.minor.into() * 100
-            //     + next_version.patch.into();
-            // assert(next_version_as_number > prev_version_as_number, 'argent/downgrade-not-allowed');
+            self.migrate_from_0_4_0();
 
             if data.is_empty() {
                 return;

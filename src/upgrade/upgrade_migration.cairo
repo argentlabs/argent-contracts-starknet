@@ -1,4 +1,3 @@
-use argent::multiowner_account::events::EscapeCanceled;
 use argent::signer::signer_signature::SignerStorageValue;
 
 #[starknet::interface]
@@ -10,13 +9,13 @@ trait IUpgradeMigrationInternal<TContractState> {
 #[starknet::interface]
 trait IUpgradeMigrationCallback<TContractState> {
     fn perform_health_check(ref self: TContractState);
-    fn emit_escape_canceled_event(ref self: TContractState, event: EscapeCanceled);
+    fn emit_escape_canceled_event(ref self: TContractState);
     fn initialize_from_upgrade(ref self: TContractState, signer_storage_value: SignerStorageValue);
 }
 
 #[starknet::component]
 mod upgrade_migration_component {
-    use argent::multiowner_account::events::{SignerLinked, EscapeCanceled};
+    use argent::multiowner_account::events::SignerLinked;
     use argent::multiowner_account::owner_manager::IOwnerManagerCallback;
     use argent::multiowner_account::recovery::LegacyEscape;
     use argent::signer::signer_signature::{SignerStorageValue, Signer, starknet_signer_from_pubkey, SignerTrait};
@@ -41,7 +40,6 @@ mod upgrade_migration_component {
         // Legacy storage
         _implementation: felt252,
         // 0.4.0
-        _signer: felt252,
         #[deprecated(feature: "deprecated_legacy_map")]
         _signer_non_stark: LegacyMap<felt252, felt252>,
     }
@@ -76,7 +74,7 @@ mod upgrade_migration_component {
                 let escape_ready_at: u64 = escape_ready_at.try_into().unwrap();
                 if get_block_timestamp() < escape_ready_at + DEFAULT_ESCAPE_SECURITY_PERIOD {
                     // Not expired. Automatically cancelling the escape when upgrading
-                    self.emit_escape_canceled_event(EscapeCanceled {});
+                    self.emit_escape_canceled_event();
                 }
                 // Clear the escape
                 self._escape.write(Default::default());
@@ -173,9 +171,9 @@ mod upgrade_migration_component {
             contract.emit_signer_linked_event(event);
         }
 
-        fn emit_escape_canceled_event(ref self: ComponentState<TContractState>, event: EscapeCanceled) {
+        fn emit_escape_canceled_event(ref self: ComponentState<TContractState>) {
             let mut contract = self.get_contract_mut();
-            contract.emit_escape_canceled_event(event);
+            contract.emit_escape_canceled_event();
         }
 
         fn perform_health_check(ref self: ComponentState<TContractState>) {

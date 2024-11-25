@@ -306,9 +306,8 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
         }
 
-        // TODO Do we need to have the event passed as it is empty? if not, we can remove it + remove SERDE on it
-        fn emit_escape_canceled_event(ref self: ContractState, event: EscapeCanceled) {
-            self.emit(event);
+        fn emit_escape_canceled_event(ref self: ContractState) {
+            self.emit(EscapeCanceled {});
         }
 
         fn initialize_from_upgrade(ref self: ContractState, signer_storage_value: SignerStorageValue) {

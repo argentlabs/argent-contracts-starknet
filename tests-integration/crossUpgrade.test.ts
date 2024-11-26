@@ -11,7 +11,7 @@ describe("Upgrades to a different account type", function () {
 
   it("Upgrade Multisig to Account should fail", async function () {
     const { account } = await deployMultisig1_1();
-    // Error comes from the health check
+    // Error comes from the health check because the account wasn't initialized from any known signer slot
     await expectRevertWithErrorMessage(
       "argent/invalid-signers-len",
       upgradeAccount(account, await manager.declareLocalContract("ArgentAccount")),

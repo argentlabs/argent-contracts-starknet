@@ -1,10 +1,9 @@
 #[starknet::contract(account)]
 mod ArgentAccount {
-    use argent::account::interface::{IAccount, IArgentAccount, IDeprecatedArgentAccount, Version};
+    use argent::account::interface::{IAccount, IDeprecatedArgentAccount, Version};
     use argent::introspection::src5::src5_component;
     use argent::multiowner_account::account_interface::{
         IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait,
-        IArgentMultiOwnerAccountLibraryDispatcher
     };
     use argent::multiowner_account::events::{
         SignerLinked, TransactionExecuted, AccountCreated, AccountCreatedGuid, EscapeOwnerTriggeredGuid,
@@ -17,16 +16,15 @@ mod ArgentAccount {
     use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
     use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{
-        outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
+        outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
     use argent::recovery::EscapeStatus;
-
     use argent::session::{
         interface::ISessionCallback, session::{session_component::{Internal, InternalTrait}, session_component}
     };
     use argent::signer::signer_signature::{
         Signer, SignerStorageValue, SignerType, StarknetSigner, StarknetSignature, SignerTrait, SignerStorageTrait,
-        SignerSignature, SignerSignatureTrait, starknet_signer_from_pubkey
+        SignerSignature, SignerSignatureTrait
     };
     use argent::upgrade::{
         upgrade_migration::{IUpgradeMigrationInternal, upgrade_migration_component, IUpgradeMigrationCallback},
@@ -102,7 +100,6 @@ mod ArgentAccount {
     impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
 
     #[storage]
-    #[feature("deprecated_legacy_map")]
     struct Storage {
         #[substorage(v0)]
         owner_manager: owner_manager_component::Storage,

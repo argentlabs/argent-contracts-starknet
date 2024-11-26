@@ -5,14 +5,6 @@ trait IUpgradeInternal<TContractState> {
     fn complete_upgrade(ref self: TContractState, new_implementation: ClassHash);
 }
 
-
-pub trait WideMul<Lhs, Rhs> {
-    /// The type of the result of the multiplication.
-    type Target;
-    /// Multiply two values together, producing a wider type.
-    fn wide_mul(self: Lhs, other: Rhs) -> Self::Target;
-}
-
 #[starknet::component]
 mod upgrade_component {
     use argent::account::interface::SRC5_ACCOUNT_INTERFACE_ID;

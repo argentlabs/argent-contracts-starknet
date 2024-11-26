@@ -1,11 +1,6 @@
-use argent::signer::{
-    signer_signature::{
-        Signer, SignerTrait, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerSignatureTrait,
-        SignerSpanTrait
-    },
-};
+use argent::multiowner_account::events::SignerLinked;
+use argent::signer::signer_signature::{Signer, SignerSignature, SignerStorageValue, SignerStorageTrait};
 use argent::utils::linked_set::SetItem;
-use super::events::SignerLinked;
 
 impl SignerStorageValueSetItem of SetItem<SignerStorageValue> {
     fn is_valid_item(self: @SignerStorageValue) -> bool {
@@ -61,18 +56,16 @@ trait IOwnerManagerInternal<TContractState> {
 /// Managing the list of owners of the account
 #[starknet::component]
 mod owner_manager_component {
+    use argent::multiowner_account::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
     use argent::signer::signer_signature::{
         Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
         SignerStorageTrait
     };
     use argent::utils::{
         linked_set::{LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl},
-        transaction_version::is_estimate_transaction, asserts::assert_only_self
+        transaction_version::is_estimate_transaction
     };
-
-    use super::super::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
-    use super::{IOwnerManager, IOwnerManagerInternal};
-    use super::{SignerStorageValueSetItem, IOwnerManagerCallback};
+    use super::{IOwnerManager, IOwnerManagerInternal, SignerStorageValueSetItem, IOwnerManagerCallback};
     /// Too many owners could make the account unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 

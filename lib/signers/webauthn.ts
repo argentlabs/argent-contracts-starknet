@@ -108,7 +108,7 @@ export class WebauthnOwner extends KeyPair {
 
     const sha256Impl = this.useCairo0Sha256 ? "0" : "1";
     const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0${sha256Impl}`));
-    const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin });
+    const clientData = JSON.stringify(this.getClientData(challenge));
 
     // const extraJson = "";
     const extraJson = `,"crossOrigin":false}`;
@@ -152,6 +152,10 @@ export class WebauthnOwner extends KeyPair {
       }),
     };
   }
+
+  getClientData(challenge: string): any {
+    return { type: "webauthn.get", challenge, origin: this.origin };
+  }
 }
 
 // LEGACY WEBAUTHN
@@ -159,43 +163,22 @@ type LegacyWebauthnSignature = {
   cross_origin: boolean;
 } & WebauthnSignature;
 
-// TODO ANSWER: Code of this is quite copy paste... Should I refactor or leave as is?
-// Feel like it's better to leave as is to avoid cluttering the regular WebauthnOwner with more overhead
 export class LegacyWebauthnOwner extends WebauthnOwner {
+  crossOrigin = false;
+
   public getPrivateKey(): string {
     return buf2hex(this.pk);
   }
 
+  getClientData(challenge: string): any {
+    return { ...super.getClientData(challenge), crossOrigin: this.crossOrigin };
+  }
+
   public async signHash(transactionHash: string): Promise<LegacyWebauthnSignature> {
-    const flags = Number("0b00000101"); // present and verified
-    const signCount = 0;
-    const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([flags, 0, 0, 0, signCount]));
-
-    const sha256Impl = this.useCairo0Sha256 ? "0" : "1";
-    const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0${sha256Impl}`));
-    const crossOrigin = false;
-    const extraJson = ""; // = `,"extraField":"random data"}`;
-    const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin, crossOrigin });
-    const clientDataJson = extraJson ? clientData.replace(/}$/, extraJson) : clientData;
-    const clientDataHash = sha256(new TextEncoder().encode(clientDataJson));
-
-    const signedHash = sha256(concatBytes(authenticatorData, clientDataHash));
-
-    const signature = normalizeSecpR1Signature(secp256r1.sign(signedHash, this.pk));
+    const webauthnSignature = await super.signHash(transactionHash);
     return {
-      cross_origin: crossOrigin,
-      client_data_json_outro: CallData.compile(toCharArray(extraJson)),
-      flags,
-      sign_count: signCount,
-      ec_signature: {
-        r: uint256.bnToUint256(signature.r),
-        s: uint256.bnToUint256(signature.s),
-        y_parity: signature.yParity,
-      },
-      sha256_implementation: new CairoCustomEnum({
-        Cairo0: this.useCairo0Sha256 ? {} : undefined,
-        Cairo1: this.useCairo0Sha256 ? undefined : {},
-      }),
+      cross_origin: this.crossOrigin,
+      ...webauthnSignature,
     };
   }
 }

@@ -4,8 +4,10 @@ import {
   ArgentSigner,
   ContractWithClass,
   LegacyStarknetKeyPair,
+  LegacyWebauthnOwner,
   RawSigner,
   StarknetKeyPair,
+  WebauthnOwner,
   deployAccount,
   deployAccountWithoutGuardian,
   deployLegacyAccount,
@@ -20,6 +22,8 @@ import {
   randomEthKeyPair,
   randomSecp256r1KeyPair,
   randomStarknetKeyPair,
+  randomWebauthnLegacyCairo0Owner,
+  randomWebauthnLegacyOwner,
   upgradeAccount,
 } from "../lib";
 
@@ -130,7 +134,12 @@ describe("ArgentAccount: upgrade", function () {
 
           const oldSigner = account.signer;
 
-          account.signer = toSigner(guardian);
+          if (guardian instanceof StarknetKeyPair) {
+            account.signer =  new ArgentSigner(guardian);
+          } else {
+            account.signer = guardian;
+          }
+
           await manager.ensureSuccess(
             account.execute({
               contractAddress: account.address,
@@ -149,7 +158,12 @@ describe("ArgentAccount: upgrade", function () {
           const { account, owner } = await deployAccount();
 
           const oldSigner = account.signer;
-          account.signer = toSigner(owner);
+
+          if (owner instanceof StarknetKeyPair) {
+            account.signer =  new ArgentSigner(owner);
+          } else {
+            account.signer = owner;
+          }
 
           await manager.ensureSuccess(
             account.execute({
@@ -197,36 +211,48 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   describe("Testing upgrade version 0.4.0 with every signer type", function () {
+    before(async () => {
+      await manager.declareFixtureContract("Sha256Cairo0");
+    });
     // Same as in accountSigners.test.ts
     const nonStarknetKeyPairs = [
       { name: "Ethereum signature", keyPair: randomEthKeyPair },
       { name: "Secp256r1 signature", keyPair: randomSecp256r1KeyPair },
       { name: "Eip191 signature", keyPair: randomEip191KeyPair },
-      // Those two can't be done unless we provide an "old" version of the webauthn signer, we run into an invalid signature format error
-      // { name: "Webauthn signature", keyPair: randomWebauthnOwner },
-      // { name: "Webauthn signature (cairo0)", keyPair: randomWebauthnCairo0Owner },
+      { name: "Webauthn signature", keyPair: randomWebauthnLegacyOwner },
+      { name: "Webauthn signature (cairo0)", keyPair: randomWebauthnLegacyCairo0Owner },
     ];
 
     for (const { name, keyPair } of nonStarknetKeyPairs) {
-      it(`Testing upgrade using signer ${name}`, async function () {
-        const { account } = await deployAccount({ owner: keyPair(), classHash: classHashV040 });
+      it(`[${name}] Testing upgrade`, async function () {
+        const owner = keyPair();
+        const { account, guardian } = await deployAccount({ owner, classHash: classHashV040 });
 
         await upgradeAccount(account, argentAccountClassHash);
         expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
 
         mockDapp.connect(account);
+        // We have to update the owner with the new webauthn format
+        if (owner instanceof LegacyWebauthnOwner) {
+          account.signer = new ArgentSigner(new WebauthnOwner(owner.getPrivateKey()), guardian);
+        }
+        await manager.ensureSuccess(mockDapp.set_number(42));
+      });
+
+      it(`[${name}] Testing upgrade without guardian ${name}`, async function () {
+        const owner = keyPair();
+        const { account } = await deployAccountWithoutGuardian({ owner, classHash: classHashV040 });
+
+        await upgradeAccount(account, argentAccountClassHash);
+        expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+
+        mockDapp.connect(account);
+        // We have to update the owner with the new webauthn format
+        if (owner instanceof LegacyWebauthnOwner) {
+          account.signer = new ArgentSigner(new WebauthnOwner(owner.getPrivateKey()));
+        }
         await manager.ensureSuccess(mockDapp.set_number(42));
       });
     }
   });
 });
-
-function toSigner(signer: RawSigner): RawSigner {
-  if (signer instanceof LegacyStarknetKeyPair) {
-    return signer;
-  } else if (signer instanceof StarknetKeyPair) {
-    return new ArgentSigner(signer);
-  } else {
-    throw new Error("unsupported Signer type");
-  }
-}

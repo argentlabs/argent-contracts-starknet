@@ -154,9 +154,57 @@ export class WebauthnOwner extends KeyPair {
   }
 }
 
+// LEGACY WEBAUTHN
+type LegacyWebauthnSignature = {
+  cross_origin: boolean;
+} & WebauthnSignature;
+
+// TODO ANSWER: Code of this is quite copy paste... Should I refactor or leave as is?
+// Feel like it's better to leave as is to avoid cluttering the regular WebauthnOwner with more overhead
+export class LegacyWebauthnOwner extends WebauthnOwner {
+  public getPrivateKey(): string {
+    return buf2hex(this.pk);
+  }
+
+  public async signHash(transactionHash: string): Promise<LegacyWebauthnSignature> {
+    const flags = Number("0b00000101"); // present and verified
+    const signCount = 0;
+    const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([flags, 0, 0, 0, signCount]));
+
+    const sha256Impl = this.useCairo0Sha256 ? "0" : "1";
+    const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0${sha256Impl}`));
+    const crossOrigin = false;
+    const extraJson = ""; // = `,"extraField":"random data"}`;
+    const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin, crossOrigin });
+    const clientDataJson = extraJson ? clientData.replace(/}$/, extraJson) : clientData;
+    const clientDataHash = sha256(new TextEncoder().encode(clientDataJson));
+
+    const signedHash = sha256(concatBytes(authenticatorData, clientDataHash));
+
+    const signature = normalizeSecpR1Signature(secp256r1.sign(signedHash, this.pk));
+    return {
+      cross_origin: crossOrigin,
+      client_data_json_outro: CallData.compile(toCharArray(extraJson)),
+      flags,
+      sign_count: signCount,
+      ec_signature: {
+        r: uint256.bnToUint256(signature.r),
+        s: uint256.bnToUint256(signature.s),
+        y_parity: signature.yParity,
+      },
+      sha256_implementation: new CairoCustomEnum({
+        Cairo0: this.useCairo0Sha256 ? {} : undefined,
+        Cairo1: this.useCairo0Sha256 ? undefined : {},
+      }),
+    };
+  }
+}
+
 function sha256(message: BinaryLike) {
   return createHash("sha256").update(message).digest();
 }
 
 export const randomWebauthnOwner = () => new WebauthnOwner(undefined, undefined, undefined, false);
 export const randomWebauthnCairo0Owner = () => new WebauthnOwner(undefined, undefined, undefined, true);
+export const randomWebauthnLegacyOwner = () => new LegacyWebauthnOwner(undefined, undefined, undefined, false);
+export const randomWebauthnLegacyCairo0Owner = () => new LegacyWebauthnOwner(undefined, undefined, undefined, true);

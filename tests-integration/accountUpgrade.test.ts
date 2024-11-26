@@ -11,6 +11,7 @@ import {
   deployLegacyAccount,
   deployLegacyAccountWithoutGuardian,
   deployOldAccountWithProxy,
+  deployOldAccountWithProxyWithoutGuardian,
   expectEvent,
   expectRevertWithErrorMessage,
   getUpgradeDataLegacy,
@@ -36,7 +37,7 @@ describe("ArgentAccount: upgrade", function () {
       name: "Legacy",
       deployAccount: async () => await deployOldAccountWithProxy(),
       extraCalldata: ["0"],
-      deployAccountWithoutGuardian: async () => await deployOldAccountWithProxy(), // TODO ?
+      deployAccountWithoutGuardian: async () => await deployOldAccountWithProxyWithoutGuardian(),
       // Gotta call like that as the entrypoint is not found on the contract for legacy versions
       triggerEscapeOwner: { entrypoint: "triggerEscapeSigner" },
       triggerEscapeGuardian: { entrypoint: "triggerEscapeGuardian" },

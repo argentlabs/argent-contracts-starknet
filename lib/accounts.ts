@@ -83,12 +83,21 @@ export interface ArgentWalletWithGuardian extends ArgentWallet {
   guardian: KeyPair;
 }
 
+interface LegacyArgentWalletInner {
+  account: ArgentAccount;
+  accountContract: Contract;
+  owner: LegacyKeyPair;
+  guardian?: LegacyKeyPair;
+}
+
 export interface LegacyArgentWallet {
   account: ArgentAccount;
   accountContract: Contract;
   owner: LegacyKeyPair;
   guardian: LegacyKeyPair;
 }
+
+export type LegacyArgentWalletWithoutGuardian = LegacyArgentWalletInner & Omit<LegacyArgentWallet, "guardian">;
 
 export interface ArgentWalletWithGuardianAndBackup extends ArgentWalletWithGuardian {
   guardianBackup: KeyPair;
@@ -129,19 +138,39 @@ export async function deployOldAccountWithProxy(
   guardian = new LegacyStarknetKeyPair(),
   salt = num.toHex(randomStarknetKeyPair().privateKey),
 ): Promise<LegacyArgentWallet> {
+  const { account, accountContract } = await deployOldAccountWithProxyInner(owner, guardian, salt);
+  return { account, accountContract, owner, guardian };
+}
+
+export async function deployOldAccountWithProxyWithoutGuardian(): Promise<LegacyArgentWalletWithoutGuardian> {
+  const owner = new LegacyStarknetKeyPair();
+  const { account, accountContract } = await deployOldAccountWithProxyInner(owner);
+  return { account, accountContract, owner };
+}
+
+async function deployOldAccountWithProxyInner(
+  owner: LegacyKeyPair,
+  guardian?: LegacyKeyPair,
+  salt = num.toHex(randomStarknetKeyPair().privateKey),
+): Promise<LegacyArgentWalletInner> {
   const proxyClassHash = await manager.declareFixtureContract("Proxy");
   const oldArgentAccountClassHash = await manager.declareFixtureContract("OldArgentAccount");
 
+  const guardianPublicKey = guardian ? guardian.publicKey : 0;
   const constructorCalldata = CallData.compile({
     implementation: oldArgentAccountClassHash,
     selector: hash.getSelectorFromName("initialize"),
-    calldata: CallData.compile({ owner: owner.publicKey, guardian: guardian.publicKey }),
+    calldata: CallData.compile({ owner: owner.publicKey, guardian: guardianPublicKey }),
   });
 
   const contractAddress = hash.calculateContractAddressFromHash(salt, proxyClassHash, constructorCalldata, 0);
 
   const account = new Account(manager, contractAddress, owner);
-  account.signer = new LegacyMultisigSigner([owner, guardian]);
+  const keys = [owner];
+  if (guardian) {
+    keys.push(guardian);
+  }
+  account.signer = new LegacyMultisigSigner(keys);
 
   await fundAccount(account.address, 1e16, "ETH"); // 0.01 ETH
 

@@ -3,9 +3,7 @@ import { CairoOption, CairoOptionVariant, CallData } from "starknet";
 import {
   ArgentSigner,
   ContractWithClass,
-  LegacyStarknetKeyPair,
   LegacyWebauthnOwner,
-  RawSigner,
   StarknetKeyPair,
   WebauthnOwner,
   deployAccount,
@@ -135,7 +133,7 @@ describe("ArgentAccount: upgrade", function () {
           const oldSigner = account.signer;
 
           if (guardian instanceof StarknetKeyPair) {
-            account.signer =  new ArgentSigner(guardian);
+            account.signer = new ArgentSigner(guardian);
           } else {
             account.signer = guardian;
           }
@@ -160,7 +158,7 @@ describe("ArgentAccount: upgrade", function () {
           const oldSigner = account.signer;
 
           if (owner instanceof StarknetKeyPair) {
-            account.signer =  new ArgentSigner(owner);
+            account.signer = new ArgentSigner(owner);
           } else {
             account.signer = owner;
           }

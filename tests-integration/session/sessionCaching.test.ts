@@ -39,7 +39,9 @@ describe("Session Account: execute caching", function () {
 
   for (const useCaching of [false, true]) {
     it(`Session is successfully cached when flag set (caching: ${useCaching})`, async function () {
-      const { accountContract, account, guardian, owner } = await deployAccount();
+      const { accountContract, account, guardian, owner } = await deployAccount({
+        classHash: argentAccountClassHash,
+      });
 
       const { accountWithDappSigner, sessionHash } = await setupSession({
         guardian: guardian as StarknetKeyPair,
@@ -70,7 +72,9 @@ describe("Session Account: execute caching", function () {
     });
 
     it(`Fail if guardian backup signed session (caching: ${useCaching})`, async function () {
-      const { account, guardian, owner } = await deployAccountWithGuardianBackup();
+      const { account, guardian, owner } = await deployAccountWithGuardianBackup({
+        classHash: argentAccountClassHash,
+      });
 
       const { accountWithDappSigner } = await setupSession({
         guardian: guardian as StarknetKeyPair,
@@ -86,7 +90,7 @@ describe("Session Account: execute caching", function () {
     });
 
     it(`Fail with 'argent/invalid-signature-len' if more than owner + guardian signed session (caching: ${useCaching})`, async function () {
-      const { account, guardian, accountContract, owner } = await deployAccount();
+      const { account, guardian, accountContract, owner } = await deployAccount({ classHash: argentAccountClassHash });
 
       const { accountWithDappSigner, sessionHash, authorizationSignature, sessionRequest, dappService } =
         await setupSession({

@@ -209,10 +209,6 @@ describe("ArgentAccount: upgrade", function () {
   });
 
   describe("Testing upgrade version 0.4.0 with every signer type", function () {
-    before(async () => {
-      await manager.declareFixtureContract("Sha256Cairo0");
-    });
-    // Same as in accountSigners.test.ts
     const nonStarknetKeyPairs = [
       { name: "Ethereum signature", keyPair: randomEthKeyPair },
       { name: "Secp256r1 signature", keyPair: randomSecp256r1KeyPair },
@@ -220,6 +216,10 @@ describe("ArgentAccount: upgrade", function () {
       { name: "Webauthn signature", keyPair: randomWebauthnLegacyOwner },
       { name: "Webauthn signature (cairo0)", keyPair: randomWebauthnLegacyCairo0Owner },
     ];
+
+    before(async () => {
+      await manager.declareFixtureContract("Sha256Cairo0");
+    });
 
     for (const { name, keyPair } of nonStarknetKeyPairs) {
       it(`[${name}] Testing upgrade`, async function () {

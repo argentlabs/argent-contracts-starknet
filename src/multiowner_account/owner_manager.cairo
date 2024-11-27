@@ -12,7 +12,6 @@ impl SignerStorageValueSetItem of SetItem<SignerStorageValue> {
     }
 }
 
-#[starknet::interface] // TODO is this interface necessary?
 // TODO just have a generic emit_event?
 trait IOwnerManagerCallback<TContractState> {
     fn emit_signer_linked_event(ref self: TContractState, event: SignerLinked);

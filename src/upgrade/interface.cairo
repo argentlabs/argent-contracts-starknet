@@ -1,5 +1,5 @@
-use argent::account::interface::Version;
 use starknet::ClassHash;
+
 #[starknet::interface]
 trait IUpgradeable<TContractState> {
     /// @notice Upgrades the implementation of the account by doing a library call to `perform_upgrade` on the new

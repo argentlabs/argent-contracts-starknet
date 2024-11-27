@@ -1,3 +1,4 @@
+use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
 use argent::signer::signer_signature::SignerStorageValue;
 
 #[starknet::interface]
@@ -6,18 +7,17 @@ trait IUpgradeMigrationInternal<TContractState> {
     fn migrate_from_0_4_0(ref self: TContractState);
 }
 
-#[starknet::interface]
+// TODO Split his in 2 interfaces?
 trait IUpgradeMigrationCallback<TContractState> {
     fn perform_health_check(ref self: TContractState);
-    fn emit_escape_canceled_event(ref self: TContractState);
+    fn emit_event(ref self: TContractState, event: ArgentAccountEvent);
     fn initialize_from_upgrade(ref self: TContractState, signer_storage_value: SignerStorageValue);
 }
 
 #[starknet::component]
 mod upgrade_migration_component {
     use argent::multiowner_account::account_interface::IArgentMultiOwnerAccount;
-    use argent::multiowner_account::events::SignerLinked;
-    use argent::multiowner_account::owner_manager::IOwnerManagerCallback;
+    use argent::multiowner_account::events::{EscapeCanceled, SignerLinked};
     use argent::multiowner_account::recovery::LegacyEscape;
     use argent::signer::signer_signature::{SignerStorageValue, Signer, starknet_signer_from_pubkey, SignerTrait};
     use argent::upgrade::interface::{IUpgradableCallback, IUpgradeable, IUpgradableCallbackDispatcherTrait};
@@ -25,7 +25,7 @@ mod upgrade_migration_component {
         syscalls::replace_class_syscall, SyscallResultTrait, get_block_timestamp, storage::Map,
         storage_access::{storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,}
     };
-    use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback};
+    use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback, ArgentAccountEvent};
 
     const DEFAULT_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
@@ -50,7 +50,6 @@ mod upgrade_migration_component {
     impl UpgradableMigrationInternal<
         TContractState,
         +HasComponent<TContractState>,
-        +IOwnerManagerCallback<TContractState>,
         +Drop<TContractState>,
         +IUpgradeMigrationCallback<TContractState>,
         +IArgentMultiOwnerAccount<TContractState>
@@ -73,7 +72,7 @@ mod upgrade_migration_component {
                 let escape_ready_at: u64 = escape_ready_at.try_into().unwrap();
                 if get_block_timestamp() < escape_ready_at + DEFAULT_ESCAPE_SECURITY_PERIOD {
                     // Not expired. Automatically cancelling the escape when upgrading
-                    self.emit_escape_canceled_event();
+                    self.emit_event(ArgentAccountEvent::EscapeCanceled(EscapeCanceled {}));
                 }
                 // Clear the escape
                 self._escape.write(Default::default());
@@ -94,15 +93,20 @@ mod upgrade_migration_component {
                 assert(guardian_backup_key == 0, 'argent/backup-should-be-null');
             } else {
                 let guardian = starknet_signer_from_pubkey(guardian_key);
-                self.emit_signer_linked_event(guardian);
+                let guardian_linked = SignerLinked { signer_guid: guardian.into_guid(), signer: guardian };
+                self.emit_event(ArgentAccountEvent::SignerLinked(guardian_linked));
                 if guardian_backup_key != 0 {
                     let guardian_backup = starknet_signer_from_pubkey(guardian_backup_key);
-                    self.emit_signer_linked_event(guardian_backup);
+                    let guardian_backup_linked = SignerLinked {
+                        signer_guid: guardian_backup.into_guid(), signer: guardian_backup
+                    };
+                    self.emit_event(ArgentAccountEvent::SignerLinked(guardian_backup_linked));
                 }
             }
 
             let owner = starknet_signer_from_pubkey(owner_key);
-            self.emit_signer_linked_event(owner);
+            let owner_linked = SignerLinked { signer_guid: owner.into_guid(), signer: owner };
+            self.emit_event(ArgentAccountEvent::SignerLinked(owner_linked));
 
             let implementation = self._implementation.read();
 
@@ -152,20 +156,11 @@ mod upgrade_migration_component {
 
     #[generate_trait]
     impl Private<
-        TContractState,
-        +HasComponent<TContractState>,
-        +IOwnerManagerCallback<TContractState>,
-        +IUpgradeMigrationCallback<TContractState>,
-        +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +IUpgradeMigrationCallback<TContractState>, +Drop<TContractState>
     > of PrivateTrait<TContractState> {
-        fn emit_signer_linked_event(ref self: ComponentState<TContractState>, signer: Signer) {
+        fn emit_event(ref self: ComponentState<TContractState>, event: ArgentAccountEvent) {
             let mut contract = self.get_contract_mut();
-            contract.emit_signer_linked_event(SignerLinked { signer_guid: signer.into_guid(), signer });
-        }
-
-        fn emit_escape_canceled_event(ref self: ComponentState<TContractState>) {
-            let mut contract = self.get_contract_mut();
-            contract.emit_escape_canceled_event();
+            contract.emit_event(event);
         }
 
         fn perform_health_check(ref self: ComponentState<TContractState>) {

@@ -304,8 +304,8 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
         }
 
-        fn emit_escape_canceled_event(ref self: ContractState) {
-            self.emit(EscapeCanceled {});
+        fn emit_event(ref self: ContractState, event: Event) {
+            self.emit(event);
         }
 
         fn initialize_from_upgrade(ref self: ContractState, signer_storage_value: SignerStorageValue) {

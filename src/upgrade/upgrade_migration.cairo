@@ -15,6 +15,7 @@ trait IUpgradeMigrationCallback<TContractState> {
 
 #[starknet::component]
 mod upgrade_migration_component {
+    use argent::multiowner_account::account_interface::IArgentMultiOwnerAccount;
     use argent::multiowner_account::events::SignerLinked;
     use argent::multiowner_account::owner_manager::IOwnerManagerCallback;
     use argent::multiowner_account::recovery::LegacyEscape;
@@ -31,8 +32,6 @@ mod upgrade_migration_component {
     #[storage]
     struct Storage {
         // Duplicate keys
-        _guardian: felt252,
-        _guardian_backup: felt252,
         _escape: LegacyEscape,
         // Legacy storage
         _signer: felt252,
@@ -53,7 +52,8 @@ mod upgrade_migration_component {
         +HasComponent<TContractState>,
         +IOwnerManagerCallback<TContractState>,
         +Drop<TContractState>,
-        +IUpgradeMigrationCallback<TContractState>
+        +IUpgradeMigrationCallback<TContractState>,
+        +IArgentMultiOwnerAccount<TContractState>
     > of IUpgradeMigrationInternal<ComponentState<TContractState>> {
         fn migrate_from_before_0_4_0(ref self: ComponentState<TContractState>) {
             // As the storage layout for the escape is changing, if there is an ongoing escape it should revert
@@ -85,25 +85,24 @@ mod upgrade_migration_component {
 
             // Check basic invariants and emit missing events
             let owner_key = self._signer.read();
-            let guardian_key = self._guardian.read();
-            let guardian_backup_key = self._guardian_backup.read();
             assert(owner_key != 0, 'argent/null-owner');
+
+            let argent_account = self.get_contract();
+            let guardian_key = argent_account.get_guardian();
+            let guardian_backup_key = argent_account.get_guardian_backup();
             if guardian_key == 0 {
                 assert(guardian_backup_key == 0, 'argent/backup-should-be-null');
             } else {
                 let guardian = starknet_signer_from_pubkey(guardian_key);
-                self.emit_signer_linked_event(SignerLinked { signer_guid: guardian.into_guid(), signer: guardian });
+                self.emit_signer_linked_event(guardian);
                 if guardian_backup_key != 0 {
                     let guardian_backup = starknet_signer_from_pubkey(guardian_backup_key);
-                    self
-                        .emit_signer_linked_event(
-                            SignerLinked { signer_guid: guardian_backup.into_guid(), signer: guardian_backup }
-                        );
+                    self.emit_signer_linked_event(guardian_backup);
                 }
             }
 
             let owner = starknet_signer_from_pubkey(owner_key);
-            self.emit_signer_linked_event(SignerLinked { signer_guid: owner.into_guid(), signer: owner });
+            self.emit_signer_linked_event(owner);
 
             let implementation = self._implementation.read();
 
@@ -159,9 +158,9 @@ mod upgrade_migration_component {
         +IUpgradeMigrationCallback<TContractState>,
         +Drop<TContractState>
     > of PrivateTrait<TContractState> {
-        fn emit_signer_linked_event(ref self: ComponentState<TContractState>, event: SignerLinked) {
+        fn emit_signer_linked_event(ref self: ComponentState<TContractState>, signer: Signer) {
             let mut contract = self.get_contract_mut();
-            contract.emit_signer_linked_event(event);
+            contract.emit_signer_linked_event(SignerLinked { signer_guid: signer.into_guid(), signer });
         }
 
         fn emit_escape_canceled_event(ref self: ComponentState<TContractState>) {

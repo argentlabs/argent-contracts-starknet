@@ -12,7 +12,7 @@ impl SignerStorageValueSetItem of SetItem<SignerStorageValue> {
     }
 }
 
-// TODO just have a generic emit_event?
+// If we remove this to use the emit_event_callback, the multiowner_mock is broken
 trait IOwnerManagerCallback<TContractState> {
     fn emit_signer_linked_event(ref self: TContractState, event: SignerLinked);
 }

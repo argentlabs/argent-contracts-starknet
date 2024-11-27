@@ -1,4 +1,3 @@
-use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
 use argent::signer::signer_signature::SignerStorageValue;
 
 #[starknet::interface]
@@ -10,13 +9,14 @@ trait IUpgradeMigrationInternal<TContractState> {
 // TODO Split his in 2 interfaces?
 trait IUpgradeMigrationCallback<TContractState> {
     fn perform_health_check(ref self: TContractState);
-    fn emit_event(ref self: TContractState, event: ArgentAccountEvent);
     fn initialize_from_upgrade(ref self: TContractState, signer_storage_value: SignerStorageValue);
 }
 
 #[starknet::component]
 mod upgrade_migration_component {
+    use argent::account::interface::IEmitArgentAccountEvent;
     use argent::multiowner_account::account_interface::IArgentMultiOwnerAccount;
+    use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::events::{EscapeCanceled, SignerLinked};
     use argent::multiowner_account::recovery::LegacyEscape;
     use argent::signer::signer_signature::{SignerStorageValue, Signer, starknet_signer_from_pubkey, SignerTrait};
@@ -25,7 +25,7 @@ mod upgrade_migration_component {
         syscalls::replace_class_syscall, SyscallResultTrait, get_block_timestamp, storage::Map,
         storage_access::{storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,}
     };
-    use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback, ArgentAccountEvent};
+    use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback};
 
     const DEFAULT_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
@@ -52,7 +52,8 @@ mod upgrade_migration_component {
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         +IUpgradeMigrationCallback<TContractState>,
-        +IArgentMultiOwnerAccount<TContractState>
+        +IArgentMultiOwnerAccount<TContractState>,
+        +IEmitArgentAccountEvent<TContractState>,
     > of IUpgradeMigrationInternal<ComponentState<TContractState>> {
         fn migrate_from_before_0_4_0(ref self: ComponentState<TContractState>) {
             // As the storage layout for the escape is changing, if there is an ongoing escape it should revert
@@ -156,11 +157,15 @@ mod upgrade_migration_component {
 
     #[generate_trait]
     impl Private<
-        TContractState, +HasComponent<TContractState>, +IUpgradeMigrationCallback<TContractState>, +Drop<TContractState>
+        TContractState,
+        +HasComponent<TContractState>,
+        +IUpgradeMigrationCallback<TContractState>,
+        +Drop<TContractState>,
+        +IEmitArgentAccountEvent<TContractState>,
     > of PrivateTrait<TContractState> {
         fn emit_event(ref self: ComponentState<TContractState>, event: ArgentAccountEvent) {
             let mut contract = self.get_contract_mut();
-            contract.emit_event(event);
+            contract.emit_event_callback(event);
         }
 
         fn perform_health_check(ref self: ComponentState<TContractState>) {

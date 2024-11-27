@@ -1,6 +1,6 @@
 #[starknet::contract(account)]
 mod ArgentAccount {
-    use argent::account::interface::{IAccount, IDeprecatedArgentAccount, Version};
+    use argent::account::interface::{IAccount, IDeprecatedArgentAccount, Version, IEmitArgentAccountEvent};
     use argent::introspection::src5::src5_component;
     use argent::multiowner_account::account_interface::{
         IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait,
@@ -242,6 +242,12 @@ mod ArgentAccount {
         }
     }
 
+    impl EmitArgentAccountEventImpl of IEmitArgentAccountEvent<ContractState> {
+        fn emit_event_callback(ref self: ContractState, event: Event) {
+            self.emit(event);
+        }
+    }
+
     #[abi(embed_v0)]
     impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
         // Called when coming from account v0.2.3 to v0.3.1. Note that accounts v0.2.3.* won't always call this method
@@ -302,10 +308,6 @@ mod ArgentAccount {
 
             self.reset_escape();
             self.reset_escape_timestamps();
-        }
-
-        fn emit_event(ref self: ContractState, event: Event) {
-            self.emit(event);
         }
 
         fn initialize_from_upgrade(ref self: ContractState, signer_storage_value: SignerStorageValue) {

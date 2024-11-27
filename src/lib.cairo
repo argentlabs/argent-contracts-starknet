@@ -56,6 +56,7 @@ mod utils {
     mod calls;
     mod hashing;
     mod linked_set;
+    mod linked_set_plus_one;
     mod serialization;
     mod transaction_version;
 }
@@ -63,6 +64,7 @@ mod utils {
 mod mocks {
     mod future_argent_account;
     mod future_argent_multisig;
+    mod linked_set_mock;
     mod mock_dapp;
     mod mock_erc20;
     mod multiowner_mock;

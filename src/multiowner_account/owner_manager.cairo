@@ -1,32 +1,44 @@
 use argent::signer::{
     signer_signature::{
         Signer, SignerTrait, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerSignatureTrait,
-        SignerSpanTrait
+        SignerSpanTrait, SignerTypeIntoFelt252, SignerType
     },
 };
-use argent::utils::linked_set::SetItem;
+use argent::utils::linked_set::LinkedSetConfig;
 use starknet::storage::{StoragePathEntry, StoragePath,};
 use super::events::SignerLinked;
 
-impl SignerStorageValueSetItem of SetItem<SignerStorageValue> {
+
+const STORED_VALUE_END: felt252 = 'end';
+
+impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue> {
+    const END_MARKER: SignerStorageValue =
+        SignerStorageValue { stored_value: STORED_VALUE_END, signer_type: SignerType::Starknet };
+
     fn is_valid_item(self: @SignerStorageValue) -> bool {
-        *self.stored_value != 0
+        *self.stored_value != 0 && *self.stored_value != STORED_VALUE_END
     }
 
     fn id(self: @SignerStorageValue) -> felt252 {
         (*self).into_guid()
     }
-    fn read_value(path: StoragePath<SignerStorageValue>) -> Option<SignerStorageValue> {
+
+    fn path_read_value(path: StoragePath<SignerStorageValue>) -> Option<SignerStorageValue> {
         let stored_value = path.stored_value.read();
-        if stored_value == 0 {
+        if stored_value == 0 || stored_value == STORED_VALUE_END {
             return Option::None;
         }
         let signer_type = path.signer_type.read();
         Option::Some(SignerStorageValue { stored_value, signer_type })
     }
 
-    fn has_value(path: StoragePath<SignerStorageValue>) -> bool {
+    fn path_is_in_set(path: StoragePath<SignerStorageValue>) -> bool {
         path.stored_value.read() != 0
+    }
+
+    fn path_has_next_item(path: StoragePath<SignerStorageValue>) -> bool {
+        let stored_value = path.stored_value.read();
+        stored_value != 0 && stored_value != STORED_VALUE_END
     }
 }
 
@@ -79,19 +91,21 @@ mod owner_manager_component {
             SignerStorageTrait
         },
     };
-    use argent::utils::linked_set::{LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl};
+    use argent::utils::linked_set_plus_one::{
+        LinkedSetPlus1, LinkedSetPlus1ReadImpl, LinkedSetPlus1WriteImpl, MutableLinkedSetPlus1ReadImpl
+    };
 
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
 
     use super::super::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
     use super::{IOwnerManager, IOwnerManagerInternal};
-    use super::{SignerStorageValueSetItem, IOwnerManagerCallback};
+    use super::{SignerStorageValueLinkedSetConfig, IOwnerManagerCallback};
     /// Too many owners could make the account unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 
     #[storage]
     struct Storage {
-        owners_storage: LinkedSet<SignerStorageValue>
+        owners_storage: LinkedSetPlus1<SignerStorageValue>
     }
 
     #[event]
@@ -133,18 +147,18 @@ mod owner_manager_component {
         TContractState, +HasComponent<TContractState>, +IOwnerManagerCallback<TContractState>, +Drop<TContractState>
     > of IOwnerManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, owner: Signer) {
-            let guid = self.owners_storage.add_item_opt(owner.storage_value(), last_item_id: 0);
+            let guid = self.owners_storage.add_item(owner.storage_value()); // TODO Could be optimized to avoid checkd
             self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: owner });
         }
 
         fn add_owners(ref self: ComponentState<TContractState>, owners_to_add: Array<Signer>) {
-            let (owner_len, mut last_owner_guid) = self.owners_storage.load();
-            self.assert_valid_owner_count(owner_len + owners_to_add.len());
+            let owner_len = self.owners_storage.len();
 
+            self.assert_valid_owner_count(owner_len + owners_to_add.len());
             for owner in owners_to_add {
-                last_owner_guid = self.owners_storage.add_item_opt(owner.storage_value(), last_owner_guid);
-                self.emit_owner_added(last_owner_guid);
-                self.emit_signer_linked_event(SignerLinked { signer_guid: last_owner_guid, signer: owner });
+                let owner_guid = self.owners_storage.add_item(owner.storage_value());
+                self.emit_owner_added(owner_guid);
+                self.emit_signer_linked_event(SignerLinked { signer_guid: owner_guid, signer: owner });
             };
         }
 
@@ -162,7 +176,7 @@ mod owner_manager_component {
         }
 
         fn get_single_owner(self: @ComponentState<TContractState>) -> Option<SignerStorageValue> {
-            self.owners_storage.single()
+            self.owners_storage.first() // TODO
         }
 
         fn get_single_stark_owner_pubkey(self: @ComponentState<TContractState>) -> Option<felt252> {
@@ -170,7 +184,7 @@ mod owner_manager_component {
         }
 
         fn is_valid_owners_replacement(self: @ComponentState<TContractState>, new_single_owner: Signer) -> bool {
-            !self.owners_storage.is_in_id(new_single_owner.into_guid())
+            !self.is_owner(new_single_owner)
         }
 
         fn replace_all_owners_with_one(ref self: ComponentState<TContractState>, new_single_owner: SignerStorageValue) {

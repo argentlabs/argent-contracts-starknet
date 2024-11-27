@@ -1,82 +1,50 @@
 use starknet::Store;
-use starknet::storage::{StoragePathEntry, StoragePath, Mutable, StoragePathUpdateTrait, StorageBase};
+use starknet::storage::{
+    StorageAsPath, StoragePathEntry, StoragePath, Mutable, StoragePathUpdateTrait, StorageBase, StoragePathTrait
+};
 
-pub trait SetItem<T> {
-    // TODO rename? this is needed mostly to check if the result of reading storage is valid, but also to ensure we
-    // don't store invalid items
+pub trait LinkedSetConfig<T> {
+    const END_MARKER: T;
+
     fn is_valid_item(self: @T) -> bool;
-    // can't be zero unless it's an invalid item, actually it should never be called on an invalid item, maybe can
-    // return NonZero<felt252>? also add a note that the ids must be unique
+
+    // returns a unique if for the given item. The id can't be zero
+    // This function should be called only on valid items
+    // TODO explain it cant return ids like 1,2,3 if the actual storage size is more than 1 felt252 because the is is
+    // actually the index in the storage
     fn id(self: @T) -> felt252;
 
     // must return valid items
-    fn read_value(path: StoragePath<T>) -> Option<T>;
-    fn has_value(path: StoragePath<T>) -> bool;
+    // reads the value stored at the given path or empty if there is no valid value
+    fn path_read_value(path: StoragePath<T>) -> Option<T>;
+
+    // checks if the value stored in the given path is valid or the end marker
+    fn path_is_in_set(path: StoragePath<T>) -> bool;
+
+    // checks if the value stored in the given path is valid, (not the end marker)
+    fn path_has_next_item(path: StoragePath<T>) -> bool;
 }
 
 #[phantom]
 pub struct LinkedSet<T> {}
 
-impl EntryInfoLinkedSet<T> of StoragePathEntry<StoragePath<LinkedSet<T>>> {
-    type Key = felt252;
-    type Value = T;
-
-    fn entry(self: StoragePath<LinkedSet<T>>, key: felt252) -> StoragePath<T> {
-        if (key != 0) {
-            self.update(key)
-        } else {
-            // TODO reconsider this
-            // Avoid hashing for the first slot
-            StoragePath { __hash_state__: self.__hash_state__ }
-        }
-    }
-}
-
-impl MutableEntryInfoLinkedSet<T> of StoragePathEntry<StoragePath<Mutable<LinkedSet<T>>>> {
-    type Key = felt252;
-    type Value = Mutable<T>;
-    fn entry(self: StoragePath<Mutable<LinkedSet<T>>>, key: felt252) -> StoragePath<Mutable<T>> {
-        if (key != 0) {
-            self.update(key)
-        } else {
-            // Avoid hashing for the first slot
-            StoragePath { __hash_state__: self.__hash_state__ }
-        }
-    }
-}
-
-/// Trait for reading a contract/component storage member in a specific key place.
 pub trait LinkedSetRead<TMemberState> {
     type Value;
     fn len(self: TMemberState) -> usize;
     fn is_empty(self: TMemberState) -> bool;
     fn is_in(self: TMemberState, item: Self::Value) -> bool;
     fn is_in_id(self: TMemberState, item_id: felt252) -> bool;
-    fn is_in_id_using_last(self: TMemberState, item_id: felt252, last_item_id: felt252) -> bool;
-    fn find_last_id(self: TMemberState) -> felt252;
     fn first(self: TMemberState) -> Option<Self::Value>;
-    // Returns the first item if there is one item in the list, otherwise returns None
-    fn single(self: TMemberState) -> Option<Self::Value>;
-    fn next(self: TMemberState, item_id: felt252) -> Option<Self::Value>;
-    fn has_next(self: TMemberState, item_id: felt252) -> bool;
-    fn item_id_before(self: TMemberState, item_after_id: felt252) -> felt252;
-    // Returns the set size and the last item id (or zero if empty)
-    fn load(self: TMemberState) -> (usize, felt252);
     fn get_all_ids(self: TMemberState) -> Array<felt252>;
 }
 
-/// Trait for reading a contract/component storage member in a specific key place.
 pub trait LinkedSetWrite<TMemberState> {
     type Value;
-    fn remove(self: TMemberState, remove_id: felt252);
-    // Returns the last item of the list after the removal
-    fn remove_opt(self: TMemberState, remove_id: felt252, last_item_id: felt252) -> felt252;
     /// @returns the id of the inserted item which is now the latest item on the list
     fn add_item(self: TMemberState, item: Self::Value) -> felt252;
-    /// @returns the id of the inserted item which is now the latest item on the list
-    fn add_item_opt(self: TMemberState, item: Self::Value, last_item_id: felt252) -> felt252;
-    fn add_items(self: TMemberState, items_to_add: Span<Self::Value>, last_item_id: felt252);
-    fn remove_items(self: TMemberState, items_ids_to_remove: Span<felt252>, last_item_id: felt252);
+    fn add_items(self: TMemberState, items_to_add: Span<Self::Value>);
+    fn remove(self: TMemberState, remove_id: felt252);
+    fn remove_items(self: TMemberState, items_ids_to_remove: Span<felt252>);
 
     /// @notice Replace one item with a different one
     /// @dev Will revert when trying to remove an item that isn't in the list
@@ -87,7 +55,9 @@ pub trait LinkedSetWrite<TMemberState> {
     fn replace_item(self: TMemberState, item_id_to_remove: felt252, item_to_add: Self::Value);
 }
 
-impl LinkedSetReadImpl<T, +Drop<T>, +PartialEq<T>, +starknet::Store<T>, +SetItem<T>> of LinkedSetRead<StorageBase<LinkedSet<T>>> {
+impl LinkedSetReadImpl<
+    T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>
+> of LinkedSetRead<StorageBase<LinkedSet<T>>> {
     type Value = T;
 
     fn is_empty(self: StorageBase<LinkedSet<T>>) -> bool {
@@ -98,77 +68,17 @@ impl LinkedSetReadImpl<T, +Drop<T>, +PartialEq<T>, +starknet::Store<T>, +SetItem
         if !item.is_valid_item() {
             return false;
         }
-        if self.has_next(item.id()) {
-            return true;
-        }
-        // check if its the latest. This is a bit better than calling find_last_id
-        let mut current_item_id = 0;
-        loop {
-            if let Option::Some(next_item) = self.next(current_item_id) {
-                if next_item == item {
-                    break true;
-                }
-                current_item_id = next_item.id();
-            } else {
-                // Reached the end of the list
-                break false;
-            }
-        }
+        LinkedSetConfig::path_is_in_set(path: self.entry(item.id()))
     }
 
     fn is_in_id(self: StorageBase<LinkedSet<T>>, item_id: felt252) -> bool {
         if item_id == 0 {
             return false;
         }
-        if self.has_next(item_id) {
-            return true;
-        }
-        // check if its the latest. This is a bit better than calling find_last_id
-        let mut current_item_id = 0;
-        loop {
-            if let Option::Some(next_item) = self.next(current_item_id) {
-                current_item_id = next_item.id();
-                if current_item_id == item_id {
-                    break true;
-                }
-            } else {
-                break false;
-            }
-        }
-    }
-
-    fn is_in_id_using_last(self: StorageBase<LinkedSet<T>>, item_id: felt252, last_item_id: felt252) -> bool {
-        if item_id == 0 {
-            return false;
-        }
-        if self.has_next(item_id) {
-            return true;
-        }
-        // check if its the latest
-        self.find_last_id() == item_id
-    }
-
-    // Return the last item id or zero when the list is empty. Cost increases with the list size
-    fn find_last_id(self: StorageBase<LinkedSet<T>>) -> felt252 {
-        let mut current_item_id = 0;
-        loop {
-            if let Option::Some(next_item) = self.next(current_item_id) {
-                current_item_id = next_item.id();
-            } else {
-                break current_item_id;
-            }
-        }
+        LinkedSetConfig::path_is_in_set(path: self.entry(item_id))
     }
 
     fn len(self: StorageBase<LinkedSet<T>>) -> usize {
-        let (len, _) = self.load();
-        len
-    }
-
-    // Returns the number of signers and the last item id (or zero if the list is empty). Cost
-    // increases with the list size
-    /// returns (len, last_item_id)
-    fn load(self: StorageBase<LinkedSet<T>>) -> (usize, felt252) {
         let mut current_item_id = 0;
         let mut size = 0;
         loop {
@@ -176,7 +86,7 @@ impl LinkedSetReadImpl<T, +Drop<T>, +PartialEq<T>, +starknet::Store<T>, +SetItem
                 current_item_id = next_item.id();
                 size += 1;
             } else {
-                break (size, current_item_id);
+                break size;
             }
         }
     }
@@ -185,36 +95,6 @@ impl LinkedSetReadImpl<T, +Drop<T>, +PartialEq<T>, +starknet::Store<T>, +SetItem
         self.next(0)
     }
 
-    fn single(self: StorageBase<LinkedSet<T>>) -> Option<T> {
-        let first_item = self.first()?;
-        if self.has_next(first_item.id()) {
-            // More than one item in the list
-            Option::None
-        } else {
-            Option::Some(first_item)
-        }
-    }
-
-    fn next(self: StorageBase<LinkedSet<T>>, item_id: felt252) -> Option<T> {
-        SetItem::read_value(self.entry(item_id))
-    }
-
-    fn has_next(self: StorageBase<LinkedSet<T>>, item_id: felt252) -> bool {
-        SetItem::has_value(self.entry(item_id))
-    }
-
-    fn item_id_before(self: StorageBase<LinkedSet<T>>, item_after_id: felt252) -> felt252 {
-        assert(item_after_id != 0, 'linked-set/item-after-id');
-        let mut current_item_id = 0;
-        loop {
-            let next_item = self.next(current_item_id).expect('linked-set/item-not-found');
-            let next_item_id = next_item.id();
-            if next_item_id == item_after_id {
-                break current_item_id;
-            }
-            current_item_id = next_item_id;
-        }
-    }
 
     fn get_all_ids(self: StorageBase<LinkedSet<T>>) -> Array<felt252> {
         let mut current_item_id = 0;
@@ -231,8 +111,49 @@ impl LinkedSetReadImpl<T, +Drop<T>, +PartialEq<T>, +starknet::Store<T>, +SetItem
     }
 }
 
+#[generate_trait]
+impl LinkedSetReadPrivateImpl<T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>> of LinkedSetReadPrivate<T> {
+    fn entry(self: StorageBase<LinkedSet<T>>, entry_id: felt252) -> StoragePath<T> {
+        let path: StoragePath<T> = StoragePathTrait::new(self.as_path().__hash_state__.state);
+        path.update(entry_id)
+    }
+
+    fn next(self: StorageBase<LinkedSet<T>>, item_id: felt252) -> Option<T> {
+        LinkedSetConfig::path_read_value(path: self.entry(item_id))
+    }
+
+    fn has_next(self: StorageBase<LinkedSet<T>>, item_id: felt252) -> bool {
+        LinkedSetConfig::path_has_next_item(path: self.entry(item_id))
+    }
+
+    // Return the last item id or zero when the list is empty. Cost increases with the list size
+    fn find_last_id(self: StorageBase<LinkedSet<T>>) -> felt252 {
+        let mut current_item_id = 0;
+        loop {
+            if let Option::Some(next_item) = self.next(current_item_id) {
+                current_item_id = next_item.id();
+            } else {
+                break current_item_id;
+            }
+        }
+    }
+
+    fn item_id_before(self: StorageBase<LinkedSet<T>>, item_after_id: felt252) -> felt252 {
+        assert(item_after_id != 0, 'linked-set/item-after-id');
+        let mut current_item_id = 0;
+        loop {
+            let next_item = self.next(current_item_id).expect('linked-set/item-not-found');
+            let next_item_id = next_item.id();
+            if next_item_id == item_after_id {
+                break current_item_id;
+            }
+            current_item_id = next_item_id;
+        }
+    }
+}
+
 impl LinkedSetWriteImpl<
-    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +SetItem<T>, +Default<T>
+    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>
 > of LinkedSetWrite<StorageBase<Mutable<LinkedSet<T>>>> {
     type Value = T;
 
@@ -240,64 +161,75 @@ impl LinkedSetWriteImpl<
         self.add_item_opt(:item, last_item_id: self.find_last_id())
     }
 
-    fn add_item_opt(self: StorageBase<Mutable<LinkedSet<T>>>, item: T, last_item_id: felt252) -> felt252 {
-        assert(item.is_valid_item(), 'linked-set/invalid-item');
-        let item_id = item.id();
-        let is_duplicate = self.is_in_id_using_last(:item_id, :last_item_id);
-        assert(!is_duplicate, 'linked-set/already-in-set');
-        self.entry(last_item_id).write(item);
-        item_id
-    }
-
-    fn add_items(self: StorageBase<Mutable<LinkedSet<T>>>, mut items_to_add: Span<T>, mut last_item_id: felt252) {
+    fn add_items(self: StorageBase<Mutable<LinkedSet<T>>>, mut items_to_add: Span<T>) {
+        let mut last_item_id: felt252 = self.find_last_id();
         for item in items_to_add {
             last_item_id = self.add_item_opt(item: *item, :last_item_id);
         };
     }
 
-    fn remove_items(
-        self: StorageBase<Mutable<LinkedSet<T>>>, mut items_ids_to_remove: Span<felt252>, mut last_item_id: felt252
-    ) {
+    fn remove_items(self: StorageBase<Mutable<LinkedSet<T>>>, mut items_ids_to_remove: Span<felt252>) {
         for item_id in items_ids_to_remove {
-            last_item_id = self.remove_opt(remove_id: *item_id, :last_item_id);
+            self.remove(remove_id: *item_id);
         };
     }
 
     fn replace_item(self: StorageBase<Mutable<LinkedSet<T>>>, item_id_to_remove: felt252, item_to_add: T) {
-        let new_item_id = self.add_item(item_to_add);
-        self.remove_opt(remove_id: item_id_to_remove, last_item_id: new_item_id);
+        self.add_item(item_to_add);
+        self.remove(remove_id: item_id_to_remove);
     }
 
     fn remove(self: StorageBase<Mutable<LinkedSet<T>>>, remove_id: felt252) {
         assert(remove_id != 0, 'linked-set/invalid-id-to-remove');
 
-        // removed pointer set to empty, Previous item set to the next item in the list
+        // Previous item set to the next item in the list
         let previous_item_id = self.item_id_before(remove_id);
+
         if let Option::Some(next_item) = self.next(remove_id) {
             // Removing an item in the middle
             self.entry(previous_item_id).write(next_item);
-            self.entry(remove_id).write(Default::default());
         } else {
             // Removing the last item
-            self.entry(previous_item_id).write(Default::default());
+            self.entry(previous_item_id).write(LinkedSetConfig::END_MARKER);
         }
+        // removed pointer set to empty
+        self.entry(remove_id).write(Default::default());
+    }
+}
+#[generate_trait]
+impl LinkedSetWritePrivateImpl<
+    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>
+> of LinkedSetPlus1WritePrivate<T> {
+    fn entry(self: StorageBase<Mutable<LinkedSet<T>>>, entry_id: felt252) -> StoragePath<Mutable<T>> {
+        let path: StoragePath<Mutable<T>> = StoragePathTrait::new(self.as_path().__hash_state__.state);
+        path.update(entry_id)
     }
 
-    fn remove_opt(self: StorageBase<Mutable<LinkedSet<T>>>, remove_id: felt252, last_item_id: felt252) -> felt252 {
-        assert(remove_id != 0, 'linked-set/invalid-id-to-remove');
+    fn add_item_opt(self: StorageBase<Mutable<LinkedSet<T>>>, item: T, last_item_id: felt252) -> felt252 {
+        assert(item.is_valid_item(), 'linked-set/invalid-item');
+        let item_id = item.id();
+        let is_duplicate = self.is_in_id(:item_id);
+        assert(!is_duplicate, 'linked-set/already-in-set');
+        self.entry(last_item_id).write(item);
+        self.entry(item_id).write(LinkedSetConfig::END_MARKER);
+        item_id
+    }
 
-        // removed pointer set to empty, Previous item set to the next item in the list
-        let previous_item_id = self.item_id_before(remove_id);
-        if let Option::Some(next_item) = self.next(remove_id) {
-            // Removing an item in the middle
-            self.entry(previous_item_id).write(next_item);
-            self.entry(remove_id).write(Default::default());
-            last_item_id
-        } else {
-            // Removing the last item
-            self.entry(previous_item_id).write(Default::default());
-            previous_item_id
-        }
+    // Allow easy access to the read-only version of the storage
+    fn item_id_before(self: StorageBase<Mutable<LinkedSet<T>>>, item_after_id: felt252) -> felt252 {
+        self.as_read_only().item_id_before(item_after_id)
+    }
+
+    fn next(self: StorageBase<Mutable<LinkedSet<T>>>, item_id: felt252) -> Option<T> {
+        self.as_read_only().next(item_id)
+    }
+
+    fn has_next(self: StorageBase<Mutable<LinkedSet<T>>>, item_id: felt252) -> bool {
+        self.as_read_only().has_next(item_id)
+    }
+
+    fn find_last_id(self: StorageBase<Mutable<LinkedSet<T>>>) -> felt252 {
+        self.as_read_only().find_last_id()
     }
 }
 
@@ -310,7 +242,7 @@ impl StorageBaseAsReadOnlyImpl<T> of StorageBaseAsReadOnly<T> {
 
 // Allow read operations in mutable access too
 impl MutableLinkedSetReadImpl<
-    T, +Drop<T>, +PartialEq<T>, +Store<T>, +SetItem<T>,
+    T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetRead<StorageBase<Mutable<LinkedSet<T>>>> {
     type Value = T;
 
@@ -325,40 +257,12 @@ impl MutableLinkedSetReadImpl<
         self.as_read_only().is_in_id(item_id)
     }
 
-    fn is_in_id_using_last(self: StorageBase<Mutable<LinkedSet<T>>>, item_id: felt252, last_item_id: felt252) -> bool {
-        self.as_read_only().is_in_id_using_last(item_id, last_item_id)
-    }
-
-    fn find_last_id(self: StorageBase<Mutable<LinkedSet<T>>>) -> felt252 {
-        self.as_read_only().find_last_id()
-    }
-
     fn len(self: StorageBase<Mutable<LinkedSet<T>>>) -> usize {
         self.as_read_only().len()
     }
 
-    fn load(self: StorageBase<Mutable<LinkedSet<T>>>) -> (usize, felt252) {
-        self.as_read_only().load()
-    }
-
     fn first(self: StorageBase<Mutable<LinkedSet<T>>>) -> Option<T> {
         self.as_read_only().first()
-    }
-
-    fn single(self: StorageBase<Mutable<LinkedSet<T>>>) -> Option<T> {
-        self.as_read_only().single()
-    }
-
-    fn next(self: StorageBase<Mutable<LinkedSet<T>>>, item_id: felt252) -> Option<T> {
-        self.as_read_only().next(item_id)
-    }
-
-    fn has_next(self: StorageBase<Mutable<LinkedSet<T>>>, item_id: felt252) -> bool {
-        self.as_read_only().has_next(item_id)
-    }
-
-    fn item_id_before(self: StorageBase<Mutable<LinkedSet<T>>>, item_after_id: felt252) -> felt252 {
-        self.as_read_only().item_id_before(item_after_id)
     }
 
     fn get_all_ids(self: StorageBase<Mutable<LinkedSet<T>>>) -> Array<felt252> {

@@ -8,7 +8,9 @@ impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
         *self != 0 && *self != Self::END_MARKER
     }
 
-    fn id(self: @felt252) -> felt252 {
+    fn hash(self: @felt252) -> felt252 {
+        // No need to hash the value since it the value is already a hash.
+        // We also know that the this function will never return 0 as the guid 0 is invalid
         *self
     }
 
@@ -148,9 +150,11 @@ mod signer_manager_component {
 
         fn replace_signer(ref self: ComponentState<TContractState>, signer_to_remove: Signer, signer_to_add: Signer) {
             assert_only_self();
+            // Adding before removing guarantees that we are not replacing an owner with itself
+            let signer_to_add_guid = self.signer_list.add_item(signer_to_add.into_guid());
+
             let signer_to_remove_guid = signer_to_remove.into_guid();
-            let signer_to_add_guid = signer_to_add.into_guid();
-            self.signer_list.replace_item(signer_to_remove_guid, signer_to_add_guid);
+            self.signer_list.remove_item(signer_to_remove_guid);
 
             self.emit(OwnerRemovedGuid { removed_owner_guid: signer_to_remove_guid });
             self.emit(OwnerAddedGuid { new_owner_guid: signer_to_add_guid });
@@ -162,7 +166,7 @@ mod signer_manager_component {
         }
 
         fn get_signer_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
-            self.signer_list.get_all_ids()
+            self.signer_list.get_all_hashes()
         }
 
         fn is_signer(self: @ComponentState<TContractState>, signer: Signer) -> bool {

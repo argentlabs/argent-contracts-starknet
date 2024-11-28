@@ -21,7 +21,7 @@ impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue> {
     }
 
     #[inline(always)]
-    fn id(self: @SignerStorageValue) -> felt252 {
+    fn hash(self: @SignerStorageValue) -> felt252 {
         (*self).into_guid()
     }
 
@@ -119,7 +119,7 @@ mod owner_manager_component {
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>, +IOwnerManagerCallback<TContractState>
     > of IOwnerManager<ComponentState<TContractState>> {
         fn get_owner_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
-            self.owners_storage.get_all_ids()
+            self.owners_storage.get_all_hashes()
         }
 
         #[inline(always)]
@@ -129,7 +129,7 @@ mod owner_manager_component {
 
         #[inline(always)]
         fn is_owner_guid(self: @ComponentState<TContractState>, owner_guid: felt252) -> bool {
-            self.owners_storage.is_in_id(owner_guid)
+            self.owners_storage.is_in_hash(owner_guid)
         }
 
         #[must_use]
@@ -167,7 +167,7 @@ mod owner_manager_component {
             self.assert_valid_owner_count(self.owners_storage.len() - owner_guids_to_remove.len());
 
             for guid in owner_guids_to_remove {
-                self.owners_storage.remove(guid);
+                self.owners_storage.remove_item(guid);
                 self.emit_owner_removed(guid);
             };
         }
@@ -190,10 +190,10 @@ mod owner_manager_component {
 
         fn replace_all_owners_with_one(ref self: ComponentState<TContractState>, new_single_owner: SignerStorageValue) {
             let new_owner_guid = new_single_owner.into_guid();
-            let current_owners = self.owners_storage.get_all_ids();
+            let current_owners = self.owners_storage.get_all_hashes();
             for current_owner_guid in current_owners {
                 assert(current_owner_guid != new_owner_guid, 'argent/already-an-owner');
-                self.owners_storage.remove(current_owner_guid);
+                self.owners_storage.remove_item(current_owner_guid);
                 self.emit_owner_removed(current_owner_guid);
             };
             self.owners_storage.add_item(new_single_owner);

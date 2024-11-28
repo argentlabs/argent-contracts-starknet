@@ -39,12 +39,6 @@ impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue> {
     fn path_is_in_set(path: StoragePath<SignerStorageValue>) -> bool {
         path.stored_value.read() != 0
     }
-
-    #[inline(always)]
-    fn path_has_next_item(path: StoragePath<SignerStorageValue>) -> bool {
-        let stored_value = path.stored_value.read();
-        stored_value != 0 && stored_value != STORED_VALUE_END
-    }
 }
 
 #[starknet::interface]
@@ -154,7 +148,7 @@ mod owner_manager_component {
         TContractState, +HasComponent<TContractState>, +IOwnerManagerCallback<TContractState>, +Drop<TContractState>
     > of IOwnerManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, owner: Signer) {
-            let guid = self.owners_storage.add_item(owner.storage_value()); // TODO Could be optimized to avoid checkd
+            let guid = self.owners_storage.add_item(owner.storage_value());
             self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: owner });
         }
 

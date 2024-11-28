@@ -1,7 +1,7 @@
 use argent::utils::linked_set::LinkedSetConfig;
 use starknet::storage::{StoragePathEntry, StoragePath, StorageBase};
 
-impl FeltValueLinkedSetConfig of LinkedSetConfig<felt252> {
+impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
     const END_MARKER: felt252 = 'end';
 
     fn is_valid_item(self: @felt252) -> bool {
@@ -23,11 +23,6 @@ impl FeltValueLinkedSetConfig of LinkedSetConfig<felt252> {
     fn path_is_in_set(path: StoragePath<felt252>) -> bool {
         path.read() != 0
     }
-
-    fn path_has_next_item(path: StoragePath<felt252>) -> bool {
-        let stored_value = path.read();
-        stored_value != 0 && stored_value != Self::END_MARKER
-    }
 }
 
 /// @notice Implements the methods of a multisig such as
@@ -42,7 +37,7 @@ mod signer_manager_component {
     };
     use argent::utils::linked_set::{LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl};
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
-    use super::FeltValueLinkedSetConfig;
+    use super::SignerGuidLinkedSetConfig;
 
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;

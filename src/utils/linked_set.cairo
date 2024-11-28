@@ -8,7 +8,7 @@ pub trait LinkedSetConfig<T> {
 
     fn is_valid_item(self: @T) -> bool;
 
-    // returns a unique if for the given item. The id can't be zero as it's reserved for the first item 
+    // returns a unique id for the given item. The id can't be zero as it's reserved for the first item 
     // TODO explain it cant return ids like 1,2,3 if the actual storage size is more than 1 felt252 because the is is
     // actually the offset in the storage
     fn id(self: @T) -> felt252;
@@ -20,8 +20,6 @@ pub trait LinkedSetConfig<T> {
     // checks if the value stored in the given path is valid or the end marker
     fn path_is_in_set(path: StoragePath<T>) -> bool;
 
-    // checks if the value stored in the given path is valid, (not the end marker)
-    fn path_has_next_item(path: StoragePath<T>) -> bool;
 }
 
 #[phantom]
@@ -113,11 +111,6 @@ impl LinkedSetReadPrivateImpl<T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetC
     #[inline(always)]
     fn next(self: StorageBase<LinkedSet<T>>, item_id: felt252) -> Option<T> {
         LinkedSetConfig::path_read_value(path: self.entry(item_id))
-    }
-
-    #[inline(always)]
-    fn has_next(self: StorageBase<LinkedSet<T>>, item_id: felt252) -> bool {
-        LinkedSetConfig::path_has_next_item(path: self.entry(item_id))
     }
 
     // Return the last item id or zero when the list is empty. Cost increases with the list size
@@ -224,11 +217,6 @@ impl LinkedSetWritePrivateImpl<
     #[inline(always)]
     fn next(self: StorageBase<Mutable<LinkedSet<T>>>, item_id: felt252) -> Option<T> {
         self.as_read_only().next(item_id)
-    }
-
-    #[inline(always)]
-    fn has_next(self: StorageBase<Mutable<LinkedSet<T>>>, item_id: felt252) -> bool {
-        self.as_read_only().has_next(item_id)
     }
 
     #[inline(always)]

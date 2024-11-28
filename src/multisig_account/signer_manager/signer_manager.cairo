@@ -214,7 +214,7 @@ mod signer_manager_component {
             assert(threshold <= signers_len, 'argent/bad-threshold');
         }
 
-        fn assert_valid_storage(ref self: ComponentState<TContractState>) {
+        fn assert_valid_storage(self: @ComponentState<TContractState>) {
             self.assert_valid_threshold_and_signers_count(self.threshold.read(), self.signer_list.len());
         }
 

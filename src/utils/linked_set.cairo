@@ -8,7 +8,7 @@ pub trait LinkedSetConfig<T> {
 
     fn is_valid_item(self: @T) -> bool;
 
-    // returns a unique id for the given item. The id can't be zero as it's reserved for the first item 
+    // returns a unique id for the given item. The id can't be zero as it's reserved for the first item
     // TODO explain it cant return ids like 1,2,3 if the actual storage size is more than 1 felt252 because the is is
     // actually the offset in the storage
     fn id(self: @T) -> felt252;
@@ -19,7 +19,6 @@ pub trait LinkedSetConfig<T> {
 
     // checks if the value stored in the given path is valid or the end marker
     fn path_is_in_set(path: StoragePath<T>) -> bool;
-
 }
 
 #[phantom]
@@ -190,7 +189,6 @@ impl LinkedSetWriteImpl<
 impl LinkedSetWritePrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>
 > of LinkedSetPlus1WritePrivate<T> {
-    
     #[inline(always)]
     fn entry(self: StorageBase<Mutable<LinkedSet<T>>>, entry_id: felt252) -> StoragePath<Mutable<T>> {
         let path: StoragePath<Mutable<T>> = StoragePathTrait::new(self.as_path().__hash_state__.state);

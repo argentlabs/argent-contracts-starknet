@@ -77,20 +77,8 @@ fn test_is_in() {
     let owner2 = starknet_signer_from_pubkey(2);
     let signer_storage2 = owner2.storage_value();
 
-    assert(linked_set.is_in(signer_storage1), 'Item1 should be in the set');
-    assert(!linked_set.is_in(signer_storage2), 'Item2 should not be in the set');
-}
-
-#[test]
-fn test_is_in_id() {
-    let linked_set = setup_linked_set();
-
-    let owner1 = starknet_signer_from_pubkey(1);
-    let signer_storage1 = owner1.storage_value();
-    linked_set.add_item(signer_storage1);
-
-    assert(linked_set.is_in_id(signer_storage1.id()), 'ID1 should be in the set');
-    assert!(!linked_set.is_in_id(123), "Random ID should not be in the set");
+    assert(linked_set.is_in(signer_storage1.id()), 'Item1 should be in the set');
+    assert(!linked_set.is_in(signer_storage2.id()), 'Item2 should not be in the set');
 }
 
 #[test]
@@ -187,7 +175,7 @@ fn test_read() {
     let signer_storage = owner.storage_value();
     linked_set.add_item(signer_storage);
 
-    assert!(linked_set.is_in(signer_storage), "Read set should contain added item");
+    assert!(linked_set.is_in(signer_storage.id()), "Read set should contain added item");
 }
 
 #[test]
@@ -204,8 +192,8 @@ fn test_remove() {
 
     linked_set.remove(signer_storage1.id());
 
-    assert!(!linked_set.is_in(signer_storage1), "Removed item should not be in set");
-    assert!(linked_set.is_in(signer_storage2), "Non-removed item should still be in set");
+    assert!(!linked_set.is_in(signer_storage1.id()), "Removed item should not be in set");
+    assert!(linked_set.is_in(signer_storage2.id()), "Non-removed item should still be in set");
 }
 
 

@@ -33,6 +33,7 @@ impl LinkedSetPlus1ReadImpl<
 > of LinkedSetPlus1Read<StorageBase<LinkedSetPlus1<T>>> {
     type Value = T;
 
+    #[inline(always)]
     fn first(self: StorageBase<LinkedSetPlus1<T>>) -> Option<T> {
         LinkedSetConfig::path_read_value(path: self.head_entry())
     }
@@ -48,10 +49,8 @@ impl LinkedSetPlus1ReadImpl<
         self.first().is_none()
     }
 
+    #[inline(always)]
     fn is_in(self: StorageBase<LinkedSetPlus1<T>>, item: T) -> bool {
-        if !item.is_valid_item() {
-            return false;
-        }
         let first_item = if let Option::Some(value) = self.first() {
             value
         } else {
@@ -61,14 +60,11 @@ impl LinkedSetPlus1ReadImpl<
         if first_item == item {
             return true;
         }
-        self.get_tail_list().is_in(item)
+        self.get_tail_list().is_in(item_id: item.id())
     }
 
+    #[inline(always)]
     fn is_in_id(self: StorageBase<LinkedSetPlus1<T>>, item_id: felt252) -> bool {
-        if item_id == 0 {
-            return false;
-        }
-
         let first_item = if let Option::Some(value) = self.first() {
             value
         } else {
@@ -79,7 +75,7 @@ impl LinkedSetPlus1ReadImpl<
             return true;
         }
 
-        self.get_tail_list().is_in_id(item_id)
+        self.get_tail_list().is_in(item_id)
     }
 
     fn get_all_ids(self: StorageBase<LinkedSetPlus1<T>>) -> Array<felt252> {
@@ -98,9 +94,12 @@ impl LinkedSetPlus1ReadImpl<
 impl LinkedSetPlus1ReadPrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +starknet::Store<T>, +LinkedSetConfig<T>
 > of LinkedSetPlus1ReadPrivate<T> {
+    #[inline(always)]
     fn head_entry(self: StorageBase<LinkedSetPlus1<T>>) -> StoragePath<T> {
         StoragePathTrait::new(self.as_path().__hash_state__.state)
     }
+
+    #[inline(always)]
     fn get_tail_list(self: StorageBase<LinkedSetPlus1<T>>) -> StorageBase<LinkedSet<T>> {
         StorageBase { __base_address__: self.__base_address__ }
     }
@@ -111,6 +110,7 @@ impl LinkedSetPlus1WriteImpl<
 > of LinkedSetPlus1Write<StorageBase<Mutable<LinkedSetPlus1<T>>>> {
     type Value = T;
 
+    #[inline(always)]
     fn add_item(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item: T) -> felt252 {
         assert(item.is_valid_item(), 'linked-set/invalid-item');
 
@@ -149,9 +149,12 @@ impl LinkedSetPlus1WriteImpl<
 impl LinkedSetPlus1WritePrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>
 > of LinkedSetPlus1WritePrivate<T> {
+    #[inline(always)]
     fn head_entry(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> StoragePath<Mutable<T>> {
         StoragePathTrait::new(self.as_path().__hash_state__.state)
     }
+
+    #[inline(always)]
     fn get_tail_list(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> StorageBase<Mutable<LinkedSet<T>>> {
         StorageBase { __base_address__: self.__base_address__ }
     }
@@ -163,26 +166,32 @@ impl MutableLinkedSetPlus1ReadImpl<
 > of LinkedSetPlus1Read<StorageBase<Mutable<LinkedSetPlus1<T>>>> {
     type Value = T;
 
+    #[inline(always)]
     fn first(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> Option<T> {
         self.as_read_only().first()
     }
 
+    #[inline(always)]
     fn len(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> usize {
         self.as_read_only().len()
     }
 
+    #[inline(always)]
     fn is_empty(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> bool {
         self.as_read_only().is_empty()
     }
 
+    #[inline(always)]
     fn is_in(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item: T) -> bool {
         self.as_read_only().is_in(item)
     }
 
+    #[inline(always)]
     fn is_in_id(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item_id: felt252) -> bool {
         self.as_read_only().is_in_id(item_id)
     }
 
+    #[inline(always)]
     fn get_all_ids(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> Array<felt252> {
         self.as_read_only().get_all_ids()
     }

@@ -99,9 +99,9 @@ async function profileGasUsage(transactionHash: string, manager: Manager, allowF
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
 
   // L2 payloads
-  const { calldata, signature } = (await manager.getTransaction(receipt.transaction_hash)) as any;
-  const calldataGas =
-    calldata && signature ? Math.floor((calldata.length + signature.length) * l2PayloadsWeights.calldata) : undefined; // TODO find workaround for deployment transactions
+  const tx = (await manager.getTransaction(receipt.transaction_hash)) as any;
+  const calldataLen = tx.calldata?.length || tx.constructor_calldata.length;
+  const calldataGas = Math.floor((calldataLen + tx.signature.length) * l2PayloadsWeights.calldata);
 
   const eventGas = Math.floor(
     receipt.events.reduce(

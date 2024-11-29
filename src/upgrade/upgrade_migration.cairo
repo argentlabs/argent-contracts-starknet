@@ -26,7 +26,7 @@ mod upgrade_migration_component {
     };
     use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback};
 
-    const DEFAULT_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
+    const LEGACY_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
     #[storage]
     struct Storage {
@@ -70,7 +70,7 @@ mod upgrade_migration_component {
                 assert(escape_new_signer.is_zero(), 'argent/esc-new-signer-not-null');
             } else {
                 let escape_ready_at: u64 = escape_ready_at.try_into().unwrap();
-                if get_block_timestamp() < escape_ready_at + DEFAULT_ESCAPE_SECURITY_PERIOD {
+                if get_block_timestamp() < escape_ready_at + LEGACY_ESCAPE_SECURITY_PERIOD {
                     // Not expired. Automatically cancelling the escape when upgrading
                     self.emit_event(ArgentAccountEvent::EscapeCanceled(EscapeCanceled {}));
                 }
@@ -132,18 +132,18 @@ mod upgrade_migration_component {
                 self.initialize_from_upgrade(stark_signer);
                 self._signer.write(0);
             } else {
-                for offset in 1_u8
+                for signer_type_ordinal in 1_u8
                     ..5 {
-                        let stored_value = self._signer_non_stark.read(offset.into());
+                        let stored_value = self._signer_non_stark.read(signer_type_ordinal.into());
 
                         // Can unwrap safely as we are bound by the loop range
-                        let signer_type: u256 = offset.into();
+                        let signer_type: u256 = signer_type_ordinal.into();
                         let signer_type = signer_type.try_into().unwrap();
 
                         if (stored_value != 0) {
                             let signer_storage_value = SignerStorageValue { signer_type, stored_value };
                             self.initialize_from_upgrade(signer_storage_value);
-                            self._signer_non_stark.write(offset.into(), 0);
+                            self._signer_non_stark.write(signer_type_ordinal.into(), 0);
                             break;
                         }
                     };

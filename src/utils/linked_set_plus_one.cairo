@@ -19,18 +19,30 @@ pub struct LinkedSetPlus1<T> {}
 
 pub trait LinkedSetPlus1Read<TMemberState> {
     type Value;
+    /// @returns the first item in the set or None if the set is empty
     fn first(self: TMemberState) -> Option<Self::Value>;
+    /// @returns the number of items in the set
     fn len(self: TMemberState) -> usize;
+    /// @returns true if the set is empty
     fn is_empty(self: TMemberState) -> bool;
+    /// @returns true if the item is in the set
+    /// @param item The item to check inclusion
     fn is_in(self: TMemberState, item: Self::Value) -> bool;
+    /// @returns true if the item is in the set
+    /// @param item_hash The hash of the item to check inclusion
     fn is_in_hash(self: TMemberState, item_hash: felt252) -> bool;
+    /// @returns all the hashes in the set
     fn get_all_hashes(self: TMemberState) -> Array<felt252>;
 }
 
 pub trait LinkedSetPlus1Write<TMemberState> {
     type Value;
-    // returns the id of the added item
+    /// Adds an item to the set, it will panic if the item is already in the set
+    /// @param item The item to add
+    /// @returns the hash of the added item
     fn add_item(self: TMemberState, item: Self::Value) -> felt252;
+    /// Removes an item from the set, it will panic if the item is not in the set
+    /// @param item_hash The hash of the item to remove
     fn remove_item(self: TMemberState, item_hash: felt252);
 }
 
@@ -119,13 +131,12 @@ impl LinkedSetPlus1WriteImpl<
 
     #[inline(always)]
     fn add_item(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item: T) -> felt252 {
-        assert(item.is_valid_item(), 'linked-set/invalid-item');
-
         if let Option::Some(first_item) = self.first() {
             assert(item != first_item, 'linked-set/already-in-set');
             self.get_tail_list().add_item(item)
         } else {
             // Empty list
+            assert(item.is_valid_item(), 'linked-set/invalid-item');
             self.head_entry().write(item);
             item.hash()
         }

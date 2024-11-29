@@ -87,7 +87,7 @@ pub trait LinkedSetConfig<T> {
     fn path_read_value(path: StoragePath<T>) -> Option<T>;
 
     // @return true the value stored in the given path is valid or the end marker
-    // @param path the path to check, is the path determined by the hash of the item we want to check
+    // @param path the path determined by the hash of the item we want to check inclusion
     fn path_is_in_set(path: StoragePath<T>) -> bool;
 }
 

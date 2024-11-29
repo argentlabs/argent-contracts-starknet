@@ -6,7 +6,6 @@ trait IUpgradeMigrationInternal<TContractState> {
     fn migrate_from_0_4_0(ref self: TContractState);
 }
 
-// TODO Split his in 2 interfaces?
 trait IUpgradeMigrationCallback<TContractState> {
     fn perform_health_check(ref self: TContractState);
     fn initialize_from_upgrade(ref self: TContractState, signer_storage_value: SignerStorageValue);

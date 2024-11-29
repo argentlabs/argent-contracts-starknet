@@ -1,5 +1,5 @@
 use argent::account::interface::Version;
-use argent::multiowner_account::recovery::{LegacyEscape};
+use argent::multiowner_account::recovery::Escape;
 use argent::recovery::{EscapeStatus};
 use argent::signer::signer_signature::{Signer, SignerType, SignerSignature};
 
@@ -105,7 +105,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
     fn get_guardian_backup_guid(self: @TContractState) -> Option<felt252>;
     /// @notice Returns the backup guardian type if there's any backup guardian
     fn get_guardian_backup_type(self: @TContractState) -> Option<SignerType>;
-    fn get_escape(self: @TContractState) -> LegacyEscape;
+    fn get_escape(self: @TContractState) -> Escape;
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
     fn get_last_owner_trigger_escape_attempt(self: @TContractState) -> u64;
@@ -114,7 +114,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
     fn get_last_guardian_escape_attempt(self: @TContractState) -> u64;
 
     /// Current escape if any, and its status
-    fn get_escape_and_status(self: @TContractState) -> (LegacyEscape, EscapeStatus);
+    fn get_escape_and_status(self: @TContractState) -> (Escape, EscapeStatus);
     /// Reads the current security period used for escapes
     fn get_escape_security_period(self: @TContractState) -> u64;
 }

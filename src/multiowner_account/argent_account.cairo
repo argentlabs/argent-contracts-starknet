@@ -271,8 +271,9 @@ mod ArgentAccount {
             assert_only_self();
 
             // Downgrade check
-            let previous_version = IArgentMultiOwnerAccountDispatcher { contract_address: get_contract_address() }
-                .get_version();
+            let argent_dispatcher = IArgentMultiOwnerAccountDispatcher { contract_address: get_contract_address() };
+            assert(argent_dispatcher.get_name() == self.get_name(), 'argent/invalid-name');
+            let previous_version = argent_dispatcher.get_version();
             let current_version = self.get_version();
             assert(previous_version < current_version, 'argent/downgrade-not-allowed');
 

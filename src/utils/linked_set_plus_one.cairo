@@ -8,10 +8,13 @@ use super::linked_set::{
 
 ///
 /// A LinkedSetPlus1 is storage structure that allows to store multiple items making it efficient to check if an item is
-/// on the set LinkedSet doesn't allow duplicate items. The order of the items is preserved.
+/// in the set.
+/// LinkedSet doesn't allow duplicate items.
+/// The order of the items is preserved.
 /// It builds on top of LinkedSet but stores the first item separately. This means:
 /// - Storing just one item is cheap because it doesn't need to store the end marker. Uses the same amount of storage
-/// for larger sets - Checking if an item is in the set is O(1) complexity. Its a bit more expensive than LinkedSet but
+/// for larger sets
+/// - Checking if an item is in the set is O(1) complexity. Its a bit more expensive than LinkedSet but
 /// still very efficient. It offers better performance than LinkedSet when the set is a single item
 ///
 #[phantom]
@@ -98,14 +101,14 @@ impl LinkedSetPlus1ReadImpl<
     }
 
     fn get_all_hashes(self: StorageBase<LinkedSetPlus1<T>>) -> Array<felt252> {
-        let first_item = if let Option::Some(value) = self.first() {
-            value
+        if let Option::Some(first_item) = self.first() {
+            let mut all_hashes = array![first_item.hash()];
+            all_hashes.append_all(self.get_tail_list().get_all_hashes().span());
+            all_hashes
         } else {
-            return array![]; // empty collection
-        };
-        let mut all_hashes = array![first_item.hash()];
-        all_hashes.append_all(self.get_tail_list().get_all_hashes().span());
-        all_hashes
+            // empty collection
+            array![]
+        }
     }
 }
 

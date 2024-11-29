@@ -1,7 +1,6 @@
 /// @dev 🚨 This smart contract is a mock implementation and is not meant for actual deployment or use in any live
-/// environment. It is solely for testing, educational, or demonstration purposes. Any interactions with this contract
-/// will not have real-world consequences or effects on blockchain networks. Please refrain from relying on the
-/// functionality of this contract for any production. 🚨
+/// environment. It is solely for testing, educational, or demonstration purposes.
+/// Please refrain from relying on the functionality of this contract for any production code. 🚨
 #[starknet::contract(account)]
 mod MockFutureArgentMultisig {
     use argent::account::interface::{

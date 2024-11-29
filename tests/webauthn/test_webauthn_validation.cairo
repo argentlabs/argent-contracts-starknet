@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{WebauthnSigner, is_valid_webauthn_signature};
+use argent::signer::signer_signature::{WebauthnSigner, Signer, SignerTrait, is_valid_webauthn_signature};
 use argent::signer::webauthn::{WebauthnSignature, Sha256Implementation};
 use argent::utils::bytes::ByteArrayExt;
 use starknet::secp256_trait::Signature;
@@ -36,6 +36,14 @@ fn valid_signer() -> (felt252, WebauthnSigner, WebauthnSignature) {
     (transaction_hash, signer, signature)
 }
 
+#[test]
+fn test_webauthn_guid() {
+    let origin = "http://localhost:5173";
+    let rp_id_hash = 0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763; // sha256("localhost")
+    let pubkey = 0xaaa7d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898caaa;
+    let signer = Signer::Webauthn(new_webauthn_signer(:origin, :rp_id_hash, :pubkey));
+    assert_eq!(signer.into_guid(), 373364643267162427145230563325562902896349593487311671217063963547709994471);
+}
 
 #[test]
 fn test_is_valid_webauthn_signature() {

@@ -11,7 +11,7 @@ mod ArgentAccount {
         OwnerChangedGuid, GuardianChanged, GuardianChangedGuid, GuardianBackupChanged, GuardianBackupChangedGuid,
         EscapeSecurityPeriodChanged,
     };
-    use argent::multiowner_account::owner_manager::{IOwnerManager, IOwnerManagerCallback, owner_manager_component};
+    use argent::multiowner_account::owner_manager::{IOwnerManager, owner_manager_component};
     use argent::multiowner_account::recovery::{LegacyEscape, LegacyEscapeType};
     use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
     use argent::offchain_message::interface::IOffChainMessageHashRev1;
@@ -235,13 +235,6 @@ mod ArgentAccount {
     }
 
     // Required Callbacks
-    impl OwnerManagerCallbackImpl of IOwnerManagerCallback<ContractState> {
-        fn emit_signer_linked_event(ref self: ContractState, event: SignerLinked) {
-            // TODO check if possible to emit events using generics
-            self.emit(event);
-        }
-    }
-
     impl EmitArgentAccountEventImpl of IEmitArgentAccountEvent<ContractState> {
         fn emit_event_callback(ref self: ContractState, event: Event) {
             self.emit(event);

@@ -976,7 +976,6 @@ mod ArgentAccount {
             assert(self.read_guardian().is_some(), 'argent/guardian-required');
         }
 
-        #[inline(always)]
         fn reset_escape_timestamps(ref self: ContractState) {
             self.last_owner_trigger_escape_attempt.write(0);
             self.last_guardian_trigger_escape_attempt.write(0);
@@ -1061,7 +1060,6 @@ mod ArgentAccount {
             }
         }
 
-        #[inline(always)]
         fn is_valid_guardian_backup(self: @ContractState, guardian_backup: SignerStorageValue) -> bool {
             match guardian_backup.signer_type {
                 SignerType::Starknet => (self._guardian_backup.read() == guardian_backup.stored_value),

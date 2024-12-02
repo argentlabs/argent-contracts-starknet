@@ -1,12 +1,29 @@
-use argent::utils::linked_set::SetItem;
+use argent::utils::linked_set::LinkedSetConfig;
+use starknet::storage::{StoragePathEntry, StoragePath, StorageBase};
 
-impl FeltValueSetItem of SetItem<felt252> {
+impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
+    const END_MARKER: felt252 = 'end';
+
     fn is_valid_item(self: @felt252) -> bool {
-        *self != 0
+        *self != 0 && *self != Self::END_MARKER
     }
 
-    fn id(self: @felt252) -> felt252 {
+    fn hash(self: @felt252) -> felt252 {
+        // No need to hash the value since it the value is already a hash.
+        // We also know that the this function will never return 0 as the guid 0 is invalid
         *self
+    }
+
+    fn path_read_value(path: StoragePath<felt252>) -> Option<felt252> {
+        let stored_value = path.read();
+        if stored_value == 0 || stored_value == Self::END_MARKER {
+            return Option::None;
+        }
+        Option::Some(stored_value)
+    }
+
+    fn path_is_in_set(path: StoragePath<felt252>) -> bool {
+        path.read() != 0
     }
 }
 
@@ -22,7 +39,7 @@ mod signer_manager_component {
     };
     use argent::utils::linked_set::{LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl};
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
-    use super::FeltValueSetItem;
+    use super::SignerGuidLinkedSetConfig;
 
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
@@ -90,14 +107,13 @@ mod signer_manager_component {
         fn add_signers(ref self: ComponentState<TContractState>, new_threshold: usize, signers_to_add: Array<Signer>) {
             assert_only_self();
 
-            let (signers_len, last_signer_guid) = self.signer_list.load();
             let previous_threshold = self.threshold.read();
 
-            let new_signers_count = signers_len + signers_to_add.len();
+            let new_signers_count = self.signer_list.len() + signers_to_add.len();
             self.assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
             let mut guids = signers_to_add.span().to_guid_list();
-            self.signer_list.add_items(guids.span(), last_item_id: last_signer_guid);
+            self.signer_list.add_items(guids.span());
             let mut signers_to_add_span = signers_to_add.span();
             while let Option::Some(signer) = signers_to_add_span.pop_front() {
                 let signer_guid = guids.pop_front().unwrap();
@@ -115,14 +131,13 @@ mod signer_manager_component {
             ref self: ComponentState<TContractState>, new_threshold: usize, signers_to_remove: Array<Signer>
         ) {
             assert_only_self();
-            let (signers_len, last_signer_guid) = self.signer_list.load();
             let previous_threshold = self.threshold.read();
 
-            let new_signers_count = signers_len - signers_to_remove.len();
+            let new_signers_count = self.signer_list.len() - signers_to_remove.len();
             self.assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
             let mut guids = signers_to_remove.span().to_guid_list();
-            self.signer_list.remove_items(guids.span(), last_item_id: last_signer_guid);
+            self.signer_list.remove_items(guids.span());
             while let Option::Some(removed_owner_guid) = guids.pop_front() {
                 self.emit(OwnerRemovedGuid { removed_owner_guid })
             };
@@ -135,9 +150,11 @@ mod signer_manager_component {
 
         fn replace_signer(ref self: ComponentState<TContractState>, signer_to_remove: Signer, signer_to_add: Signer) {
             assert_only_self();
+            // Adding before removing guarantees that we are not replacing an owner with itself
+            let signer_to_add_guid = self.signer_list.add_item(signer_to_add.into_guid());
+
             let signer_to_remove_guid = signer_to_remove.into_guid();
-            let signer_to_add_guid = signer_to_add.into_guid();
-            self.signer_list.replace_item(signer_to_remove_guid, signer_to_add_guid);
+            self.signer_list.remove_item(signer_to_remove_guid);
 
             self.emit(OwnerRemovedGuid { removed_owner_guid: signer_to_remove_guid });
             self.emit(OwnerAddedGuid { new_owner_guid: signer_to_add_guid });
@@ -149,7 +166,7 @@ mod signer_manager_component {
         }
 
         fn get_signer_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
-            self.signer_list.get_all_ids()
+            self.signer_list.get_all_hashes()
         }
 
         fn is_signer(self: @ComponentState<TContractState>, signer: Signer) -> bool {
@@ -180,7 +197,7 @@ mod signer_manager_component {
             self.assert_valid_threshold_and_signers_count(threshold, new_signers_count);
 
             let mut guids = signers.span().to_guid_list();
-            self.signer_list.add_items(guids.span(), last_item_id: 0);
+            self.signer_list.add_items(guids.span());
 
             while let Option::Some(signer) = signers.pop_front() {
                 let signer_guid = guids.pop_front().unwrap();
@@ -201,7 +218,7 @@ mod signer_manager_component {
             assert(threshold <= signers_len, 'argent/bad-threshold');
         }
 
-        fn assert_valid_storage(ref self: ComponentState<TContractState>) {
+        fn assert_valid_storage(self: @ComponentState<TContractState>) {
             self.assert_valid_threshold_and_signers_count(self.threshold.read(), self.signer_list.len());
         }
 
@@ -219,10 +236,9 @@ mod signer_manager_component {
                 signers_to_add.append(signer_guid);
                 self.emit(SignerLinked { signer_guid, signer: starknet_signer });
             };
-            let last_signer = *pubkeys[pubkeys.len() - 1];
 
-            self.signer_list.remove_items(pubkeys.span(), last_item_id: last_signer);
-            self.signer_list.add_items(signers_to_add.span(), last_item_id: 0);
+            self.signer_list.remove_items(pubkeys.span());
+            self.signer_list.add_items(signers_to_add.span());
         }
 
         fn is_valid_signature_with_threshold(

@@ -8,7 +8,6 @@ mod MultisigMock {
     component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
     #[abi(embed_v0)]
     impl SignerManager = signer_manager_component::SignerManagerImpl<ContractState>;
-    #[abi(embed_v0)]
     impl SignerManagerInternal = signer_manager_component::SignerManagerInternalImpl<ContractState>;
 
 

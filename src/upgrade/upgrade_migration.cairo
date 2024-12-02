@@ -36,7 +36,7 @@ mod upgrade_migration_component {
     use argent::multiowner_account::account_interface::IArgentMultiOwnerAccount;
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::events::{EscapeCanceled, SignerLinked};
-    use argent::multiowner_account::recovery::LegacyEscape;
+    use argent::multiowner_account::recovery::Escape;
     use argent::signer::signer_signature::{SignerStorageValue, Signer, starknet_signer_from_pubkey, SignerTrait};
     use argent::upgrade::interface::{IUpgradableCallback, IUpgradeable, IUpgradableCallbackDispatcherTrait};
     use starknet::{
@@ -50,7 +50,7 @@ mod upgrade_migration_component {
     #[storage]
     struct Storage {
         // Duplicate keys
-        _escape: LegacyEscape,
+        _escape: Escape,
         // Legacy storage
         _signer: felt252,
         _implementation: felt252,

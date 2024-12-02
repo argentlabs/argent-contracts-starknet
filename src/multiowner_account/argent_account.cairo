@@ -12,7 +12,7 @@ mod ArgentAccount {
         EscapeSecurityPeriodChanged,
     };
     use argent::multiowner_account::owner_manager::{IOwnerManager, owner_manager_component};
-    use argent::multiowner_account::recovery::{LegacyEscape, LegacyEscapeType};
+    use argent::multiowner_account::recovery::{Escape, EscapeType};
     use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
     use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{
@@ -121,7 +121,7 @@ mod ArgentAccount {
         _guardian_backup: felt252,
         _guardian_backup_non_stark: Map<felt252, felt252>,
         /// The ongoing escape, if any
-        _escape: LegacyEscape,
+        _escape: Escape,
         /// The following 4 fields are used to limit the number of escapes the account will pay for
         /// Values are Rounded down to the hour:
         /// https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 Values are
@@ -491,7 +491,7 @@ mod ArgentAccount {
 
             // no escape if there is a guardian escape triggered by the owner in progress
             let current_escape = self._escape.read();
-            if current_escape.escape_type == LegacyEscapeType::Guardian {
+            if current_escape.escape_type == EscapeType::Guardian {
                 assert(
                     self.get_escape_status(current_escape.ready_at) == EscapeStatus::Expired,
                     'argent/cannot-override-escape'
@@ -500,8 +500,8 @@ mod ArgentAccount {
 
             self.reset_escape();
             let ready_at = get_block_timestamp() + self.get_escape_security_period();
-            let escape = LegacyEscape {
-                ready_at, escape_type: LegacyEscapeType::Owner, new_signer: Option::Some(new_owner.storage_value()),
+            let escape = Escape {
+                ready_at, escape_type: EscapeType::Owner, new_signer: Option::Some(new_owner.storage_value()),
             };
             self._escape.write(escape);
 
@@ -524,8 +524,8 @@ mod ArgentAccount {
             };
 
             let ready_at = get_block_timestamp() + self.get_escape_security_period();
-            let escape = LegacyEscape {
-                ready_at, escape_type: LegacyEscapeType::Guardian, new_signer: new_guardian_storage_value,
+            let escape = Escape {
+                ready_at, escape_type: EscapeType::Guardian, new_signer: new_guardian_storage_value,
             };
             self._escape.write(escape);
             self.emit(EscapeGuardianTriggeredGuid { ready_at, new_guardian_guid });
@@ -643,7 +643,7 @@ mod ArgentAccount {
             }
         }
 
-        fn get_escape(self: @ContractState) -> LegacyEscape {
+        fn get_escape(self: @ContractState) -> Escape {
             self._escape.read()
         }
 
@@ -673,7 +673,7 @@ mod ArgentAccount {
         }
 
         /// Current escape if any, and its status
-        fn get_escape_and_status(self: @ContractState) -> (LegacyEscape, EscapeStatus) {
+        fn get_escape_and_status(self: @ContractState) -> (Escape, EscapeStatus) {
             let current_escape = self._escape.read();
             (current_escape, self.get_escape_status(current_escape.ready_at))
         }
@@ -732,7 +732,7 @@ mod ArgentAccount {
 
                         assert((*call.calldata).is_empty(), 'argent/invalid-calldata');
                         let current_escape = self._escape.read();
-                        assert(current_escape.escape_type == LegacyEscapeType::Owner, 'argent/invalid-escape');
+                        assert(current_escape.escape_type == EscapeType::Owner, 'argent/invalid-escape');
                         let guardian_signature = self.parse_single_guardian_signature(signatures);
                         let is_valid = self.is_valid_guardian_signature(execution_hash, guardian_signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');
@@ -771,7 +771,7 @@ mod ArgentAccount {
                         assert((*call.calldata).is_empty(), 'argent/invalid-calldata');
                         let current_escape = self._escape.read();
 
-                        assert(current_escape.escape_type == LegacyEscapeType::Guardian, 'argent/invalid-escape');
+                        assert(current_escape.escape_type == EscapeType::Guardian, 'argent/invalid-escape');
 
                         let owner_signature = self.parse_single_owner_signature(signatures);
                         let is_valid = self.is_valid_owner_signature(execution_hash, owner_signature);

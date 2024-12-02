@@ -171,17 +171,17 @@ mod signer_manager_component {
         }
 
         fn is_signer(self: @ComponentState<TContractState>, signer: Signer) -> bool {
-            self.signer_list.is_in(signer.into_guid())
+            self.signer_list.contains(signer.into_guid())
         }
 
         fn is_signer_guid(self: @ComponentState<TContractState>, signer_guid: felt252) -> bool {
-            self.signer_list.is_in(signer_guid)
+            self.signer_list.contains(signer_guid)
         }
 
         fn is_valid_signer_signature(
             self: @ComponentState<TContractState>, hash: felt252, signer_signature: SignerSignature
         ) -> bool {
-            let is_signer = self.signer_list.is_in(signer_signature.signer().into_guid());
+            let is_signer = self.signer_list.contains(signer_signature.signer().into_guid());
             assert(is_signer, 'argent/not-a-signer');
             signer_signature.is_valid_signature(hash)
         }

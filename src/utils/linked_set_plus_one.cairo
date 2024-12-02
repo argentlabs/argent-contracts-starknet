@@ -36,10 +36,10 @@ pub trait LinkedSetPlus1Read<TMemberState> {
     fn is_empty(self: TMemberState) -> bool;
     /// @returns true if the item is in the set
     /// @param item The item to check inclusion
-    fn is_in(self: TMemberState, item: Self::Value) -> bool;
+    fn contains(self: TMemberState, item: Self::Value) -> bool;
     /// @returns true if the item is in the set (using the item hash)
     /// @param item_hash The hash of the item to check inclusion
-    fn is_in_hash(self: TMemberState, item_hash: felt252) -> bool;
+    fn contains_by_hash(self: TMemberState, item_hash: felt252) -> bool;
     /// @returns all the hashes in the set
     fn get_all_hashes(self: TMemberState) -> Array<felt252>;
 }
@@ -78,7 +78,7 @@ impl LinkedSetPlus1ReadImpl<
     }
 
     #[inline(always)]
-    fn is_in(self: StorageBase<LinkedSetPlus1<T>>, item: T) -> bool {
+    fn contains(self: StorageBase<LinkedSetPlus1<T>>, item: T) -> bool {
         let first_item = if let Option::Some(value) = self.first() {
             value
         } else {
@@ -88,11 +88,11 @@ impl LinkedSetPlus1ReadImpl<
         if first_item == item {
             return true;
         }
-        self.get_tail_list().is_in(item_hash: item.hash())
+        self.get_tail_list().contains(item_hash: item.hash())
     }
 
     #[inline(always)]
-    fn is_in_hash(self: StorageBase<LinkedSetPlus1<T>>, item_hash: felt252) -> bool {
+    fn contains_by_hash(self: StorageBase<LinkedSetPlus1<T>>, item_hash: felt252) -> bool {
         let first_item = if let Option::Some(value) = self.first() {
             value
         } else {
@@ -103,7 +103,7 @@ impl LinkedSetPlus1ReadImpl<
             return true;
         }
 
-        self.get_tail_list().is_in(item_hash)
+        self.get_tail_list().contains(item_hash)
     }
 
     fn get_all_hashes(self: StorageBase<LinkedSetPlus1<T>>) -> Array<felt252> {
@@ -208,13 +208,13 @@ impl MutableLinkedSetPlus1ReadImpl<
     }
 
     #[inline(always)]
-    fn is_in(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item: T) -> bool {
-        self.as_read_only().is_in(:item)
+    fn contains(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item: T) -> bool {
+        self.as_read_only().contains(:item)
     }
 
     #[inline(always)]
-    fn is_in_hash(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item_hash: felt252) -> bool {
-        self.as_read_only().is_in_hash(:item_hash)
+    fn contains_by_hash(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item_hash: felt252) -> bool {
+        self.as_read_only().contains_by_hash(:item_hash)
     }
 
     #[inline(always)]

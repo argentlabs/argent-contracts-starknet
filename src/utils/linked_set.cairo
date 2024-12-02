@@ -38,7 +38,7 @@ pub trait LinkedSetRead<TMemberState> {
     fn is_empty(self: TMemberState) -> bool;
     /// @return true if the item is in the set
     /// @param item_hash the hash of the item to check
-    fn is_in(self: TMemberState, item_hash: felt252) -> bool;
+    fn contains(self: TMemberState, item_hash: felt252) -> bool;
     /// @return first item on the set or None if the set is empty
     fn first(self: TMemberState) -> Option<Self::Value>;
     /// @return the hashes of all items in the set
@@ -101,7 +101,7 @@ impl LinkedSetReadImpl<
     }
 
     #[inline(always)]
-    fn is_in(self: StorageBase<LinkedSet<T>>, item_hash: felt252) -> bool {
+    fn contains(self: StorageBase<LinkedSet<T>>, item_hash: felt252) -> bool {
         if item_hash == 0 {
             return false;
         }
@@ -236,7 +236,7 @@ impl LinkedSetWritePrivateImpl<
     fn add_item_opt(self: StorageBase<Mutable<LinkedSet<T>>>, item: T, last_item_hash: felt252) -> felt252 {
         assert(item.is_valid_item(), 'linked-set/invalid-item');
         let item_hash = item.hash();
-        let is_duplicate = self.is_in(:item_hash);
+        let is_duplicate = self.contains(:item_hash);
         assert(!is_duplicate, 'linked-set/already-in-set');
         self.entry(last_item_hash).write(item);
         self.entry(item_hash).write(LinkedSetConfig::END_MARKER);
@@ -280,8 +280,8 @@ impl MutableLinkedSetReadImpl<
     }
 
     #[inline(always)]
-    fn is_in(self: StorageBase<Mutable<LinkedSet<T>>>, item_hash: felt252) -> bool {
-        self.as_read_only().is_in(:item_hash)
+    fn contains(self: StorageBase<Mutable<LinkedSet<T>>>, item_hash: felt252) -> bool {
+        self.as_read_only().contains(:item_hash)
     }
 
     #[inline(always)]

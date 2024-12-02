@@ -50,16 +50,16 @@ pub trait LinkedSetWrite<TMemberState> {
     /// Adds an item at the end of the set. It will panic if the item is already in the set
     /// @returns the hash of the inserted item which is now the latest item on the list
     /// @param item the item to add
-    fn add_item(self: TMemberState, item: Self::Value) -> felt252;
+    fn insert(self: TMemberState, item: Self::Value) -> felt252;
     /// Adds multiple items to the end of the set. It will panic if any of the items is already in the set
     /// @param items_to_add the items to add
-    fn add_items(self: TMemberState, items_to_add: Span<Self::Value>);
+    fn insert_many(self: TMemberState, items_to_add: Span<Self::Value>);
     /// Removes an item from the set. It will panic if the item is not in the set
     /// @param item_hash the hash of the item to remove
-    fn remove_item(self: TMemberState, item_hash: felt252);
+    fn remove(self: TMemberState, item_hash: felt252);
     /// Removes multiple items from the set. It will panic if any of the items is not in the set
     /// @param items_hashes_to_remove the hashes of the items to remove
-    fn remove_items(self: TMemberState, items_hashes_to_remove: Span<felt252>);
+    fn remove_many(self: TMemberState, items_hashes_to_remove: Span<felt252>);
 }
 
 ///
@@ -186,26 +186,25 @@ impl LinkedSetWriteImpl<
     type Value = T;
 
     #[inline(always)]
-    fn add_item(self: StorageBase<Mutable<LinkedSet<T>>>, item: T) -> felt252 {
-        self.add_item_opt(:item, last_item_hash: self.find_last_hash())
+    fn insert(self: StorageBase<Mutable<LinkedSet<T>>>, item: T) -> felt252 {
+        self.insert_opt(:item, last_item_hash: self.find_last_hash())
     }
 
     #[inline(always)]
-    fn add_items(self: StorageBase<Mutable<LinkedSet<T>>>, mut items_to_add: Span<T>) {
+    fn insert_many(self: StorageBase<Mutable<LinkedSet<T>>>, mut items_to_add: Span<T>) {
         let mut last_item_hash: felt252 = self.find_last_hash();
         for item in items_to_add {
-            last_item_hash = self.add_item_opt(item: *item, :last_item_hash);
+            last_item_hash = self.insert_opt(item: *item, :last_item_hash);
         };
     }
 
-    fn remove_items(self: StorageBase<Mutable<LinkedSet<T>>>, mut items_hashes_to_remove: Span<felt252>) {
+    fn remove_many(self: StorageBase<Mutable<LinkedSet<T>>>, mut items_hashes_to_remove: Span<felt252>) {
         for item_hash in items_hashes_to_remove {
-            self.remove_item(item_hash: *item_hash);
+            self.remove(item_hash: *item_hash);
         };
     }
 
-
-    fn remove_item(self: StorageBase<Mutable<LinkedSet<T>>>, item_hash: felt252) {
+    fn remove(self: StorageBase<Mutable<LinkedSet<T>>>, item_hash: felt252) {
         assert(item_hash != 0, 'linked-set/invalid-hash-to-rem');
 
         // Previous item set to the next item in the list
@@ -233,7 +232,7 @@ impl LinkedSetWritePrivateImpl<
     }
 
     #[inline(always)]
-    fn add_item_opt(self: StorageBase<Mutable<LinkedSet<T>>>, item: T, last_item_hash: felt252) -> felt252 {
+    fn insert_opt(self: StorageBase<Mutable<LinkedSet<T>>>, item: T, last_item_hash: felt252) -> felt252 {
         assert(item.is_valid_item(), 'linked-set/invalid-item');
         let item_hash = item.hash();
         let is_duplicate = self.contains(:item_hash);

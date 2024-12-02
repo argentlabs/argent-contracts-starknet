@@ -150,7 +150,7 @@ mod owner_manager_component {
         TContractState, +HasComponent<TContractState>, +IOwnerManagerCallback<TContractState>, +Drop<TContractState>
     > of IOwnerManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, owner: Signer) {
-            let guid = self.owners_storage.add_item(owner.storage_value());
+            let guid = self.owners_storage.insert(owner.storage_value());
             self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: owner });
         }
 
@@ -159,7 +159,7 @@ mod owner_manager_component {
 
             self.assert_valid_owner_count(owner_len + owners_to_add.len());
             for owner in owners_to_add {
-                let owner_guid = self.owners_storage.add_item(owner.storage_value());
+                let owner_guid = self.owners_storage.insert(owner.storage_value());
                 self.emit_owner_added(owner_guid);
                 self.emit_signer_linked_event(SignerLinked { signer_guid: owner_guid, signer: owner });
             };
@@ -169,7 +169,7 @@ mod owner_manager_component {
             self.assert_valid_owner_count(self.owners_storage.len() - owner_guids_to_remove.len());
 
             for guid in owner_guids_to_remove {
-                self.owners_storage.remove_item(guid);
+                self.owners_storage.remove(guid);
                 self.emit_owner_removed(guid);
             };
         }
@@ -195,10 +195,10 @@ mod owner_manager_component {
             let current_owners = self.owners_storage.get_all_hashes();
             for current_owner_guid in current_owners {
                 assert(current_owner_guid != new_owner_guid, 'argent/already-an-owner');
-                self.owners_storage.remove_item(current_owner_guid);
+                self.owners_storage.remove(current_owner_guid);
                 self.emit_owner_removed(current_owner_guid);
             };
-            self.owners_storage.add_item(new_single_owner);
+            self.owners_storage.insert(new_single_owner);
             self.emit_owner_added(new_owner_guid);
         }
     }

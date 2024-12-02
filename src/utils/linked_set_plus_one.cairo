@@ -49,10 +49,10 @@ pub trait LinkedSetPlus1Write<TMemberState> {
     /// Adds an item to the set, it will panic if the item is already in the set
     /// @param item The item to add
     /// @returns the hash of the added item
-    fn add_item(self: TMemberState, item: Self::Value) -> felt252;
+    fn insert(self: TMemberState, item: Self::Value) -> felt252;
     /// Removes an item from the set, it will panic if the item is not in the set
     /// @param item_hash The hash of the item to remove
-    fn remove_item(self: TMemberState, item_hash: felt252);
+    fn remove(self: TMemberState, item_hash: felt252);
 }
 
 
@@ -139,10 +139,10 @@ impl LinkedSetPlus1WriteImpl<
     type Value = T;
 
     #[inline(always)]
-    fn add_item(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item: T) -> felt252 {
+    fn insert(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item: T) -> felt252 {
         if let Option::Some(first_item) = self.first() {
             assert(item != first_item, 'linked-set/already-in-set');
-            self.get_tail_list().add_item(item)
+            self.get_tail_list().insert(item)
         } else {
             // Empty list
             assert(item.is_valid_item(), 'linked-set/invalid-item');
@@ -151,7 +151,7 @@ impl LinkedSetPlus1WriteImpl<
         }
     }
 
-    fn remove_item(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item_hash: felt252) {
+    fn remove(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item_hash: felt252) {
         let head_item = self.first().expect('linked-set/item-not-found');
         if head_item.hash() == item_hash {
             // Removing head item
@@ -159,14 +159,14 @@ impl LinkedSetPlus1WriteImpl<
             if let Option::Some(first_in_tail) = first_in_tail {
                 // Move first tail item to the head
                 self.head_entry().write(first_in_tail); // overwrite the head
-                self.get_tail_list().remove_item(first_in_tail.hash());
+                self.get_tail_list().remove(first_in_tail.hash());
             } else {
                 // Tail is empty. Remove the head and leave an empty set
                 self.head_entry().write(Default::default());
             }
         } else {
             // Item is not the head
-            self.get_tail_list().remove_item(item_hash);
+            self.get_tail_list().remove(item_hash);
         };
     }
 }

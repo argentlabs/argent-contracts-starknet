@@ -21,15 +21,15 @@ fn setup_three_owners() -> (StorageBase<Mutable<LinkedSet<SignerStorageValue>>>,
     let storage = setup_linked_set();
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
-    storage.add_item(signer_storage1);
+    storage.insert(signer_storage1);
 
     let owner2 = starknet_signer_from_pubkey(2);
     let signer_storage2 = owner2.storage_value();
-    storage.add_item(signer_storage2);
+    storage.insert(signer_storage2);
 
     let owner3 = starknet_signer_from_pubkey(3);
     let signer_storage3 = owner3.storage_value();
-    storage.add_item(signer_storage3);
+    storage.insert(signer_storage3);
 
     (storage, array![signer_storage1, signer_storage2, signer_storage3])
 }
@@ -42,13 +42,13 @@ fn test_len() {
 
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
-    linked_set.add_item(signer_storage1);
+    linked_set.insert(signer_storage1);
 
     assert_eq!(linked_set.len(), 1);
 
     let owner2 = starknet_signer_from_pubkey(2);
     let signer_storage2 = owner2.storage_value();
-    linked_set.add_item(signer_storage2);
+    linked_set.insert(signer_storage2);
 
     assert_eq!(linked_set.len(), 2);
 }
@@ -61,7 +61,7 @@ fn test_is_empty() {
 
     let owner = starknet_signer_from_pubkey(1);
     let signer_storage = owner.storage_value();
-    linked_set.add_item(signer_storage);
+    linked_set.insert(signer_storage);
 
     assert!(!linked_set.is_empty(), "Set should not be empty after adding item");
 }
@@ -72,7 +72,7 @@ fn test_contains() {
 
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
-    linked_set.add_item(signer_storage1);
+    linked_set.insert(signer_storage1);
 
     let owner2 = starknet_signer_from_pubkey(2);
     let signer_storage2 = owner2.storage_value();
@@ -89,13 +89,13 @@ fn test_find_last_id() {
 
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
-    linked_set.add_item(signer_storage1);
+    linked_set.insert(signer_storage1);
 
     assert_eq!(linked_set.find_last_hash(), signer_storage1.hash());
 
     let owner2 = starknet_signer_from_pubkey(2);
     let signer_storage2 = owner2.storage_value();
-    linked_set.add_item(signer_storage2);
+    linked_set.insert(signer_storage2);
 
     assert_eq!(linked_set.find_last_hash(), signer_storage2.hash());
 }
@@ -109,7 +109,7 @@ fn test_first() {
 
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
-    linked_set.add_item(signer_storage1);
+    linked_set.insert(signer_storage1);
 
     let first = linked_set.first().unwrap();
     assert_eq!(first.hash(), signer_storage1.hash());
@@ -121,11 +121,11 @@ fn test_next() {
 
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
-    linked_set.add_item(signer_storage1);
+    linked_set.insert(signer_storage1);
 
     let owner2 = starknet_signer_from_pubkey(2);
     let signer_storage2 = owner2.storage_value();
-    linked_set.add_item(signer_storage2);
+    linked_set.insert(signer_storage2);
 
     let next = linked_set.next(signer_storage1.hash()).unwrap();
     assert_eq!(next.hash(), signer_storage2.hash());
@@ -139,11 +139,11 @@ fn test_item_id_before() {
 
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
-    linked_set.add_item(signer_storage1);
+    linked_set.insert(signer_storage1);
 
     let owner2 = starknet_signer_from_pubkey(2);
     let signer_storage2 = owner2.storage_value();
-    linked_set.add_item(signer_storage2);
+    linked_set.insert(signer_storage2);
 
     assert_eq!(linked_set.item_hash_before(signer_storage2.hash()), signer_storage1.hash());
     assert_eq!(linked_set.item_hash_before(signer_storage1.hash()), 0);
@@ -155,11 +155,11 @@ fn test_get_all_ids() {
 
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
-    linked_set.add_item(signer_storage1);
+    linked_set.insert(signer_storage1);
 
     let owner2 = starknet_signer_from_pubkey(2);
     let signer_storage2 = owner2.storage_value();
-    linked_set.add_item(signer_storage2);
+    linked_set.insert(signer_storage2);
 
     let ids = linked_set.get_all_hashes();
     assert_eq!(ids.len(), 2);
@@ -173,7 +173,7 @@ fn test_read() {
 
     let owner = starknet_signer_from_pubkey(1);
     let signer_storage = owner.storage_value();
-    linked_set.add_item(signer_storage);
+    linked_set.insert(signer_storage);
 
     assert!(linked_set.contains(signer_storage.hash()), "Read set should contain added item");
 }
@@ -184,13 +184,13 @@ fn test_remove() {
 
     let owner1 = starknet_signer_from_pubkey(1);
     let signer_storage1 = owner1.storage_value();
-    linked_set.add_item(signer_storage1);
+    linked_set.insert(signer_storage1);
 
     let owner2 = starknet_signer_from_pubkey(2);
     let signer_storage2 = owner2.storage_value();
-    linked_set.add_item(signer_storage2);
+    linked_set.insert(signer_storage2);
 
-    linked_set.remove_item(signer_storage1.hash());
+    linked_set.remove(signer_storage1.hash());
 
     assert!(!linked_set.contains(signer_storage1.hash()), "Removed item should not be in set");
     assert!(linked_set.contains(signer_storage2.hash()), "Non-removed item should still be in set");
@@ -201,7 +201,7 @@ fn test_remove() {
 fn test_remove_0_1() {
     let (storage, owners) = setup_three_owners();
 
-    storage.remove_items(array![owners[0].hash(), owners[1].hash()].span());
+    storage.remove_many(array![owners[0].hash(), owners[1].hash()].span());
 
     let remaining_owners = storage.get_all_hashes();
     assert_eq!(remaining_owners.len(), 1);
@@ -212,7 +212,7 @@ fn test_remove_0_1() {
 fn test_remove_0_2() {
     let (storage, owners) = setup_three_owners();
 
-    storage.remove_items(array![owners[0].hash(), owners[2].hash()].span());
+    storage.remove_many(array![owners[0].hash(), owners[2].hash()].span());
 
     let remaining_owners = storage.get_all_hashes();
     assert_eq!(remaining_owners.len(), 1);
@@ -223,7 +223,7 @@ fn test_remove_0_2() {
 fn test_remove_1_2() {
     let (storage, owners) = setup_three_owners();
 
-    storage.remove_items(array![owners[1].hash(), owners[2].hash()].span());
+    storage.remove_many(array![owners[1].hash(), owners[2].hash()].span());
 
     let remaining_owners = storage.get_all_hashes();
     assert_eq!(remaining_owners.len(), 1);
@@ -236,7 +236,7 @@ fn test_remove_1_2() {
 fn test_add_invalid_item() {
     let mut linked_set = setup_linked_set();
     let invalid_signer = SignerStorageValue { stored_value: 0, signer_type: SignerType::Starknet };
-    linked_set.add_item(invalid_signer);
+    linked_set.insert(invalid_signer);
 }
 
 #[test]
@@ -245,8 +245,8 @@ fn test_add_duplicate_item() {
     let mut linked_set = setup_linked_set();
     let owner = starknet_signer_from_pubkey(1);
     let signer_storage = owner.storage_value();
-    linked_set.add_item(signer_storage);
-    linked_set.add_item(signer_storage);
+    linked_set.insert(signer_storage);
+    linked_set.insert(signer_storage);
 }
 
 #[test]
@@ -254,7 +254,7 @@ fn test_add_duplicate_item() {
 fn test_remove_invalid_id() {
     let mut linked_set = setup_linked_set();
 
-    linked_set.remove_item(0);
+    linked_set.remove(0);
 }
 
 #[test]
@@ -264,9 +264,9 @@ fn test_remove_non_existent_item() {
 
     let owner = starknet_signer_from_pubkey(1);
     let signer_storage = owner.storage_value();
-    linked_set.add_item(signer_storage);
+    linked_set.insert(signer_storage);
 
-    linked_set.remove_item(123);
+    linked_set.remove(123);
 }
 
 #[test]

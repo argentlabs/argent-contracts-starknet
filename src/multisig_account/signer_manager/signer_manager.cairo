@@ -113,7 +113,7 @@ mod signer_manager_component {
             self.assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
             let mut guids = signers_to_add.span().to_guid_list();
-            self.signer_list.add_items(guids.span());
+            self.signer_list.insert_many(guids.span());
 
             for signer in signers_to_add
                 .span() {
@@ -138,7 +138,7 @@ mod signer_manager_component {
             self.assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
 
             let mut guids = signers_to_remove.span().to_guid_list();
-            self.signer_list.remove_items(guids.span());
+            self.signer_list.remove_many(guids.span());
             while let Option::Some(removed_owner_guid) = guids.pop_front() {
                 self.emit(OwnerRemovedGuid { removed_owner_guid })
             };
@@ -152,10 +152,10 @@ mod signer_manager_component {
         fn replace_signer(ref self: ComponentState<TContractState>, signer_to_remove: Signer, signer_to_add: Signer) {
             assert_only_self();
             // Adding before removing guarantees that we are not replacing an owner with itself
-            let signer_to_add_guid = self.signer_list.add_item(signer_to_add.into_guid());
+            let signer_to_add_guid = self.signer_list.insert(signer_to_add.into_guid());
 
             let signer_to_remove_guid = signer_to_remove.into_guid();
-            self.signer_list.remove_item(signer_to_remove_guid);
+            self.signer_list.remove(signer_to_remove_guid);
 
             self.emit(OwnerRemovedGuid { removed_owner_guid: signer_to_remove_guid });
             self.emit(OwnerAddedGuid { new_owner_guid: signer_to_add_guid });
@@ -198,7 +198,7 @@ mod signer_manager_component {
             self.assert_valid_threshold_and_signers_count(threshold, new_signers_count);
 
             let mut guids = signers.span().to_guid_list();
-            self.signer_list.add_items(guids.span());
+            self.signer_list.insert_many(guids.span());
 
             while let Option::Some(signer) = signers.pop_front() {
                 let signer_guid = guids.pop_front().unwrap();
@@ -238,8 +238,8 @@ mod signer_manager_component {
                     self.emit(SignerLinked { signer_guid, signer: starknet_signer });
                 };
 
-            self.signer_list.remove_items(pubkeys.span());
-            self.signer_list.add_items(signers_to_add.span());
+            self.signer_list.remove_many(pubkeys.span());
+            self.signer_list.insert_many(signers_to_add.span());
         }
 
         fn is_valid_signature_with_threshold(

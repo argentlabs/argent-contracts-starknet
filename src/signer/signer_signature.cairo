@@ -296,25 +296,6 @@ impl U256TryIntoSignerType of TryInto<u256, SignerType> {
     }
 }
 
-impl U8TryIntoSignerType of TryInto<u8, SignerType> {
-    #[inline(always)]
-    fn try_into(self: u8) -> Option<SignerType> {
-        if self == 0 {
-            Option::Some(SignerType::Starknet)
-        } else if self == 1 {
-            Option::Some(SignerType::Secp256k1)
-        } else if self == 2 {
-            Option::Some(SignerType::Secp256r1)
-        } else if self == 3 {
-            Option::Some(SignerType::Eip191)
-        } else if self == 4 {
-            Option::Some(SignerType::Webauthn)
-        } else {
-            Option::None
-        }
-    }
-}
-
 #[inline(always)]
 #[must_use]
 fn is_valid_starknet_signature(hash: felt252, signer: StarknetSigner, signature: StarknetSignature) -> bool {

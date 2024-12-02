@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{SignerStorageValue, SignerType};
+use argent::signer::signer_signature::SignerStorageValue;
 
 #[starknet::interface]
 trait IUpgradeMigrationInternal<TContractState> {
@@ -28,7 +28,9 @@ mod upgrade_migration_component {
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::events::{EscapeCanceled, SignerLinked};
     use argent::multiowner_account::recovery::Escape;
-    use argent::signer::signer_signature::{SignerStorageValue, Signer, starknet_signer_from_pubkey, SignerTrait};
+    use argent::signer::signer_signature::{
+        SignerStorageValue, SignerType, Signer, starknet_signer_from_pubkey, SignerTrait
+    };
     use argent::upgrade::interface::{IUpgradableCallback, IUpgradeable, IUpgradableCallbackDispatcherTrait};
     use starknet::{
         syscalls::replace_class_syscall, SyscallResultTrait, get_block_timestamp, storage::Map,
@@ -115,11 +117,9 @@ mod upgrade_migration_component {
         }
 
         fn migrate_from_0_4_0(ref self: ComponentState<TContractState>) {
-            // Reset proxy slot as the replace_class_syscall is done in the upgrade callback
-            let implementation = self._implementation.read();
-
-            if implementation != Zeroable::zero() {
-                self._implementation.write(Zeroable::zero());
+            // Reset proxy slot, changing the classhash is not needed we already do it in the upgrade callback
+            if self._implementation.read() != 0 {
+                self._implementation.write(0);
             }
 
             let starknet_owner_pubkey = self._signer.read();
@@ -128,20 +128,17 @@ mod upgrade_migration_component {
                 self.initialize_from_upgrade(stark_signer);
                 self._signer.write(0);
             } else {
-                for signer_type_ordinal in 1_u8
-                    ..5 {
-                        let stored_value = self._signer_non_stark.read(signer_type_ordinal.into());
-
-                        // Can unwrap safely as we are bound by the loop range
-
-                        if (stored_value != 0) {
-                            let signer_type = signer_type_ordinal.try_into().unwrap();
-                            let signer_storage_value = SignerStorageValue { signer_type, stored_value };
-                            self.initialize_from_upgrade(signer_storage_value);
-                            self._signer_non_stark.write(signer_type_ordinal.into(), 0);
-                            break;
-                        }
-                    };
+                for signer_type in array![
+                    SignerType::Webauthn, SignerType::Secp256k1, SignerType::Secp256r1, SignerType::Eip191
+                ] {
+                    let stored_value = self._signer_non_stark.read(signer_type.into());
+                    if (stored_value != 0) {
+                        let signer_storage_value = SignerStorageValue { signer_type, stored_value };
+                        self.initialize_from_upgrade(signer_storage_value);
+                        self._signer_non_stark.write(signer_type.into(), 0);
+                        break;
+                    }
+                };
             }
 
             // Health check

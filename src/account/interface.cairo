@@ -58,14 +58,12 @@ trait IEmitArgentAccountEvent<TContractState> {
 
 impl VersionPartialOrd of PartialOrd<Version> {
     fn lt(lhs: Version, rhs: Version) -> bool {
-        if lhs.major == rhs.major {
-            if (lhs.minor == rhs.minor) {
-                lhs.patch < rhs.patch
-            } else {
-                lhs.minor < rhs.minor
-            }
-        } else {
-            lhs.major < rhs.major
+        if lhs.major != rhs.major {
+            return lhs.major < rhs.major;
         }
+        if lhs.minor != rhs.minor {
+            return lhs.minor < rhs.minor;
+        }
+        return lhs.patch < rhs.patch;
     }
 }

@@ -30,7 +30,6 @@ impl U8TryIntoSignerType of TryInto<u8, SignerType> {
     }
 }
 
-
 #[starknet::component]
 mod upgrade_migration_component {
     use argent::account::interface::IEmitArgentAccountEvent;

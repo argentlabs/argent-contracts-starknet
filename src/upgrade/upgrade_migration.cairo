@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::SignerStorageValue;
+use argent::signer::signer_signature::{SignerStorageValue, SignerType};
 
 #[starknet::interface]
 trait IUpgradeMigrationInternal<TContractState> {
@@ -10,6 +10,26 @@ trait IUpgradeMigrationCallback<TContractState> {
     fn perform_health_check(ref self: TContractState);
     fn initialize_from_upgrade(ref self: TContractState, signer_storage_value: SignerStorageValue);
 }
+
+impl U8TryIntoSignerType of TryInto<u8, SignerType> {
+    #[inline(always)]
+    fn try_into(self: u8) -> Option<SignerType> {
+        if self == 0 {
+            Option::Some(SignerType::Starknet)
+        } else if self == 1 {
+            Option::Some(SignerType::Secp256k1)
+        } else if self == 2 {
+            Option::Some(SignerType::Secp256r1)
+        } else if self == 3 {
+            Option::Some(SignerType::Eip191)
+        } else if self == 4 {
+            Option::Some(SignerType::Webauthn)
+        } else {
+            Option::None
+        }
+    }
+}
+
 
 #[starknet::component]
 mod upgrade_migration_component {
@@ -24,7 +44,7 @@ mod upgrade_migration_component {
         syscalls::replace_class_syscall, SyscallResultTrait, get_block_timestamp, storage::Map,
         storage_access::{storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,}
     };
-    use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback};
+    use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback, U8TryIntoSignerType};
 
     const LEGACY_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
@@ -137,8 +157,7 @@ mod upgrade_migration_component {
                         let stored_value = self._signer_non_stark.read(signer_type_ordinal.into());
 
                         // Can unwrap safely as we are bound by the loop range
-                        let signer_type: u256 = signer_type_ordinal.into();
-                        let signer_type = signer_type.try_into().unwrap();
+                        let signer_type = signer_type_ordinal.try_into().unwrap();
 
                         if (stored_value != 0) {
                             let signer_storage_value = SignerStorageValue { signer_type, stored_value };

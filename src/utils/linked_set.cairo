@@ -8,7 +8,7 @@ use starknet::storage::{
 /// In terms of storage. It will use the same number of storage slots as storing all items in succession plus the
 /// equivalent of another item to store the end marker.
 /// Searching a given item in the list can be done with O(1) complexity, that means that we only need to check the
-/// storage one regardless of the set size Items on the list must provide a hash function. So each item provides a
+/// storage once regardless of the set size. Items on the list must provide a hash function. So each item provides a
 /// unique hash.
 /// The implementation is based on a having one item "pointing" at the next one. 0 points to the first item, and the
 /// last item points to the end marker.

@@ -114,12 +114,13 @@ mod signer_manager_component {
 
             let mut guids = signers_to_add.span().to_guid_list();
             self.signer_list.add_items(guids.span());
-            let mut signers_to_add_span = signers_to_add.span();
-            while let Option::Some(signer) = signers_to_add_span.pop_front() {
-                let signer_guid = guids.pop_front().unwrap();
-                self.emit(OwnerAddedGuid { new_owner_guid: signer_guid });
-                self.emit(SignerLinked { signer_guid, signer: *signer });
-            };
+
+            for signer in signers_to_add
+                .span() {
+                    let signer_guid = guids.pop_front().unwrap();
+                    self.emit(OwnerAddedGuid { new_owner_guid: signer_guid });
+                    self.emit(SignerLinked { signer_guid, *signer });
+                };
 
             self.threshold.write(new_threshold);
             if previous_threshold != new_threshold {

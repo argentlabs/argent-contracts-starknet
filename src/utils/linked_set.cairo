@@ -13,7 +13,7 @@ use starknet::storage::{
 /// The implementation is based on a having one item "pointing" at the next one. 0 points to the first item, and the
 /// last item points to the end marker.
 ///
-/// For if we have the items A, B and C the memory will look like this
+/// If we have the items A, B and C the memory will look like this
 ///
 /// storage address ->   value
 /// -------------------------

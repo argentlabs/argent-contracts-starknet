@@ -11,6 +11,16 @@ trait IUpgradeMigrationCallback<TContractState> {
     fn initialize_from_upgrade(ref self: TContractState, signer_storage_value: SignerStorageValue);
 }
 
+#[derive(Drop, Copy, Serde, Default, starknet::Store)]
+struct LegacyEscape {
+    // timestamp for activation of escape mode, 0 otherwise
+    ready_at: u64,
+    // None (0x0), Guardian (0x1), Owner (0x2)
+    escape_type: felt252,
+    // new owner or new guardian address
+    new_signer: felt252,
+}
+
 #[starknet::component]
 mod upgrade_migration_component {
     use argent::account::interface::IEmitArgentAccountEvent;
@@ -24,14 +34,14 @@ mod upgrade_migration_component {
         syscalls::replace_class_syscall, SyscallResultTrait, get_block_timestamp, storage::Map,
         storage_access::{storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,}
     };
-    use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback, U8TryIntoSignerType};
+    use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback, LegacyEscape};
 
     const LEGACY_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
     #[storage]
     struct Storage {
-        // Duplicate keys
-        _escape: Escape,
+        // storage layout used to be different before 0.4.0
+        _escape: LegacyEscape,
         // Legacy storage
         _signer: felt252,
         _implementation: felt252,
@@ -55,28 +65,14 @@ mod upgrade_migration_component {
         +IEmitArgentAccountEvent<TContractState>,
     > of IUpgradeMigrationInternal<ComponentState<TContractState>> {
         fn migrate_from_before_0_4_0(ref self: ComponentState<TContractState>) {
-            // As the storage layout for the escape is changing, if there is an ongoing escape it should revert
-            // Expired escapes will be cleared
-            let escape_base = storage_base_address_from_felt252(selector!("_escape"));
-            let escape_ready_at = storage_read_syscall(0, storage_address_from_base_and_offset(escape_base, 0))
-                .unwrap_syscall();
-
-            if escape_ready_at == 0 {
-                let escape_type = storage_read_syscall(0, storage_address_from_base_and_offset(escape_base, 1))
-                    .unwrap_syscall();
-                let escape_new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(escape_base, 2))
-                    .unwrap_syscall();
-                assert(escape_type.is_zero(), 'argent/esc-type-not-null');
-                assert(escape_new_signer.is_zero(), 'argent/esc-new-signer-not-null');
-            } else {
-                let escape_ready_at: u64 = escape_ready_at.try_into().unwrap();
-                if get_block_timestamp() < escape_ready_at + LEGACY_ESCAPE_SECURITY_PERIOD {
-                    // Not expired. Automatically cancelling the escape when upgrading
-                    self.emit_event(ArgentAccountEvent::EscapeCanceled(EscapeCanceled {}));
-                }
-                // Clear the escape
-                self._escape.write(Default::default());
+            let legacy_escape = self._escape.read();
+            if legacy_escape.ready_at != 0 && get_block_timestamp() < legacy_escape.ready_at
+                + LEGACY_ESCAPE_SECURITY_PERIOD {
+                // Active escape. Automatically cancelling the escape with the upgrade
+                self.emit_event(ArgentAccountEvent::EscapeCanceled(EscapeCanceled {}));
             }
+            // Clear the escape
+            self._escape.write(Default::default());
 
             // Cleaning attempts storage as the escape was cleared
             self.owner_escape_attempts.write(0);

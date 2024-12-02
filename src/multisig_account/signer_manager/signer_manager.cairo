@@ -228,14 +228,14 @@ mod signer_manager_component {
             self.assert_valid_threshold_and_signers_count(self.threshold.read(), pubkeys.len());
 
             // Converting storage from public keys to guid
-            let mut pubkeys_span = pubkeys.span();
             let mut signers_to_add = array![];
-            while let Option::Some(pubkey) = pubkeys_span.pop_front() {
-                let starknet_signer = starknet_signer_from_pubkey(*pubkey);
-                let signer_guid = starknet_signer.into_guid();
-                signers_to_add.append(signer_guid);
-                self.emit(SignerLinked { signer_guid, signer: starknet_signer });
-            };
+            for pubkey in pubkeys
+                .span() {
+                    let starknet_signer = starknet_signer_from_pubkey(*pubkey);
+                    let signer_guid = starknet_signer.into_guid();
+                    signers_to_add.append(signer_guid);
+                    self.emit(SignerLinked { signer_guid, signer: starknet_signer });
+                };
 
             self.signer_list.remove_items(pubkeys.span());
             self.signer_list.add_items(signers_to_add.span());

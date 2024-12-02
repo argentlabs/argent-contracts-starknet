@@ -24,8 +24,8 @@ use starknet::storage::{
 ///
 ///
 /// It is critical that the hash function is uniformly distributed, because if the hash returned is invalid it might
-/// corrupt the set For instance if the hash returns the values 1,2,3 for the items A,B,C and storing each item uses 2
-/// storage slots. when writing one item we might e overriding the storage of other items
+/// corrupt the set. For instance if the hash returns the values 1,2,3 for the items A,B,C and storing each item uses 2
+/// storage slots, when writing one item we might be overriding the storage of other items
 ///
 #[phantom]
 pub struct LinkedSet<T> {}

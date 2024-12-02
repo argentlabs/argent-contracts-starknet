@@ -145,9 +145,9 @@ mod upgrade_migration_component {
                 self._implementation.write(Zeroable::zero());
             }
 
-            let mut signer_to_migrate = self._signer.read();
-            if (signer_to_migrate != 0) {
-                let stark_signer = starknet_signer_from_pubkey(signer_to_migrate).storage_value();
+            let starknet_owner_pubkey = self._signer.read();
+            if (starknet_owner_pubkey != 0) {
+                let stark_signer = starknet_signer_from_pubkey(starknet_owner_pubkey).storage_value();
                 self.initialize_from_upgrade(stark_signer);
                 self._signer.write(0);
             } else {
@@ -156,9 +156,9 @@ mod upgrade_migration_component {
                         let stored_value = self._signer_non_stark.read(signer_type_ordinal.into());
 
                         // Can unwrap safely as we are bound by the loop range
-                        let signer_type = signer_type_ordinal.try_into().unwrap();
 
                         if (stored_value != 0) {
+                            let signer_type = signer_type_ordinal.try_into().unwrap();
                             let signer_storage_value = SignerStorageValue { signer_type, stored_value };
                             self.initialize_from_upgrade(signer_storage_value);
                             self._signer_non_stark.write(signer_type_ordinal.into(), 0);

@@ -30,6 +30,8 @@ pub trait LinkedSetPlus1Read<TMemberState> {
     type Value;
     /// @returns the first item in the set or None if the set is empty
     fn first(self: TMemberState) -> Option<Self::Value>;
+    /// @returns the only item in the set or None if the set is empty or contains more than one item
+    fn single(self: TMemberState) -> Option<Self::Value>;
     /// @returns the number of items in the set
     fn len(self: TMemberState) -> usize;
     /// @returns true if the set is empty
@@ -64,6 +66,14 @@ impl LinkedSetPlus1ReadImpl<
     #[inline(always)]
     fn first(self: StorageBase<LinkedSetPlus1<T>>) -> Option<T> {
         LinkedSetConfig::path_read_value(path: self.head_entry())
+    }
+
+    #[inline(always)]
+    fn single(self: StorageBase<LinkedSetPlus1<T>>) -> Option<T> {
+        if !self.get_tail_list().is_empty() {
+            return Option::None; // More than one item
+        }
+        self.first()
     }
 
     fn len(self: StorageBase<LinkedSetPlus1<T>>) -> usize {
@@ -195,6 +205,11 @@ impl MutableLinkedSetPlus1ReadImpl<
     #[inline(always)]
     fn first(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> Option<T> {
         self.as_read_only().first()
+    }
+
+    #[inline(always)]
+    fn single(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> Option<T> {
+        self.as_read_only().single()
     }
 
     #[inline(always)]

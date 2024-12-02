@@ -179,7 +179,7 @@ mod owner_manager_component {
         }
 
         fn get_single_owner(self: @ComponentState<TContractState>) -> Option<SignerStorageValue> {
-            self.owners_storage.first() // TODO
+            self.owners_storage.single() // TODO consider returning .first() instead for better performance
         }
 
         fn get_single_stark_owner_pubkey(self: @ComponentState<TContractState>) -> Option<felt252> {

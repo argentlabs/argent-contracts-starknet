@@ -15,11 +15,11 @@ use starknet::storage::{
 ///
 /// If we have the items A, B and C the memory will look like this
 ///
-/// storage address ->   value
-/// -------------------------
-///       0         ->     A
-///      hash(A)    ->     B
-///      hash(B)    ->     C
+/// storage address ->    value
+/// -------------------------------
+///        0        ->      A
+///      hash(A)    ->      B
+///      hash(B)    ->      C
 ///      hash(C)    ->  END_MARKER
 ///
 ///

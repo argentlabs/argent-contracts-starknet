@@ -17,6 +17,12 @@ use super::linked_set::{
 /// - Checking if an item is in the set is O(1) complexity. Its a bit more expensive than LinkedSet but
 /// still very efficient. It offers better performance than LinkedSet when the set is a single item
 ///
+/// This is how the storage looks like depending on the number of items in the set:
+///
+/// Storing 1 item:  head=A , tail= []
+/// Storing 2 items: head=A , tail= [B]
+/// Storing 3 items: head=A , tail= [B, C]
+///
 #[phantom]
 pub struct LinkedSetPlus1<T> {}
 

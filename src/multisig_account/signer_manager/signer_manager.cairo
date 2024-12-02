@@ -119,7 +119,7 @@ mod signer_manager_component {
                 .span() {
                     let signer_guid = guids.pop_front().unwrap();
                     self.emit(OwnerAddedGuid { new_owner_guid: signer_guid });
-                    self.emit(SignerLinked { signer_guid, *signer });
+                    self.emit(SignerLinked { signer_guid, signer: *signer });
                 };
 
             self.threshold.write(new_threshold);

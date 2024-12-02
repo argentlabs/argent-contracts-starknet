@@ -1,5 +1,5 @@
 use argent::account::interface::Version;
-use argent::multiowner_account::recovery::{LegacyEscape};
+use argent::multiowner_account::recovery::Escape;
 use argent::recovery::{EscapeStatus};
 
 use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
@@ -35,12 +35,12 @@ trait ITestArgentAccount<TContractState> {
     fn get_owner_guid(self: @TContractState) -> felt252;
     fn get_guardian_guid(self: @TContractState) -> Option<felt252>;
     fn get_guardian_backup_guid(self: @TContractState) -> Option<felt252>;
-    fn get_escape(self: @TContractState) -> LegacyEscape;
+    fn get_escape(self: @TContractState) -> Escape;
     fn get_version(self: @TContractState) -> Version;
     fn get_name(self: @TContractState) -> felt252;
     fn get_last_owner_escape_attempt(self: @TContractState) -> u64;
     fn get_last_guardian_escape_attempt(self: @TContractState) -> u64;
-    fn get_escape_and_status(self: @TContractState) -> (LegacyEscape, EscapeStatus);
+    fn get_escape_and_status(self: @TContractState) -> (Escape, EscapeStatus);
     fn get_escape_security_period(self: @TContractState) -> u64;
 
     // IErc165

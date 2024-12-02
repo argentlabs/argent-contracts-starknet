@@ -31,7 +31,7 @@ pub trait LinkedSetPlus1Read<TMemberState> {
     /// @returns true if the item is in the set
     /// @param item The item to check inclusion
     fn is_in(self: TMemberState, item: Self::Value) -> bool;
-    /// @returns true if the item is in the set
+    /// @returns true if the item is in the set (using the item hash)
     /// @param item_hash The hash of the item to check inclusion
     fn is_in_hash(self: TMemberState, item_hash: felt252) -> bool;
     /// @returns all the hashes in the set

@@ -117,10 +117,8 @@ mod upgrade_migration_component {
         }
 
         fn migrate_from_0_4_0(ref self: ComponentState<TContractState>) {
-            // Reset proxy slot, changing the classhash is not needed we already do it in the upgrade callback
-            if self._implementation.read() != 0 {
-                self._implementation.write(0);
-            }
+            // Reset proxy slot, changing the ClassHash is done in the upgrade callback
+            self._implementation.write(0);
 
             let starknet_owner_pubkey = self._signer.read();
             if (starknet_owner_pubkey != 0) {

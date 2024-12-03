@@ -29,16 +29,22 @@ struct Session {
 #[derive(Drop, Serde, Copy)]
 struct SessionToken {
     session: Session,
-    cache_owner_guid: felt252,
-    session_authorization: Span<felt252>,
+    use_cache: bool,
+    // can be the sessions authorization, but also the the CacheInfo struct if the auth was previously cached
+    session_authorization_or_cache_info: Span<felt252>,
     session_signature: SignerSignature,
     guardian_signature: SignerSignature,
     proofs: Span<Span<felt252>>,
 }
 
+#[derive(Drop, Serde, Copy)]
+struct CacheInfo {
+    owner_guid: felt252,
+    guardian_guid: felt252,
+}
+
 
 /// This trait has to be implemented when using the component `session_component` (This is enforced by the compiler)
-#[starknet::interface]
 trait ISessionCallback<TContractState> {
     /// @notice Callback performed to parse the account signature
     /// @param authorization_signature The owner + guardian signature of the session
@@ -52,8 +58,8 @@ trait ISessionCallback<TContractState> {
     fn assert_valid_authorization(
         self: @TContractState, session_hash: felt252, authorization_signature: Span<SignerSignature>
     );
-    fn get_guardian_guid_callback(self: @TContractState) -> Option<felt252>;
     fn is_owner_guid(self: @TContractState, owner_guid: felt252) -> bool;
+    fn is_guardian_guid(self: @TContractState, guardian_guid: felt252) -> bool;
 }
 
 #[starknet::interface]
@@ -69,5 +75,7 @@ trait ISessionable<TContractState> {
     /// @param session_hash Hash of the session token
     /// @param owner_guid Guid of the owner used in the authorization
     /// @return Whether the session is cached
-    fn is_session_authorization_cached(self: @TContractState, session_hash: felt252, owner_guid: felt252) -> bool;
+    fn is_session_authorization_cached(
+        self: @TContractState, session_hash: felt252, owner_guid: felt252, guardian_guid: felt252
+    ) -> bool;
 }

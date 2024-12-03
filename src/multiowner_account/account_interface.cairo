@@ -42,17 +42,10 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @dev It will cancel any existing escape
     fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>);
 
-
-    /// @notice Changes the guardian
+    /// @notice Removes all guardians and optionally adds a new one
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
-    /// @dev can only be removed (set to None) if there is no guardian backup set
     /// @param new_guardian The address of the new guardian, or None to disable the guardian
-    fn change_guardian(ref self: TContractState, new_guardian: Option<Signer>);
-
-    /// @notice Changes the backup guardian
-    /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
-    /// @param new_guardian_backup The address of the new backup guardian, or None to disable the backup guardian
-    fn change_guardian_backup(ref self: TContractState, new_guardian_backup: Option<Signer>);
+    fn reset_guardians(ref self: TContractState, new_guardian: Option<Signer>);
 
     /// @notice Triggers the escape of the owner when it is lost or compromised
     /// @dev Must be called by the account and authorized by just a guardian
@@ -93,18 +86,13 @@ trait IArgentMultiOwnerAccount<TContractState> {
     fn get_owner(self: @TContractState) -> felt252;
     fn get_owner_guid(self: @TContractState) -> felt252;
     fn get_owner_type(self: @TContractState) -> SignerType;
-    /// @notice Returns the starknet pub key or `0` if there's no guardian
-    fn get_guardian(self: @TContractState) -> felt252;
-    fn is_guardian(self: @TContractState, guardian: Signer) -> bool;
-    fn get_guardian_guid(self: @TContractState) -> Option<felt252>;
-    /// @notice Returns `Starknet` if there's a guardian, `None` otherwise
-    fn get_guardian_type(self: @TContractState) -> Option<SignerType>;
-    /// @notice Returns `0` if there's no guardian backup, the public key if the requested role is Starknet, Eip191 or
-    /// Secp256k1 and panic for other types
-    fn get_guardian_backup(self: @TContractState) -> felt252;
-    fn get_guardian_backup_guid(self: @TContractState) -> Option<felt252>;
-    /// @notice Returns the backup guardian type if there's any backup guardian
-    fn get_guardian_backup_type(self: @TContractState) -> Option<SignerType>;
+
+    // /// @notice Returns `0` if there's no guardian backup, the public key if the requested role is Starknet, Eip191
+    // or /// Secp256k1 and panic for other types
+    // fn get_guardian_backup(self: @TContractState) -> felt252;
+    // fn get_guardian_backup_guid(self: @TContractState) -> Option<felt252>;
+    // /// @notice Returns the backup guardian type if there's any backup guardian
+    // fn get_guardian_backup_type(self: @TContractState) -> Option<SignerType>;
     fn get_escape(self: @TContractState) -> Escape;
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CairoOption, CairoOptionVariant, CallData } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, RawArgs } from "starknet";
 import {
   ArgentSigner,
   ContractWithClass,
@@ -25,11 +25,26 @@ import {
   upgradeAccount,
 } from "../lib";
 
+interface TriggerEscape {
+  entrypoint: string;
+  calldata?: RawArgs; // Replace `any` with a more specific type if possible
+}
+
+interface UpgradeDataEntry {
+  name: string;
+  deployAccount: () => Promise<any>;
+  deployAccountWithoutGuardian: () => Promise<any>;
+  upgradeExtraCalldata?: string[]; // Optional, as it's not present in all entries
+  triggerEscapeOwner: TriggerEscape;
+  triggerEscapeGuardian: TriggerEscape;
+}
+
+
 describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let mockDapp: ContractWithClass;
   let classHashV040: string;
-  const upgradeData: any[] = [];
+  const upgradeData: UpgradeDataEntry[] = [];
 
   before(async () => {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
@@ -38,7 +53,8 @@ describe("ArgentAccount: upgrade", function () {
     upgradeData.push({
       name: "Legacy",
       deployAccount: async () => await deployOldAccountWithProxy(),
-      extraCalldata: ["0"],
+      // Required to ensure execute_after_upgrade is called. Without any calldata, the execute_after_upgrade won't be called
+      upgradeExtraCalldata: ["0"],
       deployAccountWithoutGuardian: async () => await deployOldAccountWithProxyWithoutGuardian(),
       // Gotta call like that as the entrypoint is not found on the contract for legacy versions
       triggerEscapeOwner: { entrypoint: "triggerEscapeSigner" },
@@ -94,11 +110,11 @@ describe("ArgentAccount: upgrade", function () {
         triggerEscapeOwner,
         triggerEscapeGuardian,
         deployAccountWithoutGuardian,
-        extraCalldata,
+        upgradeExtraCalldata,
       } of upgradeData) {
         it(`[${name}] Should be possible to upgrade `, async function () {
           const { account } = await deployAccount();
-          await upgradeAccount(account, argentAccountClassHash, extraCalldata);
+          await upgradeAccount(account, argentAccountClassHash, upgradeExtraCalldata);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
           mockDapp.connect(account);
           // This should work as long as we support the "old" signature format [r1, s1, r2, s2]
@@ -108,7 +124,7 @@ describe("ArgentAccount: upgrade", function () {
 
         it(`[${name}] Should be possible to upgrade without guardian from ${name}`, async function () {
           const { account } = await deployAccountWithoutGuardian();
-          await upgradeAccount(account, argentAccountClassHash, extraCalldata);
+          await upgradeAccount(account, argentAccountClassHash, upgradeExtraCalldata);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
           account.cairoVersion = "1";
           await manager.ensureSuccess(mockDapp.set_number(42));
@@ -146,7 +162,7 @@ describe("ArgentAccount: upgrade", function () {
           );
 
           account.signer = oldSigner;
-          await expectEvent(await upgradeAccount(account, argentAccountClassHash, extraCalldata), {
+          await expectEvent(await upgradeAccount(account, argentAccountClassHash, upgradeExtraCalldata), {
             from_address: account.address,
             eventName: "EscapeCanceled",
           });
@@ -171,7 +187,7 @@ describe("ArgentAccount: upgrade", function () {
           );
 
           account.signer = oldSigner;
-          await expectEvent(await upgradeAccount(account, argentAccountClassHash, extraCalldata), {
+          await expectEvent(await upgradeAccount(account, argentAccountClassHash, upgradeExtraCalldata), {
             from_address: account.address,
             eventName: "EscapeCanceled",
           });

@@ -111,14 +111,11 @@ impl LinkedSetReadImpl<
     fn len(self: StorageBase<LinkedSet<T>>) -> usize {
         let mut current_item_hash = 0;
         let mut size = 0;
-        loop {
-            if let Option::Some(next_item) = self.next(current_item_hash) {
-                current_item_hash = next_item.hash();
-                size += 1;
-            } else {
-                break size;
-            }
-        }
+        while let Option::Some(next_item) = self.next(current_item_hash) {
+            current_item_hash = next_item.hash();
+            size += 1;
+        };
+        size
     }
 
     fn first(self: StorageBase<LinkedSet<T>>) -> Option<T> {
@@ -128,13 +125,9 @@ impl LinkedSetReadImpl<
     fn get_all_hashes(self: StorageBase<LinkedSet<T>>) -> Array<felt252> {
         let mut current_item_hash = 0;
         let mut all_hashes = array![];
-        loop {
-            if let Option::Some(next_item) = self.next(current_item_hash) {
-                current_item_hash = next_item.hash();
-                all_hashes.append(current_item_hash);
-            } else {
-                break;
-            }
+        while let Option::Some(next_item) = self.next(current_item_hash) {
+            current_item_hash = next_item.hash();
+            all_hashes.append(current_item_hash);
         };
         all_hashes
     }
@@ -157,13 +150,10 @@ impl LinkedSetReadPrivateImpl<T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetC
     #[inline(always)]
     fn find_last_hash(self: StorageBase<LinkedSet<T>>) -> felt252 {
         let mut current_item_hash = 0;
-        loop {
-            if let Option::Some(next_item) = self.next(current_item_hash) {
-                current_item_hash = next_item.hash();
-            } else {
-                break current_item_hash;
-            }
-        }
+        while let Option::Some(next_item) = self.next(current_item_hash) {
+            current_item_hash = next_item.hash();
+        };
+        current_item_hash
     }
 
     fn item_hash_before(self: StorageBase<LinkedSet<T>>, item_hash_after: felt252) -> felt252 {

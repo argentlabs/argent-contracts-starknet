@@ -73,17 +73,18 @@ pub trait LinkedSetConfig<T> {
     // Check if the item is valid. Otherwise it can't be added to the set
     fn is_valid_item(self: @T) -> bool;
 
-    /// @returns a unique hash for the given item. The hash can't be zero as it's reserved for the first item
-    /// @param item the item to hash
+    /// @notice returns a unique hash for the given item. The hash can't be zero as it's reserved for the first item
     /// @dev It is critical that the hash function is uniformly distributed, because if the hash returned is invalid it
     /// might corrupt the set For instance if the hash returns the values 1,2,3 for the items A,B,C and storing each
     /// item uses 2 storage slots. when writing one item we might e overriding the storage of other items
+    /// @param item the item to hash
+    /// @return the item hash
     fn hash(self: @T) -> felt252;
 
-    // reads the value stored at the given StoragePath
+    // @notice reads the value stored at the given StoragePath
+    // @dev must return valid items according to the `is_valid_item` function
     // @param path the path to read
     // @returns the value stored at the given path or None if the path is empty
-    // @dev must return valid items according to the `is_valid_item` function
     fn path_read_value(path: StoragePath<T>) -> Option<T>;
 
     // @return true the value stored in the given path is valid or the end marker

@@ -83,21 +83,12 @@ export interface ArgentWalletWithGuardian extends ArgentWallet {
   guardian: KeyPair;
 }
 
-interface LegacyArgentWalletInner {
+interface LegacyArgentWallet {
   account: ArgentAccount;
   accountContract: Contract;
   owner: LegacyKeyPair;
   guardian?: LegacyKeyPair;
 }
-
-export interface LegacyArgentWallet {
-  account: ArgentAccount;
-  accountContract: Contract;
-  owner: LegacyKeyPair;
-  guardian: LegacyKeyPair;
-}
-
-export type LegacyArgentWalletWithoutGuardian = LegacyArgentWalletInner & Omit<LegacyArgentWallet, "guardian">;
 
 export interface ArgentWalletWithGuardianAndBackup extends ArgentWalletWithGuardian {
   guardianBackup: KeyPair;
@@ -137,22 +128,19 @@ export async function deployOldAccountWithProxy(
   owner = new LegacyStarknetKeyPair(),
   guardian = new LegacyStarknetKeyPair(),
   salt = num.toHex(randomStarknetKeyPair().privateKey),
-): Promise<LegacyArgentWallet> {
-  const { account, accountContract } = await deployOldAccountWithProxyInner(owner, guardian, salt);
-  return { account, accountContract, owner, guardian };
+): Promise<LegacyArgentWallet & { guardian: LegacyKeyPair }> {
+  return { ...(await deployOldAccountWithProxyInner(owner, guardian, salt)), guardian };
 }
 
-export async function deployOldAccountWithProxyWithoutGuardian(): Promise<LegacyArgentWalletWithoutGuardian> {
-  const owner = new LegacyStarknetKeyPair();
-  const { account, accountContract } = await deployOldAccountWithProxyInner(owner);
-  return { account, accountContract, owner };
+export async function deployOldAccountWithProxyWithoutGuardian(): Promise<LegacyArgentWallet> {
+  return await deployOldAccountWithProxyInner(new LegacyStarknetKeyPair());
 }
 
 async function deployOldAccountWithProxyInner(
   owner: LegacyKeyPair,
   guardian?: LegacyKeyPair,
   salt = num.toHex(randomStarknetKeyPair().privateKey),
-): Promise<LegacyArgentWalletInner> {
+): Promise<LegacyArgentWallet> {
   const proxyClassHash = await manager.declareFixtureContract("Proxy");
   const oldArgentAccountClassHash = await manager.declareFixtureContract("OldArgentAccount");
 

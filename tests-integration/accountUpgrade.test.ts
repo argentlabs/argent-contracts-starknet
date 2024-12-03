@@ -39,7 +39,6 @@ interface UpgradeDataEntry {
   triggerEscapeGuardian: TriggerEscape;
 }
 
-
 describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let mockDapp: ContractWithClass;

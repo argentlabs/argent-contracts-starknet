@@ -218,7 +218,7 @@ impl LinkedSetWritePrivateImpl<
 > of LinkedSetWritePrivate<T> {
     #[inline(always)]
     fn entry(self: StorageBase<Mutable<LinkedSet<T>>>, item_hash: felt252) -> StoragePath<Mutable<T>> {
-        let path: StoragePath<Mutable<T>> = StoragePathTrait::new(self.as_path().__hash_state__.state);
+        let path: StoragePath<Mutable<T>> = StoragePathTrait::new(self.__hash_state__.state);
         path.update(item_hash)
     }
 

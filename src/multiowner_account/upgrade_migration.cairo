@@ -119,7 +119,8 @@ mod upgrade_migration_component {
         fn migrate_from_0_4_0(ref self: ComponentState<TContractState>) {
             // Reset proxy slot, changing the ClassHash is done in the upgrade callback
             self._implementation.write(0);
-            // TODO WHY
+            // During an upgrade we changed the layout from being 3 fields to 3 fields packed onto 2 fields.
+            // We need to restore that third field that could have been left behind.
             self._escape.new_signer.write(0);
 
             let starknet_owner_pubkey = self._signer.read();

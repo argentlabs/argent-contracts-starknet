@@ -4,7 +4,7 @@ use starknet::VALIDATED;
 use super::super::{
     ARGENT_ACCOUNT_ADDRESS, ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
     initialize_account_without_guardian, Felt252TryIntoStarknetSigner, tx_hash, GUARDIAN, OWNER, WRONG_OWNER,
-    to_starknet_signer_signatures, WRONG_GUARDIAN, GUARDIAN_BACKUP, to_starknet_signatures,
+    to_starknet_signer_signatures, WRONG_GUARDIAN, to_starknet_signatures,
 };
 
 #[test]
@@ -18,15 +18,6 @@ fn valid_no_guardian() {
 fn valid_with_guardian() {
     let signatures = to_starknet_signatures(array![OWNER(), GUARDIAN()]);
     assert_eq!(initialize_account().is_valid_signature(tx_hash, signatures), VALIDATED);
-}
-
-#[test]
-fn valid_with_guardian_backup() {
-    let account = initialize_account_with(OWNER().pubkey, 1);
-    let guardian_backup = Option::Some(starknet_signer_from_pubkey(GUARDIAN_BACKUP().pubkey));
-    account.change_guardian_backup(guardian_backup);
-    let signatures = to_starknet_signatures(array![OWNER(), GUARDIAN_BACKUP()]);
-    assert_eq!(account.is_valid_signature(tx_hash, signatures), VALIDATED);
 }
 
 #[test]
@@ -50,20 +41,14 @@ fn invalid_owner_without_guardian() {
     assert_eq!(account.is_valid_signature(tx_hash, signatures), 0);
     let signatures = to_starknet_signatures(array![WRONG_OWNER()]);
     assert_eq!(account.is_valid_signature(tx_hash, signatures), 0);
-    let signatures = to_starknet_signer_signatures(
-        array![GUARDIAN().pubkey, GUARDIAN_BACKUP().sig.r, GUARDIAN_BACKUP().sig.s]
-    );
-    assert_eq!(account.is_valid_signature(tx_hash, signatures), 0);
 }
 
 #[test]
 fn invalid_owner_with_guardian() {
     let account = initialize_account();
-    let signatures = to_starknet_signer_signatures(
-        array![1, 2, 3, GUARDIAN_BACKUP().pubkey, GUARDIAN_BACKUP().sig.r, GUARDIAN_BACKUP().sig.s]
-    );
+    let signatures = to_starknet_signer_signatures(array![1, 2, 3, 5, 8, 8]);
     assert_eq!(account.is_valid_signature(tx_hash, signatures), 0);
-    let signatures = to_starknet_signatures(array![WRONG_OWNER(), GUARDIAN_BACKUP()]);
+    let signatures = to_starknet_signatures(array![WRONG_OWNER(), GUARDIAN()]);
     account.is_valid_signature(tx_hash, signatures);
 }
 
@@ -111,7 +96,7 @@ fn invalid_empty_signature_without_guardian() {
 #[should_panic(expected: ('argent/invalid-signature-length',))]
 fn invalid_signature_length_without_guardian() {
     let account = initialize_account_without_guardian();
-    let signatures = to_starknet_signatures(array![OWNER(), GUARDIAN_BACKUP()]);
+    let signatures = to_starknet_signatures(array![OWNER(), GUARDIAN()]);
     account.is_valid_signature(tx_hash, signatures);
 }
 
@@ -131,12 +116,3 @@ fn invalid_signature_length_with_guardian() {
     account.is_valid_signature(tx_hash, signatures);
 }
 
-#[test]
-#[should_panic(expected: ('argent/invalid-signature-length',))]
-fn invalid_signature_length_with_owner_and_guardian_and_backup() {
-    let account = initialize_account_with(OWNER().pubkey, 1);
-    let guardian_backup = starknet_signer_from_pubkey(GUARDIAN_BACKUP().pubkey);
-    account.change_guardian_backup(Option::Some(guardian_backup));
-    let signatures = to_starknet_signatures(array![OWNER(), GUARDIAN(), GUARDIAN_BACKUP()]);
-    account.is_valid_signature(tx_hash, signatures);
-}

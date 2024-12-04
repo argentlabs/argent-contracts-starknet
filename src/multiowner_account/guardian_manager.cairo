@@ -55,7 +55,8 @@ trait IGuardianManagerInternal<TContractState> {
 /// Managing the list of owners of the account
 #[starknet::component]
 mod guardian_manager_component {
-    use argent::multiowner_account::owner_manager::{IOwnerManagerCallback, SignerStorageValueLinkedSetConfig};
+    // TODO fix after upgrade PR
+    use argent::multiowner_account::owner_manager::{IOwnerManagerCallback};
     use argent::signer::{
         signer_signature::{
             Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
@@ -68,7 +69,8 @@ mod guardian_manager_component {
 
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
 
-    use super::super::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
+    use super::super::events::{SignerLinked, GuardianAddedGuid, GuardianRemovedGuid};
+    use super::super::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use super::{IGuardianManager, IGuardianManagerInternal};
     /// Too many signers could make the account unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
@@ -80,9 +82,9 @@ mod guardian_manager_component {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event { // TODO XXXXX
-    // OwnerAddedGuid: OwnerAddedGuid,
-    // OwnerRemovedGuid: OwnerRemovedGuid,
+    enum Event {
+        GuardianAddedGuid: GuardianAddedGuid,
+        GuardianRemovedGuid: GuardianRemovedGuid,
     }
 
     #[embeddable_as(GuardianManagerImpl)]
@@ -141,7 +143,7 @@ mod guardian_manager_component {
     > of IGuardianManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, guardian: Signer) {
             let guid = self.guardians_storage.insert(guardian.storage_value());
-            // self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: owner });
+            self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: guardian });
         }
 
         fn has_guardian(self: @ComponentState<TContractState>) -> bool {

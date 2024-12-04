@@ -87,12 +87,6 @@ trait IArgentMultiOwnerAccount<TContractState> {
     fn get_owner_guid(self: @TContractState) -> felt252;
     fn get_owner_type(self: @TContractState) -> SignerType;
 
-    // /// @notice Returns `0` if there's no guardian backup, the public key if the requested role is Starknet, Eip191
-    // or /// Secp256k1 and panic for other types
-    // fn get_guardian_backup(self: @TContractState) -> felt252;
-    // fn get_guardian_backup_guid(self: @TContractState) -> Option<felt252>;
-    // /// @notice Returns the backup guardian type if there's any backup guardian
-    // fn get_guardian_backup_type(self: @TContractState) -> Option<SignerType>;
     fn get_escape(self: @TContractState) -> Escape;
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;

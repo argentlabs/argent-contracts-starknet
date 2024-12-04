@@ -20,8 +20,7 @@ trait ITestArgentAccount<TContractState> {
     fn replace_all_owners_with_one(
         ref self: TContractState, new_single_owner: SignerSignature, signature_expiration: u64
     );
-    fn change_guardian(ref self: TContractState, new_guardian: Option<Signer>);
-    fn change_guardian_backup(ref self: TContractState, new_guardian_backup: Option<Signer>);
+    fn reset_guardians(ref self: TContractState, new_guardian: Option<Signer>);
     fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);
     fn trigger_escape_guardian(ref self: TContractState, new_guardian: Option<Signer>);
     fn escape_owner(ref self: TContractState);

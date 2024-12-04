@@ -7,9 +7,7 @@ mod ArgentAccount {
     };
     use argent::multiowner_account::events::{
         SignerLinked, TransactionExecuted, AccountCreated, AccountCreatedGuid, EscapeOwnerTriggeredGuid,
-        EscapeGuardianTriggeredGuid, OwnerEscapedGuid, GuardianEscapedGuid, EscapeCanceled, OwnerChanged,
-        OwnerChangedGuid, GuardianChanged, GuardianChangedGuid, GuardianBackupChanged, GuardianBackupChangedGuid,
-        EscapeSecurityPeriodChanged,
+        EscapeGuardianTriggeredGuid, OwnerEscapedGuid, GuardianEscapedGuid, EscapeCanceled, EscapeSecurityPeriodChanged,
     };
     use argent::multiowner_account::guardian_manager::{IGuardianManager, guardian_manager_component};
     use argent::multiowner_account::owner_manager::{IOwnerManager, IOwnerManagerCallback, owner_manager_component};
@@ -169,12 +167,6 @@ mod ArgentAccount {
         OwnerEscapedGuid: OwnerEscapedGuid,
         GuardianEscapedGuid: GuardianEscapedGuid,
         EscapeCanceled: EscapeCanceled,
-        OwnerChanged: OwnerChanged,
-        OwnerChangedGuid: OwnerChangedGuid,
-        GuardianChanged: GuardianChanged,
-        GuardianChangedGuid: GuardianChangedGuid,
-        GuardianBackupChanged: GuardianBackupChanged,
-        GuardianBackupChangedGuid: GuardianBackupChangedGuid,
         SignerLinked: SignerLinked,
         EscapeSecurityPeriodChanged: EscapeSecurityPeriodChanged,
     }
@@ -461,12 +453,12 @@ mod ArgentAccount {
             // This already emits OwnerRemovedGuid & OwnerAddedGuid events
             self.owner_manager.replace_all_owners_with_one(new_owner.storage_value());
 
-            if let Option::Some(new_owner_pubkey) = new_owner.storage_value().starknet_pubkey_or_none() {
-                self.emit(OwnerChanged { new_owner: new_owner_pubkey });
-            };
-            // TODO Check events w/ backend
+            // if let Option::Some(new_owner_pubkey) = new_owner.storage_value().starknet_pubkey_or_none() {
+            //     self.emit(OwnerChanged { new_owner: new_owner_pubkey });
+            // };
+            // TODO Check events w/ backend, probably
             let new_owner_guid = new_owner.into_guid();
-            self.emit(OwnerChangedGuid { new_owner_guid });
+            // self.emit(OwnerChangedGuid { new_owner_guid });
             self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
 
             self.reset_escape();
@@ -476,11 +468,14 @@ mod ArgentAccount {
         fn reset_guardians(ref self: ContractState, new_guardian: Option<Signer>) {
             assert_only_self();
             let new_guardian_storage_value = if let Option::Some(guardian) = new_guardian {
-                Option::Some(guardian.storage_value())
+                let storage_value = guardian.storage_value();
+                self.emit(SignerLinked { signer_guid: storage_value.into_guid(), signer: guardian });
+                Option::Some(storage_value)
             } else {
                 Option::None
             };
             self.guardian_manager.reset_guardians(new_guardian_storage_value);
+
             self.reset_escape();
             self.reset_escape_timestamps();
         }
@@ -697,7 +692,7 @@ mod ArgentAccount {
                             self.last_owner_trigger_escape_attempt.write(get_block_timestamp());
                         }
 
-                        full_deserialize::<Option<Signer>>(*call.calldata).expect('argent/invalid-calldata');
+                        let _ = full_deserialize::<Option<Signer>>(*call.calldata).expect('argent/invalid-calldata');
 
                         let owner_signature = self.parse_single_owner_signature(signatures);
                         let is_valid = self.is_valid_owner_signature(execution_hash, owner_signature);

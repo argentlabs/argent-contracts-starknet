@@ -48,6 +48,7 @@ mod multiowner_account {
     mod owner_manager;
     mod recovery;
     mod replace_owners_message;
+    mod signer_storage_linked_set;
 }
 
 mod utils {

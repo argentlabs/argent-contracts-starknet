@@ -4,50 +4,12 @@ use argent::signer::{
         SignerSpanTrait, SignerTypeIntoFelt252, SignerType
     },
 };
-use argent::utils::linked_set::LinkedSetConfig;
-use starknet::storage::{StoragePathEntry, StoragePath,};
 use super::events::SignerLinked;
-
-
-const STORED_VALUE_END: felt252 = 'end';
-
-impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue> {
-    const END_MARKER: SignerStorageValue =
-        SignerStorageValue { stored_value: STORED_VALUE_END, signer_type: SignerType::Starknet };
-
-    #[inline(always)]
-    fn is_valid_item(self: @SignerStorageValue) -> bool {
-        *self.stored_value != 0 && *self.stored_value != STORED_VALUE_END
-    }
-
-    #[inline(always)]
-    fn hash(self: @SignerStorageValue) -> felt252 {
-        (*self).into_guid()
-    }
-
-    #[inline(always)]
-    fn path_read_value(path: StoragePath<SignerStorageValue>) -> Option<SignerStorageValue> {
-        let stored_value = path.stored_value.read();
-        if stored_value == 0 || stored_value == STORED_VALUE_END {
-            return Option::None;
-        }
-        let signer_type = path.signer_type.read();
-        Option::Some(SignerStorageValue { stored_value, signer_type })
-    }
-
-    #[inline(always)]
-    fn path_is_in_set(path: StoragePath<SignerStorageValue>) -> bool {
-        // items in the set point to the next item or the end marker. but items outside the set point to uninitialized
-        // storage
-        path.stored_value.read() != 0
-    }
-}
 
 #[starknet::interface]
 trait IOwnerManagerCallback<TContractState> {
     fn emit_signer_linked_event(ref self: TContractState, event: SignerLinked);
 }
-
 
 #[starknet::interface]
 pub trait IOwnerManager<TContractState> {
@@ -97,10 +59,12 @@ mod owner_manager_component {
     };
 
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
+    use super::IOwnerManagerCallback;
 
     use super::super::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
+    use super::super::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
+
     use super::{IOwnerManager, IOwnerManagerInternal};
-    use super::{SignerStorageValueLinkedSetConfig, IOwnerManagerCallback};
     /// Too many owners could make the account unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 

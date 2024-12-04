@@ -29,12 +29,6 @@ fn GUARDIAN() -> KeyAndSig {
     KeyAndSig { pubkey: new_owner.public_key, sig: StarknetSignature { r, s } }
 }
 
-fn GUARDIAN_BACKUP() -> KeyAndSig {
-    let new_owner = KeyPairTrait::from_secret_key('GUARDIAN_BACKUP');
-    let (r, s): (felt252, felt252) = new_owner.sign(tx_hash).unwrap();
-    KeyAndSig { pubkey: new_owner.public_key, sig: StarknetSignature { r, s } }
-}
-
 fn WRONG_OWNER() -> KeyAndSig {
     let new_owner = KeyPairTrait::from_secret_key('WRONG_OWNER');
     let (r, s): (felt252, felt252) = new_owner.sign(tx_hash).unwrap();

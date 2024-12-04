@@ -1,5 +1,5 @@
 use argent::mocks::linked_set_mock::linked_set_mock;
-use argent::multiowner_account::owner_manager::SignerStorageValueLinkedSetConfig;
+use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
 use argent::signer::signer_signature::{
     SignerTrait, SignerStorageValue, SignerSignatureTrait, SignerSpanTrait, Signer, SignerSignature,
     starknet_signer_from_pubkey, SignerType

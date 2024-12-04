@@ -119,7 +119,8 @@ mod session_component {
             let session_guid_from_sig = token.session_signature.signer().into_guid();
             assert(token.session.session_key_guid == session_guid_from_sig, 'session/session-key-mismatch');
             assert(token.session_signature.is_valid_signature(message_hash), 'session/invalid-session-sig');
-            // `assert_valid_session_authorization`` will assert the guardian is the same as the one in the authorization
+            // `assert_valid_session_authorization`` will assert the guardian is the same as the one in the
+            // authorization
             assert(token.guardian_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');
 
             assert_valid_session_calls(@token, calls);

@@ -294,7 +294,7 @@ mod ArgentAccount {
     }
 
     impl UpgradeMigrationCallbackImpl of IUpgradeMigrationCallback<ContractState> {
-        fn perform_health_check(ref self: ContractState) {
+        fn finalize_migration(ref self: ContractState) {
             self.owner_manager.assert_valid_storage();
             let guardian_key = self._guardian.read();
             let guardian_backup_key = self._guardian_backup.read();

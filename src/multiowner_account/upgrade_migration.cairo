@@ -7,7 +7,7 @@ trait IUpgradeMigrationInternal<TContractState> {
 }
 
 trait IUpgradeMigrationCallback<TContractState> {
-    fn perform_health_check(ref self: TContractState);
+    fn finalize_migration(ref self: TContractState);
     fn initialize_from_upgrade(ref self: TContractState, signer_storage_value: SignerStorageValue);
 }
 
@@ -143,7 +143,7 @@ mod upgrade_migration_component {
             }
 
             // Health check
-            self.perform_health_check();
+            self.finalize_migration();
         }
     }
 
@@ -160,9 +160,9 @@ mod upgrade_migration_component {
             contract.emit_event_callback(event);
         }
 
-        fn perform_health_check(ref self: ComponentState<TContractState>) {
+        fn finalize_migration(ref self: ComponentState<TContractState>) {
             let mut contract = self.get_contract_mut();
-            contract.perform_health_check();
+            contract.finalize_migration();
         }
 
         fn initialize_from_upgrade(ref self: ComponentState<TContractState>, signer_storage_value: SignerStorageValue) {

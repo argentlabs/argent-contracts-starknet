@@ -267,16 +267,19 @@ export async function deployAccountWithGuardianBackup(
   return wallet;
 }
 
-export async function deployLegacyAccount(classHash: string) {
+export async function deployLegacyAccount(classHash: string): Promise<LegacyArgentWallet> {
   const guardian = new LegacyStarknetKeyPair();
   return deployLegacyAccountInner(classHash, guardian);
 }
 
-export async function deployLegacyAccountWithoutGuardian(classHash: string) {
+export async function deployLegacyAccountWithoutGuardian(classHash: string): Promise<LegacyArgentWallet> {
   return deployLegacyAccountInner(classHash);
 }
 
-async function deployLegacyAccountInner(classHash: string, guardian?: LegacyStarknetKeyPair) {
+async function deployLegacyAccountInner(
+  classHash: string,
+  guardian?: LegacyStarknetKeyPair,
+): Promise<LegacyArgentWallet> {
   const owner = new LegacyStarknetKeyPair();
   const salt = num.toHex(owner.privateKey);
   const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian?.publicKey || 0 });

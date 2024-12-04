@@ -1,9 +1,11 @@
 import { expect } from "chai";
-import { CairoOption, CairoOptionVariant, CallData, RawArgs } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, Contract, RawArgs } from "starknet";
 import {
+  ArgentAccount,
   ArgentSigner,
   ContractWithClass,
   LegacyWebauthnOwner,
+  RawSigner,
   StarknetKeyPair,
   WebauthnOwner,
   deployAccount,
@@ -25,18 +27,24 @@ import {
   upgradeAccount,
 } from "../lib";
 
-interface TriggerEscape {
+interface SelfCall {
   entrypoint: string;
-  calldata?: RawArgs; // Replace `any` with a more specific type if possible
+  calldata?: RawArgs;
 }
 
+interface deployAccountReturn {
+  account: ArgentAccount;
+  accountContract: Contract;
+  owner: RawSigner;
+  guardian?: RawSigner;
+}
 interface UpgradeDataEntry {
   name: string;
-  deployAccount: () => Promise<any>;
-  deployAccountWithoutGuardian: () => Promise<any>;
+  deployAccount: () => Promise<deployAccountReturn>;
+  deployAccountWithoutGuardian: () => Promise<deployAccountReturn>;
   upgradeExtraCalldata?: string[]; // Optional, as it's not present in all entries
-  triggerEscapeOwner: TriggerEscape;
-  triggerEscapeGuardian: TriggerEscape;
+  triggerEscapeOwnerCall: SelfCall;
+  triggerEscapeGuardianCall: SelfCall;
 }
 
 describe("ArgentAccount: upgrade", function () {
@@ -56,20 +64,20 @@ describe("ArgentAccount: upgrade", function () {
       upgradeExtraCalldata: ["0"],
       deployAccountWithoutGuardian: async () => await deployOldAccountWithProxyWithoutGuardian(),
       // Gotta call like that as the entrypoint is not found on the contract for legacy versions
-      triggerEscapeOwner: { entrypoint: "triggerEscapeSigner" },
-      triggerEscapeGuardian: { entrypoint: "triggerEscapeGuardian" },
+      triggerEscapeOwnerCall: { entrypoint: "triggerEscapeSigner" },
+      triggerEscapeGuardianCall: { entrypoint: "triggerEscapeGuardianCall" },
     });
 
     const v030 = "0.3.0";
     const classHashV030 = await manager.declareArtifactAccountContract(v030);
-    const triggerEscapeOwnerV03 = { entrypoint: "trigger_escape_owner", calldata: [12] };
-    const triggerEscapeGuardianV03 = { entrypoint: "trigger_escape_guardian", calldata: [12] };
+    const triggerEscapeOwnerCallV03 = { entrypoint: "trigger_escape_owner", calldata: [12] };
+    const triggerEscapeGuardianCallV03 = { entrypoint: "trigger_escape_guardian", calldata: [12] };
     upgradeData.push({
       name: v030,
       deployAccount: async () => deployLegacyAccount(classHashV030),
       deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV030),
-      triggerEscapeOwner: triggerEscapeOwnerV03,
-      triggerEscapeGuardian: triggerEscapeGuardianV03,
+      triggerEscapeOwnerCall: triggerEscapeOwnerCallV03,
+      triggerEscapeGuardianCall: triggerEscapeGuardianCallV03,
     });
 
     const v031 = "0.3.1";
@@ -78,17 +86,17 @@ describe("ArgentAccount: upgrade", function () {
       name: v031,
       deployAccount: async () => deployLegacyAccount(classHashV031),
       deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV031),
-      triggerEscapeOwner: triggerEscapeOwnerV03,
-      triggerEscapeGuardian: triggerEscapeGuardianV03,
+      triggerEscapeOwnerCall: triggerEscapeOwnerCallV03,
+      triggerEscapeGuardianCall: triggerEscapeGuardianCallV03,
     });
 
     const v040 = "0.4.0";
     classHashV040 = await manager.declareArtifactAccountContract(v040);
-    const triggerEscapeOwnerV04 = {
+    const triggerEscapeOwnerCallV04 = {
       entrypoint: "trigger_escape_owner",
       calldata: CallData.compile(randomStarknetKeyPair().compiledSigner),
     };
-    const triggerEscapeGuardianV04 = {
+    const triggerEscapeGuardianCallV04 = {
       entrypoint: "trigger_escape_guardian",
       calldata: CallData.compile([new CairoOption(CairoOptionVariant.None)]),
     };
@@ -96,8 +104,8 @@ describe("ArgentAccount: upgrade", function () {
       name: v040,
       deployAccount: async () => deployAccount({ classHash: classHashV040 }),
       deployAccountWithoutGuardian: async () => deployAccountWithoutGuardian({ classHash: classHashV040 }),
-      triggerEscapeOwner: triggerEscapeOwnerV04,
-      triggerEscapeGuardian: triggerEscapeGuardianV04,
+      triggerEscapeOwnerCall: triggerEscapeOwnerCallV04,
+      triggerEscapeGuardianCall: triggerEscapeGuardianCallV04,
     });
   });
 
@@ -106,8 +114,8 @@ describe("ArgentAccount: upgrade", function () {
       for (const {
         name,
         deployAccount,
-        triggerEscapeOwner,
-        triggerEscapeGuardian,
+        triggerEscapeOwnerCall,
+        triggerEscapeGuardianCall,
         deployAccountWithoutGuardian,
         upgradeExtraCalldata,
       } of upgradeData) {
@@ -149,14 +157,14 @@ describe("ArgentAccount: upgrade", function () {
 
           if (guardian instanceof StarknetKeyPair) {
             account.signer = new ArgentSigner(guardian);
-          } else {
+          } else if (guardian) {
             account.signer = guardian;
           }
 
           await manager.ensureSuccess(
             account.execute({
               contractAddress: account.address,
-              ...triggerEscapeOwner,
+              ...triggerEscapeOwnerCall,
             }),
           );
 
@@ -181,7 +189,7 @@ describe("ArgentAccount: upgrade", function () {
           await manager.ensureSuccess(
             account.execute({
               contractAddress: account.address,
-              ...triggerEscapeGuardian,
+              ...triggerEscapeGuardianCall,
             }),
           );
 

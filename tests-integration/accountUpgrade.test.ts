@@ -32,7 +32,7 @@ interface SelfCall {
   calldata?: RawArgs;
 }
 
-interface deployAccountReturn {
+interface DeployAccountReturn {
   account: ArgentAccount;
   accountContract: Contract;
   owner: RawSigner;
@@ -40,8 +40,8 @@ interface deployAccountReturn {
 }
 interface UpgradeDataEntry {
   name: string;
-  deployAccount: () => Promise<deployAccountReturn>;
-  deployAccountWithoutGuardian: () => Promise<deployAccountReturn>;
+  deployAccount: () => Promise<DeployAccountReturn>;
+  deployAccountWithoutGuardian: () => Promise<DeployAccountReturn>;
   upgradeExtraCalldata?: string[]; // Optional, as it's not present in all entries
   triggerEscapeOwnerCall: SelfCall;
   triggerEscapeGuardianCall: SelfCall;
@@ -65,7 +65,7 @@ describe("ArgentAccount: upgrade", function () {
       deployAccountWithoutGuardian: async () => await deployOldAccountWithProxyWithoutGuardian(),
       // Gotta call like that as the entrypoint is not found on the contract for legacy versions
       triggerEscapeOwnerCall: { entrypoint: "triggerEscapeSigner" },
-      triggerEscapeGuardianCall: { entrypoint: "triggerEscapeGuardianCall" },
+      triggerEscapeGuardianCall: { entrypoint: "triggerEscapeGuardian" },
     });
 
     const v030 = "0.3.0";

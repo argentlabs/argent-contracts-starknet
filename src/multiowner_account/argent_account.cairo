@@ -14,6 +14,9 @@ mod ArgentAccount {
     use argent::multiowner_account::owner_manager::{IOwnerManager, owner_manager_component};
     use argent::multiowner_account::recovery::{Escape, EscapeType};
     use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
+    use argent::multiowner_account::upgrade_migration::{
+        IUpgradeMigrationInternal, upgrade_migration_component, IUpgradeMigrationCallback
+    };
     use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
@@ -27,7 +30,6 @@ mod ArgentAccount {
         SignerSignature, SignerSignatureTrait
     };
     use argent::upgrade::{
-        upgrade_migration::{IUpgradeMigrationInternal, upgrade_migration_component, IUpgradeMigrationCallback},
         upgrade::{IUpgradeInternal, upgrade_component}, interface::{IUpgradableCallback, IUpgradableCallbackOld}
     };
     use argent::utils::{

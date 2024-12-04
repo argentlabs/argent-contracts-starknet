@@ -1,6 +1,6 @@
 ## Guardian management:
 
-enum SignerInfo {
+struct SignerInfo {
 signerType: SignerType
 guid: felt252
 pubkey: Option<felt252>
@@ -8,7 +8,7 @@ pubkey: Option<felt252>
 
 new methods:
 get_guardian_guids() -> Array<felt252>
-get_guardian_info() -> Array<StorageValue>
+get_guardian_info() -> Array<SignerInfo>
 add_guardians(), remove_guardians()
 
 removed all backup guardian methods

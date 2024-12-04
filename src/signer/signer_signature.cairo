@@ -54,7 +54,7 @@ struct StarknetSignature {
 }
 
 /// @notice Represents all supported Signers with their different signing schemes
-#[derive(Drop, Copy, Serde)]
+#[derive(Drop, Copy, Serde, PartialEq)]
 enum Signer {
     Starknet: StarknetSigner,
     Secp256k1: Secp256k1Signer,

@@ -363,13 +363,14 @@ mod ArgentAccount {
 
 
     impl SessionCallbackImpl of ISessionCallback<ContractState> {
-        fn parse_authorization(self: @ContractState, authorization_signature: Span<felt252>) -> Array<SignerSignature> {
-            self.parse_signature_array(authorization_signature)
-        }
-        fn assert_valid_authorization(
-            self: @ContractState, session_hash: felt252, authorization_signature: Span<SignerSignature>
-        ) {
-            assert(self.is_valid_span_signature(session_hash, authorization_signature), 'session/invalid-account-sig')
+        fn validate_authorization(
+            self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>
+        ) -> Array<SignerSignature> {
+            let parsed_authorization = self.parse_signature_array(authorization_signature);
+            assert(
+                self.is_valid_span_signature(session_hash, parsed_authorization.span()), 'session/invalid-account-sig'
+            );
+            parsed_authorization
         }
         fn is_owner_guid(self: @ContractState, owner_guid: felt252) -> bool {
             self.owner_manager.is_owner_guid(owner_guid)

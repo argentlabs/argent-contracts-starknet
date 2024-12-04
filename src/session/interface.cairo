@@ -29,35 +29,24 @@ struct Session {
 #[derive(Drop, Serde, Copy)]
 struct SessionToken {
     session: Session,
-    use_cache: bool,
+    cache_owner_guid: felt252,
     // can be the sessions authorization, but also the the CacheInfo struct if the auth was previously cached
-    session_authorization_or_cache_info: Span<felt252>,
+    session_authorization: Span<felt252>,
     session_signature: SignerSignature,
     guardian_signature: SignerSignature,
     proofs: Span<Span<felt252>>,
 }
 
-#[derive(Drop, Serde, Copy)]
-struct CacheInfo {
-    owner_guid: felt252,
-    guardian_guid: felt252,
-}
-
-
 /// This trait has to be implemented when using the component `session_component` (This is enforced by the compiler)
 trait ISessionCallback<TContractState> {
-    /// @notice Callback performed to parse the account signature
-    /// @param authorization_signature The owner + guardian signature of the session
-    /// @return The parsed array of SignerSignature
-    fn parse_authorization(self: @TContractState, authorization_signature: Span<felt252>) -> Array<SignerSignature>;
-
-    /// @notice Callback performed validate the account signature
+    /// @notice Panics if the session authorization is not valid
     /// @param session_hash The hash of session
     /// @param authorization_signature The owner + guardian signature of the session
     /// @return The parsed array of SignerSignature
-    fn assert_valid_authorization(
-        self: @TContractState, session_hash: felt252, authorization_signature: Span<SignerSignature>
-    );
+    fn validate_authorization(
+        self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>
+    ) -> Array<SignerSignature>;
+
     fn is_owner_guid(self: @TContractState, owner_guid: felt252) -> bool;
     fn is_guardian_guid(self: @TContractState, guardian_guid: felt252) -> bool;
 }

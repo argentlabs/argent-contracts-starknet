@@ -306,7 +306,7 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
         }
 
-        fn initialize_from_upgrade(ref self: ContractState, signer_storage_value: SignerStorageValue) {
+        fn migrate_owner(ref self: ContractState, signer_storage_value: SignerStorageValue) {
             self.owner_manager.initialize_from_upgrade(signer_storage_value);
         }
     }

@@ -8,7 +8,7 @@ trait IUpgradeMigrationInternal<TContractState> {
 
 trait IUpgradeMigrationCallback<TContractState> {
     fn finalize_migration(ref self: TContractState);
-    fn initialize_from_upgrade(ref self: TContractState, signer_storage_value: SignerStorageValue);
+    fn migrate_owner(ref self: TContractState, signer_storage_value: SignerStorageValue);
 }
 
 #[derive(Drop, Copy, Serde, Default, starknet::Store)]
@@ -126,7 +126,7 @@ mod upgrade_migration_component {
             let starknet_owner_pubkey = self._signer.read();
             if (starknet_owner_pubkey != 0) {
                 let stark_signer = starknet_signer_from_pubkey(starknet_owner_pubkey).storage_value();
-                self.initialize_from_upgrade(stark_signer);
+                self.migrate_owner(stark_signer);
                 self._signer.write(0);
             } else {
                 for signer_type in array![
@@ -135,7 +135,7 @@ mod upgrade_migration_component {
                     let stored_value = self._signer_non_stark.read(signer_type.into());
                     if (stored_value != 0) {
                         let signer_storage_value = SignerStorageValue { signer_type, stored_value };
-                        self.initialize_from_upgrade(signer_storage_value);
+                        self.migrate_owner(signer_storage_value);
                         self._signer_non_stark.write(signer_type.into(), 0);
                         break;
                     }
@@ -165,9 +165,9 @@ mod upgrade_migration_component {
             contract.finalize_migration();
         }
 
-        fn initialize_from_upgrade(ref self: ComponentState<TContractState>, signer_storage_value: SignerStorageValue) {
+        fn migrate_owner(ref self: ComponentState<TContractState>, signer_storage_value: SignerStorageValue) {
             let mut contract = self.get_contract_mut();
-            contract.initialize_from_upgrade(signer_storage_value);
+            contract.migrate_owner(signer_storage_value);
         }
     }
 }

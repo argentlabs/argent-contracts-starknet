@@ -1,10 +1,10 @@
 use argent::utils::array_ext::ArrayExt;
-use starknet::Store;
-use starknet::storage::{StorageAsPath, StoragePathEntry, StoragePathTrait, StoragePath, Mutable, StorageBase};
 use argent::utils::linked_set::{
     LinkedSet, LinkedSetConfig, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl,
     StorageBaseAsReadOnlyImpl
 };
+use starknet::Store;
+use starknet::storage::{StorageAsPath, StoragePathEntry, StoragePathTrait, StoragePath, Mutable, StorageBase};
 
 ///
 /// A LinkedSetPlus1 is storage structure that allows to store multiple items making it efficient to check if an item is

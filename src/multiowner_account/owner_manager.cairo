@@ -1,6 +1,4 @@
-use argent::signer::signer_signature::{
-    Signer, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerType
-};
+use argent::signer::signer_signature::{Signer, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerType};
 use argent::utils::linked_set::LinkedSetConfig;
 use starknet::storage::StoragePath;
 

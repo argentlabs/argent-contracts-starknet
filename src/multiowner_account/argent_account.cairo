@@ -782,7 +782,7 @@ mod ArgentAccount {
                     }
 
                     if selector == selector!("remove_owners") {
-                        // guarantees that the owner is not removing itself and therefore there is at least one valid
+                        // guarantees that the owner is not removing itself and therefore there is at least one active
                         // owner remaining
                         let owner_guids_to_remove: Array<felt252> = full_deserialize(*call.calldata)
                             .expect('argent/invalid-calldata');

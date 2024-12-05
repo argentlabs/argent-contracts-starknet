@@ -70,6 +70,7 @@ describe("Session Account: execute caching", function () {
       await account.waitForTransaction(tx2);
       await mockDappContract.get_number(accountContract.address).should.eventually.equal(8n);
     });
+
     it(`Fail if guardian backup signed session (caching: ${useCaching})`, async function () {
       const { account, guardian, owner } = await deployAccountWithGuardianBackup({
         classHash: argentAccountClassHash,
@@ -278,22 +279,20 @@ describe("Session Account: execute caching", function () {
 
     await expectRevertWithErrorMessage("session/signer-is-not-owner", accountWithDappSigner.execute(calls2));
   });
+
   it("Fail if a large authorization is injected", async function () {
-    const { accountContract, account, guardian, owner } = await deployAccount({
-      classHash: argentAccountClassHash,
-    });
+    const { accountContract, account, guardian, owner } = await deployAccount();
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
-    const { accountWithDappSigner, sessionHash, sessionRequest, authorizationSignature, dappService } =
-      await setupSession({
-        guardian: guardian as StarknetKeyPair,
-        account,
-        expiry: initialTime + 150n,
-        dappKey: randomStarknetKeyPair(),
-        cacheOwnerGuid: owner.guid,
-        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
-      });
+    const { accountWithDappSigner, sessionHash, sessionRequest, dappService } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
+      account,
+      expiry: initialTime + 150n,
+      dappKey: randomStarknetKeyPair(),
+      cacheOwnerGuid: owner.guid,
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+    });
 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
     await account.waitForTransaction(transaction_hash);
@@ -314,10 +313,11 @@ describe("Session Account: execute caching", function () {
       executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
     );
   });
+
   describe("Session caching with legacy account", function () {
     it("Caching is unaffected between contract upgrades", async function () {
       const { account, accountContract, guardian, owner } = await deployAccount({
-        classHash: await manager.declareFixtureContract("ArgentAccount-0.4.0"),
+        classHash: await manager.declareArtifactAccountContract("0.4.0"),
       });
       const useCaching = true;
       const isLegacyAccount = true;
@@ -342,9 +342,10 @@ describe("Session Account: execute caching", function () {
       const newContract = await manager.loadContract(account.address, argentAccountClassHash);
       await newContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.equal(useCaching);
     });
+
     it("Caching is unaffected between contract upgrades and if you add more owners", async function () {
       const { account, accountContract, guardian, owner } = await deployAccount({
-        classHash: await manager.declareFixtureContract("ArgentAccount-0.4.0"),
+        classHash: await manager.declareArtifactAccountContract("0.4.0"),
       });
       const useCaching = true;
       const isLegacyAccount = true;

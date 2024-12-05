@@ -123,7 +123,7 @@ export class WebauthnOwner extends KeyPair {
 
     const sha256Impl = this.useCairo0Sha256 ? "0" : "1";
     const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0${sha256Impl}`));
-    const clientData = JSON.stringify({ type: "webauthn.get", challenge, origin: this.origin });
+    const clientData = JSON.stringify(this.getClientData(challenge));
 
     // const extraJson = "";
     const extraJson = `,"crossOrigin":false}`;
@@ -167,6 +167,35 @@ export class WebauthnOwner extends KeyPair {
       }),
     };
   }
+
+  getClientData(challenge: string): any {
+    return { type: "webauthn.get", challenge, origin: this.origin };
+  }
+}
+
+// LEGACY WEBAUTHN
+type LegacyWebauthnSignature = {
+  cross_origin: boolean;
+} & WebauthnSignature;
+
+export class LegacyWebauthnOwner extends WebauthnOwner {
+  crossOrigin = false;
+
+  public getPrivateKey(): string {
+    return buf2hex(this.pk);
+  }
+
+  getClientData(challenge: string): any {
+    return { ...super.getClientData(challenge), crossOrigin: this.crossOrigin };
+  }
+
+  public async signHash(transactionHash: string): Promise<LegacyWebauthnSignature> {
+    const webauthnSignature = await super.signHash(transactionHash);
+    return {
+      cross_origin: this.crossOrigin,
+      ...webauthnSignature,
+    };
+  }
 }
 
 function sha256(message: BinaryLike) {
@@ -175,3 +204,5 @@ function sha256(message: BinaryLike) {
 
 export const randomWebauthnOwner = () => new WebauthnOwner(undefined, undefined, undefined, false);
 export const randomWebauthnCairo0Owner = () => new WebauthnOwner(undefined, undefined, undefined, true);
+export const randomWebauthnLegacyOwner = () => new LegacyWebauthnOwner(undefined, undefined, undefined, false);
+export const randomWebauthnLegacyCairo0Owner = () => new LegacyWebauthnOwner(undefined, undefined, undefined, true);

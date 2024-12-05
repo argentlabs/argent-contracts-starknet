@@ -10,7 +10,7 @@ import {
   WebauthnOwner,
   deployAccount,
   deployAccountWithoutGuardian,
-  deployOldAccount,
+  deployOldAccountWithProxy,
   deployOpenZeppelinAccount,
   manager,
   setupSession,
@@ -63,7 +63,7 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
-  const { account } = await deployOldAccount(
+  const { account } = await deployOldAccountWithProxy(
     new LegacyStarknetKeyPair(privateKey),
     new LegacyStarknetKeyPair(guardian.privateKey),
     "0xDE",

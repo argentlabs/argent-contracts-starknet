@@ -415,7 +415,8 @@ mod ArgentAccount {
 
         fn remove_owners(ref self: ContractState, owner_guids_to_remove: Array<felt252>) {
             assert_only_self();
-            // during __validate__ we assert that the owner is not removing itself and therefore there's at least one active owner remaining
+            // during __validate__ we assert that the owner is not removing itself and therefore there's at least one
+            // active owner remaining
             self.owner_manager.remove_owners(owner_guids_to_remove);
             // Reset the escape as we have signatures from both the owner and the guardian
             self.reset_escape();
@@ -781,7 +782,8 @@ mod ArgentAccount {
                     }
 
                     if selector == selector!("remove_owners") {
-                        // guarantees that the owner is not removing itself and therefore there is at least one valid owner remaining
+                        // guarantees that the owner is not removing itself and therefore there is at least one valid
+                        // owner remaining
                         let owner_guids_to_remove: Array<felt252> = full_deserialize(*call.calldata)
                             .expect('argent/invalid-calldata');
                         let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);

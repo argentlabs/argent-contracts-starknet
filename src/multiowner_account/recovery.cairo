@@ -1,4 +1,5 @@
 use argent::signer::signer_signature::SignerStorageValue;
+use integer::u256_safe_div_rem;
 
 /// @notice The type of the escape telling who is about to be escaped
 #[derive(Drop, Copy, Serde, PartialEq, Default)]
@@ -41,8 +42,8 @@ impl EscapeStorePacking of starknet::StorePacking<Escape, (felt252, felt252)> {
     fn unpack(value: (felt252, felt252)) -> Escape {
         let (packed, stored_value) = value;
         let shift_64 = integer::u256_as_non_zero(SHIFT_64.into());
-        let (remainder, ready_at) = integer::u256_safe_div_rem(packed.into(), shift_64);
-        let (signer_type_ordinal, escape_type) = integer::u256_safe_div_rem(remainder, shift_64);
+        let (remainder, ready_at) = u256_safe_div_rem(packed.into(), shift_64);
+        let (signer_type_ordinal, escape_type) = u256_safe_div_rem(remainder, shift_64);
         Escape {
             escape_type: escape_type.try_into().unwrap(),
             ready_at: ready_at.try_into().unwrap(),

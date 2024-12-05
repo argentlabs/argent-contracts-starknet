@@ -50,13 +50,14 @@ trait IGuardianManagerInternal<TContractState> {
     // fn assert_valid_storage(self: @TContractState);
     fn get_single_stark_guardian_pubkey(self: @TContractState) -> Option<felt252>;
     fn get_single_guardian(self: @TContractState) -> Option<SignerStorageValue>;
+    fn assert_valid_storage(self: @TContractState);
 }
 
-/// Managing the list of owners of the account
+/// Managing the account guardians
 #[starknet::component]
 mod guardian_manager_component {
-    // TODO fix after upgrade PR
-    use argent::multiowner_account::owner_manager::{IOwnerManagerCallback};
+    use argent::account::interface::IEmitArgentAccountEvent;
+    use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::signer::{
         signer_signature::{
             Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
@@ -89,7 +90,7 @@ mod guardian_manager_component {
 
     #[embeddable_as(GuardianManagerImpl)]
     impl GuardianManager<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>, +IOwnerManagerCallback<TContractState>
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>, +IEmitArgentAccountEvent<TContractState>
     > of IGuardianManager<ComponentState<TContractState>> {
         fn get_guardian_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
             self.guardians_storage.get_all_hashes()
@@ -139,7 +140,7 @@ mod guardian_manager_component {
 
     #[embeddable_as(GuardianManagerInternalImpl)]
     impl GuardianManagerInternal<
-        TContractState, +HasComponent<TContractState>, +IOwnerManagerCallback<TContractState>, +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
     > of IGuardianManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, guardian: Signer) {
             let guid = self.guardians_storage.insert(guardian.storage_value());
@@ -178,7 +179,6 @@ mod guardian_manager_component {
             self.get_single_guardian()?.starknet_pubkey_or_none()
         }
 
-
         fn reset_guardians(ref self: ComponentState<TContractState>, replacement_guardian: Option<SignerStorageValue>) {
             let replacement_guid = if let Option::Some(replacement_guardian) = replacement_guardian {
                 replacement_guardian.into_guid()
@@ -202,18 +202,22 @@ mod guardian_manager_component {
                 }
             }
         }
+
+        fn assert_valid_storage(self: @ComponentState<TContractState>) {
+            self.assert_valid_guardian_count(self.guardians_storage.len());
+        }
     }
 
     #[generate_trait]
     impl Private<
-        TContractState, +HasComponent<TContractState>, +IOwnerManagerCallback<TContractState>, +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
     > of PrivateTrait<TContractState> {
         fn assert_valid_guardian_count(self: @ComponentState<TContractState>, signers_len: usize) {
             assert(signers_len <= MAX_SIGNERS_COUNT, 'argent/invalid-signers-len');
         }
         fn emit_signer_linked_event(ref self: ComponentState<TContractState>, event: SignerLinked) {
             let mut contract = self.get_contract_mut();
-            contract.emit_signer_linked_event(event);
+            contract.emit_event_callback(ArgentAccountEvent::SignerLinked(event));
         }
         // fn emit_owner_added(ref self: ComponentState<TContractState>, new_owner_guid: felt252) {
     //     self.emit(OwnerAddedGuid { new_owner_guid });

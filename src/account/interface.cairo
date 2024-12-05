@@ -1,3 +1,4 @@
+use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
 use argent::signer::signer_signature::Signer;
 use starknet::account::Call;
 
@@ -49,4 +50,20 @@ trait IDeprecatedArgentAccount<TContractState> {
     fn getName(self: @TContractState) -> felt252;
     /// For compatibility reasons this function returns 1 when the signature is valid, and panics otherwise
     fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
+}
+
+trait IEmitArgentAccountEvent<TContractState> {
+    fn emit_event_callback(ref self: TContractState, event: ArgentAccountEvent);
+}
+
+impl VersionPartialOrd of PartialOrd<Version> {
+    fn lt(lhs: Version, rhs: Version) -> bool {
+        if lhs.major != rhs.major {
+            return lhs.major < rhs.major;
+        }
+        if lhs.minor != rhs.minor {
+            return lhs.minor < rhs.minor;
+        }
+        return lhs.patch < rhs.patch;
+    }
 }

@@ -4,12 +4,6 @@ use argent::signer::{
         SignerSpanTrait, SignerTypeIntoFelt252, SignerType
     },
 };
-use super::events::SignerLinked;
-
-#[starknet::interface]
-trait IOwnerManagerCallback<TContractState> {
-    fn emit_signer_linked_event(ref self: TContractState, event: SignerLinked);
-}
 
 #[starknet::interface]
 pub trait IOwnerManager<TContractState> {
@@ -28,6 +22,7 @@ pub trait IOwnerManager<TContractState> {
 #[starknet::interface]
 trait IOwnerManagerInternal<TContractState> {
     fn initialize(ref self: TContractState, owner: Signer);
+    fn initialize_from_upgrade(ref self: TContractState, signer_storage: SignerStorageValue);
     /// @notice Adds new owners to the account
     /// @dev will revert when trying to add a signer is already an owner
     /// @param owners_to_add An array with all the signers to add
@@ -48,22 +43,20 @@ trait IOwnerManagerInternal<TContractState> {
 /// Managing the list of owners of the account
 #[starknet::component]
 mod owner_manager_component {
-    use argent::signer::{
-        signer_signature::{
-            Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
-            SignerStorageTrait
-        },
+    use argent::account::interface::IEmitArgentAccountEvent;
+    use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
+    use argent::multiowner_account::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
+    use argent::signer::signer_signature::{
+        Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
+        SignerStorageTrait
     };
     use argent::utils::linked_set_plus_one::{
         LinkedSetPlus1, LinkedSetPlus1ReadImpl, LinkedSetPlus1WriteImpl, MutableLinkedSetPlus1ReadImpl
     };
 
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
-    use super::IOwnerManagerCallback;
 
-    use super::super::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
     use super::super::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
-
     use super::{IOwnerManager, IOwnerManagerInternal};
     /// Too many owners could make the account unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
@@ -82,7 +75,7 @@ mod owner_manager_component {
 
     #[embeddable_as(OwnerManagerImpl)]
     impl OwnerManager<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>, +IOwnerManagerCallback<TContractState>
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>, +IEmitArgentAccountEvent<TContractState>
     > of IOwnerManager<ComponentState<TContractState>> {
         fn get_owner_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
             self.owners_storage.get_all_hashes()
@@ -111,11 +104,17 @@ mod owner_manager_component {
 
     #[embeddable_as(OwnerManagerInternalImpl)]
     impl OwnerManagerInternal<
-        TContractState, +HasComponent<TContractState>, +IOwnerManagerCallback<TContractState>, +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
     > of IOwnerManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, owner: Signer) {
             let guid = self.owners_storage.insert(owner.storage_value());
             self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: owner });
+        }
+
+        fn initialize_from_upgrade(ref self: ComponentState<TContractState>, signer_storage: SignerStorageValue) {
+            // We don't want to emit any events in this case
+            assert(self.owners_storage.len() == 0, 'argent/already-initialized');
+            self.owners_storage.insert(signer_storage);
         }
 
         fn add_owners(ref self: ComponentState<TContractState>, owners_to_add: Array<Signer>) {
@@ -169,7 +168,7 @@ mod owner_manager_component {
 
     #[generate_trait]
     impl Private<
-        TContractState, +HasComponent<TContractState>, +IOwnerManagerCallback<TContractState>, +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
     > of PrivateTrait<TContractState> {
         fn assert_valid_owner_count(self: @ComponentState<TContractState>, signers_len: usize) {
             assert(signers_len != 0, 'argent/invalid-signers-len');
@@ -177,7 +176,7 @@ mod owner_manager_component {
         }
         fn emit_signer_linked_event(ref self: ComponentState<TContractState>, event: SignerLinked) {
             let mut contract = self.get_contract_mut();
-            contract.emit_signer_linked_event(event);
+            contract.emit_event_callback(ArgentAccountEvent::SignerLinked(event));
         }
         fn emit_owner_added(ref self: ComponentState<TContractState>, new_owner_guid: felt252) {
             self.emit(OwnerAddedGuid { new_owner_guid });

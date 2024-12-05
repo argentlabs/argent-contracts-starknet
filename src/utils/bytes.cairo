@@ -134,7 +134,7 @@ fn eight_words_to_u256(words: [u32; 8]) -> u256 {
 
     u256 { high, low }
 }
-/// @notice Converts a u32 into 4 u8 words.
+/// @notice Converts a u32 into 4 u8s
 /// @param word The u32 to convert.
 /// @return The individual `u8` bytes ordered from most significant to least.
 fn u32_to_byte(word: u32) -> [u8; 4] {

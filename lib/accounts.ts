@@ -1,3 +1,4 @@
+import { expect } from "chai";
 import {
   Abi,
   Account,
@@ -26,7 +27,6 @@ import { manager } from "./manager";
 import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { ArgentSigner, KeyPair, RawSigner, randomStarknetKeyPair } from "./signers/signers";
 import { ethAddress, strkAddress } from "./tokens";
-import { expect } from "chai";
 
 export const VALID = BigInt(shortString.encodeShortString("VALID"));
 

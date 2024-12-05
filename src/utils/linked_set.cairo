@@ -3,7 +3,7 @@ use starknet::storage::{
     StorageAsPath, StoragePathEntry, StoragePath, Mutable, StoragePathUpdateTrait, StorageBase, StoragePathTrait
 };
 ///
-/// A LinkedSet is storage structure that allows to store multiple items making it efficient to check if an item is on
+/// A LinkedSet is storage structure that allows to store multiple items making it efficient to check if an item is in
 /// the set LinkedSet doesn't allow duplicate items. The order of the items is preserved.
 /// In terms of storage. It will use the same number of storage slots as storing all items in succession plus the
 /// equivalent of another item to store the end marker.
@@ -47,17 +47,21 @@ pub trait LinkedSetRead<TMemberState> {
 
 pub trait LinkedSetWrite<TMemberState> {
     type Value;
-    /// Adds an item at the end of the set. It will panic if the item is already in the set
+    /// Adds an item at the end of the set.
+    /// @dev It will panic if the item is already in the set
     /// @returns the hash of the inserted item which is now the latest item on the list
     /// @param item the item to add
     fn insert(self: TMemberState, item: Self::Value) -> felt252;
-    /// Adds multiple items to the end of the set. It will panic if any of the items is already in the set
+    /// Adds multiple items to the end of the set.
+    /// @dev It will panic if any of the items is already in the set
     /// @param items_to_add the items to add
     fn insert_many(self: TMemberState, items_to_add: Span<Self::Value>);
-    /// Removes an item from the set. It will panic if the item is not in the set
+    /// Removes an item from the set.
+    /// @dev It will panic if the item is not in the set
     /// @param item_hash the hash of the item to remove
     fn remove(self: TMemberState, item_hash: felt252);
-    /// Removes multiple items from the set. It will panic if any of the items is not in the set
+    /// Removes multiple items from the set.
+    /// @dev It will panic if any of the items is not in the set
     /// @param items_hashes_to_remove the hashes of the items to remove
     fn remove_many(self: TMemberState, items_hashes_to_remove: Span<felt252>);
 }
@@ -75,9 +79,9 @@ pub trait LinkedSetConfig<T> {
 
     /// @notice returns a unique hash for the given item. The hash can't be zero as it's reserved for the first item
     /// @dev It is critical that the hash function is uniformly distributed, because if the hash returned is invalid it
-    /// might corrupt the set For instance if the hash returns the values 1,2,3 for the items A,B,C and storing each
+    /// might corrupt the set. For instance if the hash returns the values 1,2,3 for the items A,B,C and storing each
     /// item uses 2 storage slots. when writing one item we might e overriding the storage of other items
-    /// @param item the item to hash
+    /// @param self the item to hash
     /// @return the item hash
     fn hash(self: @T) -> felt252;
 
@@ -87,7 +91,7 @@ pub trait LinkedSetConfig<T> {
     // @returns the value stored at the given path or None if the path is empty
     fn path_read_value(path: StoragePath<T>) -> Option<T>;
 
-    // @return true the value stored in the given path is valid or the end marker
+    // @return true when the value stored in the given path is valid or the end marker
     // @param path the path determined by the hash of the item we want to check inclusion
     fn path_is_in_set(path: StoragePath<T>) -> bool;
 }
@@ -138,7 +142,7 @@ impl LinkedSetReadImpl<
 impl LinkedSetReadPrivateImpl<T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>> of LinkedSetReadPrivate<T> {
     #[inline(always)]
     fn entry(self: StorageBase<LinkedSet<T>>, item_hash: felt252) -> StoragePath<T> {
-        let path: StoragePath<T> = StoragePathTrait::new(self.as_path().__hash_state__.state);
+        let path: StoragePath<T> = StoragePathTrait::new(self.__hash_state__.state);
         path.update(item_hash)
     }
 

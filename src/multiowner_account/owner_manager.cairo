@@ -36,7 +36,7 @@ impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue> {
 
     #[inline(always)]
     fn path_is_in_set(path: StoragePath<SignerStorageValue>) -> bool {
-        // items in the set point to the next item or the end marker. but items outside the set point to uninitialized
+        // Items in the set point to the next item or the end marker. Items outside the set point to uninitialized
         // storage
         path.stored_value.read() != 0
     }

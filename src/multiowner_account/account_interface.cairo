@@ -42,6 +42,16 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @dev It will cancel any existing escape
     fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>);
 
+    /// @notice Adds new guardians to this account
+    /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
+    /// @dev It will cancel any existing escape
+    fn add_guardians(ref self: TContractState, new_guardians: Array<Signer>);
+
+    /// @notice Removes guardisn from this account
+    /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
+    /// @dev It will cancel any existing escape
+    fn remove_guardians(ref self: TContractState, guardian_guids_to_remove: Array<felt252>);
+
     /// @notice Removes all guardians and optionally adds a new one
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     /// @param new_guardian The address of the new guardian, or None to disable the guardian

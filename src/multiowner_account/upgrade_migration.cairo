@@ -84,6 +84,10 @@ mod upgrade_migration_component {
             let owner_key = self._signer.read();
             assert(owner_key != 0, 'argent/null-owner');
 
+            let owner = starknet_signer_from_pubkey(owner_key);
+            let owner_linked = SignerLinked { signer_guid: owner.into_guid(), signer: owner };
+            self.emit_event(ArgentAccountEvent::SignerLinked(owner_linked));
+
             // TODO guardian migration!!!!
             // let argent_account = self.get_contract();
             // let guardian_key = argent_account.get_guardian();
@@ -102,10 +106,6 @@ mod upgrade_migration_component {
             //         self.emit_event(ArgentAccountEvent::SignerLinked(guardian_backup_linked));
             //     }
             // }
-
-            let owner = starknet_signer_from_pubkey(owner_key);
-            let owner_linked = SignerLinked { signer_guid: owner.into_guid(), signer: owner };
-            self.emit_event(ArgentAccountEvent::SignerLinked(owner_linked));
 
             let implementation = self._implementation.read();
 

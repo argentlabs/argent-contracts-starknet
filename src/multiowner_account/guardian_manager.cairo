@@ -43,11 +43,11 @@ trait IGuardianManagerInternal<TContractState> {
 
     // /// @notice Adds new guardians to the account
     // /// @dev will revert when trying to add a signer is already an guardian
-    // /// @guardians_to_add owners_to_add An array with all the signers to add
-    // fn add_guardians(ref self: TContractState, guardians_to_add: Array<Signer>);
+    // /// @guardians_to_add An array with all the signers to add
+    fn add_guardians(ref self: TContractState, guardians_to_add: Array<Signer>);
 
-    // fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>);
-    // fn assert_valid_storage(self: @TContractState);
+    fn remove_guardians(ref self: TContractState, guardian_guids_to_remove: Array<felt252>);
+
     fn get_single_stark_guardian_pubkey(self: @TContractState) -> Option<felt252>;
     fn get_single_guardian(self: @TContractState) -> Option<SignerStorageValue>;
     fn assert_valid_storage(self: @TContractState);
@@ -145,34 +145,35 @@ mod guardian_manager_component {
         fn initialize(ref self: ComponentState<TContractState>, guardian: Signer) {
             let guid = self.guardians_storage.insert(guardian.storage_value());
             self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: guardian });
+            self.emit_guardian_added(guid);
         }
 
         fn has_guardian(self: @ComponentState<TContractState>) -> bool {
             !self.guardians_storage.is_empty()
         }
 
-        // fn add_owners(ref self: ComponentState<TContractState>, owners_to_add: Array<Signer>) {
-        //     let owner_len = self.owners_storage.len();
+        fn add_guardians(ref self: ComponentState<TContractState>, guardians_to_add: Array<Signer>) {
+            let guardians_len = self.guardians_storage.len();
 
-        //     self.assert_valid_owner_count(owner_len + owners_to_add.len());
-        //     for owner in owners_to_add {
-        //         let owner_guid = self.owners_storage.insert(owner.storage_value());
-        //         self.emit_owner_added(owner_guid);
-        //         self.emit_signer_linked_event(SignerLinked { signer_guid: owner_guid, signer: owner });
-        //     };
-        // }
+            self.assert_valid_guardian_count(guardians_len + guardians_to_add.len());
+            for guardian in guardians_to_add {
+                let guardian_guid = self.guardians_storage.insert(guardian.storage_value());
+                self.emit_guardian_added(guardian_guid);
+                self.emit_signer_linked_event(SignerLinked { signer_guid: guardian_guid, signer: guardian });
+            };
+        }
 
-        // fn remove_owners(ref self: ComponentState<TContractState>, owner_guids_to_remove: Array<felt252>) {
-        //     self.assert_valid_owner_count(self.owners_storage.len() - owner_guids_to_remove.len());
+        fn remove_guardians(ref self: ComponentState<TContractState>, guardian_guids_to_remove: Array<felt252>) {
+            self.assert_valid_guardian_count(self.guardians_storage.len() - guardian_guids_to_remove.len());
 
-        //     for guid in owner_guids_to_remove {
-        //         self.owners_storage.remove(guid);
-        //         self.emit_owner_removed(guid);
-        //     };
-        // }
+            for guid in guardian_guids_to_remove {
+                self.guardians_storage.remove(guid);
+                self.emit_guardian_removed(guid);
+            };
+        }
 
         fn get_single_guardian(self: @ComponentState<TContractState>) -> Option<SignerStorageValue> {
-            self.guardians_storage.single() // TODO consider returning .first() instead for better performance
+            self.guardians_storage.single()
         }
 
         fn get_single_stark_guardian_pubkey(self: @ComponentState<TContractState>) -> Option<felt252> {
@@ -190,15 +191,15 @@ mod guardian_manager_component {
             for current_guardian_guid in current_guardian_guids {
                 if current_guardian_guid != replacement_guid {
                     self.guardians_storage.remove(current_guardian_guid);
-                    // self.emit_owner_removed(current_guardian_guid); // TODO
+                    self.emit_guardian_removed(current_guardian_guid);
                 } else {
                     replacement_was_already_guardian = true;
                 }
             };
             if !replacement_was_already_guardian {
                 if let Option::Some(new_guardian) = replacement_guardian {
-                    self.guardians_storage.insert(new_guardian);
-                    // self.emit_owner_added(new_guardian_guid);// TODO
+                    let new_guardian_guid = self.guardians_storage.insert(new_guardian);
+                    self.emit_guardian_added(new_guardian_guid);
                 }
             }
         }
@@ -219,11 +220,11 @@ mod guardian_manager_component {
             let mut contract = self.get_contract_mut();
             contract.emit_event_callback(ArgentAccountEvent::SignerLinked(event));
         }
-        // fn emit_owner_added(ref self: ComponentState<TContractState>, new_owner_guid: felt252) {
-    //     self.emit(OwnerAddedGuid { new_owner_guid });
-    // }
-    // fn emit_owner_removed(ref self: ComponentState<TContractState>, removed_owner_guid: felt252) {
-    //     self.emit(OwnerRemovedGuid { removed_owner_guid });
-    // }
+        fn emit_guardian_added(ref self: ComponentState<TContractState>, new_guardian_guid: felt252) {
+            self.emit(GuardianAddedGuid { new_guardian_guid });
+        }
+        fn emit_guardian_removed(ref self: ComponentState<TContractState>, removed_guardian_guid: felt252) {
+            self.emit(GuardianRemovedGuid { removed_guardian_guid });
+        }
     }
 }

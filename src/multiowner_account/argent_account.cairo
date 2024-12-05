@@ -435,6 +435,20 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
         }
 
+        fn add_guardians(ref self: ContractState, new_guardians: Array<Signer>) {
+            assert_only_self();
+            self.guardian_manager.add_guardians(new_guardians);
+            self.reset_escape();
+            self.reset_escape_timestamps();
+        }
+
+        fn remove_guardians(ref self: ContractState, guardian_guids_to_remove: Array<felt252>) {
+            assert_only_self();
+            self.guardian_manager.remove_guardians(guardian_guids_to_remove);
+            self.reset_escape();
+            self.reset_escape_timestamps();
+        }
+
         fn reset_guardians(ref self: ContractState, new_guardian: Option<Signer>) {
             assert_only_self();
             let new_guardian_storage_value = if let Option::Some(guardian) = new_guardian {

@@ -1,6 +1,7 @@
 use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
 use argent::multiowner_account::{
-    events::{OwnerAddedGuid, OwnerRemovedGuid}, owner_manager::owner_manager_component, argent_account::ArgentAccount
+    events::{OwnerAddedGuid, OwnerRemovedGuid}, owner_manager::owner_manager_component,
+    guardian_manager::guardian_manager_component, argent_account::ArgentAccount
 };
 use argent::recovery::EscapeStatus;
 use argent::signer::signer_signature::{
@@ -19,7 +20,7 @@ use snforge_std::{
 use starknet::contract_address_const;
 use super::super::{
     ARGENT_ACCOUNT_ADDRESS, ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
-    initialize_account_without_guardian, Felt252TryIntoStarknetSigner, OWNER, WRONG_OWNER
+    initialize_account_without_guardian, Felt252TryIntoStarknetSigner, OWNER, GUARDIAN, WRONG_OWNER
 };
 
 const VALID_UNTIL: u64 = 1100;
@@ -191,13 +192,25 @@ fn reset_guardians() {
     account.reset_guardians(Option::Some(guardian));
     assert_eq!(account.get_guardian(), 22);
 
-    assert_eq!(spy.get_events().events.len(), 1);
-
+    assert_eq!(spy.get_events().events.len(), 3);
     let signer_link_event = ArgentAccount::Event::SignerLinked(
         ArgentAccount::SignerLinked { signer_guid: guardian.into_guid(), signer: guardian }
     );
-
+    let guardian_removed_event = guardian_manager_component::Event::GuardianRemovedGuid(
+        guardian_manager_component::GuardianRemovedGuid {
+            removed_guardian_guid: starknet_signer_from_pubkey(GUARDIAN().pubkey).into_guid()
+        }
+    );
+    let guardian_added_event = guardian_manager_component::Event::GuardianAddedGuid(
+        guardian_manager_component::GuardianAddedGuid { new_guardian_guid: guardian.into_guid() }
+    );
     spy.assert_emitted(@array![(account.contract_address, signer_link_event)]);
+    spy
+        .assert_emitted(
+            @array![
+                (account.contract_address, guardian_removed_event), (account.contract_address, guardian_added_event)
+            ]
+        );
 }
 
 #[test]

@@ -109,6 +109,7 @@ mod owner_manager_component {
         fn initialize(ref self: ComponentState<TContractState>, owner: Signer) {
             let guid = self.owners_storage.insert(owner.storage_value());
             self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: owner });
+            self.emit_owner_added(guid);
         }
 
         fn initialize_from_upgrade(ref self: ComponentState<TContractState>, signer_storage: SignerStorageValue) {

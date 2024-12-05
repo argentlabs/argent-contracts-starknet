@@ -4,8 +4,10 @@
 /// functionality of this contract for any production. 🚨
 #[starknet::contract]
 mod MultiownerMock {
+    use argent::account::interface::{IEmitArgentAccountEvent};
+    use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::events::SignerLinked;
-    use argent::multiowner_account::owner_manager::{IOwnerManager, IOwnerManagerCallback, owner_manager_component};
+    use argent::multiowner_account::owner_manager::{IOwnerManager, owner_manager_component};
 
     // Owner management
     component!(path: owner_manager_component, storage: owner_manager, event: OwnerManagerEvents);
@@ -31,9 +33,12 @@ mod MultiownerMock {
     }
 
     // Required Callbacks
-    impl OwnerManagerCallbackImpl of IOwnerManagerCallback<ContractState> {
-        fn emit_signer_linked_event(ref self: ContractState, event: SignerLinked) {
-            self.emit(event);
+    impl OwnerManagerCallbackImpl of IEmitArgentAccountEvent<ContractState> {
+        fn emit_event_callback(
+            ref self: ContractState, event: ArgentAccountEvent
+        ) { // Cannot emit as the event is from another contract
+        // It doesn't know how to translate the event to the current contract
+        // self.emit(event);
         }
     }
 }

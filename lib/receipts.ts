@@ -1,3 +1,4 @@
+import { expect } from "chai";
 import {
   GetTransactionReceiptResponse,
   RpcProvider,
@@ -28,9 +29,11 @@ export const WithReceipts = <T extends Constructor<RpcProvider>>(Base: T) =>
     async ensureSuccess(
       execute: Promise<{ transaction_hash: string }> | { transaction_hash: string },
     ): Promise<TransactionReceipt> {
-      const tx = await this.waitForTx(execute, {
-        successStates: [TransactionExecutionStatus.SUCCEEDED],
-      });
+      // There is an annoying bug... if the tx isn't successful, the promise will never resolve (fails w timeout)
+      const tx = await this.ensureAccepted(execute);
+      expect(tx.execution_status, `Transaction failed: ${JSON.stringify(tx)}`).to.equal(
+        TransactionExecutionStatus.SUCCEEDED,
+      );
       return tx as TransactionReceipt;
     }
 

@@ -137,7 +137,7 @@ fn eight_words_to_u256(words: [u32; 8]) -> u256 {
 /// @notice Converts a u32 into 4 u8s
 /// @param word The u32 to convert.
 /// @return The individual `u8` bytes ordered from most significant to least.
-fn u32_to_byte(word: u32) -> [u8; 4] {
+fn u32_to_bytes(word: u32) -> [u8; 4] {
     let (rest, byte_4) = u32_safe_divmod(word, 0x100);
     let (rest, byte_3) = u32_safe_divmod(rest, 0x100);
     let (byte_1, byte_2) = u32_safe_divmod(rest, 0x100);

@@ -1,9 +1,9 @@
 #[starknet::contract(account)]
 mod ArgentAccount {
-    use argent::account::interface::{IAccount, IArgentAccount, IDeprecatedArgentAccount, Version};
+    use argent::account::interface::{IAccount, IDeprecatedArgentAccount, Version, IEmitArgentAccountEvent};
     use argent::introspection::src5::src5_component;
     use argent::multiowner_account::account_interface::{
-        IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait
+        IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait,
     };
     use argent::multiowner_account::events::{
         SignerLinked, TransactionExecuted, AccountCreated, AccountCreatedGuid, EscapeOwnerTriggeredGuid,
@@ -11,25 +11,27 @@ mod ArgentAccount {
         OwnerChangedGuid, GuardianChanged, GuardianChangedGuid, GuardianBackupChanged, GuardianBackupChangedGuid,
         EscapeSecurityPeriodChanged,
     };
-    use argent::multiowner_account::owner_manager::{IOwnerManager, IOwnerManagerCallback, owner_manager_component};
+    use argent::multiowner_account::owner_manager::{IOwnerManager, owner_manager_component};
     use argent::multiowner_account::recovery::{Escape, EscapeType};
     use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
+    use argent::multiowner_account::upgrade_migration::{
+        IUpgradeMigrationInternal, upgrade_migration_component, IUpgradeMigrationCallback
+    };
     use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{
-        outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
+        outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
     use argent::recovery::EscapeStatus;
-
     use argent::session::{
         interface::ISessionCallback, session::{session_component::{Internal, InternalTrait}, session_component}
     };
-    use argent::signer::{
-        signer_signature::{
-            Signer, SignerStorageValue, SignerType, StarknetSigner, StarknetSignature, SignerTrait, SignerStorageTrait,
-            SignerSignature, SignerSignatureTrait, starknet_signer_from_pubkey
-        }
+    use argent::signer::signer_signature::{
+        Signer, SignerStorageValue, SignerType, StarknetSigner, StarknetSignature, SignerTrait, SignerStorageTrait,
+        SignerSignature, SignerSignatureTrait
     };
-    use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
+    use argent::upgrade::{
+        upgrade::{IUpgradeInternal, upgrade_component}, interface::{IUpgradableCallback, IUpgradableCallbackOld}
+    };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self, assert_only_protocol}, calls::execute_multicall,
         serialization::full_deserialize,
@@ -42,13 +44,8 @@ mod ArgentAccount {
     use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
     use pedersen::PedersenTrait;
     use starknet::{
-        storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED,
-        replace_class_syscall, account::Call, SyscallResultTrait, get_tx_info, get_execution_info,
-        syscalls::storage_read_syscall,
-        storage_access::{
-            storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall,
-            storage_address_from_base
-        }
+        storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, account::Call,
+        SyscallResultTrait, get_tx_info, get_execution_info,
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -97,6 +94,9 @@ mod ArgentAccount {
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
     impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
+    // Upgrade migration
+    component!(path: upgrade_migration_component, storage: upgrade_migration, event: UpgradeMigrationEvents);
+    impl UpgradableMigrationInternal = upgrade_migration_component::UpgradableMigrationInternal<ContractState>;
     // Reentrancy guard
     component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
     impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
@@ -112,10 +112,11 @@ mod ArgentAccount {
         #[substorage(v0)]
         upgrade: upgrade_component::Storage,
         #[substorage(v0)]
+        upgrade_migration: upgrade_migration_component::Storage,
+        #[substorage(v0)]
         session: session_component::Storage,
         #[substorage(v0)]
         reentrancy_guard: ReentrancyGuardComponent::Storage,
-        _implementation: ClassHash, // This is deprecated and used to migrate cairo 0 accounts only
         /// Current account guardian
         _guardian: felt252,
         /// Current account backup guardian
@@ -145,6 +146,8 @@ mod ArgentAccount {
         SRC5Events: src5_component::Event,
         #[flat]
         UpgradeEvents: upgrade_component::Event,
+        #[flat]
+        UpgradeMigrationEvents: upgrade_migration_component::Event,
         #[flat]
         SessionableEvents: session_component::Event,
         #[flat]
@@ -234,71 +237,20 @@ mod ArgentAccount {
     }
 
     // Required Callbacks
-    impl OwnerManagerCallbackImpl of IOwnerManagerCallback<ContractState> {
-        fn emit_signer_linked_event(ref self: ContractState, event: SignerLinked) {
+    impl EmitArgentAccountEventImpl of IEmitArgentAccountEvent<ContractState> {
+        fn emit_event_callback(ref self: ContractState, event: Event) {
             self.emit(event);
         }
     }
 
     #[abi(embed_v0)]
     impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
-        // Called when coming from account 0.3.1 or older
+        // Called when coming from account v0.2.3 to v0.3.1. Note that accounts v0.2.3.* won't always call this method
+        // But v0.3.0+ is guaranteed to call it
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
 
-            // As the storage layout for the escape is changing, if there is an ongoing escape it
-            // should revert Expired escapes will be cleared
-            let base = storage_base_address_from_felt252(selector!("_escape"));
-            let escape_ready_at = storage_read_syscall(0, storage_address_from_base_and_offset(base, 0))
-                .unwrap_syscall();
-
-            if escape_ready_at == 0 {
-                let escape_type = storage_read_syscall(0, storage_address_from_base_and_offset(base, 1))
-                    .unwrap_syscall();
-                let escape_new_signer = storage_read_syscall(0, storage_address_from_base_and_offset(base, 2))
-                    .unwrap_syscall();
-                assert(escape_type.is_zero(), 'argent/esc-type-not-null');
-                assert(escape_new_signer.is_zero(), 'argent/esc-new-signer-not-null');
-            } else {
-                let escape_ready_at: u64 = escape_ready_at.try_into().unwrap();
-                if get_block_timestamp() < escape_ready_at + DEFAULT_ESCAPE_SECURITY_PERIOD {
-                    // Not expired. Automatically cancelling the escape when upgrading
-                    self.emit(EscapeCanceled {});
-                }
-                // Clear the escape
-                self._escape.write(Default::default());
-            }
-
-            // Cleaning attempts storage as the escape was cleared
-            let base = storage_base_address_from_felt252(selector!("guardian_escape_attempts"));
-            storage_write_syscall(0, storage_address_from_base_and_offset(base, 0), 0).unwrap_syscall();
-            let base = storage_base_address_from_felt252(selector!("owner_escape_attempts"));
-            storage_write_syscall(0, storage_address_from_base_and_offset(base, 0), 0).unwrap_syscall();
-
-            // Check basic invariants and emit missing events TODO
-            // let owner_key = self._signer.read();
-            // let guardian_key = self._guardian.read();
-            // let guardian_backup_key = self._guardian_backup.read();
-            // assert(owner_key != 0, 'argent/null-owner');
-            // if guardian_key == 0 {
-            //     assert(guardian_backup_key == 0, 'argent/backup-should-be-null');
-            // } else {
-            //     let guardian = starknet_signer_from_pubkey(guardian_key);
-            //     self.emit(SignerLinked { signer_guid: guardian.into_guid(), signer: guardian });
-            //     if guardian_backup_key != 0 {
-            //         let guardian_backup = starknet_signer_from_pubkey(guardian_backup_key);
-            //         self.emit(SignerLinked { signer_guid: guardian_backup.into_guid(), signer:
-            //         guardian_backup });
-            //     }
-            // }
-            // let owner = starknet_signer_from_pubkey(owner_key);
-            // self.emit(SignerLinked { signer_guid: owner.into_guid(), signer: owner });
-
-            let implementation = self._implementation.read();
-            if implementation != Zeroable::zero() {
-                replace_class_syscall(implementation).expect('argent/invalid-after-upgrade');
-                self._implementation.write(Zeroable::zero());
-            }
+            self.upgrade_migration.migrate_from_before_0_4_0();
 
             if data.is_empty() {
                 return array![];
@@ -318,15 +270,44 @@ mod ArgentAccount {
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
         // Called when coming from account 0.4.0+
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
-            // TODO: Change this to a proper implementation
-            // WARNING: THIS IS FOR TESTING PURPOSES ONLY AND IS NOT THE FINAL VERSION
             assert_only_self();
-            let base = storage_base_address_from_felt252(selector!("_signer"));
-            let owner = storage_read_syscall(0, storage_address_from_base(base)).unwrap_syscall();
-            let owner_signer = starknet_signer_from_pubkey(owner);
+
+            // Downgrade check
+            let argent_dispatcher = IArgentMultiOwnerAccountDispatcher { contract_address: get_contract_address() };
+            assert(argent_dispatcher.get_name() == self.get_name(), 'argent/invalid-name');
+            let previous_version = argent_dispatcher.get_version();
+            let current_version = self.get_version();
+            assert(previous_version < current_version, 'argent/downgrade-not-allowed');
 
             self.upgrade.complete_upgrade(new_implementation);
-            self.owner_manager.add_owners(array![owner_signer]);
+
+            self.upgrade_migration.migrate_from_0_4_0();
+
+            if data.is_empty() {
+                return;
+            }
+
+            let calls: Array<Call> = full_deserialize(data).expect('argent/invalid-calls');
+            assert_no_self_call(calls.span(), get_contract_address());
+            execute_multicall(calls.span());
+        }
+    }
+
+    impl UpgradeMigrationCallbackImpl of IUpgradeMigrationCallback<ContractState> {
+        fn finalize_migration(ref self: ContractState) {
+            self.owner_manager.assert_valid_storage();
+            let guardian_key = self._guardian.read();
+            let guardian_backup_key = self._guardian_backup.read();
+            if guardian_key == 0 {
+                assert(guardian_backup_key == 0, 'argent/backup-should-be-null');
+            }
+
+            self.reset_escape();
+            self.reset_escape_timestamps();
+        }
+
+        fn migrate_owner(ref self: ContractState, signer_storage_value: SignerStorageValue) {
+            self.owner_manager.initialize_from_upgrade(signer_storage_value);
         }
     }
 
@@ -370,7 +351,6 @@ mod ArgentAccount {
             self.owner_manager.is_owner_guid(owner_guid)
         }
     }
-
 
     #[abi(embed_v0)]
     impl ArgentMultiOwnerAccountImpl of IArgentMultiOwnerAccount<ContractState> {

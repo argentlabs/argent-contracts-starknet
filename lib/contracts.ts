@@ -1,4 +1,5 @@
-import { readFileSync } from "fs";
+import { readFileSync, readdirSync } from "fs";
+import { resolve } from "path";
 import {
   Abi,
   AccountInterface,
@@ -15,6 +16,7 @@ import { WithDevnet } from "./devnet";
 
 export const contractsFolder = "./target/release/argent_";
 export const fixturesFolder = "./tests-integration/fixtures/argent_";
+export const artifactsFolder = "./deployments/artifacts";
 
 export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) =>
   class extends Base {
@@ -62,6 +64,16 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       return await this.declareLocalContract(contractName, wait, fixturesFolder);
     }
 
+    async declareArtifactAccountContract(contractVersion: string, wait = true): Promise<string> {
+      const allArtifactsFolders = getSubfolders(artifactsFolder);
+      let contractName = allArtifactsFolders.find((folder) => folder.startsWith(`account-${contractVersion}`));
+      if (!contractName) {
+        throw new Error(`No contract found for version ${contractVersion}`);
+      }
+      contractName = `/${contractName}/ArgentAccount`;
+      return await this.declareLocalContract(contractName, wait, artifactsFolder);
+    }
+
     async loadContract(contractAddress: string, classHash?: string): Promise<ContractWithClass> {
       const { abi } = await this.getClassAt(contractAddress);
       classHash ??= await this.getClassHashAt(contractAddress);
@@ -104,4 +116,26 @@ export function getDeclareContractPayload(contractName: string, folder = contrac
 
 export function readContract(path: string) {
   return json.parse(readFileSync(path).toString("ascii"));
+}
+
+/**
+ * Get all subfolders in a directory.
+ * @param dirPath The directory path to search.
+ * @returns An array of subfolder names.
+ */
+function getSubfolders(dirPath: string): string[] {
+  try {
+    // Resolve the directory path to an absolute path
+    const absolutePath = resolve(dirPath);
+
+    // Read all items in the directory
+    const items = readdirSync(absolutePath, { withFileTypes: true });
+
+    // Filter for directories and map to their names
+    const folders = items.filter((item) => item.isDirectory()).map((folder) => folder.name);
+
+    return folders;
+  } catch (err) {
+    throw new Error(`Error reading the directory at ${dirPath}`);
+  }
 }

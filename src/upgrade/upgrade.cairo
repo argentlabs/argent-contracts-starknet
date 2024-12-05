@@ -1,6 +1,4 @@
-use argent::account::interface::SRC5_ACCOUNT_INTERFACE_ID;
-
-use starknet::{ClassHash, syscalls::replace_class_syscall};
+use starknet::ClassHash;
 
 #[starknet::interface]
 trait IUpgradeInternal<TContractState> {

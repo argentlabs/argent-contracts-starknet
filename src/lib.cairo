@@ -47,6 +47,7 @@ mod multiowner_account {
     mod owner_manager;
     mod recovery;
     mod replace_owners_message;
+    mod upgrade_migration;
 }
 
 mod utils {

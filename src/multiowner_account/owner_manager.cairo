@@ -1,11 +1,8 @@
-use argent::signer::{
-    signer_signature::{
-        Signer, SignerTrait, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerSignatureTrait,
-        SignerSpanTrait, SignerTypeIntoFelt252, SignerType
-    },
+use argent::signer::signer_signature::{
+    Signer, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerType
 };
 use argent::utils::linked_set::LinkedSetConfig;
-use starknet::storage::{StoragePathEntry, StoragePath,};
+use starknet::storage::StoragePath;
 
 
 const STORED_VALUE_END: felt252 = 'end';

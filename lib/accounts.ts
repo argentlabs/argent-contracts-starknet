@@ -26,6 +26,7 @@ import { manager } from "./manager";
 import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { ArgentSigner, KeyPair, RawSigner, randomStarknetKeyPair } from "./signers/signers";
 import { ethAddress, strkAddress } from "./tokens";
+import { expect } from "chai";
 
 export const VALID = BigInt(shortString.encodeShortString("VALID"));
 
@@ -143,6 +144,8 @@ async function deployOldAccountWithProxyInner(
 ): Promise<LegacyArgentWallet> {
   const proxyClassHash = await manager.declareFixtureContract("Proxy");
   const oldArgentAccountClassHash = await manager.declareFixtureContract("OldArgentAccount");
+  // Ensuring that the OldArgentAccount class hash is the expected one of v2.3.1
+  expect(oldArgentAccountClassHash).to.equal("0x33434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2");
 
   const guardianPublicKey = guardian ? guardian.publicKey : 0;
   const constructorCalldata = CallData.compile({

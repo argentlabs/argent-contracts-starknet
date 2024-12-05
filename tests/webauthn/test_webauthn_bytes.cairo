@@ -1,6 +1,6 @@
 use argent::utils::bytes::{
     SpanU8TryIntoFelt252, SpanU8TryIntoU256, ByteArrayExt, u8s_to_u32s_pad_end, eight_words_to_bytes, u256_to_u8s,
-    bytes_to_u32s
+    bytes_to_u32s, u32_to_byte
 };
 
 #[test]
@@ -342,4 +342,18 @@ fn test_bytes_to_u32s() {
     assert_eq!(output, array!['abcd', 'efgh', 'ijkl', 'mnop', 'qrst', 'uvwx']);
     assert_eq!(last, 'yz');
     assert_eq!(rem, 2);
+}
+
+
+#[test]
+fn test_u32_to_byte() {
+    assert_eq!(u32_to_byte(0), [0, 0, 0, 0]);
+
+    assert_eq!(u32_to_byte(256), [0, 0, 1, 0]);
+
+    assert_eq!(u32_to_byte(257), [0, 0, 1, 1]);
+
+    assert_eq!(u32_to_byte(65536), [0, 1, 0, 0]);
+
+    assert_eq!(u32_to_byte('abcd'), ['a', 'b', 'c', 'd']);
 }

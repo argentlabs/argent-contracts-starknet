@@ -1,10 +1,9 @@
 use alexandria_encoding::base64::Base64UrlEncoder;
 use argent::signer::signer_signature::WebauthnSigner;
 use argent::utils::array_ext::ArrayExt;
-use argent::utils::bytes::{u256_to_u8s, eight_words_to_bytes, eight_words_to_u256, bytes_to_u32s};
+use argent::utils::bytes::{u256_to_u8s, u32_to_byte, eight_words_to_bytes, eight_words_to_u256, bytes_to_u32s};
 use argent::utils::hashing::sha256_cairo0;
 use core::sha256::compute_sha256_u32_array;
-use integer::u32_safe_divmod;
 use starknet::secp256_trait::Signature;
 
 /// @notice The webauthn signature that needs to be validated
@@ -94,13 +93,11 @@ fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> 
         bytes.append(0);
         bytes.append(0);
     } else {
-        let (rest, byte_4) = u32_safe_divmod(signature.sign_count, 0x100);
-        let (rest, byte_3) = u32_safe_divmod(rest, 0x100);
-        let (byte_1, byte_2) = u32_safe_divmod(rest, 0x100);
-        bytes.append(byte_1.try_into().unwrap());
-        bytes.append(byte_2.try_into().unwrap());
-        bytes.append(byte_3.try_into().unwrap());
-        bytes.append(byte_4.try_into().unwrap());
+        let [byte_1, byte_2, byte_3, byte_4] = u32_to_byte(signature.sign_count);
+        bytes.append(byte_1);
+        bytes.append(byte_2);
+        bytes.append(byte_3);
+        bytes.append(byte_4);
     }
     bytes
 }

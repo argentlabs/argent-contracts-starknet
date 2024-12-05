@@ -1,7 +1,7 @@
 use argent::utils::array_ext::ArrayExt;
 use starknet::Store;
 use starknet::storage::{StorageAsPath, StoragePathEntry, StoragePathTrait, StoragePath, Mutable, StorageBase};
-use super::linked_set::{
+use argent::utils::linked_set::{
     LinkedSet, LinkedSetConfig, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl,
     StorageBaseAsReadOnlyImpl
 };

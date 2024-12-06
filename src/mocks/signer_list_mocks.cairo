@@ -4,11 +4,13 @@
 /// functionality of this contract for any production. 🚨
 #[starknet::contract]
 mod SignerListMock {
-    use argent::multisig_account::signer_storage::signer_list::signer_list_component;
+    use argent::multisig_account::signer_storage::signer_list::{
+        signer_list_component, signer_list_component::SignerListInternalImpl
+    };
 
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
-    impl SignerListInternal = signer_list_component::SignerListInternalImpl<ContractState>;
-
+    // To avoid even any issue, we should prob not even write the impl UNLESS we want to expose it and rather import the
+    // impl.
     #[storage]
     struct Storage {
         #[substorage(v0)]

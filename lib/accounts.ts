@@ -1,3 +1,4 @@
+import { expect } from "chai";
 import {
   Abi,
   Account,
@@ -142,7 +143,9 @@ async function deployOldAccountWithProxyInner(
   salt = num.toHex(randomStarknetKeyPair().privateKey),
 ): Promise<LegacyArgentWallet> {
   const proxyClassHash = await manager.declareFixtureContract("Proxy");
-  const oldArgentAccountClassHash = await manager.declareFixtureContract("OldArgentAccount");
+  const oldArgentAccountClassHash = await manager.declareFixtureContract("Account-0.2.3.1");
+  // Ensuring that the OldArgentAccount class hash is the expected one of v2.3.1
+  expect(oldArgentAccountClassHash).to.equal("0x33434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2");
 
   const guardianPublicKey = guardian ? guardian.publicKey : 0;
   const constructorCalldata = CallData.compile({

@@ -14,8 +14,7 @@ mod MultiownerMock {
 
     #[abi(embed_v0)]
     impl OwnerManager = owner_manager_component::OwnerManagerImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl OwnerManagerInternal = owner_manager_component::OwnerManagerInternalImpl<ContractState>;
+    impl OwnerManagerInternal = owner_manager_component::OwnerManagerInternal<ContractState>;
 
 
     #[storage]

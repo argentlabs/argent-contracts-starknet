@@ -48,7 +48,7 @@ mod MockFutureArgentAccount {
     // Upgrade
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
-    impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
+    impl UpgradableInternal = upgrade_component::UpgradableInternal<ContractState>;
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
 
     #[storage]

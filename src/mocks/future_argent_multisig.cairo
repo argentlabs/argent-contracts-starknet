@@ -35,7 +35,7 @@ mod MockFutureArgentMultisig {
     component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
     #[abi(embed_v0)]
     impl SignerManager = signer_manager_component::SignerManagerImpl<ContractState>;
-    impl SignerManagerInternal = signer_manager_component::SignerManagerInternalImpl<ContractState>;
+    impl SignerManagerInternal = signer_manager_component::SignerManagerInternal<ContractState>;
     // Introspection
     component!(path: src5_component, storage: src5, event: SRC5Events);
     #[abi(embed_v0)]
@@ -44,7 +44,7 @@ mod MockFutureArgentMultisig {
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
-    impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
+    impl UpgradableInternal = upgrade_component::UpgradableInternal<ContractState>;
 
     #[storage]
     struct Storage {

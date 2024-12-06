@@ -41,8 +41,11 @@ mod signer_list_component {
         signer: Signer,
     }
 
+    // Should this one be "public" too?
     #[embeddable_as(SignerListInternalImpl)]
-    impl InternalImpl<TContractState, +HasComponent<TContractState>> of ISignerList<ComponentState<TContractState>> {
+    impl SignerListInternal<
+        TContractState, +HasComponent<TContractState>
+    > of ISignerList<ComponentState<TContractState>> {
         #[inline(always)]
         fn is_signer_in_list(self: @ComponentState<TContractState>, signer: felt252) -> bool {
             if signer == 0 {

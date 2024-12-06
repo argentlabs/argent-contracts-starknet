@@ -6,7 +6,7 @@ mod ArgentMultisigAccount {
         external_recovery::{external_recovery_component, IExternalRecoveryCallback}
     };
     use argent::multisig_account::signer_manager::{
-        signer_manager::{signer_manager_component, signer_manager_component::SignerManagerInternalImpl}
+        signer_manager::{signer_manager_component, signer_manager_component::SignerManagerInternal}
     };
     use argent::multisig_account::signer_storage::signer_list::signer_list_component;
     use argent::outside_execution::{

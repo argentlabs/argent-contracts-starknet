@@ -104,7 +104,6 @@ mod owner_manager_component {
         }
     }
 
-    #[embeddable_as(OwnerManagerInternalImpl)]
     impl OwnerManagerInternal<
         TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
     > of IOwnerManagerInternal<ComponentState<TContractState>> {

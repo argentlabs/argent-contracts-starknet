@@ -19,7 +19,7 @@ mod ExternalRecoveryMock {
     component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
     #[abi(embed_v0)]
     impl SignerManager = signer_manager_component::SignerManagerImpl<ContractState>;
-    impl SignerManagerInternal = signer_manager_component::SignerManagerInternalImpl<ContractState>;
+    impl SignerManagerInternal = signer_manager_component::SignerManagerInternal<ContractState>;
 
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
     impl SignerListInternal = signer_list_component::SignerListInternalImpl<ContractState>;

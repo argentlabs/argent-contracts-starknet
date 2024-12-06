@@ -74,7 +74,7 @@ mod ArgentAccount {
     component!(path: owner_manager_component, storage: owner_manager, event: OwnerManagerEvents);
     #[abi(embed_v0)]
     impl OwnerManager = owner_manager_component::OwnerManagerImpl<ContractState>;
-    impl OwnerManagerInternal = owner_manager_component::OwnerManagerInternalImpl<ContractState>;
+    impl OwnerManagerInternal = owner_manager_component::OwnerManagerInternal<ContractState>;
     // session
     component!(path: session_component, storage: session, event: SessionableEvents);
     #[abi(embed_v0)]
@@ -93,7 +93,7 @@ mod ArgentAccount {
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
-    impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
+    impl UpgradableInternal = upgrade_component::UpgradableInternal<ContractState>;
     // Upgrade migration
     component!(path: upgrade_migration_component, storage: upgrade_migration, event: UpgradeMigrationEvents);
     impl UpgradableMigrationInternal = upgrade_migration_component::UpgradableMigrationInternal<ContractState>;

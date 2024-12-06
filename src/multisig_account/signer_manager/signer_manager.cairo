@@ -140,7 +140,6 @@ mod signer_manager_component {
         }
     }
 
-    #[embeddable_as(SignerManagerInternalImpl)]
     impl SignerManagerInternal<
         TContractState,
         +HasComponent<TContractState>,

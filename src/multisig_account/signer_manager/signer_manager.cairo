@@ -140,7 +140,7 @@ mod signer_manager_component {
         }
     }
 
-    impl SignerManagerInternal<
+    impl SignerManagerInternalImpl<
         TContractState,
         +HasComponent<TContractState>,
         impl SignerList: signer_list_component::HasComponent<TContractState>,

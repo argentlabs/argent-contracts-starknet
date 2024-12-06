@@ -74,7 +74,7 @@ mod ArgentAccount {
     component!(path: owner_manager_component, storage: owner_manager, event: OwnerManagerEvents);
     #[abi(embed_v0)]
     impl OwnerManager = owner_manager_component::OwnerManagerImpl<ContractState>;
-    impl OwnerManagerInternal = owner_manager_component::OwnerManagerInternal<ContractState>;
+    impl OwnerManagerInternal = owner_manager_component::OwnerManagerInternalImpl<ContractState>;
     // session
     component!(path: session_component, storage: session, event: SessionableEvents);
     #[abi(embed_v0)]

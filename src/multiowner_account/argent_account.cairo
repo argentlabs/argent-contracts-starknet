@@ -93,7 +93,7 @@ mod ArgentAccount {
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
-    impl UpgradableInternal = upgrade_component::UpgradableInternal<ContractState>;
+    impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
     // Upgrade migration
     component!(path: upgrade_migration_component, storage: upgrade_migration, event: UpgradeMigrationEvents);
     impl UpgradableMigrationInternal = upgrade_migration_component::UpgradableMigrationInternal<ContractState>;

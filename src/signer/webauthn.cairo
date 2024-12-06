@@ -1,7 +1,7 @@
 use alexandria_encoding::base64::Base64UrlEncoder;
 use argent::signer::signer_signature::WebauthnSigner;
 use argent::utils::array_ext::ArrayExt;
-use argent::utils::bytes::{u256_to_u8s, eight_words_to_bytes, eight_words_to_u256, bytes_to_u32s};
+use argent::utils::bytes::{u256_to_u8s, u32_to_bytes, eight_words_to_bytes, eight_words_to_u256, bytes_to_u32s};
 use argent::utils::hashing::sha256_cairo0;
 use core::sha256::compute_sha256_u32_array;
 use starknet::secp256_trait::Signature;
@@ -16,7 +16,7 @@ use starknet::secp256_trait::Signature;
 struct WebauthnSignature {
     client_data_json_outro: Span<u8>,
     flags: u8,
-    sign_count: u8,
+    sign_count: u32,
     ec_signature: Signature,
     sha256_implementation: Sha256Implementation,
 }
@@ -85,10 +85,20 @@ fn encode_challenge(hash: felt252, sha256_implementation: Sha256Implementation) 
 fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> Array<u8> {
     let mut bytes = u256_to_u8s(rp_id_hash);
     bytes.append(signature.flags);
-    bytes.append(0);
-    bytes.append(0);
-    bytes.append(0);
-    bytes.append(signature.sign_count);
+    // According to the spec, the sign count should be 4 bytes long.
+    // But is very often zero when using passkeys.
+    if signature.sign_count == 0 {
+        bytes.append(0);
+        bytes.append(0);
+        bytes.append(0);
+        bytes.append(0);
+    } else {
+        let [byte_1, byte_2, byte_3, byte_4] = u32_to_bytes(signature.sign_count);
+        bytes.append(byte_1);
+        bytes.append(byte_2);
+        bytes.append(byte_3);
+        bytes.append(byte_4);
+    }
     bytes
 }
 

@@ -189,7 +189,7 @@ impl LinkedSetPlus1WritePrivateImpl<
 > of LinkedSetPlus1WritePrivate<T> {
     #[inline(always)]
     fn head_entry(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> StoragePath<Mutable<T>> {
-        StoragePathTrait::new(self.as_path().__hash_state__.state)
+        StoragePathTrait::new(self.__hash_state__.state)
     }
 
     #[inline(always)]

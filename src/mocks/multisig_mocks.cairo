@@ -4,13 +4,14 @@
 /// functionality of this contract for any production. 🚨
 #[starknet::contract]
 mod MultisigMock {
-    use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
+    use argent::multisig_account::signer_manager::signer_manager::{
+        signer_manager_component, signer_manager_component::SignerManagerInternalImpl
+    };
     use argent::multisig_account::signer_storage::signer_list::signer_list_component;
 
     component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
     #[abi(embed_v0)]
     impl SignerManager = signer_manager_component::SignerManagerImpl<ContractState>;
-    impl SignerManagerInternal = signer_manager_component::SignerListInternalImpl<ContractState>;
 
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
     impl SignerListInternal = signer_list_component::SignerListInternalImpl<ContractState>;

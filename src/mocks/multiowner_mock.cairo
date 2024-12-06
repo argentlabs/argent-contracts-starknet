@@ -7,15 +7,15 @@ mod MultiownerMock {
     use argent::account::interface::{IEmitArgentAccountEvent};
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::events::SignerLinked;
-    use argent::multiowner_account::owner_manager::{IOwnerManager, owner_manager_component};
+    use argent::multiowner_account::owner_manager::{
+        IOwnerManager, owner_manager_component, owner_manager_component::OwnerManagerInternalImpl
+    };
 
     // Owner management
     component!(path: owner_manager_component, storage: owner_manager, event: OwnerManagerEvents);
 
     #[abi(embed_v0)]
     impl OwnerManager = owner_manager_component::OwnerManagerImpl<ContractState>;
-    impl OwnerManagerInternal = owner_manager_component::OwnerManagerInternalImpl<ContractState>;
-
 
     #[storage]
     struct Storage {

@@ -1,10 +1,10 @@
 use argent::utils::array_ext::ArrayExt;
-use starknet::Store;
-use starknet::storage::{StorageAsPath, StoragePathEntry, StoragePathTrait, StoragePath, Mutable, StorageBase};
-use super::linked_set::{
+use argent::utils::linked_set::{
     LinkedSet, LinkedSetConfig, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl,
     StorageBaseAsReadOnlyImpl
 };
+use starknet::Store;
+use starknet::storage::{StorageAsPath, StoragePathEntry, StoragePathTrait, StoragePath, Mutable, StorageBase};
 
 ///
 /// A LinkedSetPlus1 is storage structure that allows to store multiple items making it efficient to check if an item is
@@ -12,8 +12,8 @@ use super::linked_set::{
 /// LinkedSet doesn't allow duplicate items.
 /// The order of the items is preserved.
 /// It builds on top of LinkedSet but stores the first item separately. This means:
-/// - Storing just one item is cheap because it doesn't need to store the end marker. Uses the same amount of storage
-/// for larger sets
+/// - Storing just one item is cheap because it doesn't need to store the end marker. Uses the same amount of storage as
+/// a LinkedSet for larger sets
 /// - Checking if an item is in the set is O(1) complexity. Its a bit more expensive than LinkedSet but
 /// still very efficient. It offers better performance than LinkedSet when the set is a single item
 ///
@@ -48,11 +48,13 @@ pub trait LinkedSetPlus1Read<TMemberState> {
 
 pub trait LinkedSetPlus1Write<TMemberState> {
     type Value;
-    /// Adds an item to the set, it will panic if the item is already in the set
+    /// Adds an item to the set
+    /// @dev It will panic if the item is already in the set
     /// @param item The item to add
     /// @returns the hash of the added item
     fn insert(self: TMemberState, item: Self::Value) -> felt252;
-    /// Removes an item from the set, it will panic if the item is not in the set
+    /// Removes an item from the set
+    /// @dev It will panic if the item is not in the set
     /// @param item_hash The hash of the item to remove
     fn remove(self: TMemberState, item_hash: felt252);
 }
@@ -134,7 +136,7 @@ impl LinkedSetPlus1ReadPrivateImpl<
 > of LinkedSetPlus1ReadPrivate<T> {
     #[inline(always)]
     fn head_entry(self: StorageBase<LinkedSetPlus1<T>>) -> StoragePath<T> {
-        StoragePathTrait::new(self.as_path().__hash_state__.state)
+        StoragePathTrait::new(self.__hash_state__.state)
     }
 
     #[inline(always)]
@@ -187,7 +189,7 @@ impl LinkedSetPlus1WritePrivateImpl<
 > of LinkedSetPlus1WritePrivate<T> {
     #[inline(always)]
     fn head_entry(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> StoragePath<Mutable<T>> {
-        StoragePathTrait::new(self.as_path().__hash_state__.state)
+        StoragePathTrait::new(self.__hash_state__.state)
     }
 
     #[inline(always)]

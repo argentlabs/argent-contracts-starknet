@@ -1,9 +1,4 @@
-use argent::signer::{
-    signer_signature::{
-        Signer, SignerTrait, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerSignatureTrait,
-        SignerSpanTrait, SignerTypeIntoFelt252, SignerType
-    },
-};
+use argent::signer::signer_signature::{Signer, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerType};
 
 #[starknet::interface]
 pub trait IOwnerManager<TContractState> {
@@ -31,7 +26,6 @@ trait IOwnerManagerInternal<TContractState> {
     /// @notice Removes owners
     /// @dev Will revert if any of the signers is not an owner
     /// @param owners_to_remove All the signers to remove
-    // TODO can't remove self or provide signature
     fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>);
     fn is_valid_owners_replacement(self: @TContractState, new_single_owner: Signer) -> bool;
     fn replace_all_owners_with_one(ref self: TContractState, new_single_owner: SignerStorageValue);

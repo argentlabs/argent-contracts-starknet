@@ -39,6 +39,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
 
     /// @notice Removes owners from this account
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
+    /// @dev The owner signing this call cannot be removed
     /// @dev It will cancel any existing escape
     fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>);
 

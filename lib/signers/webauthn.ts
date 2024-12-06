@@ -31,6 +31,21 @@ const hex2buf = (hex: string) =>
       .map((byte) => parseInt(byte, 16)),
   );
 
+function numberToBytes(input: number): [number, number, number, number] {
+  const bytes = new Array(4).fill(0);
+
+  if (input < 0 || input > 0xffffffff) {
+    throw new Error("Input number must be between 0 and 2^32 - 1.");
+  }
+
+  for (let i = 3; i >= 0; i--) {
+    bytes[i] = input & 0xff; // Extract the least significant byte
+    input = input >> 8; // Shift right to process the next byte
+  }
+
+  return bytes as [number, number, number, number];
+}
+
 const toCharArray = (value: string) => CallData.compile(value.split("").map(shortString.encodeShortString));
 
 interface WebauthnSigner {
@@ -103,8 +118,8 @@ export class WebauthnOwner extends KeyPair {
 
   public async signHash(transactionHash: string): Promise<WebauthnSignature> {
     const flags = Number("0b00000101"); // present and verified
-    const signCount = 0;
-    const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([flags, 0, 0, 0, signCount]));
+    const signCount = 1;
+    const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([flags, ...numberToBytes(signCount)]));
 
     const sha256Impl = this.useCairo0Sha256 ? "0" : "1";
     const challenge = buf2base64url(hex2buf(`${normalizeTransactionHash(transactionHash)}0${sha256Impl}`));

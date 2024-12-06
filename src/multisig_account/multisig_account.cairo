@@ -9,6 +9,9 @@ mod ArgentMultisigAccount {
         signer_manager::{signer_manager_component, signer_manager_component::SignerManagerInternalImpl}
     };
     use argent::multisig_account::signer_storage::signer_list::signer_list_component;
+    use argent::multisig_account::upgrade_migration::{
+        IUpgradeMigrationInternal, upgrade_migration_component, IUpgradeMigrationCallback
+    };
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
@@ -46,6 +49,9 @@ mod ArgentMultisigAccount {
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
+    // Upgrade migration
+    component!(path: upgrade_migration_component, storage: upgrade_migration, event: UpgradeMigrationEvents);
+    impl UpgradableMigrationInternal = upgrade_migration_component::UpgradableMigrationInternal<ContractState>;
     // External Recovery
     component!(path: external_recovery_component, storage: escape, event: EscapeEvents);
     #[abi(embed_v0)]
@@ -67,6 +73,8 @@ mod ArgentMultisigAccount {
         #[substorage(v0)]
         upgrade: upgrade_component::Storage,
         #[substorage(v0)]
+        upgrade_migration: upgrade_migration_component::Storage,
+        #[substorage(v0)]
         escape: external_recovery_component::Storage,
         #[substorage(v0)]
         reentrancy_guard: ReentrancyGuardComponent::Storage,
@@ -85,6 +93,8 @@ mod ArgentMultisigAccount {
         SRC5Events: src5_component::Event,
         #[flat]
         UpgradeEvents: upgrade_component::Event,
+        #[flat]
+        UpgradeMigrationEvents: upgrade_migration_component::Event,
         #[flat]
         EscapeEvents: external_recovery_component::Event,
         #[flat]
@@ -237,6 +247,12 @@ mod ArgentMultisigAccount {
             self.signer_list.add_signers(signers_to_add.span(), 0);
             array![]
         }
+    }
+
+    impl UpgradeMigrationCallbackImpl of IUpgradeMigrationCallback<ContractState> {
+        fn finalize_migration(ref self: ContractState) {}
+
+        fn migrate_owner(ref self: ContractState) {}
     }
 
     #[abi(embed_v0)]

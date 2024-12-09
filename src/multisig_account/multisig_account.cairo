@@ -1,6 +1,8 @@
 #[starknet::contract(account)]
 mod ArgentMultisigAccount {
-    use argent::account::interface::{IAccount, IArgentAccount, Version};
+    use argent::account::interface::{
+        IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version
+    };
     use argent::introspection::src5::src5_component;
     use argent::multisig_account::external_recovery::{
         external_recovery::{external_recovery_component, IExternalRecoveryCallback}
@@ -26,7 +28,7 @@ mod ArgentMultisigAccount {
     use starknet::{get_tx_info, get_execution_info, get_contract_address, VALIDATED, account::Call, ClassHash};
 
     const NAME: felt252 = 'ArgentMultisig';
-    const VERSION: Version = Version { major: 0, minor: 2, patch: 0 };
+    const VERSION: Version = Version { major: 0, minor: 3, patch: 0 };
 
     // Signer storage
     component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
@@ -49,6 +51,7 @@ mod ArgentMultisigAccount {
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
+    impl UpgradableInternalImpl = upgrade_component::UpgradableInternalImpl<ContractState>;
     // Upgrade migration
     component!(path: upgrade_migration_component, storage: upgrade_migration, event: UpgradeMigrationEvents);
     impl UpgradableMigrationInternal = upgrade_migration_component::UpgradableMigrationInternal<ContractState>;
@@ -229,22 +232,10 @@ mod ArgentMultisigAccount {
     impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
-            // Check basic invariants
-            self.signer_manager.assert_valid_storage();
-            let pubkeys = self.signer_list.get_signers();
-            let mut pubkeys_span = pubkeys.span();
-            let mut signers_to_add = array![];
-            // Converting storage from public keys to guid
-            while let Option::Some(pubkey) = pubkeys_span.pop_front() {
-                let starknet_signer = starknet_signer_from_pubkey(*pubkey);
-                let signer_guid = starknet_signer.into_guid();
-                signers_to_add.append(signer_guid);
-                self.signer_list.emit(signer_list_component::SignerLinked { signer_guid, signer: starknet_signer });
-            };
+
+            self.upgrade_migration.migrate_from_before_0_3_0(self.get_version());
+
             assert(data.len() == 0, 'argent/unexpected-data');
-            let last_signer = *pubkeys[pubkeys.len() - 1];
-            self.signer_list.remove_signers(pubkeys.span(), last_signer);
-            self.signer_list.add_signers(signers_to_add.span(), 0);
             array![]
         }
     }
@@ -252,13 +243,32 @@ mod ArgentMultisigAccount {
     impl UpgradeMigrationCallbackImpl of IUpgradeMigrationCallback<ContractState> {
         fn finalize_migration(ref self: ContractState) {}
 
-        fn migrate_owner(ref self: ContractState) {}
+        fn migrate_owners(ref self: ContractState) {}
     }
 
     #[abi(embed_v0)]
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
-            panic_with_felt252('argent/downgrade-not-allowed');
+            assert_only_self();
+
+            // Downgrade check
+            let argent_dispatcher = IArgentAccountDispatcher { contract_address: get_contract_address() };
+            assert(argent_dispatcher.get_name() == self.get_name(), 'argent/invalid-name');
+            let previous_version = argent_dispatcher.get_version();
+            let current_version = self.get_version();
+            assert(previous_version < current_version, 'argent/downgrade-not-allowed');
+
+            self.upgrade.complete_upgrade(new_implementation);
+
+            self.upgrade_migration.migrate_from_0_3_0();
+
+            if data.is_empty() {
+                return;
+            }
+
+            let calls: Array<Call> = full_deserialize(data).expect('argent/invalid-calls');
+            assert_no_self_call(calls.span(), get_contract_address());
+            execute_multicall(calls.span());
         }
     }
 

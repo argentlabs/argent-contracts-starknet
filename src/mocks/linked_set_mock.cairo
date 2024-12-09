@@ -7,11 +7,11 @@
 mod linked_set_mock {
     use argent::signer::signer_signature::SignerStorageValue;
     use argent::utils::linked_set::LinkedSet;
-    use argent::utils::linked_set_plus_one::LinkedSetPlus1;
+    use argent::utils::linked_set_with_head::LinkedSetWithHead;
 
     #[storage]
     struct Storage {
-        linked_set_plus_1: LinkedSetPlus1<SignerStorageValue>,
+        linked_set_plus_1: LinkedSetWithHead<SignerStorageValue>,
         linked_set: LinkedSet<SignerStorageValue>,
     }
 

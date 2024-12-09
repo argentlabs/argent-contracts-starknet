@@ -59,7 +59,7 @@ mod utils {
     mod calls;
     mod hashing;
     mod linked_set;
-    mod linked_set_plus_one;
+    mod linked_set_with_head;
     mod serialization;
     mod transaction_version;
 }

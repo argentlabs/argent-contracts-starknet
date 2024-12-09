@@ -7,11 +7,11 @@ use starknet::Store;
 use starknet::storage::{StorageAsPath, StoragePathEntry, StoragePathTrait, StoragePath, Mutable, StorageBase};
 
 ///
-/// A LinkedSetPlus1 is storage structure that allows to store multiple items making it efficient to check if an item is
-/// in the set.
+/// A LinkedSetWithHead is storage structure that allows to store multiple items making it efficient to check if an item
+/// is in the set.
 /// LinkedSet doesn't allow duplicate items.
 /// The order of the items is preserved.
-/// It builds on top of LinkedSet but stores the first item separately. This means:
+/// It builds on top of LinkedSet but stores the first item, the head, separately. This means:
 /// - Storing just one item is cheap because it doesn't need to store the end marker. Uses the same amount of storage as
 /// a LinkedSet for larger sets
 /// - Checking if an item is in the set is O(1) complexity. Its a bit more expensive than LinkedSet but
@@ -24,9 +24,9 @@ use starknet::storage::{StorageAsPath, StoragePathEntry, StoragePathTrait, Stora
 /// Storing 3 items: head=A , tail= [B, C]
 ///
 #[phantom]
-pub struct LinkedSetPlus1<T> {}
+pub struct LinkedSetWithHead<T> {}
 
-pub trait LinkedSetPlus1Read<TMemberState> {
+pub trait LinkedSetWithHeadRead<TMemberState> {
     type Value;
     /// @returns the first item in the set or None if the set is empty
     fn first(self: TMemberState) -> Option<Self::Value>;
@@ -46,7 +46,7 @@ pub trait LinkedSetPlus1Read<TMemberState> {
     fn get_all_hashes(self: TMemberState) -> Array<felt252>;
 }
 
-pub trait LinkedSetPlus1Write<TMemberState> {
+pub trait LinkedSetWithHeadWrite<TMemberState> {
     type Value;
     /// Adds an item to the set
     /// @dev It will panic if the item is already in the set
@@ -60,37 +60,37 @@ pub trait LinkedSetPlus1Write<TMemberState> {
 }
 
 
-impl LinkedSetPlus1ReadImpl<
+impl LinkedSetWithHeadReadImpl<
     T, +Drop<T>, +PartialEq<T>, +starknet::Store<T>, +LinkedSetConfig<T>
-> of LinkedSetPlus1Read<StorageBase<LinkedSetPlus1<T>>> {
+> of LinkedSetWithHeadRead<StorageBase<LinkedSetWithHead<T>>> {
     type Value = T;
 
     #[inline(always)]
-    fn first(self: StorageBase<LinkedSetPlus1<T>>) -> Option<T> {
+    fn first(self: StorageBase<LinkedSetWithHead<T>>) -> Option<T> {
         LinkedSetConfig::path_read_value(path: self.head_entry())
     }
 
     #[inline(always)]
-    fn single(self: StorageBase<LinkedSetPlus1<T>>) -> Option<T> {
+    fn single(self: StorageBase<LinkedSetWithHead<T>>) -> Option<T> {
         if !self.get_tail_list().is_empty() {
             return Option::None; // More than one item
         }
         self.first()
     }
 
-    fn len(self: StorageBase<LinkedSetPlus1<T>>) -> usize {
+    fn len(self: StorageBase<LinkedSetWithHead<T>>) -> usize {
         if self.is_empty() {
             return 0;
         }
         1 + self.get_tail_list().len()
     }
 
-    fn is_empty(self: StorageBase<LinkedSetPlus1<T>>) -> bool {
+    fn is_empty(self: StorageBase<LinkedSetWithHead<T>>) -> bool {
         self.first().is_none()
     }
 
     #[inline(always)]
-    fn contains(self: StorageBase<LinkedSetPlus1<T>>, item: T) -> bool {
+    fn contains(self: StorageBase<LinkedSetWithHead<T>>, item: T) -> bool {
         let first_item = if let Option::Some(value) = self.first() {
             value
         } else {
@@ -104,7 +104,7 @@ impl LinkedSetPlus1ReadImpl<
     }
 
     #[inline(always)]
-    fn contains_by_hash(self: StorageBase<LinkedSetPlus1<T>>, item_hash: felt252) -> bool {
+    fn contains_by_hash(self: StorageBase<LinkedSetWithHead<T>>, item_hash: felt252) -> bool {
         let first_item = if let Option::Some(value) = self.first() {
             value
         } else {
@@ -118,7 +118,7 @@ impl LinkedSetPlus1ReadImpl<
         self.get_tail_list().contains(item_hash)
     }
 
-    fn get_all_hashes(self: StorageBase<LinkedSetPlus1<T>>) -> Array<felt252> {
+    fn get_all_hashes(self: StorageBase<LinkedSetWithHead<T>>) -> Array<felt252> {
         if let Option::Some(first_item) = self.first() {
             let mut all_hashes = array![first_item.hash()];
             all_hashes.append_all(self.get_tail_list().get_all_hashes().span());
@@ -131,27 +131,27 @@ impl LinkedSetPlus1ReadImpl<
 }
 
 #[generate_trait]
-impl LinkedSetPlus1ReadPrivateImpl<
+impl LinkedSetWithHeadReadPrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +starknet::Store<T>, +LinkedSetConfig<T>
-> of LinkedSetPlus1ReadPrivate<T> {
+> of LinkedSetWithHeadReadPrivate<T> {
     #[inline(always)]
-    fn head_entry(self: StorageBase<LinkedSetPlus1<T>>) -> StoragePath<T> {
+    fn head_entry(self: StorageBase<LinkedSetWithHead<T>>) -> StoragePath<T> {
         StoragePathTrait::new(self.__hash_state__.state)
     }
 
     #[inline(always)]
-    fn get_tail_list(self: StorageBase<LinkedSetPlus1<T>>) -> StorageBase<LinkedSet<T>> {
+    fn get_tail_list(self: StorageBase<LinkedSetWithHead<T>>) -> StorageBase<LinkedSet<T>> {
         StorageBase { __base_address__: self.__base_address__ }
     }
 }
 
-impl LinkedSetPlus1WriteImpl<
+impl LinkedSetWithHeadWriteImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>
-> of LinkedSetPlus1Write<StorageBase<Mutable<LinkedSetPlus1<T>>>> {
+> of LinkedSetWithHeadWrite<StorageBase<Mutable<LinkedSetWithHead<T>>>> {
     type Value = T;
 
     #[inline(always)]
-    fn insert(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item: T) -> felt252 {
+    fn insert(self: StorageBase<Mutable<LinkedSetWithHead<T>>>, item: T) -> felt252 {
         if let Option::Some(first_item) = self.first() {
             assert(item != first_item, 'linked-set/already-in-set');
             self.get_tail_list().insert(item)
@@ -163,7 +163,7 @@ impl LinkedSetPlus1WriteImpl<
         }
     }
 
-    fn remove(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item_hash: felt252) {
+    fn remove(self: StorageBase<Mutable<LinkedSetWithHead<T>>>, item_hash: felt252) {
         let head_item = self.first().expect('linked-set/item-not-found');
         if head_item.hash() == item_hash {
             // Removing head item
@@ -184,58 +184,58 @@ impl LinkedSetPlus1WriteImpl<
 }
 
 #[generate_trait]
-impl LinkedSetPlus1WritePrivateImpl<
+impl LinkedSetWithHeadWritePrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>
-> of LinkedSetPlus1WritePrivate<T> {
+> of LinkedSetWithHeadWritePrivate<T> {
     #[inline(always)]
-    fn head_entry(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> StoragePath<Mutable<T>> {
+    fn head_entry(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> StoragePath<Mutable<T>> {
         StoragePathTrait::new(self.__hash_state__.state)
     }
 
     #[inline(always)]
-    fn get_tail_list(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> StorageBase<Mutable<LinkedSet<T>>> {
+    fn get_tail_list(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> StorageBase<Mutable<LinkedSet<T>>> {
         StorageBase { __base_address__: self.__base_address__ }
     }
 }
 
 // Allow read operations in mutable access too
-impl MutableLinkedSetPlus1ReadImpl<
+impl MutableLinkedSetWithHeadReadImpl<
     T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>,
-> of LinkedSetPlus1Read<StorageBase<Mutable<LinkedSetPlus1<T>>>> {
+> of LinkedSetWithHeadRead<StorageBase<Mutable<LinkedSetWithHead<T>>>> {
     type Value = T;
 
     #[inline(always)]
-    fn first(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> Option<T> {
+    fn first(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> Option<T> {
         self.as_read_only().first()
     }
 
     #[inline(always)]
-    fn single(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> Option<T> {
+    fn single(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> Option<T> {
         self.as_read_only().single()
     }
 
     #[inline(always)]
-    fn len(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> usize {
+    fn len(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> usize {
         self.as_read_only().len()
     }
 
     #[inline(always)]
-    fn is_empty(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> bool {
+    fn is_empty(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> bool {
         self.as_read_only().is_empty()
     }
 
     #[inline(always)]
-    fn contains(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item: T) -> bool {
+    fn contains(self: StorageBase<Mutable<LinkedSetWithHead<T>>>, item: T) -> bool {
         self.as_read_only().contains(:item)
     }
 
     #[inline(always)]
-    fn contains_by_hash(self: StorageBase<Mutable<LinkedSetPlus1<T>>>, item_hash: felt252) -> bool {
+    fn contains_by_hash(self: StorageBase<Mutable<LinkedSetWithHead<T>>>, item_hash: felt252) -> bool {
         self.as_read_only().contains_by_hash(:item_hash)
     }
 
     #[inline(always)]
-    fn get_all_hashes(self: StorageBase<Mutable<LinkedSetPlus1<T>>>) -> Array<felt252> {
+    fn get_all_hashes(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> Array<felt252> {
         self.as_read_only().get_all_hashes()
     }
 }

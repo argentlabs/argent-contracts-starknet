@@ -16,7 +16,7 @@ impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
 
     fn path_read_value(path: StoragePath<felt252>) -> Option<felt252> {
         let stored_value = path.read();
-        if stored_value == 0 || stored_value == Self::END_MARKER {
+        if !stored_value.is_valid_item() {
             return Option::None;
         }
         Option::Some(stored_value)

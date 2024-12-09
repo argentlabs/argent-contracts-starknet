@@ -64,8 +64,8 @@ mod guardian_manager_component {
             SignerStorageTrait, SignerType
         },
     };
-    use argent::utils::linked_set_plus_one::{
-        LinkedSetPlus1, LinkedSetPlus1ReadImpl, LinkedSetPlus1WriteImpl, MutableLinkedSetPlus1ReadImpl
+    use argent::utils::linked_set_with_head::{
+        LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl
     };
 
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
@@ -78,7 +78,7 @@ mod guardian_manager_component {
 
     #[storage]
     struct Storage {
-        guardians_storage: LinkedSetPlus1<SignerStorageValue>
+        guardians_storage: LinkedSetWithHead<SignerStorageValue>
     }
 
     #[event]

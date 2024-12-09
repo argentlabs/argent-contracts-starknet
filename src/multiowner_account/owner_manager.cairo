@@ -44,8 +44,8 @@ mod owner_manager_component {
         Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
         SignerStorageTrait
     };
-    use argent::utils::linked_set_plus_one::{
-        LinkedSetPlus1, LinkedSetPlus1ReadImpl, LinkedSetPlus1WriteImpl, MutableLinkedSetPlus1ReadImpl
+    use argent::utils::linked_set_with_head::{
+        LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl
     };
 
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
@@ -57,7 +57,7 @@ mod owner_manager_component {
 
     #[storage]
     struct Storage {
-        owners_storage: LinkedSetPlus1<SignerStorageValue>
+        owners_storage: LinkedSetWithHead<SignerStorageValue>
     }
 
     #[event]

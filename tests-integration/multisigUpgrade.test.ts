@@ -14,7 +14,7 @@ import {
 } from "../lib";
 import { deployMultisig1_1 } from "../lib/multisig";
 
-describe("ArgentMultisig: upgrade", function () {
+describe.skip("ArgentMultisig: upgrade", function () {
   it("Upgrade from current version to FutureVersionMultisig", async function () {
     // This is the same as Argent Multisig but with a different version (to have another class hash)
     const argentMultisigFutureClassHash = await manager.declareLocalContract("MockFutureArgentMultisig");

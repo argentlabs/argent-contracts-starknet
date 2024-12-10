@@ -243,7 +243,8 @@ mod ArgentMultisigAccount {
     impl UpgradeMigrationCallbackImpl of IUpgradeMigrationCallback<ContractState> {
         fn finalize_migration(ref self: ContractState) {}
 
-        fn migrate_owners(ref self: ContractState) {}
+        fn migrate_owners(ref self: ContractState, guids: Span<felt252>) { // TODO Wait for linkedSet to be merged
+        }
     }
 
     #[abi(embed_v0)]

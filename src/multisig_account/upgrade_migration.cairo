@@ -9,7 +9,7 @@ trait IUpgradeMigrationInternal<TContractState> {
 
 trait IUpgradeMigrationCallback<TContractState> {
     fn finalize_migration(ref self: TContractState);
-    fn migrate_owners(ref self: TContractState);
+    fn migrate_owners(ref self: TContractState, guids: Span<felt252>);
 }
 
 #[starknet::component]
@@ -21,6 +21,7 @@ mod upgrade_migration_component {
 
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT_LEGACY: usize = 32;
+
     #[storage]
     struct Storage {
         signer_list: Map<felt252, felt252>,
@@ -29,7 +30,9 @@ mod upgrade_migration_component {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {}
+    enum Event {// SignerLinked: SignerLinked,
+    }
+    // TODO Do tests from each multisig version, like the regular account upgrade
 
     #[embeddable_as(UpgradableInternalImpl)]
     impl UpgradableMigrationInternal<
@@ -41,7 +44,7 @@ mod upgrade_migration_component {
         fn migrate_from_before_0_3_0(ref self: ComponentState<TContractState>, version: Version) {
             // Check basic invariants
             // Not migrated yet to guids
-            let guids = if version.minor == 2 {
+            let guids = if version.minor == 1 {
                 assert_valid_threshold_and_signers_count(self.threshold.read(), self.get_signers_len());
                 let pubkeys = self.get_signers();
                 let mut pubkeys_span = pubkeys.span();
@@ -51,10 +54,9 @@ mod upgrade_migration_component {
                     let starknet_signer = starknet_signer_from_pubkey(*pubkey);
                     let signer_guid = starknet_signer.into_guid();
                     signers_to_add.append(signer_guid);
-                    // TODO Do like the account using the emit event trait
-                // TODO Do tests from each multisig version, like the regular account upgrade
-                // self.signer_list.emit(signer_list_component::SignerLinked { signer_guid, signer: starknet_signer
-                // });
+                    // TODO Is this good enough or should we do like the account where we emit 'any' multisig event?
+                // Blocked by LinkedSetBranch
+                // self.emit(SignerLinked { signer_guid, signer: starknet_signer });
                 };
                 let last_signer = *pubkeys[pubkeys.len() - 1];
                 self.remove_signers(pubkeys.span(), last_signer);
@@ -64,9 +66,8 @@ mod upgrade_migration_component {
                 self.get_signers().span()
             };
             // callback with guids
-        // TODO Do the callback and add signers
-        // self.signer_list.add_signers(signers_to_add.span(), 0);
-
+            // TODO Do the callback and add signers
+            self.migrate_owners(guids);
             // For next upgrade, uncomment this line
         // self.migrate_from_0_3_0();
         }
@@ -83,14 +84,15 @@ mod upgrade_migration_component {
         +IUpgradeMigrationCallback<TContractState>,
         +Drop<TContractState>,
     > of PrivateTrait<TContractState> {
+        // TODO do anything with this fn?
         fn finalize_migration(ref self: ComponentState<TContractState>) {
             let mut contract = self.get_contract_mut();
             contract.finalize_migration();
         }
 
-        fn migrate_owners(ref self: ComponentState<TContractState>) {
+        fn migrate_owners(ref self: ComponentState<TContractState>, guids: Span<felt252>) {
             let mut contract = self.get_contract_mut();
-            contract.migrate_owners();
+            contract.migrate_owners(guids);
         }
 
 
@@ -117,7 +119,6 @@ mod upgrade_migration_component {
         }
 
         // TODO Copy pasted atm, should we optimized it? as we are reading it just before?
-
         // Returns the last signer of the list after the removal. This is needed to efficiently remove multiple signers.
         #[inline(always)]
         fn remove_signer(

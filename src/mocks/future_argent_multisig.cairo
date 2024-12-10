@@ -21,7 +21,7 @@ mod MockFutureArgentMultisig {
 
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION_MAJOR: u8 = 0;
-    const VERSION_MINOR: u8 = 3;
+    const VERSION_MINOR: u8 = 4;
     const VERSION_PATCH: u8 = 0;
 
     // Signer management
@@ -133,7 +133,7 @@ mod MockFutureArgentMultisig {
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
             assert_only_self();
             let current_version = IArgentAccountDispatcher { contract_address: get_contract_address() }.get_version();
-            assert(current_version.major == 0 && current_version.minor == 2, 'argent/invalid-from-version');
+            assert(current_version.major == 0 && current_version.minor == 3, 'argent/invalid-from-version');
             assert(data.len() == 0, 'argent/unexpected-data');
             self.upgrade.complete_upgrade(new_implementation);
             self.signer_manager.assert_valid_storage();

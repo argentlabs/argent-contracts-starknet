@@ -37,7 +37,9 @@ mod signer_manager_component {
             Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, starknet_signer_from_pubkey
         },
     };
-    use argent::utils::linked_set::{LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl};
+    use argent::utils::linked_set::{
+        LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, LinkedSetWritePrivateImpl, MutableLinkedSetReadImpl
+    };
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
     use super::SignerGuidLinkedSetConfig;
 
@@ -240,6 +242,15 @@ mod signer_manager_component {
 
             self.signer_list.remove_many(pubkeys.span());
             self.signer_list.insert_many(signers_to_add.span());
+        }
+
+        fn add_end_marker(ref self: ComponentState<TContractState>) {
+            // assert valid storage
+            let pubkeys = self.get_signer_guids();
+            self.assert_valid_threshold_and_signers_count(self.threshold.read(), pubkeys.len());
+
+            let last_signer = self.signer_list.find_last_hash();
+            self.signer_list.entry(last_signer).write(SignerGuidLinkedSetConfig::END_MARKER);
         }
 
         fn is_valid_signature_with_threshold(

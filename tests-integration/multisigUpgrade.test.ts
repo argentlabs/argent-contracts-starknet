@@ -14,7 +14,7 @@ import {
 } from "../lib";
 import { deployMultisig1_1 } from "../lib/multisig";
 
-describe.skip("ArgentMultisig: upgrade", function () {
+describe("ArgentMultisig: upgrade", function () {
   it("Upgrade from current version to FutureVersionMultisig", async function () {
     // This is the same as Argent Multisig but with a different version (to have another class hash)
     const argentMultisigFutureClassHash = await manager.declareLocalContract("MockFutureArgentMultisig");
@@ -24,6 +24,7 @@ describe.skip("ArgentMultisig: upgrade", function () {
     expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentMultisigFutureClassHash));
   });
 
+  // TODO Adding more tests for the upgrade from all versions to current version
   for (const threshold of [1, 3, 10]) {
     it(`Upgrade from 0.1.0 to Current Version with ${threshold} key(s)`, async function () {
       const { account, accountContract, signers } = await deployLegacyMultisig(

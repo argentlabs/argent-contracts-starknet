@@ -48,6 +48,7 @@ trait ISignerManagerInternal<TContractState> {
     fn assert_valid_threshold_and_signers_count(self: @TContractState, threshold: usize, signers_len: usize);
     fn assert_valid_storage(self: @TContractState);
     fn migrate_from_pubkeys_to_guids(ref self: TContractState);
+    fn add_end_marker(ref self: TContractState);
     fn is_valid_signature_with_threshold(
         self: @TContractState, hash: felt252, threshold: u32, signer_signatures: Array<SignerSignature>
     ) -> bool;

@@ -225,16 +225,15 @@ mod ArgentMultisigAccount {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
             self.signer_manager.migrate_from_pubkeys_to_guids();
-            self.upgrade_migration.migrate_from_before_0_3_0(self.get_version());
+            self.upgrade_migration.migrate_from_before_0_2_0();
             assert(data.len() == 0, 'argent/unexpected-data');
             array![]
         }
     }
 
     impl UpgradeMigrationCallbackImpl of IUpgradeMigrationCallback<ContractState> {
-        fn finalize_migration(ref self: ContractState) {}
-
-        fn migrate_owners(ref self: ContractState, guids: Span<felt252>) { // TODO Wait for linkedSet to be merged
+        fn migrate_owners(ref self: ContractState) {
+            self.signer_manager.add_end_marker();
         }
     }
 
@@ -252,7 +251,7 @@ mod ArgentMultisigAccount {
 
             self.upgrade.complete_upgrade(new_implementation);
 
-            self.upgrade_migration.migrate_from_0_3_0();
+            self.upgrade_migration.migrate_from_0_2_0();
 
             if data.is_empty() {
                 return;

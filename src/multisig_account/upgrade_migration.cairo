@@ -3,13 +3,12 @@ use argent::signer::signer_signature::SignerStorageValue;
 
 #[starknet::interface]
 trait IUpgradeMigrationInternal<TContractState> {
-    fn migrate_from_before_0_3_0(ref self: TContractState, version: Version);
-    fn migrate_from_0_3_0(ref self: TContractState);
+    fn migrate_from_before_0_2_0(ref self: TContractState);
+    fn migrate_from_0_2_0(ref self: TContractState);
 }
 
 trait IUpgradeMigrationCallback<TContractState> {
-    fn finalize_migration(ref self: TContractState);
-    fn migrate_owners(ref self: TContractState, guids: Span<felt252>);
+    fn migrate_owners(ref self: TContractState);
 }
 
 #[starknet::component]
@@ -32,7 +31,6 @@ mod upgrade_migration_component {
     #[derive(Drop, starknet::Event)]
     enum Event { // SignerLinked: SignerLinked,
     }
-    // TODO Do tests from each multisig version, like the regular account upgrade
 
     #[embeddable_as(UpgradableInternalImpl)]
     impl UpgradableMigrationInternal<
@@ -41,39 +39,30 @@ mod upgrade_migration_component {
         +Drop<TContractState>,
         +IUpgradeMigrationCallback<TContractState>,
     > of IUpgradeMigrationInternal<ComponentState<TContractState>> {
-        fn migrate_from_before_0_3_0(ref self: ComponentState<TContractState>, version: Version) {
+        fn migrate_from_before_0_2_0(ref self: ComponentState<TContractState>) {
             // Check basic invariants
             // Not migrated yet to guids
-            let guids = if version.minor == 1 {
-                assert_valid_threshold_and_signers_count(self.threshold.read(), self.get_signers_len());
-                let pubkeys = self.get_signers();
-                let mut pubkeys_span = pubkeys.span();
-                let mut signers_to_add = array![];
-                // Converting storage from public keys to guid
-                while let Option::Some(pubkey) = pubkeys_span.pop_front() {
-                    let starknet_signer = starknet_signer_from_pubkey(*pubkey);
-                    let signer_guid = starknet_signer.into_guid();
-                    signers_to_add.append(signer_guid);
-                    // TODO Is this good enough or should we do like the account where we emit 'any' multisig event?
-                // Blocked by LinkedSetBranch
-                // self.emit(SignerLinked { signer_guid, signer: starknet_signer });
-                };
-                let last_signer = *pubkeys[pubkeys.len() - 1];
-                self.remove_signers(pubkeys.span(), last_signer);
-                signers_to_add.span()
-            } else {
-                // Already migrated to guids
-                self.get_signers().span()
+            assert_valid_threshold_and_signers_count(self.threshold.read(), self.get_signers_len());
+            let pubkeys = self.get_signers();
+            let mut pubkeys_span = pubkeys.span();
+            let mut signers_to_add = array![];
+            // Converting storage from public keys to guid
+            while let Option::Some(pubkey) = pubkeys_span.pop_front() {
+                let starknet_signer = starknet_signer_from_pubkey(*pubkey);
+                let signer_guid = starknet_signer.into_guid();
+                signers_to_add.append(signer_guid);
+                // TODO Is this good enough or should we do like the account where we emit 'any' multisig event?
+            // self.emit(SignerLinked { signer_guid, signer: starknet_signer });
             };
-            // callback with guids
-            // TODO Do the callback and add signers
-            self.migrate_owners(guids);
-            // For next upgrade, uncomment this line
-        // self.migrate_from_0_3_0();
+            let last_signer = *pubkeys[pubkeys.len() - 1];
+            self.remove_signers(pubkeys.span(), last_signer);
+            self.add_signers(self.threshold.read(), pubkeys);
+
+            self.migrate_from_0_2_0();
         }
 
-        fn migrate_from_0_3_0(ref self: ComponentState<TContractState>) {
-            panic_with_felt252('argent/unsupported-migration');
+        fn migrate_from_0_2_0(ref self: ComponentState<TContractState>) {
+            self.migrate_owners();
         }
     }
 
@@ -84,15 +73,9 @@ mod upgrade_migration_component {
         +IUpgradeMigrationCallback<TContractState>,
         +Drop<TContractState>,
     > of PrivateTrait<TContractState> {
-        // TODO do anything with this fn?
-        fn finalize_migration(ref self: ComponentState<TContractState>) {
+        fn migrate_owners(ref self: ComponentState<TContractState>) {
             let mut contract = self.get_contract_mut();
-            contract.finalize_migration();
-        }
-
-        fn migrate_owners(ref self: ComponentState<TContractState>, guids: Span<felt252>) {
-            let mut contract = self.get_contract_mut();
-            contract.migrate_owners(guids);
+            contract.migrate_owners();
         }
 
 
@@ -116,6 +99,60 @@ mod upgrade_migration_component {
                 current_signer = self.signer_list.read(current_signer);
             };
             signers
+        }
+
+        fn add_signers(ref self: ComponentState<TContractState>, new_threshold: usize, signers_to_add: Array<felt252>) {
+            let (signers_len, last_signer) = self.load();
+            // let previous_threshold = self.threshold.read();
+
+            let new_signers_count = signers_len + signers_to_add.len();
+            assert_valid_threshold_and_signers_count(new_threshold, new_signers_count);
+            self.add_signers_in(signers_to_add.span(), last_signer);
+            self.threshold.write(new_threshold);
+            // if previous_threshold != new_threshold {
+        //     self.emit(ThresholdUpdated { new_threshold });
+        // }
+
+            // let mut signers_added = signers_to_add.span();
+        // loop {
+        //     match signers_added.pop_front() {
+        //         Option::Some(added_signer) => { self.emit(OwnerAdded { new_owner_guid: *added_signer }); },
+        //         Option::None(_) => { break; }
+        //     };
+        // };
+        }
+
+        fn add_signers_in(
+            ref self: ComponentState<TContractState>, mut signers_to_add: Span<felt252>, last_signer: felt252
+        ) {
+            match signers_to_add.pop_front() {
+                Option::Some(signer_ref) => {
+                    let signer = *signer_ref;
+                    assert(signer != 0, 'argent/invalid-zero-signer');
+
+                    let current_signer_status = self.is_signer_using_last(signer, last_signer);
+                    assert(!current_signer_status, 'argent/already-a-signer');
+
+                    // Signers are added at the end of the list
+                    self.signer_list.write(last_signer, signer);
+
+                    self.add_signers_in(signers_to_add, last_signer: signer);
+                },
+                Option::None(()) => (),
+            }
+        }
+
+        fn load(self: @ComponentState<TContractState>) -> (usize, felt252) {
+            let mut current_signer = 0;
+            let mut size = 0;
+            loop {
+                let next_signer = self.signer_list.read(current_signer);
+                if next_signer == 0 {
+                    break (size, current_signer);
+                }
+                current_signer = next_signer;
+                size += 1;
+            }
         }
 
         // TODO Copy pasted atm, should we optimized it? as we are reading it just before?

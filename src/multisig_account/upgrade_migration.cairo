@@ -30,7 +30,7 @@ mod upgrade_migration_component {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {// SignerLinked: SignerLinked,
+    enum Event { // SignerLinked: SignerLinked,
     }
     // TODO Do tests from each multisig version, like the regular account upgrade
 

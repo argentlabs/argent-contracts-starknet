@@ -51,7 +51,7 @@ fn test_initialize_no_signers() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/already-a-signer',))]
+#[should_panic(expected: ('linked-set/already-in-set',))]
 fn test_initialize_duplicate_signer() {
     let mut component = COMPONENT_STATE();
     component.initialize(1, array![SIGNER_1(), SIGNER_1(), SIGNER_2()]);
@@ -116,7 +116,7 @@ fn test_add_1_signer_invalid_threshold() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/already-a-signer',))]
+#[should_panic(expected: ('linked-set/already-in-set',))]
 fn test_initialize_add_duplicate_signer() {
     start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
@@ -186,7 +186,7 @@ fn test_remove_all_signers() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/not-a-signer',))]
+#[should_panic(expected: ('linked-set/item-not-found',))]
 fn test_remove_unknown_signer() {
     start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
@@ -219,7 +219,7 @@ fn test_replace_last_signer() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/not-a-signer',))]
+#[should_panic(expected: ('linked-set/item-not-found',))]
 fn test_replace_unknown_signer() {
     start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();
@@ -228,7 +228,7 @@ fn test_replace_unknown_signer() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/already-a-signer',))]
+#[should_panic(expected: ('linked-set/already-in-set',))]
 fn test_replace_duplicate_signer() {
     start_cheat_caller_address_global(test_address());
     let mut component = COMPONENT_STATE();

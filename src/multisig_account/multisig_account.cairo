@@ -10,7 +10,6 @@ mod ArgentMultisigAccount {
     use argent::multisig_account::signer_manager::{
         signer_manager::{signer_manager_component, signer_manager_component::SignerManagerInternalImpl}
     };
-    use argent::multisig_account::signer_storage::signer_list::signer_list_component;
     use argent::multisig_account::upgrade_migration::{
         IUpgradeMigrationInternal, upgrade_migration_component, IUpgradeMigrationCallback
     };
@@ -30,9 +29,6 @@ mod ArgentMultisigAccount {
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION: Version = Version { major: 0, minor: 3, patch: 0 };
 
-    // Signer storage
-    component!(path: signer_list_component, storage: signer_list, event: SignerListEvents);
-    impl SignerListInternal = signer_list_component::SignerListInternalImpl<ContractState>;
     // Signer Management
     component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
     #[abi(embed_v0)]
@@ -66,8 +62,6 @@ mod ArgentMultisigAccount {
     #[storage]
     struct Storage {
         #[substorage(v0)]
-        signer_list: signer_list_component::Storage,
-        #[substorage(v0)]
         signer_manager: signer_manager_component::Storage,
         #[substorage(v0)]
         execute_from_outside: outside_execution_component::Storage,
@@ -86,8 +80,6 @@ mod ArgentMultisigAccount {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        #[flat]
-        SignerListEvents: signer_list_component::Event,
         #[flat]
         SignerManagerEvents: signer_manager_component::Event,
         #[flat]
@@ -232,9 +224,8 @@ mod ArgentMultisigAccount {
     impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
-
+            self.signer_manager.migrate_from_pubkeys_to_guids();
             self.upgrade_migration.migrate_from_before_0_3_0(self.get_version());
-
             assert(data.len() == 0, 'argent/unexpected-data');
             array![]
         }

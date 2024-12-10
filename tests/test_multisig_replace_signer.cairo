@@ -115,7 +115,7 @@ fn replace_signer_end() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/not-a-signer',))]
+#[should_panic(expected: ('linked-set/item-not-found',))]
 fn replace_invalid_signer() {
     // init
     let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);
@@ -131,7 +131,7 @@ fn replace_invalid_signer() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/already-a-signer',))]
+#[should_panic(expected: ('linked-set/already-in-set',))]
 fn replace_already_signer() {
     // init
     let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(1).pubkey);

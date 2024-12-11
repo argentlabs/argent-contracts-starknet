@@ -12,13 +12,17 @@ mod ArgentMultisigAccount {
         signer_manager_component, signer_manager_component::SignerManagerInternalImpl
     };
     use argent::multisig_account::upgrade_migration::{
-        IUpgradeMigrationInternal, upgrade_migration_component, IUpgradeMigrationCallback
+        IUpgradeMigrationInternal, upgrade_migration_component,
+        upgrade_migration_component::UpgradableMigrationInternal, IUpgradeMigrationCallback
     };
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
     use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey, SignerTrait};
-    use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
+    use argent::upgrade::{
+        upgrade::upgrade_component, upgrade::upgrade_component::UpgradableInternalImpl,
+        interface::{IUpgradableCallback, IUpgradableCallbackOld}
+    };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
         serialization::full_deserialize,
@@ -48,10 +52,8 @@ mod ArgentMultisigAccount {
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
-    impl UpgradableInternalImpl = upgrade_component::UpgradableInternalImpl<ContractState>;
     // Upgrade migration
     component!(path: upgrade_migration_component, storage: upgrade_migration, event: UpgradeMigrationEvents);
-    impl UpgradableMigrationInternal = upgrade_migration_component::UpgradableMigrationInternal<ContractState>;
     // External Recovery
     component!(path: external_recovery_component, storage: escape, event: EscapeEvents);
     #[abi(embed_v0)]
@@ -226,7 +228,6 @@ mod ArgentMultisigAccount {
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
             self.signer_manager.migrate_from_pubkeys_to_guids();
-            self.upgrade_migration.migrate_from_before_0_2_0();
             assert(data.len() == 0, 'argent/unexpected-data');
             array![]
         }

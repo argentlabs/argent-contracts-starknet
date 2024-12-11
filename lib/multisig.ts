@@ -108,10 +108,8 @@ const keysToSigners = (keys: KeyPair[]) => keys.map(({ signer }) => signer);
 export async function deployLegacyMultisig(classHash: string, threshold = 1) {
   const keys = randomLegacyMultisigKeyPairs(threshold);
   const signersPublicKeys = keys.map((key) => key.publicKey);
-
   const salt = num.toHex(randomStarknetKeyPair().privateKey);
   const constructorCalldata = CallData.compile({ threshold, signers: signersPublicKeys });
-
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
   await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
   const deploySigner = new LegacyMultisigSigner([keys[0]]);

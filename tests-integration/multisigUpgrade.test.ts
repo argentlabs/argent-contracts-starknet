@@ -12,14 +12,31 @@ import {
   sortByGuid,
   upgradeAccount,
 } from "../lib";
-import { deployMultisig1_1 } from "../lib/multisig";
+import { deployMultisig, deployMultisig1_1 } from "../lib/multisig";
 
 describe("ArgentMultisig: upgrade", function () {
-  const artifactNames: string[] = [];
+  const artifactNames: any[] = [];
+
   before(async () => {
-    artifactNames.push("0.1.0");
-    artifactNames.push("0.1.1");
-    artifactNames.push("0.2.0");
+    const v010 = "0.1.0";
+    const classHashV010 = await manager.declareArtifactMultisigContract(v010);
+    artifactNames.push({
+      name: v010,
+      deployMultisig: (threshold: number) => deployLegacyMultisig(classHashV010, threshold),
+    });
+    const v011 = "0.1.1";
+    const classHashV011 = await manager.declareArtifactMultisigContract(v011);
+    artifactNames.push({
+      name: v011,
+      deployMultisig: (threshold: number) => deployLegacyMultisig(classHashV011, threshold),
+    });
+    const v020 = "0.2.0";
+    const classHashV020 = await manager.declareArtifactMultisigContract(v020);
+    artifactNames.push({
+      name: v020,
+      deployMultisig: (threshold: number) =>
+        deployMultisig({ classHash: classHashV020, threshold, signersLength: threshold }),
+    });
   });
 
   it("Upgrade from current version to FutureVersionMultisig", async function () {
@@ -34,30 +51,26 @@ describe("ArgentMultisig: upgrade", function () {
   // TODO Filled with temp fix comparing to "0.2.0"
   it("Waiting for data to be filled", function () {
     describe("Upgrade to latest version", function () {
-      for (const artifactName of artifactNames) {
+      for (const { name, deployMultisig } of artifactNames) {
         for (const threshold of [1, 3, 10]) {
-          it(`Upgrade from ${artifactName} to Current Version with ${threshold} key(s)`, async function () {
-            const { account, accountContract, signers } = await deployLegacyMultisig(
-              await manager.declareArtifactMultisigContract(artifactName),
-              threshold,
-              artifactName == "0.2.0",
-            );
+          it(`Upgrade from ${name} to Current Version with ${threshold} key(s)`, async function () {
+            const { account, accountContract, keys } = await deployMultisig(threshold);
             const currentImpl = await manager.declareLocalContract("ArgentMultisigAccount");
 
             const pubKeys =
-              artifactName == "0.2.0"
-                ? signers.keys.map((key) => new StarknetKeyPair((key as LegacyMultisigKeyPair).pk).guid)
-                : signers.keys.map((key) => (key as LegacyMultisigKeyPair).publicKey);
+              name == "0.2.0"
+                ? keys.map((key: StarknetKeyPair) => key.guid)
+                : keys.map((key: LegacyMultisigKeyPair) => key.publicKey);
             const accountSigners =
-              artifactName == "0.2.0" ? await accountContract.get_signer_guids() : await accountContract.get_signers();
+              name == "0.2.0" ? await accountContract.get_signer_guids() : await accountContract.get_signers();
             expect(accountSigners.length).to.equal(pubKeys.length);
             expect(pubKeys).to.have.members(accountSigners);
 
             const tx = await upgradeAccount(account, currentImpl);
             expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(currentImpl));
-            if (artifactName != "0.2.0") {
-              for (const key of signers.keys) {
-                const snKeyPair = new StarknetKeyPair((key as LegacyMultisigKeyPair).privateKey);
+            if (name != "0.2.0") {
+              for (const key of keys) {
+                const snKeyPair = new StarknetKeyPair(key.privateKey);
                 await expectEvent(tx, {
                   from_address: account.address,
                   eventName: "SignerLinked",
@@ -71,14 +84,14 @@ describe("ArgentMultisig: upgrade", function () {
 
             const ethContract = await manager.tokens.ethContract();
             const newSigners = sortByGuid(
-              signers.keys.map((key) => new StarknetKeyPair((key as LegacyMultisigKeyPair).privateKey)),
+              keys.map((key: LegacyMultisigKeyPair) => new StarknetKeyPair((key as LegacyMultisigKeyPair).privateKey)),
             );
             account.signer = new MultisigSigner(newSigners);
 
             const newAccountContract = await manager.loadContract(account.address);
             const getSignerGuids = await newAccountContract.get_signer_guids();
             expect(getSignerGuids.length).to.equal(newSigners.length);
-            const newSignersGuids = newSigners.map((signer) => signer.guid);
+            const newSignersGuids = newSigners.map(signer => signer.guid);
             expect(getSignerGuids).to.have.members(newSignersGuids);
             // Perform a transfer to make sure nothing is broken
             ethContract.connect(account);

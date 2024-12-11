@@ -4,7 +4,6 @@ import {
   KeyPair,
   LegacyMultisigSigner,
   MultisigSigner,
-  SignerType,
   StarknetKeyPair,
   deployer,
   fundAccount,
@@ -13,7 +12,6 @@ import {
   randomLegacyMultisigKeyPairs,
   randomStarknetKeyPair,
   randomStarknetKeyPairs,
-  signerTypeToCustomEnum,
   sortByGuid,
 } from ".";
 
@@ -111,26 +109,23 @@ const keysToSigners = (keys: KeyPair[]) => keys.map(({ signer }) => signer);
 export const lama = (length: number) =>
   Array.from({ length }, () => new StarknetKeyPair()).sort((n1, n2) => (n1.guid < n2.guid ? -1 : 1));
 
-export async function deployLegacyMultisig(classHash: string, threshold = 1, test = false) {
-  const keys = test ? lama(threshold) : randomLegacyMultisigKeyPairs(threshold);
-  let signersPublicKeys: any = keys.map((key) => key.publicKey);
-  if (test) {
-    signersPublicKeys = keys.map((key) => signerTypeToCustomEnum(SignerType.Starknet, { signer: key.publicKey }));
-  }
+export async function deployLegacyMultisig(classHash: string, threshold = 1) {
+  const keys = randomLegacyMultisigKeyPairs(threshold);
+  const signersPublicKeys = keys.map((key) => key.publicKey);
+
   const salt = num.toHex(randomStarknetKeyPair().privateKey);
   const constructorCalldata = CallData.compile({ threshold, signers: signersPublicKeys });
 
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
   await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
-  const deploySigner = test ? new MultisigSigner([keys[0] as StarknetKeyPair]) : new LegacyMultisigSigner([keys[0]]);
+  const deploySigner = new LegacyMultisigSigner([keys[0]]);
   const account = new Account(manager, contractAddress, deploySigner, "1");
 
   const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
   await manager.waitForTx(transaction_hash);
 
-  const signers = test ? new MultisigSigner(keys.map((key) => key as StarknetKeyPair)) : new LegacyMultisigSigner(keys);
-  account.signer = signers;
+  account.signer = new LegacyMultisigSigner(keys);
   const accountContract = await manager.loadContract(account.address);
   accountContract.connect(account);
-  return { account, accountContract, deploySigner, signers };
+  return { account, accountContract, deploySigner, keys };
 }

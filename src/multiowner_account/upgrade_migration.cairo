@@ -99,7 +99,7 @@ mod upgrade_migration_component {
             let guardian_backup_key = self._guardian_backup.read();
             assert(!(guardian_key == 0 && guardian_backup_key != 0), 'argent/backup-should-be-null');
 
-            if guardian_key == 0 {
+            if guardian_key != 0 {
                 let guardian = starknet_signer_from_pubkey(guardian_key);
                 self.emit_signer_linked(guardian.into_guid(), guardian);
                 if guardian_backup_key != 0 {

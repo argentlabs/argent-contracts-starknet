@@ -5,7 +5,6 @@ import {
   SignerType,
   StarknetKeyPair,
   deployAccount,
-  deployAccountWithGuardianBackup,
   deployer,
   executeWithCustomSig,
   expectRevertWithErrorMessage,
@@ -72,24 +71,6 @@ describe("Session Account: execute caching", function () {
       await mockDappContract.get_number(accountContract.address).should.eventually.equal(8n);
     });
 
-    it(`Fail if guardian backup signed session (caching: ${useCaching})`, async function () {
-      const { account, guardian, owner } = await deployAccountWithGuardianBackup({
-        classHash: argentAccountClassHash,
-      });
-
-      const { accountWithDappSigner } = await setupSession({
-        guardian: guardian as StarknetKeyPair,
-        account,
-        expiry: initialTime + 150n,
-        dappKey: randomStarknetKeyPair(),
-        cacheOwnerGuid: useCaching ? owner.guid : undefined,
-        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
-      });
-      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
-
-      await expectRevertWithErrorMessage("session/signer-is-not-guardian", accountWithDappSigner.execute(calls));
-    });
-
     it(`Fail with 'argent/invalid-signature-len' if more than owner + guardian signed session (caching: ${useCaching})`, async function () {
       const { account, guardian, accountContract, owner } = await deployAccount({ classHash: argentAccountClassHash });
 
@@ -119,7 +100,7 @@ describe("Session Account: execute caching", function () {
         await accountContract.is_session_authorization_cached(sessionHash, owner.guid, guardian.guid).should.eventually
           .be.true;
         await expectRevertWithErrorMessage(
-          "session/invalid-auth-len",
+          "session/cache-invalid-auth-len",
           executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
         );
       } else {
@@ -284,7 +265,7 @@ describe("Session Account: execute caching", function () {
 
     const calls2 = [mockDappContract.populateTransaction.set_number_double(4)];
 
-    await expectRevertWithErrorMessage("session/signer-is-not-owner", accountWithDappSigner.execute(calls2));
+    await expectRevertWithErrorMessage("session/cache-invalid-owner", accountWithDappSigner.execute(calls2));
   });
 
   it("Fail if a large authorization is injected", async function () {
@@ -317,7 +298,7 @@ describe("Session Account: execute caching", function () {
     });
     sessionToken.sessionAuthorization = Array(10).fill("1");
     await expectRevertWithErrorMessage(
-      "session/invalid-auth-len",
+      "session/cache-invalid-auth-len",
       executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
     );
   });

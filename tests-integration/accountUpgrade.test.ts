@@ -9,7 +9,7 @@ import {
   StarknetKeyPair,
   WebauthnOwner,
   deployAccount,
-  deployAccountWithoutGuardian,
+  deployAccountWithoutGuardians,
   deployLegacyAccount,
   deployLegacyAccountWithoutGuardian,
   deployOldAccountWithProxy,
@@ -41,7 +41,7 @@ interface DeployAccountReturn {
 interface UpgradeDataEntry {
   name: string;
   deployAccount: () => Promise<DeployAccountReturn>;
-  deployAccountWithoutGuardian: () => Promise<DeployAccountReturn>;
+  deployAccountWithoutGuardians: () => Promise<DeployAccountReturn>;
   upgradeExtraCalldata?: string[]; // Optional, as it's not present in all entries
   triggerEscapeOwnerCall: SelfCall;
   triggerEscapeGuardianCall: SelfCall;
@@ -62,7 +62,7 @@ describe("ArgentAccount: upgrade", function () {
       deployAccount: async () => await deployOldAccountWithProxy(),
       // Required to ensure execute_after_upgrade is called. Without any calldata, the execute_after_upgrade won't be called
       upgradeExtraCalldata: ["0"],
-      deployAccountWithoutGuardian: async () => await deployOldAccountWithProxyWithoutGuardian(),
+      deployAccountWithoutGuardians: async () => await deployOldAccountWithProxyWithoutGuardian(),
       // Gotta call like that as the entrypoint is not found on the contract for legacy versions
       triggerEscapeOwnerCall: { entrypoint: "triggerEscapeSigner" },
       triggerEscapeGuardianCall: { entrypoint: "triggerEscapeGuardian" },
@@ -75,7 +75,7 @@ describe("ArgentAccount: upgrade", function () {
     upgradeData.push({
       name: v030,
       deployAccount: async () => deployLegacyAccount(classHashV030),
-      deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV030),
+      deployAccountWithoutGuardians: async () => deployLegacyAccountWithoutGuardian(classHashV030),
       triggerEscapeOwnerCall: triggerEscapeOwnerCallV03,
       triggerEscapeGuardianCall: triggerEscapeGuardianCallV03,
     });
@@ -85,7 +85,7 @@ describe("ArgentAccount: upgrade", function () {
     upgradeData.push({
       name: v031,
       deployAccount: async () => deployLegacyAccount(classHashV031),
-      deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV031),
+      deployAccountWithoutGuardians: async () => deployLegacyAccountWithoutGuardian(classHashV031),
       triggerEscapeOwnerCall: triggerEscapeOwnerCallV03,
       triggerEscapeGuardianCall: triggerEscapeGuardianCallV03,
     });
@@ -103,7 +103,7 @@ describe("ArgentAccount: upgrade", function () {
     upgradeData.push({
       name: v040,
       deployAccount: async () => deployAccount({ classHash: classHashV040 }),
-      deployAccountWithoutGuardian: async () => deployAccountWithoutGuardian({ classHash: classHashV040 }),
+      deployAccountWithoutGuardians: async () => deployAccountWithoutGuardians({ classHash: classHashV040 }),
       triggerEscapeOwnerCall: triggerEscapeOwnerCallV04,
       triggerEscapeGuardianCall: triggerEscapeGuardianCallV04,
     });
@@ -116,7 +116,7 @@ describe("ArgentAccount: upgrade", function () {
         deployAccount,
         triggerEscapeOwnerCall,
         triggerEscapeGuardianCall,
-        deployAccountWithoutGuardian,
+        deployAccountWithoutGuardians,
         upgradeExtraCalldata,
       } of upgradeData) {
         it(`[${name}] Should be possible to upgrade `, async function () {
@@ -130,7 +130,7 @@ describe("ArgentAccount: upgrade", function () {
         });
 
         it(`[${name}] Should be possible to upgrade without guardian from ${name}`, async function () {
-          const { account } = await deployAccountWithoutGuardian();
+          const { account } = await deployAccountWithoutGuardians();
           await upgradeAccount(account, argentAccountClassHash, upgradeExtraCalldata);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
           account.cairoVersion = "1";
@@ -262,7 +262,7 @@ describe("ArgentAccount: upgrade", function () {
 
       it(`[${name}] Testing upgrade without guardian ${name}`, async function () {
         const owner = keyPair();
-        const { account } = await deployAccountWithoutGuardian({ owner, classHash: classHashV040 });
+        const { account } = await deployAccountWithoutGuardians({ owner, classHash: classHashV040 });
 
         await upgradeAccount(account, argentAccountClassHash);
         expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));

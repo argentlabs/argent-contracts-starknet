@@ -144,12 +144,12 @@ mod session_component {
                     .read((cache_owner_guid, token_guardian_guid, session_hash));
                 if cached_sig_len != 0 {
                     // assert signers still valid
-                    assert(state.is_owner_guid(cache_owner_guid), 'session/invalid-owner');
+                    assert(state.is_owner_guid(cache_owner_guid), 'session/cache-invalid-owner');
                     // TODO compare using SignerSignature for performance?
-                    assert(state.is_guardian_guid(token_guardian_guid), 'session/invalid-guardian');
+                    assert(state.is_guardian_guid(token_guardian_guid), 'session/cache-invalid-guardian');
 
                     // prevents a DoS attack where authorization can be replaced by a bigger one
-                    assert(session_authorization.len() <= cached_sig_len, 'session/invalid-auth-len');
+                    assert(session_authorization.len() <= cached_sig_len, 'session/cache-invalid-auth-len');
                     // authorization is cached, we can skip the signature verification
                     return; // authorized
                 }
@@ -157,7 +157,7 @@ mod session_component {
                 let owner_guid_from_auth = (*parsed_session_authorization[0]).signer().into_guid();
                 // assert guardian in the token is the same guardian as in the authorization
                 let guardian_from_auth = (*parsed_session_authorization[1]).signer();
-                assert(guardian_from_auth == token_guardian, 'session/guardian-mismatch');
+                assert(guardian_from_auth == token_guardian, 'session/guardian-key-mismatch');
 
                 self
                     .valid_session_cache
@@ -167,7 +167,7 @@ mod session_component {
 
                 // assert guardian in the token is the same guardian as in the authorization
                 let guardian_from_auth = (*parsed_session_authorization[1]).signer();
-                assert(guardian_from_auth == token_guardian, 'session/guardian-mismatch');
+                assert(guardian_from_auth == token_guardian, 'session/guardian-key-mismatch');
             }
         }
     }

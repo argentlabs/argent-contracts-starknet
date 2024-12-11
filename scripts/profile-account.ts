@@ -9,7 +9,7 @@ import {
   StarknetKeyPair,
   WebauthnOwner,
   deployAccount,
-  deployAccountWithoutGuardian,
+  deployAccountWithoutGuardians,
   deployOldAccountWithProxy,
   deployOpenZeppelinAccount,
   manager,
@@ -37,7 +37,7 @@ const starknetOwner = new StarknetKeyPair(privateKey);
 const guardian = new StarknetKeyPair(42n);
 
 {
-  const { transactionHash } = await deployAccountWithoutGuardian({
+  const { transactionHash } = await deployAccountWithoutGuardians({
     owner: starknetOwner,
     selfDeploy: true,
     salt: "0x200",
@@ -73,7 +73,7 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
-  const { account } = await deployAccountWithoutGuardian({
+  const { account } = await deployAccountWithoutGuardians({
     owner: starknetOwner,
     salt: "0x3",
     fundingAmount,
@@ -173,7 +173,7 @@ const guardian = new StarknetKeyPair(42n);
 }
 
 {
-  const { account } = await deployAccountWithoutGuardian({
+  const { account } = await deployAccountWithoutGuardians({
     owner: starknetOwner,
     salt: "0xF1",
     fundingAmount,

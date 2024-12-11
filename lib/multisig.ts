@@ -4,7 +4,6 @@ import {
   KeyPair,
   LegacyMultisigSigner,
   MultisigSigner,
-  StarknetKeyPair,
   deployer,
   fundAccount,
   fundAccountCall,
@@ -105,9 +104,6 @@ export async function deployMultisig1_1(
 const sortedKeyPairs = (length: number) => sortByGuid(randomStarknetKeyPairs(length));
 
 const keysToSigners = (keys: KeyPair[]) => keys.map(({ signer }) => signer);
-
-export const lama = (length: number) =>
-  Array.from({ length }, () => new StarknetKeyPair()).sort((n1, n2) => (n1.guid < n2.guid ? -1 : 1));
 
 export async function deployLegacyMultisig(classHash: string, threshold = 1) {
   const keys = randomLegacyMultisigKeyPairs(threshold);

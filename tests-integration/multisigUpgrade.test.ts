@@ -1,7 +1,8 @@
 import { expect } from "chai";
-import { CallData, uint256 } from "starknet";
+import { Account, CallData, Contract, uint256 } from "starknet";
 import {
-  LegacyMultisigKeyPair,
+  KeyPair,
+  LegacyKeyPair,
   MultisigSigner,
   SignerType,
   StarknetKeyPair,
@@ -13,9 +14,19 @@ import {
   upgradeAccount,
 } from "../lib";
 import { deployMultisig, deployMultisig1_1 } from "../lib/multisig";
+interface DeployMultisigReturn {
+  account: Account;
+  accountContract: Contract;
+  keys: KeyPair[] | LegacyKeyPair[];
+}
+
+interface UpgradeDataEntry {
+  name: string;
+  deployMultisig: (threshold: number) => Promise<DeployMultisigReturn>;
+}
 
 describe("ArgentMultisig: upgrade", function () {
-  const artifactNames: any[] = [];
+  const artifactNames: UpgradeDataEntry[] = [];
 
   before(async () => {
     const v010 = "0.1.0";
@@ -57,10 +68,7 @@ describe("ArgentMultisig: upgrade", function () {
             const { account, accountContract, keys } = await deployMultisig(threshold);
             const currentImpl = await manager.declareLocalContract("ArgentMultisigAccount");
 
-            const pubKeys =
-              name == "0.2.0"
-                ? keys.map((key: StarknetKeyPair) => key.guid)
-                : keys.map((key: LegacyMultisigKeyPair) => key.publicKey);
+            const pubKeys = keys.map((key: any) => key.guid);
             const accountSigners =
               name == "0.2.0" ? await accountContract.get_signer_guids() : await accountContract.get_signers();
             expect(accountSigners.length).to.equal(pubKeys.length);
@@ -68,9 +76,10 @@ describe("ArgentMultisig: upgrade", function () {
 
             const tx = await upgradeAccount(account, currentImpl);
             expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(currentImpl));
+            // SignerLinked event is not emitted when upgrading from 0.2.0
             if (name != "0.2.0") {
               for (const key of keys) {
-                const snKeyPair = new StarknetKeyPair(key.privateKey);
+                const snKeyPair = new StarknetKeyPair((key as any).privateKey);
                 await expectEvent(tx, {
                   from_address: account.address,
                   eventName: "SignerLinked",
@@ -83,15 +92,13 @@ describe("ArgentMultisig: upgrade", function () {
             }
 
             const ethContract = await manager.tokens.ethContract();
-            const newSigners = sortByGuid(
-              keys.map((key: LegacyMultisigKeyPair) => new StarknetKeyPair((key as LegacyMultisigKeyPair).privateKey)),
-            );
+            const newSigners = sortByGuid(keys.map((key: any) => new StarknetKeyPair(key.privateKey)));
             account.signer = new MultisigSigner(newSigners);
 
             const newAccountContract = await manager.loadContract(account.address);
             const getSignerGuids = await newAccountContract.get_signer_guids();
             expect(getSignerGuids.length).to.equal(newSigners.length);
-            const newSignersGuids = newSigners.map(signer => signer.guid);
+            const newSignersGuids = newSigners.map((signer) => signer.guid);
             expect(getSignerGuids).to.have.members(newSignersGuids);
             // Perform a transfer to make sure nothing is broken
             ethContract.connect(account);

@@ -35,7 +35,7 @@ describe("ArgentMultisig: upgrade", function () {
   it("Waiting for data to be filled", function () {
     describe("Upgrade to latest version", function () {
       for (const artifactName of artifactNames) {
-        for (const threshold of [1]) {
+        for (const threshold of [1, 3, 10]) {
           it(`Upgrade from ${artifactName} to Current Version with ${threshold} key(s)`, async function () {
             const { account, accountContract, signers } = await deployLegacyMultisig(
               await manager.declareArtifactMultisigContract(artifactName),
@@ -46,7 +46,7 @@ describe("ArgentMultisig: upgrade", function () {
 
             const pubKeys =
               artifactName == "0.2.0"
-                ? signers.keys.map((key) => (new StarknetKeyPair((key as LegacyMultisigKeyPair).pk)).guid)
+                ? signers.keys.map((key) => new StarknetKeyPair((key as LegacyMultisigKeyPair).pk).guid)
                 : signers.keys.map((key) => (key as LegacyMultisigKeyPair).publicKey);
             const accountSigners =
               artifactName == "0.2.0" ? await accountContract.get_signer_guids() : await accountContract.get_signers();
@@ -55,15 +55,19 @@ describe("ArgentMultisig: upgrade", function () {
 
             const tx = await upgradeAccount(account, currentImpl);
             expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(currentImpl));
-            // for (const key of signers.keys) {
-            //   const snKeyPair = new StarknetKeyPair((key as LegacyMultisigKeyPair).privateKey);
-            //   await expectEvent(tx, {
-            //     from_address: account.address,
-            //     eventName: "SignerLinked",
-            //     keys: [snKeyPair.guid.toString()],
-            //     data: CallData.compile([signerTypeToCustomEnum(SignerType.Starknet, { signer: snKeyPair.publicKey })]),
-            //   });
-            // }
+            if (artifactName != "0.2.0") {
+              for (const key of signers.keys) {
+                const snKeyPair = new StarknetKeyPair((key as LegacyMultisigKeyPair).privateKey);
+                await expectEvent(tx, {
+                  from_address: account.address,
+                  eventName: "SignerLinked",
+                  keys: [snKeyPair.guid.toString()],
+                  data: CallData.compile([
+                    signerTypeToCustomEnum(SignerType.Starknet, { signer: snKeyPair.publicKey }),
+                  ]),
+                });
+              }
+            }
 
             const ethContract = await manager.tokens.ethContract();
             const newSigners = sortByGuid(

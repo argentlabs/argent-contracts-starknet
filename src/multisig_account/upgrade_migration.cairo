@@ -1,4 +1,5 @@
 use argent::account::interface::Version;
+use argent::multiowner_account::events::SignerLinked;
 use argent::signer::signer_signature::SignerStorageValue;
 
 #[starknet::interface]
@@ -9,11 +10,13 @@ trait IUpgradeMigrationInternal<TContractState> {
 
 trait IUpgradeMigrationCallback<TContractState> {
     fn migrate_owners(ref self: TContractState);
+    fn emit_signer_linked_event(ref self: TContractState, event: SignerLinked);
 }
 
 #[starknet::component]
 mod upgrade_migration_component {
     use argent::account::interface::Version;
+    use argent::multiowner_account::events::SignerLinked;
     use argent::signer::{signer_signature::{starknet_signer_from_pubkey, SignerTrait}};
     use starknet::storage::Map;
     use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback};
@@ -29,8 +32,7 @@ mod upgrade_migration_component {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event { // SignerLinked: SignerLinked,
-    }
+    enum Event {}
 
     #[embeddable_as(UpgradableInternalImpl)]
     impl UpgradableMigrationInternal<
@@ -51,8 +53,8 @@ mod upgrade_migration_component {
                 let starknet_signer = starknet_signer_from_pubkey(*pubkey);
                 let signer_guid = starknet_signer.into_guid();
                 signers_to_add.append(signer_guid);
-                // TODO Is this good enough or should we do like the account where we emit 'any' multisig event?
-            // self.emit(SignerLinked { signer_guid, signer: starknet_signer });
+                // TODO Good enough or should do the generic emit_event callback?
+                self.emit_signer_linked_event(SignerLinked { signer_guid, signer: starknet_signer });
             };
             let last_signer = *pubkeys[pubkeys.len() - 1];
             self.remove_signers(pubkeys.span(), last_signer);
@@ -62,7 +64,9 @@ mod upgrade_migration_component {
         }
 
         fn migrate_from_0_2_0(ref self: ComponentState<TContractState>) {
+            // No need to emit events, right?
             self.migrate_owners();
+            // Do some health checks?
         }
     }
 
@@ -78,6 +82,10 @@ mod upgrade_migration_component {
             contract.migrate_owners();
         }
 
+        fn emit_signer_linked_event(ref self: ComponentState<TContractState>, event: SignerLinked) {
+            let mut contract = self.get_contract_mut();
+            contract.emit_signer_linked_event(event);
+        }
 
         // Returns the number of signers. Cost increases with the list size
         fn get_signers_len(self: @ComponentState<TContractState>) -> usize {

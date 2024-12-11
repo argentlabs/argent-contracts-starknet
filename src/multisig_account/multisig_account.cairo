@@ -4,11 +4,12 @@ mod ArgentMultisigAccount {
         IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version
     };
     use argent::introspection::src5::src5_component;
-    use argent::multisig_account::external_recovery::{
-        external_recovery::{external_recovery_component, IExternalRecoveryCallback}
+    use argent::multiowner_account::events::SignerLinked;
+    use argent::multisig_account::external_recovery::external_recovery::{
+        external_recovery_component, IExternalRecoveryCallback
     };
-    use argent::multisig_account::signer_manager::{
-        signer_manager::{signer_manager_component, signer_manager_component::SignerManagerInternalImpl}
+    use argent::multisig_account::signer_manager::signer_manager::{
+        signer_manager_component, signer_manager_component::SignerManagerInternalImpl
     };
     use argent::multisig_account::upgrade_migration::{
         IUpgradeMigrationInternal, upgrade_migration_component, IUpgradeMigrationCallback
@@ -234,6 +235,10 @@ mod ArgentMultisigAccount {
     impl UpgradeMigrationCallbackImpl of IUpgradeMigrationCallback<ContractState> {
         fn migrate_owners(ref self: ContractState) {
             self.signer_manager.add_end_marker();
+        }
+
+        fn emit_signer_linked_event(ref self: ContractState, event: SignerLinked) {
+            self.signer_manager.emit_signer_linked_event(event);
         }
     }
 

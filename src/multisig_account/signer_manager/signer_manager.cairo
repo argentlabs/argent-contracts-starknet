@@ -31,6 +31,7 @@ impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
 /// adding or removing signers, changing the threshold, etc
 #[starknet::component]
 mod signer_manager_component {
+    use argent::multiowner_account::events::SignerLinked;
     use argent::multisig_account::signer_manager::interface::{ISignerManager, ISignerManagerInternal};
     use argent::signer::{
         signer_signature::{
@@ -80,16 +81,6 @@ mod signer_manager_component {
     struct OwnerRemovedGuid {
         #[key]
         removed_owner_guid: felt252,
-    }
-
-    /// @notice Emitted when a signer is added to link its details with its GUID
-    /// @param signer_guid The signer's GUID
-    /// @param signer The signer struct
-    #[derive(Drop, starknet::Event)]
-    struct SignerLinked {
-        #[key]
-        signer_guid: felt252,
-        signer: Signer,
     }
 
     #[embeddable_as(SignerManagerImpl)]
@@ -223,6 +214,10 @@ mod signer_manager_component {
 
         fn assert_valid_storage(self: @ComponentState<TContractState>) {
             self.assert_valid_threshold_and_signers_count(self.threshold.read(), self.signer_list.len());
+        }
+
+        fn emit_signer_linked_event(ref self: ComponentState<TContractState>, event: SignerLinked) {
+            self.emit(event);
         }
 
         fn migrate_from_pubkeys_to_guids(ref self: ComponentState<TContractState>) {

@@ -15,7 +15,8 @@ mod ArgentAccount {
     use argent::multiowner_account::recovery::{Escape, EscapeType};
     use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
     use argent::multiowner_account::upgrade_migration::{
-        IUpgradeMigrationInternal, upgrade_migration_component, IUpgradeMigrationCallback
+        IUpgradeMigrationInternal, upgrade_migration_component,
+        upgrade_migration_component::UpgradeMigrationInternalImpl, IUpgradeMigrationCallback
     };
     use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{
@@ -96,7 +97,6 @@ mod ArgentAccount {
     impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
     // Upgrade migration
     component!(path: upgrade_migration_component, storage: upgrade_migration, event: UpgradeMigrationEvents);
-    impl UpgradableMigrationInternal = upgrade_migration_component::UpgradableMigrationInternal<ContractState>;
     // Reentrancy guard
     component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
     impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;

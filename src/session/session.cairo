@@ -47,13 +47,11 @@ mod session_component {
             self.revoked_session.write(session_hash, true);
         }
 
-        #[inline(always)]
         #[must_use]
         fn is_session_revoked(self: @ComponentState<TContractState>, session_hash: felt252) -> bool {
             self.revoked_session.read(session_hash)
         }
 
-        #[inline(always)]
         #[must_use]
         fn is_session_authorization_cached(
             self: @ComponentState<TContractState>, session_hash: felt252, owner_guid: felt252, guardian_guid: felt252,

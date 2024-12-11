@@ -110,12 +110,10 @@ struct WebauthnSigner {
 
 // Ensures that the pubkey_hash is not zero as we can't do NonZero<EthAddress>
 impl Secp256k1SignerSerde of Serde<Secp256k1Signer> {
-    #[inline(always)]
     fn serialize(self: @Secp256k1Signer, ref output: Array<felt252>) {
         self.pubkey_hash.serialize(ref output);
     }
 
-    #[inline(always)]
     fn deserialize(ref serialized: Span<felt252>) -> Option<Secp256k1Signer> {
         let pubkey_hash = Serde::<EthAddress>::deserialize(ref serialized)?;
         assert(pubkey_hash.address != 0, 'argent/zero-pubkey-hash');
@@ -124,12 +122,10 @@ impl Secp256k1SignerSerde of Serde<Secp256k1Signer> {
 }
 
 impl Eip191SignerSerde of Serde<Eip191Signer> {
-    #[inline(always)]
     fn serialize(self: @Eip191Signer, ref output: Array<felt252>) {
         self.eth_address.serialize(ref output);
     }
 
-    #[inline(always)]
     fn deserialize(ref serialized: Span<felt252>) -> Option<Eip191Signer> {
         let eth_address = Serde::<EthAddress>::deserialize(ref serialized)?;
         assert(eth_address.address != 0, 'argent/zero-eth-EthAddress');
@@ -302,14 +298,12 @@ fn is_valid_starknet_signature(hash: felt252, signer: StarknetSigner, signature:
     check_ecdsa_signature(hash, signer.pubkey.into(), signature.r, signature.s)
 }
 
-#[inline(always)]
 #[must_use]
 fn is_valid_secp256k1_signature(hash: u256, pubkey_hash: EthAddress, signature: Secp256Signature) -> bool {
     assert(signature.s <= SECP_256_K1_HALF, 'argent/malleable-signature');
     is_eth_signature_valid(hash, signature, pubkey_hash).is_ok()
 }
 
-#[inline(always)]
 #[must_use]
 fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: Secp256Signature) -> bool {
     // `recover_public_key` accepts invalid values for r and s, so we need to check them first
@@ -321,7 +315,6 @@ fn is_valid_secp256r1_signature(hash: u256, signer: Secp256r1Signer, signature: 
     recovered_signer == signer.pubkey.into()
 }
 
-#[inline(always)]
 #[must_use]
 fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> bool {
     verify_authenticator_flags(signature.flags);
@@ -332,7 +325,6 @@ fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, signature:
 
 trait SignerSpanTrait {
     #[must_use]
-    #[inline(always)]
     fn to_guid_list(self: Span<Signer>) -> Array<felt252>;
 }
 

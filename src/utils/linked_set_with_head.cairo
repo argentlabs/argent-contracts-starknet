@@ -103,7 +103,6 @@ impl LinkedSetWithHeadReadImpl<
         self.get_tail_list().contains(item_hash: item.hash())
     }
 
-    #[inline(always)]
     fn contains_by_hash(self: StorageBase<LinkedSetWithHead<T>>, item_hash: felt252) -> bool {
         let first_item = if let Option::Some(value) = self.first() {
             value
@@ -150,7 +149,6 @@ impl LinkedSetWithHeadWriteImpl<
 > of LinkedSetWithHeadWrite<StorageBase<Mutable<LinkedSetWithHead<T>>>> {
     type Value = T;
 
-    #[inline(always)]
     fn insert(self: StorageBase<Mutable<LinkedSetWithHead<T>>>, item: T) -> felt252 {
         if let Option::Some(first_item) = self.first() {
             assert(item != first_item, 'linked-set/already-in-set');
@@ -209,32 +207,26 @@ impl MutableLinkedSetWithHeadReadImpl<
         self.as_read_only().first()
     }
 
-    #[inline(always)]
     fn single(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> Option<T> {
         self.as_read_only().single()
     }
 
-    #[inline(always)]
     fn len(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> usize {
         self.as_read_only().len()
     }
 
-    #[inline(always)]
     fn is_empty(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> bool {
         self.as_read_only().is_empty()
     }
 
-    #[inline(always)]
     fn contains(self: StorageBase<Mutable<LinkedSetWithHead<T>>>, item: T) -> bool {
         self.as_read_only().contains(:item)
     }
 
-    #[inline(always)]
     fn contains_by_hash(self: StorageBase<Mutable<LinkedSetWithHead<T>>>, item_hash: felt252) -> bool {
         self.as_read_only().contains_by_hash(:item_hash)
     }
 
-    #[inline(always)]
     fn get_all_hashes(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> Array<felt252> {
         self.as_read_only().get_all_hashes()
     }

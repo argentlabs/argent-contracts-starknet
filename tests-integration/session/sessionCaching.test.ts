@@ -53,11 +53,12 @@ describe("Session Account: execute caching", function () {
       });
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
-      await accountContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.false;
+      await accountContract.is_session_authorization_cached(sessionHash, owner.guid, guardian.guid).should.eventually.be
+        .false;
       const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
       await accountContract
-        .is_session_authorization_cached(sessionHash, owner.guid)
+        .is_session_authorization_cached(sessionHash, owner.guid, guardian.guid)
         .should.eventually.be.equal(useCaching);
 
       await account.waitForTransaction(transaction_hash);
@@ -115,7 +116,8 @@ describe("Session Account: execute caching", function () {
       if (useCaching) {
         const { transaction_hash } = await accountWithDappSigner.execute(calls);
         await account.waitForTransaction(transaction_hash);
-        await accountContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.true;
+        await accountContract.is_session_authorization_cached(sessionHash, owner.guid, guardian.guid).should.eventually
+          .be.true;
         await expectRevertWithErrorMessage(
           "session/invalid-auth-len",
           executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
@@ -180,7 +182,8 @@ describe("Session Account: execute caching", function () {
       if (useCaching) {
         const { transaction_hash } = await accountWithDappSigner.execute(calls);
         await account.waitForTransaction(transaction_hash);
-        await accountContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.true;
+        await accountContract.is_session_authorization_cached(sessionHash, owner.guid, guardian.guid).should.eventually
+          .be.true;
       }
 
       await expectRevertWithErrorMessage(
@@ -264,16 +267,20 @@ describe("Session Account: execute caching", function () {
       allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
     });
 
-    await accountContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.false;
+    await accountContract.is_session_authorization_cached(sessionHash, owner.guid, guardian.guid).should.eventually.be
+      .false;
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
     await account.waitForTransaction(transaction_hash);
 
-    await accountContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.equal(true);
+    await accountContract
+      .is_session_authorization_cached(sessionHash, owner.guid, guardian.guid)
+      .should.eventually.be.equal(true);
 
     const signer = new ArgentSigner(newOwner, guardian);
     account.signer = signer;
     await accountContract.remove_owners([owner.guid]);
-    await accountContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.false;
+    await accountContract.is_session_authorization_cached(sessionHash, owner.guid, guardian.guid).should.eventually.be
+      .false;
 
     const calls2 = [mockDappContract.populateTransaction.set_number_double(4)];
 
@@ -298,7 +305,8 @@ describe("Session Account: execute caching", function () {
     await account.waitForTransaction(transaction_hash);
 
     // check that the session is cached
-    await accountContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.true;
+    await accountContract.is_session_authorization_cached(sessionHash, owner.guid, guardian.guid).should.eventually.be
+      .true;
 
     const sessionToken = await dappService.getSessionToken({
       calls,
@@ -340,7 +348,9 @@ describe("Session Account: execute caching", function () {
       await upgradeAccount(account, argentAccountClassHash);
       expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
       const newContract = await manager.loadContract(account.address, argentAccountClassHash);
-      await newContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.equal(useCaching);
+      await newContract
+        .is_session_authorization_cached(sessionHash, owner.guid, guardian.guid)
+        .should.eventually.be.equal(useCaching);
     });
 
     it("Caching is unaffected between contract upgrades and if you add more owners", async function () {
@@ -372,7 +382,9 @@ describe("Session Account: execute caching", function () {
       const newOwner = randomStarknetKeyPair();
       const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
       await newContract.add_owners(arrayOfSigner);
-      await newContract.is_session_authorization_cached(sessionHash, owner.guid).should.eventually.be.equal(useCaching);
+      await newContract
+        .is_session_authorization_cached(sessionHash, owner.guid, guardian.guid)
+        .should.eventually.be.equal(useCaching);
     });
   });
 });

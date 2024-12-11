@@ -120,7 +120,6 @@ fn get_webauthn_hash_cairo1(hash: felt252, signer: WebauthnSigner, signature: We
     eight_words_to_u256(sha256_u8s(message.span()))
 }
 
-#[inline(always)]
 fn sha256_u8s(arr: Span<u8>) -> [u32; 8] {
     let (word_arr, last, rem) = bytes_to_u32s(arr);
     compute_sha256_u32_array(word_arr, last, rem)

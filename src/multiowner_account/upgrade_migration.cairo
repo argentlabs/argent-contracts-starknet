@@ -9,6 +9,7 @@ trait IUpgradeMigrationInternal<TContractState> {
 trait IUpgradeMigrationCallback<TContractState> {
     fn finalize_migration(ref self: TContractState);
     fn migrate_owner(ref self: TContractState, signer_storage_value: SignerStorageValue);
+    fn migrate_guardians(ref self: TContractState, guardians_storage_value: Array<SignerStorageValue>);
 }
 
 #[derive(Drop, Copy, Serde, Default, starknet::Store)]
@@ -42,15 +43,22 @@ mod upgrade_migration_component {
 
     #[storage]
     struct Storage {
+        // proxy implementation before 0.3.0
+        _implementation: felt252,
+        // single owner starkey pubkey before 0.5.0
+        _signer: felt252,
+        // introduced in 0.4.0, removed in 0.5.0
+        _signer_non_stark: Map<felt252, felt252>,
+        // main guardian starkey pubkey before 0.5.0
+        _guardian: felt252,
+        // backup guardian starkey pubkey before 0.5.0
+        _guardian_backup: felt252,
+        // backup guardian storage values by SignerType. introduced in 0.4.0, removed in 0.5.0
+        _guardian_backup_non_stark: Map<felt252, felt252>,
         // storage layout used to be different before 0.4.0
         _escape: LegacyEscape,
-        // Legacy storage
-        _signer: felt252,
-        _implementation: felt252,
         guardian_escape_attempts: felt252,
         owner_escape_attempts: felt252,
-        // 0.4.0
-        _signer_non_stark: Map<felt252, felt252>,
     }
 
     #[event]
@@ -85,27 +93,20 @@ mod upgrade_migration_component {
             assert(owner_key != 0, 'argent/null-owner');
 
             let owner = starknet_signer_from_pubkey(owner_key);
-            let owner_linked = SignerLinked { signer_guid: owner.into_guid(), signer: owner };
-            self.emit_event(ArgentAccountEvent::SignerLinked(owner_linked));
+            self.emit_signer_linked(owner.into_guid(), owner);
 
-            // TODO guardian migration!!!!
-            // let argent_account = self.get_contract();
-            // let guardian_key = argent_account.get_guardian();
-            // let guardian_backup_key = argent_account.get_guardian_backup();
-            // if guardian_key == 0 {
-            //     assert(guardian_backup_key == 0, 'argent/backup-should-be-null');
-            // } else {
-            //     let guardian = starknet_signer_from_pubkey(guardian_key);
-            //     let guardian_linked = SignerLinked { signer_guid: guardian.into_guid(), signer: guardian };
-            //     self.emit_event(ArgentAccountEvent::SignerLinked(guardian_linked));
-            //     if guardian_backup_key != 0 {
-            //         let guardian_backup = starknet_signer_from_pubkey(guardian_backup_key);
-            //         let guardian_backup_linked = SignerLinked {
-            //             signer_guid: guardian_backup.into_guid(), signer: guardian_backup
-            //         };
-            //         self.emit_event(ArgentAccountEvent::SignerLinked(guardian_backup_linked));
-            //     }
-            // }
+            let guardian_key = self._guardian.read();
+            let guardian_backup_key = self._guardian_backup.read();
+            assert(!(guardian_key == 0 && guardian_backup_key != 0), 'argent/backup-should-be-null');
+
+            if guardian_key == 0 {
+                let guardian = starknet_signer_from_pubkey(guardian_key);
+                self.emit_signer_linked(guardian.into_guid(), guardian);
+                if guardian_backup_key != 0 {
+                    let guardian_backup = starknet_signer_from_pubkey(guardian_backup_key);
+                    self.emit_signer_linked(guardian_backup.into_guid(), guardian_backup);
+                };
+            }
 
             let implementation = self._implementation.read();
 
@@ -124,10 +125,11 @@ mod upgrade_migration_component {
             // We need to restore that third field that could have been left behind.
             self._escape.new_signer.write(0);
 
+            let mut contract = self.get_contract_mut();
+
             let starknet_owner_pubkey = self._signer.read();
             if (starknet_owner_pubkey != 0) {
-                let stark_signer = starknet_signer_from_pubkey(starknet_owner_pubkey).storage_value();
-                self.migrate_owner(stark_signer);
+                contract.migrate_owner(starknet_signer_from_pubkey(starknet_owner_pubkey).storage_value());
                 self._signer.write(0);
             } else {
                 for signer_type in array![
@@ -136,11 +138,38 @@ mod upgrade_migration_component {
                     let stored_value = self._signer_non_stark.read(signer_type.into());
                     if (stored_value != 0) {
                         let signer_storage_value = SignerStorageValue { signer_type, stored_value };
-                        self.migrate_owner(signer_storage_value);
+                        contract.migrate_owner(signer_storage_value);
                         self._signer_non_stark.write(signer_type.into(), 0);
                         break;
                     }
                 };
+            }
+            let mut guardians_to_migrate = array![];
+            let guardian_starknet_pubkey = self._guardian.read();
+            if guardian_starknet_pubkey != 0 {
+                guardians_to_migrate.append(starknet_signer_from_pubkey(guardian_starknet_pubkey).storage_value());
+                self._guardian.write(0);
+            };
+
+            let guardian_backup_starknet_pubkey = self._guardian_backup.read();
+            if guardian_backup_starknet_pubkey != 0 {
+                guardians_to_migrate
+                    .append(starknet_signer_from_pubkey(guardian_backup_starknet_pubkey).storage_value());
+                self._guardian_backup.write(0);
+            } else {
+                for signer_type in array![
+                    SignerType::Webauthn, SignerType::Secp256k1, SignerType::Secp256r1, SignerType::Eip191
+                ] {
+                    let stored_value = self._guardian_backup_non_stark.read(signer_type.into());
+                    if (stored_value != 0) {
+                        guardians_to_migrate.append(SignerStorageValue { signer_type, stored_value });
+                        self._guardian_backup_non_stark.write(signer_type.into(), 0);
+                        break;
+                    }
+                };
+            };
+            if guardians_to_migrate.len() > 0 {
+                contract.migrate_guardians(guardians_to_migrate);
             }
 
             // Health check
@@ -159,6 +188,11 @@ mod upgrade_migration_component {
         fn emit_event(ref self: ComponentState<TContractState>, event: ArgentAccountEvent) {
             let mut contract = self.get_contract_mut();
             contract.emit_event_callback(event);
+        }
+
+        fn emit_signer_linked(ref self: ComponentState<TContractState>, signer_guid: felt252, signer: Signer,) {
+            let signer_linked = SignerLinked { signer_guid, signer };
+            self.emit_event(ArgentAccountEvent::SignerLinked(signer_linked));
         }
 
         fn finalize_migration(ref self: ComponentState<TContractState>) {

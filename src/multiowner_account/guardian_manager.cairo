@@ -35,6 +35,8 @@ pub trait IGuardianManager<TContractState> {
 #[starknet::interface]
 trait IGuardianManagerInternal<TContractState> {
     fn initialize(ref self: TContractState, guardian: Signer);
+    fn migrate_guardians_storage(ref self: TContractState, guardians: Array<SignerStorageValue>);
+
     fn has_guardian(self: @TContractState) -> bool;
 
     /// @notice Removes all guardians and optionally adds a new one
@@ -101,7 +103,6 @@ mod guardian_manager_component {
             self.guardians_storage.contains(guardian.storage_value())
         }
 
-        #[inline(always)]
         fn is_guardian_guid(self: @ComponentState<TContractState>, guardian_guid: felt252) -> bool {
             self.guardians_storage.contains_by_hash(guardian_guid)
         }
@@ -146,6 +147,15 @@ mod guardian_manager_component {
             let guid = self.guardians_storage.insert(guardian.storage_value());
             self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: guardian });
             self.emit_guardian_added(guid);
+        }
+
+        fn migrate_guardians_storage(ref self: ComponentState<TContractState>, guardians: Array<SignerStorageValue>) {
+            assert(self.guardians_storage.is_empty(), 'argent/guardians-already-init');
+            self.assert_valid_guardian_count(guardians.len());
+            for guardian in guardians {
+                let guardian_guid = self.guardians_storage.insert(guardian);
+                self.emit_guardian_added(guardian_guid); // TODO emit guardian added events?
+            };
         }
 
         fn has_guardian(self: @ComponentState<TContractState>) -> bool {
@@ -216,10 +226,12 @@ mod guardian_manager_component {
         fn assert_valid_guardian_count(self: @ComponentState<TContractState>, signers_len: usize) {
             assert(signers_len <= MAX_SIGNERS_COUNT, 'argent/invalid-signers-len');
         }
+
         fn emit_signer_linked_event(ref self: ComponentState<TContractState>, event: SignerLinked) {
             let mut contract = self.get_contract_mut();
             contract.emit_event_callback(ArgentAccountEvent::SignerLinked(event));
         }
+
         fn emit_guardian_added(ref self: ComponentState<TContractState>, new_guardian_guid: felt252) {
             self.emit(GuardianAddedGuid { new_guardian_guid });
         }

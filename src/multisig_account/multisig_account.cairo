@@ -225,6 +225,7 @@ mod ArgentMultisigAccount {
 
     #[abi(embed_v0)]
     impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
+        // Called when coming from multisig 0.1.X
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
             self.signer_manager.migrate_from_pubkeys_to_guids();
@@ -235,6 +236,7 @@ mod ArgentMultisigAccount {
 
     #[abi(embed_v0)]
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
+        // Called when coming from multisig 0.2.0+
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
             assert_only_self();
 

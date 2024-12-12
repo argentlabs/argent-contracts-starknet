@@ -106,11 +106,11 @@ const sortedKeyPairs = (length: number) => sortByGuid(randomStarknetKeyPairs(len
 
 const keysToSigners = (keys: KeyPair[]) => keys.map(({ signer }) => signer);
 
-export interface LegacyMultisigWallet {
+interface LegacyMultisigWallet {
   account: Account;
   accountContract: Contract;
   keys: LegacyMultisigKeyPair[];
-  deploySigner: LegacyMultisigSigner
+  deploySigner: LegacyMultisigSigner;
 }
 
 export async function deployLegacyMultisig(classHash: string, threshold = 1): Promise<LegacyMultisigWallet> {

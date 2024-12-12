@@ -96,8 +96,7 @@ mod owner_manager_component {
         }
     }
 
-    #[embeddable_as(OwnerManagerInternalImpl)]
-    impl OwnerManagerInternal<
+    impl OwnerManagerInternalImpl<
         TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
     > of IOwnerManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, owner: Signer) {

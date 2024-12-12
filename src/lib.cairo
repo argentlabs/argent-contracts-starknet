@@ -38,10 +38,6 @@ mod multisig_account {
         mod interface;
         mod signer_manager;
     }
-    mod signer_storage {
-        mod interface;
-        mod signer_list;
-    }
 }
 
 mod multiowner_account {
@@ -61,6 +57,7 @@ mod utils {
     mod calls;
     mod hashing;
     mod linked_set;
+    mod linked_set_with_head;
     mod serialization;
     mod transaction_version;
 }
@@ -68,13 +65,13 @@ mod utils {
 mod mocks {
     mod future_argent_account;
     mod future_argent_multisig;
+    mod linked_set_mock;
     mod mock_dapp;
     mod mock_erc20;
     mod multiowner_mock;
     mod multisig_mocks;
     mod recovery_mocks;
     mod signature_verifier;
-    mod signer_list_mocks;
     mod src5_mocks;
 }
 

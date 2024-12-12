@@ -1,5 +1,4 @@
 use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
-use argent::multisig_account::signer_storage::signer_list::signer_list_component;
 use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
 use snforge_std::{spy_events, EventSpyAssertionsTrait, EventSpyTrait};
 use super::super::{
@@ -24,8 +23,8 @@ fn remove_signers_first() {
     assert!(multisig.is_signer(SIGNER_3()));
 
     let removed_owner_guid = SIGNER_1().into_guid();
-    let event = signer_list_component::Event::OwnerRemovedGuid(
-        signer_list_component::OwnerRemovedGuid { removed_owner_guid }
+    let event = signer_manager_component::Event::OwnerRemovedGuid(
+        signer_manager_component::OwnerRemovedGuid { removed_owner_guid }
     );
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
 
@@ -182,7 +181,7 @@ fn remove_3_and_2() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/not-a-signer',))]
+#[should_panic(expected: ('linked-set/item-not-found',))]
 fn remove_invalid_signers() {
     // init
     let multisig = initialize_multisig();
@@ -193,7 +192,7 @@ fn remove_invalid_signers() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/not-a-signer',))]
+#[should_panic(expected: ('linked-set/item-not-found',))]
 fn remove_same_signer_twice() {
     // init
     let multisig = initialize_multisig();

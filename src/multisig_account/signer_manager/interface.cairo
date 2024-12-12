@@ -42,7 +42,6 @@ trait ISignerManager<TContractState> {
     fn is_valid_signer_signature(self: @TContractState, hash: felt252, signer_signature: SignerSignature) -> bool;
 }
 
-#[starknet::interface]
 trait ISignerManagerInternal<TContractState> {
     fn initialize(ref self: TContractState, threshold: usize, signers: Array<Signer>);
     fn assert_valid_threshold_and_signers_count(self: @TContractState, threshold: usize, signers_len: usize);

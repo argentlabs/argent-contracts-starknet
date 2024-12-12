@@ -187,8 +187,7 @@ mod signer_manager_component {
         }
     }
 
-    #[embeddable_as(SignerManagerInternalImpl)]
-    impl SignerManagerInternal<
+    impl SignerManagerInternalImpl<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
     > of ISignerManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, threshold: usize, mut signers: Array<Signer>) {

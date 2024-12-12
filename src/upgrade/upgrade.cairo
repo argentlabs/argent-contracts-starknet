@@ -45,8 +45,7 @@ mod upgrade_component {
         }
     }
 
-    #[embeddable_as(UpgradableInternalImpl)]
-    impl UpgradableInternal<
+    impl UpgradableInternalImpl<
         TContractState, +HasComponent<TContractState>
     > of super::IUpgradeInternal<ComponentState<TContractState>> {
         fn complete_upgrade(ref self: ComponentState<TContractState>, new_implementation: ClassHash) {

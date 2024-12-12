@@ -67,7 +67,6 @@ mod mocks {
     mod future_argent_multisig;
     mod linked_set_mock;
     mod mock_dapp;
-    mod mock_erc20;
     mod multiowner_mock;
     mod multisig_mocks;
     mod recovery_mocks;

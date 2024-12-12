@@ -8,9 +8,14 @@ mod MockFutureArgentMultisig {
     };
     use argent::introspection::src5::src5_component;
     use argent::multisig_account::external_recovery::external_recovery::IExternalRecoveryCallback;
-    use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
+    use argent::multisig_account::signer_manager::signer_manager::{
+        signer_manager_component, signer_manager_component::SignerManagerInternalImpl
+    };
     use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait}};
-    use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
+    use argent::upgrade::{
+        upgrade::{upgrade_component, upgrade_component::UpgradableInternalImpl},
+        interface::{IUpgradableCallback, IUpgradableCallbackOld}
+    };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
         serialization::full_deserialize,
@@ -28,16 +33,14 @@ mod MockFutureArgentMultisig {
     component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
     #[abi(embed_v0)]
     impl SignerManager = signer_manager_component::SignerManagerImpl<ContractState>;
-    impl SignerManagerInternal = signer_manager_component::SignerManagerInternalImpl<ContractState>;
     // Introspection
     component!(path: src5_component, storage: src5, event: SRC5Events);
     #[abi(embed_v0)]
     impl SRC5 = src5_component::SRC5Impl<ContractState>;
     // Upgrade
+    component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
-    component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
-    impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
 
     #[storage]
     struct Storage {

@@ -41,8 +41,6 @@ mod signer_list_component {
         signer: Signer,
     }
 
-    // Should this one be "public" too?
-    #[embeddable_as(SignerListInternalImpl)]
     impl SignerListInternal<
         TContractState, +HasComponent<TContractState>
     > of ISignerList<ComponentState<TContractState>> {

@@ -12,7 +12,6 @@ mod MultiownerMock {
 
     // Owner management
     component!(path: owner_manager_component, storage: owner_manager, event: OwnerManagerEvents);
-
     #[abi(embed_v0)]
     impl OwnerManager = owner_manager_component::OwnerManagerImpl<ContractState>;
 

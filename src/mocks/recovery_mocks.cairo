@@ -6,9 +6,12 @@ mod ExternalRecoveryMock {
     use argent::multisig_account::external_recovery::{
         external_recovery::{external_recovery_component, IExternalRecoveryCallback}
     };
-    use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
+    use argent::multisig_account::signer_manager::signer_manager::{
+        signer_manager_component, signer_manager_component::SignerManagerInternalImpl
+    };
     use argent::utils::calls::execute_multicall;
-    use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
+    use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
+
     component!(path: external_recovery_component, storage: escape, event: EscapeEvents);
     #[abi(embed_v0)]
     impl ExternalRecovery = external_recovery_component::ExternalRecoveryImpl<ContractState>;
@@ -17,11 +20,9 @@ mod ExternalRecoveryMock {
     component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
     #[abi(embed_v0)]
     impl SignerManager = signer_manager_component::SignerManagerImpl<ContractState>;
-    impl SignerManagerInternal = signer_manager_component::SignerManagerInternalImpl<ContractState>;
 
     // Reentrancy guard
     component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
-    impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {

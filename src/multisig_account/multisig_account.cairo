@@ -233,16 +233,6 @@ mod ArgentMultisigAccount {
         }
     }
 
-    impl UpgradeMigrationCallbackImpl of IUpgradeMigrationCallback<ContractState> {
-        fn migrate_owners(ref self: ContractState) {
-            self.signer_manager.add_end_marker();
-        }
-
-        fn emit_signer_linked_event(ref self: ContractState, event: SignerLinked) {
-            self.signer_manager.emit_signer_linked_event(event);
-        }
-    }
-
     #[abi(embed_v0)]
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
@@ -266,6 +256,16 @@ mod ArgentMultisigAccount {
             let calls: Array<Call> = full_deserialize(data).expect('argent/invalid-calls');
             assert_no_self_call(calls.span(), get_contract_address());
             execute_multicall(calls.span());
+        }
+    }
+
+    impl UpgradeMigrationCallbackImpl of IUpgradeMigrationCallback<ContractState> {
+        fn migrate_owners(ref self: ContractState) {
+            self.signer_manager.add_end_marker();
+        }
+
+        fn emit_signer_linked_event(ref self: ContractState, event: SignerLinked) {
+            self.signer_manager.emit_signer_linked_event(event);
         }
     }
 

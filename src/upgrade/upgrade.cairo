@@ -1,6 +1,5 @@
 use starknet::ClassHash;
 
-#[starknet::interface]
 trait IUpgradeInternal<TContractState> {
     fn complete_upgrade(ref self: TContractState, new_implementation: ClassHash);
 }

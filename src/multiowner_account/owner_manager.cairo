@@ -14,7 +14,6 @@ pub trait IOwnerManager<TContractState> {
     fn is_valid_owner_signature(self: @TContractState, hash: felt252, owner_signature: SignerSignature) -> bool;
 }
 
-#[starknet::interface]
 trait IOwnerManagerInternal<TContractState> {
     fn initialize(ref self: TContractState, owner: Signer);
     fn initialize_from_upgrade(ref self: TContractState, signer_storage: SignerStorageValue);

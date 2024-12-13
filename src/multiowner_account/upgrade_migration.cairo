@@ -1,6 +1,5 @@
 use argent::signer::signer_signature::SignerStorageValue;
 
-#[starknet::interface]
 trait IUpgradeMigrationInternal<TContractState> {
     fn migrate_from_before_0_4_0(ref self: TContractState);
     fn migrate_from_0_4_0(ref self: TContractState);

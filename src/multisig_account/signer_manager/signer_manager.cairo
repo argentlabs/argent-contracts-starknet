@@ -203,6 +203,7 @@ mod signer_manager_component {
             self.signer_list.remove_many(pubkeys.span());
             self.signer_list.insert_many(signers_to_add.span());
         }
+
         fn add_end_marker(ref self: ComponentState<TContractState>,) {
             // assert valid storage
             let pubkeys = self.get_signer_guids();

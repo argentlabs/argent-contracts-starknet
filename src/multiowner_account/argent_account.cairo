@@ -423,14 +423,12 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
         }
 
-        fn replace_all_owners_with_one(
-            ref self: ContractState, new_single_owner: SignerSignature, signature_expiration: u64
-        ) {
+        fn reset_owners(ref self: ContractState, new_single_owner: SignerSignature, signature_expiration: u64) {
             assert_only_self();
             let new_owner = new_single_owner.signer();
             self.assert_valid_new_owner_signature(new_single_owner, signature_expiration);
             // This already emits OwnerRemovedGuid & OwnerAddedGuid events
-            self.owner_manager.replace_all_owners_with_one(new_owner.storage_value());
+            self.owner_manager.reset_owners(new_owner.storage_value());
 
             if let Option::Some(new_owner_pubkey) = new_owner.storage_value().starknet_pubkey_or_none() {
                 self.emit(OwnerChanged { new_owner: new_owner_pubkey });
@@ -545,7 +543,7 @@ mod ArgentAccount {
 
             // update owner
             let new_owner = current_escape.new_signer.unwrap();
-            self.owner_manager.replace_all_owners_with_one(new_owner);
+            self.owner_manager.reset_owners(new_owner);
             self.emit(OwnerEscapedGuid { new_owner_guid: new_owner.into_guid() });
 
             // clear escape

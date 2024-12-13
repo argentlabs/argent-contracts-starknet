@@ -21,7 +21,7 @@ fn get_owner_data(owner_guid: felt252) -> SignerStorageValue;
 added  
 fn add_owners(owners_to_add: Array<Signer>);
 fn remove_owners(owner_guids_to_remove: Array<felt252>) // can't remove self
-fn replace_all_owners_with_one(new_owner: SignerSignature); // signature needed to avoid bricking account
+fn reset_owners(new_owner: SignerSignature); // signature needed to avoid bricking account
 might need more: replace_signer to rotate key?
 
 - Recovery
@@ -41,4 +41,4 @@ OwnerChanged { new_owner: felt252 }
 OwnerChangedGuid { new_owner_guid: felt252 }
 We can try to keep them if there was a single owner being replaces, but ideally it's removed
 
-New functions like add_owners, remove_owners and replace_all_owners_with_one will emit the existing `OwnerAddedGuid` and `OwnerRemovedGuid`
+New functions like add_owners, remove_owners and reset_owners will emit the existing `OwnerAddedGuid` and `OwnerRemovedGuid`

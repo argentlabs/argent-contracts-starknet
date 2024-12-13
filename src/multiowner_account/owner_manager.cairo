@@ -174,15 +174,22 @@ mod owner_manager_component {
         }
 
         fn reset_owners(ref self: ComponentState<TContractState>, new_single_owner: SignerStorageValue) {
-            let new_owner_guid = new_single_owner.into_guid();
-            let current_owners = self.owners_storage.get_all_hashes();
-            for current_owner_guid in current_owners {
-                assert(current_owner_guid != new_owner_guid, 'argent/already-an-owner');
-                self.owners_storage.remove(current_owner_guid);
-                self.emit_owner_removed(current_owner_guid);
+            let new_single_owner_guid = new_single_owner.into_guid();
+
+            let mut new_owner_was_already_owner = false;
+            let current_owner_guids = self.owners_storage.get_all_hashes();
+            for current_owner_guid in current_owner_guids {
+                if current_owner_guid != new_single_owner_guid {
+                    self.owners_storage.remove(current_owner_guid);
+                    self.emit_owner_removed(current_owner_guid);
+                } else {
+                    new_owner_was_already_owner = true;
+                }
             };
-            self.owners_storage.insert(new_single_owner);
-            self.emit_owner_added(new_owner_guid);
+            if !new_owner_was_already_owner {
+                self.owners_storage.insert(new_single_owner);
+                self.emit_owner_added(new_single_owner_guid);
+            }
         }
     }
 

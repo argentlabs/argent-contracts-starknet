@@ -60,7 +60,6 @@ trait IOwnerManagerInternal<TContractState> {
     /// @dev Will revert if any of the signers is not an owner
     /// @param owners_to_remove All the signers to remove
     fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>);
-    fn is_valid_owners_replacement(self: @TContractState, new_single_owner: Signer) -> bool;
     fn reset_owners(ref self: TContractState, new_single_owner: SignerStorageValue);
     fn assert_valid_storage(self: @TContractState);
     fn get_single_stark_owner_pubkey(self: @TContractState) -> Option<felt252>;
@@ -172,10 +171,6 @@ mod owner_manager_component {
 
         fn get_single_stark_owner_pubkey(self: @ComponentState<TContractState>) -> Option<felt252> {
             self.get_single_owner()?.starknet_pubkey_or_none()
-        }
-
-        fn is_valid_owners_replacement(self: @ComponentState<TContractState>, new_single_owner: Signer) -> bool {
-            !self.is_owner(new_single_owner)
         }
 
         fn reset_owners(ref self: ComponentState<TContractState>, new_single_owner: SignerStorageValue) {

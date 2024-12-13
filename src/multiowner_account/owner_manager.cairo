@@ -26,8 +26,7 @@ trait IOwnerManagerInternal<TContractState> {
     /// @dev Will revert if any of the signers is not an owner
     /// @param owners_to_remove All the signers to remove
     fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>);
-    fn is_valid_owners_replacement(self: @TContractState, new_single_owner: Signer) -> bool;
-    fn replace_all_owners_with_one(ref self: TContractState, new_single_owner: SignerStorageValue);
+    fn reset_owners(ref self: TContractState, new_single_owner: SignerStorageValue);
     fn assert_valid_storage(self: @TContractState);
     fn get_single_stark_owner_pubkey(self: @TContractState) -> Option<felt252>;
     fn get_single_owner(self: @TContractState) -> Option<SignerStorageValue>;
@@ -142,11 +141,7 @@ mod owner_manager_component {
             self.get_single_owner()?.starknet_pubkey_or_none()
         }
 
-        fn is_valid_owners_replacement(self: @ComponentState<TContractState>, new_single_owner: Signer) -> bool {
-            !self.is_owner(new_single_owner)
-        }
-
-        fn replace_all_owners_with_one(ref self: ComponentState<TContractState>, new_single_owner: SignerStorageValue) {
+        fn reset_owners(ref self: ComponentState<TContractState>, new_single_owner: SignerStorageValue) {
             let new_owner_guid = new_single_owner.into_guid();
             let current_owners = self.owners_storage.get_all_hashes();
             for current_owner_guid in current_owners {

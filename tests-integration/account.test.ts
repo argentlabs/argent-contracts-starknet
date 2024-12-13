@@ -79,8 +79,8 @@ describe("ArgentAccount", function () {
     );
   });
 
-  describe("replace_all_owners_with_one(...)", function () {
-    it("Should be possible to replace_all_owners_with_one", async function () {
+  describe("reset_owners(...)", function () {
+    it("Should be possible to reset_owners", async function () {
       const { accountContract } = await deployAccount();
       const newOwner = randomStarknetKeyPair();
 
@@ -89,8 +89,8 @@ describe("ArgentAccount", function () {
       const futureTimestamp = currentTimestamp + 1000;
       const calldata = await signChangeOwnerMessage(accountContract.address, newOwner, chainId, futureTimestamp);
       calldata.push(futureTimestamp.toString());
-      // Can't just do account.replace_all_owners_with_one(x, y) because parsing goes wrong...
-      await manager.ensureSuccess(await accountContract.invoke("replace_all_owners_with_one", calldata));
+      // Can't just do account.reset_owners(x, y) because parsing goes wrong...
+      await manager.ensureSuccess(await accountContract.invoke("reset_owners", calldata));
       await accountContract.get_owner_guids().should.eventually.deep.equal([newOwner.guid]);
     });
 
@@ -98,7 +98,7 @@ describe("ArgentAccount", function () {
       const { accountContract } = await deployAccount();
       await expectRevertWithErrorMessage(
         "Failed to deserialize param #1",
-        accountContract.replace_all_owners_with_one(starknetSignatureType(0, 13, 14), 1),
+        accountContract.reset_owners(starknetSignatureType(0, 13, 14), 1),
       );
     });
   });

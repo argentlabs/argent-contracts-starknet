@@ -28,9 +28,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// cannot be in the past: before current timestamp
     /// cannot be too far in the future: current timestamp + 1 DAY in seconds
     /// @dev It will cancel any existing escape
-    fn replace_all_owners_with_one(
-        ref self: TContractState, new_single_owner: SignerSignature, signature_expiration: u64
-    );
+    fn reset_owners(ref self: TContractState, new_single_owner: SignerSignature, signature_expiration: u64);
 
     /// @notice Adds new owners to this account
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)

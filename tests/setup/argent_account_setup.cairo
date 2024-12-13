@@ -17,9 +17,7 @@ trait ITestArgentAccount<TContractState> {
     fn is_valid_signature(self: @TContractState, hash: felt252, signature: Array<felt252>) -> felt252;
 
     // External
-    fn replace_all_owners_with_one(
-        ref self: TContractState, new_single_owner: SignerSignature, signature_expiration: u64
-    );
+    fn reset_owners(ref self: TContractState, new_single_owner: SignerSignature, signature_expiration: u64);
     fn reset_guardians(ref self: TContractState, new_guardian: Option<Signer>);
     fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);
     fn trigger_escape_guardian(ref self: TContractState, new_guardian: Option<Signer>);

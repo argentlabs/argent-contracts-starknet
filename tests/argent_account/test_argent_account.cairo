@@ -80,7 +80,7 @@ fn erc165_unsupported_interfaces() {
 }
 
 #[test]
-fn replace_all_owners_with_one() {
+fn reset_owners() {
     let account = initialize_account();
     let mut spy = spy_events();
 
@@ -89,7 +89,7 @@ fn replace_all_owners_with_one() {
 
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
-    account.replace_all_owners_with_one(signer_signature, VALID_UNTIL);
+    account.reset_owners(signer_signature, VALID_UNTIL);
 
     let new_owner_guid = signer_signature.signer().into_guid();
     assert_eq!(account.get_owner_guid(), new_owner_guid);
@@ -116,7 +116,7 @@ fn replace_all_owners_with_one() {
 }
 
 #[test]
-fn replace_all_owners_with_one_reset_escape() {
+fn reset_owners_reset_escape() {
     let account = initialize_account();
 
     account.trigger_escape_owner(starknet_signer_from_pubkey(12));
@@ -125,7 +125,7 @@ fn replace_all_owners_with_one_reset_escape() {
 
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
-    account.replace_all_owners_with_one(signer_signature, VALID_UNTIL);
+    account.reset_owners(signer_signature, VALID_UNTIL);
 
     let (_, none) = account.get_escape_and_status();
     assert_eq!(none, EscapeStatus::None);
@@ -133,54 +133,54 @@ fn replace_all_owners_with_one_reset_escape() {
 
 #[test]
 #[should_panic(expected: ('argent/timestamp-too-far-future',))]
-fn replace_all_owners_with_one_too_far_future() {
+fn reset_owners_too_far_future() {
     let account = initialize_account();
 
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
-    account.replace_all_owners_with_one(signer_signature, (60 * 60 * 24) + 1);
+    account.reset_owners(signer_signature, (60 * 60 * 24) + 1);
 }
 
 #[test]
 #[should_panic(expected: ('argent/only-self',))]
-fn replace_all_owners_with_one_only_self() {
+fn reset_owners_only_self() {
     let account = initialize_account();
 
     start_cheat_caller_address_global(contract_address_const::<42>());
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
-    account.replace_all_owners_with_one(signer_signature, VALID_UNTIL);
+    account.reset_owners(signer_signature, VALID_UNTIL);
 }
 
 #[test]
 #[should_panic(expected: ('argent/expired-signature',))]
-fn replace_all_owners_with_one_timestamp_expired() {
+fn reset_owners_timestamp_expired() {
     let account = initialize_account();
 
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
     start_cheat_block_timestamp_global(VALID_UNTIL);
-    account.replace_all_owners_with_one(signer_signature, VALID_UNTIL - 1);
+    account.reset_owners(signer_signature, VALID_UNTIL - 1);
 }
 
 #[test]
 #[should_panic(expected: ('argent/invalid-new-owner-sig',))]
-fn replace_all_owners_with_one_invalid_message() {
+fn reset_owners_invalid_message() {
     let account = initialize_account();
     let (signer, _) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet(
         (signer, StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s })
     );
-    account.replace_all_owners_with_one(signer_signature, VALID_UNTIL);
+    account.reset_owners(signer_signature, VALID_UNTIL);
 }
 
 #[test]
 #[should_panic(expected: ('argent/invalid-new-owner-sig',))]
-fn replace_all_owners_with_one_wrong_pub_key() {
+fn reset_owners_wrong_pub_key() {
     let account = initialize_account();
     let (_, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((WRONG_OWNER().pubkey.try_into().unwrap(), signature));
-    account.replace_all_owners_with_one(signer_signature, VALID_UNTIL);
+    account.reset_owners(signer_signature, VALID_UNTIL);
 }
 
 #[test]

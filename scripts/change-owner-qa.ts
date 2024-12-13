@@ -21,7 +21,7 @@ const validUntil = (await manager.getCurrentTimestamp()) + 60 * 60; // Valid for
 const [r, s] = await signChangeOwnerMessage(accountAddress, newOwnerKeyPair, chainId, validUntil);
 console.log("account:", accountAddress);
 console.log("chainId:", shortString.decodeShortString(chainId));
-console.log("Parameters to replace_all_owners_with_one:");
+console.log("Parameters to reset_owners:");
 console.log("  new_owner:  ", num.toHex(newOwnerKeyPair.publicKey));
 console.log("  signature_r:", num.toHex(r));
 console.log("  signature_s:", num.toHex(s));

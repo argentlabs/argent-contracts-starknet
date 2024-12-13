@@ -418,14 +418,12 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
         }
 
-        fn replace_all_owners_with_one(
-            ref self: ContractState, new_single_owner: SignerSignature, signature_expiration: u64
-        ) {
+        fn reset_owners(ref self: ContractState, new_single_owner: SignerSignature, signature_expiration: u64) {
             assert_only_self();
             let new_owner = new_single_owner.signer();
             self.assert_valid_new_owner_signature(new_single_owner, signature_expiration);
             // This already emits OwnerRemovedGuid & OwnerAddedGuid events
-            self.owner_manager.replace_all_owners_with_one(new_owner.storage_value());
+            self.owner_manager.reset_owners(new_owner.storage_value());
 
             // if let Option::Some(new_owner_pubkey) = new_owner.storage_value().starknet_pubkey_or_none() {
             //     self.emit(OwnerChanged { new_owner: new_owner_pubkey });
@@ -525,7 +523,7 @@ mod ArgentAccount {
 
             // update owner
             let new_owner = current_escape.new_signer.unwrap();
-            self.owner_manager.replace_all_owners_with_one(new_owner);
+            self.owner_manager.reset_owners(new_owner);
             self.emit(OwnerEscapedGuid { new_owner_guid: new_owner.into_guid() });
 
             // clear escape
@@ -649,8 +647,8 @@ mod ArgentAccount {
                             self.last_guardian_trigger_escape_attempt.write(get_block_timestamp());
                         }
 
-                        let new_signer = full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
-                        self.owner_manager.is_valid_owners_replacement(new_signer); // TODO is this a good idea?
+                        let new_owner = full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
+                        assert(!self.is_owner(new_owner), 'argent/invalid-owner-replace'); // TODO is this needed?
                         let guardian_signature = self.parse_single_guardian_signature(signatures);
                         let is_valid = self.is_valid_guardian_signature(execution_hash, guardian_signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');

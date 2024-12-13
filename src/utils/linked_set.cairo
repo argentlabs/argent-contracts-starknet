@@ -43,6 +43,8 @@ pub trait LinkedSetRead<TMemberState> {
     fn first(self: TMemberState) -> Option<Self::Value>;
     /// @return the hashes of all items in the set
     fn get_all_hashes(self: TMemberState) -> Array<felt252>;
+    /// @returns all the items in the set
+    fn get_all(self: TMemberState) -> Array<Self::Value>;
 }
 
 pub trait LinkedSetWrite<TMemberState> {
@@ -133,6 +135,16 @@ impl LinkedSetReadImpl<
         while let Option::Some(next_item) = self.next(current_item_hash) {
             current_item_hash = next_item.hash();
             all_hashes.append(current_item_hash);
+        };
+        all_hashes
+    }
+
+    fn get_all(self: StorageBase<LinkedSet<T>>) -> Array<T> {
+        let mut current_item_hash = 0;
+        let mut all_hashes = array![];
+        while let Option::Some(next_item) = self.next(current_item_hash) {
+            current_item_hash = next_item.hash();
+            all_hashes.append(next_item);
         };
         all_hashes
     }
@@ -291,5 +303,9 @@ impl MutableLinkedSetReadImpl<
     #[inline(always)]
     fn get_all_hashes(self: StorageBase<Mutable<LinkedSet<T>>>) -> Array<felt252> {
         self.as_read_only().get_all_hashes()
+    }
+
+    fn get_all(self: StorageBase<Mutable<LinkedSet<T>>>) -> Array<T> {
+        self.as_read_only().get_all()
     }
 }

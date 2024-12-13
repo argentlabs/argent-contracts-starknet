@@ -1,4 +1,4 @@
-use argent::utils::array_ext::ArrayExt;
+use argent::utils::array_ext::ArrayExtTrait;
 use argent::utils::linked_set::{
     LinkedSet, LinkedSetConfig, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl,
     StorageBaseAsReadOnlyImpl
@@ -44,6 +44,8 @@ pub trait LinkedSetWithHeadRead<TMemberState> {
     fn contains_by_hash(self: TMemberState, item_hash: felt252) -> bool;
     /// @returns all the hashes in the set
     fn get_all_hashes(self: TMemberState) -> Array<felt252>;
+    /// @returns all the items in the set
+    fn get_all(self: TMemberState) -> Array<Self::Value>;
 }
 
 pub trait LinkedSetWithHeadWrite<TMemberState> {
@@ -61,7 +63,7 @@ pub trait LinkedSetWithHeadWrite<TMemberState> {
 
 
 impl LinkedSetWithHeadReadImpl<
-    T, +Drop<T>, +PartialEq<T>, +starknet::Store<T>, +LinkedSetConfig<T>
+    T, +Drop<T>, +Copy<T>, +PartialEq<T>, +starknet::Store<T>, +LinkedSetConfig<T>
 > of LinkedSetWithHeadRead<StorageBase<LinkedSetWithHead<T>>> {
     type Value = T;
 
@@ -123,6 +125,17 @@ impl LinkedSetWithHeadReadImpl<
             let mut all_hashes = array![first_item.hash()];
             all_hashes.append_all(self.get_tail_list().get_all_hashes().span());
             all_hashes
+        } else {
+            // empty collection
+            array![]
+        }
+    }
+
+    fn get_all(self: StorageBase<LinkedSetWithHead<T>>) -> Array<T> {
+        if let Option::Some(first_item) = self.first() {
+            let mut all_items = array![first_item];
+            all_items.append_all(self.get_tail_list().get_all().span());
+            all_items
         } else {
             // empty collection
             array![]
@@ -200,7 +213,7 @@ impl LinkedSetWithHeadWritePrivateImpl<
 
 // Allow read operations in mutable access too
 impl MutableLinkedSetWithHeadReadImpl<
-    T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>,
+    T, +Drop<T>, +Copy<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetWithHeadRead<StorageBase<Mutable<LinkedSetWithHead<T>>>> {
     type Value = T;
 
@@ -237,5 +250,9 @@ impl MutableLinkedSetWithHeadReadImpl<
     #[inline(always)]
     fn get_all_hashes(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> Array<felt252> {
         self.as_read_only().get_all_hashes()
+    }
+
+    fn get_all(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> Array<T> {
+        self.as_read_only().get_all()
     }
 }

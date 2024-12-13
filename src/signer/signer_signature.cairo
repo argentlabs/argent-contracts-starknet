@@ -107,6 +107,12 @@ struct WebauthnSigner {
     rp_id_hash: NonZero<u256>,
     pubkey: NonZero<u256>
 }
+#[derive(Drop, Copy, Serde)]
+struct SignerInfo {
+    signerType: SignerType,
+    guid: felt252,
+    pubkey: Option<felt252>
+}
 
 // Ensures that the pubkey_hash is not zero as we can't do NonZero<EthAddress>
 impl Secp256k1SignerSerde of Serde<Secp256k1Signer> {
@@ -230,6 +236,24 @@ impl SignerStorageValueImpl of SignerStorageTrait {
             _ => Option::None,
         }
     }
+
+    #[must_use]
+    fn to_guid_list(mut self: Span<SignerStorageValue>) -> Array<felt252> {
+        let mut guids = array![];
+        for signer_storage_value in self {
+            guids.append((*signer_storage_value).into_guid());
+        };
+        guids
+    }
+
+    #[must_use]
+    fn to_signer_info(mut self: Span<SignerStorageValue>) -> Array<SignerInfo> {
+        let mut signer_info = array![];
+        for signer_storage_value in self {
+            signer_info.append((*signer_storage_value).into());
+        };
+        signer_info
+    }
 }
 
 trait SignerSignatureTrait {
@@ -344,5 +368,19 @@ impl SignerSpanTraitImpl of SignerSpanTrait {
             guids.append((*signer).into_guid());
         };
         guids
+    }
+}
+
+impl SignerSignatureIntoSignerInfo of Into<SignerStorageValue, SignerInfo> {
+    fn into(self: SignerStorageValue) -> SignerInfo {
+        SignerInfo {
+            signerType: self.signer_type,
+            guid: self.into_guid(),
+            pubkey: if self.is_stored_as_guid() {
+                Option::Some(self.stored_value)
+            } else {
+                Option::None
+            }
+        }
     }
 }

@@ -47,7 +47,7 @@ enum SignerSignature {
 }
 
 /// @notice The starknet signature using the stark-curve
-#[derive(Drop, Copy, Serde, PartialEq)]
+#[derive(Drop, Copy, Serde)]
 struct StarknetSignature {
     r: felt252,
     s: felt252,

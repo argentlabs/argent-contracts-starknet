@@ -47,7 +47,6 @@ trait ISignerManagerInternal<TContractState> {
     fn initialize(ref self: TContractState, threshold: usize, signers: Array<Signer>);
     fn assert_valid_threshold_and_signers_count(self: @TContractState, threshold: usize, signers_len: usize);
     fn assert_valid_storage(self: @TContractState);
-    fn emit_signer_linked_event(ref self: TContractState, event: SignerLinked);
     fn is_valid_signature_with_threshold(
         self: @TContractState, hash: felt252, threshold: u32, signer_signatures: Array<SignerSignature>
     ) -> bool;

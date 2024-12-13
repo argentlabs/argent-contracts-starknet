@@ -248,10 +248,6 @@ mod signer_manager_component {
             self.assert_valid_threshold_and_signers_count(self.threshold.read(), self.signer_list.len());
         }
 
-        fn emit_signer_linked_event(ref self: ComponentState<TContractState>, event: SignerLinked) {
-            self.emit(event);
-        }
-
         fn is_valid_signature_with_threshold(
             self: @ComponentState<TContractState>,
             hash: felt252,

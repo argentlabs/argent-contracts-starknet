@@ -12,8 +12,7 @@ mod ArgentMultisigAccount {
         signer_manager_component, signer_manager_component::SignerManagerInternalImpl
     };
     use argent::multisig_account::upgrade_migration::{
-        IUpgradeMigrationInternal, upgrade_migration_component,
-        upgrade_migration_component::UpgradableMigrationInternal, IUpgradeMigrationCallback
+        upgrade_migration_component, upgrade_migration_component::UpgradableMigrationInternal
     };
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
@@ -227,7 +226,7 @@ mod ArgentMultisigAccount {
         // Called when coming from multisig 0.1.X
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
-            self.signer_manager.migrate_from_pubkeys_to_guids();
+            self.upgrade_migration.migrate_from_before_0_2_0();
             assert(data.len() == 0, 'argent/unexpected-data');
             array![]
         }
@@ -257,16 +256,6 @@ mod ArgentMultisigAccount {
             let calls: Array<Call> = full_deserialize(data).expect('argent/invalid-calls');
             assert_no_self_call(calls.span(), get_contract_address());
             execute_multicall(calls.span());
-        }
-    }
-
-    impl UpgradeMigrationCallbackImpl of IUpgradeMigrationCallback<ContractState> {
-        fn migrate_owners(ref self: ContractState) {
-            self.signer_manager.add_end_marker();
-        }
-
-        fn emit_signer_linked_event(ref self: ContractState, event: SignerLinked) {
-            self.signer_manager.emit_signer_linked_event(event);
         }
     }
 

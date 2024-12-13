@@ -32,7 +32,9 @@ impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
 #[starknet::component]
 mod signer_manager_component {
     use argent::multiowner_account::events::SignerLinked;
-    use argent::multisig_account::signer_manager::interface::{ISignerManager, ISignerManagerInternal};
+    use argent::multisig_account::signer_manager::interface::{
+        ISignerManager, ISignerManagerInternal, IUpgradeMigration
+    };
     use argent::signer::{
         signer_signature::{
             Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, starknet_signer_from_pubkey
@@ -180,6 +182,37 @@ mod signer_manager_component {
         }
     }
 
+    impl UpgradeMigrationImpl<
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
+    > of IUpgradeMigration<ComponentState<TContractState>> {
+        fn migrate_from_pubkeys_to_guids(ref self: ComponentState<TContractState>) {
+            // assert valid storage
+            let pubkeys = self.get_signer_guids();
+            self.assert_valid_threshold_and_signers_count(self.threshold.read(), pubkeys.len());
+
+            // Converting storage from public keys to guid
+            let mut signers_to_add = array![];
+            for pubkey in pubkeys
+                .span() {
+                    let starknet_signer = starknet_signer_from_pubkey(*pubkey);
+                    let signer_guid = starknet_signer.into_guid();
+                    signers_to_add.append(signer_guid);
+                    self.emit(SignerLinked { signer_guid, signer: starknet_signer });
+                };
+
+            self.signer_list.remove_many(pubkeys.span());
+            self.signer_list.insert_many(signers_to_add.span());
+        }
+        fn add_end_marker(ref self: ComponentState<TContractState>,) {
+            // assert valid storage
+            let pubkeys = self.get_signer_guids();
+            self.assert_valid_threshold_and_signers_count(self.threshold.read(), pubkeys.len());
+
+            let last_signer = self.signer_list.find_last_hash();
+            self.signer_list.entry(last_signer).write(SignerGuidLinkedSetConfig::END_MARKER);
+        }
+    }
+
     impl SignerManagerInternalImpl<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
     > of ISignerManagerInternal<ComponentState<TContractState>> {
@@ -217,34 +250,6 @@ mod signer_manager_component {
 
         fn emit_signer_linked_event(ref self: ComponentState<TContractState>, event: SignerLinked) {
             self.emit(event);
-        }
-
-        fn migrate_from_pubkeys_to_guids(ref self: ComponentState<TContractState>) {
-            // assert valid storage
-            let pubkeys = self.get_signer_guids();
-            self.assert_valid_threshold_and_signers_count(self.threshold.read(), pubkeys.len());
-
-            // Converting storage from public keys to guid
-            let mut signers_to_add = array![];
-            for pubkey in pubkeys
-                .span() {
-                    let starknet_signer = starknet_signer_from_pubkey(*pubkey);
-                    let signer_guid = starknet_signer.into_guid();
-                    signers_to_add.append(signer_guid);
-                    self.emit(SignerLinked { signer_guid, signer: starknet_signer });
-                };
-
-            self.signer_list.remove_many(pubkeys.span());
-            self.signer_list.insert_many(signers_to_add.span());
-        }
-
-        fn add_end_marker(ref self: ComponentState<TContractState>) {
-            // assert valid storage
-            let pubkeys = self.get_signer_guids();
-            self.assert_valid_threshold_and_signers_count(self.threshold.read(), pubkeys.len());
-
-            let last_signer = self.signer_list.find_last_hash();
-            self.signer_list.entry(last_signer).write(SignerGuidLinkedSetConfig::END_MARKER);
         }
 
         fn is_valid_signature_with_threshold(

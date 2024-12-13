@@ -1,27 +1,14 @@
-use argent::account::interface::Version;
-use argent::multiowner_account::events::SignerLinked;
-use argent::signer::signer_signature::SignerStorageValue;
-
 #[starknet::interface]
 trait IUpgradeMigrationInternal<TContractState> {
+    fn migrate_from_before_0_2_0(ref self: TContractState);
     fn migrate_from_0_2_0(ref self: TContractState);
-}
-
-trait IUpgradeMigrationCallback<TContractState> {
-    fn migrate_owners(ref self: TContractState);
-    fn emit_signer_linked_event(ref self: TContractState, event: SignerLinked);
 }
 
 #[starknet::component]
 mod upgrade_migration_component {
-    use argent::account::interface::Version;
-    use argent::multiowner_account::events::SignerLinked;
-    use argent::signer::{signer_signature::{starknet_signer_from_pubkey, SignerTrait}};
-    use starknet::storage::Map;
-    use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback};
-
-    /// Too many owners could make the multisig unable to process transactions if we reach a limit
-    const MAX_SIGNERS_COUNT_LEGACY: usize = 32;
+    use argent::multisig_account::signer_manager::interface::IUpgradeMigration;
+    use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
+    use super::IUpgradeMigrationInternal;
 
     #[storage]
     struct Storage {}
@@ -35,29 +22,18 @@ mod upgrade_migration_component {
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
-        +IUpgradeMigrationCallback<TContractState>,
+        impl SignerManager: signer_manager_component::HasComponent<TContractState>,
     > of IUpgradeMigrationInternal<ComponentState<TContractState>> {
+        fn migrate_from_before_0_2_0(ref self: ComponentState<TContractState>) {
+            let mut signer_manager = get_dep_component_mut!(ref self, SignerManager);
+            signer_manager.migrate_from_pubkeys_to_guids();
+            self.migrate_from_0_2_0();
+        }
+
         fn migrate_from_0_2_0(ref self: ComponentState<TContractState>) {
-            self.migrate_owners();
+            let mut signer_manager = get_dep_component_mut!(ref self, SignerManager);
+            signer_manager.add_end_marker();
             // Do some health checks?
-        }
-    }
-
-    #[generate_trait]
-    impl Private<
-        TContractState,
-        +HasComponent<TContractState>,
-        +IUpgradeMigrationCallback<TContractState>,
-        +Drop<TContractState>,
-    > of PrivateTrait<TContractState> {
-        fn migrate_owners(ref self: ComponentState<TContractState>) {
-            let mut contract = self.get_contract_mut();
-            contract.migrate_owners();
-        }
-
-        fn emit_signer_linked_event(ref self: ComponentState<TContractState>, event: SignerLinked) {
-            let mut contract = self.get_contract_mut();
-            contract.emit_signer_linked_event(event);
         }
     }
 }

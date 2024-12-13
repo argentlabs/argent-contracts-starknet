@@ -147,10 +147,10 @@ export class Session {
     if (!cacheOwnerGuid || !cacheGuardianGuid) return false;
     const sessionContract = await manager.loadContract(accountAddress);
     const sessionMessageHash = typedData.getMessageHash(await this.getTypedData(), accountAddress);
-    const isSessionCached = this.legacyMode
-      ? await sessionContract.is_session_authorization_cached(sessionMessageHash)
-      : await sessionContract.is_session_authorization_cached(sessionMessageHash, cacheOwnerGuid, cacheGuardianGuid);
-    return isSessionCached;
+    if (this.legacyMode) {
+      return await sessionContract.is_session_authorization_cached(sessionMessageHash);
+    }
+    return await sessionContract.is_session_authorization_cached(sessionMessageHash, cacheOwnerGuid, cacheGuardianGuid);
   }
 
   public async hashWithTransaction(

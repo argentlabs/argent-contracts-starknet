@@ -716,8 +716,8 @@ mod ArgentAccount {
                             self.last_guardian_trigger_escape_attempt.write(get_block_timestamp());
                         }
 
-                        let new_signer = full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
-                        self.owner_manager.is_valid_owners_replacement(new_signer);
+                        let new_owner = full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
+                        assert(!self.is_owner(new_owner), 'argent/invalid-owner-replace');
                         let guardian_signature = self.parse_single_guardian_signature(signatures);
                         let is_valid = self.is_valid_guardian_signature(execution_hash, guardian_signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');

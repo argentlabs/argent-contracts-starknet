@@ -36,4 +36,5 @@ mod upgrade_migration_component {
             // Do some health checks?
         }
     }
+    // TODO Can directly code here and not use the interface
 }

@@ -20,7 +20,10 @@ mod MockFutureArgentAccount {
             SignerSignature, SignerSignatureTrait, starknet_signer_from_pubkey
         }
     };
-    use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
+    use argent::upgrade::{
+        upgrade::{upgrade_component, upgrade_component::UpgradableInternalImpl},
+        interface::{IUpgradableCallback, IUpgradableCallbackOld}
+    };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self}, calls::execute_multicall, serialization::full_deserialize,
     };
@@ -42,14 +45,13 @@ mod MockFutureArgentAccount {
     const VERSION_COMPAT: felt252 = '0.5.0';
 
     // Introspection
+    component!(path: src5_component, storage: src5, event: SRC5Events);
     #[abi(embed_v0)]
     impl SRC5 = src5_component::SRC5Impl<ContractState>;
-    component!(path: src5_component, storage: src5, event: SRC5Events);
     // Upgrade
+    component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
-    impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
-    component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
 
     #[storage]
     struct Storage {

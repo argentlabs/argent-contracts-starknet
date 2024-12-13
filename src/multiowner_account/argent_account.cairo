@@ -11,7 +11,9 @@ mod ArgentAccount {
         OwnerChangedGuid, GuardianChanged, GuardianChangedGuid, GuardianBackupChanged, GuardianBackupChangedGuid,
         EscapeSecurityPeriodChanged,
     };
-    use argent::multiowner_account::owner_manager::{IOwnerManager, owner_manager_component};
+    use argent::multiowner_account::owner_manager::{
+        IOwnerManager, owner_manager_component, owner_manager_component::OwnerManagerInternalImpl
+    };
     use argent::multiowner_account::recovery::{Escape, EscapeType};
     use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
     use argent::multiowner_account::upgrade_migration::{
@@ -31,7 +33,8 @@ mod ArgentAccount {
         SignerSignature, SignerSignatureTrait
     };
     use argent::upgrade::{
-        upgrade::{IUpgradeInternal, upgrade_component}, interface::{IUpgradableCallback, IUpgradableCallbackOld}
+        upgrade::{IUpgradeInternal, upgrade_component, upgrade_component::UpgradableInternalImpl},
+        interface::{IUpgradableCallback, IUpgradableCallbackOld}
     };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self, assert_only_protocol}, calls::execute_multicall,
@@ -42,7 +45,7 @@ mod ArgentAccount {
         }
     };
     use hash::{HashStateTrait, HashStateExTrait};
-    use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
+    use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use pedersen::PedersenTrait;
     use starknet::{
         storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, account::Call,
@@ -75,7 +78,6 @@ mod ArgentAccount {
     component!(path: owner_manager_component, storage: owner_manager, event: OwnerManagerEvents);
     #[abi(embed_v0)]
     impl OwnerManager = owner_manager_component::OwnerManagerImpl<ContractState>;
-    impl OwnerManagerInternal = owner_manager_component::OwnerManagerInternalImpl<ContractState>;
     // session
     component!(path: session_component, storage: session, event: SessionableEvents);
     #[abi(embed_v0)]
@@ -94,12 +96,10 @@ mod ArgentAccount {
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
-    impl UpgradableInternal = upgrade_component::UpgradableInternalImpl<ContractState>;
     // Upgrade migration
     component!(path: upgrade_migration_component, storage: upgrade_migration, event: UpgradeMigrationEvents);
     // Reentrancy guard
     component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
-    impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {

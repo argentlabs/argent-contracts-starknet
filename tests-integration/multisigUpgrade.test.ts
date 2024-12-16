@@ -69,6 +69,16 @@ describe("ArgentMultisig: upgrade", function () {
     await manager.ensureSuccess(ethContract.transfer(recipient, amount, { maxFee: 5e14 }));
   });
 
+  it("Shouldn't be possible to upgrade from current version to FutureVersionMultisig with extra calldata", async function () {
+    const argentMultisigFutureClassHash = await manager.declareLocalContract("MockFutureArgentMultisig");
+
+    const { account } = await deployMultisig1_1();
+    await upgradeAccount(account, argentMultisigFutureClassHash, [1]).should.be.rejectedWith(
+      "argent/unexpected-data",
+    );
+    
+  });
+
   it("Waiting for data to be filled", function () {
     describe("Upgrade to latest version", function () {
       for (const { name, deployMultisig, getGuidsSelector } of artifactNames) {

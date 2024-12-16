@@ -234,7 +234,7 @@ mod ArgentMultisigAccount {
 
     #[abi(embed_v0)]
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
-        // Called when coming from multisig 0.2.0+
+        // Called when coming from multisig 0.2.0 and above
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
             assert_only_self();
 
@@ -249,13 +249,8 @@ mod ArgentMultisigAccount {
 
             self.upgrade_migration.migrate_from_0_2_0();
 
-            if data.is_empty() {
-                return;
-            }
-
-            let calls: Array<Call> = full_deserialize(data).expect('argent/invalid-calls');
-            assert_no_self_call(calls.span(), get_contract_address());
-            execute_multicall(calls.span());
+            // TODO Do a test
+            assert(data.len() == 0, 'argent/unexpected-data');
         }
     }
 

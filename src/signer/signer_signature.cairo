@@ -107,11 +107,17 @@ struct WebauthnSigner {
     rp_id_hash: NonZero<u256>,
     pubkey: NonZero<u256>
 }
+
+/// @notice Information about a signer stored in the account
+/// @param signerType The type of the signer
+/// @param guid The guid of the signer
+/// @param stored_value Depending on the type it can be a pubkey, a guid or another value. The stored value is unique
+/// for each signer type
 #[derive(Drop, Copy, Serde)]
 struct SignerInfo {
     signerType: SignerType,
     guid: felt252,
-    pubkey: Option<felt252>
+    stored_value: felt252
 }
 
 // Ensures that the pubkey_hash is not zero as we can't do NonZero<EthAddress>
@@ -373,14 +379,6 @@ impl SignerSpanTraitImpl of SignerSpanTrait {
 
 impl SignerSignatureIntoSignerInfo of Into<SignerStorageValue, SignerInfo> {
     fn into(self: SignerStorageValue) -> SignerInfo {
-        SignerInfo {
-            signerType: self.signer_type,
-            guid: self.into_guid(),
-            pubkey: if self.is_stored_as_guid() {
-                Option::Some(self.stored_value)
-            } else {
-                Option::None
-            }
-        }
+        SignerInfo { signerType: self.signer_type, guid: self.into_guid(), stored_value: self.stored_value }
     }
 }

@@ -73,10 +73,7 @@ describe("ArgentMultisig: upgrade", function () {
     const argentMultisigFutureClassHash = await manager.declareLocalContract("MockFutureArgentMultisig");
 
     const { account } = await deployMultisig1_1();
-    await upgradeAccount(account, argentMultisigFutureClassHash, [1]).should.be.rejectedWith(
-      "argent/unexpected-data",
-    );
-    
+    await upgradeAccount(account, argentMultisigFutureClassHash, [1]).should.be.rejectedWith("argent/unexpected-data");
   });
 
   it("Waiting for data to be filled", function () {

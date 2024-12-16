@@ -96,6 +96,20 @@ pub trait LinkedSetConfig<T> {
     fn path_is_in_set(path: StoragePath<T>) -> bool;
 }
 
+pub trait AddEndMarketRenameMePlz<TMemberState> {
+    // @return true when the value stored in the given path is valid or the end marker
+    // @param path the path determined by the hash of the item we want to check inclusion
+    fn add_end_marker(self: TMemberState);
+}
+impl AddEndMarketRenameMePlzImpl<
+    T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>, +LinkedSetReadPrivate<T>
+> of AddEndMarketRenameMePlz<StorageBase<Mutable<LinkedSet<T>>>> {
+    fn add_end_marker(self: StorageBase<Mutable<LinkedSet<T>>>) {
+        let last_signer = self.as_read_only().find_last_hash();
+        self.entry(last_signer).write('end'); // SignerGuidLinkedSetConfig::END_MARKER);
+    }
+}
+
 impl LinkedSetReadImpl<
     T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>
 > of LinkedSetRead<StorageBase<LinkedSet<T>>> {

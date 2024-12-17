@@ -10,6 +10,12 @@ trait IUpgradeMigrationCallback<TContractState> {
     fn migrate_owner(ref self: TContractState, signer_storage_value: SignerStorageValue);
 }
 
+#[starknet::interface]
+trait IFixStorage<TContractState> {
+    // Naming to be reviewed, could be too scary
+    fn unbrick_account(ref self: TContractState);
+}
+
 #[derive(Drop, Copy, Serde, Default, starknet::Store)]
 struct LegacyEscape {
     // timestamp for activation of escape mode, 0 otherwise
@@ -35,7 +41,7 @@ mod upgrade_migration_component {
         syscalls::replace_class_syscall, SyscallResultTrait, get_block_timestamp, storage::Map,
         storage_access::{storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,}
     };
-    use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback, LegacyEscape};
+    use super::{IFixStorage, IUpgradeMigrationInternal, IUpgradeMigrationCallback, LegacyEscape};
 
     const LEGACY_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
@@ -55,6 +61,22 @@ mod upgrade_migration_component {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {}
+
+
+    #[embeddable_as(FixStorageImpl)]
+    impl FixStorage<
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        +IUpgradeMigrationCallback<TContractState>,
+        +IArgentMultiOwnerAccount<TContractState>,
+        +IEmitArgentAccountEvent<TContractState>,
+    > of IFixStorage<ComponentState<TContractState>> {
+        fn unbrick_account(ref self: ComponentState<TContractState>) {
+            assert(self._signer.read() != 0, 'argent/already-unbricked');
+            self.migrate_from_before_0_4_0();
+        }
+    }
 
     impl UpgradableMigrationInternal<
         TContractState,

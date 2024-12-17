@@ -172,6 +172,7 @@ export abstract class KeyPair extends RawSigner {
       signer: this.signer,
     });
   }
+  
   public get compiledSignerAsOption() {
     return CallData.compile([this.signerAsOption]);
   }

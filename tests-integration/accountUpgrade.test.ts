@@ -1,13 +1,9 @@
 import { expect } from "chai";
-import { CairoOption, CairoOptionVariant, CallData, Contract, num, RawArgs } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, Contract, RawArgs } from "starknet";
 import {
   ArgentAccount,
   ArgentSigner,
   ContractWithClass,
-  LegacyWebauthnOwner,
-  RawSigner,
-  StarknetKeyPair,
-  WebauthnOwner,
   deployAccount,
   deployAccountWithoutGuardian,
   deployLegacyAccount,
@@ -17,6 +13,7 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   getUpgradeDataLegacy,
+  LegacyWebauthnOwner,
   manager,
   randomEip191KeyPair,
   randomEthKeyPair,
@@ -24,7 +21,10 @@ import {
   randomStarknetKeyPair,
   randomWebauthnLegacyCairo0Owner,
   randomWebauthnLegacyOwner,
+  RawSigner,
+  StarknetKeyPair,
   upgradeAccount,
+  WebauthnOwner,
 } from "../lib";
 
 interface SelfCall {
@@ -57,56 +57,56 @@ describe("ArgentAccount: upgrade", function () {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
     mockDapp = await manager.deployContract("MockDapp");
 
-    // upgradeData.push({
-    //   name: "Legacy",
-    //   deployAccount: async () => await deployOldAccountWithProxy(),
-    //   // Required to ensure execute_after_upgrade is called. Without any calldata, the execute_after_upgrade won't be called
-    //   upgradeExtraCalldata: ["0"],
-    //   deployAccountWithoutGuardian: async () => await deployOldAccountWithProxyWithoutGuardian(),
-    //   // Gotta call like that as the entrypoint is not found on the contract for legacy versions
-    //   triggerEscapeOwnerCall: { entrypoint: "triggerEscapeSigner" },
-    //   triggerEscapeGuardianCall: { entrypoint: "triggerEscapeGuardian" },
-    // });
+    upgradeData.push({
+      name: "Legacy",
+      deployAccount: async () => await deployOldAccountWithProxy(),
+      // Required to ensure execute_after_upgrade is called. Without any calldata, the execute_after_upgrade won't be called
+      upgradeExtraCalldata: ["0"],
+      deployAccountWithoutGuardian: async () => await deployOldAccountWithProxyWithoutGuardian(),
+      // Gotta call like that as the entrypoint is not found on the contract for legacy versions
+      triggerEscapeOwnerCall: { entrypoint: "triggerEscapeSigner" },
+      triggerEscapeGuardianCall: { entrypoint: "triggerEscapeGuardian" },
+    });
 
-    // const v030 = "0.3.0";
-    // const classHashV030 = await manager.declareArtifactAccountContract(v030);
-    // const triggerEscapeOwnerCallV03 = { entrypoint: "trigger_escape_owner", calldata: [12] };
-    // const triggerEscapeGuardianCallV03 = { entrypoint: "trigger_escape_guardian", calldata: [12] };
-    // upgradeData.push({
-    //   name: v030,
-    //   deployAccount: async () => deployLegacyAccount(classHashV030),
-    //   deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV030),
-    //   triggerEscapeOwnerCall: triggerEscapeOwnerCallV03,
-    //   triggerEscapeGuardianCall: triggerEscapeGuardianCallV03,
-    // });
+    const v030 = "0.3.0";
+    const classHashV030 = await manager.declareArtifactAccountContract(v030);
+    const triggerEscapeOwnerCallV03 = { entrypoint: "trigger_escape_owner", calldata: [12] };
+    const triggerEscapeGuardianCallV03 = { entrypoint: "trigger_escape_guardian", calldata: [12] };
+    upgradeData.push({
+      name: v030,
+      deployAccount: async () => deployLegacyAccount(classHashV030),
+      deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV030),
+      triggerEscapeOwnerCall: triggerEscapeOwnerCallV03,
+      triggerEscapeGuardianCall: triggerEscapeGuardianCallV03,
+    });
 
-    // const v031 = "0.3.1";
-    // const classHashV031 = await manager.declareArtifactAccountContract(v031);
-    // upgradeData.push({
-    //   name: v031,
-    //   deployAccount: async () => deployLegacyAccount(classHashV031),
-    //   deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV031),
-    //   triggerEscapeOwnerCall: triggerEscapeOwnerCallV03,
-    //   triggerEscapeGuardianCall: triggerEscapeGuardianCallV03,
-    // });
+    const v031 = "0.3.1";
+    const classHashV031 = await manager.declareArtifactAccountContract(v031);
+    upgradeData.push({
+      name: v031,
+      deployAccount: async () => deployLegacyAccount(classHashV031),
+      deployAccountWithoutGuardian: async () => deployLegacyAccountWithoutGuardian(classHashV031),
+      triggerEscapeOwnerCall: triggerEscapeOwnerCallV03,
+      triggerEscapeGuardianCall: triggerEscapeGuardianCallV03,
+    });
 
-    // const v040 = "0.4.0";
-    // classHashV040 = await manager.declareArtifactAccountContract(v040);
-    // const triggerEscapeOwnerCallV04 = {
-    //   entrypoint: "trigger_escape_owner",
-    //   calldata: CallData.compile(randomStarknetKeyPair().compiledSigner),
-    // };
-    // const triggerEscapeGuardianCallV04 = {
-    //   entrypoint: "trigger_escape_guardian",
-    //   calldata: CallData.compile([new CairoOption(CairoOptionVariant.None)]),
-    // };
-    // upgradeData.push({
-    //   name: v040,
-    //   deployAccount: async () => deployAccount({ classHash: classHashV040 }),
-    //   deployAccountWithoutGuardian: async () => deployAccountWithoutGuardian({ classHash: classHashV040 }),
-    //   triggerEscapeOwnerCall: triggerEscapeOwnerCallV04,
-    //   triggerEscapeGuardianCall: triggerEscapeGuardianCallV04,
-    // });
+    const v040 = "0.4.0";
+    classHashV040 = await manager.declareArtifactAccountContract(v040);
+    const triggerEscapeOwnerCallV04 = {
+      entrypoint: "trigger_escape_owner",
+      calldata: CallData.compile(randomStarknetKeyPair().compiledSigner),
+    };
+    const triggerEscapeGuardianCallV04 = {
+      entrypoint: "trigger_escape_guardian",
+      calldata: CallData.compile([new CairoOption(CairoOptionVariant.None)]),
+    };
+    upgradeData.push({
+      name: v040,
+      deployAccount: async () => deployAccount({ classHash: classHashV040 }),
+      deployAccountWithoutGuardian: async () => deployAccountWithoutGuardian({ classHash: classHashV040 }),
+      triggerEscapeOwnerCall: triggerEscapeOwnerCallV04,
+      triggerEscapeGuardianCall: triggerEscapeGuardianCallV04,
+    });
   });
 
   it("Waiting for upgradeData to be filled", function () {
@@ -231,7 +231,7 @@ describe("ArgentAccount: upgrade", function () {
     await expectRevertWithErrorMessage("argent/downgrade-not-allowed", upgradeAccount(account, argentAccountClassHash));
   });
 
-    // TODO We should prob do a script for when it happens?
+  // TODO We should prob do a script for when it happens?
   it.only("Upgrade from 0.3.0 un-brick the account", async function () {
     const { account, owner } = await deployOldAccountWithProxy();
     const legacyClassHash = await manager.getClassHashAt(account.address);
@@ -242,9 +242,9 @@ describe("ArgentAccount: upgrade", function () {
     mockDapp.connect(account);
 
     // Check the account is bricked
-    const brickedGuids  = await account.callContract({
+    const brickedGuids = await account.callContract({
       contractAddress: account.address,
-      entrypoint:"get_owner_guids",
+      entrypoint: "get_owner_guids",
     });
     expect(brickedGuids.length).to.equal(1);
     expect(brickedGuids[0]).to.equal("0x0");
@@ -254,18 +254,60 @@ describe("ArgentAccount: upgrade", function () {
     // Unbrick the account
     await otherAccount.execute({
       contractAddress: account.address,
-      entrypoint:"unbrick_account",
+      entrypoint: "unbrick_account",
       calldata: [],
     });
     expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
-    
 
     // Making sure it has the new owner migrated correctly
-    const newAccount = await manager.loadContract(account.address); 
+    const newAccountContract = await manager.loadContract(account.address);
     const newGuid = new StarknetKeyPair(owner.privateKey).guid;
-    expect(await newAccount.get_owner_guids()).to.deep.equal([newGuid]);
+    expect(await newAccountContract.get_owner_guids()).to.deep.equal([newGuid]);
+    mockDapp.connect(account);
     // We don't really care about the value here, just that it is successful
     await manager.ensureSuccess(mockDapp.set_number(56));
+  });
+
+  it.only("Shouldn't be possible to unbrick twice", async function () {
+    const { account } = await deployOldAccountWithProxy();
+
+    await upgradeAccount(account, argentAccountClassHash, []);
+
+    const { account: otherAccount } = await deployAccount();
+    // Unbrick the account for the first time
+    await otherAccount.execute({
+      contractAddress: account.address,
+      entrypoint: "unbrick_account",
+      calldata: [],
+    });
+    expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+
+    // TODO Note: didn't await here and it was green. Should flag it as a bug
+    // Trying to unbrick a second time
+    await otherAccount
+      .execute({
+        contractAddress: account.address,
+        entrypoint: "unbrick_account",
+        calldata: [],
+      })
+      .should.be.rejectedWith("argent/account-not-bricked");
+  });
+
+  it.only("Shouldn't be possible to unbrick an account that was correctly upgraded", async function () {
+    const { account } = await deployOldAccountWithProxy();
+    await upgradeAccount(account, argentAccountClassHash, ["0"]);
+
+    expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+
+    const { account: otherAccount } = await deployAccount();
+    // Unbrick the account
+    await otherAccount
+      .execute({
+        contractAddress: account.address,
+        entrypoint: "unbrick_account",
+        calldata: [],
+      })
+      .should.be.rejectedWith("argent/account-not-bricked");
   });
 
   describe("Testing upgrade version 0.4.0 with every signer type", function () {

@@ -73,7 +73,7 @@ mod upgrade_migration_component {
         +IEmitArgentAccountEvent<TContractState>,
     > of IFixStorage<ComponentState<TContractState>> {
         fn unbrick_account(ref self: ComponentState<TContractState>) {
-            assert(self._signer.read() != 0, 'argent/already-unbricked');
+            assert(self._signer.read() != 0, 'argent/account-not-bricked');
             self.migrate_from_before_0_4_0();
         }
     }

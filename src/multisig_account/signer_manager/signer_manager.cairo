@@ -167,7 +167,7 @@ mod signer_manager_component {
         }
 
         fn get_signer_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
-            self.signer_list.get_all_hashes()
+            self.signer_list.get_all()
         }
 
         fn is_signer(self: @ComponentState<TContractState>, signer: Signer) -> bool {

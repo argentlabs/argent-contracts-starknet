@@ -41,7 +41,7 @@ mod signer_manager_component {
         },
     };
     use argent::utils::linked_set::{
-        LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, LinkedSetWritePrivateImpl, MutableLinkedSetReadImpl
+        IAddEndMarker, LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl
     };
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
     use super::SignerGuidLinkedSetConfig;
@@ -205,12 +205,11 @@ mod signer_manager_component {
         }
 
         fn add_end_marker(ref self: ComponentState<TContractState>,) {
-            // assert valid storage
+            // Health checks
             let pubkeys = self.get_signer_guids();
             self.assert_valid_threshold_and_signers_count(self.threshold.read(), pubkeys.len());
 
-            let last_signer = self.signer_list.find_last_hash();
-            self.signer_list.entry(last_signer).write(SignerGuidLinkedSetConfig::END_MARKER);
+            self.signer_list.add_end_marker();
         }
     }
 

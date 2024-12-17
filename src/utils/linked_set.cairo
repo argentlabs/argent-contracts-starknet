@@ -111,7 +111,9 @@ impl AddEndMarkerImpl<
 > of IAddEndMarker<StorageBase<Mutable<LinkedSet<T>>>> {
     fn add_end_marker(self: StorageBase<Mutable<LinkedSet<T>>>) {
         let last_signer = self.find_last_hash();
-        self.entry(last_signer).write(LinkedSetConfig::END_MARKER);
+        if last_signer != 0 {
+            self.entry(last_signer).write(LinkedSetConfig::END_MARKER);
+        }
     }
 }
 

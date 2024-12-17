@@ -249,7 +249,6 @@ mod ArgentMultisigAccount {
 
             self.upgrade_migration.migrate_from_0_2_0();
 
-            // TODO Do a test
             assert(data.len() == 0, 'argent/unexpected-data');
         }
     }

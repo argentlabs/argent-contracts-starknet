@@ -108,6 +108,18 @@ struct WebauthnSigner {
     pubkey: NonZero<u256>
 }
 
+/// @notice Information about a signer stored in the account
+/// @param signerType The type of the signer
+/// @param guid The guid of the signer
+/// @param stored_value Depending on the type it can be a pubkey, a guid or another value. The stored value is unique
+/// for each signer type
+#[derive(Drop, Copy, Serde)]
+struct SignerInfo {
+    signerType: SignerType,
+    guid: felt252,
+    stored_value: felt252
+}
+
 // Ensures that the pubkey_hash is not zero as we can't do NonZero<EthAddress>
 impl Secp256k1SignerSerde of Serde<Secp256k1Signer> {
     #[inline(always)]
@@ -230,6 +242,24 @@ impl SignerStorageValueImpl of SignerStorageTrait {
             _ => Option::None,
         }
     }
+
+    #[must_use]
+    fn to_guid_list(mut self: Span<SignerStorageValue>) -> Array<felt252> {
+        let mut guids = array![];
+        for signer_storage_value in self {
+            guids.append((*signer_storage_value).into_guid());
+        };
+        guids
+    }
+
+    #[must_use]
+    fn to_signer_info(mut self: Span<SignerStorageValue>) -> Array<SignerInfo> {
+        let mut signer_info = array![];
+        for signer_storage_value in self {
+            signer_info.append((*signer_storage_value).into());
+        };
+        signer_info
+    }
 }
 
 trait SignerSignatureTrait {
@@ -344,5 +374,11 @@ impl SignerSpanTraitImpl of SignerSpanTrait {
             guids.append((*signer).into_guid());
         };
         guids
+    }
+}
+
+impl SignerSignatureIntoSignerInfo of Into<SignerStorageValue, SignerInfo> {
+    fn into(self: SignerStorageValue) -> SignerInfo {
+        SignerInfo { signerType: self.signer_type, guid: self.into_guid(), stored_value: self.stored_value }
     }
 }

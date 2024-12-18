@@ -10,6 +10,13 @@ trait IUpgradeMigrationCallback<TContractState> {
     fn migrate_owner(ref self: TContractState, signer_storage_value: SignerStorageValue);
 }
 
+/// Trait for recovering the `_signer` storage slot in a smart contract state.
+///
+/// This trait defines a mechanism to correct potential issues with the `_signer` storage slot following a contract
+/// upgrade that wasn't done correctly.
+/// This can happen if the contract was upgraded from 0.2.3 with an empty calldata array.
+///  The `recover_signer` function ensures that if the `_signer` slot was not properly updated during an upgrade, it can
+///  be safely recovered to that signer, preventing the contract from staying in an unusable state.
 #[starknet::interface]
 trait IRecoverSigner<TContractState> {
     fn recover_signer(ref self: TContractState);

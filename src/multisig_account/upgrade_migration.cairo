@@ -33,8 +33,6 @@ mod upgrade_migration_component {
         fn migrate_from_0_2_0(ref self: ComponentState<TContractState>) {
             let mut signer_manager = get_dep_component_mut!(ref self, SignerManager);
             signer_manager.add_end_marker();
-            // Do some health checks?
         }
     }
-    // TODO Can directly code here and not use the interface
 }

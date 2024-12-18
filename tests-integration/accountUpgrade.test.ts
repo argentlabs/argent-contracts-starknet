@@ -4,6 +4,10 @@ import {
   ArgentAccount,
   ArgentSigner,
   ContractWithClass,
+  LegacyWebauthnOwner,
+  RawSigner,
+  StarknetKeyPair,
+  WebauthnOwner,
   deployAccount,
   deployAccountWithoutGuardian,
   deployLegacyAccount,
@@ -13,7 +17,6 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   getUpgradeDataLegacy,
-  LegacyWebauthnOwner,
   manager,
   randomEip191KeyPair,
   randomEthKeyPair,
@@ -21,10 +24,7 @@ import {
   randomStarknetKeyPair,
   randomWebauthnLegacyCairo0Owner,
   randomWebauthnLegacyOwner,
-  RawSigner,
-  StarknetKeyPair,
   upgradeAccount,
-  WebauthnOwner,
 } from "../lib";
 
 interface SelfCall {
@@ -231,80 +231,83 @@ describe("ArgentAccount: upgrade", function () {
     await expectRevertWithErrorMessage("argent/downgrade-not-allowed", upgradeAccount(account, argentAccountClassHash));
   });
 
-  it.only("Upgrade from 0.3.0 un-brick the account", async function () {
-    const { account, owner } = await deployOldAccountWithProxy();
-    const legacyClassHash = await manager.getClassHashAt(account.address);
-    await upgradeAccount(account, argentAccountClassHash, []);
+  describe("Testing recover_signer when upgrading from 0.2.3", function () {
+    it("Should be possible to recover the signer", async function () {
+      const { account, owner } = await deployOldAccountWithProxy();
+      const legacyClassHash = await manager.getClassHashAt(account.address);
+      await upgradeAccount(account, argentAccountClassHash, []);
 
-    expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(legacyClassHash));
-    account.cairoVersion = "1";
-    mockDapp.connect(account);
+      expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(legacyClassHash));
+      account.cairoVersion = "1";
+      mockDapp.connect(account);
 
-    // Check the account is bricked
-    const brickedGuids = await account.callContract({
-      contractAddress: account.address,
-      entrypoint: "get_owner_guids",
-    });
-    expect(brickedGuids.length).to.equal(1);
-    expect(brickedGuids[0]).to.equal("0x0");
-    await expectRevertWithErrorMessage("argent/no-single-stark-owner", mockDapp.set_number(56));
+      // Check the account is in the wrong state
+      const wrongGuids = await account.callContract({
+        contractAddress: account.address,
+        entrypoint: "get_owner_guids",
+      });
+      // Since we have to do a raw call, we have the unparsed value returned
+      expect(wrongGuids.length).to.equal(1);
+      expect(wrongGuids[0]).to.equal("0x0");
+      await expectRevertWithErrorMessage("argent/no-single-stark-owner", mockDapp.set_number(56));
 
-    const { account: otherAccount } = await deployAccount();
-    // Recover the signer
-    await otherAccount.execute({
-      contractAddress: account.address,
-      entrypoint: "recover_signer",
-      calldata: [],
-    });
-    expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
-
-    // Making sure it has the new owner migrated correctly
-    const newAccountContract = await manager.loadContract(account.address);
-    const newGuid = new StarknetKeyPair(owner.privateKey).guid;
-    expect(await newAccountContract.get_owner_guids()).to.deep.equal([newGuid]);
-    mockDapp.connect(account);
-    // We don't really care about the value here, just that it is successful
-    await manager.ensureSuccess(mockDapp.set_number(56));
-  });
-
-  it.only("Shouldn't be possible to recover the signer twice", async function () {
-    const { account } = await deployOldAccountWithProxy();
-
-    await upgradeAccount(account, argentAccountClassHash, []);
-
-    const { account: otherAccount } = await deployAccount();
-    // Recover the signer for the first time
-    await otherAccount.execute({
-      contractAddress: account.address,
-      entrypoint: "recover_signer",
-      calldata: [],
-    });
-    expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
-
-    // Trying to recover the signer a second time
-    await otherAccount
-      .execute({
+      const { account: otherAccount } = await deployAccount();
+      // Recover the signer
+      await otherAccount.execute({
         contractAddress: account.address,
         entrypoint: "recover_signer",
         calldata: [],
-      })
-      .should.be.rejectedWith("argent/no-signer-to-recover");
-  });
+      });
+      expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
 
-  it.only("Shouldn't be possible to recover the signer an account that was correctly upgraded", async function () {
-    const { account } = await deployOldAccountWithProxy();
-    await upgradeAccount(account, argentAccountClassHash, ["0"]);
+      // Making sure it has the new owner migrated correctly
+      const newAccountContract = await manager.loadContract(account.address);
+      const newGuid = new StarknetKeyPair(owner.privateKey).guid;
+      expect(await newAccountContract.get_owner_guids()).to.deep.equal([newGuid]);
+      mockDapp.connect(account);
+      // We don't really care about the value here, just that it is successful
+      await manager.ensureSuccess(mockDapp.set_number(56));
+    });
 
-    expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+    it("Shouldn't be possible to recover the signer twice", async function () {
+      const { account } = await deployOldAccountWithProxy();
 
-    const { account: otherAccount } = await deployAccount();
-    await otherAccount
-      .execute({
+      await upgradeAccount(account, argentAccountClassHash, []);
+
+      const { account: otherAccount } = await deployAccount();
+      // Recover the signer for the first time
+      await otherAccount.execute({
         contractAddress: account.address,
         entrypoint: "recover_signer",
         calldata: [],
-      })
-      .should.be.rejectedWith("argent/no-signer-to-recover");
+      });
+      expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+
+      // Trying to recover the signer a second time
+      await otherAccount
+        .execute({
+          contractAddress: account.address,
+          entrypoint: "recover_signer",
+          calldata: [],
+        })
+        .should.be.rejectedWith("argent/no-signer-to-recover");
+    });
+
+    it("Shouldn't be possible to recover the signer an account that was correctly upgraded", async function () {
+      const { account } = await deployOldAccountWithProxy();
+      await upgradeAccount(account, argentAccountClassHash, ["0"]);
+
+      expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+
+      const { account: otherAccount } = await deployAccount();
+      await otherAccount
+        .execute({
+          contractAddress: account.address,
+          entrypoint: "recover_signer",
+          calldata: [],
+        })
+        .should.be.rejectedWith("argent/no-signer-to-recover");
+    });
   });
 
   describe("Testing upgrade version 0.4.0 with every signer type", function () {

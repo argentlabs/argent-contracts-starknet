@@ -88,7 +88,7 @@ mod upgrade_migration_component {
         }
     }
 
-    impl UpgradableMigrationInternal<
+    impl UpgradeMigrationInternalImpl<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,

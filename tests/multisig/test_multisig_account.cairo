@@ -97,7 +97,7 @@ fn get_name() {
 fn get_version() {
     let version = initialize_multisig().get_version();
     assert_eq!(version.major, 0);
-    assert_eq!(version.minor, 2);
+    assert_eq!(version.minor, 3);
     assert_eq!(version.patch, 0);
 }
 

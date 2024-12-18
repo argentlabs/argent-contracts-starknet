@@ -29,6 +29,7 @@ mod outside_execution {
 
 mod multisig_account {
     mod multisig_account;
+    mod upgrade_migration;
     mod external_recovery {
         mod external_recovery;
         mod interface;

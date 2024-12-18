@@ -1,4 +1,6 @@
-use argent::signer::signer_signature::{Signer, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerType};
+use argent::signer::signer_signature::{
+    Signer, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerType, SignerInfo
+};
 use argent::utils::linked_set::LinkedSetConfig;
 use starknet::storage::StoragePath;
 
@@ -38,6 +40,7 @@ impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue> {
 pub trait IOwnerManager<TContractState> {
     /// @notice Returns the guid of all the owners
     fn get_owner_guids(self: @TContractState) -> Array<felt252>;
+    fn get_owners_info(self: @TContractState) -> Array<SignerInfo>;
     fn is_owner(self: @TContractState, owner: Signer) -> bool;
     fn is_owner_guid(self: @TContractState, owner_guid: felt252) -> bool;
 
@@ -74,7 +77,7 @@ mod owner_manager_component {
     use argent::multiowner_account::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
     use argent::signer::signer_signature::{
         Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
-        SignerStorageTrait
+        SignerStorageTrait, SignerInfo
     };
     use argent::utils::linked_set_with_head::{
         LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl
@@ -103,6 +106,10 @@ mod owner_manager_component {
     > of IOwnerManager<ComponentState<TContractState>> {
         fn get_owner_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
             self.owners_storage.get_all_hashes()
+        }
+
+        fn get_owners_info(self: @ComponentState<TContractState>) -> Array<SignerInfo> {
+            self.owners_storage.get_all().span().to_signer_info()
         }
 
         #[inline(always)]
@@ -174,15 +181,22 @@ mod owner_manager_component {
         }
 
         fn reset_owners(ref self: ComponentState<TContractState>, new_single_owner: SignerStorageValue) {
-            let new_owner_guid = new_single_owner.into_guid();
-            let current_owners = self.owners_storage.get_all_hashes();
-            for current_owner_guid in current_owners {
-                assert(current_owner_guid != new_owner_guid, 'argent/already-an-owner');
-                self.owners_storage.remove(current_owner_guid);
-                self.emit_owner_removed(current_owner_guid);
+            let new_single_owner_guid = new_single_owner.into_guid();
+
+            let mut new_owner_was_already_owner = false;
+            let current_owner_guids = self.owners_storage.get_all_hashes();
+            for current_owner_guid in current_owner_guids {
+                if current_owner_guid != new_single_owner_guid {
+                    self.owners_storage.remove(current_owner_guid);
+                    self.emit_owner_removed(current_owner_guid);
+                } else {
+                    new_owner_was_already_owner = true;
+                }
             };
-            self.owners_storage.insert(new_single_owner);
-            self.emit_owner_added(new_owner_guid);
+            if !new_owner_was_already_owner {
+                self.owners_storage.insert(new_single_owner);
+                self.emit_owner_added(new_single_owner_guid);
+            }
         }
     }
 
@@ -194,13 +208,16 @@ mod owner_manager_component {
             assert(signers_len != 0, 'argent/invalid-signers-len');
             assert(signers_len <= MAX_SIGNERS_COUNT, 'argent/invalid-signers-len');
         }
+
         fn emit_signer_linked_event(ref self: ComponentState<TContractState>, event: SignerLinked) {
             let mut contract = self.get_contract_mut();
             contract.emit_event_callback(ArgentAccountEvent::SignerLinked(event));
         }
+
         fn emit_owner_added(ref self: ComponentState<TContractState>, new_owner_guid: felt252) {
             self.emit(OwnerAddedGuid { new_owner_guid });
         }
+
         fn emit_owner_removed(ref self: ComponentState<TContractState>, removed_owner_guid: felt252) {
             self.emit(OwnerRemovedGuid { removed_owner_guid });
         }

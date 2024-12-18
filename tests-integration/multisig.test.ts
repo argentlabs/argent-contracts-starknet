@@ -28,7 +28,7 @@ describe("ArgentMultisig", function () {
 
       await accountContract.get_threshold().should.eventually.equal(1n);
       await accountContract.get_name().should.eventually.equal(BigInt(shortString.encodeShortString("ArgentMultisig")));
-      await accountContract.get_version().should.eventually.deep.equal({ major: 0n, minor: 2n, patch: 0n });
+      await accountContract.get_version().should.eventually.deep.equal({ major: 0n, minor: 3n, patch: 0n });
       await accountContract.is_signer_guid(keys[0].guid).should.eventually.be.true;
       await accountContract.is_signer_guid(keys[1].guid).should.eventually.be.true;
       await accountContract.is_signer_guid(0).should.eventually.be.false;

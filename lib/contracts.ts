@@ -74,6 +74,16 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       return await this.declareLocalContract(contractName, wait, artifactsFolder);
     }
 
+    async declareArtifactMultisigContract(contractVersion: string, wait = true): Promise<string> {
+      const allArtifactsFolders = getSubfolders(artifactsFolder);
+      let contractName = allArtifactsFolders.find((folder) => folder.startsWith(`multisig-${contractVersion}`));
+      if (!contractName) {
+        throw new Error(`No contract found for version ${contractVersion}`);
+      }
+      contractName = `/${contractName}/ArgentMultisig`;
+      return await this.declareLocalContract(contractName, wait, artifactsFolder);
+    }
+
     async loadContract(contractAddress: string, classHash?: string): Promise<ContractWithClass> {
       const { abi } = await this.getClassAt(contractAddress);
       classHash ??= await this.getClassHashAt(contractAddress);

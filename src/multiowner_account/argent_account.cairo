@@ -12,22 +12,20 @@ mod ArgentAccount {
         EscapeSecurityPeriodChanged,
     };
     use argent::multiowner_account::owner_manager::{
-        IOwnerManager, owner_manager_component, owner_manager_component::OwnerManagerInternalImpl
+        owner_manager_component, owner_manager_component::OwnerManagerInternalImpl
     };
     use argent::multiowner_account::recovery::{Escape, EscapeType};
     use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
     use argent::multiowner_account::upgrade_migration::{
         IUpgradeMigrationInternal, upgrade_migration_component,
-        upgrade_migration_component::UpgradableMigrationInternal, IUpgradeMigrationCallback
+        upgrade_migration_component::UpgradeMigrationInternalImpl, IUpgradeMigrationCallback
     };
     use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
     use argent::recovery::EscapeStatus;
-    use argent::session::{
-        interface::ISessionCallback, session::{session_component::{Internal, InternalTrait}, session_component}
-    };
+    use argent::session::{interface::ISessionCallback, session::{session_component::InternalTrait, session_component}};
     use argent::signer::signer_signature::{
         Signer, SignerStorageValue, SignerType, StarknetSigner, StarknetSignature, SignerTrait, SignerStorageTrait,
         SignerSignature, SignerSignatureTrait
@@ -44,9 +42,7 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, DA_MODE_L1, is_estimate_transaction
         }
     };
-    use hash::{HashStateTrait, HashStateExTrait};
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
-    use pedersen::PedersenTrait;
     use starknet::{
         storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, account::Call,
         SyscallResultTrait, get_tx_info, get_execution_info,
@@ -951,7 +947,6 @@ mod ArgentAccount {
             }
         }
 
-        #[inline(always)]
         fn assert_guardian_set(self: @ContractState) {
             assert(self.read_guardian().is_some(), 'argent/guardian-required');
         }

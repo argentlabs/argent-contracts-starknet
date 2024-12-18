@@ -43,6 +43,8 @@ pub trait LinkedSetRead<TMemberState> {
     fn first(self: TMemberState) -> Option<Self::Value>;
     /// @return the hashes of all items in the set
     fn get_all_hashes(self: TMemberState) -> Array<felt252>;
+    /// @returns all the items in the set
+    fn get_all(self: TMemberState) -> Array<Self::Value>;
 }
 
 pub trait LinkedSetWrite<TMemberState> {
@@ -96,6 +98,27 @@ pub trait LinkedSetConfig<T> {
     fn path_is_in_set(path: StoragePath<T>) -> bool;
 }
 
+///
+/// Used to add the end marker.
+/// For upgrade purposes only
+/// The implementation must be correct to avoid corrupting the linked set
+///
+pub trait IAddEndMarker<TMemberState> {
+    /// @notice This is used during upgrades to ensure the linked set is correctly terminated.
+    fn add_end_marker(self: TMemberState);
+}
+
+impl AddEndMarkerImpl<
+    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>
+> of IAddEndMarker<StorageBase<Mutable<LinkedSet<T>>>> {
+    fn add_end_marker(self: StorageBase<Mutable<LinkedSet<T>>>) {
+        let last_signer = self.find_last_hash();
+        if last_signer != 0 {
+            self.entry(last_signer).write(LinkedSetConfig::END_MARKER);
+        }
+    }
+}
+
 impl LinkedSetReadImpl<
     T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>
 > of LinkedSetRead<StorageBase<LinkedSet<T>>> {
@@ -133,6 +156,16 @@ impl LinkedSetReadImpl<
         while let Option::Some(next_item) = self.next(current_item_hash) {
             current_item_hash = next_item.hash();
             all_hashes.append(current_item_hash);
+        };
+        all_hashes
+    }
+
+    fn get_all(self: StorageBase<LinkedSet<T>>) -> Array<T> {
+        let mut current_item_hash = 0;
+        let mut all_hashes = array![];
+        while let Option::Some(next_item) = self.next(current_item_hash) {
+            current_item_hash = next_item.hash();
+            all_hashes.append(next_item);
         };
         all_hashes
     }
@@ -216,6 +249,7 @@ impl LinkedSetWriteImpl<
         self.entry(item_hash).write(Default::default());
     }
 }
+
 #[generate_trait]
 impl LinkedSetWritePrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>
@@ -291,5 +325,9 @@ impl MutableLinkedSetReadImpl<
     #[inline(always)]
     fn get_all_hashes(self: StorageBase<Mutable<LinkedSet<T>>>) -> Array<felt252> {
         self.as_read_only().get_all_hashes()
+    }
+
+    fn get_all(self: StorageBase<Mutable<LinkedSet<T>>>) -> Array<T> {
+        self.as_read_only().get_all()
     }
 }

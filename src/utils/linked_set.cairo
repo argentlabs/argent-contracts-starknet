@@ -104,7 +104,7 @@ pub trait LinkedSetConfig<T> {
 /// The implementation must be correct to avoid corrupting the linked set
 ///
 pub trait IAddEndMarker<TMemberState> {
-    /// @notice This is used during upgrades to ensure the linked set is correctly terminated
+    /// @notice This is used during upgrades to ensure the linked set is correctly terminated.
     fn add_end_marker(self: TMemberState);
 }
 

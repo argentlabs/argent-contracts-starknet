@@ -1,18 +1,27 @@
 #[starknet::contract(account)]
 mod ArgentMultisigAccount {
-    use argent::account::interface::{IAccount, IArgentAccount, Version};
-    use argent::introspection::src5::src5_component;
-    use argent::multisig_account::external_recovery::{
-        external_recovery::{external_recovery_component, IExternalRecoveryCallback}
+    use argent::account::interface::{
+        IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version
     };
-    use argent::multisig_account::signer_manager::{
-        signer_manager::{signer_manager_component, signer_manager_component::SignerManagerInternalImpl}
+    use argent::introspection::src5::src5_component;
+    use argent::multiowner_account::events::SignerLinked;
+    use argent::multisig_account::external_recovery::external_recovery::{
+        external_recovery_component, IExternalRecoveryCallback
+    };
+    use argent::multisig_account::signer_manager::signer_manager::{
+        signer_manager_component, signer_manager_component::SignerManagerInternalImpl
+    };
+    use argent::multisig_account::upgrade_migration::{
+        upgrade_migration_component, upgrade_migration_component::UpgradableMigrationInternal
     };
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
     use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey, SignerTrait};
-    use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
+    use argent::upgrade::{
+        upgrade::upgrade_component, upgrade::upgrade_component::UpgradableInternalImpl,
+        interface::{IUpgradableCallback, IUpgradableCallbackOld}
+    };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
         serialization::full_deserialize,
@@ -22,7 +31,7 @@ mod ArgentMultisigAccount {
     use starknet::{get_tx_info, get_execution_info, get_contract_address, VALIDATED, account::Call, ClassHash};
 
     const NAME: felt252 = 'ArgentMultisig';
-    const VERSION: Version = Version { major: 0, minor: 2, patch: 0 };
+    const VERSION: Version = Version { major: 0, minor: 3, patch: 0 };
 
     // Signer Management
     component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
@@ -42,6 +51,8 @@ mod ArgentMultisigAccount {
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
+    // Upgrade migration
+    component!(path: upgrade_migration_component, storage: upgrade_migration, event: UpgradeMigrationEvents);
     // External Recovery
     component!(path: external_recovery_component, storage: escape, event: EscapeEvents);
     #[abi(embed_v0)]
@@ -60,6 +71,8 @@ mod ArgentMultisigAccount {
         #[substorage(v0)]
         upgrade: upgrade_component::Storage,
         #[substorage(v0)]
+        upgrade_migration: upgrade_migration_component::Storage,
+        #[substorage(v0)]
         escape: external_recovery_component::Storage,
         #[substorage(v0)]
         reentrancy_guard: ReentrancyGuardComponent::Storage,
@@ -76,6 +89,8 @@ mod ArgentMultisigAccount {
         SRC5Events: src5_component::Event,
         #[flat]
         UpgradeEvents: upgrade_component::Event,
+        #[flat]
+        UpgradeMigrationEvents: upgrade_migration_component::Event,
         #[flat]
         EscapeEvents: external_recovery_component::Event,
         #[flat]
@@ -208,9 +223,10 @@ mod ArgentMultisigAccount {
 
     #[abi(embed_v0)]
     impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
+        // Called when coming from multisig 0.1.X
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
             assert_only_self();
-            self.signer_manager.migrate_from_pubkeys_to_guids();
+            self.upgrade_migration.migrate_from_before_0_2_0();
             assert(data.len() == 0, 'argent/unexpected-data');
             array![]
         }
@@ -218,8 +234,22 @@ mod ArgentMultisigAccount {
 
     #[abi(embed_v0)]
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
+        // Called when coming from multisig 0.2.0 and above
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
-            panic_with_felt252('argent/downgrade-not-allowed');
+            assert_only_self();
+
+            // Downgrade check
+            let argent_dispatcher = IArgentAccountDispatcher { contract_address: get_contract_address() };
+            assert(argent_dispatcher.get_name() == self.get_name(), 'argent/invalid-name');
+            let previous_version = argent_dispatcher.get_version();
+            let current_version = self.get_version();
+            assert(previous_version < current_version, 'argent/downgrade-not-allowed');
+
+            self.upgrade.complete_upgrade(new_implementation);
+
+            self.upgrade_migration.migrate_from_0_2_0();
+
+            assert(data.len() == 0, 'argent/unexpected-data');
         }
     }
 

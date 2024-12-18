@@ -56,7 +56,7 @@ mod upgrade_migration_component {
     #[derive(Drop, starknet::Event)]
     enum Event {}
 
-    impl UpgradableMigrationInternal<
+    impl UpgradeMigrationInternalImpl<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,

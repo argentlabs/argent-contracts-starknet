@@ -98,6 +98,27 @@ pub trait LinkedSetConfig<T> {
     fn path_is_in_set(path: StoragePath<T>) -> bool;
 }
 
+///
+/// Used to add the end marker.
+/// For upgrade purposes only
+/// The implementation must be correct to avoid corrupting the linked set
+///
+pub trait IAddEndMarker<TMemberState> {
+    /// @notice This is used during upgrades to ensure the linked set is correctly terminated.
+    fn add_end_marker(self: TMemberState);
+}
+
+impl AddEndMarkerImpl<
+    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>
+> of IAddEndMarker<StorageBase<Mutable<LinkedSet<T>>>> {
+    fn add_end_marker(self: StorageBase<Mutable<LinkedSet<T>>>) {
+        let last_signer = self.find_last_hash();
+        if last_signer != 0 {
+            self.entry(last_signer).write(LinkedSetConfig::END_MARKER);
+        }
+    }
+}
+
 impl LinkedSetReadImpl<
     T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>
 > of LinkedSetRead<StorageBase<LinkedSet<T>>> {
@@ -228,6 +249,7 @@ impl LinkedSetWriteImpl<
         self.entry(item_hash).write(Default::default());
     }
 }
+
 #[generate_trait]
 impl LinkedSetWritePrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>

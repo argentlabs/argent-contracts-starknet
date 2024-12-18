@@ -2,6 +2,7 @@ import { Account, CallData, Contract, GetTransactionReceiptResponse, RPC, hash, 
 import {
   ArgentAccount,
   KeyPair,
+  LegacyMultisigKeyPair,
   LegacyMultisigSigner,
   MultisigSigner,
   deployer,
@@ -105,7 +106,14 @@ const sortedKeyPairs = (length: number) => sortByGuid(randomStarknetKeyPairs(len
 
 const keysToSigners = (keys: KeyPair[]) => keys.map(({ signer }) => signer);
 
-export async function deployLegacyMultisig(classHash: string, threshold = 1) {
+interface LegacyMultisigWallet {
+  account: Account;
+  accountContract: Contract;
+  keys: LegacyMultisigKeyPair[];
+  deploySigner: LegacyMultisigSigner;
+}
+
+export async function deployLegacyMultisig(classHash: string, threshold = 1): Promise<LegacyMultisigWallet> {
   const keys = randomLegacyMultisigKeyPairs(threshold);
   const signersPublicKeys = keys.map((key) => key.publicKey);
   const salt = num.toHex(randomStarknetKeyPair().privateKey);
@@ -118,9 +126,8 @@ export async function deployLegacyMultisig(classHash: string, threshold = 1) {
   const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
   await manager.waitForTx(transaction_hash);
 
-  const signers = new LegacyMultisigSigner(keys);
-  account.signer = signers;
+  account.signer = new LegacyMultisigSigner(keys);
   const accountContract = await manager.loadContract(account.address);
   accountContract.connect(account);
-  return { account, accountContract, deploySigner, signers };
+  return { account, accountContract, deploySigner, keys };
 }

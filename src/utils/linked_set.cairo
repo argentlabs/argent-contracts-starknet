@@ -213,12 +213,10 @@ impl LinkedSetWriteImpl<
 > of LinkedSetWrite<StorageBase<Mutable<LinkedSet<T>>>> {
     type Value = T;
 
-    #[inline(always)]
     fn insert(self: StorageBase<Mutable<LinkedSet<T>>>, item: T) -> felt252 {
         self.insert_opt(:item, last_item_hash: self.find_last_hash())
     }
 
-    #[inline(always)]
     fn insert_many(self: StorageBase<Mutable<LinkedSet<T>>>, mut items_to_add: Span<T>) {
         let mut last_item_hash: felt252 = self.find_last_hash();
         for item in items_to_add {

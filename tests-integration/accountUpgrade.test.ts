@@ -254,7 +254,7 @@ describe("ArgentAccount: upgrade", function () {
     // Unbrick the account
     await otherAccount.execute({
       contractAddress: account.address,
-      entrypoint: "unbrick_account",
+      entrypoint: "recover_signer",
       calldata: [],
     });
     expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
@@ -277,7 +277,7 @@ describe("ArgentAccount: upgrade", function () {
     // Unbrick the account for the first time
     await otherAccount.execute({
       contractAddress: account.address,
-      entrypoint: "unbrick_account",
+      entrypoint: "recover_signer",
       calldata: [],
     });
     expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
@@ -287,7 +287,7 @@ describe("ArgentAccount: upgrade", function () {
     await otherAccount
       .execute({
         contractAddress: account.address,
-        entrypoint: "unbrick_account",
+        entrypoint: "recover_signer",
         calldata: [],
       })
       .should.be.rejectedWith("argent/account-not-bricked");
@@ -304,7 +304,7 @@ describe("ArgentAccount: upgrade", function () {
     await otherAccount
       .execute({
         contractAddress: account.address,
-        entrypoint: "unbrick_account",
+        entrypoint: "recover_signer",
         calldata: [],
       })
       .should.be.rejectedWith("argent/account-not-bricked");

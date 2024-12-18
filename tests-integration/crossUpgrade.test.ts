@@ -4,7 +4,7 @@ describe("Upgrades to a different account type", function () {
   it("Upgrade Account to Multisig should fail", async function () {
     const { account } = await deployAccount();
     await expectRevertWithErrorMessage(
-      "argent/downgrade-not-allowed",
+      "argent/invalid-name",
       upgradeAccount(account, await manager.declareLocalContract("ArgentMultisigAccount")),
     );
   });

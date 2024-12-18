@@ -44,7 +44,6 @@ struct SignerLinked {
     signer: Signer,
 }
 
-
 /// Emitted when an account owner is added, including when the account is created.
 #[derive(Drop, starknet::Event)]
 struct OwnerAddedGuid {

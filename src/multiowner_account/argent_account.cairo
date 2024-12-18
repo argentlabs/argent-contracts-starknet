@@ -18,7 +18,7 @@ mod ArgentAccount {
     use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
     use argent::multiowner_account::upgrade_migration::{
         IUpgradeMigrationInternal, upgrade_migration_component,
-        upgrade_migration_component::UpgradableMigrationInternal, IUpgradeMigrationCallback
+        upgrade_migration_component::UpgradeMigrationInternalImpl, IUpgradeMigrationCallback
     };
     use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{

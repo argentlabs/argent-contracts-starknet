@@ -208,13 +208,16 @@ mod owner_manager_component {
             assert(signers_len != 0, 'argent/invalid-signers-len');
             assert(signers_len <= MAX_SIGNERS_COUNT, 'argent/invalid-signers-len');
         }
+
         fn emit_signer_linked_event(ref self: ComponentState<TContractState>, event: SignerLinked) {
             let mut contract = self.get_contract_mut();
             contract.emit_event_callback(ArgentAccountEvent::SignerLinked(event));
         }
+
         fn emit_owner_added(ref self: ComponentState<TContractState>, new_owner_guid: felt252) {
             self.emit(OwnerAddedGuid { new_owner_guid });
         }
+
         fn emit_owner_removed(ref self: ComponentState<TContractState>, removed_owner_guid: felt252) {
             self.emit(OwnerRemovedGuid { removed_owner_guid });
         }

@@ -81,6 +81,7 @@ mod upgrade_migration_component {
         fn recover_signer(ref self: ComponentState<TContractState>) {
             assert(self._signer.read() != 0, 'argent/no-signer-to-recover');
             self.migrate_from_before_0_4_0();
+            // Double check no side effect if already upgraded
         }
     }
 

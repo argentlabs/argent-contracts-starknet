@@ -947,6 +947,7 @@ mod ArgentAccount {
             }
         }
 
+        #[inline(always)]
         fn assert_guardian_set(self: @ContractState) {
             assert(self.read_guardian().is_some(), 'argent/guardian-required');
         }

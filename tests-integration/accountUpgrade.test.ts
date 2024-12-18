@@ -231,7 +231,6 @@ describe("ArgentAccount: upgrade", function () {
     await expectRevertWithErrorMessage("argent/downgrade-not-allowed", upgradeAccount(account, argentAccountClassHash));
   });
 
-  // TODO We should prob do a script for when it happens?
   it.only("Upgrade from 0.3.0 un-brick the account", async function () {
     const { account, owner } = await deployOldAccountWithProxy();
     const legacyClassHash = await manager.getClassHashAt(account.address);
@@ -251,7 +250,7 @@ describe("ArgentAccount: upgrade", function () {
     await expectRevertWithErrorMessage("argent/no-single-stark-owner", mockDapp.set_number(56));
 
     const { account: otherAccount } = await deployAccount();
-    // Unbrick the account
+    // Recover the signer
     await otherAccount.execute({
       contractAddress: account.address,
       entrypoint: "recover_signer",
@@ -268,13 +267,13 @@ describe("ArgentAccount: upgrade", function () {
     await manager.ensureSuccess(mockDapp.set_number(56));
   });
 
-  it.only("Shouldn't be possible to unbrick twice", async function () {
+  it.only("Shouldn't be possible to recover the signer twice", async function () {
     const { account } = await deployOldAccountWithProxy();
 
     await upgradeAccount(account, argentAccountClassHash, []);
 
     const { account: otherAccount } = await deployAccount();
-    // Unbrick the account for the first time
+    // Recover the signer for the first time
     await otherAccount.execute({
       contractAddress: account.address,
       entrypoint: "recover_signer",
@@ -283,31 +282,30 @@ describe("ArgentAccount: upgrade", function () {
     expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
 
     // TODO Note: didn't await here and it was green. Should flag it as a bug
-    // Trying to unbrick a second time
+    // Trying to recover the signer a second time
     await otherAccount
       .execute({
         contractAddress: account.address,
         entrypoint: "recover_signer",
         calldata: [],
       })
-      .should.be.rejectedWith("argent/account-not-bricked");
+      .should.be.rejectedWith("argent/no-signer-to-recover");
   });
 
-  it.only("Shouldn't be possible to unbrick an account that was correctly upgraded", async function () {
+  it.only("Shouldn't be possible to recover the signer an account that was correctly upgraded", async function () {
     const { account } = await deployOldAccountWithProxy();
     await upgradeAccount(account, argentAccountClassHash, ["0"]);
 
     expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
 
     const { account: otherAccount } = await deployAccount();
-    // Unbrick the account
     await otherAccount
       .execute({
         contractAddress: account.address,
         entrypoint: "recover_signer",
         calldata: [],
       })
-      .should.be.rejectedWith("argent/account-not-bricked");
+      .should.be.rejectedWith("argent/no-signer-to-recover");
   });
 
   describe("Testing upgrade version 0.4.0 with every signer type", function () {

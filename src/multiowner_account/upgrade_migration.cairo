@@ -11,7 +11,7 @@ trait IUpgradeMigrationCallback<TContractState> {
 }
 
 #[starknet::interface]
-trait IFixStorage<TContractState> {
+trait IRecoverSigner<TContractState> {
     fn recover_signer(ref self: TContractState);
 }
 
@@ -40,7 +40,7 @@ mod upgrade_migration_component {
         syscalls::replace_class_syscall, SyscallResultTrait, get_block_timestamp, storage::Map,
         storage_access::{storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,}
     };
-    use super::{IFixStorage, IUpgradeMigrationInternal, IUpgradeMigrationCallback, LegacyEscape};
+    use super::{IRecoverSigner, IUpgradeMigrationInternal, IUpgradeMigrationCallback, LegacyEscape};
 
     const LEGACY_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
@@ -62,17 +62,17 @@ mod upgrade_migration_component {
     enum Event {}
 
 
-    #[embeddable_as(FixStorageImpl)]
-    impl FixStorage<
+    #[embeddable_as(RecoverSignerImpl)]
+    impl RecoverSigner<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         +IUpgradeMigrationCallback<TContractState>,
         +IArgentMultiOwnerAccount<TContractState>,
         +IEmitArgentAccountEvent<TContractState>,
-    > of IFixStorage<ComponentState<TContractState>> {
+    > of IRecoverSigner<ComponentState<TContractState>> {
         fn recover_signer(ref self: ComponentState<TContractState>) {
-            assert(self._signer.read() != 0, 'argent/account-not-bricked');
+            assert(self._signer.read() != 0, 'argent/no-signer-to-recover');
             self.migrate_from_before_0_4_0();
         }
     }

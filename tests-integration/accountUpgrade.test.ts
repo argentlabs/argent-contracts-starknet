@@ -281,7 +281,6 @@ describe("ArgentAccount: upgrade", function () {
     });
     expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
 
-    // TODO Note: didn't await here and it was green. Should flag it as a bug
     // Trying to recover the signer a second time
     await otherAccount
       .execute({

@@ -88,7 +88,7 @@ mod upgrade_migration_component {
             // Ensuring the recovery was successful
             assert(self._signer.read() == 0, 'argent/signer-not-removed');
             assert(self._implementation.read() == 0, 'argent/impl-not-removed');
-            assert(owner_manager.get_owner_guids().len() == 1, 'argent/owner-not-empty');
+            assert(owner_manager.get_owner_guids().len() == 1, 'argent/owner-not-migrated');
         }
     }
 

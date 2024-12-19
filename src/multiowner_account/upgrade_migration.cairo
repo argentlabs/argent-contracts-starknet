@@ -15,11 +15,11 @@ trait IUpgradeMigrationCallback<TContractState> {
 /// This trait defines a mechanism to correct potential issues with the `_signer` storage slot following a contract
 /// upgrade that wasn't done correctly.
 /// This can happen if the contract was upgraded from 0.2.3 with an empty calldata array.
-///  The `recover_signer` function ensures that if the `_signer` slot was not properly updated during an upgrade, it can
-///  be safely recovered to that signer, preventing the contract from staying in an unusable state.
+///  The `recovery_from_legacy_upgrade` function ensures that if the `_signer` slot was not properly updated during an
+///  upgrade, it can be safely recovered to that signer, preventing the contract from staying in an unusable state.
 #[starknet::interface]
-trait IRecoverSigner<TContractState> {
-    fn recover_signer(ref self: TContractState);
+trait IRecoveryFromLegacyUpgrade<TContractState> {
+    fn recovery_from_legacy_upgrade(ref self: TContractState);
 }
 
 #[derive(Drop, Copy, Serde, Default, starknet::Store)]
@@ -47,7 +47,7 @@ mod upgrade_migration_component {
         syscalls::replace_class_syscall, SyscallResultTrait, get_block_timestamp, storage::Map,
         storage_access::{storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,}
     };
-    use super::{IRecoverSigner, IUpgradeMigrationInternal, IUpgradeMigrationCallback, LegacyEscape};
+    use super::{IRecoveryFromLegacyUpgrade, IUpgradeMigrationInternal, IUpgradeMigrationCallback, LegacyEscape};
 
     const LEGACY_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
@@ -69,16 +69,16 @@ mod upgrade_migration_component {
     enum Event {}
 
 
-    #[embeddable_as(RecoverSignerImpl)]
-    impl RecoverSigner<
+    #[embeddable_as(RecoveryFromLegacyUpgradeImpl)]
+    impl RecoveryFromLegacyUpgrade<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         +IUpgradeMigrationCallback<TContractState>,
         +IArgentMultiOwnerAccount<TContractState>,
         +IEmitArgentAccountEvent<TContractState>,
-    > of IRecoverSigner<ComponentState<TContractState>> {
-        fn recover_signer(ref self: ComponentState<TContractState>) {
+    > of IRecoveryFromLegacyUpgrade<ComponentState<TContractState>> {
+        fn recovery_from_legacy_upgrade(ref self: ComponentState<TContractState>) {
             assert(self._signer.read() != 0, 'argent/no-signer-to-recover');
             assert(self._implementation.read() != 0, 'argent/wrong-implementation');
             self.migrate_from_before_0_4_0();

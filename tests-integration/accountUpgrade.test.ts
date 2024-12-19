@@ -231,7 +231,7 @@ describe("ArgentAccount: upgrade", function () {
     await expectRevertWithErrorMessage("argent/downgrade-not-allowed", upgradeAccount(account, argentAccountClassHash));
   });
 
-  describe("Testing recover_signer when upgrading from 0.2.3", function () {
+  describe("Testing recovery_from_legacy_upgrade when upgrading from 0.2.3", function () {
     it("Should be possible to recover the signer", async function () {
       const { account, owner } = await deployOldAccountWithProxy();
       const legacyClassHash = await manager.getClassHashAt(account.address);
@@ -255,7 +255,7 @@ describe("ArgentAccount: upgrade", function () {
       // Recover the signer
       await otherAccount.execute({
         contractAddress: account.address,
-        entrypoint: "recover_signer",
+        entrypoint: "recovery_from_legacy_upgrade",
         calldata: [],
       });
       expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
@@ -278,7 +278,7 @@ describe("ArgentAccount: upgrade", function () {
       // Recover the signer for the first time
       await otherAccount.execute({
         contractAddress: account.address,
-        entrypoint: "recover_signer",
+        entrypoint: "recovery_from_legacy_upgrade",
         calldata: [],
       });
       expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
@@ -287,7 +287,7 @@ describe("ArgentAccount: upgrade", function () {
       await otherAccount
         .execute({
           contractAddress: account.address,
-          entrypoint: "recover_signer",
+          entrypoint: "recovery_from_legacy_upgrade",
           calldata: [],
         })
         .should.be.rejectedWith("argent/no-signer-to-recover");
@@ -303,7 +303,7 @@ describe("ArgentAccount: upgrade", function () {
       await otherAccount
         .execute({
           contractAddress: account.address,
-          entrypoint: "recover_signer",
+          entrypoint: "recovery_from_legacy_upgrade",
           calldata: [],
         })
         .should.be.rejectedWith("argent/no-signer-to-recover");

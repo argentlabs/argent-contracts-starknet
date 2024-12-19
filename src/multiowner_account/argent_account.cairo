@@ -95,7 +95,7 @@ mod ArgentAccount {
     // Upgrade migration
     component!(path: upgrade_migration_component, storage: upgrade_migration, event: UpgradeMigrationEvents);
     #[abi(embed_v0)]
-    impl FixStorage = upgrade_migration_component::RecoverSignerImpl<ContractState>;
+    impl FixStorage = upgrade_migration_component::RecoveryFromLegacyUpgradeImpl<ContractState>;
     // Reentrancy guard
     component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
 

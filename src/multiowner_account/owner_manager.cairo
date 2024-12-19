@@ -75,6 +75,7 @@ mod owner_manager_component {
     use argent::account::interface::{IEmitArgentAccountEvent};
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
+    use argent::multiowner_account::upgrade_migration::IRecoveryFromLegacyUpgradeCallback;
     use argent::signer::signer_signature::{
         Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
         SignerStorageTrait, SignerInfo
@@ -130,6 +131,14 @@ mod owner_manager_component {
                 return false;
             }
             return owner_signature.is_valid_signature(hash) || is_estimate_transaction();
+        }
+    }
+
+    impl RecoveryFromLegacyUpgradeCallbackImpl<
+        TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
+    > of IRecoveryFromLegacyUpgradeCallback<ComponentState<TContractState>> {
+        fn ensure_empty(self: @ComponentState<TContractState>) {
+            assert(self.owners_storage.is_empty(), 'argent/owner-not-empty');
         }
     }
 

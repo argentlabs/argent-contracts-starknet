@@ -213,7 +213,6 @@ impl LinkedSetWriteImpl<
 > of LinkedSetWrite<StorageBase<Mutable<LinkedSet<T>>>> {
     type Value = T;
 
-    #[inline(always)]
     fn insert(self: StorageBase<Mutable<LinkedSet<T>>>, item: T) -> felt252 {
         self.insert_opt(:item, last_item_hash: self.find_last_hash())
     }

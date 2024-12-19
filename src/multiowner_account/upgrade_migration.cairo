@@ -10,6 +10,15 @@ trait IUpgradeMigrationCallback<TContractState> {
     fn migrate_owner(ref self: TContractState, signer_storage_value: SignerStorageValue);
 }
 
+/// Trait for recovering upon an upgrade that wasn't done correctly.
+///
+/// This can happen if the contract was upgraded from 0.2.3.* with an empty calldata array.
+/// This function should make all the checks and changes necessary to ensure the contract is in a valid state.
+#[starknet::interface]
+trait IRecoveryFromLegacyUpgrade<TContractState> {
+    fn recovery_from_legacy_upgrade(ref self: TContractState);
+}
+
 #[derive(Drop, Copy, Serde, Default, starknet::Store)]
 struct LegacyEscape {
     // timestamp for activation of escape mode, 0 otherwise
@@ -26,6 +35,7 @@ mod upgrade_migration_component {
     use argent::multiowner_account::account_interface::IArgentMultiOwnerAccount;
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::events::{EscapeCanceled, SignerLinked};
+    use argent::multiowner_account::owner_manager::{IOwnerManager, owner_manager_component};
     use argent::multiowner_account::recovery::Escape;
     use argent::signer::signer_signature::{
         SignerStorageValue, SignerType, Signer, starknet_signer_from_pubkey, SignerTrait
@@ -35,8 +45,7 @@ mod upgrade_migration_component {
         syscalls::replace_class_syscall, SyscallResultTrait, get_block_timestamp, storage::Map,
         storage_access::{storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,}
     };
-    use super::{IUpgradeMigrationInternal, IUpgradeMigrationCallback, LegacyEscape};
-
+    use super::{IRecoveryFromLegacyUpgrade, IUpgradeMigrationInternal, IUpgradeMigrationCallback, LegacyEscape};
     const LEGACY_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
     #[storage]
@@ -55,6 +64,33 @@ mod upgrade_migration_component {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {}
+
+
+    #[embeddable_as(RecoveryFromLegacyUpgradeImpl)]
+    impl RecoveryFromLegacyUpgrade<
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        +IUpgradeMigrationCallback<TContractState>,
+        +IArgentMultiOwnerAccount<TContractState>,
+        +IEmitArgentAccountEvent<TContractState>,
+        impl OwnerManager: owner_manager_component::HasComponent<TContractState>,
+    > of IRecoveryFromLegacyUpgrade<ComponentState<TContractState>> {
+        fn recovery_from_legacy_upgrade(ref self: ComponentState<TContractState>) {
+            // Ensuring there is a signer to recover
+            assert(self._signer.read() != 0, 'argent/no-signer-to-recover');
+            assert(self._implementation.read() != 0, 'argent/wrong-implementation');
+            let owner_manager = get_dep_component!(@self, OwnerManager);
+            assert(owner_manager.get_owner_guids().len() == 0, 'argent/owner-not-empty');
+
+            self.migrate_from_before_0_4_0();
+
+            // Ensuring the recovery was successful
+            assert(self._signer.read() == 0, 'argent/signer-not-removed');
+            assert(self._implementation.read() == 0, 'argent/impl-not-removed');
+            assert(owner_manager.get_owner_guids().len() == 1, 'argent/owner-not-migrated');
+        }
+    }
 
     impl UpgradeMigrationInternalImpl<
         TContractState,

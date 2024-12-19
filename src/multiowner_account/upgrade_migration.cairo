@@ -76,6 +76,7 @@ mod upgrade_migration_component {
         +IEmitArgentAccountEvent<TContractState>,
     > of IRecoveryFromLegacyUpgrade<ComponentState<TContractState>> {
         fn recovery_from_legacy_upgrade(ref self: ComponentState<TContractState>) {
+            // Ensuring there is a signer to recover
             assert(self._signer.read() != 0, 'argent/no-signer-to-recover');
             assert(self._implementation.read() != 0, 'argent/wrong-implementation');
             self.migrate_from_before_0_4_0();

@@ -12,8 +12,7 @@ mod ArgentAccount {
         EscapeSecurityPeriodChanged,
     };
     use argent::multiowner_account::owner_manager::{
-        owner_manager_component,
-        owner_manager_component::{OwnerManagerInternalImpl, RecoveryFromLegacyUpgradeCallbackImpl}
+        owner_manager_component, owner_manager_component::OwnerManagerInternalImpl
     };
     use argent::multiowner_account::recovery::{Escape, EscapeType};
     use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;

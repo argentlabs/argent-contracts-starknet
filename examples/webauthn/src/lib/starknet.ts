@@ -1,5 +1,5 @@
-  import * as env from "$env/static/public";
-  import {
+import * as env from "$env/static/public";
+import {
   Account,
   CallData,
   Contract,

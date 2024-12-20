@@ -41,6 +41,8 @@ mod owner_manager_component {
     use argent::account::interface::IEmitArgentAccountEvent;
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
+
+    use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use argent::signer::signer_signature::{
         Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
         SignerStorageTrait, SignerInfo
@@ -50,8 +52,6 @@ mod owner_manager_component {
     };
 
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
-
-    use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use super::{IOwnerManager, IOwnerManagerInternal};
     /// Too many owners could make the account unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;

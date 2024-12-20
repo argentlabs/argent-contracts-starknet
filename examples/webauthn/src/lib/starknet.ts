@@ -1,8 +1,10 @@
-import {
+  import * as env from "$env/static/public";
+  import {
   Account,
   CallData,
   Contract,
   ProviderInterface,
+  RPC,
   RpcProvider,
   Signer,
   SignerInterface,

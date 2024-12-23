@@ -91,10 +91,6 @@ interface LegacyArgentWallet {
   guardian?: LegacyKeyPair;
 }
 
-export interface ArgentWalletWithGuardianAndBackup extends ArgentWalletWithGuardian {
-  guardianBackup: KeyPair;
-}
-
 export const deployer = (() => {
   if (manager.isDevnet) {
     const devnetAddress = "0x64b48806902a367c8598f4f95c305e8c1a1acba5f082d294a43793113115691";
@@ -247,27 +243,13 @@ export async function deployAccount(
   return { account, accountContract, owner, guardian: params.guardian, transactionHash };
 }
 
-export async function deployAccountWithoutGuardian(
+export async function deployAccountWithoutGuardians(
   params: Omit<DeployAccountParams, "guardian"> = {},
 ): Promise<ArgentWallet & { transactionHash: string }> {
   const { account, owner, transactionHash } = await deployAccountInner(params);
   const accountContract = await manager.loadContract(account.address);
   accountContract.connect(account);
   return { account, accountContract, owner, transactionHash };
-}
-
-export async function deployAccountWithGuardianBackup(
-  params: DeployAccountParams & { guardianBackup?: KeyPair } = {},
-): Promise<ArgentWalletWithGuardianAndBackup> {
-  const guardianBackup = params.guardianBackup ?? randomStarknetKeyPair();
-
-  const wallet = (await deployAccount(params)) as ArgentWalletWithGuardianAndBackup & { transactionHash: string };
-  await wallet.accountContract.change_guardian_backup(guardianBackup.compiledSignerAsOption);
-
-  wallet.account.signer = new ArgentSigner(wallet.owner, guardianBackup);
-  wallet.guardianBackup = guardianBackup;
-  wallet.accountContract.connect(wallet.account);
-  return wallet;
 }
 
 export async function deployLegacyAccount(classHash: string): Promise<LegacyArgentWallet> {

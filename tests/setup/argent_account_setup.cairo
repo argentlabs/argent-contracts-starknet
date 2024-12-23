@@ -18,8 +18,7 @@ trait ITestArgentAccount<TContractState> {
 
     // External
     fn reset_owners(ref self: TContractState, new_single_owner: SignerSignature, signature_expiration: u64);
-    fn change_guardian(ref self: TContractState, new_guardian: Option<Signer>);
-    fn change_guardian_backup(ref self: TContractState, new_guardian_backup: Option<Signer>);
+    fn reset_guardians(ref self: TContractState, new_guardian: Option<Signer>);
     fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);
     fn trigger_escape_guardian(ref self: TContractState, new_guardian: Option<Signer>);
     fn escape_owner(ref self: TContractState);
@@ -29,10 +28,8 @@ trait ITestArgentAccount<TContractState> {
     // Views
     fn get_owner(self: @TContractState) -> felt252;
     fn get_guardian(self: @TContractState) -> felt252;
-    fn get_guardian_backup(self: @TContractState) -> felt252;
     fn get_owner_guid(self: @TContractState) -> felt252;
     fn get_guardian_guid(self: @TContractState) -> Option<felt252>;
-    fn get_guardian_backup_guid(self: @TContractState) -> Option<felt252>;
     fn get_escape(self: @TContractState) -> Escape;
     fn get_version(self: @TContractState) -> Version;
     fn get_name(self: @TContractState) -> felt252;

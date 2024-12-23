@@ -51,13 +51,26 @@ struct OwnerAddedGuid {
     new_owner_guid: felt252,
 }
 
-/// Emitted when an an account owner is removed
+/// Emitted when an account owner is removed
 #[derive(Drop, starknet::Event)]
 struct OwnerRemovedGuid {
     #[key]
     removed_owner_guid: felt252,
 }
 
+/// Emitted when an account guardian is added, including when the account is created.
+#[derive(Drop, starknet::Event)]
+struct GuardianAddedGuid {
+    #[key]
+    new_guardian_guid: felt252,
+}
+
+/// Emitted when an account guardian is removed
+#[derive(Drop, starknet::Event)]
+struct GuardianRemovedGuid {
+    #[key]
+    removed_guardian_guid: felt252,
+}
 
 /// @notice Owner escape was triggered by the guardian
 /// @param ready_at when the escape can be completed
@@ -95,52 +108,6 @@ struct GuardianEscapedGuid {
 /// @notice An ongoing escape was canceled
 #[derive(Drop, starknet::Event)]
 struct EscapeCanceled {}
-
-/// @notice Deprecated from v0.4.0. This is only emitted if the new owner is a starknet key
-/// @notice The account owner was changed
-/// @param new_owner new owner address
-#[derive(Drop, starknet::Event)]
-struct OwnerChanged {
-    new_owner: felt252
-}
-
-/// @notice The account owner was changed
-/// @param new_owner_guid new owner guid
-#[derive(Drop, starknet::Event)]
-struct OwnerChangedGuid {
-    new_owner_guid: felt252
-}
-
-/// @notice Deprecated from v0.4.0. This is only emitted if the new guardian is empty or a
-/// starknet key @notice The account guardian was changed or removed
-/// @param new_guardian address of the new guardian or 0 if it was removed
-#[derive(Drop, starknet::Event)]
-struct GuardianChanged {
-    new_guardian: felt252
-}
-
-/// @notice The account guardian was changed or removed
-/// @param new_guardian_guid address of the new guardian or 0 if it was removed
-#[derive(Drop, starknet::Event)]
-struct GuardianChangedGuid {
-    new_guardian_guid: felt252
-}
-
-/// @notice Deprecated from v0.4.0. This is only emitted if the new guardian backup is empty or
-/// a starknet key @notice The account backup guardian was changed or removed
-/// @param new_guardian_backup address of the backup guardian or 0 if it was removed
-#[derive(Drop, starknet::Event)]
-struct GuardianBackupChanged {
-    new_guardian_backup: felt252
-}
-
-/// @notice The account backup guardian was changed or removed
-/// @param new_guardian_backup_guid guid of the backup guardian or 0 if it was removed
-#[derive(Drop, starknet::Event)]
-struct GuardianBackupChangedGuid {
-    new_guardian_backup_guid: felt252
-}
-
 
 /// @notice The security period for the escape was update
 /// @param escape_security_period the new security for the escape in seconds

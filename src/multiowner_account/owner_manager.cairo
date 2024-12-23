@@ -1,40 +1,6 @@
 use argent::signer::signer_signature::{
     Signer, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerType, SignerInfo
 };
-use argent::utils::linked_set::LinkedSetConfig;
-use starknet::storage::StoragePath;
-
-impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue> {
-    const END_MARKER: SignerStorageValue =
-        SignerStorageValue { stored_value: 'end', signer_type: SignerType::Starknet };
-
-    #[inline(always)]
-    fn is_valid_item(self: @SignerStorageValue) -> bool {
-        *self.stored_value != 0 && *self.stored_value != Self::END_MARKER.stored_value
-    }
-
-    #[inline(always)]
-    fn hash(self: @SignerStorageValue) -> felt252 {
-        (*self).into_guid()
-    }
-
-    #[inline(always)]
-    fn path_read_value(path: StoragePath<SignerStorageValue>) -> Option<SignerStorageValue> {
-        let stored_value = path.stored_value.read();
-        if stored_value == 0 || stored_value == Self::END_MARKER.stored_value {
-            return Option::None;
-        }
-        let signer_type = path.signer_type.read();
-        Option::Some(SignerStorageValue { stored_value, signer_type })
-    }
-
-    #[inline(always)]
-    fn path_is_in_set(path: StoragePath<SignerStorageValue>) -> bool {
-        // Items in the set point to the next item or the end marker. Items outside the set point to uninitialized
-        // storage
-        path.stored_value.read() != 0
-    }
-}
 
 #[starknet::interface]
 pub trait IOwnerManager<TContractState> {
@@ -72,9 +38,11 @@ trait IOwnerManagerInternal<TContractState> {
 /// Managing the list of owners of the account
 #[starknet::component]
 mod owner_manager_component {
-    use argent::account::interface::{IEmitArgentAccountEvent};
+    use argent::account::interface::IEmitArgentAccountEvent;
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::events::{SignerLinked, OwnerAddedGuid, OwnerRemovedGuid};
+
+    use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use argent::signer::signer_signature::{
         Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
         SignerStorageTrait, SignerInfo
@@ -84,7 +52,7 @@ mod owner_manager_component {
     };
 
     use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
-    use super::{IOwnerManager, IOwnerManagerInternal, SignerStorageValueLinkedSetConfig};
+    use super::{IOwnerManager, IOwnerManagerInternal};
     /// Too many owners could make the account unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 

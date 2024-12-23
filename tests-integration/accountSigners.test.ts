@@ -1,10 +1,8 @@
 import { Contract, uint256 } from "starknet";
 import {
   ArgentAccount,
-  ArgentSigner,
   deployAccount,
-  deployAccountWithoutGuardian,
-  expectRevertWithErrorMessage,
+  deployAccountWithoutGuardians,
   manager,
   randomEip191KeyPair,
   randomEthKeyPair,
@@ -19,15 +17,14 @@ interface Account {
   account: ArgentAccount;
 }
 
-describe("ArgentAccount: Signers types", function () {
+describe("ArgentAccount: Signer types", function () {
   const recipient = "0xadbe1";
   const amount = uint256.bnToUint256(1);
   let ethContract: Contract;
 
   const accounts: Account[] = [];
-  const starknetKeyPairs = [{ name: "Starknet signature", keyPair: randomStarknetKeyPair }];
-
-  const nonStarknetKeyPairs = [
+  const signerTypes = [
+    { name: "Starknet signature", keyPair: randomStarknetKeyPair },
     { name: "Ethereum signature", keyPair: randomEthKeyPair },
     { name: "Secp256r1 signature", keyPair: randomSecp256r1KeyPair },
     { name: "Eip191 signature", keyPair: randomEip191KeyPair },
@@ -39,10 +36,10 @@ describe("ArgentAccount: Signers types", function () {
     ethContract = await manager.tokens.ethContract();
     await manager.declareFixtureContract("Sha256Cairo0");
 
-    for (const { name, keyPair } of [...starknetKeyPairs, ...nonStarknetKeyPairs]) {
+    for (const { name, keyPair } of signerTypes) {
       const { account: withGuardian } = await deployAccount({ owner: keyPair() });
       accounts.push({ name, account: withGuardian });
-      const { account: withoutGuardian } = await deployAccountWithoutGuardian({ owner: keyPair() });
+      const { account: withoutGuardian } = await deployAccountWithoutGuardians({ owner: keyPair() });
       accounts.push({ name: name + " (without guardian)", account: withoutGuardian });
     }
   });
@@ -57,22 +54,4 @@ describe("ArgentAccount: Signers types", function () {
       }
     });
   });
-
-  for (const { name, keyPair } of nonStarknetKeyPairs) {
-    it(`Expect 'argent/invalid-guardian-type' when deploying with a wrong guardian "${name}"`, async function () {
-      await expectRevertWithErrorMessage(
-        "argent/invalid-guardian-type",
-        deployAccount({ guardian: keyPair() }).then(({ transactionHash }) => ({ transaction_hash: transactionHash })),
-      );
-    });
-
-    it(`Expect 'argent/invalid-guardian-type' on trigger_escape_guardian with "${name}"`, async function () {
-      const { accountContract, account, owner } = await deployAccount();
-      account.signer = new ArgentSigner(owner);
-      await expectRevertWithErrorMessage(
-        "argent/invalid-guardian-type",
-        accountContract.trigger_escape_guardian(keyPair().compiledSignerAsOption),
-      );
-    });
-  }
 });

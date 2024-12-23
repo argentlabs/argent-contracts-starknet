@@ -185,7 +185,6 @@ impl LinkedSetReadPrivateImpl<T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetC
     }
 
     // Return the last item hash or zero when the list is empty. Cost increases with the list size
-    #[inline(always)]
     fn find_last_hash(self: StorageBase<LinkedSet<T>>) -> felt252 {
         let mut current_item_hash = 0;
         while let Option::Some(next_item) = self.next(current_item_hash) {
@@ -217,7 +216,6 @@ impl LinkedSetWriteImpl<
         self.insert_opt(:item, last_item_hash: self.find_last_hash())
     }
 
-    #[inline(always)]
     fn insert_many(self: StorageBase<Mutable<LinkedSet<T>>>, mut items_to_add: Span<T>) {
         let mut last_item_hash: felt252 = self.find_last_hash();
         for item in items_to_add {
@@ -271,7 +269,6 @@ impl LinkedSetWritePrivateImpl<
     }
 
     // Allow easy access to the read-only version of the storage
-    #[inline(always)]
     fn item_hash_before(self: StorageBase<Mutable<LinkedSet<T>>>, item_hash_after: felt252) -> felt252 {
         self.as_read_only().item_hash_before(:item_hash_after)
     }
@@ -301,7 +298,6 @@ impl MutableLinkedSetReadImpl<
 > of LinkedSetRead<StorageBase<Mutable<LinkedSet<T>>>> {
     type Value = T;
 
-    #[inline(always)]
     fn is_empty(self: StorageBase<Mutable<LinkedSet<T>>>) -> bool {
         self.as_read_only().is_empty()
     }
@@ -311,17 +307,14 @@ impl MutableLinkedSetReadImpl<
         self.as_read_only().contains(:item_hash)
     }
 
-    #[inline(always)]
     fn len(self: StorageBase<Mutable<LinkedSet<T>>>) -> usize {
         self.as_read_only().len()
     }
 
-    #[inline(always)]
     fn first(self: StorageBase<Mutable<LinkedSet<T>>>) -> Option<T> {
         self.as_read_only().first()
     }
 
-    #[inline(always)]
     fn get_all_hashes(self: StorageBase<Mutable<LinkedSet<T>>>) -> Array<felt252> {
         self.as_read_only().get_all_hashes()
     }

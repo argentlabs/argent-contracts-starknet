@@ -4,7 +4,6 @@ use keccak::cairo_keccak;
 use starknet::secp256_trait::{Signature as Secp256Signature};
 
 #[must_use]
-#[inline(always)]
 fn is_valid_eip191_signature(hash: felt252, signer: Eip191Signer, signature: Secp256Signature) -> bool {
     is_valid_secp256k1_signature(calculate_eip191_hash(hash), signer.eth_address.into(), signature)
 }
@@ -52,7 +51,6 @@ fn calculate_eip191_hash(message: felt252) -> u256 {
 
 // converts from big endian to little endian
 #[must_use]
-#[inline(always)]
 fn to_le(input: u64) -> u64 {
     let result_u128 = u128_byte_reverse(input.into());
     let result_u128_shifted = result_u128 / 0x10000000000000000;

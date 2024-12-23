@@ -8,7 +8,7 @@ mod session_component {
         session_hash::{OffChainMessageHashSessionRev1, MerkleLeafHash},
         interface::{ISessionable, SessionToken, Session, ISessionCallback},
     };
-    use argent::signer::signer_signature::{SignerSignatureTrait, SignerTrait, SignerSignature};
+    use argent::signer::signer_signature::{SignerSignatureTrait, SignerTrait, SignerSignature, Signer};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
     use hash::{HashStateExTrait, HashStateTrait};
     use poseidon::PoseidonTrait;
@@ -47,32 +47,21 @@ mod session_component {
             self.revoked_session.write(session_hash, true);
         }
 
-        #[inline(always)]
         #[must_use]
         fn is_session_revoked(self: @ComponentState<TContractState>, session_hash: felt252) -> bool {
             self.revoked_session.read(session_hash)
         }
 
-        #[inline(always)]
         #[must_use]
         fn is_session_authorization_cached(
-            self: @ComponentState<TContractState>, session_hash: felt252, owner_guid: felt252
+            self: @ComponentState<TContractState>, session_hash: felt252, owner_guid: felt252, guardian_guid: felt252,
         ) -> bool {
             let state = self.get_contract();
-
-            let guardian_guid = if let Option::Some(guardian_guid) = state.get_guardian_guid_callback() {
-                guardian_guid
-            } else {
-                // No guardian, can't be cached
-                return false;
-            };
-
-            // owner + guardian signed
             let cached_sig_len = self.valid_session_cache.read((owner_guid, guardian_guid, session_hash));
             if (cached_sig_len == 0) {
                 return false;
             }
-            state.is_owner_guid(owner_guid)
+            state.is_owner_guid(owner_guid) && state.is_guardian_guid(guardian_guid)
         }
     }
 
@@ -103,20 +92,24 @@ mod session_component {
             let token: SessionToken = full_deserialize(signature.slice(1, signature.len() - 1))
                 .expect('session/invalid-calldata');
 
-            let token_session_hash = token.session.get_message_hash_rev_1();
+            let session_hash = token.session.get_message_hash_rev_1();
 
-            assert(!self.revoked_session.read(token_session_hash), 'session/revoked');
+            assert(!self.revoked_session.read(session_hash), 'session/revoked');
 
             assert(token.session.expires_at >= get_block_timestamp(), 'session/expired');
 
             self
                 .assert_valid_session_authorization(
-                    state, token.session_authorization, token.cache_owner_guid, token_session_hash
+                    state,
+                    session_authorization: token.session_authorization,
+                    cache_owner_guid: token.cache_owner_guid,
+                    token_guardian: token.guardian_signature.signer(),
+                    :session_hash
                 );
 
             let message_hash = PoseidonTrait::new()
                 .update_with(transaction_hash)
-                .update_with(token_session_hash)
+                .update_with(session_hash)
                 .update_with(token.cache_owner_guid)
                 .finalize();
 
@@ -124,72 +117,72 @@ mod session_component {
             let session_guid_from_sig = token.session_signature.signer().into_guid();
             assert(token.session.session_key_guid == session_guid_from_sig, 'session/session-key-mismatch');
             assert(token.session_signature.is_valid_signature(message_hash), 'session/invalid-session-sig');
-
-            // checks that its the account guardian that signed the session
-            let current_guardian_guid = state.get_guardian_guid_callback().expect('session/no-guardian');
-            assert(
-                current_guardian_guid == token.guardian_signature.signer().into_guid(), 'session/guardian-key-mismatch'
-            );
+            // `assert_valid_session_authorization`` will assert the guardian is the same as the one in the
+            // authorization
             assert(token.guardian_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');
 
             assert_valid_session_calls(@token, calls);
         }
 
-
+        /// @dev guarantees that the authorization is valid (either cached or not)
+        /// will store the authorization in the cache when cache_owner_guid is not 0
+        /// The guardian from the sessions token must match the guardian from the authorization
         fn assert_valid_session_authorization(
             ref self: ComponentState<TContractState>,
             state: @TContractState,
             session_authorization: Span<felt252>,
             cache_owner_guid: felt252,
+            token_guardian: Signer,
             session_hash: felt252,
         ) {
-            let current_guardian_guid = state.get_guardian_guid_callback().expect('session/no-guardian');
-
-            if cache_owner_guid.is_non_zero() {
+            if cache_owner_guid != 0 {
+                // using cache
+                let token_guardian_guid = token_guardian.into_guid();
                 // Check if the authorization is cached
                 let cached_sig_len = self
                     .valid_session_cache
-                    .read((cache_owner_guid, current_guardian_guid, session_hash));
+                    .read((cache_owner_guid, token_guardian_guid, session_hash));
                 if cached_sig_len != 0 {
-                    // assert owner is still valid
-                    assert(state.is_owner_guid(cache_owner_guid), 'session/signer-is-not-owner');
+                    // assert signers still valid
+                    assert(state.is_owner_guid(cache_owner_guid), 'session/cache-invalid-owner');
+                    // TODO compare using SignerSignature for performance?
+                    assert(state.is_guardian_guid(token_guardian_guid), 'session/cache-invalid-guardian');
+
                     // prevents a DoS attack where authorization can be replaced by a bigger one
-                    assert(session_authorization.len() <= cached_sig_len, 'session/invalid-auth-len');
+                    assert(session_authorization.len() <= cached_sig_len, 'session/cache-invalid-auth-len');
                     // authorization is cached, we can skip the signature verification
-                    return;
+                    return; // authorized
                 }
-            }
+                let parsed_session_authorization = state.validate_authorization(session_hash, session_authorization);
+                let owner_guid_from_auth = (*parsed_session_authorization[0]).signer().into_guid();
+                // assert guardian in the token is the same guardian as in the authorization
+                let guardian_from_auth = (*parsed_session_authorization[1]).signer();
+                assert(guardian_from_auth == token_guardian, 'session/guardian-key-mismatch');
 
-            // not cached, continue to verification
-            let parsed_session_authorization = state.parse_authorization(session_authorization);
-            state.assert_valid_authorization(session_hash, parsed_session_authorization.span());
-            // owner + guardian signed
-            assert(parsed_session_authorization.len() == 2, 'session/invalid-signature-len');
-            let owner_guid_from_sig = (*parsed_session_authorization[0]).signer().into_guid();
-            let guardian_guid_from_sig = (*parsed_session_authorization[1]).signer().into_guid();
-            // checks that second signature is the guardian and not the backup guardian
-            assert(guardian_guid_from_sig == current_guardian_guid, 'session/signer-is-not-guardian');
-
-            if cache_owner_guid.is_non_zero() {
-                // Store the authorization signature in the cache
-                assert(cache_owner_guid == owner_guid_from_sig, 'session/cache-owner-mismatch');
                 self
                     .valid_session_cache
-                    .write((cache_owner_guid, current_guardian_guid, session_hash), session_authorization.len());
+                    .write((owner_guid_from_auth, token_guardian_guid, session_hash), session_authorization.len());
+            } else {
+                let parsed_session_authorization = state.validate_authorization(session_hash, session_authorization);
+
+                // assert guardian in the token is the same guardian as in the authorization
+                let guardian_from_auth = (*parsed_session_authorization[1]).signer();
+                assert(guardian_from_auth == token_guardian, 'session/guardian-key-mismatch');
             }
         }
     }
 
     fn assert_valid_session_calls(token: @SessionToken, mut calls: Span<Call>) {
-        assert((*token.proofs).len() == calls.len(), 'session/unaligned-proofs');
+        let mut proofs = *token.proofs;
+        assert(proofs.len() == calls.len(), 'session/unaligned-proofs');
         let merkle_root = *token.session.allowed_methods_root;
         let mut merkle_tree: MerkleTree<Hasher> = MerkleTreeImpl::new();
-        let mut proofs = *token.proofs;
-        while let Option::Some(call) = calls.pop_front() {
+
+        for call in calls {
             let leaf = call.get_merkle_leaf();
             let proof = proofs.pop_front().expect('session/proof-empty');
             let is_valid = merkle_tree.verify(merkle_root, leaf, *proof);
             assert(is_valid, 'session/invalid-call');
-        };
+        }
     }
 }

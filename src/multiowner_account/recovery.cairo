@@ -59,7 +59,6 @@ impl EscapeStorePacking of starknet::StorePacking<Escape, (felt252, felt252)> {
 }
 
 impl EscapeTypeIntoFelt252 of Into<EscapeType, felt252> {
-    #[inline(always)]
     fn into(self: EscapeType) -> felt252 {
         match self {
             EscapeType::None => 0,
@@ -70,7 +69,6 @@ impl EscapeTypeIntoFelt252 of Into<EscapeType, felt252> {
 }
 
 impl U256TryIntoEscapeType of TryInto<u256, EscapeType> {
-    #[inline(always)]
     fn try_into(self: u256) -> Option<EscapeType> {
         if self == 0 {
             Option::Some(EscapeType::None)

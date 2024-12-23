@@ -2,25 +2,24 @@
 
 ## High-Level Specification
 
-The Argent account is a custom multisig (1-of-1, 2-of-2 or 2-of-3) tailored for individuals.
+The Argent account is a custom multisig tailored for individuals.
 
-The primary key called the `owner` is typically stored on the user's device. A second key called the `guardian` acts both as a co-validator for typical operations of the wallet, and as the trusted actor that can recover the wallet in case the `owner` key is lost or compromised. In a typical setting the `guardian` key is managed by an off-chain service to enable fraud monitoring (e.g. trusted contacts, daily limits, etc) and recovery.
-
-The user can always opt-out of the guardian service and manage the guardian key himself. Alternatively he/she can add a second `guardian_backup` key to the account that has the same role as the `guardian` and can be used as the ultimate censorship resistance guarantee. The account can only have a `guardian_backup` when the `guardian` is set.
+There are two main roles, the owners and the guardians. The account must have at least one owner. The guardians are optional.
+The owner represent keys controlled but the user. And the guardians acts both as a co-validators for typical operations of the wallet, and as trusted actors that can recover the wallet in case the `owner` keys are lost or compromised. The guardians key is not typically managed by the owner directly, but by a 3rd party which the owner trusts.
 
 By default the account can execute a sequence of operations such as calling external contracts in a multicall. A multicall will fail if one of the inner call fails. Whenever a function of the account must be called (`change_owner`, `trigger_escape_guardian`, `upgrade`, etc), it should be the only call performed in this multicall.
 
 In addition to the main `__execute__` entry point used by the Starknet protocol, the account can also be called by an external contract via the `execute_from_outside` function to e.g. enable sponsored transactions. The calling contract must provide a valid signature (`owner` and/or `guardian`) for the target execution.
 
-Normal operations of the wallet (calling external contracts via `__execute__` or `execute_from_outside`, `change_owner`, `change_guardian`, `change_guardian_backup`, `cancel_escape`, `upgrade`) require the approval of the `owner` and a `guardian` to be executed.
+Normal operations of the wallet (calling external contracts via `__execute__` or `execute_from_outside`, `reset_owners`, `reset_guardians`, `cancel_escape`, `upgrade`) require the approval of one `owner` and one `guardian` (if the account has any)
 
-Each party alone can trigger the `escape` mode (a.k.a. recovery) on the wallet if the other party is not cooperating or lost. You need to wait for the security period to elapse before the escape is active. Then the non-cooperating party can be replaced. If another security period elapses where the escape is not completed, it will expire. The default security period is 7 days but it can be defined by the user.
+One role (owner or guardian) alone can also trigger the `escape` mode (a.k.a. recovery) on the wallet if the other role is not cooperating or lost. You need to wait for the security period to elapse before the escape is active. Then the non-cooperating role can be replaced. If another security period elapses where the escape is not completed, it will expire. The default security period is 7 days but it can be defined by the user.
 
-The wallet is asymmetric in favor of the `owner` who can override an escape triggered by a `guardian`.
+The wallet is asymmetric in favor of the owners who can override an escape triggered by a guardian.
 
-A triggered escape can always be cancelled with the approval of the `owner` and a `guardian`.
+A triggered escape can always be cancelled with the approval of one `owner` and one `guardian`.
 
-We assume that the `owner` key is backed up such that the probability of the `owner` key being lost should be close to zero.
+We assume that one `owner` key is backed up such that the probability of the `owner` key being lost should be close to zero.
 
 Under this model we can build a simple yet highly secure non-custodial wallet.
 
@@ -38,6 +37,8 @@ To enable that model to evolve the account can be upgraded. Upgrading the wallet
 | Escape Owner            |       | X        | After security period                    |
 | Cancel Escape           | X     | X        |                                          |
 | Upgrade                 | X     | X        |                                          |
+
+Adding multiple guardians can also be used as the as the ultimate censorship resistance guarantee.
 
 ## Signer types
 

@@ -11,7 +11,7 @@ mod linked_set_mock {
 
     #[storage]
     struct Storage {
-        linked_set_plus_1: LinkedSetWithHead<SignerStorageValue>,
+        linked_set_with_head: LinkedSetWithHead<SignerStorageValue>,
         linked_set: LinkedSet<SignerStorageValue>,
     }
 

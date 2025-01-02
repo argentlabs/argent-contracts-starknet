@@ -1,6 +1,4 @@
-use argent::signer::signer_signature::{
-    Signer, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerType, SignerInfo
-};
+use argent::signer::signer_signature::{Signer, SignerSignature, SignerStorageValue, SignerInfo};
 
 #[starknet::interface]
 pub trait IOwnerManager<TContractState> {

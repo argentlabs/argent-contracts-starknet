@@ -40,7 +40,7 @@ mod ArgentAccount {
         serialization::full_deserialize,
         transaction_version::{
             TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
-            assert_correct_deploy_account_version, DA_MODE_L1, is_estimate_transaction
+            assert_correct_deploy_account_version, DA_MODE_L1
         }
     };
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
@@ -512,6 +512,7 @@ mod ArgentAccount {
         fn escape_owner(ref self: ContractState) {
             assert_only_self();
 
+            // __validate__ guarantees that the escape is of the correct type
             let current_escape = self._escape.read();
 
             let current_escape_status = self.get_escape_status(current_escape.ready_at);
@@ -531,6 +532,7 @@ mod ArgentAccount {
         fn escape_guardian(ref self: ContractState) {
             assert_only_self();
 
+            // __validate__ guarantees that the escape is of the correct type
             let current_escape = self._escape.read();
             assert(self.get_escape_status(current_escape.ready_at) == EscapeStatus::Ready, 'argent/invalid-escape');
 

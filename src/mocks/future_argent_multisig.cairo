@@ -7,21 +7,15 @@ mod MockFutureArgentMultisig {
         IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version
     };
     use argent::introspection::src5::src5_component;
-    use argent::multisig_account::external_recovery::external_recovery::IExternalRecoveryCallback;
     use argent::multisig_account::signer_manager::signer_manager::{
         signer_manager_component, signer_manager_component::SignerManagerInternalImpl
     };
-    use argent::signer::{signer_signature::{Signer, SignerTrait, SignerSignature, SignerSignatureTrait}};
+    use argent::signer::signer_signature::{Signer, SignerTrait, SignerSignature};
     use argent::upgrade::{
         upgrade::{upgrade_component, upgrade_component::UpgradableInternalImpl},
         interface::{IUpgradableCallback, IUpgradableCallbackOld}
     };
-    use argent::utils::{
-        asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
-        serialization::full_deserialize,
-    };
-    use core::array::ArrayTrait;
-    use core::result::ResultTrait;
+    use argent::utils::{asserts::assert_only_self, calls::execute_multicall, serialization::full_deserialize};
     use starknet::{get_tx_info, get_contract_address, VALIDATED, ClassHash, account::Call};
 
     const NAME: felt252 = 'ArgentMultisig';

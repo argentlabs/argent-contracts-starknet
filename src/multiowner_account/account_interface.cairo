@@ -16,6 +16,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
 
     /// @notice Changes the security period used for escapes
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
+    /// @dev Will revert if there is an ongoing escape
     /// @param new_security_period new delay in seconds before the escape can be completed. Must be >= 10 minutes
     fn set_escape_security_period(ref self: TContractState, new_security_period: u64);
 
@@ -24,9 +25,9 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @param new_single_owner SignerSignature of the new owner
     /// Required to prevent changing to a signer which is not in control of the user
     /// It is the signature of the SNIP-12 V1 compliant object ReplaceOwnersWithOne
-    /// @param signature_expiration Signature expiration timestamp
+    /// @param signature_expiration Signature expiration timestamp in seconds since the Unix epoch
     /// cannot be in the past: before current timestamp
-    /// cannot be too far in the future: current timestamp + 1 DAY in seconds
+    /// cannot be too far in the future: current timestamp + 1 DAY
     /// @dev It will cancel any existing escape
     fn reset_owners(ref self: TContractState, new_single_owner: SignerSignature, signature_expiration: u64);
 
@@ -53,51 +54,58 @@ trait IArgentMultiOwnerAccount<TContractState> {
 
     /// @notice Removes all guardians and optionally adds a new one
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
+    /// @dev It will cancel any existing escape
     /// @param new_guardian The address of the new guardian, or None to disable the guardian
     fn reset_guardians(ref self: TContractState, new_guardian: Option<Signer>);
 
     /// @notice Triggers the escape of the owner when it is lost or compromised
     /// @dev Must be called by the account and authorized by just a guardian
     /// @dev This function assumes that there is a guardian
+    /// This is guaranteed before calling this method, usually when validating the transaction
+    /// Does this mean it has to be done off chain? I'd rephrase this.
+    /// And what happens if not done then?
     /// @dev Cannot override an ongoing escape of the guardian
-    /// @param new_owner The new account owner if the escape completes
-    /// This must be guaranteed before calling this method, usually when validating the transaction
+    /// @param new_owner The new account owner for when the escape completes
+    /// What does the "account" stands for in the line above?
     fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);
 
     /// @notice Triggers the escape of the guardian when it is lost or compromised
     /// @dev Can override an ongoing escape of the owner
     /// @dev Must be called by the account and authorized by the owner alone
     /// @dev This function assumes that there is at least one guardian
-    /// This must be guaranteed before calling this method, usually when validating the transaction
-    /// @param new_guardian The new account guardian if the escape completes
+    /// This is guaranteed before calling this method, usually when validating the transaction
+    /// @param new_guardian The new account guardian or None if the owner wants to remove the guardian
     fn trigger_escape_guardian(ref self: TContractState, new_guardian: Option<Signer>);
 
-    /// @notice Completes the escape and changes the owner after the security period
+    /// @notice Completes the escape and changes the owner. Can only be called after the security period has elapsed
     /// @dev Must be called by the account and authorized by just a guardian
     /// @dev This function assumes that there is a guardian, and that the there is an escape for the owner
-    /// This must be guaranteed before calling this method, usually when validating the transaction
+    /// This is guaranteed before calling this method, usually when validating the transaction
     fn escape_owner(ref self: TContractState);
 
-    /// @notice Completes the escape and changes the guardian after the security period
+    /// @notice Completes the escape and changes the guardian. Can only be called after the security period has elapsed
     /// @dev Must be called by the account and authorized by just the owner
     /// @dev This function assumes that there is a guardian, and that the there is an escape for the guardian
-    /// @dev This must be guaranteed before calling this method. Usually when validating the transaction
+    /// This is guaranteed before calling this method, usually when validating the transaction
     fn escape_guardian(ref self: TContractState);
 
-    /// @notice Cancels an ongoing escape if any
+    /// @notice Cancels an ongoing escape
+    /// @dev Will revert if there is no ongoing escape
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     fn cancel_escape(ref self: TContractState);
 
     // Views
 
     /// @notice Returns the public key if the requested role is Starknet, Eip191 or Secp256k1 and panic for other types
+    /// @dev Fails if there is more than one owner
     fn get_owner(self: @TContractState) -> felt252;
     fn get_owner_guid(self: @TContractState) -> felt252;
     fn get_owner_type(self: @TContractState) -> SignerType;
 
-    fn get_escape(self: @TContractState) -> Escape;
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
+
+    fn get_escape(self: @TContractState) -> Escape;
     fn get_last_owner_trigger_escape_attempt(self: @TContractState) -> u64;
     fn get_last_guardian_trigger_escape_attempt(self: @TContractState) -> u64;
     fn get_last_owner_escape_attempt(self: @TContractState) -> u64;

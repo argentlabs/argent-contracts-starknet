@@ -1,5 +1,4 @@
-use argent::offchain_message::{interface::{StarknetDomain, IOffChainMessageHashRev1, IStructHashRev1},};
-
+use argent::offchain_message::interface::{StarknetDomain, IOffChainMessageHashRev1, IStructHashRev1};
 use hash::{HashStateTrait, HashStateExTrait};
 use poseidon::PoseidonTrait;
 use starknet::{get_tx_info, get_contract_address};

@@ -67,20 +67,6 @@ fn u256_to_u8s(word: u256) -> Array<u8> {
     ]
 }
 
-#[generate_trait]
-impl ByteArrayExt of ByteArrayExtTrait {
-    fn into_bytes(self: ByteArray) -> Array<u8> {
-        let len = self.len();
-        let mut output = array![];
-        let mut i = 0;
-        while i != len {
-            output.append(self[i]);
-            i += 1;
-        };
-        output
-    }
-}
-
 /// @notice Converts of 8 u32s into a u256
 /// @param words 8 words sorted from most significant to least significant
 /// @return u256 A 256-bit unsigned integer
@@ -99,6 +85,7 @@ fn eight_words_to_u256(words: [u32; 8]) -> u256 {
 
     u256 { high, low }
 }
+
 /// @notice Converts a u32 into 4 u8s
 /// @param word The u32 to convert.
 /// @return The individual `u8` bytes ordered from most significant to least.

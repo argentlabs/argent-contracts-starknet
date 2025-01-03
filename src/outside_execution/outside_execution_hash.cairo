@@ -5,10 +5,10 @@ use argent::offchain_message::{
     },
     precalculated_hashing::get_message_hash_rev_1_with_precalc
 };
-use argent::outside_execution::interface::{OutsideExecution};
+use argent::outside_execution::interface::OutsideExecution;
 use hash::{HashStateTrait, HashStateExTrait};
 use pedersen::PedersenTrait;
-use poseidon::{poseidon_hash_span, hades_permutation, HashState};
+use poseidon::poseidon_hash_span;
 use starknet::{get_tx_info, get_contract_address, account::Call};
 
 const MAINNET_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =

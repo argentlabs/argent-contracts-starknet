@@ -3,16 +3,16 @@ mod session_component {
     use alexandria_merkle_tree::merkle_tree::{
         Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,
     };
-    use argent::account::interface::{IAccount};
+    use argent::account::interface::IAccount;
     use argent::session::{
         session_hash::{OffChainMessageHashSessionRev1, MerkleLeafHash},
         interface::{ISessionable, SessionToken, Session, ISessionCallback},
     };
-    use argent::signer::signer_signature::{SignerSignatureTrait, SignerTrait, SignerSignature, Signer};
+    use argent::signer::signer_signature::{SignerSignatureTrait, SignerTrait, Signer};
     use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
     use hash::{HashStateExTrait, HashStateTrait};
     use poseidon::PoseidonTrait;
-    use starknet::{account::Call, get_contract_address, VALIDATED, get_block_timestamp, storage::Map};
+    use starknet::{account::Call, get_contract_address, get_block_timestamp, storage::Map};
 
 
     #[storage]
@@ -56,11 +56,12 @@ mod session_component {
         fn is_session_authorization_cached(
             self: @ComponentState<TContractState>, session_hash: felt252, owner_guid: felt252, guardian_guid: felt252,
         ) -> bool {
-            let state = self.get_contract();
             let cached_sig_len = self.valid_session_cache.read((owner_guid, guardian_guid, session_hash));
             if (cached_sig_len == 0) {
                 return false;
             }
+
+            let state = self.get_contract();
             state.is_owner_guid(owner_guid) && state.is_guardian_guid(guardian_guid)
         }
     }
@@ -135,8 +136,8 @@ mod session_component {
             token_guardian: Signer,
             session_hash: felt252,
         ) {
+            // using cache
             if cache_owner_guid != 0 {
-                // using cache
                 let token_guardian_guid = token_guardian.into_guid();
                 // Check if the authorization is cached
                 let cached_sig_len = self

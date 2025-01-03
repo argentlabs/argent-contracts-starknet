@@ -4,7 +4,7 @@ use argent::offchain_message::{
 };
 use argent::session::interface::Session;
 use hash::{HashStateExTrait, HashStateTrait};
-use poseidon::{hades_permutation, poseidon_hash_span, HashState};
+use poseidon::{poseidon_hash_span, HashState};
 use starknet::{get_contract_address, get_tx_info, account::Call};
 
 

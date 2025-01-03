@@ -6,12 +6,8 @@ mod outside_execution_component {
         outside_execution_hash::{OffChainMessageOutsideExecutionRev0, OffChainMessageOutsideExecutionRev1},
         interface::{OutsideExecution, IOutsideExecutionCallback, IOutsideExecution}
     };
-    use hash::{HashStateTrait, HashStateExTrait};
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
-    use pedersen::PedersenTrait;
-    use starknet::{
-        get_caller_address, get_contract_address, get_block_timestamp, get_tx_info, account::Call, storage::Map
-    };
+    use starknet::{get_caller_address, get_block_timestamp, account::Call, storage::Map};
 
     #[storage]
     struct Storage {
@@ -29,7 +25,7 @@ mod outside_execution_component {
         +HasComponent<TContractState>,
         +IOutsideExecutionCallback<TContractState>,
         +Drop<TContractState>,
-        impl ReentrancyGuard: ReentrancyGuardComponent::HasComponent<TContractState>,
+        +ReentrancyGuardComponent::HasComponent<TContractState>,
     > of IOutsideExecution<ComponentState<TContractState>> {
         fn execute_from_outside(
             ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Array<felt252>

@@ -62,6 +62,7 @@ mod signer_manager_component {
         SignerLinked: SignerLinked,
     }
 
+    // ? why is this event here while in the external_recovery_component it is in the interface???
     /// @notice Emitted when the multisig threshold changes
     /// @param new_threshold New threshold
     #[derive(Drop, starknet::Event)]

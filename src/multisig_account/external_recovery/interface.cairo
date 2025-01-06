@@ -21,7 +21,7 @@ struct EscapeCall {
 /// @notice Information relative to whether the escape is enabled
 /// @param is_enabled The escape is enabled
 /// @param security_period Time it takes for the escape to become ready after being triggered
-/// @param expiry_period The escape will be ready and can be completed for this duration
+/// @param expiry_period Time it takes for the escape to expire after being ready
 #[derive(Drop, Copy, Serde)]
 struct EscapeEnabled {
     is_enabled: bool,
@@ -36,19 +36,26 @@ trait IExternalRecovery<TContractState> {
     fn toggle_escape(
         ref self: TContractState, is_enabled: bool, security_period: u64, expiry_period: u64, guardian: ContractAddress
     );
+
+    /// @notice Gets the guardian that can trigger the escape
     fn get_guardian(self: @TContractState) -> ContractAddress;
+
     /// @notice Triggers the escape
     /// @param call Call to trigger on the account to recover the account
     /// @dev This function must be called by the guardian
     fn trigger_escape(ref self: TContractState, call: EscapeCall);
+
     /// @notice Executes the escape
     /// @param call Call provided to `trigger_escape`
     /// @dev This function can be called by any external contract
     fn execute_escape(ref self: TContractState, call: EscapeCall);
+
     /// @notice Cancels the ongoing escape
     fn cancel_escape(ref self: TContractState);
+
     /// @notice Gets the escape configuration
     fn get_escape_enabled(self: @TContractState) -> EscapeEnabled;
+
     /// @notice Gets the ongoing escape if any, and its status
     fn get_escape(self: @TContractState) -> (Escape, EscapeStatus);
 }

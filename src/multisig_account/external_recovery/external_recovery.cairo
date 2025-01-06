@@ -17,9 +17,7 @@ mod external_recovery_component {
         IExternalRecovery, EscapeCall, Escape, EscapeTriggered, EscapeExecuted, EscapeCanceled, EscapeEnabled
     };
     use argent::recovery::EscapeStatus;
-    use argent::signer::signer_signature::{Signer, SignerTrait};
     use argent::utils::asserts::assert_only_self;
-    use argent::utils::serialization::serialize;
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use starknet::{
         get_block_timestamp, get_contract_address, get_caller_address, ContractAddress, account::Call,
@@ -147,6 +145,8 @@ mod external_recovery_component {
                 self.escape_enabled.write(EscapeEnabled { is_enabled: true, security_period, expiry_period });
                 self.guardian.write(guardian);
             } else {
+                // Why don't we do this check on the other side?
+                // This seems odd that on one arm we check it and on the other one we don't
                 assert(escape_config.is_enabled, 'argent/escape-disabled');
                 assert(
                     security_period == 0 && expiry_period == 0 && guardian == contract_address_const::<0>(),

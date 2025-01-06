@@ -4,7 +4,6 @@ mod ArgentMultisigAccount {
         IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version
     };
     use argent::introspection::src5::src5_component;
-    use argent::multiowner_account::events::SignerLinked;
     use argent::multisig_account::external_recovery::external_recovery::{
         external_recovery_component, IExternalRecoveryCallback
     };
@@ -17,13 +16,13 @@ mod ArgentMultisigAccount {
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
     };
-    use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey, SignerTrait};
+    use argent::signer::signer_signature::{Signer, SignerSignature};
     use argent::upgrade::{
         upgrade::upgrade_component, upgrade::upgrade_component::UpgradableInternalImpl,
         interface::{IUpgradableCallback, IUpgradableCallbackOld}
     };
     use argent::utils::{
-        asserts::{assert_no_self_call, assert_only_protocol, assert_only_self,}, calls::execute_multicall,
+        asserts::{assert_no_self_call, assert_only_protocol, assert_only_self}, calls::execute_multicall,
         serialization::full_deserialize,
         transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
     };

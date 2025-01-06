@@ -1,5 +1,5 @@
 use argent::utils::linked_set::LinkedSetConfig;
-use starknet::storage::{StoragePathEntry, StoragePath, StorageBase};
+use starknet::storage::StoragePath;
 
 impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
     const END_MARKER: felt252 = 'end';
@@ -32,9 +32,7 @@ impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
 #[starknet::component]
 mod signer_manager_component {
     use argent::multiowner_account::events::SignerLinked;
-    use argent::multisig_account::signer_manager::interface::{
-        ISignerManager, ISignerManagerInternal, IUpgradeMigration
-    };
+    use argent::multisig_account::signer_manager::interface::{ISignerManager, IUpgradeMigration};
     use argent::signer::{
         signer_signature::{
             Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, starknet_signer_from_pubkey
@@ -213,9 +211,10 @@ mod signer_manager_component {
         }
     }
 
+    #[generate_trait]
     impl SignerManagerInternalImpl<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
-    > of ISignerManagerInternal<ComponentState<TContractState>> {
+    > of ISignerManagerInternal<TContractState> {
         fn initialize(ref self: ComponentState<TContractState>, threshold: usize, mut signers: Array<Signer>) {
             assert(self.threshold.read() == 0, 'argent/already-initialized');
 

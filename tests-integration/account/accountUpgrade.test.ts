@@ -25,7 +25,7 @@ import {
   randomWebauthnLegacyCairo0Owner,
   randomWebauthnLegacyOwner,
   upgradeAccount,
-} from "../lib";
+} from "../../lib";
 
 interface SelfCall {
   entrypoint: string;

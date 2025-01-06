@@ -1,6 +1,5 @@
 import { CallData, shortString, TransactionReceipt } from "starknet";
-import { expectEvent, expectExecutionRevert, expectRevertWithErrorMessage, randomStarknetKeyPair } from "../lib";
-import { deployMultisig, deployMultisig1_1 } from "../lib/multisig";
+import { expectEvent, expectExecutionRevert, expectRevertWithErrorMessage, randomStarknetKeyPair, deployMultisig, deployMultisig1_1  } from "../../lib";
 
 describe("ArgentMultisig", function () {
   for (const useTxV3 of [false, true]) {

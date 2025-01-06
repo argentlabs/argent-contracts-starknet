@@ -9,9 +9,8 @@ import {
   getOutsideExecutionCall,
   getTypedDataHash,
   manager,
-  randomStarknetKeyPair,
-} from "../lib";
-import { deployMultisig } from "../lib/multisig";
+  randomStarknetKeyPair,deployMultisig
+} from "../../lib";
 
 const legacyRevision = TypedDataRevision.LEGACY;
 const activeRevision = TypedDataRevision.ACTIVE;

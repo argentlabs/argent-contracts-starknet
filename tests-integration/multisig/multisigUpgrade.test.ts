@@ -11,9 +11,8 @@ import {
   manager,
   signerTypeToCustomEnum,
   sortByGuid,
-  upgradeAccount,
-} from "../lib";
-import { deployMultisig, deployMultisig1_1 } from "../lib/multisig";
+  upgradeAccount,deployMultisig, deployMultisig1_1
+} from "../../lib";
 
 interface DeployMultisigReturn {
   account: Account;

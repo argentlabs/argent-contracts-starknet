@@ -1,12 +1,5 @@
-import assert from "assert";
 import { uint256 } from "starknet";
-import {
-  StarknetKeyPair,
-  WebauthnOwner,
-  deployAccount,
-  manager,
-  upgradeAccount,
-} from "../lib";
+import { StarknetKeyPair, WebauthnOwner, deployAccount, manager, upgradeAccount } from "../lib";
 import { newProfiler } from "../lib/gas";
 
 const profiler = newProfiler(manager);
@@ -31,7 +24,7 @@ const profilerClassHash = await manager.declareLocalContract("ArgentAccountProfi
 const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 {
   const { account } = await deployAccount({
-    classHash:profilerClassHash,
+    classHash: profilerClassHash,
     owner: new WebauthnOwner(privateKey),
     guardian,
     salt: "0x8",
@@ -39,7 +32,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
   });
 
   await upgradeAccount(account, latestClassHash);
-  
+
   ethContract.connect(account);
   await profiler.profile("Transfer - Webauthn no guardian", await ethContract.transfer(recipient, amount));
 }

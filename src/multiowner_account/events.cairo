@@ -1,6 +1,7 @@
 use argent::signer::signer_signature::Signer;
 
 /// @notice Deprecated: Use AccountCreatedGuid instead
+/// @dev This is only emitted for the owner and then guardian when they of type SignerType::Starknet
 /// @dev Emitted exactly once when the account is initialized
 /// @param owner The owner starknet pubkey
 /// @param guardian The guardian starknet pubkey or 0 if there's no guardian

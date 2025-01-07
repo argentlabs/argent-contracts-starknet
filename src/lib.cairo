@@ -66,6 +66,7 @@ mod utils {
 }
 
 mod mocks {
+    mod argent_account_profiler;
     mod future_argent_account;
     mod future_argent_multisig;
     mod linked_set_mock;

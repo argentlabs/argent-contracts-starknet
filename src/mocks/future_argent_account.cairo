@@ -117,16 +117,7 @@ mod MockFutureArgentAccount {
         // Called when coming from account 0.4.0+
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
             assert_only_self();
-            let current_version = IFutureArgentUserAccountDispatcher { contract_address: get_contract_address() }
-                .get_version();
-            assert(current_version.major == 0 && current_version.minor >= 4, 'argent/invalid-from-version');
             self.upgrade.complete_upgrade(new_implementation);
-            if data.is_empty() {
-                return;
-            }
-            let calls: Array<Call> = full_deserialize(data).expect('argent/invalid-calls');
-            assert_no_self_call(calls.span(), get_contract_address());
-            execute_multicall(calls.span());
         }
     }
 

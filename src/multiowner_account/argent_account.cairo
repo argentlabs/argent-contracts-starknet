@@ -45,7 +45,7 @@ mod ArgentAccount {
     };
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use starknet::{
-        storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, account::Call,
+        ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, account::Call,
         SyscallResultTrait, get_tx_info, get_execution_info,
     };
 

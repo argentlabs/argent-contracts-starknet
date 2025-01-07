@@ -15,17 +15,13 @@ trait IArgentAccountProfiler<TContractState> {
 #[starknet::contract(account)]
 mod ArgentAccountProfile {
     use argent::account::interface::{IAccount, Version, IEmitArgentAccountEvent};
-    use argent::introspection::src5::src5_component;
+    use argent::introspection::src5::src5_component; // TODO Could be removed to depend on even less stuff
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::guardian_manager::{
         guardian_manager_component, guardian_manager_component::GuardianManagerInternalImpl
     };
     use argent::multiowner_account::owner_manager::{
         owner_manager_component, owner_manager_component::OwnerManagerInternalImpl
-    };
-    use argent::multiowner_account::upgrade_migration::{
-        IUpgradeMigrationInternal, upgrade_migration_component,
-        upgrade_migration_component::UpgradeMigrationInternalImpl, IUpgradeMigrationCallback
     };
     use argent::signer::signer_signature::{Signer, SignerStorageValue};
     use argent::upgrade::{
@@ -37,7 +33,6 @@ mod ArgentAccountProfile {
 
     const NAME: felt252 = 'ArgentAccount';
     const VERSION: Version = Version { major: 0, minor: 4, patch: 0 };
-    const VERSION_COMPAT: felt252 = '0.4.0';
 
     // Owner management
     component!(path: owner_manager_component, storage: owner_manager, event: OwnerManagerEvents);
@@ -51,8 +46,6 @@ mod ArgentAccountProfile {
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
     impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
-    // Upgrade migration
-    component!(path: upgrade_migration_component, storage: upgrade_migration, event: UpgradeMigrationEvents);
 
     #[storage]
     struct Storage {
@@ -62,8 +55,6 @@ mod ArgentAccountProfile {
         guardian_manager: guardian_manager_component::Storage,
         #[substorage(v0)]
         upgrade: upgrade_component::Storage,
-        #[substorage(v0)]
-        upgrade_migration: upgrade_migration_component::Storage,
     }
 
     #[event]
@@ -77,8 +68,6 @@ mod ArgentAccountProfile {
         SRC5Events: src5_component::Event,
         #[flat]
         UpgradeEvents: upgrade_component::Event,
-        #[flat]
-        UpgradeMigrationEvents: upgrade_migration_component::Event,
     }
 
     #[constructor]
@@ -121,16 +110,8 @@ mod ArgentAccountProfile {
 
     #[abi(embed_v0)]
     impl UpgradeableCallbackImpl of IUpgradableCallback<ContractState> {
-        // Called when coming from account 0.4.0+
+        // As we have the correct layout already, no need to do anything
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {}
-    }
-
-    impl UpgradeMigrationCallbackImpl of IUpgradeMigrationCallback<ContractState> {
-        fn finalize_migration(ref self: ContractState) {}
-
-        fn migrate_owner(ref self: ContractState, signer_storage_value: SignerStorageValue) {}
-
-        fn migrate_guardians(ref self: ContractState, guardians_storage_value: Array<SignerStorageValue>) {}
     }
 
     #[abi(embed_v0)]

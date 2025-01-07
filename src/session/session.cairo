@@ -136,8 +136,8 @@ mod session_component {
             token_guardian: Signer,
             session_hash: felt252,
         ) {
-            // using cache
             if cache_owner_guid != 0 {
+                // using cache
                 let token_guardian_guid = token_guardian.into_guid();
                 // Check if the authorization is cached
                 let cached_sig_len = self

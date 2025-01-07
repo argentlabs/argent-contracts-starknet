@@ -145,8 +145,6 @@ mod external_recovery_component {
                 self.escape_enabled.write(EscapeEnabled { is_enabled: true, security_period, expiry_period });
                 self.guardian.write(guardian);
             } else {
-                // Why don't we do this check on the other side?
-                // This seems odd that on one arm we check it and on the other one we don't
                 assert(escape_config.is_enabled, 'argent/escape-disabled');
                 assert(
                     security_period == 0 && expiry_period == 0 && guardian == contract_address_const::<0>(),

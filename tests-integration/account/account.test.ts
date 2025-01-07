@@ -13,7 +13,6 @@ import {
   starknetSignatureType,
   zeroStarknetSignatureType,
 } from "../../lib";
-// TODO Try fixing the path to absolute lib path instead of relative
 
 describe("ArgentAccount", function () {
   let argentAccountClassHash: string;

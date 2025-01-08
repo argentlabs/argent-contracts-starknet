@@ -60,10 +60,8 @@ trait IArgentMultiOwnerAccount<TContractState> {
 
     /// @notice Triggers the escape of the owner when it is lost or compromised
     /// @dev Must be called by the account and authorized by just a guardian
-    /// @dev This function assumes that there is a guardian
-    /// This is guaranteed before calling this method, usually when validating the transaction
-    /// Does this mean it has to be done off chain? I'd rephrase this.
-    /// And what happens if not done then?
+    /// @dev This function assumes the presence of a guardian
+    /// This is ensured by the account during call validation.
     /// @dev Cannot override an ongoing escape of the guardian
     /// @param new_owner The new account owner for when the escape completes
     /// What does the "account" stands for in the line above?
@@ -73,20 +71,21 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @dev Can override an ongoing escape of the owner
     /// @dev Must be called by the account and authorized by the owner alone
     /// @dev This function assumes that there is at least one guardian
-    /// This is guaranteed before calling this method, usually when validating the transaction
+    /// This is ensured by the account during call validation.
+
     /// @param new_guardian The new account guardian or None if the owner wants to remove the guardian
     fn trigger_escape_guardian(ref self: TContractState, new_guardian: Option<Signer>);
 
     /// @notice Completes the escape and changes the owner. Can only be called after the security period has elapsed
     /// @dev Must be called by the account and authorized by just a guardian
     /// @dev This function assumes that there is a guardian, and that the there is an escape for the owner
-    /// This is guaranteed before calling this method, usually when validating the transaction
+    /// This is ensured by the account during call validation.
     fn escape_owner(ref self: TContractState);
 
     /// @notice Completes the escape and changes the guardian. Can only be called after the security period has elapsed
     /// @dev Must be called by the account and authorized by just the owner
     /// @dev This function assumes that there is a guardian, and that the there is an escape for the guardian
-    /// This is guaranteed before calling this method, usually when validating the transaction
+    /// This is ensured by the account during call validation.
     fn escape_guardian(ref self: TContractState);
 
     /// @notice Cancels an ongoing escape

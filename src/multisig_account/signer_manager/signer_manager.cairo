@@ -32,7 +32,9 @@ impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
 #[starknet::component]
 mod signer_manager_component {
     use argent::multiowner_account::events::SignerLinked;
-    use argent::multisig_account::signer_manager::interface::{ISignerManager, IUpgradeMigration};
+    use argent::multisig_account::signer_manager::interface::{
+        ISignerManager, IUpgradeMigration, ThresholdUpdated, OwnerAddedGuid, OwnerRemovedGuid
+    };
     use argent::signer::{
         signer_signature::{
             Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, starknet_signer_from_pubkey
@@ -60,28 +62,6 @@ mod signer_manager_component {
         OwnerAddedGuid: OwnerAddedGuid,
         OwnerRemovedGuid: OwnerRemovedGuid,
         SignerLinked: SignerLinked,
-    }
-
-    // ? why is this event here while in the external_recovery_component it is in the interface???
-    /// @notice Emitted when the multisig threshold changes
-    /// @param new_threshold New threshold
-    #[derive(Drop, starknet::Event)]
-    struct ThresholdUpdated {
-        new_threshold: usize,
-    }
-
-    /// Emitted when an account owner is added, including when the account is created.
-    #[derive(Drop, starknet::Event)]
-    struct OwnerAddedGuid {
-        #[key]
-        new_owner_guid: felt252,
-    }
-
-    /// Emitted when an an account owner is removed
-    #[derive(Drop, starknet::Event)]
-    struct OwnerRemovedGuid {
-        #[key]
-        removed_owner_guid: felt252,
     }
 
     #[embeddable_as(SignerManagerImpl)]

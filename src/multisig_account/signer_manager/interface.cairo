@@ -45,3 +45,24 @@ trait IUpgradeMigration<TContractState> {
     fn migrate_from_pubkeys_to_guids(ref self: TContractState);
     fn add_end_marker(ref self: TContractState);
 }
+
+/// @notice Emitted when the multisig threshold changes
+/// @param new_threshold New threshold
+#[derive(Drop, starknet::Event)]
+struct ThresholdUpdated {
+    new_threshold: usize,
+}
+
+/// Emitted when an account owner is added, including when the account is created.
+#[derive(Drop, starknet::Event)]
+struct OwnerAddedGuid {
+    #[key]
+    new_owner_guid: felt252,
+}
+
+/// Emitted when an an account owner is removed
+#[derive(Drop, starknet::Event)]
+struct OwnerRemovedGuid {
+    #[key]
+    removed_owner_guid: felt252,
+}

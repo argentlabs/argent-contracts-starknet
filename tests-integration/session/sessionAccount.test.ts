@@ -1,6 +1,10 @@
 import { CallData, Contract, num } from "starknet";
 import {
   AllowedMethod,
+  ArgentAccount,
+  ArgentSigner,
+  EstimateStarknetKeyPair,
+  EstimateStarknetKeyPairWithPk,
   StarknetKeyPair,
   deployAccount,
   deployer,
@@ -52,6 +56,38 @@ describe("ArgentAccount: session basics", function () {
 
       await account.waitForTransaction(transaction_hash);
       await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
+    });
+
+    it(`Should be possible to estimate a basic session (TxV3: ${useTxV3})`, async function () {
+      const { account, owner, guardian } = await deployAccount({
+        useTxV3,
+        classHash: sessionAccountClassHash,
+      });
+
+      const guardianEstimate = new EstimateStarknetKeyPairWithPk((guardian as StarknetKeyPair).pk);
+      const estimateSigner = new ArgentSigner(
+        new EstimateStarknetKeyPair((owner as StarknetKeyPair).publicKey),
+        guardianEstimate,
+      );
+
+      const estimateAccount = new ArgentAccount(
+        manager,
+        account.address,
+        estimateSigner,
+        "1",
+        account.transactionVersion,
+      );
+
+      const { accountWithDappSigner } = await setupSession({
+        guardian: guardianEstimate,
+        account: estimateAccount,
+        expiry: initialTime + 150n,
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+      });
+
+      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+
+      await accountWithDappSigner.estimateFee(calls, { skipValidate: false });
     });
   }
 

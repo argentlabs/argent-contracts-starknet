@@ -40,7 +40,7 @@ mod ArgentAccount {
         serialization::full_deserialize,
         transaction_version::{
             TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
-            assert_correct_deploy_account_version, DA_MODE_L1, is_estimate_transaction
+            assert_correct_deploy_account_version, DA_MODE_L1
         }
     };
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
@@ -337,9 +337,11 @@ mod ArgentAccount {
             );
             parsed_authorization
         }
+
         fn is_owner_guid(self: @ContractState, owner_guid: felt252) -> bool {
             self.owner_manager.is_owner_guid(owner_guid)
         }
+
         fn is_guardian_guid(self: @ContractState, guardian_guid: felt252) -> bool {
             self.guardian_manager.is_guardian_guid(guardian_guid)
         }

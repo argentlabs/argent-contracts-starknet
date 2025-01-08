@@ -246,6 +246,14 @@ export class EstimateStarknetKeyPair extends KeyPair {
   }
 }
 
+export class EstimateStarknetKeyPairWithPk extends StarknetKeyPair {
+  public async signRaw(messageHash: string): Promise<string[]> {
+    const fakeR = "0x6cefb49a1f4eb406e8112db9b8cdf247965852ddc5ca4d74b09e42471689495";
+    const fakeS = "0x25760910405a052b7f08ec533939c54948bc530c662c5d79e8ff416579087f7";
+    return starknetSignatureType(this.publicKey, fakeR, fakeS);
+  }
+}
+
 export function starknetSignatureType(
   signer: bigint | number | string,
   r: bigint | number | string,

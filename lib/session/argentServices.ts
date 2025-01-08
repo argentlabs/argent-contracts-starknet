@@ -9,7 +9,15 @@ import {
   num,
   typedData,
 } from "starknet";
-import { OutsideExecution, Session, StarknetKeyPair, calculateTransactionHash, getTypedData, manager } from "..";
+import {
+  EstimateStarknetKeyPairWithPk,
+  OutsideExecution,
+  Session,
+  StarknetKeyPair,
+  calculateTransactionHash,
+  getTypedData,
+  manager,
+} from "..";
 
 export class ArgentX {
   constructor(
@@ -25,7 +33,7 @@ export class ArgentX {
 export class BackendService {
   // TODO We might want to update this to support KeyPair instead of StarknetKeyPair?
   // Or that backend becomes: "export class BackendService extends KeyPair {", can also extends RawSigner ?
-  constructor(private backendKey: StarknetKeyPair) {}
+  constructor(private backendKey: StarknetKeyPair | EstimateStarknetKeyPairWithPk) {}
 
   public async signTxAndSession(
     calls: Call[],
@@ -53,8 +61,8 @@ export class BackendService {
       transactionDetail.walletAddress,
       cacheOwnerGuid,
     );
-    const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
-    return [signature.r, signature.s];
+    const signature = await this.backendKey.signRaw(sessionWithTxHash);
+    return [BigInt(signature[2]), BigInt(signature[3])];
   }
 
   public async signOutsideTxAndSession(

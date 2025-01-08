@@ -225,7 +225,7 @@ describe("Session Account: execute caching", function () {
 
       await expectRevertWithErrorMessage(
         "session/invalid-backend-sig",
-        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
+        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), {skipValidate: true}),
       );
     });
   }

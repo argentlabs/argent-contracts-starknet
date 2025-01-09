@@ -184,7 +184,7 @@ describe("Session Account: execute caching", function () {
       );
     });
 
-    it.only(`Fail if a different guardian key signed session token (caching: ${useCaching})`, async function () {
+    it(`Fail if a different guardian key signed session token (caching: ${useCaching})`, async function () {
       const { account, guardian, owner } = await deployAccount({ classHash: argentAccountClassHash });
 
       const { accountWithDappSigner, sessionRequest, authorizationSignature, dappService } = await setupSession({
@@ -217,6 +217,7 @@ describe("Session Account: execute caching", function () {
         executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
       );
 
+      console.log(sessionToken.sessionSignature);
       sessionToken.guardianSignature = signerTypeToCustomEnum(SignerType.Starknet, {
         pubkey: originalGuardianSignature.variant.Starknet.pubkey,
         r: 200n,
@@ -225,7 +226,7 @@ describe("Session Account: execute caching", function () {
 
       await expectRevertWithErrorMessage(
         "session/invalid-backend-sig",
-        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), {skipValidate: true}),
+        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
       );
     });
   }

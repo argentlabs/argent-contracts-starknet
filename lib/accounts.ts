@@ -11,6 +11,7 @@ import {
   Contract,
   DeployAccountContractPayload,
   DeployContractResponse,
+  EstimateFee,
   InvocationsSignerDetails,
   InvokeFunctionResponse,
   RPC,
@@ -324,6 +325,28 @@ export async function executeWithCustomSig(
 
   return await newAccount.execute(transactions, undefined, transactionsDetail);
 }
+
+export async function estimateWithCustomSig(
+  account: ArgentAccount,
+  transactions: AllowArray<Call>,
+  signature: ArraySignatureType,
+): Promise<EstimateFee> {
+  const signer = new (class extends RawSigner {
+    public async signRaw(_messageHash: string): Promise<string[]> {
+      return signature;
+    }
+  })();
+  const newAccount = new ArgentAccount(
+    manager,
+    account.address,
+    signer,
+    account.cairoVersion,
+    account.transactionVersion,
+  );
+
+  return await newAccount.estimateFee(transactions, {skipValidate: false});
+}
+
 
 export async function getSignerDetails(account: ArgentAccount, calls: Call[]): Promise<InvocationsSignerDetails> {
   const newAccount = new ArgentAccount(

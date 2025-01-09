@@ -1,18 +1,17 @@
 import { CallData, Contract, num } from "starknet";
 import {
   AllowedMethod,
-  ArgentAccount,
-  ArgentSigner,
-  EstimateStarknetKeyPair,
-  EstimateStarknetKeyPairWithPk,
+  SignerType,
   StarknetKeyPair,
   deployAccount,
   deployer,
+  estimateWithCustomSig,
   executeWithCustomSig,
   expectRevertWithErrorMessage,
   manager,
   randomStarknetKeyPair,
   setupSession,
+  signerTypeToCustomEnum,
 } from "../../lib";
 import { singleMethodAllowList } from "./sessionTestHelpers";
 
@@ -57,39 +56,66 @@ describe("ArgentAccount: session basics", function () {
       await account.waitForTransaction(transaction_hash);
       await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
     });
-
-    it(`Should be possible to estimate a basic session (TxV3: ${useTxV3})`, async function () {
-      const { account, owner, guardian } = await deployAccount({
-        useTxV3,
-        classHash: sessionAccountClassHash,
-      });
-
-      const guardianEstimate = new EstimateStarknetKeyPairWithPk((guardian as StarknetKeyPair).pk);
-      const estimateSigner = new ArgentSigner(
-        new EstimateStarknetKeyPair((owner as StarknetKeyPair).publicKey),
-        guardianEstimate,
-      );
-
-      const estimateAccount = new ArgentAccount(
-        manager,
-        account.address,
-        estimateSigner,
-        "1",
-        account.transactionVersion,
-      );
-
-      const { accountWithDappSigner } = await setupSession({
-        guardian: guardianEstimate,
-        account: estimateAccount,
-        expiry: initialTime + 150n,
-        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
-      });
-
-      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
-
-      await accountWithDappSigner.estimateFee(calls, { skipValidate: false });
-    });
   }
+
+
+  it(`Should be possible to estimate a basic session given an invalid guardian signature`, async function () {
+    const { account, guardian, owner } = await deployAccount();
+
+    const { accountWithDappSigner, sessionRequest, authorizationSignature, dappService } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
+      account,
+      expiry: initialTime + 150n,
+      cacheOwnerGuid: owner.guid,
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+    });
+
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+    const sessionToken = await dappService.getSessionToken({
+      calls,
+      account: accountWithDappSigner,
+      completedSession: sessionRequest,
+      authorizationSignature,
+    });
+    
+    const pubkey = sessionToken.guardianSignature.variant.Starknet.pubkey;
+    sessionToken.guardianSignature = signerTypeToCustomEnum(SignerType.Starknet, {
+      pubkey,
+      r: 42,
+      s: 69,
+    });
+
+    await estimateWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature());
+  });
+
+  it(`Should be possible to estimate a basic session given an invalid session signature`, async function () {
+    const { account, guardian, owner } = await deployAccount();
+
+    const { accountWithDappSigner, sessionRequest, authorizationSignature, dappService } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
+      account,
+      expiry: initialTime + 150n,
+      cacheOwnerGuid: owner.guid,
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+    });
+
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+    const sessionToken = await dappService.getSessionToken({
+      calls,
+      account: accountWithDappSigner,
+      completedSession: sessionRequest,
+      authorizationSignature,
+    });
+
+    const pubkey = sessionToken.sessionSignature.variant.Starknet.pubkey;
+    sessionToken.sessionSignature = signerTypeToCustomEnum(SignerType.Starknet, {
+      pubkey,
+      r: 42,
+      s: 69,
+    });
+
+    await estimateWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature());
+  });
 
   it(`Execute basic session when there a multiple owners`, async function () {
     const { accountContract, account, guardian } = await deployAccount({

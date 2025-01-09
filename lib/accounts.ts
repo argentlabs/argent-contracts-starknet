@@ -344,9 +344,8 @@ export async function estimateWithCustomSig(
     account.transactionVersion,
   );
 
-  return await newAccount.estimateFee(transactions, {skipValidate: false});
+  return await newAccount.estimateFee(transactions, { skipValidate: false });
 }
-
 
 export async function getSignerDetails(account: ArgentAccount, calls: Call[]): Promise<InvocationsSignerDetails> {
   const newAccount = new ArgentAccount(

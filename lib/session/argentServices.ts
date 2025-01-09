@@ -9,15 +9,7 @@ import {
   num,
   typedData,
 } from "starknet";
-import {
-  EstimateStarknetKeyPairWithPk,
-  OutsideExecution,
-  Session,
-  StarknetKeyPair,
-  calculateTransactionHash,
-  getTypedData,
-  manager,
-} from "..";
+import { OutsideExecution, Session, StarknetKeyPair, calculateTransactionHash, getTypedData, manager } from "..";
 
 export class ArgentX {
   constructor(

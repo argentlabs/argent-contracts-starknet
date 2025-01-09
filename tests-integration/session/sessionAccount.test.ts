@@ -58,7 +58,6 @@ describe("ArgentAccount: session basics", function () {
     });
   }
 
-
   it(`Should be possible to estimate a basic session given an invalid guardian signature`, async function () {
     const { account, guardian, owner } = await deployAccount();
 
@@ -77,7 +76,7 @@ describe("ArgentAccount: session basics", function () {
       completedSession: sessionRequest,
       authorizationSignature,
     });
-    
+
     const pubkey = sessionToken.guardianSignature.variant.Starknet.pubkey;
     sessionToken.guardianSignature = signerTypeToCustomEnum(SignerType.Starknet, {
       pubkey,

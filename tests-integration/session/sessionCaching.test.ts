@@ -217,7 +217,6 @@ describe("Session Account: execute caching", function () {
         executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
       );
 
-      console.log(sessionToken.sessionSignature);
       sessionToken.guardianSignature = signerTypeToCustomEnum(SignerType.Starknet, {
         pubkey: originalGuardianSignature.variant.Starknet.pubkey,
         r: 200n,

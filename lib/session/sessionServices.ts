@@ -45,7 +45,7 @@ export class DappService {
     authorizationSignature: ArraySignatureType,
     cacheOwnerGuid = 0n,
     isLegacyAccount = false,
-  ) {
+  ): ArgentAccount {
     const sessionSigner = new SessionSigner(
       async (calls: Call[], transactionDetail: InvocationsSignerDetails): Promise<ArraySignatureType> => {
         const sessionToken = await this.getSessionToken({
@@ -63,7 +63,15 @@ export class DappService {
     return new ArgentAccount(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
   }
 
-  public async getSessionToken(arg: {
+  public async getSessionToken({
+    calls,
+    account,
+    completedSession,
+    authorizationSignature,
+    cacheOwnerGuid,
+    isLegacyAccount = false,
+    transactionDetail: providedTransactionDetail,
+  }: {
     calls: Call[];
     account: ArgentAccount;
     completedSession: Session;
@@ -72,16 +80,6 @@ export class DappService {
     isLegacyAccount?: boolean;
     transactionDetail?: InvocationsSignerDetails;
   }): Promise<SessionToken> {
-    const {
-      calls,
-      account,
-      completedSession,
-      authorizationSignature,
-      cacheOwnerGuid,
-      isLegacyAccount: isLegacyAccountArg,
-      transactionDetail: providedTransactionDetail,
-    } = arg;
-    const isLegacyAccount = isLegacyAccountArg ?? false;
     const transactionDetail = providedTransactionDetail ?? (await getSignerDetails(account, calls));
 
     const transactionHash = calculateTransactionHash(transactionDetail, calls);
@@ -166,7 +164,16 @@ export class DappService {
     };
   }
 
-  private async generateSessionSignatures(args: {
+  private async generateSessionSignatures({
+    completedSession,
+    transactionHash,
+    calls,
+    accountAddress,
+    cacheOwnerGuid,
+    transactionDetail,
+    outsideExecution,
+    revision,
+  }: {
     completedSession: Session;
     transactionHash: string;
     calls: Call[];
@@ -179,17 +186,6 @@ export class DappService {
     sessionSignature: bigint[];
     guardianSignature: bigint[];
   }> {
-    const {
-      completedSession,
-      transactionHash,
-      calls,
-      accountAddress,
-      cacheOwnerGuid,
-      transactionDetail,
-      outsideExecution,
-      revision,
-    } = args;
-
     let guardianSignature: bigint[];
 
     if (outsideExecution && revision) {

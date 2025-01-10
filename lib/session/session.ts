@@ -65,7 +65,15 @@ export class SessionToken {
   public guardianSignature: CairoCustomEnum;
   private legacyMode: boolean;
 
-  constructor(args: {
+  constructor({
+    session,
+    cacheOwnerGuid,
+    sessionAuthorization,
+    sessionSignature,
+    guardianSignature,
+    calls,
+    isLegacyAccount,
+  } : {
     session: Session;
     cacheOwnerGuid?: bigint;
     sessionAuthorization?: string[];
@@ -74,15 +82,6 @@ export class SessionToken {
     calls: Call[];
     isLegacyAccount: boolean;
   }) {
-    const {
-      session,
-      cacheOwnerGuid,
-      sessionAuthorization,
-      sessionSignature,
-      guardianSignature,
-      calls,
-      isLegacyAccount,
-    } = args;
 
     this.session = session;
     this.proofs = session.getProofs(calls);

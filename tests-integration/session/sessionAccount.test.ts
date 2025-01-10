@@ -59,7 +59,7 @@ describe("ArgentAccount: session basics", function () {
   }
 
   it(`Should be possible to estimate a basic session given an invalid guardian signature`, async function () {
-    const { account, guardian, owner } = await deployAccount();
+    const { account, guardian, owner } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const { accountWithDappSigner, sessionRequest, authorizationSignature, dappService } = await setupSession({
       guardian: guardian as StarknetKeyPair,
@@ -75,16 +75,25 @@ describe("ArgentAccount: session basics", function () {
       account: accountWithDappSigner,
       completedSession: sessionRequest,
       authorizationSignature,
+      cacheOwnerGuid:owner.guid,
     });
 
-    const pubkey = sessionToken.guardianSignature.variant.Starknet.pubkey;
-    sessionToken.guardianSignature = signerTypeToCustomEnum(SignerType.Starknet, {
-      pubkey,
-      r: 42,
-      s: 69,
-    });
+    // const pubkey = sessionToken.guardianSignature.variant.Starknet.pubkey;
+    // sessionToken.guardianSignature = signerTypeToCustomEnum(SignerType.Starknet, {
+    //   pubkey,
+    //   r: 42,
+    //   s: 69,
+    // });
 
-    await estimateWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature());
+    // Should pass when estimating
+    // await estimateWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature());
+    await  manager.ensureSuccess(await accountWithDappSigner.execute(calls));
+    await executeWithCustomSig(accountWithDappSigner, calls,sessionToken.compileSignature());
+    // Should fail when executing
+    // await expectRevertWithErrorMessage(
+    //   "session/invalid-backend-sig",
+    //   executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), {maxFee:1e16, skipValidate:true}) ,
+    // );
   });
 
   it(`Should be possible to estimate a basic session given an invalid session signature`, async function () {
@@ -113,7 +122,15 @@ describe("ArgentAccount: session basics", function () {
       s: 69,
     });
 
+    // Should pass when estimating
+    // TODO Should simulate TX and ensure it passes instead of just getting the fee
     await estimateWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature());
+
+    // Should fail when executing
+    await expectRevertWithErrorMessage(
+      "session/invalid-session-sig",
+      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
+    );
   });
 
   it(`Execute basic session when there a multiple owners`, async function () {

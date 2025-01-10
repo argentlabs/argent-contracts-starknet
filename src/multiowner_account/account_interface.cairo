@@ -63,8 +63,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @dev This function assumes the presence of a guardian
     /// This is ensured by the account during call validation.
     /// @dev Cannot override an ongoing escape of the guardian
-    /// @param new_owner The new account owner for when the escape completes
-    /// What does the "account" stands for in the line above?
+    /// @param new_owner The new account owner for when escape completes
     fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);
 
     /// @notice Triggers the escape of the guardian when it is lost or compromised

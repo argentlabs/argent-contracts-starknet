@@ -71,7 +71,6 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @dev Must be called by the account and authorized by the owner alone
     /// @dev This function assumes that there is at least one guardian
     /// This is ensured by the account during call validation.
-
     /// @param new_guardian The new account guardian or None if the owner wants to remove the guardian
     fn trigger_escape_guardian(ref self: TContractState, new_guardian: Option<Signer>);
 

@@ -1,40 +1,5 @@
 use integer::{u128_safe_divmod, u32_safe_divmod};
 
-/// @dev Leading zeros are ignored and the input must be at most 32 bytes long (both [1] and [0, 1] will be casted to 1)
-impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
-    fn try_into(mut self: Span<u8>) -> Option<u256> {
-        if self.len() < 32 {
-            let result: felt252 = self.try_into().unwrap();
-            Option::Some(result.into())
-        } else if self.len() == 32 {
-            let higher_bytes: felt252 = self.slice(0, 31).try_into().unwrap();
-            let last_byte = *self.at(31);
-            Option::Some((0x100 * higher_bytes.into()) + last_byte.into())
-        } else {
-            Option::None
-        }
-    }
-}
-
-/// @dev Leading zeros are ignored and the input must be at most 32 bytes long (both [1] and [0, 1] will be casted to 1)
-impl SpanU8TryIntoFelt252 of TryInto<Span<u8>, felt252> {
-    fn try_into(mut self: Span<u8>) -> Option<felt252> {
-        if self.len() < 32 {
-            let mut result = 0;
-            while let Option::Some(byte) = self.pop_front() {
-                let byte = (*byte).into();
-                result = (0x100 * result) + byte;
-            };
-            Option::Some(result)
-        } else if self.len() == 32 {
-            let result: u256 = self.try_into()?;
-            Option::Some(result.try_into()?)
-        } else {
-            Option::None
-        }
-    }
-}
-
 fn u256_to_u8s(word: u256) -> Array<u8> {
     let (rest, byte_32) = u128_safe_divmod(word.low, 0x100);
     let (rest, byte_31) = u128_safe_divmod(rest, 0x100);
@@ -102,20 +67,6 @@ fn u256_to_u8s(word: u256) -> Array<u8> {
     ]
 }
 
-#[generate_trait]
-impl ByteArrayExt of ByteArrayExtTrait {
-    fn into_bytes(self: ByteArray) -> Array<u8> {
-        let len = self.len();
-        let mut output = array![];
-        let mut i = 0;
-        while i != len {
-            output.append(self[i]);
-            i += 1;
-        };
-        output
-    }
-}
-
 /// @notice Converts of 8 u32s into a u256
 /// @param words 8 words sorted from most significant to least significant
 /// @return u256 A 256-bit unsigned integer
@@ -134,6 +85,7 @@ fn eight_words_to_u256(words: [u32; 8]) -> u256 {
 
     u256 { high, low }
 }
+
 /// @notice Converts a u32 into 4 u8s
 /// @param word The u32 to convert.
 /// @return The individual `u8` bytes ordered from most significant to least.

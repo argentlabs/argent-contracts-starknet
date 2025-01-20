@@ -1,12 +1,9 @@
-use argent::signer::signer_signature::{Signer, SignerSignature};
-use poseidon::poseidon_hash_span;
-use starknet::account::Call;
-use starknet::{get_tx_info, get_contract_address, ContractAddress};
+use argent::signer::signer_signature::SignerSignature;
 
 /// @notice Session struct that the owner and guardian has to sign to initiate a session
 /// @dev The hash of the session is also signed by the guardian (backend) and
 /// the dapp (session key) for every session tx (which may include multiple calls)
-/// @param expires_at Expiry timestamp of the session (seconds)
+/// @param expires_at Expiry timestamp of the session (in seconds since the Unix epoch)
 /// @param allowed_methods_root The root of the merkle tree of the allowed methods
 /// @param metadata_hash The hash of the metadata JSON string of the session
 /// @param session_key_guid The GUID of the session key
@@ -57,13 +54,14 @@ trait ISessionable<TContractState> {
     /// @param session_hash Hash of the session token
     fn revoke_session(ref self: TContractState, session_hash: felt252);
 
-    /// @notice View function to see if a session is revoked, returns a boolean
+    /// @notice View function to see if a session is revoked
+    /// @return A boolean indicating whether the session is revoked
     fn is_session_revoked(self: @TContractState, session_hash: felt252) -> bool;
 
     /// @notice View function to see if a session authorization is cached
     /// @param session_hash Hash of the session token
     /// @param owner_guid Guid of the owner used in the authorization
-    /// @return Whether the session is cached
+    /// @return A boolean indicating whether the session is cached
     fn is_session_authorization_cached(
         self: @TContractState, session_hash: felt252, owner_guid: felt252, guardian_guid: felt252
     ) -> bool;

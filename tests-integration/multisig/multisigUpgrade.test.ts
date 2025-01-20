@@ -7,13 +7,14 @@ import {
   SignerType,
   StarknetKeyPair,
   deployLegacyMultisig,
+  deployMultisig,
+  deployMultisig1_1,
   expectEvent,
   manager,
   signerTypeToCustomEnum,
   sortByGuid,
   upgradeAccount,
-} from "../lib";
-import { deployMultisig, deployMultisig1_1 } from "../lib/multisig";
+} from "../../lib";
 
 interface DeployMultisigReturn {
   account: Account;

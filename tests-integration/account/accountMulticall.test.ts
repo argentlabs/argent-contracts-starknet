@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { CallData, Contract, num, uint256 } from "starknet";
-import { deployAccount, expectEvent, expectRevertWithErrorMessage, manager, randomStarknetKeyPair } from "../lib";
+import { deployAccount, expectEvent, expectRevertWithErrorMessage, manager, randomStarknetKeyPair } from "../../lib";
 
 describe("ArgentAccount: multicall", function () {
   let mockDappContract: Contract;

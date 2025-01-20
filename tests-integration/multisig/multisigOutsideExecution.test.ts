@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { Contract, TypedDataRevision, num, shortString } from "starknet";
 import {
   OutsideExecution,
+  deployMultisig,
   deployer,
   expectExecutionRevert,
   expectRevertWithErrorMessage,
@@ -10,8 +11,7 @@ import {
   getTypedDataHash,
   manager,
   randomStarknetKeyPair,
-} from "../lib";
-import { deployMultisig } from "../lib/multisig";
+} from "../../lib";
 
 const legacyRevision = TypedDataRevision.LEGACY;
 const activeRevision = TypedDataRevision.ACTIVE;

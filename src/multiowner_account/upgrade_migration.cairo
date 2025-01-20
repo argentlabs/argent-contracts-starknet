@@ -47,6 +47,7 @@ mod upgrade_migration_component {
         storage_access::{storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,}
     };
     use super::{IRecoveryFromLegacyUpgrade, IUpgradeMigrationInternal, IUpgradeMigrationCallback, LegacyEscape};
+
     const LEGACY_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
     #[storage]

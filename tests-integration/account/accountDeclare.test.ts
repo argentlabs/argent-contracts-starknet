@@ -7,7 +7,7 @@ import {
   getDeclareContractPayload,
   manager,
   readContract,
-} from "../lib";
+} from "../../lib";
 
 describe("ArgentAccount: declare", function () {
   beforeEach(async () => {

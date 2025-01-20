@@ -1,7 +1,20 @@
 use argent::signer::signer_signature::{WebauthnSigner, Signer, SignerTrait, is_valid_webauthn_signature};
 use argent::signer::webauthn::{WebauthnSignature, Sha256Implementation};
-use argent::utils::bytes::ByteArrayExt;
 use starknet::secp256_trait::Signature;
+
+#[generate_trait]
+impl ByteArrayExt of ByteArrayExtTrait {
+    fn into_bytes(self: ByteArray) -> Array<u8> {
+        let len = self.len();
+        let mut output = array![];
+        let mut i = 0;
+        while i != len {
+            output.append(self[i]);
+            i += 1;
+        };
+        output
+    }
+}
 
 fn new_webauthn_signer(origin: ByteArray, rp_id_hash: u256, pubkey: u256) -> WebauthnSigner {
     let origin = origin.into_bytes().span();

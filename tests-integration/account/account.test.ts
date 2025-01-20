@@ -12,7 +12,7 @@ import {
   signChangeOwnerMessage,
   starknetSignatureType,
   zeroStarknetSignatureType,
-} from "../lib";
+} from "../../lib";
 
 describe("ArgentAccount", function () {
   let argentAccountClassHash: string;

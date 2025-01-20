@@ -1,5 +1,5 @@
 use argent::utils::linked_set::LinkedSetConfig;
-use starknet::storage::{StoragePathEntry, StoragePath, StorageBase};
+use starknet::storage::StoragePath;
 
 impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
     const END_MARKER: felt252 = 'end';
@@ -33,7 +33,7 @@ impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
 mod signer_manager_component {
     use argent::multiowner_account::events::SignerLinked;
     use argent::multisig_account::signer_manager::interface::{
-        ISignerManager, ISignerManagerInternal, IUpgradeMigration
+        ISignerManager, IUpgradeMigration, ThresholdUpdated, OwnerAddedGuid, OwnerRemovedGuid
     };
     use argent::signer::{
         signer_signature::{
@@ -62,27 +62,6 @@ mod signer_manager_component {
         OwnerAddedGuid: OwnerAddedGuid,
         OwnerRemovedGuid: OwnerRemovedGuid,
         SignerLinked: SignerLinked,
-    }
-
-    /// @notice Emitted when the multisig threshold changes
-    /// @param new_threshold New threshold
-    #[derive(Drop, starknet::Event)]
-    struct ThresholdUpdated {
-        new_threshold: usize,
-    }
-
-    /// Emitted when an account owner is added, including when the account is created.
-    #[derive(Drop, starknet::Event)]
-    struct OwnerAddedGuid {
-        #[key]
-        new_owner_guid: felt252,
-    }
-
-    /// Emitted when an an account owner is removed
-    #[derive(Drop, starknet::Event)]
-    struct OwnerRemovedGuid {
-        #[key]
-        removed_owner_guid: felt252,
     }
 
     #[embeddable_as(SignerManagerImpl)]
@@ -213,9 +192,10 @@ mod signer_manager_component {
         }
     }
 
+    #[generate_trait]
     impl SignerManagerInternalImpl<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
-    > of ISignerManagerInternal<ComponentState<TContractState>> {
+    > of ISignerManagerInternal<TContractState> {
         fn initialize(ref self: ComponentState<TContractState>, threshold: usize, mut signers: Array<Signer>) {
             assert(self.threshold.read() == 0, 'argent/already-initialized');
 

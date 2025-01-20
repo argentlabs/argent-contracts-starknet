@@ -12,7 +12,7 @@ import {
   getTypedDataHash,
   manager,
   randomStarknetKeyPair,
-} from "../lib";
+} from "../../lib";
 
 const activeRevision = TypedDataRevision.ACTIVE;
 const legacyRevision = TypedDataRevision.LEGACY;

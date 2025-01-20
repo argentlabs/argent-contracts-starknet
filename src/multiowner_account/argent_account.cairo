@@ -514,6 +514,7 @@ mod ArgentAccount {
         fn escape_owner(ref self: ContractState) {
             assert_only_self();
 
+            // assert_valid_calls_and_signature(...) guarantees that the escape is of the correct type
             let current_escape = self._escape.read();
 
             let current_escape_status = self.get_escape_status(current_escape.ready_at);
@@ -533,6 +534,7 @@ mod ArgentAccount {
         fn escape_guardian(ref self: ContractState) {
             assert_only_self();
 
+            // assert_valid_calls_and_signature(...) guarantees that the escape is of the correct type
             let current_escape = self._escape.read();
             assert(self.get_escape_status(current_escape.ready_at) == EscapeStatus::Ready, 'argent/invalid-escape');
 

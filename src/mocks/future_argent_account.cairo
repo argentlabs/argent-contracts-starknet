@@ -1,25 +1,30 @@
 /// @dev 🚨 This smart contract is a mock implementation and is not meant for actual deployment or use in any live
 /// environment. It is solely for testing, educational, or demonstration purposes. Please refrain from relying on the
 /// functionality of this contract for any production. 🚨
-use argent::account::interface::{IAccount, IArgentAccount, Version};
-use argent::signer::{
-    signer_signature::{
-        Signer, SignerStorageValue, SignerType, StarknetSigner, StarknetSignature, SignerTrait, SignerStorageTrait,
-        SignerSignature, SignerSignatureTrait, starknet_signer_from_pubkey
-    }
-};
+use argent::account::interface::Version;
+use argent::signer::signer_signature::Signer;
+
+#[starknet::interface]
+trait IFutureArgentUserAccount<TContractState> {
+    fn __validate_deploy__(
+        self: @TContractState,
+        class_hash: felt252,
+        contract_address_salt: felt252,
+        owner: Signer,
+        guardian: Option<Signer>
+    ) -> felt252;
+    fn get_owner(self: @TContractState) -> felt252;
+    fn get_guardian(self: @TContractState) -> felt252;
+
+    fn get_name(self: @TContractState) -> felt252;
+    fn get_version(self: @TContractState) -> Version;
+}
 
 #[starknet::contract(account)]
 mod MockFutureArgentAccount {
-    use argent::account::interface::{IAccount, IArgentAccount, Version};
+    use argent::account::interface::{IAccount, Version};
     use argent::introspection::src5::src5_component;
-
-    use argent::signer::{
-        signer_signature::{
-            Signer, SignerStorageValue, SignerType, StarknetSigner, StarknetSignature, SignerTrait, SignerStorageTrait,
-            SignerSignature, SignerSignatureTrait, starknet_signer_from_pubkey
-        }
-    };
+    use argent::signer::signer_signature::{Signer, SignerType, SignerTrait, SignerSignature, SignerSignatureTrait};
     use argent::upgrade::{
         upgrade::{upgrade_component, upgrade_component::UpgradableInternalImpl},
         interface::{IUpgradableCallback, IUpgradableCallbackOld}
@@ -27,15 +32,7 @@ mod MockFutureArgentAccount {
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self}, calls::execute_multicall, serialization::full_deserialize,
     };
-    use core::option::OptionTrait;
-    use core::traits::TryInto;
-    use hash::HashStateTrait;
-    use pedersen::PedersenTrait;
-    use starknet::{
-        ClassHash, get_block_timestamp, get_contract_address, VALIDATED, replace_class_syscall, account::Call,
-        SyscallResultTrait, get_tx_info, get_execution_info, syscalls::storage_read_syscall,
-        storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall}
-    };
+    use starknet::{ClassHash, get_contract_address, VALIDATED, account::Call, SyscallResultTrait, get_tx_info,};
     use super::{IFutureArgentUserAccount, IFutureArgentUserAccountDispatcher, IFutureArgentUserAccountDispatcherTrait};
 
     const NAME: felt252 = 'ArgentAccount';
@@ -213,20 +210,3 @@ mod MockFutureArgentAccount {
         }
     }
 }
-
-#[starknet::interface]
-trait IFutureArgentUserAccount<TContractState> {
-    fn __validate_deploy__(
-        self: @TContractState,
-        class_hash: felt252,
-        contract_address_salt: felt252,
-        owner: Signer,
-        guardian: Option<Signer>
-    ) -> felt252;
-    fn get_owner(self: @TContractState) -> felt252;
-    fn get_guardian(self: @TContractState) -> felt252;
-
-    fn get_name(self: @TContractState) -> felt252;
-    fn get_version(self: @TContractState) -> Version;
-}
-

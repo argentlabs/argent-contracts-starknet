@@ -10,7 +10,7 @@ import {
   randomWebauthnCairo0Owner,
   randomWebauthnOwner,
   sortByGuid,
-} from "../lib";
+} from "../../lib";
 
 interface Account {
   name: string;

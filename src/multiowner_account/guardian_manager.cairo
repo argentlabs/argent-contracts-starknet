@@ -1,21 +1,13 @@
-use argent::signer::{
-    signer_signature::{
-        Signer, SignerTrait, SignerSignature, SignerStorageValue, SignerStorageTrait, SignerSignatureTrait,
-        SignerSpanTrait, SignerTypeIntoFelt252, SignerType
-    },
-};
-use argent::utils::linked_set::LinkedSetConfig;
-use starknet::storage::{StoragePathEntry, StoragePath,};
-use super::events::SignerLinked;
-
+use argent::signer::signer_signature::{Signer, SignerSignature, SignerStorageValue, SignerType};
 
 #[starknet::interface]
 pub trait IGuardianManager<TContractState> {
-    /// @notice Returns the starknet pub key or `0` if there's no guardian. Panics if there are multiple guardians.
+    /// @notice Returns the starknet pub key or 0 if there's no guardian.
+    /// @dev Panics if there are multiple guardians.
     fn get_guardian(self: @TContractState) -> felt252;
     fn get_guardian_guid(self: @TContractState) -> Option<felt252>;
-    /// @notice Returns the guardian type if there's any guardian. None if there is no guardian. Panics if there are
-    /// multiple guardians.
+    /// @notice Returns the guardian type if there's any guardian. None if there is no guardian.
+    /// @dev Panics if there are multiple guardians.
     fn get_guardian_type(self: @TContractState) -> Option<SignerType>;
 
     /// @notice Returns the guid of all the guardians
@@ -43,11 +35,15 @@ trait IGuardianManagerInternal<TContractState> {
     /// @param new_guardian The address of the new guardian, or None to disable the guardian
     fn reset_guardians(ref self: TContractState, replacement_guardian: Option<SignerStorageValue>);
 
-    // /// @notice Adds new guardians to the account
-    // /// @dev will revert when trying to add a signer is already an guardian
-    // /// @guardians_to_add An array with all the signers to add
+    /// @notice Add new guardians to the account
+    /// @dev will revert when trying to add a signer is already a guardian
+    /// @param guardians_to_add An array with all the signers to add
     fn add_guardians(ref self: TContractState, guardians_to_add: Array<Signer>);
 
+
+    /// @notice Remove guardians to the account
+    /// @dev will revert when trying to remove a signer that isn't a guardian
+    /// @param guardian_guids_to_remove An array with all the guids to remove
     fn remove_guardians(ref self: TContractState, guardian_guids_to_remove: Array<felt252>);
 
     fn get_single_stark_guardian_pubkey(self: @TContractState) -> Option<felt252>;
@@ -60,21 +56,17 @@ trait IGuardianManagerInternal<TContractState> {
 mod guardian_manager_component {
     use argent::account::interface::IEmitArgentAccountEvent;
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
-    use argent::signer::{
-        signer_signature::{
-            Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
-            SignerStorageTrait, SignerType
-        },
+    use argent::multiowner_account::events::{SignerLinked, GuardianAddedGuid, GuardianRemovedGuid};
+    use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
+    use argent::signer::signer_signature::{
+        Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerStorageValue, SignerStorageTrait, SignerType
     };
     use argent::utils::linked_set_with_head::{
         LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl
     };
-
-    use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
-
-    use super::super::events::{SignerLinked, GuardianAddedGuid, GuardianRemovedGuid};
-    use super::super::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
+    use argent::utils::transaction_version::is_estimate_transaction;
     use super::{IGuardianManager, IGuardianManagerInternal};
+
     /// Too many signers could make the account unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 

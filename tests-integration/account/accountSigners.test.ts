@@ -10,7 +10,7 @@ import {
   randomStarknetKeyPair,
   randomWebauthnCairo0Owner,
   randomWebauthnOwner,
-} from "../lib";
+} from "../../lib";
 
 interface Account {
   name: string;

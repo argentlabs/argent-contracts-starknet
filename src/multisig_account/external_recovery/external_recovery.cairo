@@ -17,9 +17,7 @@ mod external_recovery_component {
         IExternalRecovery, EscapeCall, Escape, EscapeTriggered, EscapeExecuted, EscapeCanceled, EscapeEnabled
     };
     use argent::recovery::EscapeStatus;
-    use argent::signer::signer_signature::{Signer, SignerTrait};
     use argent::utils::asserts::assert_only_self;
-    use argent::utils::serialization::serialize;
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use starknet::{
         get_block_timestamp, get_contract_address, get_caller_address, ContractAddress, account::Call,

@@ -11,7 +11,7 @@ import {
   deployMultisig1_3,
   expectRevertWithErrorMessage,
   manager,
-} from "../lib";
+} from "../../lib";
 
 const recipient = "0xadbe1";
 const amount = uint256.bnToUint256(1);

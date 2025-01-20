@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { CallData, hash } from "starknet";
-import { deployMultisig1_1, expectRevertWithErrorMessage, manager, randomStarknetKeyPair } from "../lib";
+import { deployMultisig1_1, expectRevertWithErrorMessage, manager, randomStarknetKeyPair } from "../../lib";
 
 const initialTime = 100;
 

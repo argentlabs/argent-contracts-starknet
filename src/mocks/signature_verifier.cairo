@@ -1,9 +1,7 @@
 #[starknet::contract]
 mod SignatureVerifier {
-    use argent::signer::{signer_signature::{Signer, SignerSignature, SignerSignatureTrait,}};
-
+    use argent::signer::signer_signature::{SignerSignature, SignerSignatureTrait};
     use argent::utils::serialization::full_deserialize;
-    use starknet::VALIDATED;
 
     #[storage]
     struct Storage {}

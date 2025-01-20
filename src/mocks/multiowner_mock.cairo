@@ -7,7 +7,7 @@ mod MultiownerMock {
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::events::SignerLinked;
     use argent::multiowner_account::owner_manager::{
-        IOwnerManager, owner_manager_component, owner_manager_component::OwnerManagerInternalImpl
+        owner_manager_component, owner_manager_component::OwnerManagerInternalImpl
     };
 
     // Owner management

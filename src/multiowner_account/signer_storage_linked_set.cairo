@@ -1,8 +1,6 @@
-use argent::signer::signer_signature::{
-    SignerSignature, SignerStorageValue, SignerStorageTrait, SignerTypeIntoFelt252, SignerType
-};
+use argent::signer::signer_signature::{SignerStorageValue, SignerStorageTrait, SignerType};
 use argent::utils::linked_set::LinkedSetConfig;
-use starknet::storage::{StoragePathEntry, StoragePath,};
+use starknet::storage::StoragePath;
 
 impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue> {
     const END_MARKER: SignerStorageValue =
@@ -30,8 +28,8 @@ impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue> {
 
     #[inline(always)]
     fn path_is_in_set(path: StoragePath<SignerStorageValue>) -> bool {
-        // Items in the set point to the next item or the end marker. Items outside the set point to uninitialized
-        // storage
+        // Items in the set point to the next item or the end marker.
+        // Items outside the set point to uninitialized storage
         path.stored_value.read() != 0
     }
 }

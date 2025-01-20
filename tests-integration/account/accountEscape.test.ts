@@ -26,7 +26,7 @@ import {
   randomStarknetKeyPair,
   upgradeAccount,
   zeroStarknetSignatureType,
-} from "../lib";
+} from "../../lib";
 
 describe("ArgentAccount: escape mechanism", function () {
   let argentAccountClassHash: string;

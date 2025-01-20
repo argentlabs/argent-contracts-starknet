@@ -70,7 +70,7 @@ mod MockFutureArgentMultisig {
             VALIDATED
         }
 
-        fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
+        fn __execute__(ref self: ContractState, calls: Array<Call>) {
             execute_multicall(calls.span())
         }
 

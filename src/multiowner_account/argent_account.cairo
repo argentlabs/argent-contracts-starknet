@@ -36,8 +36,8 @@ mod ArgentAccount {
         interface::{IUpgradableCallback, IUpgradableCallbackOld}
     };
     use argent::utils::{
-        asserts::{assert_no_self_call, assert_only_self, assert_only_protocol}, calls::execute_multicall,
-        serialization::full_deserialize,
+        asserts::{assert_no_self_call, assert_only_self, assert_only_protocol},
+        calls::{execute_multicall, execute_multicall_for_result}, serialization::{serialize, full_deserialize},
         transaction_version::{
             TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
             assert_correct_deploy_account_version, DA_MODE_L1
@@ -198,7 +198,7 @@ mod ArgentAccount {
             VALIDATED
         }
 
-        fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
+        fn __execute__(ref self: ContractState, calls: Array<Call>) {
             self.reentrancy_guard.start();
             let exec_info = get_execution_info();
             let tx_info = exec_info.tx_info;
@@ -212,11 +212,10 @@ mod ArgentAccount {
                 assert(session_timestamp_u64 >= exec_info.block_info.block_timestamp, 'session/expired');
             }
 
-            let retdata = execute_multicall(calls.span());
+            execute_multicall(calls.span());
 
-            self.emit(TransactionExecuted { hash: tx_info.transaction_hash, response: retdata.span() });
+            self.emit(TransactionExecuted { hash: tx_info.transaction_hash });
             self.reentrancy_guard.end();
-            retdata
         }
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
@@ -251,10 +250,7 @@ mod ArgentAccount {
             let calls: Array<Call> = full_deserialize(data.span()).expect('argent/invalid-calls');
             assert_no_self_call(calls.span(), get_contract_address());
 
-            let multicall_return = execute_multicall(calls.span());
-            let mut output = array![];
-            multicall_return.serialize(ref output);
-            output
+            serialize(@execute_multicall_for_result(calls.span()))
         }
     }
 
@@ -320,8 +316,8 @@ mod ArgentAccount {
                         account_address: get_contract_address()
                     );
             }
-            let retdata = execute_multicall(calls);
-            self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
+            let retdata = execute_multicall_for_result(calls);
+            self.emit(TransactionExecuted { hash: outside_execution_hash });
             retdata
         }
     }

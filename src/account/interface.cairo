@@ -16,7 +16,7 @@ struct Version {
 #[starknet::interface]
 trait IAccount<TContractState> {
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
-    fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
+    fn __execute__(ref self: TContractState, calls: Array<Call>);
 
     /// @notice Checks whether a given signature for a given hash is valid
     /// @dev Warning: To guarantee the signature cannot be replayed in other accounts or other chains, the data hashed

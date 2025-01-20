@@ -23,7 +23,7 @@ mod ArgentMultisigAccount {
     };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self},
-        calls::{execute_multicall, execute_multicall_for_result}, serialization::full_deserialize,
+        calls::{execute_multicall, execute_multicall_with_result}, serialization::full_deserialize,
         transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
     };
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
@@ -200,7 +200,7 @@ mod ArgentMultisigAccount {
             // validate signatures
             self.assert_valid_signatures(outside_execution_hash, signature);
 
-            let retdata = execute_multicall_for_result(calls);
+            let retdata = execute_multicall_with_result(calls);
             self.emit(TransactionExecuted { hash: outside_execution_hash });
             retdata
         }

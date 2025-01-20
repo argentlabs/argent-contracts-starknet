@@ -37,7 +37,7 @@ mod ArgentAccount {
     };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self, assert_only_protocol},
-        calls::{execute_multicall, execute_multicall_for_result}, serialization::{serialize, full_deserialize},
+        calls::{execute_multicall, execute_multicall_with_result}, serialization::{serialize, full_deserialize},
         transaction_version::{
             TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
             assert_correct_deploy_account_version, DA_MODE_L1
@@ -250,7 +250,7 @@ mod ArgentAccount {
             let calls: Array<Call> = full_deserialize(data.span()).expect('argent/invalid-calls');
             assert_no_self_call(calls.span(), get_contract_address());
 
-            serialize(@execute_multicall_for_result(calls.span()))
+            serialize(@execute_multicall_with_result(calls.span()))
         }
     }
 
@@ -316,7 +316,7 @@ mod ArgentAccount {
                         account_address: get_contract_address()
                     );
             }
-            let retdata = execute_multicall_for_result(calls);
+            let retdata = execute_multicall_with_result(calls);
             self.emit(TransactionExecuted { hash: outside_execution_hash });
             retdata
         }

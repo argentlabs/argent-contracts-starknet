@@ -1,10 +1,24 @@
 use argent::utils::array_ext::ArrayExtTrait;
 use starknet::{call_contract_syscall, account::Call};
 
-fn execute_multicall(mut calls: Span<Call>) -> Array<Span<felt252>> {
+fn execute_multicall(mut calls: Span<Call>) {
+    let mut index = 0;
+    for call in calls {
+        match call_contract_syscall(*call.to, *call.selector, *call.calldata) {
+            Result::Ok(_) => { index += 1; },
+            Result::Err(revert_reason) => {
+                let mut data = array!['argent/multicall-failed', index];
+                data.append_all(revert_reason.span());
+                panic(data);
+            },
+        }
+    };
+}
+
+fn execute_multicall_with_result(mut calls: Span<Call>) -> Array<Span<felt252>> {
     let mut result = array![];
     let mut index = 0;
-    while let Option::Some(call) = calls.pop_front() {
+    for call in calls {
         match call_contract_syscall(*call.to, *call.selector, *call.calldata) {
             Result::Ok(retdata) => {
                 result.append(retdata);

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, Contract, num, uint256 } from "starknet";
+import { Contract, uint256 } from "starknet";
 import { deployAccount, expectEvent, expectRevertWithErrorMessage, manager, randomStarknetKeyPair } from "../../lib";
 
 describe("ArgentAccount: multicall", function () {
@@ -27,12 +27,11 @@ describe("ArgentAccount: multicall", function () {
     expect(senderInitialBalance + 1000n > senderFinalBalance).to.be.true;
     expect(recipientInitialBalance + 1000n).to.equal(recipientFinalBalance);
 
-    const first_retdata = [1];
     await expectEvent(transaction_hash, {
       from_address: account.address,
       eventName: "TransactionExecuted",
       keys: [transaction_hash],
-      data: CallData.compile([[first_retdata]]),
+      data: [],
     });
   });
 
@@ -119,30 +118,5 @@ describe("ArgentAccount: multicall", function () {
         accountContract.populateTransaction.trigger_escape_owner(newOwner.compiledSigner),
       ]),
     );
-  });
-
-  it("Valid return data", async function () {
-    const { account } = await deployAccount();
-    const calls = [
-      mockDappContract.populateTransaction.increase_number(1),
-      mockDappContract.populateTransaction.increase_number(10),
-    ];
-    const receipt = await manager.ensureSuccess(account.execute(calls));
-
-    const expectedReturnCall1 = [num.toHex(1)];
-    const expectedReturnCall2 = [num.toHex(11)];
-    const expectedReturnData = [
-      num.toHex(calls.length),
-      num.toHex(expectedReturnCall1.length),
-      ...expectedReturnCall1,
-      num.toHex(expectedReturnCall2.length),
-      ...expectedReturnCall2,
-    ];
-    await expectEvent(receipt, {
-      from_address: account.address,
-      eventName: "TransactionExecuted",
-      keys: [receipt.transaction_hash],
-      data: expectedReturnData,
-    });
   });
 });

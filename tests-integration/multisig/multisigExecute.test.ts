@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, Contract } from "starknet";
+import { Contract } from "starknet";
 import {
   MultisigSigner,
   deployMultisig,
@@ -33,7 +33,7 @@ describe("ArgentMultisig: Execute", function () {
         from_address: account.address,
         eventName: "TransactionExecuted",
         keys: [transaction_hash],
-        data: CallData.compile([[[finalNumber]]]),
+        data: [],
       });
     });
   }

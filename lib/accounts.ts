@@ -343,7 +343,7 @@ export async function estimateWithCustomSig(
     account.cairoVersion,
     account.transactionVersion,
   );
-
+  // If the transaction should fail, the estimate will fail an an error will be thrown
   return await newAccount.estimateFee(transactions);
 }
 

@@ -85,7 +85,6 @@ describe("ArgentAccount: session basics", function () {
     });
 
     // Should pass when estimating
-    // TODO Simulate and assert it passes, although estimation should fail if wrong
     await estimateWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature());
     // Should fail when executing
     await expectRevertWithErrorMessage(

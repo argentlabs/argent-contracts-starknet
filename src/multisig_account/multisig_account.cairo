@@ -97,6 +97,7 @@ mod ArgentMultisigAccount {
         TransactionExecuted: TransactionExecuted,
     }
 
+    /// Deprecated: This event will likely be removed in the future
     /// @notice Emitted when the account executes a transaction
     /// @param hash The transaction hash
     #[derive(Drop, starknet::Event)]

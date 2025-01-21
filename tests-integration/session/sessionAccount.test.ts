@@ -59,13 +59,12 @@ describe("ArgentAccount: session basics", function () {
   }
 
   it(`Should be possible to estimate a basic session given an invalid guardian signature`, async function () {
-    const { account, guardian, owner } = await deployAccount({ classHash: sessionAccountClassHash });
+    const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
     const { accountWithDappSigner, sessionRequest, authorizationSignature, dappService } = await setupSession({
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      cacheOwnerGuid: owner.guid,
       allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
     });
 
@@ -75,35 +74,33 @@ describe("ArgentAccount: session basics", function () {
       account: accountWithDappSigner,
       completedSession: sessionRequest,
       authorizationSignature,
-      cacheOwnerGuid:owner.guid,
+      overrideVersionAndMaxFee: true,
     });
 
-    // const pubkey = sessionToken.guardianSignature.variant.Starknet.pubkey;
-    // sessionToken.guardianSignature = signerTypeToCustomEnum(SignerType.Starknet, {
-    //   pubkey,
-    //   r: 42,
-    //   s: 69,
-    // });
+    const pubkey = sessionToken.guardianSignature.variant.Starknet.pubkey;
+    sessionToken.guardianSignature = signerTypeToCustomEnum(SignerType.Starknet, {
+      pubkey,
+      r: 42,
+      s: 69,
+    });
 
     // Should pass when estimating
-    // await estimateWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature());
-    await  manager.ensureSuccess(await accountWithDappSigner.execute(calls));
-    await executeWithCustomSig(accountWithDappSigner, calls,sessionToken.compileSignature());
+    // TODO Simulate and assert it passes, although estimation should fail if wrong
+    await estimateWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature());
     // Should fail when executing
-    // await expectRevertWithErrorMessage(
-    //   "session/invalid-backend-sig",
-    //   executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), {maxFee:1e16, skipValidate:true}) ,
-    // );
+    await expectRevertWithErrorMessage(
+      "session/invalid-backend-sig",
+      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), { maxFee: 1e16 }),
+    );
   });
 
   it(`Should be possible to estimate a basic session given an invalid session signature`, async function () {
-    const { account, guardian, owner } = await deployAccount();
+    const { account, guardian } = await deployAccount();
 
     const { accountWithDappSigner, sessionRequest, authorizationSignature, dappService } = await setupSession({
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      cacheOwnerGuid: owner.guid,
       allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
     });
 
@@ -113,6 +110,7 @@ describe("ArgentAccount: session basics", function () {
       account: accountWithDappSigner,
       completedSession: sessionRequest,
       authorizationSignature,
+      overrideVersionAndMaxFee: true,
     });
 
     const pubkey = sessionToken.sessionSignature.variant.Starknet.pubkey;
@@ -123,13 +121,12 @@ describe("ArgentAccount: session basics", function () {
     });
 
     // Should pass when estimating
-    // TODO Should simulate TX and ensure it passes instead of just getting the fee
     await estimateWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature());
 
     // Should fail when executing
     await expectRevertWithErrorMessage(
       "session/invalid-session-sig",
-      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
+      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), { maxFee: 1e16 }),
     );
   });
 
@@ -253,13 +250,14 @@ describe("ArgentAccount: session basics", function () {
       account: accountWithDappSigner,
       completedSession: sessionRequest,
       authorizationSignature,
+      overrideVersionAndMaxFee: true,
     });
     sessionToken.proofs = [["0x1", "0x2"]];
 
     // happens when the the number of proofs is not equal to the number of calls
     await expectRevertWithErrorMessage(
       "session/unaligned-proofs",
-      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
+      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), { maxFee: 1e16 }),
     );
   });
 });

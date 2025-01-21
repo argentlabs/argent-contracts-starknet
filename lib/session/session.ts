@@ -73,7 +73,7 @@ export class SessionToken {
     guardianSignature,
     calls,
     isLegacyAccount,
-  } : {
+  }: {
     session: Session;
     cacheOwnerGuid?: bigint;
     sessionAuthorization?: string[];
@@ -82,7 +82,6 @@ export class SessionToken {
     calls: Call[];
     isLegacyAccount: boolean;
   }) {
-
     this.session = session;
     this.proofs = session.getProofs(calls);
     this.cacheOwnerGuid = cacheOwnerGuid;

@@ -71,6 +71,7 @@ export class DappService {
     cacheOwnerGuid,
     isLegacyAccount = false,
     transactionDetail: providedTransactionDetail,
+    overrideVersionAndMaxFee = false,
   }: {
     calls: Call[];
     account: ArgentAccount;
@@ -79,8 +80,13 @@ export class DappService {
     cacheOwnerGuid?: bigint;
     isLegacyAccount?: boolean;
     transactionDetail?: InvocationsSignerDetails;
+    overrideVersionAndMaxFee?: boolean;
   }): Promise<SessionToken> {
-    const transactionDetail = providedTransactionDetail ?? (await getSignerDetails(account, calls));
+    const transactionDetail: any = providedTransactionDetail ?? (await getSignerDetails(account, calls));
+    if (overrideVersionAndMaxFee) {
+      transactionDetail.version = "0x1";
+      transactionDetail.maxFee = 1e16;
+    }
 
     const transactionHash = calculateTransactionHash(transactionDetail, calls);
     const accountAddress = transactionDetail.walletAddress;

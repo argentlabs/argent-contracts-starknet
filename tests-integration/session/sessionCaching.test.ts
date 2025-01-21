@@ -218,7 +218,6 @@ describe("Session Account: execute caching", function () {
       );
     });
 
-    // TODO FAILS
     it(`Fail if a different guardian signature signed session token (caching: ${useCaching})`, async function () {
       const { account, guardian, owner } = await deployAccount({ classHash: argentAccountClassHash });
 
@@ -239,6 +238,7 @@ describe("Session Account: execute caching", function () {
         completedSession: sessionRequest,
         authorizationSignature,
         cacheOwnerGuid: useCaching ? owner.guid : undefined,
+        overrideVersionAndMaxFee: true,
       });
 
       const originalGuardianSignature = sessionToken.guardianSignature;
@@ -250,7 +250,7 @@ describe("Session Account: execute caching", function () {
 
       await expectRevertWithErrorMessage(
         "session/invalid-backend-sig",
-        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
+        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), { maxFee: 1e16 }),
       );
     });
   }

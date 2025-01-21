@@ -1,9 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Instructions:
-// - Setup `.env` file with all 3 variables.
-//   For instance for goerli network you can use this:
-//   RPC_URL=https://api.hydrogen.argent47.net/v1/starknet/goerli/rpc/v0.6
-// - Run the command: `yarn tsc && node --loader ts-node/esm scripts/multisig-change-threshold.ts`
+// - Setup `.env` file with all 3 variables: ADDRESS, PRIVATE_KEY, and ADDRESS
+// - Fill in the privateKey2 variable
+// - Run the script using the command: `yarn tsc && node --loader ts-node/esm scripts/multisig-change-threshold.ts`
 ////////////////////////////////////////////////////////////////////////////////////////////
 import "dotenv/config";
 import { RPC } from "starknet";

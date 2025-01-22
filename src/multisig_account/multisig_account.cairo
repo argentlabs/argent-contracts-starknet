@@ -22,8 +22,8 @@ mod ArgentMultisigAccount {
         interface::{IUpgradableCallback, IUpgradableCallbackOld}
     };
     use argent::utils::{
-        asserts::{assert_no_self_call, assert_only_protocol, assert_only_self}, calls::execute_multicall,
-        serialization::full_deserialize,
+        asserts::{assert_no_self_call, assert_only_protocol, assert_only_self},
+        calls::{execute_multicall, execute_multicall_with_result}, serialization::full_deserialize,
         transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
     };
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
@@ -97,14 +97,13 @@ mod ArgentMultisigAccount {
         TransactionExecuted: TransactionExecuted,
     }
 
+    /// Deprecated: This event will likely be removed in the future
     /// @notice Emitted when the account executes a transaction
     /// @param hash The transaction hash
-    /// @param response The data returned by the methods called
     #[derive(Drop, starknet::Event)]
     struct TransactionExecuted {
         #[key]
         hash: felt252,
-        response: Span<Span<felt252>>
     }
 
     #[constructor]
@@ -126,7 +125,7 @@ mod ArgentMultisigAccount {
             VALIDATED
         }
 
-        fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
+        fn __execute__(ref self: ContractState, calls: Array<Call>) {
             self.reentrancy_guard.start();
             let exec_info = get_execution_info();
             let tx_info = exec_info.tx_info;
@@ -134,13 +133,11 @@ mod ArgentMultisigAccount {
             assert_correct_invoke_version(tx_info.version);
 
             // execute calls
-            let retdata = execute_multicall(calls.span());
+            execute_multicall(calls.span());
             // emit event
             let hash = tx_info.transaction_hash;
-            let response = retdata.span();
-            self.emit(TransactionExecuted { hash, response });
+            self.emit(TransactionExecuted { hash });
             self.reentrancy_guard.end();
-            retdata
         }
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
@@ -204,8 +201,8 @@ mod ArgentMultisigAccount {
             // validate signatures
             self.assert_valid_signatures(outside_execution_hash, signature);
 
-            let retdata = execute_multicall(calls);
-            self.emit(TransactionExecuted { hash: outside_execution_hash, response: retdata.span() });
+            let retdata = execute_multicall_with_result(calls);
+            self.emit(TransactionExecuted { hash: outside_execution_hash });
             retdata
         }
     }
@@ -215,8 +212,8 @@ mod ArgentMultisigAccount {
         fn execute_recovery_call(ref self: ContractState, selector: felt252, calldata: Span<felt252>) {
             let calls = array![Call { to: get_contract_address(), selector, calldata }].span();
             self.assert_valid_calls(calls);
-            let retdata = execute_multicall(calls);
-            self.emit(TransactionExecuted { hash: get_tx_info().transaction_hash, response: retdata.span() });
+            execute_multicall(calls);
+            self.emit(TransactionExecuted { hash: get_tx_info().transaction_hash });
         }
     }
 

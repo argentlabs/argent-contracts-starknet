@@ -23,14 +23,13 @@ struct AccountCreatedGuid {
     guardian_guid: felt252
 }
 
+/// Deprecated: This event will likely be removed in the future
 /// @notice Emitted when the account executes a transaction
 /// @param hash The transaction hash
-/// @param response The data returned by the methods called
 #[derive(Drop, starknet::Event)]
 struct TransactionExecuted {
     #[key]
     hash: felt252,
-    response: Span<Span<felt252>>
 }
 
 /// @notice A new signer was linked

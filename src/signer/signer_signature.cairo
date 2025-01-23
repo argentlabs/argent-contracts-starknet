@@ -4,10 +4,10 @@ use argent::utils::hashing::poseidon_2;
 use core::traits::TryInto;
 use ecdsa::check_ecdsa_signature;
 use hash::{HashStateExTrait, HashStateTrait};
-use poseidon::{hades_permutation, PoseidonTrait};
+use poseidon::{PoseidonTrait, hades_permutation};
 use starknet::SyscallResultTrait;
 use starknet::secp256_trait::{
-    Secp256PointTrait, Signature as Secp256Signature, recover_public_key, is_signature_entry_valid
+    Secp256PointTrait, Signature as Secp256Signature, is_signature_entry_valid, recover_public_key,
 };
 use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
@@ -73,28 +73,28 @@ struct SignerStorageValue {
 /// @param pubkey the public key as felt252 for a starknet signature. Cannot be zero
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct StarknetSigner {
-    pubkey: NonZero<felt252>
+    pubkey: NonZero<felt252>,
 }
 
 /// @notice The Secp256k1 signer using the Secp256k1 elliptic curve
 /// @param pubkey_hash the right-most 160 bits of a Keccak hash of an ECDSA public key
 #[derive(Drop, Copy, PartialEq)]
 struct Secp256k1Signer {
-    pubkey_hash: EthAddress
+    pubkey_hash: EthAddress,
 }
 
 /// @notice The Secp256r1 signer using the Secp256r1 elliptic curve
 /// @param pubkey the public key as a u256. Cannot be zero
 #[derive(Drop, Copy, Serde, PartialEq)]
 struct Secp256r1Signer {
-    pubkey: NonZero<u256>
+    pubkey: NonZero<u256>,
 }
 
 /// @notice The Eip191Signer signer conforming to the EIP-191 standard
 /// @param eth_address the ethereum address that signed the data
 #[derive(Drop, Copy, PartialEq)]
 struct Eip191Signer {
-    eth_address: EthAddress
+    eth_address: EthAddress,
 }
 
 /// @notice The webauthn signer
@@ -105,7 +105,7 @@ struct Eip191Signer {
 struct WebauthnSigner {
     origin: Span<u8>,
     rp_id_hash: NonZero<u256>,
-    pubkey: NonZero<u256>
+    pubkey: NonZero<u256>,
 }
 
 /// @notice Information about a signer stored in the account
@@ -117,7 +117,7 @@ struct WebauthnSigner {
 struct SignerInfo {
     signerType: SignerType,
     guid: felt252,
-    stored_value: felt252
+    stored_value: felt252,
 }
 
 // Ensures that the pubkey_hash is not zero as we can't do NonZero<EthAddress>
@@ -180,19 +180,19 @@ impl SignerTraitImpl of SignerTrait {
     fn storage_value(self: Signer) -> SignerStorageValue {
         match self {
             Signer::Starknet(signer) => SignerStorageValue {
-                signer_type: SignerType::Starknet, stored_value: signer.pubkey.into()
+                signer_type: SignerType::Starknet, stored_value: signer.pubkey.into(),
             },
             Signer::Secp256k1(signer) => SignerStorageValue {
-                signer_type: SignerType::Secp256k1, stored_value: signer.pubkey_hash.address.try_into().unwrap()
+                signer_type: SignerType::Secp256k1, stored_value: signer.pubkey_hash.address.try_into().unwrap(),
             },
             Signer::Secp256r1 => SignerStorageValue {
-                signer_type: SignerType::Secp256r1, stored_value: self.into_guid().try_into().unwrap()
+                signer_type: SignerType::Secp256r1, stored_value: self.into_guid().try_into().unwrap(),
             },
             Signer::Eip191(signer) => SignerStorageValue {
-                signer_type: SignerType::Eip191, stored_value: signer.eth_address.address.try_into().unwrap()
+                signer_type: SignerType::Eip191, stored_value: signer.eth_address.address.try_into().unwrap(),
             },
             Signer::Webauthn => SignerStorageValue {
-                signer_type: SignerType::Webauthn, stored_value: self.into_guid().try_into().unwrap()
+                signer_type: SignerType::Webauthn, stored_value: self.into_guid().try_into().unwrap(),
             },
         }
     }
@@ -264,15 +264,16 @@ trait SignerSignatureTrait {
 }
 
 impl SignerSignatureImpl of SignerSignatureTrait {
-    #[inline(always)]
+    // TODO re-assess later
+    // #[inline(always)]
     fn is_valid_signature(self: SignerSignature, hash: felt252) -> bool {
         match self {
             SignerSignature::Starknet((signer, signature)) => is_valid_starknet_signature(hash, signer, signature),
             SignerSignature::Secp256k1((
-                signer, signature
+                signer, signature,
             )) => is_valid_secp256k1_signature(hash.into(), signer.pubkey_hash.into(), signature),
             SignerSignature::Secp256r1((
-                signer, signature
+                signer, signature,
             )) => is_valid_secp256r1_signature(hash.into(), signer, signature),
             SignerSignature::Eip191((signer, signature)) => is_valid_eip191_signature(hash, signer, signature),
             SignerSignature::Webauthn((signer, signature)) => is_valid_webauthn_signature(hash, signer, signature),
@@ -285,7 +286,7 @@ impl SignerSignatureImpl of SignerSignatureTrait {
             SignerSignature::Secp256k1((signer, _)) => Signer::Secp256k1(signer),
             SignerSignature::Secp256r1((signer, _)) => Signer::Secp256r1(signer),
             SignerSignature::Eip191((signer, _)) => Signer::Eip191(signer),
-            SignerSignature::Webauthn((signer, _)) => Signer::Webauthn(signer)
+            SignerSignature::Webauthn((signer, _)) => Signer::Webauthn(signer),
         }
     }
 }

@@ -1,7 +1,7 @@
 use argent::account::interface::Version;
 use argent::multisig_account::multisig_account::ArgentMultisigAccount;
 use argent::signer::signer_signature::{Signer, SignerSignature};
-use snforge_std::{declare, ContractClassTrait, ContractClass, start_cheat_caller_address_global, DeclareResultTrait};
+use snforge_std::{ContractClass, ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address_global};
 use starknet::account::Call;
 use super::super::{SIGNER_1, SIGNER_2, SIGNER_3};
 
@@ -17,7 +17,7 @@ trait ITestArgentMultisig<TContractState> {
         class_hash: felt252,
         contract_address_salt: felt252,
         threshold: usize,
-        signers: Array<felt252>
+        signers: Array<felt252>,
     ) -> felt252;
     // External
     fn change_threshold(ref self: TContractState, new_threshold: usize);
@@ -50,7 +50,7 @@ fn declare_multisig() -> ContractClass {
 
 fn initialize_multisig() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
-    let signers_array = array![SIGNER_1(), SIGNER_2(), SIGNER_3(),];
+    let signers_array = array![SIGNER_1(), SIGNER_2(), SIGNER_3()];
     initialize_multisig_with(threshold, signers_array.span())
 }
 

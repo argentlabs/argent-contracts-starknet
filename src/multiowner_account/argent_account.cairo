@@ -1,52 +1,52 @@
 #[starknet::contract(account)]
 mod ArgentAccount {
-    use argent::account::interface::{IAccount, IDeprecatedArgentAccount, Version, IEmitArgentAccountEvent};
+    use argent::account::interface::{IAccount, IDeprecatedArgentAccount, IEmitArgentAccountEvent, Version};
     use argent::introspection::src5::src5_component;
     use argent::multiowner_account::account_interface::{
         IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait,
     };
     use argent::multiowner_account::events::{
-        SignerLinked, TransactionExecuted, AccountCreated, AccountCreatedGuid, EscapeOwnerTriggeredGuid,
-        EscapeGuardianTriggeredGuid, OwnerEscapedGuid, GuardianEscapedGuid, EscapeCanceled, EscapeSecurityPeriodChanged,
+        AccountCreated, AccountCreatedGuid, EscapeCanceled, EscapeGuardianTriggeredGuid, EscapeOwnerTriggeredGuid,
+        EscapeSecurityPeriodChanged, GuardianEscapedGuid, OwnerEscapedGuid, SignerLinked, TransactionExecuted,
     };
     use argent::multiowner_account::guardian_manager::{
-        IGuardianManager, guardian_manager_component, guardian_manager_component::GuardianManagerInternalImpl
+        IGuardianManager, guardian_manager_component, guardian_manager_component::GuardianManagerInternalImpl,
     };
     use argent::multiowner_account::owner_manager::{
-        owner_manager_component, owner_manager_component::OwnerManagerInternalImpl
+        owner_manager_component, owner_manager_component::OwnerManagerInternalImpl,
     };
     use argent::multiowner_account::recovery::{Escape, EscapeType};
     use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
     use argent::multiowner_account::upgrade_migration::{
-        IUpgradeMigrationInternal, upgrade_migration_component,
-        upgrade_migration_component::UpgradeMigrationInternalImpl, IUpgradeMigrationCallback
+        IUpgradeMigrationCallback, IUpgradeMigrationInternal, upgrade_migration_component,
+        upgrade_migration_component::UpgradeMigrationInternalImpl,
     };
     use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{
-        outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
+        interface::IOutsideExecutionCallback, outside_execution::outside_execution_component,
     };
     use argent::recovery::EscapeStatus;
-    use argent::session::{interface::ISessionCallback, session::{session_component::InternalTrait, session_component}};
+    use argent::session::{interface::ISessionCallback, session::{session_component, session_component::InternalTrait}};
     use argent::signer::signer_signature::{
-        Signer, SignerStorageValue, SignerType, StarknetSigner, StarknetSignature, SignerTrait, SignerStorageTrait,
-        SignerSignature, SignerSignatureTrait
+        Signer, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait, SignerType,
+        StarknetSignature, StarknetSigner,
     };
     use argent::upgrade::{
+        interface::{IUpgradableCallback, IUpgradableCallbackOld},
         upgrade::{IUpgradeInternal, upgrade_component, upgrade_component::UpgradableInternalImpl},
-        interface::{IUpgradableCallback, IUpgradableCallbackOld}
     };
     use argent::utils::{
-        asserts::{assert_no_self_call, assert_only_self, assert_only_protocol},
-        calls::{execute_multicall, execute_multicall_with_result}, serialization::{serialize, full_deserialize},
+        asserts::{assert_no_self_call, assert_only_protocol, assert_only_self},
+        calls::{execute_multicall, execute_multicall_with_result}, serialization::{full_deserialize, serialize},
         transaction_version::{
-            TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
-            assert_correct_deploy_account_version, DA_MODE_L1
-        }
+            DA_MODE_L1, TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_declare_version,
+            assert_correct_deploy_account_version, assert_correct_invoke_version,
+        },
     };
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use starknet::{
-        storage::Map, ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, account::Call,
-        SyscallResultTrait, get_tx_info, get_execution_info,
+        ClassHash, ContractAddress, SyscallResultTrait, VALIDATED, account::Call, get_block_timestamp,
+        get_contract_address, get_execution_info, get_tx_info, storage::Map,
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -123,6 +123,7 @@ mod ArgentAccount {
         #[substorage(v0)]
         reentrancy_guard: ReentrancyGuardComponent::Storage,
         /// The ongoing escape, if any
+        #[allow(starknet::colliding_storage_paths)]
         _escape: Escape,
         /// The following 4 fields are used to limit the number of escapes the account will pay for
         /// Values are Rounded down to the hour:
@@ -184,7 +185,7 @@ mod ArgentAccount {
             assert_correct_invoke_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             if self.session.is_session(tx_info.signature) {
-                self.session.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature,);
+                self.session.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature);
             } else {
                 self
                     .assert_valid_calls_and_signature(
@@ -313,7 +314,7 @@ mod ArgentAccount {
                         outside_execution_hash,
                         signature,
                         is_from_outside: true,
-                        account_address: get_contract_address()
+                        account_address: get_contract_address(),
                     );
             }
             let retdata = execute_multicall_with_result(calls);
@@ -325,11 +326,11 @@ mod ArgentAccount {
 
     impl SessionCallbackImpl of ISessionCallback<ContractState> {
         fn validate_authorization(
-            self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>
+            self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>,
         ) -> Array<SignerSignature> {
             let parsed_authorization = self.parse_signature_array(authorization_signature);
             assert(
-                self.is_valid_span_signature(session_hash, parsed_authorization.span()), 'session/invalid-account-sig'
+                self.is_valid_span_signature(session_hash, parsed_authorization.span()), 'session/invalid-account-sig',
             );
             parsed_authorization
         }
@@ -349,7 +350,7 @@ mod ArgentAccount {
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             self
                 .assert_valid_span_signature(
-                    tx_info.transaction_hash, self.parse_signature_array(tx_info.signature).span()
+                    tx_info.transaction_hash, self.parse_signature_array(tx_info.signature).span(),
                 );
             VALIDATED
         }
@@ -359,14 +360,14 @@ mod ArgentAccount {
             class_hash: felt252,
             contract_address_salt: felt252,
             owner: Signer,
-            guardian: Option<Signer>
+            guardian: Option<Signer>,
         ) -> felt252 {
             let tx_info = get_tx_info();
             assert_correct_deploy_account_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             self
                 .assert_valid_span_signature(
-                    tx_info.transaction_hash, self.parse_signature_array(tx_info.signature).span()
+                    tx_info.transaction_hash, self.parse_signature_array(tx_info.signature).span(),
                 );
             VALIDATED
         }
@@ -468,7 +469,7 @@ mod ArgentAccount {
             if current_escape.escape_type == EscapeType::Guardian {
                 assert(
                     self.get_escape_status(current_escape.ready_at) == EscapeStatus::Expired,
-                    'argent/cannot-override-escape'
+                    'argent/cannot-override-escape',
                 );
             }
 
@@ -498,9 +499,7 @@ mod ArgentAccount {
             };
 
             let ready_at = get_block_timestamp() + self.get_escape_security_period();
-            let escape = Escape {
-                ready_at, escape_type: EscapeType::Guardian, new_signer: new_guardian_storage_value,
-            };
+            let escape = Escape { ready_at, escape_type: EscapeType::Guardian, new_signer: new_guardian_storage_value };
             self._escape.write(escape);
             self.emit(EscapeGuardianTriggeredGuid { ready_at, new_guardian_guid });
         }
@@ -723,7 +722,9 @@ mod ArgentAccount {
             self.assert_valid_span_signature(execution_hash, signer_signatures.span());
         }
 
-        #[inline(always)]
+        // TODO This was the most straight forward to remove to not exceed contract size limit
+        // We prob want to re-assess
+        // #[inline(always)]
         fn parse_signature_array(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
             // Check if it's a legacy signature array, this only supports legacy signature if there is exactly 1 only
             // and a maximum of 1 guardian Legacy signatures are always 2 or 4 items long
@@ -744,8 +745,8 @@ mod ArgentAccount {
             let owner_signature = SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: single_stark_owner.try_into().expect('argent/zero-pubkey') },
-                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
-                )
+                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() },
+                ),
             );
             if signatures.is_empty() {
                 return array![owner_signature];
@@ -759,8 +760,8 @@ mod ArgentAccount {
             let guardian_signature = SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: single_stark_guardian.try_into().expect('argent/zero-pubkey') },
-                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
-                )
+                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() },
+                ),
             );
             return array![owner_signature, guardian_signature];
         }
@@ -780,8 +781,8 @@ mod ArgentAccount {
             SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: single_stark_owner.try_into().expect('argent/zero-pubkey') },
-                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
-                )
+                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() },
+                ),
             )
         }
 
@@ -800,14 +801,14 @@ mod ArgentAccount {
             return SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: single_stark_guardian.try_into().expect('argent/zero-pubkey') },
-                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
-                )
+                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() },
+                ),
             );
         }
 
         #[must_use]
         fn is_valid_span_signature(
-            self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>
+            self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>,
         ) -> bool {
             if self.has_guardian() {
                 assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
@@ -832,7 +833,7 @@ mod ArgentAccount {
 
         /// The message hash is the result of hashing the SNIP-12 compliant object ReplaceOwnersWithOne
         fn assert_valid_new_owner_signature(
-            self: @ContractState, new_single_owner: SignerSignature, signature_expiration: u64
+            self: @ContractState, new_single_owner: SignerSignature, signature_expiration: u64,
         ) {
             assert(signature_expiration >= get_block_timestamp(), 'argent/expired-signature');
             assert(signature_expiration - get_block_timestamp() <= ONE_DAY, 'argent/timestamp-too-far-future');
@@ -887,7 +888,7 @@ mod ArgentAccount {
             // No need for modes other than L1 while escaping
             assert(
                 tx_info.nonce_data_availability_mode == DA_MODE_L1 && tx_info.fee_data_availability_mode == DA_MODE_L1,
-                'argent/invalid-da-mode'
+                'argent/invalid-da-mode',
             );
 
             // No need to allow self deployment and escaping in one transaction
@@ -905,7 +906,7 @@ mod ArgentAccount {
                             max_tip += tx_info.tip * max_resource_amount;
                         }
                     },
-                    Option::None => { break; }
+                    Option::None => { break; },
                 };
             };
             max_fee += max_tip;
@@ -923,7 +924,11 @@ mod ArgentAccount {
 
     fn guardian_ordered_types() -> Span<SignerType> {
         array![
-            SignerType::Starknet, SignerType::Eip191, SignerType::Webauthn, SignerType::Secp256r1, SignerType::Secp256k1
+            SignerType::Starknet,
+            SignerType::Eip191,
+            SignerType::Webauthn,
+            SignerType::Secp256r1,
+            SignerType::Secp256k1,
         ]
             .span()
     }

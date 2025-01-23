@@ -1,46 +1,44 @@
 use argent::offchain_message::{
     interface::{
-        StarkNetDomain, StarknetDomain, StructHashStarkNetDomain, IOffChainMessageHashRev0, IStructHashRev0,
-        IOffChainMessageHashRev1, IStructHashRev1
+        IOffChainMessageHashRev0, IOffChainMessageHashRev1, IStructHashRev0, IStructHashRev1, StarkNetDomain,
+        StarknetDomain, StructHashStarkNetDomain,
     },
-    precalculated_hashing::get_message_hash_rev_1_with_precalc
+    precalculated_hashing::get_message_hash_rev_1_with_precalc,
 };
 use argent::outside_execution::interface::OutsideExecution;
-use hash::{HashStateTrait, HashStateExTrait};
+use hash::{HashStateExTrait, HashStateTrait};
 use pedersen::PedersenTrait;
 use poseidon::poseidon_hash_span;
-use starknet::{get_tx_info, get_contract_address, account::Call};
+use starknet::{account::Call, get_contract_address, get_tx_info};
 
-const MAINNET_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
-    (
-        2727651893633223888261849279042022325174182119102281398572272198960815727249,
-        729016093840936084580216898033636860729342953928695140840860652272753125883,
-        2792630223211151632174198306610141883878913626231408099903852589995722964080
-    );
+const MAINNET_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) = (
+    2727651893633223888261849279042022325174182119102281398572272198960815727249,
+    729016093840936084580216898033636860729342953928695140840860652272753125883,
+    2792630223211151632174198306610141883878913626231408099903852589995722964080,
+);
 
-const SEPOLIA_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) =
-    (
-        3580606761507954093996364807837346681513890124685758374532511352257317798951,
-        3431227198346789440159663709265467470274870120429209591243179659934705045436,
-        974062396530052497724701732977002885691473732259823426261944148730229556466
-    );
+const SEPOLIA_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) = (
+    3580606761507954093996364807837346681513890124685758374532511352257317798951,
+    3431227198346789440159663709265467470274870120429209591243179659934705045436,
+    974062396530052497724701732977002885691473732259823426261944148730229556466,
+);
 
 
-const OUTSIDE_CALL_TYPE_HASH_REV_0: felt252 =
-    selector!("OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)");
+const OUTSIDE_CALL_TYPE_HASH_REV_0: felt252 = selector!(
+    "OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)",
+);
 
-const OUTSIDE_EXECUTION_TYPE_HASH_REV_0: felt252 =
-    selector!(
-        "OutsideExecution(caller:felt,nonce:felt,execute_after:felt,execute_before:felt,calls_len:felt,calls:OutsideCall*)OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)"
-    );
+const OUTSIDE_EXECUTION_TYPE_HASH_REV_0: felt252 = selector!(
+    "OutsideExecution(caller:felt,nonce:felt,execute_after:felt,execute_before:felt,calls_len:felt,calls:OutsideCall*)OutsideCall(to:felt,selector:felt,calldata_len:felt,calldata:felt*)",
+);
 
-const OUTSIDE_EXECUTION_TYPE_HASH_REV_1: felt252 =
-    selector!(
-        "\"OutsideExecution\"(\"Caller\":\"ContractAddress\",\"Nonce\":\"felt\",\"Execute After\":\"u128\",\"Execute Before\":\"u128\",\"Calls\":\"Call*\")\"Call\"(\"To\":\"ContractAddress\",\"Selector\":\"selector\",\"Calldata\":\"felt*\")"
-    );
+const OUTSIDE_EXECUTION_TYPE_HASH_REV_1: felt252 = selector!(
+    "\"OutsideExecution\"(\"Caller\":\"ContractAddress\",\"Nonce\":\"felt\",\"Execute After\":\"u128\",\"Execute Before\":\"u128\",\"Calls\":\"Call*\")\"Call\"(\"To\":\"ContractAddress\",\"Selector\":\"selector\",\"Calldata\":\"felt*\")",
+);
 
-const CALL_TYPE_HASH_REV_1: felt252 =
-    selector!("\"Call\"(\"To\":\"ContractAddress\",\"Selector\":\"selector\",\"Calldata\":\"felt*\")");
+const CALL_TYPE_HASH_REV_1: felt252 = selector!(
+    "\"Call\"(\"To\":\"ContractAddress\",\"Selector\":\"selector\",\"Calldata\":\"felt*\")",
+);
 
 impl StructHashOutsideExecutionRev0 of IStructHashRev0<OutsideExecution> {
     fn get_struct_hash_rev_0(self: @OutsideExecution) -> felt252 {
@@ -110,7 +108,7 @@ impl OffChainMessageOutsideExecutionRev0 of IOffChainMessageHashRev0<OutsideExec
 impl StructHashCallRev1 of IStructHashRev1<Call> {
     fn get_struct_hash_rev_1(self: @Call) -> felt252 {
         poseidon_hash_span(
-            array![CALL_TYPE_HASH_REV_1, (*self.to).into(), *self.selector, poseidon_hash_span(*self.calldata)].span()
+            array![CALL_TYPE_HASH_REV_1, (*self.to).into(), *self.selector, poseidon_hash_span(*self.calldata)].span(),
         )
     }
 }
@@ -133,7 +131,7 @@ impl StructHashOutsideExecutionRev1 of IStructHashRev1<OutsideExecution> {
                 self.execute_before.into(),
                 poseidon_hash_span(hashed_calls.span()),
             ]
-                .span()
+                .span(),
         )
     }
 }
@@ -160,7 +158,7 @@ impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExec
                 get_contract_address().into(),
                 (*self).get_struct_hash_rev_1(),
             ]
-                .span()
+                .span(),
         )
     }
 }

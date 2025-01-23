@@ -1,7 +1,7 @@
 use argent::account::interface::Version;
 use argent::multiowner_account::recovery::Escape;
 use argent::recovery::{EscapeStatus};
-use argent::signer::signer_signature::{Signer, SignerType, SignerSignature};
+use argent::signer::signer_signature::{Signer, SignerSignature, SignerType};
 
 #[starknet::interface]
 trait IArgentMultiOwnerAccount<TContractState> {
@@ -11,7 +11,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
         class_hash: felt252,
         contract_address_salt: felt252,
         owner: Signer,
-        guardian: Option<Signer>
+        guardian: Option<Signer>,
     ) -> felt252;
 
     /// @notice Changes the security period used for escapes

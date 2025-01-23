@@ -4,19 +4,19 @@
 #[starknet::contract(account)]
 mod MockFutureArgentMultisig {
     use argent::account::interface::{
-        IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version
+        IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version,
     };
     use argent::introspection::src5::src5_component;
     use argent::multisig_account::signer_manager::signer_manager::{
-        signer_manager_component, signer_manager_component::SignerManagerInternalImpl
+        signer_manager_component, signer_manager_component::SignerManagerInternalImpl,
     };
-    use argent::signer::signer_signature::{Signer, SignerTrait, SignerSignature};
+    use argent::signer::signer_signature::{Signer, SignerSignature, SignerTrait};
     use argent::upgrade::{
+        interface::{IUpgradableCallback, IUpgradableCallbackOld},
         upgrade::{upgrade_component, upgrade_component::UpgradableInternalImpl},
-        interface::{IUpgradableCallback, IUpgradableCallbackOld}
     };
     use argent::utils::{asserts::assert_only_self, calls::execute_multicall, serialization::full_deserialize};
-    use starknet::{get_tx_info, get_contract_address, VALIDATED, ClassHash, account::Call};
+    use starknet::{ClassHash, VALIDATED, account::Call, get_contract_address, get_tx_info};
 
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION_MAJOR: u8 = 0;
@@ -80,7 +80,7 @@ mod MockFutureArgentMultisig {
                 .is_valid_signature_with_threshold(
                     hash: hash,
                     threshold: self.signer_manager.threshold.read(),
-                    signer_signatures: parse_signature_array(signature.span())
+                    signer_signatures: parse_signature_array(signature.span()),
                 ) {
                 VALIDATED
             } else {
@@ -100,7 +100,7 @@ mod MockFutureArgentMultisig {
             class_hash: felt252,
             contract_address_salt: felt252,
             threshold: usize,
-            signers: Array<Signer>
+            signers: Array<Signer>,
         ) -> felt252 {
             panic_with_felt252('argent/deploy-not-available')
         }
@@ -145,7 +145,7 @@ mod MockFutureArgentMultisig {
                 .is_valid_signature_with_threshold(
                     hash: execution_hash,
                     threshold: self.signer_manager.threshold.read(),
-                    signer_signatures: parse_signature_array(signature)
+                    signer_signatures: parse_signature_array(signature),
                 );
             assert(valid, 'argent/invalid-signature');
         }

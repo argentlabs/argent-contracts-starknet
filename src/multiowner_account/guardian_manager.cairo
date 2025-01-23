@@ -56,13 +56,13 @@ trait IGuardianManagerInternal<TContractState> {
 mod guardian_manager_component {
     use argent::account::interface::IEmitArgentAccountEvent;
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
-    use argent::multiowner_account::events::{SignerLinked, GuardianAddedGuid, GuardianRemovedGuid};
+    use argent::multiowner_account::events::{GuardianAddedGuid, GuardianRemovedGuid, SignerLinked};
     use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use argent::signer::signer_signature::{
-        Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerStorageValue, SignerStorageTrait, SignerType
+        Signer, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait, SignerType,
     };
     use argent::utils::linked_set_with_head::{
-        LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl
+        LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl,
     };
     use argent::utils::transaction_version::is_estimate_transaction;
     use super::{IGuardianManager, IGuardianManagerInternal};
@@ -72,7 +72,7 @@ mod guardian_manager_component {
 
     #[storage]
     struct Storage {
-        guardians_storage: LinkedSetWithHead<SignerStorageValue>
+        guardians_storage: LinkedSetWithHead<SignerStorageValue>,
     }
 
     #[event]
@@ -84,7 +84,7 @@ mod guardian_manager_component {
 
     #[embeddable_as(GuardianManagerImpl)]
     impl GuardianManager<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>, +IEmitArgentAccountEvent<TContractState>
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>, +IEmitArgentAccountEvent<TContractState>,
     > of IGuardianManager<ComponentState<TContractState>> {
         fn get_guardian_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
             self.guardians_storage.get_all_hashes()
@@ -101,7 +101,7 @@ mod guardian_manager_component {
 
         #[must_use]
         fn is_valid_guardian_signature(
-            self: @ComponentState<TContractState>, hash: felt252, guardian_signature: SignerSignature
+            self: @ComponentState<TContractState>, hash: felt252, guardian_signature: SignerSignature,
         ) -> bool {
             if !self.is_guardian(guardian_signature.signer()) {
                 return false;
@@ -133,7 +133,7 @@ mod guardian_manager_component {
 
     #[embeddable_as(GuardianManagerInternalImpl)]
     impl GuardianManagerInternal<
-        TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>,
     > of IGuardianManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, guardian: Signer) {
             let guid = self.guardians_storage.insert(guardian.storage_value());
@@ -213,7 +213,7 @@ mod guardian_manager_component {
 
     #[generate_trait]
     impl Private<
-        TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>,
     > of PrivateTrait<TContractState> {
         fn assert_valid_guardian_count(self: @ComponentState<TContractState>, signers_len: usize) {
             assert(signers_len <= MAX_SIGNERS_COUNT, 'argent/invalid-signers-len');

@@ -16,14 +16,10 @@ fn sha256_cairo0(message: Span<u8>) -> Option<[u32; 8]> {
     if let Result::Ok(output) = library_call_syscall(class_hash, selector!("sha256_cairo0"), calldata.span()) {
         if output.len() == 9 && *output.at(0) == 8 {
             let values: [u32; 8] = [
-                (*output.at(1)).try_into().unwrap(),
-                (*output.at(2)).try_into().unwrap(),
-                (*output.at(3)).try_into().unwrap(),
-                (*output.at(4)).try_into().unwrap(),
-                (*output.at(5)).try_into().unwrap(),
-                (*output.at(6)).try_into().unwrap(),
-                (*output.at(7)).try_into().unwrap(),
-                (*output.at(8)).try_into().unwrap(),
+                (*output.at(1)).try_into().unwrap(), (*output.at(2)).try_into().unwrap(),
+                (*output.at(3)).try_into().unwrap(), (*output.at(4)).try_into().unwrap(),
+                (*output.at(5)).try_into().unwrap(), (*output.at(6)).try_into().unwrap(),
+                (*output.at(7)).try_into().unwrap(), (*output.at(8)).try_into().unwrap(),
             ];
             return Option::Some(values);
         }

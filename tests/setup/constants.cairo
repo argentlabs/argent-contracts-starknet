@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{starknet_signer_from_pubkey, Signer, SignerTrait, StarknetSignature};
+use argent::signer::signer_signature::{Signer, SignerTrait, StarknetSignature, starknet_signer_from_pubkey};
 use snforge_std::signature::{KeyPairTrait, stark_curve::{StarkCurveKeyPairImpl, StarkCurveSignerImpl}};
 
 #[derive(Drop, Serde, Copy)]

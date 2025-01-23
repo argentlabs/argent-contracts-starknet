@@ -1,26 +1,25 @@
 use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
 use argent::multiowner_account::{
-    events::{OwnerAddedGuid, OwnerRemovedGuid}, owner_manager::owner_manager_component,
-    guardian_manager::guardian_manager_component, argent_account::ArgentAccount
+    argent_account::ArgentAccount, events::{OwnerAddedGuid, OwnerRemovedGuid},
+    guardian_manager::guardian_manager_component, owner_manager::owner_manager_component,
 };
 use argent::recovery::EscapeStatus;
 use argent::signer::signer_signature::{
-    StarknetSigner, Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait,
-    starknet_signer_from_pubkey, Secp256k1Signer, Eip191Signer
+    Eip191Signer, Secp256k1Signer, Signer, SignerSignature, SignerSignatureTrait, SignerTrait, StarknetSignature,
+    StarknetSigner, starknet_signer_from_pubkey,
 };
 
-use hash::{HashStateTrait, HashStateExTrait};
+use hash::{HashStateExTrait, HashStateTrait};
 use pedersen::PedersenTrait;
 use snforge_std::{
-    start_cheat_block_timestamp_global,
-    signature::{KeyPairTrait, stark_curve::{StarkCurveKeyPairImpl, StarkCurveSignerImpl}},
-    start_cheat_caller_address_global, start_cheat_transaction_version_global, EventSpyTrait, EventSpyAssertionsTrait,
-    spy_events
+    EventSpyAssertionsTrait, EventSpyTrait,
+    signature::{KeyPairTrait, stark_curve::{StarkCurveKeyPairImpl, StarkCurveSignerImpl}}, spy_events,
+    start_cheat_block_timestamp_global, start_cheat_caller_address_global, start_cheat_transaction_version_global,
 };
 use starknet::contract_address_const;
 use super::super::{
-    ARGENT_ACCOUNT_ADDRESS, ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
-    initialize_account_without_guardian, Felt252TryIntoStarknetSigner, OWNER, GUARDIAN, WRONG_OWNER
+    ARGENT_ACCOUNT_ADDRESS, Felt252TryIntoStarknetSigner, GUARDIAN, ITestArgentAccountDispatcherTrait, OWNER,
+    WRONG_OWNER, initialize_account, initialize_account_with, initialize_account_without_guardian,
 };
 
 const VALID_UNTIL: u64 = 1100;
@@ -98,19 +97,19 @@ fn reset_owners() {
 
     // owner_manager events
     let guid_removed_event = owner_manager_component::Event::OwnerRemovedGuid(
-        owner_manager_component::OwnerRemovedGuid { removed_owner_guid: old_owner_guid }
+        owner_manager_component::OwnerRemovedGuid { removed_owner_guid: old_owner_guid },
     );
     let guid_added_event = owner_manager_component::Event::OwnerAddedGuid(
-        owner_manager_component::OwnerAddedGuid { new_owner_guid }
+        owner_manager_component::OwnerAddedGuid { new_owner_guid },
     );
     spy
         .assert_emitted(
-            @array![(account.contract_address, guid_removed_event), (account.contract_address, guid_added_event),]
+            @array![(account.contract_address, guid_removed_event), (account.contract_address, guid_added_event)],
         );
 
     // ArgentAccount events
     let signer_link_event = ArgentAccount::Event::SignerLinked(
-        ArgentAccount::SignerLinked { signer_guid: new_owner_guid, signer: signer_signature.signer() }
+        ArgentAccount::SignerLinked { signer_guid: new_owner_guid, signer: signer_signature.signer() },
     );
     spy.assert_emitted(@array![(account.contract_address, signer_link_event)]);
 }
@@ -169,7 +168,7 @@ fn reset_owners_invalid_message() {
     let account = initialize_account();
     let (signer, _) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet(
-        (signer, StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s })
+        (signer, StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s }),
     );
     account.reset_owners(signer_signature, VALID_UNTIL);
 }
@@ -194,22 +193,22 @@ fn reset_guardians() {
 
     assert_eq!(spy.get_events().events.len(), 3);
     let signer_link_event = ArgentAccount::Event::SignerLinked(
-        ArgentAccount::SignerLinked { signer_guid: guardian.into_guid(), signer: guardian }
+        ArgentAccount::SignerLinked { signer_guid: guardian.into_guid(), signer: guardian },
     );
     let guardian_removed_event = guardian_manager_component::Event::GuardianRemovedGuid(
         guardian_manager_component::GuardianRemovedGuid {
-            removed_guardian_guid: starknet_signer_from_pubkey(GUARDIAN().pubkey).into_guid()
-        }
+            removed_guardian_guid: starknet_signer_from_pubkey(GUARDIAN().pubkey).into_guid(),
+        },
     );
     let guardian_added_event = guardian_manager_component::Event::GuardianAddedGuid(
-        guardian_manager_component::GuardianAddedGuid { new_guardian_guid: guardian.into_guid() }
+        guardian_manager_component::GuardianAddedGuid { new_guardian_guid: guardian.into_guid() },
     );
     spy.assert_emitted(@array![(account.contract_address, signer_link_event)]);
     spy
         .assert_emitted(
             @array![
-                (account.contract_address, guardian_removed_event), (account.contract_address, guardian_added_event)
-            ]
+                (account.contract_address, guardian_removed_event), (account.contract_address, guardian_added_event),
+            ],
         );
 }
 
@@ -266,25 +265,25 @@ fn supportsInterface() {
     assert_eq!(
         account.supportsInterface(0x3f918d17e5ee77373b56385708f855659a07f75997f365cf87748628532a055),
         1,
-        "SRC5_INTERFACE_ID"
+        "SRC5_INTERFACE_ID",
     );
     assert_eq!(account.supportsInterface(0xa66bd575), 1);
     assert_eq!(account.supportsInterface(0x3943f10f), 1);
     assert_eq!(
         account.supportsInterface(0x2ceccef7f994940b3962a6c67e0ba4fcd37df7d131417c604f91e03caecc1cd),
         1,
-        "SRC5_ACCOUNT_INTERFACE_ID"
+        "SRC5_ACCOUNT_INTERFACE_ID",
     );
 
     assert_eq!(
         account.supportsInterface(0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181),
         1,
-        "ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0"
+        "ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0",
     );
     assert_eq!(
         account.supportsInterface(0x1d1144bb2138366ff28d8e9ab57456b1d332ac42196230c3a602003c89872),
         1,
-        "ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1"
+        "ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1",
     );
 }
 

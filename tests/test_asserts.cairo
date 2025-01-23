@@ -1,6 +1,6 @@
 use argent::utils::asserts;
 use snforge_std::{start_cheat_caller_address_global, test_address};
-use starknet::{contract_address_const, account::Call};
+use starknet::{account::Call, contract_address_const};
 
 #[test]
 fn test_assert_only_self() {

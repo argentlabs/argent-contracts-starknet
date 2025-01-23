@@ -93,7 +93,7 @@ fn u32_to_bytes(word: u32) -> [u8; 4] {
     let (rest, byte_4) = u32_safe_divmod(word, 0x100);
     let (rest, byte_3) = u32_safe_divmod(rest, 0x100);
     let (byte_1, byte_2) = u32_safe_divmod(rest, 0x100);
-    [byte_1.try_into().unwrap(), byte_2.try_into().unwrap(), byte_3.try_into().unwrap(), byte_4.try_into().unwrap(),]
+    [byte_1.try_into().unwrap(), byte_2.try_into().unwrap(), byte_3.try_into().unwrap(), byte_4.try_into().unwrap()]
 }
 
 /// @notice Converts 8 32-bit words into 32 bytes.
@@ -126,38 +126,17 @@ fn eight_words_to_bytes(words: [u32; 8]) -> [u8; 32] {
     let (rest, byte_7_3) = u32_safe_divmod(rest, 0x100);
     let (byte_7_1, byte_7_2) = u32_safe_divmod(rest, 0x100);
     [
-        byte_0_1.try_into().unwrap(),
-        byte_0_2.try_into().unwrap(),
-        byte_0_3.try_into().unwrap(),
-        byte_0_4.try_into().unwrap(),
-        byte_1_1.try_into().unwrap(),
-        byte_1_2.try_into().unwrap(),
-        byte_1_3.try_into().unwrap(),
-        byte_1_4.try_into().unwrap(),
-        byte_2_1.try_into().unwrap(),
-        byte_2_2.try_into().unwrap(),
-        byte_2_3.try_into().unwrap(),
-        byte_2_4.try_into().unwrap(),
-        byte_3_1.try_into().unwrap(),
-        byte_3_2.try_into().unwrap(),
-        byte_3_3.try_into().unwrap(),
-        byte_3_4.try_into().unwrap(),
-        byte_4_1.try_into().unwrap(),
-        byte_4_2.try_into().unwrap(),
-        byte_4_3.try_into().unwrap(),
-        byte_4_4.try_into().unwrap(),
-        byte_5_1.try_into().unwrap(),
-        byte_5_2.try_into().unwrap(),
-        byte_5_3.try_into().unwrap(),
-        byte_5_4.try_into().unwrap(),
-        byte_6_1.try_into().unwrap(),
-        byte_6_2.try_into().unwrap(),
-        byte_6_3.try_into().unwrap(),
-        byte_6_4.try_into().unwrap(),
-        byte_7_1.try_into().unwrap(),
-        byte_7_2.try_into().unwrap(),
-        byte_7_3.try_into().unwrap(),
-        byte_7_4.try_into().unwrap(),
+        byte_0_1.try_into().unwrap(), byte_0_2.try_into().unwrap(), byte_0_3.try_into().unwrap(),
+        byte_0_4.try_into().unwrap(), byte_1_1.try_into().unwrap(), byte_1_2.try_into().unwrap(),
+        byte_1_3.try_into().unwrap(), byte_1_4.try_into().unwrap(), byte_2_1.try_into().unwrap(),
+        byte_2_2.try_into().unwrap(), byte_2_3.try_into().unwrap(), byte_2_4.try_into().unwrap(),
+        byte_3_1.try_into().unwrap(), byte_3_2.try_into().unwrap(), byte_3_3.try_into().unwrap(),
+        byte_3_4.try_into().unwrap(), byte_4_1.try_into().unwrap(), byte_4_2.try_into().unwrap(),
+        byte_4_3.try_into().unwrap(), byte_4_4.try_into().unwrap(), byte_5_1.try_into().unwrap(),
+        byte_5_2.try_into().unwrap(), byte_5_3.try_into().unwrap(), byte_5_4.try_into().unwrap(),
+        byte_6_1.try_into().unwrap(), byte_6_2.try_into().unwrap(), byte_6_3.try_into().unwrap(),
+        byte_6_4.try_into().unwrap(), byte_7_1.try_into().unwrap(), byte_7_2.try_into().unwrap(),
+        byte_7_3.try_into().unwrap(), byte_7_4.try_into().unwrap(),
     ]
 }
 

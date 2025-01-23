@@ -55,13 +55,13 @@ const types = {
     { name: "chainId", type: "shortstring" },
     { name: "revision", type: "shortstring" },
   ],
-  ReplaceOwnersWithOne: [
+  ResetOwners: [
     { name: "New owner GUID", type: "felt" },
     { name: "Signature expiration", type: "timestamp" },
   ],
 };
 
-interface ReplaceOwnersWithOne {
+interface ResetOwners {
   newOwnerGuid: bigint;
   signatureExpiration: number;
 }
@@ -75,10 +75,10 @@ function getDomain(chainId: string): StarknetDomain {
   };
 }
 
-function getTypedData(myStruct: ReplaceOwnersWithOne, chainId: string): TypedData {
+function getTypedData(myStruct: ResetOwners, chainId: string): TypedData {
   return {
     types,
-    primaryType: "ReplaceOwnersWithOne",
+    primaryType: "ResetOwners",
     domain: getDomain(chainId),
     message: {
       "New owner GUID": myStruct.newOwnerGuid,

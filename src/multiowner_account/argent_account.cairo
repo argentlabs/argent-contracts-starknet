@@ -16,7 +16,7 @@ mod ArgentAccount {
         owner_manager_component, owner_manager_component::OwnerManagerInternalImpl
     };
     use argent::multiowner_account::recovery::{Escape, EscapeType};
-    use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
+    use argent::multiowner_account::reset_owners_message::ResetOwners;
     use argent::multiowner_account::upgrade_migration::{
         IUpgradeMigrationInternal, upgrade_migration_component,
         upgrade_migration_component::UpgradeMigrationInternalImpl, IUpgradeMigrationCallback
@@ -830,14 +830,14 @@ mod ArgentAccount {
             }
         }
 
-        /// The message hash is the result of hashing the SNIP-12 compliant object ReplaceOwnersWithOne
+        /// The message hash is the result of hashing the SNIP-12 compliant object ResetOwners
         fn assert_valid_new_owner_signature(
             self: @ContractState, new_single_owner: SignerSignature, signature_expiration: u64
         ) {
             assert(signature_expiration >= get_block_timestamp(), 'argent/expired-signature');
             assert(signature_expiration - get_block_timestamp() <= ONE_DAY, 'argent/timestamp-too-far-future');
             let new_owner_guid = new_single_owner.signer().into_guid();
-            let message_hash = ReplaceOwnersWithOne { new_owner_guid, signature_expiration }.get_message_hash_rev_1();
+            let message_hash = ResetOwners { new_owner_guid, signature_expiration }.get_message_hash_rev_1();
             let is_valid = new_single_owner.is_valid_signature(message_hash);
             assert(is_valid, 'argent/invalid-new-owner-sig');
         }

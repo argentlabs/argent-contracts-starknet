@@ -1,4 +1,4 @@
-use argent::multiowner_account::replace_owners_message::ReplaceOwnersWithOne;
+use argent::multiowner_account::reset_owners_message::ResetOwners;
 use argent::multiowner_account::{
     events::{OwnerAddedGuid, OwnerRemovedGuid}, owner_manager::owner_manager_component,
     guardian_manager::guardian_manager_component, argent_account::ArgentAccount
@@ -36,7 +36,7 @@ fn new_owner_message_hash() -> felt252 {
     // Hardcoded hash of the message because get_message_hash_rev_1 uses get_contract_address() and we can't mock it
     // To update it go to src/multiowner_account/replace_owners_message.cairo and print the hash with
     // hardcoded get_contract_address() to ARGENT_ACCOUNT_ADDRESS
-    764072799120191316019353293043619478399628197068789679357607976020308362696
+    1276015325954735817330442780660672625383852586659503239691558137778155209517
 }
 
 

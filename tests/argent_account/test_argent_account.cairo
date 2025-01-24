@@ -1,4 +1,4 @@
-use argent::multiowner_account::reset_owners_message::ResetOwners;
+use argent::multiowner_account::owner_alive::OwnerAlive;
 use argent::multiowner_account::{
     events::{OwnerAddedGuid, OwnerRemovedGuid}, owner_manager::owner_manager_component,
     guardian_manager::guardian_manager_component, argent_account::ArgentAccount

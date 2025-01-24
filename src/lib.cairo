@@ -46,9 +46,9 @@ mod multiowner_account {
     mod argent_account;
     mod events;
     mod guardian_manager;
+    mod owner_alive;
     mod owner_manager;
     mod recovery;
-    mod reset_owners_message;
     mod signer_storage_linked_set;
     mod upgrade_migration;
 }

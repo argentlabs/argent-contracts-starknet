@@ -4,6 +4,7 @@ mod ArgentAccount {
     use argent::introspection::src5::src5_component;
     use argent::multiowner_account::account_interface::{
         IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait,
+        OwnerAliveSignature
     };
     use argent::multiowner_account::events::{
         SignerLinked, TransactionExecuted, AccountCreated, AccountCreatedGuid, EscapeOwnerTriggeredGuid,
@@ -12,15 +13,17 @@ mod ArgentAccount {
     use argent::multiowner_account::guardian_manager::{
         IGuardianManager, guardian_manager_component, guardian_manager_component::GuardianManagerInternalImpl
     };
+    use argent::multiowner_account::owner_alive::OwnerAlive;
     use argent::multiowner_account::owner_manager::{
         owner_manager_component, owner_manager_component::OwnerManagerInternalImpl
     };
     use argent::multiowner_account::recovery::{Escape, EscapeType};
-    use argent::multiowner_account::reset_owners_message::ResetOwners;
     use argent::multiowner_account::upgrade_migration::{
         IUpgradeMigrationInternal, upgrade_migration_component,
         upgrade_migration_component::UpgradeMigrationInternalImpl, IUpgradeMigrationCallback
     };
+    use argent::utils::array_ext::ArrayContains;
+
     use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{
         outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
@@ -402,34 +405,62 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
         }
 
-        fn remove_owners(ref self: ContractState, owner_guids_to_remove: Array<felt252>) {
+        fn remove_owners(
+            ref self: ContractState,
+            owner_guids_to_remove: Array<felt252>,
+            owner_alive_signature: Option<OwnerAliveSignature>
+        ) {
             assert_only_self();
-            // during __validate__ we assert that the owner is not removing itself and therefore there's at least one
-            // active owner remaining
             self.owner_manager.remove_owners(owner_guids_to_remove);
+
+            if let Option::Some(owner_alive_signature) = owner_alive_signature {
+                self.assert_valid_owner_alive_signature(owner_alive_signature);
+            } // else { validation will ensure it's not needed }
+
             // Reset the escape as we have signatures from both the owner and the guardian
             self.reset_escape();
             self.reset_escape_timestamps();
         }
 
-        fn reset_owners(ref self: ContractState, new_single_owner: SignerSignature, signature_expiration: u64) {
+        fn reset_owners(
+            ref self: ContractState, new_single_owner: Signer, owner_alive_signature: Option<OwnerAliveSignature>
+        ) {
             assert_only_self();
-            let new_owner = new_single_owner.signer();
-            self.assert_valid_new_owner_signature(new_single_owner, signature_expiration);
             // This already emits OwnerRemovedGuid & OwnerAddedGuid events
-            self.owner_manager.reset_owners(new_owner.storage_value());
+            self.owner_manager.reset_owners(new_single_owner.storage_value());
+            self.emit(SignerLinked { signer_guid: new_single_owner.into_guid(), signer: new_single_owner });
 
-            // if let Option::Some(new_owner_pubkey) = new_owner.storage_value().starknet_pubkey_or_none() {
-            //     self.emit(OwnerChanged { new_owner: new_owner_pubkey });
-            // };
-            // TODO Check events w/ backend, probably
-            let new_owner_guid = new_owner.into_guid();
-            // self.emit(OwnerChangedGuid { new_owner_guid });
-            self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
+            if let Option::Some(owner_alive_signature) = owner_alive_signature {
+                self.assert_valid_owner_alive_signature(owner_alive_signature);
+            } // else { validation will ensure it's not needed }
 
             self.reset_escape();
             self.reset_escape_timestamps();
         }
+
+        fn replace_owner(
+            ref self: ContractState, owner_guid_to_remove: felt252,
+            new_owner: Signer,
+            owner_alive_signature: Option<OwnerAliveSignature>
+        ) {
+            assert_only_self();
+            // This already emits OwnerRemovedGuid & OwnerAddedGuid events
+            self.owner_manager.remove_owners(array![owner_guid_to_remove]);
+            self.owner_manager.add_owners(array![new_owner]);
+
+            self.emit(SignerLinked { signer_guid: new_owner.into_guid(), signer: new_owner });
+
+            if let Option::Some(owner_alive_signature) = owner_alive_signature {
+                self.assert_valid_owner_alive_signature(owner_alive_signature);
+            } // else { validation will ensure it's not needed }
+
+            self.reset_escape();
+            self.reset_escape_timestamps();
+        }
+
+
+
+
 
         fn add_guardians(ref self: ContractState, new_guardians: Array<Signer>) {
             assert_only_self();
@@ -699,16 +730,43 @@ mod ArgentAccount {
                         return; // valid
                     }
 
-                    if selector == selector!("remove_owners") {
-                        // guarantees that the owner is not removing itself and therefore there is at least one active
-                        // owner remaining
-                        let owner_guids_to_remove: Array<felt252> = full_deserialize(*call.calldata)
-                            .expect('argent/invalid-calldata');
+                    if selector == selector!("reset_owners") {
                         let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
-                        let signature_owner_guid = (*signer_signatures[0]).signer().into_guid();
-                        for owner_guid_to_remove in owner_guids_to_remove {
-                            assert(owner_guid_to_remove != signature_owner_guid, 'argent/cant-remove-self');
-                        };
+                        if !self.has_guardian() {
+                            let calldata_tuple = full_deserialize::<(Signer, Option<OwnerAliveSignature>)>(*call.calldata)
+                                .expect('argent/invalid-calldata');
+                            let (new_single_owner, owner_alive_signature) = calldata_tuple;
+                            let signer_still_valid = (new_single_owner == (*signer_signatures[0]).signer());
+                            assert(signer_still_valid || owner_alive_signature.is_some(), 'argent/missing-owner-alive');
+                        }
+                        self.assert_valid_span_signature(execution_hash, signer_signatures.span());
+                        return; // valid
+                    }
+
+                    if selector == selector!("replace_owner") {
+                        let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
+                        if !self.has_guardian() {
+                            let calldata_tuple = full_deserialize::<(felt252, Signer, Option<OwnerAliveSignature>)>(*call.calldata)
+                                .expect('argent/invalid-calldata');
+                            let (owner_guid_to_remove, new_owner, owner_alive_signature) = calldata_tuple;
+                            let signer_owner  = (*signer_signatures[0]).signer();
+                            let signer_still_valid = owner_guid_to_remove != signer_owner.into_guid() || new_owner == signer_owner;
+                            assert(signer_still_valid || owner_alive_signature.is_some(), 'argent/missing-owner-alive');
+                        }
+                        self.assert_valid_span_signature(execution_hash, signer_signatures.span());
+                        return; // valid
+                    }
+
+                    if selector == selector!("remove_owners") {
+                        let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
+                        if !self.has_guardian() {
+                            let calldata_tuple = full_deserialize::<(Array<felt252>, Option<OwnerAliveSignature>)>(*call.calldata)
+                                .expect('argent/invalid-calldata');
+                            let (owner_guids_to_remove, owner_alive_signature)= calldata_tuple;
+                            let signer_still_valid = !owner_guids_to_remove.contains((*signer_signatures[0]).signer().into_guid());
+
+                            assert(signer_still_valid || owner_alive_signature.is_some(), 'argent/missing-owner-alive');
+                        }
                         self.assert_valid_span_signature(execution_hash, signer_signatures.span());
                         return; // valid
                     }
@@ -830,15 +888,15 @@ mod ArgentAccount {
             }
         }
 
-        /// The message hash is the result of hashing the SNIP-12 compliant object ResetOwners
-        fn assert_valid_new_owner_signature(
-            self: @ContractState, new_single_owner: SignerSignature, signature_expiration: u64
-        ) {
+        /// The message hash is the result of hashing the SNIP-12 compliant object OwnerAlive
+        fn assert_valid_owner_alive_signature(self: @ContractState, owner_alive_signature: OwnerAliveSignature) {
+            let signature_expiration = owner_alive_signature.signature_expiration;
+            let owner_signature = owner_alive_signature.owner_signature;
             assert(signature_expiration >= get_block_timestamp(), 'argent/expired-signature');
             assert(signature_expiration - get_block_timestamp() <= ONE_DAY, 'argent/timestamp-too-far-future');
-            let new_owner_guid = new_single_owner.signer().into_guid();
-            let message_hash = ResetOwners { new_owner_guid, signature_expiration }.get_message_hash_rev_1();
-            let is_valid = new_single_owner.is_valid_signature(message_hash);
+            let new_owner_guid = owner_signature.signer().into_guid();
+            let message_hash = OwnerAlive { new_owner_guid, signature_expiration }.get_message_hash_rev_1();
+            let is_valid = owner_signature.is_valid_signature(message_hash);
             assert(is_valid, 'argent/invalid-new-owner-sig');
         }
 

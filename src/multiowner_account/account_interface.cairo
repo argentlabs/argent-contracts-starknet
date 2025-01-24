@@ -22,15 +22,13 @@ trait IArgentMultiOwnerAccount<TContractState> {
 
     /// @notice Removes all owners from this account and adds a new one
     /// @dev Must be called by the account and authorized by 1 owner and a guardian (if guardian is set)
-    /// @param new_single_owner SignerSignature of the new owner
-    /// Required to prevent changing to a signer which is not in control of the user
-    /// It is the signature of the SNIP-12 V1 compliant object ResetOwners
-    /// @param signature_expiration Signature expiration timestamp in seconds since the Unix epoch
-    /// cannot be in the past: before current timestamp
-    /// cannot be too far in the future: current timestamp + 1 DAY
+    /// @param new_owner The new owner
+    /// @param owner_alive_signature Signature proving there is a valid owner after the change, required when this call
+    /// was signed by an owner that will be removed from the account with this action and there's no guardian
     /// @dev It will cancel any existing escape
-    fn reset_owners(ref self: TContractState, new_single_owner: SignerSignature, signature_expiration: u64);
-
+    fn reset_owners(
+        ref self: TContractState, new_single_owner: Signer, owner_alive_signature: Option<OwnerAliveSignature>
+    );
     /// @notice Adds new owners to this account
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     /// @dev It will cancel any existing escape
@@ -40,7 +38,18 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     /// @dev The owner signing this call cannot be removed
     /// @dev It will cancel any existing escape
-    fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>);
+    fn remove_owners(
+        ref self: TContractState,
+        owner_guids_to_remove: Array<felt252>,
+        owner_alive_signature: Option<OwnerAliveSignature>
+    );
+
+    fn replace_owner(
+        ref self: TContractState,
+        owner_guid_to_remove: felt252,
+        new_owner: Signer,
+        owner_alive_signature: Option<OwnerAliveSignature>
+    );
 
     /// @notice Adds new guardians to this account
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
@@ -112,4 +121,14 @@ trait IArgentMultiOwnerAccount<TContractState> {
     fn get_escape_and_status(self: @TContractState) -> (Escape, EscapeStatus);
     /// Reads the current security period used for escapes
     fn get_escape_security_period(self: @TContractState) -> u64;
+}
+
+
+///  Required to prevent changing to an owner which is not in control of the user
+#[derive(Drop, Copy, Serde)]
+struct OwnerAliveSignature {
+    /// It is the signature of the SNIP-12 V1 compliant object OwnerAlive
+    owner_signature: SignerSignature,
+    /// in seconds. cannot be more than 24 hours in the future
+    signature_expiration: u64
 }

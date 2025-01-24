@@ -22,7 +22,6 @@ mod ArgentAccount {
         IUpgradeMigrationInternal, upgrade_migration_component,
         upgrade_migration_component::UpgradeMigrationInternalImpl, IUpgradeMigrationCallback
     };
-    use argent::utils::array_ext::ArrayContains;
 
     use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{
@@ -38,6 +37,7 @@ mod ArgentAccount {
         upgrade::{IUpgradeInternal, upgrade_component, upgrade_component::UpgradableInternalImpl},
         interface::{IUpgradableCallback, IUpgradableCallbackOld}
     };
+    use argent::utils::array_ext::ArrayContains;
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self, assert_only_protocol},
         calls::{execute_multicall, execute_multicall_with_result}, serialization::{serialize, full_deserialize},
@@ -439,7 +439,8 @@ mod ArgentAccount {
         }
 
         fn replace_owner(
-            ref self: ContractState, owner_guid_to_remove: felt252,
+            ref self: ContractState,
+            owner_guid_to_remove: felt252,
             new_owner: Signer,
             owner_alive_signature: Option<OwnerAliveSignature>
         ) {
@@ -457,9 +458,6 @@ mod ArgentAccount {
             self.reset_escape();
             self.reset_escape_timestamps();
         }
-
-
-
 
 
         fn add_guardians(ref self: ContractState, new_guardians: Array<Signer>) {
@@ -733,7 +731,9 @@ mod ArgentAccount {
                     if selector == selector!("reset_owners") {
                         let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
                         if !self.has_guardian() {
-                            let calldata_tuple = full_deserialize::<(Signer, Option<OwnerAliveSignature>)>(*call.calldata)
+                            let calldata_tuple = full_deserialize::<
+                                (Signer, Option<OwnerAliveSignature>)
+                            >(*call.calldata)
                                 .expect('argent/invalid-calldata');
                             let (new_single_owner, owner_alive_signature) = calldata_tuple;
                             let signer_still_valid = (new_single_owner == (*signer_signatures[0]).signer());
@@ -746,11 +746,14 @@ mod ArgentAccount {
                     if selector == selector!("replace_owner") {
                         let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
                         if !self.has_guardian() {
-                            let calldata_tuple = full_deserialize::<(felt252, Signer, Option<OwnerAliveSignature>)>(*call.calldata)
+                            let calldata_tuple = full_deserialize::<
+                                (felt252, Signer, Option<OwnerAliveSignature>)
+                            >(*call.calldata)
                                 .expect('argent/invalid-calldata');
                             let (owner_guid_to_remove, new_owner, owner_alive_signature) = calldata_tuple;
-                            let signer_owner  = (*signer_signatures[0]).signer();
-                            let signer_still_valid = owner_guid_to_remove != signer_owner.into_guid() || new_owner == signer_owner;
+                            let signer_owner = (*signer_signatures[0]).signer();
+                            let signer_still_valid = owner_guid_to_remove != signer_owner.into_guid()
+                                || new_owner == signer_owner;
                             assert(signer_still_valid || owner_alive_signature.is_some(), 'argent/missing-owner-alive');
                         }
                         self.assert_valid_span_signature(execution_hash, signer_signatures.span());
@@ -760,10 +763,13 @@ mod ArgentAccount {
                     if selector == selector!("remove_owners") {
                         let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
                         if !self.has_guardian() {
-                            let calldata_tuple = full_deserialize::<(Array<felt252>, Option<OwnerAliveSignature>)>(*call.calldata)
+                            let calldata_tuple = full_deserialize::<
+                                (Array<felt252>, Option<OwnerAliveSignature>)
+                            >(*call.calldata)
                                 .expect('argent/invalid-calldata');
-                            let (owner_guids_to_remove, owner_alive_signature)= calldata_tuple;
-                            let signer_still_valid = !owner_guids_to_remove.contains((*signer_signatures[0]).signer().into_guid());
+                            let (owner_guids_to_remove, owner_alive_signature) = calldata_tuple;
+                            let signer_still_valid = !owner_guids_to_remove
+                                .contains((*signer_signatures[0]).signer().into_guid());
 
                             assert(signer_still_valid || owner_alive_signature.is_some(), 'argent/missing-owner-alive');
                         }

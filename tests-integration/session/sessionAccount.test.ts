@@ -1,6 +1,7 @@
 import { CairoOption, CairoOptionVariant, CallData, Contract, num } from "starknet";
 import {
   AllowedMethod,
+  EstimateStarknetKeyPair,
   SignerType,
   StarknetKeyPair,
   deployAccount,
@@ -61,8 +62,9 @@ describe("ArgentAccount: session basics", function () {
   it(`Should be possible to estimate a basic session given an invalid guardian signature`, async function () {
     const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
 
+    const estimateGuardian = new EstimateStarknetKeyPair((guardian as StarknetKeyPair).publicKey);
     const { accountWithDappSigner, sessionRequest, authorizationSignature, dappService } = await setupSession({
-      guardian: guardian as StarknetKeyPair,
+      guardian: estimateGuardian,
       account,
       expiry: initialTime + 150n,
       allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
@@ -74,13 +76,6 @@ describe("ArgentAccount: session basics", function () {
       account: accountWithDappSigner,
       completedSession: sessionRequest,
       authorizationSignature,
-    });
-
-    const pubkey = sessionToken.guardianSignature.variant.Starknet.pubkey;
-    sessionToken.guardianSignature = signerTypeToCustomEnum(SignerType.Starknet, {
-      pubkey,
-      r: 42,
-      s: 69,
     });
 
     // Should pass when estimating

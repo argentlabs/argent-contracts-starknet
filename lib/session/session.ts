@@ -18,6 +18,7 @@ import {
   ArgentX,
   BackendService,
   DappService,
+  EstimateStarknetKeyPair,
   StarknetKeyPair,
   manager,
   randomStarknetKeyPair,
@@ -224,7 +225,7 @@ export async function setupSession({
   cacheOwnerGuid = undefined,
   isLegacyAccount = false,
 }: {
-  guardian: StarknetKeyPair;
+  guardian: StarknetKeyPair | EstimateStarknetKeyPair;
   account: ArgentAccount;
   mockDappContractAddress?: string;
   allowedMethods: AllowedMethod[];

@@ -5,8 +5,6 @@ import {
   CallData,
   InvocationsSignerDetails,
   TypedDataRevision,
-  ec,
-  num,
   typedData,
 } from "starknet";
 import {
@@ -232,8 +230,8 @@ export class DappService {
       accountAddress,
       cacheOwnerGuid,
     );
-    const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));
-    return [signature.r, signature.s];
+    const signature = await this.sessionKey.signRaw(sessionWithTxHash);
+    return [BigInt(signature[2]), BigInt(signature[3])];
   }
   // function needed as starknetSignatureType in signer.ts is already compiled
   private getStarknetSignatureType(pubkey: BigNumberish, signature: bigint[]) {

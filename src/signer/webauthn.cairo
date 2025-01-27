@@ -67,8 +67,8 @@ fn encode_challenge(hash: felt252) -> Span<u8> {
     // So this gets padded to the next byte only
     let mut encoded_bytes = Base64UrlEncoder::encode(bytes).span();
     assert!(encoded_bytes.len() == 44, "webauthn/invalid-challenge-encoding");
-    let last_char = encoded_bytes.pop_back();
-    assert!(last_char.unwrap() == @'=', "webauthn/invalid-challenge-encoding");
+    let last_char = *encoded_bytes.pop_back().unwrap();
+    assert!(last_char == '=', "webauthn/invalid-challenge-encoding");
     encoded_bytes
 }
 

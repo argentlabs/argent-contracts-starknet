@@ -59,7 +59,6 @@ interface WebauthnSignature {
   flags: number;
   sign_count: number;
   ec_signature: { r: Uint256; s: Uint256; y_parity: boolean };
-  sha256_implementation?: CairoCustomEnum;
 }
 
 export class WebauthnOwner extends KeyPair {
@@ -70,7 +69,6 @@ export class WebauthnOwner extends KeyPair {
     pk?: string,
     public rpId = "localhost",
     public origin = "http://localhost:5173",
-    public legacy = false,
   ) {
     super();
     this.pk = pk ? hex2buf(normalizeTransactionHash(pk)) : secp256r1.utils.randomPrivateKey();
@@ -121,12 +119,7 @@ export class WebauthnOwner extends KeyPair {
     const signCount = 1;
     const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([flags, ...numberToBytes(signCount)]));
 
-    let hash = normalizeTransactionHash(transactionHash);
-    // In legacy mode we only care about Cairo1 sha256
-    if (this.legacy) {
-      hash += `01`;
-    }
-    const challenge = buf2base64url(hex2buf(hash));
+    const challenge = buf2base64url(hex2buf(normalizeTransactionHash(transactionHash)));
 
     const clientData = JSON.stringify(this.getClientData(challenge));
 
@@ -166,12 +159,6 @@ export class WebauthnOwner extends KeyPair {
         y_parity: signature.yParity,
       },
     };
-    if (this.legacy) {
-      signatureObj.sha256_implementation = new CairoCustomEnum({
-        Cairo0: undefined,
-        Cairo1: {},
-      });
-    }
     return signatureObj;
   }
 
@@ -183,7 +170,9 @@ export class WebauthnOwner extends KeyPair {
 // LEGACY WEBAUTHN
 type LegacyWebauthnSignature = {
   cross_origin: boolean;
-} & WebauthnSignature;
+} & WebauthnSignature & {
+    sha256_implementation: CairoCustomEnum;
+  };
 
 export class LegacyWebauthnOwner extends WebauthnOwner {
   crossOrigin = false;
@@ -197,10 +186,14 @@ export class LegacyWebauthnOwner extends WebauthnOwner {
   }
 
   public async signHash(transactionHash: string): Promise<LegacyWebauthnSignature> {
-    const webauthnSignature = await super.signHash(transactionHash);
+    const webauthnSignature = await super.signHash(`${normalizeTransactionHash(transactionHash)}01`);
     return {
       cross_origin: this.crossOrigin,
       ...webauthnSignature,
+      sha256_implementation: new CairoCustomEnum({
+        Cairo0: undefined,
+        Cairo1: {},
+      }),
     };
   }
 }
@@ -210,4 +203,4 @@ function sha256(message: BinaryLike) {
 }
 
 export const randomWebauthnOwner = () => new WebauthnOwner(undefined, undefined, undefined);
-export const randomWebauthnLegacyOwner = () => new LegacyWebauthnOwner(undefined, undefined, undefined, true);
+export const randomWebauthnLegacyOwner = () => new LegacyWebauthnOwner(undefined, undefined, undefined);

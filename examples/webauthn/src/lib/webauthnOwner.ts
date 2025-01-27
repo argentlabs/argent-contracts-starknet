@@ -185,8 +185,6 @@ export class WebauthnOwner extends KeyPair {
     };
 
     console.log("WebauthnOwner signed, signature is:", signature);
-    console.log("client data json outro", new TextDecoder().decode(new Uint8Array(signature.client_data_json_outro)));
-    console.log("message hash", messageHash);
     return signature;
   }
 }

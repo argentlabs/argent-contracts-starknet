@@ -70,7 +70,6 @@ export class WebauthnOwner extends KeyPair {
     pk?: string,
     public rpId = "localhost",
     public origin = "http://localhost:5173",
-    public useCairo0Sha256 = false,
     public legacy = false,
   ) {
     super();
@@ -122,10 +121,10 @@ export class WebauthnOwner extends KeyPair {
     const signCount = 1;
     const authenticatorData = concatBytes(sha256(this.rpId), new Uint8Array([flags, ...numberToBytes(signCount)]));
 
-    const sha256Impl = this.useCairo0Sha256 ? "0" : "1";
     let hash = normalizeTransactionHash(transactionHash);
+    // In legacy mode we only care about Cairo1 sha256
     if (this.legacy) {
-      hash += `0${sha256Impl}`;
+      hash += `01`;
     }
     const challenge = buf2base64url(hex2buf(hash));
 
@@ -155,7 +154,6 @@ export class WebauthnOwner extends KeyPair {
     //         s: 0x${signature.s.toString(16)},
     //         y_parity: ${signature.yParity},
     //     },
-    //     sha256_implementation: Sha256Implementation::Cairo${sha256Impl},
     // };`);
 
     const signatureObj: WebauthnSignature = {
@@ -170,8 +168,8 @@ export class WebauthnOwner extends KeyPair {
     };
     if (this.legacy) {
       signatureObj.sha256_implementation = new CairoCustomEnum({
-        Cairo0: this.useCairo0Sha256 ? {} : undefined,
-        Cairo1: this.useCairo0Sha256 ? undefined : {},
+        Cairo0: undefined,
+        Cairo1: {},
       });
     }
     return signatureObj;
@@ -211,7 +209,5 @@ function sha256(message: BinaryLike) {
   return createHash("sha256").update(message).digest();
 }
 
-export const randomWebauthnOwner = () => new WebauthnOwner(undefined, undefined, undefined, false);
-export const randomWebauthnLegacyOwner = () => new LegacyWebauthnOwner(undefined, undefined, undefined, false, true);
-export const randomWebauthnLegacyCairo0Owner = () =>
-  new LegacyWebauthnOwner(undefined, undefined, undefined, true, true);
+export const randomWebauthnOwner = () => new WebauthnOwner(undefined, undefined, undefined);
+export const randomWebauthnLegacyOwner = () => new LegacyWebauthnOwner(undefined, undefined, undefined, true);

@@ -29,7 +29,6 @@ fn localhost_rp() -> (ByteArray, u256) {
     (origin, rp_id_hash)
 }
 
-// Do we need Cairo0 test?
 fn valid_signer() -> (felt252, WebauthnSigner, WebauthnSignature) {
     let (origin, rp_id_hash) = localhost_rp();
     let transaction_hash = 0x5bcd9babc7bde1b7e104be1f3239816cf1c19cd22d5d0e29d1026cc7d0ea3e1;

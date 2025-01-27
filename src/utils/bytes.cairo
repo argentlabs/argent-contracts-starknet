@@ -1,4 +1,4 @@
-use integer::{u128_safe_divmod, u32_safe_divmod};
+use core::integer::{u128_safe_divmod, u32_safe_divmod};
 
 fn u256_to_u8s(word: u256) -> Array<u8> {
     let (rest, byte_32) = u128_safe_divmod(word.low, 0x100);

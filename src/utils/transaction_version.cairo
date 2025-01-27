@@ -1,4 +1,5 @@
-use starknet::{SyscallResultTrait, get_caller_address, get_execution_info, get_tx_info};
+use core::num::traits::Zero;
+use starknet::{get_caller_address, get_tx_info};
 
 const TX_V1: felt252 = 1; // INVOKE
 const TX_V1_ESTIMATE: felt252 = 0x100000000000000000000000000000000 + 1; // 2**128 + TX_V1

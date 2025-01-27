@@ -2,7 +2,7 @@
 name = "argent"
 version = "0.1.0"
 cairo-version = "2.10.0-rc.1"
-edition="2023_01"
+edition="2024_07"
 
 [[target.starknet-contract]]
 sierra = true

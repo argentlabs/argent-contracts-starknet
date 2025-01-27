@@ -1,6 +1,6 @@
-use hash::{HashStateExTrait, HashStateTrait};
-use pedersen::PedersenTrait;
-use poseidon::poseidon_hash_span;
+use core::hash::{HashStateExTrait, HashStateTrait};
+use core::pedersen::PedersenTrait;
+use core::poseidon::poseidon_hash_span;
 
 /// Reference to SNIP-12: https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-12.md
 
@@ -20,7 +20,7 @@ trait IStructHashRev0<T> {
 }
 
 /// @notice Defines the function to generates the SNIP-12 revision 1 compliant hash on an object
-trait IStructHashRev1<T> {
+pub trait IStructHashRev1<T> {
     fn get_struct_hash_rev_1(self: @T) -> felt252;
 }
 

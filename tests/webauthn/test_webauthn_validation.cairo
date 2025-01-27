@@ -72,7 +72,7 @@ fn test_is_valid_webauthn_signature_with_extra_json() {
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
         client_data_json_outro: ",\"crossOrigin\":false,\"extraField\":\"random data\"}".into_bytes().span(),
-        flags: 5,
+        flags: 0b00000101,
         sign_count: 0,
         ec_signature: Signature {
             r: 0xb7fdfa659cbe0beb8c6723420612d884fbf795c1f7e4c53d72bae3c84d529eb2,
@@ -94,7 +94,7 @@ fn test_is_valid_webauthn_signature_sign_count() {
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
         client_data_json_outro: array![].span(),
-        flags: 5,
+        flags: 0b00000101,
         sign_count: 42,
         ec_signature: Signature {
             r: 0x9574895b2b167b811118b42fe6ec515b7ccf1e4900460a5cc16b73da7094c18f,

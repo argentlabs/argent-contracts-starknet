@@ -124,7 +124,6 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public async signHash(messageHash: string): Promise<WebauthnSignature> {
-    // TODO Add button to configure it from UI
     const normalizedChallenge = hex2buf(normalizeTransactionHash(messageHash));
 
     const assertionResponse = await this.requestSignature(this.attestation, normalizedChallenge);
@@ -133,8 +132,6 @@ export class WebauthnOwner extends KeyPair {
     const signCount = Number(BigInt(buf2hex(authenticatorData.slice(33, 37))));
     const jsonString = new TextDecoder().decode(clientDataJson);
     const startJsonString = `{"type":"webauthn.get","challenge":"${buf2base64url(normalizedChallenge)}","origin":"${this.attestation.origin}"`;
-
-    console.log(startJsonString);
     if (!jsonString.startsWith(startJsonString)) {
       console.log("Should start with: ", startJsonString);
       console.log("But got: ", jsonString);

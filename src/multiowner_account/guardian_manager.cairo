@@ -31,20 +31,12 @@ trait IGuardianManagerInternal<TContractState> {
 
     fn has_guardian(self: @TContractState) -> bool;
 
-    /// @notice Removes all guardians and optionally adds a new one
-    /// @param new_guardian The address of the new guardian, or None to disable the guardian
-    fn reset_guardians(ref self: TContractState, replacement_guardian: Option<SignerStorageValue>);
 
-    /// @notice Add new guardians to the account
-    /// @dev will revert when trying to add a signer is already a guardian
-    /// @param guardians_to_add An array with all the signers to add
-    fn add_guardians(ref self: TContractState, guardians_to_add: Array<Signer>);
+    fn change_guardians(
+        ref self: TContractState, guardian_guids_to_remove: Array<felt252>, guardians_to_add: Array<Signer>,
+    );
 
-
-    /// @notice Remove guardians to the account
-    /// @dev will revert when trying to remove a signer that isn't a guardian
-    /// @param guardian_guids_to_remove An array with all the guids to remove
-    fn remove_guardians(ref self: TContractState, guardian_guids_to_remove: Array<felt252>);
+    fn complete_guardian_escape(ref self: TContractState, new_guardian: Option<SignerStorageValue>);
 
     fn get_single_stark_guardian_pubkey(self: @TContractState) -> Option<felt252>;
     fn get_single_guardian(self: @TContractState) -> Option<SignerStorageValue>;
@@ -154,26 +146,6 @@ mod guardian_manager_component {
             !self.guardians_storage.is_empty()
         }
 
-        fn add_guardians(ref self: ComponentState<TContractState>, guardians_to_add: Array<Signer>) {
-            let guardians_len = self.guardians_storage.len();
-
-            self.assert_valid_guardian_count(guardians_len + guardians_to_add.len());
-            for guardian in guardians_to_add {
-                let guardian_guid = self.guardians_storage.insert(guardian.storage_value());
-                self.emit_guardian_added(guardian_guid);
-                self.emit_signer_linked_event(SignerLinked { signer_guid: guardian_guid, signer: guardian });
-            };
-        }
-
-        fn remove_guardians(ref self: ComponentState<TContractState>, guardian_guids_to_remove: Array<felt252>) {
-            self.assert_valid_guardian_count(self.guardians_storage.len() - guardian_guids_to_remove.len());
-
-            for guid in guardian_guids_to_remove {
-                self.guardians_storage.remove(guid);
-                self.emit_guardian_removed(guid);
-            };
-        }
-
         fn get_single_guardian(self: @ComponentState<TContractState>) -> Option<SignerStorageValue> {
             self.guardians_storage.single()
         }
@@ -182,28 +154,40 @@ mod guardian_manager_component {
             self.get_single_guardian()?.starknet_pubkey_or_none()
         }
 
-        fn reset_guardians(ref self: ComponentState<TContractState>, replacement_guardian: Option<SignerStorageValue>) {
-            let replacement_guid = if let Option::Some(replacement_guardian) = replacement_guardian {
-                replacement_guardian.into_guid()
+        fn change_guardians(
+            ref self: ComponentState<TContractState>,
+            guardian_guids_to_remove: Array<felt252>,
+            guardians_to_add: Array<Signer>,
+        ) {
+            let mut guardians_to_add_storage = array![];
+            for guardian in guardians_to_add {
+                let guardian_storage = guardian.storage_value();
+                self
+                    .emit_signer_linked_event(
+                        SignerLinked { signer_guid: guardian_storage.into_guid(), signer: guardian }
+                    );
+                guardians_to_add_storage.append(guardian_storage);
+            };
+            self.change_guardians_using_storage(guardian_guids_to_remove, guardians_to_add_storage);
+        }
+
+        fn complete_guardian_escape(
+            ref self: ComponentState<TContractState>, new_guardian: Option<SignerStorageValue>
+        ) {
+            if let Option::Some(new_guardian) = new_guardian {
+                let new_guardian_guid = new_guardian.into_guid();
+                let mut guardians_to_remove = array![];
+                for guardian_to_remove_guid in self
+                    .guardians_storage
+                    .get_all_hashes() {
+                        if guardian_to_remove_guid != new_guardian_guid {
+                            guardians_to_remove.append(guardian_to_remove_guid);
+                        };
+                    };
+                self.change_guardians_using_storage(guardians_to_remove, array![new_guardian]);
             } else {
-                0
+                self.change_guardians_using_storage(self.guardians_storage.get_all_hashes(), array![]);
             };
-            let mut replacement_was_already_guardian = false;
-            let current_guardian_guids = self.guardians_storage.get_all_hashes();
-            for current_guardian_guid in current_guardian_guids {
-                if current_guardian_guid != replacement_guid {
-                    self.guardians_storage.remove(current_guardian_guid);
-                    self.emit_guardian_removed(current_guardian_guid);
-                } else {
-                    replacement_was_already_guardian = true;
-                }
-            };
-            if !replacement_was_already_guardian {
-                if let Option::Some(new_guardian) = replacement_guardian {
-                    let new_guardian_guid = self.guardians_storage.insert(new_guardian);
-                    self.emit_guardian_added(new_guardian_guid);
-                }
-            }
         }
 
         fn assert_valid_storage(self: @ComponentState<TContractState>) {
@@ -215,6 +199,23 @@ mod guardian_manager_component {
     impl Private<
         TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
     > of PrivateTrait<TContractState> {
+        fn change_guardians_using_storage(
+            ref self: ComponentState<TContractState>,
+            guardian_guids_to_remove: Array<felt252>,
+            guardians_to_add: Array<SignerStorageValue>
+        ) {
+            for guid_to_remove in guardian_guids_to_remove
+                .span() {
+                    self.guardians_storage.remove(*guid_to_remove);
+                    self.emit_guardian_removed(*guid_to_remove);
+                };
+            for guardian in guardians_to_add {
+                let guardian_guid = self.guardians_storage.insert(guardian);
+                self.emit_guardian_added(guardian_guid);
+            };
+            self.assert_valid_storage();
+        }
+
         fn assert_valid_guardian_count(self: @ComponentState<TContractState>, signers_len: usize) {
             assert(signers_len <= MAX_SIGNERS_COUNT, 'argent/invalid-signers-len');
         }

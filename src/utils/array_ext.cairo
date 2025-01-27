@@ -7,13 +7,13 @@ impl ArrayExt<T, +Drop<T>, +Copy<T>> of ArrayExtTrait<T> {
         };
     }
 }
+
 #[generate_trait]
-impl ArrayContains<T, +Drop<T>, +Copy<T>, +PartialEq<T>> of ArrayContainsTrait<T> {
-    #[inline(always)]
-    fn contains(self: Array<T>, value: T) -> bool {
+impl SpanContains<T, +Drop<T>, +Copy<T>, +PartialEq<T>> of SpanContainsTrait<T> {
+    fn contains(self: @Span<T>, item: T) -> bool {
         let mut found = false;
-        for item in self {
-            if item == value {
+        for self_item in *self {
+            if item == *self_item {
                 found = true;
                 break;
             }

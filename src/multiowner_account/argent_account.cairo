@@ -168,11 +168,23 @@ mod ArgentAccount {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: Signer, guardian: Option<Signer>) {
-        self.owner_manager.initialize(owner);
-        if let Option::Some(guardian) = guardian {
-            self.guardian_manager.initialize(guardian);
+        let owner_guid = self.owner_manager.initialize(owner);
+        let guardian_guid_or_zero = if let Option::Some(guardian) = guardian {
+            self.guardian_manager.initialize(guardian)
+        } else {
+            0
         };
-        // TODO: AccountCreated events
+
+        if let Option::Some(starknet_owner) = owner.starknet_pubkey_or_none() {
+            if let Option::Some(guardian) = guardian {
+                if let Option::Some(starknet_guardian) = guardian.starknet_pubkey_or_none() {
+                    self.emit(AccountCreated { owner: starknet_owner, guardian: starknet_guardian });
+                };
+            } else {
+                self.emit(AccountCreated { owner: starknet_owner, guardian: 0 });
+            };
+        };
+        self.emit(AccountCreatedGuid { owner_guid, guardian_guid: guardian_guid_or_zero });
     }
 
     #[abi(embed_v0)]
@@ -416,16 +428,9 @@ mod ArgentAccount {
             assert_only_self();
             let new_owner = new_single_owner.signer();
             self.assert_valid_new_owner_signature(new_single_owner, signature_expiration);
-            // This already emits OwnerRemovedGuid & OwnerAddedGuid events
+            // This emits OwnerRemovedGuid & OwnerAddedGuid events
             self.owner_manager.reset_owners(new_owner.storage_value());
-
-            // if let Option::Some(new_owner_pubkey) = new_owner.storage_value().starknet_pubkey_or_none() {
-            //     self.emit(OwnerChanged { new_owner: new_owner_pubkey });
-            // };
-            // TODO Check events w/ backend, probably
-            let new_owner_guid = new_owner.into_guid();
-            // self.emit(OwnerChangedGuid { new_owner_guid });
-            self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
+            self.emit(SignerLinked { signer_guid: new_owner.into_guid(), signer: new_owner });
 
             self.reset_escape();
             self.reset_escape_timestamps();

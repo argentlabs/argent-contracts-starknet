@@ -26,7 +26,10 @@ pub trait IGuardianManager<TContractState> {
 
 #[starknet::interface]
 trait IGuardianManagerInternal<TContractState> {
-    fn initialize(ref self: TContractState, guardian: Signer);
+    /// @notice Initializes the contract with the first guardian. Should ony be called in the constructor
+    /// @param guardian The first guardian of the account
+    /// @return The guid of the guardian
+    fn initialize(ref self: TContractState, guardian: Signer) -> felt252;
     fn migrate_guardians_storage(ref self: TContractState, guardians: Array<SignerStorageValue>);
 
     fn has_guardian(self: @TContractState) -> bool;
@@ -135,10 +138,11 @@ mod guardian_manager_component {
     impl GuardianManagerInternal<
         TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
     > of IGuardianManagerInternal<ComponentState<TContractState>> {
-        fn initialize(ref self: ComponentState<TContractState>, guardian: Signer) {
+        fn initialize(ref self: ComponentState<TContractState>, guardian: Signer) -> felt252 {
             let guid = self.guardians_storage.insert(guardian.storage_value());
             self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: guardian });
             self.emit_guardian_added(guid);
+            guid
         }
 
         fn migrate_guardians_storage(ref self: ComponentState<TContractState>, guardians: Array<SignerStorageValue>) {

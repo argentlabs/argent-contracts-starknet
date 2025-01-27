@@ -207,6 +207,13 @@ impl SignerTraitImpl of SignerTrait {
             Signer::Webauthn => SignerType::Webauthn,
         }
     }
+    #[inline(always)]
+    fn starknet_pubkey_or_none(self: Signer) -> Option<felt252> {
+        match self {
+            Signer::Starknet(signer) => Option::Some(signer.pubkey.into()),
+            _ => Option::None,
+        }
+    }
 }
 
 #[generate_trait]

@@ -15,7 +15,7 @@ describe("ArgentAccount: declare", function () {
   });
 
   for (const useTxV3 of [false, true]) {
-    it.only(`Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) (TxV3: ${useTxV3})`, async function () {
+    it(`Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) (TxV3: ${useTxV3})`, async function () {
       const { account } = await deployAccount({ useTxV3 });
       // Using version 1 will require ETH
       await manager.mintEth(account.address, 1e18);

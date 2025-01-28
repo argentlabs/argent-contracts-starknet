@@ -34,7 +34,7 @@ fn NEW_OWNER() -> (StarknetSigner, StarknetSignature) {
 
 fn new_owner_message_hash() -> felt252 {
     // Hardcoded hash of the message because get_message_hash_rev_1 uses get_contract_address() and we can't mock it
-    // To update it go to src/multiowner_account/replace_owners_message.cairo and print the hash with
+    // To update it go to src/multiowner_account/owner_alive.cairo and print the hash with
     // hardcoded get_contract_address() to ARGENT_ACCOUNT_ADDRESS
     1276015325954735817330442780660672625383852586659503239691558137778155209517
 }

@@ -818,9 +818,10 @@ mod ArgentAccount {
             assert(signature_expiration >= get_block_timestamp(), 'argent/expired-signature');
             assert(signature_expiration - get_block_timestamp() <= ONE_DAY, 'argent/timestamp-too-far-future');
             let new_owner_guid = owner_signature.signer().into_guid();
+            assert(self.owner_manager.is_owner_guid(new_owner_guid), 'argent/invalid-sig-not-owner');
             let message_hash = OwnerAlive { new_owner_guid, signature_expiration }.get_message_hash_rev_1();
             let is_valid = owner_signature.is_valid_signature(message_hash);
-            assert(is_valid, 'argent/invalid-new-owner-sig');
+            assert(is_valid, 'argent/invalid-alive-sig');
         }
 
         fn get_escape_status(self: @ContractState, escape_ready_at: u64) -> EscapeStatus {

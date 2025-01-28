@@ -171,11 +171,23 @@ mod ArgentAccount {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: Signer, guardian: Option<Signer>) {
-        self.owner_manager.initialize(owner);
-        if let Option::Some(guardian) = guardian {
-            self.guardian_manager.initialize(guardian);
+        let owner_guid = self.owner_manager.initialize(owner);
+        let guardian_guid_or_zero = if let Option::Some(guardian) = guardian {
+            self.guardian_manager.initialize(guardian)
+        } else {
+            0
         };
-        // TODO: AccountCreated events
+
+        if let Option::Some(starknet_owner) = owner.starknet_pubkey_or_none() {
+            if let Option::Some(guardian) = guardian {
+                if let Option::Some(starknet_guardian) = guardian.starknet_pubkey_or_none() {
+                    self.emit(AccountCreated { owner: starknet_owner, guardian: starknet_guardian });
+                };
+            } else {
+                self.emit(AccountCreated { owner: starknet_owner, guardian: 0 });
+            };
+        };
+        self.emit(AccountCreatedGuid { owner_guid, guardian_guid: guardian_guid_or_zero });
     }
 
     #[abi(embed_v0)]

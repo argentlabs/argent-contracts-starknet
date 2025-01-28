@@ -36,6 +36,7 @@ mod owner_manager_component {
         Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
         SignerStorageTrait, SignerInfo
     };
+    use argent::utils::array_ext::SpanContains;
     use argent::utils::linked_set_with_head::{
         LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl
     };
@@ -133,15 +134,16 @@ mod owner_manager_component {
 
         fn complete_owner_escape(ref self: ComponentState<TContractState>, new_owner: SignerStorageValue) {
             let new_owner_guid = new_owner.into_guid();
-            let mut owners_to_remove = array![];
+            let mut owner_guids_to_remove = array![];
             for owner_to_remove_guid in self
                 .owners_storage
                 .get_all_hashes() {
                     if owner_to_remove_guid != new_owner_guid {
-                        owners_to_remove.append(owner_to_remove_guid);
+                        owner_guids_to_remove.append(owner_to_remove_guid);
                     };
                 };
-            self.change_owners_using_storage(owners_to_remove, array![new_owner]);
+
+            self.change_owners_using_storage(:owner_guids_to_remove, owners_to_add: array![new_owner]);
         }
     }
 
@@ -149,21 +151,25 @@ mod owner_manager_component {
     impl Private<
         TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
     > of PrivateTrait<TContractState> {
+        /// @dev it will revert if there's any overlap between the owners to add and the owners to remove
+        /// @dev it will revert if there are duplicate in the owners to add or remove
         fn change_owners_using_storage(
             ref self: ComponentState<TContractState>,
             owner_guids_to_remove: Array<felt252>,
             owners_to_add: Array<SignerStorageValue>,
         ) {
-            for guid_to_remove in owner_guids_to_remove
-                .span() {
-                    self.owners_storage.remove(*guid_to_remove);
-                    self.emit_owner_removed(*guid_to_remove);
-                };
-            // TODO this will allow to remove and add the same owner in the same transaction emitting both events, makes sense?
+            let owner_guids_to_remove_span = owner_guids_to_remove.span();
+            for guid_to_remove in owner_guids_to_remove {
+                self.owners_storage.remove(guid_to_remove);
+                self.emit_owner_removed(guid_to_remove);
+            };
+
             for owner_to_add in owners_to_add {
+                assert(!owner_guids_to_remove_span.contains(owner_to_add.into_guid()), 'argent/duplicated-guids');
                 let owner_guid = self.owners_storage.insert(owner_to_add);
                 self.emit_owner_added(owner_guid);
             };
+
             self.assert_valid_storage();
         }
 

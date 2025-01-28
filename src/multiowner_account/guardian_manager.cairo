@@ -53,6 +53,7 @@ mod guardian_manager_component {
     use argent::signer::signer_signature::{
         Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerStorageValue, SignerStorageTrait, SignerType
     };
+    use argent::utils::array_ext::SpanContains;
     use argent::utils::linked_set_with_head::{
         LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl
     };
@@ -176,18 +177,21 @@ mod guardian_manager_component {
         ) {
             if let Option::Some(new_guardian) = new_guardian {
                 let new_guardian_guid = new_guardian.into_guid();
-                let mut guardians_to_remove = array![];
+                let mut guardian_guids_to_remove = array![];
                 for guardian_to_remove_guid in self
                     .guardians_storage
                     .get_all_hashes() {
                         if guardian_to_remove_guid != new_guardian_guid {
-                            guardians_to_remove.append(guardian_to_remove_guid);
+                            guardian_guids_to_remove.append(guardian_to_remove_guid);
                         };
                     };
-                self.change_guardians_using_storage(guardians_to_remove, array![new_guardian]);
+                self.change_guardians_using_storage(:guardian_guids_to_remove, guardians_to_add: array![new_guardian]);
             } else {
-                self.change_guardians_using_storage(self.guardians_storage.get_all_hashes(), array![]);
-            };
+                self
+                    .change_guardians_using_storage(
+                        guardian_guids_to_remove: self.guardians_storage.get_all_hashes(), guardians_to_add: array![]
+                    );
+            }
         }
 
         fn assert_valid_storage(self: @ComponentState<TContractState>) {
@@ -199,20 +203,25 @@ mod guardian_manager_component {
     impl Private<
         TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
     > of PrivateTrait<TContractState> {
+        /// @dev it will revert if there's any overlap between the guardians to add and the guardians to remove
+        /// @dev it will revert if there are duplicate in the guardians to add or remove
         fn change_guardians_using_storage(
             ref self: ComponentState<TContractState>,
             guardian_guids_to_remove: Array<felt252>,
             guardians_to_add: Array<SignerStorageValue>
         ) {
-            for guid_to_remove in guardian_guids_to_remove
-                .span() {
-                    self.guardians_storage.remove(*guid_to_remove);
-                    self.emit_guardian_removed(*guid_to_remove);
-                };
+            let guardian_to_remove_span = guardian_guids_to_remove.span();
+            for guid_to_remove in guardian_guids_to_remove {
+                self.guardians_storage.remove(guid_to_remove);
+                self.emit_guardian_removed(guid_to_remove);
+            };
+
             for guardian in guardians_to_add {
+                assert(!guardian_to_remove_span.contains(guardian.into_guid()), 'argent/duplicated-guids');
                 let guardian_guid = self.guardians_storage.insert(guardian);
                 self.emit_guardian_added(guardian_guid);
             };
+
             self.assert_valid_storage();
         }
 

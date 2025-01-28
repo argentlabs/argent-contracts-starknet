@@ -663,7 +663,6 @@ mod ArgentAccount {
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return; // valid
                     }
-
                     if selector == selector!("change_owners") {
                         let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
                         if !self.has_guardian() {

@@ -1,5 +1,6 @@
 import {
   CairoCustomEnum,
+  CallData,
   Contract,
   shortString,
   StarknetDomain,
@@ -38,14 +39,15 @@ export const ESCAPE_TYPE_OWNER = new CairoCustomEnum({
   Owner: {},
 });
 
-export const signChangeOwnerMessage = async (
+export const signOwnerAliveMessage = async (
   accountAddress: string,
   newOwner: KeyPair,
   chainId: string,
   maxTimestamp: number,
 ) => {
-  const messageHash = await getChangeOwnerMessageHash(accountAddress, chainId, newOwner.guid, maxTimestamp);
-  return newOwner.signRaw(messageHash);
+  const messageHash = await getOwnerAliveMessageHash(accountAddress, chainId, newOwner.guid, maxTimestamp);
+  const signature = await newOwner.signRaw(messageHash);
+  return CallData.compile([...signature, maxTimestamp]);
 };
 
 const types = {
@@ -55,45 +57,45 @@ const types = {
     { name: "chainId", type: "shortstring" },
     { name: "revision", type: "shortstring" },
   ],
-  ResetOwners: [
-    { name: "New owner GUID", type: "felt" },
+  "Owner Alive": [
+    { name: "Owner GUID", type: "felt" },
     { name: "Signature expiration", type: "timestamp" },
   ],
 };
 
-interface ResetOwners {
-  newOwnerGuid: bigint;
+interface OwnerAlive {
+  ownerGuid: bigint;
   signatureExpiration: number;
 }
 
 function getDomain(chainId: string): StarknetDomain {
   return {
-    name: "Replace all owners with one",
+    name: "Owner Alive",
     version: shortString.encodeShortString("1"),
     chainId,
     revision: TypedDataRevision.ACTIVE,
   };
 }
 
-function getTypedData(myStruct: ResetOwners, chainId: string): TypedData {
+function getTypedData(myStruct: OwnerAlive, chainId: string): TypedData {
   return {
     types,
-    primaryType: "ResetOwners",
+    primaryType: "Owner Alive",
     domain: getDomain(chainId),
     message: {
-      "New owner GUID": myStruct.newOwnerGuid,
+      "Owner GUID": myStruct.ownerGuid,
       "Signature expiration": myStruct.signatureExpiration,
     },
   };
 }
 
-export async function getChangeOwnerMessageHash(
+export async function getOwnerAliveMessageHash(
   accountAddress: string,
   chainId: string,
-  newOwnerGuid: bigint,
+  ownerGuid: bigint,
   signatureExpiration: number,
 ) {
-  return typedData.getMessageHash(getTypedData({ newOwnerGuid, signatureExpiration }, chainId), accountAddress);
+  return typedData.getMessageHash(getTypedData({ ownerGuid, signatureExpiration }, chainId), accountAddress);
 }
 
 export async function hasOngoingEscape(accountContract: Contract): Promise<boolean> {

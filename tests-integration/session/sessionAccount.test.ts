@@ -74,7 +74,6 @@ describe("ArgentAccount: session basics", function () {
       account: accountWithDappSigner,
       completedSession: sessionRequest,
       authorizationSignature,
-      overrideVersionAndMaxFee: true,
     });
 
     const pubkey = sessionToken.guardianSignature.variant.Starknet.pubkey;
@@ -89,7 +88,9 @@ describe("ArgentAccount: session basics", function () {
     // Should fail when executing
     await expectRevertWithErrorMessage(
       "session/invalid-backend-sig",
-      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), { maxFee: 1e16 }),
+      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), {
+        maxFee: sessionToken.maxFee,
+      }),
     );
   });
 
@@ -109,7 +110,6 @@ describe("ArgentAccount: session basics", function () {
       account: accountWithDappSigner,
       completedSession: sessionRequest,
       authorizationSignature,
-      overrideVersionAndMaxFee: true,
     });
 
     const pubkey = sessionToken.sessionSignature.variant.Starknet.pubkey;
@@ -125,7 +125,7 @@ describe("ArgentAccount: session basics", function () {
     // Should fail when executing
     await expectRevertWithErrorMessage(
       "session/invalid-session-sig",
-      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), { maxFee: 1e16 }),
+      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
     );
   });
 
@@ -249,14 +249,13 @@ describe("ArgentAccount: session basics", function () {
       account: accountWithDappSigner,
       completedSession: sessionRequest,
       authorizationSignature,
-      overrideVersionAndMaxFee: true,
     });
     sessionToken.proofs = [["0x1", "0x2"]];
 
     // happens when the the number of proofs is not equal to the number of calls
     await expectRevertWithErrorMessage(
       "session/unaligned-proofs",
-      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), { maxFee: 1e16 }),
+      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
     );
   });
 });

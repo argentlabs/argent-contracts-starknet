@@ -64,6 +64,7 @@ export class SessionToken {
   public sessionSignature: CairoCustomEnum;
   public guardianSignature: CairoCustomEnum;
   private legacyMode: boolean;
+  public maxFee?: bigint;
 
   constructor({
     session,
@@ -73,6 +74,7 @@ export class SessionToken {
     guardianSignature,
     calls,
     isLegacyAccount,
+    maxFee,
   }: {
     session: Session;
     cacheOwnerGuid?: bigint;
@@ -81,6 +83,7 @@ export class SessionToken {
     guardianSignature: CairoCustomEnum;
     calls: Call[];
     isLegacyAccount: boolean;
+    maxFee?: bigint;
   }) {
     this.session = session;
     this.proofs = session.getProofs(calls);
@@ -89,6 +92,7 @@ export class SessionToken {
     this.sessionSignature = sessionSignature;
     this.guardianSignature = guardianSignature;
     this.legacyMode = isLegacyAccount;
+    this.maxFee = maxFee;
   }
 
   public compileSignature(): string[] {

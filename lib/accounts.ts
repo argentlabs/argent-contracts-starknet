@@ -367,7 +367,8 @@ export async function getSignerDetails(account: ArgentAccount, calls: Call[]): P
   })();
   newAccount.signer = customSigner;
   try {
-    await newAccount.execute(calls, undefined);
+    // Hardcoding skipValidate to skip estimation
+    await newAccount.execute(calls, undefined, { skipValidate: true });
     throw Error("Should not execute");
   } catch (customError) {
     return customSigner.signerDetails!;

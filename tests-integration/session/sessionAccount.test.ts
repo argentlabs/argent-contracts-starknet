@@ -88,9 +88,7 @@ describe("ArgentAccount: session basics", function () {
     // Should fail when executing
     await expectRevertWithErrorMessage(
       "session/invalid-backend-sig",
-      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), {
-        maxFee: sessionToken.maxFee,
-      }),
+      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
     );
   });
 

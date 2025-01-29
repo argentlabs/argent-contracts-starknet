@@ -17,8 +17,8 @@ const SECP256R1_SIGNER_TYPE: felt252 = 'Secp256r1 Signer';
 const EIP191_SIGNER_TYPE: felt252 = 'Eip191 Signer';
 const WEBAUTHN_SIGNER_TYPE: felt252 = 'Webauthn Signer';
 
-const SECP_256_R1_HALF: u256 = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551 / 2;
-const SECP_256_K1_HALF: u256 = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141 / 2;
+pub const SECP_256_R1_HALF: u256 = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551 / 2;
+pub const SECP_256_K1_HALF: u256 = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141 / 2;
 
 
 /// @notice The type of the signer that this version of the accounts supports
@@ -76,15 +76,15 @@ pub struct StarknetSigner {
 /// @notice The Secp256k1 signer using the Secp256k1 elliptic curve
 /// @param pubkey_hash the right-most 160 bits of a Keccak hash of an ECDSA public key
 #[derive(Drop, Copy, PartialEq)]
-struct Secp256k1Signer {
-    pubkey_hash: EthAddress,
+pub struct Secp256k1Signer {
+    pub pubkey_hash: EthAddress,
 }
 
 /// @notice The Secp256r1 signer using the Secp256r1 elliptic curve
 /// @param pubkey the public key as a u256. Cannot be zero
 #[derive(Drop, Copy, Serde, PartialEq)]
-struct Secp256r1Signer {
-    pubkey: NonZero<u256>,
+pub struct Secp256r1Signer {
+    pub pubkey: NonZero<u256>,
 }
 
 /// @notice The Eip191Signer signer conforming to the EIP-191 standard

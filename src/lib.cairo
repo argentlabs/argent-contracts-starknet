@@ -25,7 +25,7 @@ pub mod signer {
 pub mod outside_execution {
     pub mod interface;
     pub mod outside_execution;
-    mod outside_execution_hash;
+    pub mod outside_execution_hash;
 }
 
 pub mod multisig_account {
@@ -78,10 +78,10 @@ pub mod mocks {
     pub mod src5_mocks;
 }
 
-mod session {
+pub mod session {
     pub mod interface;
     pub mod session;
-    mod session_hash;
+    pub mod session_hash;
 }
 
 pub mod offchain_message {

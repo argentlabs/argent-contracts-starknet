@@ -10,7 +10,7 @@ mod MockFutureArgentMultisig {
     use argent::multisig_account::signer_manager::signer_manager::{
         signer_manager_component, signer_manager_component::SignerManagerInternalImpl,
     };
-    use argent::signer::signer_signature::{Signer, SignerSignature, SignerTrait};
+    use argent::signer::signer_signature::{Signer, SignerSignature};
     use argent::upgrade::{
         interface::{IUpgradableCallback, IUpgradableCallbackOld},
         upgrade::{upgrade_component, upgrade_component::UpgradableInternalImpl},
@@ -79,7 +79,7 @@ mod MockFutureArgentMultisig {
                 .signer_manager
                 .is_valid_signature_with_threshold(
                     hash: hash,
-                    threshold: self.signer_manager.threshold.read(),
+                    threshold: self.signer_manager.threshold(),
                     signer_signatures: parse_signature_array(signature.span()),
                 ) {
                 VALIDATED
@@ -92,7 +92,7 @@ mod MockFutureArgentMultisig {
     #[abi(embed_v0)]
     impl ArgentAccountImpl of IArgentAccount<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
-            panic_with_felt252('argent/declare-not-available') // Not implemented yet
+            core::panic_with_felt252('argent/declare-not-available') // Not implemented yet
         }
 
         fn __validate_deploy__(
@@ -102,7 +102,7 @@ mod MockFutureArgentMultisig {
             threshold: usize,
             signers: Array<Signer>,
         ) -> felt252 {
-            panic_with_felt252('argent/deploy-not-available')
+            core::panic_with_felt252('argent/deploy-not-available')
         }
 
         fn get_name(self: @ContractState) -> felt252 {
@@ -119,7 +119,7 @@ mod MockFutureArgentMultisig {
     impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
         // Called when coming from account < 0.2.0
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
-            panic_with_felt252('argent/no-direct-upgrade');
+            core::panic_with_felt252('argent/no-direct-upgrade');
             array![]
         }
     }
@@ -144,7 +144,7 @@ mod MockFutureArgentMultisig {
                 .signer_manager
                 .is_valid_signature_with_threshold(
                     hash: execution_hash,
-                    threshold: self.signer_manager.threshold.read(),
+                    threshold: self.signer_manager.threshold(),
                     signer_signatures: parse_signature_array(signature),
                 );
             assert(valid, 'argent/invalid-signature');

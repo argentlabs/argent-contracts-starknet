@@ -9,7 +9,7 @@ use starknet::account::Call;
 use super::super::{ARGENT_ACCOUNT_ADDRESS, GUARDIAN, OWNER};
 
 #[starknet::interface]
-trait ITestArgentAccount<TContractState> {
+pub trait ITestArgentAccount<TContractState> {
     // IAccount
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
@@ -48,15 +48,15 @@ trait ITestArgentAccount<TContractState> {
     fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }
 
-fn initialize_account() -> ITestArgentAccountDispatcher {
+pub fn initialize_account() -> ITestArgentAccountDispatcher {
     initialize_account_with(OWNER().pubkey, GUARDIAN().pubkey)
 }
 
-fn initialize_account_without_guardian() -> ITestArgentAccountDispatcher {
+pub fn initialize_account_without_guardian() -> ITestArgentAccountDispatcher {
     initialize_account_with(OWNER().pubkey, 0)
 }
 
-fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAccountDispatcher {
+pub fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAccountDispatcher {
     let owner = starknet_signer_from_pubkey(owner);
     let guardian_signer: Option<Signer> = match guardian {
         0 => Option::None,

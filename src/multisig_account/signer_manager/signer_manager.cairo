@@ -1,5 +1,5 @@
 use argent::utils::linked_set::LinkedSetConfig;
-use starknet::storage::StoragePath;
+use starknet::storage::{StoragePath, StoragePointerReadAccess};
 
 impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
     const END_MARKER: felt252 = 'end';
@@ -30,7 +30,7 @@ impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
 /// @notice Implements the methods of a multisig such as
 /// adding or removing signers, changing the threshold, etc
 #[starknet::component]
-mod signer_manager_component {
+pub mod signer_manager_component {
     use argent::multiowner_account::events::SignerLinked;
     use argent::multisig_account::signer_manager::interface::{
         ISignerManager, IUpgradeMigration, OwnerAddedGuid, OwnerRemovedGuid, ThresholdUpdated,
@@ -44,20 +44,21 @@ mod signer_manager_component {
         IAddEndMarker, LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl,
     };
     use argent::utils::{asserts::assert_only_self, transaction_version::is_estimate_transaction};
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use super::SignerGuidLinkedSetConfig;
 
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 
     #[storage]
-    struct Storage {
+    pub struct Storage {
         threshold: usize,
         signer_list: LinkedSet<felt252>,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         ThresholdUpdated: ThresholdUpdated,
         OwnerAddedGuid: OwnerAddedGuid,
         OwnerRemovedGuid: OwnerRemovedGuid,
@@ -191,7 +192,7 @@ mod signer_manager_component {
     }
 
     #[generate_trait]
-    impl SignerManagerInternalImpl<
+    pub impl SignerManagerInternalImpl<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>,
     > of ISignerManagerInternal<TContractState> {
         fn initialize(ref self: ComponentState<TContractState>, threshold: usize, mut signers: Array<Signer>) {
@@ -224,6 +225,10 @@ mod signer_manager_component {
 
         fn assert_valid_storage(self: @ComponentState<TContractState>) {
             self.assert_valid_threshold_and_signers_count(self.threshold.read(), self.signer_list.len());
+        }
+
+        fn threshold(self: @ComponentState<TContractState>) -> u32 {
+            self.threshold.read()
         }
 
         fn is_valid_signature_with_threshold(

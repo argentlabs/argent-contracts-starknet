@@ -29,17 +29,17 @@ mod outside_execution {
 }
 
 mod multisig_account {
-    //     mod multisig_account;
-//     mod upgrade_migration;
-//     mod external_recovery {
-//         mod external_recovery;
-//         mod interface;
-//         mod packing;
-//     }
-//     mod signer_manager {
-//         mod interface;
-//         mod signer_manager;
-//     }
+    mod multisig_account;
+    mod upgrade_migration;
+    pub mod external_recovery {
+        pub mod external_recovery;
+        mod interface;
+        mod packing;
+    }
+    pub mod signer_manager {
+        pub mod interface;
+        pub mod signer_manager;
+    }
 }
 
 mod multiowner_account {

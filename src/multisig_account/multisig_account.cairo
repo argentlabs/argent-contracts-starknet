@@ -11,7 +11,7 @@ mod ArgentMultisigAccount {
         signer_manager_component, signer_manager_component::SignerManagerInternalImpl,
     };
     use argent::multisig_account::upgrade_migration::{
-        upgrade_migration_component, upgrade_migration_component::UpgradableMigrationInternal,
+        upgrade_migration_component, upgrade_migration_component::UpgradableMigrationInternalImpl,
     };
     use argent::outside_execution::{
         interface::IOutsideExecutionCallback, outside_execution::outside_execution_component,
@@ -144,9 +144,7 @@ mod ArgentMultisigAccount {
             if self
                 .signer_manager
                 .is_valid_signature_with_threshold(
-                    hash,
-                    self.signer_manager.threshold.read(),
-                    signer_signatures: parse_signature_array(signature.span()),
+                    hash, self.signer_manager.threshold(), signer_signatures: parse_signature_array(signature.span()),
                 ) {
                 VALIDATED
             } else {
@@ -158,7 +156,7 @@ mod ArgentMultisigAccount {
     #[abi(embed_v0)]
     impl ArgentAccountImpl of IArgentAccount<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
-            panic_with_felt252('argent/declare-not-available') // Not implemented yet
+            core::panic_with_felt252('argent/declare-not-available') // Not implemented yet
         }
 
         fn __validate_deploy__(
@@ -272,7 +270,7 @@ mod ArgentMultisigAccount {
                 .signer_manager
                 .is_valid_signature_with_threshold(
                     execution_hash,
-                    self.signer_manager.threshold.read(),
+                    self.signer_manager.threshold(),
                     signer_signatures: parse_signature_array(signature),
                 );
             assert(valid, 'argent/invalid-signature');

@@ -2,7 +2,7 @@ use argent::multisig_account::external_recovery::interface::EscapeCall;
 use argent::utils::serialization::serialize;
 
 /// This trait must be implemented when using the component `external_recovery`
-trait IExternalRecoveryCallback<TContractState> {
+pub trait IExternalRecoveryCallback<TContractState> {
     #[inline(always)]
     fn execute_recovery_call(ref self: TContractState, selector: felt252, calldata: Span<felt252>);
 }
@@ -12,16 +12,17 @@ trait IExternalRecoveryCallback<TContractState> {
 /// @dev The recovery can be executed by anyone after the security period
 /// @dev The recovery can be canceled by the authorized signers
 #[starknet::component]
-mod external_recovery_component {
+pub mod external_recovery_component {
     use argent::multisig_account::external_recovery::interface::{
         Escape, EscapeCall, EscapeCanceled, EscapeEnabled, EscapeExecuted, EscapeTriggered, IExternalRecovery,
     };
     use argent::recovery::EscapeStatus;
     use argent::utils::asserts::assert_only_self;
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{
-        ContractAddress, account::Call, contract_address::contract_address_const, get_block_timestamp,
-        get_caller_address, get_contract_address,
+        ContractAddress, contract_address::contract_address_const, get_block_timestamp, get_caller_address,
+        get_contract_address,
     };
     use super::{IExternalRecoveryCallback, get_escape_call_hash};
 
@@ -29,7 +30,7 @@ mod external_recovery_component {
     const MIN_ESCAPE_PERIOD: u64 = 60 * 10; // 10 minutes;
 
     #[storage]
-    struct Storage {
+    pub struct Storage {
         escape_enabled: EscapeEnabled,
         escape: Escape,
         guardian: ContractAddress,
@@ -37,7 +38,7 @@ mod external_recovery_component {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         EscapeTriggered: EscapeTriggered,
         EscapeExecuted: EscapeExecuted,
         EscapeCanceled: EscapeCanceled,
@@ -133,7 +134,7 @@ mod external_recovery_component {
             let current_escape_status = self.get_escape_status(current_escape.ready_at, escape_config.expiry_period);
             match current_escape_status {
                 EscapeStatus::None => (), // ignore
-                EscapeStatus::NotReady | EscapeStatus::Ready => panic_with_felt252('argent/ongoing-escape'),
+                EscapeStatus::NotReady | EscapeStatus::Ready => core::panic_with_felt252('argent/ongoing-escape'),
                 EscapeStatus::Expired => self.escape.write(Default::default()),
             }
 
@@ -187,5 +188,5 @@ mod external_recovery_component {
 }
 #[inline(always)]
 fn get_escape_call_hash(escape_call: @EscapeCall) -> felt252 {
-    poseidon::poseidon_hash_span(serialize(escape_call).span())
+    core::poseidon::poseidon_hash_span(serialize(escape_call).span())
 }

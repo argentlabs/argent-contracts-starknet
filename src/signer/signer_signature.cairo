@@ -358,7 +358,7 @@ fn is_valid_webauthn_signature(hash: felt252, signer: WebauthnSigner, signature:
     is_valid_secp256r1_signature(signed_hash, Secp256r1Signer { pubkey: signer.pubkey }, signature.ec_signature)
 }
 
-trait SignerSpanTrait {
+pub trait SignerSpanTrait {
     #[must_use]
     fn to_guid_list(self: Span<Signer>) -> Array<felt252>;
 }

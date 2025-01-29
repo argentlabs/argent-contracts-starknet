@@ -2,12 +2,12 @@
 // Which should be pub(crate)?
 mod recovery;
 mod upgrade {
-    //     mod interface;
-//     mod upgrade;
+    mod interface;
+    // mod upgrade;
 }
 
 mod account {
-    //     mod interface;
+    // mod interface;
 }
 
 mod introspection {
@@ -15,9 +15,9 @@ mod introspection {
     //     mod src5;
 }
 
-mod signer {
+pub mod signer {
     mod eip191;
-    mod signer_signature;
+    pub mod signer_signature;
     mod webauthn;
 }
 
@@ -59,7 +59,7 @@ mod utils {
     pub mod bytes;
     mod calls;
     pub mod hashing;
-    //     mod linked_set;
+    // mod linked_set;
     //     mod linked_set_with_head;
     mod serialization;
     mod transaction_version;
@@ -78,8 +78,8 @@ mod mocks {
 }
 
 mod session {
-    //     mod interface;
-//     mod session;
+    mod interface;
+    //     mod session;
 //     mod session_hash;
 }
 

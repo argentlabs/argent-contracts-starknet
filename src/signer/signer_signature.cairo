@@ -35,7 +35,7 @@ enum SignerType {
 /// @notice The different signature type supported
 /// Each variant must contain a signer and its associated signature
 #[derive(Drop, Copy, Serde)]
-enum SignerSignature {
+pub enum SignerSignature {
     Starknet: (StarknetSigner, StarknetSignature),
     Secp256k1: (Secp256k1Signer, Secp256Signature),
     Secp256r1: (Secp256r1Signer, Secp256Signature),
@@ -52,7 +52,7 @@ struct StarknetSignature {
 
 /// @notice Represents all supported Signers with their different signing schemes
 #[derive(Drop, Copy, Serde, PartialEq)]
-enum Signer {
+pub enum Signer {
     Starknet: StarknetSigner,
     Secp256k1: Secp256k1Signer,
     Secp256r1: Secp256r1Signer,

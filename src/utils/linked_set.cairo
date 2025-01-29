@@ -1,6 +1,7 @@
 use starknet::Store;
 use starknet::storage::{
-    Mutable, StorageAsPath, StorageBase, StoragePath, StoragePathEntry, StoragePathTrait, StoragePathUpdateTrait,
+    Mutable, PendingStoragePath, PendingStoragePathTrait, StorageAsPath, StorageBase, StoragePath,
+    StoragePointerWriteAccess,
 };
 ///
 /// A LinkedSet is storage structure that allows to store multiple items making it efficient to check if an item is in
@@ -133,7 +134,7 @@ impl LinkedSetReadImpl<
         if item_hash == 0 {
             return false;
         }
-        LinkedSetConfig::path_is_in_set(path: self.entry(item_hash))
+        LinkedSetConfig::path_is_in_set(path: self.entry(item_hash).as_path())
     }
 
     fn len(self: StorageBase<LinkedSet<T>>) -> usize {
@@ -174,14 +175,13 @@ impl LinkedSetReadImpl<
 #[generate_trait]
 impl LinkedSetReadPrivateImpl<T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>> of LinkedSetReadPrivate<T> {
     #[inline(always)]
-    fn entry(self: StorageBase<LinkedSet<T>>, item_hash: felt252) -> StoragePath<T> {
-        let path: StoragePath<T> = StoragePathTrait::new(self.__hash_state__.state);
-        path.update(item_hash)
+    fn entry(self: StorageBase<LinkedSet<T>>, item_hash: felt252) -> PendingStoragePath<T> {
+        PendingStoragePathTrait::new(@self.as_path(), item_hash)
     }
 
     #[inline(always)]
     fn next(self: StorageBase<LinkedSet<T>>, item_hash: felt252) -> Option<T> {
-        LinkedSetConfig::path_read_value(path: self.entry(item_hash))
+        LinkedSetConfig::path_read_value(path: self.entry(item_hash).as_path())
     }
 
     // Return the last item hash or zero when the list is empty. Cost increases with the list size
@@ -252,9 +252,8 @@ impl LinkedSetWritePrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of LinkedSetWritePrivate<T> {
     #[inline(always)]
-    fn entry(self: StorageBase<Mutable<LinkedSet<T>>>, item_hash: felt252) -> StoragePath<Mutable<T>> {
-        let path: StoragePath<Mutable<T>> = StoragePathTrait::new(self.__hash_state__.state);
-        path.update(item_hash)
+    fn entry(self: StorageBase<Mutable<LinkedSet<T>>>, item_hash: felt252) -> PendingStoragePath<Mutable<T>> {
+        PendingStoragePathTrait::new(@self.as_path(), item_hash)
     }
 
     #[inline(always)]

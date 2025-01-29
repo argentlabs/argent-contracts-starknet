@@ -2,13 +2,13 @@ use starknet::{ContractAddress, account::Call};
 
 // Interface ID for revision 0 of the OutsideExecute interface
 // see https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-9.md
-const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0: felt252 =
+pub const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0: felt252 =
     0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181;
 
 // Interface ID for revision 1 of the OutsideExecute interface
 // see https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-9.md
 // calculated using https://github.com/ericnordelo/src5-rs
-const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1: felt252 =
+pub const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1: felt252 =
     0x1d1144bb2138366ff28d8e9ab57456b1d332ac42196230c3a602003c89872;
 
 /// @notice As defined in SNIP-9 https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-9.md

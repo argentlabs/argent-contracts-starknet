@@ -1,6 +1,6 @@
 /// @notice The status of the Escape
 #[derive(Drop, Copy, Serde, PartialEq, Debug)]
-enum EscapeStatus {
+pub enum EscapeStatus {
     /// No escape triggered, or it was canceled
     None,
     /// Escape was triggered and it's waiting for the `security_period`

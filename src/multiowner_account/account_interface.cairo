@@ -4,7 +4,7 @@ use argent::recovery::{EscapeStatus};
 use argent::signer::signer_signature::{Signer, SignerSignature, SignerType};
 
 #[starknet::interface]
-trait IArgentMultiOwnerAccount<TContractState> {
+pub trait IArgentMultiOwnerAccount<TContractState> {
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate_deploy__(
         self: @TContractState,

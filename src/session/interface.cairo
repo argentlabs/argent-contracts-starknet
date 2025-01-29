@@ -8,11 +8,11 @@ use argent::signer::signer_signature::SignerSignature;
 /// @param metadata_hash The hash of the metadata JSON string of the session
 /// @param session_key_guid The GUID of the session key
 #[derive(Drop, Serde, Copy)]
-struct Session {
-    expires_at: u64,
-    allowed_methods_root: felt252,
-    metadata_hash: felt252,
-    session_key_guid: felt252,
+pub struct Session {
+    pub expires_at: u64,
+    pub allowed_methods_root: felt252,
+    pub metadata_hash: felt252,
+    pub session_key_guid: felt252,
 }
 
 /// @notice Session Token struct contains the session struct, relevant signatures and merkle proofs
@@ -24,18 +24,18 @@ struct Session {
 /// @param guardian_signature Guardian signature of the poseidon H(tx_hash, session hash)
 /// @param proofs The merkle proof of the session calls
 #[derive(Drop, Serde, Copy)]
-struct SessionToken {
-    session: Session,
-    cache_owner_guid: felt252,
+pub struct SessionToken {
+    pub session: Session,
+    pub cache_owner_guid: felt252,
     // can be the sessions authorization, but also the the CacheInfo struct if the auth was previously cached
-    session_authorization: Span<felt252>,
-    session_signature: SignerSignature,
-    guardian_signature: SignerSignature,
-    proofs: Span<Span<felt252>>,
+    pub session_authorization: Span<felt252>,
+    pub session_signature: SignerSignature,
+    pub guardian_signature: SignerSignature,
+    pub proofs: Span<Span<felt252>>,
 }
 
 /// This trait has to be implemented when using the component `session_component` (This is enforced by the compiler)
-trait ISessionCallback<TContractState> {
+pub trait ISessionCallback<TContractState> {
     /// @notice Panics if the session authorization is not valid
     /// @param session_hash The hash of session
     /// @param authorization_signature The owner + guardian signature of the session
@@ -49,7 +49,7 @@ trait ISessionCallback<TContractState> {
 }
 
 #[starknet::interface]
-trait ISessionable<TContractState> {
+pub trait ISessionable<TContractState> {
     /// @notice This function allows user to revoke a session based on its hash
     /// @param session_hash Hash of the session token
     fn revoke_session(ref self: TContractState, session_hash: felt252);

@@ -1,18 +1,19 @@
 // TODO LIST:
 // Which should be pub(crate)?
 mod recovery;
+
 mod upgrade {
-    mod interface;
-    // mod upgrade;
+    pub mod interface;
+    pub mod upgrade;
 }
 
 mod account {
-    // mod interface;
+    pub mod interface;
 }
 
 mod introspection {
-    mod interface;
-    //     mod src5;
+    pub mod interface;
+    pub mod src5;
 }
 
 pub mod signer {
@@ -22,8 +23,8 @@ pub mod signer {
 }
 
 mod outside_execution {
-    mod interface;
-    mod outside_execution;
+    pub mod interface;
+    pub mod outside_execution;
     mod outside_execution_hash;
 }
 
@@ -42,27 +43,27 @@ mod multisig_account {
 }
 
 mod multiowner_account {
-    //     mod account_interface;
-//     mod argent_account;
-//     mod events;
-//     mod guardian_manager;
-//     mod owner_manager;
-//     mod recovery;
-//     mod replace_owners_message;
-//     mod signer_storage_linked_set;
-//     mod upgrade_migration;
+    mod account_interface;
+    pub mod argent_account;
+    pub mod events;
+    mod guardian_manager;
+    mod owner_manager;
+    pub mod recovery;
+    mod replace_owners_message;
+    mod signer_storage_linked_set;
+    pub mod upgrade_migration;
 }
 
 mod utils {
     pub mod array_ext;
-    mod asserts;
+    pub mod asserts;
     pub mod bytes;
-    mod calls;
+    pub mod calls;
     pub mod hashing;
-    mod linked_set;
-    mod linked_set_with_head;
-    mod serialization;
-    mod transaction_version;
+    pub mod linked_set;
+    pub mod linked_set_with_head;
+    pub mod serialization;
+    pub mod transaction_version;
 }
 
 mod mocks {
@@ -78,9 +79,9 @@ mod mocks {
 }
 
 mod session {
-    mod interface;
-    //     mod session;
-//     mod session_hash;
+    pub mod interface;
+    pub mod session;
+    mod session_hash;
 }
 
 pub mod offchain_message {

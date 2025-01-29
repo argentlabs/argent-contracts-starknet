@@ -3,8 +3,7 @@ use argent::offchain_message::{
     precalculated_hashing::get_message_hash_rev_1_with_precalc,
 };
 use argent::session::interface::Session;
-use hash::{HashStateExTrait, HashStateTrait};
-use poseidon::{HashState, poseidon_hash_span};
+use core::poseidon::poseidon_hash_span;
 use starknet::{account::Call, get_contract_address, get_tx_info};
 
 
@@ -29,7 +28,7 @@ const ALLOWED_METHOD_HASH_REV_1: felt252 = selector!(
     "\"Allowed Method\"(\"Contract Address\":\"ContractAddress\",\"selector\":\"selector\")",
 );
 
-impl MerkleLeafHash of IMerkleLeafHash<Call> {
+pub impl MerkleLeafHash of IMerkleLeafHash<Call> {
     fn get_merkle_leaf(self: @Call) -> felt252 {
         poseidon_hash_span(array![ALLOWED_METHOD_HASH_REV_1, (*self.to).into(), *self.selector].span())
     }
@@ -51,7 +50,7 @@ impl StructHashSession of IStructHashRev1<Session> {
     }
 }
 
-impl OffChainMessageHashSessionRev1 of IOffChainMessageHashRev1<Session> {
+pub impl OffChainMessageHashSessionRev1 of IOffChainMessageHashRev1<Session> {
     fn get_message_hash_rev_1(self: @Session) -> felt252 {
         let chain_id = get_tx_info().chain_id;
         if chain_id == 'SN_MAIN' {

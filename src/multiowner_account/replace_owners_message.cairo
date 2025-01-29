@@ -1,6 +1,6 @@
 use argent::offchain_message::interface::{IOffChainMessageHashRev1, IStructHashRev1, StarknetDomain};
-use hash::{HashStateExTrait, HashStateTrait};
-use poseidon::PoseidonTrait;
+use core::hash::{HashStateExTrait, HashStateTrait};
+use core::poseidon::PoseidonTrait;
 use starknet::{get_contract_address, get_tx_info};
 
 
@@ -9,9 +9,9 @@ const REPLACE_OWNERS_WITH_ONE_TYPE_HASH: felt252 = selector!(
 );
 
 #[derive(Drop, Copy, Hash)]
-struct ReplaceOwnersWithOne {
-    new_owner_guid: felt252,
-    signature_expiration: u64,
+pub struct ReplaceOwnersWithOne {
+    pub new_owner_guid: felt252,
+    pub signature_expiration: u64,
 }
 
 impl StructHashReplaceOwnersWithOneRev1 of IStructHashRev1<ReplaceOwnersWithOne> {

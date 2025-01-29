@@ -1,7 +1,7 @@
 /// @dev If you are using this component you have to support it in the `supports_interface` function
 // This is achieved by adding outside_execution::ERC165_OUTSIDE_EXECUTION_INTERFACE_ID
 #[starknet::component]
-mod outside_execution_component {
+pub mod outside_execution_component {
     use argent::outside_execution::{
         interface::{IOutsideExecution, IOutsideExecutionCallback, OutsideExecution},
         outside_execution_hash::{OffChainMessageOutsideExecutionRev0, OffChainMessageOutsideExecutionRev1},
@@ -11,14 +11,14 @@ mod outside_execution_component {
     use starknet::{get_block_timestamp, get_caller_address, storage::Map};
 
     #[storage]
-    struct Storage {
+    pub struct Storage {
         /// Keeps track of used nonces for outside transactions (`execute_from_outside`)
         outside_nonces: Map<felt252, bool>,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {}
+    pub enum Event {}
 
     #[embeddable_as(OutsideExecutionImpl)]
     impl ImplOutsideExecution<

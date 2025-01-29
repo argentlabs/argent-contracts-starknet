@@ -1,5 +1,5 @@
 use argent::signer::signer_signature::{Eip191Signer, is_valid_secp256k1_signature};
-use core::integer::{u128_byte_reverse};
+use core::integer::u128_byte_reverse;
 use core::keccak::cairo_keccak;
 use starknet::secp256_trait::{Signature as Secp256Signature};
 

@@ -23,7 +23,7 @@ const SECP_256_K1_HALF: u256 = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03
 
 /// @notice The type of the signer that this version of the accounts supports
 #[derive(Drop, Copy, PartialEq, Serde, Default, starknet::Store)]
-enum SignerType {
+pub enum SignerType {
     #[default]
     Starknet,
     Secp256k1,
@@ -45,9 +45,9 @@ pub enum SignerSignature {
 
 /// @notice The starknet signature using the stark-curve
 #[derive(Drop, Copy, Serde)]
-struct StarknetSignature {
-    r: felt252,
-    s: felt252,
+pub struct StarknetSignature {
+    pub r: felt252,
+    pub s: felt252,
 }
 
 /// @notice Represents all supported Signers with their different signing schemes
@@ -61,16 +61,16 @@ pub enum Signer {
 }
 
 #[derive(Drop, Copy, Serde, PartialEq, starknet::Store, Default)]
-struct SignerStorageValue {
-    stored_value: felt252,
-    signer_type: SignerType,
+pub struct SignerStorageValue {
+    pub stored_value: felt252,
+    pub signer_type: SignerType,
 }
 
 /// @notice The Starknet signer using the Starknet Curve
 /// @param pubkey the public key as felt252 for a starknet signature. Cannot be zero
 #[derive(Drop, Copy, Serde, PartialEq)]
-struct StarknetSigner {
-    pubkey: NonZero<felt252>,
+pub struct StarknetSigner {
+    pub pubkey: NonZero<felt252>,
 }
 
 /// @notice The Secp256k1 signer using the Secp256k1 elliptic curve
@@ -111,7 +111,7 @@ pub struct WebauthnSigner {
 /// @param stored_value Depending on the type it can be a pubkey, a guid or another value. The stored value is unique
 /// for each signer type
 #[derive(Drop, Copy, Serde)]
-struct SignerInfo {
+pub struct SignerInfo {
     signerType: SignerType,
     guid: felt252,
     stored_value: felt252,
@@ -143,12 +143,12 @@ impl Eip191SignerSerde of Serde<Eip191Signer> {
 }
 
 #[inline(always)]
-fn starknet_signer_from_pubkey(pubkey: felt252) -> Signer {
+pub fn starknet_signer_from_pubkey(pubkey: felt252) -> Signer {
     Signer::Starknet(StarknetSigner { pubkey: pubkey.try_into().expect('argent/zero-pubkey') })
 }
 
 #[generate_trait]
-impl SignerTraitImpl of SignerTrait {
+pub impl SignerTraitImpl of SignerTrait {
     fn into_guid(self: Signer) -> felt252 {
         match self {
             Signer::Starknet(signer) => poseidon_2(STARKNET_SIGNER_TYPE, signer.pubkey.into()),
@@ -214,7 +214,7 @@ impl SignerTraitImpl of SignerTrait {
 }
 
 #[generate_trait]
-impl SignerStorageValueImpl of SignerStorageTrait {
+pub impl SignerStorageValueImpl of SignerStorageTrait {
     fn into_guid(self: SignerStorageValue) -> felt252 {
         match self.signer_type {
             SignerType::Starknet => poseidon_2(STARKNET_SIGNER_TYPE, self.stored_value),
@@ -262,7 +262,7 @@ impl SignerStorageValueImpl of SignerStorageTrait {
     }
 }
 
-trait SignerSignatureTrait {
+pub trait SignerSignatureTrait {
     fn is_valid_signature(self: SignerSignature, hash: felt252) -> bool;
     fn signer(self: SignerSignature) -> Signer;
 }

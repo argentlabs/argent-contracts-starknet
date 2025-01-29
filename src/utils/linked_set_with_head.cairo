@@ -64,7 +64,7 @@ pub trait LinkedSetWithHeadWrite<TMemberState> {
 }
 
 
-impl LinkedSetWithHeadReadImpl<
+pub impl LinkedSetWithHeadReadImpl<
     T, +Drop<T>, +Copy<T>, +PartialEq<T>, +starknet::Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetWithHeadRead<StorageBase<LinkedSetWithHead<T>>> {
     type Value = T;
@@ -159,7 +159,7 @@ impl LinkedSetWithHeadReadPrivateImpl<
     }
 }
 
-impl LinkedSetWithHeadWriteImpl<
+pub impl LinkedSetWithHeadWriteImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of LinkedSetWithHeadWrite<StorageBase<Mutable<LinkedSetWithHead<T>>>> {
     type Value = T;
@@ -212,7 +212,7 @@ impl LinkedSetWithHeadWritePrivateImpl<
 }
 
 // Allow read operations in mutable access too
-impl MutableLinkedSetWithHeadReadImpl<
+pub impl MutableLinkedSetWithHeadReadImpl<
     T, +Drop<T>, +Copy<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetWithHeadRead<StorageBase<Mutable<LinkedSetWithHead<T>>>> {
     type Value = T;

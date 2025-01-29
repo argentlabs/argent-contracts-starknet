@@ -1,11 +1,11 @@
 use starknet::ClassHash;
 
-trait IUpgradeInternal<TContractState> {
+pub trait IUpgradeInternal<TContractState> {
     fn complete_upgrade(ref self: TContractState, new_implementation: ClassHash);
 }
 
 #[starknet::component]
-mod upgrade_component {
+pub mod upgrade_component {
     use argent::account::interface::SRC5_ACCOUNT_INTERFACE_ID;
     use argent::introspection::interface::{ISRC5DispatcherTrait, ISRC5LibraryDispatcher};
     use argent::upgrade::interface::{
@@ -15,11 +15,11 @@ mod upgrade_component {
     use starknet::{ClassHash, syscalls::replace_class_syscall};
 
     #[storage]
-    struct Storage {}
+    pub struct Storage {}
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         AccountUpgraded: AccountUpgraded,
     }
 
@@ -44,7 +44,7 @@ mod upgrade_component {
         }
     }
 
-    impl UpgradableInternalImpl<
+    pub impl UpgradableInternalImpl<
         TContractState, +HasComponent<TContractState>,
     > of super::IUpgradeInternal<ComponentState<TContractState>> {
         fn complete_upgrade(ref self: ComponentState<TContractState>, new_implementation: ClassHash) {

@@ -57,7 +57,6 @@ interface WebauthnSignature {
   flags: number;
   sign_count: number;
   ec_signature: { r: Uint256; s: Uint256; y_parity: boolean };
-  sha256_implementation: CairoCustomEnum;
 }
 
 export class WebauthnOwner extends KeyPair {
@@ -125,9 +124,8 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public async signHash(messageHash: string): Promise<WebauthnSignature> {
-    // TODO Add button to configure it from UI
-    const cairoVersion = 0;
-    const normalizedChallenge = hex2buf(`${normalizeTransactionHash(messageHash)}${cairoVersion}`);
+    const normalizedChallenge = hex2buf(normalizeTransactionHash(messageHash));
+
     const assertionResponse = await this.requestSignature(this.attestation, normalizedChallenge);
     const authenticatorData = new Uint8Array(assertionResponse.authenticatorData);
     const clientDataJson = new Uint8Array(assertionResponse.clientDataJSON);
@@ -181,10 +179,6 @@ export class WebauthnOwner extends KeyPair {
         s: uint256.bnToUint256(s),
         y_parity: yParity,
       },
-      sha256_implementation: new CairoCustomEnum({
-        Cairo0: cairoVersion ? undefined : {},
-        Cairo1: cairoVersion ? {} : undefined,
-      }),
     };
 
     console.log("WebauthnOwner signed, signature is:", signature);

@@ -22,7 +22,6 @@ import {
   randomEthKeyPair,
   randomSecp256r1KeyPair,
   randomStarknetKeyPair,
-  randomWebauthnLegacyCairo0Owner,
   randomWebauthnLegacyOwner,
   upgradeAccount,
 } from "../../lib";
@@ -316,12 +315,7 @@ describe("ArgentAccount: upgrade", function () {
       { name: "Secp256r1 signature", keyPair: randomSecp256r1KeyPair },
       { name: "Eip191 signature", keyPair: randomEip191KeyPair },
       { name: "Webauthn signature", keyPair: randomWebauthnLegacyOwner },
-      { name: "Webauthn signature (cairo0)", keyPair: randomWebauthnLegacyCairo0Owner },
     ];
-
-    before(async () => {
-      await manager.declareFixtureContract("Sha256Cairo0");
-    });
 
     for (const { name, keyPair } of nonStarknetKeyPairs) {
       it(`[${name}] Testing upgrade`, async function () {

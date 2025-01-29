@@ -120,7 +120,7 @@ impl AddEndMarkerImpl<
     }
 }
 
-impl LinkedSetReadImpl<
+pub impl LinkedSetReadImpl<
     T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetRead<StorageBase<LinkedSet<T>>> {
     type Value = T;
@@ -207,7 +207,7 @@ impl LinkedSetReadPrivateImpl<T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetC
     }
 }
 
-impl LinkedSetWriteImpl<
+pub impl LinkedSetWriteImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of LinkedSetWrite<StorageBase<Mutable<LinkedSet<T>>>> {
     type Value = T;
@@ -284,7 +284,7 @@ impl LinkedSetWritePrivateImpl<
 }
 
 #[generate_trait]
-impl StorageBaseAsReadOnlyImpl<T> of StorageBaseAsReadOnly<T> {
+pub impl StorageBaseAsReadOnlyImpl<T> of StorageBaseAsReadOnly<T> {
     #[inline(always)]
     fn as_read_only(self: StorageBase<Mutable<T>>) -> StorageBase<T> {
         StorageBase { __base_address__: self.__base_address__ }
@@ -292,7 +292,7 @@ impl StorageBaseAsReadOnlyImpl<T> of StorageBaseAsReadOnly<T> {
 }
 
 // Allow read operations in mutable access too
-impl MutableLinkedSetReadImpl<
+pub impl MutableLinkedSetReadImpl<
     T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetRead<StorageBase<Mutable<LinkedSet<T>>>> {
     type Value = T;

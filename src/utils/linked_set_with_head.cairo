@@ -4,7 +4,9 @@ use argent::utils::linked_set::{
     StorageBaseAsReadOnlyImpl,
 };
 use starknet::Store;
-use starknet::storage::{Mutable, StorageAsPath, StorageBase, StoragePath, StoragePathEntry, StoragePathTrait};
+use starknet::storage::{
+    Mutable, PendingStoragePath, PendingStoragePathTrait, StorageAsPath, StorageBase, StoragePointerWriteAccess,
+};
 
 ///
 /// A LinkedSetWithHead is storage structure that allows to store multiple items making it efficient to check if an item
@@ -69,7 +71,7 @@ impl LinkedSetWithHeadReadImpl<
 
     #[inline(always)]
     fn first(self: StorageBase<LinkedSetWithHead<T>>) -> Option<T> {
-        LinkedSetConfig::path_read_value(path: self.head_entry())
+        LinkedSetConfig::path_read_value(path: self.head_entry().as_path())
     }
 
     #[inline(always)]
@@ -147,8 +149,8 @@ impl LinkedSetWithHeadReadPrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +starknet::Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetWithHeadReadPrivate<T> {
     #[inline(always)]
-    fn head_entry(self: StorageBase<LinkedSetWithHead<T>>) -> StoragePath<T> {
-        StoragePathTrait::new(self.__hash_state__.state)
+    fn head_entry(self: StorageBase<LinkedSetWithHead<T>>) -> PendingStoragePath<T> {
+        PendingStoragePathTrait::new(@self.as_path(), 0)
     }
 
     #[inline(always)]
@@ -199,8 +201,8 @@ impl LinkedSetWithHeadWritePrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of LinkedSetWithHeadWritePrivate<T> {
     #[inline(always)]
-    fn head_entry(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> StoragePath<Mutable<T>> {
-        StoragePathTrait::new(self.__hash_state__.state)
+    fn head_entry(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> PendingStoragePath<Mutable<T>> {
+        PendingStoragePathTrait::new(@self.as_path(), 0)
     }
 
     #[inline(always)]

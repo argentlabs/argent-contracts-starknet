@@ -6,9 +6,9 @@ use argent::offchain_message::{
     precalculated_hashing::get_message_hash_rev_1_with_precalc,
 };
 use argent::outside_execution::interface::OutsideExecution;
-use hash::{HashStateExTrait, HashStateTrait};
-use pedersen::PedersenTrait;
-use poseidon::poseidon_hash_span;
+use core::hash::{HashStateExTrait, HashStateTrait};
+use core::pedersen::PedersenTrait;
+use core::poseidon::poseidon_hash_span;
 use starknet::{account::Call, get_contract_address, get_tx_info};
 
 const MAINNET_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) = (
@@ -89,7 +89,7 @@ impl StructHashCallRev0 of IStructHashRev0<Call> {
     }
 }
 
-impl OffChainMessageOutsideExecutionRev0 of IOffChainMessageHashRev0<OutsideExecution> {
+pub impl OffChainMessageOutsideExecutionRev0 of IOffChainMessageHashRev0<OutsideExecution> {
     fn get_message_hash_rev_0(self: @OutsideExecution) -> felt252 {
         let domain = StarkNetDomain {
             name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().chain_id,
@@ -136,7 +136,7 @@ impl StructHashOutsideExecutionRev1 of IStructHashRev1<OutsideExecution> {
     }
 }
 
-impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExecution> {
+pub impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExecution> {
     fn get_message_hash_rev_1(self: @OutsideExecution) -> felt252 {
         // Version is a felt instead of a shortstring in SNIP-9 due to a mistake in the Braavos contracts and has been
         // copied for compatibility.

@@ -20,17 +20,17 @@ const ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1: felt252 =
 /// @param calls The calls that will be executed by the Account
 /// Using `Call` here instead of re-declaring `OutsideCall` to avoid the conversion
 #[derive(Copy, Drop, Serde)]
-struct OutsideExecution {
-    caller: ContractAddress,
-    nonce: felt252,
-    execute_after: u64,
-    execute_before: u64,
-    calls: Span<Call>,
+pub struct OutsideExecution {
+    pub caller: ContractAddress,
+    pub nonce: felt252,
+    pub execute_after: u64,
+    pub execute_before: u64,
+    pub calls: Span<Call>,
 }
 
 /// @notice get_outside_execution_message_hash_rev_* is not part of the standard interface
 #[starknet::interface]
-trait IOutsideExecution<TContractState> {
+pub trait IOutsideExecution<TContractState> {
     /// @notice This function allows anyone to submit a transaction on behalf of the account as long as they have the
     /// relevant signatures
     /// @param outside_execution The parameters of the transaction to execute
@@ -61,7 +61,7 @@ trait IOutsideExecution<TContractState> {
 
 /// This trait must be implemented when using the component `outside_execution_component` (This is enforced by the
 /// compiler)
-trait IOutsideExecutionCallback<TContractState> {
+pub trait IOutsideExecutionCallback<TContractState> {
     /// @notice Callback performed after checking the OutsideExecution is valid
     /// @dev Make the correct access control checks in this callback
     /// @param calls The calls to be performed

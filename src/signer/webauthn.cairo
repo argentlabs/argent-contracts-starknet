@@ -92,7 +92,7 @@ fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> 
     bytes
 }
 
-fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
+pub fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
     let mut client_data_hash = eight_words_to_bytes(sha256_u8s(client_data_json));
 

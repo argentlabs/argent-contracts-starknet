@@ -7,7 +7,8 @@ mod outside_execution_component {
         outside_execution_hash::{OffChainMessageOutsideExecutionRev0, OffChainMessageOutsideExecutionRev1},
     };
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
-    use starknet::{account::Call, get_block_timestamp, get_caller_address, storage::Map};
+    use starknet::storage::{StorageMapReadAccess, StorageMapWriteAccess};
+    use starknet::{get_block_timestamp, get_caller_address, storage::Map};
 
     #[storage]
     struct Storage {

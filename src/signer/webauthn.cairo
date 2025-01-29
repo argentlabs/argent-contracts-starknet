@@ -13,9 +13,9 @@ use starknet::secp256_trait::Signature;
 /// @param sha256_implementation The implementation of the sha256 hash
 #[derive(Drop, Copy, Serde, PartialEq)]
 pub struct WebauthnSignature {
-    client_data_json_outro: Span<u8>,
+    pub client_data_json_outro: Span<u8>,
     pub flags: u8,
-    sign_count: u32,
+    pub sign_count: u32,
     pub ec_signature: Signature,
 }
 

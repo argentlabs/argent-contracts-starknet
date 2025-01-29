@@ -9,7 +9,7 @@ pub fn is_valid_eip191_signature(hash: felt252, signer: Eip191Signer, signature:
 }
 
 #[must_use]
-fn calculate_eip191_hash(message: felt252) -> u256 {
+pub fn calculate_eip191_hash(message: felt252) -> u256 {
     // This functions allows to verify eip-191 signatures
 
     // split message into pieces

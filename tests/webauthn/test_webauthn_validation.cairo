@@ -3,7 +3,7 @@ use argent::signer::webauthn::WebauthnSignature;
 use starknet::secp256_trait::Signature;
 
 #[generate_trait]
-impl ByteArrayExt of ByteArrayExtTrait {
+pub impl ByteArrayExt of ByteArrayExtTrait {
     fn into_bytes(self: ByteArray) -> Array<u8> {
         let len = self.len();
         let mut output = array![];

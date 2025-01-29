@@ -173,7 +173,9 @@ pub impl LinkedSetReadImpl<
 }
 
 #[generate_trait]
-impl LinkedSetReadPrivateImpl<T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>> of LinkedSetReadPrivate<T> {
+pub impl LinkedSetReadPrivateImpl<
+    T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>,
+> of LinkedSetReadPrivate<T> {
     #[inline(always)]
     fn entry(self: StorageBase<LinkedSet<T>>, item_hash: felt252) -> PendingStoragePath<T> {
         PendingStoragePathTrait::new(@self.as_path(), item_hash)
@@ -248,7 +250,7 @@ pub impl LinkedSetWriteImpl<
 }
 
 #[generate_trait]
-impl LinkedSetWritePrivateImpl<
+pub impl LinkedSetWritePrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of LinkedSetWritePrivate<T> {
     #[inline(always)]

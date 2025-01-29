@@ -11,29 +11,29 @@ pub mod account {
     pub mod interface;
 }
 
-mod introspection {
+pub mod introspection {
     pub mod interface;
     pub mod src5;
 }
 
 pub mod signer {
-    mod eip191;
+    pub mod eip191;
     pub mod signer_signature;
-    mod webauthn;
+    pub mod webauthn;
 }
 
-mod outside_execution {
+pub mod outside_execution {
     pub mod interface;
     pub mod outside_execution;
     mod outside_execution_hash;
 }
 
-mod multisig_account {
+pub mod multisig_account {
     mod multisig_account;
     mod upgrade_migration;
     pub mod external_recovery {
         pub mod external_recovery;
-        mod interface;
+        pub mod interface;
         mod packing;
     }
     pub mod signer_manager {
@@ -50,7 +50,7 @@ pub mod multiowner_account {
     pub mod owner_manager;
     pub mod recovery;
     mod replace_owners_message;
-    mod signer_storage_linked_set;
+    pub mod signer_storage_linked_set;
     pub mod upgrade_migration;
 }
 
@@ -66,16 +66,16 @@ pub mod utils {
     pub mod transaction_version;
 }
 
-mod mocks {
+pub mod mocks {
     mod future_argent_account;
     mod future_argent_multisig;
-    mod linked_set_mock;
+    pub mod linked_set_mock;
     mod mock_dapp;
     mod multiowner_mock;
-    mod multisig_mocks;
+    pub mod multisig_mocks;
     mod recovery_mocks;
     mod signature_verifier;
-    mod src5_mocks;
+    pub mod src5_mocks;
 }
 
 mod session {

@@ -8,9 +8,11 @@ Breaking changes:
 
 new methods:
 
-fn get_owner_guids() -> Array<felt252>;
+fn get_owners_guid() -> Array<felt252>;
 fn get_owner_type(owner_guid: felt252) -> SignerType;
 fn get_owner_data(owner_guid: felt252) -> SignerStorageValue;
+
+fn get_guardians_info() -> Array<SignerInfo>;
 
 - Concise signatures (for devs and dexes)
   still working but only if there's a single owner, works with or without guardian

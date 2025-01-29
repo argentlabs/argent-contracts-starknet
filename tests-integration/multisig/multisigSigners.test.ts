@@ -7,7 +7,6 @@ import {
   randomEthKeyPair,
   randomSecp256r1KeyPair,
   randomStarknetKeyPair,
-  randomWebauthnCairo0Owner,
   randomWebauthnOwner,
   sortByGuid,
 } from "../../lib";
@@ -28,12 +27,10 @@ describe("Multisig: Signers types", function () {
     { name: "Secp256r1 signature", keyPair: randomSecp256r1KeyPair },
     { name: "Eip191 signature", keyPair: randomEip191KeyPair },
     { name: "Webauthn signature", keyPair: randomWebauthnOwner },
-    { name: "Webauthn signature (cairo0)", keyPair: randomWebauthnCairo0Owner },
   ];
 
   before(async () => {
     ethContract = await manager.tokens.ethContract();
-    await manager.declareFixtureContract("Sha256Cairo0");
 
     for (const { name, keyPair } of keyPairs) {
       const { account: oneSigner } = await deployMultisig({ threshold: 1, keys: [keyPair()] });

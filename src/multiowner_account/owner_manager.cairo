@@ -16,7 +16,10 @@ pub trait IOwnerManager<TContractState> {
 }
 
 trait IOwnerManagerInternal<TContractState> {
-    fn initialize(ref self: TContractState, owner: Signer);
+    /// @notice Initializes the contract with the first owner. Should ony be called in the constructor
+    /// @param owner The first owner of the account
+    /// @return The guid of the owner
+    fn initialize(ref self: TContractState, owner: Signer) -> felt252;
     fn initialize_from_upgrade(ref self: TContractState, signer_storage: SignerStorageValue);
     /// @notice Adds new owners to the account
     /// @dev will revert when trying to add a signer is already an owner
@@ -101,10 +104,11 @@ mod owner_manager_component {
     impl OwnerManagerInternalImpl<
         TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>,
     > of IOwnerManagerInternal<ComponentState<TContractState>> {
-        fn initialize(ref self: ComponentState<TContractState>, owner: Signer) {
+        fn initialize(ref self: ComponentState<TContractState>, owner: Signer) -> felt252 {
             let guid = self.owners_storage.insert(owner.storage_value());
             self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: owner });
             self.emit_owner_added(guid);
+            guid
         }
 
         fn initialize_from_upgrade(ref self: ComponentState<TContractState>, signer_storage: SignerStorageValue) {
@@ -138,7 +142,7 @@ mod owner_manager_component {
         }
 
         fn get_single_owner(self: @ComponentState<TContractState>) -> Option<SignerStorageValue> {
-            self.owners_storage.single() // TODO consider returning .first() instead for better performance
+            self.owners_storage.single()
         }
 
         fn get_single_stark_owner_pubkey(self: @ComponentState<TContractState>) -> Option<felt252> {

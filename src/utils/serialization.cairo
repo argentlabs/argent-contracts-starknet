@@ -9,7 +9,7 @@ fn full_deserialize<E, impl ESerde: Serde<E>, impl EDrop: Drop<E>>(mut data: Spa
     }
 }
 
-fn serialize<E, impl ESerde: Serde<E>>(value: @E) -> Array<felt252> {
+pub fn serialize<E, impl ESerde: Serde<E>>(value: @E) -> Array<felt252> {
     let mut output = array![];
     ESerde::serialize(value, ref output);
     output

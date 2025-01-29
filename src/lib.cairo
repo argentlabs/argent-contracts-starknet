@@ -1,3 +1,5 @@
+// TODO LIST:
+// Which should be pub(crate)?
 mod recovery;
 // mod upgrade {
 //     mod interface;
@@ -13,11 +15,11 @@ mod recovery;
 //     mod src5;
 // }
 
-// mod signer {
-//     mod eip191;
-//     mod signer_signature;
-//     mod webauthn;
-// }
+mod signer {
+    mod eip191;
+    mod signer_signature;
+    mod webauthn;
+}
 
 // mod outside_execution {
 //     mod interface;
@@ -52,14 +54,14 @@ mod recovery;
 // }
 
 mod utils {
-    mod array_ext;
+    pub mod array_ext;
     mod asserts;
-    mod bytes;
+    pub mod bytes;
     mod calls;
-    //     mod hashing;
+    pub mod hashing;
     //     mod linked_set;
     //     mod linked_set_with_head;
-    //     mod serialization;
+    mod serialization;
     mod transaction_version;
 }
 

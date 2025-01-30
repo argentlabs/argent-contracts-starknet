@@ -150,7 +150,7 @@ impl LinkedSetWithHeadReadPrivateImpl<
 > of LinkedSetWithHeadReadPrivate<T> {
     #[inline(always)]
     fn head_entry(self: StorageBase<LinkedSetWithHead<T>>) -> PendingStoragePath<T> {
-        PendingStoragePathTrait::new(@self.as_path(), 0)
+        PendingStoragePathTrait::new(@self.as_path(), self.__base_address__)
     }
 
     #[inline(always)]
@@ -202,7 +202,7 @@ impl LinkedSetWithHeadWritePrivateImpl<
 > of LinkedSetWithHeadWritePrivate<T> {
     #[inline(always)]
     fn head_entry(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> PendingStoragePath<Mutable<T>> {
-        PendingStoragePathTrait::new(@self.as_path(), 0)
+        PendingStoragePathTrait::new(@self.as_path(), self.__base_address__)
     }
 
     #[inline(always)]

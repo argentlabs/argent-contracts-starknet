@@ -277,7 +277,7 @@ describe("ArgentAccount: upgrade", function () {
       // Check the account is in the wrong state
       const wrongGuids = await account.callContract({
         contractAddress: account.address,
-        entrypoint: "get_owner_guids",
+        entrypoint: "get_owners_guids",
       });
       // Since we have to do a raw call, we have the unparsed value returned
       expect(wrongGuids.length).to.equal(1);
@@ -296,7 +296,7 @@ describe("ArgentAccount: upgrade", function () {
       // Making sure it has the new owner migrated correctly
       const newAccountContract = await manager.loadContract(account.address);
       const newGuid = new StarknetKeyPair(owner.privateKey).guid;
-      expect(await newAccountContract.get_owner_guids()).to.deep.equal([newGuid]);
+      expect(await newAccountContract.get_owners_guids()).to.deep.equal([newGuid]);
       mockDapp.connect(account);
       // We don't really care about the value here, just that it is successful
       await manager.ensureSuccess(mockDapp.set_number(56));

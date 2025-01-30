@@ -531,21 +531,6 @@ mod ArgentAccount {
             self.reset_escape_timestamps();
         }
 
-        fn get_owner(self: @ContractState) -> felt252 {
-            let owner = self.owner_manager.get_single_owner().expect('argent/no-single-owner');
-            assert(!owner.is_stored_as_guid(), 'argent/only_guid');
-            owner.stored_value
-        }
-
-        fn get_owner_type(self: @ContractState) -> SignerType {
-            self.owner_manager.get_single_owner().expect('argent/no-single-owner').signer_type
-        }
-
-        fn get_owner_guid(self: @ContractState) -> felt252 {
-            self.owner_manager.get_single_owner().expect('argent/no-single-owner').into_guid()
-        }
-
-
         fn get_escape(self: @ContractState) -> Escape {
             self._escape.read()
         }

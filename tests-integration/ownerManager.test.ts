@@ -18,7 +18,7 @@ describe("Owner Manager Tests", function () {
           alive_signature: new CairoOption(CairoOptionVariant.None),
         }),
       );
-      const newOwners = await accountContract.get_owner_guids();
+      const newOwners = await accountContract.get_owners_guids();
 
       expect(newOwners).to.deep.equal([owner.guid, newOwner.guid]);
     });
@@ -37,7 +37,7 @@ describe("Owner Manager Tests", function () {
         }),
       );
 
-      const newOwners = await accountContract.get_owner_guids();
+      const newOwners = await accountContract.get_owners_guids();
       expect(newOwners).to.deep.equal([owner.guid, newOwner1.guid, newOwner2.guid]);
     });
 
@@ -75,7 +75,7 @@ describe("Owner Manager Tests", function () {
           alive_signature: new CairoOption(CairoOptionVariant.None),
         }),
       );
-      const newOwnersAfterRemove = await accountContract.get_owner_guids();
+      const newOwnersAfterRemove = await accountContract.get_owners_guids();
       expect(newOwnersAfterRemove).to.deep.equal([owner.guid]);
     });
     it("Remove 2 Owners", async function () {
@@ -97,7 +97,7 @@ describe("Owner Manager Tests", function () {
           alive_signature: new CairoOption(CairoOptionVariant.None),
         }),
       );
-      const newOwnersAfterRemove = await accountContract.get_owner_guids();
+      const newOwnersAfterRemove = await accountContract.get_owners_guids();
       expect(newOwnersAfterRemove).to.deep.equal([owner.guid]);
     });
     it("Remove Owner not in the List", async function () {

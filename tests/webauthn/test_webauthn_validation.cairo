@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{WebauthnSigner, Signer, SignerTrait, is_valid_webauthn_signature};
+use argent::signer::signer_signature::{Signer, SignerTrait, WebauthnSigner, is_valid_webauthn_signature};
 use argent::signer::webauthn::WebauthnSignature;
 use starknet::secp256_trait::Signature;
 

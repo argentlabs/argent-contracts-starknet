@@ -4,9 +4,9 @@ use argent::recovery::{EscapeStatus};
 
 use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
 use argent::utils::serialization::serialize;
-use snforge_std::{declare, ContractClassTrait, start_cheat_caller_address_global, DeclareResultTrait};
+use snforge_std::{ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address_global};
 use starknet::account::Call;
-use super::super::{OWNER, GUARDIAN, ARGENT_ACCOUNT_ADDRESS};
+use super::super::{ARGENT_ACCOUNT_ADDRESS, GUARDIAN, OWNER};
 
 #[starknet::interface]
 trait ITestArgentAccount<TContractState> {

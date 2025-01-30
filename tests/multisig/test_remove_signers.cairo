@@ -1,8 +1,8 @@
 use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
 use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
-use snforge_std::{spy_events, EventSpyAssertionsTrait, EventSpyTrait};
+use snforge_std::{EventSpyAssertionsTrait, EventSpyTrait, spy_events};
 use super::super::{
-    SIGNER_1, SIGNER_2, SIGNER_3, initialize_multisig, initialize_multisig_with, ITestArgentMultisigDispatcherTrait
+    ITestArgentMultisigDispatcherTrait, SIGNER_1, SIGNER_2, SIGNER_3, initialize_multisig, initialize_multisig_with,
 };
 
 #[test]
@@ -24,12 +24,12 @@ fn remove_signers_first() {
 
     let removed_owner_guid = SIGNER_1().into_guid();
     let event = signer_manager_component::Event::OwnerRemovedGuid(
-        signer_manager_component::OwnerRemovedGuid { removed_owner_guid }
+        signer_manager_component::OwnerRemovedGuid { removed_owner_guid },
     );
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
 
     let event = signer_manager_component::Event::ThresholdUpdated(
-        signer_manager_component::ThresholdUpdated { new_threshold: 2 }
+        signer_manager_component::ThresholdUpdated { new_threshold: 2 },
     );
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
 

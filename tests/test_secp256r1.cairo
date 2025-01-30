@@ -1,5 +1,5 @@
 use argent::signer::signer_signature::{
-    SignerSignature, SignerSignatureTrait, Secp256r1Signer, Secp256Signature, SECP_256_R1_HALF
+    SECP_256_R1_HALF, Secp256Signature, Secp256r1Signer, SignerSignature, SignerSignatureTrait,
 };
 use starknet::secp256_trait::{Secp256PointTrait, Secp256Trait};
 use starknet::secp256r1::Secp256r1Point;
@@ -25,7 +25,7 @@ const sig_s_high_odd: u256 = 0x56dfd723ec56c6f85cdaa82be0125a2c2e2bb602a4c61a46e
 
 fn validateR1Signature(r: u256, s: u256, y_parity: bool, message_hash: felt252) -> bool {
     let sig = SignerSignature::Secp256r1(
-        (Secp256r1Signer { pubkey: pubkey.try_into().unwrap() }, Secp256Signature { r, s, y_parity })
+        (Secp256r1Signer { pubkey: pubkey.try_into().unwrap() }, Secp256Signature { r, s, y_parity }),
     );
     sig.is_valid_signature(message_hash)
 }
@@ -39,7 +39,7 @@ fn test_SECP_256_R1_HALF() {
 fn test_successful_invalid_verification() {
     assert!(
         !validateR1Signature(sig_r_low_even, 'invalid_s_value'.into(), true, message_hash_low_even),
-        "invalid-verification"
+        "invalid-verification",
     );
 }
 
@@ -47,14 +47,14 @@ fn test_successful_invalid_verification() {
 fn test_successful_verification_low_even() {
     assert!(
         validateR1Signature(sig_r_low_even, sig_s_low_even, true, message_hash_low_even),
-        "invalid-verification-low-even"
+        "invalid-verification-low-even",
     );
 }
 
 #[test]
 fn test_successful_verification_low_odd() {
     assert!(
-        validateR1Signature(sig_r_low_odd, sig_s_low_odd, false, message_hash_low_odd), "invalid-verification-low-odd"
+        validateR1Signature(sig_r_low_odd, sig_s_low_odd, false, message_hash_low_odd), "invalid-verification-low-odd",
     );
 }
 
@@ -62,7 +62,7 @@ fn test_successful_verification_low_odd() {
 fn test_successful_verification_high_even() {
     assert!(
         validateR1Signature(sig_r_high_even, sig_s_high_even, true, message_hash_high_even),
-        "invalid-verification-high-even"
+        "invalid-verification-high-even",
     );
 }
 
@@ -70,7 +70,7 @@ fn test_successful_verification_high_even() {
 fn test_successful_verification_high_odd() {
     assert!(
         validateR1Signature(sig_r_high_odd, sig_s_high_odd, false, message_hash_high_odd),
-        "invalid-verification-high-odd"
+        "invalid-verification-high-odd",
     );
 }
 
@@ -78,7 +78,7 @@ fn test_successful_verification_high_odd() {
 #[should_panic(expected: ('argent/invalid-r-value',))]
 fn test_high_r() {
     validateR1Signature(
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, sig_s_low_even, true, message_hash_low_even
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, sig_s_low_even, true, message_hash_low_even,
     );
 }
 
@@ -92,7 +92,7 @@ fn test_0_r() {
 #[should_panic(expected: ('argent/invalid-s-value',))]
 fn test_high_s() {
     validateR1Signature(
-        sig_r_low_even, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, true, message_hash_low_even
+        sig_r_low_even, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, true, message_hash_low_even,
     );
 }
 

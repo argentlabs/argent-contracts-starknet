@@ -16,7 +16,7 @@ trait IMockDapp<TContractState> {
 
 #[starknet::contract]
 mod MockDapp {
-    use starknet::{get_caller_address, ContractAddress, storage::Map};
+    use starknet::{ContractAddress, get_caller_address, storage::Map};
 
     #[storage]
     struct Storage {

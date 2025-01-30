@@ -1,7 +1,7 @@
 use argent::mocks::multisig_mocks::MultisigMock;
 use argent::multisig_account::signer_manager::interface::ISignerManager;
 use argent::multisig_account::signer_manager::signer_manager::{
-    signer_manager_component, signer_manager_component::ISignerManagerInternal
+    signer_manager_component, signer_manager_component::ISignerManagerInternal,
 };
 use argent::signer::signer_signature::SignerTrait;
 use snforge_std::{start_cheat_caller_address_global, test_address};

@@ -4,7 +4,7 @@
 #[starknet::contract]
 mod MultisigMock {
     use argent::multisig_account::signer_manager::signer_manager::{
-        signer_manager_component, signer_manager_component::SignerManagerInternalImpl
+        signer_manager_component, signer_manager_component::SignerManagerInternalImpl,
     };
 
     component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);

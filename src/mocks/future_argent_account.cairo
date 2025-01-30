@@ -11,7 +11,7 @@ trait IFutureArgentUserAccount<TContractState> {
         class_hash: felt252,
         contract_address_salt: felt252,
         owner: Signer,
-        guardian: Option<Signer>
+        guardian: Option<Signer>,
     ) -> felt252;
     fn get_owner(self: @TContractState) -> felt252;
     fn get_guardian(self: @TContractState) -> felt252;
@@ -24,15 +24,15 @@ trait IFutureArgentUserAccount<TContractState> {
 mod MockFutureArgentAccount {
     use argent::account::interface::{IAccount, Version};
     use argent::introspection::src5::src5_component;
-    use argent::signer::signer_signature::{Signer, SignerType, SignerTrait, SignerSignature, SignerSignatureTrait};
+    use argent::signer::signer_signature::{Signer, SignerSignature, SignerSignatureTrait, SignerTrait, SignerType};
     use argent::upgrade::{
+        interface::{IUpgradableCallback, IUpgradableCallbackOld},
         upgrade::{upgrade_component, upgrade_component::UpgradableInternalImpl},
-        interface::{IUpgradableCallback, IUpgradableCallbackOld}
     };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self}, calls::execute_multicall, serialization::full_deserialize,
     };
-    use starknet::{ClassHash, get_contract_address, VALIDATED, account::Call, SyscallResultTrait, get_tx_info,};
+    use starknet::{ClassHash, SyscallResultTrait, VALIDATED, account::Call, get_contract_address, get_tx_info};
     use super::{IFutureArgentUserAccount, IFutureArgentUserAccountDispatcher, IFutureArgentUserAccountDispatcherTrait};
 
     const NAME: felt252 = 'ArgentAccount';
@@ -134,7 +134,7 @@ mod MockFutureArgentAccount {
             class_hash: felt252,
             contract_address_salt: felt252,
             owner: Signer,
-            guardian: Option<Signer>
+            guardian: Option<Signer>,
         ) -> felt252 {
             let tx_info = get_tx_info();
             self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
@@ -172,7 +172,7 @@ mod MockFutureArgentAccount {
         }
 
         fn is_valid_span_signature(
-            self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>
+            self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>,
         ) -> bool {
             if self._guardian.read() == 0 {
                 assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');

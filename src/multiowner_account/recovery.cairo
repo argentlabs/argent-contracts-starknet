@@ -7,7 +7,7 @@ enum EscapeType {
     #[default]
     None,
     Guardian,
-    Owner
+    Owner,
 }
 
 /// @param ready_at when the escape can be completed
@@ -33,7 +33,7 @@ impl EscapeStorePacking of starknet::StorePacking<Escape, (felt252, felt252)> {
     fn pack(value: Escape) -> (felt252, felt252) {
         let (signer_type_ordinal, stored_value) = match value.new_signer {
             Option::Some(new_signer) => (new_signer.signer_type.into(), new_signer.stored_value.into()),
-            Option::None => (0, 0)
+            Option::None => (0, 0),
         };
         let packed = value.ready_at.into() + (value.escape_type.into() * SHIFT_64) + (signer_type_ordinal * SHIFT_128);
         (packed, stored_value)
@@ -53,7 +53,7 @@ impl EscapeStorePacking of starknet::StorePacking<Escape, (felt252, felt252)> {
                 let signer_type = signer_type_ordinal.try_into().unwrap();
                 let stored_value = stored_value.try_into().unwrap();
                 Option::Some(SignerStorageValue { signer_type, stored_value })
-            }
+            },
         }
     }
 }
@@ -63,7 +63,7 @@ impl EscapeTypeIntoFelt252 of Into<EscapeType, felt252> {
         match self {
             EscapeType::None => 0,
             EscapeType::Guardian => 1,
-            EscapeType::Owner => 2
+            EscapeType::Owner => 2,
         }
     }
 }

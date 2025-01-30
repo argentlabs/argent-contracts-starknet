@@ -3,11 +3,11 @@
 #[starknet::component]
 mod outside_execution_component {
     use argent::outside_execution::{
+        interface::{IOutsideExecution, IOutsideExecutionCallback, OutsideExecution},
         outside_execution_hash::{OffChainMessageOutsideExecutionRev0, OffChainMessageOutsideExecutionRev1},
-        interface::{OutsideExecution, IOutsideExecutionCallback, IOutsideExecution}
     };
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
-    use starknet::{get_caller_address, get_block_timestamp, account::Call, storage::Map};
+    use starknet::{account::Call, get_block_timestamp, get_caller_address, storage::Map};
 
     #[storage]
     struct Storage {
@@ -28,27 +28,27 @@ mod outside_execution_component {
         +ReentrancyGuardComponent::HasComponent<TContractState>,
     > of IOutsideExecution<ComponentState<TContractState>> {
         fn execute_from_outside(
-            ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Array<felt252>
+            ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Array<felt252>,
         ) -> Array<Span<felt252>> {
             let hash = outside_execution.get_message_hash_rev_0();
             self.assert_valid_outside_execution(outside_execution, hash, signature.span())
         }
 
         fn execute_from_outside_v2(
-            ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Span<felt252>
+            ref self: ComponentState<TContractState>, outside_execution: OutsideExecution, signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
             let hash = outside_execution.get_message_hash_rev_1();
             self.assert_valid_outside_execution(outside_execution, hash, signature)
         }
 
         fn get_outside_execution_message_hash_rev_0(
-            self: @ComponentState<TContractState>, outside_execution: OutsideExecution
+            self: @ComponentState<TContractState>, outside_execution: OutsideExecution,
         ) -> felt252 {
             outside_execution.get_message_hash_rev_0()
         }
 
         fn get_outside_execution_message_hash_rev_1(
-            self: @ComponentState<TContractState>, outside_execution: OutsideExecution
+            self: @ComponentState<TContractState>, outside_execution: OutsideExecution,
         ) -> felt252 {
             outside_execution.get_message_hash_rev_1()
         }
@@ -70,7 +70,7 @@ mod outside_execution_component {
             ref self: ComponentState<TContractState>,
             outside_execution: OutsideExecution,
             outside_tx_hash: felt252,
-            signature: Span<felt252>
+            signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
             let mut reentrancy_guard = get_dep_component_mut!(ref self, ReentrancyGuard);
             reentrancy_guard.start();
@@ -82,7 +82,7 @@ mod outside_execution_component {
             let block_timestamp = get_block_timestamp();
             assert(
                 outside_execution.execute_after < block_timestamp && block_timestamp < outside_execution.execute_before,
-                'argent/invalid-timestamp'
+                'argent/invalid-timestamp',
             );
             let nonce = outside_execution.nonce;
             assert(!self.outside_nonces.read(nonce), 'argent/duplicated-outside-nonce');

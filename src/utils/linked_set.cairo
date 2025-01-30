@@ -1,6 +1,6 @@
 use starknet::Store;
 use starknet::storage::{
-    StorageAsPath, StoragePathEntry, StoragePath, Mutable, StoragePathUpdateTrait, StorageBase, StoragePathTrait
+    Mutable, StorageAsPath, StorageBase, StoragePath, StoragePathEntry, StoragePathTrait, StoragePathUpdateTrait,
 };
 ///
 /// A LinkedSet is storage structure that allows to store multiple items making it efficient to check if an item is in
@@ -109,7 +109,7 @@ pub trait IAddEndMarker<TMemberState> {
 }
 
 impl AddEndMarkerImpl<
-    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>
+    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of IAddEndMarker<StorageBase<Mutable<LinkedSet<T>>>> {
     fn add_end_marker(self: StorageBase<Mutable<LinkedSet<T>>>) {
         let last_signer = self.find_last_hash();
@@ -120,7 +120,7 @@ impl AddEndMarkerImpl<
 }
 
 impl LinkedSetReadImpl<
-    T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>
+    T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetRead<StorageBase<LinkedSet<T>>> {
     type Value = T;
 
@@ -208,7 +208,7 @@ impl LinkedSetReadPrivateImpl<T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetC
 }
 
 impl LinkedSetWriteImpl<
-    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>
+    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of LinkedSetWrite<StorageBase<Mutable<LinkedSet<T>>>> {
     type Value = T;
 
@@ -249,7 +249,7 @@ impl LinkedSetWriteImpl<
 
 #[generate_trait]
 impl LinkedSetWritePrivateImpl<
-    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>
+    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of LinkedSetWritePrivate<T> {
     #[inline(always)]
     fn entry(self: StorageBase<Mutable<LinkedSet<T>>>, item_hash: felt252) -> StoragePath<Mutable<T>> {

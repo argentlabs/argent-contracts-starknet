@@ -140,10 +140,11 @@ mod guardian_manager_component {
 
         fn migrate_guardians_storage(ref self: ComponentState<TContractState>, guardians: Array<SignerStorageValue>) {
             assert(self.guardians_storage.is_empty(), 'argent/guardians-already-init');
+
             self.assert_valid_guardian_count(guardians.len());
             for guardian in guardians {
                 let guardian_guid = self.guardians_storage.insert(guardian);
-                self.emit_guardian_added(guardian_guid); // TODO emit guardian added events?
+                self.emit_guardian_added(guardian_guid);
             };
         }
 

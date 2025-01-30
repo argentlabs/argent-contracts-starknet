@@ -105,9 +105,11 @@ mod owner_manager_component {
         }
 
         fn initialize_from_upgrade(ref self: ComponentState<TContractState>, signer_storage: SignerStorageValue) {
-            // We don't want to emit any events in this case
+            // Sanity check
             assert(self.owners_storage.len() == 0, 'argent/already-initialized');
-            self.owners_storage.insert(signer_storage);
+            let guid = self.owners_storage.insert(signer_storage);
+            // SignerLinked event is not needed here but OwnerAddedGuid is needed
+            self.emit_owner_added(guid);
         }
 
         fn assert_valid_storage(self: @ComponentState<TContractState>) {

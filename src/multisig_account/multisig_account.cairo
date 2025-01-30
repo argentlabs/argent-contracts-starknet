@@ -1,33 +1,33 @@
 #[starknet::contract(account)]
 mod ArgentMultisigAccount {
     use argent::account::interface::{
-        IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version
+        IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version,
     };
     use argent::introspection::src5::src5_component;
     use argent::multisig_account::external_recovery::external_recovery::{
-        external_recovery_component, IExternalRecoveryCallback
+        IExternalRecoveryCallback, external_recovery_component,
     };
     use argent::multisig_account::signer_manager::signer_manager::{
-        signer_manager_component, signer_manager_component::SignerManagerInternalImpl
+        signer_manager_component, signer_manager_component::SignerManagerInternalImpl,
     };
     use argent::multisig_account::upgrade_migration::{
-        upgrade_migration_component, upgrade_migration_component::UpgradableMigrationInternal
+        upgrade_migration_component, upgrade_migration_component::UpgradableMigrationInternal,
     };
     use argent::outside_execution::{
-        outside_execution::outside_execution_component, interface::IOutsideExecutionCallback
+        interface::IOutsideExecutionCallback, outside_execution::outside_execution_component,
     };
     use argent::signer::signer_signature::{Signer, SignerSignature};
     use argent::upgrade::{
-        upgrade::upgrade_component, upgrade::upgrade_component::UpgradableInternalImpl,
-        interface::{IUpgradableCallback, IUpgradableCallbackOld}
+        interface::{IUpgradableCallback, IUpgradableCallbackOld}, upgrade::upgrade_component,
+        upgrade::upgrade_component::UpgradableInternalImpl,
     };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self},
         calls::{execute_multicall, execute_multicall_with_result}, serialization::full_deserialize,
-        transaction_version::{assert_correct_invoke_version, assert_correct_deploy_account_version},
+        transaction_version::{assert_correct_deploy_account_version, assert_correct_invoke_version},
     };
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
-    use starknet::{get_tx_info, get_execution_info, get_contract_address, VALIDATED, account::Call, ClassHash};
+    use starknet::{ClassHash, VALIDATED, account::Call, get_contract_address, get_execution_info, get_tx_info};
 
     const NAME: felt252 = 'ArgentMultisig';
     const VERSION: Version = Version { major: 0, minor: 3, patch: 0 };
@@ -146,7 +146,7 @@ mod ArgentMultisigAccount {
                 .is_valid_signature_with_threshold(
                     hash,
                     self.signer_manager.threshold.read(),
-                    signer_signatures: parse_signature_array(signature.span())
+                    signer_signatures: parse_signature_array(signature.span()),
                 ) {
                 VALIDATED
             } else {
@@ -166,7 +166,7 @@ mod ArgentMultisigAccount {
             class_hash: felt252,
             contract_address_salt: felt252,
             threshold: usize,
-            signers: Array<Signer>
+            signers: Array<Signer>,
         ) -> felt252 {
             let tx_info = get_tx_info();
             assert_correct_deploy_account_version(tx_info.version);
@@ -175,7 +175,7 @@ mod ArgentMultisigAccount {
             let is_valid = self
                 .signer_manager
                 .is_valid_signature_with_threshold(
-                    tx_info.transaction_hash, threshold: 1, signer_signatures: parse_signature_array(tx_info.signature)
+                    tx_info.transaction_hash, threshold: 1, signer_signatures: parse_signature_array(tx_info.signature),
                 );
             assert(is_valid, 'argent/invalid-signature');
             VALIDATED
@@ -273,7 +273,7 @@ mod ArgentMultisigAccount {
                 .is_valid_signature_with_threshold(
                     execution_hash,
                     self.signer_manager.threshold.read(),
-                    signer_signatures: parse_signature_array(signature)
+                    signer_signatures: parse_signature_array(signature),
                 );
             assert(valid, 'argent/invalid-signature');
         }

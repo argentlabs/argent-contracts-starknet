@@ -9,7 +9,7 @@ use argent::signer::signer_signature::Signer;
 struct AccountCreated {
     #[key]
     owner: felt252,
-    guardian: felt252
+    guardian: felt252,
 }
 
 /// @notice Emitted on initialization with the the owner and guardian (or 0 if none) guid's
@@ -20,7 +20,7 @@ struct AccountCreated {
 struct AccountCreatedGuid {
     #[key]
     owner_guid: felt252,
-    guardian_guid: felt252
+    guardian_guid: felt252,
 }
 
 /// Deprecated: This event will likely be removed in the future
@@ -77,7 +77,7 @@ struct GuardianRemovedGuid {
 #[derive(Drop, starknet::Event)]
 struct EscapeOwnerTriggeredGuid {
     ready_at: u64,
-    new_owner_guid: felt252
+    new_owner_guid: felt252,
 }
 
 /// @notice Guardian escape was triggered by the owner
@@ -87,21 +87,21 @@ struct EscapeOwnerTriggeredGuid {
 #[derive(Drop, starknet::Event)]
 struct EscapeGuardianTriggeredGuid {
     ready_at: u64,
-    new_guardian_guid: felt252
+    new_guardian_guid: felt252,
 }
 
 /// @notice Owner escape was completed and there is a new account owner
 /// @param new_owner_guid new owner guid
 #[derive(Drop, starknet::Event)]
 struct OwnerEscapedGuid {
-    new_owner_guid: felt252
+    new_owner_guid: felt252,
 }
 
 /// @notice Guardian escape was completed and there is a new account guardian
 /// @param new_guardian_guid guid of the new guardian or 0 if it was removed
 #[derive(Drop, starknet::Event)]
 struct GuardianEscapedGuid {
-    new_guardian_guid: felt252
+    new_guardian_guid: felt252,
 }
 
 /// @notice An ongoing escape was canceled

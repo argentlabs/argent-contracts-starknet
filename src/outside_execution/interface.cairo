@@ -25,7 +25,7 @@ struct OutsideExecution {
     nonce: felt252,
     execute_after: u64,
     execute_before: u64,
-    calls: Span<Call>
+    calls: Span<Call>,
 }
 
 /// @notice get_outside_execution_message_hash_rev_* is not part of the standard interface
@@ -38,12 +38,12 @@ trait IOutsideExecution<TContractState> {
     /// @notice This function does not allow reentrancy. A call to `__execute__` or `execute_from_outside` cannot
     /// trigger another nested transaction to `execute_from_outside`.
     fn execute_from_outside(
-        ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>
+        ref self: TContractState, outside_execution: OutsideExecution, signature: Array<felt252>,
     ) -> Array<Span<felt252>>;
 
     /// @notice Outside execution using SNIP-12 Rev 1
     fn execute_from_outside_v2(
-        ref self: TContractState, outside_execution: OutsideExecution, signature: Span<felt252>
+        ref self: TContractState, outside_execution: OutsideExecution, signature: Span<felt252>,
     ) -> Array<Span<felt252>>;
 
     /// Get the status for a given nonce

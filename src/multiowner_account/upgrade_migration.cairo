@@ -39,14 +39,15 @@ mod upgrade_migration_component {
     use argent::multiowner_account::owner_manager::{IOwnerManager, owner_manager_component};
     use argent::multiowner_account::recovery::Escape;
     use argent::signer::signer_signature::{
-        SignerStorageValue, SignerType, Signer, starknet_signer_from_pubkey, SignerTrait
+        Signer, SignerStorageValue, SignerTrait, SignerType, starknet_signer_from_pubkey,
     };
-    use argent::upgrade::interface::{IUpgradableCallback, IUpgradeable, IUpgradableCallbackDispatcherTrait};
+    use argent::upgrade::interface::{IUpgradableCallback, IUpgradableCallbackDispatcherTrait, IUpgradeable};
     use starknet::{
-        syscalls::replace_class_syscall, SyscallResultTrait, get_block_timestamp, storage::Map,
-        storage_access::{storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,}
+        SyscallResultTrait, get_block_timestamp, storage::Map,
+        storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_read_syscall},
+        syscalls::replace_class_syscall,
     };
-    use super::{IRecoveryFromLegacyUpgrade, IUpgradeMigrationInternal, IUpgradeMigrationCallback, LegacyEscape};
+    use super::{IRecoveryFromLegacyUpgrade, IUpgradeMigrationCallback, IUpgradeMigrationInternal, LegacyEscape};
 
     const LEGACY_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
@@ -168,7 +169,7 @@ mod upgrade_migration_component {
                 self._signer.write(0);
             } else {
                 for signer_type in array![
-                    SignerType::Webauthn, SignerType::Secp256k1, SignerType::Secp256r1, SignerType::Eip191
+                    SignerType::Webauthn, SignerType::Secp256k1, SignerType::Secp256r1, SignerType::Eip191,
                 ] {
                     let stored_value = self._signer_non_stark.read(signer_type.into());
                     if (stored_value != 0) {
@@ -193,7 +194,7 @@ mod upgrade_migration_component {
                 self._guardian_backup.write(0);
             } else {
                 for signer_type in array![
-                    SignerType::Webauthn, SignerType::Secp256k1, SignerType::Secp256r1, SignerType::Eip191
+                    SignerType::Webauthn, SignerType::Secp256k1, SignerType::Secp256r1, SignerType::Eip191,
                 ] {
                     let stored_value = self._guardian_backup_non_stark.read(signer_type.into());
                     if (stored_value != 0) {
@@ -225,7 +226,7 @@ mod upgrade_migration_component {
             contract.emit_event_callback(event);
         }
 
-        fn emit_signer_linked(ref self: ComponentState<TContractState>, signer_guid: felt252, signer: Signer,) {
+        fn emit_signer_linked(ref self: ComponentState<TContractState>, signer_guid: felt252, signer: Signer) {
             let signer_linked = SignerLinked { signer_guid, signer };
             self.emit_event(ArgentAccountEvent::SignerLinked(signer_linked));
         }

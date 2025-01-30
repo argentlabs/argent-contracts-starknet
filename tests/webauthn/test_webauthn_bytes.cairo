@@ -1,4 +1,4 @@
-use argent::utils::bytes::{u8s_to_u32s_pad_end, eight_words_to_bytes, u256_to_u8s, bytes_to_u32s, u32_to_bytes};
+use argent::utils::bytes::{bytes_to_u32s, eight_words_to_bytes, u256_to_u8s, u32_to_bytes, u8s_to_u32s_pad_end};
 use super::test_webauthn_validation::ByteArrayExt;
 
 #[test]
@@ -29,38 +29,8 @@ fn convert_8_words_to_bytes() {
     let input = [0x6a09e667, 0xbb67ae85, 0x11223344, 0x55667788, 0x99aabbcc, 0xddeeff00, 0x12345678, 0x9abcdef0];
     let output = eight_words_to_bytes(input);
     let expected = [
-        0x6a,
-        0x09,
-        0xe6,
-        0x67,
-        0xbb,
-        0x67,
-        0xae,
-        0x85,
-        0x11,
-        0x22,
-        0x33,
-        0x44,
-        0x55,
-        0x66,
-        0x77,
-        0x88,
-        0x99,
-        0xaa,
-        0xbb,
-        0xcc,
-        0xdd,
-        0xee,
-        0xff,
-        0x00,
-        0x12,
-        0x34,
-        0x56,
-        0x78,
-        0x9a,
-        0xbc,
-        0xde,
-        0xf0
+        0x6a, 0x09, 0xe6, 0x67, 0xbb, 0x67, 0xae, 0x85, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa,
+        0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
     ];
     assert_eq!(output.span(), expected.span());
 }
@@ -166,7 +136,7 @@ fn test_bytes_to_u32s() {
         'w',
         'x',
         'y',
-        'z'
+        'z',
     ];
     let (output, last, rem) = bytes_to_u32s(input.span());
     assert_eq!(output, array!['abcd', 'efgh', 'ijkl', 'mnop', 'qrst', 'uvwx']);

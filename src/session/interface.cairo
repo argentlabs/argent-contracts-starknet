@@ -41,7 +41,7 @@ trait ISessionCallback<TContractState> {
     /// @param authorization_signature The owner + guardian signature of the session
     /// @return The parsed array of SignerSignature
     fn validate_authorization(
-        self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>
+        self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>,
     ) -> Array<SignerSignature>;
 
     fn is_owner_guid(self: @TContractState, owner_guid: felt252) -> bool;
@@ -63,6 +63,6 @@ trait ISessionable<TContractState> {
     /// @param owner_guid Guid of the owner used in the authorization
     /// @return A boolean indicating whether the session is cached
     fn is_session_authorization_cached(
-        self: @TContractState, session_hash: felt252, owner_guid: felt252, guardian_guid: felt252
+        self: @TContractState, session_hash: felt252, owner_guid: felt252, guardian_guid: felt252,
     ) -> bool;
 }

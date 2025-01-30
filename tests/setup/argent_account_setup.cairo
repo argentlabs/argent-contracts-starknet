@@ -5,9 +5,9 @@ use argent::multiowner_account::recovery::Escape;
 use argent::recovery::{EscapeStatus};
 use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
 use argent::utils::serialization::serialize;
-use snforge_std::{declare, ContractClassTrait, start_cheat_caller_address_global, DeclareResultTrait};
+use snforge_std::{ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address_global};
 use starknet::account::Call;
-use super::super::{OWNER, GUARDIAN, ARGENT_ACCOUNT_ADDRESS};
+use super::super::{ARGENT_ACCOUNT_ADDRESS, GUARDIAN, OWNER};
 
 #[starknet::interface]
 trait ITestArgentAccount<TContractState> {
@@ -22,10 +22,10 @@ trait ITestArgentAccount<TContractState> {
         ref self: TContractState,
         owner_guids_to_remove: Array<felt252>,
         owners_to_add: Array<Signer>,
-        owner_alive_signature: Option<OwnerAliveSignature>
+        owner_alive_signature: Option<OwnerAliveSignature>,
     );
     fn change_guardians(
-        ref self: TContractState, guardian_guids_to_remove: Array<felt252>, guardians_to_add: Array<Signer>
+        ref self: TContractState, guardian_guids_to_remove: Array<felt252>, guardians_to_add: Array<Signer>,
     );
     fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);
     fn trigger_escape_guardian(ref self: TContractState, new_guardian: Option<Signer>);

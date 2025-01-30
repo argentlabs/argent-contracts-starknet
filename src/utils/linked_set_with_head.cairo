@@ -1,10 +1,10 @@
 use argent::utils::array_ext::ArrayExtTrait;
 use argent::utils::linked_set::{
     LinkedSet, LinkedSetConfig, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl,
-    StorageBaseAsReadOnlyImpl
+    StorageBaseAsReadOnlyImpl,
 };
 use starknet::Store;
-use starknet::storage::{StorageAsPath, StoragePathEntry, StoragePathTrait, StoragePath, Mutable, StorageBase};
+use starknet::storage::{Mutable, StorageAsPath, StorageBase, StoragePath, StoragePathEntry, StoragePathTrait};
 
 ///
 /// A LinkedSetWithHead is storage structure that allows to store multiple items making it efficient to check if an item
@@ -63,7 +63,7 @@ pub trait LinkedSetWithHeadWrite<TMemberState> {
 
 
 impl LinkedSetWithHeadReadImpl<
-    T, +Drop<T>, +Copy<T>, +PartialEq<T>, +starknet::Store<T>, +LinkedSetConfig<T>
+    T, +Drop<T>, +Copy<T>, +PartialEq<T>, +starknet::Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetWithHeadRead<StorageBase<LinkedSetWithHead<T>>> {
     type Value = T;
 
@@ -144,7 +144,7 @@ impl LinkedSetWithHeadReadImpl<
 
 #[generate_trait]
 impl LinkedSetWithHeadReadPrivateImpl<
-    T, +Drop<T>, +PartialEq<T>, +starknet::Store<T>, +LinkedSetConfig<T>
+    T, +Drop<T>, +PartialEq<T>, +starknet::Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetWithHeadReadPrivate<T> {
     #[inline(always)]
     fn head_entry(self: StorageBase<LinkedSetWithHead<T>>) -> StoragePath<T> {
@@ -158,7 +158,7 @@ impl LinkedSetWithHeadReadPrivateImpl<
 }
 
 impl LinkedSetWithHeadWriteImpl<
-    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>
+    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of LinkedSetWithHeadWrite<StorageBase<Mutable<LinkedSetWithHead<T>>>> {
     type Value = T;
 
@@ -196,7 +196,7 @@ impl LinkedSetWithHeadWriteImpl<
 
 #[generate_trait]
 impl LinkedSetWithHeadWritePrivateImpl<
-    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>
+    T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of LinkedSetWithHeadWritePrivate<T> {
     #[inline(always)]
     fn head_entry(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> StoragePath<Mutable<T>> {

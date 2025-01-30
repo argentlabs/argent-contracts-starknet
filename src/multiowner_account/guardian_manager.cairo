@@ -51,14 +51,14 @@ trait IGuardianManagerInternal<TContractState> {
 mod guardian_manager_component {
     use argent::account::interface::IEmitArgentAccountEvent;
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
-    use argent::multiowner_account::events::{SignerLinked, GuardianAddedGuid, GuardianRemovedGuid};
+    use argent::multiowner_account::events::{GuardianAddedGuid, GuardianRemovedGuid, SignerLinked};
     use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use argent::signer::signer_signature::{
-        Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerStorageValue, SignerStorageTrait, SignerType
+        Signer, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait, SignerType,
     };
     use argent::utils::array_ext::SpanContains;
     use argent::utils::linked_set_with_head::{
-        LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl
+        LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl,
     };
     use argent::utils::transaction_version::is_estimate_transaction;
     use super::{IGuardianManager, IGuardianManagerInternal};
@@ -68,7 +68,7 @@ mod guardian_manager_component {
 
     #[storage]
     struct Storage {
-        guardians_storage: LinkedSetWithHead<SignerStorageValue>
+        guardians_storage: LinkedSetWithHead<SignerStorageValue>,
     }
 
     #[event]
@@ -80,7 +80,7 @@ mod guardian_manager_component {
 
     #[embeddable_as(GuardianManagerImpl)]
     impl GuardianManager<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>, +IEmitArgentAccountEvent<TContractState>
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>, +IEmitArgentAccountEvent<TContractState>,
     > of IGuardianManager<ComponentState<TContractState>> {
         fn get_guardian_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
             self.guardians_storage.get_all_hashes()
@@ -97,7 +97,7 @@ mod guardian_manager_component {
 
         #[must_use]
         fn is_valid_guardian_signature(
-            self: @ComponentState<TContractState>, hash: felt252, guardian_signature: SignerSignature
+            self: @ComponentState<TContractState>, hash: felt252, guardian_signature: SignerSignature,
         ) -> bool {
             if !self.is_guardian(guardian_signature.signer()) {
                 return false;
@@ -129,7 +129,7 @@ mod guardian_manager_component {
 
     #[embeddable_as(GuardianManagerInternalImpl)]
     impl GuardianManagerInternal<
-        TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>,
     > of IGuardianManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, guardian: Signer) -> felt252 {
             let guid = self.guardians_storage.insert(guardian.storage_value());
@@ -169,7 +169,7 @@ mod guardian_manager_component {
                 let guardian_storage = guardian.storage_value();
                 self
                     .emit_signer_linked_event(
-                        SignerLinked { signer_guid: guardian_storage.into_guid(), signer: guardian }
+                        SignerLinked { signer_guid: guardian_storage.into_guid(), signer: guardian },
                     );
                 guardians_to_add_storage.append(guardian_storage);
             };
@@ -177,23 +177,21 @@ mod guardian_manager_component {
         }
 
         fn complete_guardian_escape(
-            ref self: ComponentState<TContractState>, new_guardian: Option<SignerStorageValue>
+            ref self: ComponentState<TContractState>, new_guardian: Option<SignerStorageValue>,
         ) {
             if let Option::Some(new_guardian) = new_guardian {
                 let new_guardian_guid = new_guardian.into_guid();
                 let mut guardian_guids_to_remove = array![];
-                for guardian_to_remove_guid in self
-                    .guardians_storage
-                    .get_all_hashes() {
-                        if guardian_to_remove_guid != new_guardian_guid {
-                            guardian_guids_to_remove.append(guardian_to_remove_guid);
-                        };
+                for guardian_to_remove_guid in self.guardians_storage.get_all_hashes() {
+                    if guardian_to_remove_guid != new_guardian_guid {
+                        guardian_guids_to_remove.append(guardian_to_remove_guid);
                     };
+                };
                 self.change_guardians_using_storage(:guardian_guids_to_remove, guardians_to_add: array![new_guardian]);
             } else {
                 self
                     .change_guardians_using_storage(
-                        guardian_guids_to_remove: self.guardians_storage.get_all_hashes(), guardians_to_add: array![]
+                        guardian_guids_to_remove: self.guardians_storage.get_all_hashes(), guardians_to_add: array![],
                     );
             }
         }
@@ -205,14 +203,14 @@ mod guardian_manager_component {
 
     #[generate_trait]
     impl Private<
-        TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>,
     > of PrivateTrait<TContractState> {
         /// @dev it will revert if there's any overlap between the guardians to add and the guardians to remove
         /// @dev it will revert if there are duplicate in the guardians to add or remove
         fn change_guardians_using_storage(
             ref self: ComponentState<TContractState>,
             guardian_guids_to_remove: Array<felt252>,
-            guardians_to_add: Array<SignerStorageValue>
+            guardians_to_add: Array<SignerStorageValue>,
         ) {
             let guardian_to_remove_span = guardian_guids_to_remove.span();
             for guid_to_remove in guardian_guids_to_remove {

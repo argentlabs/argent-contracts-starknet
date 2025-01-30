@@ -1,7 +1,7 @@
 use argent::account::interface::Version;
 use argent::multiowner_account::recovery::Escape;
 use argent::recovery::{EscapeStatus};
-use argent::signer::signer_signature::{Signer, SignerType, SignerSignature};
+use argent::signer::signer_signature::{Signer, SignerSignature, SignerType};
 
 #[starknet::interface]
 trait IArgentMultiOwnerAccount<TContractState> {
@@ -11,7 +11,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
         class_hash: felt252,
         contract_address_salt: felt252,
         owner: Signer,
-        guardian: Option<Signer>
+        guardian: Option<Signer>,
     ) -> felt252;
 
     /// @notice Changes the security period used for escapes
@@ -34,7 +34,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
         ref self: TContractState,
         owner_guids_to_remove: Array<felt252>,
         owners_to_add: Array<Signer>,
-        owner_alive_signature: Option<OwnerAliveSignature>
+        owner_alive_signature: Option<OwnerAliveSignature>,
     );
 
     /// @notice Manage the guardians of this account by adding and removing them
@@ -111,5 +111,5 @@ struct OwnerAliveSignature {
     /// It is the signature of the SNIP-12 V1 compliant object OwnerAlive
     owner_signature: SignerSignature,
     /// in seconds. cannot be more than 24 hours in the future
-    signature_expiration: u64
+    signature_expiration: u64,
 }

@@ -1,7 +1,8 @@
 [package]
 name = "argent"
 version = "0.1.0"
-cairo-version = "2.8.2"
+cairo-version = "2.9.2"
+edition="2023_01"
 
 [[target.starknet-contract]]
 sierra = true
@@ -11,14 +12,14 @@ build-external-contracts = ["openzeppelin_presets::account::AccountUpgradeable"]
 
 # Uses packages form scarbs.xyz
 [dependencies]
-starknet = "2.8.2"
-assert_macros = "2.8.2"
-snforge_std = "0.31.0"
-alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b0805" }
-alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b0805" }
-alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev="e1b0805" }
-openzeppelin_security = "0.15.0"
-openzeppelin_presets = "0.15.0"
+starknet = "2.9.2"
+assert_macros = "2.9.2"
+snforge_std = "0.36.0"
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1" }
+alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1" }
+alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev="162bed1" }
+openzeppelin_security = "0.20.0"
+openzeppelin_presets = "0.20.0"
 
 [tool.fmt]
 max-line-length = 120

@@ -91,14 +91,14 @@ mod upgrade_migration_component {
             assert(self._signer.read() != 0, 'argent/no-signer-to-recover');
             assert(self._implementation.read() != 0, 'argent/wrong-implementation');
             let owner_manager = get_dep_component!(@self, OwnerManager);
-            assert(owner_manager.get_owner_guids().len() == 0, 'argent/owner-not-empty');
+            assert(owner_manager.get_owners_guids().len() == 0, 'argent/owner-not-empty');
 
             self.migrate_from_before_0_4_0();
 
             // Ensuring the recovery was successful
             assert(self._signer.read() == 0, 'argent/signer-not-removed');
             assert(self._implementation.read() == 0, 'argent/impl-not-removed');
-            assert(owner_manager.get_owner_guids().len() == 1, 'argent/owner-not-migrated');
+            assert(owner_manager.get_owners_guids().len() == 1, 'argent/owner-not-migrated');
         }
     }
 

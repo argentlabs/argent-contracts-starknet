@@ -52,19 +52,19 @@ describe("ArgentAccount", function () {
     // });
 
     const accountContract = await manager.loadContract(contractAddress);
-    await accountContract.get_owner_guids().should.eventually.deep.equal([owner.guid]);
+    await accountContract.get_owners_guids().should.eventually.deep.equal([owner.guid]);
     await accountContract.is_owner_guid(owner.guid).should.eventually.equal(true);
 
     expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(guardian.guid);
-    await accountContract.get_guardian_guids().should.eventually.deep.equal([guardian.guid]);
+    await accountContract.get_guardians_guids().should.eventually.deep.equal([guardian.guid]);
   });
 
   for (const useTxV3 of [false, true]) {
     it(`Self deployment (TxV3: ${useTxV3})`, async function () {
       const { accountContract, owner } = await deployAccountWithoutGuardians({ useTxV3, selfDeploy: true });
 
-      await accountContract.get_owner_guids().should.eventually.deep.equal([owner.guid]);
-      await accountContract.get_guardian_guids().should.eventually.deep.equal([]);
+      await accountContract.get_owners_guids().should.eventually.deep.equal([owner.guid]);
+      await accountContract.get_guardians_guids().should.eventually.deep.equal([]);
     });
   }
 
@@ -91,7 +91,7 @@ describe("ArgentAccount", function () {
       calldata.push(futureTimestamp.toString());
       // Can't just do account.reset_owners(x, y) because parsing goes wrong...
       await manager.ensureSuccess(await accountContract.invoke("reset_owners", calldata));
-      await accountContract.get_owner_guids().should.eventually.deep.equal([newOwner.guid]);
+      await accountContract.get_owners_guids().should.eventually.deep.equal([newOwner.guid]);
     });
 
     it("Expect parsing error when new_owner is zero", async function () {

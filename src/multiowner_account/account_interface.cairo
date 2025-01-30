@@ -110,6 +110,6 @@ trait IArgentMultiOwnerAccount<TContractState> {
 struct OwnerAliveSignature {
     /// It is the signature of the SNIP-12 V1 compliant object OwnerAlive
     owner_signature: SignerSignature,
-    /// in seconds. cannot be more than 24 hours in the future
+    /// Signature expiration in seconds. Cannot be more than 24 hours in the future
     signature_expiration: u64,
 }

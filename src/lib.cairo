@@ -1,5 +1,3 @@
-// TODO LIST:
-// Which should be pub(crate)?
 pub mod recovery;
 
 mod upgrade {

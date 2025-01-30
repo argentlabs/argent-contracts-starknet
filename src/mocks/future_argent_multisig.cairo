@@ -16,6 +16,7 @@ mod MockFutureArgentMultisig {
         upgrade::{upgrade_component, upgrade_component::UpgradableInternalImpl},
     };
     use argent::utils::{asserts::assert_only_self, calls::execute_multicall, serialization::full_deserialize};
+    use core::panic_with_felt252;
     use starknet::{ClassHash, VALIDATED, account::Call, get_contract_address, get_tx_info};
 
     const NAME: felt252 = 'ArgentMultisig';
@@ -92,7 +93,7 @@ mod MockFutureArgentMultisig {
     #[abi(embed_v0)]
     impl ArgentAccountImpl of IArgentAccount<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
-            core::panic_with_felt252('argent/declare-not-available') // Not implemented yet
+            panic_with_felt252('argent/declare-not-available') // Not implemented yet
         }
 
         fn __validate_deploy__(
@@ -102,7 +103,7 @@ mod MockFutureArgentMultisig {
             threshold: usize,
             signers: Array<Signer>,
         ) -> felt252 {
-            core::panic_with_felt252('argent/deploy-not-available')
+            panic_with_felt252('argent/deploy-not-available')
         }
 
         fn get_name(self: @ContractState) -> felt252 {
@@ -119,7 +120,7 @@ mod MockFutureArgentMultisig {
     impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
         // Called when coming from account < 0.2.0
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
-            core::panic_with_felt252('argent/no-direct-upgrade');
+            panic_with_felt252('argent/no-direct-upgrade');
             array![]
         }
     }

@@ -1,10 +1,10 @@
 use argent::multisig_account::signer_manager::interface::{OwnerRemovedGuid, ThresholdUpdated};
 use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
 use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
-use snforge_std::{EventSpyAssertionsTrait, EventSpyTrait, spy_events};
-use super::super::{
+use crate::{
     ITestArgentMultisigDispatcherTrait, SIGNER_1, SIGNER_2, SIGNER_3, initialize_multisig, initialize_multisig_with,
 };
+use snforge_std::{EventSpyAssertionsTrait, EventSpyTrait, spy_events};
 
 #[test]
 fn remove_signers_first() {

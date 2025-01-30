@@ -7,12 +7,13 @@ use argent::multisig_account::signer_manager::interface::{ISignerManagerDispatch
 use argent::recovery::EscapeStatus;
 use argent::signer::signer_signature::Signer;
 use argent::utils::serialization::serialize;
+use crate::{SIGNER_1, SIGNER_2, SIGNER_3, SIGNER_4};
 use snforge_std::{
     ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, EventSpyTrait, declare, spy_events,
     start_cheat_block_timestamp_global, start_cheat_caller_address_global,
 };
 use starknet::{ContractAddress, contract_address_const};
-use super::{SIGNER_1, SIGNER_2, SIGNER_3, SIGNER_4};
+
 fn GUARDIAN() -> ContractAddress {
     contract_address_const::<'guardian'>()
 }

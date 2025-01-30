@@ -1,9 +1,9 @@
-use starknet::VALIDATED;
-use super::super::{
+use crate::{
     Felt252TryIntoStarknetSigner, GUARDIAN, ITestArgentAccountDispatcherTrait, OWNER, TX_HASH, WRONG_GUARDIAN,
     WRONG_OWNER, initialize_account, initialize_account_without_guardian, to_starknet_signatures,
     to_starknet_signer_signatures,
 };
+use starknet::VALIDATED;
 
 #[test]
 fn valid_no_guardian() {

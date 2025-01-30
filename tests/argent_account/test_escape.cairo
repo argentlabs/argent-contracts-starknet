@@ -1,11 +1,11 @@
 use argent::multiowner_account::{argent_account::ArgentAccount, events::EscapeSecurityPeriodChanged};
 use argent::recovery::EscapeStatus;
 use argent::signer::signer_signature::starknet_signer_from_pubkey;
+use crate::{Felt252TryIntoStarknetSigner, ITestArgentAccountDispatcherTrait, initialize_account};
 use snforge_std::{
     EventSpyAssertionsTrait, EventSpyTrait, spy_events, start_cheat_block_timestamp_global,
     start_cheat_caller_address_global,
 };
-use super::super::{Felt252TryIntoStarknetSigner, ITestArgentAccountDispatcherTrait, initialize_account};
 
 #[test]
 fn set_escape_security_period() {

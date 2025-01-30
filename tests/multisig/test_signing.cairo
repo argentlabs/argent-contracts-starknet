@@ -1,8 +1,8 @@
-use starknet::VALIDATED;
-use super::super::{
+use crate::{
     ITestArgentMultisigDispatcherTrait, MULTISIG_OWNER, SIGNER_1, SIGNER_2, TX_HASH, initialize_multisig_with,
     initialize_multisig_with_one_signer, to_starknet_signatures, to_starknet_signer_signatures,
 };
+use starknet::VALIDATED;
 
 #[test]
 fn test_signature() {

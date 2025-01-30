@@ -1,7 +1,7 @@
 use argent::signer::eip191::calculate_eip191_hash;
 use argent::signer::signer_signature::{Eip191Signer, SignerSignature, SignerSignatureTrait};
+use crate::TX_HASH;
 use starknet::secp256_trait::Signature;
-use super::TX_HASH;
 const eth_address: felt252 = 0x3da5e1F7B6D63E9982A6c26D8eCFd8219654E087;
 const sig_r: u256 = 0x944254ac8d2d6019987a58302f531eda7161fe3703bebfaa1a6f9bd82e9e7832;
 const sig_s: u256 = 0x58cb979aaac276bc59f2858b3dc6cdd1e31b401434bfc12fc0ea4b42c83c72f1;

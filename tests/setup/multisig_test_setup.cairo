@@ -1,8 +1,8 @@
 use argent::account::interface::Version;
 use argent::signer::signer_signature::{Signer, SignerSignature};
+use crate::{SIGNER_1, SIGNER_2, SIGNER_3};
 use snforge_std::{ContractClass, ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address_global};
 use starknet::account::Call;
-use super::super::{SIGNER_1, SIGNER_2, SIGNER_3};
 
 #[starknet::interface]
 pub trait ITestArgentMultisig<TContractState> {

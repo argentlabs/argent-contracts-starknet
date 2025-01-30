@@ -2,8 +2,8 @@ use argent::multiowner_account::events::SignerLinked;
 use argent::multisig_account::signer_manager::interface::{OwnerAddedGuid, OwnerRemovedGuid};
 use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
 use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
+use crate::{ITestArgentMultisigDispatcherTrait, SIGNER_1, SIGNER_2, SIGNER_3, initialize_multisig_with};
 use snforge_std::{EventSpyAssertionsTrait, EventSpyTrait, spy_events};
-use super::super::{ITestArgentMultisigDispatcherTrait, SIGNER_1, SIGNER_2, SIGNER_3, initialize_multisig_with};
 
 #[test]
 fn replace_signer_1() {

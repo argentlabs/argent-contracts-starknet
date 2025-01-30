@@ -10,11 +10,11 @@ mod test_secp256r1;
 mod test_transaction_version;
 mod test_version;
 
-// mod argent_account {
-//     mod test_argent_account;
-//     mod test_escape;
-//     mod test_signatures;
-// }
+mod argent_account {
+    mod test_argent_account;
+    mod test_escape;
+    mod test_signatures;
+}
 
 // mod multisig {
 //     mod test_add_signers;

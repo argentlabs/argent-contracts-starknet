@@ -46,7 +46,7 @@ pub mod multiowner_account {
     mod account_interface;
     pub mod argent_account;
     pub mod events;
-    mod guardian_manager;
+    pub mod guardian_manager;
     pub mod owner_manager;
     pub mod recovery;
     mod replace_owners_message;

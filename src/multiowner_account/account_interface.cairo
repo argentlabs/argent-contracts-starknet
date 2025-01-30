@@ -37,7 +37,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
         owner_alive_signature: Option<OwnerAliveSignature>,
     );
 
-    /// @notice Manage the guardians of this account by adding and removing them
+    /// @notice Manage the guardians of this account by adding and/or removing them
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     /// @param guardian_guids_to_remove The list of guardian guids to remove
     /// @param guardians_to_add The list of guardians to add

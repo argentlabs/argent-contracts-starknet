@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{Signer, SignerType, SignerSignature, SignerStorageValue, SignerInfo};
+use argent::signer::signer_signature::{Signer, SignerInfo, SignerSignature, SignerStorageValue, SignerType};
 
 #[starknet::interface]
 pub trait IOwnerManager<TContractState> {
@@ -9,7 +9,7 @@ pub trait IOwnerManager<TContractState> {
     fn get_owner_guid(self: @TContractState) -> felt252;
 
     /// @notice Returns the guid of all the owners
-    fn get_owners_guid(self: @TContractState) -> Array<felt252>;
+    fn get_owners_guids(self: @TContractState) -> Array<felt252>;
     fn get_owners_info(self: @TContractState) -> Array<SignerInfo>;
     fn is_owner(self: @TContractState, owner: Signer) -> bool;
     fn is_owner_guid(self: @TContractState, owner_guid: felt252) -> bool;
@@ -50,8 +50,8 @@ mod owner_manager_component {
     use argent::multiowner_account::events::{OwnerAddedGuid, OwnerRemovedGuid, SignerLinked};
     use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use argent::signer::signer_signature::{
-        Signer, SignerType, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageValue,
-        SignerStorageTrait, SignerInfo
+        Signer, SignerInfo, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageTrait,
+        SignerStorageValue, SignerTrait, SignerType,
     };
     use argent::utils::linked_set_with_head::{
         LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl,
@@ -92,7 +92,7 @@ mod owner_manager_component {
             self.get_single_owner().expect('argent/no-single-owner').into_guid()
         }
 
-        fn get_owners_guid(self: @ComponentState<TContractState>) -> Array<felt252> {
+        fn get_owners_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
             self.owners_storage.get_all_hashes()
         }
 

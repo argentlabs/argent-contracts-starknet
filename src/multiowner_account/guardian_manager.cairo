@@ -11,7 +11,7 @@ pub trait IGuardianManager<TContractState> {
     fn get_guardian_type(self: @TContractState) -> Option<SignerType>;
 
     /// @notice Returns the guid of all the guardians
-    fn get_guardians_guid(self: @TContractState) -> Array<felt252>;
+    fn get_guardians_guids(self: @TContractState) -> Array<felt252>;
     fn get_guardians_info(self: @TContractState) -> Array<SignerInfo>;
 
     fn is_guardian(self: @TContractState, guardian: Signer) -> bool;
@@ -62,8 +62,8 @@ mod guardian_manager_component {
     use argent::multiowner_account::events::{GuardianAddedGuid, GuardianRemovedGuid, SignerLinked};
     use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use argent::signer::signer_signature::{
-        Signer, SignerInfo, SignerTrait, SignerSignature, SignerSignatureTrait, SignerStorageValue, SignerStorageTrait,
-        SignerType
+        Signer, SignerInfo, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait,
+        SignerType,
     };
     use argent::utils::linked_set_with_head::{
         LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl,
@@ -90,7 +90,7 @@ mod guardian_manager_component {
     impl GuardianManager<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>, +IEmitArgentAccountEvent<TContractState>,
     > of IGuardianManager<ComponentState<TContractState>> {
-        fn get_guardians_guid(self: @ComponentState<TContractState>) -> Array<felt252> {
+        fn get_guardians_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
             self.guardians_storage.get_all_hashes()
         }
 

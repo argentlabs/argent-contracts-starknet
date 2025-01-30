@@ -19,7 +19,7 @@ describe("Owner Manager Tests", function () {
       const newOwner = randomStarknetKeyPair();
       const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
       await accountContract.add_owners(arrayOfSigner);
-      const newOwners = await accountContract.get_owners_guid();
+      const newOwners = await accountContract.get_owners_guids();
 
       expect(newOwners).to.deep.equal([owner.guid, newOwner.guid]);
     });
@@ -32,7 +32,7 @@ describe("Owner Manager Tests", function () {
       const arrayOfSigner = CallData.compile({ new_owners: [newOwner1.signer, newOwner2.signer] });
       await accountContract.add_owners(arrayOfSigner);
 
-      const newOwners = await accountContract.get_owners_guid();
+      const newOwners = await accountContract.get_owners_guids();
       expect(newOwners).to.deep.equal([owner.guid, newOwner1.guid, newOwner2.guid]);
     });
 
@@ -51,7 +51,7 @@ describe("Owner Manager Tests", function () {
       await accountContract.add_owners(arrayOfSigner);
 
       await accountContract.remove_owners([newOwner.guid]);
-      const newOwnersAfterRemove = await accountContract.get_owners_guid();
+      const newOwnersAfterRemove = await accountContract.get_owners_guids();
       expect(newOwnersAfterRemove).to.deep.equal([owner.guid]);
     });
     it("Remove 2 Owners", async function () {
@@ -62,7 +62,7 @@ describe("Owner Manager Tests", function () {
       await accountContract.add_owners(arrayOfSigner);
 
       await accountContract.remove_owners([newOwner1.guid, newOwner2.guid]);
-      const newOwnersAfterRemove = await accountContract.get_owners_guid();
+      const newOwnersAfterRemove = await accountContract.get_owners_guids();
       expect(newOwnersAfterRemove).to.deep.equal([owner.guid]);
     });
     it("Remove Owner not in the List", async function () {
@@ -86,7 +86,7 @@ describe("Owner Manager Tests", function () {
 
       account.signer = new ArgentSigner(newOwner1, undefined);
       await accountContract.remove_owners([owner.guid]);
-      const newOwnersAfterRemove = await accountContract.get_owners_guid();
+      const newOwnersAfterRemove = await accountContract.get_owners_guids();
       expect(newOwnersAfterRemove).to.deep.equal([newOwner1.guid]);
     });
   });

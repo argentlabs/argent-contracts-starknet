@@ -677,12 +677,11 @@ mod ArgentAccount {
                     if selector == selector!("change_owners") {
                         let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
                         if !self.has_guardian() {
-                            let calldata_tuple: (Array<felt252>, Array<Signer>, Option<OwnerAliveSignature>) =
-                                full_deserialize(
-                                *call.calldata,
-                            )
+                            let (owner_guids_to_remove, _, owner_alive_signature) = full_deserialize::<
+                                (Array<felt252>, Array<Signer>, Option<OwnerAliveSignature>),
+                            >(*call.calldata)
                                 .expect('argent/invalid-calldata');
-                            let (owner_guids_to_remove, _, owner_alive_signature) = calldata_tuple;
+
                             let signer_still_valid = !owner_guids_to_remove
                                 .span()
                                 .contains((*signer_signatures[0]).signer().into_guid());

@@ -230,6 +230,20 @@ fn change_owners_signature_not_from_owner() {
         );
 }
 
+#[test]
+#[should_panic(expected: ('argent/duplicated-guids',))]
+fn change_owners_duplicates() {
+    let account = initialize_account();
+    let current_owner = starknet_signer_from_pubkey(OWNER().pubkey);
+
+    account
+        .change_owners(
+            owner_guids_to_remove: array![current_owner.into_guid()],
+            owners_to_add: array![current_owner],
+            owner_alive_signature: Option::None,
+        );
+}
+
 
 #[test]
 fn change_guardians() {
@@ -263,6 +277,15 @@ fn change_guardians() {
                 (account.contract_address, guardian_removed_event), (account.contract_address, guardian_added_event),
             ],
         );
+}
+
+#[test]
+#[should_panic(expected: ('argent/duplicated-guids',))]
+fn change_guardians_duplicates() {
+    let account = initialize_account();
+    let guardian = starknet_signer_from_pubkey(GUARDIAN().pubkey);
+    account
+        .change_guardians(guardian_guids_to_remove: array![guardian.into_guid()], guardians_to_add: array![guardian]);
 }
 
 #[test]

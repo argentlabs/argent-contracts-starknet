@@ -128,9 +128,7 @@ describe("ArgentAccount", function () {
       await manager.increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
-      const calldata = CallData.compile([
-        ...CallData.compile({ guardian_guids_to_remove: [guardian.guid], guardians_to_add: [] }),
-      ]);
+      const calldata = CallData.compile([{ guardian_guids_to_remove: [guardian.guid], guardians_to_add: [] }]);
       await accountContract.invoke("change_guardians", calldata);
 
       expect((await accountContract.get_guardian_guid()).isNone()).to.be.true;

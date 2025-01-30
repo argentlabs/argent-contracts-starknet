@@ -32,3 +32,16 @@ pub impl Felt252TryIntoStarknetSigner of TryInto<felt252, StarknetSigner> {
     }
 }
 
+#[generate_trait]
+pub impl ByteArrayExt of ByteArrayExtTrait {
+    fn into_bytes(self: ByteArray) -> Array<u8> {
+        let len = self.len();
+        let mut output = array![];
+        let mut i = 0;
+        while i != len {
+            output.append(self[i]);
+            i += 1;
+        };
+        output
+    }
+}

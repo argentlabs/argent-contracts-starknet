@@ -50,5 +50,5 @@ use setup::{
         ITestArgentMultisigDispatcherTrait, declare_multisig, initialize_multisig, initialize_multisig_with,
         initialize_multisig_with_one_signer,
     },
-    utils::{Felt252TryIntoStarknetSigner, to_starknet_signatures, to_starknet_signer_signatures},
+    utils::{ByteArrayExt, Felt252TryIntoStarknetSigner, to_starknet_signatures, to_starknet_signer_signatures},
 };

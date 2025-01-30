@@ -43,7 +43,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @param guardians_to_add The list of guardians to add
     /// @dev It will cancel any existing escape
     /// @dev Will revert if any of the guids to remove is not a guardian
-    /// @dev Will revert if any of the signers to add is already an guardian
+    /// @dev Will revert if any of the signers to add is already a guardian
     fn change_guardians(
         ref self: TContractState, guardian_guids_to_remove: Array<felt252>, guardians_to_add: Array<Signer>,
     );

@@ -21,7 +21,7 @@ trait IArgentMultiOwnerAccount<TContractState> {
     fn set_escape_security_period(ref self: TContractState, new_security_period: u64);
 
 
-    /// @notice Manage the owners of this account by adding and removing them
+    /// @notice Manage the owners of this account by adding and/or removing them
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
     /// @param owner_guids_to_remove The list of owner guids to remove
     /// @param owners_to_add The list of owners to add

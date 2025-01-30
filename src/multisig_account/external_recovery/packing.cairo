@@ -3,7 +3,6 @@ use core::num::traits::zero::Zero;
 use starknet::storage_access::StorePacking;
 
 const SHIFT_8: felt252 = 0x100;
-const SHIFT_8_u256: u256 = 0x100;
 const SHIFT_64: felt252 = 0x10000000000000000;
 
 pub impl PackEscapeEnabled of StorePacking<EscapeEnabled, felt252> {

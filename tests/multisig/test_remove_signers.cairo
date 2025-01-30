@@ -1,3 +1,4 @@
+use argent::multisig_account::signer_manager::interface::{OwnerRemovedGuid, ThresholdUpdated};
 use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
 use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
 use snforge_std::{EventSpyAssertionsTrait, EventSpyTrait, spy_events};
@@ -23,14 +24,10 @@ fn remove_signers_first() {
     assert!(multisig.is_signer(SIGNER_3()));
 
     let removed_owner_guid = SIGNER_1().into_guid();
-    let event = signer_manager_component::Event::OwnerRemovedGuid(
-        signer_manager_component::OwnerRemovedGuid { removed_owner_guid },
-    );
+    let event = signer_manager_component::Event::OwnerRemovedGuid(OwnerRemovedGuid { removed_owner_guid });
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
 
-    let event = signer_manager_component::Event::ThresholdUpdated(
-        signer_manager_component::ThresholdUpdated { new_threshold: 2 },
-    );
+    let event = signer_manager_component::Event::ThresholdUpdated(ThresholdUpdated { new_threshold: 2 });
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
 
     assert_eq!(spy.get_events().events.len(), 2);

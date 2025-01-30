@@ -16,13 +16,13 @@ mod argent_account {
     mod test_signatures;
 }
 
-// mod multisig {
-//     mod test_add_signers;
-//     mod test_multisig_account;
-//     mod test_remove_signers;
-//     mod test_replace_signer;
-//     mod test_signing;
-// }
+mod multisig {
+    mod test_add_signers;
+    mod test_multisig_account;
+    mod test_remove_signers;
+    mod test_replace_signer;
+    mod test_signing;
+}
 
 mod setup {
     pub mod argent_account_setup;

@@ -16,7 +16,7 @@ import {
 } from "../../lib";
 import { singleMethodAllowList } from "./sessionTestHelpers";
 
-describe.only("Session Account: execute caching", function () {
+describe("Session Account: execute caching", function () {
   let argentAccountClassHash: string;
   let mockDappContract: Contract;
   const initialTime = 1710167933n;

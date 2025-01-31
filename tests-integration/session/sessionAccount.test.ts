@@ -15,7 +15,7 @@ import {
 } from "../../lib";
 import { singleMethodAllowList } from "./sessionTestHelpers";
 
-describe.only("ArgentAccount: session basics", function () {
+describe("ArgentAccount: session basics", function () {
   let sessionAccountClassHash: string;
   let mockDappContract: Contract;
   const initialTime = 1710167933n;

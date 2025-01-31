@@ -71,7 +71,7 @@ pub impl LinkedSetWithHeadReadImpl<
 
     #[inline(always)]
     fn first(self: StorageBase<LinkedSetWithHead<T>>) -> Option<T> {
-        LinkedSetConfig::path_read_value(path: self.head_entry().as_path())
+        LinkedSetConfig::path_read_value(path: self.head_entry())
     }
 
     #[inline(always)]

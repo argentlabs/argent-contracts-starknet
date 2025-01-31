@@ -27,6 +27,7 @@ mod ArgentMultisigAccount {
         transaction_version::{assert_correct_deploy_account_version, assert_correct_invoke_version},
     };
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
+    use starknet::storage::StoragePointerReadAccess;
     use starknet::{ClassHash, VALIDATED, account::Call, get_contract_address, get_execution_info, get_tx_info};
 
     const NAME: felt252 = 'ArgentMultisig';
@@ -144,7 +145,9 @@ mod ArgentMultisigAccount {
             if self
                 .signer_manager
                 .is_valid_signature_with_threshold(
-                    hash, self.signer_manager.threshold(), signer_signatures: parse_signature_array(signature.span()),
+                    hash,
+                    self.signer_manager.threshold.read(),
+                    signer_signatures: parse_signature_array(signature.span()),
                 ) {
                 VALIDATED
             } else {
@@ -270,7 +273,7 @@ mod ArgentMultisigAccount {
                 .signer_manager
                 .is_valid_signature_with_threshold(
                     execution_hash,
-                    self.signer_manager.threshold(),
+                    self.signer_manager.threshold.read(),
                     signer_signatures: parse_signature_array(signature),
                 );
             assert(valid, 'argent/invalid-signature');

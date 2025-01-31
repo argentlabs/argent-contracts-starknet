@@ -1,6 +1,6 @@
 use argent::signer::signer_signature::{SignerStorageTrait, SignerStorageValue, SignerType};
 use argent::utils::linked_set::LinkedSetConfig;
-use starknet::storage::{StoragePath, StoragePointerReadAccess};
+use starknet::storage::{PendingStoragePath, StoragePointerReadAccess};
 
 pub impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue> {
     const END_MARKER: SignerStorageValue = SignerStorageValue {
@@ -18,7 +18,7 @@ pub impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue
     }
 
     #[inline(always)]
-    fn path_read_value(path: StoragePath<SignerStorageValue>) -> Option<SignerStorageValue> {
+    fn path_read_value(path: PendingStoragePath<SignerStorageValue>) -> Option<SignerStorageValue> {
         let stored_value = path.stored_value.read();
         if stored_value == 0 || stored_value == Self::END_MARKER.stored_value {
             return Option::None;
@@ -28,7 +28,7 @@ pub impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue
     }
 
     #[inline(always)]
-    fn path_is_in_set(path: StoragePath<SignerStorageValue>) -> bool {
+    fn path_is_in_set(path: PendingStoragePath<SignerStorageValue>) -> bool {
         // Items in the set point to the next item or the end marker.
         // Items outside the set point to uninitialized storage
         path.stored_value.read() != 0

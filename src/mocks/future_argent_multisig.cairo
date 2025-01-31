@@ -17,6 +17,7 @@ mod MockFutureArgentMultisig {
     };
     use argent::utils::{asserts::assert_only_self, calls::execute_multicall, serialization::full_deserialize};
     use core::panic_with_felt252;
+    use starknet::storage::StoragePointerReadAccess;
     use starknet::{ClassHash, VALIDATED, account::Call, get_contract_address, get_tx_info};
 
     const NAME: felt252 = 'ArgentMultisig';
@@ -80,7 +81,7 @@ mod MockFutureArgentMultisig {
                 .signer_manager
                 .is_valid_signature_with_threshold(
                     hash: hash,
-                    threshold: self.signer_manager.threshold(),
+                    threshold: self.signer_manager.threshold.read(),
                     signer_signatures: parse_signature_array(signature.span()),
                 ) {
                 VALIDATED
@@ -145,7 +146,7 @@ mod MockFutureArgentMultisig {
                 .signer_manager
                 .is_valid_signature_with_threshold(
                     hash: execution_hash,
-                    threshold: self.signer_manager.threshold(),
+                    threshold: self.signer_manager.threshold.read(),
                     signer_signatures: parse_signature_array(signature),
                 );
             assert(valid, 'argent/invalid-signature');

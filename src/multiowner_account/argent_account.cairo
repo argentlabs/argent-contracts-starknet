@@ -43,6 +43,7 @@ pub mod ArgentAccount {
             assert_correct_deploy_account_version, assert_correct_invoke_version,
         },
     };
+    use core::panic_with_felt252;
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use starknet::{
         ClassHash, ContractAddress, VALIDATED, account::Call, get_block_timestamp, get_contract_address,
@@ -392,7 +393,7 @@ pub mod ArgentAccount {
             let current_escape_status = self.get_escape_status(current_escape.ready_at);
             match current_escape_status {
                 EscapeStatus::None => (), // ignore
-                EscapeStatus::NotReady | EscapeStatus::Ready => core::panic_with_felt252('argent/ongoing-escape'),
+                EscapeStatus::NotReady | EscapeStatus::Ready => panic_with_felt252('argent/ongoing-escape'),
                 EscapeStatus::Expired => self._escape.write(Default::default()),
             }
             self.escape_security_period.write(new_security_period);
@@ -906,7 +907,7 @@ pub mod ArgentAccount {
             // other fields not available on V1
             assert(tx_info.max_fee <= MAX_ESCAPE_MAX_FEE_ETH, 'argent/max-fee-too-high');
         } else {
-            core::panic_with_felt252('argent/invalid-tx-version');
+            panic_with_felt252('argent/invalid-tx-version');
         }
 
         assert(get_block_timestamp() > last_timestamp + TIME_BETWEEN_TWO_ESCAPES, 'argent/last-escape-too-recent');

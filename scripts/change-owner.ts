@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { Account, num } from "starknet";
-import { StarknetKeyPair, getChangeOwnerMessageHash, manager, starknetSignatureType } from "../lib";
+import { StarknetKeyPair, getOwnerAliveMessageHash, manager, starknetSignatureType } from "../lib";
 
 /// To use this script, fill the following three values:
 /// - accountAddress: the address of the account to change owner
@@ -36,7 +36,7 @@ if (owner !== ownerSigner.publicKey) {
 // share to backend
 console.log(
   "messageHash:",
-  await getChangeOwnerMessageHash(accountContract.address, chainId, ownerSigner.guid, validUntil),
+  await getOwnerAliveMessageHash(accountContract.address, chainId, ownerSigner.guid, validUntil),
 );
 const [r, s] = [1, 2]; // fill with values from backend
 

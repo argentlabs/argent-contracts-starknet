@@ -1,7 +1,8 @@
 use argent::account::interface::Version;
+
+use argent::multiowner_account::account_interface::OwnerAliveSignature;
 use argent::multiowner_account::recovery::Escape;
 use argent::recovery::{EscapeStatus};
-
 use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
 use argent::utils::serialization::serialize;
 use crate::{ARGENT_ACCOUNT_ADDRESS, GUARDIAN, OWNER};
@@ -17,8 +18,15 @@ pub trait ITestArgentAccount<TContractState> {
     fn is_valid_signature(self: @TContractState, hash: felt252, signature: Array<felt252>) -> felt252;
 
     // External
-    fn reset_owners(ref self: TContractState, new_single_owner: SignerSignature, signature_expiration: u64);
-    fn reset_guardians(ref self: TContractState, new_guardian: Option<Signer>);
+    fn change_owners(
+        ref self: TContractState,
+        owner_guids_to_remove: Array<felt252>,
+        owners_to_add: Array<Signer>,
+        owner_alive_signature: Option<OwnerAliveSignature>,
+    );
+    fn change_guardians(
+        ref self: TContractState, guardian_guids_to_remove: Array<felt252>, guardians_to_add: Array<Signer>,
+    );
     fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);
     fn trigger_escape_guardian(ref self: TContractState, new_guardian: Option<Signer>);
     fn escape_owner(ref self: TContractState);

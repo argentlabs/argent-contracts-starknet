@@ -13,17 +13,14 @@ const accountAddress = "0x064645274c31f18081e1a6b6748cfa513e59deda120a308e705cc6
 // No need to change anything below this
 
 import "dotenv/config";
-import { num, shortString } from "starknet";
-import { StarknetKeyPair, manager, signChangeOwnerMessage } from "../lib";
+import { shortString } from "starknet";
+import { StarknetKeyPair, manager, signOwnerAliveMessage } from "../lib";
 const chainId = await manager.getChainId();
 const newOwnerKeyPair = new StarknetKeyPair();
 const validUntil = (await manager.getCurrentTimestamp()) + 60 * 60; // Valid for 1h
-const [r, s] = await signChangeOwnerMessage(accountAddress, newOwnerKeyPair, chainId, validUntil);
+const signerAliveSignature = await signOwnerAliveMessage(accountAddress, newOwnerKeyPair, chainId, validUntil);
 console.log("account:", accountAddress);
 console.log("chainId:", shortString.decodeShortString(chainId));
-console.log("Parameters to reset_owners:");
-console.log("  new_owner:  ", num.toHex(newOwnerKeyPair.publicKey));
-console.log("  signature_r:", num.toHex(r));
-console.log("  signature_s:", num.toHex(s));
-console.log("  signature_expiration:", validUntil);
-console.log("Warning: Using this parameters will make you account unrecoverable.");
+console.log("Parameters for owner change:");
+console.log("  signerAliveSignature:  ", JSON.stringify(signerAliveSignature));
+console.log("Warning: Using these parameters will make your account unrecoverable.");

@@ -1,4 +1,4 @@
-import { CallData, Contract, num } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, Contract, num } from "starknet";
 import {
   AllowedMethod,
   StarknetKeyPair,
@@ -62,9 +62,13 @@ describe("ArgentAccount: session basics", function () {
 
     const newOwner1 = randomStarknetKeyPair();
     const newOwner2 = randomStarknetKeyPair();
-    const arrayOfSigner = CallData.compile({ new_owners: [newOwner1.signer, newOwner2.signer] });
-    await accountContract.add_owners(arrayOfSigner);
-
+    await accountContract.change_owners(
+      CallData.compile({
+        remove: [],
+        add: [newOwner1.signer, newOwner2.signer],
+        alive_signature: new CairoOption(CairoOptionVariant.None),
+      }),
+    );
     const { accountWithDappSigner } = await setupSession({
       guardian: guardian as StarknetKeyPair,
       account,

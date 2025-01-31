@@ -1,6 +1,7 @@
 use starknet::Store;
 use starknet::storage::{
-    Mutable, PendingStoragePath, PendingStoragePathTrait, StorageAsPath, StorageBase, StoragePointerWriteAccess,
+    Mutable, PendingStoragePath, PendingStoragePathTrait, StorageAsPath, StorageBase, StoragePath,
+    StoragePointerWriteAccess,
 };
 ///
 /// A LinkedSet is storage structure that allows to store multiple items making it efficient to check if an item is in
@@ -91,11 +92,11 @@ pub trait LinkedSetConfig<T> {
     // @dev must return valid items according to the `is_valid_item` function
     // @param path the path to read
     // @returns the value stored at the given path or None if the path is empty
-    fn path_read_value(path: PendingStoragePath<T>) -> Option<T>;
+    fn path_read_value(path: StoragePath<T>) -> Option<T>;
 
     // @return true when the value stored in the given path is valid or the end marker
     // @param path the path determined by the hash of the item we want to check inclusion
-    fn path_is_in_set(path: PendingStoragePath<T>) -> bool;
+    fn path_is_in_set(path: StoragePath<T>) -> bool;
 }
 
 ///
@@ -133,7 +134,7 @@ pub impl LinkedSetReadImpl<
         if item_hash == 0 {
             return false;
         }
-        LinkedSetConfig::path_is_in_set(path: self.entry(item_hash))
+        LinkedSetConfig::path_is_in_set(path: self.entry(item_hash).as_path())
     }
 
     fn len(self: StorageBase<LinkedSet<T>>) -> usize {
@@ -182,7 +183,7 @@ pub impl LinkedSetReadPrivateImpl<
 
     #[inline(always)]
     fn next(self: StorageBase<LinkedSet<T>>, item_hash: felt252) -> Option<T> {
-        LinkedSetConfig::path_read_value(path: self.entry(item_hash))
+        LinkedSetConfig::path_read_value(path: self.entry(item_hash).as_path())
     }
 
     // Return the last item hash or zero when the list is empty. Cost increases with the list size

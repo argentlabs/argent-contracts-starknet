@@ -1,5 +1,5 @@
 use argent::utils::linked_set::LinkedSetConfig;
-use starknet::storage::{PendingStoragePath, StoragePointerReadAccess};
+use starknet::storage::{StoragePath, StoragePointerReadAccess};
 
 impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
     const END_MARKER: felt252 = 'end';
@@ -14,7 +14,7 @@ impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
         *self
     }
 
-    fn path_read_value(path: PendingStoragePath<felt252>) -> Option<felt252> {
+    fn path_read_value(path: StoragePath<felt252>) -> Option<felt252> {
         let stored_value = path.read();
         if !stored_value.is_valid_item() {
             return Option::None;
@@ -22,7 +22,7 @@ impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
         Option::Some(stored_value)
     }
 
-    fn path_is_in_set(path: PendingStoragePath<felt252>) -> bool {
+    fn path_is_in_set(path: StoragePath<felt252>) -> bool {
         path.read() != 0
     }
 }

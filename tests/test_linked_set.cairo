@@ -1,13 +1,13 @@
 use argent::mocks::linked_set_mock::linked_set_mock;
 use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
 use argent::signer::signer_signature::{
-    SignerTrait, SignerStorageValue, Signer, starknet_signer_from_pubkey, SignerType
+    Signer, SignerStorageValue, SignerTrait, SignerType, starknet_signer_from_pubkey,
 };
 use argent::utils::linked_set::{
-    LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl, LinkedSetReadPrivateImpl,
-    LinkedSetWritePrivateImpl
+    LinkedSet, LinkedSetReadImpl, LinkedSetReadPrivateImpl, LinkedSetWriteImpl, LinkedSetWritePrivateImpl,
+    MutableLinkedSetReadImpl,
 };
-use starknet::storage::{StoragePath, Mutable, StorageBase};
+use starknet::storage::{Mutable, StorageBase, StoragePath};
 
 type ComponentState = linked_set_mock::ComponentState<linked_set_mock::Storage>;
 

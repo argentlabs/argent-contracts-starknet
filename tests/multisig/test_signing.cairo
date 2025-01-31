@@ -1,8 +1,8 @@
 use argent::utils::serialization::serialize;
 use starknet::VALIDATED;
 use super::super::{
-    MULTISIG_OWNER, SIGNER_1, SIGNER_2, tx_hash, initialize_multisig_with, ITestArgentMultisigDispatcherTrait,
-    initialize_multisig_with_one_signer, to_starknet_signatures, to_starknet_signer_signatures
+    ITestArgentMultisigDispatcherTrait, MULTISIG_OWNER, SIGNER_1, SIGNER_2, initialize_multisig_with,
+    initialize_multisig_with_one_signer, to_starknet_signatures, to_starknet_signer_signatures, tx_hash,
 };
 
 #[test]
@@ -84,8 +84,8 @@ fn test_long_signature() {
             MULTISIG_OWNER(2).sig.s,
             MULTISIG_OWNER(2).pubkey,
             MULTISIG_OWNER(2).sig.r,
-            MULTISIG_OWNER(2).sig.s
-        ]
+            MULTISIG_OWNER(2).sig.s,
+        ],
     );
     multisig.is_valid_signature(tx_hash, signature);
 }

@@ -1,13 +1,9 @@
 import { expect } from "chai";
-import { CairoOption, CairoOptionVariant, CallData, Contract, RawArgs } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, Contract, hash, RawArgs } from "starknet";
 import {
   ArgentAccount,
   ArgentSigner,
   ContractWithClass,
-  LegacyWebauthnOwner,
-  RawSigner,
-  StarknetKeyPair,
-  WebauthnOwner,
   deployAccount,
   deployAccountWithoutGuardians,
   deployLegacyAccount,
@@ -17,13 +13,17 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   getUpgradeDataLegacy,
+  LegacyWebauthnOwner,
   manager,
   randomEip191KeyPair,
   randomEthKeyPair,
   randomSecp256r1KeyPair,
   randomStarknetKeyPair,
   randomWebauthnLegacyOwner,
+  RawSigner,
+  StarknetKeyPair,
   upgradeAccount,
+  WebauthnOwner,
 } from "../../lib";
 
 interface SelfCall {
@@ -57,7 +57,7 @@ describe("ArgentAccount: upgrade", function () {
     mockDapp = await manager.deployContract("MockDapp");
 
     upgradeData.push({
-      name: "Legacy",
+      name: "0.2.3.1",
       deployAccount: async () => await deployOldAccountWithProxy(),
       // Required to ensure execute_after_upgrade is called. Without any calldata, the execute_after_upgrade won't be called
       upgradeExtraCalldata: ["0"],
@@ -120,8 +120,42 @@ describe("ArgentAccount: upgrade", function () {
       } of upgradeData) {
         it(`[${name}] Should be possible to upgrade `, async function () {
           const { account } = await deployAccount();
-          await upgradeAccount(account, argentAccountClassHash, upgradeExtraCalldata);
+          const txReceipt = await upgradeAccount(account, argentAccountClassHash, upgradeExtraCalldata);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
+          // Check events
+          const eventsEmittedByAccount = txReceipt.events.filter((e) => e.from_address === account.address);
+
+          const expectedEvents = ["OwnerAddedGuid", "GuardianAddedGuid"];
+
+          const [major, minor] = name.split(".").map(Number);
+          if (major > 0 || minor >= 3) {
+            // >= 0.3.*
+            expectedEvents.push("TransactionExecuted", "AccountUpgraded");
+          } else {
+            expectedEvents.push("transaction_executed", "account_upgraded");
+          }
+          if (major === 0 && minor < 4) {
+            // < 0.4.*
+            expectedEvents.push("SignerLinked", "SignerLinked");
+          }
+
+          const missingEvents = [];
+          for (const expectedEventName of expectedEvents) {
+            const eventIndex = eventsEmittedByAccount.findIndex(
+              (event) => event.keys?.[0] === hash.getSelectorFromName(expectedEventName),
+            );
+            if (eventIndex === -1) {
+              missingEvents.push(expectedEventName);
+            } else {
+              eventsEmittedByAccount.splice(eventIndex, 1);
+            }
+          }
+          expect(missingEvents).to.have.lengthOf(0, `Expected events ${missingEvents.join(", ")} not found`);
+          expect(eventsEmittedByAccount).to.have.lengthOf(
+            0,
+            `Unexpected events ${eventsEmittedByAccount.join(", ")} found`,
+          );
+
           mockDapp.connect(account);
           // This should work as long as we support the "old" signature format [r1, s1, r2, s2]
           account.cairoVersion = "1";
@@ -243,7 +277,7 @@ describe("ArgentAccount: upgrade", function () {
       // Check the account is in the wrong state
       const wrongGuids = await account.callContract({
         contractAddress: account.address,
-        entrypoint: "get_owner_guids",
+        entrypoint: "get_owners_guids",
       });
       // Since we have to do a raw call, we have the unparsed value returned
       expect(wrongGuids.length).to.equal(1);
@@ -262,7 +296,7 @@ describe("ArgentAccount: upgrade", function () {
       // Making sure it has the new owner migrated correctly
       const newAccountContract = await manager.loadContract(account.address);
       const newGuid = new StarknetKeyPair(owner.privateKey).guid;
-      expect(await newAccountContract.get_owner_guids()).to.deep.equal([newGuid]);
+      expect(await newAccountContract.get_owners_guids()).to.deep.equal([newGuid]);
       mockDapp.connect(account);
       // We don't really care about the value here, just that it is successful
       await manager.ensureSuccess(mockDapp.set_number(56));

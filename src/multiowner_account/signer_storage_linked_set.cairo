@@ -1,10 +1,11 @@
-use argent::signer::signer_signature::{SignerStorageValue, SignerStorageTrait, SignerType};
+use argent::signer::signer_signature::{SignerStorageTrait, SignerStorageValue, SignerType};
 use argent::utils::linked_set::LinkedSetConfig;
 use starknet::storage::StoragePath;
 
 impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue> {
-    const END_MARKER: SignerStorageValue =
-        SignerStorageValue { stored_value: 'end', signer_type: SignerType::Starknet };
+    const END_MARKER: SignerStorageValue = SignerStorageValue {
+        stored_value: 'end', signer_type: SignerType::Starknet,
+    };
 
     #[inline(always)]
     fn is_valid_item(self: @SignerStorageValue) -> bool {

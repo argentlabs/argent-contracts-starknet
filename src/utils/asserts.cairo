@@ -1,4 +1,4 @@
-use starknet::{get_contract_address, get_caller_address, ContractAddress, account::Call};
+use starknet::{ContractAddress, account::Call, get_caller_address, get_contract_address};
 
 #[inline(always)]
 fn assert_only_self() {

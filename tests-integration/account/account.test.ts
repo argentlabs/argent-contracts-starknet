@@ -5,12 +5,12 @@ import {
   deployAccount,
   deployAccountWithoutGuardians,
   deployer,
+  expectEvent,
   expectRevertWithErrorMessage,
   hasOngoingEscape,
   manager,
   randomStarknetKeyPair,
-  signChangeOwnerMessage,
-  starknetSignatureType,
+  signOwnerAliveMessage,
   zeroStarknetSignatureType,
 } from "../../lib";
 
@@ -36,35 +36,34 @@ describe("ArgentAccount", function () {
     });
     const receipt = await manager.waitForTx(deployer.execute(udcCalls));
 
-    // TODO: Add this back once the event is implemented
-    // await expectEvent(receipt, {
-    //   from_address: contractAddress,
-    //   eventName: "AccountCreated",
-    //   keys: [owner.storedValue.toString()],
-    //   data: [guardian.storedValue.toString()],
-    // });
+    await expectEvent(receipt, {
+      from_address: contractAddress,
+      eventName: "AccountCreated",
+      keys: [owner.storedValue.toString()],
+      data: [guardian.storedValue.toString()],
+    });
 
-    // await expectEvent(receipt, {
-    //   from_address: contractAddress,
-    //   eventName: "AccountCreatedGuid",
-    //   keys: [owner.guid.toString()],
-    //   data: [guardian.guid.toString()],
-    // });
+    await expectEvent(receipt, {
+      from_address: contractAddress,
+      eventName: "AccountCreatedGuid",
+      keys: [owner.guid.toString()],
+      data: [guardian.guid.toString()],
+    });
 
     const accountContract = await manager.loadContract(contractAddress);
-    await accountContract.get_owner_guids().should.eventually.deep.equal([owner.guid]);
+    await accountContract.get_owners_guids().should.eventually.deep.equal([owner.guid]);
     await accountContract.is_owner_guid(owner.guid).should.eventually.equal(true);
 
     expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(guardian.guid);
-    await accountContract.get_guardian_guids().should.eventually.deep.equal([guardian.guid]);
+    await accountContract.get_guardians_guids().should.eventually.deep.equal([guardian.guid]);
   });
 
   for (const useTxV3 of [false, true]) {
     it(`Self deployment (TxV3: ${useTxV3})`, async function () {
       const { accountContract, owner } = await deployAccountWithoutGuardians({ useTxV3, selfDeploy: true });
 
-      await accountContract.get_owner_guids().should.eventually.deep.equal([owner.guid]);
-      await accountContract.get_guardian_guids().should.eventually.deep.equal([]);
+      await accountContract.get_owners_guids().should.eventually.deep.equal([owner.guid]);
+      await accountContract.get_guardians_guids().should.eventually.deep.equal([]);
     });
   }
 
@@ -79,56 +78,60 @@ describe("ArgentAccount", function () {
     );
   });
 
-  describe("reset_owners(...)", function () {
-    it("Should be possible to reset_owners", async function () {
-      const { accountContract } = await deployAccount();
+  describe("change_owners(...)", function () {
+    it("Should be possible to change_owners", async function () {
+      const { accountContract, owner } = await deployAccount();
       const newOwner = randomStarknetKeyPair();
 
       const chainId = await manager.getChainId();
       const currentTimestamp = await manager.getCurrentTimestamp();
-      const futureTimestamp = currentTimestamp + 1000;
-      const calldata = await signChangeOwnerMessage(accountContract.address, newOwner, chainId, futureTimestamp);
-      calldata.push(futureTimestamp.toString());
-      // Can't just do account.reset_owners(x, y) because parsing goes wrong...
-      await manager.ensureSuccess(await accountContract.invoke("reset_owners", calldata));
-      await accountContract.get_owner_guids().should.eventually.deep.equal([newOwner.guid]);
+      const signerAliveSignature = await signOwnerAliveMessage(
+        accountContract.address,
+        newOwner,
+        chainId,
+        currentTimestamp + 1000,
+      );
+      const calldata = CallData.compile([
+        ...CallData.compile({ owner_guids_to_remove: [owner.guid], owners_to_add: [newOwner.signer] }),
+        0,
+        ...signerAliveSignature,
+      ]);
+      // Can't just do account.change_owners(x, y) because parsing goes wrong...
+      await manager.ensureSuccess(await accountContract.invoke("change_owners", calldata));
+      await accountContract.get_owners_guids().should.eventually.deep.equal([newOwner.guid]);
     });
 
     it("Expect parsing error when new_owner is zero", async function () {
       const { accountContract } = await deployAccount();
+      const calldata = CallData.compile([
+        ...CallData.compile({ owner_guids_to_remove: [] }),
+        1,
+        ...CallData.compile({ signer: zeroStarknetSignatureType() }), // malformed signer
+        1, // no alive signature
+      ]);
       await expectRevertWithErrorMessage(
-        "Failed to deserialize param #1",
-        accountContract.reset_owners(starknetSignatureType(0, 13, 14), 1),
+        "Failed to deserialize param #2",
+        accountContract.invoke("change_owners", calldata),
       );
     });
   });
 
-  describe("reset_guardians(new_guardian)", function () {
-    it("Shouldn't be possible to use a guardian with pubkey = 0", async function () {
-      const { account } = await deployAccount();
-      const { accountContract } = await deployAccount();
-      accountContract.connect(account);
-      await expectRevertWithErrorMessage(
-        "Failed to deserialize param #1",
-        accountContract.reset_guardians(CallData.compile([zeroStarknetSignatureType()])),
-      );
-    });
-
+  describe("change_guardians()", function () {
     it("Expect the escape to be reset", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount();
       account.signer = new ArgentSigner(guardian);
 
       const newOwner = randomStarknetKeyPair();
-      const newGuardian = randomStarknetKeyPair();
 
       await accountContract.trigger_escape_owner(newOwner.compiledSigner);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
       await manager.increaseTime(10);
 
       account.signer = new ArgentSigner(owner, guardian);
-      await accountContract.reset_guardians(newGuardian.compiledSignerAsOption);
+      const calldata = CallData.compile([{ guardian_guids_to_remove: [guardian.guid], guardians_to_add: [] }]);
+      await accountContract.invoke("change_guardians", calldata);
 
-      expect((await accountContract.get_guardian_guid()).unwrap()).to.equal(newGuardian.guid);
+      expect((await accountContract.get_guardian_guid()).isNone()).to.be.true;
 
       await hasOngoingEscape(accountContract).should.eventually.be.false;
     });

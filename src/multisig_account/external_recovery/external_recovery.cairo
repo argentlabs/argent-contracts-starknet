@@ -14,14 +14,14 @@ trait IExternalRecoveryCallback<TContractState> {
 #[starknet::component]
 mod external_recovery_component {
     use argent::multisig_account::external_recovery::interface::{
-        IExternalRecovery, EscapeCall, Escape, EscapeTriggered, EscapeExecuted, EscapeCanceled, EscapeEnabled
+        Escape, EscapeCall, EscapeCanceled, EscapeEnabled, EscapeExecuted, EscapeTriggered, IExternalRecovery,
     };
     use argent::recovery::EscapeStatus;
     use argent::utils::asserts::assert_only_self;
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use starknet::{
-        get_block_timestamp, get_contract_address, get_caller_address, ContractAddress, account::Call,
-        contract_address::contract_address_const
+        ContractAddress, account::Call, contract_address::contract_address_const, get_block_timestamp,
+        get_caller_address, get_contract_address,
     };
     use super::{IExternalRecoveryCallback, get_escape_call_hash};
 
@@ -32,7 +32,7 @@ mod external_recovery_component {
     struct Storage {
         escape_enabled: EscapeEnabled,
         escape: Escape,
-        guardian: ContractAddress
+        guardian: ContractAddress,
     }
 
     #[event]
@@ -49,7 +49,7 @@ mod external_recovery_component {
         +HasComponent<TContractState>,
         +IExternalRecoveryCallback<TContractState>,
         +Drop<TContractState>,
-        impl ReentrancyGuard: ReentrancyGuardComponent::HasComponent<TContractState>
+        impl ReentrancyGuard: ReentrancyGuardComponent::HasComponent<TContractState>,
     > of IExternalRecovery<ComponentState<TContractState>> {
         fn trigger_escape(ref self: ComponentState<TContractState>, call: EscapeCall) {
             self.assert_only_guardian();
@@ -62,7 +62,7 @@ mod external_recovery_component {
                     || call.selector == selector!("remove_signers")
                     || call.selector == selector!("add_signers")
                     || call.selector == selector!("change_threshold"),
-                'argent/invalid-selector'
+                'argent/invalid-selector',
             );
 
             let current_escape: Escape = self.escape.read();
@@ -124,7 +124,7 @@ mod external_recovery_component {
             is_enabled: bool,
             security_period: u64,
             expiry_period: u64,
-            guardian: ContractAddress
+            guardian: ContractAddress,
         ) {
             assert_only_self();
             // cannot toggle escape if there is an ongoing escape
@@ -148,7 +148,7 @@ mod external_recovery_component {
                 assert(escape_config.is_enabled, 'argent/escape-disabled');
                 assert(
                     security_period == 0 && expiry_period == 0 && guardian == contract_address_const::<0>(),
-                    'argent/invalid-escape-params'
+                    'argent/invalid-escape-params',
                 );
                 self.escape_enabled.write(EscapeEnabled { is_enabled: false, security_period, expiry_period });
                 self.guardian.write(contract_address_const::<0>());
@@ -163,7 +163,7 @@ mod external_recovery_component {
     #[generate_trait]
     impl Private<TContractState, +HasComponent<TContractState>> of PrivateTrait<TContractState> {
         fn get_escape_status(
-            self: @ComponentState<TContractState>, escape_ready_at: u64, expiry_period: u64
+            self: @ComponentState<TContractState>, escape_ready_at: u64, expiry_period: u64,
         ) -> EscapeStatus {
             if escape_ready_at == 0 {
                 return EscapeStatus::None;

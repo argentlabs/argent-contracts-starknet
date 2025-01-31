@@ -1,5 +1,5 @@
 use argent::signer::signer_signature::{
-    SignerSignature, SignerSignatureTrait, Secp256k1Signer, Secp256Signature, SECP_256_K1_HALF
+    SECP_256_K1_HALF, Secp256Signature, Secp256k1Signer, SignerSignature, SignerSignatureTrait,
 };
 use starknet::secp256_trait::{Secp256PointTrait, Secp256Trait};
 use starknet::secp256k1::Secp256k1Point;
@@ -24,7 +24,7 @@ const sig_s_high_odd: u256 = 0x33486eb4073a267b3949411bd76ee83d6c9b1135956e8f508
 
 fn validateK1Signature(r: u256, s: u256, y_parity: bool, message_hash: felt252) -> bool {
     let sig = SignerSignature::Secp256k1(
-        (Secp256k1Signer { pubkey_hash: pubkey_hash.try_into().unwrap() }, Secp256Signature { r, s, y_parity })
+        (Secp256k1Signer { pubkey_hash: pubkey_hash.try_into().unwrap() }, Secp256Signature { r, s, y_parity }),
     );
     sig.is_valid_signature(message_hash)
 }
@@ -39,7 +39,7 @@ fn test_SECP_256_K1_HALF() {
 fn test_successful_invalid_verification() {
     assert!(
         !validateK1Signature(sig_r_low_even, 'invalid_s_value'.into(), true, message_hash_low_even),
-        "invalid-verification"
+        "invalid-verification",
     );
 }
 
@@ -47,14 +47,14 @@ fn test_successful_invalid_verification() {
 fn test_successful_verification_low_even() {
     assert!(
         validateK1Signature(sig_r_low_even, sig_s_low_even, true, message_hash_low_even),
-        "invalid-verification-low-even"
+        "invalid-verification-low-even",
     );
 }
 
 #[test]
 fn test_successful_verification_low_odd() {
     assert!(
-        validateK1Signature(sig_r_low_odd, sig_s_low_odd, false, message_hash_low_odd), "invalid-verification-low-odd"
+        validateK1Signature(sig_r_low_odd, sig_s_low_odd, false, message_hash_low_odd), "invalid-verification-low-odd",
     );
 }
 
@@ -62,7 +62,7 @@ fn test_successful_verification_low_odd() {
 fn test_successful_verification_high_even() {
     assert!(
         validateK1Signature(sig_r_high_even, sig_s_high_even, true, message_hash_high_even),
-        "invalid-verification-high-even"
+        "invalid-verification-high-even",
     );
 }
 
@@ -70,6 +70,6 @@ fn test_successful_verification_high_even() {
 fn test_successful_verification_high_odd() {
     assert!(
         validateK1Signature(sig_r_high_odd, sig_s_high_odd, false, message_hash_high_odd),
-        "invalid-verification-high-odd"
+        "invalid-verification-high-odd",
     );
 }

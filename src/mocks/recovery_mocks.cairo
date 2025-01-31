@@ -4,10 +4,10 @@
 #[starknet::contract]
 mod ExternalRecoveryMock {
     use argent::multisig_account::external_recovery::{
-        external_recovery::{external_recovery_component, IExternalRecoveryCallback}
+        external_recovery::{IExternalRecoveryCallback, external_recovery_component},
     };
     use argent::multisig_account::signer_manager::signer_manager::{
-        signer_manager_component, signer_manager_component::SignerManagerInternalImpl
+        signer_manager_component, signer_manager_component::SignerManagerInternalImpl,
     };
     use argent::utils::calls::execute_multicall;
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
@@ -48,7 +48,7 @@ mod ExternalRecoveryMock {
     impl IExternalRecoveryCallbackImpl of IExternalRecoveryCallback<ContractState> {
         fn execute_recovery_call(ref self: ContractState, selector: felt252, calldata: Span<felt252>) {
             execute_multicall(
-                array![starknet::account::Call { to: starknet::get_contract_address(), selector, calldata }].span()
+                array![starknet::account::Call { to: starknet::get_contract_address(), selector, calldata }].span(),
             );
         }
     }

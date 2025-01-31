@@ -1,21 +1,21 @@
 #[starknet::component]
 mod session_component {
     use alexandria_merkle_tree::merkle_tree::{
-        Hasher, MerkleTree, MerkleTreeImpl, poseidon::PoseidonHasherImpl, MerkleTreeTrait,
+        Hasher, MerkleTree, MerkleTreeImpl, MerkleTreeTrait, poseidon::PoseidonHasherImpl,
     };
     use argent::account::interface::IAccount;
     use argent::session::{
-        session_hash::{OffChainMessageHashSessionRev1, MerkleLeafHash},
-        interface::{ISessionable, SessionToken, Session, ISessionCallback},
+        interface::{ISessionCallback, ISessionable, Session, SessionToken},
+        session_hash::{MerkleLeafHash, OffChainMessageHashSessionRev1},
     };
-    use argent::signer::signer_signature::{SignerSignatureTrait, SignerTrait, Signer};
+    use argent::signer::signer_signature::{Signer, SignerSignatureTrait, SignerTrait};
     use argent::utils::{
-        asserts::{assert_no_self_call, assert_only_self}, transaction_version::is_estimate_transaction,
-        serialization::full_deserialize
+        asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize,
+        transaction_version::is_estimate_transaction,
     };
     use hash::{HashStateExTrait, HashStateTrait};
     use poseidon::PoseidonTrait;
-    use starknet::{account::Call, get_contract_address, get_block_timestamp, storage::Map};
+    use starknet::{account::Call, get_block_timestamp, get_contract_address, storage::Map};
 
     #[storage]
     struct Storage {
@@ -30,7 +30,7 @@ mod session_component {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        SessionRevoked: SessionRevoked
+        SessionRevoked: SessionRevoked,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -76,7 +76,7 @@ mod session_component {
         fn is_session(self: @ComponentState<TContractState>, signature: Span<felt252>) -> bool {
             match signature.get(0) {
                 Option::Some(session_magic) => *session_magic.unbox() == SESSION_MAGIC,
-                Option::None => false
+                Option::None => false,
             }
         }
 
@@ -107,7 +107,7 @@ mod session_component {
                     session_authorization: token.session_authorization,
                     cache_owner_guid: token.cache_owner_guid,
                     token_guardian: token.guardian_signature.signer(),
-                    :session_hash
+                    :session_hash,
                 );
 
             let message_hash = PoseidonTrait::new()

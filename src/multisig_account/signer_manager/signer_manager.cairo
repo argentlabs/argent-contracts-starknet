@@ -33,17 +33,17 @@ impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
 mod signer_manager_component {
     use argent::multiowner_account::events::SignerLinked;
     use argent::multisig_account::signer_manager::interface::{
-        ISignerManager, IUpgradeMigration, ThresholdUpdated, OwnerAddedGuid, OwnerRemovedGuid
+        ISignerManager, IUpgradeMigration, OwnerAddedGuid, OwnerRemovedGuid, ThresholdUpdated,
     };
     use argent::signer::{
         signer_signature::{
-            Signer, SignerTrait, SignerSignature, SignerSignatureTrait, SignerSpanTrait, starknet_signer_from_pubkey
+            Signer, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerTrait, starknet_signer_from_pubkey,
         },
     };
     use argent::utils::linked_set::{
-        IAddEndMarker, LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl
+        IAddEndMarker, LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl,
     };
-    use argent::utils::{transaction_version::is_estimate_transaction, asserts::assert_only_self};
+    use argent::utils::{asserts::assert_only_self, transaction_version::is_estimate_transaction};
     use super::SignerGuidLinkedSetConfig;
 
     /// Too many owners could make the multisig unable to process transactions if we reach a limit
@@ -52,7 +52,7 @@ mod signer_manager_component {
     #[storage]
     struct Storage {
         threshold: usize,
-        signer_list: LinkedSet<felt252>
+        signer_list: LinkedSet<felt252>,
     }
 
     #[event]
@@ -66,7 +66,7 @@ mod signer_manager_component {
 
     #[embeddable_as(SignerManagerImpl)]
     impl SignerManager<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>,
     > of ISignerManager<ComponentState<TContractState>> {
         fn change_threshold(ref self: ComponentState<TContractState>, new_threshold: usize) {
             assert_only_self();
@@ -89,12 +89,11 @@ mod signer_manager_component {
             let mut guids = signers_to_add.span().to_guid_list();
             self.signer_list.insert_many(guids.span());
 
-            for signer in signers_to_add
-                .span() {
-                    let signer_guid = guids.pop_front().unwrap();
-                    self.emit(OwnerAddedGuid { new_owner_guid: signer_guid });
-                    self.emit(SignerLinked { signer_guid, signer: *signer });
-                };
+            for signer in signers_to_add.span() {
+                let signer_guid = guids.pop_front().unwrap();
+                self.emit(OwnerAddedGuid { new_owner_guid: signer_guid });
+                self.emit(SignerLinked { signer_guid, signer: *signer });
+            };
 
             self.threshold.write(new_threshold);
             if previous_threshold != new_threshold {
@@ -103,7 +102,7 @@ mod signer_manager_component {
         }
 
         fn remove_signers(
-            ref self: ComponentState<TContractState>, new_threshold: usize, signers_to_remove: Array<Signer>
+            ref self: ComponentState<TContractState>, new_threshold: usize, signers_to_remove: Array<Signer>,
         ) {
             assert_only_self();
             let previous_threshold = self.threshold.read();
@@ -153,7 +152,7 @@ mod signer_manager_component {
         }
 
         fn is_valid_signer_signature(
-            self: @ComponentState<TContractState>, hash: felt252, signer_signature: SignerSignature
+            self: @ComponentState<TContractState>, hash: felt252, signer_signature: SignerSignature,
         ) -> bool {
             let is_signer = self.signer_list.contains(signer_signature.signer().into_guid());
             assert(is_signer, 'argent/not-a-signer');
@@ -162,7 +161,7 @@ mod signer_manager_component {
     }
 
     impl UpgradeMigrationImpl<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>,
     > of IUpgradeMigration<ComponentState<TContractState>> {
         fn migrate_from_pubkeys_to_guids(ref self: ComponentState<TContractState>) {
             // assert valid storage
@@ -171,19 +170,18 @@ mod signer_manager_component {
 
             // Converting storage from public keys to guid
             let mut signers_to_add = array![];
-            for pubkey in pubkeys
-                .span() {
-                    let starknet_signer = starknet_signer_from_pubkey(*pubkey);
-                    let signer_guid = starknet_signer.into_guid();
-                    signers_to_add.append(signer_guid);
-                    self.emit(SignerLinked { signer_guid, signer: starknet_signer });
-                };
+            for pubkey in pubkeys.span() {
+                let starknet_signer = starknet_signer_from_pubkey(*pubkey);
+                let signer_guid = starknet_signer.into_guid();
+                signers_to_add.append(signer_guid);
+                self.emit(SignerLinked { signer_guid, signer: starknet_signer });
+            };
 
             self.signer_list.remove_many(pubkeys.span());
             self.signer_list.insert_many(signers_to_add.span());
         }
 
-        fn add_end_marker(ref self: ComponentState<TContractState>,) {
+        fn add_end_marker(ref self: ComponentState<TContractState>) {
             // Health checks
             let pubkeys = self.get_signer_guids();
             self.assert_valid_threshold_and_signers_count(self.threshold.read(), pubkeys.len());
@@ -194,7 +192,7 @@ mod signer_manager_component {
 
     #[generate_trait]
     impl SignerManagerInternalImpl<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>,
     > of ISignerManagerInternal<TContractState> {
         fn initialize(ref self: ComponentState<TContractState>, threshold: usize, mut signers: Array<Signer>) {
             assert(self.threshold.read() == 0, 'argent/already-initialized');
@@ -216,7 +214,7 @@ mod signer_manager_component {
         }
 
         fn assert_valid_threshold_and_signers_count(
-            self: @ComponentState<TContractState>, threshold: usize, signers_len: usize
+            self: @ComponentState<TContractState>, threshold: usize, signers_len: usize,
         ) {
             assert(threshold != 0, 'argent/invalid-threshold');
             assert(signers_len != 0, 'argent/invalid-signers-len');
@@ -232,14 +230,14 @@ mod signer_manager_component {
             self: @ComponentState<TContractState>,
             hash: felt252,
             threshold: u32,
-            mut signer_signatures: Array<SignerSignature>
+            mut signer_signatures: Array<SignerSignature>,
         ) -> bool {
             assert(signer_signatures.len() == threshold, 'argent/signature-invalid-length');
             let mut last_signer: u256 = 0;
             loop {
                 let signer_sig = match signer_signatures.pop_front() {
                     Option::Some(signer_sig) => signer_sig,
-                    Option::None => { break true; }
+                    Option::None => { break true; },
                 };
                 let signer_guid = signer_sig.signer().into_guid();
                 assert(self.is_signer_guid(signer_guid), 'argent/not-a-signer');

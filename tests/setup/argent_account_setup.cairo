@@ -3,7 +3,7 @@ use argent::account::interface::Version;
 use argent::multiowner_account::account_interface::OwnerAliveSignature;
 use argent::multiowner_account::recovery::Escape;
 use argent::recovery::{EscapeStatus};
-use argent::signer::signer_signature::{Signer, SignerSignature, starknet_signer_from_pubkey};
+use argent::signer::signer_signature::{Signer, starknet_signer_from_pubkey};
 use argent::utils::serialization::serialize;
 use crate::{ARGENT_ACCOUNT_ADDRESS, GUARDIAN, OWNER};
 use snforge_std::{ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address_global};

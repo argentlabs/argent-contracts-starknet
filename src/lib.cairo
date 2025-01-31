@@ -41,11 +41,11 @@ pub mod multisig_account {
 }
 
 pub mod multiowner_account {
-    mod account_interface;
+    pub mod account_interface;
     pub mod argent_account;
     pub mod events;
     pub mod guardian_manager;
-    mod owner_alive;
+    pub mod owner_alive;
     pub mod owner_manager;
     pub mod recovery;
     pub mod signer_storage_linked_set;

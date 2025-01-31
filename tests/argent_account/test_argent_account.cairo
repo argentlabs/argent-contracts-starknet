@@ -1,5 +1,4 @@
 use argent::multiowner_account::account_interface::OwnerAliveSignature;
-use argent::multiowner_account::owner_alive::OwnerAlive;
 use argent::multiowner_account::{
     argent_account::ArgentAccount,
     events::{GuardianAddedGuid, GuardianRemovedGuid, OwnerAddedGuid, OwnerRemovedGuid, SignerLinked},
@@ -7,13 +6,12 @@ use argent::multiowner_account::{
 };
 use argent::recovery::EscapeStatus;
 use argent::signer::signer_signature::{
-    Eip191Signer, Secp256k1Signer, Signer, SignerSignature, SignerSignatureTrait, SignerTrait, StarknetSignature,
-    StarknetSigner, starknet_signer_from_pubkey,
+    Eip191Signer, Secp256k1Signer, Signer, SignerSignature, SignerTrait, StarknetSignature, StarknetSigner,
+    starknet_signer_from_pubkey,
 };
-use core::num::traits::Zero;
 use crate::{
-    Felt252TryIntoStarknetSigner, GUARDIAN, ITestArgentAccountDispatcherTrait, OWNER, WRONG_OWNER, initialize_account,
-    initialize_account_with,
+    Felt252TryIntoStarknetSigner, GUARDIAN, ITestArgentAccountDispatcherTrait, OWNER, initialize_account,
+    initialize_account_with, initialize_account_without_guardian,
 };
 use snforge_std::{
     EventSpyAssertionsTrait, EventSpyTrait,

@@ -1,9 +1,15 @@
-use argent::signer::signer_signature::{Signer, SignerInfo, SignerSignature, SignerStorageValue};
+use argent::signer::signer_signature::{Signer, SignerInfo, SignerSignature, SignerStorageValue, SignerType};
 
 #[starknet::interface]
 pub trait IOwnerManager<TContractState> {
+    /// @notice Returns the public key if the requested role is Starknet, Eip191 or Secp256k1 and panic for other types
+    /// @dev Fails if there is more than one owner
+    fn get_owner(self: @TContractState) -> felt252;
+    fn get_owner_type(self: @TContractState) -> SignerType;
+    fn get_owner_guid(self: @TContractState) -> felt252;
+
     /// @notice Returns the guid of all the owners
-    fn get_owner_guids(self: @TContractState) -> Array<felt252>;
+    fn get_owners_guids(self: @TContractState) -> Array<felt252>;
     fn get_owners_info(self: @TContractState) -> Array<SignerInfo>;
     fn is_owner(self: @TContractState, owner: Signer) -> bool;
     fn is_owner_guid(self: @TContractState, owner_guid: felt252) -> bool;
@@ -45,6 +51,7 @@ pub mod owner_manager_component {
     use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use argent::signer::signer_signature::{
         Signer, SignerInfo, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait,
+        SignerType,
     };
     use argent::utils::linked_set_with_head::{
         LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl,
@@ -71,7 +78,21 @@ pub mod owner_manager_component {
     impl OwnerManager<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>, +IEmitArgentAccountEvent<TContractState>,
     > of IOwnerManager<ComponentState<TContractState>> {
-        fn get_owner_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
+        fn get_owner(self: @ComponentState<TContractState>) -> felt252 {
+            let owner = self.get_single_owner().expect('argent/no-single-owner');
+            assert(!owner.is_stored_as_guid(), 'argent/only_guid');
+            owner.stored_value
+        }
+
+        fn get_owner_type(self: @ComponentState<TContractState>) -> SignerType {
+            self.get_single_owner().expect('argent/no-single-owner').signer_type
+        }
+
+        fn get_owner_guid(self: @ComponentState<TContractState>) -> felt252 {
+            self.get_single_owner().expect('argent/no-single-owner').into_guid()
+        }
+
+        fn get_owners_guids(self: @ComponentState<TContractState>) -> Array<felt252> {
             self.owners_storage.get_all_hashes()
         }
 
@@ -111,9 +132,11 @@ pub mod owner_manager_component {
         }
 
         fn initialize_from_upgrade(ref self: ComponentState<TContractState>, signer_storage: SignerStorageValue) {
-            // We don't want to emit any events in this case
+            // Sanity check
             assert(self.owners_storage.len() == 0, 'argent/already-initialized');
-            self.owners_storage.insert(signer_storage);
+            let guid = self.owners_storage.insert(signer_storage);
+            // SignerLinked event is not needed here but OwnerAddedGuid is needed
+            self.emit_owner_added(guid);
         }
 
         fn add_owners(ref self: ComponentState<TContractState>, owners_to_add: Array<Signer>) {

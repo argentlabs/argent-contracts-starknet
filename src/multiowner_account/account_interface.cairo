@@ -1,7 +1,7 @@
 use argent::account::interface::Version;
 use argent::multiowner_account::recovery::Escape;
 use argent::recovery::{EscapeStatus};
-use argent::signer::signer_signature::{Signer, SignerSignature, SignerType};
+use argent::signer::signer_signature::{Signer, SignerSignature};
 
 #[starknet::interface]
 pub trait IArgentMultiOwnerAccount<TContractState> {
@@ -92,12 +92,6 @@ pub trait IArgentMultiOwnerAccount<TContractState> {
     fn cancel_escape(ref self: TContractState);
 
     // Views
-
-    /// @notice Returns the public key if the requested role is Starknet, Eip191 or Secp256k1 and panic for other types
-    /// @dev Fails if there is more than one owner
-    fn get_owner(self: @TContractState) -> felt252;
-    fn get_owner_guid(self: @TContractState) -> felt252;
-    fn get_owner_type(self: @TContractState) -> SignerType;
 
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;

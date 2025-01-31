@@ -322,8 +322,6 @@ export async function executeWithCustomSig(
     account.cairoVersion,
     account.transactionVersion,
   );
-  // As we want to execute we must skip the estimation step
-  // transactionsDetail.skipValidate = true;
 
   return await newAccount.execute(transactions, undefined, transactionsDetail);
 }

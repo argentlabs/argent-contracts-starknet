@@ -1,12 +1,6 @@
 import { expect } from "chai";
-import { CallData } from "starknet";
-import {
-  ArgentSigner,
-  deployAccountWithoutGuardians,
-  expectRevertWithErrorMessage,
-  manager,
-  randomStarknetKeyPair,
-} from "../lib";
+import { CairoOption, CairoOptionVariant, CallData } from "starknet";
+import { deployAccountWithoutGuardians, expectRevertWithErrorMessage, manager, randomStarknetKeyPair } from "../lib";
 describe("Owner Manager Tests", function () {
   before(async () => {
     await manager.declareLocalContract("ArgentAccount");
@@ -17,8 +11,13 @@ describe("Owner Manager Tests", function () {
       const { accountContract, owner } = await deployAccountWithoutGuardians();
 
       const newOwner = randomStarknetKeyPair();
-      const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
-      await accountContract.add_owners(arrayOfSigner);
+      await accountContract.change_owners(
+        CallData.compile({
+          remove: [],
+          add: [newOwner.signer],
+          alive_signature: new CairoOption(CairoOptionVariant.None),
+        }),
+      );
       const newOwners = await accountContract.get_owners_guids();
 
       expect(newOwners).to.deep.equal([owner.guid, newOwner.guid]);
@@ -29,8 +28,14 @@ describe("Owner Manager Tests", function () {
 
       const newOwner1 = randomStarknetKeyPair();
       const newOwner2 = randomStarknetKeyPair();
-      const arrayOfSigner = CallData.compile({ new_owners: [newOwner1.signer, newOwner2.signer] });
-      await accountContract.add_owners(arrayOfSigner);
+
+      await accountContract.change_owners(
+        CallData.compile({
+          remove: [],
+          add: [newOwner1.signer, newOwner2.signer],
+          alive_signature: new CairoOption(CairoOptionVariant.None),
+        }),
+      );
 
       const newOwners = await accountContract.get_owners_guids();
       expect(newOwners).to.deep.equal([owner.guid, newOwner1.guid, newOwner2.guid]);
@@ -39,18 +44,37 @@ describe("Owner Manager Tests", function () {
     it("Add Owner Already in the List", async function () {
       const { accountContract, owner } = await deployAccountWithoutGuardians();
 
-      const arrayOfSigner = CallData.compile({ new_owners: [owner.signer] });
-      await expectRevertWithErrorMessage("linked-set/already-in-set", accountContract.add_owners(arrayOfSigner));
+      await expectRevertWithErrorMessage(
+        "linked-set/already-in-set",
+        accountContract.change_owners(
+          CallData.compile({
+            remove: [],
+            add: [owner.signer],
+            alive_signature: new CairoOption(CairoOptionVariant.None),
+          }),
+        ),
+      );
     });
   });
   describe("Remove Owners Tests", function () {
     it("Remove 1 Owner", async function () {
       const { accountContract, owner } = await deployAccountWithoutGuardians();
       const newOwner = randomStarknetKeyPair();
-      const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
-      await accountContract.add_owners(arrayOfSigner);
+      await accountContract.change_owners(
+        CallData.compile({
+          remove: [],
+          add: [newOwner.signer],
+          alive_signature: new CairoOption(CairoOptionVariant.None),
+        }),
+      );
 
-      await accountContract.remove_owners([newOwner.guid]);
+      await accountContract.change_owners(
+        CallData.compile({
+          remove: [newOwner.guid],
+          add: [],
+          alive_signature: new CairoOption(CairoOptionVariant.None),
+        }),
+      );
       const newOwnersAfterRemove = await accountContract.get_owners_guids();
       expect(newOwnersAfterRemove).to.deep.equal([owner.guid]);
     });
@@ -58,36 +82,57 @@ describe("Owner Manager Tests", function () {
       const { accountContract, owner } = await deployAccountWithoutGuardians();
       const newOwner1 = randomStarknetKeyPair();
       const newOwner2 = randomStarknetKeyPair();
-      const arrayOfSigner = CallData.compile({ new_owners: [newOwner1.signer, newOwner2.signer] });
-      await accountContract.add_owners(arrayOfSigner);
+      await accountContract.change_owners(
+        CallData.compile({
+          remove: [],
+          add: [newOwner1.signer, newOwner2.signer],
+          alive_signature: new CairoOption(CairoOptionVariant.None),
+        }),
+      );
 
-      await accountContract.remove_owners([newOwner1.guid, newOwner2.guid]);
+      await accountContract.change_owners(
+        CallData.compile({
+          remove: [newOwner1.guid, newOwner2.guid],
+          add: [],
+          alive_signature: new CairoOption(CairoOptionVariant.None),
+        }),
+      );
       const newOwnersAfterRemove = await accountContract.get_owners_guids();
       expect(newOwnersAfterRemove).to.deep.equal([owner.guid]);
     });
     it("Remove Owner not in the List", async function () {
       const { accountContract } = await deployAccountWithoutGuardians();
       const newOwner = randomStarknetKeyPair();
-      const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
-      await accountContract.add_owners(arrayOfSigner);
-      await expectRevertWithErrorMessage("linked-set/item-not-found", accountContract.remove_owners([1n]));
+      await accountContract.change_owners(
+        CallData.compile({
+          remove: [],
+          add: [newOwner.signer],
+          alive_signature: new CairoOption(CairoOptionVariant.None),
+        }),
+      );
+      await expectRevertWithErrorMessage(
+        "linked-set/item-not-found",
+        accountContract.change_owners(
+          CallData.compile({
+            remove: [1n],
+            add: [],
+            alive_signature: new CairoOption(CairoOptionVariant.None),
+          }),
+        ),
+      );
     });
-    it("Remove Owner /w 1 Owner", async function () {
+    it("Can't self remove without signature", async function () {
       const { accountContract, owner } = await deployAccountWithoutGuardians();
-      await expectRevertWithErrorMessage("argent/cant-remove-self", accountContract.remove_owners([owner.guid]));
-    });
-    it("Cant remove self even with multiple owners", async function () {
-      const { accountContract, owner, account } = await deployAccountWithoutGuardians();
-      const newOwner1 = randomStarknetKeyPair();
-      const arrayOfSigner = CallData.compile({ new_owners: [newOwner1.signer] });
-      await accountContract.add_owners(arrayOfSigner);
-      account.signer = new ArgentSigner(owner, undefined);
-      await expectRevertWithErrorMessage("argent/cant-remove-self", accountContract.remove_owners([owner.guid]));
-
-      account.signer = new ArgentSigner(newOwner1, undefined);
-      await accountContract.remove_owners([owner.guid]);
-      const newOwnersAfterRemove = await accountContract.get_owners_guids();
-      expect(newOwnersAfterRemove).to.deep.equal([newOwner1.guid]);
+      await expectRevertWithErrorMessage(
+        "argent/missing-owner-alive",
+        accountContract.change_owners(
+          CallData.compile({
+            remove: [owner.guid],
+            add: [],
+            alive_signature: new CairoOption(CairoOptionVariant.None),
+          }),
+        ),
+      );
     });
   });
 });

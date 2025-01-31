@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, Contract, num } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, Contract, num } from "starknet";
 import {
   ArgentSigner,
   SignerType,
@@ -234,8 +234,13 @@ describe("Session Account: execute caching", function () {
     const { account, guardian, owner, accountContract } = await deployAccount({ classHash: argentAccountClassHash });
 
     const newOwner = randomStarknetKeyPair();
-    const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
-    await accountContract.add_owners(arrayOfSigner);
+    await accountContract.change_owners(
+      CallData.compile({
+        remove: [],
+        add: [newOwner.signer],
+        alive_signature: new CairoOption(CairoOptionVariant.None),
+      }),
+    );
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
@@ -259,7 +264,13 @@ describe("Session Account: execute caching", function () {
 
     const signer = new ArgentSigner(newOwner, guardian);
     account.signer = signer;
-    await accountContract.remove_owners([owner.guid]);
+    await accountContract.change_owners(
+      CallData.compile({
+        remove: [owner.guid],
+        add: [],
+        alive_signature: new CairoOption(CairoOptionVariant.None),
+      }),
+    );
     await accountContract.is_session_authorization_cached(sessionHash, owner.guid, guardian.guid).should.eventually.be
       .false;
 
@@ -361,8 +372,13 @@ describe("Session Account: execute caching", function () {
 
       newContract.connect(account);
       const newOwner = randomStarknetKeyPair();
-      const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
-      await newContract.add_owners(arrayOfSigner);
+      await newContract.change_owners(
+        CallData.compile({
+          remove: [],
+          add: [newOwner.signer],
+          alive_signature: new CairoOption(CairoOptionVariant.None),
+        }),
+      );
       await newContract
         .is_session_authorization_cached(sessionHash, owner.guid, guardian.guid)
         .should.eventually.be.equal(useCaching);

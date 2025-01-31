@@ -20,43 +20,33 @@ trait IArgentMultiOwnerAccount<TContractState> {
     /// @param new_security_period new delay in seconds before the escape can be completed. Must be >= 10 minutes
     fn set_escape_security_period(ref self: TContractState, new_security_period: u64);
 
-    /// @notice Removes all owners from this account and adds a new one
-    /// @dev Must be called by the account and authorized by 1 owner and a guardian (if guardian is set)
-    /// @param new_single_owner SignerSignature of the new owner
-    /// Required to prevent changing to a signer which is not in control of the user
-    /// It is the signature of the SNIP-12 V1 compliant object ReplaceOwnersWithOne
-    /// @param signature_expiration Signature expiration timestamp in seconds since the Unix epoch
-    /// cannot be in the past: before current timestamp
-    /// cannot be too far in the future: current timestamp + 1 DAY
-    /// @dev It will cancel any existing escape
-    fn reset_owners(ref self: TContractState, new_single_owner: SignerSignature, signature_expiration: u64);
 
-    /// @notice Adds new owners to this account
+    /// @notice Manage the owners of this account by adding and/or removing them
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
+    /// @param owner_guids_to_remove The list of owner guids to remove
+    /// @param owners_to_add The list of owners to add
+    /// @param owner_alive_signature Signature proving there is a valid owner after the change, required when this call
+    /// will remove the owner that signed the transaction and there's no guardian
     /// @dev It will cancel any existing escape
-    fn add_owners(ref self: TContractState, new_owners: Array<Signer>);
+    /// @dev Will revert if any of the guids to remove is not an owner
+    /// @dev Will revert if any of the signers to add is already an owner
+    fn change_owners(
+        ref self: TContractState,
+        owner_guids_to_remove: Array<felt252>,
+        owners_to_add: Array<Signer>,
+        owner_alive_signature: Option<OwnerAliveSignature>,
+    );
 
-    /// @notice Removes owners from this account
+    /// @notice Manage the guardians of this account by adding and/or removing them
     /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
-    /// @dev The owner signing this call cannot be removed
+    /// @param guardian_guids_to_remove The list of guardian guids to remove
+    /// @param guardians_to_add The list of guardians to add
     /// @dev It will cancel any existing escape
-    fn remove_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>);
-
-    /// @notice Adds new guardians to this account
-    /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
-    /// @dev It will cancel any existing escape
-    fn add_guardians(ref self: TContractState, new_guardians: Array<Signer>);
-
-    /// @notice Removes guardians from this account
-    /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
-    /// @dev It will cancel any existing escape
-    fn remove_guardians(ref self: TContractState, guardian_guids_to_remove: Array<felt252>);
-
-    /// @notice Removes all guardians and optionally adds a new one
-    /// @dev Must be called by the account and authorized by the owner and a guardian (if guardian is set)
-    /// @dev It will cancel any existing escape
-    /// @param new_guardian The address of the new guardian, or None to disable the guardian
-    fn reset_guardians(ref self: TContractState, new_guardian: Option<Signer>);
+    /// @dev Will revert if any of the guids to remove is not a guardian
+    /// @dev Will revert if any of the signers to add is already a guardian
+    fn change_guardians(
+        ref self: TContractState, guardian_guids_to_remove: Array<felt252>, guardians_to_add: Array<Signer>,
+    );
 
     /// @notice Triggers the escape of the owner when it is lost or compromised
     /// @dev Must be called by the account and authorized by just a guardian
@@ -106,4 +96,14 @@ trait IArgentMultiOwnerAccount<TContractState> {
     fn get_escape_and_status(self: @TContractState) -> (Escape, EscapeStatus);
     /// Reads the current security period used for escapes
     fn get_escape_security_period(self: @TContractState) -> u64;
+}
+
+
+///  Required to prevent changing to an owner which is not in control of the user
+#[derive(Drop, Copy, Serde)]
+struct OwnerAliveSignature {
+    /// It is the signature of the SNIP-12 V1 compliant object OwnerAlive
+    owner_signature: SignerSignature,
+    /// Signature expiration in seconds. Cannot be more than 24 hours in the future
+    signature_expiration: u64,
 }

@@ -323,7 +323,7 @@ export async function executeWithCustomSig(
     account.transactionVersion,
   );
   // As we want to execute we must skip the estimation step
-  transactionsDetail.skipValidate = true;
+  // transactionsDetail.skipValidate = true;
 
   return await newAccount.execute(transactions, undefined, transactionsDetail);
 }

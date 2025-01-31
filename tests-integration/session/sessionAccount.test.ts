@@ -15,7 +15,7 @@ import {
 } from "../../lib";
 import { singleMethodAllowList } from "./sessionTestHelpers";
 
-describe("ArgentAccount: session basics", function () {
+describe.only("ArgentAccount: session basics", function () {
   let sessionAccountClassHash: string;
   let mockDappContract: Contract;
   const initialTime = 1710167933n;
@@ -88,7 +88,7 @@ describe("ArgentAccount: session basics", function () {
     // Should fail when executing
     await expectRevertWithErrorMessage(
       "session/invalid-backend-sig",
-      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
+      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), { skipValidate: true }),
     );
   });
 

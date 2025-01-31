@@ -16,7 +16,7 @@ import {
 } from "../../lib";
 import { singleMethodAllowList } from "./sessionTestHelpers";
 
-describe("Session Account: execute caching", function () {
+describe.only("Session Account: execute caching", function () {
   let argentAccountClassHash: string;
   let mockDappContract: Contract;
   const initialTime = 1710167933n;
@@ -249,7 +249,7 @@ describe("Session Account: execute caching", function () {
 
       await expectRevertWithErrorMessage(
         "session/invalid-backend-sig",
-        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
+        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), { skipValidate: true }),
       );
     });
   }

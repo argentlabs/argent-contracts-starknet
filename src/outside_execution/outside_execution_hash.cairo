@@ -1,5 +1,5 @@
 use argent::offchain_message::{
-    interface::{
+    offchain_message::{
         IOffChainMessageHashRev0, IOffChainMessageHashRev1, IStructHashRev0, IStructHashRev1, StarkNetDomain,
         StarknetDomain, StructHashStarkNetDomain,
     },

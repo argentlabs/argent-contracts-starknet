@@ -76,7 +76,7 @@ pub mod session {
 }
 
 pub mod offchain_message {
-    pub mod interface;
+    pub mod offchain_message;
     pub mod precalculated_hashing;
 }
 

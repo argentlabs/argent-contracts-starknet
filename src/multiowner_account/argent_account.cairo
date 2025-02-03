@@ -30,7 +30,7 @@ pub mod ArgentAccount {
         upgrade_migration_component::UpgradeMigrationInternalImpl,
     };
 
-    use argent::offchain_message::interface::IOffChainMessageHashRev1;
+    use argent::offchain_message::offchain_message::IOffChainMessageHashRev1;
     use argent::outside_execution::{
         outside_execution::IOutsideExecutionCallback, outside_execution::outside_execution_component,
     };

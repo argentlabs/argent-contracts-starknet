@@ -1,5 +1,7 @@
 use argent::offchain_message::{
-    interface::{IMerkleLeafHash, IOffChainMessageHashRev1, IStructHashRev1, StarknetDomain, StructHashStarknetDomain},
+    offchain_message::{
+        IMerkleLeafHash, IOffChainMessageHashRev1, IStructHashRev1, StarknetDomain, StructHashStarknetDomain,
+    },
     precalculated_hashing::get_message_hash_rev_1_with_precalc,
 };
 use argent::session::interface::Session;

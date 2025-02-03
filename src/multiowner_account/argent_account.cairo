@@ -10,7 +10,6 @@ pub mod ArgentAccount {
     use argent::introspection::src5_component;
     use argent::multiowner_account::account_interface::{
         IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait,
-        OwnerAliveSignature,
     };
     use argent::multiowner_account::argent_account::IEmitArgentAccountEvent;
     use argent::multiowner_account::events::{
@@ -21,6 +20,7 @@ pub mod ArgentAccount {
         IGuardianManager, guardian_manager_component, guardian_manager_component::GuardianManagerInternalImpl,
     };
     use argent::multiowner_account::owner_alive::OwnerAlive;
+    use argent::multiowner_account::owner_alive::OwnerAliveSignature;
     use argent::multiowner_account::owner_manager::{
         owner_manager_component, owner_manager_component::OwnerManagerInternalImpl,
     };

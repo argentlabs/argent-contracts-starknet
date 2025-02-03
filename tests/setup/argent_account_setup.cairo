@@ -1,6 +1,6 @@
 use argent::account::Version;
 
-use argent::multiowner_account::account_interface::OwnerAliveSignature;
+use argent::multiowner_account::owner_alive::OwnerAliveSignature;
 use argent::multiowner_account::recovery::Escape;
 use argent::recovery::{EscapeStatus};
 use argent::signer::signer_signature::{Signer, starknet_signer_from_pubkey};

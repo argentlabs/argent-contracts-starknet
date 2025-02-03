@@ -15,7 +15,6 @@ pub mod signer {
 }
 
 pub mod outside_execution {
-    pub mod interface;
     pub mod outside_execution;
     pub mod outside_execution_hash;
 }

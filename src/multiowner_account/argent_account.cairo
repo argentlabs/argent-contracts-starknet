@@ -32,7 +32,7 @@ pub mod ArgentAccount {
 
     use argent::offchain_message::interface::IOffChainMessageHashRev1;
     use argent::outside_execution::{
-        interface::IOutsideExecutionCallback, outside_execution::outside_execution_component,
+        outside_execution::IOutsideExecutionCallback, outside_execution::outside_execution_component,
     };
     use argent::recovery::EscapeStatus;
     use argent::session::{interface::ISessionCallback, session::{session_component, session_component::InternalTrait}};

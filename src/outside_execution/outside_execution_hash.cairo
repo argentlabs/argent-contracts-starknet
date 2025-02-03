@@ -5,7 +5,7 @@ use argent::offchain_message::{
     },
     precalculated_hashing::get_message_hash_rev_1_with_precalc,
 };
-use argent::outside_execution::interface::OutsideExecution;
+use argent::outside_execution::outside_execution::OutsideExecution;
 use core::hash::{HashStateExTrait, HashStateTrait};
 use core::pedersen::PedersenTrait;
 use core::poseidon::poseidon_hash_span;

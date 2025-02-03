@@ -5,7 +5,7 @@
 mod MockFutureArgentMultisig {
     use argent::account::{IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version};
     use argent::introspection::src5_component;
-    use argent::multisig_account::signer_manager::signer_manager::{
+    use argent::multisig_account::signer_manager::{
         signer_manager_component, signer_manager_component::SignerManagerInternalImpl,
     };
     use argent::signer::signer_signature::{Signer, SignerSignature};

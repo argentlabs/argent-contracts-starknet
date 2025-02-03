@@ -18,11 +18,8 @@ pub mod outside_execution {
 pub mod multisig_account {
     pub mod external_recovery;
     pub mod multisig_account;
+    pub mod signer_manager;
     mod upgrade_migration;
-    pub mod signer_manager {
-        pub mod interface;
-        pub mod signer_manager;
-    }
 }
 
 pub mod multiowner_account {

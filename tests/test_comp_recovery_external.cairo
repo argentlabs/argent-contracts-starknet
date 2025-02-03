@@ -2,7 +2,7 @@ use argent::multisig_account::external_recovery::{
     EscapeCall, EscapeCanceled, EscapeTriggered, IExternalRecoveryDispatcher, IExternalRecoveryDispatcherTrait,
     external_recovery_component, get_escape_call_hash,
 };
-use argent::multisig_account::signer_manager::interface::{ISignerManagerDispatcher, ISignerManagerDispatcherTrait};
+use argent::multisig_account::signer_manager::{ISignerManagerDispatcher, ISignerManagerDispatcherTrait};
 use argent::recovery::EscapeStatus;
 use argent::signer::signer_signature::Signer;
 use argent::utils::serialization::serialize;

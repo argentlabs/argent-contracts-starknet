@@ -3,7 +3,7 @@
 /// Please refrain from relying on the functionality of this contract for any production code. 🚨
 #[starknet::contract]
 pub mod MultisigMock {
-    use argent::multisig_account::signer_manager::signer_manager::{
+    use argent::multisig_account::signer_manager::{
         signer_manager_component, signer_manager_component::SignerManagerInternalImpl,
     };
 

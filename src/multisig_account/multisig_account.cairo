@@ -3,7 +3,7 @@ mod ArgentMultisigAccount {
     use argent::account::{IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version};
     use argent::introspection::src5_component;
     use argent::multisig_account::external_recovery::{IExternalRecoveryCallback, external_recovery_component};
-    use argent::multisig_account::signer_manager::signer_manager::{
+    use argent::multisig_account::signer_manager::{
         signer_manager_component, signer_manager_component::SignerManagerInternalImpl,
     };
     use argent::multisig_account::upgrade_migration::{

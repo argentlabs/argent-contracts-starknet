@@ -23,7 +23,7 @@ trait IFutureArgentUserAccount<TContractState> {
 #[starknet::contract(account)]
 mod MockFutureArgentAccount {
     use argent::account::{IAccount, Version};
-    use argent::introspection::src5::src5_component;
+    use argent::introspection::src5_component;
     use argent::signer::signer_signature::{Signer, SignerSignature, SignerSignatureTrait, SignerTrait, SignerType};
     use argent::upgrade::{
         IUpgradableCallback, IUpgradableCallbackOld, upgrade_component, upgrade_component::UpgradableInternalImpl,

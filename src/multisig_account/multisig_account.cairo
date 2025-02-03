@@ -1,7 +1,7 @@
 #[starknet::contract(account)]
 mod ArgentMultisigAccount {
     use argent::account::{IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version};
-    use argent::introspection::src5::src5_component;
+    use argent::introspection::src5_component;
     use argent::multisig_account::external_recovery::external_recovery::{
         IExternalRecoveryCallback, external_recovery_component,
     };

@@ -7,7 +7,7 @@ pub trait IEmitArgentAccountEvent<TContractState> {
 #[starknet::contract(account)]
 pub mod ArgentAccount {
     use argent::account::{IAccount, IDeprecatedArgentAccount, Version};
-    use argent::introspection::src5::src5_component;
+    use argent::introspection::src5_component;
     use argent::multiowner_account::account_interface::{
         IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait,
         OwnerAliveSignature,

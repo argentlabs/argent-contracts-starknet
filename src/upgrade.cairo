@@ -33,7 +33,7 @@ pub trait IUpgradeInternal<TContractState> {
 #[starknet::component]
 pub mod upgrade_component {
     use argent::account::SRC5_ACCOUNT_INTERFACE_ID;
-    use argent::introspection::interface::{ISRC5DispatcherTrait, ISRC5LibraryDispatcher};
+    use argent::introspection::{ISRC5DispatcherTrait, ISRC5LibraryDispatcher};
     use argent::upgrade::{
         IUpgradableCallback, IUpgradableCallbackDispatcherTrait, IUpgradableCallbackLibraryDispatcher, IUpgradeable,
     };

@@ -1,12 +1,8 @@
 pub mod account;
+
+pub mod introspection;
 pub mod recovery;
 pub mod upgrade;
-
-
-pub mod introspection {
-    pub mod interface;
-    pub mod src5;
-}
 
 pub mod signer {
     pub mod eip191;

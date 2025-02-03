@@ -35,7 +35,7 @@ pub mod ArgentAccount {
         outside_execution::IOutsideExecutionCallback, outside_execution::outside_execution_component,
     };
     use argent::recovery::EscapeStatus;
-    use argent::session::{interface::ISessionCallback, session::{session_component, session_component::InternalTrait}};
+    use argent::session::session::{ISessionCallback, session_component, session_component::InternalTrait};
     use argent::signer::signer_signature::{
         Signer, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait, SignerType,
         StarknetSignature, StarknetSigner,

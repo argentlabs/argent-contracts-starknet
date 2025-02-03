@@ -70,7 +70,6 @@ pub mod mocks {
 }
 
 pub mod session {
-    pub mod interface;
     pub mod session;
     pub mod session_hash;
 }

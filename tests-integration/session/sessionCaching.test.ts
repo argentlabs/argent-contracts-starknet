@@ -184,7 +184,7 @@ describe("Session Account: execute caching", function () {
       );
     });
 
-    it(`Fail if a different guardian key signed session token (caching: ${useCaching})`, async function () {
+    it(`Fail if a different guardian public key signed session token (caching: ${useCaching})`, async function () {
       const { account, guardian, owner } = await deployAccount({ classHash: argentAccountClassHash });
 
       const { accountWithDappSigner, sessionRequest, authorizationSignature, dappService } = await setupSession({
@@ -216,7 +216,31 @@ describe("Session Account: execute caching", function () {
         "session/guardian-key-mismatch",
         executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
       );
+    });
 
+    it(`Fail if a different guardian signature signed session token (caching: ${useCaching})`, async function () {
+      const { account, guardian, owner } = await deployAccount({ classHash: argentAccountClassHash });
+
+      const { accountWithDappSigner, sessionRequest, authorizationSignature, dappService } = await setupSession({
+        guardian: guardian as StarknetKeyPair,
+        account,
+        expiry: initialTime + 150n,
+        dappKey: randomStarknetKeyPair(),
+        cacheOwnerGuid: owner.guid,
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+      });
+
+      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+
+      const sessionToken = await dappService.getSessionToken({
+        calls,
+        account: accountWithDappSigner,
+        completedSession: sessionRequest,
+        authorizationSignature,
+        cacheOwnerGuid: useCaching ? owner.guid : undefined,
+      });
+
+      const originalGuardianSignature = sessionToken.guardianSignature;
       sessionToken.guardianSignature = signerTypeToCustomEnum(SignerType.Starknet, {
         pubkey: originalGuardianSignature.variant.Starknet.pubkey,
         r: 200n,
@@ -225,7 +249,7 @@ describe("Session Account: execute caching", function () {
 
       await expectRevertWithErrorMessage(
         "session/invalid-backend-sig",
-        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
+        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), { skipValidate: true }),
       );
     });
   }

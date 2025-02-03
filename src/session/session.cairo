@@ -9,8 +9,12 @@ pub mod session_component {
         session_hash::{MerkleLeafHash, OffChainMessageHashSessionRev1},
     };
     use argent::signer::signer_signature::{Signer, SignerSignatureTrait, SignerTrait};
-    use argent::utils::{asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize};
+    use argent::utils::{
+        asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize,
+        transaction_version::is_estimate_transaction,
+    };
     use core::hash::{HashStateExTrait, HashStateTrait};
+
     use core::poseidon::PoseidonTrait;
     use starknet::storage::{StorageMapReadAccess, StorageMapWriteAccess};
     use starknet::{account::Call, get_block_timestamp, get_contract_address, storage::Map};
@@ -117,10 +121,12 @@ pub mod session_component {
             // checks that the session key the user signed is the same key that signed the session
             let session_guid_from_sig = token.session_signature.signer().into_guid();
             assert(token.session.session_key_guid == session_guid_from_sig, 'session/session-key-mismatch');
-            assert(token.session_signature.is_valid_signature(message_hash), 'session/invalid-session-sig');
+            let is_valid_session_sig = token.session_signature.is_valid_signature(message_hash);
+            assert(is_valid_session_sig || is_estimate_transaction(), 'session/invalid-session-sig');
             // `assert_valid_session_authorization`` will assert the guardian is the same as the one in the
             // authorization
-            assert(token.guardian_signature.is_valid_signature(message_hash), 'session/invalid-backend-sig');
+            let is_valid_guardian_sig = token.guardian_signature.is_valid_signature(message_hash);
+            assert(is_valid_guardian_sig || is_estimate_transaction(), 'session/invalid-backend-sig');
 
             assert_valid_session_calls(@token, calls);
         }

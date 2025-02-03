@@ -350,9 +350,11 @@ pub mod ArgentAccount {
             );
             parsed_authorization
         }
+
         fn is_owner_guid(self: @ContractState, owner_guid: felt252) -> bool {
             self.owner_manager.is_owner_guid(owner_guid)
         }
+
         fn is_guardian_guid(self: @ContractState, guardian_guid: felt252) -> bool {
             self.guardian_manager.is_guardian_guid(guardian_guid)
         }

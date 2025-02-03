@@ -1,4 +1,4 @@
-use argent::account::interface::Version;
+use argent::account::Version;
 use argent::multiowner_account::recovery::Escape;
 use argent::recovery::{EscapeStatus};
 use argent::signer::signer_signature::{Signer, SignerSignature};

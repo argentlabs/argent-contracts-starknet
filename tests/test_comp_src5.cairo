@@ -1,6 +1,4 @@
-use argent::account::interface::{
-    SRC5_ACCOUNT_INTERFACE_ID, SRC5_ACCOUNT_INTERFACE_ID_OLD_1, SRC5_ACCOUNT_INTERFACE_ID_OLD_2,
-};
+use argent::account::{SRC5_ACCOUNT_INTERFACE_ID, SRC5_ACCOUNT_INTERFACE_ID_OLD_1, SRC5_ACCOUNT_INTERFACE_ID_OLD_2};
 use argent::introspection::interface::{ISRC5, ISRC5Legacy, SRC5_INTERFACE_ID, SRC5_INTERFACE_ID_OLD};
 use argent::introspection::src5::src5_component;
 use argent::mocks::src5_mocks::SRC5Mock;

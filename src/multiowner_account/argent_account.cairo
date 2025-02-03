@@ -1,11 +1,18 @@
+use argent::multiowner_account::argent_account::ArgentAccount::Event;
+
+pub trait IEmitArgentAccountEvent<TContractState> {
+    fn emit_event_callback(ref self: TContractState, event: Event);
+}
+
 #[starknet::contract(account)]
 pub mod ArgentAccount {
-    use argent::account::interface::{IAccount, IDeprecatedArgentAccount, IEmitArgentAccountEvent, Version};
+    use argent::account::{IAccount, IDeprecatedArgentAccount, Version};
     use argent::introspection::src5::src5_component;
     use argent::multiowner_account::account_interface::{
         IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait,
         OwnerAliveSignature,
     };
+    use argent::multiowner_account::argent_account::IEmitArgentAccountEvent;
     use argent::multiowner_account::events::{
         AccountCreated, AccountCreatedGuid, EscapeCanceled, EscapeGuardianTriggeredGuid, EscapeOwnerTriggeredGuid,
         EscapeSecurityPeriodChanged, GuardianEscapedGuid, OwnerEscapedGuid, SignerLinked, TransactionExecuted,

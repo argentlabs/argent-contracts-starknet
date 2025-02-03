@@ -3,7 +3,7 @@ pub mod session_component {
     use alexandria_merkle_tree::merkle_tree::{
         Hasher, MerkleTree, MerkleTreeImpl, MerkleTreeTrait, poseidon::PoseidonHasherImpl,
     };
-    use argent::account::interface::IAccount;
+    use argent::account::IAccount;
     use argent::session::{
         interface::{ISessionCallback, ISessionable, SessionToken},
         session_hash::{MerkleLeafHash, OffChainMessageHashSessionRev1},

@@ -1,4 +1,3 @@
-use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
 use argent::signer::signer_signature::Signer;
 use starknet::account::Call;
 
@@ -52,9 +51,6 @@ pub trait IDeprecatedArgentAccount<TContractState> {
     fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }
 
-pub trait IEmitArgentAccountEvent<TContractState> {
-    fn emit_event_callback(ref self: TContractState, event: ArgentAccountEvent);
-}
 
 impl VersionPartialOrd of PartialOrd<Version> {
     fn lt(lhs: Version, rhs: Version) -> bool {

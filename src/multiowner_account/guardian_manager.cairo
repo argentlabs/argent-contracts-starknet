@@ -49,6 +49,9 @@ trait IGuardianManagerInternal<TContractState> {
 /// Managing the account guardians
 #[starknet::component]
 pub mod guardian_manager_component {
+    use argent::linked_set::linked_set_with_head::{
+        LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl,
+    };
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::argent_account::IEmitArgentAccountEvent;
     use argent::multiowner_account::events::{GuardianAddedGuid, GuardianRemovedGuid, SignerLinked};
@@ -58,9 +61,6 @@ pub mod guardian_manager_component {
         SignerType,
     };
     use argent::utils::array_ext::SpanContains;
-    use argent::utils::linked_set_with_head::{
-        LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl,
-    };
     use argent::utils::transaction_version::is_estimate_transaction;
     use super::{IGuardianManager, IGuardianManagerInternal};
 

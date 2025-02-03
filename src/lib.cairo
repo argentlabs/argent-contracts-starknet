@@ -41,14 +41,18 @@ pub mod multiowner_account {
     pub mod upgrade_migration;
 }
 
+pub mod linked_set {
+    pub mod linked_set;
+    pub mod linked_set_with_head;
+}
+
 pub mod utils {
     pub mod array_ext;
     pub mod asserts;
     pub mod bytes;
     pub mod calls;
     pub mod hashing;
-    pub mod linked_set;
-    pub mod linked_set_with_head;
+
     pub mod serialization;
     pub mod transaction_version;
 }

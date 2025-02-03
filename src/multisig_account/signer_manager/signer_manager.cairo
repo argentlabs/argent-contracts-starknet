@@ -1,4 +1,4 @@
-use argent::utils::linked_set::LinkedSetConfig;
+use argent::linked_set::linked_set::LinkedSetConfig;
 use starknet::storage::{StoragePath, StoragePointerReadAccess};
 
 impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
@@ -31,6 +31,9 @@ impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
 /// adding or removing signers, changing the threshold, etc
 #[starknet::component]
 pub mod signer_manager_component {
+    use argent::linked_set::linked_set::{
+        IAddEndMarker, LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl,
+    };
     use argent::multiowner_account::events::SignerLinked;
     use argent::multisig_account::signer_manager::interface::{
         ISignerManager, IUpgradeMigration, OwnerAddedGuid, OwnerRemovedGuid, ThresholdUpdated,
@@ -39,9 +42,6 @@ pub mod signer_manager_component {
         signer_signature::{
             Signer, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerTrait, starknet_signer_from_pubkey,
         },
-    };
-    use argent::utils::linked_set::{
-        IAddEndMarker, LinkedSet, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl,
     };
     use argent::utils::{asserts::assert_only_self, transaction_version::is_estimate_transaction};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};

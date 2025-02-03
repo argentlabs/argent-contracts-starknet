@@ -16,8 +16,7 @@ mod ArgentMultisigAccount {
     };
     use argent::signer::signer_signature::{Signer, SignerSignature};
     use argent::upgrade::{
-        interface::{IUpgradableCallback, IUpgradableCallbackOld}, upgrade::upgrade_component,
-        upgrade::upgrade_component::UpgradableInternalImpl,
+        IUpgradableCallback, IUpgradableCallbackOld, upgrade_component, upgrade_component::UpgradableInternalImpl,
     };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self},

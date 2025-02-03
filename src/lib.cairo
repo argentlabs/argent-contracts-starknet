@@ -1,9 +1,6 @@
 pub mod account;
 pub mod recovery;
-mod upgrade {
-    pub mod interface;
-    pub mod upgrade;
-}
+pub mod upgrade;
 
 
 pub mod introspection {

@@ -26,8 +26,7 @@ mod MockFutureArgentAccount {
     use argent::introspection::src5::src5_component;
     use argent::signer::signer_signature::{Signer, SignerSignature, SignerSignatureTrait, SignerTrait, SignerType};
     use argent::upgrade::{
-        interface::{IUpgradableCallback, IUpgradableCallbackOld},
-        upgrade::{upgrade_component, upgrade_component::UpgradableInternalImpl},
+        IUpgradableCallback, IUpgradableCallbackOld, upgrade_component, upgrade_component::UpgradableInternalImpl,
     };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self}, calls::execute_multicall, serialization::full_deserialize,

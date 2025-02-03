@@ -41,8 +41,8 @@ pub mod ArgentAccount {
         StarknetSignature, StarknetSigner,
     };
     use argent::upgrade::{
-        interface::{IUpgradableCallback, IUpgradableCallbackOld},
-        upgrade::{IUpgradeInternal, upgrade_component, upgrade_component::UpgradableInternalImpl},
+        IUpgradableCallback, IUpgradableCallbackOld, IUpgradeInternal, upgrade_component,
+        upgrade_component::UpgradableInternalImpl,
     };
     use argent::utils::array_ext::SpanContains;
     use argent::utils::{

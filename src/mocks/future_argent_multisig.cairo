@@ -10,8 +10,7 @@ mod MockFutureArgentMultisig {
     };
     use argent::signer::signer_signature::{Signer, SignerSignature};
     use argent::upgrade::{
-        interface::{IUpgradableCallback, IUpgradableCallbackOld},
-        upgrade::{upgrade_component, upgrade_component::UpgradableInternalImpl},
+        IUpgradableCallback, IUpgradableCallbackOld, upgrade_component, upgrade_component::UpgradableInternalImpl,
     };
     use argent::utils::{asserts::assert_only_self, calls::execute_multicall, serialization::full_deserialize};
     use core::panic_with_felt252;

@@ -1,6 +1,7 @@
 pub mod account;
 
 pub mod introspection;
+pub mod offchain_message;
 pub mod recovery;
 pub mod upgrade;
 
@@ -45,10 +46,16 @@ pub mod utils {
     pub mod bytes;
     pub mod calls;
     pub mod hashing;
-
     pub mod serialization;
     pub mod transaction_version;
 }
+
+
+pub mod session {
+    pub mod session;
+    pub mod session_hash;
+}
+
 
 pub mod mocks {
     mod future_argent_account;
@@ -60,15 +67,5 @@ pub mod mocks {
     mod recovery_mocks;
     mod signature_verifier;
     pub mod src5_mocks;
-}
-
-pub mod session {
-    pub mod session;
-    pub mod session_hash;
-}
-
-pub mod offchain_message {
-    pub mod offchain_message;
-    pub mod precalculated_hashing;
 }
 

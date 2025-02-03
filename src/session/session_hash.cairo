@@ -1,10 +1,10 @@
-use argent::offchain_message::{
+use argent::session::session::Session;
+use argent::{
     offchain_message::{
         IMerkleLeafHash, IOffChainMessageHashRev1, IStructHashRev1, StarknetDomain, StructHashStarknetDomain,
+        get_message_hash_rev_1_with_precalc,
     },
-    precalculated_hashing::get_message_hash_rev_1_with_precalc,
 };
-use argent::session::session::Session;
 use core::poseidon::poseidon_hash_span;
 use starknet::{account::Call, get_contract_address, get_tx_info};
 

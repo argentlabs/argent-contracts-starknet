@@ -16,13 +16,9 @@ pub mod outside_execution {
 }
 
 pub mod multisig_account {
-    mod multisig_account;
+    pub mod external_recovery;
+    pub mod multisig_account;
     mod upgrade_migration;
-    pub mod external_recovery {
-        pub mod external_recovery;
-        pub mod interface;
-        mod packing;
-    }
     pub mod signer_manager {
         pub mod interface;
         pub mod signer_manager;

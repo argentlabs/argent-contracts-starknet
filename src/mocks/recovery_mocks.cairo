@@ -3,9 +3,7 @@
 /// Please refrain from relying on the functionality of this contract for any production code. 🚨
 #[starknet::contract]
 mod ExternalRecoveryMock {
-    use argent::multisig_account::external_recovery::{
-        external_recovery::{IExternalRecoveryCallback, external_recovery_component},
-    };
+    use argent::multisig_account::external_recovery::{IExternalRecoveryCallback, external_recovery_component};
     use argent::multisig_account::signer_manager::signer_manager::{
         signer_manager_component, signer_manager_component::SignerManagerInternalImpl,
     };
